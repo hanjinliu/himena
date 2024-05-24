@@ -1,0 +1,88 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "royalapp"
+dynamic = ["version"]
+description = ''
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+keywords = []
+authors = [
+  { name = "Hanjin Liu", email = "liuhanjin.sc@gmail.com" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = [
+  "qtpy>=2.3.1",
+  "superqt>=0.6.1",
+]
+
+[project.urls]
+Documentation = "https://github.com/hanjinliu/royalapp#readme"
+Issues = "https://github.com/hanjinliu/royalapp/issues"
+Source = "https://github.com/hanjinliu/royalapp"
+
+[tool.hatch.version]
+path = "src/royalapp/__init__.py"
+
+[tool.hatch.envs.types]
+extra-dependencies = [
+  "mypy>=1.0.0",
+]
+[tool.hatch.envs.types.scripts]
+check = "mypy --install-types --non-interactive {args:src/royalapp tests}"
+
+[tool.coverage.run]
+source_pkgs = ["royalapp", "tests"]
+branch = true
+parallel = true
+omit = [
+  "src/royalapp/__init__.py",
+]
+
+[tool.coverage.paths]
+royalapp = ["src/royalapp", "*/royalapp/src/royalapp"]
+tests = ["tests", "*/royalapp/tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
+
+[tool.hatch.envs.lint]
+detached = true
+dependencies = [
+  "black>=23.1.0",
+  "mypy>=1.0.0",
+  "ruff>=0.0.243",
+]
+[tool.hatch.envs.lint.scripts]
+typing = "mypy --install-types --non-interactive {args:whitecanvas tests}"
+style = [
+  "ruff {args:.}",
+  "black --check --diff {args:.}",
+]
+fmt = [
+  "black {args:.}",
+  "ruff --fix {args:.}",
+  "style",
+]
+all = [
+  "style",
+  "typing",
+]
+exclude_lines = [
+  "if TYPE_CHECKING:",
+]

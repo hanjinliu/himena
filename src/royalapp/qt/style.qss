@@ -1,0 +1,9 @@
+QMainWindow {
+    color: $(foreground-1);
+    background-color: $(background-1);
+}
+
+
+QMdiArea {
+    qproperty-background: $(background-2);
+}
