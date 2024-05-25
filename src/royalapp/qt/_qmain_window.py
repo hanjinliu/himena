@@ -2,31 +2,47 @@ from __future__ import annotations
 
 from typing import TypeVar
 from pathlib import Path
-from qtpy import QtWidgets as QtW, QtGui
+from qtpy import QtWidgets as QtW, QtGui, QtCore
 from qtpy.QtCore import Qt
 from app_model.backends.qt import QModelMainWindow
 from royalapp.qt._qtab_widget import QTabWidget
-from royalapp.qt._qsub_window import QSubWindow
+from royalapp.qt._qsub_window import QSubWindow, QSubWindowArea
 from royalapp.qt._qdock_widget import QDockWidget
-
-from royalapp.types import DockArea, DockAreaString, TabTitle, WindowTitle
+from royalapp import _app_model
+from royalapp.types import (
+    DockArea,
+    DockAreaString,
+    NewWidgetBehavior,
+    TabTitle,
+    WindowTitle,
+    FileData,
+)
 from royalapp.style import get_style
 from royalapp.app import get_app
+from royalapp.qt._widget_registry import pick_provider
 
 _STYLE_QSS_PATH = Path(__file__).parent / "style.qss"
 _T = TypeVar("_T", bound=QtW.QWidget)
 
-class QMainWindow(QModelMainWindow):
-    def __init__(self, app: str = "royalapp"):
+
+class QMainWindow(QModelMainWindow, _app_model.MainWindowMixin):
+    def __init__(
+        self,
+        app: str = "royalapp",
+        *,
+        new_widget_behavior: NewWidgetBehavior = NewWidgetBehavior.WINDOW,
+    ):
         _app = get_app("qt")
-        _qt_app = _app.get_app()
-        
-        super().__init__(app)
+        self._qt_app = _app.get_app()
+        self._app_name = app
+
+        app_model_app = _app_model.get_application(app)
+        super().__init__(app_model_app)
         self._tab_widget = QTabWidget()
         self._menubar = self.setModelMenuBar({"file": "File"})
         self._toolbar = self.addModelToolBar("toolbar")
         self.setCentralWidget(self._tab_widget)
-        
+
         style = get_style("default")
         style_text = (
             _STYLE_QSS_PATH.read_text()
@@ -38,7 +54,8 @@ class QMainWindow(QModelMainWindow):
             .replace("$(background-3)", style.background.level_3)
         )
         self.setStyleSheet(style_text)
-        self._init_app_model()
+        self._new_widget_behavior = NewWidgetBehavior(new_widget_behavior)
+        _app_model.set_current_instance(app, self)
 
     def add_dock_widget(
         self,
@@ -52,7 +69,10 @@ class QMainWindow(QModelMainWindow):
             title = widget.objectName()
         if allowed_areas is None:
             allowed_areas = [
-                DockArea.LEFT, DockArea.RIGHT, DockArea.TOP, DockArea.BOTTOM
+                DockArea.LEFT,
+                DockArea.RIGHT,
+                DockArea.TOP,
+                DockArea.BOTTOM,
             ]
         else:
             allowed_areas = [DockArea(area) for area in allowed_areas]
@@ -63,12 +83,22 @@ class QMainWindow(QModelMainWindow):
         dock_widget.setAllowedAreas(areas)
         self.addDockWidget(_DOCK_AREA_MAP[area], dock_widget)
         return dock_widget
-    
+
+    def add_tab(self, tab_name: str) -> QSubWindowArea:
+        """
+        Add a new tab with a sub-window area.
+
+        Parameters
+        ----------
+        tab_name : str
+            Name of the tab.
+        """
+        return self._tab_widget.addTabArea(tab_name)
+
     def add_widget(
         self,
         widget: _T,
         *,
-        tab: str | None = None,
         title: str | None = None,
     ) -> QSubWindow[_T]:
         """
@@ -78,55 +108,102 @@ class QMainWindow(QModelMainWindow):
         ----------
         widget : QtW.QWidget
             Widget to add.
-        tab : str, optional
-            Which tab the widget will be added to. If not given, current tab will be 
-            used.
         title : str, optional
-            Title of the sub-window. If not given, its name will be automatically 
+            Title of the sub-window. If not given, its name will be automatically
             generated.
 
         Returns
         -------
         QSubWindow
-            A sub-window widget. The added widget is available by calling 
+            A sub-window widget. The added widget is available by calling
             `main_widget()` method.
         """
-        if tab is None:
+        if self._new_widget_behavior is NewWidgetBehavior.WINDOW:
             if (sub_window_area := self._tab_widget.currentWidget()) is None:
-                sub_window_area = self._tab_widget.addTabArea("Tab")
+                sub_window_area = self._tab_widget.addTabArea()
         else:
-            for i in range(self._tab_widget.count()):
-                if self._tab_widget.tabText(i) == tab:
-                    sub_window_area = self._tab_widget.widget(i)
-                    break
-            else:
-                sub_window_area = self._tab_widget.addTabArea(tab)
-        if title is None:
-            title = "Window"
-        out = sub_window_area.add_sub_window(widget, title)
+            sub_window_area = self._tab_widget.addTabArea(title)
+        out = sub_window_area.add_widget(widget, title=title)
         self._tab_widget.setCurrentWidget(sub_window_area)
+        if self._new_widget_behavior is NewWidgetBehavior.TAB:
+            out.state = "full"
         return out
-    
+
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
         super().resizeEvent(event)
         if widget := self._tab_widget.currentWidget():
-            widget._anchor_minimized_windows()
+            widget._reanchor_windows()
         return None
 
-    def _init_app_model(self):
-        from royalapp._app_model import ACTIONS
+    def showEvent(self, event: QtGui.QShowEvent) -> None:
+        super().showEvent(event)
+        if widget := self._tab_widget.currentWidget():
+            widget._reanchor_windows()
+        return None
 
-        self._app.register_actions(ACTIONS)
-        self._app.injection_store.register_provider(self._current_tab_name)
-        self._app.injection_store.register_provider(self._current_sub_window_title)
+    def event(self, e: QtCore.QEvent) -> bool:
+        if e.type() in {
+            QtCore.QEvent.Type.WindowActivate,
+            QtCore.QEvent.Type.ZOrderChange,
+        }:
+            # upon activation or raise_, put window at the end of _instances
+            _app_model.set_current_instance(self._app_name, self)
 
-    def _current_tab_name(self) -> TabTitle:
-        return self._tab_widget.tabText(self._tab_widget.currentIndex())
+        res = super().event(e)
 
-    def _current_sub_window_title(self) -> WindowTitle:
-        if cur := self._tab_widget.currentWidget():
-            return cur.activeSubWindow().windowTitle()
-        return ""
+        if e.type() == QtCore.QEvent.Type.Close and e.isAccepted():
+            _app_model.remove_instance(self._app_name, self)
+
+        return res
+
+    def show(self, run: bool = False) -> None:
+        super().show()
+        if run:
+            get_app("qt").run_app()
+        return None
+
+    def _provide_current_tab_name(self) -> TabTitle:
+        idx = self._tab_widget.currentIndex()
+        return self._tab_widget.tabText(idx)
+
+    def _provide_current_sub_window_title(self) -> WindowTitle:
+        raise self._tab_widget.currentWidget().windowTitle()
+
+    def _process_file_input(self, file_data: FileData) -> None:
+        widget = pick_provider(file_data)(file_data)
+        self._tab_widget.currentWidget().add_widget(widget)
+
+    def _provide_file_output(self) -> FileData:
+        if sub := self._tab_widget.currentWidget().currentSubWindow():
+            active_window = sub.main_widget()
+            if not hasattr(active_window, "as_file_data"):
+                raise ValueError("Widget does not have `as_file_data` method.")
+            return active_window.as_file_data()
+        else:
+            raise ValueError("No active window.")
+
+    def _open_file_dialog(self, mode: str = "r") -> Path | list[Path] | None:
+        if mode == "r":
+            path = QtW.QFileDialog.getOpenFileName(self, "Open File")[0]
+            if path:
+                return Path(path)
+        elif mode == "w":
+            path = QtW.QFileDialog.getSaveFileName(self, "Save File")[0]
+            if path:
+                return Path(path)
+        elif mode == "rm":
+            paths = QtW.QFileDialog.getOpenFileNames(self, "Open Files")[0]
+            if paths:
+                return [Path(p) for p in paths]
+        elif mode == "d":
+            path = QtW.QFileDialog.getExistingDirectory(self, "Open Directory")
+            if path:
+                return Path(path)
+        return None
+
+    def _close_window(self) -> None:
+        self.close()
+
 
 _DOCK_AREA_MAP = {
     DockArea.TOP: Qt.DockWidgetArea.TopDockWidgetArea,

@@ -1,21 +1,15 @@
-from app_model.types import Action, KeyBindingRule, KeyCode, KeyMod, MenuRule
-from app_model import Application
+from royalapp._app_model._app_registry import (
+    current_instance,
+    set_current_instance,
+    remove_instance,
+    MainWindowMixin,
+    get_application,
+)
 
-ACTIONS: list[Action] = [
-    Action(
-        id='open',
-        title="Open",
-        icon="fa6-solid:folder-open",
-        callback="default.io:open",
-        menus=["file", "toolbar"],
-        keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyO)],
-    ),
-    Action(
-        id='close',
-        title="Close",
-        icon="fa-solid:window-close",
-        callback="default.window:close",
-        menus=["file"],
-        keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyW)],
-    ),
+__all__ = [
+    "current_instance",
+    "set_current_instance",
+    "remove_instance",
+    "MainWindowMixin",
+    "get_application",
 ]
