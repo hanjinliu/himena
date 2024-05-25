@@ -57,12 +57,18 @@ class QDefaultTextEdit(QtW.QPlainTextEdit):
         self.setPlainText(file.value)
         if file.file_path is not None:
             self.setObjectName(file.file_path.name)
+        self._file_path = file.file_path
+        self.textChanged.connect(self._on_text_changed)
+
+    def _on_text_changed(self) -> None:
+        # self.setWindowModified(True)
+        pass
 
     def as_file_data(self) -> FileData:
         return FileData(
             value=self.toPlainText(),
             file_type="text",
-            file_path=None,
+            file_path=self._file_path,
         )
 
 

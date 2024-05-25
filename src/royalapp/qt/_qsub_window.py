@@ -318,6 +318,19 @@ class QSubWindowTitleBar(QtW.QFrame):
             self._subwindow.state = SubWindowState.FULL
 
     def _close(self):
+        if self._subwindow.main_widget().isWindowModified():
+            ok = (
+                QtW.QMessageBox.question(
+                    self._subwindow,
+                    "Close Window",
+                    "Data is not saved. Are you sure to close this window?",
+                    QtW.QMessageBox.StandardButton.Yes
+                    | QtW.QMessageBox.StandardButton.No,
+                )
+                == QtW.QMessageBox.StandardButton.Yes
+            )
+            if not ok:
+                return
         self._subwindow.close()
 
     # drag events for moving the window

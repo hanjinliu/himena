@@ -39,8 +39,10 @@ class QMainWindow(QModelMainWindow, _app_model.MainWindowMixin):
         app_model_app = _app_model.get_application(app)
         super().__init__(app_model_app)
         self._tab_widget = QTabWidget()
-        self._menubar = self.setModelMenuBar({"file": "File"})
-        self._toolbar = self.addModelToolBar("toolbar")
+        self._menubar = self.setModelMenuBar(menu_ids={"file": "File"})
+        self._toolbar = self.addModelToolBar(menu_id="toolbar")
+        self._toolbar.setMovable(False)
+        self._toolbar.setFixedHeight(32)
         self.setCentralWidget(self._tab_widget)
 
         style = get_style("default")
@@ -201,8 +203,16 @@ class QMainWindow(QModelMainWindow, _app_model.MainWindowMixin):
                 return Path(path)
         return None
 
-    def _close_window(self) -> None:
+    def _open_confirmation_dialog(self, message: str) -> bool:
+        answer = QtW.QMessageBox.question(self, "Confirmation", message)
+        return answer == QtW.QMessageBox.StandardButton.Yes
+
+    def _exit_main_window(self) -> None:
         self.close()
+
+    def _close_current_window(self) -> None:
+        self._tab_widget.removeTab(self._tab_widget.currentIndex())
+        return None
 
 
 _DOCK_AREA_MAP = {

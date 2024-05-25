@@ -6,9 +6,10 @@ from royalapp.types import FileData
 from royalapp.consts import BasicTextFileTypes
 
 _READER_PROVIDERS: list[Callable] = []
+_WRITER_PROVIDERS: list[Callable] = []
 
 
-def get_readers(file_path: Path | list[Path]) -> list[Callable[..., FileData]]:
+def get_readers(file_path: Path | list[Path]) -> list[Callable[[Path], FileData]]:
     """Get reader."""
     matched: list[Callable] = []
     for provider in _READER_PROVIDERS:
@@ -19,18 +20,15 @@ def get_readers(file_path: Path | list[Path]) -> list[Callable[..., FileData]]:
     return [_fallback_reader(file_path)]
 
 
-_WRITER_PROVIDERS: list[Callable] = []
-
-
-def get_writers(file_path: Path) -> list[Callable[..., None]]:
+def get_writers(file_data: FileData) -> list[Callable[[FileData], None]]:
     """Get writer."""
-    matched: list[Callable] = []
+    matched: list[Callable[[FileData], None]] = []
     for provider in _WRITER_PROVIDERS:
-        if out := provider(file_path):
+        if out := provider(file_data):
             matched.append(out)
     if matched:
         return matched
-    return [_fallback_writer(file_path)]
+    return [_fallback_writer(file_data)]
 
 
 # default readers
@@ -69,7 +67,7 @@ def _read_csv(file_path: Path) -> FileData:
     )
 
 
-def _fallback_reader(file_path: Path | list[Path]) -> Callable[..., FileData]:
+def _fallback_reader(file_path: Path | list[Path]) -> Callable[[Path], FileData]:
     """Get default reader."""
     if isinstance(file_path, list):
         raise ValueError("Multiple files are not supported.")
@@ -85,15 +83,17 @@ def _fallback_reader(file_path: Path | list[Path]) -> Callable[..., FileData]:
 # default writers
 
 
-def write_text(file_path: Path, data: str) -> None:
+def write_text(file_data: FileData[str]) -> None:
     """Write text file."""
-    with open(file_path, "w") as f:
-        f.write(data)
+    if file_data.file_path is None:
+        raise ValueError("File path is not provided.")
+    with open(file_data.file_path, "w") as f:
+        f.write(file_data.value)
 
 
-def _fallback_writer(file_path: Path) -> Callable[..., None]:
+def _fallback_writer(file_data: FileData) -> Callable[[FileData], None]:
     """Get default writer."""
-    if file_path.suffix in BasicTextFileTypes:
+    if file_data.file_path.suffix in BasicTextFileTypes:
         return write_text
     else:
         return None

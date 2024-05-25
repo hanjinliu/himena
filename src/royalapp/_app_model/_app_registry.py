@@ -35,7 +35,13 @@ class MainWindowMixin:
     def _open_file_dialog(self, mode: str = "r") -> Path | list[Path] | None:
         raise NotImplementedError
 
-    def _close_window(self) -> None:
+    def _open_confirmation_dialog(self, message: str) -> bool:
+        raise NotImplementedError
+
+    def _exit_main_window(self) -> None:
+        raise NotImplementedError
+
+    def _close_current_window(self) -> None:
         raise NotImplementedError
 
 
