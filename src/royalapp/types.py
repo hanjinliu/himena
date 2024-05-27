@@ -1,5 +1,14 @@
 from pathlib import Path
-from typing import Any, Hashable, Literal, TypeAlias, NewType, TypeVar, Generic
+from typing import (
+    Any,
+    Callable,
+    Hashable,
+    Literal,
+    TypeAlias,
+    NewType,
+    TypeVar,
+    Generic,
+)
 from enum import StrEnum
 from pydantic_compat import BaseModel, Field, validator
 
@@ -13,9 +22,6 @@ class DockArea(StrEnum):
     RIGHT = "right"
 
 
-DockAreaString: TypeAlias = Literal["top", "bottom", "left", "right"]
-
-
 class SubWindowState(StrEnum):
     """State of the sub window."""
 
@@ -25,6 +31,7 @@ class SubWindowState(StrEnum):
     FULL = "full"
 
 
+DockAreaString: TypeAlias = Literal["top", "bottom", "left", "right"]
 SubWindowStateString: TypeAlias = Literal["min", "max", "normal", "full"]
 
 TabTitle = NewType("TabTitle", str)
@@ -41,25 +48,35 @@ class NewWidgetBehavior(StrEnum):
 _T = TypeVar("_T")
 
 
-class FileData(BaseModel, Generic[_T]):
-    value: _T
-    """Internal data of the file."""
-    file_type: Hashable | None = Field(default=None)
-    """Type of the file, e.g., 'text', 'image', 'table'."""
-    file_path: Path | None = Field(default=None)
-    """Path of the file."""
-    metadata: dict[str, Any] = Field(default_factory=dict)
+class WidgetDataModel(BaseModel, Generic[_T]):
+    value: _T = Field(..., description="Internal value.")
+    source: Path | None = Field(default=None, description="Path of the file.")
+    type: Hashable | None = Field(default=None, description="Type of the internal data.")  # fmt: skip
+    title: str | None = Field(default=None, description="Title for the widget.")
+    extensions: list[str] = Field(default_factory=list, description="List of allowed file extensions.")  # fmt: skip
+    metadata: dict[str, Any] = Field(default_factory=dict, description="Metadata of the widget.")  # fmt: skip
 
-    @validator("file_path", pre=True)
+    @validator("source", pre=True)
     def _validate_file_path(cls, v):
-        if isinstance(v, str):
+        if isinstance(v, (str, Path)):
             return Path(v)
-        return v
+        elif v is None:
+            return None
+        raise TypeError(f"Invalid type for `source`: {type(v)}")
 
-    @validator("file_type", pre=True)
-    def _validate_file_type(cls, v, values):
+    @validator("type", pre=True)
+    def _validate_type(cls, v, values):
         if v is None:
             return type(values["value"])
+        return v
+
+    @validator("title", pre=True)
+    def _validate_title(cls, v, values):
+        if v is None:
+            src = cls._validate_file_path(values["source"])
+            if src is None:
+                return None
+            return src.name
         return v
 
     def __repr__(self):
@@ -69,21 +86,15 @@ class FileData(BaseModel, Generic[_T]):
             value_repr = value_repr[:24] + "..."
         if len(metadata_repr) > 24:
             metadata_repr = metadata_repr[:24] + "..."
+        if source := self.source:
+            source_repr = source.as_posix()
+        else:
+            source_repr = None
         return (
-            f"{self.__class__.__name__}(value={value_repr}, "
-            f"file_type={self.file_type!r}, file_path={self.file_path.as_posix()!r}), "
-            f"metadata={metadata_repr})"
+            f"{self.__class__.__name__}(value={value_repr}, source={source_repr}), "
+            f"type={self.type!r}, title={self.title!r}, metadata={metadata_repr})"
         )
 
 
-class ClipBoardData(BaseModel, Generic[_T]):
-    value: _T
-    """Internal data of the clipboard."""
-    clip_type: Hashable | None = Field(default=None)
-    """Type of the clipboard, e.g., 'text', 'html', 'image'."""
-
-    @validator("clip_type", pre=True)
-    def _validate_clip_type(cls, v, values):
-        if v is None:
-            return type(values["value"])
-        return v
+ReaderFunction = Callable[[Path], WidgetDataModel]
+WriterFunction = Callable[[WidgetDataModel], None]

@@ -1,4 +1,4 @@
-from royalapp.qt import QMainWindow
+from royalapp import new_window
 from qtpy.QtWidgets import QTableWidget, QTableWidgetItem
 
 def make_table(shape: tuple[int, int]):
@@ -10,7 +10,7 @@ def make_table(shape: tuple[int, int]):
     return table
 
 def main():
-    ui = QMainWindow()
+    ui = new_window()
 
     table1 = make_table((3, 3))
     table2 = make_table((4, 4))

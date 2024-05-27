@@ -1,49 +1,70 @@
 from app_model.types import Action, KeyBindingRule, KeyCode, KeyMod
-from royalapp._app_model._app_registry import MainWindowMixin
+from royalapp.widgets import MainWindow
 from royalapp.io import get_readers, get_writers
-from royalapp.types import FileData
+from royalapp.types import WidgetDataModel, WindowTitle
+from royalapp._app_model._context import MainWindowContexts
 
 
-def open_from_dialog(ui: MainWindowMixin) -> FileData:
-    file_path = ui._open_file_dialog()
+def open_from_dialog(ui: MainWindow) -> WidgetDataModel:
+    file_path = ui._backend_main_window._open_file_dialog()
     if file_path is None:
         return None
     readers = get_readers(file_path)
     return readers[0](file_path)
 
 
-def save_from_dialog(ui: MainWindowMixin) -> None:
-    fd = ui._provide_file_output()
-    if fd.file_path is None:
-        save_path = ui._open_file_dialog(mode="w")
+def save_from_dialog(ui: MainWindow) -> None:
+    fd = ui._backend_main_window._provide_file_output()
+    if fd.source is None:
+        save_path = ui._backend_main_window._open_file_dialog(mode="w")
         if save_path is None:
             return
-        fd.file_path = save_path
+        fd.source = save_path
     else:
-        ok = ui._open_confirmation_dialog("File exists, overwrite?")
-        if not ok:
-            return None
+        if fd.source.exists():
+            _path = fd.source.as_posix()
+            ok = ui._backend_main_window._open_confirmation_dialog(
+                f"{_path!r} already exists, overwrite?"
+            )
+            if not ok:
+                return None
 
     writers = get_writers(fd)
     return writers[0](fd)
 
 
-def save_as_from_dialog(ui: MainWindowMixin) -> None:
-    fd = ui._provide_file_output()
-    save_path = ui._open_file_dialog(mode="w")
+def save_as_from_dialog(ui: MainWindow) -> None:
+    fd = ui._backend_main_window._provide_file_output()
+    save_path = ui._backend_main_window._open_file_dialog(mode="w")
     if save_path is None:
         return
-    fd.file_path = save_path
+    fd.source = save_path
     writers = get_writers(fd)
     return writers[0](fd)
 
 
-def exit_main_window(ui: MainWindowMixin) -> None:
-    ui._exit_main_window()
+def exit_main_window(ui: MainWindow) -> None:
+    ui._backend_main_window._exit_main_window()
 
 
-def close_current_window(ui: MainWindowMixin) -> None:
-    ui._close_current_window()
+def close_current_tab(ui: MainWindow) -> None:
+    idx = ui._backend_main_window._current_tab_index()
+    if idx is not None:
+        ui.tabs.pop(idx)
+
+
+def close_current_window(ui: MainWindow) -> None:
+    i_tab = ui._backend_main_window._current_tab_index()
+    if i_tab is None:
+        return None
+    i_window = ui._backend_main_window._current_sub_window_index()
+    if i_window is None:
+        return None
+    ui._backend_main_window._del_widget_at(i_tab, i_window)
+
+
+def test_command(ui: MainWindow, title: WindowTitle) -> WidgetDataModel:
+    return ui.tabs.current().current().widget.export_data()
 
 
 ACTIONS: list[Action] = [
@@ -62,6 +83,7 @@ ACTIONS: list[Action] = [
         callback=save_from_dialog,
         menus=["file", "toolbar"],
         keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyS)],
+        enablement=MainWindowContexts.is_active_window_savable,
     ),
     Action(
         id="save_as",
@@ -72,6 +94,7 @@ ACTIONS: list[Action] = [
         keybindings=[
             KeyBindingRule(primary=KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyS)
         ],
+        enablement=MainWindowContexts.is_active_window_savable,
     ),
     Action(
         id="close",
@@ -87,5 +110,12 @@ ACTIONS: list[Action] = [
         callback=exit_main_window,
         menus=["file"],
         keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyQ)],
+    ),
+    # Just for test
+    Action(
+        id="test",
+        title="Test",
+        callback=test_command,
+        menus=["edit"],
     ),
 ]

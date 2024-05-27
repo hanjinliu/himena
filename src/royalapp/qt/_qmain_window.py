@@ -8,38 +8,35 @@ from app_model.backends.qt import QModelMainWindow
 from royalapp.qt._qtab_widget import QTabWidget
 from royalapp.qt._qsub_window import QSubWindow, QSubWindowArea
 from royalapp.qt._qdock_widget import QDockWidget
-from royalapp import _app_model
 from royalapp.types import (
     DockArea,
     DockAreaString,
-    NewWidgetBehavior,
     TabTitle,
     WindowTitle,
-    FileData,
+    WidgetDataModel,
 )
 from royalapp.style import get_style
 from royalapp.app import get_app
-from royalapp.qt._widget_registry import pick_provider
+from royalapp import widgets
+from royalapp.qt._widget_registry import pick_widget_class
 
 _STYLE_QSS_PATH = Path(__file__).parent / "style.qss"
 _T = TypeVar("_T", bound=QtW.QWidget)
 
 
-class QMainWindow(QModelMainWindow, _app_model.MainWindowMixin):
+class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def __init__(
         self,
         app: str = "royalapp",
-        *,
-        new_widget_behavior: NewWidgetBehavior = NewWidgetBehavior.WINDOW,
     ):
         _app = get_app("qt")
         self._qt_app = _app.get_app()
         self._app_name = app
 
-        app_model_app = _app_model.get_application(app)
+        app_model_app = widgets.get_application(app)
         super().__init__(app_model_app)
         self._tab_widget = QTabWidget()
-        self._menubar = self.setModelMenuBar(menu_ids={"file": "File"})
+        self._menubar = self.setModelMenuBar(menu_ids={"file": "File", "edit": "Edit"})
         self._toolbar = self.addModelToolBar(menu_id="toolbar")
         self._toolbar.setMovable(False)
         self._toolbar.setFixedHeight(32)
@@ -56,8 +53,6 @@ class QMainWindow(QModelMainWindow, _app_model.MainWindowMixin):
             .replace("$(background-3)", style.background.level_3)
         )
         self.setStyleSheet(style_text)
-        self._new_widget_behavior = NewWidgetBehavior(new_widget_behavior)
-        _app_model.set_current_instance(app, self)
 
     def add_dock_widget(
         self,
@@ -100,36 +95,21 @@ class QMainWindow(QModelMainWindow, _app_model.MainWindowMixin):
     def add_widget(
         self,
         widget: _T,
-        *,
+        i_tab: int,
         title: str | None = None,
     ) -> QSubWindow[_T]:
-        """
-        Add a widget to the sub window.
-
-        Parameters
-        ----------
-        widget : QtW.QWidget
-            Widget to add.
-        title : str, optional
-            Title of the sub-window. If not given, its name will be automatically
-            generated.
-
-        Returns
-        -------
-        QSubWindow
-            A sub-window widget. The added widget is available by calling
-            `main_widget()` method.
-        """
-        if self._new_widget_behavior is NewWidgetBehavior.WINDOW:
-            if (sub_window_area := self._tab_widget.currentWidget()) is None:
-                sub_window_area = self._tab_widget.addTabArea()
-        else:
-            sub_window_area = self._tab_widget.addTabArea(title)
-        out = sub_window_area.add_widget(widget, title=title)
-        self._tab_widget.setCurrentWidget(sub_window_area)
-        if self._new_widget_behavior is NewWidgetBehavior.TAB:
-            out.state = "full"
-        return out
+        if not isinstance(widget, QtW.QWidget):
+            raise TypeError(
+                f"`widget` must be a QtW.QWidget instance, got {type(widget)}."
+            )
+        size = widget.size()
+        sub_window = QSubWindow(widget, title)
+        sub_window.resize(size)
+        tab = self._tab_widget.widget(i_tab)
+        nwindows = len(tab.subWindowList())
+        tab.addSubWindow(sub_window)
+        sub_window.move(4 + 24 * (nwindows % 5), 4 + 24 * (nwindows % 5))
+        return sub_window
 
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
         super().resizeEvent(event)
@@ -149,38 +129,57 @@ class QMainWindow(QModelMainWindow, _app_model.MainWindowMixin):
             QtCore.QEvent.Type.ZOrderChange,
         }:
             # upon activation or raise_, put window at the end of _instances
-            _app_model.set_current_instance(self._app_name, self)
+            widgets.set_current_instance(self._app_name, self._royalapp_main_window)
 
         res = super().event(e)
 
         if e.type() == QtCore.QEvent.Type.Close and e.isAccepted():
-            _app_model.remove_instance(self._app_name, self)
+            widgets.remove_instance(self._app_name, self._royalapp_main_window)
 
         return res
 
-    def show(self, run: bool = False) -> None:
-        super().show()
-        if run:
-            get_app("qt").run_app()
+    def _run_app(self):
+        return get_app("qt").run_app()
+
+    def _current_tab_index(self) -> int:
+        return self._tab_widget.currentIndex()
+
+    def _set_current_tab_index(self, i_tab: int) -> None:
+        return self._tab_widget.setCurrentIndex(i_tab)
+
+    def _current_sub_window_index(self) -> int:
+        area = self._tab_widget.currentWidget()
+        return area.subWindowList().index(area.currentSubWindow())
+
+    def _set_current_sub_window_index(self, i_window: int) -> None:
+        area = self._tab_widget.currentWidget()
+        area.activateWindow(area.subWindowList()[i_window])
         return None
 
-    def _provide_current_tab_name(self) -> TabTitle:
-        idx = self._tab_widget.currentIndex()
-        return self._tab_widget.tabText(idx)
+    def _set_tab_title(self, i_tab: int, title: TabTitle) -> None:
+        return self._tab_widget.setTabText(i_tab, title)
 
-    def _provide_current_sub_window_title(self) -> WindowTitle:
-        raise self._tab_widget.currentWidget().windowTitle()
+    def _window_title(self, widget: QtW.QWidget) -> WindowTitle:
+        window = widget.parentWidget().parentWidget()
+        if not isinstance(window, QSubWindow):
+            raise ValueError(f"Widget {widget!r} is not in a sub-window.")
+        return window.windowTitle()
 
-    def _process_file_input(self, file_data: FileData) -> None:
-        widget = pick_provider(file_data)(file_data)
-        self._tab_widget.currentWidget().add_widget(widget)
+    def _set_window_title(self, widget: QtW.QWidget, title: WindowTitle) -> None:
+        window = widget.parentWidget().parentWidget()
+        if not isinstance(window, QSubWindow):
+            raise ValueError(f"Widget {widget!r} is not in a sub-window.")
+        return window.setWindowTitle(title)
 
-    def _provide_file_output(self) -> FileData:
+    def _pick_widget_class(self, file_type: str) -> QtW.QWidget:
+        return pick_widget_class(file_type)
+
+    def _provide_file_output(self) -> WidgetDataModel:
         if sub := self._tab_widget.currentWidget().currentSubWindow():
             active_window = sub.main_widget()
-            if not hasattr(active_window, "as_file_data"):
-                raise ValueError("Widget does not have `as_file_data` method.")
-            return active_window.as_file_data()
+            if not hasattr(active_window, "export_data"):
+                raise ValueError("Widget does not have `export_data` method.")
+            return active_window.export_data()
         else:
             raise ValueError("No active window.")
 
@@ -212,6 +211,18 @@ class QMainWindow(QModelMainWindow, _app_model.MainWindowMixin):
 
     def _close_current_window(self) -> None:
         self._tab_widget.removeTab(self._tab_widget.currentIndex())
+        return None
+
+    def _get_tab_name_list(self) -> list[TabTitle]:
+        return [self._tab_widget.tabText(i) for i in range(self._tab_widget.count())]
+
+    def _get_widget_list(self, i_tab: int) -> list[tuple[str, QtW.QWidget]]:
+        tab = self._tab_widget.widget(i_tab)
+        return [(w.windowTitle(), w.main_widget()) for w in tab.subWindowList()]
+
+    def _del_widget_at(self, i_tab: int, i_window: int) -> None:
+        tab = self._tab_widget.widget(i_tab)
+        tab.removeSubWindow(tab.subWindowList()[i_window])
         return None
 
 

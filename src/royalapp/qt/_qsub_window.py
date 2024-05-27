@@ -1,13 +1,11 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterator, Generic, TypeVar
+from typing import TYPE_CHECKING, Iterator
 from timeit import default_timer as timer
 from qtpy import QtWidgets as QtW
 from qtpy import QtCore, QtGui
 from superqt import QIconifyIcon
 from royalapp.types import SubWindowState
 from royalapp.qt._qwindow_resize import ResizeState
-
-_T = TypeVar("_T", bound=QtW.QWidget)
 
 
 class QSubWindowArea(QtW.QMdiArea):
@@ -25,27 +23,9 @@ class QSubWindowArea(QtW.QMdiArea):
 
     def add_widget(
         self,
-        widget: _T,
-        *,
+        widget: QtW.QWidget,
         title: str | None = None,
-    ) -> QSubWindow[_T]:
-        """
-        Add a widget to the sub window.
-
-        Parameters
-        ----------
-        widget : QtW.QWidget
-            Widget to add.
-        title : str, optional
-            Title of the sub-window. If not given, its name will be automatically
-            generated.
-
-        Returns
-        -------
-        QSubWindow
-            A sub-window widget. The added widget is available by calling
-            `main_widget()` method.
-        """
+    ) -> QSubWindow:
         if title is None:
             title = widget.objectName() or "Window"
         if not isinstance(widget, QtW.QWidget):
@@ -53,11 +33,11 @@ class QSubWindowArea(QtW.QMdiArea):
                 f"`widget` must be a QtW.QWidget instance, got {type(widget)}."
             )
         size = widget.size()
-        sub_window = QSubWindow(widget, self._coerce_window_title(title))
+        sub_window = QSubWindow(widget, title)
         sub_window.resize(size)
         nwindows = len(self.subWindowList())
         self.addSubWindow(sub_window)
-        sub_window.move(4 + 24 * nwindows, 4 + 24 * nwindows)
+        sub_window.move(4 + 24 * (nwindows % 5), 4 + 24 * (nwindows % 5))
         return sub_window
 
     def _reanchor_windows(self):
@@ -72,15 +52,6 @@ class QSubWindowArea(QtW.QMdiArea):
             elif sub_window.state in (SubWindowState.MAX, SubWindowState.FULL):
                 sub_window.setGeometry(parent_geometry)
 
-    def _coerce_window_title(self, title: str) -> str:
-        existing = {sub_window.windowTitle() for sub_window in self.subWindowList()}
-        title_original = title
-        count = 0
-        while title in existing:
-            title = f"{title_original}-{count}"
-            count += 1
-        return title
-
     if TYPE_CHECKING:
 
         def subWindowList(self) -> list[QSubWindow]: ...
@@ -94,8 +65,8 @@ _ICON_CLOSE = QIconifyIcon("material-symbols:close-rounded")
 _ICON_NORMAL = QIconifyIcon("material-symbols:filter-none-outline-rounded", rotate=180)
 
 
-class QSubWindow(QtW.QMdiSubWindow, Generic[_T]):
-    def __init__(self, widget: _T, title: str):
+class QSubWindow(QtW.QMdiSubWindow):
+    def __init__(self, widget: QtW.QWidget, title: str):
         super().__init__()
         self.setWindowFlags(QtCore.Qt.WindowType.FramelessWindowHint)
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
@@ -129,7 +100,7 @@ class QSubWindow(QtW.QMdiSubWindow, Generic[_T]):
         self._widget = widget
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_Hover, True)
 
-    def main_widget(self) -> _T:
+    def main_widget(self) -> QtW.QWidget:
         return self._widget
 
     def windowTitle(self) -> str:
@@ -243,7 +214,7 @@ class QSubWindow(QtW.QMdiSubWindow, Generic[_T]):
 
 
 class QSubWindowTitleBar(QtW.QFrame):
-    def __init__(self, subwindow: QSubWindow[_T], title: str):
+    def __init__(self, subwindow: QSubWindow, title: str):
         super().__init__()
         self.setFrameShape(QtW.QFrame.Shape.StyledPanel)
         self.setFrameShadow(QtW.QFrame.Shadow.Raised)
