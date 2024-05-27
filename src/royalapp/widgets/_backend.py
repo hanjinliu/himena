@@ -77,5 +77,5 @@ class BackendMainWindow(Generic[_W]):
     def _run_app(self):
         raise NotImplementedError
 
-    def _pick_widget_class(self, file_type: str) -> _W:
+    def _pick_widget_class(self, type: str) -> _W:
         raise NotImplementedError

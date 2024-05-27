@@ -5,7 +5,7 @@ from royalapp.types import SubWindowState
 
 def _is_active_window_savable(ui: MainWindow) -> bool:
     widget = ui.tabs.current().current().is_
-    return hasattr(widget, "export_data")
+    return hasattr(widget, "to_model")
 
 
 def _active_window_state(ui: MainWindow):

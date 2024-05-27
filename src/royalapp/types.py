@@ -48,7 +48,7 @@ class NewWidgetBehavior(StrEnum):
 _T = TypeVar("_T")
 
 
-class WidgetDataModel(BaseModel, Generic[_T]):
+class WidgetDataModel(Generic[_T], BaseModel):
     value: _T = Field(..., description="Internal value.")
     source: Path | None = Field(default=None, description="Path of the file.")
     type: Hashable | None = Field(default=None, description="Type of the internal data.")  # fmt: skip

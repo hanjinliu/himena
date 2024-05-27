@@ -64,7 +64,7 @@ def close_current_window(ui: MainWindow) -> None:
 
 
 def test_command(ui: MainWindow, title: WindowTitle) -> WidgetDataModel:
-    return ui.tabs.current().current().widget.export_data()
+    return ui.tabs.current().current().widget.to_model()
 
 
 ACTIONS: list[Action] = [

@@ -14,19 +14,19 @@ _F = TypeVar("_F", bound=WidgetClass)
 
 @overload
 def register_frontend_widget(
-    file_type: Hashable,
+    type_: Hashable,
     widget_class: _F,
 ) -> _F: ...
 
 
 @overload
 def register_frontend_widget(
-    file_type: Hashable,
+    type_: Hashable,
     widget_class: None,
 ) -> Callable[[_F], _F]: ...
 
 
-def register_frontend_widget(file_type, widget_class=None) -> None:
+def register_frontend_widget(type_, widget_class=None) -> None:
     """
     Register a widget class as a frontend widget for the given file type.
 
@@ -43,7 +43,7 @@ def register_frontend_widget(file_type, widget_class=None) -> None:
     """
 
     def _inner(widget_class):
-        _TYPE_TO_QWIDGET[file_type] = widget_class
+        _TYPE_TO_QWIDGET[type_] = widget_class
         if not (
             isinstance(widget_class, type) and issubclass(widget_class, QtW.QWidget)
         ):
@@ -51,9 +51,9 @@ def register_frontend_widget(file_type, widget_class=None) -> None:
                 "Widget class must be a subclass of `QtW.QWidget`, "
                 f"got {widget_class!r}"
             )
-        if not hasattr(widget_class, "import_data"):
+        if not hasattr(widget_class, "from_model"):
             raise TypeError(
-                f"Widget class {widget_class!r} does not have an `import_data` method."
+                f"Widget class {widget_class!r} does not have an `from_model` method."
             )
         return widget_class
 
@@ -73,14 +73,14 @@ class QDefaultTextEdit(QtW.QPlainTextEdit):
         pass
 
     @classmethod
-    def import_data(cls, file: WidgetDataModel) -> QDefaultTextEdit:
+    def from_model(cls, file: WidgetDataModel) -> QDefaultTextEdit:
         self = cls(file.source)
         self.setPlainText(file.value)
         if file.source is not None:
             self.setObjectName(file.source.name)
         return self
 
-    def export_data(self) -> WidgetDataModel:
+    def to_model(self) -> WidgetDataModel:
         return WidgetDataModel(
             value=self.toPlainText(),
             type="text",
@@ -94,17 +94,17 @@ def register_default_widget_types() -> None:
     register_frontend_widget("text", QDefaultTextEdit)
 
 
-def pick_widget_class(file_type: Hashable) -> WidgetClass:
+def pick_widget_class(type: Hashable) -> WidgetClass:
     """Pick a widget class for the given file type."""
-    if file_type not in _TYPE_TO_QWIDGET:
-        raise ValueError(f"No widget class is registered for file type {file_type!r}")
-    return _TYPE_TO_QWIDGET[file_type]
+    if type not in _TYPE_TO_QWIDGET:
+        raise ValueError(f"No widget class is registered for file type {type!r}")
+    return _TYPE_TO_QWIDGET[type]
 
 
 def provide_widget(fd: WidgetDataModel) -> QtW.QWidget:
     """Provide a widget for the file."""
     widget_class = pick_widget_class(fd.type)
-    return widget_class.import_data(fd)
+    return widget_class.from_model(fd)
 
 
 register_default_widget_types()

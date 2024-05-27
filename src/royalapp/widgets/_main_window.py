@@ -96,12 +96,12 @@ class MainWindow(Generic[_W]):
         type: Hashable,
         title: str | None = None,
     ) -> WidgetWrapper[_W]:
-        fd = WidgetDataModel(value=data, file_type=type, source=None)
-        return self.add_data_model(fd)
+        wd = WidgetDataModel(value=data, type=type, source=None, title=title)
+        return self.add_data_model(wd)
 
     def add_data_model(self, model_data: WidgetDataModel) -> WidgetWrapper[_W]:
         cls = self._backend_main_window._pick_widget_class(model_data.type)
-        widget = cls.import_data(model_data)
+        widget = cls.from_model(model_data)
         return self.add_widget(widget)
 
     def show(self, run: bool = False) -> None:
@@ -167,6 +167,6 @@ def _init_application(app: Application) -> None:
     def _process_file_input(file_data: WidgetDataModel) -> None:
         ins = current_instance(app.name)
         cls = ins._backend_main_window._pick_widget_class(file_data.type)
-        widget = cls.import_data(file_data)
+        widget = cls.from_model(file_data)
         ins.add_widget(widget, title=file_data.title)
         return None

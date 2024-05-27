@@ -218,11 +218,11 @@ class WidgetWrapper(_HasMainWindowRef[_W], Generic[_W]):
     @property
     def is_importable(self) -> bool:
         """Whether the widget accept importing values."""
-        return hasattr(self.widget, "import_data") and isinstance(
-            vars(type(self.widget))["import_data"], (classmethod, staticmethod)
+        return hasattr(self.widget, "from_model") and isinstance(
+            vars(type(self.widget))["from_model"], (classmethod, staticmethod)
         )
 
     @property
     def is_exportable(self) -> bool:
         """Whether the widget can export its data."""
-        return hasattr(self.widget, "export_data")
+        return hasattr(self.widget, "to_model")

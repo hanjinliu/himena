@@ -5,7 +5,7 @@ from typing import Callable, TypeVar
 from royalapp.types import WidgetDataModel, ReaderFunction, WriterFunction
 from royalapp.consts import BasicTextFileTypes
 
-_ReaderProvider = Callable[[WidgetDataModel], ReaderFunction]
+_ReaderProvider = Callable[[Path], ReaderFunction]
 _WriterProvider = Callable[[WidgetDataModel], WriterFunction]
 
 _RP = TypeVar("_RP", bound=_ReaderProvider)

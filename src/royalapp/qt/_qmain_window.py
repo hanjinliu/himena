@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TypeVar
+from typing import Hashable, TypeVar
 from pathlib import Path
 from qtpy import QtWidgets as QtW, QtGui, QtCore
 from qtpy.QtCore import Qt
@@ -171,15 +171,15 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             raise ValueError(f"Widget {widget!r} is not in a sub-window.")
         return window.setWindowTitle(title)
 
-    def _pick_widget_class(self, file_type: str) -> QtW.QWidget:
-        return pick_widget_class(file_type)
+    def _pick_widget_class(self, type: Hashable) -> QtW.QWidget:
+        return pick_widget_class(type)
 
     def _provide_file_output(self) -> WidgetDataModel:
         if sub := self._tab_widget.currentWidget().currentSubWindow():
             active_window = sub.main_widget()
-            if not hasattr(active_window, "export_data"):
-                raise ValueError("Widget does not have `export_data` method.")
-            return active_window.export_data()
+            if not hasattr(active_window, "to_model"):
+                raise ValueError("Widget does not have `to_model` method.")
+            return active_window.to_model()
         else:
             raise ValueError("No active window.")
 
