@@ -53,10 +53,7 @@ def my_reader_provider(file_path):
 # `@register_writer_provider` is a decorator that registers a function as one that
 # provides a write for the given data model.
 @register_writer_provider
-def my_writer_provider(model: WidgetDataModel):
-    df = model.value
-    if not isinstance(df, pd.DataFrame):
-        return None
+def my_writer_provider(model: WidgetDataModel[pd.DataFrame]):
     if model.source.suffix == ".csv":
         def _write(model: WidgetDataModel[pd.DataFrame]):
             model.value.to_csv(model.source, index=False)

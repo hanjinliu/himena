@@ -21,6 +21,9 @@ class QSubWindowArea(QtW.QMdiArea):
         for sub_window in self.subWindowList():
             yield sub_window.widget()
 
+    def indexOf(self, sub_window: QSubWindow) -> int:
+        return self.subWindowList().index(sub_window)
+
     def add_widget(
         self,
         widget: QtW.QWidget,
@@ -56,7 +59,7 @@ class QSubWindowArea(QtW.QMdiArea):
 
         def subWindowList(self) -> list[QSubWindow]: ...
         def activeSubWindow(self) -> QSubWindow: ...
-        def currentSubWindow(self) -> QSubWindow: ...
+        def currentSubWindow(self) -> QSubWindow | None: ...
 
 
 _ICON_MIN = QIconifyIcon("material-symbols:minimize-rounded")

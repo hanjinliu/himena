@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Generic, TypeVar
+
+import psygnal
 from royalapp.types import TabTitle, WindowTitle, WidgetDataModel, SubWindowState
 
 _W = TypeVar("_W")  # backend widget type
@@ -75,4 +77,7 @@ class BackendMainWindow(Generic[_W]):
         raise NotImplementedError
 
     def _pick_widget_class(self, type: str) -> type[_W]:
+        raise NotImplementedError
+
+    def _connect_activation_signal(self, sig: psygnal.SignalInstance):
         raise NotImplementedError

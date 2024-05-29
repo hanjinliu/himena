@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Hashable, TypeVar
 from pathlib import Path
+import psygnal
 from qtpy import QtWidgets as QtW, QtGui, QtCore
 from qtpy.QtCore import Qt
 from app_model.backends.qt import QModelMainWindow, QModelMenu
@@ -14,6 +15,7 @@ from royalapp.types import (
     TabTitle,
     WindowTitle,
     WidgetDataModel,
+    SubWindowState,
 )
 from royalapp.style import get_style
 from royalapp.app import get_app
@@ -25,10 +27,7 @@ _T = TypeVar("_T", bound=QtW.QWidget)
 
 
 class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
-    def __init__(
-        self,
-        app: str = "royalapp",
-    ):
+    def __init__(self, app: str = "royalapp"):
         _app = get_app("qt")
         self._qt_app = _app.get_app()
         self._app_name = app
@@ -39,7 +38,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         default_menu_ids = {
             menu_id: menu_id.replace("_", " ").title()
             for menu_id, _ in app_model_app.menus
-            if menu_id not in ("toolbar", "_command_pallet_")
+            if menu_id not in ("toolbar", app_model_app.menus.COMMAND_PALETTE_ID)
         }
         self._menubar = self.setModelMenuBar(default_menu_ids)
         self._toolbar = self.addModelToolBar(menu_id="toolbar")
@@ -58,7 +57,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             .replace("$(background-3)", style.background.level_3)
         )
         self.setStyleSheet(style_text)
-        self._app.register_action
+        self._tab_widget.newWindowActivated.connect(self._update_context)
 
     def add_dock_widget(
         self,
@@ -144,6 +143,11 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
         return res
 
+    def _update_context(self) -> None:
+        ctx = self._royalapp_main_window._ctx_keys
+        ctx.update(self._royalapp_main_window)
+        self._menubar.update_from_context(ctx.dict())
+
     def _run_app(self):
         return get_app("qt").run_app()
 
@@ -155,7 +159,12 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def _current_sub_window_index(self) -> int:
         area = self._tab_widget.currentWidget()
-        return area.subWindowList().index(area.currentSubWindow())
+        if area is None:
+            return -1
+        sub = area.currentSubWindow()
+        if sub is None:
+            return -1
+        return area.subWindowList().index(sub)
 
     def _set_current_sub_window_index(self, i_window: int) -> None:
         area = self._tab_widget.currentWidget()
@@ -178,7 +187,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         return window.setWindowTitle(title)
 
     def _pick_widget_class(self, type: Hashable) -> QtW.QWidget:
-        return pick_widget_class(type)
+        return pick_widget_class(self._app_name, type)
 
     def _provide_file_output(self) -> WidgetDataModel:
         if sub := self._tab_widget.currentWidget().currentSubWindow():
@@ -227,9 +236,27 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         return [(w.windowTitle(), w.main_widget()) for w in tab.subWindowList()]
 
     def _del_widget_at(self, i_tab: int, i_window: int) -> None:
+        if i_tab < 0 or i_window < 0:
+            return None
         tab = self._tab_widget.widget(i_tab)
         tab.removeSubWindow(tab.subWindowList()[i_window])
         return None
+
+    def _window_state(self, widget: QtW.QWidget) -> SubWindowState:
+        window = widget.parentWidget().parentWidget()
+        if not isinstance(window, QSubWindow):
+            raise ValueError(f"Widget {widget!r} is not in a sub-window.")
+        return window.state
+
+    def _set_window_state(self, widget: QtW.QWidget, state: SubWindowState) -> None:
+        window = widget.parentWidget().parentWidget()
+        if not isinstance(window, QSubWindow):
+            raise ValueError(f"Widget {widget!r} is not in a sub-window.")
+        window.state = state
+        return None
+
+    def _connect_activation_signal(self, sig: psygnal.SignalInstance):
+        self._tab_widget.newWindowActivated.connect(sig.emit)
 
     def _add_model_menu(
         self,

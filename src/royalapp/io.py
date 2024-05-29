@@ -49,7 +49,7 @@ def register_writer_provider(provider: _WP) -> _WP:
     """Register writer provider function."""
     if not callable(provider):
         raise ValueError("Provider must be callable.")
-    _WRITER_PROVIDERS.append(provider)
+    _WRITER_PROVIDERS.append(TypedWriterProvider.try_convert(provider))
     return provider
 
 
@@ -119,3 +119,28 @@ def _fallback_writer(file_data: WidgetDataModel) -> WriterFunction:
         return write_text
     else:
         return None
+
+
+class TypedWriterProvider:
+    def __init__(self, func: Callable, typ: type):
+        self._func = func
+        self._data_type = typ
+
+    def __call__(self, model: WidgetDataModel):
+        if not isinstance(model.value, self._data_type):
+            return None
+        return self._func(model)
+
+    @staticmethod
+    def try_convert(func: Callable) -> Callable:
+        annots = list(func.__annotations__.values())
+        if len(annots) != 1:
+            return func
+        annot = annots[0]
+        if not (hasattr(annot, "__origin__") and hasattr(annot, "__args__")):
+            return func
+        if annot.__origin__ is not WidgetDataModel:
+            return func
+        if len(annot.__args__) != 1:
+            return func
+        return TypedWriterProvider(func, annot.__args__[0])

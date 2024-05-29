@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from royalapp.widgets import BackendMainWindow
 
 _W = TypeVar("_W")  # backend widget type
+_T = TypeVar("_T")  # type of the default value
 
 
 class _HasMainWindowRef(Generic[_W]):
@@ -93,12 +94,21 @@ class TabArea(SemiMutableSequence[_W], _HasMainWindowRef[_W]):
     def append(self, value: _W, /) -> None:
         return self._main_window().add_widget(value)
 
-    def current(self) -> WidgetWrapper[_W]:
-        """Get the current widget in the sub window."""
+    def current(self) -> SubWindow[_W]:
+        """Get the current sub-window."""
+        if out := self.current_or():
+            return out
+        raise ValueError("No tab exists.")
+
+    def current_or(self, default: _T = None) -> SubWindow[_W] | _T:
+        """Get the current sub-window or a default value."""
         idx = self._main_window()._current_sub_window_index()
         if idx is None:
-            raise ValueError("No sub-window is active.")
-        return self[idx]
+            return default
+        try:
+            return self[idx]
+        except IndexError:
+            return default
 
     @property
     def names(self) -> list[str]:
@@ -110,7 +120,7 @@ class TabArea(SemiMutableSequence[_W], _HasMainWindowRef[_W]):
         widget: _W,
         *,
         title: str | None = None,
-    ) -> WidgetWrapper[_W]:
+    ) -> SubWindow[_W]:
         """
         Add a widget to the sub window.
 
@@ -124,11 +134,11 @@ class TabArea(SemiMutableSequence[_W], _HasMainWindowRef[_W]):
 
         Returns
         -------
-        WidgetWrapper
+        SubWindow
             A sub-window widget. The added widget is available by calling
             `widget` property.
         """
-        sub_window = WidgetWrapper(widget=widget, main_window=self._main_window())
+        sub_window = SubWindow(widget=widget, main_window=self._main_window())
         title = self._coerce_window_title(title)
         self._main_window().add_widget(sub_window.widget, self._i_tab, title)
         sub_window.title = title
@@ -182,10 +192,22 @@ class TabList(SemiMutableSequence[TabArea[_W]], _HasMainWindowRef[_W], Generic[_
 
     def current(self) -> TabArea[_W]:
         """Get the current tab."""
-        return self[self._main_window()._current_tab_index()]
+        if out := self.current_or():
+            return out
+        raise ValueError("No tab exists.")
+
+    def current_or(self, default: _T = None) -> TabArea[_W] | _T:
+        """Get the current tab or a default value."""
+        idx = self._main_window()._current_tab_index()
+        if idx is None:
+            return default
+        try:
+            return self[idx]
+        except IndexError:
+            return default
 
 
-class WidgetWrapper(_HasMainWindowRef[_W], Generic[_W]):
+class SubWindow(_HasMainWindowRef[_W], Generic[_W]):
     def __init__(self, widget: _W, main_window: BackendMainWindow[_W]):
         super().__init__(main_window)
         self._widget = weakref.ref(widget)

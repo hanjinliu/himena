@@ -86,3 +86,9 @@ all = [
 exclude_lines = [
   "if TYPE_CHECKING:",
 ]
+
+[tool.pyright.defineConstant]
+PYQT5 = true
+PYSIDE2 = false
+PYQT6 = false
+PYSIDE6 = false

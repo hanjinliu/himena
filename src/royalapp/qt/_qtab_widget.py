@@ -2,10 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Iterator
 from qtpy import QtWidgets as QtW
+from qtpy.QtCore import Signal
 from royalapp.qt._qsub_window import QSubWindowArea
 
 
 class QTabWidget(QtW.QTabWidget):
+    newWindowActivated = Signal()
+
     def __init__(self):
         super().__init__()
         self.setTabBarAutoHide(True)
@@ -25,6 +28,7 @@ class QTabWidget(QtW.QTabWidget):
             tab_name = "Tab"
         widget = QSubWindowArea()
         self.addTab(widget, self._coerce_tab_name(tab_name))
+        widget.subWindowActivated.connect(self._emit_current_indices)
         return widget
 
     def iter_widgets(self) -> Iterator[QtW.QWidget]:
@@ -45,6 +49,16 @@ class QTabWidget(QtW.QTabWidget):
 
     def _on_current_changed(self, index: int) -> None:
         self.widget(index)._reanchor_windows()
+        self._emit_current_indices()
+
+    def _current_indices(self) -> tuple[int, int]:
+        if widget := self.currentWidget():
+            if win := widget.currentSubWindow():
+                return self.currentIndex(), widget.indexOf(win)
+        return self.currentIndex(), -1
+
+    def _emit_current_indices(self) -> None:
+        self.newWindowActivated.emit()
 
     if TYPE_CHECKING:
 

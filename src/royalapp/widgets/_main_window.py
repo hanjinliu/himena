@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any, Generic, Hashable, TypeVar
 from app_model import Application
+from app_model.expressions import create_context
+from psygnal import SignalGroup, Signal
 from royalapp.types import (
     TabTitle,
     WindowTitle,
@@ -9,9 +11,9 @@ from royalapp.types import (
     NewWidgetBehavior,
     SubWindowState,
 )
-
+from royalapp._app_model._context import MainWindowContexts
 from royalapp.widgets._backend import BackendMainWindow
-from royalapp.widgets._tab_list import TabList, TabArea, WidgetWrapper
+from royalapp.widgets._tab_list import TabList, TabArea, SubWindow
 
 _W = TypeVar("_W")  # backend widget type
 
@@ -28,13 +30,22 @@ def get_application(name: str) -> Application:
     return _APPLICATIONS[name]
 
 
+class MainWindowEvents(SignalGroup):
+    window_activated = Signal()
+
+
 class MainWindow(Generic[_W]):
     def __init__(self, backend: BackendMainWindow[_W], app: Application) -> None:
+        self.events = MainWindowEvents()
         self._backend_main_window = backend
         self._tab_list = TabList(self._backend_main_window)
         self._new_widget_behavior = NewWidgetBehavior.WINDOW
         self._model_app = app
         set_current_instance(app, self)
+        self._backend_main_window._connect_activation_signal(
+            self.events.window_activated
+        )
+        self._ctx_keys = MainWindowContexts(create_context(self, max_depth=0))
 
     @property
     def tabs(self) -> TabList[_W]:
@@ -54,7 +65,7 @@ class MainWindow(Generic[_W]):
         widget: _W,
         *,
         title: str | None = None,
-    ) -> WidgetWrapper[_W]:
+    ) -> SubWindow[_W]:
         """
         Add a widget to the sub window.
 
@@ -96,11 +107,11 @@ class MainWindow(Generic[_W]):
         data: Any,
         type: Hashable,
         title: str | None = None,
-    ) -> WidgetWrapper[_W]:
+    ) -> SubWindow[_W]:
         wd = WidgetDataModel(value=data, type=type, source=None, title=title)
         return self.add_data_model(wd)
 
-    def add_data_model(self, model_data: WidgetDataModel) -> WidgetWrapper[_W]:
+    def add_data_model(self, model_data: WidgetDataModel) -> SubWindow[_W]:
         cls = self._backend_main_window._pick_widget_class(model_data.type)
         widget = cls.from_model(model_data)
         return self.add_widget(widget, title=model_data.title)
