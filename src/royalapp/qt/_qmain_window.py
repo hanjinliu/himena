@@ -4,7 +4,7 @@ from typing import Hashable, TypeVar
 from pathlib import Path
 from qtpy import QtWidgets as QtW, QtGui, QtCore
 from qtpy.QtCore import Qt
-from app_model.backends.qt import QModelMainWindow
+from app_model.backends.qt import QModelMainWindow, QModelMenu
 from royalapp.qt._qtab_widget import QTabWidget
 from royalapp.qt._qsub_window import QSubWindow, QSubWindowArea
 from royalapp.qt._qdock_widget import QDockWidget
@@ -36,7 +36,12 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         app_model_app = widgets.get_application(app)
         super().__init__(app_model_app)
         self._tab_widget = QTabWidget()
-        self._menubar = self.setModelMenuBar(menu_ids={"file": "File", "edit": "Edit"})
+        default_menu_ids = {
+            menu_id: menu_id.replace("_", " ").title()
+            for menu_id, _ in app_model_app.menus
+            if menu_id not in ("toolbar", "_command_pallet_")
+        }
+        self._menubar = self.setModelMenuBar(default_menu_ids)
         self._toolbar = self.addModelToolBar(menu_id="toolbar")
         self._toolbar.setMovable(False)
         self._toolbar.setFixedHeight(32)
@@ -53,6 +58,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             .replace("$(background-3)", style.background.level_3)
         )
         self.setStyleSheet(style_text)
+        self._app.register_action
 
     def add_dock_widget(
         self,
@@ -224,6 +230,16 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         tab = self._tab_widget.widget(i_tab)
         tab.removeSubWindow(tab.subWindowList()[i_window])
         return None
+
+    def _add_model_menu(
+        self,
+        id_: str,
+        title: str | None = None,
+    ) -> None:
+        if title is None:
+            title = id_.title()
+        menu = self._menubar
+        menu.addMenu(QModelMenu(id_, self._app, title, self))
 
 
 _DOCK_AREA_MAP = {

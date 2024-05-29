@@ -22,7 +22,7 @@ _APP_INSTANCES: dict[str, list[MainWindow]] = {}
 def get_application(name: str) -> Application:
     """Get application by name."""
     if name not in _APPLICATIONS:
-        app = Application(name)
+        app = Application.get_or_create(name)
         _APPLICATIONS[name] = app
         _init_application(app)
     return _APPLICATIONS[name]
@@ -38,6 +38,7 @@ class MainWindow(Generic[_W]):
 
     @property
     def tabs(self) -> TabList[_W]:
+        """Tab list object."""
         return self._tab_list
 
     @property
@@ -102,7 +103,7 @@ class MainWindow(Generic[_W]):
     def add_data_model(self, model_data: WidgetDataModel) -> WidgetWrapper[_W]:
         cls = self._backend_main_window._pick_widget_class(model_data.type)
         widget = cls.from_model(model_data)
-        return self.add_widget(widget)
+        return self.add_widget(widget, title=model_data.title)
 
     def show(self, run: bool = False) -> None:
         """

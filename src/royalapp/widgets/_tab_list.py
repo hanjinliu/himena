@@ -4,7 +4,7 @@ from abc import abstractmethod
 from typing import Generic, TYPE_CHECKING, Iterable, Iterator, TypeVar
 from collections.abc import Sequence
 import weakref
-from royalapp.types import SubWindowState
+from royalapp.types import SubWindowState, WidgetDataModel
 
 if TYPE_CHECKING:
     from royalapp.widgets import BackendMainWindow
@@ -129,8 +129,9 @@ class TabArea(SemiMutableSequence[_W], _HasMainWindowRef[_W]):
             `widget` property.
         """
         sub_window = WidgetWrapper(widget=widget, main_window=self._main_window())
+        title = self._coerce_window_title(title)
         self._main_window().add_widget(sub_window.widget, self._i_tab, title)
-        sub_window.title = self._coerce_window_title(title)
+        sub_window.title = title
         return sub_window
 
     def _coerce_window_title(self, title: str | None) -> str:
@@ -226,3 +227,9 @@ class WidgetWrapper(_HasMainWindowRef[_W], Generic[_W]):
     def is_exportable(self) -> bool:
         """Whether the widget can export its data."""
         return hasattr(self.widget, "to_model")
+
+    def to_model(self) -> WidgetDataModel:
+        """Export the widget data."""
+        if not self.is_exportable:
+            raise ValueError("Widget does not have `to_model` method.")
+        return self.widget.to_model()  # type: ignore

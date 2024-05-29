@@ -3,10 +3,14 @@ from pathlib import Path
 import numpy as np
 from royalapp import new_window, register_reader_provider, register_writer_provider
 from royalapp.qt import register_frontend_widget
+from royalapp.widgets import MainWindow
 from royalapp.types import WidgetDataModel
+from royalapp.plugins import get_plugin_interface
 from wgpu.gui.qt import WgpuWidget
 import imageio.v3 as iio
 import pygfx as gfx
+
+APP_NAME = "myapp"
 
 # `@register_frontend_widget` is a decorator that registers a widget class as a frontend
 # widget for the given file type. The class must have an `from_model` method to convert
@@ -41,12 +45,12 @@ class WgpuImageWidget(WgpuWidget):
         return self
 
     def to_model(self) -> WidgetDataModel:
-        return WidgetDataModel(value=self._model.value, type="image")
+        return WidgetDataModel(value=self._model.value, type="image", title=self._model.title)
 
 # `@register_reader_provider` is a decorator that registers a function as one that
-# provides a reader for the given file.
+# provides a reader for the given file path.
 @register_reader_provider
-def my_reader_provider(file_path) -> WidgetDataModel:
+def my_reader_provider(file_path):
     if Path(file_path).suffix not in {".png", ".jpg", ".jpeg"}:
         return None
 
@@ -56,16 +60,39 @@ def my_reader_provider(file_path) -> WidgetDataModel:
 
     return _read_image
 
+# `@register_writer_provider` is a decorator that registers a function as one that
+# provides a write for the given data model.
 @register_writer_provider
 def my_writer_provider(model: WidgetDataModel):
+    if not isinstance(model.value, np.ndarray):
+        return None
     if model.source.suffix not in {".png", ".jpg", ".jpeg"}:
         return None
     def _write_image(model: WidgetDataModel):
         iio.imwrite(model.source, model.value)
     return _write_image
 
+interf = get_plugin_interface(APP_NAME, "image_processing")
+
+@interf.register_function(title="Gaussian Filter")
+def gaussian_filter(ui: MainWindow) -> WidgetDataModel:
+    from scipy.ndimage import gaussian_filter
+
+    model = ui.tabs.current().current().to_model()
+    im = model.value
+    if im.ndim == 3:
+        im = gaussian_filter(im, sigma=3, axes=(0, 1))
+    else:
+        im = gaussian_filter(im, sigma=3)
+    return WidgetDataModel(value=im, type="image", title=model.title + "-Gaussian")
+
+@interf.register_function(title="Invert")
+def invert(ui: MainWindow) -> WidgetDataModel:
+    model = ui.tabs.current().current().to_model()
+    return WidgetDataModel(value=-model.value, type="image", title=model.title + "-Inverted")
+
 def main():
-    ui = new_window()
+    ui = new_window(APP_NAME)
     im = iio.imread("imageio:astronaut.png")
     ui.add_data(im, type="image", title="Astronaut")
     ui.show(run=True)

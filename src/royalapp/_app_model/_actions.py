@@ -1,7 +1,7 @@
 from app_model.types import Action, KeyBindingRule, KeyCode, KeyMod
 from royalapp.widgets import MainWindow
 from royalapp.io import get_readers, get_writers
-from royalapp.types import WidgetDataModel, WindowTitle
+from royalapp.types import WidgetDataModel
 from royalapp._app_model._context import MainWindowContexts
 
 
@@ -63,8 +63,11 @@ def close_current_window(ui: MainWindow) -> None:
     ui._backend_main_window._del_widget_at(i_tab, i_window)
 
 
-def test_command(ui: MainWindow, title: WindowTitle) -> WidgetDataModel:
-    return ui.tabs.current().current().widget.to_model()
+def copy_window(ui: MainWindow) -> WidgetDataModel:
+    model = ui.tabs.current().current().to_model()
+    if model.title is not None:
+        model.title += " (copy)"
+    return model
 
 
 ACTIONS: list[Action] = [
@@ -83,10 +86,10 @@ ACTIONS: list[Action] = [
         callback=save_from_dialog,
         menus=["file", "toolbar"],
         keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyS)],
-        enablement=MainWindowContexts.is_active_window_savable,
+        enablement=MainWindowContexts.is_active_window_exportable,
     ),
     Action(
-        id="save_as",
+        id="save-as",
         title="Save As",
         icon="material-symbols:save-as-outline",
         callback=save_as_from_dialog,
@@ -94,14 +97,14 @@ ACTIONS: list[Action] = [
         keybindings=[
             KeyBindingRule(primary=KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyS)
         ],
-        enablement=MainWindowContexts.is_active_window_savable,
+        enablement=MainWindowContexts.is_active_window_exportable,
     ),
     Action(
-        id="close",
+        id="close-window",
         title="Close",
         icon="material-symbols:tab-close-outline",
         callback=close_current_window,
-        menus=["file"],
+        menus=["window"],
         keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyW)],
     ),
     Action(
@@ -113,9 +116,10 @@ ACTIONS: list[Action] = [
     ),
     # Just for test
     Action(
-        id="test",
-        title="Test",
-        callback=test_command,
-        menus=["edit"],
+        id="copy-window",
+        title="Copy current window",
+        callback=copy_window,
+        menus=["window"],
+        enablement=MainWindowContexts.is_active_window_exportable,
     ),
 ]

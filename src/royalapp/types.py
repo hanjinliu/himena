@@ -49,10 +49,12 @@ _T = TypeVar("_T")
 
 
 class WidgetDataModel(Generic[_T], BaseModel):
+    """A data model that represents a widget containing an internal data."""
+
     value: _T = Field(..., description="Internal value.")
     source: Path | None = Field(default=None, description="Path of the file.")
     type: Hashable | None = Field(default=None, description="Type of the internal data.")  # fmt: skip
-    title: str | None = Field(default=None, description="Title for the widget.")
+    title: str = Field(default=None, description="Title for the widget.")
     extensions: list[str] = Field(default_factory=list, description="List of allowed file extensions.")  # fmt: skip
     metadata: dict[str, Any] = Field(default_factory=dict, description="Metadata of the widget.")  # fmt: skip
 
@@ -75,9 +77,19 @@ class WidgetDataModel(Generic[_T], BaseModel):
         if v is None:
             src = cls._validate_file_path(values["source"])
             if src is None:
-                return None
+                return "Untitled"
             return src.name
+        elif not isinstance(v, str):
+            raise TypeError(f"Invalid type for `title`: {type(v)}")
         return v
+
+    @validator("extensions", pre=True)
+    def _validate_extensions(cls, v):
+        if isinstance(v, str):
+            v = [v]
+        if not all(isinstance(ext, str) for ext in v):
+            raise TypeError(f"Invalid type for `extensions`: {type(v)}")
+        return [s if s.startswith(".") else f".{s}" for s in v]
 
     def __repr__(self):
         value_repr = repr(self.value)

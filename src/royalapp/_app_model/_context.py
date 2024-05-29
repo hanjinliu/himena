@@ -4,8 +4,7 @@ from royalapp.types import SubWindowState
 
 
 def _is_active_window_savable(ui: MainWindow) -> bool:
-    widget = ui.tabs.current().current().is_
-    return hasattr(widget, "to_model")
+    return ui.tabs.current().current().is_exportable
 
 
 def _active_window_state(ui: MainWindow):
@@ -18,7 +17,7 @@ def _is_active_tab_empty(ui: MainWindow) -> bool:
 
 
 class MainWindowContexts(ContextNamespace[MainWindow]):
-    is_active_window_savable = ContextKey(
+    is_active_window_exportable = ContextKey(
         False,
         "if the current window is savable",
         _is_active_window_savable,
@@ -32,4 +31,14 @@ class MainWindowContexts(ContextNamespace[MainWindow]):
         False,
         "if the current tab is empty",
         _is_active_tab_empty,
+    )
+
+
+def type_is(typ) -> bool:
+    def _context_key_func(ui: MainWindow) -> bool:
+        widget = ui.tabs.current().current()
+        return hash(widget.to_model().type) == hash(typ)
+
+    return ContextKey(
+        False, f"if the current window is of type {typ!r}", _context_key_func
     )

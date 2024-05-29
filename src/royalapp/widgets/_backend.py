@@ -35,9 +35,6 @@ class BackendMainWindow(Generic[_W]):
     def _set_window_title(self, widget: _W, title: WindowTitle) -> None:
         raise NotImplementedError
 
-    def _pick_widget_class(self, file_data: WidgetDataModel) -> type[_W]:
-        raise NotImplementedError
-
     def _provide_file_output(self) -> WidgetDataModel:
         raise NotImplementedError
 
@@ -77,5 +74,5 @@ class BackendMainWindow(Generic[_W]):
     def _run_app(self):
         raise NotImplementedError
 
-    def _pick_widget_class(self, type: str) -> _W:
+    def _pick_widget_class(self, type: str) -> type[_W]:
         raise NotImplementedError
