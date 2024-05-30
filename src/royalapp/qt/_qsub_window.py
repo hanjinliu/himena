@@ -35,11 +35,11 @@ class QSubWindowArea(QtW.QMdiArea):
             raise TypeError(
                 f"`widget` must be a QtW.QWidget instance, got {type(widget)}."
             )
-        size = widget.size()
+        size = widget.sizeHint()
         sub_window = QSubWindow(widget, title)
-        sub_window.resize(size)
         nwindows = len(self.subWindowList())
         self.addSubWindow(sub_window)
+        sub_window.resize(size + QtCore.QSize(8, 8))
         sub_window.move(4 + 24 * (nwindows % 5), 4 + 24 * (nwindows % 5))
         return sub_window
 
@@ -69,10 +69,14 @@ _ICON_NORMAL = QIconifyIcon("material-symbols:filter-none-outline-rounded", rota
 
 
 class QSubWindow(QtW.QMdiSubWindow):
+    state_changed = QtCore.Signal(SubWindowState)
+    closed = QtCore.Signal()
+
     def __init__(self, widget: QtW.QWidget, title: str):
         super().__init__()
         self.setWindowFlags(QtCore.Qt.WindowType.FramelessWindowHint)
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
+
         # add shadow effect
         self._shadow_effect = QtW.QGraphicsDropShadowEffect()
         self._shadow_effect.setBlurRadius(14)
@@ -83,7 +87,8 @@ class QSubWindow(QtW.QMdiSubWindow):
         self._window_state = SubWindowState.NORMAL
         self._resize_state = ResizeState.NONE
         self._current_button: int = QtCore.Qt.MouseButton.NoButton
-        self._last_hovered = timer()
+        self._widget = widget
+        self._last_hovered = timer()  # throttling
 
         _central_widget = QtW.QWidget()
         layout = QtW.QVBoxLayout()
@@ -100,7 +105,6 @@ class QSubWindow(QtW.QMdiSubWindow):
         self._last_geometry = self.geometry()
 
         # self._graphics_effect = QtW.QGraphicsDropShadowEffect()  # TODO
-        self._widget = widget
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_Hover, True)
 
     def main_widget(self) -> QtW.QWidget:
@@ -122,6 +126,7 @@ class QSubWindow(QtW.QMdiSubWindow):
     @state.setter
     def state(self, state: SubWindowState):
         state = SubWindowState(state)
+        self.state_changed.emit(state)
         if self._subwindow_area().viewMode() != QtW.QMdiArea.ViewMode.SubWindowView:
             self._window_state = state
             return None
@@ -215,6 +220,24 @@ class QSubWindow(QtW.QMdiSubWindow):
             self._resize_state.resize_widget(self, event_pos, min_size, max_size)
         return None
 
+    def _close_me(self):
+        if self.main_widget().isWindowModified():
+            ok = (
+                QtW.QMessageBox.question(
+                    self,
+                    "Close Window",
+                    "Data is not saved. Are you sure to close this window?",
+                    QtW.QMessageBox.StandardButton.Yes
+                    | QtW.QMessageBox.StandardButton.No,
+                )
+                == QtW.QMessageBox.StandardButton.Yes
+            )
+            if not ok:
+                return
+        self.close()
+        self.closed.emit()
+        return None
+
 
 class QSubWindowTitleBar(QtW.QFrame):
     def __init__(self, subwindow: QSubWindow, title: str):
@@ -292,20 +315,7 @@ class QSubWindowTitleBar(QtW.QFrame):
             self._subwindow.state = SubWindowState.FULL
 
     def _close(self):
-        if self._subwindow.main_widget().isWindowModified():
-            ok = (
-                QtW.QMessageBox.question(
-                    self._subwindow,
-                    "Close Window",
-                    "Data is not saved. Are you sure to close this window?",
-                    QtW.QMessageBox.StandardButton.Yes
-                    | QtW.QMessageBox.StandardButton.No,
-                )
-                == QtW.QMessageBox.StandardButton.Yes
-            )
-            if not ok:
-                return
-        self._subwindow.close()
+        return self._subwindow._close_me()
 
     # drag events for moving the window
     def mousePressEvent(self, event: QtGui.QMouseEvent):

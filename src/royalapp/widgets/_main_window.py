@@ -94,6 +94,10 @@ class MainWindow(Generic[_W]):
             tabarea = self.add_tab(title)
             idx = len(self.tabs) - 1
         out = tabarea.add_widget(widget, title=title)
+
+        # connect events
+        out.state_changed.connect(self._backend_main_window._update_context)
+
         self._backend_main_window._set_current_tab_index(idx)
         if self._new_widget_behavior is NewWidgetBehavior.TAB:
             nwindows = len(tabarea)

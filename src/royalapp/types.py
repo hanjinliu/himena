@@ -66,13 +66,13 @@ class WidgetDataModel(Generic[_T], BaseModel):
             return None
         raise TypeError(f"Invalid type for `source`: {type(v)}")
 
-    @validator("type", pre=True)
+    @validator("type", pre=True, always=True)
     def _validate_type(cls, v, values):
         if v is None:
             return type(values["value"])
         return v
 
-    @validator("title", pre=True)
+    @validator("title", pre=True, always=True)
     def _validate_title(cls, v, values):
         if v is None:
             src = cls._validate_file_path(values["source"])

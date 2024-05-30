@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Generic, TypeVar
+from typing import Generic, TypeVar, TYPE_CHECKING
 
 import psygnal
 from royalapp.types import TabTitle, WindowTitle, WidgetDataModel, SubWindowState
+
+if TYPE_CHECKING:
+    from royalapp.widgets._tab_list import SubWindow
 
 _W = TypeVar("_W")  # backend widget type
 
@@ -61,7 +64,7 @@ class BackendMainWindow(Generic[_W]):
     def _del_tab_at(self, i_tab: int) -> None:
         raise NotImplementedError
 
-    def add_widget(self, widget: _W, i_tab: int, title: str) -> None:
+    def add_widget(self, widget: _W, i_tab: int, title: str) -> _W:
         raise NotImplementedError
 
     def add_tab(self, title: TabTitle) -> None:
@@ -80,4 +83,10 @@ class BackendMainWindow(Generic[_W]):
         raise NotImplementedError
 
     def _connect_activation_signal(self, sig: psygnal.SignalInstance):
+        raise NotImplementedError
+
+    def _connect_window_events(self, sub: SubWindow, backend: _W):
+        raise NotImplementedError
+
+    def _update_context(self) -> None:
         raise NotImplementedError

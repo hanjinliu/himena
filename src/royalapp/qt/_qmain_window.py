@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Hashable, TypeVar
+from typing import Hashable, TypeVar, TYPE_CHECKING
 from pathlib import Path
 import psygnal
 from qtpy import QtWidgets as QtW, QtGui, QtCore
@@ -22,11 +22,16 @@ from royalapp.app import get_app
 from royalapp import widgets
 from royalapp.qt._widget_registry import pick_widget_class
 
+if TYPE_CHECKING:
+    from royalapp.widgets._main_window import SubWindow, MainWindow
+
 _STYLE_QSS_PATH = Path(__file__).parent / "style.qss"
 _T = TypeVar("_T", bound=QtW.QWidget)
 
 
 class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
+    _royalapp_main_window: MainWindow
+
     def __init__(self, app: str = "royalapp"):
         _app = get_app("qt")
         self._qt_app = _app.get_app()
@@ -107,14 +112,13 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             raise TypeError(
                 f"`widget` must be a QtW.QWidget instance, got {type(widget)}."
             )
-        size = widget.size()
-        sub_window = QSubWindow(widget, title)
-        sub_window.resize(size)
         tab = self._tab_widget.widget(i_tab)
-        nwindows = len(tab.subWindowList())
-        tab.addSubWindow(sub_window)
-        sub_window.move(4 + 24 * (nwindows % 5), 4 + 24 * (nwindows % 5))
-        return sub_window
+        subwindow = tab.add_widget(widget, title)
+        return subwindow
+
+    def _connect_window_events(self, sub: SubWindow, qsub: QSubWindow):
+        qsub.state_changed.connect(lambda state: sub.state_changed.emit(state))
+        qsub.closed.connect(lambda: sub.closed.emit())
 
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
         super().resizeEvent(event)
@@ -146,7 +150,8 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _update_context(self) -> None:
         ctx = self._royalapp_main_window._ctx_keys
         ctx._update(self._royalapp_main_window)
-        self._menubar.update_from_context(ctx.dict())
+        _dict = ctx.dict()
+        self._menubar.update_from_context(_dict)
 
     def _run_app(self):
         return get_app("qt").run_app()

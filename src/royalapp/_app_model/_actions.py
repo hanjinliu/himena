@@ -2,7 +2,7 @@ from app_model.types import Action, KeyBindingRule, KeyCode, KeyMod
 from royalapp.widgets import MainWindow
 from royalapp.io import get_readers, get_writers
 from royalapp.types import WidgetDataModel
-from royalapp._app_model._context import AppContext
+from royalapp._app_model._context import AppContext as _ctx
 
 
 def open_from_dialog(ui: MainWindow) -> WidgetDataModel:
@@ -86,7 +86,7 @@ ACTIONS: list[Action] = [
         callback=save_from_dialog,
         menus=["file", "toolbar"],
         keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyS)],
-        enablement=AppContext.is_active_window_exportable,
+        enablement=_ctx.is_active_window_exportable,
     ),
     Action(
         id="save-as",
@@ -97,7 +97,7 @@ ACTIONS: list[Action] = [
         keybindings=[
             KeyBindingRule(primary=KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyS)
         ],
-        enablement=AppContext.is_active_window_exportable,
+        enablement=_ctx.is_active_window_exportable,
     ),
     Action(
         id="close-window",
@@ -106,6 +106,7 @@ ACTIONS: list[Action] = [
         callback=close_current_window,
         menus=["window"],
         keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyW)],
+        enablement=~_ctx.is_active_tab_empty,
     ),
     Action(
         id="exit",
@@ -120,6 +121,6 @@ ACTIONS: list[Action] = [
         title="Copy current window",
         callback=copy_window,
         menus=["window"],
-        enablement=AppContext.is_active_window_exportable,
+        enablement=_ctx.is_active_window_exportable,
     ),
 ]

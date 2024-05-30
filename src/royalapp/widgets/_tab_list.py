@@ -4,6 +4,8 @@ from abc import abstractmethod
 from typing import Generic, TYPE_CHECKING, Iterable, Iterator, TypeVar
 from collections.abc import Sequence
 import weakref
+
+from psygnal import Signal
 from royalapp.types import SubWindowState, WidgetDataModel
 
 if TYPE_CHECKING:
@@ -36,6 +38,14 @@ class SemiMutableSequence(Sequence[_W]):
                 self.pop()
         except IndexError:
             pass
+
+    def remove(self, value: _W) -> None:
+        """Remove the first occurrence of a value."""
+        try:
+            i = self.index(value)
+        except ValueError:
+            raise ValueError("Value not found in the list.")
+        del self[i]
 
     @abstractmethod
     def append(self, value: _W) -> None: ...
@@ -140,7 +150,8 @@ class TabArea(SemiMutableSequence[_W], _HasMainWindowRef[_W]):
         """
         sub_window = SubWindow(widget=widget, main_window=self._main_window())
         title = self._coerce_window_title(title)
-        self._main_window().add_widget(sub_window.widget, self._i_tab, title)
+        out = self._main_window().add_widget(sub_window.widget, self._i_tab, title)
+        self._main_window()._connect_window_events(sub_window, out)
         sub_window.title = title
         return sub_window
 
@@ -208,6 +219,9 @@ class TabList(SemiMutableSequence[TabArea[_W]], _HasMainWindowRef[_W], Generic[_
 
 
 class SubWindow(_HasMainWindowRef[_W], Generic[_W]):
+    state_changed = Signal(SubWindowState)
+    closed = Signal()
+
     def __init__(self, widget: _W, main_window: BackendMainWindow[_W]):
         super().__init__(main_window)
         self._widget = weakref.ref(widget)
