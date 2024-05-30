@@ -2,9 +2,13 @@ from pathlib import Path
 
 import pandas as pd
 from qtpy import QtWidgets as QtW
-from royalapp import new_window, register_reader_provider, register_writer_provider
+from royalapp import (
+    new_window,
+    register_reader_provider,
+    register_writer_provider,
+    WidgetDataModel,
+)
 from royalapp.qt import register_frontend_widget
-from royalapp.types import WidgetDataModel
 
 APP_NAME = "myapp"
 

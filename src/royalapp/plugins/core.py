@@ -5,7 +5,11 @@ from typing import Callable, TypeVar, overload
 
 from app_model import Application
 from app_model.types import SubmenuItem
+from app_model.expressions import BoolOp
+
+from royalapp._app_model import AppContext as ctx
 from royalapp.widgets import get_application
+from royalapp import _utils
 
 _F = TypeVar("_F", bound=Callable)
 
@@ -28,7 +32,7 @@ class PluginInterface:
         func: None = None,
         *,
         title: str | None = None,
-        enablement=None,
+        enablement: BoolOp | None = None,
     ) -> None: ...
     @overload
     def register_function(
@@ -36,21 +40,40 @@ class PluginInterface:
         func: _F,
         *,
         title: str | None = None,
-        enablement=None,
+        enablement: BoolOp | None = None,
     ) -> _F: ...
 
     def register_function(self, func=None, *, title=None, enablement=None) -> None:
+        """
+        Register a function as a callback of a plugin action.
+        """
+
         def _inner(f: _F) -> _F:
             if title is None:
                 _title = f.__name__.replace("_", " ").title()
             else:
                 _title = title
+            _enablement = enablement
+            if annot := _utils.get_widget_data_model_variable(f):
+                _expr = ctx.is_active_window_exportable & (
+                    ctx.active_window_model_type == annot
+                )
+                if enablement is None:
+                    _enablement = _expr
+                else:
+                    _enablement = _expr & enablement
+            elif _utils.has_widget_data_model_argument(f):
+                _expr = ctx.is_active_window_exportable
+                if enablement is None:
+                    _enablement = _expr
+                else:
+                    _enablement = _expr & enablement
             self._app.register_action(
                 action=f.__qualname__,
                 title=_title,
                 callback=f,
                 menus=[str(self._place)],
-                enablement=enablement,
+                enablement=_enablement,
             )
 
         return _inner if func is None else _inner(func)

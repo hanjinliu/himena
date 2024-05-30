@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Callable, TypeVar
 from royalapp.types import WidgetDataModel, ReaderFunction, WriterFunction
 from royalapp.consts import BasicTextFileTypes
+from royalapp._utils import get_widget_data_model_variable
 
 _ReaderProvider = Callable[[Path], ReaderFunction]
 _WriterProvider = Callable[[WidgetDataModel], WriterFunction]
@@ -133,14 +134,6 @@ class TypedWriterProvider:
 
     @staticmethod
     def try_convert(func: Callable) -> Callable:
-        annots = list(func.__annotations__.values())
-        if len(annots) != 1:
-            return func
-        annot = annots[0]
-        if not (hasattr(annot, "__origin__") and hasattr(annot, "__args__")):
-            return func
-        if annot.__origin__ is not WidgetDataModel:
-            return func
-        if len(annot.__args__) != 1:
-            return func
-        return TypedWriterProvider(func, annot.__args__[0])
+        if arg := get_widget_data_model_variable(func):
+            return TypedWriterProvider(func, arg)
+        return func

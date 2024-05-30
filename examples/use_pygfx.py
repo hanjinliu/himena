@@ -1,10 +1,13 @@
 from pathlib import Path
 
 import numpy as np
-from royalapp import new_window, register_reader_provider, register_writer_provider
+from royalapp import (
+    new_window,
+    register_reader_provider,
+    register_writer_provider,
+    MainWindow, WidgetDataModel
+)
 from royalapp.qt import register_frontend_widget
-from royalapp.widgets import MainWindow
-from royalapp.types import WidgetDataModel
 from royalapp.plugins import get_plugin_interface
 from wgpu.gui.qt import WgpuWidget
 import imageio.v3 as iio

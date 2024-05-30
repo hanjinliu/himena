@@ -34,7 +34,7 @@ def _active_window_model_type(ui: "MainWindow") -> str | None:
     return None
 
 
-class MainWindowContexts(ContextNamespace["MainWindow"]):
+class AppContext(ContextNamespace["MainWindow"]):
     is_active_window_exportable = ContextKey(
         False,
         "if the current window is savable",
@@ -56,16 +56,6 @@ class MainWindowContexts(ContextNamespace["MainWindow"]):
         _active_window_model_type,
     )
 
-    def update(self, ui):
+    def _update(self, ui):
         for k, v in self._getters.items():
             setattr(self, k, v(ui))
-
-
-def type_is(typ) -> bool:
-    def _context_key_func(ui: "MainWindow") -> bool:
-        widget = ui.tabs.current().current()
-        return hash(widget.to_model().type) == hash(typ)
-
-    return ContextKey(
-        False, f"if the current window is of type {typ!r}", _context_key_func
-    )

@@ -1,10 +1,10 @@
 from qtpy import QtWidgets as QtW
 
 import re
-from royalapp import new_window
-from royalapp.types import WidgetDataModel
+from royalapp import new_window, WidgetDataModel
 from royalapp.qt import register_frontend_widget
 from royalapp.plugins import get_plugin_interface
+from royalapp._app_model import AppContext
 
 APP_NAME = "myapp"
 
@@ -40,7 +40,6 @@ class MyHtmlEdit(QtW.QTextEdit):
 class MyNonSavableEdit(QtW.QTextEdit):
     @classmethod
     def from_model(cls, model: WidgetDataModel):
-        print("converting model to NonSavableEdit")
         self = cls()
         self.setPlainText(model.value)
         return self
@@ -59,7 +58,7 @@ def to_plain_text(model: WidgetDataModel) -> WidgetDataModel:
     new.title = model.title + " (plain)"
     return new
 
-@interf.register_function
+@interf.register_function(enablement=AppContext.active_window_model_type == "text")
 def to_basic_widget(model: WidgetDataModel) -> WidgetDataModel:
     if model.type != "text":
         return None

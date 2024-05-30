@@ -145,7 +145,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def _update_context(self) -> None:
         ctx = self._royalapp_main_window._ctx_keys
-        ctx.update(self._royalapp_main_window)
+        ctx._update(self._royalapp_main_window)
         self._menubar.update_from_context(ctx.dict())
 
     def _run_app(self):

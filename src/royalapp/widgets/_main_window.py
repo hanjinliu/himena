@@ -11,7 +11,7 @@ from royalapp.types import (
     NewWidgetBehavior,
     SubWindowState,
 )
-from royalapp._app_model._context import MainWindowContexts
+from royalapp._app_model._context import AppContext
 from royalapp.widgets._backend import BackendMainWindow
 from royalapp.widgets._tab_list import TabList, TabArea, SubWindow
 
@@ -45,7 +45,7 @@ class MainWindow(Generic[_W]):
         self._backend_main_window._connect_activation_signal(
             self.events.window_activated
         )
-        self._ctx_keys = MainWindowContexts(create_context(self, max_depth=0))
+        self._ctx_keys = AppContext(create_context(self, max_depth=0))
 
     @property
     def tabs(self) -> TabList[_W]:
@@ -105,9 +105,28 @@ class MainWindow(Generic[_W]):
     def add_data(
         self,
         data: Any,
-        type: Hashable,
+        type: Hashable | None = None,
         title: str | None = None,
     ) -> SubWindow[_W]:
+        """
+        Add any data as a widget data model.
+
+        Parameters
+        ----------
+        data : Any
+            Any object.
+        type : Hashable, optional
+            Any hashable object that describes the type of the data. If not given,
+            the Python type of the data will be used. This type must be registered with
+            a proper backend widget class.
+        title : str, optional
+            Title of the sub-window.
+
+        Returns
+        -------
+        SubWindow
+            A sub-window with `data` as the internal data.
+        """
         wd = WidgetDataModel(value=data, type=type, source=None, title=title)
         return self.add_data_model(wd)
 
