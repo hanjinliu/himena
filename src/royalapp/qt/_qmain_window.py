@@ -15,12 +15,14 @@ from royalapp.types import (
     TabTitle,
     WindowTitle,
     WidgetDataModel,
+    ClipBoardDataModel,
     SubWindowState,
 )
 from royalapp.style import get_style
 from royalapp.app import get_app
 from royalapp import widgets
 from royalapp.qt._widget_registry import pick_widget_class
+from royalapp.qt._utils import get_clipboard_data
 
 if TYPE_CHECKING:
     from royalapp.widgets._main_window import SubWindow, MainWindow
@@ -266,6 +268,9 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             raise ValueError(f"Widget {widget!r} is not in a sub-window.")
         window.state = state
         return None
+
+    def _clipboard_data(self) -> ClipBoardDataModel | None:
+        return get_clipboard_data()
 
     def _connect_activation_signal(self, sig: psygnal.SignalInstance):
         self._tab_widget.newWindowActivated.connect(sig.emit)

@@ -41,6 +41,12 @@ def save_from_dialog(ui: MainWindow) -> None:
     return writers[0](fd)
 
 
+def paste_from_clipboard(ui: MainWindow) -> WidgetDataModel:
+    if data := ui._backend_main_window._clipboard_data():
+        return data.to_widget_data_model()
+    return None
+
+
 def save_as_from_dialog(ui: MainWindow) -> None:
     fd = ui._backend_main_window._provide_file_output()
     save_path = ui._backend_main_window._open_file_dialog(mode="w")
@@ -100,7 +106,7 @@ ACTIONS: list[Action] = [
     Action(
         id="open-folder",
         title="Open Folder",
-        icon="material-symbols:folder-open-outline",
+        icon="material-symbols:folder-open",
         callback=open_folder_from_dialog,
         menus=["file"],
         keybindings=[
@@ -126,6 +132,14 @@ ACTIONS: list[Action] = [
             KeyBindingRule(primary=KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyS)
         ],
         enablement=_ctx.is_active_window_exportable,
+    ),
+    Action(
+        id="paste",
+        title="Paste",
+        icon="material-symbols:content-paste",
+        callback=paste_from_clipboard,
+        menus=["file"],
+        keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyV)],
     ),
     Action(
         id="close-window",

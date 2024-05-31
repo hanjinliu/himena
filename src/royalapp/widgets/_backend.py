@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Generic, TypeVar, TYPE_CHECKING
 
 import psygnal
-from royalapp.types import TabTitle, WindowTitle, WidgetDataModel, SubWindowState
+from royalapp.types import WidgetDataModel, SubWindowState, ClipBoardDataModel
 
 if TYPE_CHECKING:
     from royalapp.widgets._tab_list import SubWindow
@@ -31,13 +31,13 @@ class BackendMainWindow(Generic[_W]):
     def _set_window_state(self, widget: _W, state: SubWindowState) -> None:
         raise NotImplementedError
 
-    def _set_tab_title(self, i_tab: int, title: TabTitle) -> None:
+    def _set_tab_title(self, i_tab: int, title: str) -> None:
         raise NotImplementedError
 
-    def _window_title(self, widget: _W) -> WindowTitle:
+    def _window_title(self, widget: _W) -> str:
         raise NotImplementedError
 
-    def _set_window_title(self, widget: _W, title: WindowTitle) -> None:
+    def _set_window_title(self, widget: _W, title: str) -> None:
         raise NotImplementedError
 
     def _provide_file_output(self) -> WidgetDataModel:
@@ -67,7 +67,7 @@ class BackendMainWindow(Generic[_W]):
     def add_widget(self, widget: _W, i_tab: int, title: str) -> _W:
         raise NotImplementedError
 
-    def add_tab(self, title: TabTitle) -> None:
+    def add_tab(self, title: str) -> None:
         raise NotImplementedError
 
     def add_dock_widget(self, widget: _W) -> None:
@@ -89,4 +89,7 @@ class BackendMainWindow(Generic[_W]):
         raise NotImplementedError
 
     def _update_context(self) -> None:
+        raise NotImplementedError
+
+    def _clipboard_data(self) -> ClipBoardDataModel | None:
         raise NotImplementedError

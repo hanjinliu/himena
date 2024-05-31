@@ -108,5 +108,15 @@ class WidgetDataModel(Generic[_T], BaseModel):
         )
 
 
+class ClipBoardDataModel(Generic[_T], BaseModel):
+    """Data model for a clipboard data."""
+
+    value: _T = Field(..., description="Internal value.")
+    type: Hashable | None = Field(default=None, description="Type of the internal data.")  # fmt: skip
+
+    def to_widget_data_model(self) -> WidgetDataModel[_T]:
+        return WidgetDataModel(value=self.value, type=self.type, title="Clipboard")
+
+
 ReaderFunction = Callable[[Path], WidgetDataModel]
 WriterFunction = Callable[[WidgetDataModel], None]

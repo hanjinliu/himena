@@ -16,20 +16,20 @@ _F = TypeVar("_F", bound=WidgetClass)
 @overload
 def register_frontend_widget(
     type_: Hashable,
-    app: str | None,
     widget_class: _F,
+    app: str | None,
 ) -> _F: ...
 
 
 @overload
 def register_frontend_widget(
     type_: Hashable,
-    app: str | None,
     widget_class: None,
+    app: str | None,
 ) -> Callable[[_F], _F]: ...
 
 
-def register_frontend_widget(type_, app=None, widget_class=None) -> None:
+def register_frontend_widget(type_, widget_class=None, app=None) -> None:
     """
     Register a widget class as a frontend widget for the given file type.
 
@@ -45,6 +45,9 @@ def register_frontend_widget(type_, app=None, widget_class=None) -> None:
     ...         self.setPlainText(fd.value)
     ...         return self
     """
+
+    if app is not None and not isinstance(app, str):
+        raise TypeError(f"App name must be a string, got {app!r}")
 
     def _inner(widget_class):
         if not (
@@ -105,7 +108,9 @@ class QFallbackWidget(QtW.QPlainTextEdit):
     @classmethod
     def from_model(cls, model: WidgetDataModel) -> QFallbackWidget:
         self = cls()
-        self.setPlainText(f"No widget registered for the data:\n\n{model.value!r}")
+        self.setPlainText(
+            f"No widget registered for:\n\ntype: {model.type!r}\nvalue: {model.value!r}"
+        )
         return self
 
 
@@ -119,9 +124,9 @@ def register_default_widget_types() -> None:
 def pick_widget_class(app_name: str, type: Hashable) -> WidgetClass:
     """Pick a widget class for the given file type."""
     if app_name in _APP_TYPE_TO_QWIDGET:
-        _map = _APP_TYPE_TO_QWIDGET[app_name]
-        if type in _map:
-            return _map[type]
+        _map_for_app = _APP_TYPE_TO_QWIDGET[app_name]
+        if type in _map_for_app:
+            return _map_for_app[type]
     if type not in _GLOBAL_TYPE_TO_QWIDGET:
         return QFallbackWidget
     return _GLOBAL_TYPE_TO_QWIDGET[type]
