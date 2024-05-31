@@ -48,8 +48,9 @@ class QTabWidget(QtW.QTabWidget):
         return tab_name
 
     def _on_current_changed(self, index: int) -> None:
-        self.widget(index)._reanchor_windows()
-        self._emit_current_indices()
+        if widget := self.widget(index):
+            widget._reanchor_windows()
+            self._emit_current_indices()
 
     def _current_indices(self) -> tuple[int, int]:
         if widget := self.currentWidget():
@@ -62,5 +63,5 @@ class QTabWidget(QtW.QTabWidget):
 
     if TYPE_CHECKING:
 
-        def widget(self, index: int) -> QSubWindowArea: ...
+        def widget(self, index: int) -> QSubWindowArea | None: ...
         def currentWidget(self) -> QSubWindowArea | None: ...

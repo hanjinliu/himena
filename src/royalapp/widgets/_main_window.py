@@ -5,8 +5,6 @@ from app_model import Application
 from app_model.expressions import create_context
 from psygnal import SignalGroup, Signal
 from royalapp.types import (
-    TabTitle,
-    WindowTitle,
     WidgetDataModel,
     NewWidgetBehavior,
     SubWindowState,
@@ -57,8 +55,11 @@ class MainWindow(Generic[_W]):
         """The app-model application instance."""
         return self._model_app
 
-    def add_tab(self, title: TabTitle | None) -> TabArea[_W]:
-        return self._backend_main_window.add_tab(title)
+    def add_tab(self, title: str | None = None) -> TabArea[_W]:
+        self._backend_main_window.add_tab(title)
+        idx = len(self.tabs) - 1
+        self._backend_main_window._set_current_tab_index(idx)
+        return self.tabs[idx]
 
     def add_widget(
         self,
@@ -181,18 +182,6 @@ def _init_application(app: Application) -> None:
     @app.injection_store.mark_provider
     def _current_instance() -> MainWindow:
         return current_instance(app.name)
-
-    @app.injection_store.mark_provider
-    def _current_tab_name() -> TabTitle:
-        ins = current_instance(app.name)
-        idx = ins._backend_main_window._current_tab_index()
-        return ins._backend_main_window._get_tab_name_list()[idx]
-
-    @app.injection_store.mark_provider
-    def _current_sub_window_title() -> WindowTitle:
-        ins = current_instance(app.name)
-        wrapper = ins.tabs.current().current()
-        return ins._backend_main_window._window_title(wrapper.widget)
 
     @app.injection_store.mark_provider
     def _provide_file_output() -> WidgetDataModel:

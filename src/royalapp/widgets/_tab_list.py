@@ -112,13 +112,16 @@ class TabArea(SemiMutableSequence[_W], _HasMainWindowRef[_W]):
 
     def current_or(self, default: _T = None) -> SubWindow[_W] | _T:
         """Get the current sub-window or a default value."""
-        idx = self._main_window()._current_sub_window_index()
+        idx = self.current_index()
         if idx is None:
             return default
         try:
             return self[idx]
         except IndexError:
             return default
+
+    def current_index(self) -> int | None:
+        return self._main_window()._current_sub_window_index()
 
     @property
     def names(self) -> list[str]:
@@ -209,13 +212,16 @@ class TabList(SemiMutableSequence[TabArea[_W]], _HasMainWindowRef[_W], Generic[_
 
     def current_or(self, default: _T = None) -> TabArea[_W] | _T:
         """Get the current tab or a default value."""
-        idx = self._main_window()._current_tab_index()
+        idx = self.current_index()
         if idx is None:
             return default
         try:
             return self[idx]
         except IndexError:
             return default
+
+    def current_index(self) -> int | None:
+        return self._main_window()._current_tab_index()
 
 
 class SubWindow(_HasMainWindowRef[_W], Generic[_W]):

@@ -3,6 +3,7 @@ from typing import Callable, Hashable, TypeVar, Union, overload
 from qtpy import QtWidgets as QtW
 
 from royalapp.types import WidgetDataModel
+from royalapp.consts import StandardTypes
 
 WidgetClass = Union[Callable[[WidgetDataModel], QtW.QWidget], type[QtW.QWidget]]
 
@@ -112,6 +113,7 @@ def register_default_widget_types() -> None:
     """Register default widget types."""
     register_frontend_widget(str, QDefaultTextEdit)
     register_frontend_widget("text", QDefaultTextEdit)
+    register_frontend_widget(StandardTypes.TEXT, QDefaultTextEdit)
 
 
 def pick_widget_class(app_name: str, type: Hashable) -> WidgetClass:

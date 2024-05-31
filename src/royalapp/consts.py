@@ -1,3 +1,5 @@
+from enum import Enum
+
 BasicTextFileTypes = frozenset(
     [
         ".txt",
@@ -10,3 +12,10 @@ BasicTextFileTypes = frozenset(
         ".log",
     ]
 )
+
+
+class StandardTypes(Enum):
+    TEXT = "text"
+    HTML = "html"
+    TABLE = "table"
+    IMAGE = "image"

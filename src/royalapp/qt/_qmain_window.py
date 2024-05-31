@@ -247,6 +247,13 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         tab.removeSubWindow(tab.subWindowList()[i_window])
         return None
 
+    def _del_tab_at(self, i_tab: int) -> None:
+        sub = self._tab_widget.widget(i_tab)
+        for window in sub.subWindowList():
+            window._close_me()
+        self._tab_widget.removeTab(i_tab)
+        return None
+
     def _window_state(self, widget: QtW.QWidget) -> SubWindowState:
         window = widget.parentWidget().parentWidget()
         if not isinstance(window, QSubWindow):
