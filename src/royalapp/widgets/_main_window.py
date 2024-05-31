@@ -8,6 +8,8 @@ from royalapp.types import (
     WidgetDataModel,
     NewWidgetBehavior,
     SubWindowState,
+    DockArea,
+    DockAreaString,
 )
 from royalapp._app_model._context import AppContext
 from royalapp.widgets._backend import BackendMainWindow
@@ -106,6 +108,19 @@ class MainWindow(Generic[_W]):
                 idx, nwindows - 1, SubWindowState.FULL
             )
         return out
+
+    def add_dock_widget(
+        self,
+        widget: _W,
+        *,
+        title: str | None,
+        area: DockAreaString | DockArea | None = DockArea.RIGHT,
+        allowed_areas: list[DockAreaString | DockArea] | None = None,
+    ):
+        self._backend_main_window.add_dock_widget(
+            widget, title=title, area=area, allowed_areas=allowed_areas
+        )
+        return None
 
     def add_data(
         self,

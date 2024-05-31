@@ -4,7 +4,13 @@ from pathlib import Path
 from typing import Generic, TypeVar, TYPE_CHECKING
 
 import psygnal
-from royalapp.types import WidgetDataModel, SubWindowState, ClipBoardDataModel
+from royalapp.types import (
+    WidgetDataModel,
+    SubWindowState,
+    ClipBoardDataModel,
+    DockArea,
+    DockAreaString,
+)
 
 if TYPE_CHECKING:
     from royalapp.widgets._tab_list import SubWindow
@@ -70,7 +76,13 @@ class BackendMainWindow(Generic[_W]):
     def add_tab(self, title: str) -> None:
         raise NotImplementedError
 
-    def add_dock_widget(self, widget: _W) -> None:
+    def add_dock_widget(
+        self,
+        widget: _W,
+        title: str | None,
+        area: DockAreaString | DockArea | None = DockArea.RIGHT,
+        allowed_areas: list[DockAreaString | DockArea] | None = None,
+    ) -> _W:
         raise NotImplementedError
 
     def show(self, run: bool = False) -> None:

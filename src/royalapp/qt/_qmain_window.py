@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Hashable, TypeVar, TYPE_CHECKING
 from pathlib import Path
+import app_model
 import psygnal
 from qtpy import QtWidgets as QtW, QtGui, QtCore
 from qtpy.QtCore import Qt
@@ -45,7 +46,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         default_menu_ids = {
             menu_id: menu_id.replace("_", " ").title()
             for menu_id, _ in app_model_app.menus
-            if menu_id not in ("toolbar", app_model_app.menus.COMMAND_PALETTE_ID)
+            if _is_root_menu_id(app_model_app, menu_id)
         }
         self._menubar = self.setModelMenuBar(default_menu_ids)
         self._toolbar = self.addModelToolBar(menu_id="toolbar")
@@ -293,3 +294,9 @@ _DOCK_AREA_MAP = {
     DockArea.RIGHT: Qt.DockWidgetArea.RightDockWidgetArea,
     None: Qt.DockWidgetArea.NoDockWidgetArea,
 }
+
+
+def _is_root_menu_id(app: app_model.Application, menu_id: str) -> bool:
+    if menu_id in ("toolbar", app.menus.COMMAND_PALETTE_ID):
+        return False
+    return "/" not in menu_id.replace("//", "")

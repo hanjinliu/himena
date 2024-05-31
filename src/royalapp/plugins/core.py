@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import PurePosixPath
 from typing import Callable, Hashable, Sequence, TypeVar, overload
 
 from app_model import Application
@@ -8,16 +7,25 @@ from app_model.types import SubmenuItem
 from app_model.expressions import BoolOp
 
 from royalapp._app_model import AppContext as ctx
-from royalapp.widgets import get_application
+from royalapp.widgets import get_application, MainWindow
+from royalapp.types import DockArea, DockAreaString
 from royalapp import _utils
 
 _F = TypeVar("_F", bound=Callable)
 
 
 class PluginInterface:
-    def __init__(self, app: str | Application, place: str | PurePosixPath = "."):
+    def __init__(self, app: str | Application, place: list[str]):
         self._app = get_application(app) if isinstance(app, str) else app
-        self._place = PurePosixPath(place)
+        self._place = place
+        to_add = []
+        for i in range(1, len(self._place)):
+            id = "/".join(self._place[:i])
+            item = SubmenuItem(
+                title=self._place[i], submenu="/".join(self._place[: i + 1])
+            )
+            to_add.append((id, item))
+        self._app.menus.append_menu_items(to_add)
 
     def add_child(
         self,
@@ -32,9 +40,11 @@ class PluginInterface:
         """
         if title is None:
             title = id.title()
-        item = SubmenuItem(title=title, submenu=str(self._place), enablement=enablement)
+        item = SubmenuItem(
+            title=title, submenu="/".join(self._place), enablement=enablement
+        )
         self._app.menus.append_menu_items([(id, item)])
-        return self.__class__(self._app, self._place.joinpath(id))
+        return self.__class__(self._app, self._place + [id])
 
     @overload
     def register_function(
@@ -113,13 +123,78 @@ class PluginInterface:
                 action=f.__qualname__,
                 title=_title,
                 callback=f,
-                menus=[str(self._place)],
+                menus=["/".join(self._place)],
                 enablement=_enablement,
             )
 
         return _inner if func is None else _inner(func)
 
+    @overload
+    def register_dock_widget(
+        self,
+        widget_factory: _F,
+        *,
+        title: str | None = None,
+        area: DockArea | DockAreaString = DockArea.RIGHT,
+        allowed_areas: Sequence[DockArea | DockAreaString] | None = None,
+    ) -> _F: ...
 
-def get_plugin_interface(app: str, menu_id: str) -> PluginInterface:
-    out = PluginInterface(app, menu_id)
+    @overload
+    def register_dock_widget(
+        self,
+        widget_factory: None = None,
+        *,
+        title: str | None = None,
+        area: DockArea | DockAreaString = DockArea.RIGHT,
+        allowed_areas: Sequence[DockArea | DockAreaString] | None = None,
+    ) -> Callable[[_F], _F]: ...
+
+    def register_dock_widget(
+        self,
+        widget_factory=None,
+        *,
+        title: str | None = None,
+        area: DockArea | DockAreaString = DockArea.RIGHT,
+        allowed_areas: Sequence[DockArea | DockAreaString] | None = None,
+    ):
+        """
+        Register a widget factory as a dock widget function.
+
+        Parameters
+        ----------
+        widget_factory : callable, optional
+            Class of dock widget, or a factory function for the dock widget.
+        title : str, optional
+            Title of the dock widget.
+        area : DockArea or DockAreaString, optional
+            Initial area of the dock widget.
+        allowed_areas : sequence of DockArea or DockAreaString, optional
+            List of areas that is allowed for the dock widget.
+        """
+
+        def _inner(wf: Callable):
+            def _callback(ui: MainWindow):
+                ui.add_dock_widget(
+                    wf(), title=title, area=area, allowed_areas=allowed_areas
+                )
+
+            self._app.register_action(
+                action=wf.__qualname__,
+                title=title,
+                callback=_callback,
+                menus=["/".join(self._place)],
+            )
+            return wf
+
+        return _inner if widget_factory is None else _inner(widget_factory)
+
+
+def get_plugin_interface(
+    app: str, place: str | list[str] | None = None
+) -> PluginInterface:
+    if not isinstance(app, str):
+        raise TypeError(f"`app` must be a string, got {type(app)}.")
+    if place is None:
+        place = ["Plugins", app]
+    out = PluginInterface(app, place)
     return out

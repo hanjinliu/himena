@@ -97,7 +97,7 @@ _CtrlK = KeyMod.CtrlCmd | KeyCode.KeyK
 ACTIONS: list[Action] = [
     Action(
         id="open",
-        title="Open",
+        title="Open File(s)",
         icon="material-symbols:folder-open-outline",
         callback=open_file_from_dialog,
         menus=["file", "toolbar"],
