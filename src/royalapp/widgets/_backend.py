@@ -7,13 +7,15 @@ import psygnal
 from royalapp.types import (
     WidgetDataModel,
     SubWindowState,
-    ClipBoardDataModel,
+    ClipboardDataModel,
     DockArea,
     DockAreaString,
 )
 
 if TYPE_CHECKING:
     from royalapp.widgets._tab_list import SubWindow
+    import numpy as np
+    from numpy.typing import NDArray
 
 _W = TypeVar("_W")  # backend widget type
 
@@ -103,5 +105,11 @@ class BackendMainWindow(Generic[_W]):
     def _update_context(self) -> None:
         raise NotImplementedError
 
-    def _clipboard_data(self) -> ClipBoardDataModel | None:
+    def _clipboard_data(self) -> ClipboardDataModel | None:
+        raise NotImplementedError
+
+    def _set_clipboard_data(self, data: ClipboardDataModel) -> None:
+        raise NotImplementedError
+
+    def _screenshot(self, target: str) -> NDArray[np.uint8]:
         raise NotImplementedError

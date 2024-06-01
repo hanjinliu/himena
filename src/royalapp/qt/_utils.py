@@ -1,13 +1,26 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 import qtpy
 from qtpy import QtWidgets as QtW
-from qtpy import QtGui
-from royalapp.types import ClipBoardDataModel
+from qtpy import QtGui, QtCore
+from royalapp.types import ClipboardDataModel
 from royalapp.consts import StandardTypes
 
+if TYPE_CHECKING:
+    import numpy as np
+    from numpy.typing import NDArray
 
-def get_clipboard_data() -> ClipBoardDataModel | None:
+
+class ArrayQImage:
+    def __init__(self, qimage: QtGui.QImage):
+        self.qimage = qimage
+
+    def __array__(self, dtype=None) -> NDArray[np.uint8]:
+        return qimage_to_ndarray(self.qimage)
+
+
+def get_clipboard_data() -> ClipboardDataModel | None:
     clipboard = QtW.QApplication.clipboard()
     if clipboard is None:
         return None
@@ -15,16 +28,33 @@ def get_clipboard_data() -> ClipBoardDataModel | None:
     if md is None:
         return None
     if md.hasHtml():
-        return ClipBoardDataModel(value=md.html(), type=StandardTypes.HTML)
+        return ClipboardDataModel(value=md.html(), type=StandardTypes.HTML)
     elif md.hasImage():
-        arr = qimage_to_ndarray(clipboard.image())
-        return ClipBoardDataModel(value=arr, type=StandardTypes.IMAGE)
+        arr = ArrayQImage(clipboard.image())
+        return ClipboardDataModel(value=arr, type=StandardTypes.IMAGE)
     elif md.hasText():
-        return ClipBoardDataModel(value=md.text(), type=StandardTypes.TEXT)
+        return ClipboardDataModel(value=md.text(), type=StandardTypes.TEXT)
     return None
 
 
-def qimage_to_ndarray(img: QtGui.QImage):
+def set_clipboard_data(data: ClipboardDataModel) -> None:
+    clipboard = QtW.QApplication.clipboard()
+    if clipboard is None:
+        return
+    if data.type == StandardTypes.HTML:
+        md = QtCore.QMimeData()
+        md.setHtml(str(data.value))
+    elif data.type == StandardTypes.IMAGE:
+        if isinstance(data.value, ArrayQImage):
+            img = data.value.qimage
+        else:
+            raise NotImplementedError
+        clipboard.setImage(img)
+    elif data.type == StandardTypes.TEXT:
+        clipboard.setText(str(data.value))
+
+
+def qimage_to_ndarray(img: QtGui.QImage) -> NDArray[np.uint8]:
     import numpy as np
 
     if img.format() != QtGui.QImage.Format.Format_ARGB32:

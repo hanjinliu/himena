@@ -11,12 +11,13 @@ from royalapp import (
 from royalapp.qt import register_frontend_widget
 
 APP_NAME = "myapp"
+PANDAS_TABLE_TYPE = object()
 
 # `@register_frontend_widget` is a decorator that registers a widget class as a frontend
 # widget for the given file type. The class must have an `from_model` method to convert
 # data model to its instance. By further providing `to_model` method, the widget can
 # be converted back to data model.
-@register_frontend_widget("table")
+@register_frontend_widget(PANDAS_TABLE_TYPE)
 class DataFrameWidget(QtW.QTableWidget):
     def __init__(self, model: WidgetDataModel[pd.DataFrame]):
         df = model.value
@@ -45,11 +46,11 @@ def my_reader_provider(file_path):
     if Path(file_path).suffix == ".csv":
         def _read(file_path):
             df = pd.read_csv(file_path)
-            return WidgetDataModel(value=df, type="table", source=file_path)
+            return WidgetDataModel(value=df, type=PANDAS_TABLE_TYPE, source=file_path)
     elif Path(file_path).suffix == ".xlsx":
         def _read(file_path):
             df = pd.read_excel(file_path)
-            return WidgetDataModel(value=df, type="table", source=file_path)
+            return WidgetDataModel(value=df, type=PANDAS_TABLE_TYPE, source=file_path)
     else:
         return None
     return _read
@@ -71,7 +72,7 @@ def my_writer_provider(model: WidgetDataModel[pd.DataFrame]):
 def main():
     ui = new_window(APP_NAME)
     df = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
-    ui.add_data(df, type="table", title="test table")
+    ui.add_data(df, type=PANDAS_TABLE_TYPE, title="test table")
     ui.show(run=True)
 
 if __name__ == "__main__":

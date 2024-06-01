@@ -196,5 +196,7 @@ def get_plugin_interface(
         raise TypeError(f"`app` must be a string, got {type(app)}.")
     if place is None:
         place = ["Plugins", app]
+    elif isinstance(place, str):
+        place = [place]
     out = PluginInterface(app, place)
     return out

@@ -35,7 +35,7 @@ class QSubWindowArea(QtW.QMdiArea):
             raise TypeError(
                 f"`widget` must be a QtW.QWidget instance, got {type(widget)}."
             )
-        size = widget.sizeHint()
+        size = widget.sizeHint().expandedTo(QtCore.QSize(160, 120))
         sub_window = QSubWindow(widget, title)
         nwindows = len(self.subWindowList())
         self.addSubWindow(sub_window)
@@ -222,15 +222,16 @@ class QSubWindow(QtW.QMdiSubWindow):
 
     def _close_me(self):
         if self.main_widget().isWindowModified():
+            _yes = QtW.QMessageBox.StandardButton.Yes
+            _no = QtW.QMessageBox.StandardButton.No
             ok = (
                 QtW.QMessageBox.question(
                     self,
                     "Close Window",
                     "Data is not saved. Are you sure to close this window?",
-                    QtW.QMessageBox.StandardButton.Yes
-                    | QtW.QMessageBox.StandardButton.No,
+                    _yes | _no,
                 )
-                == QtW.QMessageBox.StandardButton.Yes
+                == _yes
             )
             if not ok:
                 return

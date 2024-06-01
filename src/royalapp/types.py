@@ -5,7 +5,6 @@ from typing import (
     Hashable,
     Literal,
     TypeAlias,
-    NewType,
     TypeVar,
     Generic,
 )
@@ -33,9 +32,6 @@ class SubWindowState(StrEnum):
 
 DockAreaString: TypeAlias = Literal["top", "bottom", "left", "right"]
 SubWindowStateString: TypeAlias = Literal["min", "max", "normal", "full"]
-
-TabTitle = NewType("TabTitle", str)
-WindowTitle = NewType("WindowTitle", str)
 
 
 class NewWidgetBehavior(StrEnum):
@@ -108,7 +104,7 @@ class WidgetDataModel(Generic[_T], BaseModel):
         )
 
 
-class ClipBoardDataModel(Generic[_T], BaseModel):
+class ClipboardDataModel(Generic[_T], BaseModel):
     """Data model for a clipboard data."""
 
     value: _T = Field(..., description="Internal value.")
@@ -116,6 +112,19 @@ class ClipBoardDataModel(Generic[_T], BaseModel):
 
     def to_widget_data_model(self) -> WidgetDataModel[_T]:
         return WidgetDataModel(value=self.value, type=self.type, title="Clipboard")
+
+
+class DragDropDataModel(Generic[_T], BaseModel):
+    """Data model for a drag and drop data."""
+
+    value: _T = Field(..., description="Internal value.")
+    type: Hashable | None = Field(default=None, description="Type of the internal data.")  # fmt: skip
+    title: str = Field(default=None, description="Title for the widget.")
+    source: Path | None = Field(default=None, description="Path of the file.")
+    source_type: str | None = Field(default=None, description="Type of the source.")  # fmt: skip
+
+    def to_widget_data_model(self) -> WidgetDataModel[_T]:
+        return WidgetDataModel(value=self.value, type=self.type, source=self.source)
 
 
 ReaderFunction = Callable[[Path], WidgetDataModel]

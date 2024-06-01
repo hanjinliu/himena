@@ -13,17 +13,15 @@ from royalapp.qt._qdock_widget import QDockWidget
 from royalapp.types import (
     DockArea,
     DockAreaString,
-    TabTitle,
-    WindowTitle,
     WidgetDataModel,
-    ClipBoardDataModel,
+    ClipboardDataModel,
     SubWindowState,
 )
 from royalapp.style import get_style
 from royalapp.app import get_app
 from royalapp import widgets
-from royalapp.qt._widget_registry import pick_widget_class
-from royalapp.qt._utils import get_clipboard_data
+from royalapp.qt.registry import pick_widget_class
+from royalapp.qt._utils import get_clipboard_data, set_clipboard_data, ArrayQImage
 
 if TYPE_CHECKING:
     from royalapp.widgets._main_window import SubWindow, MainWindow
@@ -179,16 +177,16 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         area.activateWindow(area.subWindowList()[i_window])
         return None
 
-    def _set_tab_title(self, i_tab: int, title: TabTitle) -> None:
+    def _set_tab_title(self, i_tab: int, title: str) -> None:
         return self._tab_widget.setTabText(i_tab, title)
 
-    def _window_title(self, widget: QtW.QWidget) -> WindowTitle:
+    def _window_title(self, widget: QtW.QWidget) -> str:
         window = widget.parentWidget().parentWidget()
         if not isinstance(window, QSubWindow):
             raise ValueError(f"Widget {widget!r} is not in a sub-window.")
         return window.windowTitle()
 
-    def _set_window_title(self, widget: QtW.QWidget, title: WindowTitle) -> None:
+    def _set_window_title(self, widget: QtW.QWidget, title: str) -> None:
         window = widget.parentWidget().parentWidget()
         if not isinstance(window, QSubWindow):
             raise ValueError(f"Widget {widget!r} is not in a sub-window.")
@@ -236,7 +234,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self._tab_widget.removeTab(self._tab_widget.currentIndex())
         return None
 
-    def _get_tab_name_list(self) -> list[TabTitle]:
+    def _get_tab_name_list(self) -> list[str]:
         return [self._tab_widget.tabText(i) for i in range(self._tab_widget.count())]
 
     def _get_widget_list(self, i_tab: int) -> list[tuple[str, QtW.QWidget]]:
@@ -270,8 +268,11 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         window.state = state
         return None
 
-    def _clipboard_data(self) -> ClipBoardDataModel | None:
+    def _clipboard_data(self) -> ClipboardDataModel | None:
         return get_clipboard_data()
+
+    def _set_clipboard_data(self, data: ClipboardDataModel) -> None:
+        return set_clipboard_data(data)
 
     def _connect_activation_signal(self, sig: psygnal.SignalInstance):
         self._tab_widget.newWindowActivated.connect(sig.emit)
@@ -285,6 +286,21 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             title = id_.title()
         menu = self._menubar
         menu.addMenu(QModelMenu(id_, self._app, title, self))
+
+    def _screenshot(self, target: str):
+        if target == "main":
+            qimg = self.grab().toImage()
+        elif target == "area":
+            if widget := self._tab_widget.currentWidget():
+                qimg = widget.grab().toImage()
+            else:
+                raise ValueError("No active area.")
+        elif target == "window":
+            if sub := self._tab_widget.currentWidget().currentSubWindow():
+                qimg = sub.main_widget().grab().toImage()
+            else:
+                raise ValueError("No active window.")
+        return ArrayQImage(qimg)
 
 
 _DOCK_AREA_MAP = {

@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Callable, TypeVar
+import warnings
 from royalapp.types import WidgetDataModel, ReaderFunction, WriterFunction
-from royalapp.consts import BasicTextFileTypes
+from royalapp.consts import BasicTextFileTypes, StandardTypes
 from royalapp._utils import get_widget_data_model_variable
 
 _ReaderProvider = Callable[[Path], ReaderFunction]
@@ -18,10 +19,15 @@ _WRITER_PROVIDERS: list[_WriterProvider] = []
 
 def get_readers(file_path: Path | list[Path]) -> list[ReaderFunction]:
     """Get reader."""
-    matched: list[Callable] = []
+    matched: list[ReaderFunction] = []
     for provider in _READER_PROVIDERS:
-        if out := provider(file_path):
-            matched.append(out)
+        try:
+            out = provider(file_path)
+        except Exception as e:
+            _warn_failed_provider(provider, e)
+        else:
+            if out:
+                matched.append(out)
     if matched:
         return matched
     return [_fallback_reader(file_path)]
@@ -31,15 +37,42 @@ def get_writers(file_data: WidgetDataModel) -> list[WriterFunction]:
     """Get writer."""
     matched: list[WriterFunction] = []
     for provider in _WRITER_PROVIDERS:
-        if out := provider(file_data):
-            matched.append(out)
+        try:
+            out = provider(file_data)
+        except Exception as e:
+            _warn_failed_provider(provider, e)
+        else:
+            if out:
+                matched.append(out)
     if matched:
         return matched
     return [_fallback_writer(file_data)]
 
 
+def _warn_failed_provider(provider, e: Exception):
+    return warnings.warn(
+        f"Error in reader provider {provider!r}: {e}",
+        RuntimeWarning,
+        stacklevel=3,
+    )
+
+
 def register_reader_provider(provider: _RP) -> _RP:
-    """Register reader provider function."""
+    """
+    Register reader provider function.
+
+    This function should return a reader function for the given file path, or None if
+    your plugin does not support the file type.
+
+    >>> @register_reader_provider
+    ... def my_reader_provider(path):
+    ...     if Path(path).suffix != ".txt":
+    ...         return None
+    ...     def _read_text(path):  # this is the reader function
+    ...         with open(path) as f:
+    ...             return WidgetDataModel(value=f.read(), type="text", source=path)
+    ...     return _read_text
+    """
     if not callable(provider):
         raise ValueError("Provider must be callable.")
     _READER_PROVIDERS.append(provider)
@@ -47,7 +80,21 @@ def register_reader_provider(provider: _RP) -> _RP:
 
 
 def register_writer_provider(provider: _WP) -> _WP:
-    """Register writer provider function."""
+    """
+    Register writer provider function.
+
+    This function should return a writer function for the given data model, or None if
+    your plugin does not support the data type.
+
+    >>> @register_writer_provider
+    ... def my_writer_provider(model: WidgetDataModel):
+    ...     if not isinstance(model.value, str) or model.source.suffix != ".txt":
+    ...         return None
+    ...     def _write_text(model: WidgetDataModel):  # this is the writer function
+    ...         with open(model.source, "w") as f:
+    ...             f.write(model.value)
+    ...     return _write_text
+    """
     if not callable(provider):
         raise ValueError("Provider must be callable.")
     _WRITER_PROVIDERS.append(TypedWriterProvider.try_convert(provider))
@@ -62,30 +109,36 @@ def _read_text(file_path: Path) -> WidgetDataModel:
     with open(file_path) as f:
         return WidgetDataModel(
             value=f.read(),
-            type="text",
+            type=StandardTypes.TEXT,
             source=Path(file_path),
         )
 
 
 def _read_simple_image(file_path: Path) -> WidgetDataModel:
     """Read image file."""
-    import imageio.v3 as iio
+    import numpy as np
+    from PIL import Image
+
+    arr = np.array(Image.open(file_path))
 
     return WidgetDataModel(
-        value=iio.imread(file_path),
-        type="image",
+        value=arr,
+        type=StandardTypes.IMAGE,
         source=Path(file_path),
     )
 
 
 def _read_csv(file_path: Path) -> WidgetDataModel:
     """Read CSV file."""
-    import numpy as np
+    import csv
 
-    value = np.genfromtxt(file_path, delimiter=",", dtype=None, encoding=None)
+    with open(file_path) as f:
+        reader = csv.reader(f)
+        data = list(reader)
+
     return WidgetDataModel(
-        value,
-        type="csv",
+        value=data,
+        type=StandardTypes.TABLE,
         source=Path(file_path),
     )
 
@@ -98,7 +151,7 @@ def _fallback_reader(file_path: Path | list[Path]) -> ReaderFunction:
         return _read_text
     elif file_path.suffix == ".csv":
         return _read_csv
-    elif file_path.suffix in {".png", ".jpg", ".jpeg", ".gif"}:
+    elif file_path.suffix in {".png", ".jpg", ".jpeg"}:
         return _read_simple_image
     raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
@@ -106,7 +159,7 @@ def _fallback_reader(file_path: Path | list[Path]) -> ReaderFunction:
 # default writers
 
 
-def write_text(file_data: WidgetDataModel[str]) -> None:
+def _write_text(file_data: WidgetDataModel[str]) -> None:
     """Write text file."""
     if file_data.source is None:
         raise ValueError("File path is not provided.")
@@ -117,7 +170,7 @@ def write_text(file_data: WidgetDataModel[str]) -> None:
 def _fallback_writer(file_data: WidgetDataModel) -> WriterFunction:
     """Get default writer."""
     if file_data.source.suffix in BasicTextFileTypes:
-        return write_text
+        return _write_text
     else:
         return None
 

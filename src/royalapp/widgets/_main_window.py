@@ -6,6 +6,7 @@ from app_model.expressions import create_context
 from psygnal import SignalGroup, Signal
 from royalapp.types import (
     WidgetDataModel,
+    ClipboardDataModel,
     NewWidgetBehavior,
     SubWindowState,
     DockArea,
@@ -190,9 +191,14 @@ def remove_instance(name: str, instance: MainWindow[_W]) -> None:
 
 
 def _init_application(app: Application) -> None:
-    from royalapp._app_model._actions import ACTIONS
+    from royalapp._app_model._actions import ACTIONS_AND_MENUS
 
-    app.register_actions(ACTIONS)
+    for each in ACTIONS_AND_MENUS:
+        if isinstance(each, list):
+            app.menus.append_menu_items([each[0]])
+            app.register_actions(each[1:])
+        else:
+            app.register_action(each)
 
     @app.injection_store.mark_provider
     def _current_instance() -> MainWindow:
@@ -208,4 +214,14 @@ def _init_application(app: Application) -> None:
         cls = ins._backend_main_window._pick_widget_class(file_data.type)
         widget = cls.from_model(file_data)
         ins.add_widget(widget, title=file_data.title)
+        return None
+
+    @app.injection_store.mark_provider
+    def _get_clipboard_data() -> ClipboardDataModel:
+        return current_instance(app.name)._backend_main_window._clipboard_data()
+
+    @app.injection_store.mark_processor
+    def _process_clipboard_data(clip_data: ClipboardDataModel) -> None:
+        ins = current_instance(app.name)
+        ins._backend_main_window._set_clipboard_data(clip_data)
         return None

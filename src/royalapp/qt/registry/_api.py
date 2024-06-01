@@ -4,6 +4,12 @@ from qtpy import QtWidgets as QtW
 
 from royalapp.types import WidgetDataModel
 from royalapp.consts import StandardTypes
+from royalapp.qt.registry._widgets import (
+    QDefaultTextEdit,
+    QDefaultTableWidget,
+    QFallbackWidget,
+    QDefaultImageView,
+)
 
 WidgetClass = Union[Callable[[WidgetDataModel], QtW.QWidget], type[QtW.QWidget]]
 
@@ -72,53 +78,14 @@ def register_frontend_widget(type_, widget_class=None, app=None) -> None:
     return _inner if widget_class is None else _inner(widget_class)
 
 
-class QDefaultTextEdit(QtW.QPlainTextEdit):
-    def __init__(self, file_path):
-        super().__init__()
-        self._file_path = file_path
-        self.textChanged.connect(self._on_text_changed)
-
-    def _on_text_changed(self) -> None:
-        # self.setWindowModified(True)
-        pass
-
-    @classmethod
-    def from_model(cls, file: WidgetDataModel) -> QDefaultTextEdit:
-        self = cls(file.source)
-        self.setPlainText(file.value)
-        if file.source is not None:
-            self.setObjectName(file.source.name)
-        return self
-
-    def to_model(self) -> WidgetDataModel:
-        return WidgetDataModel(
-            value=self.toPlainText(),
-            type="text",
-            source=self._file_path,
-        )
-
-
-class QFallbackWidget(QtW.QPlainTextEdit):
-    """A fallback widget for the data of non-registered type."""
-
-    def __init__(self):
-        super().__init__()
-        self.setReadOnly(True)
-
-    @classmethod
-    def from_model(cls, model: WidgetDataModel) -> QFallbackWidget:
-        self = cls()
-        self.setPlainText(
-            f"No widget registered for:\n\ntype: {model.type!r}\nvalue: {model.value!r}"
-        )
-        return self
-
-
 def register_default_widget_types() -> None:
     """Register default widget types."""
-    register_frontend_widget(str, QDefaultTextEdit)
     register_frontend_widget("text", QDefaultTextEdit)
     register_frontend_widget(StandardTypes.TEXT, QDefaultTextEdit)
+    register_frontend_widget("table", QDefaultTableWidget)
+    register_frontend_widget(StandardTypes.TABLE, QDefaultTableWidget)
+    register_frontend_widget("image", QDefaultImageView)
+    register_frontend_widget(StandardTypes.IMAGE, QDefaultImageView)
 
 
 def pick_widget_class(app_name: str, type: Hashable) -> WidgetClass:

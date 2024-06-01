@@ -94,6 +94,7 @@ def invert(ui: MainWindow) -> WidgetDataModel:
     model = ui.tabs.current().current().to_model()
     return WidgetDataModel(value=-model.value, type="image", title=model.title + "-Inverted")
 
+
 def main():
     ui = new_window(APP_NAME)
     im = iio.imread("imageio:astronaut.png")

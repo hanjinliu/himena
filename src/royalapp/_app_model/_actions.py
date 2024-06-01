@@ -1,7 +1,15 @@
-from app_model.types import Action, KeyBindingRule, KeyCode, KeyMod, KeyChord
+from app_model.types import (
+    Action,
+    KeyBindingRule,
+    KeyCode,
+    KeyMod,
+    KeyChord,
+    SubmenuItem,
+)
+from royalapp.consts import StandardTypes
 from royalapp.widgets import MainWindow
 from royalapp.io import get_readers, get_writers
-from royalapp.types import WidgetDataModel
+from royalapp.types import ClipboardDataModel, WidgetDataModel
 from royalapp._app_model._context import AppContext as _ctx
 
 
@@ -92,9 +100,48 @@ def close_current_tab(ui: MainWindow) -> None:
         ui.tabs.pop(idx)
 
 
+def copy_screenshot(ui: MainWindow) -> ClipboardDataModel:
+    data = ui._backend_main_window._screenshot("main")
+    return ClipboardDataModel(value=data, type=StandardTypes.IMAGE)
+
+
+def copy_screenshot_area(ui: MainWindow) -> ClipboardDataModel:
+    data = ui._backend_main_window._screenshot("area")
+    return ClipboardDataModel(value=data, type=StandardTypes.IMAGE)
+
+
+def copy_screenshot_window(ui: MainWindow) -> ClipboardDataModel:
+    data = ui._backend_main_window._screenshot("window")
+    return ClipboardDataModel(value=data, type=StandardTypes.IMAGE)
+
+
+def _save_screenshot(ui: MainWindow, target: str) -> None:
+    from PIL import Image
+    import numpy as np
+
+    arr = ui._backend_main_window._screenshot(target)
+    save_path = ui._backend_main_window._open_file_dialog(mode="w")
+    if save_path is None:
+        return
+    img = Image.fromarray(np.asarray(arr))
+    img.save(save_path)
+
+
+def save_screenshot(ui: MainWindow) -> None:
+    _save_screenshot(ui, "main")
+
+
+def save_screenshot_area(ui: MainWindow) -> None:
+    _save_screenshot(ui, "area")
+
+
+def save_screenshot_window(ui: MainWindow) -> None:
+    _save_screenshot(ui, "window")
+
+
 _CtrlK = KeyMod.CtrlCmd | KeyCode.KeyK
 
-ACTIONS: list[Action] = [
+ACTIONS_AND_MENUS = [
     Action(
         id="open",
         title="Open File(s)",
@@ -135,11 +182,10 @@ ACTIONS: list[Action] = [
     ),
     Action(
         id="paste",
-        title="Paste",
+        title="Paste as window",
         icon="material-symbols:content-paste",
         callback=paste_from_clipboard,
         menus=["file"],
-        keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyV)],
     ),
     Action(
         id="close-window",
@@ -156,13 +202,6 @@ ACTIONS: list[Action] = [
         callback=close_all_windows_in_tab,
         menus=["window"],
         enablement=~_ctx.is_active_tab_empty,
-    ),
-    Action(
-        id="exit",
-        title="Exit",
-        callback=exit_main_window,
-        menus=["file"],
-        keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyQ)],
     ),
     Action(
         id="copy-window",
@@ -183,5 +222,51 @@ ACTIONS: list[Action] = [
         title="Close Tab",
         callback=close_current_tab,
         menus=["tab"],
+    ),
+    [
+        ("file", SubmenuItem(submenu="file/screenshot", title="Screenshot")),
+        Action(
+            id="copy-screenshot",
+            title="Copy screenshot of entire main window",
+            callback=copy_screenshot,
+            menus=["file/screenshot"],
+        ),
+        Action(
+            id="copy-screenshot-area",
+            title="Copy screenshot of tab area",
+            callback=copy_screenshot_area,
+            menus=["file/screenshot"],
+        ),
+        Action(
+            id="copy-screenshot-window",
+            title="Copy Screenshot of sub-window",
+            callback=copy_screenshot_window,
+            menus=["file/screenshot"],
+        ),
+        Action(
+            id="save-screenshot",
+            title="Save screenshot of entire main window",
+            callback=save_screenshot,
+            menus=["file/screenshot"],
+        ),
+        Action(
+            id="save-screenshot-area",
+            title="Save screenshot of tab area",
+            callback=save_screenshot_area,
+            menus=["file/screenshot"],
+        ),
+        Action(
+            id="save-screenshot-window",
+            title="Save screenshot of sub-window",
+            callback=save_screenshot_window,
+            menus=["file/screenshot"],
+        ),
+    ],
+    Action(
+        id="exit",
+        title="Exit",
+        callback=exit_main_window,
+        menus=["file"],
+        keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyQ)],
     ),
 ]
