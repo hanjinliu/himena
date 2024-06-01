@@ -68,6 +68,16 @@ _ICON_CLOSE = QIconifyIcon("material-symbols:close-rounded")
 _ICON_NORMAL = QIconifyIcon("material-symbols:filter-none-outline-rounded", rotate=180)
 
 
+class QCentralWidget(QtW.QWidget):
+    def __init__(self, parent):
+        super().__init__(parent)
+        layout = QtW.QVBoxLayout()
+        pad = 4
+        layout.setContentsMargins(pad, pad, pad, pad)
+        layout.setSpacing(0)
+        self.setLayout(layout)
+
+
 class QSubWindow(QtW.QMdiSubWindow):
     state_changed = QtCore.Signal(SubWindowState)
     closed = QtCore.Signal()
@@ -76,13 +86,15 @@ class QSubWindow(QtW.QMdiSubWindow):
         super().__init__()
         self.setWindowFlags(QtCore.Qt.WindowType.FramelessWindowHint)
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_Hover, True)
 
+        # BUG: this causes the window to be unresponsive sometimes
         # add shadow effect
-        self._shadow_effect = QtW.QGraphicsDropShadowEffect()
-        self._shadow_effect.setBlurRadius(14)
-        self._shadow_effect.setColor(QtGui.QColor(0, 0, 0, 100))
-        self._shadow_effect.setOffset(0, 0)
-        self.setGraphicsEffect(self._shadow_effect)
+        # self._shadow_effect = QtW.QGraphicsDropShadowEffect()
+        # self._shadow_effect.setBlurRadius(14)
+        # self._shadow_effect.setColor(QtGui.QColor(0, 0, 0, 100))
+        # self._shadow_effect.setOffset(0, 0)
+        # self.setGraphicsEffect(self._shadow_effect)
 
         self._window_state = SubWindowState.NORMAL
         self._resize_state = ResizeState.NONE
@@ -90,22 +102,14 @@ class QSubWindow(QtW.QMdiSubWindow):
         self._widget = widget
         self._last_hovered = timer()  # throttling
 
-        _central_widget = QtW.QWidget()
-        layout = QtW.QVBoxLayout()
-        pad = 4
-        layout.setContentsMargins(pad, pad, pad, pad)
-        layout.setSpacing(0)
-        _central_widget.setLayout(layout)
-        self.setWidget(_central_widget)
+        self._central_widget = QCentralWidget(self)
+        self.setWidget(self._central_widget)
 
         self._title_bar = QSubWindowTitleBar(self, title)
 
-        layout.addWidget(self._title_bar)
-        layout.addWidget(widget)
+        self._central_widget.layout().addWidget(self._title_bar)
+        self._central_widget.layout().addWidget(widget)
         self._last_geometry = self.geometry()
-
-        # self._graphics_effect = QtW.QGraphicsDropShadowEffect()  # TODO
-        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_Hover, True)
 
     def main_widget(self) -> QtW.QWidget:
         return self._widget
@@ -178,6 +182,7 @@ class QSubWindow(QtW.QMdiSubWindow):
     def keyPressEvent(self, a0: QtGui.QKeyEvent | None) -> None:
         if a0.key() == QtCore.Qt.Key.Key_F11:
             self._title_bar._toggle_full_screen()
+        return super().keyPressEvent(a0)
 
     def event(self, a0: QtCore.QEvent) -> bool:
         if a0.type() == QtCore.QEvent.Type.HoverMove:
@@ -203,12 +208,12 @@ class QSubWindow(QtW.QMdiSubWindow):
 
     def _mouse_hover_event(self, event_pos: QtCore.QPoint):
         # if the cursor is at the edges, set the cursor to resize
-        if self.state is not SubWindowState.NORMAL:
-            return
         current_time = timer()
         if current_time - self._last_hovered < 0.1:
-            return
+            return None
         self._last_hovered = current_time
+        if self.state is not SubWindowState.NORMAL:
+            return None
         resize_state = self._check_resize_state(event_pos)
         if self._current_button == QtCore.Qt.MouseButton.NoButton:
             self.setCursor(resize_state.to_cursor_shape())
