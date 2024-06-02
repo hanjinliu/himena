@@ -41,11 +41,14 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         app_model_app = widgets.get_application(app)
         super().__init__(app_model_app)
         self._tab_widget = QTabWidget()
-        default_menu_ids = {
-            menu_id: menu_id.replace("_", " ").title()
-            for menu_id, _ in app_model_app.menus
-            if _is_root_menu_id(app_model_app, menu_id)
-        }
+        default_menu_ids = {"file": "File", "window": "Window", "tab": "Tab"}
+        default_menu_ids.update(
+            {
+                menu_id: menu_id.replace("_", " ").title()
+                for menu_id, _ in app_model_app.menus
+                if _is_root_menu_id(app_model_app, menu_id)
+            }
+        )
         self._menubar = self.setModelMenuBar(default_menu_ids)
         self._toolbar = self.addModelToolBar(menu_id="toolbar")
         self._toolbar.setMovable(False)
@@ -243,7 +246,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def _del_widget_at(self, i_tab: int, i_window: int) -> None:
         if i_tab < 0 or i_window < 0:
-            return None
+            raise ValueError("Invalid tab or window index.")
         tab = self._tab_widget.widget(i_tab)
         tab.removeSubWindow(tab.subWindowList()[i_window])
         return None

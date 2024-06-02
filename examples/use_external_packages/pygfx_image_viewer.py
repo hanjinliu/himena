@@ -5,15 +5,13 @@ from royalapp import (
     new_window,
     register_reader_provider,
     register_writer_provider,
-    MainWindow, WidgetDataModel
+    WidgetDataModel
 )
 from royalapp.qt import register_frontend_widget
 from royalapp.plugins import get_plugin_interface
 from wgpu.gui.qt import WgpuWidget
 import imageio.v3 as iio
 import pygfx as gfx
-
-APP_NAME = "myapp"
 
 # `@register_frontend_widget` is a decorator that registers a widget class as a frontend
 # widget for the given file type. The class must have an `from_model` method to convert
@@ -75,13 +73,12 @@ def my_writer_provider(model: WidgetDataModel):
         iio.imwrite(model.source, model.value)
     return _write_image
 
-interf = get_plugin_interface(APP_NAME, "image_processing")
+interf = get_plugin_interface("image_processing")
 
-@interf.register_function(title="Gaussian Filter")
-def gaussian_filter(ui: MainWindow) -> WidgetDataModel:
+@interf.register_function(title="Gaussian Filter", types="image")
+def gaussian_filter(model: WidgetDataModel) -> WidgetDataModel:
     from scipy.ndimage import gaussian_filter
 
-    model = ui.tabs.current().current().to_model()
     im = model.value
     if im.ndim == 3:
         im = gaussian_filter(im, sigma=3, axes=(0, 1))
@@ -89,14 +86,13 @@ def gaussian_filter(ui: MainWindow) -> WidgetDataModel:
         im = gaussian_filter(im, sigma=3)
     return WidgetDataModel(value=im, type="image", title=model.title + "-Gaussian")
 
-@interf.register_function(title="Invert")
-def invert(ui: MainWindow) -> WidgetDataModel:
-    model = ui.tabs.current().current().to_model()
+@interf.register_function(title="Invert", types="image")
+def invert(model: WidgetDataModel) -> WidgetDataModel:
     return WidgetDataModel(value=-model.value, type="image", title=model.title + "-Inverted")
 
 
 def main():
-    ui = new_window(APP_NAME)
+    ui = new_window(plugins=[interf])
     im = iio.imread("imageio:astronaut.png")
     ui.add_data(im, type="image", title="Astronaut")
     ui.show(run=True)

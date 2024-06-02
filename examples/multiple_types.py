@@ -4,9 +4,7 @@ import re
 from royalapp import new_window, WidgetDataModel
 from royalapp.qt import register_frontend_widget
 from royalapp.plugins import get_plugin_interface
-from royalapp._app_model import AppContext
 
-APP_NAME = "myapp"
 
 @register_frontend_widget("text")
 class MyTextEdit(QtW.QPlainTextEdit):
@@ -44,7 +42,7 @@ class MyNonSavableEdit(QtW.QTextEdit):
         self.setPlainText(model.value)
         return self
 
-interf = get_plugin_interface(APP_NAME, "my_menu")
+interf = get_plugin_interface(["plugins", "my_menu"])
 
 @interf.register_function
 def to_plain_text(model: WidgetDataModel) -> WidgetDataModel:
@@ -58,7 +56,7 @@ def to_plain_text(model: WidgetDataModel) -> WidgetDataModel:
     new.title = model.title + " (plain)"
     return new
 
-@interf.register_function(enablement=AppContext.active_window_model_type == "text")
+@interf.register_function(types="text")
 def to_basic_widget(model: WidgetDataModel) -> WidgetDataModel:
     if model.type != "text":
         return None
@@ -68,7 +66,7 @@ def to_basic_widget(model: WidgetDataModel) -> WidgetDataModel:
     return new
 
 def main():
-    ui = new_window(APP_NAME)
+    ui = new_window("myapp", plugins=["royalapp.builtins.console", interf])
     ui.add_data("<i>Text</i>", type="html", title="test window")
     ui.show(run=True)
 

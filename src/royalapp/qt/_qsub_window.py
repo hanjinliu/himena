@@ -11,6 +11,7 @@ from royalapp.qt._qwindow_resize import ResizeState
 class QSubWindowArea(QtW.QMdiArea):
     def __init__(self):
         super().__init__()
+        self.viewport().setFocusPolicy(QtCore.Qt.FocusPolicy.ClickFocus)
 
     def addSubWindow(self, sub_window: QSubWindow):
         super().addSubWindow(sub_window)

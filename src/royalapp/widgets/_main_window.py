@@ -22,22 +22,14 @@ _APPLICATIONS: dict[str, Application] = {}
 _APP_INSTANCES: dict[str, list[MainWindow]] = {}
 
 
-def get_application(name: str) -> Application:
-    """Get application by name."""
-    if name not in _APPLICATIONS:
-        app = Application.get_or_create(name)
-        _APPLICATIONS[name] = app
-        _init_application(app)
-    return _APPLICATIONS[name]
-
-
 class MainWindowEvents(SignalGroup):
     window_activated = Signal()
 
 
 class MainWindow(Generic[_W]):
-    def __init__(self, backend: BackendMainWindow[_W], app: Application) -> None:
+    def __init__(self, backend: BackendMainWindow[_W], app: str | Application) -> None:
         self.events = MainWindowEvents()
+        app = Application.get_or_create(app) if isinstance(app, str) else app
         self._backend_main_window = backend
         self._tab_list = TabList(self._backend_main_window)
         self._new_widget_behavior = NewWidgetBehavior.WINDOW
@@ -47,6 +39,7 @@ class MainWindow(Generic[_W]):
             self.events.window_activated
         )
         self._ctx_keys = AppContext(create_context(self, max_depth=0))
+        self._tab_list.changed.connect(self._backend_main_window._update_context)
 
     @property
     def tabs(self) -> TabList[_W]:
@@ -200,9 +193,28 @@ def _init_application(app: Application) -> None:
         else:
             app.register_action(each)
 
+    app.injection_store.namespace = {
+        "MainWindow": MainWindow,
+        "TabArea": TabArea,
+        "SubWindow": SubWindow,
+        "WidgetDataModel": WidgetDataModel,
+    }
+
+    ### providers and processors
     @app.injection_store.mark_provider
     def _current_instance() -> MainWindow:
         return current_instance(app.name)
+
+    @app.injection_store.mark_provider
+    def _current_tab_area() -> TabArea:
+        return current_instance(app.name).tabs.current()
+
+    @app.injection_store.mark_provider
+    def _current_window() -> SubWindow:
+        ins = current_instance(app.name)
+        if area := ins.tabs.current():
+            return area.current()
+        return None
 
     @app.injection_store.mark_provider
     def _provide_file_output() -> WidgetDataModel:
@@ -225,3 +237,12 @@ def _init_application(app: Application) -> None:
         ins = current_instance(app.name)
         ins._backend_main_window._set_clipboard_data(clip_data)
         return None
+
+
+def get_application(name: str) -> Application:
+    """Get application by name."""
+    if name not in _APPLICATIONS:
+        app = Application.get_or_create(name)
+        _APPLICATIONS[name] = app
+        _init_application(app)
+    return _APPLICATIONS[name]

@@ -1,37 +1,30 @@
 from __future__ import annotations
 
-from typing import Callable, Hashable, Sequence, TypeVar, overload
+from typing import Callable, Hashable, Sequence, TypeVar, overload, TYPE_CHECKING
 
-from app_model import Application
+from app_model import Action, Application
 from app_model.types import SubmenuItem
 from app_model.expressions import BoolOp
 
 from royalapp._app_model import AppContext as ctx
-from royalapp.widgets import get_application, MainWindow
 from royalapp.types import DockArea, DockAreaString
 from royalapp import _utils
+
+if TYPE_CHECKING:
+    from royalapp.widgets import MainWindow
 
 _F = TypeVar("_F", bound=Callable)
 
 
 class PluginInterface:
-    def __init__(self, app: str | Application, place: list[str]):
-        self._app = get_application(app) if isinstance(app, str) else app
+    def __init__(self, place: list[str]):
         self._place = place
-        to_add = []
-        for i in range(1, len(self._place)):
-            id = "/".join(self._place[:i])
-            item = SubmenuItem(
-                title=self._place[i], submenu="/".join(self._place[: i + 1])
-            )
-            to_add.append((id, item))
-        self._app.menus.append_menu_items(to_add)
+        self._actions: list[Action] = []
 
     def add_child(
         self,
         id: str,
         title: str | None = None,
-        enablement=None,
     ) -> PluginInterface:
         """
         Add a child interface.
@@ -40,11 +33,7 @@ class PluginInterface:
         """
         if title is None:
             title = id.title()
-        item = SubmenuItem(
-            title=title, submenu="/".join(self._place), enablement=enablement
-        )
-        self._app.menus.append_menu_items([(id, item)])
-        return self.__class__(self._app, self._place + [id])
+        return self.__class__(self._place + [id])
 
     @overload
     def register_function(
@@ -94,10 +83,10 @@ class PluginInterface:
         if types is not None:
             if enablement is not None:
                 raise TypeError("Cannot give both `types` and `enablement`.")
-            elif isinstance(types, Sequence):
-                enablement = ctx.active_window_model_type.in_(types)
+            elif isinstance(types, Sequence) and not isinstance(types, str):
+                enablement = ctx.active_window_model_type.in_([hash(t) for t in types])
             else:
-                enablement = ctx.active_window_model_type == types
+                enablement = ctx.active_window_model_type == hash(types)
 
         def _inner(f: _F) -> _F:
             if title is None:
@@ -105,27 +94,21 @@ class PluginInterface:
             else:
                 _title = title
             _enablement = enablement
-            if annot := _utils.get_widget_data_model_variable(f):
-                _expr = ctx.is_active_window_exportable & (
-                    ctx.active_window_model_type == annot
-                )
-                if enablement is None:
-                    _enablement = _expr
-                else:
-                    _enablement = _expr & enablement
-            elif _utils.has_widget_data_model_argument(f):
+            if _utils.has_widget_data_model_argument(f):
                 _expr = ctx.is_active_window_exportable
                 if enablement is None:
                     _enablement = _expr
                 else:
                     _enablement = _expr & enablement
-            self._app.register_action(
-                action=f.__qualname__,
+
+            action = Action(
+                id=f.__qualname__,
                 title=_title,
                 callback=f,
                 menus=["/".join(self._place)],
                 enablement=_enablement,
             )
+            self._actions.append(action)
 
         return _inner if func is None else _inner(func)
 
@@ -174,29 +157,50 @@ class PluginInterface:
 
         def _inner(wf: Callable):
             def _callback(ui: MainWindow):
+                try:
+                    widget = wf(ui)
+                except TypeError:
+                    widget = wf()
                 ui.add_dock_widget(
-                    wf(), title=title, area=area, allowed_areas=allowed_areas
+                    widget, title=title, area=area, allowed_areas=allowed_areas
                 )
 
-            self._app.register_action(
-                action=wf.__qualname__,
+            action = Action(
+                id=wf.__qualname__,
                 title=title,
                 callback=_callback,
                 menus=["/".join(self._place)],
             )
+            self._actions.append(action)
             return wf
 
         return _inner if widget_factory is None else _inner(widget_factory)
 
+    def install_to(self, app: Application):
+        existing_menu_ids = set()
+        for menu_id, menu in app.menus:
+            existing_menu_ids.add(menu_id)
+            for each in menu:
+                if isinstance(each, SubmenuItem):
+                    existing_menu_ids.add(each.submenu)
+        app.register_actions(self._actions)
+        to_add: list[tuple[str, SubmenuItem]] = []
+        for i in range(1, len(self._place)):
+            id = "/".join(self._place[:i])
+            if id in existing_menu_ids:
+                continue
+            item = SubmenuItem(
+                title=self._place[i], submenu="/".join(self._place[: i + 1])
+            )
+            to_add.append((id, item))
 
-def get_plugin_interface(
-    app: str, place: str | list[str] | None = None
-) -> PluginInterface:
-    if not isinstance(app, str):
-        raise TypeError(f"`app` must be a string, got {type(app)}.")
+        app.menus.append_menu_items(to_add)
+
+
+def get_plugin_interface(place: str | list[str] | None = None) -> PluginInterface:
     if place is None:
-        place = ["Plugins", app]
+        place = ["Plugins"]
     elif isinstance(place, str):
         place = [place]
-    out = PluginInterface(app, place)
+    out = PluginInterface(place)
     return out

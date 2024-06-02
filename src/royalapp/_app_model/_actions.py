@@ -80,7 +80,7 @@ def close_current_window(ui: MainWindow) -> None:
 
 
 def close_all_windows_in_tab(ui: MainWindow) -> None:
-    if area := ui.tabs.current_or():
+    if area := ui.tabs.current():
         area.clear()
 
 
@@ -194,14 +194,14 @@ ACTIONS_AND_MENUS = [
         callback=close_current_window,
         menus=["window"],
         keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyW)],
-        enablement=~_ctx.is_active_tab_empty,
+        enablement=_ctx.has_sub_windows,
     ),
     Action(
         id="close-all-window",
         title="Close all windows in tab",
         callback=close_all_windows_in_tab,
         menus=["window"],
-        enablement=~_ctx.is_active_tab_empty,
+        enablement=_ctx.has_sub_windows,
     ),
     Action(
         id="copy-window",
@@ -222,6 +222,7 @@ ACTIONS_AND_MENUS = [
         title="Close Tab",
         callback=close_current_tab,
         menus=["tab"],
+        enablement=_ctx.has_tabs,
     ),
     [
         ("file", SubmenuItem(submenu="file/screenshot", title="Screenshot")),
@@ -236,12 +237,14 @@ ACTIONS_AND_MENUS = [
             title="Copy screenshot of tab area",
             callback=copy_screenshot_area,
             menus=["file/screenshot"],
+            enablement=_ctx.has_tabs,
         ),
         Action(
             id="copy-screenshot-window",
             title="Copy Screenshot of sub-window",
             callback=copy_screenshot_window,
             menus=["file/screenshot"],
+            enablement=_ctx.has_sub_windows,
         ),
         Action(
             id="save-screenshot",
@@ -254,12 +257,14 @@ ACTIONS_AND_MENUS = [
             title="Save screenshot of tab area",
             callback=save_screenshot_area,
             menus=["file/screenshot"],
+            enablement=_ctx.has_tabs,
         ),
         Action(
             id="save-screenshot-window",
             title="Save screenshot of sub-window",
             callback=save_screenshot_window,
             menus=["file/screenshot"],
+            enablement=_ctx.has_sub_windows,
         ),
     ],
     Action(

@@ -18,6 +18,7 @@ def get_widget_data_model_variable(func: Callable) -> type | None:
 
 
 def has_widget_data_model_argument(func: Callable) -> bool:
+    """If true, the function has a WidgetDataModel type hint."""
     for k, v in func.__annotations__.items():
         if k == "return":
             continue

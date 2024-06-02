@@ -7,30 +7,37 @@ if TYPE_CHECKING:
 
 
 def _is_active_window_savable(ui: "MainWindow") -> bool:
-    if area := ui.tabs.current_or():
-        if win := area.current_or():
+    if area := ui.tabs.current():
+        if win := area.current():
             return win.is_exportable
     return False
 
 
 def _active_window_state(ui: "MainWindow"):
-    if area := ui.tabs.current_or():
-        if win := area.current_or():
+    if area := ui.tabs.current():
+        if win := area.current():
             return win.state
     return SubWindowState.NORMAL
 
 
-def _is_active_tab_empty(ui: "MainWindow") -> bool:
-    if area := ui.tabs.current_or():
-        return area.len() == 0
-    return True
+def _has_sub_windows(ui: "MainWindow") -> bool:
+    if area := ui.tabs.current():
+        return area.len() > 0
+    return False
 
 
-def _active_window_model_type(ui: "MainWindow") -> str | None:
-    if area := ui.tabs.current_or():
-        if win := area.current_or():
+def _has_tabs(ui: "MainWindow") -> bool:
+    return ui.tabs.len() > 0
+
+
+def _active_window_model_type(ui: "MainWindow") -> int | None:
+    if area := ui.tabs.current():
+        if win := area.current():
             if win.is_exportable:
-                return win.to_model().type
+                out = win.to_model().type
+                if out is None:
+                    return out
+                return hash(out)
     return None
 
 
@@ -45,14 +52,19 @@ class AppContext(ContextNamespace["MainWindow"]):
         "state of the sub-window",
         _active_window_state,
     )
-    is_active_tab_empty = ContextKey(
+    has_tabs = ContextKey(
+        False,
+        "if the current window has tabs",
+        _has_tabs,
+    )
+    has_sub_windows = ContextKey(
         False,
         "if the current tab is empty",
-        _is_active_tab_empty,
+        _has_sub_windows,
     )
     active_window_model_type = ContextKey(
         None,
-        "type of the model of the active window",
+        "hash of the type of the model of the active window",
         _active_window_model_type,
     )
 

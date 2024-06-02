@@ -33,11 +33,8 @@ class SemiMutableSequence(Sequence[_W]):
 
     def clear(self):
         """Clear all the contents of the list."""
-        try:
-            while True:
-                self.pop()
-        except IndexError:
-            pass
+        for _ in range(len(self)):
+            del self[-1]
 
     def remove(self, value: _W) -> None:
         """Remove the first occurrence of a value."""
@@ -76,6 +73,9 @@ class TabArea(SemiMutableSequence[_W], _HasMainWindowRef[_W]):
         super().__init__(main_window)
         self._i_tab = i_tab
 
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}({list(self)})"
+
     def __getitem__(self, index_or_name: int | str) -> _W:
         index = self._norm_index_or_name(index_or_name)
         backend_widget = self._main_window()._get_widget_list(self._i_tab)[index][1]
@@ -90,9 +90,12 @@ class TabArea(SemiMutableSequence[_W], _HasMainWindowRef[_W]):
 
     def _norm_index_or_name(self, index_or_name: int | str) -> int:
         if isinstance(index_or_name, str):
-            index = self.names.index(index_or_name)
+            index = self.titles.index(index_or_name)
         else:
-            index = index_or_name
+            if index_or_name < 0:
+                index = len(self) + index_or_name
+            else:
+                index = index_or_name
         return index
 
     def __len__(self) -> int:
@@ -104,13 +107,7 @@ class TabArea(SemiMutableSequence[_W], _HasMainWindowRef[_W]):
     def append(self, value: _W, /) -> None:
         return self._main_window().add_widget(value)
 
-    def current(self) -> SubWindow[_W]:
-        """Get the current sub-window."""
-        if out := self.current_or():
-            return out
-        raise ValueError("No tab exists.")
-
-    def current_or(self, default: _T = None) -> SubWindow[_W] | _T:
+    def current(self, default: _T = None) -> SubWindow[_W] | _T:
         """Get the current sub-window or a default value."""
         idx = self.current_index()
         if idx is None:
@@ -124,7 +121,7 @@ class TabArea(SemiMutableSequence[_W], _HasMainWindowRef[_W]):
         return self._main_window()._current_sub_window_index()
 
     @property
-    def names(self) -> list[str]:
+    def titles(self) -> list[str]:
         """List of names of the sub-windows."""
         return [w[0] for w in self._main_window()._get_widget_list(self._i_tab)]
 
@@ -159,7 +156,7 @@ class TabArea(SemiMutableSequence[_W], _HasMainWindowRef[_W]):
         return sub_window
 
     def _coerce_window_title(self, title: str | None) -> str:
-        existing = set(self.names)
+        existing = set(self.titles)
         if title is None:
             title = "Window"
         title_original = title
@@ -171,6 +168,11 @@ class TabArea(SemiMutableSequence[_W], _HasMainWindowRef[_W]):
 
 
 class TabList(SemiMutableSequence[TabArea[_W]], _HasMainWindowRef[_W], Generic[_W]):
+    changed = Signal()
+
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}({list(self)})"
+
     def __getitem__(self, index_or_name: int | str) -> TabArea[_W]:
         index = self._norm_index_or_name(index_or_name)
         return TabArea(self._main_window(), index)
@@ -180,7 +182,9 @@ class TabList(SemiMutableSequence[TabArea[_W]], _HasMainWindowRef[_W], Generic[_
 
     def __delitem__(self, index_or_name: int | str) -> None:
         index = self._norm_index_or_name(index_or_name)
-        return self._main_window()._del_tab_at(index)
+        self._main_window()._del_tab_at(index)
+        self.changed.emit()
+        return None
 
     def __len__(self) -> int:
         return len(self._main_window()._get_tab_name_list())
@@ -202,15 +206,11 @@ class TabList(SemiMutableSequence[TabArea[_W]], _HasMainWindowRef[_W], Generic[_
         return self._main_window()._get_tab_name_list()
 
     def append(self, value: TabArea[_W]) -> None:
-        return self._main_window().add_tab(value)
+        self._main_window().add_tab(value)
+        self.changed.emit()
+        return None
 
-    def current(self) -> TabArea[_W]:
-        """Get the current tab."""
-        if out := self.current_or():
-            return out
-        raise ValueError("No tab exists.")
-
-    def current_or(self, default: _T = None) -> TabArea[_W] | _T:
+    def current(self, default: _T = None) -> TabArea[_W] | _T:
         """Get the current tab or a default value."""
         idx = self.current_index()
         if idx is None:
@@ -232,6 +232,12 @@ class SubWindow(_HasMainWindowRef[_W], Generic[_W]):
         super().__init__(main_window)
         self._widget = weakref.ref(widget)
         widget._royalapp_widget = self
+
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}(title={self.title!r}, widget={self.widget!r})"
+
+    def __class_getitem__(cls, widget_type: type[_W]):
+        return cls
 
     @property
     def widget(self) -> _W:
