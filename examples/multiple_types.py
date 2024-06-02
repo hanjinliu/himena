@@ -66,7 +66,7 @@ def to_basic_widget(model: WidgetDataModel) -> WidgetDataModel:
     return new
 
 def main():
-    ui = new_window("myapp", plugins=["royalapp.builtins.console", interf])
+    ui = new_window(plugins=[interf])
     ui.add_data("<i>Text</i>", type="html", title="test window")
     ui.show(run=True)
 

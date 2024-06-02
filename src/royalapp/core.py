@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from app_model import Application
+from royalapp.profile import AppProfile, load_app_profile
 
 if TYPE_CHECKING:
     from royalapp.plugins.core import PluginInterface
@@ -10,14 +11,26 @@ if TYPE_CHECKING:
 
 
 def new_window(
-    app: str = "royalapp",
+    profile: str | AppProfile | None = None,
+    *,
     plugins: list[str | PluginInterface] = [],
+    app: str = "royalapp",
 ) -> MainWindow[QtW.QWidget]:
     from royalapp.qt import MainWindowQt
 
+    app = Application.get_or_create(app)
+    plugins = list(plugins)
+    if isinstance(profile, str):
+        app_prof = load_app_profile(profile)
+        plugins = app_prof.plugins + plugins
+    elif isinstance(profile, AppProfile):
+        plugins = profile.plugins + plugins
+    elif profile is None:
+        plugins = AppProfile().plugins + plugins
+    else:
+        raise TypeError("`profile` must be a str or an AppProfile object.")
     if plugins:
-        plugins = plugins.copy()
-        install_plugins(Application.get_or_create(app), plugins)
+        install_plugins(app, plugins)
     return MainWindowQt(app)
 
 
@@ -32,10 +45,9 @@ def install_plugins(app: Application, plugins: list[str | PluginInterface]):
         if isinstance(name, str):
             mod = import_module(name)
             if not hasattr(mod, _ROYALAPP_PLUGIN_VAR):
-                raise AttributeError(
-                    f"Plugin interface not found in module {name}. Please define a "
-                    f"variable named {_ROYALAPP_PLUGIN_VAR!r} in the module."
-                )
+                # if the plugin only provides reader/writer, importing the submodule
+                # is enough.
+                continue
             interf = getattr(mod, _ROYALAPP_PLUGIN_VAR)
             if not isinstance(interf, PluginInterface):
                 raise TypeError(

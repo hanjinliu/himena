@@ -33,12 +33,12 @@ _T = TypeVar("_T", bound=QtW.QWidget)
 class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     _royalapp_main_window: MainWindow
 
-    def __init__(self, app: str = "royalapp"):
-        _app = get_app("qt")
-        self._qt_app = _app.get_app()
-        self._app_name = app
+    def __init__(self, app: app_model.Application):
+        _app_instance = get_app("qt")
+        self._qt_app = _app_instance.get_app()
+        self._app_name = app.name
 
-        app_model_app = widgets.get_application(app)
+        app_model_app = widgets.init_application(app)
         super().__init__(app_model_app)
         self._tab_widget = QTabWidget()
         default_menu_ids = {"file": "File", "window": "Window", "tab": "Tab"}

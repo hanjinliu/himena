@@ -10,7 +10,6 @@ from royalapp import (
 )
 from royalapp.qt import register_frontend_widget
 
-APP_NAME = "myapp"
 PANDAS_TABLE_TYPE = object()
 
 # `@register_frontend_widget` is a decorator that registers a widget class as a frontend
@@ -70,7 +69,7 @@ def my_writer_provider(model: WidgetDataModel[pd.DataFrame]):
     return _write
 
 def main():
-    ui = new_window(APP_NAME)
+    ui = new_window()
     df = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
     ui.add_data(df, type=PANDAS_TABLE_TYPE, title="test table")
     ui.show(run=True)

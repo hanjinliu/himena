@@ -4,7 +4,7 @@ from royalapp.widgets._main_window import (
     current_instance,
     set_current_instance,
     remove_instance,
-    get_application,
+    init_application,
 )
 from royalapp.widgets._tab_list import SubWindow
 
@@ -15,5 +15,5 @@ __all__ = [
     "current_instance",
     "set_current_instance",
     "remove_instance",
-    "get_application",
+    "init_application",
 ]

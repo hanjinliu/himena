@@ -18,7 +18,7 @@ from royalapp.widgets._tab_list import TabList, TabArea, SubWindow
 
 _W = TypeVar("_W")  # backend widget type
 
-_APPLICATIONS: dict[str, Application] = {}
+_INITIALIZED_APPLICATIONS: dict[str, Application] = {}
 _APP_INSTANCES: dict[str, list[MainWindow]] = {}
 
 
@@ -27,9 +27,8 @@ class MainWindowEvents(SignalGroup):
 
 
 class MainWindow(Generic[_W]):
-    def __init__(self, backend: BackendMainWindow[_W], app: str | Application) -> None:
+    def __init__(self, backend: BackendMainWindow[_W], app: Application) -> None:
         self.events = MainWindowEvents()
-        app = Application.get_or_create(app) if isinstance(app, str) else app
         self._backend_main_window = backend
         self._tab_list = TabList(self._backend_main_window)
         self._new_widget_behavior = NewWidgetBehavior.WINDOW
@@ -239,10 +238,9 @@ def _init_application(app: Application) -> None:
         return None
 
 
-def get_application(name: str) -> Application:
+def init_application(app: Application) -> Application:
     """Get application by name."""
-    if name not in _APPLICATIONS:
-        app = Application.get_or_create(name)
-        _APPLICATIONS[name] = app
+    if app.name not in _INITIALIZED_APPLICATIONS:
         _init_application(app)
-    return _APPLICATIONS[name]
+        _INITIALIZED_APPLICATIONS[app.name] = app
+    return app
