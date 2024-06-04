@@ -4,10 +4,9 @@ from pathlib import Path
 from typing import Callable, TypeVar
 import warnings
 from royalapp.types import WidgetDataModel, ReaderFunction, WriterFunction
-from royalapp.consts import BasicTextFileTypes, StandardTypes
 from royalapp._utils import get_widget_data_model_variable
 
-_ReaderProvider = Callable[[Path], ReaderFunction]
+_ReaderProvider = Callable[["Path | list[Path]"], ReaderFunction]
 _WriterProvider = Callable[[WidgetDataModel], WriterFunction]
 
 _RP = TypeVar("_RP", bound=_ReaderProvider)
@@ -30,7 +29,7 @@ def get_readers(file_path: Path | list[Path]) -> list[ReaderFunction]:
                 matched.append(out)
     if matched:
         return matched
-    return [_fallback_reader(file_path)]
+    raise ValueError(f"No reader functions supports file: {file_path.name}")
 
 
 def get_writers(file_data: WidgetDataModel) -> list[WriterFunction]:
@@ -46,7 +45,7 @@ def get_writers(file_data: WidgetDataModel) -> list[WriterFunction]:
                 matched.append(out)
     if matched:
         return matched
-    return [_fallback_writer(file_data)]
+    raise ValueError(f"No writer functions supports data: {file_data.type}")
 
 
 def _warn_failed_provider(provider, e: Exception):
@@ -99,80 +98,6 @@ def register_writer_provider(provider: _WP) -> _WP:
         raise ValueError("Provider must be callable.")
     _WRITER_PROVIDERS.append(TypedWriterProvider.try_convert(provider))
     return provider
-
-
-# default readers
-
-
-def _read_text(file_path: Path) -> WidgetDataModel:
-    """Read text file."""
-    with open(file_path) as f:
-        return WidgetDataModel(
-            value=f.read(),
-            type=StandardTypes.TEXT,
-            source=Path(file_path),
-        )
-
-
-def _read_simple_image(file_path: Path) -> WidgetDataModel:
-    """Read image file."""
-    import numpy as np
-    from PIL import Image
-
-    arr = np.array(Image.open(file_path))
-
-    return WidgetDataModel(
-        value=arr,
-        type=StandardTypes.IMAGE,
-        source=Path(file_path),
-    )
-
-
-def _read_csv(file_path: Path) -> WidgetDataModel:
-    """Read CSV file."""
-    import csv
-
-    with open(file_path) as f:
-        reader = csv.reader(f)
-        data = list(reader)
-
-    return WidgetDataModel(
-        value=data,
-        type=StandardTypes.TABLE,
-        source=Path(file_path),
-    )
-
-
-def _fallback_reader(file_path: Path | list[Path]) -> ReaderFunction:
-    """Get default reader."""
-    if isinstance(file_path, list):
-        raise ValueError("Multiple files are not supported.")
-    if file_path.suffix in BasicTextFileTypes:
-        return _read_text
-    elif file_path.suffix == ".csv":
-        return _read_csv
-    elif file_path.suffix in {".png", ".jpg", ".jpeg"}:
-        return _read_simple_image
-    raise ValueError(f"No reader functions supports file: {file_path.name}")
-
-
-# default writers
-
-
-def _write_text(file_data: WidgetDataModel[str]) -> None:
-    """Write text file."""
-    if file_data.source is None:
-        raise ValueError("File path is not provided.")
-    with open(file_data.source, "w") as f:
-        f.write(file_data.value)
-
-
-def _fallback_writer(file_data: WidgetDataModel) -> WriterFunction:
-    """Get default writer."""
-    if file_data.source.suffix in BasicTextFileTypes:
-        return _write_text
-    else:
-        return None
 
 
 class TypedWriterProvider:

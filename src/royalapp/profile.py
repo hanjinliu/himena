@@ -16,8 +16,11 @@ def profile_dir() -> Path:
 def _default_plugins() -> list[str]:
     """Factory function for the default plugin list."""
     out = []
-    for path in Path(__file__).parent.joinpath("builtins").glob("*"):
-        out.append(f"royalapp.builtins.{path.name}")
+    _builtins_dir = Path(__file__).parent.joinpath("builtins")
+    for path in _builtins_dir.joinpath("qt").glob("*"):
+        out.append(f"royalapp.builtins.qt.{path.name}")
+    for path in _builtins_dir.glob("*.py"):
+        out.append(f"royalapp.builtins.{path.stem}")
     return out
 
 

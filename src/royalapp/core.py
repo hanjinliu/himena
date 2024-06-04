@@ -31,7 +31,9 @@ def new_window(
         raise TypeError("`profile` must be a str or an AppProfile object.")
     if plugins:
         install_plugins(app, plugins)
-    return MainWindowQt(app)
+    main_window = MainWindowQt(app)
+    main_window._backend_main_window._update_context()
+    return main_window
 
 
 _ROYALAPP_PLUGIN_VAR = "__royalapp_plugin__"

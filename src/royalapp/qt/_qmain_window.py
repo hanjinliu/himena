@@ -292,6 +292,8 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def _get_widget_list(self, i_tab: int) -> list[tuple[str, QtW.QWidget]]:
         tab = self._tab_widget.widget(i_tab)
+        if tab is None:
+            return []
         return [(w.windowTitle(), w.main_widget()) for w in tab.subWindowList()]
 
     def _del_widget_at(self, i_tab: int, i_window: int) -> None:

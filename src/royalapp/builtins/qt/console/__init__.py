@@ -13,7 +13,7 @@ __royalapp_plugin__ = get_plugin_interface()
 )
 def install_console(ui):
     """Python interpreter widget."""
-    from royalapp.builtins.console._widget import QtConsole
+    from royalapp.builtins.qt.console._widget import QtConsole
 
     console = QtConsole()
     console.connect_parent(ui)
