@@ -89,8 +89,11 @@ class TabArea(SemiMutableSequence[_W], _HasMainWindowRef[_W]):
     def __len__(self) -> int:
         return len(self._main_window()._get_widget_list(self._i_tab))
 
-    def __iter__(self):
-        return iter(w[1] for w in self._main_window()._get_widget_list(self._i_tab))
+    def __iter__(self) -> Iterator[SubWindow[_W]]:
+        return iter(
+            w[1]._royalapp_widget
+            for w in self._main_window()._get_widget_list(self._i_tab)
+        )
 
     def append(self, value: _W, /) -> None:
         return self._main_window().add_widget(value)

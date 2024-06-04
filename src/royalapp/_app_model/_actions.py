@@ -9,7 +9,7 @@ from app_model.types import (
 from royalapp.consts import StandardTypes
 from royalapp.widgets import MainWindow
 from royalapp.io import get_readers, get_writers
-from royalapp.types import ClipboardDataModel, WidgetDataModel
+from royalapp.types import ClipboardDataModel, SubWindowState, WidgetDataModel
 from royalapp._app_model._context import AppContext as _ctx
 
 
@@ -88,6 +88,22 @@ def copy_window(model: WidgetDataModel) -> WidgetDataModel:
     if model.title is not None:
         model.title += " (copy)"
     return model
+
+
+def minimize_others(ui: MainWindow):
+    if area := ui.tabs.current():
+        cur_window = area.current()
+        for window in area:
+            if cur_window is window:
+                continue
+            window.state = SubWindowState.MIN
+
+
+def show_all_windows(ui: MainWindow):
+    if area := ui.tabs.current():
+        for window in area:
+            if window.state is SubWindowState.MIN:
+                window.state = SubWindowState.NORMAL
 
 
 def new_tab(ui: MainWindow) -> None:
@@ -209,6 +225,20 @@ ACTIONS_AND_MENUS = [
         callback=copy_window,
         menus=["window"],
         enablement=_ctx.is_active_window_exportable,
+    ),
+    Action(
+        id="minimize-other-windows",
+        title="Minimize other windows",
+        callback=minimize_others,
+        menus=["window"],
+        enablement=_ctx.has_sub_windows,
+    ),
+    Action(
+        id="show-all-windows",
+        title="Show all windows",
+        callback=show_all_windows,
+        menus=["window"],
+        enablement=_ctx.has_sub_windows,
     ),
     Action(
         id="new-tab",

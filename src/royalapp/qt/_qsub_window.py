@@ -120,6 +120,7 @@ class QSubWindow(QtW.QMdiSubWindow):
 
     def setWindowTitle(self, title: str):
         self._title_bar._title_label.setText(title)
+        self._title_bar.setToolTip(title)
 
     def _subwindow_area(self) -> QSubWindowArea:
         return self.parentWidget().parentWidget()

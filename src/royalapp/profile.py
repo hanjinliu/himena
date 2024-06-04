@@ -15,9 +15,10 @@ def profile_dir() -> Path:
 
 def _default_plugins() -> list[str]:
     """Factory function for the default plugin list."""
-    return [
-        "royalapp.builtins.console",
-    ]
+    out = []
+    for path in Path(__file__).parent.joinpath("builtins").glob("*"):
+        out.append(f"royalapp.builtins.{path.name}")
+    return out
 
 
 class AppProfile(BaseModel):

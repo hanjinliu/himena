@@ -216,9 +216,14 @@ class PluginInterface:
                 dock._identifier = id(wf)
                 return None
 
+            if doc := getattr(wf, "__doc__", None):
+                tooltip = str(doc)
+            else:
+                tooltip = None
             action = Action(
-                id=wf.__qualname__,
+                id=getattr(wf, "__qualname__", str(wf)),
                 title=title,
+                tooltip=tooltip,
                 callback=_callback,
                 menus=["/".join(self._place)],
                 category="plugins",
