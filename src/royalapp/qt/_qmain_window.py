@@ -18,7 +18,7 @@ from royalapp.types import (
     SubWindowState,
 )
 from royalapp.style import get_style
-from royalapp.app import get_app
+from royalapp.app import get_event_loop_handler
 from royalapp import widgets
 from royalapp.qt.registry import pick_widget_class
 from royalapp.qt._utils import (
@@ -39,7 +39,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     _royalapp_main_window: MainWindow
 
     def __init__(self, app: app_model.Application):
-        _app_instance = get_app("qt")
+        _app_instance = get_event_loop_handler("qt", app.name)
         self._qt_app = _app_instance.get_app()
         self._app_name = app.name
 
@@ -208,7 +208,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self._menubar.update_from_context(_dict)
 
     def _run_app(self):
-        return get_app("qt").run_app()
+        return get_event_loop_handler("qt", self._app_name).run_app()
 
     def _current_tab_index(self) -> int:
         return self._tab_widget.currentIndex()

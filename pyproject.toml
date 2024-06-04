@@ -33,6 +33,9 @@ Documentation = "https://github.com/hanjinliu/royalapp#readme"
 Issues = "https://github.com/hanjinliu/royalapp/issues"
 Source = "https://github.com/hanjinliu/royalapp"
 
+[project.scripts]
+royalapp = "royalapp.__main__:main"
+
 [tool.hatch.version]
 path = "src/royalapp/__init__.py"
 

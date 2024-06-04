@@ -153,7 +153,7 @@ def _fallback_reader(file_path: Path | list[Path]) -> ReaderFunction:
         return _read_csv
     elif file_path.suffix in {".png", ".jpg", ".jpeg"}:
         return _read_simple_image
-    raise ValueError(f"Unsupported file type: {file_path.suffix}")
+    raise ValueError(f"No reader functions supports file: {file_path.name}")
 
 
 # default writers

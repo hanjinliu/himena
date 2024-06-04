@@ -1,5 +1,7 @@
 from __future__ import annotations
-from typing import Callable
+import sys
+from typing import Callable, Any
+from types import TracebackType
 from royalapp.types import WidgetDataModel
 
 
@@ -28,3 +30,21 @@ def has_widget_data_model_argument(func: Callable) -> bool:
             if v.__origin__ is WidgetDataModel:
                 return True
     return False
+
+
+class ExceptionHandler:
+    """Handle exceptions in the GUI thread."""
+
+    def __init__(
+        self, hook: Callable[[type[Exception], Exception, TracebackType], Any]
+    ):
+        self._excepthook = hook
+
+    def __enter__(self):
+        self._original_excepthook = sys.excepthook
+        sys.excepthook = self._excepthook
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        sys.excepthook = self._original_excepthook
+        return None
