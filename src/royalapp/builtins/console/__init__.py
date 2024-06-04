@@ -1,9 +1,16 @@
+"""Builtin QtConsole plugin."""
+
 from royalapp.plugins import get_plugin_interface
 
-__royalapp_plugin__ = get_plugin_interface(["window"])
+__royalapp_plugin__ = get_plugin_interface()
 
 
-@__royalapp_plugin__.register_dock_widget(title="Console", area="bottom")
+@__royalapp_plugin__.register_dock_widget(
+    title="Console",
+    area="bottom",
+    keybindings=["Ctrl+Shift+C"],
+    singleton=True,
+)
 def install_console(ui):
     from royalapp.builtins.console._widget import QtConsole
 

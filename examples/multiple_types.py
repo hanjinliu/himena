@@ -44,10 +44,8 @@ class MyNonSavableEdit(QtW.QTextEdit):
 
 interf = get_plugin_interface(["plugins", "my_menu"])
 
-@interf.register_function
+@interf.register_function(types="html")
 def to_plain_text(model: WidgetDataModel) -> WidgetDataModel:
-    if model.type != "html":
-        return None
     new = model.copy()
 
     pattern = re.compile("<.*?>")
@@ -56,7 +54,7 @@ def to_plain_text(model: WidgetDataModel) -> WidgetDataModel:
     new.title = model.title + " (plain)"
     return new
 
-@interf.register_function(types="text")
+@interf.register_function(types=["text", "html"])
 def to_basic_widget(model: WidgetDataModel) -> WidgetDataModel:
     if model.type != "text":
         return None

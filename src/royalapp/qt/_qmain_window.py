@@ -21,7 +21,12 @@ from royalapp.style import get_style
 from royalapp.app import get_app
 from royalapp import widgets
 from royalapp.qt.registry import pick_widget_class
-from royalapp.qt._utils import get_clipboard_data, set_clipboard_data, ArrayQImage
+from royalapp.qt._utils import (
+    get_clipboard_data,
+    set_clipboard_data,
+    ArrayQImage,
+    qsignal_blocker,
+)
 
 if TYPE_CHECKING:
     from royalapp.widgets._main_window import SubWindow, MainWindow
@@ -41,7 +46,12 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         app_model_app = widgets.init_application(app)
         super().__init__(app_model_app)
         self._tab_widget = QTabWidget()
-        default_menu_ids = {"file": "File", "window": "Window", "tab": "Tab"}
+        default_menu_ids = {
+            "file": "File",
+            "window": "Window",
+            "tab": "Tab",
+            "plugins": "Plugins",
+        }
         default_menu_ids.update(
             {
                 menu_id: menu_id.replace("_", " ").title()
@@ -76,6 +86,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         area: DockAreaString | DockArea | None = DockArea.RIGHT,
         allowed_areas: list[DockAreaString | DockArea] | None = None,
     ) -> QDockWidget:
+        # Normalize title and areas
         if title is None:
             title = widget.objectName()
         if allowed_areas is None:
@@ -87,13 +98,52 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             ]
         else:
             allowed_areas = [DockArea(area) for area in allowed_areas]
-        dock_widget = QDockWidget(widget, title)
         areas = Qt.DockWidgetArea.NoDockWidgetArea
         for allowed_area in allowed_areas:
             areas |= _DOCK_AREA_MAP[allowed_area]
+
+        # Construct and add the dock widget
+        dock_widget = QDockWidget(widget, title)
         dock_widget.setAllowedAreas(areas)
         self.addDockWidget(_DOCK_AREA_MAP[area], dock_widget)
+
+        # add an toggleable action
+        for child in self._menubar.actions():
+            qmenu = child.menu()
+            if isinstance(qmenu, QtW.QMenu) and qmenu.title() == "Window":
+                qaction = QtW.QAction(title, qmenu)
+                qaction.setCheckable(True)
+                qaction.setChecked(True)
+                qaction.toggled.connect(
+                    _dock_widget_action_toggled_callback(qaction, dock_widget)
+                )
+                dock_widget.visibilityChanged.connect(
+                    _dock_widget_vis_changed_callback(qaction, dock_widget)
+                )
+                qmenu.addAction(qaction)
+                break
+
         return dock_widget
+
+    def _dock_widget_title(self, widget: QtW.QWidget) -> str:
+        if isinstance(dock := widget.parentWidget(), QtW.QDockWidget):
+            return dock.windowTitle()
+        raise ValueError(f"{widget!r} does not have a dock widget parent.")
+
+    def _set_dock_widget_title(self, widget: QtW.QWidget, title: str) -> None:
+        if isinstance(dock := widget.parentWidget(), QtW.QDockWidget):
+            return dock.setWindowTitle(title)
+        raise ValueError(f"{widget!r} does not have a dock widget parent.")
+
+    def _dock_widget_visible(self, widget: QtW.QWidget) -> bool:
+        if isinstance(dock := widget.parentWidget(), QtW.QDockWidget):
+            return dock.isVisible()
+        raise ValueError(f"{widget!r} does not have a dock widget parent.")
+
+    def _set_dock_widget_visible(self, widget: QtW.QWidget, visible: bool) -> None:
+        if isinstance(dock := widget.parentWidget(), QtW.QDockWidget):
+            return dock.setVisible(visible)
+        raise ValueError(f"{widget!r} does not have a dock widget parent.")
 
     def add_tab(self, tab_name: str) -> QSubWindowArea:
         """
@@ -319,3 +369,18 @@ def _is_root_menu_id(app: app_model.Application, menu_id: str) -> bool:
     if menu_id in ("toolbar", app.menus.COMMAND_PALETTE_ID):
         return False
     return "/" not in menu_id.replace("//", "")
+
+
+def _dock_widget_action_toggled_callback(action: QtW.QAction, dock: QtW.QDockWidget):
+    def _cb():
+        dock.setVisible(action.isChecked())
+
+    return _cb
+
+
+def _dock_widget_vis_changed_callback(action: QtW.QAction, dock: QtW.QDockWidget):
+    def _cb():
+        with qsignal_blocker(dock):
+            action.setChecked(dock.isVisible())
+
+    return _cb

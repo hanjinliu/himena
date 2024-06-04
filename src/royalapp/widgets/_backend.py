@@ -13,7 +13,7 @@ from royalapp.types import (
 )
 
 if TYPE_CHECKING:
-    from royalapp.widgets._tab_list import SubWindow
+    from royalapp.widgets._wrapper import SubWindow, DockWidget
     import numpy as np
     from numpy.typing import NDArray
 
@@ -84,7 +84,20 @@ class BackendMainWindow(Generic[_W]):
         title: str | None,
         area: DockAreaString | DockArea | None = DockArea.RIGHT,
         allowed_areas: list[DockAreaString | DockArea] | None = None,
-    ) -> _W:
+        keybindings=None,
+    ) -> DockWidget[_W]:
+        raise NotImplementedError
+
+    def _dock_widget_visible(self, widget: _W) -> bool:
+        raise NotImplementedError
+
+    def _set_dock_widget_visible(self, widget: _W, visible: bool) -> None:
+        raise NotImplementedError
+
+    def _dock_widget_title(self, widget: _W) -> str:
+        raise NotImplementedError
+
+    def _set_dock_widget_title(self, widget: _W, title: str) -> None:
         raise NotImplementedError
 
     def show(self, run: bool = False) -> None:

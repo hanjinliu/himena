@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 from typing import TYPE_CHECKING
 import qtpy
 from qtpy import QtWidgets as QtW
@@ -70,3 +71,13 @@ def qimage_to_ndarray(img: QtGui.QImage) -> NDArray[np.uint8]:
 
     arr = arr[:, :, [2, 1, 0, 3]]
     return arr
+
+
+@contextmanager
+def qsignal_blocker(widget: QtW.QWidget):
+    was_blocked = widget.signalsBlocked()
+    widget.blockSignals(True)
+    try:
+        yield
+    finally:
+        widget.blockSignals(was_blocked)

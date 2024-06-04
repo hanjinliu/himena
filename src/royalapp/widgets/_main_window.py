@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any, Generic, Hashable, TypeVar
+from weakref import WeakSet
 from app_model import Application
 from app_model.expressions import create_context
 from psygnal import SignalGroup, Signal
@@ -14,7 +15,8 @@ from royalapp.types import (
 )
 from royalapp._app_model._context import AppContext
 from royalapp.widgets._backend import BackendMainWindow
-from royalapp.widgets._tab_list import TabList, TabArea, SubWindow
+from royalapp.widgets._tab_list import TabList, TabArea
+from royalapp.widgets._wrapper import SubWindow, DockWidget
 
 _W = TypeVar("_W")  # backend widget type
 
@@ -39,6 +41,7 @@ class MainWindow(Generic[_W]):
         )
         self._ctx_keys = AppContext(create_context(self, max_depth=0))
         self._tab_list.changed.connect(self._backend_main_window._update_context)
+        self._dock_widgets = WeakSet[_W]()
 
     @property
     def tabs(self) -> TabList[_W]:
@@ -106,14 +109,16 @@ class MainWindow(Generic[_W]):
         self,
         widget: _W,
         *,
-        title: str | None,
+        title: str | None = None,
         area: DockAreaString | DockArea | None = DockArea.RIGHT,
         allowed_areas: list[DockAreaString | DockArea] | None = None,
-    ):
+    ) -> DockWidget[_W]:
         self._backend_main_window.add_dock_widget(
             widget, title=title, area=area, allowed_areas=allowed_areas
         )
-        return None
+        dock = DockWidget(widget, self._backend_main_window)
+        self._dock_widgets.add(dock.widget)
+        return dock
 
     def add_data(
         self,

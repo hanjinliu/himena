@@ -1,9 +1,20 @@
 from __future__ import annotations
 
-from typing import Callable, Hashable, Sequence, TypeVar, overload, TYPE_CHECKING
+from functools import reduce
+import operator
+from typing import (
+    Callable,
+    Hashable,
+    Mapping,
+    Sequence,
+    TypeVar,
+    cast,
+    overload,
+    TYPE_CHECKING,
+)
 
 from app_model import Action, Application
-from app_model.types import SubmenuItem
+from app_model.types import SubmenuItem, KeyBindingRule
 from app_model.expressions import BoolOp
 
 from royalapp._app_model import AppContext as ctx
@@ -11,7 +22,7 @@ from royalapp.types import DockArea, DockAreaString
 from royalapp import _utils
 
 if TYPE_CHECKING:
-    from royalapp.widgets import MainWindow
+    from royalapp.widgets import MainWindow, DockWidget
 
 _F = TypeVar("_F", bound=Callable)
 
@@ -84,7 +95,10 @@ class PluginInterface:
             if enablement is not None:
                 raise TypeError("Cannot give both `types` and `enablement`.")
             elif isinstance(types, Sequence) and not isinstance(types, str):
-                enablement = ctx.active_window_model_type.in_([hash(t) for t in types])
+                enablement = reduce(
+                    operator.or_,
+                    [ctx.active_window_model_type == hash(t) for t in types],
+                )
             else:
                 enablement = ctx.active_window_model_type == hash(types)
 
@@ -120,6 +134,8 @@ class PluginInterface:
         title: str | None = None,
         area: DockArea | DockAreaString = DockArea.RIGHT,
         allowed_areas: Sequence[DockArea | DockAreaString] | None = None,
+        keybindings=None,
+        singleton: bool = False,
     ) -> _F: ...
 
     @overload
@@ -130,6 +146,8 @@ class PluginInterface:
         title: str | None = None,
         area: DockArea | DockAreaString = DockArea.RIGHT,
         allowed_areas: Sequence[DockArea | DockAreaString] | None = None,
+        keybindings=None,
+        singleton: bool = False,
     ) -> Callable[[_F], _F]: ...
 
     def register_dock_widget(
@@ -139,6 +157,8 @@ class PluginInterface:
         title: str | None = None,
         area: DockArea | DockAreaString = DockArea.RIGHT,
         allowed_areas: Sequence[DockArea | DockAreaString] | None = None,
+        keybindings=None,
+        singleton: bool = False,
     ):
         """
         Register a widget factory as a dock widget function.
@@ -153,23 +173,56 @@ class PluginInterface:
             Initial area of the dock widget.
         allowed_areas : sequence of DockArea or DockAreaString, optional
             List of areas that is allowed for the dock widget.
+        keybindings : sequence of keybinding rule, optional
+            Keybindings to trigger the dock widget.
+        singleton : bool, default False
+            If true, the registered dock widget will constructed only once.
         """
+        # Normalize keybindings
+        if isinstance(keybindings, str):
+            kbs = [KeyBindingRule(primary=keybindings)]
+        elif isinstance(keybindings, Sequence):
+            kbs = []
+            for kb in keybindings:
+                if isinstance(kb, str):
+                    kbs.append(KeyBindingRule(primary=kb))
+                elif isinstance(kb, Mapping):
+                    kbs.append(KeyBindingRule(**kb))
+                elif isinstance(kb, KeyBindingRule):
+                    kbs.append(kb)
+                else:
+                    raise TypeError(f"{kb!r} not allowed as a keybinding.")
+        elif keybindings is None:
+            kbs = keybindings
+        else:
+            raise TypeError(f"{keybindings!r} not allowed as keybindings.")
 
         def _inner(wf: Callable):
-            def _callback(ui: MainWindow):
+            def _callback(ui: MainWindow) -> None:
+                if singleton:
+                    for _backend_dock in ui._dock_widgets:
+                        _dock = cast("DockWidget", _backend_dock._royalapp_widget)
+                        if id(wf) != _dock._identifier:
+                            continue
+                        _dock.visible = not _dock.visible
+                        return None
                 try:
                     widget = wf(ui)
                 except TypeError:
                     widget = wf()
-                ui.add_dock_widget(
+                dock = ui.add_dock_widget(
                     widget, title=title, area=area, allowed_areas=allowed_areas
                 )
+                dock._identifier = id(wf)
+                return None
 
             action = Action(
                 id=wf.__qualname__,
                 title=title,
                 callback=_callback,
                 menus=["/".join(self._place)],
+                category="plugins",
+                keybindings=kbs,
             )
             self._actions.append(action)
             return wf
@@ -186,20 +239,18 @@ class PluginInterface:
         app.register_actions(self._actions)
         to_add: list[tuple[str, SubmenuItem]] = []
         for i in range(1, len(self._place)):
-            id = "/".join(self._place[:i])
-            if id in existing_menu_ids:
+            menu_id = "/".join(self._place[:i])
+            submenu = "/".join(self._place[: i + 1])
+            if submenu in existing_menu_ids:
                 continue
-            item = SubmenuItem(
-                title=self._place[i], submenu="/".join(self._place[: i + 1])
-            )
-            to_add.append((id, item))
-
+            item = SubmenuItem(title=self._place[i], submenu=submenu)
+            to_add.append((menu_id, item))
         app.menus.append_menu_items(to_add)
 
 
 def get_plugin_interface(place: str | list[str] | None = None) -> PluginInterface:
     if place is None:
-        place = ["Plugins"]
+        place = ["plugins"]
     elif isinstance(place, str):
         place = [place]
     out = PluginInterface(place)

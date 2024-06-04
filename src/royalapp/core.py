@@ -43,6 +43,8 @@ def install_plugins(app: Application, plugins: list[str | PluginInterface]):
 
     for name in plugins:
         if isinstance(name, str):
+            if name.endswith(".py"):
+                name = name[:-3]
             mod = import_module(name)
             if not hasattr(mod, _ROYALAPP_PLUGIN_VAR):
                 # if the plugin only provides reader/writer, importing the submodule
