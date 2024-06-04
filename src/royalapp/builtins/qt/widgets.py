@@ -5,6 +5,7 @@ from qtpy import QtGui, QtCore
 from royalapp.consts import StandardTypes
 from royalapp.types import WidgetDataModel
 from royalapp.qt import register_frontend_widget
+from royalapp.qt._qt_consts import MonospaceFontFamily
 
 
 def register_default_widget_types() -> None:
@@ -21,6 +22,7 @@ class QDefaultTextEdit(QtW.QPlainTextEdit):
     def __init__(self, file_path):
         super().__init__()
         self.setWordWrapMode(QtGui.QTextOption.WrapMode.NoWrap)
+        self.setFont(QtGui.QFont(MonospaceFontFamily))
         self._file_path = file_path
 
     # def _on_text_changed(self) -> None:

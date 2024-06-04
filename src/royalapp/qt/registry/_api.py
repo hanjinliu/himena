@@ -3,13 +3,7 @@ from typing import Callable, Hashable, TypeVar, Union, overload
 from qtpy import QtWidgets as QtW
 
 from royalapp.types import WidgetDataModel
-from royalapp.consts import StandardTypes
-from royalapp.qt.registry._widgets import (
-    QDefaultTextEdit,
-    QDefaultTableWidget,
-    QFallbackWidget,
-    QDefaultImageView,
-)
+from royalapp.qt.registry._widgets import QFallbackWidget
 
 WidgetClass = Union[Callable[[WidgetDataModel], QtW.QWidget], type[QtW.QWidget]]
 
@@ -78,16 +72,6 @@ def register_frontend_widget(type_, widget_class=None, app=None) -> None:
     return _inner if widget_class is None else _inner(widget_class)
 
 
-def register_default_widget_types() -> None:
-    """Register default widget types."""
-    register_frontend_widget("text", QDefaultTextEdit)
-    register_frontend_widget(StandardTypes.TEXT, QDefaultTextEdit)
-    register_frontend_widget("table", QDefaultTableWidget)
-    register_frontend_widget(StandardTypes.TABLE, QDefaultTableWidget)
-    register_frontend_widget("image", QDefaultImageView)
-    register_frontend_widget(StandardTypes.IMAGE, QDefaultImageView)
-
-
 def pick_widget_class(app_name: str, type: Hashable) -> WidgetClass:
     """Pick a widget class for the given file type."""
     if app_name in _APP_TYPE_TO_QWIDGET:
@@ -97,6 +81,3 @@ def pick_widget_class(app_name: str, type: Hashable) -> WidgetClass:
     if type not in _GLOBAL_TYPE_TO_QWIDGET:
         return QFallbackWidget
     return _GLOBAL_TYPE_TO_QWIDGET[type]
-
-
-register_default_widget_types()

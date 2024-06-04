@@ -77,6 +77,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         )
         self.setStyleSheet(style_text)
         self._tab_widget.newWindowActivated.connect(self._update_context)
+        self.setMinimumSize(400, 300)
 
     def add_dock_widget(
         self,
@@ -184,6 +185,14 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         super().showEvent(event)
         if widget := self._tab_widget.currentWidget():
             widget._reanchor_windows()
+        return None
+
+    def show(self):
+        super().show()
+        size = self.size()
+        minw, minh = 600, 400
+        if size.width() < minw or size.height() < minh:
+            self.resize(min(size.width(), minw), min(size.height(), minh))
         return None
 
     def event(self, e: QtCore.QEvent) -> bool:
