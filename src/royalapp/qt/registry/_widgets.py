@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from qtpy import QtWidgets as QtW
+from qtpy import QtWidgets as QtW, QtGui
 from royalapp.types import WidgetDataModel
+from royalapp.qt._qt_consts import MonospaceFontFamily
 
 
 class QFallbackWidget(QtW.QPlainTextEdit):
@@ -10,6 +11,7 @@ class QFallbackWidget(QtW.QPlainTextEdit):
     def __init__(self):
         super().__init__()
         self.setReadOnly(True)
+        self.setFont(QtGui.QFont(MonospaceFontFamily))
 
     @classmethod
     def from_model(cls, model: WidgetDataModel) -> QFallbackWidget:

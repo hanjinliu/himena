@@ -1,6 +1,5 @@
 from pathlib import Path
 from typing import (
-    Any,
     Callable,
     Hashable,
     Literal,
@@ -42,6 +41,7 @@ class NewWidgetBehavior(StrEnum):
 
 
 _T = TypeVar("_T")
+_U = TypeVar("_U")
 
 
 class WidgetDataModel(Generic[_T], BaseModel):
@@ -52,7 +52,14 @@ class WidgetDataModel(Generic[_T], BaseModel):
     type: Hashable | None = Field(default=None, description="Type of the internal data.")  # fmt: skip
     title: str = Field(default=None, description="Title for the widget.")
     extensions: list[str] = Field(default_factory=list, description="List of allowed file extensions.")  # fmt: skip
-    metadata: dict[str, Any] = Field(default_factory=dict, description="Metadata of the widget.")  # fmt: skip
+
+    def with_value(
+        self, value: _U, type: Hashable | None = None
+    ) -> "WidgetDataModel[_U]":
+        update = {"value": value}
+        if type is not None:
+            update["type"] = type
+        return self.copy(update=update)
 
     @validator("source", pre=True)
     def _validate_file_path(cls, v):
@@ -89,18 +96,15 @@ class WidgetDataModel(Generic[_T], BaseModel):
 
     def __repr__(self):
         value_repr = repr(self.value)
-        metadata_repr = repr(self.metadata)
         if len(value_repr) > 24:
             value_repr = value_repr[:24] + "..."
-        if len(metadata_repr) > 24:
-            metadata_repr = metadata_repr[:24] + "..."
         if source := self.source:
             source_repr = source.as_posix()
         else:
             source_repr = None
         return (
             f"{self.__class__.__name__}(value={value_repr}, source={source_repr}), "
-            f"type={self.type!r}, title={self.title!r}, metadata={metadata_repr})"
+            f"type={self.type!r}, title={self.title!r})"
         )
 
 

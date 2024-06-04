@@ -26,7 +26,13 @@ def get_readers(file_path: Path | list[Path]) -> list[ReaderFunction]:
             _warn_failed_provider(provider, e)
         else:
             if out:
-                matched.append(out)
+                if callable(out):
+                    matched.append(out)
+                else:
+                    warnings.warn(
+                        f"Reader provider {provider!r} returned {out!r}, which is not"
+                        "callable."
+                    )
     if matched:
         return matched
     raise ValueError(f"No reader functions supports file: {file_path.name}")
@@ -42,7 +48,13 @@ def get_writers(file_data: WidgetDataModel) -> list[WriterFunction]:
             _warn_failed_provider(provider, e)
         else:
             if out:
-                matched.append(out)
+                if callable(out):
+                    matched.append(out)
+                else:
+                    warnings.warn(
+                        f"Writer provider {provider!r} returned {out!r}, which is not"
+                        "callable."
+                    )
     if matched:
         return matched
     raise ValueError(f"No writer functions supports data: {file_data.type}")

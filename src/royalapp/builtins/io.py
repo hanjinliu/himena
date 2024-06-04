@@ -74,13 +74,13 @@ def default_reader_provider(file_path: Path | list[Path]):
         return _read_tsv
     elif file_path.suffix in {".png", ".jpg", ".jpeg"}:
         return _read_simple_image
-    raise ValueError(f"No reader functions supports file: {file_path.name}")
+    return None
 
 
 def _write_text(file_data: WidgetDataModel[str]) -> None:
     """Write text file."""
     if file_data.source is None:
-        raise ValueError("File path is not provided.")
+        return None
     with open(file_data.source, "w") as f:
         f.write(file_data.value)
     return None
