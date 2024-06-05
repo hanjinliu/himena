@@ -11,6 +11,7 @@ from royalapp.consts import StandardTypes
 if TYPE_CHECKING:
     import numpy as np
     from numpy.typing import NDArray
+    from royalapp.qt import MainWindowQt
 
 
 class ArrayQImage:
@@ -81,3 +82,12 @@ def qsignal_blocker(widget: QtW.QWidget):
         yield
     finally:
         widget.blockSignals(was_blocked)
+
+
+def get_main_window(widget: QtW.QWidget) -> MainWindowQt:
+    parent = widget
+    while parent is not None:
+        parent = parent.parentWidget()
+        if isinstance(parent, QtW.QMainWindow):
+            return parent._royalapp_main_window
+    raise ValueError("No mainwindow found.")

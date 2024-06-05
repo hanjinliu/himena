@@ -5,7 +5,9 @@ from qtpy import QtWidgets as QtW
 from qtpy import QtCore, QtGui
 from superqt import QIconifyIcon
 from royalapp.types import SubWindowState
+from royalapp.qt._utils import get_main_window
 from royalapp.qt._qwindow_resize import ResizeState
+from royalapp.qt._qrename import QRenameLineEdit
 
 
 class QSubWindowArea(QtW.QMdiArea):
@@ -256,6 +258,17 @@ class QSubWindowTitleBar(QtW.QFrame):
         height = 18
         self.setFixedHeight(height)
         self.setMinimumWidth(100)
+        self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self._show_context_menu)
+
+        self._line_edit = QRenameLineEdit(self)
+
+        @self._line_edit.rename_requested.connect
+        def _(new_name: str):
+            if tab := get_main_window(self).tabs.current():
+                new_name = tab._coerce_window_title(new_name)
+            self._title_label.setText(new_name)
+
         self._title = title
         self._title_label = QtW.QLabel(title)
         self._title_label.setIndent(3)
@@ -304,6 +317,36 @@ class QSubWindowTitleBar(QtW.QFrame):
         self._drag_position: QtCore.QPoint | None = None
         self._resize_position: QtCore.QPoint | None = None
         self._subwindow = subwindow
+
+    def _show_context_menu(self):
+        # TODO: use app_model.Action
+        menu = QtW.QMenu(self)
+        menu.addAction("Rename", self._start_renaming)
+        menu.addAction("Minimize", self._minimize)
+        menu.addAction("Maximize", self._maximize)
+        menu.addAction("Toggle full screen", self._toggle_full_screen)
+        menu.addAction("Close", self._close)
+        menu.move(QtGui.QCursor.pos())
+        menu.exec_()
+
+    def _start_renaming(self):
+        self._line_edit.show()
+        self._move_line_edit(self._title_label.rect(), self._title_label.text())
+
+    def _move_line_edit(
+        self,
+        rect: QtCore.QRect,
+        text: str,
+    ) -> QtW.QLineEdit:
+        geometry = self._line_edit.geometry()
+        geometry.setWidth(rect.width())
+        geometry.setHeight(rect.height())
+        geometry.moveCenter(rect.center())
+        self._line_edit.setGeometry(geometry)
+        self._line_edit.setText(text)
+        self._line_edit.setHidden(False)
+        self._line_edit.setFocus()
+        self._line_edit.selectAll()
 
     def _minimize(self):
         self._subwindow.state = SubWindowState.MIN

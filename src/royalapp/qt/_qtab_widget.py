@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Iterator
 from qtpy import QtWidgets as QtW
 from qtpy import QtCore, QtGui
 from royalapp.qt._qsub_window import QSubWindowArea
+from royalapp.qt._qrename import QRenameLineEdit
 
 
 class QTabWidget(QtW.QTabWidget):
@@ -14,15 +15,11 @@ class QTabWidget(QtW.QTabWidget):
         self._line_edit = QRenameLineEdit(self)
         self._current_edit_index = None
 
-        @self._line_edit.editingFinished.connect
-        def _():
-            if not self._line_edit.isVisible():
-                return
-            self._line_edit.setHidden(True)
-            text = self._line_edit.text()
-            if text and self._current_edit_index is not None:
-                text = self._coerce_tab_name(text)
-                self.setTabText(self._current_edit_index, text)
+        @self._line_edit.rename_requested.connect
+        def _(new_name: str):
+            if self._current_edit_index is not None:
+                new_name = self._coerce_tab_name(new_name)
+                self.setTabText(self._current_edit_index, new_name)
 
         self.setTabBarAutoHide(True)
         self.tabBar().setMovable(False)
@@ -121,18 +118,3 @@ class QTabWidget(QtW.QTabWidget):
 
         def widget(self, index: int) -> QSubWindowArea | None: ...
         def currentWidget(self) -> QSubWindowArea | None: ...
-
-
-class QRenameLineEdit(QtW.QLineEdit):
-    def __init__(self, parent: QtW.QWidget):
-        super().__init__(parent)
-        self.setHidden(True)
-
-    def keyPressEvent(self, a0: QtGui.QKeyEvent) -> None:
-        if a0.key() == QtCore.Qt.Key.Key_Escape:
-            self.setHidden(True)
-        return super().keyPressEvent(a0)
-
-    # def focusOutEvent(self, event: QtGui.QFocusEvent) -> None:
-    #     self.setHidden(True)
-    #     super().focusOutEvent(event)
