@@ -228,7 +228,8 @@ class QSubWindow(QtW.QMdiSubWindow):
         return None
 
     def _close_me(self):
-        if self.main_widget().isWindowModified():
+        is_modified = getattr(self.main_widget(), "is_modified", None)
+        if callable(is_modified) and is_modified():
             _yes = QtW.QMessageBox.StandardButton.Yes
             _no = QtW.QMessageBox.StandardButton.No
             ok = (

@@ -30,10 +30,11 @@ class QDefaultTextEdit(QtW.QPlainTextEdit):
         self.setWordWrapMode(QtGui.QTextOption.WrapMode.NoWrap)
         self.setFont(QtGui.QFont(MonospaceFontFamily))
         self._file_path = file_path
+        self._modified = False
 
-    # def _on_text_changed(self) -> None:
-    #     self.setWindowModified(True)
-    #     pass
+        @self.textChanged.connect
+        def _():
+            self._modified = True
 
     @classmethod
     def from_model(cls, model: WidgetDataModel) -> QDefaultTextEdit:
@@ -50,12 +51,20 @@ class QDefaultTextEdit(QtW.QPlainTextEdit):
             source=self._file_path,
         )
 
+    def is_modified(self) -> bool:
+        return self._modified
+
 
 class QDefaultTableWidget(QtW.QTableWidget):
     def __init__(self, file_path):
         super().__init__()
         self._file_path = file_path
         self.horizontalHeader().hide()
+        self._modified = False
+
+        @self.itemChanged.connect
+        def _():
+            self._modified = True
 
     @classmethod
     def from_model(cls, model: WidgetDataModel) -> QDefaultTableWidget:
@@ -81,6 +90,9 @@ class QDefaultTableWidget(QtW.QTableWidget):
             type=StandardTypes.TABLE,
             source=self._file_path,
         )
+
+    def is_modified(self) -> bool:
+        return self._modified
 
     def _to_list(self, rsl: slice, csl: slice) -> list[list[str]]:
         values: list[list[str]] = []
@@ -177,9 +189,9 @@ class _QImageLabel(QtW.QLabel):
             val, val.shape[1], val.shape[0], QtGui.QImage.Format.Format_RGBA8888
         )
         self._pixmap_orig = QtGui.QPixmap.fromImage(image)
-        self._update_pixmal()
+        self._update_pixmap()
 
-    def _update_pixmal(self):
+    def _update_pixmap(self):
         sz = self.size()
         self.setPixmap(
             self._pixmap_orig.scaled(
@@ -190,7 +202,7 @@ class _QImageLabel(QtW.QLabel):
         )
 
     def resizeEvent(self, ev: QtGui.QResizeEvent) -> None:
-        self._update_pixmal()
+        self._update_pixmap()
 
 
 class QDefaultImageView(QtW.QWidget):
