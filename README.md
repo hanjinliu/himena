@@ -5,10 +5,24 @@
 
 -----
 
+![](images/window.png)
+
 An infinitely extensible and reusable applications framework.
+
+Python has a lot of third-party GUI libraries for different purposes. They ususally
+implements their own reader/writer functions, widgets and plugins, which forces
+programmers to repeat the same code over and over again for different projects.
+`royalapp` abstracts the logic of the common workflow to allow different GUI ideas
+to be implemented in a single framework.
 
 ## Installation
 
-```console
+```shell
 pip install royalapp -U
+```
+
+## Start application
+
+```shell
+royalapp
 ```
