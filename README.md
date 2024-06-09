@@ -5,10 +5,10 @@
 
 -----
 
-`royalapp` gives you a sophisticated framework for complicated applications.
+An infinitely extensible and reusable applications framework.
 
 ## Installation
 
 ```console
-pip install royalapp
+pip install royalapp -U
 ```

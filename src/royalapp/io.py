@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable, TypeVar
+from typing import Callable, TypeVar, overload
 import warnings
 from royalapp.types import WidgetDataModel, ReaderFunction, WriterFunction
 from royalapp._utils import get_widget_data_model_variable
@@ -12,14 +12,15 @@ _WriterProvider = Callable[[WidgetDataModel], WriterFunction]
 _RP = TypeVar("_RP", bound=_ReaderProvider)
 _WP = TypeVar("_WP", bound=_WriterProvider)
 
-_READER_PROVIDERS: list[_ReaderProvider] = []
-_WRITER_PROVIDERS: list[_WriterProvider] = []
+_READER_PROVIDERS: list[tuple[_ReaderProvider, int]] = []
+_WRITER_PROVIDERS: list[tuple[_WriterProvider, int]] = []
 
 
 def get_readers(file_path: Path | list[Path]) -> list[ReaderFunction]:
     """Get reader."""
-    matched: list[ReaderFunction] = []
-    for provider in _READER_PROVIDERS:
+    matched: list[tuple[ReaderFunction, int]] = []
+    priority_max = -1
+    for provider, priority in _READER_PROVIDERS:
         try:
             out = provider(file_path)
         except Exception as e:
@@ -27,21 +28,23 @@ def get_readers(file_path: Path | list[Path]) -> list[ReaderFunction]:
         else:
             if out:
                 if callable(out):
-                    matched.append(out)
+                    matched.append((out, priority))
+                    priority_max = max(priority_max, priority)
                 else:
                     warnings.warn(
                         f"Reader provider {provider!r} returned {out!r}, which is not"
                         "callable."
                     )
     if matched:
-        return matched
+        return [fn for fn, pri in matched if pri == priority_max]
     raise ValueError(f"No reader functions supports file: {file_path.name}")
 
 
 def get_writers(file_data: WidgetDataModel) -> list[WriterFunction]:
     """Get writer."""
-    matched: list[WriterFunction] = []
-    for provider in _WRITER_PROVIDERS:
+    matched: list[tuple[WriterFunction, int]] = []
+    priority_max = -1
+    for provider, priority in _WRITER_PROVIDERS:
         try:
             out = provider(file_data)
         except Exception as e:
@@ -49,14 +52,15 @@ def get_writers(file_data: WidgetDataModel) -> list[WriterFunction]:
         else:
             if out:
                 if callable(out):
-                    matched.append(out)
+                    matched.append((out, priority))
+                    priority_max = max(priority_max, priority)
                 else:
                     warnings.warn(
                         f"Writer provider {provider!r} returned {out!r}, which is not"
                         "callable."
                     )
     if matched:
-        return matched
+        return [fn for fn, pri in matched if pri == priority_max]
     raise ValueError(f"No writer functions supports data: {file_data.type}")
 
 
@@ -68,7 +72,13 @@ def _warn_failed_provider(provider, e: Exception):
     )
 
 
-def register_reader_provider(provider: _RP) -> _RP:
+@overload
+def register_reader_provider(provider: _RP, *, priority: int = 0) -> _RP: ...
+@overload
+def register_reader_provider(*, priority: int = 0) -> Callable[[_RP], _RP]: ...
+
+
+def register_reader_provider(provider=None, priority=0):
     """
     Register reader provider function.
 
@@ -84,13 +94,24 @@ def register_reader_provider(provider: _RP) -> _RP:
     ...             return WidgetDataModel(value=f.read(), type="text", source=path)
     ...     return _read_text
     """
-    if not callable(provider):
-        raise ValueError("Provider must be callable.")
-    _READER_PROVIDERS.append(provider)
-    return provider
+    _check_priority(priority)
+
+    def _inner(func):
+        if not callable(func):
+            raise ValueError("Provider must be callable.")
+        _READER_PROVIDERS.append((func, priority))
+        return func
+
+    return _inner if provider is None else _inner(provider)
 
 
-def register_writer_provider(provider: _WP) -> _WP:
+@overload
+def register_writer_provider(provider: _WP, *, priority: int = 0) -> _WP: ...
+@overload
+def register_writer_provider(*, priority: int = 0) -> _WP: ...
+
+
+def register_writer_provider(provider=None, priority=0):
     """
     Register writer provider function.
 
@@ -106,10 +127,21 @@ def register_writer_provider(provider: _WP) -> _WP:
     ...             f.write(model.value)
     ...     return _write_text
     """
-    if not callable(provider):
-        raise ValueError("Provider must be callable.")
-    _WRITER_PROVIDERS.append(TypedWriterProvider.try_convert(provider))
-    return provider
+    _check_priority(priority)
+
+    def _inner(func):
+        if not callable(func):
+            raise ValueError("Provider must be callable.")
+        _WRITER_PROVIDERS.append((TypedWriterProvider.try_convert(func), priority))
+        return func
+
+    return _inner if provider is None else _inner(provider)
+
+
+def _check_priority(priority: int):
+    if isinstance(priority, int) or hasattr(priority, "__int__"):
+        return int(priority)
+    raise TypeError(f"Priority must be an integer, not {type(priority)}.")
 
 
 class TypedWriterProvider:
