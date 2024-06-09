@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from timeit import default_timer as timer
+import logging
 from typing import Hashable, TypeVar, TYPE_CHECKING
 from pathlib import Path
 import app_model
@@ -33,6 +35,7 @@ if TYPE_CHECKING:
 
 _STYLE_QSS_PATH = Path(__file__).parent / "style.qss"
 _T = TypeVar("_T", bound=QtW.QWidget)
+_LOGGER = logging.getLogger(__name__)
 
 
 class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
@@ -211,10 +214,13 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         return res
 
     def _update_context(self) -> None:
+        _time_0 = timer()
         ctx = self._royalapp_main_window._ctx_keys
         ctx._update(self._royalapp_main_window)
         _dict = ctx.dict()
         self._menubar.update_from_context(_dict)
+        _msec = (timer() - _time_0) * 1000
+        _LOGGER.info(f"Context update took {_msec:.3f} msec")
 
     def _run_app(self):
         return get_event_loop_handler("qt", self._app_name).run_app()

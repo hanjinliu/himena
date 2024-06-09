@@ -18,6 +18,8 @@ def _default_plugins() -> list[str]:
     out = []
     _builtins_dir = Path(__file__).parent.joinpath("builtins")
     for path in _builtins_dir.joinpath("qt").glob("*"):
+        if path.name == "__pycache__":
+            continue
         out.append(f"royalapp.builtins.qt.{path.name}")
     for path in _builtins_dir.glob("*.py"):
         out.append(f"royalapp.builtins.{path.stem}")

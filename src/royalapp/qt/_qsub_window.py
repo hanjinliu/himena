@@ -261,14 +261,6 @@ class QSubWindowTitleBar(QtW.QFrame):
         self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self._show_context_menu)
 
-        self._line_edit = QRenameLineEdit(self)
-
-        @self._line_edit.rename_requested.connect
-        def _(new_name: str):
-            if tab := get_main_window(self).tabs.current():
-                new_name = tab._coerce_window_title(new_name)
-            self._title_label.setText(new_name)
-
         self._title = title
         self._title_label = QtW.QLabel(title)
         self._title_label.setIndent(3)
@@ -277,6 +269,14 @@ class QSubWindowTitleBar(QtW.QFrame):
         self._title_label.setSizePolicy(
             QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Fixed
         )
+
+        self._line_edit = QRenameLineEdit(self._title_label)
+
+        @self._line_edit.rename_requested.connect
+        def _(new_name: str):
+            if tab := get_main_window(self).tabs.current():
+                new_name = tab._coerce_window_title(new_name)
+            self._title_label.setText(new_name)
 
         self._minimize_button = QtW.QToolButton()
         self._minimize_button.clicked.connect(self._minimize)
