@@ -246,6 +246,9 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         area.activateWindow(area.subWindowList()[i_window])
         return None
 
+    def _tab_title(self, i_tab: int) -> str:
+        return self._tab_widget.tabText(i_tab)
+
     def _set_tab_title(self, i_tab: int, title: str) -> None:
         return self._tab_widget.setTabText(i_tab, title)
 

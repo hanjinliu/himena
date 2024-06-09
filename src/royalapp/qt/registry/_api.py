@@ -18,6 +18,7 @@ def register_frontend_widget(
     type_: Hashable,
     widget_class: _F,
     app: str | None,
+    override: bool = True,
 ) -> _F: ...
 
 
@@ -26,10 +27,16 @@ def register_frontend_widget(
     type_: Hashable,
     widget_class: None,
     app: str | None,
+    override: bool = True,
 ) -> Callable[[_F], _F]: ...
 
 
-def register_frontend_widget(type_, widget_class=None, app=None) -> None:
+def register_frontend_widget(
+    type_,
+    widget_class=None,
+    app=None,
+    override=True,
+) -> None:
     """
     Register a widget class as a frontend widget for the given file type.
 
@@ -49,25 +56,25 @@ def register_frontend_widget(type_, widget_class=None, app=None) -> None:
     if app is not None and not isinstance(app, str):
         raise TypeError(f"App name must be a string, got {app!r}")
 
-    def _inner(widget_class):
-        if not (
-            isinstance(widget_class, type) and issubclass(widget_class, QtW.QWidget)
-        ):
+    def _inner(wdt_class):
+        if not (isinstance(wdt_class, type) and issubclass(wdt_class, QtW.QWidget)):
             raise TypeError(
                 "Widget class must be a subclass of `QtW.QWidget`, "
-                f"got {widget_class!r}"
+                f"got {wdt_class!r}"
             )
-        if not hasattr(widget_class, "from_model"):
+        if not hasattr(wdt_class, "from_model"):
             raise TypeError(
-                f"Widget class {widget_class!r} does not have an `from_model` method."
+                f"Widget class {wdt_class!r} does not have an `from_model` method."
             )
         if app is not None:
             if app not in _APP_TYPE_TO_QWIDGET:
                 _APP_TYPE_TO_QWIDGET[app] = {}
-            _APP_TYPE_TO_QWIDGET[app][type_] = widget_class
+            if type_ not in _APP_TYPE_TO_QWIDGET[app] or override:
+                _APP_TYPE_TO_QWIDGET[app][type_] = wdt_class
         else:
-            _GLOBAL_TYPE_TO_QWIDGET[type_] = widget_class
-        return widget_class
+            if type_ not in _GLOBAL_TYPE_TO_QWIDGET or override:
+                _GLOBAL_TYPE_TO_QWIDGET[type_] = wdt_class
+        return wdt_class
 
     return _inner if widget_class is None else _inner(widget_class)
 

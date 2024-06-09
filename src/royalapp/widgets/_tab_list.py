@@ -79,7 +79,7 @@ class TabArea(SemiMutableSequence[_W], _HasMainWindowRef[_W]):
 
     def _norm_index_or_name(self, index_or_name: int | str) -> int:
         if isinstance(index_or_name, str):
-            index = self.titles.index(index_or_name)
+            index = self.window_titles.index(index_or_name)
         else:
             if index_or_name < 0:
                 index = len(self) + index_or_name
@@ -113,7 +113,12 @@ class TabArea(SemiMutableSequence[_W], _HasMainWindowRef[_W]):
         return self._main_window()._current_sub_window_index()
 
     @property
-    def titles(self) -> list[str]:
+    def title(self) -> str:
+        """Title of the tab area."""
+        return self._main_window()._tab_title(self._i_tab)
+
+    @property
+    def window_titles(self) -> list[str]:
         """List of names of the sub-windows."""
         return [w[0] for w in self._main_window()._get_widget_list(self._i_tab)]
 
@@ -176,7 +181,7 @@ class TabArea(SemiMutableSequence[_W], _HasMainWindowRef[_W]):
                 main._set_window_rect(sub.widget, WindowRect.from_numbers(x, y, w, h))
 
     def _coerce_window_title(self, title: str | None) -> str:
-        existing = set(self.titles)
+        existing = set(self.window_titles)
         if title is None:
             title = "Window"
         title_original = title

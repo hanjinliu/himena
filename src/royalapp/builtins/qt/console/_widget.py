@@ -138,6 +138,12 @@ class QtConsole(RichJupyterWidget):
         self.shell.push(dict(ns))
         return None
 
+    def showEvent(self, event):
+        """Show event."""
+        super().showEvent(event)
+        self.setFocus()
+        return None
+
 
 @lru_cache(maxsize=1)
 def _get_exit_auto_call():

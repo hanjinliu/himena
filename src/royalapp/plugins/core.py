@@ -54,6 +54,7 @@ class PluginInterface:
         title: str | None = None,
         types: Hashable | Sequence[Hashable] | None = None,
         enablement: BoolOp | None = None,
+        command_id: str | None = None,
     ) -> None: ...
 
     @overload
@@ -64,6 +65,7 @@ class PluginInterface:
         title: str | None = None,
         types: Hashable | Sequence[Hashable] | None = None,
         enablement: BoolOp | None = None,
+        command_id: str | None = None,
     ) -> _F: ...
 
     def register_function(
@@ -73,6 +75,7 @@ class PluginInterface:
         title=None,
         types=None,
         enablement=None,
+        command_id=None,
     ):
         """
         Register a function as a callback of a plugin action.
@@ -90,6 +93,8 @@ class PluginInterface:
         enablement: Expr, optional
             Expression that describes when the action will be enabled. As this argument
             is a generalized version of `types` argument, you cannot use both of them.
+        command_id : str, optional
+            Command ID. If not given, the function qualname will be used.
         """
         if types is not None:
             if enablement is not None:
@@ -114,9 +119,12 @@ class PluginInterface:
                     _enablement = _expr
                 else:
                     _enablement = _expr & enablement
-
+            if command_id is None:
+                _id = f.__qualname__
+            else:
+                _id = command_id
             action = Action(
-                id=f.__qualname__,
+                id=_id,
                 title=_title,
                 callback=f,
                 menus=["/".join(self._place)],
@@ -136,6 +144,7 @@ class PluginInterface:
         allowed_areas: Sequence[DockArea | DockAreaString] | None = None,
         keybindings=None,
         singleton: bool = False,
+        command_id: str | None = None,
     ) -> _F: ...
 
     @overload
@@ -148,6 +157,7 @@ class PluginInterface:
         allowed_areas: Sequence[DockArea | DockAreaString] | None = None,
         keybindings=None,
         singleton: bool = False,
+        command_id: str | None = None,
     ) -> Callable[[_F], _F]: ...
 
     def register_dock_widget(
@@ -159,6 +169,7 @@ class PluginInterface:
         allowed_areas: Sequence[DockArea | DockAreaString] | None = None,
         keybindings=None,
         singleton: bool = False,
+        command_id: str | None = None,
     ):
         """
         Register a widget factory as a dock widget function.
@@ -177,6 +188,8 @@ class PluginInterface:
             Keybindings to trigger the dock widget.
         singleton : bool, default False
             If true, the registered dock widget will constructed only once.
+        command_id : str, optional
+            Command ID. If not given, the function name will be used.
         """
         # Normalize keybindings
         if isinstance(keybindings, str):
@@ -220,8 +233,12 @@ class PluginInterface:
                 tooltip = str(doc)
             else:
                 tooltip = None
+            if command_id is None:
+                _id = getattr(wf, "__qualname__", str(wf))
+            else:
+                _id = command_id
             action = Action(
-                id=getattr(wf, "__qualname__", str(wf)),
+                id=_id,
                 title=title,
                 tooltip=tooltip,
                 callback=_callback,

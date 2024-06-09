@@ -16,12 +16,12 @@ if TYPE_CHECKING:
 
 def register_default_widget_types() -> None:
     """Register default widget types."""
-    register_frontend_widget("text", QDefaultTextEdit)
-    register_frontend_widget(StandardTypes.TEXT, QDefaultTextEdit)
-    register_frontend_widget("table", QDefaultTableWidget)
-    register_frontend_widget(StandardTypes.TABLE, QDefaultTableWidget)
-    register_frontend_widget("image", QDefaultImageView)
-    register_frontend_widget(StandardTypes.IMAGE, QDefaultImageView)
+    register_frontend_widget("text", QDefaultTextEdit, override=False)
+    register_frontend_widget(StandardTypes.TEXT, QDefaultTextEdit, override=False)
+    register_frontend_widget("table", QDefaultTableWidget, override=False)
+    register_frontend_widget(StandardTypes.TABLE, QDefaultTableWidget, override=False)
+    register_frontend_widget("image", QDefaultImageView, override=False)
+    register_frontend_widget(StandardTypes.IMAGE, QDefaultImageView, override=False)
 
 
 class QDefaultTextEdit(QtW.QPlainTextEdit):

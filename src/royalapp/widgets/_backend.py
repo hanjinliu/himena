@@ -40,6 +40,9 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     def _set_window_state(self, widget: _W, state: SubWindowState) -> None:
         raise NotImplementedError
 
+    def _tab_title(self, i_tab: int) -> str:
+        raise NotImplementedError
+
     def _set_tab_title(self, i_tab: int, title: str) -> None:
         raise NotImplementedError
 

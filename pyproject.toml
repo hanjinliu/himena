@@ -36,6 +36,13 @@ Source = "https://github.com/hanjinliu/royalapp"
 [project.scripts]
 royalapp = "royalapp.__main__:main"
 
+[project.optional-dependencies]
+testing = [
+  "pytest",
+  "pytest-qt",
+  "numpy",
+]
+
 [tool.hatch.version]
 path = "src/royalapp/__init__.py"
 
@@ -89,6 +96,22 @@ all = [
 ]
 exclude_lines = [
   "if TYPE_CHECKING:",
+]
+
+
+[tool.hatch.envs.test]
+features = ["testing"]
+
+[tool.hatch.envs.test.scripts]
+run = "pytest -v"
+
+[[tool.hatch.envs.test.matrix]]
+backend = ["pyqt5", "pyqt6"]
+
+[tool.hatch.envs.test.overrides]
+matrix.backend.features = [
+  { value = "pyqt5", if = ["pyqt5"] },
+  { value = "pyqt6", if = ["pyqt6"] },
 ]
 
 [tool.pyright.defineConstant]

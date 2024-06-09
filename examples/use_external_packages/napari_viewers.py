@@ -1,11 +1,9 @@
 import numpy as np
-from qtpy import QtWidgets as QtW, QtCore
+from qtpy import QtWidgets as QtW
 import napari
 from napari.qt import QtViewer
 
 from royalapp import new_window
-
-QtW.QApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
 
 class MyViewer(QtW.QWidget):
     def __init__(self):
@@ -29,7 +27,7 @@ class MyViewer(QtW.QWidget):
             self.viewer.dims.ndisplay = 2
 
 def main():
-    ui = new_window("myapp")
+    ui = new_window()
 
     viewer0 = MyViewer()
     viewer1 = MyViewer()

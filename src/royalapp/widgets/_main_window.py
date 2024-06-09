@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any, Generic, Hashable, TypeVar
 from weakref import WeakSet
 from app_model import Application
 from app_model.expressions import create_context
 from psygnal import SignalGroup, Signal
+from royalapp.io import get_readers
 from royalapp.types import (
     WidgetDataModel,
     ClipboardDataModel,
@@ -152,6 +154,22 @@ class MainWindow(Generic[_W]):
         cls = self._backend_main_window._pick_widget_class(model_data.type)
         widget = cls.from_model(model_data)
         return self.add_widget(widget, title=model_data.title)
+
+    def read_file(self, file_path) -> None:
+        if hasattr(file_path, "__iter__") and not isinstance(file_path, (str, Path)):
+            fp = [Path(f) for f in file_path]
+        else:
+            fp = Path(file_path)
+        readers = get_readers(fp)
+        if len(readers) == 0:
+            raise ValueError(f"No reader found for {fp}")
+        model = readers[0](fp)
+        return self.add_data_model(model)
+
+    def exec_action(self, id: str) -> None:
+        """Execute an action by its ID."""
+        self._model_app.commands.execute_command(id)
+        return None
 
     def show(self, run: bool = False) -> None:
         """
