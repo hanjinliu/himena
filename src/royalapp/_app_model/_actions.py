@@ -155,6 +155,11 @@ def save_screenshot_window(ui: MainWindow) -> None:
     _save_screenshot(ui, "window")
 
 
+def tile_windows(ui: MainWindow) -> None:
+    if area := ui.tabs.current():
+        area.tile_windows()
+
+
 _CtrlK = KeyMod.CtrlCmd | KeyCode.KeyK
 
 ACTIONS_AND_MENUS = [
@@ -237,6 +242,13 @@ ACTIONS_AND_MENUS = [
         id="show-all-windows",
         title="Show all windows",
         callback=show_all_windows,
+        menus=["window"],
+        enablement=_ctx.has_sub_windows,
+    ),
+    Action(
+        id="tile-windows",
+        title="Tile windows",
+        callback=tile_windows,
         menus=["window"],
         enablement=_ctx.has_sub_windows,
     ),

@@ -10,6 +10,7 @@ from royalapp.types import (
     ClipboardDataModel,
     DockArea,
     DockAreaString,
+    WindowRect,
 )
 
 if TYPE_CHECKING:
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
 _W = TypeVar("_W")  # backend widget type
 
 
-class BackendMainWindow(Generic[_W]):
+class BackendMainWindow(Generic[_W]):  # pragma: no cover
     def _current_tab_index(self) -> int | None:
         raise NotImplementedError
 
@@ -46,6 +47,15 @@ class BackendMainWindow(Generic[_W]):
         raise NotImplementedError
 
     def _set_window_title(self, widget: _W, title: str) -> None:
+        raise NotImplementedError
+
+    def _window_rect(self, widget: _W) -> WindowRect:
+        raise NotImplementedError
+
+    def _set_window_rect(self, widget: _W, rect: WindowRect) -> None:
+        raise NotImplementedError
+
+    def _area_size(self) -> tuple[int, int]:
         raise NotImplementedError
 
     def _provide_file_output(self) -> WidgetDataModel:

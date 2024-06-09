@@ -55,6 +55,8 @@ class SubWindow(WidgetWrapper[_W]):
         return f"{type(self).__name__}(title={self.title!r}, widget={self.widget!r})"
 
     def __class_getitem__(cls, widget_type: type[_W]):
+        # this hack allows in_n_out to assign both SubWindow and SubWindow[T] to the
+        # same provider/processor.
         return cls
 
     @property
@@ -97,6 +99,7 @@ class SubWindow(WidgetWrapper[_W]):
 class DockWidget(WidgetWrapper[_W]):
     @property
     def visible(self) -> bool:
+        """Visibility of the dock widget."""
         return self._main_window()._dock_widget_visible(self.widget)
 
     @visible.setter
@@ -104,16 +107,18 @@ class DockWidget(WidgetWrapper[_W]):
         return self._main_window()._set_dock_widget_visible(self.widget, visible)
 
     def show(self) -> None:
+        """Show the dock widget."""
         self.visible = True
 
     def hide(self) -> None:
+        """Hide the dock widget."""
         self.visible = False
 
     @property
     def title(self) -> str:
+        """Title of the dock widget."""
         return self._main_window()._dock_widget_title(self.widget)
 
     @title.setter
     def title(self, title: str) -> None:
-        title = str(title)
-        return self._main_window()._set_dock_widget_title(self.widget, title)
+        return self._main_window()._set_dock_widget_title(self.widget, str(title))

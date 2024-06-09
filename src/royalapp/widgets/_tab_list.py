@@ -5,6 +5,7 @@ from typing import Generic, TYPE_CHECKING, Iterable, Iterator, TypeVar
 from collections.abc import Sequence
 
 from psygnal import Signal
+from royalapp.types import WindowRect
 from royalapp.widgets._wrapper import _HasMainWindowRef, SubWindow
 
 if TYPE_CHECKING:
@@ -64,7 +65,7 @@ class TabArea(SemiMutableSequence[_W], _HasMainWindowRef[_W]):
     def __repr__(self) -> str:
         return f"{type(self).__name__}({list(self)})"
 
-    def __getitem__(self, index_or_name: int | str) -> _W:
+    def __getitem__(self, index_or_name: int | str) -> SubWindow[_W]:
         index = self._norm_index_or_name(index_or_name)
         backend_widget = self._main_window()._get_widget_list(self._i_tab)[index][1]
         return backend_widget._royalapp_widget
@@ -145,6 +146,34 @@ class TabArea(SemiMutableSequence[_W], _HasMainWindowRef[_W]):
         self._main_window()._connect_window_events(sub_window, out)
         sub_window.title = title
         return sub_window
+
+    def tile_windows(
+        self,
+        nrows: int | None = None,
+        ncols: int | None = None,
+    ) -> None:
+        main = self._main_window()
+        width, height = main._area_size()
+        if nrows is None:
+            if ncols is None:
+                nrows = int(len(self) ** 0.5)
+                ncols = int(len(self) / nrows)
+            else:
+                nrows = int(len(self) / ncols)
+        elif ncols is None:
+            ncols = int(len(self) / nrows)
+
+        w = width / ncols
+        h = height / nrows
+        for i in range(nrows):
+            for j in range(ncols):
+                idx = i * ncols + j
+                if idx >= len(self):
+                    break
+                x = j * width / ncols
+                y = i * height / nrows
+                sub = self[idx]
+                main._set_window_rect(sub.widget, WindowRect.from_numbers(x, y, w, h))
 
     def _coerce_window_title(self, title: str | None) -> str:
         existing = set(self.titles)

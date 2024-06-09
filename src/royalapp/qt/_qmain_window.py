@@ -18,6 +18,7 @@ from royalapp.types import (
     WidgetDataModel,
     ClipboardDataModel,
     SubWindowState,
+    WindowRect,
 )
 from royalapp.style import get_style
 from royalapp.app import get_event_loop_handler
@@ -165,7 +166,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         widget: _T,
         i_tab: int,
         title: str | None = None,
-    ) -> QSubWindow[_T]:
+    ) -> QSubWindow:
         if not isinstance(widget, QtW.QWidget):
             raise TypeError(
                 f"`widget` must be a QtW.QWidget instance, got {type(widget)}."
@@ -326,17 +327,23 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         return None
 
     def _window_state(self, widget: QtW.QWidget) -> SubWindowState:
-        window = widget.parentWidget().parentWidget()
-        if not isinstance(window, QSubWindow):
-            raise ValueError(f"Widget {widget!r} is not in a sub-window.")
-        return window.state
+        return _get_subwindow(widget).state
 
     def _set_window_state(self, widget: QtW.QWidget, state: SubWindowState) -> None:
-        window = widget.parentWidget().parentWidget()
-        if not isinstance(window, QSubWindow):
-            raise ValueError(f"Widget {widget!r} is not in a sub-window.")
-        window.state = state
+        _get_subwindow(widget).state = state
         return None
+
+    def _window_rect(self, widget: QtW.QWidget) -> WindowRect:
+        geo = _get_subwindow(widget).geometry()
+        return WindowRect(geo.x(), geo.y(), geo.width(), geo.height())
+
+    def _set_window_rect(self, widget: QtW.QWidget, rect: WindowRect) -> None:
+        _get_subwindow(widget).setGeometry(rect.left, rect.top, rect.width, rect.height)
+        return None
+
+    def _area_size(self) -> tuple[int, int]:
+        size = self._tab_widget.currentWidget().size()
+        return size.width(), size.height()
 
     def _clipboard_data(self) -> ClipboardDataModel | None:
         return get_clipboard_data()
@@ -401,3 +408,10 @@ def _dock_widget_vis_changed_callback(action: QtW.QAction, dock: QtW.QDockWidget
             action.setChecked(dock.isVisible())
 
     return _cb
+
+
+def _get_subwindow(widget: QtW.QWidget) -> QSubWindow:
+    window = widget.parentWidget().parentWidget()
+    if not isinstance(window, QSubWindow):
+        raise ValueError(f"Widget {widget!r} is not in a sub-window.")
+    return window

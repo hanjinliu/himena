@@ -3,6 +3,7 @@ from typing import (
     Callable,
     Hashable,
     Literal,
+    NamedTuple,
     TypeAlias,
     TypeVar,
     Generic,
@@ -133,3 +134,22 @@ class DragDropDataModel(Generic[_T], BaseModel):
 
 ReaderFunction = Callable[[Path], WidgetDataModel]
 WriterFunction = Callable[[WidgetDataModel], None]
+
+
+class WindowRect(NamedTuple):
+    left: int
+    top: int
+    width: int
+    height: int
+
+    @property
+    def right(self):
+        return self.left + self.width
+
+    @property
+    def bottom(self):
+        return self.top + self.height
+
+    @classmethod
+    def from_numbers(self, left, top, width, height) -> "WindowRect":
+        return WindowRect(int(left), int(top), int(width), int(height))
