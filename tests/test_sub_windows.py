@@ -24,5 +24,5 @@ def test_new_window():
 
 def test_builtin_dock_commands():
     win = new_window(app="test_builtin_dock_commands")
-    win.exec_action("builtin.console")
-    win.exec_action("builtin.filetree")
+    win.exec_action("builtins.console")
+    win.exec_action("builtins.filetree")

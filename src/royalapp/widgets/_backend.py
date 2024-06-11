@@ -101,6 +101,9 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     ) -> DockWidget[_W]:
         raise NotImplementedError
 
+    def add_dialog_widget(self, widget: _W, title: str | None):
+        raise NotImplementedError
+
     def _dock_widget_visible(self, widget: _W) -> bool:
         raise NotImplementedError
 

@@ -93,10 +93,11 @@ class QtErrorMessageBox(QtW.QMessageBox):
         return self
 
     @classmethod
-    def raise_(cls, e: Exception, parent=None):
+    def raise_(cls, e: Exception, parent: QtW.QWidget | None = None):
         """Raise exception in the message box."""
-        # unwrap EmitLoopError
-        return cls.from_exc(e, parent=parent).exec_()
+        cls.from_exc(e, parent=parent).exec_()
+        if parent:
+            parent.setFocus()
 
     def _get_traceback(self):
         if self._exc is None:

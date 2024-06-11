@@ -15,10 +15,10 @@ class QWorkspaceFileTree(QtW.QTreeView):
     def __init__(self, ui: MainWindow) -> None:
         super().__init__()
         self._model = QFileSystemModel(self)
-        self.setModel(self._model)
         self.setHeaderHidden(True)
         self.setTextElideMode(QtCore.Qt.TextElideMode.ElideNone)
-        self._model.setRootPath(str(Path.cwd()))
+        self._model.setRootPath(str(Path.cwd()))  # TODO: Not properly updated
+        self.setModel(self._model)
         self._main_window_ref = weakref.ref(ui)
         self.doubleClicked.connect(self._double_clicked)
 

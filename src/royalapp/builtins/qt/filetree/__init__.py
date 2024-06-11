@@ -9,7 +9,7 @@ __royalapp_plugin__ = get_plugin_interface()
     title="File tree",
     area="left",
     keybindings="Ctrl+Shift+E",
-    command_id="builtin.filetree",
+    command_id="builtins.filetree",
 )
 def make_file_tree_widget(ui):
     """Open a file tree widget to efficiently open files in a workspace."""

@@ -56,6 +56,7 @@ class MainWindow(Generic[_W]):
         return self._model_app
 
     def add_tab(self, title: str | None = None) -> TabArea[_W]:
+        """Add a new tab of given name."""
         self._backend_main_window.add_tab(title)
         idx = len(self.tabs) - 1
         self._backend_main_window._set_current_tab_index(idx)
@@ -122,6 +123,9 @@ class MainWindow(Generic[_W]):
         self._dock_widgets.add(dock.widget)
         return dock
 
+    def add_dialog(self, widget: _W, *, title: str | None = None):
+        return self._backend_main_window.add_dialog_widget(widget, title=title)
+
     def add_data(
         self,
         data: Any,
@@ -156,6 +160,8 @@ class MainWindow(Generic[_W]):
         return self.add_widget(widget, title=model_data.title)
 
     def read_file(self, file_path) -> None:
+        """
+        Read local file(s) and open as a new sub-window."""
         if hasattr(file_path, "__iter__") and not isinstance(file_path, (str, Path)):
             fp = [Path(f) for f in file_path]
         else:

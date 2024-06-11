@@ -130,6 +130,23 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
         return dock_widget
 
+    def add_dialog_widget(
+        self,
+        widget: QtW.QWidget,
+        *,
+        title: str | None = None,
+    ) -> QtW.QDialog:
+        dialog = QtW.QDialog(self)
+        if title is None:
+            title = widget.objectName()
+        dialog.setWindowTitle(title)
+        layout = QtW.QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(widget)
+        dialog.setLayout(layout)
+        dialog.exec_()
+        return None
+
     def _dock_widget_title(self, widget: QtW.QWidget) -> str:
         if isinstance(dock := widget.parentWidget(), QtW.QDockWidget):
             return dock.windowTitle()

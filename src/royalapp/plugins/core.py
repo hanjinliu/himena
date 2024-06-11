@@ -135,6 +135,52 @@ class PluginInterface:
         return _inner if func is None else _inner(func)
 
     @overload
+    def register_dialog(
+        self,
+        widget_factory: _F,
+        *,
+        title: str | None = None,
+        types: Hashable | Sequence[Hashable] | None = None,
+        enablement: BoolOp | None = None,
+        command_id: str | None = None,
+    ) -> _F: ...
+
+    @overload
+    def register_dialog(
+        self,
+        widget_factory: None = None,
+        *,
+        title: str | None = None,
+        types: Hashable | Sequence[Hashable] | None = None,
+        enablement: BoolOp | None = None,
+        command_id: str | None = None,
+    ) -> Callable[[_F], _F]: ...
+
+    def register_dialog(
+        self,
+        widget_factory=None,
+        *,
+        title: str | None = None,
+        types=None,
+        enablement=None,
+        command_id=None,
+    ):
+        def _inner(wf):
+            def _exec_dialog(ui: MainWindow):
+                widget = wf()
+                return ui.add_dialog(widget, title=title)
+
+            return self.register_function(
+                _exec_dialog,
+                title=title,
+                types=types,
+                enablement=enablement,
+                command_id=command_id,
+            )
+
+        return _inner if widget_factory is None else _inner(widget_factory)
+
+    @overload
     def register_dock_widget(
         self,
         widget_factory: _F,
@@ -252,6 +298,7 @@ class PluginInterface:
         return _inner if widget_factory is None else _inner(widget_factory)
 
     def install_to(self, app: Application):
+        """Installl plugins to the application."""
         existing_menu_ids = set()
         for menu_id, menu in app.menus:
             existing_menu_ids.add(menu_id)
