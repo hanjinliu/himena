@@ -81,9 +81,8 @@ class MainWindow(Generic[_W]):
 
         Returns
         -------
-        QSubWindow
-            A sub-window widget. The added widget is available by calling
-            `main_widget()` method.
+        SubWindow
+            The sub-window handler.
         """
         if self._new_widget_behavior is NewWidgetBehavior.WINDOW:
             if len(self.tabs) == 0:
@@ -116,6 +115,26 @@ class MainWindow(Generic[_W]):
         area: DockAreaString | DockArea | None = DockArea.RIGHT,
         allowed_areas: list[DockAreaString | DockArea] | None = None,
     ) -> DockWidget[_W]:
+        """
+        Add a custom widget as a dock widget of the main window.
+
+        Parameters
+        ----------
+        widget : Widget type
+            Widget instance that is allowed for the backend.
+        title : str, optional
+            Title of the dock widget.
+        area : dock area, default DockArea.RIGHT
+            String or DockArea enum that describes where the dock widget initially
+            appears.
+        allowed_areas : list of dock area, optional
+            List of allowed dock areas for the widget.
+
+        Returns
+        -------
+        DockWidget
+            The dock widget handler.
+        """
         self._backend_main_window.add_dock_widget(
             widget, title=title, area=area, allowed_areas=allowed_areas
         )
@@ -149,7 +168,7 @@ class MainWindow(Generic[_W]):
         Returns
         -------
         SubWindow
-            A sub-window with `data` as the internal data.
+            The sub-window handler.
         """
         wd = WidgetDataModel(value=data, type=type, source=None, title=title)
         return self.add_data_model(wd)
@@ -160,8 +179,7 @@ class MainWindow(Generic[_W]):
         return self.add_widget(widget, title=model_data.title)
 
     def read_file(self, file_path) -> None:
-        """
-        Read local file(s) and open as a new sub-window."""
+        """Read local file(s) and open as a new sub-window."""
         if hasattr(file_path, "__iter__") and not isinstance(file_path, (str, Path)):
             fp = [Path(f) for f in file_path]
         else:
@@ -193,10 +211,12 @@ class MainWindow(Generic[_W]):
 
 
 def current_instance(name: str) -> MainWindow[_W]:
+    """Get current instance of the main window (raise if not exists)."""
     return _APP_INSTANCES[name][-1]
 
 
 def set_current_instance(name: str, instance: MainWindow[_W]) -> None:
+    """Set the instance as the current one."""
     if name not in _APP_INSTANCES:
         _APP_INSTANCES[name] = []
     elif instance in _APP_INSTANCES[name]:
@@ -206,6 +226,7 @@ def set_current_instance(name: str, instance: MainWindow[_W]) -> None:
 
 
 def remove_instance(name: str, instance: MainWindow[_W]) -> None:
+    """Remove the instance from the list."""
     if name in _APP_INSTANCES:
         _APP_INSTANCES[name].remove(instance)
     return None

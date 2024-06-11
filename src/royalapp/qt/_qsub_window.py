@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Iterator
+from typing import TYPE_CHECKING, Iterator, Callable, TypeVar
+from functools import lru_cache
 from timeit import default_timer as timer
 from qtpy import QtWidgets as QtW
 from qtpy import QtCore, QtGui
@@ -8,6 +9,11 @@ from royalapp.types import SubWindowState
 from royalapp.qt._utils import get_main_window
 from royalapp.qt._qwindow_resize import ResizeState
 from royalapp.qt._qrename import QRenameLineEdit
+
+if TYPE_CHECKING:
+    _F = TypeVar("_F", bound=Callable)
+
+    def lru_cache(maxsize: int = 128, typed: bool = False) -> Callable[[_F], _F]: ...
 
 
 class QSubWindowArea(QtW.QMdiArea):
@@ -65,10 +71,31 @@ class QSubWindowArea(QtW.QMdiArea):
         def currentSubWindow(self) -> QSubWindow | None: ...
 
 
-_ICON_MIN = QIconifyIcon("material-symbols:minimize-rounded")
-_ICON_MAX = QIconifyIcon("material-symbols:crop-5-4-outline")
-_ICON_CLOSE = QIconifyIcon("material-symbols:close-rounded")
-_ICON_NORMAL = QIconifyIcon("material-symbols:filter-none-outline-rounded", rotate=180)
+def _get_icon(name: str, rotate=None):
+    try:
+        return QIconifyIcon(name, rotate=rotate)
+    except OSError:
+        return QtGui.QIcon()
+
+
+@lru_cache(maxsize=1)
+def _icon_min() -> QtGui.QIcon:
+    return _get_icon("material-symbols:minimize-rounded")
+
+
+@lru_cache(maxsize=1)
+def _icon_max() -> QtGui.QIcon:
+    return _get_icon("material-symbols:crop-5-4-outline")
+
+
+@lru_cache(maxsize=1)
+def _icon_close() -> QtGui.QIcon:
+    return _get_icon("material-symbols:close-rounded")
+
+
+@lru_cache(maxsize=1)
+def _icon_normal() -> QtGui.QIcon:
+    return _get_icon("material-symbols:filter-none-outline-rounded", rotate=180)
 
 
 class QCentralWidget(QtW.QWidget):
@@ -153,11 +180,11 @@ class QSubWindow(QtW.QMdiSubWindow):
                 if self.state is SubWindowState.NORMAL:
                     self._last_geometry = self.geometry()
                 self.setGeometry(self.parentWidget().geometry())
-                self._title_bar._toggle_size_button.setIcon(_ICON_NORMAL)
+                self._title_bar._toggle_size_button.setIcon(_icon_normal())
                 self._widget.setVisible(True)
             case SubWindowState.NORMAL:
                 self.setGeometry(self._last_geometry)
-                self._title_bar._toggle_size_button.setIcon(_ICON_MAX)
+                self._title_bar._toggle_size_button.setIcon(_icon_max())
                 self._widget.setVisible(True)
                 if self._title_bar.is_upper_than_area():
                     self.move(self.pos().x(), 0)
@@ -174,7 +201,7 @@ class QSubWindow(QtW.QMdiSubWindow):
 
     def _set_minimized(self, geometry: QtCore.QRect, number: int = 0):
         self.move(2, geometry.height() - (self._title_bar.height() + 8) * (number + 1))
-        self._title_bar._toggle_size_button.setIcon(_ICON_NORMAL)
+        self._title_bar._toggle_size_button.setIcon(_icon_normal())
         self._widget.setVisible(False)
 
     def move_over(self, other: QSubWindow, dx: int = 36, dy: int = 36):
@@ -282,21 +309,21 @@ class QSubWindowTitleBar(QtW.QFrame):
         self._minimize_button.clicked.connect(self._minimize)
         self._minimize_button.setToolTip("Minimize this window")
         self._minimize_button.setFixedSize(height, height)
-        self._minimize_button.setIcon(_ICON_MIN)
+        self._minimize_button.setIcon(_icon_min())
         self._minimize_button.setIconSize(QtCore.QSize(height - 2, height - 2))
 
         self._toggle_size_button = QtW.QToolButton()
         self._toggle_size_button.clicked.connect(self._toggle_size)
         self._toggle_size_button.setToolTip("Toggle the size of this window")
         self._toggle_size_button.setFixedSize(height, height)
-        self._toggle_size_button.setIcon(_ICON_MAX)
+        self._toggle_size_button.setIcon(_icon_max())
         self._toggle_size_button.setIconSize(QtCore.QSize(height - 2, height - 2))
 
         self._close_button = QtW.QToolButton()
         self._close_button.clicked.connect(self._close)
         self._close_button.setToolTip("Close this window")
         self._close_button.setFixedSize(height, height)
-        self._close_button.setIcon(_ICON_CLOSE)
+        self._close_button.setIcon(_icon_close())
         self._close_button.setIconSize(QtCore.QSize(height - 2, height - 2))
 
         layout = QtW.QHBoxLayout()
@@ -388,7 +415,7 @@ class QSubWindowTitleBar(QtW.QFrame):
         ):
             if self._subwindow.state == SubWindowState.MAX:
                 # change to normal without moving
-                self._toggle_size_button.setIcon(_ICON_MAX)
+                self._toggle_size_button.setIcon(_icon_max())
                 self._subwindow._widget.setVisible(True)
                 self._subwindow._window_state = SubWindowState.NORMAL
             new_pos = event.globalPos() - self._drag_position

@@ -170,6 +170,7 @@ ACTIONS_AND_MENUS = [
         callback=open_file_from_dialog,
         menus=["file", "toolbar"],
         keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyO)],
+        icon_visible_in_menu=False,
     ),
     Action(
         id="open-folder",
@@ -180,6 +181,7 @@ ACTIONS_AND_MENUS = [
         keybindings=[
             KeyBindingRule(primary=KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.KeyO))
         ],
+        icon_visible_in_menu=False,
     ),
     Action(
         id="save",
@@ -189,6 +191,7 @@ ACTIONS_AND_MENUS = [
         menus=["file", "toolbar"],
         keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyS)],
         enablement=_ctx.is_active_window_exportable,
+        icon_visible_in_menu=False,
     ),
     Action(
         id="save-as",
@@ -200,6 +203,7 @@ ACTIONS_AND_MENUS = [
             KeyBindingRule(primary=KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyS)
         ],
         enablement=_ctx.is_active_window_exportable,
+        icon_visible_in_menu=False,
     ),
     Action(
         id="paste",
@@ -207,6 +211,7 @@ ACTIONS_AND_MENUS = [
         icon="material-symbols:content-paste",
         callback=paste_from_clipboard,
         menus=["file"],
+        icon_visible_in_menu=False,
     ),
     Action(
         id="copy-window",
@@ -214,6 +219,7 @@ ACTIONS_AND_MENUS = [
         callback=copy_window,
         menus=["window"],
         enablement=_ctx.is_active_window_exportable,
+        icon_visible_in_menu=False,
     ),
     Action(
         id="minimize-other-windows",
@@ -221,6 +227,7 @@ ACTIONS_AND_MENUS = [
         callback=minimize_others,
         menus=["window"],
         enablement=_ctx.has_sub_windows,
+        icon_visible_in_menu=False,
     ),
     Action(
         id="show-all-windows",
@@ -228,6 +235,7 @@ ACTIONS_AND_MENUS = [
         callback=show_all_windows,
         menus=["window"],
         enablement=_ctx.has_sub_windows,
+        icon_visible_in_menu=False,
     ),
     Action(
         id="tile-windows",
@@ -235,6 +243,7 @@ ACTIONS_AND_MENUS = [
         callback=tile_windows,
         menus=["window"],
         enablement=_ctx.has_sub_windows,
+        icon_visible_in_menu=False,
     ),
     Action(
         id="close-window",
@@ -244,6 +253,7 @@ ACTIONS_AND_MENUS = [
         menus=["window"],
         keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyW)],
         enablement=_ctx.has_sub_windows,
+        icon_visible_in_menu=False,
     ),
     Action(
         id="close-all-window",
@@ -251,6 +261,7 @@ ACTIONS_AND_MENUS = [
         callback=close_all_windows_in_tab,
         menus=["window"],
         enablement=_ctx.has_sub_windows,
+        icon_visible_in_menu=False,
     ),
     Action(
         id="new-tab",
@@ -258,6 +269,7 @@ ACTIONS_AND_MENUS = [
         callback=new_tab,
         menus=["tab"],
         keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyT)],
+        icon_visible_in_menu=False,
     ),
     Action(
         id="close-tab",
@@ -265,6 +277,7 @@ ACTIONS_AND_MENUS = [
         callback=close_current_tab,
         menus=["tab"],
         enablement=_ctx.has_tabs,
+        icon_visible_in_menu=False,
     ),
     [
         ("file", SubmenuItem(submenu="file/screenshot", title="Screenshot")),
@@ -273,6 +286,7 @@ ACTIONS_AND_MENUS = [
             title="Copy screenshot of entire main window",
             callback=copy_screenshot,
             menus=["file/screenshot"],
+            icon_visible_in_menu=False,
         ),
         Action(
             id="copy-screenshot-area",
@@ -280,6 +294,7 @@ ACTIONS_AND_MENUS = [
             callback=copy_screenshot_area,
             menus=["file/screenshot"],
             enablement=_ctx.has_tabs,
+            icon_visible_in_menu=False,
         ),
         Action(
             id="copy-screenshot-window",
@@ -287,12 +302,14 @@ ACTIONS_AND_MENUS = [
             callback=copy_screenshot_window,
             menus=["file/screenshot"],
             enablement=_ctx.has_sub_windows,
+            icon_visible_in_menu=False,
         ),
         Action(
             id="save-screenshot",
             title="Save screenshot of entire main window",
             callback=save_screenshot,
             menus=["file/screenshot"],
+            icon_visible_in_menu=False,
         ),
         Action(
             id="save-screenshot-area",
@@ -300,6 +317,7 @@ ACTIONS_AND_MENUS = [
             callback=save_screenshot_area,
             menus=["file/screenshot"],
             enablement=_ctx.has_tabs,
+            icon_visible_in_menu=False,
         ),
         Action(
             id="save-screenshot-window",
@@ -307,6 +325,7 @@ ACTIONS_AND_MENUS = [
             callback=save_screenshot_window,
             menus=["file/screenshot"],
             enablement=_ctx.has_sub_windows,
+            icon_visible_in_menu=False,
         ),
     ],
     Action(
@@ -315,5 +334,6 @@ ACTIONS_AND_MENUS = [
         callback=exit_main_window,
         menus=["file"],
         keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyQ)],
+        icon_visible_in_menu=False,
     ),
 ]

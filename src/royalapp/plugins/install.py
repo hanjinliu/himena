@@ -49,4 +49,5 @@ def dry_install_plugins(plugins: list[str | PluginInterface]):
     if Application.get_app(_DUMMY_APP_NAME):
         raise RuntimeError("Dummy application already exists.")
     app = Application(_DUMMY_APP_NAME)
-    return install_plugins(app, plugins)
+    install_plugins(app, plugins)
+    Application.destroy(app.name)
