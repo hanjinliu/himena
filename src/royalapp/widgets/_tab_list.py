@@ -15,7 +15,7 @@ _W = TypeVar("_W")  # backend widget type
 _T = TypeVar("_T")  # type of the default value
 
 
-class SemiMutableSequence(Sequence[_W]):
+class SemiMutableSequence(Sequence[_T]):
     @abstractmethod
     def __delitem__(self, i: int) -> None:
         return NotImplementedError
@@ -25,7 +25,7 @@ class SemiMutableSequence(Sequence[_W]):
         for _ in range(len(self)):
             del self[-1]
 
-    def remove(self, value: _W) -> None:
+    def remove(self, value: _T) -> None:
         """Remove the first occurrence of a value."""
         try:
             i = self.index(value)
@@ -34,15 +34,15 @@ class SemiMutableSequence(Sequence[_W]):
         del self[i]
 
     @abstractmethod
-    def append(self, value: _W) -> None: ...
+    def append(self, value: _T) -> None: ...
 
-    def extend(self, values: Iterable[_W]) -> None:
+    def extend(self, values: Iterable[_T]) -> None:
         if values is self:
             values = list(values)
         for v in values:
             self.append(v)
 
-    def pop(self, index: int = -1) -> _W:
+    def pop(self, index: int = -1):
         v = self[index]
         del self[index]
         return v
@@ -50,14 +50,14 @@ class SemiMutableSequence(Sequence[_W]):
     def len(self) -> int:
         return len(self)
 
-    def enumerate(self) -> Iterator[tuple[int, _W]]:
+    def enumerate(self):
         yield from enumerate(self)
 
-    def iter(self) -> Iterator[_W]:
+    def iter(self):
         return iter(self)
 
 
-class TabArea(SemiMutableSequence[_W], _HasMainWindowRef[_W]):
+class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
     def __init__(self, main_window: BackendMainWindow[_W], i_tab: int):
         super().__init__(main_window)
         self._i_tab = i_tab
@@ -110,6 +110,7 @@ class TabArea(SemiMutableSequence[_W], _HasMainWindowRef[_W]):
             return default
 
     def current_index(self) -> int | None:
+        """Get the index of the current sub-window."""
         return self._main_window()._current_sub_window_index()
 
     @property
@@ -222,7 +223,10 @@ class TabList(SemiMutableSequence[TabArea[_W]], _HasMainWindowRef[_W], Generic[_
         if isinstance(index_or_name, str):
             index = self.names.index(index_or_name)
         else:
-            index = index_or_name
+            if index_or_name < 0:
+                index = len(self) + index_or_name
+            else:
+                index = index_or_name
         return index
 
     @property

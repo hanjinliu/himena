@@ -1,10 +1,10 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterator, Callable, TypeVar
 from functools import lru_cache
-from timeit import default_timer as timer
 from qtpy import QtWidgets as QtW
 from qtpy import QtCore, QtGui
 from superqt import QIconifyIcon
+from superqt.utils import qthrottled
 from royalapp.types import SubWindowState
 from royalapp.qt._utils import get_main_window
 from royalapp.qt._qwindow_resize import ResizeState
@@ -118,19 +118,10 @@ class QSubWindow(QtW.QMdiSubWindow):
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_Hover, True)
 
-        # BUG: this causes the window to be unresponsive sometimes
-        # add shadow effect
-        # self._shadow_effect = QtW.QGraphicsDropShadowEffect()
-        # self._shadow_effect.setBlurRadius(14)
-        # self._shadow_effect.setColor(QtGui.QColor(0, 0, 0, 100))
-        # self._shadow_effect.setOffset(0, 0)
-        # self.setGraphicsEffect(self._shadow_effect)
-
         self._window_state = SubWindowState.NORMAL
         self._resize_state = ResizeState.NONE
         self._current_button: int = QtCore.Qt.MouseButton.NoButton
         self._widget = widget
-        self._last_hovered = timer()  # throttling
 
         self._central_widget = QCentralWidget(self)
         self.setWidget(self._central_widget)
@@ -140,6 +131,14 @@ class QSubWindow(QtW.QMdiSubWindow):
         self._central_widget.layout().addWidget(self._title_bar)
         self._central_widget.layout().addWidget(widget)
         self._last_geometry = self.geometry()
+
+        # BUG: this causes the window to be unresponsive sometimes
+        # add shadow effect
+        # self._shadow_effect = QtW.QGraphicsDropShadowEffect(self)
+        # self._shadow_effect.setBlurRadius(14)
+        # self._shadow_effect.setColor(QtGui.QColor(0, 0, 0, 100))
+        # self._shadow_effect.setOffset(0, 0)
+        # self.setGraphicsEffect(self._shadow_effect)
 
     def main_widget(self) -> QtW.QWidget:
         return self._widget
@@ -237,12 +236,9 @@ class QSubWindow(QtW.QMdiSubWindow):
         is_bottom = mouse_pos.y() > self.height() - thickness
         return ResizeState.from_bools(is_left, is_right, is_top, is_bottom)
 
+    @qthrottled(timeout=10)
     def _mouse_hover_event(self, event_pos: QtCore.QPoint):
         # if the cursor is at the edges, set the cursor to resize
-        current_time = timer()
-        if current_time - self._last_hovered < 0.1:
-            return None
-        self._last_hovered = current_time
         if self.state is not SubWindowState.NORMAL:
             return None
         resize_state = self._check_resize_state(event_pos)

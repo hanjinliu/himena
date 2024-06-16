@@ -103,6 +103,8 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             ]
         else:
             allowed_areas = [DockArea(area) for area in allowed_areas]
+        if area is not None:
+            area = DockArea(area)
         areas = Qt.DockWidgetArea.NoDockWidgetArea
         for allowed_area in allowed_areas:
             areas |= _DOCK_AREA_MAP[allowed_area]

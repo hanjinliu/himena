@@ -106,6 +106,17 @@ def show_all_windows(ui: MainWindow):
                 window.state = SubWindowState.NORMAL
 
 
+def full_screen_in_new_tab(ui: MainWindow) -> None:
+    if area := ui.tabs.current():
+        index = area.current_index()
+        if index is None:
+            return
+        window = area.pop(index)
+        ui.add_tab(window.title)
+        new_window = ui.tabs[-1].add_widget(window.widget, title=window.title)
+        new_window.state = SubWindowState.FULL
+
+
 def new_tab(ui: MainWindow) -> None:
     ui.add_tab()
 
@@ -225,6 +236,14 @@ ACTIONS_AND_MENUS = [
         id="minimize-other-windows",
         title="Minimize other windows",
         callback=minimize_others,
+        menus=["window"],
+        enablement=_ctx.has_sub_windows,
+        icon_visible_in_menu=False,
+    ),
+    Action(
+        id="full-screen-in-new-tab",
+        title="Full screen in new tab",
+        callback=full_screen_in_new_tab,
         menus=["window"],
         enablement=_ctx.has_sub_windows,
         icon_visible_in_menu=False,

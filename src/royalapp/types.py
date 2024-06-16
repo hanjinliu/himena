@@ -8,11 +8,19 @@ from typing import (
     TypeVar,
     Generic,
 )
-from enum import StrEnum
+from enum import Enum
 from pydantic_compat import BaseModel, Field, validator
 
 
-class DockArea(StrEnum):
+class StrEnum(Enum):
+    def __repr__(self):
+        return f"{self.__class__.__name__}.{self.name}"
+
+    def __str__(self):
+        return self.name
+
+
+class DockArea(Enum):
     """Area of the dock widget."""
 
     TOP = "top"
@@ -21,7 +29,7 @@ class DockArea(StrEnum):
     RIGHT = "right"
 
 
-class SubWindowState(StrEnum):
+class SubWindowState(Enum):
     """State of the sub window."""
 
     MIN = "min"
@@ -34,7 +42,7 @@ DockAreaString: TypeAlias = Literal["top", "bottom", "left", "right"]
 SubWindowStateString: TypeAlias = Literal["min", "max", "normal", "full"]
 
 
-class NewWidgetBehavior(StrEnum):
+class NewWidgetBehavior(Enum):
     """Behavior of adding a widget."""
 
     TAB = "tab"

@@ -25,6 +25,10 @@ class QTabWidget(QtW.QTabWidget):
         self.tabBar().setMovable(False)
         self.currentChanged.connect(self._on_current_changed)
         self.tabBarDoubleClicked.connect(self._start_editing_tab)
+        self.setSizePolicy(
+            QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Expanding
+        )
+        self.setMinimumSize(200, 200)
 
     def addTabArea(self, tab_name: str | None = None) -> QSubWindowArea:
         """
