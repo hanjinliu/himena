@@ -1,3 +1,4 @@
+from typing import Any
 from app_model.types import (
     Action,
     KeyBindingRule,
@@ -9,7 +10,12 @@ from app_model.types import (
 from royalapp.consts import StandardTypes
 from royalapp.widgets import MainWindow
 from royalapp.io import get_readers, get_writers
-from royalapp.types import ClipboardDataModel, SubWindowState, WidgetDataModel
+from royalapp.types import (
+    ClipboardDataModel,
+    SubWindowState,
+    WidgetDataModel,
+    WindowRect,
+)
 from royalapp._app_model._context import AppContext as _ctx
 
 
@@ -127,6 +133,30 @@ def close_current_tab(ui: MainWindow) -> None:
         ui.tabs.pop(idx)
 
 
+def merge_tabs(ui: MainWindow) -> None:
+    if len(ui.tabs.names) < 2:
+        return
+    names = ui._backend_main_window._open_selection_dialog(
+        "Select tab to merge", ui.tabs.names
+    )
+    if names is None:
+        return
+    all_window_info: list[tuple[Any, str, SubWindowState, WindowRect]] = []
+    for name in names:
+        for window in ui.tabs[name]:
+            all_window_info.append(
+                (window.widget, window.title, window.state, window.window_rect)
+            )
+    for name in names:
+        del ui.tabs[name]
+    new_tab = ui.add_tab(names[0])
+    for widget, title, state, rect in all_window_info:
+        new_window = new_tab.add_widget(widget, title=title)
+        new_window.state = state
+        if state is SubWindowState.NORMAL:
+            new_window.window_rect = rect
+
+
 def copy_screenshot(ui: MainWindow) -> ClipboardDataModel:
     data = ui._backend_main_window._screenshot("main")
     return ClipboardDataModel(value=data, type=StandardTypes.IMAGE)
@@ -216,12 +246,72 @@ ACTIONS_AND_MENUS = [
         enablement=_ctx.is_active_window_exportable,
         icon_visible_in_menu=False,
     ),
+    [
+        ("file", SubmenuItem(submenu="file/new", title="New")),
+    ],
     Action(
         id="paste",
         title="Paste as window",
         icon="material-symbols:content-paste",
         callback=paste_from_clipboard,
         menus=["file"],
+        icon_visible_in_menu=False,
+    ),
+    [
+        ("file", SubmenuItem(submenu="file/screenshot", title="Screenshot")),
+        Action(
+            id="copy-screenshot",
+            title="Copy screenshot of entire main window",
+            callback=copy_screenshot,
+            menus=["file/screenshot"],
+            icon_visible_in_menu=False,
+        ),
+        Action(
+            id="copy-screenshot-area",
+            title="Copy screenshot of tab area",
+            callback=copy_screenshot_area,
+            menus=["file/screenshot"],
+            enablement=_ctx.has_tabs,
+            icon_visible_in_menu=False,
+        ),
+        Action(
+            id="copy-screenshot-window",
+            title="Copy Screenshot of sub-window",
+            callback=copy_screenshot_window,
+            menus=["file/screenshot"],
+            enablement=_ctx.has_sub_windows,
+            icon_visible_in_menu=False,
+        ),
+        Action(
+            id="save-screenshot",
+            title="Save screenshot of entire main window",
+            callback=save_screenshot,
+            menus=["file/screenshot"],
+            icon_visible_in_menu=False,
+        ),
+        Action(
+            id="save-screenshot-area",
+            title="Save screenshot of tab area",
+            callback=save_screenshot_area,
+            menus=["file/screenshot"],
+            enablement=_ctx.has_tabs,
+            icon_visible_in_menu=False,
+        ),
+        Action(
+            id="save-screenshot-window",
+            title="Save screenshot of sub-window",
+            callback=save_screenshot_window,
+            menus=["file/screenshot"],
+            enablement=_ctx.has_sub_windows,
+            icon_visible_in_menu=False,
+        ),
+    ],
+    Action(
+        id="exit",
+        title="Exit",
+        callback=exit_main_window,
+        menus=["file"],
+        keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyQ)],
         icon_visible_in_menu=False,
     ),
     Action(
@@ -298,61 +388,12 @@ ACTIONS_AND_MENUS = [
         enablement=_ctx.has_tabs,
         icon_visible_in_menu=False,
     ),
-    [
-        ("file", SubmenuItem(submenu="file/screenshot", title="Screenshot")),
-        Action(
-            id="copy-screenshot",
-            title="Copy screenshot of entire main window",
-            callback=copy_screenshot,
-            menus=["file/screenshot"],
-            icon_visible_in_menu=False,
-        ),
-        Action(
-            id="copy-screenshot-area",
-            title="Copy screenshot of tab area",
-            callback=copy_screenshot_area,
-            menus=["file/screenshot"],
-            enablement=_ctx.has_tabs,
-            icon_visible_in_menu=False,
-        ),
-        Action(
-            id="copy-screenshot-window",
-            title="Copy Screenshot of sub-window",
-            callback=copy_screenshot_window,
-            menus=["file/screenshot"],
-            enablement=_ctx.has_sub_windows,
-            icon_visible_in_menu=False,
-        ),
-        Action(
-            id="save-screenshot",
-            title="Save screenshot of entire main window",
-            callback=save_screenshot,
-            menus=["file/screenshot"],
-            icon_visible_in_menu=False,
-        ),
-        Action(
-            id="save-screenshot-area",
-            title="Save screenshot of tab area",
-            callback=save_screenshot_area,
-            menus=["file/screenshot"],
-            enablement=_ctx.has_tabs,
-            icon_visible_in_menu=False,
-        ),
-        Action(
-            id="save-screenshot-window",
-            title="Save screenshot of sub-window",
-            callback=save_screenshot_window,
-            menus=["file/screenshot"],
-            enablement=_ctx.has_sub_windows,
-            icon_visible_in_menu=False,
-        ),
-    ],
     Action(
-        id="exit",
-        title="Exit",
-        callback=exit_main_window,
-        menus=["file"],
-        keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyQ)],
+        id="merge-tabs",
+        title="Merge Tabs",
+        callback=merge_tabs,
+        menus=["tab"],
+        enablement=_ctx.has_tabs,
         icon_visible_in_menu=False,
     ),
 ]

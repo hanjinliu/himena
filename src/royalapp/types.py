@@ -54,7 +54,22 @@ _U = TypeVar("_U")
 
 
 class WidgetDataModel(Generic[_T], BaseModel):
-    """A data model that represents a widget containing an internal data."""
+    """
+    A data model that represents a widget containing an internal data.
+
+    Parameters
+    ----------
+    value : Any
+        Internal value.
+    source : Path, optional
+        Path of the source file if exists.
+    type : Hashable, optional
+        Type of the internal data.
+    title : str, optional
+        Title for the widget.
+    extensions : list[str], optional
+        List of allowed file extensions to save this data.
+    """
 
     value: _T = Field(..., description="Internal value.")
     source: Path | None = Field(default=None, description="Path of the file.")

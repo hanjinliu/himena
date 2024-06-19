@@ -40,6 +40,7 @@ class QDefaultTextEdit(QtW.QPlainTextEdit):
     def from_model(cls, model: WidgetDataModel) -> QDefaultTextEdit:
         self = cls(model.source)
         self.setPlainText(model.value)
+        self._modified = False
         if model.source is not None:
             self.setObjectName(model.source.name)
         return self

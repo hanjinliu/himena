@@ -70,6 +70,9 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     def _open_confirmation_dialog(self, message: str) -> bool:
         raise NotImplementedError
 
+    def _open_selection_dialog(self, msg: str, options: list[str]) -> list[str] | None:
+        raise NotImplementedError
+
     def _exit_main_window(self) -> None:
         raise NotImplementedError
 

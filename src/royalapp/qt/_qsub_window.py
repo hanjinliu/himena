@@ -252,22 +252,23 @@ class QSubWindow(QtW.QMdiSubWindow):
             self._resize_state.resize_widget(self, event_pos, min_size, max_size)
         return None
 
-    def _close_me(self):
-        is_modified = getattr(self.main_widget(), "is_modified", None)
-        if callable(is_modified) and is_modified():
-            _yes = QtW.QMessageBox.StandardButton.Yes
-            _no = QtW.QMessageBox.StandardButton.No
-            ok = (
-                QtW.QMessageBox.question(
-                    self,
-                    "Close Window",
-                    "Data is not saved. Are you sure to close this window?",
-                    _yes | _no,
+    def _close_me(self, confirm: bool = False):
+        if confirm:
+            is_modified = getattr(self.main_widget(), "is_modified", None)
+            if callable(is_modified) and is_modified():
+                _yes = QtW.QMessageBox.StandardButton.Yes
+                _no = QtW.QMessageBox.StandardButton.No
+                ok = (
+                    QtW.QMessageBox.question(
+                        self,
+                        "Close Window",
+                        "Data is not saved. Are you sure to close this window?",
+                        _yes | _no,
+                    )
+                    == _yes
                 )
-                == _yes
-            )
-            if not ok:
-                return
+                if not ok:
+                    return
         self.close()
         self.closed.emit()
         return None
@@ -390,7 +391,7 @@ class QSubWindowTitleBar(QtW.QFrame):
             self._subwindow.state = SubWindowState.FULL
 
     def _close(self):
-        return self._subwindow._close_me()
+        return self._subwindow._close_me(confirm=True)
 
     # drag events for moving the window
     def mousePressEvent(self, event: QtGui.QMouseEvent):

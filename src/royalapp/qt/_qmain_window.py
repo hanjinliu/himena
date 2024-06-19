@@ -318,6 +318,26 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         answer = QtW.QMessageBox.question(self, "Confirmation", message)
         return answer == QtW.QMessageBox.StandardButton.Yes
 
+    def _open_selection_dialog(self, msg: str, options: list[str]) -> list[str] | None:
+        dialog = QtW.QDialog(self)
+        dialog.setWindowTitle("Selection")
+        layout = QtW.QVBoxLayout(dialog)
+        layout.addWidget(QtW.QLabel(msg))
+        lw = QtW.QListWidget()
+        lw.setSelectionMode(QtW.QAbstractItemView.SelectionMode.MultiSelection)
+        lw.addItems(options)
+        layout.addWidget(lw)
+        buttons = QtW.QDialogButtonBox(
+            QtW.QDialogButtonBox.StandardButton.Ok
+            | QtW.QDialogButtonBox.StandardButton.Cancel
+        )
+        layout.addWidget(buttons)
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        if dialog.exec_():
+            return [item.text() for item in lw.selectedItems()]
+        return None
+
     def _exit_main_window(self) -> None:
         self.close()
 

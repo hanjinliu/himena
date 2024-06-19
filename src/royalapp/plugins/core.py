@@ -24,6 +24,8 @@ from royalapp import _utils
 if TYPE_CHECKING:
     from royalapp.widgets import MainWindow, DockWidget
 
+    KeyBindingsType = str | KeyBindingRule | Sequence[str] | Sequence[KeyBindingRule]
+
 _F = TypeVar("_F", bound=Callable)
 
 
@@ -54,6 +56,7 @@ class PluginInterface:
         title: str | None = None,
         types: Hashable | Sequence[Hashable] | None = None,
         enablement: BoolOp | None = None,
+        keybindings: Sequence[KeyBindingRule] | None = None,
         command_id: str | None = None,
     ) -> None: ...
 
@@ -65,6 +68,7 @@ class PluginInterface:
         title: str | None = None,
         types: Hashable | Sequence[Hashable] | None = None,
         enablement: BoolOp | None = None,
+        keybindings: Sequence[KeyBindingRule] | None = None,
         command_id: str | None = None,
     ) -> _F: ...
 
@@ -75,6 +79,7 @@ class PluginInterface:
         title=None,
         types=None,
         enablement=None,
+        keybindings=None,
         command_id=None,
     ):
         """
@@ -106,6 +111,7 @@ class PluginInterface:
                 )
             else:
                 enablement = ctx.active_window_model_type == hash(types)
+        kbs = _normalize_keybindings(keybindings)
 
         def _inner(f: _F) -> _F:
             if title is None:
@@ -129,8 +135,10 @@ class PluginInterface:
                 callback=f,
                 menus=["/".join(self._place)],
                 enablement=_enablement,
+                keybindings=kbs,
             )
             self._actions.append(action)
+            return f
 
         return _inner if func is None else _inner(func)
 
@@ -142,6 +150,7 @@ class PluginInterface:
         title: str | None = None,
         types: Hashable | Sequence[Hashable] | None = None,
         enablement: BoolOp | None = None,
+        keybindings: Sequence[KeyBindingRule] | None = None,
         command_id: str | None = None,
     ) -> _F: ...
 
@@ -153,6 +162,7 @@ class PluginInterface:
         title: str | None = None,
         types: Hashable | Sequence[Hashable] | None = None,
         enablement: BoolOp | None = None,
+        keybindings: Sequence[KeyBindingRule] | None = None,
         command_id: str | None = None,
     ) -> Callable[[_F], _F]: ...
 
@@ -163,6 +173,7 @@ class PluginInterface:
         title: str | None = None,
         types=None,
         enablement=None,
+        keybindings=None,
         command_id=None,
     ):
         def _inner(wf):
@@ -175,6 +186,7 @@ class PluginInterface:
                 title=title,
                 types=types,
                 enablement=enablement,
+                keybindings=keybindings,
                 command_id=command_id,
             )
 
@@ -188,7 +200,7 @@ class PluginInterface:
         title: str | None = None,
         area: DockArea | DockAreaString = DockArea.RIGHT,
         allowed_areas: Sequence[DockArea | DockAreaString] | None = None,
-        keybindings=None,
+        keybindings: KeyBindingsType | None = None,
         singleton: bool = False,
         command_id: str | None = None,
     ) -> _F: ...
@@ -201,7 +213,7 @@ class PluginInterface:
         title: str | None = None,
         area: DockArea | DockAreaString = DockArea.RIGHT,
         allowed_areas: Sequence[DockArea | DockAreaString] | None = None,
-        keybindings=None,
+        keybindings: KeyBindingsType | None = None,
         singleton: bool = False,
         command_id: str | None = None,
     ) -> Callable[[_F], _F]: ...
@@ -237,26 +249,11 @@ class PluginInterface:
         command_id : str, optional
             Command ID. If not given, the function name will be used.
         """
-        # Normalize keybindings
-        if isinstance(keybindings, str):
-            kbs = [KeyBindingRule(primary=keybindings)]
-        elif isinstance(keybindings, Sequence):
-            kbs = []
-            for kb in keybindings:
-                if isinstance(kb, str):
-                    kbs.append(KeyBindingRule(primary=kb))
-                elif isinstance(kb, Mapping):
-                    kbs.append(KeyBindingRule(**kb))
-                elif isinstance(kb, KeyBindingRule):
-                    kbs.append(kb)
-                else:
-                    raise TypeError(f"{kb!r} not allowed as a keybinding.")
-        elif keybindings is None:
-            kbs = keybindings
-        else:
-            raise TypeError(f"{keybindings!r} not allowed as keybindings.")
+        kbs = _normalize_keybindings(keybindings)
 
         def _inner(wf: Callable):
+            _title = _normalize_title(title, wf)
+
             def _callback(ui: MainWindow) -> None:
                 if singleton:
                     for _backend_dock in ui._dock_widgets:
@@ -270,7 +267,7 @@ class PluginInterface:
                 except TypeError:
                     widget = wf()
                 dock = ui.add_dock_widget(
-                    widget, title=title, area=area, allowed_areas=allowed_areas
+                    widget, title=_title, area=area, allowed_areas=allowed_areas
                 )
                 dock._identifier = id(wf)
                 return None
@@ -285,7 +282,7 @@ class PluginInterface:
                 _id = command_id
             action = Action(
                 id=_id,
-                title=title,
+                title=_title,
                 tooltip=tooltip,
                 callback=_callback,
                 menus=["/".join(self._place)],
@@ -296,6 +293,74 @@ class PluginInterface:
             return wf
 
         return _inner if widget_factory is None else _inner(widget_factory)
+
+    @overload
+    def register_new_action(
+        self,
+        func: _F,
+        *,
+        title: str | None = None,
+        keybindings: KeyBindingsType | None = None,
+        command_id: str | None = None,
+    ) -> _F: ...
+    @overload
+    def register_new_action(
+        self,
+        func: None = None,
+        *,
+        title: str | None = None,
+        keybindings: KeyBindingsType | None = None,
+        command_id: str | None = None,
+    ) -> Callable[[_F], _F]: ...
+
+    def register_new_action(
+        self,
+        func=None,
+        *,
+        title=None,
+        keybindings=None,
+        command_id=None,
+    ):
+        """
+        Register a function as a "New File" action.
+
+        The registered function must provide a `WidgetDataModel` as the return value,
+        which is directly passed to the main window to create a new sub-window.
+
+        Parameters
+        ----------
+        func : callable, optional
+            Function that create a `WidgetDataModel` instance.
+        title : str, optional
+            Title of the window.
+        keybindings : keybinding type, optional
+            Keybindings to trigger the action.
+        command_id : str, optional
+            Custom command ID.
+        """
+        kbs = _normalize_keybindings(keybindings)
+
+        def _inner(f: Callable):
+            if doc := getattr(f, "__doc__", None):
+                tooltip = str(doc)
+            else:
+                tooltip = None
+            if command_id is None:
+                _id = getattr(f, "__qualname__", str(f))
+            else:
+                _id = command_id
+            action = Action(
+                id=_id,
+                title=_normalize_title(title, f),
+                tooltip=tooltip,
+                callback=f,
+                menus=["file/new"],
+                keybindings=kbs,
+            )
+            self._actions.append(action)
+            return f
+
+        return _inner if func is None else _inner(func)
 
     def install_to(self, app: Application):
         """Installl plugins to the application."""
@@ -324,3 +389,30 @@ def get_plugin_interface(place: str | list[str] | None = None) -> PluginInterfac
         place = [place]
     out = PluginInterface(place)
     return out
+
+
+def _normalize_keybindings(keybindings):
+    if isinstance(keybindings, str):
+        kbs = [KeyBindingRule(primary=keybindings)]
+    elif isinstance(keybindings, Sequence):
+        kbs = []
+        for kb in keybindings:
+            if isinstance(kb, str):
+                kbs.append(KeyBindingRule(primary=kb))
+            elif isinstance(kb, Mapping):
+                kbs.append(KeyBindingRule(**kb))
+            elif isinstance(kb, KeyBindingRule):
+                kbs.append(kb)
+            else:
+                raise TypeError(f"{kb!r} not allowed as a keybinding.")
+    elif keybindings is None:
+        kbs = keybindings
+    else:
+        raise TypeError(f"{keybindings!r} not allowed as keybindings.")
+    return kbs
+
+
+def _normalize_title(title: str | None, func: Callable) -> str:
+    if title is None:
+        return func.__name__.replace("_", " ").title()
+    return title

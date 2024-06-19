@@ -6,7 +6,7 @@ from typing import Generic, TYPE_CHECKING, TypeVar
 import weakref
 
 from psygnal import Signal
-from royalapp.types import SubWindowState, WidgetDataModel
+from royalapp.types import SubWindowState, WidgetDataModel, WindowRect
 
 if TYPE_CHECKING:
     from royalapp.widgets import BackendMainWindow
@@ -94,6 +94,17 @@ class SubWindow(WidgetWrapper[_W]):
         if not self.is_exportable:
             raise ValueError("Widget does not have `to_model` method.")
         return self.widget.to_model()  # type: ignore
+
+    @property
+    def window_rect(self) -> WindowRect:
+        """Position and size of the sub-window."""
+        return self._main_window()._window_rect(self.widget)
+
+    @window_rect.setter
+    def window_rect(self, value) -> None:
+        self._main_window()._set_window_rect(
+            self.widget, WindowRect.from_numbers(*value)
+        )
 
 
 class DockWidget(WidgetWrapper[_W]):
