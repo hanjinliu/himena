@@ -180,6 +180,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
                 y = i * height / nrows
                 sub = self[idx]
                 main._set_window_rect(sub.widget, WindowRect.from_numbers(x, y, w, h))
+        return None
 
     def _coerce_window_title(self, title: str | None) -> str:
         existing = set(self.window_titles)

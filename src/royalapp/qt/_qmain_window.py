@@ -80,8 +80,11 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             .replace("$(background-3)", style.background.level_3)
         )
         self.setStyleSheet(style_text)
+
+        self._anim_subwindow = QtCore.QPropertyAnimation()
         self._tab_widget.newWindowActivated.connect(self._update_context)
         self.setMinimumSize(400, 300)
+        self.resize(800, 600)
 
     def add_dock_widget(
         self,
@@ -380,7 +383,8 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         return WindowRect(geo.x(), geo.y(), geo.width(), geo.height())
 
     def _set_window_rect(self, widget: QtW.QWidget, rect: WindowRect) -> None:
-        _get_subwindow(widget).setGeometry(rect.left, rect.top, rect.width, rect.height)
+        qrect = QtCore.QRect(rect.left, rect.top, rect.width, rect.height)
+        _get_subwindow(widget)._set_geometry_animated(qrect)
         return None
 
     def _area_size(self) -> tuple[int, int]:

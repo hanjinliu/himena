@@ -132,6 +132,7 @@ class QSubWindow(QtW.QMdiSubWindow):
         self._central_widget.layout().addWidget(widget)
         self._last_geometry = self.geometry()
 
+        self._anim_geometry = QtCore.QPropertyAnimation(self, b"geometry")
         # BUG: this causes the window to be unresponsive sometimes
         # add shadow effect
         # self._shadow_effect = QtW.QGraphicsDropShadowEffect(self)
@@ -178,11 +179,11 @@ class QSubWindow(QtW.QMdiSubWindow):
             case SubWindowState.MAX:
                 if self.state is SubWindowState.NORMAL:
                     self._last_geometry = self.geometry()
-                self.setGeometry(self.parentWidget().geometry())
+                self._set_geometry_animated(self.parentWidget().geometry())
                 self._title_bar._toggle_size_button.setIcon(_icon_normal())
                 self._widget.setVisible(True)
             case SubWindowState.NORMAL:
-                self.setGeometry(self._last_geometry)
+                self._set_geometry_animated(self._last_geometry)
                 self._title_bar._toggle_size_button.setIcon(_icon_max())
                 self._widget.setVisible(True)
                 if self._title_bar.is_upper_than_area():
@@ -190,7 +191,7 @@ class QSubWindow(QtW.QMdiSubWindow):
             case SubWindowState.FULL:
                 if self.state is SubWindowState.NORMAL:
                     self._last_geometry = self.geometry()
-                self.setGeometry(self.parentWidget().geometry())
+                self._set_geometry_animated(self.parentWidget().geometry())
         self._title_bar.setVisible(state is not SubWindowState.FULL)
         self._title_bar._minimize_button.setVisible(state is not SubWindowState.MIN)
         self._widget.setVisible(state is not SubWindowState.MIN)
@@ -206,7 +207,7 @@ class QSubWindow(QtW.QMdiSubWindow):
     def move_over(self, other: QSubWindow, dx: int = 36, dy: int = 36):
         rect = other.geometry()
         rect.translate(dx, dy)
-        self.setGeometry(rect)
+        self._set_geometry_animated(rect)
         return self
 
     def keyPressEvent(self, a0: QtGui.QKeyEvent | None) -> None:
@@ -272,6 +273,16 @@ class QSubWindow(QtW.QMdiSubWindow):
         self.close()
         self.closed.emit()
         return None
+
+    def _set_geometry_animated(self, rect: QtCore.QRect):
+        if self._anim_geometry.state() == QtCore.QAbstractAnimation.State.Running:
+            self._anim_geometry.stop()
+        self._anim_geometry.setTargetObject(self)
+        self._anim_geometry.setPropertyName(b"geometry")
+        self._anim_geometry.setStartValue(QtCore.QRect(self.geometry()))
+        self._anim_geometry.setEndValue(rect)
+        self._anim_geometry.setDuration(60)
+        self._anim_geometry.start()
 
 
 class QSubWindowTitleBar(QtW.QFrame):

@@ -90,7 +90,7 @@ def close_all_windows_in_tab(ui: MainWindow) -> None:
         area.clear()
 
 
-def copy_window(model: WidgetDataModel) -> WidgetDataModel:
+def duplicate_window(model: WidgetDataModel) -> WidgetDataModel:
     if model.title is not None:
         model.title += " (copy)"
     return model
@@ -121,6 +121,53 @@ def full_screen_in_new_tab(ui: MainWindow) -> None:
         ui.add_tab(window.title)
         new_window = ui.tabs[-1].add_widget(window.widget, title=window.title)
         new_window.state = SubWindowState.FULL
+
+
+def align_window_left(ui: MainWindow) -> None:
+    if area := ui.tabs.current():
+        if window := area.current():
+            rect = window.window_rect
+            window.window_rect = WindowRect(0, rect.top, rect.width, rect.height)
+
+
+def align_window_right(ui: MainWindow) -> None:
+    if area := ui.tabs.current():
+        width, _ = ui.area_size
+        if window := area.current():
+            rect = window.window_rect
+            window.window_rect = WindowRect(
+                width - rect.width, rect.top, rect.width, rect.height
+            )
+
+
+def align_window_top(ui: MainWindow) -> None:
+    if area := ui.tabs.current():
+        if window := area.current():
+            rect = window.window_rect
+            window.window_rect = WindowRect(rect.left, 0, rect.width, rect.height)
+
+
+def align_window_bottom(ui: MainWindow) -> None:
+    if area := ui.tabs.current():
+        _, height = ui.area_size
+        if window := area.current():
+            rect = window.window_rect
+            window.window_rect = WindowRect(
+                rect.left, height - rect.height, rect.width, rect.height
+            )
+
+
+def align_window_center(ui: MainWindow) -> None:
+    if area := ui.tabs.current():
+        width, height = ui.area_size
+        if window := area.current():
+            rect = window.window_rect
+            window.window_rect = WindowRect(
+                (width - rect.width) / 2,
+                (height - rect.height) / 2,
+                rect.width,
+                rect.height,
+            )
 
 
 def new_tab(ui: MainWindow) -> None:
@@ -202,6 +249,7 @@ def tile_windows(ui: MainWindow) -> None:
 
 
 _CtrlK = KeyMod.CtrlCmd | KeyCode.KeyK
+_CtrlAlt = KeyMod.CtrlCmd | KeyMod.Alt
 
 ACTIONS_AND_MENUS = [
     Action(
@@ -315,9 +363,9 @@ ACTIONS_AND_MENUS = [
         icon_visible_in_menu=False,
     ),
     Action(
-        id="copy-window",
-        title="Copy current window",
-        callback=copy_window,
+        id="duplicate-window",
+        title="Duplicate current window",
+        callback=duplicate_window,
         menus=["window"],
         enablement=_ctx.is_active_window_exportable,
         icon_visible_in_menu=False,
@@ -354,6 +402,54 @@ ACTIONS_AND_MENUS = [
         enablement=_ctx.has_sub_windows,
         icon_visible_in_menu=False,
     ),
+    [
+        ("window", SubmenuItem(submenu="window/align", title="Align")),
+        Action(
+            id="align-window-left",
+            title="Align window to left",
+            callback=align_window_left,
+            menus=["window/align"],
+            enablement=_ctx.has_sub_windows,
+            keybindings=[KeyBindingRule(primary=_CtrlAlt | KeyCode.LeftArrow)],
+            icon_visible_in_menu=False,
+        ),
+        Action(
+            id="align-window-right",
+            title="Align window to right",
+            callback=align_window_right,
+            menus=["window/align"],
+            enablement=_ctx.has_sub_windows,
+            keybindings=[KeyBindingRule(primary=_CtrlAlt | KeyCode.RightArrow)],
+            icon_visible_in_menu=False,
+        ),
+        Action(
+            id="align-window-top",
+            title="Align window to top",
+            callback=align_window_top,
+            menus=["window/align"],
+            enablement=_ctx.has_sub_windows,
+            keybindings=[KeyBindingRule(primary=_CtrlAlt | KeyCode.UpArrow)],
+            icon_visible_in_menu=False,
+        ),
+        Action(
+            id="align-window-bottom",
+            title="Align window to bottom",
+            callback=align_window_bottom,
+            menus=["window/align"],
+            enablement=_ctx.has_sub_windows,
+            keybindings=[KeyBindingRule(primary=_CtrlAlt | KeyCode.DownArrow)],
+            icon_visible_in_menu=False,
+        ),
+        Action(
+            id="align-window-center",
+            title="Align window to center",
+            callback=align_window_center,
+            menus=["window/align"],
+            enablement=_ctx.has_sub_windows,
+            keybindings=[KeyBindingRule(primary=_CtrlAlt | KeyCode.Space)],
+            icon_visible_in_menu=False,
+        ),
+    ],
     Action(
         id="close-window",
         title="Close window",

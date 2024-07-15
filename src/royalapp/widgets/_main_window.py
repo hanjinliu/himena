@@ -55,6 +55,11 @@ class MainWindow(Generic[_W]):
         """The app-model application instance."""
         return self._model_app
 
+    @property
+    def area_size(self) -> tuple[int, int]:
+        """(width, height) of the main window tab area."""
+        return self._backend_main_window._area_size()
+
     def add_tab(self, title: str | None = None) -> TabArea[_W]:
         """Add a new tab of given name."""
         self._backend_main_window.add_tab(title)
