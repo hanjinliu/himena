@@ -102,7 +102,7 @@ class QCentralWidget(QtW.QWidget):
     def __init__(self, parent):
         super().__init__(parent)
         layout = QtW.QVBoxLayout()
-        pad = 4
+        pad = 0
         layout.setContentsMargins(pad, pad, pad, pad)
         layout.setSpacing(0)
         self.setLayout(layout)
@@ -129,7 +129,11 @@ class QSubWindow(QtW.QMdiSubWindow):
         self._title_bar = QSubWindowTitleBar(self, title)
 
         self._central_widget.layout().addWidget(self._title_bar)
-        self._central_widget.layout().addWidget(widget)
+        spacer = QtW.QWidget()
+        spacer.setLayout(QtW.QVBoxLayout())
+        spacer.layout().setContentsMargins(4, 4, 4, 4)
+        spacer.layout().addWidget(widget)
+        self._central_widget.layout().addWidget(spacer)
         self._last_geometry = self.geometry()
 
         self._anim_geometry = QtCore.QPropertyAnimation(self, b"geometry")
@@ -316,23 +320,23 @@ class QSubWindowTitleBar(QtW.QFrame):
         self._minimize_button = QtW.QToolButton()
         self._minimize_button.clicked.connect(self._minimize)
         self._minimize_button.setToolTip("Minimize this window")
-        self._minimize_button.setFixedSize(height, height)
+        self._minimize_button.setFixedSize(height - 2, height - 2)
         self._minimize_button.setIcon(_icon_min())
-        self._minimize_button.setIconSize(QtCore.QSize(height - 2, height - 2))
+        self._minimize_button.setIconSize(QtCore.QSize(height - 3, height - 3))
 
         self._toggle_size_button = QtW.QToolButton()
         self._toggle_size_button.clicked.connect(self._toggle_size)
         self._toggle_size_button.setToolTip("Toggle the size of this window")
-        self._toggle_size_button.setFixedSize(height, height)
+        self._toggle_size_button.setFixedSize(height - 2, height - 2)
         self._toggle_size_button.setIcon(_icon_max())
-        self._toggle_size_button.setIconSize(QtCore.QSize(height - 2, height - 2))
+        self._toggle_size_button.setIconSize(QtCore.QSize(height - 3, height - 3))
 
         self._close_button = QtW.QToolButton()
         self._close_button.clicked.connect(self._close)
         self._close_button.setToolTip("Close this window")
-        self._close_button.setFixedSize(height, height)
+        self._close_button.setFixedSize(height - 2, height - 2)
         self._close_button.setIcon(_icon_close())
-        self._close_button.setIconSize(QtCore.QSize(height - 2, height - 2))
+        self._close_button.setIconSize(QtCore.QSize(height - 3, height - 3))
 
         layout = QtW.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)

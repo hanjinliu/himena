@@ -14,7 +14,7 @@ __royalapp_plugin__ = get_plugin_interface()
 )
 def make_file_tree_widget(ui):
     """Open a file tree widget to efficiently open files in a workspace."""
-    from royalapp.builtins.qt.filetree._widget import QWorkspaceFileTree
+    from royalapp.builtins.qt.filetree._widget import QWorkspaceWidget
 
-    console = QWorkspaceFileTree(ui)
-    return console
+    filetree = QWorkspaceWidget(ui)
+    return filetree

@@ -14,6 +14,9 @@ QSubWindow {
 }
 
 QSubWindow:focus {
-    border: 1px solid $(foreground-1);
     background-color: $(background-1)
+}
+
+QSubWindowTitleBar {
+    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 $(background-1), stop:1 $(background-2));
 }

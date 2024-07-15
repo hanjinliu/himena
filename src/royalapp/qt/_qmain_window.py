@@ -275,15 +275,11 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         return self._tab_widget.setTabText(i_tab, title)
 
     def _window_title(self, widget: QtW.QWidget) -> str:
-        window = widget.parentWidget().parentWidget()
-        if not isinstance(window, QSubWindow):
-            raise ValueError(f"Widget {widget!r} is not in a sub-window.")
+        window = _get_subwindow(widget)
         return window.windowTitle()
 
     def _set_window_title(self, widget: QtW.QWidget, title: str) -> None:
-        window = widget.parentWidget().parentWidget()
-        if not isinstance(window, QSubWindow):
-            raise ValueError(f"Widget {widget!r} is not in a sub-window.")
+        window = _get_subwindow(widget)
         return window.setWindowTitle(title)
 
     def _pick_widget_class(self, type: Hashable) -> QtW.QWidget:
@@ -457,7 +453,7 @@ def _dock_widget_vis_changed_callback(action: QtW.QAction, dock: QtW.QDockWidget
 
 
 def _get_subwindow(widget: QtW.QWidget) -> QSubWindow:
-    window = widget.parentWidget().parentWidget()
+    window = widget.parentWidget().parentWidget().parentWidget()
     if not isinstance(window, QSubWindow):
         raise ValueError(f"Widget {widget!r} is not in a sub-window.")
     return window
