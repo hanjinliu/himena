@@ -20,6 +20,8 @@ class QSubWindowArea(QtW.QMdiArea):
     def __init__(self):
         super().__init__()
         self.viewport().setFocusPolicy(QtCore.Qt.FocusPolicy.ClickFocus)
+        self._last_press_pos: QtCore.QPoint | None = None
+        self._last_drag_pos: QtCore.QPoint | None = None
 
     def addSubWindow(self, sub_window: QSubWindow):
         super().addSubWindow(sub_window)
@@ -51,6 +53,32 @@ class QSubWindowArea(QtW.QMdiArea):
         sub_window.resize(size + QtCore.QSize(8, 8))
         sub_window.move(4 + 24 * (nwindows % 5), 4 + 24 * (nwindows % 5))
         return sub_window
+
+    def mousePressEvent(self, event: QtGui.QMouseEvent):
+        self._last_drag_pos = self._last_press_pos = event.pos()
+        if event.buttons() == QtCore.Qt.MouseButton.LeftButton:
+            self.setCursor(QtCore.Qt.CursorShape.ClosedHandCursor)
+        return None
+
+    def mouseMoveEvent(self, event: QtGui.QMouseEvent):
+        if event.buttons() == QtCore.Qt.MouseButton.LeftButton:
+            if self._last_drag_pos is None:
+                return None
+            dpos = event.pos() - self._last_drag_pos
+            for sub_window in self.subWindowList():
+                sub_window.move(sub_window.pos() + dpos)
+            self.setCursor(QtCore.Qt.CursorShape.ClosedHandCursor)
+        self._last_drag_pos = event.pos()
+        return None
+
+    def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
+        self.setCursor(QtCore.Qt.CursorShape.ArrowCursor)
+        self._last_press_pos = self._last_drag_pos = None
+        return None
+
+    def hideEvent(self, a0: QtGui.QHideEvent | None) -> None:
+        self._last_drag_pos = self._last_press_pos = None
+        return super().hideEvent(a0)
 
     def _reanchor_windows(self):
         if self.viewMode() != QtW.QMdiArea.ViewMode.SubWindowView:
