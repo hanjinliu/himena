@@ -6,6 +6,7 @@ from typing import Generic, TYPE_CHECKING, TypeVar
 import weakref
 
 from psygnal import Signal
+from royalapp import anchor as _anchor
 from royalapp.types import SubWindowState, WidgetDataModel, WindowRect
 
 if TYPE_CHECKING:
@@ -102,9 +103,30 @@ class SubWindow(WidgetWrapper[_W]):
 
     @window_rect.setter
     def window_rect(self, value) -> None:
-        self._main_window()._set_window_rect(
-            self.widget, WindowRect.from_numbers(*value)
+        if self.state is not SubWindowState.NORMAL:
+            raise ValueError(
+                "Cannot set window rect when window is not in normal state."
+            )
+        main = self._main_window()
+        rect = WindowRect.from_numbers(*value)
+        anc = main._window_anchor(self.widget).update_for_window_rect(
+            main._area_size(), rect
         )
+        main._set_window_rect(self.widget, rect)
+        main._set_window_anchor(self.widget, anc)
+
+    @property
+    def anchor(self) -> _anchor.WindowAnchor:
+        """Anchor of the sub-window."""
+        return self._main_window()._window_anchor(self.widget)
+
+    @anchor.setter
+    def anchor(self, anchor: _anchor.WindowAnchor | None):
+        if anchor is None:
+            anchor = _anchor.NoAnchor
+        elif not isinstance(anchor, _anchor.WindowAnchor):
+            raise TypeError(f"Expected WindowAnchor, got {type(anchor)}")
+        self._main_window()._set_window_anchor(self.widget, anchor)
 
 
 class DockWidget(WidgetWrapper[_W]):

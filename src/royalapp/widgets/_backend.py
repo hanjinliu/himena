@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Generic, TypeVar, TYPE_CHECKING
 
 import psygnal
+from royalapp.anchor import WindowAnchor
 from royalapp.types import (
     WidgetDataModel,
     SubWindowState,
@@ -56,6 +57,12 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
         raise NotImplementedError
 
     def _set_window_rect(self, widget: _W, rect: WindowRect) -> None:
+        raise NotImplementedError
+
+    def _window_anchor(self, widget: _W) -> WindowAnchor:
+        raise NotImplementedError
+
+    def _set_window_anchor(self, widget: _W, anchor: WindowAnchor) -> None:
         raise NotImplementedError
 
     def _area_size(self) -> tuple[int, int]:

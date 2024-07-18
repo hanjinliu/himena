@@ -5,8 +5,10 @@ from qtpy import QtWidgets as QtW
 from qtpy import QtCore
 from qtpy.QtCore import Qt
 
+
 class ResizeState(StrEnum):
     """The state of the resize operation of the window."""
+
     NONE = "none"
     TOP = "top"
     BOTTOM = "bottom"
@@ -16,14 +18,16 @@ class ResizeState(StrEnum):
     TOP_RIGHT = "top_right"
     BOTTOM_LEFT = "bottom_left"
     BOTTOM_RIGHT = "bottom_right"
-    
+
     @staticmethod
     def from_bools(
         is_left: bool, is_right: bool, is_top: bool, is_bottom: bool
     ) -> ResizeState:
         """Get the resize state from the edge booleans."""
-        return _RESIZE_STATE_MAP.get((is_left, is_right, is_top, is_bottom), ResizeState.NONE)
-    
+        return _RESIZE_STATE_MAP.get(
+            (is_left, is_right, is_top, is_bottom), ResizeState.NONE
+        )
+
     def to_cursor_shape(self) -> Qt.CursorShape:
         """Get the cursor shape for the resize state."""
         return _CURSOR_SHAPE_MAP[self]
@@ -34,7 +38,7 @@ class ResizeState(StrEnum):
         mouse_pos: QtCore.QPoint,
         min_size: QtCore.QSize,
         max_size: QtCore.QSize,
-    ) -> None:
+    ) -> bool:
         w_adj = _SizeAdjuster(min_size.width(), max_size.width())
         h_adj = _SizeAdjuster(min_size.height(), max_size.height())
         if self is ResizeState.TOP_LEFT:
@@ -93,14 +97,19 @@ class ResizeState(StrEnum):
                 w_adj(mouse_pos.x()),
                 h_adj(widget.height()),
             )
+        else:
+            return False
+        return True
+
 
 class _SizeAdjuster:
     def __init__(self, min_x: int, max_x: int):
         self.min_x = min_x
         self.max_x = max_x
-    
+
     def __call__(self, x: int) -> int:
         return min(max(x, self.min_x), self.max_x)
+
 
 # is_left_edge, is_right_edge, is_top_edge, is_bottom_edge
 _RESIZE_STATE_MAP = {

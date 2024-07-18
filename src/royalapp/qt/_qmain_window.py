@@ -12,6 +12,7 @@ from app_model.backends.qt import QModelMainWindow, QModelMenu
 from royalapp.qt._qtab_widget import QTabWidget
 from royalapp.qt._qsub_window import QSubWindow, QSubWindowArea
 from royalapp.qt._qdock_widget import QDockWidget
+from royalapp import anchor as _anchor
 from royalapp.types import (
     DockArea,
     DockAreaString,
@@ -381,6 +382,15 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _set_window_rect(self, widget: QtW.QWidget, rect: WindowRect) -> None:
         qrect = QtCore.QRect(rect.left, rect.top, rect.width, rect.height)
         _get_subwindow(widget)._set_geometry_animated(qrect)
+        return None
+
+    def _window_anchor(self, widget: QtW.QWidget) -> _anchor.WindowAnchor:
+        return _get_subwindow(widget)._window_anchor
+
+    def _set_window_anchor(
+        self, widget: QtW.QWidget, anchor: _anchor.WindowAnchor
+    ) -> None:
+        _get_subwindow(widget)._window_anchor = anchor
         return None
 
     def _area_size(self) -> tuple[int, int]:

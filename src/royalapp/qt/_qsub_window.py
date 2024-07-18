@@ -1,16 +1,20 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Iterator, Callable, TypeVar
 from functools import lru_cache
 from qtpy import QtWidgets as QtW
 from qtpy import QtCore, QtGui
 from superqt import QIconifyIcon
 from superqt.utils import qthrottled
-from royalapp.types import SubWindowState
+from royalapp import anchor as _anchor
+from royalapp.types import SubWindowState, WindowRect
 from royalapp.qt._utils import get_main_window
 from royalapp.qt._qwindow_resize import ResizeState
 from royalapp.qt._qrename import QRenameLineEdit
 
 if TYPE_CHECKING:
+    from royalapp.qt._qmain_window import QMainWindow
+
     _F = TypeVar("_F", bound=Callable)
 
     def lru_cache(maxsize: int = 128, typed: bool = False) -> Callable[[_F], _F]: ...
@@ -56,7 +60,10 @@ class QSubWindowArea(QtW.QMdiArea):
 
     def mousePressEvent(self, event: QtGui.QMouseEvent):
         self._last_drag_pos = self._last_press_pos = event.pos()
-        if event.buttons() == QtCore.Qt.MouseButton.LeftButton:
+        if (
+            event.buttons() == QtCore.Qt.MouseButton.LeftButton
+            and event.modifiers() & QtCore.Qt.KeyboardModifier.ControlModifier
+        ):
             self.setCursor(QtCore.Qt.CursorShape.ClosedHandCursor)
         return None
 
@@ -64,10 +71,12 @@ class QSubWindowArea(QtW.QMdiArea):
         if event.buttons() == QtCore.Qt.MouseButton.LeftButton:
             if self._last_drag_pos is None:
                 return None
-            dpos = event.pos() - self._last_drag_pos
-            for sub_window in self.subWindowList():
-                sub_window.move(sub_window.pos() + dpos)
-            self.setCursor(QtCore.Qt.CursorShape.ClosedHandCursor)
+            if event.modifiers() & QtCore.Qt.KeyboardModifier.ControlModifier:
+                dpos = event.pos() - self._last_drag_pos
+                for sub_window in self.subWindowList():
+                    sub_window.move(sub_window.pos() + dpos)
+                self._reanchor_windows()
+                self.setCursor(QtCore.Qt.CursorShape.ClosedHandCursor)
         self._last_drag_pos = event.pos()
         return None
 
@@ -81,6 +90,7 @@ class QSubWindowArea(QtW.QMdiArea):
         return super().hideEvent(a0)
 
     def _reanchor_windows(self):
+        """Reanchor all windows if needed (such as minimized windows)."""
         if self.viewMode() != QtW.QMdiArea.ViewMode.SubWindowView:
             return
         parent_geometry = self.viewport().geometry()
@@ -91,6 +101,14 @@ class QSubWindowArea(QtW.QMdiArea):
                 num += 1
             elif sub_window.state in (SubWindowState.MAX, SubWindowState.FULL):
                 sub_window.setGeometry(parent_geometry)
+            else:
+                main_qsize = parent_geometry.size()
+                sub_qsize = sub_window.size()
+                if rect := sub_window._window_anchor.apply_anchor(
+                    (main_qsize.width(), main_qsize.height()),
+                    (sub_qsize.width(), sub_qsize.height()),
+                ):
+                    sub_window.setGeometry(rect.left, rect.top, rect.width, rect.height)
 
     if TYPE_CHECKING:
 
@@ -148,6 +166,7 @@ class QSubWindow(QtW.QMdiSubWindow):
 
         self._window_state = SubWindowState.NORMAL
         self._resize_state = ResizeState.NONE
+        self._window_anchor: _anchor.WindowAnchor = _anchor.NoAnchor
         self._current_button: int = QtCore.Qt.MouseButton.NoButton
         self._widget = widget
 
@@ -175,6 +194,14 @@ class QSubWindow(QtW.QMdiSubWindow):
 
     def main_widget(self) -> QtW.QWidget:
         return self._widget
+
+    def _qt_mdiarea(self) -> QMainWindow:
+        parent = self
+        while parent is not None:
+            parent = parent.parentWidget()
+            if isinstance(parent, QtW.QMdiArea):
+                return parent
+        raise ValueError("Could not find the Qt main window.")
 
     def windowTitle(self) -> str:
         return self._title_bar._title_label.text()
@@ -282,7 +309,14 @@ class QSubWindow(QtW.QMdiSubWindow):
                 self._title_bar.minimumSize()
             )
             max_size = self._widget.maximumSize()
-            self._resize_state.resize_widget(self, event_pos, min_size, max_size)
+            if self._resize_state.resize_widget(self, event_pos, min_size, max_size):
+                # update window anchor
+                g = self.geometry()
+                main_qsize = self._qt_mdiarea().size()
+                self._window_anchor = self._window_anchor.update_for_window_rect(
+                    (main_qsize.width(), main_qsize.height()),
+                    WindowRect.from_numbers(g.left(), g.top(), g.width(), g.height()),
+                )
         return None
 
     def _close_me(self, confirm: bool = False):
@@ -391,7 +425,18 @@ class QSubWindowTitleBar(QtW.QFrame):
         menu.addAction("Rename", self._start_renaming)
         menu.addAction("Minimize", self._minimize)
         menu.addAction("Maximize", self._maximize)
-        menu.addAction("Toggle full screen", self._toggle_full_screen)
+        if self._subwindow.state is SubWindowState.MAX:
+            _toggle_full_screen_text = "Reset full screen"
+        else:
+            _toggle_full_screen_text = "Full screen"
+        menu.addAction(_toggle_full_screen_text, self._toggle_full_screen)
+        menu.addSeparator()
+        menu.addAction("Unanchor", self._unset_anchor)
+        menu.addAction("Anchor at top-left corner", self._set_top_left_anchor)
+        menu.addAction("Anchor at top-right corner", self._set_top_right_anchor)
+        menu.addAction("Anchor at bottom-left corner", self._set_bottom_left_anchor)
+        menu.addAction("Anchor at bottom-right corner", self._set_bottom_right_anchor)
+        menu.addSeparator()
         menu.addAction("Close", self._close)
         menu.move(QtGui.QCursor.pos())
         menu.exec_()
@@ -433,6 +478,34 @@ class QSubWindowTitleBar(QtW.QFrame):
         else:
             self._subwindow.state = SubWindowState.FULL
 
+    def _unset_anchor(self):
+        self._subwindow._window_anchor = _anchor.NoAnchor
+
+    def _set_top_left_anchor(self):
+        g = self._subwindow.geometry()
+        self._subwindow._window_anchor = _anchor.TopLeftConstAnchor(g.left(), g.top())
+
+    def _set_top_right_anchor(self):
+        g = self._subwindow.geometry()
+        main_size = self._subwindow._qt_mdiarea().size()
+        self._subwindow._window_anchor = _anchor.TopRightConstAnchor(
+            main_size.width() - g.right(), g.top()
+        )
+
+    def _set_bottom_left_anchor(self):
+        g = self._subwindow.geometry()
+        main_size = self._subwindow._qt_mdiarea().size()
+        self._subwindow._window_anchor = _anchor.BottomLeftConstAnchor(
+            g.left(), main_size.height() - g.bottom()
+        )
+
+    def _set_bottom_right_anchor(self):
+        g = self._subwindow.geometry()
+        main_size = self._subwindow._qt_mdiarea().size()
+        self._subwindow._window_anchor = _anchor.BottomRightConstAnchor(
+            main_size.width() - g.right(), main_size.height() - g.bottom()
+        )
+
     def _close(self):
         return self._subwindow._close_me(confirm=True)
 
@@ -448,21 +521,31 @@ class QSubWindowTitleBar(QtW.QFrame):
         return super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent):
+        _subwindow = self._subwindow
         if (
             event.buttons() == QtCore.Qt.MouseButton.LeftButton
             and self._drag_position is not None
-            and self._subwindow._resize_state is ResizeState.NONE
+            and _subwindow._resize_state is ResizeState.NONE
         ):
-            if self._subwindow.state == SubWindowState.MAX:
+            if _subwindow.state == SubWindowState.MAX:
                 # change to normal without moving
                 self._toggle_size_button.setIcon(_icon_max())
-                self._subwindow._widget.setVisible(True)
-                self._subwindow._window_state = SubWindowState.NORMAL
+                _subwindow._widget.setVisible(True)
+                _subwindow._window_state = SubWindowState.NORMAL
             new_pos = event.globalPos() - self._drag_position
             offset = self.height() - 4
             if new_pos.y() < -offset:
                 new_pos.setY(-offset)
-            self._subwindow.move(new_pos)
+            _subwindow.move(new_pos)
+            # update window anchor
+            g = _subwindow.geometry()
+            main_qsize = _subwindow._qt_mdiarea().size()
+            _subwindow._window_anchor = (
+                _subwindow._window_anchor.update_for_window_rect(
+                    (main_qsize.width(), main_qsize.height()),
+                    WindowRect.from_numbers(g.left(), g.top(), g.width(), g.height()),
+                )
+            )
         return super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
