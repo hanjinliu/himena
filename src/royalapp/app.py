@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import sys
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Callable
 
 if TYPE_CHECKING:
+    from types import TracebackType
     from IPython import InteractiveShell
     from qtpy.QtWidgets import QApplication
 
@@ -50,8 +51,6 @@ class QtEventLoopHandler(EventLoopHandler):
     def run_app(self):
         """Start the event loop."""
         if not gui_is_active("qt"):
-            from tabulous.exceptions import ExceptionHandler
-
             with ExceptionHandler(hook=self._excepthook) as _:
                 self.get_app().exec_()
             return None
@@ -103,4 +102,22 @@ def get_ipython_shell() -> InteractiveShell | None:
 
         return get_ipython()
     else:
+        return None
+
+
+class ExceptionHandler:
+    """Handle exceptions in the GUI thread."""
+
+    def __init__(
+        self, hook: Callable[[type[Exception], Exception, TracebackType], Any]
+    ):
+        self._excepthook = hook
+
+    def __enter__(self):
+        self._original_excepthook = sys.excepthook
+        sys.excepthook = self._excepthook
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        sys.excepthook = self._original_excepthook
         return None
