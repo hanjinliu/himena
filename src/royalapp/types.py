@@ -89,7 +89,10 @@ class WidgetDataModel(Generic[_T], BaseModel):
     def with_source(self, source: str | Path) -> "WidgetDataModel[_T]":
         """Return a new instance with the source path."""
         path = Path(source).resolve()
-        return self.model_copy(update={"method": LocalReaderMethod(path=path)})
+        to_update = {"method": LocalReaderMethod(path=path)}
+        if self.title is None:
+            to_update.update({"title": source.name})
+        return self.model_copy(update=to_update)
 
     @property
     def source(self) -> Path | None:

@@ -5,6 +5,7 @@ from qtpy import QtWidgets as QtW
 from qtpy import QtCore, QtGui
 from royalapp.qt._qsub_window import QSubWindowArea
 from royalapp.qt._qrename import QRenameLineEdit
+from royalapp.qt._utils import get_main_window
 
 
 class QTabWidget(QtW.QTabWidget):
@@ -29,6 +30,7 @@ class QTabWidget(QtW.QTabWidget):
             QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Expanding
         )
         self.setMinimumSize(200, 200)
+        self.setAcceptDrops(True)
 
     def addTabArea(self, tab_name: str | None = None) -> QSubWindowArea:
         """
@@ -117,6 +119,20 @@ class QTabWidget(QtW.QTabWidget):
         self._current_edit_index = index
         self._move_line_edit(rect, self.tabText(index))
         return None
+
+    def dragEnterEvent(self, e: QtGui.QDragEnterEvent) -> None:
+        # This override is necessary for accepting drops from files.
+        e.accept()
+
+    def dropEvent(self, event: QtGui.QDropEvent) -> None:
+        mime_data = event.mimeData()
+        if mime_data.hasUrls():
+            urls = mime_data.urls()
+            for url in urls:
+                if url.isLocalFile():
+                    path = url.toLocalFile()
+                    get_main_window(self).read_file(path)
+        return super().dropEvent(event)
 
     if TYPE_CHECKING:
 

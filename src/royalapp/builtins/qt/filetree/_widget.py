@@ -1,7 +1,7 @@
 from __future__ import annotations
 from pathlib import Path
 import weakref
-from qtpy import QtWidgets as QtW, QtCore
+from qtpy import QtWidgets as QtW, QtCore, QtGui
 from royalapp.widgets import MainWindow
 from royalapp.io import get_readers
 
@@ -61,6 +61,7 @@ class QWorkspaceFileTree(QtW.QTreeView):
         self.setTextElideMode(QtCore.Qt.TextElideMode.ElideNone)
         self.setModel(self._model)
         self.setRootIndex(self._model.index(self._model.rootPath()))
+        self.setSelectionMode(QtW.QAbstractItemView.SelectionMode.ExtendedSelection)
         self._main_window_ref = weakref.ref(ui)
         self.doubleClicked.connect(self._double_clicked)
 
@@ -78,3 +79,20 @@ class QWorkspaceFileTree(QtW.QTreeView):
         model = readers[0](path)
         self._main_window_ref().add_data_model(model)
         return None
+
+    # drag-and-drop
+    def mouseMoveEvent(self, e: QtGui.QMouseEvent):
+        if e.buttons() == QtCore.Qt.MouseButton.LeftButton:
+            self._startDrag(e.pos())
+        return super().mouseMoveEvent(e)
+
+    def _startDrag(self, pos: QtCore.QPoint):
+        mime = QtCore.QMimeData()
+        selected_indices = self.selectedIndexes()
+        urls = [self._model.filePath(idx) for idx in selected_indices]
+        mime.setUrls([QtCore.QUrl.fromLocalFile(url) for url in urls])
+        drag = QtGui.QDrag(self)
+        drag.setMimeData(mime)
+        cursor = QtGui.QCursor(QtCore.Qt.CursorShape.OpenHandCursor)
+        drag.setDragCursor(cursor.pixmap(), QtCore.Qt.DropAction.MoveAction)
+        drag.exec_(QtCore.Qt.DropAction.MoveAction)
