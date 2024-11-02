@@ -2,21 +2,23 @@ from __future__ import annotations
 
 import sys
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar
 
 if TYPE_CHECKING:
     from types import TracebackType
     from IPython import InteractiveShell
     from qtpy.QtWidgets import QApplication
 
+_A = TypeVar("_A")  # the backend application type
 
-class EventLoopHandler(ABC):
+
+class EventLoopHandler(ABC, Generic[_A]):
     def __init__(self, name: str):
         self._name = name
 
     @abstractmethod
-    def get_app(self) -> Any:
-        """Get Application."""
+    def get_app(self) -> _A:
+        """Get Application instance."""
 
     @abstractmethod
     def run_app(self):
@@ -29,7 +31,7 @@ def gui_is_active(event_loop: str) -> bool:
     return shell and shell.active_eventloop == event_loop
 
 
-class QtEventLoopHandler(EventLoopHandler):
+class QtEventLoopHandler(EventLoopHandler["QApplication"]):
     _APP: QApplication | None = None
 
     def get_app(self):
@@ -41,7 +43,7 @@ class QtEventLoopHandler(EventLoopHandler):
         self._APP = app
         return app
 
-    def create_application(self):
+    def create_application(self) -> QApplication:
         from qtpy.QtCore import Qt
         from qtpy.QtWidgets import QApplication
 
@@ -57,12 +59,12 @@ class QtEventLoopHandler(EventLoopHandler):
 
         return self.get_app().exec_()
 
-    def instance(self):
+    def instance(self) -> QApplication | None:
         from qtpy.QtWidgets import QApplication
 
         return QApplication.instance()
 
-    def gui_qt(self):
+    def gui_qt(self) -> None:
         """Call "%gui qt" magic."""
         if not gui_is_active("qt"):
             shell = get_ipython_shell()

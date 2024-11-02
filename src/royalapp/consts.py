@@ -8,6 +8,12 @@ BasicTextFileTypes = frozenset(
     ]
 )  # fmt: skip
 
+ConventionalTextFileNames = frozenset(
+    ["LICENSE", "Makefile", "dockerfile", ".gitignore", ".gitattributes", ".vimrc",
+     ".viminfo", ".pypirc",
+    ]
+)  # fmt: skip
+
 
 class StandardTypes(Enum):
     TEXT = "text"

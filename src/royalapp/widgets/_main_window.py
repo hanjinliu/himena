@@ -16,6 +16,7 @@ from royalapp.types import (
     DockAreaString,
 )
 from royalapp._app_model._context import AppContext
+from royalapp._descriptors import ProgramaticMethod, LocalReaderMethod
 from royalapp.widgets._backend import BackendMainWindow
 from royalapp.widgets._tab_list import TabList, TabArea
 from royalapp.widgets._wrapper import SubWindow, DockWidget
@@ -43,6 +44,7 @@ class MainWindow(Generic[_W]):
         )
         self._ctx_keys = AppContext(create_context(self, max_depth=0))
         self._tab_list.changed.connect(self._backend_main_window._update_context)
+        self.events.window_activated.connect(self._backend_main_window._update_context)
         self._dock_widgets = WeakSet[_W]()
 
     @property
@@ -175,13 +177,19 @@ class MainWindow(Generic[_W]):
         SubWindow
             The sub-window handler.
         """
-        wd = WidgetDataModel(value=data, type=type, source=None, title=title)
+        wd = WidgetDataModel(
+            value=data, type=type, title=title, method=ProgramaticMethod()
+        )
         return self.add_data_model(wd)
 
     def add_data_model(self, model_data: WidgetDataModel) -> SubWindow[_W]:
+        """Add a widget data model as a widget."""
         cls = self._backend_main_window._pick_widget_class(model_data.type)
         widget = cls.from_model(model_data)
-        return self.add_widget(widget, title=model_data.title)
+        sub_win = self.add_widget(widget, title=model_data.title)
+        if isinstance(method := model_data.method, LocalReaderMethod):
+            sub_win.update_default_save_path(method.path)
+        return sub_win
 
     def read_file(self, file_path) -> None:
         """Read local file(s) and open as a new sub-window."""
@@ -190,9 +198,7 @@ class MainWindow(Generic[_W]):
         else:
             fp = Path(file_path)
         readers = get_readers(fp)
-        if len(readers) == 0:
-            raise ValueError(f"No reader found for {fp}")
-        model = readers[0](fp)
+        model = readers[0](fp).with_source(fp)
         return self.add_data_model(model)
 
     def exec_action(self, id: str) -> None:
@@ -213,6 +219,24 @@ class MainWindow(Generic[_W]):
         if run:
             self._backend_main_window._run_app()
         return None
+
+    @property
+    def current_subwindow(self) -> SubWindow[_W] | None:
+        """Get the current sub-window."""
+        idx_tab = self._backend_main_window._current_tab_index()
+        if idx_tab is None:
+            return None
+        idx_win = self._backend_main_window._current_sub_window_index()
+        if idx_win is None:
+            return None
+        return self.tabs[idx_tab][idx_win]
+
+    def _provide_file_output(self) -> tuple[WidgetDataModel, SubWindow[_W]]:
+        if sub := self.current_subwindow:
+            model = sub.to_model()
+            return model, sub
+        else:
+            raise ValueError("No active window.")
 
 
 def current_instance(name: str) -> MainWindow[_W]:
@@ -271,16 +295,21 @@ def _init_application(app: Application) -> None:
         return None
 
     @app.injection_store.mark_provider
-    def _provide_file_output() -> WidgetDataModel:
-        return current_instance(app.name)._backend_main_window._provide_file_output()
+    def _provide_data_model() -> WidgetDataModel:
+        return current_instance(app.name)._provide_file_output()[0]
 
     @app.injection_store.mark_processor
     def _process_file_input(file_data: WidgetDataModel) -> None:
         ins = current_instance(app.name)
-        cls = ins._backend_main_window._pick_widget_class(file_data.type)
-        widget = cls.from_model(file_data)
-        ins.add_widget(widget, title=file_data.title)
+        sub_win = ins.add_data_model(file_data)
+        if (method := file_data.method) is not None:
+            sub_win._update_widget_data_model_method(method)
         return None
+
+    @app.injection_store.mark_processor
+    def _process_file_inputs(file_data: list[WidgetDataModel]) -> None:
+        for each in file_data:
+            _process_file_input(each)
 
     @app.injection_store.mark_provider
     def _get_clipboard_data() -> ClipboardDataModel:

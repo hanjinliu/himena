@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Generic, TypeVar, TYPE_CHECKING
+from typing import Generic, Literal, TypeVar, TYPE_CHECKING, overload
 
 import psygnal
 from royalapp.anchor import WindowAnchor
 from royalapp.types import (
-    WidgetDataModel,
     SubWindowState,
     ClipboardDataModel,
     DockArea,
@@ -68,10 +67,12 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     def _area_size(self) -> tuple[int, int]:
         raise NotImplementedError
 
-    def _provide_file_output(self) -> WidgetDataModel:
-        raise NotImplementedError
+    @overload
+    def _open_file_dialog(self, mode: Literal["r", "d", "w"] = "r") -> Path | None: ...
+    @overload
+    def _open_file_dialog(self, mode: Literal["rm"]) -> list[Path] | None: ...
 
-    def _open_file_dialog(self, mode: str = "r") -> Path | list[Path] | None:
+    def _open_file_dialog(self, mode) -> list[Path] | None:
         raise NotImplementedError
 
     def _open_confirmation_dialog(self, message: str) -> bool:

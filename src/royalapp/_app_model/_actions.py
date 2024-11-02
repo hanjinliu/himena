@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any
 from app_model.types import (
     Action,
@@ -7,6 +8,7 @@ from app_model.types import (
     KeyChord,
     SubmenuItem,
 )
+from royalapp._descriptors import ConverterMethod
 from royalapp.consts import StandardTypes
 from royalapp.widgets import MainWindow
 from royalapp.io import get_readers, get_writers
@@ -15,67 +17,79 @@ from royalapp.types import (
     SubWindowState,
     WidgetDataModel,
     WindowRect,
+    ReaderFunction,
 )
 from royalapp._app_model._context import AppContext as _ctx
 
 
-def open_file_from_dialog(ui: MainWindow) -> WidgetDataModel:
-    file_path = ui._backend_main_window._open_file_dialog()
-    if file_path is None:
+def _read_and_update_source(reader: ReaderFunction, source: Path) -> WidgetDataModel:
+    """Update the `method` attribute if it is not set."""
+    model = reader(source)
+    if model.method is None:
+        model = model.with_source(source)
+    if model.title is None:
+        model.title = source.name
+    return model
+
+
+def open_file_from_dialog(ui: MainWindow) -> list[WidgetDataModel]:
+    """Open files as separate sub-windows."""
+    file_paths = ui._backend_main_window._open_file_dialog(mode="rm")
+    if file_paths is None or len(file_paths) == 0:
         return None
-    readers = get_readers(file_path)
-    return readers[0](file_path)
+    reader_path_sets: list[tuple[ReaderFunction, Any]] = []
+    for file_path in file_paths:
+        readers_matched = get_readers(file_path)
+        reader_path_sets.append((readers_matched[0], file_path))
+    return [
+        _read_and_update_source(reader, file_path)
+        for reader, file_path in reader_path_sets
+    ]
 
 
 def open_folder_from_dialog(ui: MainWindow) -> WidgetDataModel:
-    file_path = ui._backend_main_window._open_file_dialog("d")
+    """Open a folder as a sub-window."""
+    file_path = ui._backend_main_window._open_file_dialog(mode="d")
     if file_path is None:
         return None
     readers = get_readers(file_path)
-    return readers[0](file_path)
+    return _read_and_update_source(readers[0], file_path)
 
 
 def save_from_dialog(ui: MainWindow) -> None:
-    fd = ui._backend_main_window._provide_file_output()
-    if fd.source is None:
-        save_path = ui._backend_main_window._open_file_dialog(mode="w")
-        if save_path is None:
-            return
-        fd.source = save_path
-    else:
-        if fd.source.exists():
-            _path = fd.source.as_posix()
-            ok = ui._backend_main_window._open_confirmation_dialog(
-                f"{_path!r} already exists, overwrite?"
-            )
-            if not ok:
-                return None
-
-    writers = get_writers(fd)
-    return writers[0](fd)
+    """Save (overwrite) the current sub-window as a file."""
+    fd, sub_win = ui._provide_file_output()
+    if save_path := sub_win.save_behavior.get_save_path(ui._backend_main_window):
+        writers = get_writers(fd)
+        writers[0](fd, save_path)  # run save function
+        sub_win.update_default_save_path(save_path)
+    return None
 
 
 def paste_from_clipboard(ui: MainWindow) -> WidgetDataModel:
+    """Paste the clipboard data as a sub-window."""
     if data := ui._backend_main_window._clipboard_data():
         return data.to_widget_data_model()
     return None
 
 
 def save_as_from_dialog(ui: MainWindow) -> None:
-    fd = ui._backend_main_window._provide_file_output()
-    save_path = ui._backend_main_window._open_file_dialog(mode="w")
-    if save_path is None:
-        return
-    fd.source = save_path
-    writers = get_writers(fd)
-    return writers[0](fd)
+    """Save the current sub-window as a new file."""
+    fd, sub_win = ui._provide_file_output()
+    if save_path := sub_win.save_behavior.get_save_path(ui._backend_main_window):
+        writers = get_writers(fd)
+        writers[0](fd, save_path)
+        sub_win.update_default_save_path(save_path)
+    return None
 
 
 def exit_main_window(ui: MainWindow) -> None:
+    """Exit the application."""
     ui._backend_main_window._exit_main_window()
 
 
 def close_current_window(ui: MainWindow) -> None:
+    """Close the selected sub-window."""
     i_tab = ui.tabs.current_index()
     if i_tab is None:
         return None
@@ -86,17 +100,23 @@ def close_current_window(ui: MainWindow) -> None:
 
 
 def close_all_windows_in_tab(ui: MainWindow) -> None:
+    """Close all sub-windows in the current tab."""
     if area := ui.tabs.current():
         area.clear()
 
 
 def duplicate_window(model: WidgetDataModel) -> WidgetDataModel:
+    """Duplicate the selected sub-window."""
     if model.title is not None:
         model.title += " (copy)"
+    if (method := model.method) is not None:
+        model.method = ConverterMethod(original=method, action_id="duplicate-window")
+    print(model.title)
     return model
 
 
 def minimize_others(ui: MainWindow):
+    """Minimize all sub-windows except the current one."""
     if area := ui.tabs.current():
         cur_window = area.current()
         for window in area:
@@ -106,6 +126,7 @@ def minimize_others(ui: MainWindow):
 
 
 def show_all_windows(ui: MainWindow):
+    """Show all sub-windows in the current tab."""
     if area := ui.tabs.current():
         for window in area:
             if window.state is SubWindowState.MIN:
@@ -113,6 +134,7 @@ def show_all_windows(ui: MainWindow):
 
 
 def full_screen_in_new_tab(ui: MainWindow) -> None:
+    """Move the selected sub-window to a new tab and make it full screen."""
     if area := ui.tabs.current():
         index = area.current_index()
         if index is None:
@@ -124,50 +146,28 @@ def full_screen_in_new_tab(ui: MainWindow) -> None:
 
 
 def align_window_left(ui: MainWindow) -> None:
-    if area := ui.tabs.current():
-        if window := area.current():
-            rect = window.window_rect
-            window.window_rect = WindowRect(0, rect.top, rect.width, rect.height)
+    if window := ui.current_subwindow:
+        window.window_rect = window.window_rect.align_left()
 
 
 def align_window_right(ui: MainWindow) -> None:
-    if area := ui.tabs.current():
-        width, _ = ui.area_size
-        if window := area.current():
-            rect = window.window_rect
-            window.window_rect = WindowRect(
-                width - rect.width, rect.top, rect.width, rect.height
-            )
+    if window := ui.current_subwindow:
+        window.window_rect = window.window_rect.align_right(ui.area_size)
 
 
 def align_window_top(ui: MainWindow) -> None:
-    if area := ui.tabs.current():
-        if window := area.current():
-            rect = window.window_rect
-            window.window_rect = WindowRect(rect.left, 0, rect.width, rect.height)
+    if window := ui.current_subwindow:
+        window.window_rect = window.window_rect.align_top(ui.area_size)
 
 
 def align_window_bottom(ui: MainWindow) -> None:
-    if area := ui.tabs.current():
-        _, height = ui.area_size
-        if window := area.current():
-            rect = window.window_rect
-            window.window_rect = WindowRect(
-                rect.left, height - rect.height, rect.width, rect.height
-            )
+    if window := ui.current_subwindow:
+        window.window_rect = window.window_rect.align_bottom(ui.area_size)
 
 
 def align_window_center(ui: MainWindow) -> None:
-    if area := ui.tabs.current():
-        width, height = ui.area_size
-        if window := area.current():
-            rect = window.window_rect
-            window.window_rect = WindowRect(
-                (width - rect.width) / 2,
-                (height - rect.height) / 2,
-                rect.width,
-                rect.height,
-            )
+    if window := ui.current_subwindow:
+        window.window_rect = window.window_rect.align_center(ui.area_size)
 
 
 def new_tab(ui: MainWindow) -> None:

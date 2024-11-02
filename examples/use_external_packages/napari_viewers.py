@@ -32,7 +32,7 @@ def main():
     viewer0 = MyViewer()
     viewer1 = MyViewer()
 
-    viewer0.viewer.open_sample("napari", "cells3d")
+    viewer0.viewer.open_sample("napari", "brain")
     viewer1.viewer.add_points(
         np.random.normal(scale=(20, 30, 15), size=(80, 3)),
         size=5,

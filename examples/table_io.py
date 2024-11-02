@@ -45,11 +45,11 @@ def my_reader_provider(file_path):
     if Path(file_path).suffix == ".csv":
         def _read(file_path):
             df = pd.read_csv(file_path)
-            return WidgetDataModel(value=df, type=PANDAS_TABLE_TYPE, source=file_path)
+            return WidgetDataModel(value=df, type=PANDAS_TABLE_TYPE)
     elif Path(file_path).suffix == ".xlsx":
         def _read(file_path):
             df = pd.read_excel(file_path)
-            return WidgetDataModel(value=df, type=PANDAS_TABLE_TYPE, source=file_path)
+            return WidgetDataModel(value=df, type=PANDAS_TABLE_TYPE)
     else:
         return None
     return _read
@@ -57,13 +57,13 @@ def my_reader_provider(file_path):
 # `@register_writer_provider` is a decorator that registers a function as one that
 # provides a write for the given data model.
 @register_writer_provider
-def my_writer_provider(model: WidgetDataModel[pd.DataFrame]):
-    if model.source.suffix == ".csv":
+def my_writer_provider(model: WidgetDataModel[pd.DataFrame], path: Path):
+    if path.suffix == ".csv":
         def _write(model: WidgetDataModel[pd.DataFrame]):
-            model.value.to_csv(model.source, index=False)
-    elif model.source.suffix == ".xlsx":
+            model.value.to_csv(path, index=False)
+    elif path.suffix == ".xlsx":
         def _write(model: WidgetDataModel[pd.DataFrame]):
-            model.value.to_excel(model.source, index=False)
+            model.value.to_excel(path, index=False)
     else:
         return None
     return _write

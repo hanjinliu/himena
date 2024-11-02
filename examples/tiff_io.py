@@ -33,18 +33,17 @@ def read_tiff_provider(path: Path):
             img_data = ImageAndMetadata(tif.asarray(), ijmeta)
         return WidgetDataModel(
             value=img_data,
-            source=path,
             type=TIFF_TYPE,
             title=path.name
         )
     return read
 
 @register_writer_provider
-def write_tiff_provider(model: WidgetDataModel[ImageAndMetadata]):
-    if model.source is None or model.type is not TIFF_TYPE:
+def write_tiff_provider(model: WidgetDataModel[ImageAndMetadata], path: Path):
+    if model.type is not TIFF_TYPE:
         return None
     def write(model: WidgetDataModel[ImageAndMetadata]):
-        return imwrite(model.source, model.value.image, **model.value.metadata)
+        return imwrite(path, model.value.image, **model.value.metadata)
     return write
 
 @register_frontend_widget(TIFF_TYPE)

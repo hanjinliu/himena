@@ -58,6 +58,8 @@ class SemiMutableSequence(Sequence[_T]):
 
 
 class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
+    """An area containing multiple sub-windows."""
+
     def __init__(self, main_window: BackendMainWindow[_W], i_tab: int):
         super().__init__(main_window)
         self._i_tab = i_tab
@@ -160,14 +162,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
     ) -> None:
         main = self._main_window()
         width, height = main._area_size()
-        if nrows is None:
-            if ncols is None:
-                nrows = int(len(self) ** 0.5)
-                ncols = int(len(self) / nrows)
-            else:
-                nrows = int(len(self) / ncols)
-        elif ncols is None:
-            ncols = int(len(self) / nrows)
+        nrows, ncols = _norm_nrows_ncols(nrows, ncols, len(self))
 
         w = width / ncols
         h = height / nrows
@@ -192,6 +187,18 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
             title = f"{title_original}-{count}"
             count += 1
         return title
+
+
+def _norm_nrows_ncols(nrows: int | None, ncols: int | None, n: int) -> tuple[int, int]:
+    if nrows is None:
+        if ncols is None:
+            nrows = int(n**0.5)
+            ncols = int(n / nrows)
+        else:
+            nrows = int(n / ncols)
+    elif ncols is None:
+        ncols = int(n / nrows)
+    return nrows, ncols
 
 
 class TabList(SemiMutableSequence[TabArea[_W]], _HasMainWindowRef[_W], Generic[_W]):

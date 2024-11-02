@@ -9,7 +9,8 @@ from typing import (
     Generic,
 )
 from enum import Enum
-from pydantic_compat import BaseModel, Field, validator
+from pydantic_compat import BaseModel, Field, field_validator
+from royalapp._descriptors import MethodDescriptor, LocalReaderMethod
 
 
 class StrEnum(Enum):
@@ -72,9 +73,9 @@ class WidgetDataModel(Generic[_T], BaseModel):
     """
 
     value: _T = Field(..., description="Internal value.")
-    source: Path | None = Field(default=None, description="Path of the file.")
+    method: MethodDescriptor | None = Field(default=None, description="Method descriptor.")  # fmt: skip
     type: Hashable | None = Field(default=None, description="Type of the internal data.")  # fmt: skip
-    title: str = Field(default=None, description="Title for the widget.")
+    title: str | None = Field(default=None, description="Default title for the widget.")
     extensions: list[str] = Field(default_factory=list, description="List of allowed file extensions.")  # fmt: skip
 
     def with_value(
@@ -83,34 +84,27 @@ class WidgetDataModel(Generic[_T], BaseModel):
         update = {"value": value}
         if type is not None:
             update["type"] = type
-        return self.copy(update=update)
+        return self.model_copy(update=update)
 
-    @validator("source", pre=True)
-    def _validate_file_path(cls, v):
-        if isinstance(v, (str, Path)):
-            return Path(v)
-        elif v is None:
-            return None
-        raise TypeError(f"Invalid type for `source`: {type(v)}")
+    def with_source(self, source: str | Path) -> "WidgetDataModel[_T]":
+        """Return a new instance with the source path."""
+        path = Path(source).resolve()
+        return self.model_copy(update={"method": LocalReaderMethod(path=path)})
 
-    @validator("type", pre=True, always=True)
+    @property
+    def source(self) -> Path | None:
+        """The direct source path of the data."""
+        if isinstance(self.method, LocalReaderMethod):
+            return self.method.path
+        return None
+
+    @field_validator("type", mode="before")
     def _validate_type(cls, v, values):
         if v is None:
             return type(values["value"])
         return v
 
-    @validator("title", pre=True, always=True)
-    def _validate_title(cls, v, values):
-        if v is None:
-            src = cls._validate_file_path(values["source"])
-            if src is None:
-                return "Untitled"
-            return src.name
-        elif not isinstance(v, str):
-            raise TypeError(f"Invalid type for `title`: {type(v)}")
-        return v
-
-    @validator("extensions", pre=True)
+    @field_validator("extensions", mode="before")
     def _validate_extensions(cls, v):
         if isinstance(v, str):
             v = [v]
@@ -152,11 +146,11 @@ class DragDropDataModel(Generic[_T], BaseModel):
     source_type: str | None = Field(default=None, description="Type of the source.")  # fmt: skip
 
     def to_widget_data_model(self) -> WidgetDataModel[_T]:
-        return WidgetDataModel(value=self.value, type=self.type, source=self.source)
+        return WidgetDataModel(value=self.value, type=self.type)
 
 
 ReaderFunction = Callable[[Path], WidgetDataModel]
-WriterFunction = Callable[[WidgetDataModel], None]
+WriterFunction = Callable[[WidgetDataModel, Path], None]
 
 
 class WindowRect(NamedTuple):
@@ -176,3 +170,36 @@ class WindowRect(NamedTuple):
     @classmethod
     def from_numbers(self, left, top, width, height) -> "WindowRect":
         return WindowRect(int(left), int(top), int(width), int(height))
+
+    def align_left(self, area_size: "tuple[int, int]") -> "WindowRect":
+        return WindowRect(0, self.top, self.width, self.height)
+
+    def align_right(self, area_size: "tuple[int, int]") -> "WindowRect":
+        w0, _ = area_size
+        return WindowRect(w0 - self.width, self.top, self.width, self.height)
+
+    def align_top(self, area_size: "tuple[int, int]") -> "WindowRect":
+        return WindowRect(self.left, 0, self.width, self.height)
+
+    def align_bottom(self, area_size: "tuple[int, int]") -> "WindowRect":
+        _, h0 = area_size
+        return WindowRect(self.left, h0 - self.height, self.width, self.height)
+
+    def align_center(self, area_size: "tuple[int, int]") -> "WindowRect":
+        w0, h0 = area_size
+        return WindowRect(
+            (w0 - self.width) / 2,
+            (h0 - self.height) / 2,
+            self.width,
+            self.height,
+        )
+
+    def resize_relative(self, wratio: float, hratio: float) -> "WindowRect":
+        if wratio <= 0 or hratio <= 0:
+            raise ValueError("Ratios must be positive.")
+        return WindowRect(
+            self.left,
+            self.top,
+            round(self.width * wratio),
+            round(self.height * hratio),
+        )

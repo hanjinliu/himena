@@ -57,20 +57,20 @@ def my_reader_provider(file_path):
 
     def _read_image(file_path):
         im = iio.imread(file_path)
-        return WidgetDataModel(value=im, type="image", source=file_path)
+        return WidgetDataModel(value=im, type="image")
 
     return _read_image
 
 # `@register_writer_provider` is a decorator that registers a function as one that
 # provides a write for the given data model.
 @register_writer_provider
-def my_writer_provider(model: WidgetDataModel):
+def my_writer_provider(model: WidgetDataModel, path: Path):
     if not isinstance(model.value, np.ndarray):
         return None
-    if model.source.suffix not in {".png", ".jpg", ".jpeg"}:
+    if path.suffix not in {".png", ".jpg", ".jpeg"}:
         return None
     def _write_image(model: WidgetDataModel):
-        iio.imwrite(model.source, model.value)
+        iio.imwrite(path, model.value)
     return _write_image
 
 interf = get_plugin_interface("image_processing")

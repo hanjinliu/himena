@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from functools import reduce
+from functools import reduce, wraps
+import inspect
 import operator
 from typing import (
     Callable,
@@ -9,6 +10,7 @@ from typing import (
     Sequence,
     TypeVar,
     cast,
+    get_origin,
     overload,
     TYPE_CHECKING,
 )
@@ -18,7 +20,8 @@ from app_model.types import SubmenuItem, KeyBindingRule
 from app_model.expressions import BoolOp
 
 from royalapp._app_model import AppContext as ctx
-from royalapp.types import DockArea, DockAreaString
+from royalapp._descriptors import ConverterMethod, ProgramaticMethod
+from royalapp.types import DockArea, DockAreaString, WidgetDataModel
 from royalapp import _utils
 
 if TYPE_CHECKING:
@@ -129,10 +132,11 @@ class PluginInterface:
                 _id = f.__qualname__
             else:
                 _id = command_id
+
             action = Action(
                 id=_id,
                 title=_title,
-                callback=f,
+                callback=_make_function_callback(f, _id),
                 menus=["/".join(self._place)],
                 enablement=_enablement,
                 keybindings=kbs,
@@ -416,3 +420,39 @@ def _normalize_title(title: str | None, func: Callable) -> str:
     if title is None:
         return func.__name__.replace("_", " ").title()
     return title
+
+
+def _make_function_callback(f: _F, action_id: str) -> _F:
+    try:
+        sig = inspect.signature(f)
+    except Exception:
+        return f
+
+    def is_widget_data_model(a):
+        return WidgetDataModel in (get_origin(a), a)
+
+    if not is_widget_data_model(sig.return_annotation):
+        return f
+
+    key_model = None
+    for key, param in sig.parameters.items():
+        if is_widget_data_model(param.annotation):
+            key_model = key
+
+    if key_model is None:
+        return f
+
+    @wraps(f)
+    def _new_f(*args, **kwargs):
+        bound = sig.bind(*args, **kwargs)
+        out = f(*args, **kwargs)
+        input_ = bound.arguments[key_model]
+        if isinstance(out, WidgetDataModel) and isinstance(input_, WidgetDataModel):
+            if input_.method is None:
+                method = ProgramaticMethod()
+            else:
+                method = input_.method
+            out.method = ConverterMethod(original=method, action_id=action_id)
+        return out
+
+    return _new_f

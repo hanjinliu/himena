@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from royalapp.io import register_writer_provider
 from royalapp.types import WidgetDataModel
-from royalapp.consts import StandardTypes, BasicTextFileTypes
+from royalapp.consts import StandardTypes, BasicTextFileTypes, ConventionalTextFileNames
 from royalapp import register_reader_provider
 
 
@@ -27,7 +27,6 @@ def _read_simple_image(file_path: Path) -> WidgetDataModel:
     return WidgetDataModel(
         value=arr,
         type=StandardTypes.IMAGE,
-        source=Path(file_path),
     )
 
 
@@ -42,7 +41,6 @@ def _read_csv(file_path: Path) -> WidgetDataModel:
     return WidgetDataModel(
         value=data,
         type=StandardTypes.TABLE,
-        source=Path(file_path),
     )
 
 
@@ -57,7 +55,6 @@ def _read_tsv(file_path: Path) -> WidgetDataModel:
     return WidgetDataModel(
         value=data,
         type=StandardTypes.TABLE,
-        source=Path(file_path),
     )
 
 
@@ -74,6 +71,8 @@ def default_reader_provider(file_path: Path | list[Path]):
         return _read_tsv
     elif file_path.suffix in {".png", ".jpg", ".jpeg"}:
         return _read_simple_image
+    elif file_path.name in ConventionalTextFileNames:
+        return _read_text
     return None
 
 
@@ -87,9 +86,9 @@ def _write_text(file_data: WidgetDataModel[str]) -> None:
 
 
 @register_writer_provider
-def default_writer_provider(file_data: WidgetDataModel):
+def default_writer_provider(file_data: WidgetDataModel, path: Path):
     """Get default writer."""
-    if file_data.source.suffix in BasicTextFileTypes:
+    if file_data.type is StandardTypes.TEXT:
         return _write_text
     else:
         return None

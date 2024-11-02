@@ -118,9 +118,3 @@ matrix.backend.features = [
   { value = "pyqt5", if = ["pyqt5"] },
   { value = "pyqt6", if = ["pyqt6"] },
 ]
-
-[tool.pyright.defineConstant]
-PYQT5 = true
-PYSIDE2 = false
-PYQT6 = false
-PYSIDE6 = false

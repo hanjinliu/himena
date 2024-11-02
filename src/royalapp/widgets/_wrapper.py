@@ -2,12 +2,20 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Generic, TYPE_CHECKING, TypeVar
 import weakref
 
 from psygnal import Signal
 from royalapp import anchor as _anchor
 from royalapp.types import SubWindowState, WidgetDataModel, WindowRect
+from royalapp._descriptors import (
+    SaveBehavior,
+    SaveToNewPath,
+    SaveToPath,
+    MethodDescriptor,
+    ProgramaticMethod,
+)
 
 if TYPE_CHECKING:
     from royalapp.widgets import BackendMainWindow
@@ -39,6 +47,8 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         if identifier is None:
             identifier = id(widget)
         self._identifier = identifier
+        self._save_behavior: SaveBehavior = SaveToNewPath()
+        self._widget_data_model_method: MethodDescriptor = ProgramaticMethod()
 
     @property
     def widget(self) -> _W:
@@ -46,6 +56,21 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         if out := self._widget():
             return out
         raise RuntimeError("Widget was deleted.")
+
+    @property
+    def save_behavior(self) -> SaveBehavior:
+        """Get the save behavior of the widget."""
+        return self._save_behavior
+
+    def update_default_save_path(self, path: str | Path) -> None:
+        """Update the save behavior of the widget."""
+        self._save_behavior = SaveToPath(path=Path(path), ask_overwrite=True)
+        return None
+
+    def _update_widget_data_model_method(self, method: MethodDescriptor) -> None:
+        """Update the method descriptor of the widget."""
+        self._widget_data_model_method = method
+        return None
 
 
 class SubWindow(WidgetWrapper[_W]):
@@ -94,7 +119,17 @@ class SubWindow(WidgetWrapper[_W]):
         """Export the widget data."""
         if not self.is_exportable:
             raise ValueError("Widget does not have `to_model` method.")
-        return self.widget.to_model()  # type: ignore
+        model = self.widget.to_model()  # type: ignore
+        if not isinstance(model, WidgetDataModel):
+            raise TypeError(
+                "`to_model` method must return an instance of WidgetDataModel, got "
+                f"{type(model)}"
+            )
+        if model.title is None:
+            model.title = self.title
+        if model.method is None:
+            model.method = self._widget_data_model_method
+        return model
 
     @property
     def window_rect(self) -> WindowRect:
@@ -127,6 +162,18 @@ class SubWindow(WidgetWrapper[_W]):
         elif not isinstance(anchor, _anchor.WindowAnchor):
             raise TypeError(f"Expected WindowAnchor, got {type(anchor)}")
         self._main_window()._set_window_anchor(self.widget, anchor)
+
+    def to_json(self) -> dict:
+        """Serialize the sub-window to JSON."""
+        model = self.to_model()
+        model.method
+        return {
+            "source": model.source,
+            "title": self.title,
+            "state": self.state.value,
+            "window_rect": self.window_rect,
+            "anchor": _anchor.anchor_to_dict(self.anchor),
+        }
 
 
 class DockWidget(WidgetWrapper[_W]):

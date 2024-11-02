@@ -1,3 +1,5 @@
+# Define a plugin dock widget.
+# The widget is available under the "Myapp" menu.
 from royalapp import new_window
 from royalapp.plugins import get_plugin_interface
 
@@ -14,7 +16,7 @@ class MyWidget(QtW.QListWidget):
         self.addItems(["Item 1", "Item 2", "Item 3"])
 
 def main():
-    ui = new_window(APP_NAME)
+    ui = new_window(APP_NAME, plugins=[plugin])
     ui.show(run=True)
 
 if __name__ == "__main__":

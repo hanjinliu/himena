@@ -58,7 +58,9 @@ class AppProfile(BaseModel):
 
 def load_app_profile(name: str) -> AppProfile:
     path = profile_dir() / f"{name}.json"
-    return AppProfile.from_json(path)
+    if path.exists():
+        return AppProfile.from_json(path)
+    return AppProfile.default()
 
 
 def iter_app_profiles() -> Iterable[AppProfile]:

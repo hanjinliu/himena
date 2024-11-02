@@ -116,3 +116,39 @@ class BottomRightConstAnchor(WindowAnchor):
     ) -> Self:
         w0, h0 = main_window_size
         return BottomRightConstAnchor(w0 - window_rect.right, h0 - window_rect.bottom)
+
+
+def anchor_to_dict(anchor: WindowAnchor) -> dict:
+    if isinstance(anchor, TopLeftConstAnchor):
+        return {"type": "top-left-const", "left": anchor._left, "top": anchor._top}
+    if isinstance(anchor, TopRightConstAnchor):
+        return {"type": "top-right-const", "right": anchor._right, "top": anchor._top}
+    if isinstance(anchor, BottomLeftConstAnchor):
+        return {
+            "type": "bottom-left-const",
+            "left": anchor._left,
+            "bottom": anchor._bottom,
+        }
+    if isinstance(anchor, BottomRightConstAnchor):
+        return {
+            "type": "bottom-right-const",
+            "right": anchor._right,
+            "bottom": anchor._bottom,
+        }
+    if isinstance(anchor, NoAnchor):
+        return {"type": "no-anchor"}
+    raise ValueError(f"Unknown anchor type: {anchor!r}")
+
+
+def dict_to_anchor(data: dict) -> WindowAnchor:
+    if data["type"] == "top-left-const":
+        return TopLeftConstAnchor(data["left"], data["top"])
+    if data["type"] == "top-right-const":
+        return TopRightConstAnchor(data["right"], data["top"])
+    if data["type"] == "bottom-left-const":
+        return BottomLeftConstAnchor(data["left"], data["bottom"])
+    if data["type"] == "bottom-right-const":
+        return BottomRightConstAnchor(data["right"], data["bottom"])
+    if data["type"] == "no-anchor":
+        return NoAnchor
+    raise ValueError(f"Unknown anchor type: {data['type']}")

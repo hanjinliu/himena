@@ -16,8 +16,10 @@ _READER_PROVIDERS: list[tuple[_ReaderProvider, int]] = []
 _WRITER_PROVIDERS: list[tuple[_WriterProvider, int]] = []
 
 
-def get_readers(file_path: Path | list[Path]) -> list[ReaderFunction]:
-    """Get reader."""
+def get_readers(
+    file_path: Path | list[Path], empty_ok: bool = False
+) -> list[ReaderFunction]:
+    """Get reader functions."""
     matched: list[tuple[ReaderFunction, int]] = []
     priority_max = -1
     for provider, priority in _READER_PROVIDERS:
@@ -35,12 +37,18 @@ def get_readers(file_path: Path | list[Path]) -> list[ReaderFunction]:
                         f"Reader provider {provider!r} returned {out!r}, which is not"
                         "callable."
                     )
-    if matched:
-        return [fn for fn, pri in matched if pri == priority_max]
-    raise ValueError(f"No reader functions supports file: {file_path.name}")
+    if not matched and not empty_ok:
+        if isinstance(file_path, list):
+            msg = [p.name for p in file_path]
+        else:
+            msg = file_path.name
+        raise ValueError(f"No reader functions available for {msg!r}")
+    return [fn for fn, pri in matched if pri == priority_max]
 
 
-def get_writers(file_data: WidgetDataModel) -> list[WriterFunction]:
+def get_writers(
+    file_data: WidgetDataModel, empty_ok: bool = False
+) -> list[WriterFunction]:
     """Get writer."""
     matched: list[tuple[WriterFunction, int]] = []
     priority_max = -1
@@ -59,9 +67,9 @@ def get_writers(file_data: WidgetDataModel) -> list[WriterFunction]:
                         f"Writer provider {provider!r} returned {out!r}, which is not"
                         "callable."
                     )
-    if matched:
-        return [fn for fn, pri in matched if pri == priority_max]
-    raise ValueError(f"No writer functions supports data: {file_data.type}")
+    if not matched and not empty_ok:
+        raise ValueError(f"No writer functions available for {file_data.type!r}")
+    return [fn for fn, pri in matched if pri == priority_max]
 
 
 def _warn_failed_provider(provider, e: Exception):

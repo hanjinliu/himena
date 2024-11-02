@@ -49,7 +49,6 @@ class QDefaultTextEdit(QtW.QPlainTextEdit):
         return WidgetDataModel(
             value=self.toPlainText(),
             type=StandardTypes.TEXT,
-            source=self._file_path,
         )
 
     def is_modified(self) -> bool:
@@ -60,7 +59,6 @@ class QDefaultTableWidget(QtW.QTableWidget):
     def __init__(self, file_path):
         super().__init__()
         self._file_path = file_path
-        self.horizontalHeader().hide()
         self._modified = False
 
         @self.itemChanged.connect
@@ -89,7 +87,6 @@ class QDefaultTableWidget(QtW.QTableWidget):
                 slice(0, self.rowCount()), slice(0, self.columnCount())
             ),
             type=StandardTypes.TABLE,
-            source=self._file_path,
         )
 
     def is_modified(self) -> bool:
@@ -243,7 +240,6 @@ class QDefaultImageView(QtW.QWidget):
         return WidgetDataModel(
             value=self._model.value,
             type=self._model.type,
-            source=self._model.source,
         )
 
     def as_image_array(self, arr: np.ndarray) -> NDArray[np.uint8]:

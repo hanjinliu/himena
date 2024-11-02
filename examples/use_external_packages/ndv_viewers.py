@@ -1,4 +1,5 @@
-from ndv import NDViewer, data
+from ndv import NDViewer
+import numpy as np
 
 from royalapp import new_window
 from royalapp.consts import StandardTypes
@@ -15,7 +16,7 @@ register_frontend_widget(StandardTypes.IMAGE, MyNDViewer)
 def main():
     ui = new_window()
 
-    sample = data.cells3d()
+    sample = np.random.default_rng(0).normal(size=(3, 100, 100))
     viewer0 = MyNDViewer(sample, channel_mode="composite")
     viewer1 = MyNDViewer(sample, channel_mode="mono")
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from timeit import default_timer as timer
 import logging
-from typing import Hashable, TypeVar, TYPE_CHECKING
+from typing import Hashable, TypeVar, TYPE_CHECKING, cast
 from pathlib import Path
 import app_model
 import psygnal
@@ -16,7 +16,6 @@ from royalapp import anchor as _anchor
 from royalapp.types import (
     DockArea,
     DockAreaString,
-    WidgetDataModel,
     ClipboardDataModel,
     SubWindowState,
     WindowRect,
@@ -36,6 +35,7 @@ if TYPE_CHECKING:
     from royalapp.widgets._main_window import SubWindow, MainWindow
 
 _STYLE_QSS_PATH = Path(__file__).parent / "style.qss"
+_ICON_PATH = Path(__file__).parent.parent / "resources" / "royalapp.svg"
 _T = TypeVar("_T", bound=QtW.QWidget)
 _LOGGER = logging.getLogger(__name__)
 
@@ -45,11 +45,14 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def __init__(self, app: app_model.Application):
         _app_instance = get_event_loop_handler("qt", app.name)
-        self._qt_app = _app_instance.get_app()
+        self._qt_app = cast(QtW.QApplication, _app_instance.get_app())
         self._app_name = app.name
 
         app_model_app = widgets.init_application(app)
         super().__init__(app_model_app)
+        self._qt_app.setApplicationName(app.name)
+        self.setWindowTitle(app.name)
+        self.setWindowIcon(QtGui.QIcon(_ICON_PATH.as_posix()))
         self._tab_widget = QTabWidget()
         default_menu_ids = {
             "file": "File",
@@ -83,7 +86,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self.setStyleSheet(style_text)
 
         self._anim_subwindow = QtCore.QPropertyAnimation()
-        self._tab_widget.newWindowActivated.connect(self._update_context)
         self.setMinimumSize(400, 300)
         self.resize(800, 600)
 
@@ -285,15 +287,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def _pick_widget_class(self, type: Hashable) -> QtW.QWidget:
         return pick_widget_class(self._app_name, type)
-
-    def _provide_file_output(self) -> WidgetDataModel:
-        if sub := self._tab_widget.currentWidget().currentSubWindow():
-            active_window = sub.main_widget()
-            if not hasattr(active_window, "to_model"):
-                raise ValueError("Widget does not have `to_model` method.")
-            return active_window.to_model()
-        else:
-            raise ValueError("No active window.")
 
     def _open_file_dialog(self, mode: str = "r") -> Path | list[Path] | None:
         if mode == "r":
