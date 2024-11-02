@@ -1,4 +1,13 @@
+import sys
 from enum import Enum
+
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:
+
+    class StrEnum(str, Enum):
+        pass
+
 
 BasicTextFileTypes = frozenset(
     [".txt", ".md", ".json", ".xml", ".yaml", ".yml", ".toml", ".log", ".py", ".pyi",
@@ -15,7 +24,7 @@ ConventionalTextFileNames = frozenset(
 )  # fmt: skip
 
 
-class StandardTypes(Enum):
+class StandardTypes(StrEnum):
     TEXT = "text"
     HTML = "html"
     TABLE = "table"
@@ -23,3 +32,21 @@ class StandardTypes(Enum):
 
     def __repr__(self):
         return f"{self.__class__.__name__}.{self.name}"
+
+
+class MenuId(StrEnum):
+    FILE = "file"
+    FILE_NEW = "file/new"
+    FILE_SCREENSHOT = "file/screenshot"
+    WINDOW = "window"
+    WINDOW_ALIGN = "window/align"
+    WINDOW_ANCHOR = "window/anchor"
+    WINDOW_EXIT = "window/exit"
+    TAB = "tab"
+    TOOLBAR = "toolbar"
+    WINDOW_TITLE_BAR = "window_title_bar"
+    WINDOW_TITLE_BAR_ALIGN = "window_title_bar/align"
+    WINDOW_TITLE_BAR_ANCHOR = "window_title_bar/anchor"
+
+    def __str__(self) -> str:
+        return self.value

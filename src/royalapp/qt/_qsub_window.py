@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Iterator, Callable, TypeVar
 from functools import lru_cache
+from app_model.backends.qt import QModelMenu
 from qtpy import QtWidgets as QtW
 from qtpy import QtCore, QtGui
 from superqt import QIconifyIcon
 from superqt.utils import qthrottled
 from royalapp import anchor as _anchor
+from royalapp.consts import MenuId
 from royalapp.types import SubWindowState, WindowRect
 from royalapp.qt._utils import get_main_window
 from royalapp.qt._qwindow_resize import ResizeState
@@ -350,6 +352,31 @@ class QSubWindow(QtW.QMdiSubWindow):
         self._anim_geometry.setDuration(60)
         self._anim_geometry.start()
 
+    def _set_top_left_anchor(self):
+        g = self.geometry()
+        self._window_anchor = _anchor.TopLeftConstAnchor(g.left(), g.top())
+
+    def _set_top_right_anchor(self):
+        g = self.geometry()
+        main_size = self._qt_mdiarea().size()
+        self._window_anchor = _anchor.TopRightConstAnchor(
+            main_size.width() - g.right(), g.top()
+        )
+
+    def _set_bottom_left_anchor(self):
+        g = self.geometry()
+        main_size = self._qt_mdiarea().size()
+        self._window_anchor = _anchor.BottomLeftConstAnchor(
+            g.left(), main_size.height() - g.bottom()
+        )
+
+    def _set_bottom_right_anchor(self):
+        g = self.geometry()
+        main_size = self._qt_mdiarea().size()
+        self._window_anchor = _anchor.BottomRightConstAnchor(
+            main_size.width() - g.right(), main_size.height() - g.bottom()
+        )
+
 
 class QSubWindowTitleBar(QtW.QFrame):
     def __init__(self, subwindow: QSubWindow, title: str):
@@ -419,28 +446,6 @@ class QSubWindowTitleBar(QtW.QFrame):
         self._resize_position: QtCore.QPoint | None = None
         self._subwindow = subwindow
 
-    def _show_context_menu(self):
-        # TODO: use app_model.Action
-        menu = QtW.QMenu(self)
-        menu.addAction("Rename", self._start_renaming)
-        menu.addAction("Minimize", self._minimize)
-        menu.addAction("Maximize", self._maximize)
-        if self._subwindow.state is SubWindowState.MAX:
-            _toggle_full_screen_text = "Reset full screen"
-        else:
-            _toggle_full_screen_text = "Full screen"
-        menu.addAction(_toggle_full_screen_text, self._toggle_full_screen)
-        menu.addSeparator()
-        menu.addAction("Unanchor", self._unset_anchor)
-        menu.addAction("Anchor at top-left corner", self._set_top_left_anchor)
-        menu.addAction("Anchor at top-right corner", self._set_top_right_anchor)
-        menu.addAction("Anchor at bottom-left corner", self._set_bottom_left_anchor)
-        menu.addAction("Anchor at bottom-right corner", self._set_bottom_right_anchor)
-        menu.addSeparator()
-        menu.addAction("Close", self._close)
-        menu.move(QtGui.QCursor.pos())
-        menu.exec_()
-
     def _start_renaming(self):
         self._line_edit.show()
         self._move_line_edit(self._title_label.rect(), self._title_label.text())
@@ -477,34 +482,6 @@ class QSubWindowTitleBar(QtW.QFrame):
             self._subwindow.state = SubWindowState.NORMAL
         else:
             self._subwindow.state = SubWindowState.FULL
-
-    def _unset_anchor(self):
-        self._subwindow._window_anchor = _anchor.NoAnchor
-
-    def _set_top_left_anchor(self):
-        g = self._subwindow.geometry()
-        self._subwindow._window_anchor = _anchor.TopLeftConstAnchor(g.left(), g.top())
-
-    def _set_top_right_anchor(self):
-        g = self._subwindow.geometry()
-        main_size = self._subwindow._qt_mdiarea().size()
-        self._subwindow._window_anchor = _anchor.TopRightConstAnchor(
-            main_size.width() - g.right(), g.top()
-        )
-
-    def _set_bottom_left_anchor(self):
-        g = self._subwindow.geometry()
-        main_size = self._subwindow._qt_mdiarea().size()
-        self._subwindow._window_anchor = _anchor.BottomLeftConstAnchor(
-            g.left(), main_size.height() - g.bottom()
-        )
-
-    def _set_bottom_right_anchor(self):
-        g = self._subwindow.geometry()
-        main_size = self._subwindow._qt_mdiarea().size()
-        self._subwindow._window_anchor = _anchor.BottomRightConstAnchor(
-            main_size.width() - g.right(), main_size.height() - g.bottom()
-        )
 
     def _close(self):
         return self._subwindow._close_me(confirm=True)
@@ -564,3 +541,22 @@ class QSubWindowTitleBar(QtW.QFrame):
         self_pos = self.mapToGlobal(self._subwindow.rect().topLeft())
         parent_pos = self._subwindow.parentWidget().mapToGlobal(QtCore.QPoint(0, 0))
         return self_pos.y() < parent_pos.y()
+
+    def _show_context_menu(self):
+        """Show the context menu at the given position."""
+        main = get_main_window(self)
+        app = main._model_app
+
+        context_menu = build_qmodel_menu(
+            MenuId.WINDOW_TITLE_BAR, app=app.name, parent=self
+        )
+        ctx = main._ctx_keys
+        ctx._update(main)
+        context_menu.update_from_context(ctx.dict())
+        context_menu.exec_(QtGui.QCursor.pos())
+        return None
+
+
+@lru_cache(maxsize=12)
+def build_qmodel_menu(menu_id: str, app: str, parent: QtW.QWidget) -> QModelMenu:
+    return QModelMenu(menu_id=menu_id, app=app, parent=parent)

@@ -96,6 +96,9 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     def _del_tab_at(self, i_tab: int) -> None:
         raise NotImplementedError
 
+    def _rename_window_at(self, i_tab: int, i_window: int) -> None:
+        raise NotImplementedError
+
     def add_widget(self, widget: _W, i_tab: int, title: str) -> _W:
         raise NotImplementedError
 

@@ -5,7 +5,6 @@ import sys
 from typing import Callable, Generator, TYPE_CHECKING
 
 from qtpy import QtWidgets as QtW, QtGui, QtCore
-from psygnal import EmitLoopError
 from royalapp.qt._qt_consts import MonospaceFontFamily
 
 if TYPE_CHECKING:
@@ -54,14 +53,19 @@ class QtErrorMessageBox(QtW.QMessageBox):
             text = text_or_exception
             exc = None
         else:
-            text = str(text_or_exception)
+            if len(text_or_exception.args) > 0:
+                text = str(text_or_exception)
+                if len(text) > 1000:
+                    text = text[:1000] + "..."
+            else:
+                text = ""
             exc = text_or_exception
         self._old_focus = QtW.QApplication.focusWidget()
         MBox = QtW.QMessageBox
         super().__init__(
             MBox.Icon.Critical,
             str(title),
-            str(text)[:1000],
+            str(text),
             MBox.StandardButton.Ok | MBox.StandardButton.Help,
             parent=parent,
         )
@@ -75,47 +79,30 @@ class QtErrorMessageBox(QtW.QMessageBox):
     def exec_(self):
         returned = super().exec_()
         if returned == QtW.QMessageBox.StandardButton.Help:
-            self.exec_traceback()
-        if self._old_focus is not None:
-            QtCore.QTimer.singleShot(0, self._old_focus.setFocus)
+            tb = self._get_traceback()
+            dlg = QtTracebackDialog(self)
+            dlg.setText(tb)
+            dlg.exec_()
         return returned
 
-    def exec_traceback(self):
-        """Excecute traceback dialog"""
-        tb = self._get_traceback()
-        dlg = QtTracebackDialog(self)
-        dlg.setText(tb)
-        dlg.exec_()
-        if wdt := self.parentWidget():
-            wdt.setFocus()
-        return None
-
     @classmethod
-    def from_exc(cls, e: Exception, parent=None):
-        """Construct message box from a exception."""
-        # unwrap EmitLoopError
-        while isinstance(e, EmitLoopError):
-            e = e.__cause__
-            if e is None:
-                raise RuntimeError("EmitLoopError unwrapping failed.")
-        self = cls(type(e).__name__, e, parent)
-        return self
-
-    @classmethod
-    def raise_(cls, e: Exception, parent: QtW.QWidget | None = None):
+    def raise_(cls, e: Exception, parent=None):
         """Raise exception in the message box."""
-        cls.from_exc(e, parent=parent).exec_()
-        if parent:
-            parent.setFocus()
+        self = cls(type(e).__name__, e, parent)
+        self.exec_()
 
     def _get_traceback(self):
         if self._exc is None:
             import traceback
 
             tb = traceback.format_exc()
-            print(tb)
         else:
-            tb = get_tb_formatter()(self._exc, as_html=True)
+            exc_info = (
+                self._exc.__class__,
+                self._exc,
+                self._exc.__traceback__,
+            )
+            tb = get_tb_formatter()(exc_info, as_html=True)
         return tb
 
 

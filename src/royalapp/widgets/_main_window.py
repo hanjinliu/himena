@@ -262,14 +262,13 @@ def remove_instance(name: str, instance: MainWindow[_W]) -> None:
 
 
 def _init_application(app: Application) -> None:
-    from royalapp._app_model._actions import ACTIONS_AND_MENUS
+    from royalapp._app_model.actions import tab_actions, window_actions, file_actions
 
-    for each in ACTIONS_AND_MENUS:
-        if isinstance(each, list):
-            app.menus.append_menu_items([each[0]])
-            app.register_actions(each[1:])
-        else:
-            app.register_action(each)
+    app.register_actions(file_actions.ACTIONS)
+    app.register_actions(tab_actions.ACTIONS)
+    app.register_actions(window_actions.ACTIONS)
+    app.menus.append_menu_items(file_actions.SUBMENUS)
+    app.menus.append_menu_items(window_actions.SUBMENUS)
 
     app.injection_store.namespace = {
         "MainWindow": MainWindow,

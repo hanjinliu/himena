@@ -159,6 +159,8 @@ class SubWindow(WidgetWrapper[_W]):
     def anchor(self, anchor: _anchor.WindowAnchor | None):
         if anchor is None:
             anchor = _anchor.NoAnchor
+        elif isinstance(anchor, str):
+            anchor = self._anchor_from_str(anchor)
         elif not isinstance(anchor, _anchor.WindowAnchor):
             raise TypeError(f"Expected WindowAnchor, got {type(anchor)}")
         self._main_window()._set_window_anchor(self.widget, anchor)
@@ -174,6 +176,20 @@ class SubWindow(WidgetWrapper[_W]):
             "window_rect": self.window_rect,
             "anchor": _anchor.anchor_to_dict(self.anchor),
         }
+
+    def _anchor_from_str(sub_win: SubWindow[_W], anchor: str):
+        rect = sub_win.window_rect
+        w0, h0 = sub_win._main_window()._area_size()
+        if anchor in ("top-left", "top left", "top_left"):
+            return _anchor.TopLeftConstAnchor(rect.left, rect.top)
+        elif anchor in ("top-right", "top right", "top_right"):
+            return _anchor.TopRightConstAnchor(w0 - rect.right, rect.top)
+        elif anchor in ("bottom-left", "bottom left", "bottom_left"):
+            return _anchor.BottomLeftConstAnchor(rect.left, h0 - rect.bottom)
+        elif anchor in ("bottom-right", "bottom right", "bottom_right"):
+            return _anchor.BottomRightConstAnchor(w0 - rect.right, h0 - rect.bottom)
+        else:
+            raise ValueError(f"Unknown anchor: {anchor}")
 
 
 class DockWidget(WidgetWrapper[_W]):

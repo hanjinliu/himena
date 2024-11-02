@@ -9,6 +9,7 @@ import psygnal
 from qtpy import QtWidgets as QtW, QtGui, QtCore
 from qtpy.QtCore import Qt
 from app_model.backends.qt import QModelMainWindow, QModelMenu
+from royalapp.consts import MenuId
 from royalapp.qt._qtab_widget import QTabWidget
 from royalapp.qt._qsub_window import QSubWindow, QSubWindowArea
 from royalapp.qt._qdock_widget import QDockWidget
@@ -68,7 +69,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             }
         )
         self._menubar = self.setModelMenuBar(default_menu_ids)
-        self._toolbar = self.addModelToolBar(menu_id="toolbar")
+        self._toolbar = self.addModelToolBar(menu_id=MenuId.TOOLBAR)
         self._toolbar.setMovable(False)
         self._toolbar.setFixedHeight(32)
         self.setCentralWidget(self._tab_widget)
@@ -361,6 +362,12 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self._tab_widget.removeTab(i_tab)
         return None
 
+    def _rename_window_at(self, i_tab: int, i_window: int) -> None:
+        tab = self._tab_widget.widget(i_tab)
+        window = tab.subWindowList()[i_window]
+        window._title_bar._start_renaming()
+        return None
+
     def _window_state(self, widget: QtW.QWidget) -> SubWindowState:
         return _get_subwindow(widget).state
 
@@ -435,7 +442,11 @@ _DOCK_AREA_MAP = {
 
 
 def _is_root_menu_id(app: app_model.Application, menu_id: str) -> bool:
-    if menu_id in ("toolbar", app.menus.COMMAND_PALETTE_ID):
+    if menu_id in (
+        MenuId.TOOLBAR,
+        MenuId.WINDOW_TITLE_BAR,
+        app.menus.COMMAND_PALETTE_ID,
+    ):
         return False
     return "/" not in menu_id.replace("//", "")
 
