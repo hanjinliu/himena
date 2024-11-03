@@ -16,6 +16,7 @@ def profile_dir() -> Path:
 
 
 def list_recent_files() -> list[Path | list[Path]]:
+    """List the recent files (older first)."""
     _path = USER_DATA_DIR / "recent.json"
     if not _path.exists():
         return []

@@ -256,10 +256,12 @@ class MainWindow(Generic[_W]):
             raise ValueError("No active window.")
 
     def _update_open_recent_menu(self):
-        file_paths = list_recent_files()
+        file_paths = list_recent_files()[::-1]
         if len(file_paths) == 0:
             return None
-        actions = [action_for_file(path) for path in file_paths]
+        actions = [
+            action_for_file(path, in_menu=i < 8) for i, path in enumerate(file_paths)
+        ]
         self._open_recent_disposer()
         self._open_recent_disposer = self.model_app.register_actions(actions)
         self.model_app.menus.menus_changed.emit({MenuId.FILE_RECENT})
@@ -289,10 +291,16 @@ def remove_instance(name: str, instance: MainWindow[_W]) -> None:
 
 
 def _init_application(app: Application) -> None:
-    from royalapp._app_model.actions import tab_actions, window_actions, file_actions
+    from royalapp._app_model.actions import (
+        tab_actions,
+        window_actions,
+        file_actions,
+        view_actions,
+    )
 
     app.register_actions(file_actions.ACTIONS)
     app.register_actions(tab_actions.ACTIONS)
+    app.register_actions(view_actions.ACTIONS)
     app.register_actions(window_actions.ACTIONS)
     app.menus.append_menu_items(file_actions.SUBMENUS)
     app.menus.append_menu_items(window_actions.SUBMENUS)

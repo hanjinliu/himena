@@ -44,6 +44,7 @@ class MenuId(StrEnum):
     WINDOW_ANCHOR = "window/anchor"
     WINDOW_EXIT = "window/exit"
     TAB = "tab"
+    VIEW = "view"
     TOOLBAR = "toolbar"
     WINDOW_TITLE_BAR = "window_title_bar"
     WINDOW_TITLE_BAR_ALIGN = "window_title_bar/align"
@@ -51,3 +52,7 @@ class MenuId(StrEnum):
 
     def __str__(self) -> str:
         return self.value
+
+
+class ActionCategory(StrEnum):
+    OPEN_RECENT = "open-recent"

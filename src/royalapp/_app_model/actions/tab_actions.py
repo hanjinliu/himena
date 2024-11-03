@@ -37,7 +37,7 @@ def merge_tabs(ui: MainWindow) -> None:
     if len(ui.tabs.names) < 2:
         return
     names = ui._backend_main_window._open_selection_dialog(
-        "Select tab to merge", ui.tabs.names
+        "Selects tab to merge", ui.tabs.names
     )
     if names is None:
         return

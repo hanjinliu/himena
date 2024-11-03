@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from timeit import default_timer as timer
 import logging
-from typing import Hashable, TypeVar, TYPE_CHECKING, cast
+from typing import Hashable, Literal, TypeVar, TYPE_CHECKING, cast
 from pathlib import Path
 import app_model
 import psygnal
@@ -10,9 +10,11 @@ from qtpy import QtWidgets as QtW, QtGui, QtCore
 from qtpy.QtCore import Qt
 from app_model.backends.qt import QModelMainWindow, QModelMenu
 from royalapp.consts import MenuId
+from royalapp._app_model import _formatter
 from royalapp.qt._qtab_widget import QTabWidget
 from royalapp.qt._qsub_window import QSubWindow, QSubWindowArea
 from royalapp.qt._qdock_widget import QDockWidget
+from royalapp.qt._qcommand_palette import QCommandPalette
 from royalapp import anchor as _anchor
 from royalapp.types import (
     DockArea,
@@ -73,6 +75,19 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self._toolbar.setMovable(False)
         self._toolbar.setFixedHeight(32)
         self.setCentralWidget(self._tab_widget)
+
+        self._command_palette_general = QCommandPalette(
+            self._app,
+            parent=self,
+            formatter=_formatter.formatter_general,
+        )
+        self._command_palette_recent = QCommandPalette(
+            self._app,
+            menu_id=MenuId.FILE_RECENT,
+            parent=self,
+            exclude=["open-recent"],
+            formatter=_formatter.formatter_recent,
+        )
 
         style = get_style("default")
         style_text = (
@@ -341,6 +356,14 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         if dialog.exec_():
             return [item.text() for item in lw.selectedItems()]
         return None
+
+    def _show_command_palette(self, kind: Literal["general", "recent"]) -> None:
+        if kind == "general":
+            self._command_palette_general.show()
+        elif kind == "recent":
+            self._command_palette_recent.show()
+        else:
+            raise NotImplementedError
 
     def _exit_main_window(self) -> None:
         self.close()

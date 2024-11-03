@@ -70,7 +70,7 @@ def save_from_dialog(ui: MainWindow) -> None:
 
 def open_recent(ui: MainWindow) -> WidgetDataModel:
     """Open a recent file as a sub-window."""
-    raise NotImplementedError
+    return ui._backend_main_window._show_command_palette("recent")
 
 
 def paste_from_clipboard(ui: MainWindow) -> WidgetDataModel:
