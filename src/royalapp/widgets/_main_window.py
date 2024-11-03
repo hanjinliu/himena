@@ -6,6 +6,7 @@ from weakref import WeakSet
 from app_model import Application
 from app_model.expressions import create_context
 from psygnal import SignalGroup, Signal
+from royalapp.consts import MenuId
 from royalapp.io import get_readers
 from royalapp.types import (
     WidgetDataModel,
@@ -17,7 +18,9 @@ from royalapp.types import (
 )
 from royalapp._app_model._context import AppContext
 from royalapp._descriptors import ProgramaticMethod, LocalReaderMethod
+from royalapp.profile import list_recent_files, append_recent_files
 from royalapp.widgets._backend import BackendMainWindow
+from royalapp.widgets._open_recent import action_for_file
 from royalapp.widgets._tab_list import TabList, TabArea
 from royalapp.widgets._wrapper import SubWindow, DockWidget
 
@@ -47,6 +50,8 @@ class MainWindow(Generic[_W]):
         self.events.window_activated.connect(self._backend_main_window._update_context)
         self._dock_widgets = WeakSet[_W]()
         self._skip_confirmations = False
+        self._open_recent_disposer = lambda: None
+        self._update_open_recent_menu()
 
     @property
     def tabs(self) -> TabList[_W]:
@@ -194,7 +199,7 @@ class MainWindow(Generic[_W]):
             sub_win.update_default_save_path(method.path)
         return sub_win
 
-    def read_file(self, file_path) -> None:
+    def read_file(self, file_path) -> SubWindow[_W]:
         """Read local file(s) and open as a new sub-window."""
         if hasattr(file_path, "__iter__") and not isinstance(file_path, (str, Path)):
             fp = [Path(f) for f in file_path]
@@ -202,7 +207,10 @@ class MainWindow(Generic[_W]):
             fp = Path(file_path)
         readers = get_readers(fp)
         model = readers[0](fp).with_source(fp)
-        return self.add_data_model(model)
+        out = self.add_data_model(model)
+        append_recent_files([file_path])
+        self._update_open_recent_menu()
+        return out
 
     def exec_action(self, id: str) -> None:
         """Execute an action by its ID."""
@@ -246,6 +254,16 @@ class MainWindow(Generic[_W]):
             return model, sub
         else:
             raise ValueError("No active window.")
+
+    def _update_open_recent_menu(self):
+        file_paths = list_recent_files()
+        if len(file_paths) == 0:
+            return None
+        actions = [action_for_file(path) for path in file_paths]
+        self._open_recent_disposer()
+        self._open_recent_disposer = self.model_app.register_actions(actions)
+        self.model_app.menus.menus_changed.emit({MenuId.FILE_RECENT})
+        return None
 
 
 def current_instance(name: str) -> MainWindow[_W]:

@@ -10,4 +10,4 @@ __royalapp_plugin__ = get_plugin_interface()
 @__royalapp_plugin__.register_new_provider(keybindings="Ctrl+N")
 def new_text() -> WidgetDataModel:
     """Create widget for a new text file."""
-    return WidgetDataModel(value="", type=StandardTypes.TEXT, title="New Text Window")
+    return WidgetDataModel(value="", type=StandardTypes.TEXT, title="Untitled")

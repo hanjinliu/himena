@@ -9,6 +9,7 @@ from app_model.types import (
     SubmenuItem,
 )
 from royalapp.consts import StandardTypes, MenuId
+from royalapp.profile import append_recent_files
 from royalapp.widgets import MainWindow
 from royalapp.io import get_readers, get_writers
 from royalapp.types import (
@@ -36,10 +37,13 @@ def open_file_from_dialog(ui: MainWindow) -> list[WidgetDataModel]:
     for file_path in file_paths:
         readers_matched = get_readers(file_path)
         reader_path_sets.append((readers_matched[0], file_path))
-    return [
+    out = [
         _read_and_update_source(reader, file_path)
         for reader, file_path in reader_path_sets
     ]
+    append_recent_files(file_paths)
+    ui._update_open_recent_menu()
+    return out
 
 
 def open_folder_from_dialog(ui: MainWindow) -> WidgetDataModel:
@@ -48,7 +52,10 @@ def open_folder_from_dialog(ui: MainWindow) -> WidgetDataModel:
     if file_path is None:
         return None
     readers = get_readers(file_path)
-    return _read_and_update_source(readers[0], file_path)
+    out = _read_and_update_source(readers[0], file_path)
+    append_recent_files([file_path])
+    ui._update_open_recent_menu()
+    return out
 
 
 def save_from_dialog(ui: MainWindow) -> None:
@@ -59,6 +66,11 @@ def save_from_dialog(ui: MainWindow) -> None:
         writers[0](fd, save_path)  # run save function
         sub_win.update_default_save_path(save_path)
     return None
+
+
+def open_recent(ui: MainWindow) -> WidgetDataModel:
+    """Open a recent file as a sub-window."""
+    raise NotImplementedError
 
 
 def paste_from_clipboard(ui: MainWindow) -> WidgetDataModel:
@@ -124,8 +136,9 @@ def save_screenshot_window(ui: MainWindow) -> None:
 
 _CtrlK = KeyMod.CtrlCmd | KeyCode.KeyK
 
-IO_GROUP = "00_io"
-SCR_SHOT_GROUP = "01_screenshot"
+READ_GROUP = "00_io_read"
+WRITE_GROUP = "01_io_write"
+SCR_SHOT_GROUP = "21_screenshot"
 COPY_SCR_SHOT = "00_copy-screenshot"
 SAVE_SCR_SHOT = "01_save-screenshot"
 EXIT_GROUP = "99_exit"
@@ -137,8 +150,8 @@ ACTIONS = [
         icon="material-symbols:folder-open-outline",
         callback=open_file_from_dialog,
         menus=[
-            {"id": MenuId.FILE, "group": IO_GROUP},
-            {"id": MenuId.TOOLBAR, "group": IO_GROUP},
+            {"id": MenuId.FILE, "group": READ_GROUP},
+            {"id": MenuId.TOOLBAR, "group": READ_GROUP},
         ],
         keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyO)],
         icon_visible_in_menu=False,
@@ -148,9 +161,23 @@ ACTIONS = [
         title="Open Folder",
         icon="material-symbols:folder-open",
         callback=open_folder_from_dialog,
-        menus=[{"id": MenuId.FILE, "group": IO_GROUP}],
+        menus=[{"id": MenuId.FILE, "group": READ_GROUP}],
         keybindings=[
             KeyBindingRule(primary=KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.KeyO))
+        ],
+        icon_visible_in_menu=False,
+    ),
+    Action(
+        id="open-recent",
+        title="Open Recent",
+        icon="mdi:recent",
+        callback=open_recent,
+        menus=[
+            {"id": MenuId.FILE_RECENT, "group": READ_GROUP, "order": 99},
+            {"id": MenuId.TOOLBAR, "group": READ_GROUP, "order": 99},
+        ],
+        keybindings=[
+            KeyBindingRule(primary=KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.KeyR))
         ],
         icon_visible_in_menu=False,
     ),
@@ -160,8 +187,8 @@ ACTIONS = [
         icon="material-symbols:save-outline",
         callback=save_from_dialog,
         menus=[
-            {"id": MenuId.FILE, "group": IO_GROUP},
-            {"id": MenuId.TOOLBAR, "group": IO_GROUP},
+            {"id": MenuId.FILE, "group": WRITE_GROUP},
+            {"id": MenuId.TOOLBAR, "group": WRITE_GROUP},
         ],
         keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyS)],
         enablement=_ctx.is_active_window_exportable,
@@ -172,7 +199,7 @@ ACTIONS = [
         title="Save As",
         icon="material-symbols:save-as-outline",
         callback=save_as_from_dialog,
-        menus=[{"id": MenuId.FILE, "group": IO_GROUP}],
+        menus=[{"id": MenuId.FILE, "group": WRITE_GROUP}],
         keybindings=[
             KeyBindingRule(primary=KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyS)
         ],
@@ -184,7 +211,7 @@ ACTIONS = [
         title="Paste as window",
         icon="material-symbols:content-paste",
         callback=paste_from_clipboard,
-        menus=[{"id": MenuId.FILE, "group": IO_GROUP}],
+        menus=[{"id": MenuId.FILE, "group": READ_GROUP}],
         icon_visible_in_menu=False,
     ),
     Action(
@@ -247,9 +274,17 @@ SUBMENUS = [
     (
         MenuId.FILE,
         SubmenuItem(
+            submenu=MenuId.FILE_RECENT,
+            title="Open Recent",
+            group=READ_GROUP,
+        ),
+    ),
+    (
+        MenuId.FILE,
+        SubmenuItem(
             submenu=MenuId.FILE_NEW,
             title="New",
-            group=IO_GROUP,
+            group=READ_GROUP,
         ),
     ),
     (

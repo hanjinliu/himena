@@ -7,10 +7,17 @@ from royalapp.types import WidgetDataModel
 
 
 class QDefaultTableWidget(QtW.QTableWidget):
-    def __init__(self, file_path):
+    def __init__(self):
         super().__init__()
-        self._file_path = file_path
         self._modified = False
+        self.horizontalHeader().setFixedHeight(18)
+
+        # scroll by pixel
+        self.setVerticalScrollMode(QtW.QAbstractItemView.ScrollMode.ScrollPerPixel)
+        self.setHorizontalScrollMode(QtW.QAbstractItemView.ScrollMode.ScrollPerPixel)
+        # scroll bar policy
+        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
 
         @self.itemChanged.connect
         def _():
@@ -20,7 +27,7 @@ class QDefaultTableWidget(QtW.QTableWidget):
     def from_model(cls, model: WidgetDataModel) -> QDefaultTableWidget:
         import numpy as np
 
-        self = cls(model.source)
+        self = cls()
         table = np.asarray(model.value, dtype=str)
         self.setRowCount(table.shape[0])
         self.setColumnCount(table.shape[1])
@@ -30,6 +37,7 @@ class QDefaultTableWidget(QtW.QTableWidget):
             self.setRowHeight(i, 22)
         if model.source is not None:
             self.setObjectName(model.source.name)
+        self._modified = False
         return self
 
     def to_model(self) -> WidgetDataModel:

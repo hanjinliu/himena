@@ -36,6 +36,7 @@ class StandardTypes(StrEnum):
 
 class MenuId(StrEnum):
     FILE = "file"
+    FILE_RECENT = "file/recent"
     FILE_NEW = "file/new"
     FILE_SCREENSHOT = "file/screenshot"
     WINDOW = "window"

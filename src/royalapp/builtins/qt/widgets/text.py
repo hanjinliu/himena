@@ -61,15 +61,10 @@ class QMainTextEdit(QtW.QPlainTextEdit):
         self.setFont(font)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self._tab_size = 4
-        self._modified = False
         self._highlight = None
 
-        @self.textChanged.connect
-        def _():
-            self._modified = True
-
     def is_modified(self) -> bool:
-        return self._modified
+        return self.document().isModified()
 
     def syntax_highlight(self, lang: str | None = "python", theme: str = "default"):
         """Highlight syntax."""
@@ -391,7 +386,6 @@ class QDefaultTextEdit(QtW.QWidget):
 
     def initPlainText(self, text: str):
         self._main_text_edit.setPlainText(text)
-        self._main_text_edit._modified = False
 
     def toPlainText(self) -> str:
         return self._main_text_edit.toPlainText()
