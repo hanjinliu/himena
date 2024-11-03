@@ -24,8 +24,6 @@ def _read_and_update_source(reader: ReaderFunction, source: Path) -> WidgetDataM
     model = reader(source)
     if model.method is None:
         model = model.with_source(source)
-    if model.title is None:
-        model.title = source.name
     return model
 
 
@@ -56,7 +54,7 @@ def open_folder_from_dialog(ui: MainWindow) -> WidgetDataModel:
 def save_from_dialog(ui: MainWindow) -> None:
     """Save (overwrite) the current sub-window as a file."""
     fd, sub_win = ui._provide_file_output()
-    if save_path := sub_win.save_behavior.get_save_path(ui._backend_main_window):
+    if save_path := sub_win.save_behavior.get_save_path(ui):
         writers = get_writers(fd)
         writers[0](fd, save_path)  # run save function
         sub_win.update_default_save_path(save_path)
@@ -73,7 +71,7 @@ def paste_from_clipboard(ui: MainWindow) -> WidgetDataModel:
 def save_as_from_dialog(ui: MainWindow) -> None:
     """Save the current sub-window as a new file."""
     fd, sub_win = ui._provide_file_output()
-    if save_path := sub_win.save_behavior.get_save_path(ui._backend_main_window):
+    if save_path := sub_win.save_behavior.get_save_path(ui):
         writers = get_writers(fd)
         writers[0](fd, save_path)
         sub_win.update_default_save_path(save_path)

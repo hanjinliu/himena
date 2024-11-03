@@ -20,8 +20,17 @@ def new_tab(ui: MainWindow) -> None:
 
 def close_current_tab(ui: MainWindow) -> None:
     idx = ui._backend_main_window._current_tab_index()
-    if idx is not None:
-        ui.tabs.pop(idx)
+    if idx is None:
+        return
+    win_modified = [win for win in ui.tabs[idx] if win.is_modified]
+    if len(win_modified) > 0:
+        _modified_msg = "\n".join([f"- {win.title}" for win in win_modified])
+        if not ui.exec_confirmation_dialog(
+            f"Some windows in the tab are modified:\n{_modified_msg}\n"
+            "Close without saving?"
+        ):
+            return None
+    ui.tabs.pop(idx)
 
 
 def merge_tabs(ui: MainWindow) -> None:

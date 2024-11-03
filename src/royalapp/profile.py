@@ -52,7 +52,7 @@ class AppProfile(BaseModel):
     def save(self, path):
         """Save profile as a json file."""
         with open(path, "w") as f:
-            json.dump(self.dict(), f, indent=4)
+            json.dump(self.model_dump(), f, indent=4)
         return None
 
 

@@ -46,6 +46,7 @@ class MainWindow(Generic[_W]):
         self._tab_list.changed.connect(self._backend_main_window._update_context)
         self.events.window_activated.connect(self._backend_main_window._update_context)
         self._dock_widgets = WeakSet[_W]()
+        self._skip_confirmations = False
 
     @property
     def tabs(self) -> TabList[_W]:
@@ -112,6 +113,8 @@ class MainWindow(Generic[_W]):
             self._backend_main_window._set_window_state(
                 idx, nwindows - 1, SubWindowState.FULL
             )
+        else:
+            self._backend_main_window._set_current_sub_window_index(len(tabarea) - 1)
         return out
 
     def add_dock_widget(
@@ -205,6 +208,12 @@ class MainWindow(Generic[_W]):
         """Execute an action by its ID."""
         self._model_app.commands.execute_command(id)
         return None
+
+    def exec_confirmation_dialog(self, msg: str) -> bool:
+        """Execute a confirmation dialog."""
+        if self._skip_confirmations:
+            return True
+        return self._backend_main_window._open_confirmation_dialog(msg)
 
     def show(self, run: bool = False) -> None:
         """

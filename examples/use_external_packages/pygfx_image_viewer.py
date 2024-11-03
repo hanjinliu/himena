@@ -73,7 +73,7 @@ def my_writer_provider(model: WidgetDataModel, path: Path):
         iio.imwrite(path, model.value)
     return _write_image
 
-interf = get_plugin_interface("image_processing")
+interf = get_plugin_interface("plugins/image_processing")
 
 @interf.register_function(title="Gaussian Filter", types="image")
 def gaussian_filter(model: WidgetDataModel) -> WidgetDataModel:

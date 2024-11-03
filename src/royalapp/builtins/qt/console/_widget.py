@@ -1,5 +1,4 @@
 from __future__ import annotations
-from functools import lru_cache
 
 from pathlib import Path
 import weakref
@@ -9,6 +8,7 @@ from contextlib import suppress
 from qtpy.QtCore import Signal
 from qtpy import QtWidgets as QtW
 from qtconsole.rich_jupyter_widget import RichJupyterWidget
+from royalapp._utils import lru_cache
 
 if TYPE_CHECKING:
     from royalapp.widgets import MainWindow

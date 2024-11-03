@@ -32,6 +32,8 @@ class QTabWidget(QtW.QTabWidget):
         self.setMinimumSize(200, 200)
         self.setAcceptDrops(True)
 
+        self.newWindowActivated.connect(self._repolish)
+
     def addTabArea(self, tab_name: str | None = None) -> QSubWindowArea:
         """
         Add a new tab with a sub-window area.
@@ -73,6 +75,13 @@ class QTabWidget(QtW.QTabWidget):
             widget._reanchor_windows()
             self._emit_current_indices()
             self._line_edit.setHidden(True)
+
+    def _repolish(self) -> None:
+        if area := self.currentWidget():
+            wins = area.subWindowList()
+            cur = area.currentSubWindow()
+            for i, win in enumerate(wins):
+                win.set_is_current(win == cur)
 
     def _current_indices(self) -> tuple[int, int]:
         if widget := self.currentWidget():

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterator, Callable, TypeVar
-from functools import lru_cache
+from typing import TYPE_CHECKING, Iterator
 from app_model.backends.qt import QModelMenu
 from qtpy import QtWidgets as QtW
 from qtpy import QtCore, QtGui
@@ -9,6 +8,7 @@ from superqt import QIconifyIcon
 from superqt.utils import qthrottled
 from royalapp import anchor as _anchor
 from royalapp.consts import MenuId
+from royalapp._utils import lru_cache
 from royalapp.types import SubWindowState, WindowRect
 from royalapp.qt._utils import get_main_window
 from royalapp.qt._qwindow_resize import ResizeState
@@ -16,10 +16,6 @@ from royalapp.qt._qrename import QRenameLineEdit
 
 if TYPE_CHECKING:
     from royalapp.qt._qmain_window import QMainWindow
-
-    _F = TypeVar("_F", bound=Callable)
-
-    def lru_cache(maxsize: int = 128, typed: bool = False) -> Callable[[_F], _F]: ...
 
 
 class QSubWindowArea(QtW.QMdiArea):
@@ -265,6 +261,12 @@ class QSubWindow(QtW.QMdiSubWindow):
         self._title_bar._toggle_size_button.setIcon(_icon_normal())
         self._widget.setVisible(False)
 
+    def set_is_current(self, is_current: bool):
+        """Set the isCurrent state of the sub-window and update styles."""
+        self._title_bar.setProperty("isCurrent", is_current)
+        self._title_bar.style().unpolish(self._title_bar)
+        self._title_bar.style().polish(self._title_bar)
+
     def move_over(self, other: QSubWindow, dx: int = 36, dy: int = 36):
         rect = other.geometry()
         rect.translate(dx, dy)
@@ -445,6 +447,7 @@ class QSubWindowTitleBar(QtW.QFrame):
         self._drag_position: QtCore.QPoint | None = None
         self._resize_position: QtCore.QPoint | None = None
         self._subwindow = subwindow
+        self.setProperty("isCurrent", False)
 
     def _start_renaming(self):
         self._line_edit.show()

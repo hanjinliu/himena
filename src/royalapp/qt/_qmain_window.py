@@ -83,6 +83,9 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             .replace("$(background-1)", style.background.level_1)
             .replace("$(background-2)", style.background.level_2)
             .replace("$(background-3)", style.background.level_3)
+            .replace("$(highlight-1)", style.highlight.level_1)
+            .replace("$(highlight-2)", style.highlight.level_2)
+            .replace("$(highlight-3)", style.highlight.level_3)
         )
         self.setStyleSheet(style_text)
 
@@ -268,8 +271,12 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         return area.subWindowList().index(sub)
 
     def _set_current_sub_window_index(self, i_window: int) -> None:
+        assert i_window >= 0
         area = self._tab_widget.currentWidget()
-        area.activateWindow(area.subWindowList()[i_window])
+        subwindows = area.subWindowList()
+        for i in range(len(subwindows)):
+            subwindows[i].set_is_current(i == i_window)
+        self._tab_widget.setCurrentWidget(subwindows[i_window])
         return None
 
     def _tab_title(self, i_tab: int) -> str:

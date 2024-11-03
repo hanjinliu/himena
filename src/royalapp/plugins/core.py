@@ -33,8 +33,8 @@ _F = TypeVar("_F", bound=Callable)
 
 
 class PluginInterface:
-    def __init__(self, place: list[str]):
-        self._place = place
+    def __init__(self, places: list[str] | None):
+        self._places = places
         self._actions: list[Action] = []
 
     def add_child(
@@ -49,7 +49,10 @@ class PluginInterface:
         """
         if title is None:
             title = id.title()
-        return self.__class__(self._place + [id])
+        return self.__class__([f"{p}/{id}" for p in self._places])
+
+    def _places_formatted(self) -> list[str]:
+        return self._places
 
     @overload
     def register_function(
@@ -128,16 +131,13 @@ class PluginInterface:
                     _enablement = _expr
                 else:
                     _enablement = _expr & enablement
-            if command_id is None:
-                _id = f.__qualname__
-            else:
-                _id = command_id
-
+            _id = _command_id_from_func(f, command_id)
             action = Action(
                 id=_id,
                 title=_title,
+                tooltip=_tooltip_from_func(f),
                 callback=_make_function_callback(f, _id),
-                menus=["/".join(self._place)],
+                menus=self._places_formatted(),
                 enablement=_enablement,
                 keybindings=kbs,
             )
@@ -276,21 +276,12 @@ class PluginInterface:
                 dock._identifier = id(wf)
                 return None
 
-            if doc := getattr(wf, "__doc__", None):
-                tooltip = str(doc)
-            else:
-                tooltip = None
-            if command_id is None:
-                _id = getattr(wf, "__qualname__", str(wf))
-            else:
-                _id = command_id
             action = Action(
-                id=_id,
+                id=_command_id_from_func(wf, command_id),
                 title=_title,
-                tooltip=tooltip,
+                tooltip=_tooltip_from_func(wf),
                 callback=_callback,
-                menus=["/".join(self._place)],
-                category="plugins",
+                menus=self._places_formatted(),
                 keybindings=kbs,
             )
             self._actions.append(action)
@@ -299,7 +290,7 @@ class PluginInterface:
         return _inner if widget_factory is None else _inner(widget_factory)
 
     @overload
-    def register_new_action(
+    def register_new_provider(
         self,
         func: _F,
         *,
@@ -308,7 +299,7 @@ class PluginInterface:
         command_id: str | None = None,
     ) -> _F: ...
     @overload
-    def register_new_action(
+    def register_new_provider(
         self,
         func: None = None,
         *,
@@ -317,7 +308,7 @@ class PluginInterface:
         command_id: str | None = None,
     ) -> Callable[[_F], _F]: ...
 
-    def register_new_action(
+    def register_new_provider(
         self,
         func=None,
         *,
@@ -345,18 +336,10 @@ class PluginInterface:
         kbs = _normalize_keybindings(keybindings)
 
         def _inner(f: Callable):
-            if doc := getattr(f, "__doc__", None):
-                tooltip = str(doc)
-            else:
-                tooltip = None
-            if command_id is None:
-                _id = getattr(f, "__qualname__", str(f))
-            else:
-                _id = command_id
             action = Action(
-                id=_id,
+                id=_command_id_from_func(f, command_id),
                 title=_normalize_title(title, f),
-                tooltip=tooltip,
+                tooltip=_tooltip_from_func(f),
                 callback=f,
                 menus=["file/new"],
                 keybindings=kbs,
@@ -368,30 +351,51 @@ class PluginInterface:
 
     def install_to(self, app: Application):
         """Installl plugins to the application."""
+        # look for existing menu items
         existing_menu_ids = set()
         for menu_id, menu in app.menus:
             existing_menu_ids.add(menu_id)
             for each in menu:
                 if isinstance(each, SubmenuItem):
                     existing_menu_ids.add(each.submenu)
+
         app.register_actions(self._actions)
+
+        # add submenus if not exists
         to_add: list[tuple[str, SubmenuItem]] = []
-        for i in range(1, len(self._place)):
-            menu_id = "/".join(self._place[:i])
-            submenu = "/".join(self._place[: i + 1])
-            if submenu in existing_menu_ids:
-                continue
-            item = SubmenuItem(title=self._place[i], submenu=submenu)
-            to_add.append((menu_id, item))
+        for place in self._places_formatted():
+            place_components = place.split("/")
+            for i in range(1, len(place_components)):
+                menu_id = "/".join(place_components[:i])
+                submenu = "/".join(place_components[: i + 1])
+                if submenu in existing_menu_ids:
+                    continue
+                item = SubmenuItem(title=place_components[i], submenu=submenu)
+                to_add.append((menu_id, item))
+
         app.menus.append_menu_items(to_add)
+        return None
 
 
-def get_plugin_interface(place: str | list[str] | None = None) -> PluginInterface:
-    if place is None:
-        place = ["plugins"]
-    elif isinstance(place, str):
-        place = [place]
-    out = PluginInterface(place)
+def get_plugin_interface(places: str | list[str] | None = None) -> PluginInterface:
+    """
+    Create or get a plugin interface for registration of plugin functions.
+
+    To make the interface discoverable by setting the application profile, the interface
+    must be assigned to the `__royalapp_plugin__` variable.
+
+    Parameters
+    ----------
+    places : str or list of str, optional
+        Places to register the plugin actions. For example, setting this argument to
+        ["plugins/my_plugin", "my_menu"] will create a submenu "my_plugin" in the
+        "plugins" and a menu "my_menu" in the main menu bar.
+    """
+    if places is None:
+        places = ["plugins"]
+    elif isinstance(places, str):
+        places = [places]
+    out = PluginInterface(places)
     return out
 
 
@@ -420,6 +424,31 @@ def _normalize_title(title: str | None, func: Callable) -> str:
     if title is None:
         return func.__name__.replace("_", " ").title()
     return title
+
+
+def _command_id_from_func(func: Callable, command_id: str) -> str:
+    """Make a command ID from a function.
+
+    If function `my_func` is defined in a module `my_module`, the command ID will be
+    `my_module:my_func`. If `command_id` is given, it will be used instead of `my_func`.
+    """
+    if command_id is None:
+        _id = getattr(func, "__qualname__", str(func))
+    else:
+        if command_id.count(":") != 1:
+            raise ValueError(
+                "command_id must be in the format of 'module:function_name'.",
+            )
+        _id = command_id
+    return _id
+
+
+def _tooltip_from_func(func: Callable) -> str | None:
+    if doc := getattr(func, "__doc__", None):
+        tooltip = str(doc)
+    else:
+        tooltip = None
+    return tooltip
 
 
 def _make_function_callback(f: _F, action_id: str) -> _F:

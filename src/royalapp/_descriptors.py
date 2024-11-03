@@ -3,7 +3,7 @@ from pathlib import Path
 from pydantic_compat import BaseModel, Field
 
 if TYPE_CHECKING:
-    from royalapp.widgets import BackendMainWindow
+    from royalapp.widgets import MainWindow
 
 
 class MethodDescriptor(BaseModel):
@@ -31,9 +31,9 @@ class ConverterMethod(MethodDescriptor):
 class SaveBehavior(BaseModel):
     """A class that describes how a widget should be saved."""
 
-    def get_save_path(self, main: "BackendMainWindow") -> Path | None:
+    def get_save_path(self, main: "MainWindow") -> Path | None:
         """Return the path to save (None to cancel)."""
-        return main._open_file_dialog(mode="w")
+        return main._backend_main_window._open_file_dialog(mode="w")
 
 
 class SaveToNewPath(SaveBehavior):
@@ -49,9 +49,9 @@ class SaveToPath(SaveBehavior):
         description="Ask before overwriting the file if `path` already exists.",
     )
 
-    def get_save_path(self, main: "BackendMainWindow") -> Path | None:
+    def get_save_path(self, main: "MainWindow") -> Path | None:
         if self.path.exists() and self.ask_overwrite:
-            ok = main._open_confirmation_dialog(
+            ok = main.exec_confirmation_dialog(
                 f"{self.path} already exists, overwrite?"
             )
             if not ok:

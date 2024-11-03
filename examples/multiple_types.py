@@ -32,7 +32,7 @@ class MyHtmlEdit(QtW.QTextEdit):
         return cls(model)
 
     def to_model(self) -> WidgetDataModel:
-        return self._model
+        return self._model.model_copy()
 
 @register_frontend_widget("cannot-save")
 class MyNonSavableEdit(QtW.QTextEdit):
@@ -42,26 +42,23 @@ class MyNonSavableEdit(QtW.QTextEdit):
         self.setPlainText(model.value)
         return self
 
-interf = get_plugin_interface(["plugins", "my_menu"])
+interf = get_plugin_interface("plugins/my_menu")
 
 @interf.register_function(types="html")
 def to_plain_text(model: WidgetDataModel) -> WidgetDataModel:
-    new = model.copy()
-
     pattern = re.compile("<.*?>")
-    new.value = re.sub(pattern, "", model.value)
-    new.type = "text"
-    new.title = model.title + " (plain)"
-    return new
+    model.value = re.sub(pattern, "", model.value)
+    model.type = "text"
+    model.title = model.title + " (plain)"
+    return model
 
 @interf.register_function(types=["text", "html"])
 def to_basic_widget(model: WidgetDataModel) -> WidgetDataModel:
     if model.type != "text":
         return None
-    new = model.copy()
-    new.type = "cannot-save"
-    new.title = model.title + " (cannot save)"
-    return new
+    model.type = "cannot-save"
+    model.title = model.title + " (cannot save)"
+    return model
 
 def main():
     ui = new_window(plugins=[interf])

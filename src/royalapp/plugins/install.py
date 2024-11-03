@@ -29,7 +29,10 @@ def install_plugins(app: Application, plugins: list[str | PluginInterface]):
             if interf is _NO_INTERF:
                 # if the plugin only provides reader/writer, importing the submodule
                 # is enough.
-                pass
+                _LOGGER.info(
+                    f"Plugin {name} only provides reader/writer, installed in "
+                    f"{(timer() - _time_0) * 1000:.3f} msec."
+                )
             elif not isinstance(interf, PluginInterface):
                 raise TypeError(
                     f"Invalid plugin interface type: {type(interf)} in module {name}."

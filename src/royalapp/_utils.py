@@ -1,8 +1,27 @@
 from __future__ import annotations
 import sys
-from typing import Callable, Any
+from typing import (
+    Callable,
+    Any,
+    Hashable,
+    Iterator,
+    MutableSet,
+    TypeVar,
+    TYPE_CHECKING,
+    overload,
+)
 from types import TracebackType
 from royalapp.types import WidgetDataModel
+
+if TYPE_CHECKING:
+    _F = TypeVar("_F", bound=Callable)
+
+    @overload
+    def lru_cache(maxsize: int = 128, typed: bool = False) -> Callable[[_F], _F]: ...
+    @overload
+    def lru_cache(f: _F) -> _F: ...
+else:
+    pass
 
 
 def get_widget_data_model_variable(func: Callable) -> type | None:
@@ -48,3 +67,26 @@ class ExceptionHandler:
     def __exit__(self, exc_type, exc_value, exc_traceback):
         sys.excepthook = self._original_excepthook
         return None
+
+
+_T = TypeVar("_T", bound=Hashable)
+
+
+class OrderedSet(MutableSet[_T]):
+    def __init__(self):
+        self._dict: dict[_T, None] = {}
+
+    def __contains__(self, other) -> bool:
+        return other in self._dict
+
+    def __iter__(self) -> Iterator[_T]:
+        yield from self._dict
+
+    def __len__(self) -> int:
+        return len(self._dict)
+
+    def add(self, value: _T) -> None:
+        self._dict[value] = None
+
+    def discard(self, value: _T) -> None:
+        self._dict.pop(value, None)

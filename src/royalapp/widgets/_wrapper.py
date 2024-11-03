@@ -115,6 +115,12 @@ class SubWindow(WidgetWrapper[_W]):
         """Whether the widget can export its data."""
         return hasattr(self.widget, "to_model")
 
+    @property
+    def is_modified(self) -> bool:
+        """Whether the content of the widget has been modified."""
+        is_modified_func = getattr(self.widget, "is_modified", None)
+        return callable(is_modified_func) and is_modified_func()
+
     def to_model(self) -> WidgetDataModel:
         """Export the widget data."""
         if not self.is_exportable:

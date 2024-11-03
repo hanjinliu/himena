@@ -9,7 +9,7 @@ __royalapp_plugin__ = get_plugin_interface()
     title="File tree",
     area="left",
     keybindings="Ctrl+Shift+E",
-    command_id="builtins.filetree",
+    command_id="builtins:filetree",
     singleton=True,
 )
 def make_file_tree_widget(ui):

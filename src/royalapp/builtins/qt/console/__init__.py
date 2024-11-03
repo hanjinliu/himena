@@ -10,7 +10,7 @@ __royalapp_plugin__ = get_plugin_interface()
     area="bottom",
     keybindings=["Ctrl+Shift+C"],
     singleton=True,
-    command_id="builtins.console",
+    command_id="builtins:console",
 )
 def install_console(ui):
     """Python interpreter widget."""

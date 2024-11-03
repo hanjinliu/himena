@@ -3,7 +3,6 @@ from pathlib import Path
 import weakref
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from royalapp.widgets import MainWindow
-from royalapp.io import get_readers
 
 
 class QFileSystemModel(QtW.QFileSystemModel):
@@ -13,6 +12,11 @@ class QFileSystemModel(QtW.QFileSystemModel):
 
     def columnCount(self, parent) -> int:
         return 1
+
+    def data(self, index: QtCore.QModelIndex, role: int):
+        if role == QtCore.Qt.ItemDataRole.SizeHintRole:
+            return QtCore.QSize(18, 16)
+        return super().data(index, role)
 
 
 class QRootPathEdit(QtW.QWidget):
@@ -26,11 +30,11 @@ class QRootPathEdit(QtW.QWidget):
         self._path_edit.setTextInteractionFlags(
             QtCore.Qt.TextInteractionFlag.TextSelectableByMouse
         )
-        self._btn = QtW.QPushButton("...")
-        self._btn.setFixedWidth(20)
-        self._btn.clicked.connect(self._select_root_path)
+        self._btn_set_root = QtW.QPushButton("...")
+        self._btn_set_root.setFixedWidth(20)
+        self._btn_set_root.clicked.connect(self._select_root_path)
         layout.addWidget(self._path_edit)
-        layout.addWidget(self._btn)
+        layout.addWidget(self._btn_set_root)
 
     def _select_root_path(self):
         path = QtW.QFileDialog.getExistingDirectory(self, "Select Root Path")
@@ -75,9 +79,7 @@ class QWorkspaceFileTree(QtW.QTreeView):
         path = Path(self._model.filePath(idx))
         if path.is_dir():
             return
-        readers = get_readers(path)
-        model = readers[0](path)
-        self._main_window_ref().add_data_model(model)
+        self._main_window_ref().read_file(path)
         return None
 
     # drag-and-drop

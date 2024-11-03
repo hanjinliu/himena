@@ -1,9 +1,11 @@
+import logging
 from app_model.types import (
     Action,
     KeyBindingRule,
     KeyCode,
     KeyMod,
     SubmenuItem,
+    KeyChord,
 )
 from royalapp._descriptors import ConverterMethod
 from royalapp.consts import MenuId
@@ -11,21 +13,35 @@ from royalapp.widgets import MainWindow
 from royalapp.types import SubWindowState, WidgetDataModel
 from royalapp._app_model._context import AppContext as _ctx
 
+_LOGGER = logging.getLogger(__name__)
+
 
 def close_current_window(ui: MainWindow) -> None:
     """Close the selected sub-window."""
     i_tab = ui.tabs.current_index()
     if i_tab is None:
         return None
-    i_window = ui.tabs.current_index()
+    i_window = ui.tabs[i_tab].current_index()
     if i_window is None:
         return None
+    win = ui.tabs[i_tab][i_window]
+    if win.is_modified:
+        if not ui.exec_confirmation_dialog(f"Close {win.title} without saving?"):
+            return None
+    _LOGGER.info(f"Closing window {i_window} in tab {i_tab}")
     del ui.tabs[i_tab][i_window]
 
 
 def close_all_windows_in_tab(ui: MainWindow) -> None:
     """Close all sub-windows in the current tab."""
     if area := ui.tabs.current():
+        win_modified = [win for win in area if win.is_modified]
+        if len(win_modified) > 0:
+            _modified_msg = "\n".join([f"- {win.title}" for win in win_modified])
+            if not ui.exec_confirmation_dialog(
+                f"Some windows are modified:\n{_modified_msg}\nClose without saving?"
+            ):
+                return None
         area.clear()
 
 
@@ -151,6 +167,7 @@ def tile_windows(ui: MainWindow) -> None:
 
 _CtrlAlt = KeyMod.CtrlCmd | KeyMod.Alt
 _CtrlShift = KeyMod.CtrlCmd | KeyMod.Shift
+_CtrlK = KeyMod.CtrlCmd | KeyCode.KeyK
 
 EDIT_GROUP = "00_edit"
 STATE_GROUP = "01_state"
@@ -218,6 +235,9 @@ ACTIONS = [
             {"id": MenuId.WINDOW_TITLE_BAR, "group": EDIT_GROUP},
         ],
         enablement=_ctx.has_sub_windows,
+        keybindings=[
+            KeyBindingRule(primary=KeyChord(_CtrlK, KeyCode.F2)),
+        ],
         icon_visible_in_menu=False,
     ),
     Action(
