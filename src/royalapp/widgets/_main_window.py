@@ -230,7 +230,7 @@ class MainWindow(Generic[_W]):
         return None
 
     @property
-    def current_subwindow(self) -> SubWindow[_W] | None:
+    def current_window(self) -> SubWindow[_W] | None:
         """Get the current sub-window."""
         idx_tab = self._backend_main_window._current_tab_index()
         if idx_tab is None:
@@ -241,7 +241,7 @@ class MainWindow(Generic[_W]):
         return self.tabs[idx_tab][idx_win]
 
     def _provide_file_output(self) -> tuple[WidgetDataModel, SubWindow[_W]]:
-        if sub := self.current_subwindow:
+        if sub := self.current_window:
             model = sub.to_model()
             return model, sub
         else:

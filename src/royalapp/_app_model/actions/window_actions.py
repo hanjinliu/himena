@@ -63,17 +63,17 @@ def rename_window(ui: MainWindow) -> None:
 
 
 def minimize_current_window(ui: MainWindow) -> None:
-    if window := ui.current_subwindow:
+    if window := ui.current_window:
         window.state = SubWindowState.MIN
 
 
 def maximize_current_window(ui: MainWindow) -> None:
-    if window := ui.current_subwindow:
+    if window := ui.current_window:
         window.state = SubWindowState.MAX
 
 
 def toggle_full_screen(ui: MainWindow) -> None:
-    if window := ui.current_subwindow:
+    if window := ui.current_window:
         if window.state is SubWindowState.MAX:
             window.state = SubWindowState.NORMAL
         else:
@@ -81,27 +81,27 @@ def toggle_full_screen(ui: MainWindow) -> None:
 
 
 def unset_anchor(ui: MainWindow) -> None:
-    if window := ui.current_subwindow:
+    if window := ui.current_window:
         window.anchor = None
 
 
 def anchor_at_top_left(ui: MainWindow) -> None:
-    if window := ui.current_subwindow:
+    if window := ui.current_window:
         window.anchor = "top-left"
 
 
 def anchor_at_top_right(ui: MainWindow) -> None:
-    if window := ui.current_subwindow:
+    if window := ui.current_window:
         window.anchor = "top-right"
 
 
 def anchor_at_bottom_left(ui: MainWindow) -> None:
-    if window := ui.current_subwindow:
+    if window := ui.current_window:
         window.anchor = "bottom-left"
 
 
 def anchor_at_bottom_right(ui: MainWindow) -> None:
-    if window := ui.current_subwindow:
+    if window := ui.current_window:
         window.anchor = "bottom-right"
 
 
@@ -136,27 +136,27 @@ def full_screen_in_new_tab(ui: MainWindow) -> None:
 
 
 def align_window_left(ui: MainWindow) -> None:
-    if window := ui.current_subwindow:
+    if window := ui.current_window:
         window.window_rect = window.window_rect.align_left()
 
 
 def align_window_right(ui: MainWindow) -> None:
-    if window := ui.current_subwindow:
+    if window := ui.current_window:
         window.window_rect = window.window_rect.align_right(ui.area_size)
 
 
 def align_window_top(ui: MainWindow) -> None:
-    if window := ui.current_subwindow:
+    if window := ui.current_window:
         window.window_rect = window.window_rect.align_top(ui.area_size)
 
 
 def align_window_bottom(ui: MainWindow) -> None:
-    if window := ui.current_subwindow:
+    if window := ui.current_window:
         window.window_rect = window.window_rect.align_bottom(ui.area_size)
 
 
 def align_window_center(ui: MainWindow) -> None:
-    if window := ui.current_subwindow:
+    if window := ui.current_window:
         window.window_rect = window.window_rect.align_center(ui.area_size)
 
 

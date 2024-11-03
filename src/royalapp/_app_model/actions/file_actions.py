@@ -136,7 +136,10 @@ ACTIONS = [
         title="Open File(s)",
         icon="material-symbols:folder-open-outline",
         callback=open_file_from_dialog,
-        menus=[{"id": MenuId.FILE, "group": IO_GROUP}, MenuId.TOOLBAR],
+        menus=[
+            {"id": MenuId.FILE, "group": IO_GROUP},
+            {"id": MenuId.TOOLBAR, "group": IO_GROUP},
+        ],
         keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyO)],
         icon_visible_in_menu=False,
     ),
@@ -156,7 +159,10 @@ ACTIONS = [
         title="Save",
         icon="material-symbols:save-outline",
         callback=save_from_dialog,
-        menus=[{"id": MenuId.FILE, "group": IO_GROUP}, MenuId.TOOLBAR],
+        menus=[
+            {"id": MenuId.FILE, "group": IO_GROUP},
+            {"id": MenuId.TOOLBAR, "group": IO_GROUP},
+        ],
         keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyS)],
         enablement=_ctx.is_active_window_exportable,
         icon_visible_in_menu=False,

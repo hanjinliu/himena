@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     @overload
     def lru_cache(f: _F) -> _F: ...
 else:
-    pass
+    pass  # noqa: F811
 
 
 def get_widget_data_model_variable(func: Callable) -> type | None:

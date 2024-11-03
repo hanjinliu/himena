@@ -255,19 +255,22 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _run_app(self):
         return get_event_loop_handler("qt", self._app_name).run_app()
 
-    def _current_tab_index(self) -> int:
-        return self._tab_widget.currentIndex()
+    def _current_tab_index(self) -> int | None:
+        idx = self._tab_widget.currentIndex()
+        if idx == -1:
+            return None
+        return idx
 
     def _set_current_tab_index(self, i_tab: int) -> None:
         return self._tab_widget.setCurrentIndex(i_tab)
 
-    def _current_sub_window_index(self) -> int:
+    def _current_sub_window_index(self) -> int | None:
         area = self._tab_widget.currentWidget()
         if area is None:
-            return -1
+            return None
         sub = area.currentSubWindow()
         if sub is None:
-            return -1
+            return None
         return area.subWindowList().index(sub)
 
     def _set_current_sub_window_index(self, i_window: int) -> None:
