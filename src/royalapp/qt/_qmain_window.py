@@ -58,10 +58,10 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self.setWindowIcon(QtGui.QIcon(_ICON_PATH.as_posix()))
         self._tab_widget = QTabWidget()
         default_menu_ids = {
-            "file": "File",
-            "window": "Window",
-            "tab": "Tab",
-            "plugins": "Plugins",
+            MenuId.FILE: "File",
+            MenuId.WINDOW: "Window",
+            MenuId.TAB: "Tab",
+            MenuId.TOOLS: "Tools",
         }
         default_menu_ids.update(
             {
@@ -222,6 +222,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _connect_window_events(self, sub: SubWindow, qsub: QSubWindow):
         qsub.state_changed.connect(lambda state: sub.state_changed.emit(state))
         qsub.closed.connect(lambda: sub.closed.emit())
+        qsub.renamed.connect(lambda title: sub.renamed.emit(title))
 
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
         super().resizeEvent(event)
@@ -265,7 +266,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         _dict = ctx.dict()
         self._menubar.update_from_context(_dict)
         _msec = (timer() - _time_0) * 1000
-        _LOGGER.info(f"Context update took {_msec:.3f} msec")
+        _LOGGER.debug(f"Context update took {_msec:.3f} msec")
 
     def _run_app(self):
         return get_event_loop_handler("qt", self._app_name).run_app()
@@ -295,6 +296,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         for i in range(len(subwindows)):
             subwindows[i].set_is_current(i == i_window)
         self._tab_widget.setCurrentWidget(subwindows[i_window])
+        _LOGGER.info(f"Set current sub-window index to {i_window}")
         return None
 
     def _tab_title(self, i_tab: int) -> str:
@@ -357,7 +359,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             return [item.text() for item in lw.selectedItems()]
         return None
 
-    def _show_command_palette(self, kind: Literal["general", "recent"]) -> None:
+    def _show_command_palette(self, kind: Literal["general", "recent", "goto"]) -> None:
         if kind == "general":
             self._command_palette_general.show()
         elif kind == "recent":

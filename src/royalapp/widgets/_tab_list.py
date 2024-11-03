@@ -148,10 +148,11 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
             A sub-window widget. The added widget is available by calling
             `widget` property.
         """
-        sub_window = SubWindow(widget=widget, main_window=self._main_window())
+        main = self._main_window()
+        sub_window = SubWindow(widget=widget, main_window=main)
         title = self._coerce_window_title(title)
-        out = self._main_window().add_widget(sub_window.widget, self._i_tab, title)
-        self._main_window()._connect_window_events(sub_window, out)
+        out = main.add_widget(sub_window.widget, self._i_tab, title)
+        main._connect_window_events(sub_window, out)
         sub_window.title = title
         return sub_window
 

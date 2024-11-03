@@ -154,6 +154,7 @@ class QCentralWidget(QtW.QWidget):
 
 class QSubWindow(QtW.QMdiSubWindow):
     state_changed = QtCore.Signal(SubWindowState)
+    renamed = QtCore.Signal(str)
     closed = QtCore.Signal()
 
     def __init__(self, widget: QtW.QWidget, title: str):
@@ -407,6 +408,7 @@ class QSubWindowTitleBar(QtW.QFrame):
             if tab := get_main_window(self).tabs.current():
                 new_name = tab._coerce_window_title(new_name)
             self._title_label.setText(new_name)
+            self._subwindow.renamed.emit(new_name)
 
         self._minimize_button = QtW.QToolButton()
         self._minimize_button.clicked.connect(self._minimize)

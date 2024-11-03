@@ -294,13 +294,13 @@ def _init_application(app: Application) -> None:
     from royalapp._app_model.actions import (
         tab_actions,
         window_actions,
+        tools_actions,
         file_actions,
-        view_actions,
     )
 
     app.register_actions(file_actions.ACTIONS)
     app.register_actions(tab_actions.ACTIONS)
-    app.register_actions(view_actions.ACTIONS)
+    app.register_actions(tools_actions.ACTIONS)
     app.register_actions(window_actions.ACTIONS)
     app.menus.append_menu_items(file_actions.SUBMENUS)
     app.menus.append_menu_items(window_actions.SUBMENUS)

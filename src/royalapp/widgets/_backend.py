@@ -14,6 +14,7 @@ from royalapp.types import (
 )
 
 if TYPE_CHECKING:
+    from royalapp.widgets._main_window import MainWindow
     from royalapp.widgets._wrapper import SubWindow, DockWidget
     import numpy as np
     from numpy.typing import NDArray
@@ -22,6 +23,8 @@ _W = TypeVar("_W")  # backend widget type
 
 
 class BackendMainWindow(Generic[_W]):  # pragma: no cover
+    _royalapp_main_window: MainWindow
+
     def _current_tab_index(self) -> int | None:
         raise NotImplementedError
 

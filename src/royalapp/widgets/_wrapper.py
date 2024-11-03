@@ -75,6 +75,7 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
 
 class SubWindow(WidgetWrapper[_W]):
     state_changed = Signal(SubWindowState)
+    renamed = Signal(str)
     closed = Signal()
 
     def __repr__(self) -> str:
@@ -171,7 +172,7 @@ class SubWindow(WidgetWrapper[_W]):
             raise TypeError(f"Expected WindowAnchor, got {type(anchor)}")
         self._main_window()._set_window_anchor(self.widget, anchor)
 
-    def to_json(self) -> dict:
+    def to_json(self) -> dict:  # TODO
         """Serialize the sub-window to JSON."""
         model = self.to_model()
         model.method

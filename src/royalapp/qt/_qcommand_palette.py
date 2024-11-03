@@ -47,14 +47,18 @@ class QCommandPalette(QtW.QWidget):
         self._menu_id = menu_id or app.menus.COMMAND_PALETTE_ID
         self._exclude = set(exclude)
 
-        menu_items = app.menus.get_menu(self._menu_id)
-        self.extend_command(
-            item.command
-            for item in menu_items
-            if isinstance(item, MenuItem) and item.command.id not in self._exclude
-        )
+        try:
+            menu_items = app.menus.get_menu(self._menu_id)
+            self.extend_command(
+                item.command
+                for item in menu_items
+                if isinstance(item, MenuItem) and item.command.id not in self._exclude
+            )
+        except KeyError:
+            pass
         app.menus.menus_changed.connect(self._on_app_menus_changed)
         self._model_app = app
+        self._need_update = False  # needs update before showing the palette
 
     def sizeHint(self) -> QtCore.QSize:
         return QtCore.QSize(600, 400)
@@ -74,13 +78,20 @@ class QCommandPalette(QtW.QWidget):
 
     def _on_app_menus_changed(self, changed_menus: set[str]) -> None:
         """Connected to app_model.menus.menus_changed."""
-        app = self._model_app
         if self._menu_id not in changed_menus:
             return
+        self._need_update = True
+
+    def _update_contents(self) -> None:
+        app = self._model_app
         all_cmds_set = set(self._list.all_commands)
+        try:
+            menus = app.menus.get_menu(self._menu_id)
+        except KeyError:
+            return
         palette_menu_commands = [
             item.command
-            for item in app.menus.get_menu(self._menu_id)
+            for item in menus
             if isinstance(item, MenuItem) and item.command.id not in self._exclude
         ]
         palette_menu_set = set(palette_menu_commands)
@@ -104,6 +115,9 @@ class QCommandPalette(QtW.QWidget):
         return
 
     def show(self) -> None:
+        if self._need_update:
+            self._update_contents()
+            self._need_update = False
         self._line.setText("")
         self._list.update_for_text("")
         super().show()

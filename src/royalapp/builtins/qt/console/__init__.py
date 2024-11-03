@@ -2,7 +2,7 @@
 
 from royalapp.plugins import get_plugin_interface
 
-__royalapp_plugin__ = get_plugin_interface()
+__royalapp_plugin__ = get_plugin_interface("tools")
 
 
 @__royalapp_plugin__.register_dock_widget(
