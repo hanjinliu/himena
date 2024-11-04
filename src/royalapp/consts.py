@@ -40,6 +40,7 @@ class MenuId(StrEnum):
     FILE_NEW = "file/new"
     FILE_SCREENSHOT = "file/screenshot"
     WINDOW = "window"
+    WINDOW_RESIZE = "window/resize"
     WINDOW_ALIGN = "window/align"
     WINDOW_ANCHOR = "window/anchor"
     WINDOW_EXIT = "window/exit"
@@ -47,6 +48,7 @@ class MenuId(StrEnum):
     TOOLS = "tools"
     TOOLBAR = "toolbar"
     WINDOW_TITLE_BAR = "window_title_bar"
+    WINDOW_TITLE_BAR_RESIZE = "window_title_bar/resize"
     WINDOW_TITLE_BAR_ALIGN = "window_title_bar/align"
     WINDOW_TITLE_BAR_ANCHOR = "window_title_bar/anchor"
 

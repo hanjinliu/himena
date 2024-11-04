@@ -21,7 +21,7 @@ class WidgetStyle:
         return WidgetStyle(
             background=LeveledStyle("#f0f0f0", "#d3d3d3", "#a6a6a6"),
             foreground=LeveledStyle("#000000", "#303030", "#606060"),
-            highlight=LeveledStyle("#c267e1", "#8045c9", "#5b2fa7"),
+            highlight=LeveledStyle("#cd94e0", "#a76ed2", "#8045c9"),
         )
 
 

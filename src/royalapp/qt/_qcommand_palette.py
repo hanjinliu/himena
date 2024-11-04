@@ -72,6 +72,9 @@ class QCommandPalette(QtW.QWidget):
         return
 
     def _on_command_clicked(self, index: int) -> None:
+        index_widget = self._list.widget_at(index)
+        if index_widget.disabled():
+            return
         self._list.execute(index)
         self.hide()
         return
@@ -218,6 +221,7 @@ class QCommandLabel(QtW.QLabel):
         super().__init__()
         self._command: CommandRule | None = None
         self._command_text: str = ""
+        self._disabled = False
 
     def command(self) -> CommandRule | None:
         """The app-model Action bound to this label."""
@@ -269,10 +273,16 @@ class QCommandLabel(QtW.QLabel):
         self.setText(output_text)
         return
 
-    def set_disabled(self) -> None:
+    def disabled(self) -> bool:
+        """Return true if the label is disabled."""
+        return self._disabled
+
+    def set_disabled(self, disabled: bool) -> None:
         """Set the label to disabled."""
-        text = self.command_text()
-        self.setText(colored(text, self.DISABLED_COLOR))
+        if disabled:
+            text = self.command_text()
+            self.setText(colored(text, self.DISABLED_COLOR))
+        self._disabled = disabled
         return
 
 
@@ -342,7 +352,7 @@ class QCommandList(QtW.QListView):
 
     def command_at(self, index: int) -> CommandRule | None:
         i = index - self._index_offset
-        index_widget = self.indexWidget(self.model().index(i))
+        index_widget = self.widget_at(i)
         if index_widget is None:
             return None
         return index_widget.command()
@@ -384,6 +394,10 @@ class QCommandList(QtW.QListView):
             return False
         return _enabled(command, self._app_model_context)
 
+    def widget_at(self, index: int) -> QCommandLabel | None:
+        i = index - self._index_offset
+        return self.indexWidget(self.model().index(i))
+
     def update_for_text(self, input_text: str) -> None:
         """Update the list to match the input text."""
         self._selected_index = 0
@@ -391,15 +405,16 @@ class QCommandList(QtW.QListView):
         row = 0
         for row, action in enumerate(self.iter_top_hits(input_text)):
             self.setRowHidden(row, False)
-            lw = self.indexWidget(self.model().index(row))
+            lw = self.widget_at(row)
             if lw is None:
                 self._current_max_index = row
                 break
             lw.set_command(action, self._formatter(action))
             if _enabled(action, self._app_model_context):
+                lw.set_disabled(False)
                 lw.set_text_colors(input_text, color=self._match_color)
             else:
-                lw.set_disabled()
+                lw.set_disabled(True)
 
             if row >= max_matches:
                 self._current_max_index = max_matches

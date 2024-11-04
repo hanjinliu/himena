@@ -24,3 +24,8 @@ QSubWindowTitleBar[isCurrent=false] {
 QSubWindowTitleBar[isCurrent=true] {
     background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 $(highlight-1), stop:1 $(background-2));
 }
+
+QCommandLabel:hover {
+    background-color: $(highlight-1);
+    color: $(foreground-1);
+}

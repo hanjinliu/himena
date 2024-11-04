@@ -410,3 +410,22 @@ class QDefaultTextEdit(QtW.QWidget):
 
     def is_modified(self) -> bool:
         return self._main_text_edit.is_modified()
+
+
+class QDefaultHTMLEdit(QDefaultTextEdit):
+    @classmethod
+    def from_model(cls, model: WidgetDataModel) -> QDefaultTextEdit:
+        self = cls()
+        self.initPlainText(model.value)
+        if model.source is not None:
+            self.setObjectName(model.source.name)
+            # set default language
+        self._footer._language_combobox.setCurrentText("HTML")
+        self._footer._emit_language_changed()
+        return self
+
+    def to_model(self) -> WidgetDataModel:
+        return WidgetDataModel(
+            value=self.toPlainText(),
+            type=StandardTypes.HTML,
+        )

@@ -58,10 +58,10 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self.setWindowIcon(QtGui.QIcon(_ICON_PATH.as_posix()))
         self._tab_widget = QTabWidget()
         default_menu_ids = {
-            MenuId.FILE: "File",
-            MenuId.WINDOW: "Window",
-            MenuId.TAB: "Tab",
-            MenuId.TOOLS: "Tools",
+            MenuId.FILE: MenuId.FILE.capitalize(),
+            MenuId.WINDOW: MenuId.WINDOW.capitalize(),
+            MenuId.TAB: MenuId.TAB.capitalize(),
+            MenuId.TOOLS: MenuId.TOOLS.capitalize(),
         }
         default_menu_ids.update(
             {

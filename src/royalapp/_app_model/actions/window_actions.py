@@ -267,6 +267,32 @@ def full_screen_in_new_tab(ui: MainWindow) -> None:
         new_window.state = SubWindowState.FULL
 
 
+@ACTIONS.append_from_fn(
+    id="window-expand",
+    title="Expand (+20%)",
+    enablement=_ctx.has_sub_windows,
+    menus=[MenuId.WINDOW_RESIZE, MenuId.WINDOW_TITLE_BAR_RESIZE],
+    keybindings=[StandardKeyBinding.ZoomIn],
+)
+def window_expand(ui: MainWindow) -> None:
+    """Expand (increase the size of) the current window."""
+    if window := ui.current_window:
+        window.window_rect = window.window_rect.resize_relative(1.2, 1.2)
+
+
+@ACTIONS.append_from_fn(
+    id="window-shrink",
+    title="Shrink (-20%)",
+    enablement=_ctx.has_sub_windows,
+    menus=[MenuId.WINDOW_RESIZE, MenuId.WINDOW_TITLE_BAR_RESIZE],
+    keybindings=[StandardKeyBinding.ZoomOut],
+)
+def window_shrink(ui: MainWindow) -> None:
+    """Shrink (reduce the size of) the current window."""
+    if window := ui.current_window:
+        window.window_rect = window.window_rect.resize_relative(0.8, 0.8)
+
+
 _CtrlAlt = KeyMod.CtrlCmd | KeyMod.Alt
 
 
@@ -349,6 +375,13 @@ def tile_windows(ui: MainWindow) -> None:
 
 SUBMENUS.append_from(
     id=MenuId.WINDOW,
+    submenu=MenuId.WINDOW_RESIZE,
+    title="Resize",
+    enablement=_ctx.has_sub_windows,
+    group=MOVE_GROUP,
+)
+SUBMENUS.append_from(
+    id=MenuId.WINDOW,
     submenu=MenuId.WINDOW_ALIGN,
     title="Align",
     enablement=_ctx.has_sub_windows,
@@ -358,6 +391,13 @@ SUBMENUS.append_from(
     id=MenuId.WINDOW,
     submenu=MenuId.WINDOW_ANCHOR,
     title="Anchor",
+    enablement=_ctx.has_sub_windows,
+    group=MOVE_GROUP,
+)
+SUBMENUS.append_from(
+    id=MenuId.WINDOW_TITLE_BAR,
+    submenu=MenuId.WINDOW_TITLE_BAR_RESIZE,
+    title="Resize",
     enablement=_ctx.has_sub_windows,
     group=MOVE_GROUP,
 )
