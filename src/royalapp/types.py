@@ -73,10 +73,25 @@ class WidgetDataModel(Generic[_T], BaseModel):
     """
 
     value: _T = Field(..., description="Internal value.")
-    method: MethodDescriptor | None = Field(default=None, description="Method descriptor.")  # fmt: skip
-    type: Hashable | None = Field(default=None, description="Type of the internal data.")  # fmt: skip
-    title: str | None = Field(default=None, description="Default title for the widget.")
-    extensions: list[str] = Field(default_factory=list, description="List of allowed file extensions.")  # fmt: skip
+    method: MethodDescriptor | None = Field(
+        default=None,
+        description="Method descriptor.",
+    )
+    type: Hashable | None = Field(
+        default=None, description="Type of the internal data."
+    )
+    title: str | None = Field(
+        default=None,
+        description="Default title for the widget.",
+    )
+    extensions: list[str] = Field(
+        default_factory=list,
+        description="List of allowed file extensions.",
+    )
+    additional_data: object | None = Field(
+        default=None,
+        description="Additional data that may be used for specific widgets.",
+    )  # fmt: skip
 
     def with_value(
         self, value: _U, type: Hashable | None = None

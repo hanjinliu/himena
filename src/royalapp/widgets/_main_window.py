@@ -47,7 +47,7 @@ class MainWindow(Generic[_W]):
         self._tab_list.changed.connect(self._backend_main_window._update_context)
         self.events.window_activated.connect(self._backend_main_window._update_context)
         self._dock_widgets = WeakSet[_W]()
-        self._skip_confirmations = False
+        self._exec_confirmations = True
         self._open_recent_disposer = lambda: None
         self._update_open_recent_menu()
 
@@ -216,8 +216,8 @@ class MainWindow(Generic[_W]):
         return None
 
     def exec_confirmation_dialog(self, msg: str) -> bool:
-        """Execute a confirmation dialog."""
-        if self._skip_confirmations:
+        """Execute a confirmation dialog (True if Yes is selected)."""
+        if not self._exec_confirmations:
             return True
         return self._backend_main_window._open_confirmation_dialog(msg)
 

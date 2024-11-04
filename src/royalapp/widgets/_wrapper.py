@@ -172,17 +172,18 @@ class SubWindow(WidgetWrapper[_W]):
             raise TypeError(f"Expected WindowAnchor, got {type(anchor)}")
         self._main_window()._set_window_anchor(self.widget, anchor)
 
-    def to_json(self) -> dict:  # TODO
-        """Serialize the sub-window to JSON."""
-        model = self.to_model()
-        model.method
-        return {
-            "source": model.source,
-            "title": self.title,
-            "state": self.state.value,
-            "window_rect": self.window_rect,
-            "anchor": _anchor.anchor_to_dict(self.anchor),
-        }
+    # TODO
+    # def to_json(self) -> dict:
+    #     """Serialize the sub-window to JSON."""
+    #     model = self.to_model()
+    #     model.method
+    #     return {
+    #         "source": model.source,
+    #         "title": self.title,
+    #         "state": self.state.value,
+    #         "window_rect": self.window_rect,
+    #         "anchor": _anchor.anchor_to_dict(self.anchor),
+    #     }
 
     def _anchor_from_str(sub_win: SubWindow[_W], anchor: str):
         rect = sub_win.window_rect
@@ -205,7 +206,13 @@ class SubWindow(WidgetWrapper[_W]):
                     return i_tab, i_win
         raise RuntimeError(f"SubWindow {self.title} not found in main window.")
 
-    def _close_me(self, main: MainWindow) -> None:
+    def _close_me(self, main: MainWindow, confirm: bool = False) -> None:
+        if (
+            self.is_modified
+            and confirm
+            and not main.exec_confirmation_dialog(f"Close {self.title} without saving?")
+        ):
+            return None
         i_tab, i_win = self._find_me(main)
         del main.tabs[i_tab][i_win]
 

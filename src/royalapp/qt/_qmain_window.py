@@ -203,7 +203,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         tab_name : str
             Name of the tab.
         """
-        return self._tab_widget.addTabArea(tab_name)
+        return self._tab_widget.add_tab_area(tab_name)
 
     def add_widget(
         self,
@@ -215,7 +215,9 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             raise TypeError(
                 f"`widget` must be a QtW.QWidget instance, got {type(widget)}."
             )
-        tab = self._tab_widget.widget(i_tab)
+        tab = self._tab_widget.widget_area(i_tab)
+        if tab is None:
+            tab = self.add_tab("Tab")
         subwindow = tab.add_widget(widget, title)
         return subwindow
 
@@ -224,7 +226,10 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         def _(state: SubWindowState):
             sub.state = state
 
-        qsub.close_requested.connect(lambda: sub._close_me(self._royalapp_main_window))
+        @qsub.close_requested.connect
+        def _():
+            main = self._royalapp_main_window
+            sub._close_me(main, main._exec_confirmations)
 
         @qsub.rename_requested.connect
         def _(title: str):
@@ -232,13 +237,13 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
         super().resizeEvent(event)
-        if widget := self._tab_widget.currentWidget():
+        if widget := self._tab_widget.current_widget_area():
             widget._reanchor_windows()
         return None
 
     def showEvent(self, event: QtGui.QShowEvent) -> None:
         super().showEvent(event)
-        if widget := self._tab_widget.currentWidget():
+        if widget := self._tab_widget.current_widget_area():
             widget._reanchor_windows()
         return None
 
@@ -287,7 +292,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         return self._tab_widget.setCurrentIndex(i_tab)
 
     def _current_sub_window_index(self) -> int | None:
-        area = self._tab_widget.currentWidget()
+        area = self._tab_widget.current_widget_area()
         if area is None:
             return None
         sub = area.currentSubWindow()
@@ -297,7 +302,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def _set_current_sub_window_index(self, i_window: int) -> None:
         assert i_window >= 0
-        area = self._tab_widget.currentWidget()
+        area = self._tab_widget.current_widget_area()
         subwindows = area.subWindowList()
         for i in range(len(subwindows)):
             subwindows[i].set_is_current(i == i_window)
@@ -380,7 +385,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         return [self._tab_widget.tabText(i) for i in range(self._tab_widget.count())]
 
     def _get_widget_list(self, i_tab: int) -> list[tuple[str, QtW.QWidget]]:
-        tab = self._tab_widget.widget(i_tab)
+        tab = self._tab_widget.widget_area(i_tab)
         if tab is None:
             return []
         return [(w.windowTitle(), w.main_widget()) for w in tab.subWindowList()]
@@ -388,16 +393,16 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _del_widget_at(self, i_tab: int, i_window: int) -> None:
         if i_tab < 0 or i_window < 0:
             raise ValueError("Invalid tab or window index.")
-        tab = self._tab_widget.widget(i_tab)
+        tab = self._tab_widget.widget_area(i_tab)
         tab.removeSubWindow(tab.subWindowList()[i_window])
         return None
 
     def _del_tab_at(self, i_tab: int) -> None:
-        self._tab_widget.removeTab(i_tab)
+        self._tab_widget.remove_tab_area(i_tab)
         return None
 
     def _rename_window_at(self, i_tab: int, i_window: int) -> None:
-        tab = self._tab_widget.widget(i_tab)
+        tab = self._tab_widget.widget_area(i_tab)
         window = tab.subWindowList()[i_window]
         window._title_bar._start_renaming()
         return None
@@ -428,7 +433,10 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         return None
 
     def _area_size(self) -> tuple[int, int]:
-        size = self._tab_widget.currentWidget().size()
+        if widget := self._tab_widget.currentWidget():
+            size = widget.size()
+        else:
+            size = self._tab_widget.children()[0].size()
         return size.width(), size.height()
 
     def _clipboard_data(self) -> ClipboardDataModel | None:
@@ -454,12 +462,12 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         if target == "main":
             qimg = self.grab().toImage()
         elif target == "area":
-            if widget := self._tab_widget.currentWidget():
+            if widget := self._tab_widget.current_widget_area():
                 qimg = widget.grab().toImage()
             else:
                 raise ValueError("No active area.")
         elif target == "window":
-            if sub := self._tab_widget.currentWidget().currentSubWindow():
+            if sub := self._tab_widget.current_widget_area().currentSubWindow():
                 qimg = sub.main_widget().grab().toImage()
             else:
                 raise ValueError("No active window.")

@@ -400,6 +400,8 @@ class QDefaultTextEdit(QtW.QWidget):
             if lang := find_language_from_path(model.source.name):
                 self._footer._language_combobox.setCurrentText(lang)
                 self._footer._emit_language_changed()
+        else:
+            self._main_text_edit.document().setModified(True)
         return self
 
     def to_model(self) -> WidgetDataModel:

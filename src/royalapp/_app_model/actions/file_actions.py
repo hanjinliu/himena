@@ -38,7 +38,7 @@ def _read_and_update_source(reader: ReaderFunction, source: Path) -> WidgetDataM
 
 
 @ACTIONS.append_from_fn(
-    id="open",
+    id="open-file",
     title="Open File(s) ...",
     icon="material-symbols:folder-open-outline",
     menus=[

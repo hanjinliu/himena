@@ -13,3 +13,4 @@ class MainWindowQt(MainWindow[QtW.QWidget]):
         backend = QMainWindow(app=app)
         super().__init__(backend, app)
         backend._royalapp_main_window = self
+        backend._tab_widget._init_startup()

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterator
+from typing import Iterator
 from qtpy import QtWidgets as QtW
 from qtpy import QtCore, QtGui
+from royalapp.qt._qclickable_label import QClickableLabel
 from royalapp.qt._qsub_window import QSubWindowArea
 from royalapp.qt._qrename import QRenameLineEdit
 from royalapp.qt._utils import get_main_window
@@ -22,7 +23,7 @@ class QTabWidget(QtW.QTabWidget):
                 new_name = self._coerce_tab_name(new_name)
                 self.setTabText(self._current_edit_index, new_name)
 
-        self.setTabBarAutoHide(True)
+        self.setTabBarAutoHide(False)
         self.tabBar().setMovable(False)
         self.currentChanged.connect(self._on_current_changed)
         self.tabBarDoubleClicked.connect(self._start_editing_tab)
@@ -34,7 +35,11 @@ class QTabWidget(QtW.QTabWidget):
 
         self.newWindowActivated.connect(self._repolish)
 
-    def addTabArea(self, tab_name: str | None = None) -> QSubWindowArea:
+    def _init_startup(self):
+        self._startup_widget = QStartupWidget(self)
+        self._add_startup_widget()
+
+    def add_tab_area(self, tab_name: str | None = None) -> QSubWindowArea:
         """
         Add a new tab with a sub-window area.
 
@@ -45,15 +50,33 @@ class QTabWidget(QtW.QTabWidget):
         """
         if tab_name is None:
             tab_name = "Tab"
+        if self._is_startup_only():
+            self.removeTab(0)
+            self.setTabBarAutoHide(False)
         widget = QSubWindowArea()
         self.addTab(widget, self._coerce_tab_name(tab_name))
         widget.subWindowActivated.connect(self._emit_current_indices)
         return widget
 
+    def remove_tab_area(self, index: int) -> None:
+        if self._is_startup_only():
+            raise ValueError("No tab in the tab widget.")
+        self.removeTab(index)
+        if self.count() == 0:
+            self._add_startup_widget()
+        return None
+
+    def _add_startup_widget(self):
+        self.addTab(self._startup_widget, ".welcome")
+        self.setTabBarAutoHide(True)
+
+    def _is_startup_only(self) -> bool:
+        return self.count() == 1 and self.widget(0) == self._startup_widget
+
     def iter_widgets(self) -> Iterator[QtW.QWidget]:
         """Iterate over all widgets in the tab widget."""
         for idx in self.count():
-            area = self.widget(idx)
+            area = self.widget_area(idx)
             yield from area.iter_widgets()
 
     def mousePressEvent(self, event: QtGui.QMouseEvent) -> None:
@@ -71,20 +94,20 @@ class QTabWidget(QtW.QTabWidget):
         return tab_name
 
     def _on_current_changed(self, index: int) -> None:
-        if widget := self.widget(index):
+        if widget := self.widget_area(index):
             widget._reanchor_windows()
             self._emit_current_indices()
             self._line_edit.setHidden(True)
 
     def _repolish(self) -> None:
-        if area := self.currentWidget():
+        if area := self.current_widget_area():
             wins = area.subWindowList()
             cur = area.currentSubWindow()
             for i, win in enumerate(wins):
                 win.set_is_current(win == cur)
 
     def _current_indices(self) -> tuple[int, int]:
-        if widget := self.currentWidget():
+        if widget := self.current_widget_area():
             if win := widget.currentSubWindow():
                 return self.currentIndex(), widget.indexOf(win)
         return self.currentIndex(), -1
@@ -143,7 +166,42 @@ class QTabWidget(QtW.QTabWidget):
                     get_main_window(self).read_file(path)
         return super().dropEvent(event)
 
-    if TYPE_CHECKING:
+    def widget_area(self, index: int) -> QSubWindowArea | None:
+        """Get the QSubWindowArea widget at index."""
+        if self._is_startup_only():
+            return None
+        return self.widget(index)
 
-        def widget(self, index: int) -> QSubWindowArea | None: ...
-        def currentWidget(self) -> QSubWindowArea | None: ...
+    def current_widget_area(self) -> QSubWindowArea | None:
+        """Get the current QSubWindowArea widget."""
+        if self._is_startup_only():
+            return None
+        return self.currentWidget()
+
+
+class QStartupWidget(QtW.QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        _layout = QtW.QVBoxLayout(self)
+        _layout.setContentsMargins(12, 12, 12, 12)
+        _layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
+
+        self._open_file_btn = self.make_button("open-file", "Ctrl+O")
+        self._open_folder_btn = self.make_button("open-folder", "Ctrl+K, Ctrl+O")
+        self._open_recent_btn = self.make_button("open-recent", "Ctrl+K, Ctrl+R")
+
+        _layout.addWidget(self._open_file_btn)
+        _layout.addWidget(self._open_folder_btn)
+        _layout.addWidget(self._open_recent_btn)
+        self.setMinimumSize(0, 0)
+        return None
+
+    def make_button(self, command_id: str, shortcut: str) -> QClickableLabel:
+        def callback():
+            get_main_window(self).model_app.commands.execute_command(command_id)
+
+        cmd = get_main_window(self).model_app.commands[command_id]
+
+        label = QClickableLabel(f"{cmd.title} ({shortcut})")
+        label.clicked.connect(callback)
+        return label
