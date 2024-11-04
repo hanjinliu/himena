@@ -177,6 +177,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
                 if autosize and (size_hint := sub_window.size_hint()):
                     left, top, _, _ = sub_window.window_rect
                     sub_window.window_rect = WindowRect(left, top, *size_hint)
+        main._move_focus_to(widget)
         return sub_window
 
     def tile_windows(

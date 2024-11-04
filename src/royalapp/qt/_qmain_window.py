@@ -503,6 +503,10 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
         return container.native, connect
 
+    def _move_focus_to(self, win: QtW.QWidget) -> None:
+        win.setFocus()
+        return None
+
 
 _DOCK_AREA_MAP = {
     DockArea.TOP: Qt.DockWidgetArea.TopDockWidgetArea,

@@ -412,6 +412,9 @@ class QDefaultTextEdit(QtW.QWidget):
     def toPlainText(self) -> str:
         return self._main_text_edit.toPlainText()
 
+    def setFocus(self):
+        self._main_text_edit.setFocus()
+
     @classmethod
     def from_model(cls, model: WidgetDataModel) -> QDefaultTextEdit:
         self = cls()

@@ -184,3 +184,6 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
 
     def _parametric_widget(self, sig: inspect.Signature) -> tuple[_W, Connection]:
         raise NotImplementedError
+
+    def _move_focus_to(self, widget: _W) -> None:
+        raise NotImplementedError
