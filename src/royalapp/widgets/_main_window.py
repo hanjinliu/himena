@@ -73,10 +73,12 @@ class MainWindow(Generic[_W]):
 
     def add_tab(self, title: str | None = None) -> TabArea[_W]:
         """Add a new tab of given name."""
+        n_tab = len(self.tabs)
+        if title is None:
+            title = f"Tab-{n_tab}"
         self._backend_main_window.add_tab(title)
-        idx = len(self.tabs) - 1
-        self._backend_main_window._set_current_tab_index(idx)
-        return self.tabs[idx]
+        self._backend_main_window._set_current_tab_index(n_tab)
+        return self.tabs[n_tab]
 
     @contextmanager
     def _animation_context(self, enabled: bool):
@@ -202,7 +204,12 @@ class MainWindow(Generic[_W]):
             sub_win.update_default_save_path(method.path)
         return sub_win
 
-    def add_parametric_element(self, fn: Parametric[_T]) -> SubWindow[_W]:
+    def add_parametric_element(
+        self,
+        fn: Parametric[_T],
+        *,
+        title: str | None = None,
+    ) -> SubWindow[_W]:
         """
         Add a sub-window that generates a model from a function.
 
@@ -213,16 +220,20 @@ class MainWindow(Generic[_W]):
         ----------
         fn : function (...) -> WidgetDataModel
             Function that generates a model from the input parameters.
+        title : str, optional
+            Title of the sub-window.
 
         Returns
         -------
         SubWindow
             The sub-window instance that represents the output model.
         """
+        if title is None:
+            title = getattr(fn, "__name__", "Run ...")
         sig = inspect.signature(fn)
         back_main = self._backend_main_window
         back_param_widget, connection = back_main._parametric_widget(sig)
-        param_widget = self.add_widget(back_param_widget)
+        param_widget = self.add_widget(back_param_widget, title=title)
 
         @connection
         def _callback(**kwargs):

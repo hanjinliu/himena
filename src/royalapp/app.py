@@ -75,7 +75,7 @@ class QtEventLoopHandler(EventLoopHandler["QApplication"]):
     def _excepthook(self, exc_type: type[Exception], exc_value: Exception, exc_tb):
         """Exception hook used during application execution."""
         from royalapp.qt._qtraceback import QtErrorMessageBox
-        from royalapp.widgets._main_window import current_instance
+        from royalapp.widgets import current_instance
 
         viewer = current_instance(self._name)
         QtErrorMessageBox.raise_(exc_value, parent=viewer._backend_main_window)

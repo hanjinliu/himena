@@ -15,6 +15,7 @@ from royalapp.qt._qtab_widget import QTabWidget
 from royalapp.qt._qsub_window import QSubWindow, QSubWindowArea
 from royalapp.qt._qdock_widget import QDockWidget
 from royalapp.qt._qcommand_palette import QCommandPalette
+from royalapp.qt._qgoto import QGotoWidget
 from royalapp import anchor as _anchor
 from royalapp.types import (
     DockArea,
@@ -89,6 +90,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             exclude=["open-recent"],
             formatter=_formatter.formatter_recent,
         )
+        self._goto_widget = QGotoWidget(self)
 
         style = get_style("default")
         style_text = (
@@ -376,6 +378,8 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             self._command_palette_general.show()
         elif kind == "recent":
             self._command_palette_recent.show()
+        elif kind == "goto":
+            self._goto_widget.show()
         else:
             raise NotImplementedError
 
@@ -383,6 +387,8 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self.close()
 
     def _get_tab_name_list(self) -> list[str]:
+        if self._tab_widget._is_startup_only():
+            return []
         return [self._tab_widget.tabText(i) for i in range(self._tab_widget.count())]
 
     def _get_widget_list(self, i_tab: int) -> list[tuple[str, QtW.QWidget]]:

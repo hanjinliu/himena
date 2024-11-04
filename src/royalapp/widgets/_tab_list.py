@@ -112,6 +112,11 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
             return default
 
     @property
+    def name(self) -> str:
+        """Name of the tab area."""
+        return self._main_window()._get_tab_name_list()[self._i_tab]
+
+    @property
     def current_index(self) -> int | None:
         """Get the index of the current sub-window."""
         return self._main_window()._current_sub_window_index()
@@ -156,7 +161,8 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         """
         main = self._main_window()
         sub_window = SubWindow(widget=widget, main_window=main)
-        title = self._coerce_window_title(title)
+        if title is None:
+            title = "Window"
         out = main.add_widget(sub_window.widget, self._i_tab, title)
 
         main._connect_window_events(sub_window, out)
@@ -203,17 +209,6 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
                 rect = WindowRect.from_numbers(x, y, w, h)
                 main._set_window_rect(sub.widget, rect, inst)
         return None
-
-    def _coerce_window_title(self, title: str | None) -> str:
-        existing = set(self.window_titles)
-        if title is None:
-            title = "Window"
-        title_original = title
-        count = 0
-        while title in existing:
-            title = f"{title_original}-{count}"
-            count += 1
-        return title
 
 
 def _norm_nrows_ncols(nrows: int | None, ncols: int | None, n: int) -> tuple[int, int]:

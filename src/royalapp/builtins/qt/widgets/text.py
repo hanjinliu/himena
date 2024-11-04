@@ -365,6 +365,7 @@ class QTextFooter(QtW.QWidget):
         self._language_combobox = QSearchableComboBox()
         self._language_combobox.addItems(get_languages())
         self._language_combobox.setToolTip("Language of the document")
+        self._language_combobox.setMaximumWidth(120)
         self._language_combobox.currentIndexChanged.connect(self._emit_language_changed)
 
         self._tab_spaces_combobox = QtW.QComboBox()

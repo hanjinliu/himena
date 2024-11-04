@@ -20,7 +20,6 @@ class QTabWidget(QtW.QTabWidget):
         @self._line_edit.rename_requested.connect
         def _(new_name: str):
             if self._current_edit_index is not None:
-                new_name = self._coerce_tab_name(new_name)
                 self.setTabText(self._current_edit_index, new_name)
 
         self.setTabBarAutoHide(False)
@@ -54,7 +53,7 @@ class QTabWidget(QtW.QTabWidget):
             self.removeTab(0)
             self.setTabBarAutoHide(False)
         widget = QSubWindowArea()
-        self.addTab(widget, self._coerce_tab_name(tab_name))
+        self.addTab(widget, tab_name)
         widget.subWindowActivated.connect(self._emit_current_indices)
         return widget
 
@@ -82,16 +81,6 @@ class QTabWidget(QtW.QTabWidget):
     def mousePressEvent(self, event: QtGui.QMouseEvent) -> None:
         self._line_edit.setHidden(True)
         return super().mousePressEvent(event)
-
-    def _coerce_tab_name(self, tab_name: str) -> str:
-        """Coerce tab name to be unique."""
-        existing = {self.tabText(i) for i in range(self.count())}
-        tab_name_orig = tab_name
-        count = 0
-        while tab_name in existing:
-            count += 1
-            tab_name = f"{tab_name_orig}-{count}"
-        return tab_name
 
     def _on_current_changed(self, index: int) -> None:
         if widget := self.widget_area(index):
