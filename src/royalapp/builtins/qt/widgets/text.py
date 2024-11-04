@@ -6,10 +6,11 @@ from qtpy import QtGui, QtCore
 from superqt import QSearchableComboBox
 
 from royalapp.consts import StandardTypes
-from royalapp.types import WidgetDataModel
+from royalapp.types import TextFileMeta, WidgetDataModel
 from royalapp.qt._qt_consts import MonospaceFontFamily
 
 from royalapp._utils import OrderedSet, lru_cache
+from royalapp.qt._qfinderwidget import QFinderWidget
 
 
 _POPULAR_LANGUAGES = [
@@ -62,6 +63,7 @@ class QMainTextEdit(QtW.QPlainTextEdit):
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self._tab_size = 4
         self._highlight = None
+        self._finder_widget = None
 
     def is_modified(self) -> bool:
         return self.document().isModified()
@@ -320,6 +322,26 @@ class QMainTextEdit(QtW.QPlainTextEdit):
         cursor.insertText("\n" + indent)
         self.setTextCursor(cursor)
 
+    def _find_string(self):
+        if self._finder_widget is None:
+            self._finder_widget = QFinderWidget(self)
+        self._finder_widget.show()
+        self._finder_widget.lineEdit().setFocus()
+        self._align_finder()
+
+    def resizeEvent(self, event):
+        if self._finder_widget is not None:
+            self._align_finder()
+        super().resizeEvent(event)
+
+    def _align_finder(self):
+        if fd := self._finder_widget:
+            vbar = self.verticalScrollBar()
+            if vbar.isVisible():
+                fd.move(self.width() - fd.width() - vbar.width() - 3, 5)
+            else:
+                fd.move(self.width() - fd.width() - 3, 5)
+
 
 def _get_indents(text: str, tab_spaces: int = 4) -> str:
     chars = []
@@ -394,20 +416,31 @@ class QDefaultTextEdit(QtW.QWidget):
     def from_model(cls, model: WidgetDataModel) -> QDefaultTextEdit:
         self = cls()
         self.initPlainText(model.value)
-        if model.source is not None:
-            self.setObjectName(model.source.name)
-            # set default language
-            if lang := find_language_from_path(model.source.name):
-                self._footer._language_combobox.setCurrentText(lang)
-                self._footer._emit_language_changed()
-        else:
+        lang = None
+        spaces = 4
+        if isinstance(model.additional_data, TextFileMeta):
+            lang = model.additional_data.language
+            spaces = model.additional_data.spaces
+        if model.source is None:
             self._main_text_edit.document().setModified(True)
+        elif lang is None:
+            # set default language
+            lang = find_language_from_path(model.source.name)
+
+        if lang:
+            self._footer._language_combobox.setCurrentText(lang)
+            self._footer._emit_language_changed()
+        self._footer._tab_spaces_combobox.setCurrentText(str(spaces))
         return self
 
     def to_model(self) -> WidgetDataModel:
         return WidgetDataModel(
             value=self.toPlainText(),
             type=StandardTypes.TEXT,
+            additional_data=TextFileMeta(
+                language=self._footer._language_combobox.currentText(),
+                spaces=int(self._footer._tab_spaces_combobox.currentText()),
+            ),
         )
 
     def size_hint(self) -> tuple[int, int]:
@@ -415,6 +448,15 @@ class QDefaultTextEdit(QtW.QWidget):
 
     def is_modified(self) -> bool:
         return self._main_text_edit.is_modified()
+
+    def keyPressEvent(self, a0: QtGui.QKeyEvent | None) -> None:
+        if (
+            a0.key() == QtCore.Qt.Key.Key_F
+            and a0.modifiers() & QtCore.Qt.KeyboardModifier.ControlModifier
+        ):
+            self._main_text_edit._find_string()
+            return None
+        return super().keyPressEvent(a0)
 
 
 class QDefaultHTMLEdit(QDefaultTextEdit):
