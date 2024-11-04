@@ -216,7 +216,7 @@ SUBMENUS = [
 ACTIONS = [
     Action(
         id="duplicate-window",
-        title="Duplicate current window",
+        title="Duplicate window",
         callback=duplicate_window,
         menus=[
             {"id": MenuId.WINDOW, "group": EDIT_GROUP},

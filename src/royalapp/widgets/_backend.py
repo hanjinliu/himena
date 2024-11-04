@@ -84,6 +84,11 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     def _open_selection_dialog(self, msg: str, options: list[str]) -> list[str] | None:
         raise NotImplementedError
 
+    def _request_values(
+        self, msg: str, spec: dict[str, type]
+    ) -> dict[str, object] | None:
+        raise NotImplementedError
+
     def _show_command_palette(self, kind: str) -> None:
         raise NotImplementedError
 
