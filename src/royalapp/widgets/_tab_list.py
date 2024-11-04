@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Generic, TYPE_CHECKING, Iterable, Iterator, TypeVar
+from typing import Generic, TYPE_CHECKING, Iterator, TypeVar
 from collections.abc import Sequence
 
 from psygnal import Signal
@@ -32,15 +32,6 @@ class SemiMutableSequence(Sequence[_T]):
         except ValueError:
             raise ValueError("Value not found in the list.")
         del self[i]
-
-    @abstractmethod
-    def append(self, value: _T) -> None: ...
-
-    def extend(self, values: Iterable[_T]) -> None:
-        if values is self:
-            values = list(values)
-        for v in values:
-            self.append(v)
 
     def pop(self, index: int = -1):
         v = self[index]
@@ -98,8 +89,26 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
             for w in self._main_window()._get_widget_list(self._i_tab)
         )
 
-    def append(self, value: _W, /) -> None:
-        return self._main_window().add_widget(value)
+    def append(self, sub_window: SubWindow[_W], title: str) -> None:
+        main = self._main_window()
+        out = main.add_widget(sub_window.widget, self._i_tab, title)
+
+        main._connect_window_events(sub_window, out)
+        sub_window.title = title
+        sub_window.state_changed.connect(main._update_context)
+
+        main._set_current_tab_index(self._i_tab)
+        with main._royalapp_main_window._animation_context(enabled=False):
+            if main._royalapp_main_window._new_widget_behavior is NewWidgetBehavior.TAB:
+                nwindows = len(self)
+                main._set_window_state(
+                    self._i_tab,
+                    nwindows - 1,
+                    SubWindowState.FULL,
+                )
+
+        main._move_focus_to(sub_window.widget)
+        return None
 
     def current(self, default: _T = None) -> SubWindow[_W] | _T:
         """Get the current sub-window or a default value."""

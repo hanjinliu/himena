@@ -355,6 +355,14 @@ class QSubWindow(QtW.QMdiSubWindow):
             main_size.width() - g.right(), main_size.height() - g.bottom()
         )
 
+    def _find_me(self) -> tuple[int, int]:
+        main = get_main_window(self)
+        for i_tab, tab in enumerate(main.tabs):
+            for i_win, win in enumerate(tab):
+                if win.widget is self.main_widget():
+                    return i_tab, i_win
+        raise RuntimeError("Could not find the sub-window in the main window.")
+
 
 class QSubWindowTitleBar(QtW.QFrame):
     def __init__(self, subwindow: QSubWindow, title: str):
@@ -419,6 +427,7 @@ class QSubWindowTitleBar(QtW.QFrame):
         self.setLayout(layout)
 
         self._drag_position: QtCore.QPoint | None = None
+        self._is_ctrl_drag: bool = False
         self._resize_position: QtCore.QPoint | None = None
         self._subwindow = subwindow
         self.setProperty("isCurrent", False)
@@ -465,13 +474,24 @@ class QSubWindowTitleBar(QtW.QFrame):
 
     # drag events for moving the window
     def mousePressEvent(self, event: QtGui.QMouseEvent):
+        self._is_ctrl_drag = False
         if event.button() == QtCore.Qt.MouseButton.LeftButton:
-            if self._subwindow._window_state == SubWindowState.MIN:
-                # cannot move minimized window
-                return
-            self._drag_position = (
-                event.globalPos() - self._subwindow.frameGeometry().topLeft()
-            )
+            if event.modifiers() & QtCore.Qt.KeyboardModifier.ControlModifier:
+                self._is_ctrl_drag = True
+                drag = QtGui.QDrag(self._subwindow)
+                mime_data = QtCore.QMimeData()
+                i_tab, i_win = self._subwindow._find_me()
+                text = f"royalapp-subwindow:{i_tab},{i_win}"
+                mime_data.setText(text)
+                drag.setMimeData(mime_data)
+                drag.exec()
+            else:
+                if self._subwindow._window_state == SubWindowState.MIN:
+                    # cannot move minimized window
+                    return
+                self._drag_position = (
+                    event.globalPos() - self._subwindow.frameGeometry().topLeft()
+                )
         return super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent):
@@ -480,6 +500,7 @@ class QSubWindowTitleBar(QtW.QFrame):
             event.buttons() == QtCore.Qt.MouseButton.LeftButton
             and self._drag_position is not None
             and _subwindow._resize_state is ResizeState.NONE
+            and not self._is_ctrl_drag
         ):
             if _subwindow._window_state == SubWindowState.MAX:
                 # change to normal without moving
@@ -503,6 +524,7 @@ class QSubWindowTitleBar(QtW.QFrame):
         return super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
+        self._is_ctrl_drag = False
         if event.button() == QtCore.Qt.MouseButton.LeftButton:
             self._drag_position = None
             if self.is_upper_than_area():
@@ -513,6 +535,17 @@ class QSubWindowTitleBar(QtW.QFrame):
         if event.button() == QtCore.Qt.MouseButton.LeftButton:
             self._toggle_size()
         return super().mouseDoubleClickEvent(event)
+
+    def wheelEvent(self, event: QtGui.QWheelEvent):
+        if event.modifiers() & QtCore.Qt.KeyboardModifier.ControlModifier:
+            i_tab, i_win = self._subwindow._find_me()
+            main = get_main_window(self)
+            sub = main.tabs[i_tab][i_win]
+            if event.angleDelta().y() > 0:
+                sub.window_rect = sub.window_rect.resize_relative(1.1, 1.1)
+            else:
+                sub.window_rect = sub.window_rect.resize_relative(1 / 1.1, 1 / 1.1)
+        return super().wheelEvent(event)
 
     def is_upper_than_area(self) -> bool:
         self_pos = self.mapToGlobal(self._subwindow.rect().topLeft())

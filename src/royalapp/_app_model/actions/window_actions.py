@@ -286,7 +286,7 @@ def window_expand(ui: MainWindow) -> None:
 def window_shrink(ui: MainWindow) -> None:
     """Shrink (reduce the size of) the current window."""
     if window := ui.current_window:
-        window.window_rect = window.window_rect.resize_relative(0.8, 0.8)
+        window.window_rect = window.window_rect.resize_relative(1 / 1.2, 1 / 1.2)
 
 
 _CtrlAlt = KeyMod.CtrlCmd | KeyMod.Alt

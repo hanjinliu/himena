@@ -4,9 +4,45 @@ from typing import Iterator
 from qtpy import QtWidgets as QtW
 from qtpy import QtCore, QtGui
 from royalapp.qt._qclickable_label import QClickableLabel
-from royalapp.qt._qsub_window import QSubWindowArea
+from royalapp.qt._qsub_window import QSubWindowArea, QSubWindow
 from royalapp.qt._qrename import QRenameLineEdit
 from royalapp.qt._utils import get_main_window
+
+
+class QTabBar(QtW.QTabBar):
+    def __init__(self):
+        super().__init__()
+        self.setAcceptDrops(True)
+
+    def dragEnterEvent(self, e: QtGui.QDragEnterEvent) -> None:
+        e.accept()
+
+    def dropEvent(self, e: QtGui.QDropEvent) -> None:
+        if isinstance(sub := e.source(), QSubWindow):
+            target_index = self.tabAt(e.pos())
+            self._process_drop_event(sub, target_index)
+        return super().dropEvent(e)
+
+    def _process_drop_event(self, sub: QSubWindow, target_index: int) -> None:
+        # this is needed to initialize the drag state
+        sub._title_bar._drag_position = None
+        # move window to the new tab
+        i_tab, i_win = sub._find_me()
+        if target_index == i_tab:
+            return
+        self.move_window(i_tab, i_win, target_index)
+
+    def move_window(self, source_tab: int, source_window: int, target_tab: int) -> None:
+        main = get_main_window(self)
+        title = main.tabs[source_tab][source_window].title
+        win = main.tabs[source_tab].pop(source_window)
+        old_rect = win.window_rect
+        if target_tab < 0:
+            main.add_tab()
+        main.tabs[target_tab].append(win, title)
+        with main._animation_context(enabled=False):
+            win.window_rect = old_rect
+        main.tabs.current_index = source_tab
 
 
 class QTabWidget(QtW.QTabWidget):
@@ -14,6 +50,8 @@ class QTabWidget(QtW.QTabWidget):
 
     def __init__(self):
         super().__init__()
+        self._tabbar = QTabBar()
+        self.setTabBar(self._tabbar)
         self._line_edit = QRenameLineEdit(self)
         self._current_edit_index = None
 
@@ -23,7 +61,6 @@ class QTabWidget(QtW.QTabWidget):
                 self.setTabText(self._current_edit_index, new_name)
 
         self.setTabBarAutoHide(False)
-        self.tabBar().setMovable(False)
         self.currentChanged.connect(self._on_current_changed)
         self.tabBarDoubleClicked.connect(self._start_editing_tab)
         self.setSizePolicy(
@@ -147,7 +184,12 @@ class QTabWidget(QtW.QTabWidget):
 
     def dropEvent(self, event: QtGui.QDropEvent) -> None:
         mime_data = event.mimeData()
-        if mime_data.hasUrls():
+        glob_pos = QtGui.QCursor.pos()
+        if QtW.QApplication.widgetAt(glob_pos) is self:
+            # dropped on the tabbar outside the existing tabs
+            if isinstance(src := event.source(), QSubWindow):
+                self._tabbar._process_drop_event(src, -1)
+        elif mime_data.hasUrls():
             urls = mime_data.urls()
             for url in urls:
                 if url.isLocalFile():
