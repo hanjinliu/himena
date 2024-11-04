@@ -220,9 +220,15 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         return subwindow
 
     def _connect_window_events(self, sub: SubWindow, qsub: QSubWindow):
-        qsub.state_changed.connect(lambda state: sub.state_changed.emit(state))
-        qsub.closed.connect(lambda: sub.closed.emit())
-        qsub.renamed.connect(lambda title: sub.renamed.emit(title))
+        @qsub.state_change_requested.connect
+        def _(state: SubWindowState):
+            sub.state = state
+
+        qsub.close_requested.connect(lambda: sub._close_me(self._royalapp_main_window))
+
+        @qsub.rename_requested.connect
+        def _(title: str):
+            sub.title = title
 
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
         super().resizeEvent(event)
@@ -295,7 +301,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         subwindows = area.subWindowList()
         for i in range(len(subwindows)):
             subwindows[i].set_is_current(i == i_window)
-        self._tab_widget.setCurrentWidget(subwindows[i_window])
+        area.setActiveSubWindow(subwindows[i_window])
         _LOGGER.info(f"Set current sub-window index to {i_window}")
         return None
 
@@ -370,10 +376,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _exit_main_window(self) -> None:
         self.close()
 
-    def _close_current_window(self) -> None:
-        self._tab_widget.removeTab(self._tab_widget.currentIndex())
-        return None
-
     def _get_tab_name_list(self) -> list[str]:
         return [self._tab_widget.tabText(i) for i in range(self._tab_widget.count())]
 
@@ -391,9 +393,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         return None
 
     def _del_tab_at(self, i_tab: int) -> None:
-        sub = self._tab_widget.widget(i_tab)
-        for window in sub.subWindowList():
-            window._close_me()
         self._tab_widget.removeTab(i_tab)
         return None
 
@@ -407,7 +406,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         return _get_subwindow(widget).state
 
     def _set_window_state(self, widget: QtW.QWidget, state: SubWindowState) -> None:
-        _get_subwindow(widget).state = state
+        _get_subwindow(widget)._update_window_state(state)
         return None
 
     def _window_rect(self, widget: QtW.QWidget) -> WindowRect:

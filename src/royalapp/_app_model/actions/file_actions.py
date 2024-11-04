@@ -1,12 +1,11 @@
 from pathlib import Path
 from typing import Any
 from app_model.types import (
-    Action,
     KeyBindingRule,
     KeyCode,
     KeyMod,
     KeyChord,
-    SubmenuItem,
+    StandardKeyBinding,
 )
 from royalapp.consts import StandardTypes, MenuId
 from royalapp.profile import append_recent_files
@@ -18,6 +17,16 @@ from royalapp.types import (
     ReaderFunction,
 )
 from royalapp._app_model._context import AppContext as _ctx
+from royalapp._app_model.actions._registry import ACTIONS, SUBMENUS
+
+_CtrlK = KeyMod.CtrlCmd | KeyCode.KeyK
+
+READ_GROUP = "00_io_read"
+WRITE_GROUP = "01_io_write"
+SCR_SHOT_GROUP = "21_screenshot"
+COPY_SCR_SHOT = "00_copy-screenshot"
+SAVE_SCR_SHOT = "01_save-screenshot"
+EXIT_GROUP = "99_exit"
 
 
 def _read_and_update_source(reader: ReaderFunction, source: Path) -> WidgetDataModel:
@@ -28,8 +37,18 @@ def _read_and_update_source(reader: ReaderFunction, source: Path) -> WidgetDataM
     return model
 
 
+@ACTIONS.append_from_fn(
+    id="open",
+    title="Open File(s) ...",
+    icon="material-symbols:folder-open-outline",
+    menus=[
+        {"id": MenuId.FILE, "group": READ_GROUP},
+        {"id": MenuId.TOOLBAR, "group": READ_GROUP},
+    ],
+    keybindings=[StandardKeyBinding.Open],
+)
 def open_file_from_dialog(ui: MainWindow) -> list[WidgetDataModel]:
-    """Open files as separate sub-windows."""
+    """Open file(s). Multiple files will be opened as separate sub-windows."""
     file_paths = ui._backend_main_window._open_file_dialog(mode="rm")
     if file_paths is None or len(file_paths) == 0:
         return None
@@ -46,6 +65,15 @@ def open_file_from_dialog(ui: MainWindow) -> list[WidgetDataModel]:
     return out
 
 
+@ACTIONS.append_from_fn(
+    id="open-folder",
+    title="Open Folder ...",
+    icon="material-symbols:folder-open",
+    menus=[{"id": MenuId.FILE, "group": READ_GROUP}],
+    keybindings=[
+        KeyBindingRule(primary=KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.KeyO))
+    ],
+)
 def open_folder_from_dialog(ui: MainWindow) -> WidgetDataModel:
     """Open a folder as a sub-window."""
     file_path = ui._backend_main_window._open_file_dialog(mode="d")
@@ -58,6 +86,17 @@ def open_folder_from_dialog(ui: MainWindow) -> WidgetDataModel:
     return out
 
 
+@ACTIONS.append_from_fn(
+    id="save",
+    title="Save ...",
+    icon="material-symbols:save-outline",
+    menus=[
+        {"id": MenuId.FILE, "group": WRITE_GROUP},
+        {"id": MenuId.TOOLBAR, "group": WRITE_GROUP},
+    ],
+    keybindings=[StandardKeyBinding.Save],
+    enablement=_ctx.is_active_window_exportable,
+)
 def save_from_dialog(ui: MainWindow) -> None:
     """Save (overwrite) the current sub-window as a file."""
     fd, sub_win = ui._provide_file_output()
@@ -68,11 +107,30 @@ def save_from_dialog(ui: MainWindow) -> None:
     return None
 
 
+@ACTIONS.append_from_fn(
+    id="open-recent",
+    title="Open Recent ...",
+    icon="mdi:recent",
+    menus=[
+        {"id": MenuId.FILE_RECENT, "group": READ_GROUP, "order": 99},
+        {"id": MenuId.TOOLBAR, "group": READ_GROUP, "order": 99},
+    ],
+    keybindings=[
+        KeyBindingRule(primary=KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.KeyR))
+    ],
+)
 def open_recent(ui: MainWindow) -> WidgetDataModel:
     """Open a recent file as a sub-window."""
     return ui._backend_main_window._show_command_palette("recent")
 
 
+@ACTIONS.append_from_fn(
+    id="paste",
+    title="Paste as window",
+    icon="material-symbols:content-paste",
+    menus=[{"id": MenuId.FILE, "group": READ_GROUP}],
+    keybindings=[StandardKeyBinding.Paste],
+)
 def paste_from_clipboard(ui: MainWindow) -> WidgetDataModel:
     """Paste the clipboard data as a sub-window."""
     if data := ui._backend_main_window._clipboard_data():
@@ -80,6 +138,14 @@ def paste_from_clipboard(ui: MainWindow) -> WidgetDataModel:
     return None
 
 
+@ACTIONS.append_from_fn(
+    id="save-as",
+    title="Save As ...",
+    icon="material-symbols:save-as-outline",
+    menus=[{"id": MenuId.FILE, "group": WRITE_GROUP}],
+    keybindings=[StandardKeyBinding.SaveAs],
+    enablement=_ctx.is_active_window_exportable,
+)
 def save_as_from_dialog(ui: MainWindow) -> None:
     """Save the current sub-window as a new file."""
     fd, sub_win = ui._provide_file_output()
@@ -90,22 +156,48 @@ def save_as_from_dialog(ui: MainWindow) -> None:
     return None
 
 
-def exit_main_window(ui: MainWindow) -> None:
-    """Exit the application."""
+@ACTIONS.append_from_fn(
+    id="quit",
+    title="Quit",
+    menus=[{"id": MenuId.FILE, "group": EXIT_GROUP}],
+    keybindings=[StandardKeyBinding.Quit],
+)
+def quit_main_window(ui: MainWindow) -> None:
+    """Quit the application."""
     ui._backend_main_window._exit_main_window()
 
 
+@ACTIONS.append_from_fn(
+    id="copy-screenshot",
+    title="Copy screenshot of entire main window",
+    menus=[{"id": MenuId.FILE_SCREENSHOT, "group": COPY_SCR_SHOT}],
+)
 def copy_screenshot(ui: MainWindow) -> ClipboardDataModel:
+    """Copy a screenshot of the main window to the clipboard."""
     data = ui._backend_main_window._screenshot("main")
     return ClipboardDataModel(value=data, type=StandardTypes.IMAGE)
 
 
+@ACTIONS.append_from_fn(
+    id="copy-screenshot-area",
+    title="Copy screenshot of tab area",
+    menus=[{"id": MenuId.FILE_SCREENSHOT, "group": COPY_SCR_SHOT}],
+    enablement=_ctx.has_tabs,
+)
 def copy_screenshot_area(ui: MainWindow) -> ClipboardDataModel:
+    """Copy a screenshot of the tab area to the clipboard."""
     data = ui._backend_main_window._screenshot("area")
     return ClipboardDataModel(value=data, type=StandardTypes.IMAGE)
 
 
+@ACTIONS.append_from_fn(
+    id="copy-screenshot-window",
+    title="Copy Screenshot of sub-window",
+    menus=[{"id": MenuId.FILE_SCREENSHOT, "group": COPY_SCR_SHOT}],
+    enablement=_ctx.has_sub_windows,
+)
 def copy_screenshot_window(ui: MainWindow) -> ClipboardDataModel:
+    """Copy a screenshot of the sub window to the clipboard."""
     data = ui._backend_main_window._screenshot("window")
     return ClipboardDataModel(value=data, type=StandardTypes.IMAGE)
 
@@ -122,177 +214,50 @@ def _save_screenshot(ui: MainWindow, target: str) -> None:
     img.save(save_path)
 
 
+@ACTIONS.append_from_fn(
+    id="save-screenshot",
+    title="Save screenshot of entire main window",
+    menus=[{"id": MenuId.FILE_SCREENSHOT, "group": SAVE_SCR_SHOT}],
+)
 def save_screenshot(ui: MainWindow) -> None:
     _save_screenshot(ui, "main")
 
 
+@ACTIONS.append_from_fn(
+    id="save-screenshot-area",
+    title="Save screenshot of tab area",
+    menus=[{"id": MenuId.FILE_SCREENSHOT, "group": SAVE_SCR_SHOT}],
+    enablement=_ctx.has_tabs,
+)
 def save_screenshot_area(ui: MainWindow) -> None:
     _save_screenshot(ui, "area")
 
 
+@ACTIONS.append_from_fn(
+    id="save-screenshot-window",
+    title="Save screenshot of sub-window",
+    menus=[{"id": MenuId.FILE_SCREENSHOT, "group": SAVE_SCR_SHOT}],
+    enablement=_ctx.has_sub_windows,
+)
 def save_screenshot_window(ui: MainWindow) -> None:
     _save_screenshot(ui, "window")
 
 
-_CtrlK = KeyMod.CtrlCmd | KeyCode.KeyK
-
-READ_GROUP = "00_io_read"
-WRITE_GROUP = "01_io_write"
-SCR_SHOT_GROUP = "21_screenshot"
-COPY_SCR_SHOT = "00_copy-screenshot"
-SAVE_SCR_SHOT = "01_save-screenshot"
-EXIT_GROUP = "99_exit"
-
-ACTIONS = [
-    Action(
-        id="open",
-        title="Open File(s)",
-        icon="material-symbols:folder-open-outline",
-        callback=open_file_from_dialog,
-        menus=[
-            {"id": MenuId.FILE, "group": READ_GROUP},
-            {"id": MenuId.TOOLBAR, "group": READ_GROUP},
-        ],
-        keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyO)],
-        icon_visible_in_menu=False,
-    ),
-    Action(
-        id="open-folder",
-        title="Open Folder",
-        icon="material-symbols:folder-open",
-        callback=open_folder_from_dialog,
-        menus=[{"id": MenuId.FILE, "group": READ_GROUP}],
-        keybindings=[
-            KeyBindingRule(primary=KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.KeyO))
-        ],
-        icon_visible_in_menu=False,
-    ),
-    Action(
-        id="open-recent",
-        title="Open Recent",
-        icon="mdi:recent",
-        callback=open_recent,
-        menus=[
-            {"id": MenuId.FILE_RECENT, "group": READ_GROUP, "order": 99},
-            {"id": MenuId.TOOLBAR, "group": READ_GROUP, "order": 99},
-        ],
-        keybindings=[
-            KeyBindingRule(primary=KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.KeyR))
-        ],
-        icon_visible_in_menu=False,
-    ),
-    Action(
-        id="save",
-        title="Save",
-        icon="material-symbols:save-outline",
-        callback=save_from_dialog,
-        menus=[
-            {"id": MenuId.FILE, "group": WRITE_GROUP},
-            {"id": MenuId.TOOLBAR, "group": WRITE_GROUP},
-        ],
-        keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyS)],
-        enablement=_ctx.is_active_window_exportable,
-        icon_visible_in_menu=False,
-    ),
-    Action(
-        id="save-as",
-        title="Save As",
-        icon="material-symbols:save-as-outline",
-        callback=save_as_from_dialog,
-        menus=[{"id": MenuId.FILE, "group": WRITE_GROUP}],
-        keybindings=[
-            KeyBindingRule(primary=KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyS)
-        ],
-        enablement=_ctx.is_active_window_exportable,
-        icon_visible_in_menu=False,
-    ),
-    Action(
-        id="paste",
-        title="Paste as window",
-        icon="material-symbols:content-paste",
-        callback=paste_from_clipboard,
-        menus=[{"id": MenuId.FILE, "group": READ_GROUP}],
-        icon_visible_in_menu=False,
-    ),
-    Action(
-        id="copy-screenshot",
-        title="Copy screenshot of entire main window",
-        callback=copy_screenshot,
-        menus=[{"id": MenuId.FILE_SCREENSHOT, "group": COPY_SCR_SHOT}],
-        icon_visible_in_menu=False,
-    ),
-    Action(
-        id="copy-screenshot-area",
-        title="Copy screenshot of tab area",
-        callback=copy_screenshot_area,
-        menus=[{"id": MenuId.FILE_SCREENSHOT, "group": COPY_SCR_SHOT}],
-        enablement=_ctx.has_tabs,
-        icon_visible_in_menu=False,
-    ),
-    Action(
-        id="copy-screenshot-window",
-        title="Copy Screenshot of sub-window",
-        callback=copy_screenshot_window,
-        menus=[{"id": MenuId.FILE_SCREENSHOT, "group": COPY_SCR_SHOT}],
-        enablement=_ctx.has_sub_windows,
-        icon_visible_in_menu=False,
-    ),
-    Action(
-        id="save-screenshot",
-        title="Save screenshot of entire main window",
-        callback=save_screenshot,
-        menus=[{"id": MenuId.FILE_SCREENSHOT, "group": SAVE_SCR_SHOT}],
-        icon_visible_in_menu=False,
-    ),
-    Action(
-        id="save-screenshot-area",
-        title="Save screenshot of tab area",
-        callback=save_screenshot_area,
-        menus=[{"id": MenuId.FILE_SCREENSHOT, "group": SAVE_SCR_SHOT}],
-        enablement=_ctx.has_tabs,
-        icon_visible_in_menu=False,
-    ),
-    Action(
-        id="save-screenshot-window",
-        title="Save screenshot of sub-window",
-        callback=save_screenshot_window,
-        menus=[{"id": MenuId.FILE_SCREENSHOT, "group": SAVE_SCR_SHOT}],
-        enablement=_ctx.has_sub_windows,
-        icon_visible_in_menu=False,
-    ),
-    Action(
-        id="exit",
-        title="Exit",
-        callback=exit_main_window,
-        menus=[{"id": MenuId.FILE, "group": EXIT_GROUP}],
-        keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyQ)],
-        icon_visible_in_menu=False,
-    ),
-]
-
-SUBMENUS = [
-    (
-        MenuId.FILE,
-        SubmenuItem(
-            submenu=MenuId.FILE_RECENT,
-            title="Open Recent",
-            group=READ_GROUP,
-        ),
-    ),
-    (
-        MenuId.FILE,
-        SubmenuItem(
-            submenu=MenuId.FILE_NEW,
-            title="New",
-            group=READ_GROUP,
-        ),
-    ),
-    (
-        MenuId.FILE,
-        SubmenuItem(
-            submenu=MenuId.FILE_SCREENSHOT,
-            title="Screenshot",
-            group=SCR_SHOT_GROUP,
-        ),
-    ),
-]
+SUBMENUS.append_from(
+    id=MenuId.FILE,
+    submenu=MenuId.FILE_RECENT,
+    title="Open Recent",
+    group=READ_GROUP,
+)
+SUBMENUS.append_from(
+    id=MenuId.FILE,
+    submenu=MenuId.FILE_NEW,
+    title="New",
+    group=READ_GROUP,
+)
+SUBMENUS.append_from(
+    id=MenuId.FILE,
+    submenu=MenuId.FILE_SCREENSHOT,
+    title="Screenshot",
+    group=SCR_SHOT_GROUP,
+)

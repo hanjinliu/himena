@@ -94,10 +94,10 @@ class QSubWindowArea(QtW.QMdiArea):
         parent_geometry = self.viewport().geometry()
         num = 0
         for sub_window in self.subWindowList():
-            if sub_window.state is SubWindowState.MIN:
+            if sub_window._window_state is SubWindowState.MIN:
                 sub_window._set_minimized(parent_geometry, num)
                 num += 1
-            elif sub_window.state in (SubWindowState.MAX, SubWindowState.FULL):
+            elif sub_window._window_state in (SubWindowState.MAX, SubWindowState.FULL):
                 sub_window.setGeometry(parent_geometry)
             else:
                 main_qsize = parent_geometry.size()
@@ -153,9 +153,9 @@ class QCentralWidget(QtW.QWidget):
 
 
 class QSubWindow(QtW.QMdiSubWindow):
-    state_changed = QtCore.Signal(SubWindowState)
-    renamed = QtCore.Signal(str)
-    closed = QtCore.Signal()
+    state_change_requested = QtCore.Signal(SubWindowState)
+    rename_requested = QtCore.Signal(str)
+    close_requested = QtCore.Signal()
 
     def __init__(self, widget: QtW.QWidget, title: str):
         super().__init__()
@@ -216,26 +216,24 @@ class QSubWindow(QtW.QMdiSubWindow):
     def state(self) -> SubWindowState:
         return self._window_state
 
-    @state.setter
-    def state(self, state: SubWindowState):
+    def _update_window_state(self, state: SubWindowState):
         state = SubWindowState(state)
-        self.state_changed.emit(state)
         if self._subwindow_area().viewMode() != QtW.QMdiArea.ViewMode.SubWindowView:
             self._window_state = state
             return None
         match state:
             case SubWindowState.MIN:
-                if self.state is SubWindowState.NORMAL:
+                if self._window_state is SubWindowState.NORMAL:
                     self._last_geometry = self.geometry()
                 self.resize(124, self._title_bar.height() + 8)
                 n_minimized = sum(
                     1
                     for sub_window in self._subwindow_area().subWindowList()
-                    if sub_window.state is SubWindowState.MIN
+                    if sub_window._window_state is SubWindowState.MIN
                 )
                 self._set_minimized(self.parentWidget().geometry(), n_minimized)
             case SubWindowState.MAX:
-                if self.state is SubWindowState.NORMAL:
+                if self._window_state is SubWindowState.NORMAL:
                     self._last_geometry = self.geometry()
                 self._set_geometry_animated(self.parentWidget().geometry())
                 self._title_bar._toggle_size_button.setIcon(_icon_normal())
@@ -247,7 +245,7 @@ class QSubWindow(QtW.QMdiSubWindow):
                 if self._title_bar.is_upper_than_area():
                     self.move(self.pos().x(), 0)
             case SubWindowState.FULL:
-                if self.state is SubWindowState.NORMAL:
+                if self._window_state is SubWindowState.NORMAL:
                     self._last_geometry = self.geometry()
                 self._set_geometry_animated(self.parentWidget().geometry())
         self._title_bar.setVisible(state is not SubWindowState.FULL)
@@ -304,7 +302,7 @@ class QSubWindow(QtW.QMdiSubWindow):
     @qthrottled(timeout=10)
     def _mouse_hover_event(self, event_pos: QtCore.QPoint):
         # if the cursor is at the edges, set the cursor to resize
-        if self.state is not SubWindowState.NORMAL:
+        if self._window_state is not SubWindowState.NORMAL:
             return None
         resize_state = self._check_resize_state(event_pos)
         if self._current_button == QtCore.Qt.MouseButton.NoButton:
@@ -322,27 +320,6 @@ class QSubWindow(QtW.QMdiSubWindow):
                     (main_qsize.width(), main_qsize.height()),
                     WindowRect.from_numbers(g.left(), g.top(), g.width(), g.height()),
                 )
-        return None
-
-    def _close_me(self, confirm: bool = False):
-        if confirm:
-            is_modified = getattr(self.main_widget(), "is_modified", None)
-            if callable(is_modified) and is_modified():
-                _yes = QtW.QMessageBox.StandardButton.Yes
-                _no = QtW.QMessageBox.StandardButton.No
-                ok = (
-                    QtW.QMessageBox.question(
-                        self,
-                        "Close Window",
-                        "Data is not saved. Are you sure to close this window?",
-                        _yes | _no,
-                    )
-                    == _yes
-                )
-                if not ok:
-                    return
-        self.close()
-        self.closed.emit()
         return None
 
     def _set_geometry_animated(self, rect: QtCore.QRect):
@@ -405,10 +382,7 @@ class QSubWindowTitleBar(QtW.QFrame):
 
         @self._line_edit.rename_requested.connect
         def _(new_name: str):
-            if tab := get_main_window(self).tabs.current():
-                new_name = tab._coerce_window_title(new_name)
-            self._title_label.setText(new_name)
-            self._subwindow.renamed.emit(new_name)
+            self._subwindow.rename_requested.emit(new_name)
 
         self._minimize_button = QtW.QToolButton()
         self._minimize_button.clicked.connect(self._minimize)
@@ -471,30 +445,30 @@ class QSubWindowTitleBar(QtW.QFrame):
         self._line_edit.selectAll()
 
     def _minimize(self):
-        self._subwindow.state = SubWindowState.MIN
+        self._subwindow.state_change_requested.emit(SubWindowState.MIN)
 
     def _toggle_size(self):
-        if self._subwindow.state is SubWindowState.NORMAL:
-            self._subwindow.state = SubWindowState.MAX
+        if self._subwindow._window_state is SubWindowState.NORMAL:
+            self._subwindow.state_change_requested.emit(SubWindowState.MAX)
         else:
-            self._subwindow.state = SubWindowState.NORMAL
+            self._subwindow.state_change_requested.emit(SubWindowState.NORMAL)
 
     def _maximize(self):
-        self._subwindow.state = SubWindowState.MAX
+        self._subwindow.state_change_requested.emit(SubWindowState.MAX)
 
     def _toggle_full_screen(self):
-        if self._subwindow.state is SubWindowState.FULL:
-            self._subwindow.state = SubWindowState.NORMAL
+        if self._subwindow._window_state is SubWindowState.FULL:
+            self._subwindow.state_change_requested.emit(SubWindowState.NORMAL)
         else:
-            self._subwindow.state = SubWindowState.FULL
+            self._subwindow.state_change_requested.emit(SubWindowState.FULL)
 
     def _close(self):
-        return self._subwindow._close_me(confirm=True)
+        return self._subwindow.close_requested.emit()
 
     # drag events for moving the window
     def mousePressEvent(self, event: QtGui.QMouseEvent):
         if event.button() == QtCore.Qt.MouseButton.LeftButton:
-            if self._subwindow.state == SubWindowState.MIN:
+            if self._subwindow._window_state == SubWindowState.MIN:
                 # cannot move minimized window
                 return
             self._drag_position = (
@@ -509,7 +483,7 @@ class QSubWindowTitleBar(QtW.QFrame):
             and self._drag_position is not None
             and _subwindow._resize_state is ResizeState.NONE
         ):
-            if _subwindow.state == SubWindowState.MAX:
+            if _subwindow._window_state == SubWindowState.MAX:
                 # change to normal without moving
                 self._toggle_size_button.setIcon(_icon_max())
                 _subwindow._widget.setVisible(True)
@@ -534,7 +508,7 @@ class QSubWindowTitleBar(QtW.QFrame):
         if event.button() == QtCore.Qt.MouseButton.LeftButton:
             self._drag_position = None
             if self.is_upper_than_area():
-                self._subwindow.state = SubWindowState.MAX
+                self._subwindow.state_change_requested(SubWindowState.MAX)
         return super().mouseReleaseEvent(event)
 
     def mouseDoubleClickEvent(self, event: QtGui.QMouseEvent):

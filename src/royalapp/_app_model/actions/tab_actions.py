@@ -1,6 +1,5 @@
 from typing import Any
 from app_model.types import (
-    Action,
     KeyBindingRule,
     KeyCode,
     KeyMod,
@@ -12,13 +11,29 @@ from royalapp.types import (
     WindowRect,
 )
 from royalapp._app_model._context import AppContext as _ctx
+from royalapp._app_model.actions._registry import ACTIONS
 
 
+@ACTIONS.append_from_fn(
+    id="new-tab",
+    title="New Tab",
+    menus=[MenuId.TAB],
+    keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyT)],
+)
 def new_tab(ui: MainWindow) -> None:
+    """Create a new tab."""
     ui.add_tab()
 
 
+@ACTIONS.append_from_fn(
+    id="close-tab",
+    title="Close Tab",
+    enablement=_ctx.has_tabs,
+    menus=[MenuId.TAB],
+    keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyW)],
+)
 def close_current_tab(ui: MainWindow) -> None:
+    """Close the current tab."""
     idx = ui._backend_main_window._current_tab_index()
     if idx is None:
         return
@@ -33,8 +48,15 @@ def close_current_tab(ui: MainWindow) -> None:
     ui.tabs.pop(idx)
 
 
+@ACTIONS.append_from_fn(
+    id="merge-tabs",
+    title="Merge Tabs ...",
+    enablement=_ctx.has_tabs,
+    menus=[MenuId.TAB],
+)
 def merge_tabs(ui: MainWindow) -> None:
-    if len(ui.tabs.names) < 2:
+    """Select tabs and merge them."""
+    if len(ui.tabs) < 2:
         return
     names = ui._backend_main_window._open_selection_dialog(
         "Selects tab to merge", ui.tabs.names
@@ -55,31 +77,3 @@ def merge_tabs(ui: MainWindow) -> None:
         new_window.state = state
         if state is SubWindowState.NORMAL:
             new_window.window_rect = rect
-
-
-ACTIONS = [
-    Action(
-        id="new-tab",
-        title="New Tab",
-        callback=new_tab,
-        menus=[MenuId.TAB],
-        keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyT)],
-        icon_visible_in_menu=False,
-    ),
-    Action(
-        id="close-tab",
-        title="Close Tab",
-        callback=close_current_tab,
-        menus=[MenuId.TAB],
-        enablement=_ctx.has_tabs,
-        icon_visible_in_menu=False,
-    ),
-    Action(
-        id="merge-tabs",
-        title="Merge Tabs",
-        callback=merge_tabs,
-        menus=[MenuId.TAB],
-        enablement=_ctx.has_tabs,
-        icon_visible_in_menu=False,
-    ),
-]

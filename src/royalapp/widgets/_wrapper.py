@@ -18,7 +18,7 @@ from royalapp._descriptors import (
 )
 
 if TYPE_CHECKING:
-    from royalapp.widgets import BackendMainWindow
+    from royalapp.widgets import BackendMainWindow, MainWindow
 
 _W = TypeVar("_W")  # backend widget type
 
@@ -197,6 +197,17 @@ class SubWindow(WidgetWrapper[_W]):
             return _anchor.BottomRightConstAnchor(w0 - rect.right, h0 - rect.bottom)
         else:
             raise ValueError(f"Unknown anchor: {anchor}")
+
+    def _find_me(self, main: MainWindow) -> tuple[int, int]:
+        for i_tab, tab in enumerate(main.tabs):
+            for i_win, win in enumerate(tab):
+                if win is self:
+                    return i_tab, i_win
+        raise RuntimeError(f"SubWindow {self.title} not found in main window.")
+
+    def _close_me(self, main: MainWindow) -> None:
+        i_tab, i_win = self._find_me(main)
+        del main.tabs[i_tab][i_win]
 
 
 class DockWidget(WidgetWrapper[_W]):

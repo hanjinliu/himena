@@ -105,6 +105,7 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
         raise NotImplementedError
 
     def _del_tab_at(self, i_tab: int) -> None:
+        # NOTE: backend does not need to close the subwindows one by one
         raise NotImplementedError
 
     def _rename_window_at(self, i_tab: int, i_window: int) -> None:

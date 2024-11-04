@@ -103,7 +103,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
 
     def current(self, default: _T = None) -> SubWindow[_W] | _T:
         """Get the current sub-window or a default value."""
-        idx = self.current_index()
+        idx = self.current_index
         if idx is None:
             return default
         try:
@@ -111,9 +111,14 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         except IndexError:
             return default
 
+    @property
     def current_index(self) -> int | None:
         """Get the index of the current sub-window."""
         return self._main_window()._current_sub_window_index()
+
+    @current_index.setter
+    def current_index(self, index: int) -> None:
+        self._main_window()._set_current_sub_window_index(index)
 
     @property
     def title(self) -> str:
@@ -217,6 +222,8 @@ class TabList(SemiMutableSequence[TabArea[_W]], _HasMainWindowRef[_W], Generic[_
 
     def __delitem__(self, index_or_name: int | str) -> None:
         index = self._norm_index_or_name(index_or_name)
+        area = self[index]
+        area.clear()
         self._main_window()._del_tab_at(index)
         self.changed.emit()
         return None
@@ -250,7 +257,7 @@ class TabList(SemiMutableSequence[TabArea[_W]], _HasMainWindowRef[_W], Generic[_
 
     def current(self, default: _T = None) -> TabArea[_W] | _T:
         """Get the current tab or a default value."""
-        idx = self.current_index()
+        idx = self.current_index
         if idx is None:
             return default
         try:
@@ -258,5 +265,11 @@ class TabList(SemiMutableSequence[TabArea[_W]], _HasMainWindowRef[_W], Generic[_
         except IndexError:
             return default
 
+    @property
     def current_index(self) -> int | None:
+        """Get the index of the current tab (None of nothing exists)."""
         return self._main_window()._current_tab_index()
+
+    @current_index.setter
+    def current_index(self, index: int):
+        self._main_window()._set_current_tab_index(index)
