@@ -122,6 +122,9 @@ class SubWindow(WidgetWrapper[_W]):
         is_modified_func = getattr(self.widget, "is_modified", None)
         return callable(is_modified_func) and is_modified_func()
 
+    def size_hint(self) -> tuple[int, int] | None:
+        return getattr(self.widget, "size_hint", lambda: None)()
+
     def to_model(self) -> WidgetDataModel:
         """Export the widget data."""
         if not self.is_exportable:

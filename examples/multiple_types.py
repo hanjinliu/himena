@@ -42,7 +42,7 @@ class MyNonSavableEdit(QtW.QTextEdit):
         self.setPlainText(model.value)
         return self
 
-interf = get_plugin_interface("plugins/my_menu")
+interf = get_plugin_interface("tools/my_menu")
 
 @interf.register_function(types="html")
 def to_plain_text(model: WidgetDataModel) -> WidgetDataModel:

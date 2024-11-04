@@ -86,6 +86,9 @@ class QDefaultImageView(QtW.QWidget):
             type=self._model.type,
         )
 
+    def size_hint(self) -> tuple[int, int]:
+        return 400, 400
+
     def as_image_array(self, arr: np.ndarray) -> NDArray[np.uint8]:
         import numpy as np
 

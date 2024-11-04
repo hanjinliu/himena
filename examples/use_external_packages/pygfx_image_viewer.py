@@ -73,17 +73,17 @@ def my_writer_provider(model: WidgetDataModel, path: Path):
         iio.imwrite(path, model.value)
     return _write_image
 
-interf = get_plugin_interface("plugins/image_processing")
+interf = get_plugin_interface("tools/image_processing")
 
 @interf.register_function(title="Gaussian Filter", types="image")
-def gaussian_filter(model: WidgetDataModel) -> WidgetDataModel:
-    from scipy.ndimage import gaussian_filter
+def gaussian_filter(model: WidgetDataModel[np.ndarray]) -> WidgetDataModel[np.ndarray]:
+    from scipy import ndimage as ndi
 
     im = model.value
     if im.ndim == 3:
-        im = gaussian_filter(im, sigma=3, axes=(0, 1))
+        im = ndi.gaussian_filter(im, sigma=3, axes=(0, 1))
     else:
-        im = gaussian_filter(im, sigma=3)
+        im = ndi.gaussian_filter(im, sigma=3)
     return WidgetDataModel(value=im, type="image", title=model.title + "-Gaussian")
 
 @interf.register_function(title="Invert", types="image")

@@ -410,6 +410,9 @@ class QDefaultTextEdit(QtW.QWidget):
             type=StandardTypes.TEXT,
         )
 
+    def size_hint(self) -> tuple[int, int]:
+        return 400, 300
+
     def is_modified(self) -> bool:
         return self._main_text_edit.is_modified()
 

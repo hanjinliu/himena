@@ -5,7 +5,7 @@ from typing import Generic, TYPE_CHECKING, Iterable, Iterator, TypeVar
 from collections.abc import Sequence
 
 from psygnal import Signal
-from royalapp.types import WindowRect
+from royalapp.types import NewWidgetBehavior, SubWindowState, WindowRect
 from royalapp.widgets._wrapper import _HasMainWindowRef, SubWindow
 
 if TYPE_CHECKING:
@@ -135,6 +135,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         widget: _W,
         *,
         title: str | None = None,
+        autosize: bool = True,
     ) -> SubWindow[_W]:
         """
         Add a widget to the sub window.
@@ -157,8 +158,20 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         sub_window = SubWindow(widget=widget, main_window=main)
         title = self._coerce_window_title(title)
         out = main.add_widget(sub_window.widget, self._i_tab, title)
+
         main._connect_window_events(sub_window, out)
         sub_window.title = title
+        sub_window.state_changed.connect(main._update_context)
+
+        main._set_current_tab_index(self._i_tab)
+        if main._royalapp_main_window._new_widget_behavior is NewWidgetBehavior.TAB:
+            nwindows = len(self)
+            main._set_window_state(self._i_tab, nwindows - 1, SubWindowState.FULL)
+        else:
+            main._set_current_sub_window_index(len(self) - 1)
+            if autosize and (size_hint := sub_window.size_hint()):
+                left, top, _, _ = sub_window.window_rect
+                sub_window.window_rect = WindowRect(left, top, *size_hint)
         return sub_window
 
     def tile_windows(

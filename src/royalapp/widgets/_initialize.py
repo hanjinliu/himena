@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TypeVar
 from app_model import Application
-from royalapp.types import WidgetDataModel, ClipboardDataModel
+from royalapp.types import Parametric, WidgetDataModel, ClipboardDataModel
 from royalapp.widgets._main_window import MainWindow
 from royalapp.widgets._tab_list import TabArea
 from royalapp.widgets._wrapper import SubWindow
@@ -89,6 +89,12 @@ def _init_application(app: Application) -> None:
     def _process_clipboard_data(clip_data: ClipboardDataModel) -> None:
         ins = current_instance(app.name)
         ins._backend_main_window._set_clipboard_data(clip_data)
+        return None
+
+    @app.injection_store.mark_processor
+    def _process_parametric(fn: Parametric) -> None:
+        ins = current_instance(app.name)
+        ins.add_parametric_element(fn)
         return None
 
 

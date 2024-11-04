@@ -473,6 +473,22 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
                 raise ValueError("No active window.")
         return ArrayQImage(qimg)
 
+    def _parametric_widget(self, sig) -> QtW.QWidget:
+        from magicgui.widgets import Container, PushButton  # TODO: remove magicgui
+
+        container = Container.from_signature(sig)
+        btn = PushButton(text="Run", gui_only=True)
+        container.append(btn)
+
+        def connect(fn):
+            def _callback(*_):
+                values = container.asdict()
+                return fn(**values)
+
+            btn.clicked.connect(_callback)
+
+        return container.native, connect
+
 
 _DOCK_AREA_MAP = {
     DockArea.TOP: Qt.DockWidgetArea.TopDockWidgetArea,

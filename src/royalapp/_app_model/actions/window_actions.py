@@ -80,7 +80,7 @@ def duplicate_window(model: WidgetDataModel) -> WidgetDataModel:
     if model.title is not None:
         model.title += " (copy)"
     if (method := model.method) is not None:
-        model.method = ConverterMethod(original=method, action_id="duplicate-window")
+        model.method = ConverterMethod(originals=[method], action_id="duplicate-window")
     return model
 
 

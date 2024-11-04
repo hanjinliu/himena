@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 from pathlib import Path
 from typing import Generic, Literal, TypeVar, TYPE_CHECKING, overload
 
@@ -11,6 +12,7 @@ from royalapp.types import (
     DockArea,
     DockAreaString,
     WindowRect,
+    Connection,
 )
 
 if TYPE_CHECKING:
@@ -167,4 +169,7 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
         raise NotImplementedError
 
     def _screenshot(self, target: str) -> NDArray[np.uint8]:
+        raise NotImplementedError
+
+    def _parametric_widget(self, sig: inspect.Signature) -> tuple[_W, Connection]:
         raise NotImplementedError

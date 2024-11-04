@@ -24,7 +24,7 @@ class LocalReaderMethod(MethodDescriptor):
 class ConverterMethod(MethodDescriptor):
     """Describes that one was converted from another widget data model."""
 
-    original: MethodDescriptor
+    originals: list[MethodDescriptor]
     action_id: str
 
 

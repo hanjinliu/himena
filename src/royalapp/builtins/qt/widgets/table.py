@@ -48,6 +48,9 @@ class QDefaultTableWidget(QtW.QTableWidget):
             type=StandardTypes.TABLE,
         )
 
+    def size_hint(self) -> tuple[int, int]:
+        return 400, 300
+
     def is_modified(self) -> bool:
         return self._modified
 

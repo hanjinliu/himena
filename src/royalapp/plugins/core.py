@@ -460,28 +460,37 @@ def _make_function_callback(f: _F, action_id: str) -> _F:
     def is_widget_data_model(a):
         return WidgetDataModel in (get_origin(a), a)
 
-    if not is_widget_data_model(sig.return_annotation):
-        return f
-
-    key_model = None
+    keys_model: list[str] = []
     for key, param in sig.parameters.items():
         if is_widget_data_model(param.annotation):
-            key_model = key
+            keys_model.append(key)
 
-    if key_model is None:
+    for key in keys_model:
+        f.__annotations__[key] = WidgetDataModel
+
+    if not is_widget_data_model(sig.return_annotation):
+        return f
+    else:
+        f.__annotations__["return"] = WidgetDataModel
+
+    if len(keys_model) == 0:
         return f
 
     @wraps(f)
     def _new_f(*args, **kwargs):
         bound = sig.bind(*args, **kwargs)
         out = f(*args, **kwargs)
-        input_ = bound.arguments[key_model]
-        if isinstance(out, WidgetDataModel) and isinstance(input_, WidgetDataModel):
-            if input_.method is None:
-                method = ProgramaticMethod()
-            else:
-                method = input_.method
-            out.method = ConverterMethod(original=method, action_id=action_id)
+        originals = []
+        for key in keys_model:
+            input_ = bound.arguments[key]
+            if isinstance(out, WidgetDataModel) and isinstance(input_, WidgetDataModel):
+                if input_.method is None:
+                    method = ProgramaticMethod()
+                else:
+                    method = input_.method
+                originals.append(method)
+        if len(originals) > 0:
+            out.method = ConverterMethod(originals=originals, action_id=action_id)
         return out
 
     return _new_f

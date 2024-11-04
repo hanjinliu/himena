@@ -64,7 +64,7 @@ def register_frontend_widget(
             )
         if not hasattr(wdt_class, "from_model"):
             raise TypeError(
-                f"Widget class {wdt_class!r} does not have an `from_model` method."
+                f"Widget class {wdt_class!r} does not have a `from_model` method."
             )
         if app is not None:
             if app not in _APP_TYPE_TO_QWIDGET:

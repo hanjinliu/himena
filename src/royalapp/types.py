@@ -13,14 +13,6 @@ from pydantic_compat import BaseModel, Field, field_validator
 from royalapp._descriptors import MethodDescriptor, LocalReaderMethod
 
 
-class StrEnum(Enum):
-    def __repr__(self):
-        return f"{self.__class__.__name__}.{self.name}"
-
-    def __str__(self):
-        return self.name
-
-
 class DockArea(Enum):
     """Area of the dock widget."""
 
@@ -221,3 +213,13 @@ class WindowRect(NamedTuple):
             round(self.width * wratio),
             round(self.height * hratio),
         )
+
+
+class Parametric(Callable[..., _T], Generic[_T]):
+    """Parametric function that returns a widget data model."""
+
+    def __call__(self, *args, **kwargs) -> WidgetDataModel[_T]:
+        raise NotImplementedError("This method must be implemented by subclasses.")
+
+
+Connection = Callable[[Callable[[WidgetDataModel], None]], None]

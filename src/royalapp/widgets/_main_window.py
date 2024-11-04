@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 from pathlib import Path
 from typing import Any, Generic, Hashable, TypeVar
 from weakref import WeakSet
@@ -9,9 +10,9 @@ from psygnal import SignalGroup, Signal
 from royalapp.consts import MenuId
 from royalapp.io import get_readers
 from royalapp.types import (
+    Parametric,
     WidgetDataModel,
     NewWidgetBehavior,
-    SubWindowState,
     DockArea,
     DockAreaString,
 )
@@ -24,6 +25,7 @@ from royalapp.widgets._tab_list import TabList, TabArea
 from royalapp.widgets._wrapper import SubWindow, DockWidget
 
 _W = TypeVar("_W")  # backend widget type
+_T = TypeVar("_T")  # internal data type
 
 
 class MainWindowEvents(SignalGroup):
@@ -73,6 +75,19 @@ class MainWindow(Generic[_W]):
         self._backend_main_window._set_current_tab_index(idx)
         return self.tabs[idx]
 
+    def _current_or_new_tab(self, title: str | None = None) -> tuple[int, TabArea[_W]]:
+        if self._new_widget_behavior is NewWidgetBehavior.WINDOW:
+            if len(self.tabs) == 0:
+                self.add_tab(title)
+                idx = 0
+            else:
+                idx = self._backend_main_window._current_tab_index()
+            tabarea = self.tabs[idx]
+        else:
+            tabarea = self.add_tab(title)
+            idx = len(self.tabs) - 1
+        return idx, tabarea
+
     def add_widget(
         self,
         widget: _W,
@@ -95,30 +110,8 @@ class MainWindow(Generic[_W]):
         SubWindow
             The sub-window handler.
         """
-        if self._new_widget_behavior is NewWidgetBehavior.WINDOW:
-            if len(self.tabs) == 0:
-                self.add_tab("Tab")
-                idx = 0
-            else:
-                idx = self._backend_main_window._current_tab_index()
-            tabarea = self.tabs[idx]
-        else:
-            tabarea = self.add_tab(title)
-            idx = len(self.tabs) - 1
-        out = tabarea.add_widget(widget, title=title)
-
-        # connect events
-        out.state_changed.connect(self._backend_main_window._update_context)
-
-        self._backend_main_window._set_current_tab_index(idx)
-        if self._new_widget_behavior is NewWidgetBehavior.TAB:
-            nwindows = len(tabarea)
-            self._backend_main_window._set_window_state(
-                idx, nwindows - 1, SubWindowState.FULL
-            )
-        else:
-            self._backend_main_window._set_current_sub_window_index(len(tabarea) - 1)
-        return out
+        _, tabarea = self._current_or_new_tab(title)
+        return tabarea.add_widget(widget, title=title)
 
     def add_dock_widget(
         self,
@@ -196,6 +189,49 @@ class MainWindow(Generic[_W]):
         if isinstance(method := model_data.method, LocalReaderMethod):
             sub_win.update_default_save_path(method.path)
         return sub_win
+
+    def add_parametric_element(self, fn: Parametric[_T]) -> SubWindow[_W]:
+        """
+        Add a sub-window that generates a model from a function.
+
+        The input function must return a `WidgetDataModel` instance, which can be
+        interpreted by the application.
+
+        Parameters
+        ----------
+        fn : function (...) -> WidgetDataModel
+            Function that generates a model from the input parameters.
+
+        Returns
+        -------
+        SubWindow
+            The sub-window instance that represents the output model.
+        """
+        sig = inspect.signature(fn)
+        back_widget_param, connection = self._backend_main_window._parametric_widget(
+            sig
+        )
+        widget_param = self.add_widget(back_widget_param)
+
+        @connection
+        def _callback(**kwargs):
+            model = fn(**kwargs)
+            cls = self._backend_main_window._pick_widget_class(model.type)
+            widget = cls.from_model(model)
+            rect = widget_param.window_rect
+            i_tab, i_win = widget_param._find_me(self)
+            del self.tabs[i_tab][i_win]
+            result_widget = self.tabs[i_tab].add_widget(
+                widget, title=model.title, autosize=False
+            )
+            if size_hint := result_widget.size_hint():
+                new_rect = (rect.left, rect.top, size_hint[0], size_hint[1])
+            else:
+                new_rect = rect
+            result_widget.window_rect = new_rect
+            return None
+
+        return widget_param
 
     def read_file(self, file_path) -> SubWindow[_W]:
         """Read local file(s) and open as a new sub-window."""
