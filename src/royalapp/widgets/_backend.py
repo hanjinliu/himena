@@ -13,6 +13,7 @@ from royalapp.types import (
     DockAreaString,
     WindowRect,
     Connection,
+    BackendInstructions,
 )
 
 if TYPE_CHECKING:
@@ -42,7 +43,12 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     def _window_state(self, widget: _W) -> SubWindowState:
         raise NotImplementedError
 
-    def _set_window_state(self, widget: _W, state: SubWindowState) -> None:
+    def _set_window_state(
+        self,
+        widget: _W,
+        state: SubWindowState,
+        inst: BackendInstructions,
+    ) -> None:
         raise NotImplementedError
 
     def _tab_title(self, i_tab: int) -> str:
@@ -60,7 +66,12 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     def _window_rect(self, widget: _W) -> WindowRect:
         raise NotImplementedError
 
-    def _set_window_rect(self, widget: _W, rect: WindowRect) -> None:
+    def _set_window_rect(
+        self,
+        widget: _W,
+        rect: WindowRect,
+        inst: BackendInstructions,
+    ) -> None:
         raise NotImplementedError
 
     def _window_anchor(self, widget: _W) -> WindowAnchor:

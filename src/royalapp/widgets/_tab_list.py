@@ -164,14 +164,19 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         sub_window.state_changed.connect(main._update_context)
 
         main._set_current_tab_index(self._i_tab)
-        if main._royalapp_main_window._new_widget_behavior is NewWidgetBehavior.TAB:
-            nwindows = len(self)
-            main._set_window_state(self._i_tab, nwindows - 1, SubWindowState.FULL)
-        else:
-            main._set_current_sub_window_index(len(self) - 1)
-            if autosize and (size_hint := sub_window.size_hint()):
-                left, top, _, _ = sub_window.window_rect
-                sub_window.window_rect = WindowRect(left, top, *size_hint)
+        with main._royalapp_main_window._animation_context(enabled=False):
+            if main._royalapp_main_window._new_widget_behavior is NewWidgetBehavior.TAB:
+                nwindows = len(self)
+                main._set_window_state(
+                    self._i_tab,
+                    nwindows - 1,
+                    SubWindowState.FULL,
+                )
+            else:
+                main._set_current_sub_window_index(len(self) - 1)
+                if autosize and (size_hint := sub_window.size_hint()):
+                    left, top, _, _ = sub_window.window_rect
+                    sub_window.window_rect = WindowRect(left, top, *size_hint)
         return sub_window
 
     def tile_windows(
@@ -180,6 +185,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         ncols: int | None = None,
     ) -> None:
         main = self._main_window()
+        inst = main._royalapp_main_window._instructions
         width, height = main._area_size()
         nrows, ncols = _norm_nrows_ncols(nrows, ncols, len(self))
 
@@ -193,7 +199,8 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
                 x = j * width / ncols
                 y = i * height / nrows
                 sub = self[idx]
-                main._set_window_rect(sub.widget, WindowRect.from_numbers(x, y, w, h))
+                rect = WindowRect.from_numbers(x, y, w, h)
+                main._set_window_rect(sub.widget, rect, inst)
         return None
 
     def _coerce_window_title(self, title: str | None) -> str:

@@ -216,11 +216,15 @@ class QSubWindow(QtW.QMdiSubWindow):
     def state(self) -> SubWindowState:
         return self._window_state
 
-    def _update_window_state(self, state: SubWindowState):
+    def _update_window_state(self, state: SubWindowState, animate: bool = True):
         state = SubWindowState(state)
         if self._subwindow_area().viewMode() != QtW.QMdiArea.ViewMode.SubWindowView:
             self._window_state = state
             return None
+        if animate:
+            _setter = self._set_geometry_animated
+        else:
+            _setter = self.setGeometry
         match state:
             case SubWindowState.MIN:
                 if self._window_state is SubWindowState.NORMAL:
@@ -235,11 +239,11 @@ class QSubWindow(QtW.QMdiSubWindow):
             case SubWindowState.MAX:
                 if self._window_state is SubWindowState.NORMAL:
                     self._last_geometry = self.geometry()
-                self._set_geometry_animated(self.parentWidget().geometry())
+                _setter(self.parentWidget().geometry())
                 self._title_bar._toggle_size_button.setIcon(_icon_normal())
                 self._widget.setVisible(True)
             case SubWindowState.NORMAL:
-                self._set_geometry_animated(self._last_geometry)
+                _setter(self._last_geometry)
                 self._title_bar._toggle_size_button.setIcon(_icon_max())
                 self._widget.setVisible(True)
                 if self._title_bar.is_upper_than_area():
@@ -247,7 +251,7 @@ class QSubWindow(QtW.QMdiSubWindow):
             case SubWindowState.FULL:
                 if self._window_state is SubWindowState.NORMAL:
                     self._last_geometry = self.geometry()
-                self._set_geometry_animated(self.parentWidget().geometry())
+                _setter(self.parentWidget().geometry())
         self._title_bar.setVisible(state is not SubWindowState.FULL)
         self._title_bar._minimize_button.setVisible(state is not SubWindowState.MIN)
         self._widget.setVisible(state is not SubWindowState.MIN)
@@ -265,12 +269,6 @@ class QSubWindow(QtW.QMdiSubWindow):
         self._title_bar.setProperty("isCurrent", is_current)
         self._title_bar.style().unpolish(self._title_bar)
         self._title_bar.style().polish(self._title_bar)
-
-    def move_over(self, other: QSubWindow, dx: int = 36, dy: int = 36):
-        rect = other.geometry()
-        rect.translate(dx, dy)
-        self._set_geometry_animated(rect)
-        return self
 
     def keyPressEvent(self, a0: QtGui.QKeyEvent | None) -> None:
         if a0.key() == QtCore.Qt.Key.Key_F11:

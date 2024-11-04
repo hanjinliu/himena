@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 import inspect
 from pathlib import Path
 from typing import Any, Generic, Hashable, TypeVar
@@ -15,6 +16,7 @@ from royalapp.types import (
     NewWidgetBehavior,
     DockArea,
     DockAreaString,
+    BackendInstructions,
 )
 from royalapp._app_model._context import AppContext
 from royalapp._descriptors import ProgramaticMethod, LocalReaderMethod
@@ -41,6 +43,7 @@ class MainWindow(Generic[_W]):
         self._tab_list = TabList(self._backend_main_window)
         self._new_widget_behavior = NewWidgetBehavior.WINDOW
         self._model_app = app
+        self._instructions = BackendInstructions()
         set_current_instance(app, self)
         self._backend_main_window._connect_activation_signal(
             self.events.window_activated
@@ -74,6 +77,15 @@ class MainWindow(Generic[_W]):
         idx = len(self.tabs) - 1
         self._backend_main_window._set_current_tab_index(idx)
         return self.tabs[idx]
+
+    @contextmanager
+    def _animation_context(self, enabled: bool):
+        old = self._instructions
+        self._instructions = self._instructions.updated(animate=enabled)
+        try:
+            yield None
+        finally:
+            self._instructions = old
 
     def _current_or_new_tab(self, title: str | None = None) -> tuple[int, TabArea[_W]]:
         if self._new_widget_behavior is NewWidgetBehavior.WINDOW:
@@ -208,18 +220,17 @@ class MainWindow(Generic[_W]):
             The sub-window instance that represents the output model.
         """
         sig = inspect.signature(fn)
-        back_widget_param, connection = self._backend_main_window._parametric_widget(
-            sig
-        )
-        widget_param = self.add_widget(back_widget_param)
+        back_main = self._backend_main_window
+        back_param_widget, connection = back_main._parametric_widget(sig)
+        param_widget = self.add_widget(back_param_widget)
 
         @connection
         def _callback(**kwargs):
             model = fn(**kwargs)
-            cls = self._backend_main_window._pick_widget_class(model.type)
+            cls = back_main._pick_widget_class(model.type)
             widget = cls.from_model(model)
-            rect = widget_param.window_rect
-            i_tab, i_win = widget_param._find_me(self)
+            rect = param_widget.window_rect
+            i_tab, i_win = param_widget._find_me(self)
             del self.tabs[i_tab][i_win]
             result_widget = self.tabs[i_tab].add_widget(
                 widget, title=model.title, autosize=False
@@ -231,7 +242,7 @@ class MainWindow(Generic[_W]):
             result_widget.window_rect = new_rect
             return None
 
-        return widget_param
+        return param_widget
 
     def read_file(self, file_path) -> SubWindow[_W]:
         """Read local file(s) and open as a new sub-window."""

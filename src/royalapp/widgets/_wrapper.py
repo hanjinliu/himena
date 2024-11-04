@@ -102,7 +102,8 @@ class SubWindow(WidgetWrapper[_W]):
 
     @state.setter
     def state(self, value: SubWindowState) -> None:
-        self._main_window()._set_window_state(self.widget, value)
+        inst = self._main_window()._royalapp_main_window._instructions
+        self._main_window()._set_window_state(self.widget, value, inst)
 
     @property
     def is_importable(self) -> bool:
@@ -157,7 +158,9 @@ class SubWindow(WidgetWrapper[_W]):
         anc = main._window_anchor(self.widget).update_for_window_rect(
             main._area_size(), rect
         )
-        main._set_window_rect(self.widget, rect)
+        main._set_window_rect(
+            self.widget, rect, main._royalapp_main_window._instructions
+        )
         main._set_window_anchor(self.widget, anc)
 
     @property

@@ -223,3 +223,14 @@ class Parametric(Callable[..., _T], Generic[_T]):
 
 
 Connection = Callable[[Callable[[WidgetDataModel], None]], None]
+
+
+class BackendInstructions(NamedTuple):
+    """Instructions for the backend."""
+
+    animate: bool = True
+
+    def updated(self, **kwargs) -> "BackendInstructions":
+        params = self._asdict()
+        params.update(kwargs)
+        return BackendInstructions(**params)

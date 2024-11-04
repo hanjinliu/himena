@@ -22,6 +22,7 @@ from royalapp.types import (
     ClipboardDataModel,
     SubWindowState,
     WindowRect,
+    BackendInstructions,
 )
 from royalapp.style import get_style
 from royalapp.app import get_event_loop_handler
@@ -410,17 +411,30 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _window_state(self, widget: QtW.QWidget) -> SubWindowState:
         return _get_subwindow(widget).state
 
-    def _set_window_state(self, widget: QtW.QWidget, state: SubWindowState) -> None:
-        _get_subwindow(widget)._update_window_state(state)
+    def _set_window_state(
+        self,
+        widget: QtW.QWidget,
+        state: SubWindowState,
+        inst: BackendInstructions,
+    ) -> None:
+        _get_subwindow(widget)._update_window_state(state, animate=inst.animate)
         return None
 
     def _window_rect(self, widget: QtW.QWidget) -> WindowRect:
         geo = _get_subwindow(widget).geometry()
         return WindowRect(geo.x(), geo.y(), geo.width(), geo.height())
 
-    def _set_window_rect(self, widget: QtW.QWidget, rect: WindowRect) -> None:
+    def _set_window_rect(
+        self,
+        widget: QtW.QWidget,
+        rect: WindowRect,
+        inst: BackendInstructions,
+    ) -> None:
         qrect = QtCore.QRect(rect.left, rect.top, rect.width, rect.height)
-        _get_subwindow(widget)._set_geometry_animated(qrect)
+        if inst.animate:
+            _get_subwindow(widget)._set_geometry_animated(qrect)
+        else:
+            _get_subwindow(widget).setGeometry(qrect)
         return None
 
     def _window_anchor(self, widget: QtW.QWidget) -> _anchor.WindowAnchor:
