@@ -440,12 +440,15 @@ class QDefaultTextEdit(QtW.QWidget):
     def to_model(self) -> WidgetDataModel:
         return WidgetDataModel(
             value=self.toPlainText(),
-            type=StandardTypes.TEXT,
+            type=self.model_type(),
             additional_data=TextFileMeta(
                 language=self._footer._language_combobox.currentText(),
                 spaces=int(self._footer._tab_spaces_combobox.currentText()),
             ),
         )
+
+    def model_type(self):
+        return StandardTypes.TEXT
 
     def size_hint(self) -> tuple[int, int]:
         return 400, 300

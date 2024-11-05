@@ -356,12 +356,22 @@ class QSubWindow(QtW.QMdiSubWindow):
             main_size.width() - g.right(), main_size.height() - g.bottom()
         )
 
-    def _pixmap_resized(self, size: QtCore.QSize) -> QtGui.QPixmap:
-        return self.grab().scaled(
+    def _pixmap_resized(
+        self,
+        size: QtCore.QSize,
+        outline: QtGui.QColor | None = None,
+    ) -> QtGui.QPixmap:
+        pixmap = self.grab().scaled(
             size,
             QtCore.Qt.AspectRatioMode.KeepAspectRatio,
             QtCore.Qt.TransformationMode.SmoothTransformation,
         )
+        if outline is not None:
+            painter = QtGui.QPainter(pixmap)
+            painter.setPen(QtGui.QPen(outline, 2))
+            painter.drawRect(pixmap.rect())
+            painter.end()
+        return pixmap
 
     def _find_me(self) -> tuple[int, int]:
         return self._find_me_and_main()[0]
@@ -540,7 +550,7 @@ class QSubWindowTitleBar(QtW.QFrame):
         if event.button() == QtCore.Qt.MouseButton.LeftButton:
             self._drag_position = None
             if self.is_upper_than_area():
-                self._subwindow.state_change_requested(SubWindowState.MAX)
+                self._subwindow.state_change_requested.emit(SubWindowState.MAX)
         return super().mouseReleaseEvent(event)
 
     def mouseDoubleClickEvent(self, event: QtGui.QMouseEvent):

@@ -9,8 +9,6 @@ WidgetClass = Union[Callable[[WidgetDataModel], QtW.QWidget], type[QtW.QWidget]]
 
 # NOTE: Different applications may use different widgets for the same data type.
 _APP_TYPE_TO_QWIDGET: dict[str | None, dict[Hashable, WidgetClass]] = {}
-# NOTE: A widget always has a unique data type regardless of applications.
-_QWIDGET_TO_TYPE: dict[WidgetClass, Hashable] = {}
 
 _F = TypeVar("_F", bound=WidgetClass)
 
@@ -89,6 +87,4 @@ def pick_widget_class(app_name: str, type: Hashable) -> WidgetClass:
     return _fallback_dict[type]
 
 
-def type_for_widget(widget: WidgetClass) -> Hashable:
-    """Get the file type for the given widget class."""
-    return _QWIDGET_TO_TYPE[widget]
+_T = TypeVar("_T")

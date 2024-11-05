@@ -86,6 +86,9 @@ class QDefaultImageView(QtW.QWidget):
             type=self._model.type,
         )
 
+    def model_type(self) -> str:
+        return self._model.type
+
     def size_hint(self) -> tuple[int, int]:
         return 400, 400
 

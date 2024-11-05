@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Generic, TYPE_CHECKING, TypeVar
+from typing import Generic, TYPE_CHECKING, Hashable, TypeVar
 from uuid import uuid4
 import weakref
 
@@ -125,7 +125,12 @@ class SubWindow(WidgetWrapper[_W]):
         return callable(is_modified_func) and is_modified_func()
 
     def size_hint(self) -> tuple[int, int] | None:
+        """Size hint of the sub-window."""
         return getattr(self.widget, "size_hint", lambda: None)()
+
+    def model_type(self) -> Hashable | None:
+        """Type of the widget data model."""
+        return getattr(self.widget, "model_type", lambda: None)()
 
     def to_model(self) -> WidgetDataModel:
         """Export the widget data."""

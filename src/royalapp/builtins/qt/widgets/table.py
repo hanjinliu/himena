@@ -45,8 +45,11 @@ class QDefaultTableWidget(QtW.QTableWidget):
             value=self._to_list(
                 slice(0, self.rowCount()), slice(0, self.columnCount())
             ),
-            type=StandardTypes.TABLE,
+            type=self.model_type(),
         )
+
+    def model_type(self):
+        return StandardTypes.TABLE
 
     def size_hint(self) -> tuple[int, int]:
         return 400, 300
