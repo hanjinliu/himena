@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from logging import getLogger
-import inspect
 from pathlib import Path
-from typing import Any, Generic, Hashable, TypeVar
+from typing import Any, Callable, Generic, Hashable, TypeVar
 from weakref import WeakSet
 from app_model import Application
 from app_model.expressions import create_context
@@ -104,7 +103,8 @@ class MainWindow(Generic[_W]):
         self.events.window_activated.emit(tab[i_win])
         return None
 
-    def widget_for_id(self, identifier: int) -> SubWindow[_W] | None:
+    def window_for_id(self, identifier: int) -> SubWindow[_W] | None:
+        """Retrieve a widget by its identifier."""
         for tab in self.tabs:
             for widget in tab:
                 if widget._identifier == identifier:
@@ -229,7 +229,7 @@ class MainWindow(Generic[_W]):
 
     def add_parametric_element(
         self,
-        fn: Parametric[_T],
+        func: Callable[..., _T],
         *,
         title: str | None = None,
     ) -> SubWindow[_W]:
@@ -251,9 +251,10 @@ class MainWindow(Generic[_W]):
         SubWindow
             The sub-window instance that represents the output model.
         """
+        fn = Parametric(func)
         if title is None:
-            title = getattr(fn, "__name__", "Run ...")
-        sig = inspect.signature(fn)
+            title = fn.name
+        sig = fn.get_signature()
         back_main = self._backend_main_window
         back_param_widget, connection = back_main._parametric_widget(sig)
         param_widget = self.add_widget(back_param_widget, title=title)
@@ -274,6 +275,9 @@ class MainWindow(Generic[_W]):
             else:
                 new_rect = rect
             result_widget.window_rect = new_rect
+            if fn.sources:
+                new_method = fn.to_converter_method(kwargs)
+                result_widget._update_widget_data_model_method(new_method)
             return None
 
         return param_widget

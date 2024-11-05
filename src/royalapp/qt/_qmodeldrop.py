@@ -82,7 +82,7 @@ class QModelDrop(QtW.QWidget):
         )
 
     def widget_for_id(self) -> QSubWindow | None:
-        return get_main_window(self).widget_for_id(self._target_id)
+        return get_main_window(self).window_for_id(self._target_id)
 
     def value(self) -> WidgetDataModel | None:
         if widget := self.widget_for_id():

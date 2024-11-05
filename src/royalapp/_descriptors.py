@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from pathlib import Path
 from pydantic_compat import BaseModel, Field
 
@@ -26,6 +26,7 @@ class ConverterMethod(MethodDescriptor):
 
     originals: list[MethodDescriptor]
     action_id: str
+    parameters: dict[str, Any] = Field(default_factory=dict)
 
 
 class SaveBehavior(BaseModel):

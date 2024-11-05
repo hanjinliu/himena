@@ -1,5 +1,8 @@
+from functools import wraps
+import inspect
 from pathlib import Path
 from typing import (
+    Any,
     Callable,
     Hashable,
     Literal,
@@ -10,7 +13,7 @@ from typing import (
 )
 from enum import Enum
 from pydantic_compat import BaseModel, Field, field_validator
-from royalapp._descriptors import MethodDescriptor, LocalReaderMethod
+from royalapp._descriptors import MethodDescriptor, LocalReaderMethod, ConverterMethod
 
 
 class DockArea(Enum):
@@ -218,8 +221,50 @@ class WindowRect(NamedTuple):
 class Parametric(Callable[..., _T], Generic[_T]):
     """Parametric function that returns a widget data model."""
 
+    def __init__(
+        self,
+        func: Callable[..., _T],
+        sources: list[MethodDescriptor] = [],
+        action_id: str | None = None,
+    ):
+        if isinstance(func, Parametric):
+            if len(sources) > 0 or action_id is not None:
+                raise TypeError(
+                    "The first argument must not be a Parametric if sources are given."
+                )
+            self._func = func._func
+            sources = func.sources
+            action_id = func.action_id
+        else:
+            self._func = func
+        wraps(func)(self)
+        self._sources = list(sources)
+        self._action_id = action_id
+
     def __call__(self, *args, **kwargs) -> WidgetDataModel[_T]:
-        raise NotImplementedError("This method must be implemented by subclasses.")
+        return self._func(*args, **kwargs)
+
+    @property
+    def name(self) -> str:
+        if hasattr(self._func, "__name__"):
+            return self._func.__name__
+        return str(self._func)
+
+    @property
+    def sources(self) -> list[MethodDescriptor]:
+        return self._sources
+
+    @property
+    def action_id(self) -> str | None:
+        return self._action_id
+
+    def to_converter_method(self, parameters: dict[str, Any]) -> ConverterMethod:
+        return ConverterMethod(
+            originals=self.sources, action_id=self.action_id, parameters=parameters
+        )
+
+    def get_signature(self):
+        return inspect.signature(self._func)
 
 
 Connection = Callable[[Callable[[WidgetDataModel], None]], None]

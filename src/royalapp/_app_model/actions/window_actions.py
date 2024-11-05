@@ -139,6 +139,7 @@ def maximize_current_window(ui: MainWindow) -> None:
         {"id": MenuId.WINDOW, "group": STATE_GROUP},
         {"id": MenuId.WINDOW_TITLE_BAR, "group": STATE_GROUP},
     ],
+    keybindings=[KeyBindingRule(primary=KeyCode.F11)],
     enablement=_ctx.has_sub_windows,
 )
 def toggle_full_screen(ui: MainWindow) -> None:

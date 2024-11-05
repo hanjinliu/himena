@@ -22,7 +22,7 @@ from app_model.expressions import BoolOp
 
 from royalapp._app_model import AppContext as ctx
 from royalapp._descriptors import ConverterMethod, ProgramaticMethod
-from royalapp.types import DockArea, DockAreaString, WidgetDataModel
+from royalapp.types import DockArea, DockAreaString, WidgetDataModel, Parametric
 from royalapp import _utils
 
 if TYPE_CHECKING:
@@ -456,27 +456,34 @@ def _tooltip_from_func(func: Callable) -> str | None:
     return tooltip
 
 
+def _is_widget_data_model(a):
+    return WidgetDataModel in (get_origin(a), a)
+
+
+def _is_parametric(a):
+    return Parametric in (get_origin(a), a)
+
+
 def _make_function_callback(f: _F, action_id: str) -> _F:
     try:
         sig = inspect.signature(f)
     except Exception:
         return f
 
-    def is_widget_data_model(a):
-        return WidgetDataModel in (get_origin(a), a)
-
     keys_model: list[str] = []
     for key, param in sig.parameters.items():
-        if is_widget_data_model(param.annotation):
+        if _is_widget_data_model(param.annotation):
             keys_model.append(key)
 
     for key in keys_model:
         f.__annotations__[key] = WidgetDataModel
 
-    if not is_widget_data_model(sig.return_annotation):
-        return f
-    else:
+    if _is_widget_data_model(sig.return_annotation):
         f.__annotations__["return"] = WidgetDataModel
+    elif _is_parametric(sig.return_annotation):
+        f.__annotations__["return"] = Parametric
+    else:
+        return f
 
     if len(keys_model) == 0:
         return f
@@ -488,14 +495,17 @@ def _make_function_callback(f: _F, action_id: str) -> _F:
         originals = []
         for key in keys_model:
             input_ = bound.arguments[key]
-            if isinstance(out, WidgetDataModel) and isinstance(input_, WidgetDataModel):
+            if isinstance(input_, WidgetDataModel):
                 if input_.method is None:
                     method = ProgramaticMethod()
                 else:
                     method = input_.method
                 originals.append(method)
-        if len(originals) > 0:
-            out.method = ConverterMethod(originals=originals, action_id=action_id)
+        if isinstance(out, WidgetDataModel):
+            if len(originals) > 0:
+                out.method = ConverterMethod(originals=originals, action_id=action_id)
+        elif callable(out) and f.__annotations__["return"] is Parametric:
+            out = Parametric(out, sources=originals, action_id=action_id)
         return out
 
     return _new_f

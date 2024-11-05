@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterator
+from typing import TYPE_CHECKING, Callable, Iterator
 from app_model.backends.qt import QModelMenu
 from qtpy import QtWidgets as QtW
 from qtpy import QtCore, QtGui
+from qtpy.QtCore import Qt
 from superqt import QIconifyIcon
 from superqt.utils import qthrottled
 from royalapp import anchor as _anchor
@@ -22,7 +23,7 @@ if TYPE_CHECKING:
 class QSubWindowArea(QtW.QMdiArea):
     def __init__(self):
         super().__init__()
-        self.viewport().setFocusPolicy(QtCore.Qt.FocusPolicy.ClickFocus)
+        self.viewport().setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self._last_press_pos: QtCore.QPoint | None = None
         self._last_drag_pos: QtCore.QPoint | None = None
 
@@ -60,27 +61,27 @@ class QSubWindowArea(QtW.QMdiArea):
     def mousePressEvent(self, event: QtGui.QMouseEvent):
         self._last_drag_pos = self._last_press_pos = event.pos()
         if (
-            event.buttons() == QtCore.Qt.MouseButton.LeftButton
-            and event.modifiers() & QtCore.Qt.KeyboardModifier.ControlModifier
+            event.buttons() == Qt.MouseButton.LeftButton
+            and event.modifiers() & Qt.KeyboardModifier.ControlModifier
         ):
-            self.setCursor(QtCore.Qt.CursorShape.ClosedHandCursor)
+            self.setCursor(Qt.CursorShape.ClosedHandCursor)
         return None
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent):
-        if event.buttons() == QtCore.Qt.MouseButton.LeftButton:
+        if event.buttons() == Qt.MouseButton.LeftButton:
             if self._last_drag_pos is None:
                 return None
-            if event.modifiers() & QtCore.Qt.KeyboardModifier.ControlModifier:
+            if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
                 dpos = event.pos() - self._last_drag_pos
                 for sub_window in self.subWindowList():
                     sub_window.move(sub_window.pos() + dpos)
                 self._reanchor_windows()
-                self.setCursor(QtCore.Qt.CursorShape.ClosedHandCursor)
+                self.setCursor(Qt.CursorShape.ClosedHandCursor)
         self._last_drag_pos = event.pos()
         return None
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
-        self.setCursor(QtCore.Qt.CursorShape.ArrowCursor)
+        self.setCursor(Qt.CursorShape.ArrowCursor)
         self._last_press_pos = self._last_drag_pos = None
         return None
 
@@ -124,6 +125,11 @@ def _get_icon(name: str, rotate=None):
 
 
 @lru_cache(maxsize=1)
+def _icon_menu() -> QtGui.QIcon:
+    return _get_icon("material-symbols:menu")
+
+
+@lru_cache(maxsize=1)
 def _icon_min() -> QtGui.QIcon:
     return _get_icon("material-symbols:minimize-rounded")
 
@@ -160,14 +166,14 @@ class QSubWindow(QtW.QMdiSubWindow):
 
     def __init__(self, widget: QtW.QWidget, title: str):
         super().__init__()
-        self.setWindowFlags(QtCore.Qt.WindowType.FramelessWindowHint)
-        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
-        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_Hover, True)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        self.setAttribute(Qt.WidgetAttribute.WA_Hover, True)
 
         self._window_state = SubWindowState.NORMAL
         self._resize_state = ResizeState.NONE
         self._window_anchor: _anchor.WindowAnchor = _anchor.NoAnchor
-        self._current_button: int = QtCore.Qt.MouseButton.NoButton
+        self._current_button: int = Qt.MouseButton.NoButton
         self._widget = widget
 
         self._central_widget = QCentralWidget(self)
@@ -241,11 +247,11 @@ class QSubWindow(QtW.QMdiSubWindow):
                 if self._window_state is SubWindowState.NORMAL:
                     self._last_geometry = self.geometry()
                 _setter(self.parentWidget().geometry())
-                self._title_bar._toggle_size_button.setIcon(_icon_normal())
+                self._title_bar._toggle_size_btn.setIcon(_icon_normal())
                 self._widget.setVisible(True)
             case SubWindowState.NORMAL:
                 _setter(self._last_geometry)
-                self._title_bar._toggle_size_button.setIcon(_icon_max())
+                self._title_bar._toggle_size_btn.setIcon(_icon_max())
                 self._widget.setVisible(True)
                 if self._title_bar.is_upper_than_area():
                     self.move(self.pos().x(), 0)
@@ -254,15 +260,15 @@ class QSubWindow(QtW.QMdiSubWindow):
                     self._last_geometry = self.geometry()
                 _setter(self.parentWidget().geometry())
         self._title_bar.setVisible(state is not SubWindowState.FULL)
-        self._title_bar._minimize_button.setVisible(state is not SubWindowState.MIN)
+        self._title_bar._minimize_btn.setVisible(state is not SubWindowState.MIN)
         self._widget.setVisible(state is not SubWindowState.MIN)
         self._window_state = state
-        self._current_button: int = QtCore.Qt.MouseButton.NoButton
+        self._current_button: int = Qt.MouseButton.NoButton
         return None
 
     def _set_minimized(self, geometry: QtCore.QRect, number: int = 0):
         self.move(2, geometry.height() - (self._title_bar.height() + 8) * (number + 1))
-        self._title_bar._toggle_size_button.setIcon(_icon_normal())
+        self._title_bar._toggle_size_btn.setIcon(_icon_normal())
         self._widget.setVisible(False)
 
     def set_is_current(self, is_current: bool):
@@ -270,11 +276,6 @@ class QSubWindow(QtW.QMdiSubWindow):
         self._title_bar.setProperty("isCurrent", is_current)
         self._title_bar.style().unpolish(self._title_bar)
         self._title_bar.style().polish(self._title_bar)
-
-    def keyPressEvent(self, a0: QtGui.QKeyEvent | None) -> None:
-        if a0.key() == QtCore.Qt.Key.Key_F11:
-            self._title_bar._toggle_full_screen()
-        return super().keyPressEvent(a0)
 
     def event(self, a0: QtCore.QEvent) -> bool:
         if a0.type() == QtCore.QEvent.Type.HoverMove:
@@ -284,7 +285,7 @@ class QSubWindow(QtW.QMdiSubWindow):
             self._current_button = a0.buttons()
             self._resize_state = self._check_resize_state(a0.pos())
         elif a0.type() == QtCore.QEvent.Type.MouseButtonRelease:
-            self._current_button = QtCore.Qt.MouseButton.NoButton
+            self._current_button = Qt.MouseButton.NoButton
         return super().event(a0)
 
     def _check_resize_state(
@@ -304,9 +305,9 @@ class QSubWindow(QtW.QMdiSubWindow):
         if self._window_state is not SubWindowState.NORMAL:
             return None
         resize_state = self._check_resize_state(event_pos)
-        if self._current_button == QtCore.Qt.MouseButton.NoButton:
+        if self._current_button == Qt.MouseButton.NoButton:
             self.setCursor(resize_state.to_cursor_shape())
-        elif self._current_button & QtCore.Qt.MouseButton.LeftButton:
+        elif self._current_button & Qt.MouseButton.LeftButton:
             min_size = self._widget.minimumSize().expandedTo(
                 self._title_bar.minimumSize()
             )
@@ -363,8 +364,8 @@ class QSubWindow(QtW.QMdiSubWindow):
     ) -> QtGui.QPixmap:
         pixmap = self.grab().scaled(
             size,
-            QtCore.Qt.AspectRatioMode.KeepAspectRatio,
-            QtCore.Qt.TransformationMode.SmoothTransformation,
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation,
         )
         if outline is not None:
             painter = QtGui.QPainter(pixmap)
@@ -385,21 +386,44 @@ class QSubWindow(QtW.QMdiSubWindow):
         raise RuntimeError("Could not find the sub-window in the main window.")
 
 
+_TITLE_HEIGHT = 18
+
+
+class QTitleBarToolButton(QtW.QToolButton):
+    def __init__(
+        self,
+        icon: QtGui.QIcon,
+        tooltip: str,
+        callback: Callable[[], None],
+    ):
+        super().__init__()
+        self.setFixedSize(_TITLE_HEIGHT - 2, _TITLE_HEIGHT - 2)
+        self.setIcon(icon)
+        self.setIconSize(QtCore.QSize(_TITLE_HEIGHT - 3, _TITLE_HEIGHT - 3))
+        self.setStyleSheet("QTitleBarToolButton {background-color: transparent;}")
+        self.setToolTip(tooltip)
+        self.clicked.connect(callback)
+
+
 class QSubWindowTitleBar(QtW.QFrame):
     def __init__(self, subwindow: QSubWindow, title: str):
         super().__init__()
         self.setFrameShape(QtW.QFrame.Shape.StyledPanel)
         self.setFrameShadow(QtW.QFrame.Shadow.Raised)
-        height = 18
-        self.setFixedHeight(height)
+        self.setFixedHeight(_TITLE_HEIGHT)
         self.setMinimumWidth(100)
-        self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self._show_context_menu)
 
-        self._title = title
+        self._menu_btn = QTitleBarToolButton(
+            icon=_icon_menu(),
+            tooltip="Menu for this window",
+            callback=self._show_context_menu_at_button,
+        )
+
         self._title_label = QtW.QLabel(title)
         self._title_label.setIndent(3)
-        self._title_label.setFixedHeight(height)
+        self._title_label.setFixedHeight(_TITLE_HEIGHT)
         self._title_label.setContentsMargins(0, 0, 0, 0)
         self._title_label.setSizePolicy(
             QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Fixed
@@ -411,41 +435,30 @@ class QSubWindowTitleBar(QtW.QFrame):
         def _(new_name: str):
             self._subwindow.rename_requested.emit(new_name)
 
-        self._minimize_button = QtW.QToolButton()
-        self._minimize_button.clicked.connect(self._minimize)
-        self._minimize_button.setToolTip("Minimize this window")
-        self._minimize_button.setFixedSize(height - 2, height - 2)
-        self._minimize_button.setIcon(_icon_min())
-        self._minimize_button.setIconSize(QtCore.QSize(height - 3, height - 3))
+        self._minimize_btn = QTitleBarToolButton(
+            icon=_icon_min(),
+            tooltip="Minimize this window",
+            callback=self._minimize,
+        )
+        self._toggle_size_btn = QTitleBarToolButton(
+            icon=_icon_max(),
+            tooltip="Toggle the size of this window",
+            callback=self._toggle_size,
+        )
+        self._close_btn = QTitleBarToolButton(
+            icon=_icon_close(),
+            tooltip="Close this window",
+            callback=self._close,
+        )
 
-        self._toggle_size_button = QtW.QToolButton()
-        self._toggle_size_button.clicked.connect(self._toggle_size)
-        self._toggle_size_button.setToolTip("Toggle the size of this window")
-        self._toggle_size_button.setFixedSize(height - 2, height - 2)
-        self._toggle_size_button.setIcon(_icon_max())
-        self._toggle_size_button.setIconSize(QtCore.QSize(height - 3, height - 3))
-
-        self._close_button = QtW.QToolButton()
-        self._close_button.clicked.connect(self._close)
-        self._close_button.setToolTip("Close this window")
-        self._close_button.setFixedSize(height - 2, height - 2)
-        self._close_button.setIcon(_icon_close())
-        self._close_button.setIconSize(QtCore.QSize(height - 3, height - 3))
-
-        layout = QtW.QHBoxLayout()
+        layout = QtW.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(1)
+        layout.addWidget(self._menu_btn)
         layout.addWidget(self._title_label)
-        layout.addWidget(
-            self._minimize_button, alignment=QtCore.Qt.AlignmentFlag.AlignRight
-        )
-        layout.addWidget(
-            self._toggle_size_button, alignment=QtCore.Qt.AlignmentFlag.AlignRight
-        )
-        layout.addWidget(
-            self._close_button, alignment=QtCore.Qt.AlignmentFlag.AlignRight
-        )
-        self.setLayout(layout)
+        layout.addWidget(self._minimize_btn, alignment=Qt.AlignmentFlag.AlignRight)
+        layout.addWidget(self._toggle_size_btn, alignment=Qt.AlignmentFlag.AlignRight)
+        layout.addWidget(self._close_btn, alignment=Qt.AlignmentFlag.AlignRight)
 
         self._drag_position: QtCore.QPoint | None = None
         self._is_ctrl_drag: bool = False
@@ -496,8 +509,8 @@ class QSubWindowTitleBar(QtW.QFrame):
     # drag events for moving the window
     def mousePressEvent(self, event: QtGui.QMouseEvent):
         self._is_ctrl_drag = False
-        if event.button() == QtCore.Qt.MouseButton.LeftButton:
-            if event.modifiers() & QtCore.Qt.KeyboardModifier.ControlModifier:
+        if event.button() == Qt.MouseButton.LeftButton:
+            if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
                 self._is_ctrl_drag = True
                 drag = QtGui.QDrag(self._subwindow)
                 mime_data = QtCore.QMimeData()
@@ -519,14 +532,14 @@ class QSubWindowTitleBar(QtW.QFrame):
     def mouseMoveEvent(self, event: QtGui.QMouseEvent):
         _subwindow = self._subwindow
         if (
-            event.buttons() == QtCore.Qt.MouseButton.LeftButton
+            event.buttons() == Qt.MouseButton.LeftButton
             and self._drag_position is not None
             and _subwindow._resize_state is ResizeState.NONE
             and not self._is_ctrl_drag
         ):
             if _subwindow._window_state == SubWindowState.MAX:
                 # change to normal without moving
-                self._toggle_size_button.setIcon(_icon_max())
+                self._toggle_size_btn.setIcon(_icon_max())
                 _subwindow._widget.setVisible(True)
                 _subwindow._window_state = SubWindowState.NORMAL
             new_pos = event.globalPos() - self._drag_position
@@ -547,19 +560,19 @@ class QSubWindowTitleBar(QtW.QFrame):
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
         self._is_ctrl_drag = False
-        if event.button() == QtCore.Qt.MouseButton.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             self._drag_position = None
             if self.is_upper_than_area():
                 self._subwindow.state_change_requested.emit(SubWindowState.MAX)
         return super().mouseReleaseEvent(event)
 
     def mouseDoubleClickEvent(self, event: QtGui.QMouseEvent):
-        if event.button() == QtCore.Qt.MouseButton.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             self._toggle_size()
         return super().mouseDoubleClickEvent(event)
 
     def wheelEvent(self, event: QtGui.QWheelEvent):
-        if event.modifiers() & QtCore.Qt.KeyboardModifier.ControlModifier:
+        if event.modifiers() == Qt.KeyboardModifier.NoModifier:
             i_tab, i_win = self._subwindow._find_me()
             main = get_main_window(self)
             sub = main.tabs[i_tab][i_win]
@@ -575,6 +588,14 @@ class QSubWindowTitleBar(QtW.QFrame):
         return self_pos.y() < parent_pos.y()
 
     def _show_context_menu(self):
+        return self._show_context_menu_at(QtGui.QCursor.pos())
+
+    def _show_context_menu_at_button(self):
+        pos_local = self._menu_btn.rect().bottomLeft()
+        pos_global = self._menu_btn.mapToGlobal(pos_local)
+        return self._show_context_menu_at(pos_global)
+
+    def _show_context_menu_at(self, pos: QtCore.QPoint):
         """Show the context menu at the given position."""
         main = get_main_window(self)
         app = main._model_app
@@ -585,7 +606,7 @@ class QSubWindowTitleBar(QtW.QFrame):
         ctx = main._ctx_keys
         ctx._update(main)
         context_menu.update_from_context(ctx.dict())
-        context_menu.exec_(QtGui.QCursor.pos())
+        context_menu.exec_(pos)
         return None
 
 
