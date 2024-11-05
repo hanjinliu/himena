@@ -3,6 +3,7 @@ from __future__ import annotations
 from functools import reduce, wraps
 import inspect
 import operator
+from uuid import uuid4
 from typing import (
     Callable,
     Hashable,
@@ -257,12 +258,13 @@ class PluginInterface:
 
         def _inner(wf: Callable):
             _title = _normalize_title(title, wf)
+            _uuid = uuid4().int
 
             def _callback(ui: MainWindow) -> None:
                 if singleton:
                     for _backend_dock in ui._dock_widgets:
                         _dock = cast("DockWidget", _backend_dock._royalapp_widget)
-                        if id(wf) != _dock._identifier:
+                        if _uuid != _dock._identifier:
                             continue
                         _dock.visible = not _dock.visible
                         return None
@@ -270,10 +272,13 @@ class PluginInterface:
                     widget = wf(ui)
                 except TypeError:
                     widget = wf()
-                dock = ui.add_dock_widget(
-                    widget, title=_title, area=area, allowed_areas=allowed_areas
+                ui.add_dock_widget(
+                    widget,
+                    title=_title,
+                    area=area,
+                    allowed_areas=allowed_areas,
+                    _identifier=_uuid,
                 )
-                dock._identifier = id(wf)
                 return None
 
             action = Action(

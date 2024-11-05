@@ -28,6 +28,7 @@ dependencies = [
   "pydantic_compat>=0.1.2",
   "qtpy>=2.3.1",
   "superqt[iconify]>=0.6.1",
+  "magicgui>=0.9.1",
   "platformdirs",
   "pygments>=2.18.0",
 ]

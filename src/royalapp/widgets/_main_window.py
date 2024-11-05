@@ -89,16 +89,23 @@ class MainWindow(Generic[_W]):
         finally:
             self._instructions = old
 
-    def _current_or_new_tab(self, title: str | None = None) -> tuple[int, TabArea[_W]]:
+    def widget_for_id(self, identifier: int) -> SubWindow[_W] | None:
+        for tab in self.tabs:
+            for widget in tab:
+                if widget._identifier == identifier:
+                    return widget
+        return None
+
+    def _current_or_new_tab(self) -> tuple[int, TabArea[_W]]:
         if self._new_widget_behavior is NewWidgetBehavior.WINDOW:
             if len(self.tabs) == 0:
-                self.add_tab(title)
+                self.add_tab()
                 idx = 0
             else:
                 idx = self._backend_main_window._current_tab_index()
             tabarea = self.tabs[idx]
         else:
-            tabarea = self.add_tab(title)
+            tabarea = self.add_tab()
             idx = len(self.tabs) - 1
         return idx, tabarea
 
@@ -124,7 +131,7 @@ class MainWindow(Generic[_W]):
         SubWindow
             The sub-window handler.
         """
-        _, tabarea = self._current_or_new_tab(title)
+        _, tabarea = self._current_or_new_tab()
         return tabarea.add_widget(widget, title=title)
 
     def add_dock_widget(
@@ -134,6 +141,7 @@ class MainWindow(Generic[_W]):
         title: str | None = None,
         area: DockAreaString | DockArea | None = DockArea.RIGHT,
         allowed_areas: list[DockAreaString | DockArea] | None = None,
+        _identifier: int | None = None,
     ) -> DockWidget[_W]:
         """
         Add a custom widget as a dock widget of the main window.
@@ -158,7 +166,7 @@ class MainWindow(Generic[_W]):
         self._backend_main_window.add_dock_widget(
             widget, title=title, area=area, allowed_areas=allowed_areas
         )
-        dock = DockWidget(widget, self._backend_main_window)
+        dock = DockWidget(widget, self._backend_main_window, identifier=_identifier)
         self._dock_widgets.add(dock.widget)
         return dock
 

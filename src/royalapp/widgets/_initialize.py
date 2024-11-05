@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TypeVar
+from logging import getLogger
 from app_model import Application
 from royalapp.types import Parametric, WidgetDataModel, ClipboardDataModel
 from royalapp.widgets._main_window import MainWindow
@@ -11,6 +12,7 @@ _W = TypeVar("_W")  # backend widget type
 
 _INITIALIZED_APPLICATIONS: dict[str, Application] = {}
 _APP_INSTANCES: dict[str, list[MainWindow]] = {}
+_LOGGER = getLogger(__name__)
 
 
 def current_instance(name: str) -> MainWindow[_W]:
@@ -51,14 +53,17 @@ def _init_application(app: Application) -> None:
     ### providers and processors
     @app.injection_store.mark_provider
     def _current_instance() -> MainWindow:
+        _LOGGER.debug("providing for %r", MainWindow.__name__)
         return current_instance(app.name)
 
     @app.injection_store.mark_provider
     def _current_tab_area() -> TabArea:
+        _LOGGER.debug("providing for %r", TabArea.__name__)
         return current_instance(app.name).tabs.current()
 
     @app.injection_store.mark_provider
     def _current_window() -> SubWindow:
+        _LOGGER.debug("providing for %r", SubWindow.__name__)
         ins = current_instance(app.name)
         if area := ins.tabs.current():
             return area.current()
@@ -66,10 +71,12 @@ def _init_application(app: Application) -> None:
 
     @app.injection_store.mark_provider
     def _provide_data_model() -> WidgetDataModel:
+        _LOGGER.debug("providing for %r", WidgetDataModel.__name__)
         return current_instance(app.name)._provide_file_output()[0]
 
     @app.injection_store.mark_processor
     def _process_file_input(file_data: WidgetDataModel) -> None:
+        _LOGGER.debug("processing %r", file_data)
         ins = current_instance(app.name)
         sub_win = ins.add_data_model(file_data)
         if (method := file_data.method) is not None:
@@ -78,21 +85,25 @@ def _init_application(app: Application) -> None:
 
     @app.injection_store.mark_processor
     def _process_file_inputs(file_data: list[WidgetDataModel]) -> None:
+        _LOGGER.debug("processing %r", file_data)
         for each in file_data:
             _process_file_input(each)
 
     @app.injection_store.mark_provider
     def _get_clipboard_data() -> ClipboardDataModel:
+        _LOGGER.debug("providing for %r", ClipboardDataModel.__name__)
         return current_instance(app.name)._backend_main_window._clipboard_data()
 
     @app.injection_store.mark_processor
     def _process_clipboard_data(clip_data: ClipboardDataModel) -> None:
+        _LOGGER.debug("processing %r", clip_data)
         ins = current_instance(app.name)
         ins._backend_main_window._set_clipboard_data(clip_data)
         return None
 
     @app.injection_store.mark_processor
     def _process_parametric(fn: Parametric) -> None:
+        _LOGGER.debug("processing %r", fn)
         ins = current_instance(app.name)
         ins.add_parametric_element(fn)
         return None

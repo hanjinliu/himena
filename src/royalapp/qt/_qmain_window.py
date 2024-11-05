@@ -206,21 +206,21 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         tab_name : str
             Name of the tab.
         """
+        _LOGGER.info("Adding tab of title %r", tab_name)
         return self._tab_widget.add_tab_area(tab_name)
 
     def add_widget(
         self,
         widget: _T,
         i_tab: int,
-        title: str | None = None,
+        title: str,
     ) -> QSubWindow:
         if not isinstance(widget, QtW.QWidget):
             raise TypeError(
                 f"`widget` must be a QtW.QWidget instance, got {type(widget)}."
             )
         tab = self._tab_widget.widget_area(i_tab)
-        if tab is None:
-            tab = self.add_tab("Tab")
+        _LOGGER.info("Adding widget of title %r to tab %r", title, i_tab)
         subwindow = tab.add_widget(widget, title)
         return subwindow
 
@@ -280,7 +280,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         _dict = ctx.dict()
         self._menubar.update_from_context(_dict)
         _msec = (timer() - _time_0) * 1000
-        _LOGGER.debug(f"Context update took {_msec:.3f} msec")
+        _LOGGER.debug("Context update took %.3f msec", _msec)
 
     def _run_app(self):
         return get_event_loop_handler("qt", self._app_name).run_app()
@@ -310,7 +310,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         for i in range(len(subwindows)):
             subwindows[i].set_is_current(i == i_window)
         area.setActiveSubWindow(subwindows[i_window])
-        _LOGGER.info(f"Set current sub-window index to {i_window}")
+        _LOGGER.info("Programatically set current sub-window index to %r", i_window)
         return None
 
     def _tab_title(self, i_tab: int) -> str:
@@ -400,11 +400,13 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _del_widget_at(self, i_tab: int, i_window: int) -> None:
         if i_tab < 0 or i_window < 0:
             raise ValueError("Invalid tab or window index.")
+        _LOGGER.info("Deleting widget at tab %r, window %r", i_tab, i_window)
         tab = self._tab_widget.widget_area(i_tab)
         tab.removeSubWindow(tab.subWindowList()[i_window])
         return None
 
     def _del_tab_at(self, i_tab: int) -> None:
+        _LOGGER.info("Deleting tab at index %r", i_tab)
         self._tab_widget.remove_tab_area(i_tab)
         return None
 
@@ -491,10 +493,12 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
                 qimg = sub.main_widget().grab().toImage()
             else:
                 raise ValueError("No active window.")
+        else:
+            raise ValueError(f"Invalid target name {target!r}.")
         return ArrayQImage(qimg)
 
     def _parametric_widget(self, sig) -> QtW.QWidget:
-        from magicgui.widgets import Container, PushButton  # TODO: remove magicgui
+        from magicgui.widgets import Container, PushButton
 
         container = Container.from_signature(sig)
         btn = PushButton(text="Run", gui_only=True)
@@ -507,6 +511,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
             btn.clicked.connect(_callback)
 
+        _LOGGER.info("Created parametric widget for %r", sig)
         return container.native, connect
 
     def _move_focus_to(self, win: QtW.QWidget) -> None:

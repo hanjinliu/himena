@@ -16,6 +16,7 @@ from royalapp.qt._qrename import QRenameLineEdit
 
 if TYPE_CHECKING:
     from royalapp.qt._qmain_window import QMainWindow
+    from royalapp.qt.main_window import MainWindowQt
 
 
 class QSubWindowArea(QtW.QMdiArea):
@@ -355,12 +356,22 @@ class QSubWindow(QtW.QMdiSubWindow):
             main_size.width() - g.right(), main_size.height() - g.bottom()
         )
 
+    def _pixmap_resized(self, size: QtCore.QSize) -> QtGui.QPixmap:
+        return self.grab().scaled(
+            size,
+            QtCore.Qt.AspectRatioMode.KeepAspectRatio,
+            QtCore.Qt.TransformationMode.SmoothTransformation,
+        )
+
     def _find_me(self) -> tuple[int, int]:
+        return self._find_me_and_main()[0]
+
+    def _find_me_and_main(self) -> tuple[tuple[int, int], MainWindowQt]:
         main = get_main_window(self)
         for i_tab, tab in enumerate(main.tabs):
             for i_win, win in enumerate(tab):
                 if win.widget is self.main_widget():
-                    return i_tab, i_win
+                    return (i_tab, i_win), main
         raise RuntimeError("Could not find the sub-window in the main window.")
 
 
@@ -484,6 +495,7 @@ class QSubWindowTitleBar(QtW.QFrame):
                 text = f"royalapp-subwindow:{i_tab},{i_win}"
                 mime_data.setText(text)
                 drag.setMimeData(mime_data)
+                drag.setPixmap(self._subwindow._pixmap_resized(QtCore.QSize(150, 150)))
                 drag.exec()
             else:
                 if self._subwindow._window_state == SubWindowState.MIN:

@@ -37,6 +37,7 @@ class QGotoWidget(QtW.QWidget):
         self._stack = QtW.QStackedWidget()
         layout = QtW.QVBoxLayout(self)
         layout.addWidget(self._stack)
+        self.close()
 
     def update_ui(self):
         while self._stack.count() > 0:

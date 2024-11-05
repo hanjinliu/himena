@@ -85,6 +85,7 @@ def qsignal_blocker(widget: QtW.QWidget):
 
 
 def get_main_window(widget: QtW.QWidget) -> MainWindowQt:
+    """Traceback the main window from the given widget"""
     parent = widget
     while parent is not None:
         parent = parent.parentWidget()

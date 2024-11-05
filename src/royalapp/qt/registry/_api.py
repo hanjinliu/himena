@@ -7,8 +7,10 @@ from royalapp.qt.registry._widgets import QFallbackWidget
 
 WidgetClass = Union[Callable[[WidgetDataModel], QtW.QWidget], type[QtW.QWidget]]
 
-_GLOBAL_TYPE_TO_QWIDGET: dict[Hashable, WidgetClass] = {}
-_APP_TYPE_TO_QWIDGET: dict[str, dict[Hashable, WidgetClass]] = {}
+# NOTE: Different applications may use different widgets for the same data type.
+_APP_TYPE_TO_QWIDGET: dict[str | None, dict[Hashable, WidgetClass]] = {}
+# NOTE: A widget always has a unique data type regardless of applications.
+_QWIDGET_TO_TYPE: dict[WidgetClass, Hashable] = {}
 
 _F = TypeVar("_F", bound=WidgetClass)
 
@@ -36,7 +38,7 @@ def register_frontend_widget(
     widget_class=None,
     app=None,
     override=True,
-) -> None:
+):
     """
     Register a widget class as a frontend widget for the given file type.
 
@@ -66,14 +68,10 @@ def register_frontend_widget(
             raise TypeError(
                 f"Widget class {wdt_class!r} does not have a `from_model` method."
             )
-        if app is not None:
-            if app not in _APP_TYPE_TO_QWIDGET:
-                _APP_TYPE_TO_QWIDGET[app] = {}
-            if type_ not in _APP_TYPE_TO_QWIDGET[app] or override:
-                _APP_TYPE_TO_QWIDGET[app][type_] = wdt_class
-        else:
-            if type_ not in _GLOBAL_TYPE_TO_QWIDGET or override:
-                _GLOBAL_TYPE_TO_QWIDGET[type_] = wdt_class
+        if app not in _APP_TYPE_TO_QWIDGET:
+            _APP_TYPE_TO_QWIDGET[app] = {}
+        if type_ not in _APP_TYPE_TO_QWIDGET[app] or override:
+            _APP_TYPE_TO_QWIDGET[app][type_] = wdt_class
         return wdt_class
 
     return _inner if widget_class is None else _inner(widget_class)
@@ -85,6 +83,12 @@ def pick_widget_class(app_name: str, type: Hashable) -> WidgetClass:
         _map_for_app = _APP_TYPE_TO_QWIDGET[app_name]
         if type in _map_for_app:
             return _map_for_app[type]
-    if type not in _GLOBAL_TYPE_TO_QWIDGET:
+    _fallback_dict = _APP_TYPE_TO_QWIDGET.get(None, {})
+    if type not in _fallback_dict:
         return QFallbackWidget
-    return _GLOBAL_TYPE_TO_QWIDGET[type]
+    return _fallback_dict[type]
+
+
+def type_for_widget(widget: WidgetClass) -> Hashable:
+    """Get the file type for the given widget class."""
+    return _QWIDGET_TO_TYPE[widget]

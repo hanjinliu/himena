@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Generic, TYPE_CHECKING, TypeVar
+from uuid import uuid4
 import weakref
 
 from psygnal import Signal
@@ -45,7 +46,7 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         self._widget = weakref.ref(widget)
         widget._royalapp_widget = self
         if identifier is None:
-            identifier = id(widget)
+            identifier = uuid4().int
         self._identifier = identifier
         self._save_behavior: SaveBehavior = SaveToNewPath()
         self._widget_data_model_method: MethodDescriptor = ProgramaticMethod()
@@ -136,6 +137,7 @@ class SubWindow(WidgetWrapper[_W]):
                 "`to_model` method must return an instance of WidgetDataModel, got "
                 f"{type(model)}"
             )
+        # TODO: check the model type
         if model.title is None:
             model.title = self.title
         if model.method is None:
