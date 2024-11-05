@@ -5,13 +5,28 @@ from magicgui.widgets import LineEdit
 from magicgui.widgets.bases import ValueWidget
 from magicgui.types import Undefined
 from magicgui.application import use_app
-from magicgui.backends._qtpy.widgets import LineEdit as BaseLineEdit
+from magicgui.backends._qtpy.widgets import QBaseStringWidget
 
 __all__ = ["IntEdit", "FloatEdit"]
 
 
-class QIntEdit(BaseLineEdit):
-    _qwidget: QtW.QLineEdit
+class QValuedLineEdit(QtW.QLineEdit):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # self.setValidator(QtW.QDoubleValidator(self))
+
+    # def wheelEvent(self, a0: QWheelEvent | None) -> None:
+    #     if a0 is not None:
+    #         if a0.angleDelta().y() > 0:
+    #             self.stepUp()
+    #     return super().wheelEvent(a0)
+
+
+class QIntEdit(QBaseStringWidget):
+    _qwidget: QValuedLineEdit
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__(QValuedLineEdit, "text", "setText", "textChanged", **kwargs)
 
     def _post_get_hook(self, value):
         if value == "":
@@ -46,8 +61,11 @@ class IntEdit(LineEdit):
         LineEdit.value.fset(self, value)
 
 
-class QFloatEdit(BaseLineEdit):
-    _qwidget: QtW.QLineEdit
+class QFloatEdit(QBaseStringWidget):
+    _qwidget: QValuedLineEdit
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__(QValuedLineEdit, "text", "setText", "textChanged", **kwargs)
 
     def _post_get_hook(self, value):
         if value == "":
