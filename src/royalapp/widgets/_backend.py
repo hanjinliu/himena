@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import inspect
 from pathlib import Path
-from typing import Generic, Literal, TypeVar, TYPE_CHECKING, overload
+from typing import Callable, Generic, Literal, TypeVar, TYPE_CHECKING, overload
 
-import psygnal
 from royalapp.anchor import WindowAnchor
 from royalapp.types import (
     SubWindowState,
@@ -164,7 +163,7 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     def _pick_widget_class(self, type: str) -> type[_W]:
         raise NotImplementedError
 
-    def _connect_activation_signal(self, sig: psygnal.SignalInstance):
+    def _connect_activation_signal(self, callback: Callable[[], SubWindow[_W]]):
         raise NotImplementedError
 
     def _connect_window_events(self, sub: SubWindow, backend: _W):

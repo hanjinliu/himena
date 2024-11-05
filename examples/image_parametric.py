@@ -11,7 +11,7 @@ interf = get_plugin_interface()
 
 @interf.register_function(title="Gaussian Filter", types=StandardTypes.IMAGE)
 def gaussian_filter(model: WidgetDataModel[np.ndarray]) -> Parametric:
-    def func(sigma: float = 1.0) -> WidgetDataModel[np.ndarray]:
+    def func_gauss(sigma: float = 1.0) -> WidgetDataModel[np.ndarray]:
         im = model.value
         if im.ndim == 3:
             im = ndi.gaussian_filter(im, sigma=sigma, axes=(0, 1))
@@ -22,20 +22,20 @@ def gaussian_filter(model: WidgetDataModel[np.ndarray]) -> Parametric:
             type=StandardTypes.IMAGE,
             title=model.title + "-Gaussian",
         )
-    return func
+    return func_gauss
 
-@interf.register_function(title="Add", types=StandardTypes.IMAGE)
-def add_images() -> Parametric:
-    def func(
+@interf.register_function(title="Subtract images", types=StandardTypes.IMAGE)
+def subtract_images() -> Parametric:
+    def func_sub(
         a: Annotated[WidgetDataModel[np.ndarray], {"types": StandardTypes.IMAGE}],
         b: Annotated[WidgetDataModel[np.ndarray], {"types": StandardTypes.IMAGE}],
     ) -> WidgetDataModel[np.ndarray]:
         return WidgetDataModel(
-            value=a.value + b.value,
+            value=a.value - b.value,
             type=StandardTypes.IMAGE,
             title="result",
         )
-    return func
+    return func_sub
 
 def main():
     ui = new_window(plugins=[interf])

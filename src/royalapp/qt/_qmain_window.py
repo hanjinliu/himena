@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from timeit import default_timer as timer
 import logging
-from typing import Hashable, Literal, TypeVar, TYPE_CHECKING, cast
+from typing import Callable, Hashable, Literal, TypeVar, TYPE_CHECKING, cast
 from pathlib import Path
+
 import app_model
-import psygnal
 from qtpy import QtWidgets as QtW, QtGui, QtCore
 from qtpy.QtCore import Qt
 from app_model.backends.qt import QModelMainWindow, QModelMenu
@@ -310,7 +310,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         for i in range(len(subwindows)):
             subwindows[i].set_is_current(i == i_window)
         area.setActiveSubWindow(subwindows[i_window])
-        _LOGGER.info("Programatically set current sub-window index to %r", i_window)
         return None
 
     def _tab_title(self, i_tab: int) -> str:
@@ -467,8 +466,8 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _set_clipboard_data(self, data: ClipboardDataModel) -> None:
         return set_clipboard_data(data)
 
-    def _connect_activation_signal(self, sig: psygnal.SignalInstance):
-        self._tab_widget.newWindowActivated.connect(sig.emit)
+    def _connect_activation_signal(self, cb: Callable[[], SubWindow[QtW.QWidget]]):
+        self._tab_widget.newWindowActivated.connect(cb)
 
     def _add_model_menu(
         self,

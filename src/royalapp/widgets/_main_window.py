@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+from logging import getLogger
 import inspect
 from pathlib import Path
 from typing import Any, Generic, Hashable, TypeVar
@@ -28,29 +29,27 @@ from royalapp.widgets._wrapper import SubWindow, DockWidget
 
 _W = TypeVar("_W")  # backend widget type
 _T = TypeVar("_T")  # internal data type
+_LOGGER = getLogger(__name__)
 
 
-class MainWindowEvents(SignalGroup):
-    window_activated = Signal()
+class MainWindowEvents(SignalGroup, Generic[_W]):
+    window_activated = Signal(SubWindow[_W])
 
 
 class MainWindow(Generic[_W]):
     def __init__(self, backend: BackendMainWindow[_W], app: Application) -> None:
         from royalapp.widgets._initialize import set_current_instance
 
-        self.events = MainWindowEvents()
+        self.events: MainWindowEvents[_W] = MainWindowEvents()
         self._backend_main_window = backend
-        self._tab_list = TabList(self._backend_main_window)
+        self._tab_list = TabList(backend)
         self._new_widget_behavior = NewWidgetBehavior.WINDOW
         self._model_app = app
         self._instructions = BackendInstructions()
         set_current_instance(app, self)
-        self._backend_main_window._connect_activation_signal(
-            self.events.window_activated
-        )
+        backend._connect_activation_signal(self._window_activated)
         self._ctx_keys = AppContext(create_context(self, max_depth=0))
-        self._tab_list.changed.connect(self._backend_main_window._update_context)
-        self.events.window_activated.connect(self._backend_main_window._update_context)
+        self._tab_list.changed.connect(backend._update_context)
         self._dock_widgets = WeakSet[_W]()
         self._exec_confirmations = True
         self._open_recent_disposer = lambda: None
@@ -88,6 +87,22 @@ class MainWindow(Generic[_W]):
             yield None
         finally:
             self._instructions = old
+
+    def _window_activated(self) -> SubWindow[_W]:
+        back = self._backend_main_window
+        back._update_context()
+        i_tab = back._current_tab_index()
+        if i_tab is None:
+            return None
+        tab = self.tabs[i_tab]
+        if len(tab) == 0:
+            return None
+        i_win = back._current_sub_window_index()
+        if i_win is None:
+            return None
+        _LOGGER.info("Window activated: %r-th window in %r-th tab", i_win, i_tab)
+        self.events.window_activated.emit(tab[i_win])
+        return None
 
     def widget_for_id(self, identifier: int) -> SubWindow[_W] | None:
         for tab in self.tabs:

@@ -2,6 +2,7 @@
 
 from royalapp.plugins import get_plugin_interface
 from royalapp.types import WidgetDataModel, Parametric
+from royalapp.widgets import MainWindow
 from royalapp.consts import StandardTypes
 import csv
 import requests
@@ -11,9 +12,13 @@ __royalapp_plugin__ = get_plugin_interface()
 
 
 @__royalapp_plugin__.register_new_provider(keybindings="Ctrl+N")
-def new_text() -> WidgetDataModel:
+def new_text(ui: MainWindow) -> WidgetDataModel:
     """New text file."""
-    return WidgetDataModel(value="", type=StandardTypes.TEXT, title="Untitled")
+    if tab := ui.tabs.current():
+        nwin = len(tab)
+    else:
+        nwin = 0
+    return WidgetDataModel(value="", type=StandardTypes.TEXT, title=f"Untitled-{nwin}")
 
 
 @__royalapp_plugin__.register_new_provider(

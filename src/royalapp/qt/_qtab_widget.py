@@ -132,12 +132,6 @@ class QTabWidget(QtW.QTabWidget):
             for i, win in enumerate(wins):
                 win.set_is_current(win == cur)
 
-    def _current_indices(self) -> tuple[int, int]:
-        if widget := self.current_widget_area():
-            if win := widget.currentSubWindow():
-                return self.currentIndex(), widget.indexOf(win)
-        return self.currentIndex(), -1
-
     def _emit_current_indices(self) -> None:
         self.newWindowActivated.emit()
 
