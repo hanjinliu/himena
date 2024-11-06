@@ -289,7 +289,11 @@ class MainWindow(Generic[_W]):
         else:
             fp = Path(file_path)
         readers = get_readers(fp)
-        model = readers[0](fp).with_source(fp)
+        reader = readers[0]
+        model = reader(fp)._with_source(
+            source=fp,
+            plugin=getattr(reader, "__module__", None),
+        )
         out = self.add_data_model(model)
         append_recent_files([file_path])
         self._update_open_recent_menu()

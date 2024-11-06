@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable, TypeVar, overload
+from typing import Callable, TypeVar, overload, NamedTuple
 import warnings
 from royalapp.types import WidgetDataModel, ReaderFunction, WriterFunction
 from royalapp._utils import get_widget_data_model_variable
@@ -12,7 +12,19 @@ _WriterProvider = Callable[[WidgetDataModel], WriterFunction]
 _RP = TypeVar("_RP", bound=_ReaderProvider)
 _WP = TypeVar("_WP", bound=_WriterProvider)
 
-_READER_PROVIDERS: list[tuple[_ReaderProvider, int]] = []
+
+class ReaderProviderInfo(NamedTuple):
+    provider: _ReaderProvider
+    priority: int
+
+    @property
+    def plugin(self) -> str | None:
+        if mod := getattr(self.provider, "__module__"):
+            return mod
+        return None
+
+
+_READER_PROVIDERS: list[ReaderProviderInfo] = []
 _WRITER_PROVIDERS: list[tuple[_WriterProvider, int]] = []
 
 
@@ -22,20 +34,20 @@ def get_readers(
     """Get reader functions."""
     matched: list[tuple[ReaderFunction, int]] = []
     priority_max = -1
-    for provider, priority in _READER_PROVIDERS:
+    for info in _READER_PROVIDERS:
         try:
-            out = provider(file_path)
+            out = info.provider(file_path)
         except Exception as e:
-            _warn_failed_provider(provider, e)
+            _warn_failed_provider(info.provider, e)
         else:
             if out:
                 if callable(out):
-                    matched.append((out, priority))
-                    priority_max = max(priority_max, priority)
+                    matched.append((out, info.priority))
+                    priority_max = max(priority_max, info.priority)
                 else:
                     warnings.warn(
-                        f"Reader provider {provider!r} returned {out!r}, which is not"
-                        "callable."
+                        f"Reader provider {info.provider!r} returned {out!r}, which is "
+                        "not callable."
                     )
     if not matched and not empty_ok:
         if isinstance(file_path, list):
@@ -107,7 +119,7 @@ def register_reader_provider(provider=None, priority=0):
     def _inner(func):
         if not callable(func):
             raise ValueError("Provider must be callable.")
-        _READER_PROVIDERS.append((func, priority))
+        _READER_PROVIDERS.append(ReaderProviderInfo(func, priority))
         return func
 
     return _inner if provider is None else _inner(provider)

@@ -33,7 +33,10 @@ def _read_and_update_source(reader: ReaderFunction, source: Path) -> WidgetDataM
     """Update the `method` attribute if it is not set."""
     model = reader(source)
     if model.method is None:
-        model = model.with_source(source)
+        model = model._with_source(
+            source=source,
+            plugin=getattr(reader, "__module__", None),
+        )
     return model
 
 

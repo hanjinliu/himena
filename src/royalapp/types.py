@@ -96,10 +96,14 @@ class WidgetDataModel(Generic[_T], BaseModel):
             update["type"] = type
         return self.model_copy(update=update)
 
-    def with_source(self, source: str | Path) -> "WidgetDataModel[_T]":
+    def _with_source(
+        self,
+        source: str | Path,
+        plugin: str | None = None,
+    ) -> "WidgetDataModel[_T]":
         """Return a new instance with the source path."""
         path = Path(source).resolve()
-        to_update = {"method": LocalReaderMethod(path=path)}
+        to_update = {"method": LocalReaderMethod(path=path, plugin=plugin)}
         if self.title is None:
             to_update.update({"title": source.name})
         return self.model_copy(update=to_update)
