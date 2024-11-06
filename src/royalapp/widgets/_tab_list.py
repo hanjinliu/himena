@@ -179,9 +179,9 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         sub_window.state_changed.connect(main._update_context)
 
         main._set_current_tab_index(self._i_tab)
+        nwindows = len(self)
         with main._royalapp_main_window._animation_context(enabled=False):
             if main._royalapp_main_window._new_widget_behavior is NewWidgetBehavior.TAB:
-                nwindows = len(self)
                 main._set_window_state(
                     self._i_tab,
                     nwindows - 1,
@@ -189,9 +189,14 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
                 )
             else:
                 main._set_current_sub_window_index(len(self) - 1)
-                if autosize and (size_hint := sub_window.size_hint()):
-                    left, top, _, _ = sub_window.window_rect
-                    sub_window.window_rect = WindowRect(left, top, *size_hint)
+                if autosize:
+                    left = 4 + 24 * (nwindows % 5)
+                    top = 4 + 24 * (nwindows % 5)
+                    if size_hint := sub_window.size_hint():
+                        width, height = size_hint
+                    else:
+                        _, _, width, height = sub_window.window_rect
+                    sub_window.window_rect = WindowRect(left, top, width, height)
         main._move_focus_to(widget)
         return sub_window
 

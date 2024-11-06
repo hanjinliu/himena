@@ -52,10 +52,8 @@ class QSubWindowArea(QtW.QMdiArea):
             )
         size = widget.sizeHint().expandedTo(QtCore.QSize(160, 120))
         sub_window = QSubWindow(widget, title)
-        nwindows = len(self.subWindowList())
         self.addSubWindow(sub_window)
         sub_window.resize(size + QtCore.QSize(8, 8))
-        sub_window.move(4 + 24 * (nwindows % 5), 4 + 24 * (nwindows % 5))
         return sub_window
 
     def mousePressEvent(self, event: QtGui.QMouseEvent):

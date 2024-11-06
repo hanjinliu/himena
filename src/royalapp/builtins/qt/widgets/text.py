@@ -17,8 +17,27 @@ _POPULAR_LANGUAGES = [
     "Plain Text", "Python", "C++", "C", "Java", "JavaScript", "HTML", "CSS", "SQL",
     "Rust", "Go", "TypeScript", "Shell", "Ruby", "PHP", "Swift", "Kotlin", "Dart", "R",
     "Scala", "Perl", "Lua", "Haskell", "Julia", "MATLAB", "Markdown", "YAML", "JSON",
-    "XML", "TOML",
+    "XML", "TOML", "PowerShell", "Batch", "C#", "Objective-C",
 ]  # fmt: skip
+
+_POINT_SIZES: list[int] = [
+    5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72,
+]  # fmt: skip
+
+
+def change_point_size(cur_font: QtGui.QFont, step: int) -> QtGui.QFont:
+    current_size = cur_font.pointSize()
+    nmax = len(_POINT_SIZES)
+    cur_idx = nmax - 1
+    for idx, size in enumerate(_POINT_SIZES):
+        if current_size <= size:
+            cur_idx = idx
+            break
+    next_idx = min(max(cur_idx + step, 0), nmax - 1)
+    new_size = _POINT_SIZES[next_idx]
+    cur_font.setPointSize(new_size)
+    print(f"Font size changed to {new_size}")
+    return cur_font
 
 
 @lru_cache
@@ -197,6 +216,26 @@ class QMainTextEdit(QtW.QPlainTextEdit):
                     text = clip.text().replace("\t", " " * self.tab_size())
                     cursor = self.textCursor()
                     cursor.insertText(text)
+                    return True
+                elif (
+                    _key == QtCore.Qt.Key.Key_Comma
+                    and _mod & QtCore.Qt.KeyboardModifier.ControlModifier
+                    and _mod & QtCore.Qt.KeyboardModifier.ShiftModifier
+                ) or (
+                    _key == QtCore.Qt.Key.Key_Greater
+                    and _mod & QtCore.Qt.KeyboardModifier.ControlModifier
+                ):
+                    self.setFont(change_point_size(self.font(), 1))
+                    return True
+                elif (
+                    _key == QtCore.Qt.Key.Key_Period
+                    and _mod & QtCore.Qt.KeyboardModifier.ControlModifier
+                    and _mod & QtCore.Qt.KeyboardModifier.ShiftModifier
+                ) or (
+                    _key == QtCore.Qt.Key.Key_Less
+                    and _mod & QtCore.Qt.KeyboardModifier.ControlModifier
+                ):
+                    self.setFont(change_point_size(self.font(), -1))
                     return True
 
         except Exception:

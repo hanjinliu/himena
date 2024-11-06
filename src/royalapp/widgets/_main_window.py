@@ -274,7 +274,8 @@ class MainWindow(Generic[_W]):
                 new_rect = (rect.left, rect.top, size_hint[0], size_hint[1])
             else:
                 new_rect = rect
-            result_widget.window_rect = new_rect
+            with self._animation_context(enabled=False):
+                result_widget.window_rect = new_rect
             if fn.sources:
                 new_method = fn.to_converter_method(kwargs)
                 result_widget._update_widget_data_model_method(new_method)
