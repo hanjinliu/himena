@@ -70,6 +70,7 @@ class QTabWidget(QtW.QTabWidget):
         self.setAcceptDrops(True)
 
         self.newWindowActivated.connect(self._repolish)
+        self.currentChanged.connect(self._repolish)
 
     def _init_startup(self):
         self._startup_widget = QStartupWidget(self)
@@ -91,7 +92,7 @@ class QTabWidget(QtW.QTabWidget):
             self.setTabBarAutoHide(False)
         widget = QSubWindowArea()
         self.addTab(widget, tab_name)
-        widget.subWindowActivated.connect(self._emit_current_indices)
+        widget.subWindowActivated.connect(lambda: self.newWindowActivated.emit())
         return widget
 
     def remove_tab_area(self, index: int) -> None:
@@ -122,7 +123,8 @@ class QTabWidget(QtW.QTabWidget):
     def _on_current_changed(self, index: int) -> None:
         if widget := self.widget_area(index):
             widget._reanchor_windows()
-            self._emit_current_indices()
+            if len(widget.subWindowList()) > 0:
+                self.newWindowActivated.emit()
             self._line_edit.setHidden(True)
 
     def _repolish(self) -> None:
@@ -131,9 +133,6 @@ class QTabWidget(QtW.QTabWidget):
             cur = area.currentSubWindow()
             for i, win in enumerate(wins):
                 win.set_is_current(win == cur)
-
-    def _emit_current_indices(self) -> None:
-        self.newWindowActivated.emit()
 
     def _tab_rect(self, index: int) -> QtCore.QRect:
         """Get QRect of the tab at index."""

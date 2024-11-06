@@ -163,7 +163,11 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     def _pick_widget_class(self, type: str) -> type[_W]:
         raise NotImplementedError
 
-    def _connect_activation_signal(self, callback: Callable[[], SubWindow[_W]]):
+    def _connect_activation_signal(
+        self,
+        cb_tab: Callable[[int], int],
+        cb_win: Callable[[], SubWindow[_W]],
+    ):
         raise NotImplementedError
 
     def _connect_window_events(self, sub: SubWindow, backend: _W):

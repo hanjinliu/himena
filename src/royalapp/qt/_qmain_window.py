@@ -346,6 +346,8 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             path = QtW.QFileDialog.getExistingDirectory(self, "Open Directory")
             if path:
                 return Path(path)
+        else:
+            raise ValueError(f"Invalid file mode {mode!r}.")
         return None
 
     def _open_confirmation_dialog(self, message: str) -> bool:
@@ -466,8 +468,13 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _set_clipboard_data(self, data: ClipboardDataModel) -> None:
         return set_clipboard_data(data)
 
-    def _connect_activation_signal(self, cb: Callable[[], SubWindow[QtW.QWidget]]):
-        self._tab_widget.newWindowActivated.connect(cb)
+    def _connect_activation_signal(
+        self,
+        cb_tab: Callable[[int], int],
+        cb_win: Callable[[], SubWindow[QtW.QWidget]],
+    ):
+        self._tab_widget.currentChanged.connect(cb_tab)
+        self._tab_widget.newWindowActivated.connect(cb_win)
 
     def _add_model_menu(
         self,

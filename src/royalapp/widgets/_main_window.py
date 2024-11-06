@@ -32,6 +32,7 @@ _LOGGER = getLogger(__name__)
 
 
 class MainWindowEvents(SignalGroup, Generic[_W]):
+    tab_activated = Signal(TabArea[_W])
     window_activated = Signal(SubWindow[_W])
 
 
@@ -46,7 +47,10 @@ class MainWindow(Generic[_W]):
         self._model_app = app
         self._instructions = BackendInstructions()
         set_current_instance(app, self)
-        backend._connect_activation_signal(self._window_activated)
+        backend._connect_activation_signal(
+            self._tab_activated,
+            self._window_activated,
+        )
         self._ctx_keys = AppContext(create_context(self, max_depth=0))
         self._tab_list.changed.connect(backend._update_context)
         self._dock_widgets = WeakSet[_W]()
@@ -87,7 +91,11 @@ class MainWindow(Generic[_W]):
         finally:
             self._instructions = old
 
-    def _window_activated(self) -> SubWindow[_W]:
+    def _tab_activated(self, i: int):
+        self.events.tab_activated.emit(self.tabs[i])
+        return None
+
+    def _window_activated(self):
         back = self._backend_main_window
         back._update_context()
         i_tab = back._current_tab_index()
