@@ -24,6 +24,22 @@ def gaussian_filter(model: WidgetDataModel[np.ndarray]) -> Parametric:
         )
     return func_gauss
 
+@interf.register_function(title="Median Filter", types=StandardTypes.IMAGE)
+def median_filter(model: WidgetDataModel[np.ndarray]) -> Parametric:
+    def func_median(radius: int = 1) -> WidgetDataModel[np.ndarray]:
+        im = model.value
+        footprint = np.ones((radius * 2 + 1, radius * 2 + 1), dtype=int)
+        if im.ndim == 3:
+            im = ndi.median_filter(im, footprint=footprint, axes=(0, 1))
+        else:
+            im = ndi.median_filter(im, footprint=footprint)
+        return WidgetDataModel(
+            value=im,
+            type=StandardTypes.IMAGE,
+            title=model.title + "-Median",
+        )
+    return func_median
+
 @interf.register_function(title="Subtract images", types=StandardTypes.IMAGE)
 def subtract_images() -> Parametric:
     def func_sub(
