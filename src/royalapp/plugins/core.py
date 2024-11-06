@@ -1,17 +1,14 @@
 from __future__ import annotations
 
-from functools import reduce, wraps
-import inspect
+from functools import reduce
 import operator
 from uuid import uuid4
 from typing import (
     Callable,
-    Hashable,
     Mapping,
     Sequence,
     TypeVar,
     cast,
-    get_origin,
     overload,
     TYPE_CHECKING,
 )
@@ -21,8 +18,7 @@ from app_model.types import SubmenuItem, KeyBindingRule
 from app_model.expressions import BoolOp
 
 from royalapp._app_model import AppContext as ctx
-from royalapp._descriptors import ConverterMethod, ProgramaticMethod
-from royalapp.types import DockArea, DockAreaString, WidgetDataModel, Parametric
+from royalapp.types import DockArea, DockAreaString
 from royalapp import _utils
 
 if TYPE_CHECKING:
@@ -61,7 +57,7 @@ class PluginInterface:
         func: None = None,
         *,
         title: str | None = None,
-        types: Hashable | Sequence[Hashable] | None = None,
+        types: str | Sequence[str] | None = None,
         enablement: BoolOp | None = None,
         keybindings: Sequence[KeyBindingRule] | None = None,
         command_id: str | None = None,
@@ -73,7 +69,7 @@ class PluginInterface:
         func: _F,
         *,
         title: str | None = None,
-        types: Hashable | Sequence[Hashable] | None = None,
+        types: str | Sequence[str] | None = None,
         enablement: BoolOp | None = None,
         keybindings: Sequence[KeyBindingRule] | None = None,
         command_id: str | None = None,
@@ -114,10 +110,10 @@ class PluginInterface:
             elif isinstance(types, Sequence) and not isinstance(types, str):
                 enablement = reduce(
                     operator.or_,
-                    [ctx.active_window_model_type == hash(t) for t in types],
+                    [ctx.active_window_model_type == t for t in types],
                 )
             else:
-                enablement = ctx.active_window_model_type == hash(types)
+                enablement = ctx.active_window_model_type == types
         kbs = _normalize_keybindings(keybindings)
 
         def _inner(f: _F) -> _F:
@@ -137,7 +133,7 @@ class PluginInterface:
                 id=_id,
                 title=_title,
                 tooltip=_tooltip_from_func(f),
-                callback=_make_function_callback(f, _id),
+                callback=_utils.make_function_callback(f, _id),
                 menus=self._places_formatted(),
                 enablement=_enablement,
                 keybindings=kbs,
@@ -153,7 +149,7 @@ class PluginInterface:
         widget_factory: _F,
         *,
         title: str | None = None,
-        types: Hashable | Sequence[Hashable] | None = None,
+        types: str | Sequence[str] | None = None,
         enablement: BoolOp | None = None,
         keybindings: Sequence[KeyBindingRule] | None = None,
         command_id: str | None = None,
@@ -165,7 +161,7 @@ class PluginInterface:
         widget_factory: None = None,
         *,
         title: str | None = None,
-        types: Hashable | Sequence[Hashable] | None = None,
+        types: str | Sequence[str] | None = None,
         enablement: BoolOp | None = None,
         keybindings: Sequence[KeyBindingRule] | None = None,
         command_id: str | None = None,
@@ -454,58 +450,3 @@ def _tooltip_from_func(func: Callable) -> str | None:
     else:
         tooltip = None
     return tooltip
-
-
-def _is_widget_data_model(a):
-    return WidgetDataModel in (get_origin(a), a)
-
-
-def _is_parametric(a):
-    return Parametric in (get_origin(a), a)
-
-
-def _make_function_callback(f: _F, action_id: str) -> _F:
-    try:
-        sig = inspect.signature(f)
-    except Exception:
-        return f
-
-    keys_model: list[str] = []
-    for key, param in sig.parameters.items():
-        if _is_widget_data_model(param.annotation):
-            keys_model.append(key)
-
-    for key in keys_model:
-        f.__annotations__[key] = WidgetDataModel
-
-    if _is_widget_data_model(sig.return_annotation):
-        f.__annotations__["return"] = WidgetDataModel
-    elif _is_parametric(sig.return_annotation):
-        f.__annotations__["return"] = Parametric
-    else:
-        return f
-
-    if len(keys_model) == 0:
-        return f
-
-    @wraps(f)
-    def _new_f(*args, **kwargs):
-        bound = sig.bind(*args, **kwargs)
-        out = f(*args, **kwargs)
-        originals = []
-        for key in keys_model:
-            input_ = bound.arguments[key]
-            if isinstance(input_, WidgetDataModel):
-                if input_.method is None:
-                    method = ProgramaticMethod()
-                else:
-                    method = input_.method
-                originals.append(method)
-        if isinstance(out, WidgetDataModel):
-            if len(originals) > 0:
-                out.method = ConverterMethod(originals=originals, action_id=action_id)
-        elif callable(out) and f.__annotations__["return"] is Parametric:
-            out = Parametric(out, sources=originals, action_id=action_id)
-        return out
-
-    return _new_f

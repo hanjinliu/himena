@@ -4,16 +4,19 @@ from pathlib import Path
 from typing import (
     Any,
     Callable,
-    Hashable,
     Literal,
     NamedTuple,
     TypeAlias,
     TypeVar,
     Generic,
+    TYPE_CHECKING,
 )
 from enum import Enum
 from pydantic_compat import BaseModel, Field, field_validator
 from royalapp._descriptors import MethodDescriptor, LocalReaderMethod, ConverterMethod
+
+if TYPE_CHECKING:
+    from royalapp.io import PluginInfo
 
 
 class DockArea(Enum):
@@ -25,7 +28,7 @@ class DockArea(Enum):
     RIGHT = "right"
 
 
-class SubWindowState(Enum):
+class WindowState(Enum):
     """State of the sub window."""
 
     MIN = "min"
@@ -35,7 +38,7 @@ class SubWindowState(Enum):
 
 
 DockAreaString: TypeAlias = Literal["top", "bottom", "left", "right"]
-SubWindowStateString: TypeAlias = Literal["min", "max", "normal", "full"]
+WindowStateString: TypeAlias = Literal["min", "max", "normal", "full"]
 
 
 class NewWidgetBehavior(Enum):
@@ -59,7 +62,7 @@ class WidgetDataModel(Generic[_T], BaseModel):
         Internal value.
     source : Path, optional
         Path of the source file if exists.
-    type : Hashable, optional
+    type : str, optional
         Type of the internal data.
     title : str, optional
         Title for the widget.
@@ -72,12 +75,14 @@ class WidgetDataModel(Generic[_T], BaseModel):
         default=None,
         description="Method descriptor.",
     )
-    type: Hashable | None = Field(
-        default=None, description="Type of the internal data."
-    )
+    type: str | None = Field(default=None, description="Type of the internal data.")
     title: str | None = Field(
         default=None,
         description="Default title for the widget.",
+    )
+    extension_default: str | None = Field(
+        default=None,
+        description="Default file extension for saving.",
     )
     extensions: list[str] = Field(
         default_factory=list,
@@ -88,9 +93,7 @@ class WidgetDataModel(Generic[_T], BaseModel):
         description="Additional data that may be used for specific widgets.",
     )  # fmt: skip
 
-    def with_value(
-        self, value: _U, type: Hashable | None = None
-    ) -> "WidgetDataModel[_U]":
+    def with_value(self, value: _U, type: str | None = None) -> "WidgetDataModel[_U]":
         update = {"value": value}
         if type is not None:
             update["type"] = type
@@ -99,11 +102,15 @@ class WidgetDataModel(Generic[_T], BaseModel):
     def _with_source(
         self,
         source: str | Path,
-        plugin: str | None = None,
+        plugin: "PluginInfo | None" = None,
     ) -> "WidgetDataModel[_T]":
         """Return a new instance with the source path."""
         path = Path(source).resolve()
-        to_update = {"method": LocalReaderMethod(path=path, plugin=plugin)}
+        if plugin is None:
+            plugin_name = None
+        else:
+            plugin_name = plugin.to_str()
+        to_update = {"method": LocalReaderMethod(path=path, plugin=plugin_name)}
         if self.title is None:
             to_update.update({"title": source.name})
         return self.model_copy(update=to_update)
@@ -119,6 +126,12 @@ class WidgetDataModel(Generic[_T], BaseModel):
     def _validate_type(cls, v, values):
         if v is None:
             return type(values["value"])
+        return v
+
+    @field_validator("extension_default", mode="after")
+    def _validate_extension_default(cls, v: str, values):
+        if not v.startswith("."):
+            return f".{v}"
         return v
 
     @field_validator("extensions", mode="before")
@@ -147,7 +160,7 @@ class ClipboardDataModel(Generic[_T], BaseModel):
     """Data model for a clipboard data."""
 
     value: _T = Field(..., description="Internal value.")
-    type: Hashable | None = Field(default=None, description="Type of the internal data.")  # fmt: skip
+    type: str | None = Field(default=None, description="Type of the internal data.")
 
     def to_widget_data_model(self) -> WidgetDataModel[_T]:
         return WidgetDataModel(value=self.value, type=self.type, title="Clipboard")
@@ -157,10 +170,10 @@ class DragDropDataModel(Generic[_T], BaseModel):
     """Data model for a drag and drop data."""
 
     value: _T = Field(..., description="Internal value.")
-    type: Hashable | None = Field(default=None, description="Type of the internal data.")  # fmt: skip
+    type: str | None = Field(default=None, description="Type of the internal data.")
     title: str = Field(default=None, description="Title for the widget.")
     source: Path | None = Field(default=None, description="Path of the file.")
-    source_type: str | None = Field(default=None, description="Type of the source.")  # fmt: skip
+    source_type: str | None = Field(default=None, description="Type of the source.")
 
     def to_widget_data_model(self) -> WidgetDataModel[_T]:
         return WidgetDataModel(value=self.value, type=self.type)
@@ -222,7 +235,7 @@ class WindowRect(NamedTuple):
         )
 
 
-class Parametric(Callable[..., _T], Generic[_T]):
+class Parametric(Generic[_T]):
     """Parametric function that returns a widget data model."""
 
     def __init__(

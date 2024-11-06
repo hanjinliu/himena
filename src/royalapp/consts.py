@@ -1,5 +1,6 @@
 import sys
 from enum import Enum
+from types import SimpleNamespace
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -13,25 +14,20 @@ BasicTextFileTypes = frozenset(
     [".txt", ".md", ".json", ".xml", ".yaml", ".yml", ".toml", ".log", ".py", ".pyi",
      ".pyx", ".c", ".cpp", ".h", ".hpp", ".java", ".js", ".ts", ".html", ".css",
      ".scss", ".sass", ".php", ".rb", ".sh", ".bash", ".zsh", ".ps1", ".psm1", ".bat",
-     ".cmd", ".m", ".vbs", ".vba", ".r", ".rs",
-    ]
+     ".cmd", ".m", ".vbs", ".vba", ".r", ".rs", ".go"]
 )  # fmt: skip
 
 ConventionalTextFileNames = frozenset(
     ["LICENSE", "Makefile", "dockerfile", ".gitignore", ".gitattributes", ".vimrc",
-     ".viminfo", ".pypirc",
-    ]
+     ".viminfo", ".pypirc"]
 )  # fmt: skip
 
 
-class StandardTypes(StrEnum):
+class StandardTypes(SimpleNamespace):
     TEXT = "text"
     HTML = "html"
     TABLE = "table"
     IMAGE = "image"
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}.{self.name}"
 
 
 class MenuId(StrEnum):
@@ -46,6 +42,7 @@ class MenuId(StrEnum):
     WINDOW_EXIT = "window/exit"
     TAB = "tab"
     TOOLS = "tools"
+    TOOLS_TEXT = "tools/text"
     TOOLBAR = "toolbar"
     WINDOW_TITLE_BAR = "window_title_bar"
     WINDOW_TITLE_BAR_RESIZE = "window_title_bar/resize"

@@ -36,12 +36,12 @@ class QTabBar(QtW.QTabBar):
         main = get_main_window(self)
         title = main.tabs[source_tab][source_window].title
         win = main.tabs[source_tab].pop(source_window)
-        old_rect = win.window_rect
+        old_rect = win.rect
         if target_tab < 0:
             main.add_tab()
         main.tabs[target_tab].append(win, title)
         with main._animation_context(enabled=False):
-            win.window_rect = old_rect
+            win.rect = old_rect
         main.tabs.current_index = source_tab
 
 

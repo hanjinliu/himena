@@ -3,7 +3,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Callable, Generic, Hashable, TypeVar
+from typing import Any, Callable, Generic, TypeVar
 from weakref import WeakSet
 from app_model import Application
 from app_model.expressions import create_context
@@ -19,7 +19,7 @@ from royalapp.types import (
     BackendInstructions,
 )
 from royalapp._app_model._context import AppContext
-from royalapp._descriptors import ProgramaticMethod, LocalReaderMethod
+from royalapp._descriptors import ProgramaticMethod
 from royalapp.profile import list_recent_files, append_recent_files
 from royalapp.widgets._backend import BackendMainWindow
 from royalapp.widgets._open_recent import action_for_file
@@ -32,11 +32,15 @@ _LOGGER = getLogger(__name__)
 
 
 class MainWindowEvents(SignalGroup, Generic[_W]):
+    """Main window events."""
+
     tab_activated = Signal(TabArea[_W])
     window_activated = Signal(SubWindow[_W])
 
 
 class MainWindow(Generic[_W]):
+    """The main window object."""
+
     def __init__(self, backend: BackendMainWindow[_W], app: Application) -> None:
         from royalapp.widgets._initialize import set_current_instance
 
@@ -79,6 +83,7 @@ class MainWindow(Generic[_W]):
         if title is None:
             title = f"Tab-{n_tab}"
         self._backend_main_window.add_tab(title)
+        self.tabs.changed.emit()
         self._backend_main_window._set_current_tab_index(n_tab)
         return self.tabs[n_tab]
 
@@ -199,7 +204,7 @@ class MainWindow(Generic[_W]):
     def add_data(
         self,
         data: Any,
-        type: Hashable | None = None,
+        type: str | None = None,
         title: str | None = None,
     ) -> SubWindow[_W]:
         """
@@ -209,10 +214,10 @@ class MainWindow(Generic[_W]):
         ----------
         data : Any
             Any object.
-        type : Hashable, optional
-            Any hashable object that describes the type of the data. If not given,
-            the Python type of the data will be used. This type must be registered with
-            a proper backend widget class.
+        type : str, optional
+            Any str that describes the type of the data. If not given, the Python type
+            of the data will be used. This type must be registered with a proper backend
+            widget class.
         title : str, optional
             Title of the sub-window.
 
@@ -228,12 +233,8 @@ class MainWindow(Generic[_W]):
 
     def add_data_model(self, model_data: WidgetDataModel) -> SubWindow[_W]:
         """Add a widget data model as a widget."""
-        cls = self._backend_main_window._pick_widget_class(model_data.type)
-        widget = cls.from_model(model_data)
-        sub_win = self.add_widget(widget, title=model_data.title)
-        if isinstance(method := model_data.method, LocalReaderMethod):
-            sub_win.update_default_save_path(method.path)
-        return sub_win
+        _, tabarea = self._current_or_new_tab()
+        return tabarea.add_data_model(model_data)
 
     def add_parametric_element(
         self,
@@ -272,7 +273,7 @@ class MainWindow(Generic[_W]):
             model = fn(**kwargs)
             cls = back_main._pick_widget_class(model.type)
             widget = cls.from_model(model)
-            rect = param_widget.window_rect
+            rect = param_widget.rect
             i_tab, i_win = param_widget._find_me(self)
             del self.tabs[i_tab][i_win]
             result_widget = self.tabs[i_tab].add_widget(
@@ -283,7 +284,7 @@ class MainWindow(Generic[_W]):
             else:
                 new_rect = rect
             with self._animation_context(enabled=False):
-                result_widget.window_rect = new_rect
+                result_widget.rect = new_rect
             if fn.sources:
                 new_method = fn.to_converter_method(kwargs)
                 result_widget._update_widget_data_model_method(new_method)
@@ -299,12 +300,9 @@ class MainWindow(Generic[_W]):
             fp = Path(file_path)
         readers = get_readers(fp)
         reader = readers[0]
-        model = reader(fp)._with_source(
-            source=fp,
-            plugin=getattr(reader, "__module__", None),
-        )
+        model = reader.read(fp)._with_source(source=fp, plugin=reader.plugin)
         out = self.add_data_model(model)
-        append_recent_files([file_path])
+        append_recent_files([fp])
         self._update_open_recent_menu()
         return out
 

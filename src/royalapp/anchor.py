@@ -119,6 +119,7 @@ class BottomRightConstAnchor(WindowAnchor):
 
 
 def anchor_to_dict(anchor: WindowAnchor) -> dict:
+    """Convert an anchor to a json-serializable dictionary."""
     if isinstance(anchor, TopLeftConstAnchor):
         return {"type": "top-left-const", "left": anchor._left, "top": anchor._top}
     if isinstance(anchor, TopRightConstAnchor):
@@ -135,7 +136,7 @@ def anchor_to_dict(anchor: WindowAnchor) -> dict:
             "right": anchor._right,
             "bottom": anchor._bottom,
         }
-    if isinstance(anchor, NoAnchor):
+    if anchor is NoAnchor:
         return {"type": "no-anchor"}
     raise ValueError(f"Unknown anchor type: {anchor!r}")
 

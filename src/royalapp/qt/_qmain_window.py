@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from timeit import default_timer as timer
 import logging
-from typing import Callable, Hashable, Literal, TypeVar, TYPE_CHECKING, cast
+from typing import Callable, Literal, TypeVar, TYPE_CHECKING, cast
 from pathlib import Path
 
 import app_model
@@ -21,7 +21,7 @@ from royalapp.types import (
     DockArea,
     DockAreaString,
     ClipboardDataModel,
-    SubWindowState,
+    WindowState,
     WindowRect,
     BackendInstructions,
 )
@@ -226,7 +226,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def _connect_window_events(self, sub: SubWindow, qsub: QSubWindow):
         @qsub.state_change_requested.connect
-        def _(state: SubWindowState):
+        def _(state: WindowState):
             sub.state = state
 
         @qsub.close_requested.connect
@@ -326,7 +326,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         window = _get_subwindow(widget)
         return window.setWindowTitle(title)
 
-    def _pick_widget_class(self, type: Hashable) -> QtW.QWidget:
+    def _pick_widget_class(self, type: str) -> QtW.QWidget:
         return pick_widget_class(self._app_name, type)
 
     def _open_file_dialog(self, mode: str = "r") -> Path | list[Path] | None:
@@ -417,13 +417,13 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         window._title_bar._start_renaming()
         return None
 
-    def _window_state(self, widget: QtW.QWidget) -> SubWindowState:
+    def _window_state(self, widget: QtW.QWidget) -> WindowState:
         return _get_subwindow(widget).state
 
     def _set_window_state(
         self,
         widget: QtW.QWidget,
-        state: SubWindowState,
+        state: WindowState,
         inst: BackendInstructions,
     ) -> None:
         _get_subwindow(widget)._update_window_state(state, animate=inst.animate)

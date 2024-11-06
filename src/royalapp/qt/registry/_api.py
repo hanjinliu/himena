@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Callable, Hashable, TypeVar, Union, overload
+from typing import Callable, TypeVar, Union, overload
 from qtpy import QtWidgets as QtW
 
 from royalapp.types import WidgetDataModel
@@ -8,14 +8,14 @@ from royalapp.qt.registry._widgets import QFallbackWidget
 WidgetClass = Union[Callable[[WidgetDataModel], QtW.QWidget], type[QtW.QWidget]]
 
 # NOTE: Different applications may use different widgets for the same data type.
-_APP_TYPE_TO_QWIDGET: dict[str | None, dict[Hashable, WidgetClass]] = {}
+_APP_TYPE_TO_QWIDGET: dict[str | None, dict[str, WidgetClass]] = {}
 
 _F = TypeVar("_F", bound=WidgetClass)
 
 
 @overload
 def register_frontend_widget(
-    type_: Hashable,
+    type_: str,
     widget_class: _F,
     app: str | None,
     override: bool = True,
@@ -24,7 +24,7 @@ def register_frontend_widget(
 
 @overload
 def register_frontend_widget(
-    type_: Hashable,
+    type_: str,
     widget_class: None,
     app: str | None,
     override: bool = True,
@@ -75,7 +75,7 @@ def register_frontend_widget(
     return _inner if widget_class is None else _inner(widget_class)
 
 
-def pick_widget_class(app_name: str, type: Hashable) -> WidgetClass:
+def pick_widget_class(app_name: str, type: str) -> WidgetClass:
     """Pick a widget class for the given file type."""
     if app_name in _APP_TYPE_TO_QWIDGET:
         _map_for_app = _APP_TYPE_TO_QWIDGET[app_name]
@@ -85,6 +85,3 @@ def pick_widget_class(app_name: str, type: Hashable) -> WidgetClass:
     if type not in _fallback_dict:
         return QFallbackWidget
     return _fallback_dict[type]
-
-
-_T = TypeVar("_T")

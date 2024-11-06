@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Hashable
+
 from logging import getLogger
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from royalapp.types import WidgetDataModel
@@ -16,7 +16,7 @@ class QModelDrop(QtW.QWidget):
 
     def __init__(
         self,
-        types: list[Hashable] | None = None,
+        types: list[str] | None = None,
         parent: QtW.QWidget | None = None,
     ):
         super().__init__(parent)
@@ -95,10 +95,10 @@ class QModelDrop(QtW.QWidget):
     def _on_source_closed(self):
         self._target_id = None
 
-    def _is_type_maches(self, model_type: Hashable) -> bool:
+    def _is_type_maches(self, model_type: str) -> bool:
         if self._allowed_types is None:
             return True
-        return any(hash(model_type) == hash(t) for t in self._allowed_types)
+        return any(model_type == t for t in self._allowed_types)
 
 
 THUMBNAIL_SIZE = QtCore.QSize(50, 50)

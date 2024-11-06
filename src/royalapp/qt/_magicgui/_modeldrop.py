@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Hashable
+from typing import Any
 
 from magicgui.widgets.bases import ValueWidget
 from magicgui.types import Undefined
@@ -30,9 +30,9 @@ class ModelDrop(ValueWidget):
         if types := kwargs.pop("types", None):
             if isinstance(types, list):
                 for t in types:
-                    _assert_hashable(t)
+                    _assert_str(t)
             else:
-                types = [_assert_hashable(types)]
+                types = [_assert_str(types)]
         ValueWidget.__init__(
             self,
             value=value,
@@ -42,7 +42,7 @@ class ModelDrop(ValueWidget):
         )
 
 
-def _assert_hashable(t):
-    if not isinstance(t, Hashable):
-        raise TypeError(f"types must be a Hashable or a list of Hashables, got {t}")
+def _assert_str(t):
+    if not isinstance(t, str):
+        raise TypeError(f"types must be a str or a list of str, got {t}")
     return t

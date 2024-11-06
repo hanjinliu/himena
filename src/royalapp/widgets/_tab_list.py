@@ -5,7 +5,8 @@ from typing import Generic, TYPE_CHECKING, Iterator, TypeVar
 from collections.abc import Sequence
 
 from psygnal import Signal
-from royalapp.types import NewWidgetBehavior, SubWindowState, WindowRect
+from royalapp._descriptors import LocalReaderMethod
+from royalapp.types import NewWidgetBehavior, WidgetDataModel, WindowState, WindowRect
 from royalapp.widgets._wrapper import _HasMainWindowRef, SubWindow
 
 if TYPE_CHECKING:
@@ -104,7 +105,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
                 main._set_window_state(
                     self._i_tab,
                     nwindows - 1,
-                    SubWindowState.FULL,
+                    WindowState.FULL,
                 )
 
         main._move_focus_to(sub_window.widget)
@@ -185,7 +186,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
                 main._set_window_state(
                     self._i_tab,
                     nwindows - 1,
-                    SubWindowState.FULL,
+                    WindowState.FULL,
                 )
             else:
                 main._set_current_sub_window_index(len(self) - 1)
@@ -195,10 +196,19 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
                     if size_hint := sub_window.size_hint():
                         width, height = size_hint
                     else:
-                        _, _, width, height = sub_window.window_rect
-                    sub_window.window_rect = WindowRect(left, top, width, height)
+                        _, _, width, height = sub_window.rect
+                    sub_window.rect = WindowRect(left, top, width, height)
         main._move_focus_to(widget)
         return sub_window
+
+    def add_data_model(self, model: WidgetDataModel) -> SubWindow[_W]:
+        """Add a widget data model as a widget."""
+        cls = self._main_window()._pick_widget_class(model.type)
+        widget = cls.from_model(model)
+        sub_win = self.add_widget(widget, title=model.title)
+        if isinstance(method := model.method, LocalReaderMethod):
+            sub_win.update_default_save_path(method.path)
+        return sub_win
 
     def tile_windows(
         self,
@@ -279,11 +289,6 @@ class TabList(SemiMutableSequence[TabArea[_W]], _HasMainWindowRef[_W], Generic[_
     def names(self) -> list[str]:
         """List of names of the tabs."""
         return self._main_window()._get_tab_name_list()
-
-    def append(self, value: TabArea[_W]) -> None:
-        self._main_window().add_tab(value)
-        self.changed.emit()
-        return None
 
     def current(self, default: _T = None) -> TabArea[_W] | _T:
         """Get the current tab or a default value."""

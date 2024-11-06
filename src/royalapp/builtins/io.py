@@ -76,19 +76,17 @@ def default_reader_provider(file_path: Path | list[Path]):
     return None
 
 
-def _write_text(file_data: WidgetDataModel[str]) -> None:
+def _write_text(file_data: WidgetDataModel[str], path: Path) -> None:
     """Write text file."""
-    if file_data.source is None:
-        return None
-    with open(file_data.source, "w") as f:
+    with open(path, "w") as f:
         f.write(file_data.value)
     return None
 
 
 @register_writer_provider
-def default_writer_provider(file_data: WidgetDataModel, path: Path):
+def default_writer_provider(file_data: WidgetDataModel):
     """Get default writer."""
-    if file_data.type is StandardTypes.TEXT:
+    if file_data.type == StandardTypes.TEXT:
         return _write_text
     else:
         return None

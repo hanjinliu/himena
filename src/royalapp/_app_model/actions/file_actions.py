@@ -10,7 +10,7 @@ from app_model.types import (
 from royalapp.consts import StandardTypes, MenuId
 from royalapp.profile import append_recent_files
 from royalapp.widgets import MainWindow
-from royalapp.io import get_readers, get_writers
+from royalapp.io import get_readers, get_writers, ReaderTuple
 from royalapp.types import (
     ClipboardDataModel,
     WidgetDataModel,
@@ -29,14 +29,11 @@ SAVE_SCR_SHOT = "01_save-screenshot"
 EXIT_GROUP = "99_exit"
 
 
-def _read_and_update_source(reader: ReaderFunction, source: Path) -> WidgetDataModel:
+def _read_and_update_source(reader: ReaderTuple, source: Path) -> WidgetDataModel:
     """Update the `method` attribute if it is not set."""
-    model = reader(source)
+    model = reader.read(source)
     if model.method is None:
-        model = model._with_source(
-            source=source,
-            plugin=getattr(reader, "__module__", None),
-        )
+        model = model._with_source(source=source, plugin=reader.plugin)
     return model
 
 
@@ -156,6 +153,42 @@ def save_as_from_dialog(ui: MainWindow) -> None:
         writers = get_writers(fd)
         writers[0](fd, save_path)
         sub_win.update_default_save_path(save_path)
+    return None
+
+
+@ACTIONS.append_from_fn(
+    id="load-session",
+    title="Load Session ...",
+    menus=[{"id": MenuId.FILE, "group": READ_GROUP}],
+)
+def load_session_from_dialog(ui: MainWindow) -> None:
+    """Load a session from a file."""
+    from royalapp.session import AppSession
+
+    file_path = ui._backend_main_window._open_file_dialog(mode="r")
+    if file_path is None:
+        return None
+    with open(file_path) as f:
+        session = AppSession.model_validate_json(f.read())
+    session.to_gui(ui)
+    return None
+
+
+@ACTIONS.append_from_fn(
+    id="save-session",
+    title="Save Session ...",
+    menus=[{"id": MenuId.FILE, "group": WRITE_GROUP}],
+)
+def save_session_from_dialog(ui: MainWindow) -> None:
+    """Save current application state to a session."""
+    from royalapp.session import AppSession
+
+    session = AppSession.from_gui(ui)
+    file_path = ui._backend_main_window._open_file_dialog(mode="w")
+    if file_path is None:
+        return None
+    with open(file_path, "w") as f:
+        f.write(session.model_dump_json())
     return None
 
 

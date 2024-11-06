@@ -2,12 +2,19 @@ from typing import TYPE_CHECKING, Any
 from pathlib import Path
 from pydantic_compat import BaseModel, Field
 
+
 if TYPE_CHECKING:
+    from app_model import Application
+
     from royalapp.widgets import MainWindow
+    from royalapp.types import WidgetDataModel
 
 
 class MethodDescriptor(BaseModel):
     """A class that describes how a widget data model was created."""
+
+    def get_model(self, app: "Application") -> "WidgetDataModel[Any]":
+        raise NotImplementedError
 
 
 class ProgramaticMethod(MethodDescriptor):
@@ -19,6 +26,17 @@ class LocalReaderMethod(MethodDescriptor):
 
     path: Path
     plugin: str | None = Field(default=None)
+
+    def get_model(self, app: "Application") -> "WidgetDataModel[Any]":
+        from importlib import import_module
+
+        if self.plugin is None:
+            raise ValueError("No plugin found.")
+
+        mod_name, func_name = self.plugin.rsplit(".", 1)
+        mod = import_module(mod_name)
+        func = getattr(mod, func_name)
+        return func(self.path)
 
 
 class ConverterMethod(MethodDescriptor):

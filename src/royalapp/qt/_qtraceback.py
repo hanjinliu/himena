@@ -83,6 +83,8 @@ class QtErrorMessageBox(QtW.QMessageBox):
             dlg = QtTracebackDialog(self)
             dlg.setText(tb)
             dlg.exec_()
+        if self._old_focus is not None:
+            self._old_focus.setFocus()
         return returned
 
     @classmethod

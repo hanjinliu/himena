@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from pathlib import Path
+from logging import getLogger
 from typing import Callable, TypeVar, overload, NamedTuple
 import warnings
 from royalapp.types import WidgetDataModel, ReaderFunction, WriterFunction
 from royalapp._utils import get_widget_data_model_variable
 
+_LOGGER = getLogger(__name__)
 _ReaderProvider = Callable[["Path | list[Path]"], ReaderFunction]
 _WriterProvider = Callable[[WidgetDataModel], WriterFunction]
 
@@ -13,36 +15,60 @@ _RP = TypeVar("_RP", bound=_ReaderProvider)
 _WP = TypeVar("_WP", bound=_WriterProvider)
 
 
-class ReaderProviderInfo(NamedTuple):
+class PluginInfo(NamedTuple):
+    module: str
+    name: str
+
+    def to_str(self) -> str:
+        """Return the string representation of the plugin."""
+        return f"{self.module}.{self.name}"
+
+
+def _plugin_info_from_func(func: Callable) -> PluginInfo | None:
+    if hasattr(func, "__module__"):
+        module = func.__module__
+        if hasattr(func, "__qualname__"):
+            qual = func.__qualname__
+            if not qual.isidentifier():
+                return None
+            return PluginInfo(module, qual)
+        if hasattr(func, "__name__"):
+            return PluginInfo(module, func.__name__)
+    return None
+
+
+class ReaderProviderTuple(NamedTuple):
     provider: _ReaderProvider
     priority: int
-
-    @property
-    def plugin(self) -> str | None:
-        if mod := getattr(self.provider, "__module__"):
-            return mod
-        return None
+    plugin: PluginInfo | None = None
 
 
-_READER_PROVIDERS: list[ReaderProviderInfo] = []
+class ReaderTuple(NamedTuple):
+    reader: ReaderFunction
+    priority: int
+    plugin: PluginInfo | None = None
+
+    def read(self, path: Path) -> WidgetDataModel:
+        return self.reader(path)
+
+
+_READER_PROVIDERS: list[ReaderProviderTuple] = []
 _WRITER_PROVIDERS: list[tuple[_WriterProvider, int]] = []
 
 
-def get_readers(
-    file_path: Path | list[Path], empty_ok: bool = False
-) -> list[ReaderFunction]:
-    """Get reader functions."""
-    matched: list[tuple[ReaderFunction, int]] = []
-    priority_max = -1
+def get_readers(path: Path | list[Path], empty_ok: bool = False) -> list[ReaderTuple]:
+    """Get reader functions that can read the path(s)."""
+    matched: list[ReaderTuple] = []
+    priority_max = -float("inf")
     for info in _READER_PROVIDERS:
         try:
-            out = info.provider(file_path)
+            out = info.provider(path)
         except Exception as e:
             _warn_failed_provider(info.provider, e)
         else:
             if out:
                 if callable(out):
-                    matched.append((out, info.priority))
+                    matched.append(ReaderTuple(out, info.priority, info.plugin))
                     priority_max = max(priority_max, info.priority)
                 else:
                     warnings.warn(
@@ -50,23 +76,21 @@ def get_readers(
                         "not callable."
                     )
     if not matched and not empty_ok:
-        if isinstance(file_path, list):
-            msg = [p.name for p in file_path]
+        if isinstance(path, list):
+            msg = [p.name for p in path]
         else:
-            msg = file_path.name
+            msg = path.name
         raise ValueError(f"No reader functions available for {msg!r}")
-    return [fn for fn, pri in matched if pri == priority_max]
+    return [reader for reader in matched if reader.priority == priority_max]
 
 
-def get_writers(
-    file_data: WidgetDataModel, empty_ok: bool = False
-) -> list[WriterFunction]:
-    """Get writer."""
+def get_writers(model: WidgetDataModel, empty_ok: bool = False) -> list[WriterFunction]:
+    """Get writer functions that can write given data model."""
     matched: list[tuple[WriterFunction, int]] = []
     priority_max = -1
     for provider, priority in _WRITER_PROVIDERS:
         try:
-            out = provider(file_data)
+            out = provider(model)
         except Exception as e:
             _warn_failed_provider(provider, e)
         else:
@@ -80,7 +104,8 @@ def get_writers(
                         "callable."
                     )
     if not matched and not empty_ok:
-        raise ValueError(f"No writer functions available for {file_data.type!r}")
+        _LOGGER.info("Writer providers: %r", [x[0] for x in _WRITER_PROVIDERS])
+        raise ValueError(f"No writer functions available for {model.type!r}")
     return [fn for fn, pri in matched if pri == priority_max]
 
 
@@ -119,7 +144,8 @@ def register_reader_provider(provider=None, priority=0):
     def _inner(func):
         if not callable(func):
             raise ValueError("Provider must be callable.")
-        _READER_PROVIDERS.append(ReaderProviderInfo(func, priority))
+        plugin = _plugin_info_from_func(func)
+        _READER_PROVIDERS.append(ReaderProviderTuple(func, priority, plugin))
         return func
 
     return _inner if provider is None else _inner(provider)

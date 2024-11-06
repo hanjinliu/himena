@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Generic, TYPE_CHECKING, Hashable, TypeVar
+from typing import Generic, TYPE_CHECKING, TypeVar
 from uuid import uuid4
 import weakref
 
 from psygnal import Signal
 from royalapp import anchor as _anchor
-from royalapp.types import SubWindowState, WidgetDataModel, WindowRect
+from royalapp.types import WindowState, WidgetDataModel, WindowRect
 from royalapp._descriptors import (
     SaveBehavior,
     SaveToNewPath,
@@ -75,7 +75,7 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
 
 
 class SubWindow(WidgetWrapper[_W]):
-    state_changed = Signal(SubWindowState)
+    state_changed = Signal(WindowState)
     renamed = Signal(str)
     closed = Signal()
 
@@ -97,12 +97,12 @@ class SubWindow(WidgetWrapper[_W]):
         self._main_window()._set_window_title(self.widget, value)
 
     @property
-    def state(self) -> SubWindowState:
+    def state(self) -> WindowState:
         """State (e.g. maximized, minimized) of the sub-window."""
         return self._main_window()._window_state(self.widget)
 
     @state.setter
-    def state(self, value: SubWindowState) -> None:
+    def state(self, value: WindowState) -> None:
         inst = self._main_window()._royalapp_main_window._instructions
         self._main_window()._set_window_state(self.widget, value, inst)
 
@@ -128,7 +128,7 @@ class SubWindow(WidgetWrapper[_W]):
         """Size hint of the sub-window."""
         return getattr(self.widget, "size_hint", lambda: None)()
 
-    def model_type(self) -> Hashable | None:
+    def model_type(self) -> str | None:
         """Type of the widget data model."""
         return getattr(self.widget, "model_type", lambda: None)()
 
@@ -150,13 +150,13 @@ class SubWindow(WidgetWrapper[_W]):
         return model
 
     @property
-    def window_rect(self) -> WindowRect:
+    def rect(self) -> WindowRect:
         """Position and size of the sub-window."""
         return self._main_window()._window_rect(self.widget)
 
-    @window_rect.setter
-    def window_rect(self, value) -> None:
-        if self.state is not SubWindowState.NORMAL:
+    @rect.setter
+    def rect(self, value) -> None:
+        if self.state is not WindowState.NORMAL:
             raise ValueError(
                 "Cannot set window rect when window is not in normal state."
             )
@@ -185,21 +185,19 @@ class SubWindow(WidgetWrapper[_W]):
             raise TypeError(f"Expected WindowAnchor, got {type(anchor)}")
         self._main_window()._set_window_anchor(self.widget, anchor)
 
-    # TODO
-    # def to_json(self) -> dict:
-    #     """Serialize the sub-window to JSON."""
-    #     model = self.to_model()
-    #     model.method
-    #     return {
-    #         "source": model.source,
-    #         "title": self.title,
-    #         "state": self.state.value,
-    #         "window_rect": self.window_rect,
-    #         "anchor": _anchor.anchor_to_dict(self.anchor),
-    #     }
+    def to_description(self):
+        from royalapp.session import WindowDescription
+
+        return WindowDescription(
+            title=self.title,
+            method=self._widget_data_model_method,
+            rect=self.rect,
+            state=self.state,
+            anchor=_anchor.anchor_to_dict(self.anchor),
+        )
 
     def _anchor_from_str(sub_win: SubWindow[_W], anchor: str):
-        rect = sub_win.window_rect
+        rect = sub_win.rect
         w0, h0 = sub_win._main_window()._area_size()
         if anchor in ("top-left", "top left", "top_left"):
             return _anchor.TopLeftConstAnchor(rect.left, rect.top)

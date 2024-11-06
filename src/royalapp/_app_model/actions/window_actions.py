@@ -6,10 +6,9 @@ from app_model.types import (
     KeyChord,
     StandardKeyBinding,
 )
-from royalapp._descriptors import ConverterMethod
 from royalapp.consts import MenuId
 from royalapp.widgets import MainWindow
-from royalapp.types import SubWindowState, WidgetDataModel
+from royalapp.types import WindowState, WidgetDataModel
 from royalapp._app_model._context import AppContext as _ctx
 from royalapp._app_model.actions._registry import ACTIONS, SUBMENUS
 
@@ -74,13 +73,12 @@ def close_all_windows_in_tab(ui: MainWindow) -> None:
         {"id": MenuId.WINDOW_TITLE_BAR, "group": EDIT_GROUP},
     ],
     keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyD)],
+    need_function_callback=True,
 )
 def duplicate_window(model: WidgetDataModel) -> WidgetDataModel:
     """Duplicate the selected sub-window."""
     if model.title is not None:
         model.title += " (copy)"
-    if (method := model.method) is not None:
-        model.method = ConverterMethod(originals=[method], action_id="duplicate-window")
     return model
 
 
@@ -115,7 +113,7 @@ def rename_window(ui: MainWindow) -> None:
 def minimize_current_window(ui: MainWindow) -> None:
     """Minimize the window"""
     if window := ui.current_window:
-        window.state = SubWindowState.MIN
+        window.state = WindowState.MIN
 
 
 @ACTIONS.append_from_fn(
@@ -129,7 +127,7 @@ def minimize_current_window(ui: MainWindow) -> None:
 )
 def maximize_current_window(ui: MainWindow) -> None:
     if window := ui.current_window:
-        window.state = SubWindowState.MAX
+        window.state = WindowState.MAX
 
 
 @ACTIONS.append_from_fn(
@@ -144,10 +142,10 @@ def maximize_current_window(ui: MainWindow) -> None:
 )
 def toggle_full_screen(ui: MainWindow) -> None:
     if window := ui.current_window:
-        if window.state is SubWindowState.MAX:
-            window.state = SubWindowState.NORMAL
+        if window.state is WindowState.MAX:
+            window.state = WindowState.NORMAL
         else:
-            window.state = SubWindowState.MAX
+            window.state = WindowState.MAX
 
 
 @ACTIONS.append_from_fn(
@@ -226,7 +224,7 @@ def minimize_others(ui: MainWindow):
         for window in area:
             if cur_window is window:
                 continue
-            window.state = SubWindowState.MIN
+            window.state = WindowState.MIN
 
 
 @ACTIONS.append_from_fn(
@@ -239,8 +237,8 @@ def show_all_windows(ui: MainWindow):
     """Show all sub-windows in the current tab."""
     if area := ui.tabs.current():
         for window in area:
-            if window.state is SubWindowState.MIN:
-                window.state = SubWindowState.NORMAL
+            if window.state is WindowState.MIN:
+                window.state = WindowState.NORMAL
 
 
 @ACTIONS.append_from_fn(
@@ -261,7 +259,7 @@ def full_screen_in_new_tab(ui: MainWindow) -> None:
         window = area.pop(index)
         ui.add_tab(window.title)
         new_window = ui.tabs[-1].add_widget(window.widget, title=window.title)
-        new_window.state = SubWindowState.FULL
+        new_window.state = WindowState.FULL
 
 
 @ACTIONS.append_from_fn(
@@ -274,7 +272,7 @@ def full_screen_in_new_tab(ui: MainWindow) -> None:
 def window_expand(ui: MainWindow) -> None:
     """Expand (increase the size of) the current window."""
     if window := ui.current_window:
-        window.window_rect = window.window_rect.resize_relative(1.2, 1.2)
+        window.rect = window.rect.resize_relative(1.2, 1.2)
 
 
 @ACTIONS.append_from_fn(
@@ -287,7 +285,7 @@ def window_expand(ui: MainWindow) -> None:
 def window_shrink(ui: MainWindow) -> None:
     """Shrink (reduce the size of) the current window."""
     if window := ui.current_window:
-        window.window_rect = window.window_rect.resize_relative(1 / 1.2, 1 / 1.2)
+        window.rect = window.rect.resize_relative(1 / 1.2, 1 / 1.2)
 
 
 _CtrlAlt = KeyMod.CtrlCmd | KeyMod.Alt
@@ -303,7 +301,7 @@ _CtrlAlt = KeyMod.CtrlCmd | KeyMod.Alt
 def align_window_left(ui: MainWindow) -> None:
     """Align the window to the left edge of the tab area."""
     if window := ui.current_window:
-        window.window_rect = window.window_rect.align_left()
+        window.rect = window.rect.align_left()
 
 
 @ACTIONS.append_from_fn(
@@ -316,7 +314,7 @@ def align_window_left(ui: MainWindow) -> None:
 def align_window_right(ui: MainWindow) -> None:
     """Align the window to the right edge of the tab area."""
     if window := ui.current_window:
-        window.window_rect = window.window_rect.align_right(ui.area_size)
+        window.rect = window.rect.align_right(ui.area_size)
 
 
 @ACTIONS.append_from_fn(
@@ -329,7 +327,7 @@ def align_window_right(ui: MainWindow) -> None:
 def align_window_top(ui: MainWindow) -> None:
     """Align the window to the top edge of the tab area."""
     if window := ui.current_window:
-        window.window_rect = window.window_rect.align_top(ui.area_size)
+        window.rect = window.rect.align_top(ui.area_size)
 
 
 @ACTIONS.append_from_fn(
@@ -342,7 +340,7 @@ def align_window_top(ui: MainWindow) -> None:
 def align_window_bottom(ui: MainWindow) -> None:
     """Align the window to the bottom edge of the tab area."""
     if window := ui.current_window:
-        window.window_rect = window.window_rect.align_bottom(ui.area_size)
+        window.rect = window.rect.align_bottom(ui.area_size)
 
 
 @ACTIONS.append_from_fn(
@@ -355,7 +353,7 @@ def align_window_bottom(ui: MainWindow) -> None:
 def align_window_center(ui: MainWindow) -> None:
     """Align the window to the center of the tab area."""
     if window := ui.current_window:
-        window.window_rect = window.window_rect.align_center(ui.area_size)
+        window.rect = window.rect.align_center(ui.area_size)
 
 
 @ACTIONS.append_from_fn(

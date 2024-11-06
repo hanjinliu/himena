@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import TypeVar, Callable
 from app_model.types import Action, SubmenuItem
 
+from royalapp._utils import make_function_callback
+
 _F = TypeVar("_F", bound=Callable)
 
 
@@ -15,13 +17,18 @@ class ActionList(list[Action]):
         menus=None,
         enablement=None,
         keybindings=None,
+        need_function_callback: bool = False,
     ) -> Callable[[_F], _F]:
         def inner(fn: _F) -> _F:
+            if need_function_callback:
+                callback = make_function_callback(fn, id)
+            else:
+                callback = fn
             action = Action(
                 id=id,
                 title=title,
                 icon=icon,
-                callback=fn,
+                callback=callback,
                 tooltip=fn.__doc__,
                 menus=menus,
                 keybindings=keybindings,

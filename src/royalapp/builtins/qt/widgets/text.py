@@ -412,7 +412,7 @@ class QTextFooter(QtW.QWidget):
         self._tab_spaces_combobox.setCurrentText("4")
         self._tab_spaces_combobox.setToolTip("Tab size")
         self._tab_spaces_combobox.currentTextChanged.connect(
-            lambda x: self.tabChanged(int(x))
+            lambda x: self.tabChanged.emit(int(x))
         )
 
         layout = QtW.QHBoxLayout(self)

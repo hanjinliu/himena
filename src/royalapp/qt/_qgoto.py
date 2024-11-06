@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 
-from royalapp.types import SubWindowState
+from royalapp.types import WindowState
 
 if TYPE_CHECKING:
     from royalapp.qt.main_window import QMainWindow
@@ -130,8 +130,8 @@ class QGotoWidget(QtW.QWidget):
         main = self._main._royalapp_main_window
         main.tabs.current_index = i_tab
         main.tabs.current().current_index = i_win
-        if (win := main.current_window) and win.state is SubWindowState.MIN:
-            win.state = SubWindowState.NORMAL
+        if (win := main.current_window) and win.state is WindowState.MIN:
+            win.state = WindowState.NORMAL
         self.close()
         return None
 

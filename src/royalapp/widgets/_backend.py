@@ -6,7 +6,7 @@ from typing import Callable, Generic, Literal, TypeVar, TYPE_CHECKING, overload
 
 from royalapp.anchor import WindowAnchor
 from royalapp.types import (
-    SubWindowState,
+    WindowState,
     ClipboardDataModel,
     DockArea,
     DockAreaString,
@@ -39,13 +39,13 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     def _set_current_sub_window_index(self, i_window: int) -> None:
         raise NotImplementedError
 
-    def _window_state(self, widget: _W) -> SubWindowState:
+    def _window_state(self, widget: _W) -> WindowState:
         raise NotImplementedError
 
     def _set_window_state(
         self,
         widget: _W,
-        state: SubWindowState,
+        state: WindowState,
         inst: BackendInstructions,
     ) -> None:
         raise NotImplementedError

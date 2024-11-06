@@ -8,7 +8,7 @@ __royalapp_plugin__ = get_plugin_interface("tools")
 
 
 @__royalapp_plugin__.register_function(
-    types=[StandardTypes.TEXT, "text"],
+    types=StandardTypes.TEXT,
     keybindings="Ctrl+F5",
 )
 def run_script(model: WidgetDataModel[str]):
@@ -21,4 +21,4 @@ def run_script(model: WidgetDataModel[str]):
             raise ValueError(f"Cannot run {model.additional_data.language}.")
     else:
         raise ValueError("Unknown language.")
-    return WidgetDataModel(value="", type=StandardTypes.TEXT, title="Untitled")
+    return None

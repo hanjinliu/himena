@@ -7,7 +7,7 @@ from app_model.types import (
 from royalapp.consts import MenuId
 from royalapp.widgets import MainWindow
 from royalapp.types import (
-    SubWindowState,
+    WindowState,
     WindowRect,
 )
 from royalapp._app_model._context import AppContext as _ctx
@@ -63,11 +63,11 @@ def merge_tabs(ui: MainWindow) -> None:
     )
     if names is None:
         return
-    all_window_info: list[tuple[Any, str, SubWindowState, WindowRect]] = []
+    all_window_info: list[tuple[Any, str, WindowState, WindowRect]] = []
     for name in names:
         for window in ui.tabs[name]:
             all_window_info.append(
-                (window.widget, window.title, window.state, window.window_rect)
+                (window.widget, window.title, window.state, window.rect)
             )
     for name in names:
         del ui.tabs[name]
@@ -75,5 +75,5 @@ def merge_tabs(ui: MainWindow) -> None:
     for widget, title, state, rect in all_window_info:
         new_window = new_tab.add_widget(widget, title=title)
         new_window.state = state
-        if state is SubWindowState.NORMAL:
-            new_window.window_rect = rect
+        if state is WindowState.NORMAL:
+            new_window.rect = rect
