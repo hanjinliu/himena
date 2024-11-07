@@ -84,6 +84,7 @@ class QDefaultImageView(QtW.QWidget):
         return WidgetDataModel(
             value=self._model.value,
             type=self._model.type,
+            extension_default=".png",
         )
 
     def model_type(self) -> str:

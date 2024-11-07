@@ -329,21 +329,51 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _pick_widget_class(self, type: str) -> QtW.QWidget:
         return pick_widget_class(self._app_name, type)
 
-    def _open_file_dialog(self, mode: str = "r") -> Path | list[Path] | None:
+    def _open_file_dialog(
+        self,
+        mode: str = "r",
+        extension_default: str | None = None,
+        allowed_extensions: list[str] | None = None,
+    ) -> Path | list[Path] | None:
+        if allowed_extensions:
+            filter_str = (
+                ";".join(_ext_to_filter(ext) for ext in allowed_extensions)
+                + ";;All Files (*)"
+            )
+        else:
+            filter_str = "All Files (*)"
+
         if mode == "r":
-            path = QtW.QFileDialog.getOpenFileName(self, "Open File")[0]
+            path, _ = QtW.QFileDialog.getOpenFileName(
+                self,
+                caption="Open File",
+                filter=filter_str,
+            )
             if path:
                 return Path(path)
         elif mode == "w":
-            path = QtW.QFileDialog.getSaveFileName(self, "Save File")[0]
+            path, _ = QtW.QFileDialog.getSaveFileName(
+                self,
+                caption="Save File",
+                filter=filter_str,
+            )
             if path:
-                return Path(path)
+                output_path = Path(path)
+                if output_path.suffix == "" and extension_default is not None:
+                    output_path = output_path.with_suffix(extension_default)
         elif mode == "rm":
-            paths = QtW.QFileDialog.getOpenFileNames(self, "Open Files")[0]
+            paths, _ = QtW.QFileDialog.getOpenFileNames(
+                self,
+                caption="Open Files",
+                filter=filter_str,
+            )
             if paths:
                 return [Path(p) for p in paths]
         elif mode == "d":
-            path = QtW.QFileDialog.getExistingDirectory(self, "Open Directory")
+            path = QtW.QFileDialog.getExistingDirectory(
+                self,
+                caption="Open Directory",
+            )
             if path:
                 return Path(path)
         else:
@@ -564,3 +594,12 @@ def _get_subwindow(widget: QtW.QWidget) -> QSubWindow:
     if not isinstance(window, QSubWindow):
         raise ValueError(f"Widget {widget!r} is not in a sub-window.")
     return window
+
+
+def _ext_to_filter(ext: str) -> str:
+    if ext.startswith("."):
+        return f"*{ext}"
+    elif ext == "":
+        return "*"
+    else:
+        return f"*.{ext}"

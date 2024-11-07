@@ -46,6 +46,7 @@ class QDefaultTableWidget(QtW.QTableWidget):
                 slice(0, self.rowCount()), slice(0, self.columnCount())
             ),
             type=self.model_type(),
+            extension_default=".csv",
         )
 
     def model_type(self):
@@ -56,6 +57,9 @@ class QDefaultTableWidget(QtW.QTableWidget):
 
     def is_modified(self) -> bool:
         return self._modified
+
+    def set_modified(self, value: bool) -> None:
+        self._modified = value
 
     def _to_list(self, rsl: slice, csl: slice) -> list[list[str]]:
         values: list[list[str]] = []

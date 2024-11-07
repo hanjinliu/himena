@@ -66,6 +66,8 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
     def update_default_save_path(self, path: str | Path) -> None:
         """Update the save behavior of the widget."""
         self._save_behavior = SaveToPath(path=Path(path), ask_overwrite=True)
+        if hasattr(self.widget, "set_modified"):
+            self.widget.set_modified(False)
         return None
 
     def _update_widget_data_model_method(self, method: MethodDescriptor) -> None:

@@ -100,9 +100,27 @@ def open_folder_from_dialog(ui: MainWindow) -> WidgetDataModel:
 def save_from_dialog(ui: MainWindow) -> None:
     """Save (overwrite) the current sub-window as a file."""
     fd, sub_win = ui._provide_file_output()
-    if save_path := sub_win.save_behavior.get_save_path(ui):
+    if save_path := sub_win.save_behavior.get_save_path(ui, fd):
         writers = get_writers(fd)
         writers[0](fd, save_path)  # run save function
+        sub_win.update_default_save_path(save_path)
+    return None
+
+
+@ACTIONS.append_from_fn(
+    id="save-as",
+    title="Save As ...",
+    icon="material-symbols:save-as-outline",
+    menus=[{"id": MenuId.FILE, "group": WRITE_GROUP}],
+    keybindings=[StandardKeyBinding.SaveAs],
+    enablement=_ctx.is_active_window_exportable,
+)
+def save_as_from_dialog(ui: MainWindow) -> None:
+    """Save the current sub-window as a new file."""
+    fd, sub_win = ui._provide_file_output()
+    if save_path := sub_win.save_behavior.get_save_path(ui, fd):
+        writers = get_writers(fd)
+        writers[0](fd, save_path)
         sub_win.update_default_save_path(save_path)
     return None
 
@@ -135,24 +153,6 @@ def paste_from_clipboard(ui: MainWindow) -> WidgetDataModel:
     """Paste the clipboard data as a sub-window."""
     if data := ui._backend_main_window._clipboard_data():
         return data.to_widget_data_model()
-    return None
-
-
-@ACTIONS.append_from_fn(
-    id="save-as",
-    title="Save As ...",
-    icon="material-symbols:save-as-outline",
-    menus=[{"id": MenuId.FILE, "group": WRITE_GROUP}],
-    keybindings=[StandardKeyBinding.SaveAs],
-    enablement=_ctx.is_active_window_exportable,
-)
-def save_as_from_dialog(ui: MainWindow) -> None:
-    """Save the current sub-window as a new file."""
-    fd, sub_win = ui._provide_file_output()
-    if save_path := sub_win.save_behavior.get_save_path(ui):
-        writers = get_writers(fd)
-        writers[0](fd, save_path)
-        sub_win.update_default_save_path(save_path)
     return None
 
 

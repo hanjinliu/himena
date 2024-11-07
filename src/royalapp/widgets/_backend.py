@@ -83,11 +83,21 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
         raise NotImplementedError
 
     @overload
-    def _open_file_dialog(self, mode: Literal["r", "d", "w"] = "r") -> Path | None: ...
+    def _open_file_dialog(
+        self,
+        mode: Literal["r", "d", "w"] = "r",
+        extension_default: str | None = None,
+        allowed_extensions: list[str] | None = None,
+    ) -> Path | None: ...
     @overload
-    def _open_file_dialog(self, mode: Literal["rm"]) -> list[Path] | None: ...
+    def _open_file_dialog(
+        self,
+        mode: Literal["rm"],
+        extension_default: str | None = None,
+        allowed_extensions: list[str] | None = None,
+    ) -> list[Path] | None: ...
 
-    def _open_file_dialog(self, mode) -> list[Path] | None:
+    def _open_file_dialog(self, mode, extension_default=None, allowed_extensions=None):
         raise NotImplementedError
 
     def _open_confirmation_dialog(self, message: str) -> bool:

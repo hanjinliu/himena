@@ -480,6 +480,7 @@ class QDefaultTextEdit(QtW.QWidget):
         return WidgetDataModel(
             value=self.toPlainText(),
             type=self.model_type(),
+            extension_default=".txt",
             additional_data=TextFileMeta(
                 language=self._footer._language_combobox.currentText(),
                 spaces=int(self._footer._tab_spaces_combobox.currentText()),
@@ -494,6 +495,9 @@ class QDefaultTextEdit(QtW.QWidget):
 
     def is_modified(self) -> bool:
         return self._main_text_edit.is_modified()
+
+    def set_modified(self, value: bool) -> None:
+        self._main_text_edit.document().setModified(value)
 
     def keyPressEvent(self, a0: QtGui.QKeyEvent | None) -> None:
         if (

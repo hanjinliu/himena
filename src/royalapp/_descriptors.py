@@ -50,9 +50,17 @@ class ConverterMethod(MethodDescriptor):
 class SaveBehavior(BaseModel):
     """A class that describes how a widget should be saved."""
 
-    def get_save_path(self, main: "MainWindow") -> Path | None:
+    def get_save_path(
+        self,
+        main: "MainWindow",
+        model: "WidgetDataModel",
+    ) -> Path | None:
         """Return the path to save (None to cancel)."""
-        return main._backend_main_window._open_file_dialog(mode="w")
+        return main._backend_main_window._open_file_dialog(
+            mode="w",
+            extension_default=model.extension_default,
+            allowed_extensions=model.extensions,
+        )
 
 
 class SaveToNewPath(SaveBehavior):
@@ -68,7 +76,11 @@ class SaveToPath(SaveBehavior):
         description="Ask before overwriting the file if `path` already exists.",
     )
 
-    def get_save_path(self, main: "MainWindow") -> Path | None:
+    def get_save_path(
+        self,
+        main: "MainWindow",
+        model: "WidgetDataModel",
+    ) -> Path | None:
         if self.path.exists() and self.ask_overwrite:
             ok = main.exec_confirmation_dialog(
                 f"{self.path} already exists, overwrite?"
