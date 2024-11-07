@@ -34,6 +34,7 @@ def show_command_palette(ui: MainWindow) -> None:
         {"id": MenuId.TOOLS, "group": CMD_GROUP},
         {"id": MenuId.TOOLBAR, "group": CMD_GROUP},
     ],
+    enablement=_ctx.has_tabs,
     keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyG)],
 )
 def go_to_window(ui: MainWindow) -> None:

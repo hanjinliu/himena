@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from typing import Iterator
 from qtpy import QtWidgets as QtW
 from qtpy import QtCore, QtGui
@@ -210,13 +211,16 @@ class QStartupWidget(QtW.QWidget):
         _layout.setContentsMargins(12, 12, 12, 12)
         _layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
 
-        self._open_file_btn = self.make_button("open-file", "Ctrl+O")
-        self._open_folder_btn = self.make_button("open-folder", "Ctrl+K, Ctrl+O")
-        self._open_recent_btn = self.make_button("open-recent", "Ctrl+K, Ctrl+R")
+        ctrl = "⌘" if sys.platform == "darwin" else "Ctrl"
+        self._open_file_btn = self.make_button("open-file", f"{ctrl}+O")
+        self._open_folder_btn = self.make_button("open-folder", f"{ctrl}+K, {ctrl}+O")
+        self._open_recent_btn = self.make_button("open-recent", f"{ctrl}+K, {ctrl}+R")
+        self._load_session_btn = self.make_button("load-session", f"{ctrl}+L")
 
         _layout.addWidget(self._open_file_btn)
         _layout.addWidget(self._open_folder_btn)
         _layout.addWidget(self._open_recent_btn)
+        _layout.addWidget(self._load_session_btn)
         self.setMinimumSize(0, 0)
         return None
 

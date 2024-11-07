@@ -1,14 +1,16 @@
 from pathlib import Path
 from logging import getLogger
-from typing import Any, TypeVar
+from typing import Any, TypeVar, TYPE_CHECKING
 from pydantic_compat import BaseModel, Field
 import yaml
 
 from royalapp._descriptors import dict_to_method, method_to_dict
 from royalapp.types import WindowState, WindowRect
-from royalapp.widgets import SubWindow, MainWindow
 from royalapp import anchor
 from royalapp.widgets._tab_list import TabArea
+
+if TYPE_CHECKING:
+    from royalapp.widgets import SubWindow, MainWindow
 
 _W = TypeVar("_W")  # backend widget type
 _LOGGER = getLogger(__name__)
@@ -38,7 +40,7 @@ class WindowDescription(BaseModel):
     identifier: int = Field(default=0)
 
     @classmethod
-    def from_gui(cls, window: SubWindow) -> "WindowDescription":
+    def from_gui(cls, window: "SubWindow") -> "WindowDescription":
         return WindowDescription(
             title=window.title,
             method=method_to_dict(window._widget_data_model_method),
@@ -64,7 +66,7 @@ class TabSession(BaseModel):
             windows=[WindowDescription.from_gui(window) for window in tab],
         )
 
-    def to_gui(self, main: MainWindow[_W]) -> None:
+    def to_gui(self, main: "MainWindow[_W]") -> None:
         with main._animation_context(enabled=False):
             area = main.add_tab(self.name)
             cur_index = self.current_index
@@ -99,13 +101,13 @@ class AppSession(BaseModel):
     current_index: int = Field(default=0)
 
     @classmethod
-    def from_gui(cls, main: MainWindow) -> "AppSession":
+    def from_gui(cls, main: "MainWindow[_W]") -> "AppSession":
         return AppSession(
             tabs=[TabSession.from_gui(tab) for tab in main.tabs],
             current_index=main.tabs.current_index,
         )
 
-    def to_gui(self, main: MainWindow[_W]) -> None:
+    def to_gui(self, main: "MainWindow[_W]") -> None:
         with main._animation_context(enabled=False):
             for tab_session in self.tabs:
                 area = main.add_tab(tab_session.name)

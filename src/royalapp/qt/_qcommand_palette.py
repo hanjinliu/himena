@@ -121,6 +121,7 @@ class QCommandPalette(QtW.QWidget):
         if self._need_update:
             self._update_contents()
             self._need_update = False
+
         self._line.setText("")
         self._list.update_for_text("")
         super().show()

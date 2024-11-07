@@ -407,8 +407,10 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def _show_command_palette(self, kind: Literal["general", "recent", "goto"]) -> None:
         if kind == "general":
+            self._command_palette_general.update_context(self)
             self._command_palette_general.show()
         elif kind == "recent":
+            self._command_palette_general.update_context(self)
             self._command_palette_recent.show()
         elif kind == "goto":
             self._goto_widget.show()

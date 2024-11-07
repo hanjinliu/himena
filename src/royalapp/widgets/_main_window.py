@@ -8,6 +8,10 @@ from weakref import WeakSet
 from app_model import Application
 from app_model.expressions import create_context
 from psygnal import SignalGroup, Signal
+
+from royalapp._app_model._context import AppContext
+from royalapp._descriptors import ProgramaticMethod
+from royalapp._open_recent import RecentFileManager, RecentSessionManager
 from royalapp.io import get_readers
 from royalapp.types import (
     Parametric,
@@ -17,10 +21,8 @@ from royalapp.types import (
     DockAreaString,
     BackendInstructions,
 )
-from royalapp._app_model._context import AppContext
-from royalapp._descriptors import ProgramaticMethod
+from royalapp.session import from_yaml
 from royalapp.widgets._backend import BackendMainWindow
-from royalapp._open_recent import OpeRecentManager
 from royalapp.widgets._tab_list import TabList, TabArea
 from royalapp.widgets._wrapper import SubWindow, DockWidget
 
@@ -57,9 +59,9 @@ class MainWindow(Generic[_W]):
         self._tab_list.changed.connect(backend._update_context)
         self._dock_widgets = WeakSet[_W]()
         self._exec_confirmations = True
-        self._recent_manager = OpeRecentManager.default_recent_files(app)
+        self._recent_manager = RecentFileManager.default(app)
         self._recent_manager.update_menu()
-        self._recent_session_manager = OpeRecentManager.default_recent_sessions(app)
+        self._recent_session_manager = RecentSessionManager.default(app)
         self._recent_session_manager.update_menu()
 
     @property
@@ -292,7 +294,7 @@ class MainWindow(Generic[_W]):
 
         return param_widget
 
-    def read_file(self, file_path: str | Path) -> SubWindow[_W]:
+    def read_file(self, file_path: str | Path | list[str | Path]) -> SubWindow[_W]:
         """Read local file(s) and open as a new sub-window."""
         if hasattr(file_path, "__iter__") and not isinstance(file_path, (str, Path)):
             fp = [Path(f) for f in file_path]
@@ -305,6 +307,15 @@ class MainWindow(Generic[_W]):
         self._recent_manager.append_recent_files([fp])
         self._recent_manager.update_menu()
         return out
+
+    def read_session(self, file_path: str | Path) -> None:
+        """Read a session file and open the session."""
+        fp = Path(file_path)
+        session = from_yaml(fp)
+        session.to_gui(self)
+        self._recent_session_manager.append_recent_files([fp])
+        self._recent_session_manager.update_menu()
+        return None
 
     def exec_action(self, id: str) -> None:
         """Execute an action by its ID."""

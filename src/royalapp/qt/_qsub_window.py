@@ -223,6 +223,8 @@ class QSubWindow(QtW.QMdiSubWindow):
 
     def _update_window_state(self, state: WindowState, animate: bool = True):
         state = WindowState(state)
+        if self._window_state == state:
+            return None
         if self._subwindow_area().viewMode() != QtW.QMdiArea.ViewMode.SubWindowView:
             self._window_state = state
             return None
@@ -230,33 +232,34 @@ class QSubWindow(QtW.QMdiSubWindow):
             _setter = self._set_geometry_animated
         else:
             _setter = self.setGeometry
-        match state:
-            case WindowState.MIN:
-                if self._window_state is WindowState.NORMAL:
-                    self._last_geometry = self.geometry()
-                self.resize(124, self._title_bar.height() + 8)
-                n_minimized = sum(
-                    1
-                    for sub_window in self._subwindow_area().subWindowList()
-                    if sub_window._window_state is WindowState.MIN
-                )
-                self._set_minimized(self.parentWidget().geometry(), n_minimized)
-            case WindowState.MAX:
-                if self._window_state is WindowState.NORMAL:
-                    self._last_geometry = self.geometry()
-                _setter(self.parentWidget().geometry())
-                self._title_bar._toggle_size_btn.setIcon(_icon_normal())
-                self._widget.setVisible(True)
-            case WindowState.NORMAL:
-                _setter(self._last_geometry)
-                self._title_bar._toggle_size_btn.setIcon(_icon_max())
-                self._widget.setVisible(True)
-                if self._title_bar.is_upper_than_area():
-                    self.move(self.pos().x(), 0)
-            case WindowState.FULL:
-                if self._window_state is WindowState.NORMAL:
-                    self._last_geometry = self.geometry()
-                _setter(self.parentWidget().geometry())
+        if state == WindowState.MIN:
+            if self._window_state is WindowState.NORMAL:
+                self._last_geometry = self.geometry()
+            self.resize(124, self._title_bar.height() + 8)
+            n_minimized = sum(
+                1
+                for sub_window in self._subwindow_area().subWindowList()
+                if sub_window._window_state is WindowState.MIN
+            )
+            self._set_minimized(self.parentWidget().geometry(), n_minimized)
+        elif state == WindowState.MAX:
+            if self._window_state is WindowState.NORMAL:
+                self._last_geometry = self.geometry()
+            _setter(self.parentWidget().geometry())
+            self._title_bar._toggle_size_btn.setIcon(_icon_normal())
+            self._widget.setVisible(True)
+        elif state == WindowState.NORMAL:
+            _setter(self._last_geometry)
+            self._title_bar._toggle_size_btn.setIcon(_icon_max())
+            self._widget.setVisible(True)
+            if self._title_bar.is_upper_than_area():
+                self.move(self.pos().x(), 0)
+        elif state == WindowState.FULL:
+            if self._window_state is WindowState.NORMAL:
+                self._last_geometry = self.geometry()
+            _setter(self.parentWidget().geometry())
+        else:
+            raise RuntimeError(f"Invalid window state value: {state}")
         self._title_bar.setVisible(state is not WindowState.FULL)
         self._title_bar._minimize_btn.setVisible(state is not WindowState.MIN)
         self._widget.setVisible(state is not WindowState.MIN)

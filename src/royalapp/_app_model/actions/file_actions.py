@@ -129,7 +129,7 @@ def save_as_from_dialog(ui: MainWindow) -> None:
     title="Open Recent ...",
     icon="mdi:recent",
     menus=[
-        {"id": MenuId.FILE_RECENT, "group": READ_GROUP, "order": 99},
+        {"id": MenuId.FILE_RECENT, "group": "02_more", "order": 99},
         {"id": MenuId.TOOLBAR, "group": READ_GROUP, "order": 99},
     ],
     keybindings=[
@@ -162,20 +162,17 @@ def paste_from_clipboard(ui: MainWindow) -> WidgetDataModel:
     id="load-session",
     title="Load Session ...",
     menus=[{"id": MenuId.FILE, "group": READ_GROUP}],
+    keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyL)],
 )
 def load_session_from_dialog(ui: MainWindow) -> None:
     """Load a session from a file."""
-    from royalapp.session import from_yaml
-
     file_path = ui._backend_main_window._open_file_dialog(
         mode="r",
         allowed_extensions=[".session.yaml"],
     )
     if file_path is None:
         return None
-    session = from_yaml(file_path)
-    session.to_gui(ui)
-    return None
+    return ui.read_session(file_path)
 
 
 @ACTIONS.append_from_fn(

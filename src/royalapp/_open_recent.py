@@ -6,6 +6,7 @@ from app_model.types import Action
 import json
 from royalapp.consts import MenuId, ActionCategory
 from royalapp.profile import data_dir
+from datetime import datetime
 
 if TYPE_CHECKING:
     from app_model import Application
@@ -23,7 +24,18 @@ class OpenRecentFunction:
         return f"Open {self._file.as_posix()}"
 
 
-class OpeRecentManager:
+class OpenSessionFunction:
+    def __init__(self, file: Path | list[Path]):
+        self._file = file
+
+    def __call__(self, ui: MainWindow):
+        ui.read_session(self._file)
+
+    def to_str(self) -> str:
+        return f"Load session {self._file.as_posix()}"
+
+
+class RecentFileManager:
     def __init__(
         self,
         app: Application,
@@ -56,18 +68,8 @@ class OpeRecentManager:
         return None
 
     @classmethod
-    def default_recent_files(cls, app: Application) -> OpeRecentManager:
+    def default(cls, app: Application) -> RecentFileManager:
         return cls(app)
-
-    @classmethod
-    def default_recent_sessions(cls, app: Application) -> OpeRecentManager:
-        return cls(
-            app,
-            file_name="recent_sessions.json",
-            group="01_recent_sessions",
-            n_history=20,
-            n_history_menu=3,
-        )
 
     def _list_recent_files(self) -> list[Path | list[Path]]:
         """List the recent files (older first)."""
@@ -104,15 +106,16 @@ class OpeRecentManager:
             all_info = []
         existing_paths = [each["path"] for each in all_info]
         to_remove: list[int] = []
+        now = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
         for each in inputs_str:
             if each in existing_paths:
                 to_remove.append(existing_paths.index(each))
             if isinstance(each, list):
-                all_info.append({"type": "group", "path": each})
+                all_info.append({"type": "group", "path": each, "time": now})
             elif Path(each).is_file():
-                all_info.append({"type": "file", "path": each})
+                all_info.append({"type": "file", "path": each, "time": now})
             else:
-                all_info.append({"type": "folder", "path": each})
+                all_info.append({"type": "folder", "path": each, "time": now})
         for i in sorted(to_remove, reverse=True):
             all_info.pop(i)
         if len(all_info) > self._n_history:
@@ -127,14 +130,7 @@ class OpeRecentManager:
         in_menu: bool = True,
     ) -> Action:
         """Make an Action for opening a file."""
-        if isinstance(file, Path):
-            id = f"open-{file}"
-            title = str(file)
-        else:
-            name = ";".join([f.name for f in file])
-            id = f"open-{name}"
-            title = f"{len(file)} files such as {file[0]}"
-
+        id, title = self.id_title_for_file(file)
         if in_menu:
             menus = [{"id": self._menu_id, "group": self._group}]
         else:
@@ -142,11 +138,46 @@ class OpeRecentManager:
         return Action(
             id=id,
             title=title,
-            callback=OpenRecentFunction(file),
+            callback=self.to_callback(file),
             menus=menus,
             category=ActionCategory.OPEN_RECENT,
             palette=False,
         )
+
+    def to_callback(self, file):
+        return OpenRecentFunction(file)
+
+    def id_title_for_file(self, file: Path | list[Path]) -> tuple[str, str]:
+        """Return the ID for the file."""
+        if isinstance(file, Path):
+            id = f"open-{file}"
+            title = str(file)
+        else:
+            name = ";".join([f.name for f in file])
+            id = f"open-{name}"
+            title = f"{len(file)} files such as {file[0]}"
+        return id, title
+
+
+class RecentSessionManager(RecentFileManager):
+    @classmethod
+    def default(cls, app: Application) -> RecentSessionManager:
+        return cls(
+            app,
+            file_name="recent_sessions.json",
+            group="21_recent_sessions",
+            n_history=20,
+            n_history_menu=3,
+        )
+
+    def to_callback(self, file):
+        return OpenSessionFunction(file)
+
+    def id_title_for_file(self, file: Path) -> tuple[str, str]:
+        """Return the ID for the file."""
+        id = f"load-session-{file}"
+        title = f"{file} [Session]"
+        return id, title
 
 
 def _path_to_list(obj: list[Path | list[Path]]) -> list[str | list[str]]:
