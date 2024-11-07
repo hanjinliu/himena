@@ -208,6 +208,8 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         sub_win = self.add_widget(widget, title=model.title)
         if isinstance(method := model.method, LocalReaderMethod):
             sub_win.update_default_save_path(method.path)
+        if (method := model.method) is not None:
+            sub_win._update_widget_data_model_method(method)
         return sub_win
 
     def tile_windows(

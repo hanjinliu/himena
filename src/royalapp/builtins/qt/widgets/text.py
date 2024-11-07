@@ -36,7 +36,6 @@ def change_point_size(cur_font: QtGui.QFont, step: int) -> QtGui.QFont:
     next_idx = min(max(cur_idx + step, 0), nmax - 1)
     new_size = _POINT_SIZES[next_idx]
     cur_font.setPointSize(new_size)
-    print(f"Font size changed to {new_size}")
     return cur_font
 
 

@@ -361,6 +361,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
                 output_path = Path(path)
                 if output_path.suffix == "" and extension_default is not None:
                     output_path = output_path.with_suffix(extension_default)
+                return output_path
         elif mode == "rm":
             paths, _ = QtW.QFileDialog.getOpenFileNames(
                 self,
@@ -574,14 +575,14 @@ def _is_root_menu_id(app: app_model.Application, menu_id: str) -> bool:
     return "/" not in menu_id.replace("//", "")
 
 
-def _dock_widget_action_toggled_callback(action: QtW.QAction, dock: QtW.QDockWidget):
+def _dock_widget_action_toggled_callback(action, dock: QtW.QDockWidget):
     def _cb():
         dock.setVisible(action.isChecked())
 
     return _cb
 
 
-def _dock_widget_vis_changed_callback(action: QtW.QAction, dock: QtW.QDockWidget):
+def _dock_widget_vis_changed_callback(action, dock: QtW.QDockWidget):
     def _cb():
         with qsignal_blocker(dock):
             action.setChecked(dock.isVisible())

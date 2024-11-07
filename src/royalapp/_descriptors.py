@@ -28,15 +28,27 @@ class LocalReaderMethod(MethodDescriptor):
     plugin: str | None = Field(default=None)
 
     def get_model(self, app: "Application") -> "WidgetDataModel[Any]":
+        """Get model by importing the reader plugin and actually read the file(s)."""
         from importlib import import_module
+        from royalapp.io import PluginInfo
+        from royalapp.types import WidgetDataModel
 
         if self.plugin is None:
             raise ValueError("No plugin found.")
 
         mod_name, func_name = self.plugin.rsplit(".", 1)
         mod = import_module(mod_name)
-        func = getattr(mod, func_name)
-        return func(self.path)
+        reader_provider = getattr(mod, func_name)
+        reader = reader_provider(self.path)
+        model = reader(self.path)
+        if not isinstance(model, WidgetDataModel):
+            raise ValueError(f"Expected to return a WidgetDataModel but got {model}")
+        if model.method is None:
+            model = model._with_source(
+                source=self.path,
+                plugin=PluginInfo(module=mod_name, name=func_name),
+            )
+        return model
 
 
 class ConverterMethod(MethodDescriptor):
@@ -45,6 +57,41 @@ class ConverterMethod(MethodDescriptor):
     originals: list[MethodDescriptor]
     action_id: str
     parameters: dict[str, Any] = Field(default_factory=dict)
+
+
+def dict_to_method(data: dict) -> MethodDescriptor:
+    """Convert a dictionary to a method descriptor."""
+    if data["type"] == "programatic":
+        return ProgramaticMethod()
+    if data["type"] == "local_reader":
+        return LocalReaderMethod(path=Path(data["path"]), plugin=data["plugin"])
+    if data["type"] == "converter":
+        return ConverterMethod(
+            originals=[dict_to_method(d) for d in data["originals"]],
+            action_id=data["action_id"],
+            parameters=data["parameters"],
+        )
+    raise ValueError(f"Unknown method type: {data['type']}")
+
+
+def method_to_dict(method: MethodDescriptor) -> dict:
+    """Convert a method descriptor to a dictionary."""
+    if isinstance(method, ProgramaticMethod):
+        return {"type": "programatic"}
+    if isinstance(method, LocalReaderMethod):
+        return {
+            "type": "local_reader",
+            "path": str(method.path),
+            "plugin": method.plugin,
+        }
+    if isinstance(method, ConverterMethod):
+        return {
+            "type": "converter",
+            "originals": [method_to_dict(m) for m in method.originals],
+            "action_id": method.action_id,
+            "parameters": method.parameters,
+        }
+    raise ValueError(f"Unknown method type: {method}")
 
 
 class SaveBehavior(BaseModel):

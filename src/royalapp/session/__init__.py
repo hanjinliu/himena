@@ -1,3 +1,3 @@
-from ._session import AppSession, TabSession
+from ._session import AppSession, TabSession, from_yaml
 
-__all__ = ["AppSession", "TabSession"]
+__all__ = ["AppSession", "TabSession", "from_yaml"]

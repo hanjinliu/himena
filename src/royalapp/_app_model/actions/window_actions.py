@@ -6,9 +6,10 @@ from app_model.types import (
     KeyChord,
     StandardKeyBinding,
 )
-from royalapp.consts import MenuId
+from royalapp._descriptors import SaveToPath
+from royalapp.consts import MenuId, StandardTypes
 from royalapp.widgets import MainWindow
-from royalapp.types import WindowState, WidgetDataModel
+from royalapp.types import ClipboardDataModel, WindowState, WidgetDataModel
 from royalapp._app_model._context import AppContext as _ctx
 from royalapp._app_model.actions._registry import ACTIONS, SUBMENUS
 
@@ -99,6 +100,26 @@ def rename_window(ui: MainWindow) -> None:
         return None
     if (i_win := ui._backend_main_window._current_sub_window_index()) is not None:
         ui._backend_main_window._rename_window_at(i_tab, i_win)
+
+
+@ACTIONS.append_from_fn(
+    id="copy-path-to-clipboard",
+    title="Copy path to clipboard",
+    menus=[
+        {"id": MenuId.WINDOW, "group": EDIT_GROUP},
+        {"id": MenuId.WINDOW_TITLE_BAR, "group": EDIT_GROUP},
+    ],
+    enablement=_ctx.has_sub_windows,
+    keybindings=[
+        KeyBindingRule(primary=KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.KeyC))
+    ],
+)
+def copy_path_to_clipboard(ui: MainWindow) -> ClipboardDataModel:
+    """Copy the path of the current window to the clipboard."""
+    if window := ui.current_window:
+        if isinstance(sv := window.save_behavior, SaveToPath):
+            return ClipboardDataModel(value=sv.path, type=StandardTypes.TEXT)
+    return None
 
 
 @ACTIONS.append_from_fn(

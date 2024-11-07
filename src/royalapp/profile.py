@@ -8,74 +8,15 @@ from pydantic_compat import BaseModel, Field
 USER_DATA_DIR = Path(user_data_dir("royalapp"))
 
 
+def data_dir() -> Path:
+    return USER_DATA_DIR
+
+
 def profile_dir() -> Path:
     _dir = USER_DATA_DIR / "profiles"
     if not _dir.exists():
         _dir.mkdir(parents=True)
     return _dir
-
-
-def list_recent_files() -> list[Path | list[Path]]:
-    """List the recent files (older first)."""
-    _path = USER_DATA_DIR / "recent.json"
-    if not _path.exists():
-        return []
-    with open(USER_DATA_DIR / "recent.json") as f:
-        js = json.load(f)
-    if not isinstance(js, list):
-        return []
-    paths: list[Path | list[Path]] = []
-    for each in js:
-        if not isinstance(each, dict):
-            continue
-        if "type" not in each:
-            continue
-        if each["type"] == "group":
-            paths.append([Path(p) for p in each["path"]])
-        elif each["type"] == "file":
-            path = Path(each["path"])
-            paths.append(path)
-    return paths
-
-
-def _path_to_list(obj: list[Path | list[Path]]) -> list[str | list[str]]:
-    out = []
-    for each in obj:
-        if isinstance(each, list):
-            out.append([p.as_posix() for p in each])
-        else:
-            out.append(each.as_posix())
-    return out
-
-
-def append_recent_files(inputs: list[Path | list[Path]]) -> None:
-    _path = USER_DATA_DIR / "recent.json"
-    inputs_str = _path_to_list(inputs)
-    if _path.exists():
-        with open(_path) as f:
-            all_info = json.load(f)
-        if not isinstance(all_info, list):
-            all_info = []
-    else:
-        all_info = []
-    existing_paths = [each["path"] for each in all_info]
-    to_remove: list[int] = []
-    for each in inputs_str:
-        if each in existing_paths:
-            to_remove.append(existing_paths.index(each))
-        if isinstance(each, list):
-            all_info.append({"type": "group", "path": each})
-        elif Path(each).is_file():
-            all_info.append({"type": "file", "path": each})
-        else:
-            all_info.append({"type": "folder", "path": each})
-    for i in sorted(to_remove, reverse=True):
-        all_info.pop(i)
-    if len(all_info) > 60:
-        all_info = all_info[-60:]
-    with open(_path, "w") as f:
-        json.dump(all_info, f, indent=2)
-    return None
 
 
 def _default_plugins() -> list[str]:

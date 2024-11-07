@@ -8,7 +8,6 @@ from app_model.types import (
     StandardKeyBinding,
 )
 from royalapp.consts import StandardTypes, MenuId
-from royalapp.profile import append_recent_files
 from royalapp.widgets import MainWindow
 from royalapp.io import get_readers, get_writers, ReaderTuple
 from royalapp.types import (
@@ -60,8 +59,8 @@ def open_file_from_dialog(ui: MainWindow) -> list[WidgetDataModel]:
         _read_and_update_source(reader, file_path)
         for reader, file_path in reader_path_sets
     ]
-    append_recent_files(file_paths)
-    ui._update_open_recent_menu()
+    ui._recent_manager.append_recent_files(file_paths)
+    ui._recent_manager.update_menu()
     return out
 
 
@@ -81,8 +80,8 @@ def open_folder_from_dialog(ui: MainWindow) -> WidgetDataModel:
         return None
     readers = get_readers(file_path)
     out = _read_and_update_source(readers[0], file_path)
-    append_recent_files([file_path])
-    ui._update_open_recent_menu()
+    ui._recent_manager.append_recent_files([file_path])
+    ui._recent_manager.update_menu()
     return out
 
 
@@ -156,6 +155,9 @@ def paste_from_clipboard(ui: MainWindow) -> WidgetDataModel:
     return None
 
 
+### Load/save session
+
+
 @ACTIONS.append_from_fn(
     id="load-session",
     title="Load Session ...",
@@ -163,13 +165,15 @@ def paste_from_clipboard(ui: MainWindow) -> WidgetDataModel:
 )
 def load_session_from_dialog(ui: MainWindow) -> None:
     """Load a session from a file."""
-    from royalapp.session import AppSession
+    from royalapp.session import from_yaml
 
-    file_path = ui._backend_main_window._open_file_dialog(mode="r")
+    file_path = ui._backend_main_window._open_file_dialog(
+        mode="r",
+        allowed_extensions=[".session.yaml"],
+    )
     if file_path is None:
         return None
-    with open(file_path) as f:
-        session = AppSession.model_validate_json(f.read())
+    session = from_yaml(file_path)
     session.to_gui(ui)
     return None
 
@@ -178,17 +182,43 @@ def load_session_from_dialog(ui: MainWindow) -> None:
     id="save-session",
     title="Save Session ...",
     menus=[{"id": MenuId.FILE, "group": WRITE_GROUP}],
+    enablement=_ctx.has_tabs,
 )
 def save_session_from_dialog(ui: MainWindow) -> None:
     """Save current application state to a session."""
     from royalapp.session import AppSession
 
     session = AppSession.from_gui(ui)
-    file_path = ui._backend_main_window._open_file_dialog(mode="w")
+    file_path = ui._backend_main_window._open_file_dialog(
+        mode="w",
+        extension_default=".session.yaml",
+        allowed_extensions=[".session.yaml"],
+    )
     if file_path is None:
         return None
-    with open(file_path, "w") as f:
-        f.write(session.model_dump_json())
+    session.dump_yaml(file_path)
+    return None
+
+
+@ACTIONS.append_from_fn(
+    id="save-tab-session",
+    title="Save Tab Session ...",
+    menus=[{"id": MenuId.FILE, "group": WRITE_GROUP}],
+    enablement=_ctx.has_tabs & _ctx.has_sub_windows,
+)
+def save_tab_session_from_dialog(ui: MainWindow) -> None:
+    """Save current application state to a session."""
+    from royalapp.session import TabSession
+
+    session = TabSession.from_gui(ui.tabs.current())
+    file_path = ui._backend_main_window._open_file_dialog(
+        mode="w",
+        extension_default=".session.yaml",
+        allowed_extensions=[".session.yaml"],
+    )
+    if file_path is None:
+        return None
+    session.dump_yaml(file_path)
     return None
 
 

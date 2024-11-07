@@ -78,9 +78,7 @@ def _init_application(app: Application) -> None:
     def _process_file_input(file_data: WidgetDataModel) -> None:
         _LOGGER.debug("processing %r", file_data)
         ins = current_instance(app.name)
-        sub_win = ins.add_data_model(file_data)
-        if (method := file_data.method) is not None:
-            sub_win._update_widget_data_model_method(method)
+        ins.add_data_model(file_data)
         return None
 
     @app.injection_store.mark_processor
@@ -96,6 +94,8 @@ def _init_application(app: Application) -> None:
 
     @app.injection_store.mark_processor
     def _process_clipboard_data(clip_data: ClipboardDataModel) -> None:
+        if clip_data is None:
+            return None
         _LOGGER.debug("processing %r", clip_data)
         ins = current_instance(app.name)
         ins._backend_main_window._set_clipboard_data(clip_data)

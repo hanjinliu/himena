@@ -61,8 +61,10 @@ class QGotoWidget(QtW.QWidget):
             list_widget.itemClicked.connect(self.activate_window_for_item)
             self._list_widgets.append(list_widget)
         lw = self.currentListWidget()
-        self._stack.setCurrentIndex(main.tabs.current_index)
-        lw.setCurrentRow(main.tabs.current().current_index)
+        if (idx := main.tabs.current_index) is not None:
+            self._stack.setCurrentIndex(idx)
+        if (idx := main.tabs.current().current_index) is not None:
+            lw.setCurrentRow(idx)
         lw.setFocus()
 
     def currentListWidget(self) -> QtW.QListWidget:

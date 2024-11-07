@@ -3,12 +3,11 @@ from __future__ import annotations
 from contextlib import contextmanager
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Callable, Generic, TypeVar
+from typing import Any, Callable, Generic, Iterator, TypeVar
 from weakref import WeakSet
 from app_model import Application
 from app_model.expressions import create_context
 from psygnal import SignalGroup, Signal
-from royalapp.consts import MenuId
 from royalapp.io import get_readers
 from royalapp.types import (
     Parametric,
@@ -20,9 +19,8 @@ from royalapp.types import (
 )
 from royalapp._app_model._context import AppContext
 from royalapp._descriptors import ProgramaticMethod
-from royalapp.profile import list_recent_files, append_recent_files
 from royalapp.widgets._backend import BackendMainWindow
-from royalapp.widgets._open_recent import action_for_file
+from royalapp._open_recent import OpeRecentManager
 from royalapp.widgets._tab_list import TabList, TabArea
 from royalapp.widgets._wrapper import SubWindow, DockWidget
 
@@ -59,8 +57,10 @@ class MainWindow(Generic[_W]):
         self._tab_list.changed.connect(backend._update_context)
         self._dock_widgets = WeakSet[_W]()
         self._exec_confirmations = True
-        self._open_recent_disposer = lambda: None
-        self._update_open_recent_menu()
+        self._recent_manager = OpeRecentManager.default_recent_files(app)
+        self._recent_manager.update_menu()
+        self._recent_session_manager = OpeRecentManager.default_recent_sessions(app)
+        self._recent_session_manager.update_menu()
 
     @property
     def tabs(self) -> TabList[_W]:
@@ -292,7 +292,7 @@ class MainWindow(Generic[_W]):
 
         return param_widget
 
-    def read_file(self, file_path) -> SubWindow[_W]:
+    def read_file(self, file_path: str | Path) -> SubWindow[_W]:
         """Read local file(s) and open as a new sub-window."""
         if hasattr(file_path, "__iter__") and not isinstance(file_path, (str, Path)):
             fp = [Path(f) for f in file_path]
@@ -302,8 +302,8 @@ class MainWindow(Generic[_W]):
         reader = readers[0]
         model = reader.read(fp)._with_source(source=fp, plugin=reader.plugin)
         out = self.add_data_model(model)
-        append_recent_files([fp])
-        self._update_open_recent_menu()
+        self._recent_manager.append_recent_files([fp])
+        self._recent_manager.update_menu()
         return out
 
     def exec_action(self, id: str) -> None:
@@ -342,21 +342,13 @@ class MainWindow(Generic[_W]):
             return None
         return self.tabs[idx_tab][idx_win]
 
+    def iter_windows(self) -> Iterator[SubWindow[_W]]:
+        for tab in self.tabs:
+            yield from tab
+
     def _provide_file_output(self) -> tuple[WidgetDataModel, SubWindow[_W]]:
         if sub := self.current_window:
             model = sub.to_model()
             return model, sub
         else:
             raise ValueError("No active window.")
-
-    def _update_open_recent_menu(self):
-        file_paths = list_recent_files()[::-1]
-        if len(file_paths) == 0:
-            return None
-        actions = [
-            action_for_file(path, in_menu=i < 8) for i, path in enumerate(file_paths)
-        ]
-        self._open_recent_disposer()
-        self._open_recent_disposer = self.model_app.register_actions(actions)
-        self.model_app.menus.menus_changed.emit({MenuId.FILE_RECENT})
-        return None
