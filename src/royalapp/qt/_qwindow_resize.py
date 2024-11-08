@@ -3,7 +3,7 @@ from __future__ import annotations
 from qtpy import QtWidgets as QtW
 from qtpy import QtCore
 from qtpy.QtCore import Qt
-from royalapp.consts import StrEnum
+from royalapp._enum import StrEnum
 
 
 class ResizeState(StrEnum):

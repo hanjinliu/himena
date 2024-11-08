@@ -1,6 +1,11 @@
 import argparse
 from royalapp import new_window
 import logging
+import sys
+
+
+def _is_testing() -> bool:
+    return "pytest" in sys.modules
 
 
 def _main(
@@ -9,7 +14,7 @@ def _main(
 ):
     logging.basicConfig(level=log_level)
     ui = new_window(profile)
-    ui.show(run=True)
+    ui.show(run=not _is_testing())
 
 
 def main():

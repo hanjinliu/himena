@@ -50,7 +50,7 @@ class MainWindow(Generic[_W]):
         self._model_app = app
         self._instructions = BackendInstructions()
         self._history_tab = ActivationHistory[int]()
-        set_current_instance(app, self)
+        set_current_instance(app.name, self)
         backend._connect_activation_signal(
             self._tab_activated,
             self._window_activated,
@@ -298,7 +298,7 @@ class MainWindow(Generic[_W]):
 
     def exec_action(self, id: str) -> None:
         """Execute an action by its ID."""
-        self._model_app.commands.execute_command(id)
+        self._model_app.commands.execute_command(id).result()
         return None
 
     def exec_confirmation_dialog(self, msg: str) -> bool:

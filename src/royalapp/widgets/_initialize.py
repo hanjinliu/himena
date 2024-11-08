@@ -32,7 +32,9 @@ def set_current_instance(name: str, instance: MainWindow[_W]) -> None:
 def remove_instance(name: str, instance: MainWindow[_W]) -> None:
     """Remove the instance from the list."""
     if name in _APP_INSTANCES:
-        _APP_INSTANCES[name].remove(instance)
+        instances = _APP_INSTANCES[name]
+        if instance in instances:
+            instances.remove(instance)
     return None
 
 

@@ -71,9 +71,14 @@ omit = [
   "src/royalapp/__init__.py",
 ]
 
+[tool.pytest.ini_options]
+addopts = ["--maxfail=5"]
+filterwarnings = [
+    "ignore:Jupyter is migrating its paths to use standard platformdirs:DeprecationWarning",
+]
+
 [tool.coverage.paths]
 royalapp = ["src/royalapp", "*/royalapp/src/royalapp"]
-tests = ["tests", "*/royalapp/**/tests"]
 
 [tool.coverage.report]
 exclude_lines = [

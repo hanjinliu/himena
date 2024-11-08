@@ -11,15 +11,15 @@ from typing import (
     Generic,
     TYPE_CHECKING,
 )
-from enum import Enum
 from pydantic_compat import BaseModel, Field, field_validator
 from royalapp._descriptors import MethodDescriptor, LocalReaderMethod, ConverterMethod
+from royalapp._enum import StrEnum
 
 if TYPE_CHECKING:
     from royalapp.io import PluginInfo
 
 
-class DockArea(Enum):
+class DockArea(StrEnum):
     """Area of the dock widget."""
 
     TOP = "top"
@@ -28,7 +28,7 @@ class DockArea(Enum):
     RIGHT = "right"
 
 
-class WindowState(Enum):
+class WindowState(StrEnum):
     """State of the sub window."""
 
     MIN = "min"
@@ -41,7 +41,7 @@ DockAreaString: TypeAlias = Literal["top", "bottom", "left", "right"]
 WindowStateString: TypeAlias = Literal["min", "max", "normal", "full"]
 
 
-class NewWidgetBehavior(Enum):
+class NewWidgetBehavior(StrEnum):
     """Behavior of adding a widget."""
 
     TAB = "tab"
@@ -51,8 +51,18 @@ class NewWidgetBehavior(Enum):
 _T = TypeVar("_T")
 _U = TypeVar("_U")
 
+if TYPE_CHECKING:
 
-class WidgetDataModel(Generic[_T], BaseModel):
+    class GenericModel(Generic[_T], BaseModel):
+        pass
+else:
+
+    class GenericModel(BaseModel):
+        def __class_getitem__(cls, item):
+            return GenericModel
+
+
+class WidgetDataModel(GenericModel[_T]):
     """
     A data model that represents a widget containing an internal data.
 
@@ -160,7 +170,7 @@ class WidgetDataModel(Generic[_T], BaseModel):
         )
 
 
-class ClipboardDataModel(Generic[_T], BaseModel):
+class ClipboardDataModel(GenericModel[_T]):
     """Data model for a clipboard data."""
 
     value: _T = Field(..., description="Internal value.")
@@ -170,7 +180,7 @@ class ClipboardDataModel(Generic[_T], BaseModel):
         return WidgetDataModel(value=self.value, type=self.type, title="Clipboard")
 
 
-class DragDropDataModel(Generic[_T], BaseModel):
+class DragDropDataModel(GenericModel[_T]):
     """Data model for a drag and drop data."""
 
     value: _T = Field(..., description="Internal value.")

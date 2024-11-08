@@ -1,5 +1,7 @@
 import tempfile
 import pytest
+from pathlib import Path
+from qtpy.QtWidgets import QApplication
 from app_model import Application
 
 @pytest.fixture(scope="session", autouse=True)
@@ -22,3 +24,9 @@ def ui():
         Application.destroy(app)
         window.close()
         assert app not in Application._instances
+        QApplication.processEvents()
+
+@pytest.fixture
+def sample_dir() -> Path:
+
+    return Path(__file__).parent / "samples"
