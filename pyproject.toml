@@ -23,6 +23,7 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dependencies = [
+  "numpy",
   "app_model>=0.2.7",
   "pydantic>=1.10",
   "pydantic_compat>=0.1.2",
@@ -49,7 +50,6 @@ pyqt6 = ["pyqt6"]
 testing = [
   "pytest",
   "pytest-qt",
-  "numpy",
 ]
 
 [tool.hatch.version]

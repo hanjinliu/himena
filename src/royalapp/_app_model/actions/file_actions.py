@@ -128,10 +128,7 @@ def save_as_from_dialog(ui: MainWindow) -> None:
     id="open-recent",
     title="Open Recent ...",
     icon="mdi:recent",
-    menus=[
-        {"id": MenuId.FILE_RECENT, "group": "02_more", "order": 99},
-        {"id": MenuId.TOOLBAR, "group": READ_GROUP, "order": 99},
-    ],
+    menus=[{"id": MenuId.FILE_RECENT, "group": "02_more", "order": 99}],
     keybindings=[
         KeyBindingRule(primary=KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.KeyR))
     ],

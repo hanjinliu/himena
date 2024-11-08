@@ -97,6 +97,7 @@ def _init_application(app: Application) -> None:
         if clip_data is None:
             return None
         _LOGGER.debug("processing %r", clip_data)
+        # set data to clipboard
         ins = current_instance(app.name)
         ins._backend_main_window._set_clipboard_data(clip_data)
         return None

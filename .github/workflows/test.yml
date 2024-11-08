@@ -23,7 +23,7 @@ jobs:
         backend: [pyqt5]
         include:
           - python-version: "3.11"
-            platform: [ubuntu-latest, macos-latest, windows-latest]
+            platform: ubuntu-latest
             backend: pyqt6
 
     steps:

@@ -79,7 +79,15 @@ def close_all_windows_in_tab(ui: MainWindow) -> None:
 def duplicate_window(model: WidgetDataModel) -> WidgetDataModel:
     """Duplicate the selected sub-window."""
     if model.title is not None:
-        model.title += " (copy)"
+        if (
+            (last_part := model.title.rsplit(" ", 1)[-1]).startswith("[")
+            and last_part.endswith("]")
+            and last_part[1:-1].isdigit()
+        ):
+            nth = int(last_part[1:-1])
+            model.title = model.title.rsplit(" ", 1)[0] + f" [{nth + 1}]"
+        else:
+            model.title = model.title + " [1]"
     return model
 
 
@@ -119,6 +127,22 @@ def copy_path_to_clipboard(ui: MainWindow) -> ClipboardDataModel:
     if window := ui.current_window:
         if isinstance(sv := window.save_behavior, SaveToPath):
             return ClipboardDataModel(value=sv.path, type=StandardTypes.TEXT)
+    return None
+
+
+@ACTIONS.append_from_fn(
+    id="copy-data-to-clipboard",
+    title="Copy data to clipboard",
+    menus=[
+        {"id": MenuId.WINDOW, "group": EDIT_GROUP},
+        {"id": MenuId.WINDOW_TITLE_BAR, "group": EDIT_GROUP},
+    ],
+    enablement=_ctx.has_sub_windows | _ctx.is_active_window_exportable,
+)
+def copy_data_to_clipboard(ui: MainWindow) -> ClipboardDataModel:
+    """Copy the data of the current window to the clipboard."""
+    if window := ui.current_window:
+        return window.to_model().to_clipboard_data_model()
     return None
 
 

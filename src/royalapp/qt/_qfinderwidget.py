@@ -3,13 +3,13 @@ from __future__ import annotations
 from qtpy import QtWidgets as QtW, QtGui
 from qtpy.QtCore import Qt
 from typing import TYPE_CHECKING, Generic, TypeVar
+import itertools
 
 _W = TypeVar("_W", bound=QtW.QPlainTextEdit)
+_X = TypeVar("_W", bound=QtW.QWidget)
 
 
-class QFinderWidget(QtW.QDialog, Generic[_W]):
-    """A finder widget for a text editor."""
-
+class _QFinderBaseWidget(QtW.QDialog, Generic[_X]):
     def __init__(self, parent: _W | None = None):
         super().__init__(parent, Qt.WindowType.SubWindow)
         _layout = QtW.QHBoxLayout(self)
@@ -37,6 +37,27 @@ class QFinderWidget(QtW.QDialog, Generic[_W]):
         return self._line_edit
 
     def _find_prev(self):
+        raise NotImplementedError
+
+    def _find_next(self):
+        raise NotImplementedError
+
+    def keyPressEvent(self, a0: QtGui.QKeyEvent) -> None:
+        if a0.key() == Qt.Key.Key_Escape:
+            self.hide()
+            self.parentWidget().setFocus()
+        elif a0.key() in (Qt.Key.Key_Enter, Qt.Key.Key_Return):
+            if a0.modifiers() & Qt.KeyboardModifier.ShiftModifier:
+                self._find_prev()
+            else:
+                self._find_next()
+        return super().keyPressEvent(a0)
+
+
+class QFinderWidget(_QFinderBaseWidget[_W]):
+    """A finder widget for a text editor."""
+
+    def _find_prev(self):
         text = self._line_edit.text()
         if text == "":
             return
@@ -51,19 +72,46 @@ class QFinderWidget(QtW.QDialog, Generic[_W]):
         text = self._line_edit.text()
         if text == "":
             return
-        qlogger = self.parentWidget()
-        found = qlogger.find(text)
+        qtext = self.parentWidget()
+        found = qtext.find(text)
         if not found:
-            qlogger.moveCursor(QtGui.QTextCursor.MoveOperation.Start)
-            qlogger.find(text)
+            qtext.moveCursor(QtGui.QTextCursor.MoveOperation.Start)
+            qtext.find(text)
 
-    def keyPressEvent(self, a0: QtGui.QKeyEvent) -> None:
-        if a0.key() == Qt.Key.Key_Escape:
-            self.hide()
-            self.parentWidget().setFocus()
-        elif a0.key() in (Qt.Key.Key_Enter, Qt.Key.Key_Return):
-            if a0.modifiers() & Qt.KeyboardModifier.ShiftModifier:
-                self._find_prev()
-            else:
-                self._find_next()
-        return super().keyPressEvent(a0)
+
+class QTableFinderWidget(_QFinderBaseWidget[QtW.QTableWidget]):
+    def _find_prev(self):
+        line_text = self._line_edit.text()
+        if line_text == "":
+            return
+        qtable = self.parentWidget()
+        index = qtable.currentIndex()
+        i = index.row() * qtable.columnCount() + index.column()
+        nr, nc = qtable.rowCount(), qtable.columnCount()
+
+        for ith in itertools.chain(range(i, -1, -1), range(nr * nc - 1, i, -1)):
+            r, c = divmod(ith, nc)
+            text = qtable.item(r, c).text()
+            if text == "":
+                continue
+            if line_text in text:
+                qtable.setCurrentCell(r, c)
+                return
+
+    def _find_next(self):
+        line_text = self._line_edit.text()
+        if line_text == "":
+            return
+        qtable = self.parentWidget()
+        index = qtable.currentIndex()
+        i = index.row() * qtable.columnCount() + index.column()
+        nr, nc = qtable.rowCount(), qtable.columnCount()
+
+        for ith in itertools.chain(range(i, nr * nc), range(i)):
+            r, c = divmod(ith, nc)
+            text = qtable.item(r, c).text()
+            if text == "":
+                continue
+            if line_text in text:
+                qtable.setCurrentCell(r, c)
+                return

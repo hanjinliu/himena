@@ -122,6 +122,10 @@ class WidgetDataModel(Generic[_T], BaseModel):
             return self.method.path
         return None
 
+    def to_clipboard_data_model(self) -> "ClipboardDataModel[_T]":
+        """Convert to a clipboard data model."""
+        return ClipboardDataModel(value=self.value, type=self.type)
+
     @field_validator("type", mode="before")
     def _validate_type(cls, v, values):
         if v is None:

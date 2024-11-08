@@ -4,6 +4,7 @@ from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
 from royalapp.consts import StandardTypes
 from royalapp.types import WidgetDataModel
+from royalapp.qt._qfinderwidget import QTableFinderWidget
 
 
 class QDefaultTableWidget(QtW.QTableWidget):
@@ -11,6 +12,7 @@ class QDefaultTableWidget(QtW.QTableWidget):
         super().__init__()
         self._modified = False
         self.horizontalHeader().setFixedHeight(18)
+        self._finder_widget = None
 
         # scroll by pixel
         self.setVerticalScrollMode(QtW.QAbstractItemView.ScrollMode.ScrollPerPixel)
@@ -133,4 +135,27 @@ class QDefaultTableWidget(QtW.QTableWidget):
             return self._delete_selection()
         if e.key() in (QtCore.Qt.Key.Key_Delete, QtCore.Qt.Key.Key_Backspace):
             return self._delete_selection()
+        if e.modifiers() & _Ctrl and e.key() == QtCore.Qt.Key.Key_F:
+            self._find_string()
+            return
         return super().keyPressEvent(e)
+
+    def _find_string(self):
+        if self._finder_widget is None:
+            self._finder_widget = QTableFinderWidget(self)
+        self._finder_widget.show()
+        self._finder_widget.lineEdit().setFocus()
+        self._align_finder()
+
+    def resizeEvent(self, event):
+        if self._finder_widget is not None:
+            self._align_finder()
+        super().resizeEvent(event)
+
+    def _align_finder(self):
+        if fd := self._finder_widget:
+            vbar = self.verticalScrollBar()
+            if vbar.isVisible():
+                fd.move(self.width() - fd.width() - vbar.width() - 3, 5)
+            else:
+                fd.move(self.width() - fd.width() - 3, 5)
