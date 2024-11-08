@@ -10,7 +10,6 @@ from royalapp.widgets._wrapper import SubWindow
 
 _W = TypeVar("_W")  # backend widget type
 
-_INITIALIZED_APPLICATIONS: dict[str, Application] = {}
 _APP_INSTANCES: dict[str, list[MainWindow]] = {}
 _LOGGER = getLogger(__name__)
 
@@ -37,7 +36,7 @@ def remove_instance(name: str, instance: MainWindow[_W]) -> None:
     return None
 
 
-def _init_application(app: Application) -> None:
+def init_application(app: Application) -> Application:
     from royalapp._app_model.actions import ACTIONS, SUBMENUS
 
     app.register_actions(ACTIONS)
@@ -109,10 +108,4 @@ def _init_application(app: Application) -> None:
         ins.add_parametric_element(fn)
         return None
 
-
-def init_application(app: Application) -> Application:
-    """Get application by name."""
-    if app.name not in _INITIALIZED_APPLICATIONS:
-        _init_application(app)
-        _INITIALIZED_APPLICATIONS[app.name] = app
     return app

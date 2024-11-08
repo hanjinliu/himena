@@ -18,7 +18,7 @@ def new_window(
 ) -> MainWindow[QtW.QWidget]:
     from royalapp.qt import MainWindowQt
 
-    app = Application.get_or_create(app)
+    model_app = Application.get_or_create(app)
     plugins = list(plugins)
     if isinstance(profile, str):
         app_prof = load_app_profile(profile)
@@ -32,7 +32,7 @@ def new_window(
     if plugins:
         from royalapp.plugins import install_plugins
 
-        install_plugins(app, plugins)
-    main_window = MainWindowQt(app)
+        install_plugins(model_app, plugins)
+    main_window = MainWindowQt(model_app)
     main_window._backend_main_window._update_context()
     return main_window

@@ -10,7 +10,7 @@ __royalapp_plugin__ = get_plugin_interface("tools")
     area="bottom",
     keybindings=["Ctrl+Shift+U"],
     singleton=True,
-    command_id="builtins:stdout",
+    command_id="builtins:output",
 )
 def install_output_widget(ui):
     """Standard output widget."""

@@ -11,7 +11,10 @@ from io import StringIO
 __royalapp_plugin__ = get_plugin_interface()
 
 
-@__royalapp_plugin__.register_new_provider(keybindings="Ctrl+N")
+@__royalapp_plugin__.register_new_provider(
+    keybindings="Ctrl+N",
+    command_id="builtins:new-text",
+)
 def new_text(ui: MainWindow) -> WidgetDataModel:
     """New text file."""
     if tab := ui.tabs.current():
@@ -23,6 +26,7 @@ def new_text(ui: MainWindow) -> WidgetDataModel:
 
 @__royalapp_plugin__.register_new_provider(
     title="Seaborn test data",
+    command_id="builtins:fetch-seaborn-test-data",
 )
 def seaborn_test_data() -> Parametric:
     """New table from a seaborn test data."""

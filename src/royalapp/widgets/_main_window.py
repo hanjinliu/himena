@@ -321,6 +321,11 @@ class MainWindow(Generic[_W]):
             self._backend_main_window._run_app()
         return None
 
+    def close(self) -> None:
+        """Close the main window."""
+        self._backend_main_window._exit_main_window()
+        return None
+
     @property
     def current_window(self) -> SubWindow[_W] | None:
         """Get the current sub-window."""

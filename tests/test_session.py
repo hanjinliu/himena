@@ -1,11 +1,10 @@
-from royalapp import new_window
+from royalapp import MainWindow
 from royalapp import anchor
 from pathlib import Path
 
 SAMPLE_DIR = Path(__file__).parent / "samples"
 
-def test_session(tmpdir):
-    ui = new_window()
+def test_session(tmpdir, ui: MainWindow):
     tab0 = ui.add_tab()
     tab0.read_file(SAMPLE_DIR / "text.txt").update(rect=(30, 40, 120, 150))
     tab0.read_file(SAMPLE_DIR / "json.json").update(rect=(150, 40, 250, 150), anchor="top-left")

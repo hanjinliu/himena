@@ -1,5 +1,6 @@
 import tempfile
 import pytest
+from app_model import Application
 
 @pytest.fixture(scope="session", autouse=True)
 def patch_user_data_dir(request: pytest.FixtureRequest):
@@ -8,3 +9,16 @@ def patch_user_data_dir(request: pytest.FixtureRequest):
     with tempfile.TemporaryDirectory() as tmpdir:
         with patch_user_data_dir(tmpdir):
             yield
+
+@pytest.fixture
+def ui():
+    from royalapp import new_window
+
+    app = "test-app"
+    window = new_window(app=app)
+    try:
+        yield window
+    finally:
+        Application.destroy(app)
+        window.close()
+        assert app not in Application._instances
