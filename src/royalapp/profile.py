@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 import json
 from pathlib import Path
 from typing import Iterable
@@ -8,12 +9,27 @@ from pydantic_compat import BaseModel, Field
 USER_DATA_DIR = Path(user_data_dir("royalapp"))
 
 
+@contextmanager
+def patch_user_data_dir(path: str | Path):
+    """Change the user data directory to avoid pytest updates the local state."""
+    global USER_DATA_DIR
+    old = USER_DATA_DIR
+    USER_DATA_DIR = Path(path)
+    try:
+        yield
+    finally:
+        USER_DATA_DIR = old
+
+
 def data_dir() -> Path:
+    """Get the user data directory."""
+    if not USER_DATA_DIR.exists():
+        USER_DATA_DIR.mkdir(parents=True)
     return USER_DATA_DIR
 
 
 def profile_dir() -> Path:
-    _dir = USER_DATA_DIR / "profiles"
+    _dir = data_dir() / "profiles"
     if not _dir.exists():
         _dir.mkdir(parents=True)
     return _dir

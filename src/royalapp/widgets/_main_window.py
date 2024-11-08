@@ -21,6 +21,7 @@ from royalapp.types import (
 )
 from royalapp.session import from_yaml
 from royalapp.widgets._backend import BackendMainWindow
+from royalapp.widgets._hist import ActivationHistory
 from royalapp.widgets._widget_list import TabList, TabArea, DockWidgetList
 from royalapp.widgets._wrapper import SubWindow, DockWidget
 
@@ -48,6 +49,7 @@ class MainWindow(Generic[_W]):
         self._new_widget_behavior = NewWidgetBehavior.WINDOW
         self._model_app = app
         self._instructions = BackendInstructions()
+        self._history_tab = ActivationHistory[int]()
         set_current_instance(app, self)
         backend._connect_activation_signal(
             self._tab_activated,
@@ -343,6 +345,7 @@ class MainWindow(Generic[_W]):
 
     def _tab_activated(self, i: int):
         self.events.tab_activated.emit(self.tabs[i])
+        self._history_tab.add(i)
         return None
 
     def _window_activated(self):
@@ -356,6 +359,8 @@ class MainWindow(Generic[_W]):
             return None
         i_win = back._current_sub_window_index()
         if i_win is None:
+            return None
+        if len(tab) <= i_win:
             return None
         _LOGGER.info("Window activated: %r-th window in %r-th tab", i_win, i_tab)
         self.events.window_activated.emit(tab[i_win])

@@ -35,7 +35,7 @@ def _active_window_model_type(ui: "MainWindow") -> str | None:
         out = win.to_model().type
         if out is None:
             return None
-        return out
+        return out.split(".")[0]
     return None
 
 

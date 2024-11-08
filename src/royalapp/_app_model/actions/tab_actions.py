@@ -49,6 +49,19 @@ def close_current_tab(ui: MainWindow) -> None:
 
 
 @ACTIONS.append_from_fn(
+    id="goto-last-tab",
+    title="Go to Last Tab",
+    enablement=_ctx.has_tabs,
+    menus=[MenuId.TAB],
+    keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.Tab)],
+)
+def goto_last_tab(ui: MainWindow) -> None:
+    """Go to the last tab."""
+    if (idx := ui._history_tab.last()) is not None:
+        ui.tabs.current_index = idx
+
+
+@ACTIONS.append_from_fn(
     id="merge-tabs",
     title="Merge Tabs ...",
     enablement=_ctx.has_tabs,

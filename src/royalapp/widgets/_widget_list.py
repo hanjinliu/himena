@@ -64,7 +64,8 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
 
     def __getitem__(self, index_or_name: int | str) -> SubWindow[_W]:
         index = self._norm_index_or_name(index_or_name)
-        backend_widget = self._main_window()._get_widget_list(self._i_tab)[index][1]
+        widgets = self._main_window()._get_widget_list(self._i_tab)
+        backend_widget = widgets[index][1]
         return backend_widget._royalapp_widget
 
     def __delitem__(self, index_or_name: int | str) -> None:
