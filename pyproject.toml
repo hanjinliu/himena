@@ -47,10 +47,14 @@ royalapp = "royalapp.__main__:main"
 [project.optional-dependencies]
 pyqt5 = ["pyqt5>=5.12.0"]
 pyqt6 = ["pyqt6"]
+all = [
+  "qtconsole",
+]
 testing = [
   "pytest",
   "pytest-qt",
   "pytest-cov",
+  "royalapp[all]"
 ]
 
 [tool.hatch.version]
