@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from abc import abstractmethod
+from pathlib import Path
 from typing import Generic, TYPE_CHECKING, Iterator, TypeVar
 from collections.abc import Sequence
 import weakref
 
 from psygnal import Signal
 from royalapp._descriptors import LocalReaderMethod
+from royalapp.io import get_readers
 from royalapp.types import NewWidgetBehavior, WidgetDataModel, WindowState, WindowRect
 from royalapp.widgets._wrapper import _HasMainWindowRef, SubWindow, DockWidget
 
@@ -209,6 +211,36 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         if (method := model.method) is not None:
             sub_win._update_widget_data_model_method(method)
         return sub_win
+
+    def read_file(self, file_path: str | Path | list[str | Path]) -> SubWindow[_W]:
+        """Read local file(s) and open as a new sub-window in this tab."""
+        if hasattr(file_path, "__iter__") and not isinstance(file_path, (str, Path)):
+            fp = [Path(f) for f in file_path]
+        else:
+            fp = Path(file_path)
+        readers = get_readers(fp)
+        reader = readers[0]
+        model = reader.read(fp)._with_source(source=fp, plugin=reader.plugin)
+        out = self.add_data_model(model)
+        main = self._main_window()._royalapp_main_window
+        main._recent_manager.append_recent_files([fp])
+        main._recent_manager.update_menu()
+        return out
+
+    def save_session(self, file_path: str | Path) -> None:
+        """Save the current session to a file."""
+        from royalapp.session import TabSession
+
+        file_path = self._main_window()._open_file_dialog(
+            mode="w",
+            extension_default=".session.yaml",
+            allowed_extensions=[".session.yaml"],
+        )
+        if file_path is None:
+            return None
+        session = TabSession.from_gui(self)
+        session.dump_yaml(file_path)
+        return None
 
     def tile_windows(
         self,

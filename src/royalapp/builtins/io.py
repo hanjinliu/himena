@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 from royalapp.io import register_writer_provider
 from royalapp.types import WidgetDataModel
 from royalapp.consts import StandardTypes, BasicTextFileTypes, ConventionalTextFileNames
 from royalapp import register_reader_provider
+
+if TYPE_CHECKING:
+    import numpy as np
 
 
 def _read_text(file_path: Path) -> WidgetDataModel:
@@ -83,10 +87,31 @@ def _write_text(file_data: WidgetDataModel[str], path: Path) -> None:
     return None
 
 
+def _write_csv(file_data: WidgetDataModel[list[list[str]]], path: Path) -> None:
+    """Write CSV file."""
+    import csv
+
+    with open(path, "w") as f:
+        writer = csv.writer(f)
+        writer.writerows(file_data.value)
+
+
+def _write_image(file_data: WidgetDataModel[np.ndarray], path: Path) -> None:
+    """Write image file."""
+    from PIL import Image
+
+    Image.fromarray(file_data.value).save(path)
+    return None
+
+
 @register_writer_provider
 def default_writer_provider(file_data: WidgetDataModel):
     """Get default writer."""
-    if file_data.type == StandardTypes.TEXT:
+    if file_data.type in (StandardTypes.TEXT, StandardTypes.HTML):
         return _write_text
+    elif file_data.type == StandardTypes.TABLE:
+        return _write_csv
+    elif file_data.type == StandardTypes.IMAGE:
+        return _write_image
     else:
         return None

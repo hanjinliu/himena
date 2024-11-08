@@ -31,7 +31,7 @@ dependencies = [
   "magicgui>=0.9.1",
   "platformdirs",
   "pygments>=2.18.0",
-  "yaml>=6.0.1",
+  "pyyaml>=6.0.1",
 ]
 
 [project.urls]

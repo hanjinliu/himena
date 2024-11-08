@@ -293,7 +293,7 @@ def full_screen_in_new_tab(ui: MainWindow) -> None:
 def window_expand(ui: MainWindow) -> None:
     """Expand (increase the size of) the current window."""
     if window := ui.current_window:
-        window.rect = window.rect.resize_relative(1.2, 1.2)
+        window._set_rect(window.rect.resize_relative(1.2, 1.2))
 
 
 @ACTIONS.append_from_fn(
@@ -306,7 +306,7 @@ def window_expand(ui: MainWindow) -> None:
 def window_shrink(ui: MainWindow) -> None:
     """Shrink (reduce the size of) the current window."""
     if window := ui.current_window:
-        window.rect = window.rect.resize_relative(1 / 1.2, 1 / 1.2)
+        window._set_rect(window.rect.resize_relative(1 / 1.2, 1 / 1.2))
 
 
 _CtrlAlt = KeyMod.CtrlCmd | KeyMod.Alt
@@ -322,7 +322,7 @@ _CtrlAlt = KeyMod.CtrlCmd | KeyMod.Alt
 def align_window_left(ui: MainWindow) -> None:
     """Align the window to the left edge of the tab area."""
     if window := ui.current_window:
-        window.rect = window.rect.align_left()
+        window._set_rect(window.rect.align_left())
 
 
 @ACTIONS.append_from_fn(
@@ -335,7 +335,7 @@ def align_window_left(ui: MainWindow) -> None:
 def align_window_right(ui: MainWindow) -> None:
     """Align the window to the right edge of the tab area."""
     if window := ui.current_window:
-        window.rect = window.rect.align_right(ui.area_size)
+        window._set_rect(window.rect.align_right(ui.area_size))
 
 
 @ACTIONS.append_from_fn(
@@ -348,7 +348,7 @@ def align_window_right(ui: MainWindow) -> None:
 def align_window_top(ui: MainWindow) -> None:
     """Align the window to the top edge of the tab area."""
     if window := ui.current_window:
-        window.rect = window.rect.align_top(ui.area_size)
+        window._set_rect(window.rect.align_top(ui.area_size))
 
 
 @ACTIONS.append_from_fn(
@@ -361,7 +361,7 @@ def align_window_top(ui: MainWindow) -> None:
 def align_window_bottom(ui: MainWindow) -> None:
     """Align the window to the bottom edge of the tab area."""
     if window := ui.current_window:
-        window.rect = window.rect.align_bottom(ui.area_size)
+        window._set_rect(window.rect.align_bottom(ui.area_size))
 
 
 @ACTIONS.append_from_fn(
@@ -374,7 +374,7 @@ def align_window_bottom(ui: MainWindow) -> None:
 def align_window_center(ui: MainWindow) -> None:
     """Align the window to the center of the tab area."""
     if window := ui.current_window:
-        window.rect = window.rect.align_center(ui.area_size)
+        window._set_rect(window.rect.align_center(ui.area_size))
 
 
 @ACTIONS.append_from_fn(

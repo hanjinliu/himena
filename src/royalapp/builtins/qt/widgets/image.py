@@ -39,7 +39,7 @@ class _QImageLabel(QtW.QLabel):
             self._pixmap_orig.scaled(
                 sz,
                 QtCore.Qt.AspectRatioMode.KeepAspectRatio,
-                QtCore.Qt.TransformationMode.SmoothTransformation,
+                QtCore.Qt.TransformationMode.FastTransformation,
             )
         )
 

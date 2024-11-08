@@ -9,7 +9,7 @@ import weakref
 
 from psygnal import Signal
 from royalapp import anchor as _anchor
-from royalapp.types import WindowState, WidgetDataModel, WindowRect
+from royalapp.types import BackendInstructions, WindowState, WidgetDataModel, WindowRect
 from royalapp._descriptors import (
     SaveBehavior,
     SaveToNewPath,
@@ -157,19 +157,28 @@ class SubWindow(WidgetWrapper[_W]):
         return self._main_window()._window_rect(self.widget)
 
     @rect.setter
-    def rect(self, value) -> None:
+    def rect(self, value: tuple[int, int, int, int]) -> None:
+        main = self._main_window()._royalapp_main_window
+        inst = main._instructions.updated(animate=False)
+        self._set_rect(value, inst)
+
+    def _set_rect(
+        self,
+        value: tuple[int, int, int, int],
+        inst: BackendInstructions | None = None,
+    ):
         if self.state is not WindowState.NORMAL:
             raise ValueError(
                 "Cannot set window rect when window is not in normal state."
             )
+        if inst is None:
+            inst = self._main_window()._royalapp_main_window._instructions
         main = self._main_window()
         rect = WindowRect.from_numbers(*value)
         anc = main._window_anchor(self.widget).update_for_window_rect(
             main._area_size(), rect
         )
-        main._set_window_rect(
-            self.widget, rect, main._royalapp_main_window._instructions
-        )
+        main._set_window_rect(self.widget, rect, inst)
         main._set_window_anchor(self.widget, anc)
 
     @property
@@ -187,16 +196,23 @@ class SubWindow(WidgetWrapper[_W]):
             raise TypeError(f"Expected WindowAnchor, got {type(anchor)}")
         self._main_window()._set_window_anchor(self.widget, anchor)
 
-    def to_description(self):
-        from royalapp.session import WindowDescription
-
-        return WindowDescription(
-            title=self.title,
-            method=self._widget_data_model_method,
-            rect=self.rect,
-            state=self.state,
-            anchor=_anchor.anchor_to_dict(self.anchor),
-        )
+    def update(
+        self,
+        *,
+        rect: tuple[int, int, int, int] | None = None,
+        state: WindowState | None = None,
+        title: str | None = None,
+        anchor: _anchor.WindowAnchor | str | None = None,
+    ) -> SubWindow[_W]:
+        if rect is not None:
+            self.rect = rect
+        if state is not None:
+            self.state = state
+        if title is not None:
+            self.title = title
+        if anchor is not None:
+            self.anchor = anchor
+        return self
 
     def _anchor_from_str(sub_win: SubWindow[_W], anchor: str):
         rect = sub_win.rect

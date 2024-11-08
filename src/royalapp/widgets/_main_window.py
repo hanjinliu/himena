@@ -11,7 +11,6 @@ from psygnal import SignalGroup, Signal
 from royalapp._app_model._context import AppContext
 from royalapp._descriptors import ProgramaticMethod
 from royalapp._open_recent import RecentFileManager, RecentSessionManager
-from royalapp.io import get_readers
 from royalapp.types import (
     Parametric,
     WidgetDataModel,
@@ -175,7 +174,7 @@ class MainWindow(Generic[_W]):
         self._dock_widget_list._add_dock_widget(dock)
         return dock
 
-    def add_dialog(self, widget: _W, *, title: str | None = None):
+    def exec_dialog(self, widget: _W, *, title: str | None = None):
         return self._backend_main_window.add_dialog_widget(widget, title=title)
 
     def add_data(
@@ -260,8 +259,7 @@ class MainWindow(Generic[_W]):
                 new_rect = (rect.left, rect.top, size_hint[0], size_hint[1])
             else:
                 new_rect = rect
-            with self._animation_context(enabled=False):
-                result_widget.rect = new_rect
+            result_widget.rect = new_rect
             if fn.sources:
                 new_method = fn.to_converter_method(kwargs)
                 result_widget._update_widget_data_model_method(new_method)
@@ -271,25 +269,29 @@ class MainWindow(Generic[_W]):
 
     def read_file(self, file_path: str | Path | list[str | Path]) -> SubWindow[_W]:
         """Read local file(s) and open as a new sub-window."""
-        if hasattr(file_path, "__iter__") and not isinstance(file_path, (str, Path)):
-            fp = [Path(f) for f in file_path]
-        else:
-            fp = Path(file_path)
-        readers = get_readers(fp)
-        reader = readers[0]
-        model = reader.read(fp)._with_source(source=fp, plugin=reader.plugin)
-        out = self.add_data_model(model)
-        self._recent_manager.append_recent_files([fp])
-        self._recent_manager.update_menu()
-        return out
+        _, tabarea = self._current_or_new_tab()
+        return tabarea.read_file(file_path)
 
-    def read_session(self, file_path: str | Path) -> None:
+    def read_session(self, path: str | Path) -> None:
         """Read a session file and open the session."""
-        fp = Path(file_path)
+        fp = Path(path)
         session = from_yaml(fp)
         session.to_gui(self)
         self._recent_session_manager.append_recent_files([fp])
         self._recent_session_manager.update_menu()
+        return None
+
+    def save_session(self, path: str | Path) -> None:
+        """Save the current session to a file."""
+        from royalapp.session import AppSession
+
+        session = AppSession.from_gui(self)
+        session.dump_yaml(path)
+        return None
+
+    def clear(self) -> None:
+        """Clear all widgets in the main window."""
+        self.tabs.clear()
         return None
 
     def exec_action(self, id: str) -> None:

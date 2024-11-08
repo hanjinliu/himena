@@ -166,13 +166,12 @@ def paste_from_clipboard(ui: MainWindow) -> WidgetDataModel:
 )
 def load_session_from_dialog(ui: MainWindow) -> None:
     """Load a session from a file."""
-    file_path = ui._backend_main_window._open_file_dialog(
+    if path := ui._backend_main_window._open_file_dialog(
         mode="r",
         allowed_extensions=[".session.yaml"],
-    )
-    if file_path is None:
-        return None
-    return ui.read_session(file_path)
+    ):
+        ui.read_session(path)
+    return None
 
 
 @ACTIONS.append_from_fn(
@@ -183,17 +182,12 @@ def load_session_from_dialog(ui: MainWindow) -> None:
 )
 def save_session_from_dialog(ui: MainWindow) -> None:
     """Save current application state to a session."""
-    from royalapp.session import AppSession
-
-    session = AppSession.from_gui(ui)
-    file_path = ui._backend_main_window._open_file_dialog(
+    if path := ui._backend_main_window._open_file_dialog(
         mode="w",
         extension_default=".session.yaml",
         allowed_extensions=[".session.yaml"],
-    )
-    if file_path is None:
-        return None
-    session.dump_yaml(file_path)
+    ):
+        ui.save_session(path)
     return None
 
 
@@ -205,17 +199,13 @@ def save_session_from_dialog(ui: MainWindow) -> None:
 )
 def save_tab_session_from_dialog(ui: MainWindow) -> None:
     """Save current application state to a session."""
-    from royalapp.session import TabSession
-
-    session = TabSession.from_gui(ui.tabs.current())
-    file_path = ui._backend_main_window._open_file_dialog(
+    if path := ui._backend_main_window._open_file_dialog(
         mode="w",
         extension_default=".session.yaml",
         allowed_extensions=[".session.yaml"],
-    )
-    if file_path is None:
-        return None
-    session.dump_yaml(file_path)
+    ):
+        if tab := ui.tabs.current():
+            tab.save_session(path)
     return None
 
 

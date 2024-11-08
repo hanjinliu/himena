@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from functools import reduce
+from functools import reduce, wraps
 import operator
 from uuid import uuid4
 from typing import (
@@ -180,7 +180,7 @@ class PluginInterface:
         def _inner(wf):
             def _exec_dialog(ui: MainWindow):
                 widget = wf()
-                return ui.add_dialog(widget, title=title)
+                return ui.exec_dialog(widget, title=title)
 
             return self.register_function(
                 _exec_dialog,
@@ -253,19 +253,21 @@ class PluginInterface:
         kbs = _normalize_keybindings(keybindings)
 
         def _inner(wf: Callable):
-            _title = _normalize_title(title, wf)
-            _uuid = uuid4().int
             _callback = DockWidgetCallback(
-                wf, _title, area, allowed_areas, singleton, _uuid
+                wf,
+                title=title,
+                area=area,
+                allowed_areas=allowed_areas,
+                singleton=singleton,
+                uuid=uuid4().int,
             )
-
             if singleton:
                 toggle_rule = ToggleRule(get_current=_callback.widget_visible)
             else:
                 toggle_rule = None
             action = Action(
                 id=_command_id_from_func(wf, command_id),
-                title=_title,
+                title=_callback._title,
                 tooltip=_tooltip_from_func(wf),
                 callback=_callback,
                 menus=self._places_formatted(),
@@ -388,6 +390,8 @@ def get_plugin_interface(places: str | list[str] | None = None) -> PluginInterfa
 
 
 class DockWidgetCallback:
+    """Callback for registering dock widgets."""
+
     def __init__(
         self,
         func: Callable,
@@ -398,12 +402,14 @@ class DockWidgetCallback:
         uuid: int | None,
     ):
         self._func = func
-        self._title = title
+        self._title = _normalize_title(title, func)
         self._area = area
         self._allowed_areas = allowed_areas
         self._singleton = singleton
         self._uuid = uuid
         self._widget_ref: Callable[[], None | DockWidget] = lambda: None
+        wraps(func)(self)
+        self.__annotations__ = {"ui": "MainWindow"}
 
     def __call__(self, ui: MainWindow) -> None:
         if self._singleton:

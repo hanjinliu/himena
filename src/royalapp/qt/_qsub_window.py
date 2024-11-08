@@ -578,9 +578,9 @@ class QSubWindowTitleBar(QtW.QFrame):
             main = get_main_window(self)
             sub = main.tabs[i_tab][i_win]
             if event.angleDelta().y() > 0:
-                sub.rect = sub.rect.resize_relative(1.1, 1.1)
+                sub._set_rect(sub.rect.resize_relative(1.1, 1.1))
             else:
-                sub.rect = sub.rect.resize_relative(1 / 1.1, 1 / 1.1)
+                sub._set_rect(sub.rect.resize_relative(1 / 1.1, 1 / 1.1))
         return super().wheelEvent(event)
 
     def is_upper_than_area(self) -> bool:
