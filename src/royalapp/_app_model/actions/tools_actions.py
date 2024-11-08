@@ -52,7 +52,7 @@ def go_to_window(ui: MainWindow) -> None:
 def filter_text(model: WidgetDataModel[str]) -> Parametric[str]:
     """Go to an existing window."""
 
-    def filter_text_data(include: str, exclude: str) -> WidgetDataModel[str]:
+    def filter_text_data(include: str = "", exclude: str = "") -> WidgetDataModel[str]:
         if include == "":
             _include = _const_func(True)
         else:

@@ -246,27 +246,7 @@ class MainWindow(Generic[_W]):
         back_param_widget, connection = back_main._parametric_widget(sig)
         param_widget = self.add_widget(back_param_widget, title=title)
 
-        @connection
-        def _callback(**kwargs):
-            model = fn(**kwargs)
-            cls = back_main._pick_widget_class(model.type)
-            widget = cls.from_model(model)
-            rect = param_widget.rect
-            i_tab, i_win = param_widget._find_me(self)
-            del self.tabs[i_tab][i_win]
-            result_widget = self.tabs[i_tab].add_widget(
-                widget, title=model.title, autosize=False
-            )
-            if size_hint := result_widget.size_hint():
-                new_rect = (rect.left, rect.top, size_hint[0], size_hint[1])
-            else:
-                new_rect = rect
-            result_widget.rect = new_rect
-            if fn.sources:
-                new_method = fn.to_converter_method(kwargs)
-                result_widget._update_widget_data_model_method(new_method)
-            return None
-
+        connection(fn.make_connection(self, param_widget))
         return param_widget
 
     def read_file(self, file_path: str | Path | list[str | Path]) -> SubWindow[_W]:
@@ -296,9 +276,12 @@ class MainWindow(Generic[_W]):
         self.tabs.clear()
         return None
 
-    def exec_action(self, id: str) -> None:
+    def exec_action(self, id: str, **kwargs) -> None:
         """Execute an action by its ID."""
-        self._model_app.commands.execute_command(id).result()
+        result = self._model_app.commands.execute_command(id).result()
+        if kwargs and isinstance(result, Parametric) and (tab := self.tabs.current()):
+            param_widget = tab[-1]
+            result.make_connection(self, param_widget)(**kwargs)
         return None
 
     def exec_confirmation_dialog(self, msg: str) -> bool:

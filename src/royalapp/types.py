@@ -16,6 +16,7 @@ from royalapp._descriptors import MethodDescriptor, LocalReaderMethod, Converter
 from royalapp._enum import StrEnum
 
 if TYPE_CHECKING:
+    from royalapp.widgets import MainWindow, SubWindow
     from royalapp.io import PluginInfo
 
 
@@ -59,7 +60,7 @@ else:
 
     class GenericModel(BaseModel):
         def __class_getitem__(cls, item):
-            return GenericModel
+            return cls
 
 
 class WidgetDataModel(GenericModel[_T]):
@@ -254,7 +255,7 @@ class Parametric(Generic[_T]):
 
     def __init__(
         self,
-        func: Callable[..., _T],
+        func: Callable[..., WidgetDataModel[_T]],
         sources: list[MethodDescriptor] = [],
         action_id: str | None = None,
     ):
@@ -296,6 +297,29 @@ class Parametric(Generic[_T]):
 
     def get_signature(self):
         return inspect.signature(self._func)
+
+    def make_connection(self, ui: "MainWindow", param_widget: "SubWindow"):
+        def _call_and_process(**kwargs):
+            model = self(**kwargs)
+            cls = ui._backend_main_window._pick_widget_class(model.type)
+            widget = cls.from_model(model)
+            rect = param_widget.rect
+            i_tab, i_win = param_widget._find_me(ui)
+            del ui.tabs[i_tab][i_win]
+            result_widget = ui.tabs[i_tab].add_widget(
+                widget, title=model.title, autosize=False
+            )
+            if size_hint := result_widget.size_hint():
+                new_rect = (rect.left, rect.top, size_hint[0], size_hint[1])
+            else:
+                new_rect = rect
+            result_widget.rect = new_rect
+            if self.sources:
+                new_method = self.to_converter_method(kwargs)
+                result_widget._update_widget_data_model_method(new_method)
+            return None
+
+        return _call_and_process
 
 
 Connection = Callable[[Callable[[WidgetDataModel], None]], None]
