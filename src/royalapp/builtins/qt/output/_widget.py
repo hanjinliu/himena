@@ -86,6 +86,11 @@ class StdoutInterface:
         sys.stdout = sys.__stdout__
         sys.stderr = sys.__stderr__
 
+    @property
+    def widget(self) -> QLogger:
+        """Return the QLogger widget."""
+        return self._widget
+
 
 _INTERFACES = {}
 

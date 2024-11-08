@@ -8,13 +8,13 @@ from typing import (
     Mapping,
     Sequence,
     TypeVar,
-    cast,
     overload,
     TYPE_CHECKING,
 )
+import weakref
 
 from app_model import Action, Application
-from app_model.types import SubmenuItem, KeyBindingRule
+from app_model.types import SubmenuItem, KeyBindingRule, ToggleRule
 from app_model.expressions import BoolOp
 
 from royalapp._app_model import AppContext as ctx
@@ -255,28 +255,14 @@ class PluginInterface:
         def _inner(wf: Callable):
             _title = _normalize_title(title, wf)
             _uuid = uuid4().int
+            _callback = DockWidgetCallback(
+                wf, _title, area, allowed_areas, singleton, _uuid
+            )
 
-            def _callback(ui: MainWindow) -> None:
-                if singleton:
-                    for _backend_dock in ui._dock_widgets:
-                        _dock = cast("DockWidget", _backend_dock._royalapp_widget)
-                        if _uuid != _dock._identifier:
-                            continue
-                        _dock.visible = not _dock.visible
-                        return None
-                try:
-                    widget = wf(ui)
-                except TypeError:
-                    widget = wf()
-                ui.add_dock_widget(
-                    widget,
-                    title=_title,
-                    area=area,
-                    allowed_areas=allowed_areas,
-                    _identifier=_uuid,
-                )
-                return None
-
+            if singleton:
+                toggle_rule = ToggleRule(get_current=_callback.widget_visible)
+            else:
+                toggle_rule = None
             action = Action(
                 id=_command_id_from_func(wf, command_id),
                 title=_title,
@@ -284,6 +270,7 @@ class PluginInterface:
                 callback=_callback,
                 menus=self._places_formatted(),
                 keybindings=kbs,
+                toggled=toggle_rule,
             )
             self._actions.append(action)
             return wf
@@ -398,6 +385,49 @@ def get_plugin_interface(places: str | list[str] | None = None) -> PluginInterfa
         places = [places]
     out = PluginInterface(places)
     return out
+
+
+class DockWidgetCallback:
+    def __init__(
+        self,
+        func: Callable,
+        title: str | None,
+        area: DockArea | DockAreaString,
+        allowed_areas: Sequence[DockArea | DockAreaString] | None,
+        singleton: bool,
+        uuid: int | None,
+    ):
+        self._func = func
+        self._title = title
+        self._area = area
+        self._allowed_areas = allowed_areas
+        self._singleton = singleton
+        self._uuid = uuid
+        self._widget_ref: Callable[[], None | DockWidget] = lambda: None
+
+    def __call__(self, ui: MainWindow) -> None:
+        if self._singleton:
+            if _dock := ui.dock_widgets.widget_for_id(self._uuid):
+                _dock.visible = not _dock.visible
+                return None
+        try:
+            widget = self._func(ui)
+        except TypeError:
+            widget = self._func()
+        dock = ui.add_dock_widget(
+            widget,
+            title=self._title,
+            area=self._area,
+            allowed_areas=self._allowed_areas,
+            _identifier=self._uuid,
+        )
+        self._widget_ref = weakref.ref(dock)
+        return None
+
+    def widget_visible(self) -> bool:
+        if widget := self._widget_ref():
+            return widget.visible
+        return False
 
 
 def _normalize_keybindings(keybindings):

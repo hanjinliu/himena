@@ -231,6 +231,9 @@ class SubWindow(WidgetWrapper[_W]):
 
 
 class DockWidget(WidgetWrapper[_W]):
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}(title={self.title!r}, widget={self.widget!r})"
+
     @property
     def visible(self) -> bool:
         """Visibility of the dock widget."""

@@ -16,4 +16,4 @@ def install_output_widget(ui):
     """Standard output widget."""
     from royalapp.builtins.qt.output._widget import get_interface
 
-    return get_interface()._widget
+    return get_interface().widget

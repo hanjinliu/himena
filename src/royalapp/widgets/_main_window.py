@@ -4,7 +4,6 @@ from contextlib import contextmanager
 from logging import getLogger
 from pathlib import Path
 from typing import Any, Callable, Generic, Iterator, TypeVar
-from weakref import WeakSet
 from app_model import Application
 from app_model.expressions import create_context
 from psygnal import SignalGroup, Signal
@@ -23,7 +22,7 @@ from royalapp.types import (
 )
 from royalapp.session import from_yaml
 from royalapp.widgets._backend import BackendMainWindow
-from royalapp.widgets._tab_list import TabList, TabArea
+from royalapp.widgets._widget_list import TabList, TabArea, DockWidgetList
 from royalapp.widgets._wrapper import SubWindow, DockWidget
 
 _W = TypeVar("_W")  # backend widget type
@@ -57,7 +56,7 @@ class MainWindow(Generic[_W]):
         )
         self._ctx_keys = AppContext(create_context(self, max_depth=0))
         self._tab_list.changed.connect(backend._update_context)
-        self._dock_widgets = WeakSet[_W]()
+        self._dock_widget_list = DockWidgetList(backend)
         self._exec_confirmations = True
         self._recent_manager = RecentFileManager.default(app)
         self._recent_manager.update_menu()
@@ -68,6 +67,11 @@ class MainWindow(Generic[_W]):
     def tabs(self) -> TabList[_W]:
         """Tab list object."""
         return self._tab_list
+
+    @property
+    def dock_widgets(self) -> DockWidgetList[_W]:
+        """Dock widget list object."""
+        return self._dock_widget_list
 
     @property
     def model_app(self) -> Application:
@@ -88,35 +92,6 @@ class MainWindow(Generic[_W]):
         self.tabs.changed.emit()
         self._backend_main_window._set_current_tab_index(n_tab)
         return self.tabs[n_tab]
-
-    @contextmanager
-    def _animation_context(self, enabled: bool):
-        old = self._instructions
-        self._instructions = self._instructions.updated(animate=enabled)
-        try:
-            yield None
-        finally:
-            self._instructions = old
-
-    def _tab_activated(self, i: int):
-        self.events.tab_activated.emit(self.tabs[i])
-        return None
-
-    def _window_activated(self):
-        back = self._backend_main_window
-        back._update_context()
-        i_tab = back._current_tab_index()
-        if i_tab is None:
-            return None
-        tab = self.tabs[i_tab]
-        if len(tab) == 0:
-            return None
-        i_win = back._current_sub_window_index()
-        if i_win is None:
-            return None
-        _LOGGER.info("Window activated: %r-th window in %r-th tab", i_win, i_tab)
-        self.events.window_activated.emit(tab[i_win])
-        return None
 
     def window_for_id(self, identifier: int) -> SubWindow[_W] | None:
         """Retrieve a widget by its identifier."""
@@ -193,11 +168,11 @@ class MainWindow(Generic[_W]):
         DockWidget
             The dock widget handler.
         """
+        dock = DockWidget(widget, self._backend_main_window, identifier=_identifier)
         self._backend_main_window.add_dock_widget(
             widget, title=title, area=area, allowed_areas=allowed_areas
         )
-        dock = DockWidget(widget, self._backend_main_window, identifier=_identifier)
-        self._dock_widgets.add(dock.widget)
+        self._dock_widget_list._add_dock_widget(dock)
         return dock
 
     def add_dialog(self, widget: _W, *, title: str | None = None):
@@ -363,3 +338,32 @@ class MainWindow(Generic[_W]):
             return model, sub
         else:
             raise ValueError("No active window.")
+
+    def _tab_activated(self, i: int):
+        self.events.tab_activated.emit(self.tabs[i])
+        return None
+
+    def _window_activated(self):
+        back = self._backend_main_window
+        back._update_context()
+        i_tab = back._current_tab_index()
+        if i_tab is None:
+            return None
+        tab = self.tabs[i_tab]
+        if len(tab) == 0:
+            return None
+        i_win = back._current_sub_window_index()
+        if i_win is None:
+            return None
+        _LOGGER.info("Window activated: %r-th window in %r-th tab", i_win, i_tab)
+        self.events.window_activated.emit(tab[i_win])
+        return None
+
+    @contextmanager
+    def _animation_context(self, enabled: bool):
+        old = self._instructions
+        self._instructions = self._instructions.updated(animate=enabled)
+        try:
+            yield None
+        finally:
+            self._instructions = old

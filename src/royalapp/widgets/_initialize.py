@@ -5,7 +5,7 @@ from logging import getLogger
 from app_model import Application
 from royalapp.types import Parametric, WidgetDataModel, ClipboardDataModel
 from royalapp.widgets._main_window import MainWindow
-from royalapp.widgets._tab_list import TabArea
+from royalapp.widgets._widget_list import TabArea
 from royalapp.widgets._wrapper import SubWindow
 
 _W = TypeVar("_W")  # backend widget type

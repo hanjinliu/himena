@@ -29,3 +29,7 @@ QCommandLabel:hover {
     background-color: $(highlight-1);
     color: $(foreground-1);
 }
+
+QClickableLabel {
+    color: $(highlight-3);
+}

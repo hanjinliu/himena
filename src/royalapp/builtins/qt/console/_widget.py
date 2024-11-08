@@ -120,24 +120,6 @@ class QtConsole(RichJupyterWidget):
         self._control.setFocus()
         return None
 
-    def execute(
-        self,
-        source: str | None = None,
-        hidden: bool = False,
-        interactive: bool = False,
-    ):
-        """Execute current code block."""
-        if source is None:
-            source = self.input_buffer
-        super().execute(source=source, hidden=hidden, interactive=interactive)
-        self.codeExecuted.emit(source)
-        return None
-
-    def update_console(self, ns: dict) -> None:
-        """Update the console namespace."""
-        self.shell.push(dict(ns))
-        return None
-
     def showEvent(self, event):
         """Show event."""
         super().showEvent(event)

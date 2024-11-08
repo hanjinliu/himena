@@ -152,6 +152,7 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     def add_dialog_widget(self, widget: _W, title: str | None):
         raise NotImplementedError
 
+    ### dock widgets ###
     def _dock_widget_visible(self, widget: _W) -> bool:
         raise NotImplementedError
 
@@ -164,6 +165,7 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     def _set_dock_widget_title(self, widget: _W, title: str) -> None:
         raise NotImplementedError
 
+    ### others ###
     def show(self, run: bool = False) -> None:
         raise NotImplementedError
 

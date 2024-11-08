@@ -3,11 +3,12 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import Generic, TYPE_CHECKING, Iterator, TypeVar
 from collections.abc import Sequence
+import weakref
 
 from psygnal import Signal
 from royalapp._descriptors import LocalReaderMethod
 from royalapp.types import NewWidgetBehavior, WidgetDataModel, WindowState, WindowRect
-from royalapp.widgets._wrapper import _HasMainWindowRef, SubWindow
+from royalapp.widgets._wrapper import _HasMainWindowRef, SubWindow, DockWidget
 
 if TYPE_CHECKING:
     from royalapp.widgets import BackendMainWindow
@@ -20,6 +21,9 @@ class SemiMutableSequence(Sequence[_T]):
     @abstractmethod
     def __delitem__(self, i: int) -> None:
         return NotImplementedError
+
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}({list(self)})"
 
     def clear(self):
         """Clear all the contents of the list."""
@@ -56,16 +60,10 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         super().__init__(main_window)
         self._i_tab = i_tab
 
-    def __repr__(self) -> str:
-        return f"{type(self).__name__}({list(self)})"
-
     def __getitem__(self, index_or_name: int | str) -> SubWindow[_W]:
         index = self._norm_index_or_name(index_or_name)
         backend_widget = self._main_window()._get_widget_list(self._i_tab)[index][1]
         return backend_widget._royalapp_widget
-
-    def __setitem__(self, i: int, value: _W) -> None:
-        return NotImplementedError
 
     def __delitem__(self, index_or_name: int | str) -> None:
         index = self._norm_index_or_name(index_or_name)
@@ -252,15 +250,9 @@ def _norm_nrows_ncols(nrows: int | None, ncols: int | None, n: int) -> tuple[int
 class TabList(SemiMutableSequence[TabArea[_W]], _HasMainWindowRef[_W], Generic[_W]):
     changed = Signal()
 
-    def __repr__(self) -> str:
-        return f"{type(self).__name__}({list(self)})"
-
     def __getitem__(self, index_or_name: int | str) -> TabArea[_W]:
         index = self._norm_index_or_name(index_or_name)
         return TabArea(self._main_window(), index)
-
-    def __setitem__(self, i: int, value: TabArea[_W]) -> None:
-        return NotImplementedError
 
     def __delitem__(self, index_or_name: int | str) -> None:
         index = self._norm_index_or_name(index_or_name)
@@ -310,3 +302,32 @@ class TabList(SemiMutableSequence[TabArea[_W]], _HasMainWindowRef[_W], Generic[_
     @current_index.setter
     def current_index(self, index: int):
         self._main_window()._set_current_tab_index(index)
+
+
+class DockWidgetList(Sequence[DockWidget[_W]], _HasMainWindowRef[_W], Generic[_W]):
+    def __init__(self, main_window: BackendMainWindow[_W]):
+        super().__init__(main_window)
+        self._dock_widget_set = weakref.WeakValueDictionary[DockWidget[_W], _W]()
+
+    def __getitem__(self, index: int) -> DockWidget[_W]:
+        return list(self._dock_widget_set.keys())[index]
+
+    def __len__(self) -> int:
+        return len(self._dock_widget_set)
+
+    def __iter__(self) -> Iterator[DockWidget[_W]]:
+        return iter(self._dock_widget_set.keys())
+
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}({list(self)})"
+
+    def _add_dock_widget(self, dock: DockWidget[_W]) -> None:
+        self._dock_widget_set[dock] = dock.widget
+        return None
+
+    def widget_for_id(self, id: str) -> DockWidget[_W] | None:
+        for _dock in self:
+            if id != _dock._identifier:
+                continue
+            return _dock
+        return None

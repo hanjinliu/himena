@@ -16,5 +16,6 @@ def make_file_tree_widget(ui):
     """Open a file tree widget to efficiently open files in a workspace."""
     from royalapp.builtins.qt.filetree._widget import QWorkspaceWidget
 
-    filetree = QWorkspaceWidget(ui)
+    filetree = QWorkspaceWidget()
+    filetree.fileDoubleClicked.connect(ui.read_file)
     return filetree

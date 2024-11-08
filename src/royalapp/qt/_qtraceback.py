@@ -129,10 +129,10 @@ def get_tb_formatter() -> Callable[[ExcInfo, bool, str], str]:
         The ``as_html`` determines whether the traceback is formatted in html
         or plain text.
     """
-    import numpy as np
 
     try:
         import IPython.core.ultratb
+        import numpy as np
 
         def format_exc_info(info: ExcInfo, as_html: bool, color="Neutral") -> str:
             # avoid verbose printing of the array data

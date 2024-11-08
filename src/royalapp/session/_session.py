@@ -7,7 +7,7 @@ import yaml
 from royalapp._descriptors import dict_to_method, method_to_dict
 from royalapp.types import WindowState, WindowRect
 from royalapp import anchor
-from royalapp.widgets._tab_list import TabArea
+from royalapp.widgets._widget_list import TabArea
 
 if TYPE_CHECKING:
     from royalapp.widgets import SubWindow, MainWindow

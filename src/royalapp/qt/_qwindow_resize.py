@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from enum import StrEnum
 from qtpy import QtWidgets as QtW
 from qtpy import QtCore
 from qtpy.QtCore import Qt
+from royalapp.consts import StrEnum
 
 
 class ResizeState(StrEnum):
@@ -24,13 +24,13 @@ class ResizeState(StrEnum):
         is_left: bool, is_right: bool, is_top: bool, is_bottom: bool
     ) -> ResizeState:
         """Get the resize state from the edge booleans."""
-        return _RESIZE_STATE_MAP.get(
+        return RESIZE_STATE_MAP.get(
             (is_left, is_right, is_top, is_bottom), ResizeState.NONE
         )
 
     def to_cursor_shape(self) -> Qt.CursorShape:
         """Get the cursor shape for the resize state."""
-        return _CURSOR_SHAPE_MAP[self]
+        return CURSOR_SHAPE_MAP[self]
 
     def resize_widget(
         self,
@@ -112,7 +112,7 @@ class _SizeAdjuster:
 
 
 # is_left_edge, is_right_edge, is_top_edge, is_bottom_edge
-_RESIZE_STATE_MAP = {
+RESIZE_STATE_MAP = {
     (True, False, True, False): ResizeState.TOP_LEFT,
     (False, True, True, False): ResizeState.TOP_RIGHT,
     (True, False, False, True): ResizeState.BOTTOM_LEFT,
@@ -121,9 +121,10 @@ _RESIZE_STATE_MAP = {
     (False, True, False, False): ResizeState.RIGHT,
     (False, False, True, False): ResizeState.TOP,
     (False, False, False, True): ResizeState.BOTTOM,
+    (False, False, False, False): ResizeState.NONE,
 }
 
-_CURSOR_SHAPE_MAP = {
+CURSOR_SHAPE_MAP = {
     ResizeState.TOP: Qt.CursorShape.SizeVerCursor,
     ResizeState.BOTTOM: Qt.CursorShape.SizeVerCursor,
     ResizeState.LEFT: Qt.CursorShape.SizeHorCursor,

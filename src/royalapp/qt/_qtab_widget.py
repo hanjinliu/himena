@@ -11,6 +11,8 @@ from royalapp.qt._utils import get_main_window
 
 
 class QTabBar(QtW.QTabBar):
+    """Tab bar used for the main widget"""
+
     def __init__(self):
         super().__init__()
         self.setAcceptDrops(True)
@@ -47,6 +49,8 @@ class QTabBar(QtW.QTabBar):
 
 
 class QTabWidget(QtW.QTabWidget):
+    """Tab widget used for the main widget"""
+
     newWindowActivated = QtCore.Signal()
 
     def __init__(self):

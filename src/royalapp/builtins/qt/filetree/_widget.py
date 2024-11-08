@@ -1,8 +1,6 @@
 from __future__ import annotations
 from pathlib import Path
-import weakref
 from qtpy import QtWidgets as QtW, QtCore, QtGui
-from royalapp.widgets import MainWindow
 
 
 class QFileSystemModel(QtW.QFileSystemModel):
@@ -40,25 +38,33 @@ class QRootPathEdit(QtW.QWidget):
         path = QtW.QFileDialog.getExistingDirectory(self, "Select Root Path")
         if not path:
             return
+        self._set_root_path(path)
+
+    def _set_root_path(self, path: str | Path):
         path = Path(path)
         self._path_edit.setText("/" + path.name)
-        self.rootChanged.emit(Path(path))
+        self.rootChanged.emit(path)
 
 
 class QWorkspaceWidget(QtW.QWidget):
-    def __init__(self, ui: MainWindow) -> None:
+    fileDoubleClicked = QtCore.Signal(Path)
+
+    def __init__(self) -> None:
         super().__init__()
         self._root = QRootPathEdit()
-        self._workspace_tree = QWorkspaceFileTree(ui)
+        self._workspace_tree = QWorkspaceFileTree()
         layout = QtW.QVBoxLayout(self)
         layout.addWidget(self._root)
         layout.addWidget(self._workspace_tree)
         self._root._path_edit.setText("/" + Path.cwd().name)
         self._root.rootChanged.connect(self._workspace_tree.setRootPath)
+        self._workspace_tree.fileDoubleClicked.connect(self.fileDoubleClicked.emit)
 
 
 class QWorkspaceFileTree(QtW.QTreeView):
-    def __init__(self, ui: MainWindow) -> None:
+    fileDoubleClicked = QtCore.Signal(Path)
+
+    def __init__(self) -> None:
         super().__init__()
         self._model = QFileSystemModel()
         self.setHeaderHidden(True)
@@ -66,7 +72,6 @@ class QWorkspaceFileTree(QtW.QTreeView):
         self.setModel(self._model)
         self.setRootIndex(self._model.index(self._model.rootPath()))
         self.setSelectionMode(QtW.QAbstractItemView.SelectionMode.ExtendedSelection)
-        self._main_window_ref = weakref.ref(ui)
         self.doubleClicked.connect(self._double_clicked)
 
     def setRootPath(self, path: Path):
@@ -79,7 +84,7 @@ class QWorkspaceFileTree(QtW.QTreeView):
         path = Path(self._model.filePath(idx))
         if path.is_dir():
             return
-        self._main_window_ref().read_file(path)
+        self.fileDoubleClicked.emit(path)
         return None
 
     # drag-and-drop

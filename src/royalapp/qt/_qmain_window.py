@@ -122,42 +122,10 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         # Normalize title and areas
         if title is None:
             title = widget.objectName()
-        if allowed_areas is None:
-            allowed_areas = [
-                DockArea.LEFT,
-                DockArea.RIGHT,
-                DockArea.TOP,
-                DockArea.BOTTOM,
-            ]
-        else:
-            allowed_areas = [DockArea(area) for area in allowed_areas]
-        if area is not None:
-            area = DockArea(area)
-        areas = Qt.DockWidgetArea.NoDockWidgetArea
-        for allowed_area in allowed_areas:
-            areas |= _DOCK_AREA_MAP[allowed_area]
-
         # Construct and add the dock widget
-        dock_widget = QDockWidget(widget, title)
-        dock_widget.setAllowedAreas(areas)
-        self.addDockWidget(_DOCK_AREA_MAP[area], dock_widget)
-
-        # add an toggleable action
-        for child in self._menubar.actions():
-            qmenu = child.menu()
-            if isinstance(qmenu, QtW.QMenu) and qmenu.title() == "Window":
-                qaction = QtW.QAction(title, qmenu)
-                qaction.setCheckable(True)
-                qaction.setChecked(True)
-                qaction.toggled.connect(
-                    _dock_widget_action_toggled_callback(qaction, dock_widget)
-                )
-                dock_widget.visibilityChanged.connect(
-                    _dock_widget_vis_changed_callback(qaction, dock_widget)
-                )
-                qmenu.addAction(qaction)
-                break
-
+        dock_widget = QDockWidget(widget, title, allowed_areas)
+        self.addDockWidget(dock_widget.area_normed(area), dock_widget)
+        dock_widget.closed.connect(self._update_context)
         return dock_widget
 
     def add_dialog_widget(
