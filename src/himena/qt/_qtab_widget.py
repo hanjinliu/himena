@@ -31,20 +31,8 @@ class QTabBar(QtW.QTabBar):
         sub._title_bar._drag_position = None
         # move window to the new tab
         i_tab, i_win = sub._find_me()
-        if target_index == i_tab:
-            return
-        self.move_window(i_tab, i_win, target_index)
-
-    def move_window(self, source_tab: int, source_window: int, target_tab: int) -> None:
         main = get_main_window(self)
-        title = main.tabs[source_tab][source_window].title
-        win = main.tabs[source_tab].pop(source_window)
-        old_rect = win.rect
-        if target_tab < 0:
-            main.add_tab()
-        main.tabs[target_tab].append(win, title)
-        win.rect = old_rect
-        main.tabs.current_index = source_tab
+        main.move_window(main.tabs[i_tab][i_win], target_index)
 
 
 class QTabWidget(QtW.QTabWidget):

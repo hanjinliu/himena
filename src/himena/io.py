@@ -49,7 +49,12 @@ class ReaderTuple(NamedTuple):
     plugin: PluginInfo | None = None
 
     def read(self, path: Path) -> WidgetDataModel:
-        return self.reader(path)
+        out = self.reader(path)
+        if not isinstance(out, WidgetDataModel):
+            raise TypeError(
+                f"Reader function {self.reader!r} did not return a WidgetDataModel."
+            )
+        return out
 
 
 _READER_PROVIDERS: list[ReaderProviderTuple] = []

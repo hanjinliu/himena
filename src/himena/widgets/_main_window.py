@@ -11,6 +11,7 @@ from himena._app_model._context import AppContext
 from himena._descriptors import ProgramaticMethod
 from himena._open_recent import RecentFileManager, RecentSessionManager
 from himena.types import (
+    ClipboardDataModel,
     Parametric,
     WidgetDataModel,
     NewWidgetBehavior,
@@ -81,6 +82,19 @@ class MainWindow(Generic[_W]):
     def area_size(self) -> tuple[int, int]:
         """(width, height) of the main window tab area."""
         return self._backend_main_window._area_size()
+
+    @property
+    def clipboard(self) -> ClipboardDataModel | None:
+        """Get the clipboard data as a ClipboardDataModel instance."""
+        return self._backend_main_window._clipboard_data()
+
+    @clipboard.setter
+    def clipboard(self, data: ClipboardDataModel) -> None:
+        """Set the clipboard data."""
+        if not isinstance(data, ClipboardDataModel):
+            raise ValueError("Clipboard data must be a ClipboardDataModel instance.")
+        self._backend_main_window._set_clipboard_data(data)
+        return None
 
     def add_tab(self, title: str | None = None) -> TabArea[_W]:
         """Add a new tab of given name."""
@@ -358,6 +372,26 @@ class MainWindow(Generic[_W]):
         self.events.tab_activated.emit(self.tabs[i])
         self._history_tab.add(i)
         return None
+
+    def move_window(self, sub: SubWindow[_W], target_index: int) -> None:
+        i_tab = i_win = None
+        for _i_tab, tab in enumerate(self.tabs):
+            for _i_win, win in enumerate(tab):
+                if win is sub:
+                    i_tab = _i_tab
+                    i_win = _i_win
+                    break
+
+        if i_tab is None or i_win is None or target_index == i_tab:
+            return None
+        title = self.tabs[i_tab][i_win].title
+        win = self.tabs[i_tab].pop(i_win)
+        old_rect = win.rect
+        if target_index < 0:
+            self.add_tab()
+        self.tabs[target_index].append(win, title)
+        win.rect = old_rect
+        self.tabs.current_index = i_tab
 
     def _window_activated(self):
         back = self._backend_main_window

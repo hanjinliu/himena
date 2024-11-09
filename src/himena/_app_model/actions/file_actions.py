@@ -69,9 +69,6 @@ def open_file_from_dialog(ui: MainWindow) -> list[WidgetDataModel]:
     title="Open Folder ...",
     icon="material-symbols:folder-open",
     menus=[{"id": MenuId.FILE, "group": READ_GROUP}],
-    keybindings=[
-        KeyBindingRule(primary=KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.KeyO))
-    ],
 )
 def open_folder_from_dialog(ui: MainWindow) -> WidgetDataModel:
     """Open a folder as a sub-window."""
@@ -139,7 +136,7 @@ def open_recent(ui: MainWindow) -> WidgetDataModel:
 
 
 @ACTIONS.append_from_fn(
-    id="paste",
+    id="paste-as-window",
     title="Paste as window",
     icon="material-symbols:content-paste",
     menus=[{"id": MenuId.FILE, "group": READ_GROUP}],

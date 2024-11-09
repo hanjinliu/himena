@@ -2,7 +2,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from qtpy.QtWidgets import QApplication
 from himena import MainWindow, anchor
-from himena.types import WidgetDataModel
+from himena.types import ClipboardDataModel, WidgetDataModel
 from himena.qt import register_frontend_widget, MainWindowQt
 from himena.builtins.qt import widgets as _qtw
 
@@ -55,6 +55,7 @@ def test_io_commands(ui: MainWindow, tmpdir, sample_dir: Path):
     ui._instructions = ui._instructions.updated(file_dialog_response=response_session)
     ui.exec_action("save-session")
     ui.exec_action("load-session")
+    ui.exec_action("save-tab-session")
 
 def test_builtin_commands_with_window(ui: MainWindowQt, sample_dir: Path):
     ui.exec_action("show-command-palette")
@@ -64,15 +65,59 @@ def test_builtin_commands_with_window(ui: MainWindowQt, sample_dir: Path):
     ui._backend_main_window.setFocus()
     ui.exec_action("open-recent")
     ui._backend_main_window.setFocus()
-    ui.exec_action("copy-screenshot")
-    ui.exec_action("copy-screenshot-area")
-    ui.exec_action("copy-screenshot-window")
 
     ui.exec_action("duplicate-window")
     ui.exec_action("duplicate-window")
     assert len(ui.tabs[0]) == 3
     ui.exec_action("rename-window")
     ui.exec_action("show-command-palette")
+
+def test_screenshot_commands(ui: MainWindow, sample_dir: Path, tmpdir):
+    ui.read_file(sample_dir / "text.txt")
+
+    # copy
+    ui.clipboard = ClipboardDataModel(value="", type="text")  # just for initialization
+    ui.exec_action("copy-screenshot")
+    assert ui.clipboard.type == "image"
+    ui.clipboard = ClipboardDataModel(value="", type="text")  # just for initialization
+    ui.exec_action("copy-screenshot-area")
+    assert ui.clipboard.type == "image"
+    ui.clipboard = ClipboardDataModel(value="", type="text")  # just for initialization
+    ui.exec_action("copy-screenshot-window")
+    assert ui.clipboard.type == "image"
+
+    # save
+    ui._instructions = ui._instructions.updated(
+        file_dialog_response=lambda: Path(tmpdir) / "screenshot.png"
+    )
+    ui.exec_action("save-screenshot")
+    ui.exec_action("save-screenshot-area")
+    ui.exec_action("save-screenshot-window")
+    assert Path(tmpdir).joinpath("screenshot.png").exists()
+
+def test_view_menu_commands(ui: MainWindow, sample_dir: Path):
+    ui.exec_action("new-tab")
+    ui.exec_action("close-tab")
+    ui.exec_action("new-tab")
+    ui.read_file(sample_dir / "text.txt")
+    ui.read_file(sample_dir / "text.txt")
+    ui.exec_action("new-tab")
+    ui.read_file(sample_dir / "text.txt")
+    assert ui.tabs.current_index == 1
+    ui.exec_action("goto-last-tab")
+    assert ui.tabs.current_index == 0
+    assert len(ui.tabs.current()) == 2
+    assert ui.tabs.current()[0].state == "normal"
+    assert ui.tabs.current()[1].state == "normal"
+    ui.exec_action("minimize-other-windows")
+    assert ui.tabs.current()[0].state == "min"
+    assert ui.tabs.current()[1].state == "normal"
+    ui.exec_action("show-all-windows")
+    assert ui.tabs.current()[0].state == "normal"
+    assert ui.tabs.current()[1].state == "normal"
+    ui.exec_action("close-all-windows")
+    assert len(ui.tabs.current()) == 0
+
 
 def test_custom_widget(ui: MainWindow):
     from qtpy.QtWidgets import QLabel
@@ -109,7 +154,6 @@ def test_custom_dock_widget(ui: MainWindow):
     ui.show()
     widget = QLabel("Dock widget test")
     dock = ui.add_dock_widget(widget)
-    QApplication.processEvents()
     assert dock.visible
     dock.visible = False
     assert not dock.visible
@@ -139,6 +183,56 @@ def test_register_frontend_widget(ui: MainWindow):
 
     win2 = ui.add_data_model(model)
     assert type(win2.widget) is QCustomTextView
+
+def test_register_folder(ui: MainWindow, sample_dir: Path):
+    from himena.io import register_reader_provider
+
+    def _read(fp: Path):
+        files = list(fp.glob("*.*"))
+        if files[0].name == "meta.txt":
+            code, meta = files[1], files[0]
+        elif files[1].name == "meta.txt":
+            code, meta = files[0], files[1]
+        else:
+            raise ValueError("meta.txt not found")
+        return WidgetDataModel(
+            value=code.read_text(),
+            type="text.with-meta",
+            additional_data=meta,
+        )
+
+    @register_reader_provider
+    def read_text_with_meta(path: Path):
+        if path.is_file():
+            return None
+        files = list(path.glob("*.*"))
+        if len(files) == 2 and "meta.txt" in [f.name for f in files]:
+            return _read
+        else:
+            return None
+
+    response_open = lambda: sample_dir / "folder"
+    ui._instructions = ui._instructions.updated(
+        confirm=False,
+        file_dialog_response=response_open,
+    )
+    ui.exec_action("open-folder")
+
+def test_clipboard(ui: MainWindow, sample_dir: Path):
+    cmodel = ClipboardDataModel(value="XXX", type="text")
+    ui.clipboard = cmodel
+
+    ui.exec_action("paste-as-window")
+    assert ui.current_window is not None
+    assert ui.current_window.to_model().value == "XXX"
+
+    sample_path = sample_dir / "text.txt"
+    ui.read_file(sample_path)
+    ui.exec_action("copy-path-to-clipboard")
+    assert ui.clipboard.value == str(sample_path)
+    ui.exec_action("copy-data-to-clipboard")
+    assert ui.clipboard.value == sample_path.read_text()
+    assert ui.clipboard.type == "text"
 
 def test_tile_window(ui: MainWindow):
     ui.add_data("A", type="text")

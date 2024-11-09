@@ -124,6 +124,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         dock_widget = QDockWidget(widget, title, allowed_areas)
         self.addDockWidget(dock_widget.area_normed(area), dock_widget)
         dock_widget.closed.connect(self._update_context)
+        QtW.QApplication.processEvents()
         return dock_widget
 
     def add_dialog_widget(
@@ -188,6 +189,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         tab = self._tab_widget.widget_area(i_tab)
         _LOGGER.info("Adding widget of title %r to tab %r", title, i_tab)
         subwindow = tab.add_widget(widget, title)
+        QtW.QApplication.processEvents()
         return subwindow
 
     def _connect_window_events(self, sub: SubWindow, qsub: QSubWindow):

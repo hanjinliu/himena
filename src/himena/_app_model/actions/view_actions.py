@@ -71,6 +71,7 @@ def goto_last_tab(ui: MainWindow) -> None:
 )
 def merge_tabs(ui: MainWindow) -> None:
     """Select tabs and merge them."""
+    # TODO: use `move_window`
     if len(ui.tabs) < 2:
         return
     names = ui._backend_main_window._open_selection_dialog(
@@ -139,7 +140,7 @@ def tile_windows(ui: MainWindow) -> None:
 
 
 @ACTIONS.append_from_fn(
-    id="close-all-window",
+    id="close-all-windows",
     title="Close all windows in tab",
     menus=[{"id": MenuId.VIEW, "group": WINDOW_GROUP}],
     enablement=_ctx.num_sub_windows > 0,

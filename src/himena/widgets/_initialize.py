@@ -91,7 +91,7 @@ def init_application(app: Application) -> Application:
     @app.injection_store.mark_provider
     def _get_clipboard_data() -> ClipboardDataModel:
         _LOGGER.debug("providing for %r", ClipboardDataModel.__name__)
-        return current_instance(app.name)._backend_main_window._clipboard_data()
+        return current_instance(app.name).clipboard
 
     @app.injection_store.mark_processor
     def _process_clipboard_data(clip_data: ClipboardDataModel) -> None:
@@ -100,7 +100,7 @@ def init_application(app: Application) -> Application:
         _LOGGER.debug("processing %r", clip_data)
         # set data to clipboard
         ins = current_instance(app.name)
-        ins._backend_main_window._set_clipboard_data(clip_data)
+        ins.clipboard = clip_data
         return None
 
     @app.injection_store.mark_processor
