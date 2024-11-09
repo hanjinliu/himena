@@ -74,7 +74,8 @@ class WidgetDataModel(GenericModel[_T]):
     source : Path, optional
         Path of the source file if exists.
     type : str, optional
-        Type of the internal data.
+        Type of the internal data. Type hierarchy is separated by dots. For example,
+        "text.plain" is a subtype of "text".
     title : str, optional
         Title for the widget.
     extensions : list[str], optional
@@ -137,6 +138,10 @@ class WidgetDataModel(GenericModel[_T]):
         """Convert to a clipboard data model."""
         return ClipboardDataModel(value=self.value, type=self.type)
 
+    def is_subtype_of(self, supertype: str) -> bool:
+        """Check if the type is a subtype of the given type."""
+        return is_subtype(self.type, supertype)
+
     @field_validator("type", mode="before")
     def _validate_type(cls, v, values):
         if v is None:
@@ -180,6 +185,10 @@ class ClipboardDataModel(GenericModel[_T]):
     def to_widget_data_model(self) -> WidgetDataModel[_T]:
         return WidgetDataModel(value=self.value, type=self.type, title="Clipboard")
 
+    def is_subtype_of(self, supertype: str) -> bool:
+        """Check if the type is a subtype of the given type."""
+        return is_subtype(self.type, supertype)
+
 
 class DragDropDataModel(GenericModel[_T]):
     """Data model for a drag and drop data."""
@@ -192,6 +201,20 @@ class DragDropDataModel(GenericModel[_T]):
 
     def to_widget_data_model(self) -> WidgetDataModel[_T]:
         return WidgetDataModel(value=self.value, type=self.type)
+
+
+def is_subtype(string: str, supertype: str) -> bool:
+    """Check if the type is a subtype of the given type.
+
+    >>> is_subtype_of("text", "text")  # True
+    >>> is_subtype_of("text.plain", "text")  # True
+    >>> is_subtype_of("text.plain", "text.html")  # False
+    """
+    string_parts = string.split(".")
+    supertype_parts = supertype.split(".")
+    if len(supertype_parts) > len(string_parts):
+        return False
+    return string_parts[: len(supertype_parts)] == supertype_parts
 
 
 ReaderFunction = Callable[[Path], WidgetDataModel]

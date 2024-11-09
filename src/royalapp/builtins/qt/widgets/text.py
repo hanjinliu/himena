@@ -5,7 +5,7 @@ from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
 from superqt import QSearchableComboBox
 
-from royalapp.consts import StandardTypes
+from royalapp.consts import StandardTypes, StandardSubtypes
 from royalapp.types import TextFileMeta, WidgetDataModel
 from royalapp.qt._qt_consts import MonospaceFontFamily
 
@@ -523,5 +523,5 @@ class QDefaultHTMLEdit(QDefaultTextEdit):
     def to_model(self) -> WidgetDataModel:
         return WidgetDataModel(
             value=self.toPlainText(),
-            type=StandardTypes.HTML,
+            type=StandardSubtypes.HTML,
         )

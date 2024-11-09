@@ -80,38 +80,40 @@ def default_reader_provider(file_path: Path | list[Path]):
     return None
 
 
-def _write_text(file_data: WidgetDataModel[str], path: Path) -> None:
+def _write_text(model: WidgetDataModel[str], path: Path) -> None:
     """Write text file."""
     with open(path, "w") as f:
-        f.write(file_data.value)
+        f.write(model.value)
     return None
 
 
-def _write_csv(file_data: WidgetDataModel[list[list[str]]], path: Path) -> None:
+def _write_csv(model: WidgetDataModel[list[list[str]]], path: Path) -> None:
     """Write CSV file."""
     import csv
 
     with open(path, "w") as f:
         writer = csv.writer(f)
-        writer.writerows(file_data.value)
+        writer.writerows(model.value)
 
 
-def _write_image(file_data: WidgetDataModel[np.ndarray], path: Path) -> None:
+def _write_image(model: WidgetDataModel[np.ndarray], path: Path) -> None:
     """Write image file."""
     from PIL import Image
 
-    Image.fromarray(file_data.value).save(path)
+    Image.fromarray(model.value).save(path)
     return None
 
 
 @register_writer_provider
-def default_writer_provider(file_data: WidgetDataModel):
+def default_writer_provider(model: WidgetDataModel):
     """Get default writer."""
-    if file_data.type in (StandardTypes.TEXT, StandardTypes.HTML):
+    if model.type is None:
+        return None
+    if model.is_subtype_of(StandardTypes.TEXT):
         return _write_text
-    elif file_data.type == StandardTypes.TABLE:
+    elif model.is_subtype_of(StandardTypes.TABLE):
         return _write_csv
-    elif file_data.type == StandardTypes.IMAGE:
+    elif model.is_subtype_of(StandardTypes.IMAGE):
         return _write_image
     else:
         return None

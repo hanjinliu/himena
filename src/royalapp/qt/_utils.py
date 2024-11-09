@@ -6,7 +6,7 @@ import qtpy
 from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
 from royalapp.types import ClipboardDataModel
-from royalapp.consts import StandardTypes
+from royalapp.consts import StandardTypes, StandardSubtypes
 
 if TYPE_CHECKING:
     import numpy as np
@@ -30,7 +30,7 @@ def get_clipboard_data() -> ClipboardDataModel | None:
     if md is None:
         return None
     if md.hasHtml():
-        return ClipboardDataModel(value=md.html(), type=StandardTypes.HTML)
+        return ClipboardDataModel(value=md.html(), type=StandardSubtypes.HTML)
     elif md.hasImage():
         arr = ArrayQImage(clipboard.image())
         return ClipboardDataModel(value=arr, type=StandardTypes.IMAGE)
@@ -43,17 +43,17 @@ def set_clipboard_data(data: ClipboardDataModel) -> None:
     clipboard = QtW.QApplication.clipboard()
     if clipboard is None:
         return
-    if data.type == StandardTypes.HTML:
-        md = QtCore.QMimeData()
-        md.setHtml(str(data.value))
+    if data.is_subtype_of(StandardTypes.TEXT):
+        if data.is_subtype_of(StandardSubtypes.HTML):
+            md = QtCore.QMimeData()
+            md.setHtml(str(data.value))
+        clipboard.setText(str(data.value))
     elif data.type == StandardTypes.IMAGE:
         if isinstance(data.value, ArrayQImage):
             img = data.value.qimage
         else:
             raise NotImplementedError
         clipboard.setImage(img)
-    elif data.type == StandardTypes.TEXT:
-        clipboard.setText(str(data.value))
 
 
 def qimage_to_ndarray(img: QtGui.QImage) -> NDArray[np.uint8]:

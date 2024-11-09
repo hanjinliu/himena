@@ -25,9 +25,12 @@ ConventionalTextFileNames = frozenset(
 
 class StandardTypes(SimpleNamespace):
     TEXT = "text"
-    HTML = "html"
     TABLE = "table"
     IMAGE = "image"
+
+
+class StandardSubtypes(SimpleNamespace):
+    HTML = "text.html"
 
 
 class MenuId(StrEnum):

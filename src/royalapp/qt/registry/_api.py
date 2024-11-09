@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Callable, TypeVar, Union, overload
 from qtpy import QtWidgets as QtW
 
-from royalapp.types import WidgetDataModel
+from royalapp.types import WidgetDataModel, is_subtype
 from royalapp.qt.registry._widgets import QFallbackWidget
 
 WidgetClass = Union[Callable[[WidgetDataModel], QtW.QWidget], type[QtW.QWidget]]
@@ -38,7 +38,7 @@ def register_frontend_widget(
     override=True,
 ):
     """
-    Register a widget class as a frontend widget for the given file type.
+    Register a Qt widget class as a frontend widget for the given file type.
 
     Registered function must take `WidgetDataModel` as the only argument and return a
     `QtW.QWidget`. If `app` is given, the widget class is registered for the given app.
@@ -79,9 +79,15 @@ def pick_widget_class(app_name: str, type: str) -> WidgetClass:
     """Pick a widget class for the given file type."""
     if app_name in _APP_TYPE_TO_QWIDGET:
         _map_for_app = _APP_TYPE_TO_QWIDGET[app_name]
-        if type in _map_for_app:
-            return _map_for_app[type]
-    _fallback_dict = _APP_TYPE_TO_QWIDGET.get(None, {})
-    if type not in _fallback_dict:
-        return QFallbackWidget
-    return _fallback_dict[type]
+    else:
+        _map_for_app = _APP_TYPE_TO_QWIDGET.get(None, {})
+
+    if type in _map_for_app:
+        return _map_for_app[type]
+
+    # pick supertype widget class
+    supertype_keys = [key for key in _map_for_app if is_subtype(type, key)]
+    if supertype_keys:
+        key = max(supertype_keys, key=lambda x: x.count("."))
+        return _map_for_app[key]
+    return QFallbackWidget

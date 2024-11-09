@@ -2,6 +2,9 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from qtpy.QtWidgets import QApplication
 from royalapp import MainWindow, anchor
+from royalapp.types import WidgetDataModel
+from royalapp.qt import register_frontend_widget
+from royalapp.builtins.qt import widgets as _qtw
 
 def test_new_window(ui: MainWindow):
     ui.show()
@@ -95,3 +98,27 @@ def test_custom_dock_widget(ui: MainWindow):
     assert not dock.visible
     dock.title = "New title"
     assert dock.title == "New title"
+
+def test_fallback_widget(ui: MainWindow):
+    from royalapp.qt.registry._widgets import QFallbackWidget
+    model = WidgetDataModel(value=object(), type="unsupported")
+    win = ui.add_data_model(model)
+    assert isinstance(win.widget, QFallbackWidget)
+
+def test_register_frontend_widget(ui: MainWindow):
+    from qtpy.QtWidgets import QLabel
+
+    class QCustomTextView(QLabel):
+        @classmethod
+        def from_model(cls, model: WidgetDataModel):
+            self = cls()
+            self.setText(model.value)
+            return self
+
+    model = WidgetDataModel(value="abc", type="text.xyz")
+    win = ui.add_data_model(model)
+    assert type(win.widget) is _qtw.QDefaultTextEdit
+    register_frontend_widget("text.xyz", QCustomTextView)
+
+    win2 = ui.add_data_model(model)
+    assert type(win2.widget) is QCustomTextView
