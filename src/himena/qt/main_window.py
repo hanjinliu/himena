@@ -9,6 +9,8 @@ from himena.qt._qmain_window import QMainWindow
 class MainWindowQt(MainWindow[QtW.QWidget]):
     """Main window with Qt backend."""
 
+    _backend_main_window: QMainWindow
+
     def __init__(self, app: Application) -> None:
         backend = QMainWindow(app=app)
         super().__init__(backend, app)

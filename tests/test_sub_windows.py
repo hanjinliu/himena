@@ -3,7 +3,7 @@ from tempfile import TemporaryDirectory
 from qtpy.QtWidgets import QApplication
 from himena import MainWindow, anchor
 from himena.types import WidgetDataModel
-from himena.qt import register_frontend_widget
+from himena.qt import register_frontend_widget, MainWindowQt
 from himena.builtins.qt import widgets as _qtw
 
 def test_new_window(ui: MainWindow):
@@ -39,7 +39,23 @@ def test_builtin_commands(ui: MainWindow):
     ui.exec_action("builtins:fetch-seaborn-test-data")
     ui.exec_action("quit")
 
-def test_builtin_commands_with_window(ui: MainWindow, sample_dir: Path):
+def test_io_commands(ui: MainWindow, tmpdir, sample_dir: Path):
+    response_open = lambda: sample_dir / "text.txt"
+    response_save = lambda: Path(tmpdir) / "text_out.txt"
+    ui._instructions = ui._instructions.updated(file_dialog_response=response_open)
+    ui.exec_action("open-file")
+    ui.add_data("Hello", type="text")
+    ui._instructions = ui._instructions.updated(file_dialog_response=response_save)
+    ui.exec_action("save")
+    ui.exec_action("save-as")
+
+    # session
+    response_session = lambda: Path(tmpdir) / "a.session.yaml"
+    ui._instructions = ui._instructions.updated(file_dialog_response=response_session)
+    ui.exec_action("save-session")
+    ui.exec_action("load-session")
+
+def test_builtin_commands_with_window(ui: MainWindowQt, sample_dir: Path):
     ui.exec_action("show-command-palette")
     ui.read_file(sample_dir / "text.txt")
     assert len(ui.tabs) == 1
@@ -122,3 +138,23 @@ def test_register_frontend_widget(ui: MainWindow):
 
     win2 = ui.add_data_model(model)
     assert type(win2.widget) is QCustomTextView
+
+def test_tile_window(ui: MainWindow):
+    ui.add_data("A", type="text")
+    ui.add_data("B", type="text")
+    ui.tabs[0].tile_windows()
+    ui.add_data("C", type="text")
+    ui.tabs[0].tile_windows()
+    ui.add_data("D", type="text")
+    ui.tabs[0].tile_windows()
+    ui.add_data("E", type="text")
+    ui.tabs[0].tile_windows()
+    ui.add_data("F", type="text")
+    ui.tabs[0].tile_windows()
+    ui.add_data("G", type="text")
+    ui.tabs[0].tile_windows()
+    ui.add_data("H", type="text")
+    ui.tabs[0].tile_windows()
+
+def test_qt_file_dialog(ui: MainWindow):
+    ui._backend_main_window._open_file_dialog("r")

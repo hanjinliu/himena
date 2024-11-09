@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Callable, Generic, Iterator, TypeVar
+from typing import Any, Callable, Generic, Iterator, Literal, TypeVar, overload
 from app_model import Application
 from app_model.expressions import create_context
 from psygnal import SignalGroup, Signal
@@ -288,6 +288,30 @@ class MainWindow(Generic[_W]):
             return True
         return self._backend_main_window._open_confirmation_dialog(msg)
 
+    @overload
+    def exec_file_dialog(
+        self,
+        mode: Literal["r", "d", "w"] = "r",
+        extension_default: str | None = None,
+        allowed_extensions: list[str] | None = None,
+    ) -> Path | None: ...
+    @overload
+    def exec_file_dialog(
+        self,
+        mode: Literal["rm"],
+        extension_default: str | None = None,
+        allowed_extensions: list[str] | None = None,
+    ) -> list[Path] | None: ...
+
+    def exec_file_dialog(self, mode, extension_default=None, allowed_extensions=None):
+        if res := self._instructions.file_dialog_response:
+            return res()
+        return self._backend_main_window._open_file_dialog(
+            mode,
+            extension_default=extension_default,
+            allowed_extensions=allowed_extensions,
+        )
+
     def show(self, run: bool = False) -> None:
         """
         Show the main window.
@@ -319,6 +343,7 @@ class MainWindow(Generic[_W]):
         return self.tabs[idx_tab][idx_win]
 
     def iter_windows(self) -> Iterator[SubWindow[_W]]:
+        """Iterate over all the sub-windows in this main window."""
         for tab in self.tabs:
             yield from tab
 

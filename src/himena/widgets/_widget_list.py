@@ -229,7 +229,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         """Save the current session to a file."""
         from himena.session import TabSession
 
-        file_path = self._main_window()._open_file_dialog(
+        file_path = self._main_window()._himena_main_window.exec_file_dialog(
             mode="w",
             extension_default=".session.yaml",
             allowed_extensions=[".session.yaml"],

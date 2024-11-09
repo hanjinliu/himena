@@ -103,7 +103,7 @@ class SaveBehavior(BaseModel):
         model: "WidgetDataModel",
     ) -> Path | None:
         """Return the path to save (None to cancel)."""
-        return main._backend_main_window._open_file_dialog(
+        return main.exec_file_dialog(
             mode="w",
             extension_default=model.extension_default,
             allowed_extensions=model.extensions,

@@ -48,7 +48,7 @@ def _read_and_update_source(reader: ReaderTuple, source: Path) -> WidgetDataMode
 )
 def open_file_from_dialog(ui: MainWindow) -> list[WidgetDataModel]:
     """Open file(s). Multiple files will be opened as separate sub-windows."""
-    file_paths = ui._backend_main_window._open_file_dialog(mode="rm")
+    file_paths = ui.exec_file_dialog(mode="rm")
     if file_paths is None or len(file_paths) == 0:
         return None
     reader_path_sets: list[tuple[ReaderFunction, Any]] = []
@@ -75,7 +75,7 @@ def open_file_from_dialog(ui: MainWindow) -> list[WidgetDataModel]:
 )
 def open_folder_from_dialog(ui: MainWindow) -> WidgetDataModel:
     """Open a folder as a sub-window."""
-    file_path = ui._backend_main_window._open_file_dialog(mode="d")
+    file_path = ui.exec_file_dialog(mode="d")
     if file_path is None:
         return None
     readers = get_readers(file_path)
@@ -163,7 +163,7 @@ def paste_from_clipboard(ui: MainWindow) -> WidgetDataModel:
 )
 def load_session_from_dialog(ui: MainWindow) -> None:
     """Load a session from a file."""
-    if path := ui._backend_main_window._open_file_dialog(
+    if path := ui.exec_file_dialog(
         mode="r",
         allowed_extensions=[".session.yaml"],
     ):
@@ -179,7 +179,7 @@ def load_session_from_dialog(ui: MainWindow) -> None:
 )
 def save_session_from_dialog(ui: MainWindow) -> None:
     """Save current application state to a session."""
-    if path := ui._backend_main_window._open_file_dialog(
+    if path := ui.exec_file_dialog(
         mode="w",
         extension_default=".session.yaml",
         allowed_extensions=[".session.yaml"],
@@ -196,7 +196,7 @@ def save_session_from_dialog(ui: MainWindow) -> None:
 )
 def save_tab_session_from_dialog(ui: MainWindow) -> None:
     """Save current application state to a session."""
-    if path := ui._backend_main_window._open_file_dialog(
+    if path := ui.exec_file_dialog(
         mode="w",
         extension_default=".session.yaml",
         allowed_extensions=[".session.yaml"],
@@ -257,7 +257,7 @@ def _save_screenshot(ui: MainWindow, target: str) -> None:
     import numpy as np
 
     arr = ui._backend_main_window._screenshot(target)
-    save_path = ui._backend_main_window._open_file_dialog(mode="w")
+    save_path = ui.exec_file_dialog(mode="w")
     if save_path is None:
         return
     img = Image.fromarray(np.asarray(arr))

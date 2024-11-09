@@ -1,4 +1,4 @@
-# himena
+# Himena
 
 [![PyPI - Version](https://img.shields.io/pypi/v/himena.svg)](https://pypi.org/project/himena)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/himena.svg)](https://pypi.org/project/himena)
