@@ -3,13 +3,8 @@ from __future__ import annotations
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt, Signal, Property
 
-from magicgui.widgets.bases import ButtonWidget, CategoricalWidget
-from magicgui.backends._qtpy.widgets import (
-    QBaseButtonWidget,
-    RadioButtons as RadioButtonsBase,
-    QBaseValueWidget,
-)
-from magicgui.widgets import RadioButtons, Select
+from magicgui.widgets.bases import ButtonWidget
+from magicgui.backends._qtpy.widgets import QBaseButtonWidget
 
 
 class QToggleSwitch(QtW.QWidget):
@@ -197,97 +192,6 @@ class QLabeledToggleSwitch(QtW.QWidget):
         self.setChecked(not self.isChecked())
 
 
-class QButtonGroup(QtCore.QObject):
-    """A button group object that mimics the Qt API."""
-
-    buttonToggled = Signal(QLabeledToggleSwitch, bool)
-
-    def __init__(self) -> None:
-        super().__init__()
-        self._list: list[QLabeledToggleSwitch] = []
-        self._exclusive = True
-
-    def buttons(self) -> list[QLabeledToggleSwitch]:
-        """Return the list of buttons in the group."""
-        # NOTE: Must return a copy of the list because this function will be used as
-        # an iterator.
-        return self._list.copy()
-
-    def checkedButton(self) -> QLabeledToggleSwitch:
-        for btn in self._list:
-            if btn.isChecked():
-                return btn
-        return None
-
-    def checkedButtons(self) -> list[QLabeledToggleSwitch]:
-        return [btn for btn in self._list if btn.isChecked()]
-
-    def addButton(self, btn: QLabeledToggleSwitch):
-        self._list.append(btn)
-        btn._switch.toggled.connect(
-            lambda checked: self._on_button_toggled(btn, checked)
-        )
-
-    def removeButton(self, btn: QLabeledToggleSwitch):
-        self._list.remove(btn)
-        btn._switch.toggled.disconnect()
-
-    def exclusive(self) -> bool:
-        return self._exclusive
-
-    def setExclusive(self, val: bool):
-        self._exclusive = val
-
-    def _on_button_toggled(self, btn: QLabeledToggleSwitch, checked: bool):
-        if self.exclusive():
-            if checked:
-                for b in self._list:
-                    if b is not btn:
-                        b._switch._set_checked(False)
-            else:
-                btn._switch._set_checked(True)
-        self.buttonToggled.emit(btn, checked)
-
-
-class QToggleSwitchesBase(RadioButtonsBase):
-    _qwidget: QtW.QGroupBox
-
-    def __init__(self, **kwargs):
-        QBaseValueWidget.__init__(self, QtW.QGroupBox, "", "", "", **kwargs)
-        self._btn_group = QButtonGroup()
-        self._qwidget.setLayout(QtW.QVBoxLayout())
-        self._qwidget.layout().setAlignment(Qt.AlignmentFlag.AlignTop)
-        self._btn_group.buttonToggled.connect(self._emit_data)
-
-    def _emit_data(self, btn, checked):
-        if checked or not self._btn_group.exclusive():
-            self._event_filter.valueChanged.emit(self._mgui_get_value())
-
-    def _add_button(self, label: str, data=None):
-        btn = QLabeledToggleSwitch(self._qwidget)
-        btn.setText(label)
-        btn._data = data
-        self._btn_group.addButton(btn)
-        self._qwidget.layout().addWidget(btn)
-
-    def _mgui_get_value(self):
-        if self._btn_group.exclusive():
-            btn = self._btn_group.checkedButton()
-            return btn._data if btn else None
-        else:
-            return [btn._data for btn in self._btn_group.checkedButtons()]
-
-    def _mgui_set_value(self, value) -> None:
-        if self._btn_group.exclusive():
-            for btn in self._btn_group.buttons():
-                if btn._data == value:
-                    btn._switch._set_checked(True)
-                    break  # exclusive
-        else:
-            for btn in self._btn_group.buttons():
-                btn._switch._set_checked(btn._data in value)
-
-
 class ToggleSwitch(ButtonWidget):
     """A toggle switch widget behaves like a check box."""
 
@@ -298,20 +202,3 @@ class ToggleSwitch(ButtonWidget):
             **kwargs,
         )
         self.native: QLabeledToggleSwitch
-
-
-class ToggleSwitches(RadioButtons):  # type: ignore
-    """An radio buttons using toggle switches."""
-
-    def __init__(self, choices=(), orientation="vertical", **kwargs):
-        kwargs["widget_type"] = QToggleSwitchesBase
-        CategoricalWidget.__init__(self, choices=choices, **kwargs)
-        self.orientation = orientation
-
-
-class ToggleSwitchSelect(Select):
-    def __init__(self, choices=(), orientation="vertical", **kwargs):
-        kwargs["widget_type"] = QToggleSwitchesBase
-        CategoricalWidget.__init__(self, choices=choices, **kwargs)
-        self._widget._btn_group.setExclusive(False)
-        self.orientation = orientation

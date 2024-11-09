@@ -28,7 +28,7 @@ class ModelDrop(ValueWidget):
         assert app.native
 
         if types := kwargs.pop("types", None):
-            if isinstance(types, list):
+            if isinstance(types, (list, tuple)):
                 for t in types:
                     _assert_str(t)
             else:

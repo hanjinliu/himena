@@ -1,4 +1,4 @@
-from qtpy import QtCore, QtWidgets as QtW, QtGui
+from qtpy import QtCore
 from himena import MainWindow
 from himena.qt._qmain_window import QMainWindow
 from himena.qt._qsub_window import QSubWindow, QSubWindowTitleBar
@@ -48,6 +48,7 @@ def test_subwindow_drag(ui: MainWindow, qtbot: QtBot):
     win = ui.add_data("xxx", type="text")
     qwin = win.widget.parentWidget().parentWidget().parentWidget()
     assert type(qwin) is QSubWindow
+    qtitlebar: QSubWindowTitleBar = qwin._title_bar
 
     point = qwin.rect().bottomRight()
 
@@ -68,4 +69,35 @@ def test_subwindow_drag(ui: MainWindow, qtbot: QtBot):
         qmain,
         QtCore.Qt.MouseButton.LeftButton,
         pos=point + QtCore.QPoint(15, 15),
+    )
+
+    qtbot.mousePress(
+        qtitlebar,
+        QtCore.Qt.MouseButton.LeftButton,
+        pos=qtitlebar.rect().center(),
+    )
+    qtbot.mouseMove(
+        qtitlebar,
+        pos=qtitlebar.rect().center() + QtCore.QPoint(30, 0),
+    )
+    qtbot.mouseRelease(
+        qtitlebar,
+        QtCore.Qt.MouseButton.LeftButton,
+        pos=qtitlebar.rect().center() + QtCore.QPoint(30, 0),
+    )
+    qtbot.mousePress(
+        qtitlebar,
+        QtCore.Qt.MouseButton.LeftButton,
+        modifier=QtCore.Qt.KeyboardModifier.ControlModifier,
+        pos=qtitlebar.rect().center(),
+    )
+    qtbot.mouseMove(
+        qtitlebar,
+        pos=qtitlebar.rect().center() + QtCore.QPoint(30, 0),
+    )
+    qtbot.mouseRelease(
+        qtitlebar,
+        QtCore.Qt.MouseButton.LeftButton,
+        modifier=QtCore.Qt.KeyboardModifier.ControlModifier,
+        pos=qtitlebar.rect().center() + QtCore.QPoint(30, 0),
     )

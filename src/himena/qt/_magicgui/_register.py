@@ -8,6 +8,6 @@ from himena.types import WidgetDataModel
 def register_magicgui_types():
     """Register magicgui types."""
     register_type(WidgetDataModel, widget_type=ModelDrop)
+    register_type(bool, widget_type=ToggleSwitch)
     register_type(int, widget_type=IntEdit)
     register_type(float, widget_type=FloatEdit)
-    register_type(bool, widget_type=ToggleSwitch)

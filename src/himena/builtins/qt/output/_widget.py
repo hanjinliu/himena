@@ -14,7 +14,7 @@ class QLogger(QtW.QPlainTextEdit):
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
-        self.setFont(QtGui.QFont(MonospaceFontFamily, 10))
+        self.setFont(QtGui.QFont(MonospaceFontFamily, 8))
         self.setReadOnly(True)
         self.setWordWrapMode(QtGui.QTextOption.WrapMode.NoWrap)
         self.process.connect(self.update_text)
