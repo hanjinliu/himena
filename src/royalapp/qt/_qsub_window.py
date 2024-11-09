@@ -87,6 +87,10 @@ class QSubWindowArea(QtW.QMdiArea):
         self._last_drag_pos = self._last_press_pos = None
         return super().hideEvent(a0)
 
+    def resizeEvent(self, a0: QtGui.QResizeEvent) -> None:
+        self._reanchor_windows()
+        return super().resizeEvent(a0)
+
     def _reanchor_windows(self):
         """Reanchor all windows if needed (such as minimized windows)."""
         if self.viewMode() != QtW.QMdiArea.ViewMode.SubWindowView:

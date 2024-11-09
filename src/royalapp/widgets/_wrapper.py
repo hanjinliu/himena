@@ -104,9 +104,21 @@ class SubWindow(WidgetWrapper[_W]):
         return self._main_window()._window_state(self.widget)
 
     @state.setter
-    def state(self, value: WindowState) -> None:
-        inst = self._main_window()._royalapp_main_window._instructions
-        self._main_window()._set_window_state(self.widget, value, inst)
+    def state(self, value: WindowState | str) -> None:
+        main = self._main_window()._royalapp_main_window
+        inst = main._instructions.updated(animate=False)
+        self._set_state(value, inst)
+
+    @property
+    def rect(self) -> WindowRect:
+        """Position and size of the sub-window."""
+        return self._main_window()._window_rect(self.widget)
+
+    @rect.setter
+    def rect(self, value: tuple[int, int, int, int]) -> None:
+        main = self._main_window()._royalapp_main_window
+        inst = main._instructions.updated(animate=False)
+        self._set_rect(value, inst)
 
     @property
     def is_importable(self) -> bool:
@@ -151,16 +163,10 @@ class SubWindow(WidgetWrapper[_W]):
             model.method = self._widget_data_model_method
         return model
 
-    @property
-    def rect(self) -> WindowRect:
-        """Position and size of the sub-window."""
-        return self._main_window()._window_rect(self.widget)
-
-    @rect.setter
-    def rect(self, value: tuple[int, int, int, int]) -> None:
-        main = self._main_window()._royalapp_main_window
-        inst = main._instructions.updated(animate=False)
-        self._set_rect(value, inst)
+    def _set_state(self, value: WindowState, inst: BackendInstructions | None = None):
+        if inst is None:
+            inst = self._main_window()._royalapp_main_window._instructions
+        self._main_window()._set_window_state(self.widget, value, inst)
 
     def _set_rect(
         self,

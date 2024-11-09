@@ -325,15 +325,22 @@ class Parametric(Generic[_T]):
 Connection = Callable[[Callable[[WidgetDataModel], None]], None]
 
 
-class BackendInstructions(NamedTuple):
+class BackendInstructions(BaseModel):
     """Instructions for the backend."""
 
-    animate: bool = True
+    animate: bool = Field(
+        default=True,
+        description="Whether to animate",
+        frozen=True,
+    )
+    confirm: bool = Field(
+        default=True,
+        description="Whether to show a confirmation dialog",
+        frozen=True,
+    )
 
     def updated(self, **kwargs) -> "BackendInstructions":
-        params = self._asdict()
-        params.update(kwargs)
-        return BackendInstructions(**params)
+        return self.model_copy(update=kwargs)
 
 
 class TextFileMeta(BaseModel):

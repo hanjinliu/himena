@@ -43,7 +43,7 @@ def close_current_window(ui: MainWindow) -> None:
     if i_window is None:
         return None
     _LOGGER.info(f"Closing window {i_window} in tab {i_tab}")
-    ui.tabs[i_tab][i_window]._close_me(ui, ui._exec_confirmations)
+    ui.tabs[i_tab][i_window]._close_me(ui, ui._instructions.confirm)
 
 
 @ACTIONS.append_from_fn(
@@ -56,7 +56,7 @@ def close_all_windows_in_tab(ui: MainWindow) -> None:
     """Close all sub-windows in the current tab."""
     if area := ui.tabs.current():
         win_modified = [win for win in area if win.is_modified]
-        if len(win_modified) > 0 and ui._exec_confirmations:
+        if len(win_modified) > 0 and ui._instructions.confirm:
             _modified_msg = "\n".join([f"- {win.title}" for win in win_modified])
             if not ui.exec_confirmation_dialog(
                 f"Some windows are modified:\n{_modified_msg}\nClose without saving?"

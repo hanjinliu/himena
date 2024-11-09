@@ -7,7 +7,6 @@ from pathlib import Path
 
 import app_model
 from qtpy import QtWidgets as QtW, QtGui, QtCore
-from qtpy.QtCore import Qt
 from app_model.backends.qt import QModelMainWindow, QModelMenu
 from royalapp.consts import MenuId
 from royalapp._app_model import _formatter
@@ -33,7 +32,6 @@ from royalapp.qt._utils import (
     get_clipboard_data,
     set_clipboard_data,
     ArrayQImage,
-    qsignal_blocker,
 )
 
 if TYPE_CHECKING:
@@ -200,17 +198,11 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         @qsub.close_requested.connect
         def _():
             main = self._royalapp_main_window
-            sub._close_me(main, main._exec_confirmations)
+            sub._close_me(main, main._instructions.confirm)
 
         @qsub.rename_requested.connect
         def _(title: str):
             sub.title = title
-
-    def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
-        super().resizeEvent(event)
-        if widget := self._tab_widget.current_widget_area():
-            widget._reanchor_windows()
-        return None
 
     def showEvent(self, event: QtGui.QShowEvent) -> None:
         super().showEvent(event)
@@ -526,15 +518,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         return None
 
 
-_DOCK_AREA_MAP = {
-    DockArea.TOP: Qt.DockWidgetArea.TopDockWidgetArea,
-    DockArea.BOTTOM: Qt.DockWidgetArea.BottomDockWidgetArea,
-    DockArea.LEFT: Qt.DockWidgetArea.LeftDockWidgetArea,
-    DockArea.RIGHT: Qt.DockWidgetArea.RightDockWidgetArea,
-    None: Qt.DockWidgetArea.NoDockWidgetArea,
-}
-
-
 def _is_root_menu_id(app: app_model.Application, menu_id: str) -> bool:
     if menu_id in (
         MenuId.TOOLBAR,
@@ -543,21 +526,6 @@ def _is_root_menu_id(app: app_model.Application, menu_id: str) -> bool:
     ):
         return False
     return "/" not in menu_id.replace("//", "")
-
-
-def _dock_widget_action_toggled_callback(action, dock: QtW.QDockWidget):
-    def _cb():
-        dock.setVisible(action.isChecked())
-
-    return _cb
-
-
-def _dock_widget_vis_changed_callback(action, dock: QtW.QDockWidget):
-    def _cb():
-        with qsignal_blocker(dock):
-            action.setChecked(dock.isVisible())
-
-    return _cb
 
 
 def _get_subwindow(widget: QtW.QWidget) -> QSubWindow:

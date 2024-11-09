@@ -67,23 +67,22 @@ class TabSession(BaseModel):
         )
 
     def to_gui(self, main: "MainWindow[_W]") -> None:
-        with main._animation_context(enabled=False):
-            area = main.add_tab(self.name)
-            cur_index = self.current_index
-            for window_session in self.windows:
-                try:
-                    method_desc = dict_to_method(window_session.method)
-                    model = method_desc.get_model(main.model_app)
-                except Exception:
-                    cur_index -= 1
-                    continue  # TODO: inform user
-                window = area.add_data_model(model)
-                window.title = window_session.title
-                window.rect = window_session.rect.to_tuple()
-                window.state = window_session.state
-                window.anchor = anchor.dict_to_anchor(window_session.anchor)
-            if cur_index >= 0:
-                area.current_index = cur_index
+        area = main.add_tab(self.name)
+        cur_index = self.current_index
+        for window_session in self.windows:
+            try:
+                method_desc = dict_to_method(window_session.method)
+                model = method_desc.get_model(main.model_app)
+            except Exception:
+                cur_index -= 1
+                continue  # TODO: inform user
+            window = area.add_data_model(model)
+            window.title = window_session.title
+            window.rect = window_session.rect.to_tuple()
+            window.state = window_session.state
+            window.anchor = anchor.dict_to_anchor(window_session.anchor)
+        if cur_index >= 0:
+            area.current_index = cur_index
         return None
 
     def dump_yaml(self, path: str | Path) -> None:
@@ -108,25 +107,24 @@ class AppSession(BaseModel):
         )
 
     def to_gui(self, main: "MainWindow[_W]") -> None:
-        with main._animation_context(enabled=False):
-            for tab_session in self.tabs:
-                area = main.add_tab(tab_session.name)
-                cur_index = tab_session.current_index
-                for window_session in tab_session.windows:
-                    try:
-                        method_desc = dict_to_method(window_session.method)
-                        model = method_desc.get_model(main.model_app)
-                    except Exception:
-                        cur_index -= 1
-                        continue  # TODO: inform user
-                    window = area.add_data_model(model)
-                    _LOGGER.info("Got model: %r", model)
-                    window.title = window_session.title
-                    window.rect = window_session.rect.to_tuple()
-                    window.state = window_session.state
-                    window.anchor = anchor.dict_to_anchor(window_session.anchor)
-                if cur_index >= 0:
-                    area.current_index = cur_index
+        for tab_session in self.tabs:
+            area = main.add_tab(tab_session.name)
+            cur_index = tab_session.current_index
+            for window_session in tab_session.windows:
+                try:
+                    method_desc = dict_to_method(window_session.method)
+                    model = method_desc.get_model(main.model_app)
+                except Exception:
+                    cur_index -= 1
+                    continue  # TODO: inform user
+                window = area.add_data_model(model)
+                _LOGGER.info("Got model: %r", model)
+                window.title = window_session.title
+                window.rect = window_session.rect.to_tuple()
+                window.state = window_session.state
+                window.anchor = anchor.dict_to_anchor(window_session.anchor)
+            if cur_index >= 0:
+                area.current_index = cur_index
         return None
 
     def dump_yaml(self, path: str | Path) -> None:

@@ -100,14 +100,12 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         sub_window.state_changed.connect(main._update_context)
 
         main._set_current_tab_index(self._i_tab)
-        with main._royalapp_main_window._animation_context(enabled=False):
-            if main._royalapp_main_window._new_widget_behavior is NewWidgetBehavior.TAB:
-                nwindows = len(self)
-                main._set_window_state(
-                    self._i_tab,
-                    nwindows - 1,
-                    WindowState.FULL,
-                )
+        if main._royalapp_main_window._new_widget_behavior is NewWidgetBehavior.TAB:
+            main._set_window_state(
+                sub_window.widget,
+                WindowState.FULL,
+                main._royalapp_main_window._instructions.updated(animate=False),
+            )
 
         main._move_focus_to(sub_window.widget)
         return None
@@ -182,23 +180,22 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
 
         main._set_current_tab_index(self._i_tab)
         nwindows = len(self)
-        with main._royalapp_main_window._animation_context(enabled=False):
-            if main._royalapp_main_window._new_widget_behavior is NewWidgetBehavior.TAB:
-                main._set_window_state(
-                    self._i_tab,
-                    nwindows - 1,
-                    WindowState.FULL,
-                )
-            else:
-                main._set_current_sub_window_index(len(self) - 1)
-                if autosize:
-                    left = 4 + 24 * (nwindows % 5)
-                    top = 4 + 24 * (nwindows % 5)
-                    if size_hint := sub_window.size_hint():
-                        width, height = size_hint
-                    else:
-                        _, _, width, height = sub_window.rect
-                    sub_window.rect = WindowRect(left, top, width, height)
+        if main._royalapp_main_window._new_widget_behavior is NewWidgetBehavior.TAB:
+            main._set_window_state(
+                sub_window.widget,
+                WindowState.FULL,
+                main._royalapp_main_window._instructions.updated(animate=False),
+            )
+        else:
+            main._set_current_sub_window_index(len(self) - 1)
+            if autosize:
+                left = 4 + 24 * (nwindows % 5)
+                top = 4 + 24 * (nwindows % 5)
+                if size_hint := sub_window.size_hint():
+                    width, height = size_hint
+                else:
+                    _, _, width, height = sub_window.rect
+                sub_window.rect = WindowRect(left, top, width, height)
         main._move_focus_to(widget)
         return sub_window
 

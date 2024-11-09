@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
 from logging import getLogger
 from pathlib import Path
 from typing import Any, Callable, Generic, Iterator, TypeVar
@@ -58,7 +57,6 @@ class MainWindow(Generic[_W]):
         self._ctx_keys = AppContext(create_context(self, max_depth=0))
         self._tab_list.changed.connect(backend._update_context)
         self._dock_widget_list = DockWidgetList(backend)
-        self._exec_confirmations = True
         self._recent_manager = RecentFileManager.default(app)
         self._recent_manager.update_menu()
         self._recent_session_manager = RecentSessionManager.default(app)
@@ -286,7 +284,7 @@ class MainWindow(Generic[_W]):
 
     def exec_confirmation_dialog(self, msg: str) -> bool:
         """Execute a confirmation dialog (True if Yes is selected)."""
-        if not self._exec_confirmations:
+        if not self._instructions.confirm:
             return True
         return self._backend_main_window._open_confirmation_dialog(msg)
 
@@ -353,12 +351,3 @@ class MainWindow(Generic[_W]):
         _LOGGER.info("Window activated: %r-th window in %r-th tab", i_win, i_tab)
         self.events.window_activated.emit(tab[i_win])
         return None
-
-    @contextmanager
-    def _animation_context(self, enabled: bool):
-        old = self._instructions
-        self._instructions = self._instructions.updated(animate=enabled)
-        try:
-            yield None
-        finally:
-            self._instructions = old
