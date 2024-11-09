@@ -38,7 +38,7 @@ if TYPE_CHECKING:
     from himena.widgets._main_window import SubWindow, MainWindow
 
 _STYLE_QSS_PATH = Path(__file__).parent / "style.qss"
-_ICON_PATH = Path(__file__).parent.parent / "resources" / "himena.svg"
+_ICON_PATH = Path(__file__).parent.parent / "resources" / "icon.svg"
 _T = TypeVar("_T", bound=QtW.QWidget)
 _LOGGER = logging.getLogger(__name__)
 
@@ -60,7 +60,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         default_menu_ids = {
             MenuId.FILE: MenuId.FILE.capitalize(),
             MenuId.WINDOW: MenuId.WINDOW.capitalize(),
-            MenuId.TAB: MenuId.TAB.capitalize(),
+            MenuId.VIEW: MenuId.VIEW.capitalize(),
             MenuId.TOOLS: MenuId.TOOLS.capitalize(),
         }
         default_menu_ids.update(
@@ -397,6 +397,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         _LOGGER.info("Deleting widget at tab %r, window %r", i_tab, i_window)
         tab = self._tab_widget.widget_area(i_tab)
         tab.removeSubWindow(tab.subWindowList()[i_window])
+        tab.relabel_widgets()
         return None
 
     def _del_tab_at(self, i_tab: int) -> None:
@@ -521,7 +522,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 def _is_root_menu_id(app: app_model.Application, menu_id: str) -> bool:
     if menu_id in (
         MenuId.TOOLBAR,
-        MenuId.WINDOW_TITLE_BAR,
         app.menus.COMMAND_PALETTE_ID,
     ):
         return False

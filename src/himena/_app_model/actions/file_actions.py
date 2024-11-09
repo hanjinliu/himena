@@ -175,7 +175,7 @@ def load_session_from_dialog(ui: MainWindow) -> None:
     id="save-session",
     title="Save Session ...",
     menus=[{"id": MenuId.FILE, "group": WRITE_GROUP}],
-    enablement=_ctx.has_tabs,
+    enablement=_ctx.num_tabs > 0,
 )
 def save_session_from_dialog(ui: MainWindow) -> None:
     """Save current application state to a session."""
@@ -192,7 +192,7 @@ def save_session_from_dialog(ui: MainWindow) -> None:
     id="save-tab-session",
     title="Save Tab Session ...",
     menus=[{"id": MenuId.FILE, "group": WRITE_GROUP}],
-    enablement=_ctx.has_tabs & _ctx.has_sub_windows,
+    enablement=(_ctx.num_tabs > 0) & (_ctx.num_sub_windows > 0),
 )
 def save_tab_session_from_dialog(ui: MainWindow) -> None:
     """Save current application state to a session."""
@@ -232,7 +232,7 @@ def copy_screenshot(ui: MainWindow) -> ClipboardDataModel:
     id="copy-screenshot-area",
     title="Copy screenshot of tab area",
     menus=[{"id": MenuId.FILE_SCREENSHOT, "group": COPY_SCR_SHOT}],
-    enablement=_ctx.has_tabs,
+    enablement=_ctx.num_tabs > 0,
 )
 def copy_screenshot_area(ui: MainWindow) -> ClipboardDataModel:
     """Copy a screenshot of the tab area to the clipboard."""
@@ -244,7 +244,7 @@ def copy_screenshot_area(ui: MainWindow) -> ClipboardDataModel:
     id="copy-screenshot-window",
     title="Copy Screenshot of sub-window",
     menus=[{"id": MenuId.FILE_SCREENSHOT, "group": COPY_SCR_SHOT}],
-    enablement=_ctx.has_sub_windows,
+    enablement=_ctx.num_sub_windows > 0,
 )
 def copy_screenshot_window(ui: MainWindow) -> ClipboardDataModel:
     """Copy a screenshot of the sub window to the clipboard."""
@@ -277,7 +277,7 @@ def save_screenshot(ui: MainWindow) -> None:
     id="save-screenshot-area",
     title="Save screenshot of tab area",
     menus=[{"id": MenuId.FILE_SCREENSHOT, "group": SAVE_SCR_SHOT}],
-    enablement=_ctx.has_tabs,
+    enablement=_ctx.num_tabs > 0,
 )
 def save_screenshot_area(ui: MainWindow) -> None:
     _save_screenshot(ui, "area")
@@ -287,7 +287,7 @@ def save_screenshot_area(ui: MainWindow) -> None:
     id="save-screenshot-window",
     title="Save screenshot of sub-window",
     menus=[{"id": MenuId.FILE_SCREENSHOT, "group": SAVE_SCR_SHOT}],
-    enablement=_ctx.has_sub_windows,
+    enablement=_ctx.num_sub_windows > 0,
 )
 def save_screenshot_window(ui: MainWindow) -> None:
     _save_screenshot(ui, "window")

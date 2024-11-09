@@ -77,6 +77,7 @@ class QMainTextEdit(QtW.QPlainTextEdit):
         super().__init__(parent)
         self.setWordWrapMode(QtGui.QTextOption.WrapMode.NoWrap)
         font = QtGui.QFont(MonospaceFontFamily)
+        self._default_font = font
         self.setFont(font)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self._tab_size = 4
@@ -235,6 +236,12 @@ class QMainTextEdit(QtW.QPlainTextEdit):
                     and _mod & QtCore.Qt.KeyboardModifier.ControlModifier
                 ):
                     self.setFont(change_point_size(self.font(), -1))
+                    return True
+                elif (
+                    _key == QtCore.Qt.Key.Key_0
+                    and _mod & QtCore.Qt.KeyboardModifier.ControlModifier
+                ):
+                    self.setFont(self._default_font)
                     return True
 
         except Exception:

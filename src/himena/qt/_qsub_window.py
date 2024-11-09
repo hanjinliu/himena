@@ -39,6 +39,11 @@ class QSubWindowArea(QtW.QMdiArea):
     def indexOf(self, sub_window: QSubWindow) -> int:
         return self.subWindowList().index(sub_window)
 
+    def relabel_widgets(self):
+        for i, sub_window in enumerate(self.subWindowList()):
+            text = f'<span style="color:gray;">{i}</span>'
+            sub_window._title_bar._index_label.setText(text)
+
     def add_widget(
         self,
         widget: QtW.QWidget,
@@ -54,6 +59,7 @@ class QSubWindowArea(QtW.QMdiArea):
         sub_window = QSubWindow(widget, title)
         self.addSubWindow(sub_window)
         sub_window.resize(size + QtCore.QSize(8, 8))
+        self.relabel_widgets()
         return sub_window
 
     def mousePressEvent(self, event: QtGui.QMouseEvent):
@@ -426,6 +432,21 @@ class QSubWindowTitleBar(QtW.QFrame):
             callback=self._show_context_menu_at_button,
         )
 
+        self._index_label = QtW.QLabel()
+        self._index_label.setAlignment(
+            Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignBottom
+        )
+        _index_font = self._index_label.font()
+        _index_font.setPointSize(8)
+        _index_font.setBold(True)
+        self._index_label.setFont(_index_font)
+        self._index_label.setFixedHeight(_TITLE_HEIGHT)
+        self._index_label.setFixedWidth(20)
+        self._index_label.setContentsMargins(0, 0, 0, 0)
+        self._index_label.setSizePolicy(
+            QtW.QSizePolicy.Policy.Fixed, QtW.QSizePolicy.Policy.Fixed
+        )
+
         self._title_label = QtW.QLabel(title)
         self._title_label.setIndent(3)
         self._title_label.setFixedHeight(_TITLE_HEIGHT)
@@ -460,6 +481,7 @@ class QSubWindowTitleBar(QtW.QFrame):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(1)
         layout.addWidget(self._menu_btn)
+        layout.addWidget(self._index_label)
         layout.addWidget(self._title_label)
         layout.addWidget(self._minimize_btn, alignment=Qt.AlignmentFlag.AlignRight)
         layout.addWidget(self._toggle_size_btn, alignment=Qt.AlignmentFlag.AlignRight)
@@ -605,9 +627,7 @@ class QSubWindowTitleBar(QtW.QFrame):
         main = get_main_window(self)
         app = main._model_app
 
-        context_menu = build_qmodel_menu(
-            MenuId.WINDOW_TITLE_BAR, app=app.name, parent=self
-        )
+        context_menu = build_qmodel_menu(MenuId.WINDOW, app=app.name, parent=self)
         ctx = main._ctx_keys
         ctx._update(main)
         context_menu.update_from_context(ctx.dict())

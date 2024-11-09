@@ -29,12 +29,8 @@ def show_command_palette(ui: MainWindow) -> None:
 @ACTIONS.append_from_fn(
     id="go-to-window",
     title="Go to window ...",
-    icon="gg:enter",
-    menus=[
-        {"id": MenuId.TOOLS, "group": CMD_GROUP},
-        {"id": MenuId.TOOLBAR, "group": CMD_GROUP},
-    ],
-    enablement=_ctx.has_tabs,
+    menus=[{"id": MenuId.TOOLS, "group": CMD_GROUP}],
+    enablement=_ctx.num_tabs > 0,
     keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyG)],
 )
 def go_to_window(ui: MainWindow) -> None:

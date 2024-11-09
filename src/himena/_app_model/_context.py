@@ -20,14 +20,14 @@ def _active_window_state(ui: "MainWindow"):
     return WindowState.NORMAL
 
 
-def _has_sub_windows(ui: "MainWindow") -> bool:
+def _num_sub_windows(ui: "MainWindow") -> int:
     if area := ui.tabs.current():
-        return area.len() > 0
-    return False
+        return area.len()
+    return 0
 
 
-def _has_tabs(ui: "MainWindow") -> bool:
-    return ui.tabs.len() > 0
+def _num_tabs(ui: "MainWindow") -> int:
+    return ui.tabs.len()
 
 
 def _active_window_model_type(ui: "MainWindow") -> str | None:
@@ -50,15 +50,15 @@ class AppContext(ContextNamespace["MainWindow"]):
         "state of the sub-window",
         _active_window_state,
     )
-    has_tabs = ContextKey(
-        False,
-        "if the current window has tabs",
-        _has_tabs,
+    num_tabs = ContextKey(
+        0,
+        "number of tabs",
+        _num_tabs,
     )
-    has_sub_windows = ContextKey(
-        False,
-        "if the current tab is empty",
-        _has_sub_windows,
+    num_sub_windows = ContextKey(
+        0,
+        "number of sub-windows in the current tab",
+        _num_sub_windows,
     )
     active_window_model_type = ContextKey(
         None,

@@ -42,15 +42,11 @@ class MenuId(StrEnum):
     WINDOW_RESIZE = "window/resize"
     WINDOW_ALIGN = "window/align"
     WINDOW_ANCHOR = "window/anchor"
-    WINDOW_EXIT = "window/exit"
-    TAB = "tab"
+    WINDOW_NTH = "window/nth"
+    VIEW = "view"
     TOOLS = "tools"
     TOOLS_TEXT = "tools/text"
     TOOLBAR = "toolbar"
-    WINDOW_TITLE_BAR = "window_title_bar"
-    WINDOW_TITLE_BAR_RESIZE = "window_title_bar/resize"
-    WINDOW_TITLE_BAR_ALIGN = "window_title_bar/align"
-    WINDOW_TITLE_BAR_ANCHOR = "window_title_bar/anchor"
 
     def __str__(self) -> str:
         return self.value
