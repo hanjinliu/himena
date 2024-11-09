@@ -279,7 +279,7 @@ _CtrlAlt = KeyMod.CtrlCmd | KeyMod.Alt
 def align_window_left(ui: MainWindow) -> None:
     """Align the window to the left edge of the tab area."""
     if window := ui.current_window:
-        window._set_rect(window.rect.align_left())
+        window._set_rect(window.rect.align_left(ui.area_size))
 
 
 @ACTIONS.append_from_fn(

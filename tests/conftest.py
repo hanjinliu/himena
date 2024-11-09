@@ -18,6 +18,7 @@ def ui():
 
     app = "test-app"
     window = new_window(app=app)
+    window._instructions = window._instructions.updated(confirm=False)
     try:
         yield window
     finally:

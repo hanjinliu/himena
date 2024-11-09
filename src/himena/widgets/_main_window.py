@@ -288,12 +288,17 @@ class MainWindow(Generic[_W]):
         self.tabs.clear()
         return None
 
-    def exec_action(self, id: str, **kwargs) -> None:
+    def exec_action(self, id: str, with_params: dict[str, Any] | None = None) -> None:
         """Execute an action by its ID."""
         result = self._model_app.commands.execute_command(id).result()
-        if kwargs and isinstance(result, Parametric) and (tab := self.tabs.current()):
-            param_widget = tab[-1]
-            result.make_connection(self, param_widget)(**kwargs)
+        if with_params is not None:
+            if not isinstance(result, Parametric):
+                raise ValueError(f"Action {id!r} does not accept parameters.")
+            if tab := self.tabs.current():
+                param_widget = tab[-1]
+                result.make_connection(self, param_widget)(**with_params)
+            else:
+                raise RuntimeError("Unreachable code.")
         return None
 
     def exec_confirmation_dialog(self, msg: str) -> bool:

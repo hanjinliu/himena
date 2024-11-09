@@ -42,7 +42,6 @@ def test_builtin_commands(ui: MainWindow):
 def test_io_commands(ui: MainWindow, tmpdir, sample_dir: Path):
     response_open = lambda: [sample_dir / "text.txt"]
     response_save = lambda: Path(tmpdir) / "text_out.txt"
-    ui._instructions = ui._instructions.updated(confirm=False)
     ui._instructions = ui._instructions.updated(file_dialog_response=response_open)
     ui.exec_action("open-file")
     ui.add_data("Hello", type="text")
@@ -57,7 +56,7 @@ def test_io_commands(ui: MainWindow, tmpdir, sample_dir: Path):
     ui.exec_action("load-session")
     ui.exec_action("save-tab-session")
 
-def test_builtin_commands_with_window(ui: MainWindowQt, sample_dir: Path):
+def test_window_commands(ui: MainWindowQt, sample_dir: Path):
     ui.exec_action("show-command-palette")
     ui.read_file(sample_dir / "text.txt")
     assert len(ui.tabs) == 1
@@ -70,7 +69,39 @@ def test_builtin_commands_with_window(ui: MainWindowQt, sample_dir: Path):
     ui.exec_action("duplicate-window")
     assert len(ui.tabs[0]) == 3
     ui.exec_action("rename-window")
+
+    # anchor
+    ui.exec_action("anchor-window-top-left")
+    ui.exec_action("anchor-window-top-right")
+    ui.exec_action("anchor-window-bottom-left")
+    ui.exec_action("anchor-window-bottom-right")
+    ui.exec_action("unset-anchor")
+
+    # zoom
+    ui.exec_action("window-expand")
+    ui.exec_action("window-shrink")
+
+    # align
+    ui.exec_action("align-window-left")
+    ui.exec_action("align-window-right")
+    ui.exec_action("align-window-top")
+    ui.exec_action("align-window-bottom")
+    ui.exec_action("align-window-center")
+
+
+    # state
+    ui.exec_action("minimize-window")
+    ui.exec_action("maximize-window")
+    ui.exec_action("toggle-full-screen")
+    ui.exec_action("toggle-full-screen")
+    ui.exec_action("close-window")
     ui.exec_action("show-command-palette")
+
+    ui.read_file(sample_dir / "text.txt")
+    assert len(ui.tabs) == 1
+    ui.exec_action("full-screen-in-new-tab")
+    assert len(ui.tabs) == 2
+    assert ui.tabs.current_index == 1
 
 def test_screenshot_commands(ui: MainWindow, sample_dir: Path, tmpdir):
     ui.read_file(sample_dir / "text.txt")
@@ -118,6 +149,27 @@ def test_view_menu_commands(ui: MainWindow, sample_dir: Path):
     ui.exec_action("close-all-windows")
     assert len(ui.tabs.current()) == 0
 
+    # close tab with unsaved
+    win0 = ui.read_file(sample_dir / "text.txt")
+    win0.widget.set_modified(True)
+    win1 = ui.read_file(sample_dir / "table.csv")
+    win1.widget.set_modified(True)
+    ui.read_file(sample_dir / "text.txt")
+    ui.exec_action("close-tab")
+
+def test_tools_menu(ui: MainWindow):
+    win = ui.add_data("a\nb\nc\nbc", type="text")
+    ui.tabs[0].current_index = 0
+    ui.exec_action("filter-text", with_params={"include": "b"})
+    assert ui.current_window.to_model().value == "b\nbc"
+    ui.tabs[0].current_index = 0
+    ui.exec_action("filter-text", with_params={"exclude": "b"})
+    assert ui.current_window.to_model().value == "a\nc"
+
+    ui.clear()
+    ui.add_data('{"a": [1, 2], "b": null}', type="text.json")
+    ui.tabs[0].current_index = 0
+    ui.exec_action("format-json", with_params={})
 
 def test_custom_widget(ui: MainWindow):
     from qtpy.QtWidgets import QLabel
@@ -213,7 +265,6 @@ def test_register_folder(ui: MainWindow, sample_dir: Path):
 
     response_open = lambda: sample_dir / "folder"
     ui._instructions = ui._instructions.updated(
-        confirm=False,
         file_dialog_response=response_open,
     )
     ui.exec_action("open-folder")
