@@ -46,12 +46,15 @@ class SemiMutableSequence(Sequence[_T]):
         return v
 
     def len(self) -> int:
+        """Length of the list."""
         return len(self)
 
-    def enumerate(self):
+    def enumerate(self) -> Iterator[tuple[int, _T]]:
+        """Method version of enumerate."""
         yield from enumerate(self)
 
-    def iter(self):
+    def iter(self) -> Iterator[_T]:
+        """Method version of iter."""
         return iter(self)
 
 
@@ -74,7 +77,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
 
     def _norm_index_or_name(self, index_or_name: int | str) -> int:
         if isinstance(index_or_name, str):
-            index = self.window_titles.index(index_or_name)
+            index = self.collect_titles().index(index_or_name)
         else:
             if index_or_name < 0:
                 index = len(self) + index_or_name
@@ -139,8 +142,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         """Title of the tab area."""
         return self._main_window()._tab_title(self._i_tab)
 
-    @property
-    def window_titles(self) -> list[str]:
+    def collect_titles(self) -> list[str]:
         """List of names of the sub-windows."""
         return [w[0] for w in self._main_window()._get_widget_list(self._i_tab)]
 
@@ -334,13 +336,20 @@ class TabList(SemiMutableSequence[TabArea[_W]], _HasMainWindowRef[_W], Generic[_
         self._main_window()._set_current_tab_index(index)
 
 
-class DockWidgetList(Sequence[DockWidget[_W]], _HasMainWindowRef[_W], Generic[_W]):
+class DockWidgetList(
+    SemiMutableSequence[DockWidget[_W]], _HasMainWindowRef[_W], Generic[_W]
+):
     def __init__(self, main_window: BackendMainWindow[_W]):
         super().__init__(main_window)
         self._dock_widget_set = weakref.WeakValueDictionary[DockWidget[_W], _W]()
 
     def __getitem__(self, index: int) -> DockWidget[_W]:
         return list(self._dock_widget_set.keys())[index]
+
+    def __delitem__(self, index: int) -> None:
+        dock = self[index]
+        self._main_window()._del_dock_widget(dock.widget)
+        self._dock_widget_set.pop(dock)
 
     def __len__(self) -> int:
         return len(self._dock_widget_set)

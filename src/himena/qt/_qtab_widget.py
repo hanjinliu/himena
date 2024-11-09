@@ -204,12 +204,10 @@ class QStartupWidget(QtW.QWidget):
 
         ctrl = "⌘" if sys.platform == "darwin" else "Ctrl"
         self._open_file_btn = self.make_button("open-file", f"{ctrl}+O")
-        self._open_folder_btn = self.make_button("open-folder", f"{ctrl}+K, {ctrl}+O")
         self._open_recent_btn = self.make_button("open-recent", f"{ctrl}+K, {ctrl}+R")
         self._load_session_btn = self.make_button("load-session", f"{ctrl}+L")
 
         _layout.addWidget(self._open_file_btn)
-        _layout.addWidget(self._open_folder_btn)
         _layout.addWidget(self._open_recent_btn)
         _layout.addWidget(self._load_session_btn)
         self.setMinimumSize(0, 0)

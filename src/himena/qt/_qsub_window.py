@@ -343,31 +343,6 @@ class QSubWindow(QtW.QMdiSubWindow):
         self._anim_geometry.setDuration(60)
         self._anim_geometry.start()
 
-    def _set_top_left_anchor(self):
-        g = self.geometry()
-        self._window_anchor = _anchor.TopLeftConstAnchor(g.left(), g.top())
-
-    def _set_top_right_anchor(self):
-        g = self.geometry()
-        main_size = self._qt_mdiarea().size()
-        self._window_anchor = _anchor.TopRightConstAnchor(
-            main_size.width() - g.right(), g.top()
-        )
-
-    def _set_bottom_left_anchor(self):
-        g = self.geometry()
-        main_size = self._qt_mdiarea().size()
-        self._window_anchor = _anchor.BottomLeftConstAnchor(
-            g.left(), main_size.height() - g.bottom()
-        )
-
-    def _set_bottom_right_anchor(self):
-        g = self.geometry()
-        main_size = self._qt_mdiarea().size()
-        self._window_anchor = _anchor.BottomRightConstAnchor(
-            main_size.width() - g.right(), main_size.height() - g.bottom()
-        )
-
     def _pixmap_resized(
         self,
         size: QtCore.QSize,
@@ -390,8 +365,8 @@ class QSubWindow(QtW.QMdiSubWindow):
 
     def _find_me_and_main(self) -> tuple[tuple[int, int], MainWindowQt]:
         main = get_main_window(self)
-        for i_tab, tab in enumerate(main.tabs):
-            for i_win, win in enumerate(tab):
+        for i_tab, tab in main.tabs.enumerate():
+            for i_win, win in tab.enumerate():
                 if win.widget is self.main_widget():
                     return (i_tab, i_win), main
         raise RuntimeError("Could not find the sub-window in the main window.")
@@ -631,7 +606,7 @@ class QSubWindowTitleBar(QtW.QFrame):
         ctx = main._ctx_keys
         ctx._update(main)
         context_menu.update_from_context(ctx.dict())
-        context_menu.exec_(pos)
+        context_menu.exec(pos)
         return None
 
 

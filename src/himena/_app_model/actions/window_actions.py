@@ -256,14 +256,12 @@ def window_shrink(ui: MainWindow) -> None:
 )
 def full_screen_in_new_tab(ui: MainWindow) -> None:
     """Move the selected sub-window to a new tab and make it full screen."""
-    if area := ui.tabs.current():
-        index = area.current_index
-        if index is None:
-            return
-        window = area.pop(index)
-        ui.add_tab(window.title)
-        new_window = ui.tabs[-1].add_widget(window.widget, title=window.title)
-        new_window.state = WindowState.FULL
+    if win := ui.current_window:
+        ui.add_tab(win.title)
+        index_new = len(ui.tabs) - 1
+        ui.move_window(win, index_new)
+        win.state = WindowState.FULL
+        ui.tabs.current_index = index_new
 
 
 _CtrlAlt = KeyMod.CtrlCmd | KeyMod.Alt

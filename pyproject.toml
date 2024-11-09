@@ -68,7 +68,7 @@ extra-dependencies = [
 check = "mypy --install-types --non-interactive {args:src/himena tests}"
 
 [tool.coverage.run]
-source_pkgs = ["himena", "tests"]
+source_pkgs = ["himena"]
 branch = true
 parallel = true
 omit = [
@@ -89,6 +89,10 @@ exclude_lines = [
   "no cov",
   "if __name__ == .__main__.:",
   "if TYPE_CHECKING:",
+  "pragma: no cover",
+  "@overload",
+  "@abstractmethod",
+  "raise NotImplementedError",
 ]
 
 [tool.hatch.envs.lint]

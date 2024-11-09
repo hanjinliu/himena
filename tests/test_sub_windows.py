@@ -206,6 +206,7 @@ def test_custom_dock_widget(ui: MainWindow):
     ui.show()
     widget = QLabel("Dock widget test")
     dock = ui.add_dock_widget(widget)
+    assert ui.dock_widgets.len()
     assert dock.visible
     dock.visible = False
     assert not dock.visible
@@ -301,3 +302,12 @@ def test_tile_window(ui: MainWindow):
     ui.tabs[0].tile_windows()
     ui.add_data("H", type="text")
     ui.tabs[0].tile_windows()
+
+def test_move_window(ui: MainWindow):
+    tab0 = ui.add_tab()
+    tab1 = ui.add_tab()
+    win = tab0.add_data_model(WidgetDataModel(value="A", type="text"))
+    ui.move_window(win, 1)
+    assert win not in tab0
+    assert win in tab1
+    assert tab1[0]._identifier == win._identifier

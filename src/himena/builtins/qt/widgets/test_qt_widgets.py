@@ -20,11 +20,9 @@ def test_text_edit(qtbot: QtBot):
     assert text_edit.to_model().value == "a\nb"
     assert text_edit.toPlainText() == "a\nb"
     # move to the end
-    qtbot.keyClick(main, Qt.Key.Key_End, modifier=_Ctrl)
-    qtbot.keyClick(main, Qt.Key.Key_Down)
-    qtbot.keyClick(main, Qt.Key.Key_End, modifier=_Ctrl)
-    qtbot.keyClick(main, Qt.Key.Key_Down)
-    qtbot.keyClick(main, Qt.Key.Key_End, modifier=_Ctrl)
+    cursor = main.textCursor()
+    cursor.setPosition(len(main.toPlainText()))
+    main.setTextCursor(cursor)
 
     qtbot.keyClick(main, Qt.Key.Key_Return)
     qtbot.keyClick(main, Qt.Key.Key_Tab)

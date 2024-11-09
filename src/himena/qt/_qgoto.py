@@ -49,12 +49,12 @@ class QGotoWidget(QtW.QWidget):
         tab = main.tabs.current()
         if tab is None:
             raise ValueError("No tab is opened.")
-        for i_tab, tab in enumerate(main.tabs):
+        for i_tab, tab in main.tabs.enumerate():
             area = QtW.QWidget()
             layout = QtW.QVBoxLayout(area)
             layout.addWidget(line_edit(f"({i_tab}) {tab.name}"))
             list_widget = QWindowListWidget()
-            for i_win, win in enumerate(tab):
+            for i_win, win in tab.enumerate():
                 list_widget.addItem(win.title)
             layout.addWidget(list_widget)
             self._stack.addWidget(area)

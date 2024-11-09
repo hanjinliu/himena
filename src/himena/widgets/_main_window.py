@@ -108,10 +108,9 @@ class MainWindow(Generic[_W]):
 
     def window_for_id(self, identifier: int) -> SubWindow[_W] | None:
         """Retrieve a widget by its identifier."""
-        for tab in self.tabs:
-            for widget in tab:
-                if widget._identifier == identifier:
-                    return widget
+        for win in self.iter_windows():
+            if win._identifier == identifier:
+                return win
         return None
 
     def _current_or_new_tab(self) -> tuple[int, TabArea[_W]]:
@@ -287,6 +286,7 @@ class MainWindow(Generic[_W]):
     def clear(self) -> None:
         """Clear all widgets in the main window."""
         self.tabs.clear()
+        self.dock_widgets.clear()
         return None
 
     def exec_action(self, id: str, with_params: dict[str, Any] | None = None) -> None:
@@ -381,8 +381,8 @@ class MainWindow(Generic[_W]):
 
     def move_window(self, sub: SubWindow[_W], target_index: int) -> None:
         i_tab = i_win = None
-        for _i_tab, tab in enumerate(self.tabs):
-            for _i_win, win in enumerate(tab):
+        for _i_tab, tab in self.tabs.enumerate():
+            for _i_win, win in tab.enumerate():
                 if win is sub:
                     i_tab = _i_tab
                     i_win = _i_win

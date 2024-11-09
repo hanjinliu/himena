@@ -7,7 +7,7 @@ __himena_plugin__ = get_plugin_interface("tools")
 
 @__himena_plugin__.register_dock_widget(
     title="Output",
-    area="bottom",
+    area="right",
     keybindings=["Ctrl+Shift+U"],
     singleton=True,
     command_id="builtins:output",

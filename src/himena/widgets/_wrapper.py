@@ -48,8 +48,6 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         if identifier is None:
             identifier = uuid4().int
         self._identifier = identifier
-        self._save_behavior: SaveBehavior = SaveToNewPath()
-        self._widget_data_model_method: MethodDescriptor = ProgramaticMethod()
 
     @property
     def widget(self) -> _W:
@@ -81,8 +79,21 @@ class SubWindow(WidgetWrapper[_W]):
     renamed = Signal(str)
     closed = Signal()
 
+    def __init__(
+        self,
+        widget: _W,
+        main_window: BackendMainWindow[_W],
+        identifier: int | None = None,
+    ):
+        super().__init__(widget, main_window=main_window, identifier=identifier)
+        self._save_behavior: SaveBehavior = SaveToNewPath()
+        self._widget_data_model_method: MethodDescriptor = ProgramaticMethod()
+
     def __repr__(self) -> str:
-        return f"{type(self).__name__}(title={self.title!r}, widget={self.widget!r})"
+        return (
+            f"{type(self).__name__}(title={self.title!r}, "
+            f"widget={_widget_repr(self.widget)})"
+        )
 
     def __class_getitem__(cls, widget_type: type[_W]):
         # this hack allows in_n_out to assign both SubWindow and SubWindow[T] to the
@@ -235,8 +246,8 @@ class SubWindow(WidgetWrapper[_W]):
             raise ValueError(f"Unknown anchor: {anchor}")
 
     def _find_me(self, main: MainWindow) -> tuple[int, int]:
-        for i_tab, tab in enumerate(main.tabs):
-            for i_win, win in enumerate(tab):
+        for i_tab, tab in main.tabs.enumerate():
+            for i_win, win in tab.enumerate():
                 if win is self:
                     return i_tab, i_win
         raise RuntimeError(f"SubWindow {self.title} not found in main window.")
@@ -254,7 +265,10 @@ class SubWindow(WidgetWrapper[_W]):
 
 class DockWidget(WidgetWrapper[_W]):
     def __repr__(self) -> str:
-        return f"{type(self).__name__}(title={self.title!r}, widget={self.widget!r})"
+        return (
+            f"{type(self).__name__}(title={self.title!r}, "
+            f"widget={_widget_repr(self.widget)})"
+        )
 
     @property
     def visible(self) -> bool:
@@ -281,3 +295,7 @@ class DockWidget(WidgetWrapper[_W]):
     @title.setter
     def title(self, title: str) -> None:
         return self._main_window()._set_dock_widget_title(self.widget, str(title))
+
+
+def _widget_repr(widget: _W) -> str:
+    return f"<{type(widget).__name__}>"

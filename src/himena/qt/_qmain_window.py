@@ -164,6 +164,11 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             return dock.setVisible(visible)
         raise ValueError(f"{widget!r} does not have a dock widget parent.")
 
+    def _del_dock_widget(self, widget: QtW.QWidget) -> None:
+        if isinstance(dock := widget.parentWidget(), QtW.QDockWidget):
+            dock.close()
+            return None
+
     def add_tab(self, tab_name: str) -> QSubWindowArea:
         """
         Add a new tab with a sub-window area.

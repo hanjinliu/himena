@@ -25,6 +25,9 @@ def ui():
         Application.destroy(app)
         window.close()
         assert app not in Application._instances
+
+        QApplication.processEvents()
+        QApplication.processEvents()
         QApplication.processEvents()
 
 @pytest.fixture
