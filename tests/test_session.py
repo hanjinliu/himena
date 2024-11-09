@@ -1,6 +1,6 @@
-from royalapp import MainWindow
-from royalapp import anchor
-from royalapp.builtins.qt import widgets as _qtw
+from himena import MainWindow
+from himena import anchor
+from himena.builtins.qt import widgets as _qtw
 from pathlib import Path
 
 def test_type_map_and_session(tmpdir, ui: MainWindow, sample_dir):

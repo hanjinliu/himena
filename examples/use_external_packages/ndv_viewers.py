@@ -1,10 +1,10 @@
 from ndv import NDViewer
 import numpy as np
 
-from royalapp import new_window
-from royalapp.consts import StandardTypes
-from royalapp.qt import register_frontend_widget
-from royalapp.types import WidgetDataModel
+from himena import new_window
+from himena.consts import StandardTypes
+from himena.qt import register_frontend_widget
+from himena.types import WidgetDataModel
 
 class MyNDViewer(NDViewer):
     @classmethod

@@ -1,10 +1,10 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from qtpy.QtWidgets import QApplication
-from royalapp import MainWindow, anchor
-from royalapp.types import WidgetDataModel
-from royalapp.qt import register_frontend_widget
-from royalapp.builtins.qt import widgets as _qtw
+from himena import MainWindow, anchor
+from himena.types import WidgetDataModel
+from himena.qt import register_frontend_widget
+from himena.builtins.qt import widgets as _qtw
 
 def test_new_window(ui: MainWindow):
     ui.show()
@@ -100,7 +100,7 @@ def test_custom_dock_widget(ui: MainWindow):
     assert dock.title == "New title"
 
 def test_fallback_widget(ui: MainWindow):
-    from royalapp.qt.registry._widgets import QFallbackWidget
+    from himena.qt.registry._widgets import QFallbackWidget
     model = WidgetDataModel(value=object(), type="unsupported")
     win = ui.add_data_model(model)
     assert isinstance(win.widget, QFallbackWidget)

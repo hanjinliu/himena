@@ -1,4 +1,4 @@
-from royalapp import new_window
+from himena import new_window
 from qtpy.QtWidgets import QTableWidget, QTableWidgetItem
 
 def make_table(shape: tuple[int, int]):

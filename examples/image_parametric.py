@@ -2,10 +2,10 @@ import numpy as np
 from scipy import ndimage as ndi
 from typing import Annotated
 
-from royalapp import new_window
-from royalapp.plugins import get_plugin_interface
-from royalapp.types import WidgetDataModel, Parametric
-from royalapp.consts import StandardTypes
+from himena import new_window
+from himena.plugins import get_plugin_interface
+from himena.types import WidgetDataModel, Parametric
+from himena.consts import StandardTypes
 
 interf = get_plugin_interface()
 

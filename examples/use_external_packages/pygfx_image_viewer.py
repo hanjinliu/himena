@@ -1,14 +1,14 @@
 from pathlib import Path
 
 import numpy as np
-from royalapp import (
+from himena import (
     new_window,
     register_reader_provider,
     register_writer_provider,
     WidgetDataModel
 )
-from royalapp.qt import register_frontend_widget
-from royalapp.plugins import get_plugin_interface
+from himena.qt import register_frontend_widget
+from himena.plugins import get_plugin_interface
 from wgpu.gui.qt import WgpuWidget
 import imageio.v3 as iio
 import pygfx as gfx

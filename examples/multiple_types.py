@@ -1,9 +1,9 @@
 from qtpy import QtWidgets as QtW
 
 import re
-from royalapp import new_window, WidgetDataModel
-from royalapp.qt import register_frontend_widget
-from royalapp.plugins import get_plugin_interface
+from himena import new_window, WidgetDataModel
+from himena.qt import register_frontend_widget
+from himena.plugins import get_plugin_interface
 
 
 @register_frontend_widget("text")

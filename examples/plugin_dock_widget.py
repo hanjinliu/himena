@@ -1,7 +1,7 @@
 # Define a plugin dock widget.
 # The widget is available under the "Myapp" menu.
-from royalapp import new_window
-from royalapp.plugins import get_plugin_interface
+from himena import new_window
+from himena.plugins import get_plugin_interface
 
 from qtpy import QtWidgets as QtW
 

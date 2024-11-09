@@ -3,14 +3,14 @@ from dataclasses import dataclass
 from typing import Any
 import numpy as np
 from tifffile import TiffFile, imwrite
-from royalapp import (
+from himena import (
     register_reader_provider,
     register_writer_provider,
     WidgetDataModel,
     new_window,
 )
-from royalapp.qt import register_frontend_widget
-from royalapp.builtins.qt.widgets import QDefaultImageView
+from himena.qt import register_frontend_widget
+from himena.builtins.qt.widgets import QDefaultImageView
 
 TIFF_TYPE = object()
 

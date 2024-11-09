@@ -3,7 +3,7 @@ from qtpy import QtWidgets as QtW
 import napari
 from napari.qt import QtViewer
 
-from royalapp import new_window
+from himena import new_window
 
 class MyViewer(QtW.QWidget):
     def __init__(self):

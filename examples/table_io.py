@@ -2,13 +2,13 @@ from pathlib import Path
 
 import pandas as pd
 from qtpy import QtWidgets as QtW
-from royalapp import (
+from himena import (
     new_window,
     register_reader_provider,
     register_writer_provider,
     WidgetDataModel,
 )
-from royalapp.qt import register_frontend_widget
+from himena.qt import register_frontend_widget
 
 PANDAS_TABLE_TYPE = object()
 
