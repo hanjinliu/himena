@@ -1,4 +1,5 @@
 import numpy as np
+from qtpy.QtWidgets import QApplication
 from qtpy.QtCore import Qt
 from himena.builtins.qt.widgets import (
     QDefaultTextEdit,
@@ -7,6 +8,8 @@ from himena.builtins.qt.widgets import (
 )
 from himena import WidgetDataModel
 from pytestqt.qtbot import QtBot
+
+_Ctrl = Qt.KeyboardModifier.ControlModifier
 
 
 def test_text_edit(qtbot: QtBot):
@@ -17,14 +20,15 @@ def test_text_edit(qtbot: QtBot):
 
     assert text_edit.to_model().value == "a\nb"
     assert text_edit.toPlainText() == "a\nb"
-    qtbot.keyClick(main, Qt.Key.Key_End, modifier=Qt.KeyboardModifier.ControlModifier)
+    qtbot.keyClick(main, Qt.Key.Key_End, modifier=_Ctrl)
     qtbot.keyClick(main, Qt.Key.Key_Return)
     qtbot.keyClick(main, Qt.Key.Key_Tab)
     qtbot.keyClick(main, Qt.Key.Key_Backtab)
     qtbot.keyClick(main, Qt.Key.Key_Tab)
     qtbot.keyClick(main, Qt.Key.Key_O)
     qtbot.keyClick(main, Qt.Key.Key_P)
-    assert text_edit.to_model().value.splitlines()[-1] == "    op"
+    QApplication.processEvents()
+    assert text_edit.to_model().value.splitlines() == ["a", "b", "    op"]
     qtbot.keyClick(main, Qt.Key.Key_Home)
     qtbot.keyClick(main, Qt.Key.Key_Up, modifier=Qt.KeyboardModifier.AltModifier)
     qtbot.keyClick(main, Qt.Key.Key_Down, modifier=Qt.KeyboardModifier.AltModifier)
@@ -38,25 +42,19 @@ def test_text_edit(qtbot: QtBot):
     qtbot.keyClick(main, Qt.Key.Key_B)
     qtbot.keyClick(main, Qt.Key.Key_C)
     qtbot.keyClick(main, Qt.Key.Key_D)
-    qtbot.keyClick(main, Qt.Key.Key_L, modifier=Qt.KeyboardModifier.ControlModifier)
+    qtbot.keyClick(main, Qt.Key.Key_L, modifier=_Ctrl)
     qtbot.keyClick(main, Qt.Key.Key_Up, modifier=Qt.KeyboardModifier.AltModifier)
     qtbot.keyClick(main, Qt.Key.Key_Down, modifier=Qt.KeyboardModifier.AltModifier)
     qtbot.keyClick(main, Qt.Key.Key_Left)
-    qtbot.keyClick(main, Qt.Key.Key_D, modifier=Qt.KeyboardModifier.ControlModifier)
-    qtbot.keyClick(main, Qt.Key.Key_C, modifier=Qt.KeyboardModifier.ControlModifier)
+    qtbot.keyClick(main, Qt.Key.Key_D, modifier=_Ctrl)
+    qtbot.keyClick(main, Qt.Key.Key_C, modifier=_Ctrl)
     qtbot.keyClick(main, Qt.Key.Key_Return)
-    qtbot.keyClick(main, Qt.Key.Key_V, modifier=Qt.KeyboardModifier.ControlModifier)
-    qtbot.keyClick(main, Qt.Key.Key_Less, modifier=Qt.KeyboardModifier.ControlModifier)
-    qtbot.keyClick(
-        main, Qt.Key.Key_Greater, modifier=Qt.KeyboardModifier.ControlModifier
-    )
-    qtbot.keyClick(
-        main, Qt.Key.Key_Greater, modifier=Qt.KeyboardModifier.ControlModifier
-    )
-    qtbot.keyClick(main, Qt.Key.Key_0, modifier=Qt.KeyboardModifier.ControlModifier)
-    qtbot.keyClick(
-        text_edit, Qt.Key.Key_F, modifier=Qt.KeyboardModifier.ControlModifier
-    )
+    qtbot.keyClick(main, Qt.Key.Key_V, modifier=_Ctrl)
+    qtbot.keyClick(main, Qt.Key.Key_Less, modifier=_Ctrl)
+    qtbot.keyClick(main, Qt.Key.Key_Greater, modifier=_Ctrl)
+    qtbot.keyClick(main, Qt.Key.Key_Greater, modifier=_Ctrl)
+    qtbot.keyClick(main, Qt.Key.Key_0, modifier=_Ctrl)
+    qtbot.keyClick(text_edit, Qt.Key.Key_F, modifier=_Ctrl)
     text_edit.resize(100, 100)
     text_edit.resize(120, 120)
 
@@ -65,22 +63,12 @@ def test_table_edit(qtbot: QtBot):
     model = WidgetDataModel(value=[["a", "b"], [0, 1]], type="table")
     table_widget = QDefaultTableWidget.from_model(model)
     qtbot.addWidget(table_widget)
-    qtbot.keyClick(
-        table_widget, Qt.Key.Key_A, modifier=Qt.KeyboardModifier.ControlModifier
-    )
-    qtbot.keyClick(
-        table_widget, Qt.Key.Key_C, modifier=Qt.KeyboardModifier.ControlModifier
-    )
-    qtbot.keyClick(
-        table_widget, Qt.Key.Key_X, modifier=Qt.KeyboardModifier.ControlModifier
-    )
-    qtbot.keyClick(
-        table_widget, Qt.Key.Key_V, modifier=Qt.KeyboardModifier.ControlModifier
-    )
+    qtbot.keyClick(table_widget, Qt.Key.Key_A, modifier=_Ctrl)
+    qtbot.keyClick(table_widget, Qt.Key.Key_C, modifier=_Ctrl)
+    qtbot.keyClick(table_widget, Qt.Key.Key_X, modifier=_Ctrl)
+    qtbot.keyClick(table_widget, Qt.Key.Key_V, modifier=_Ctrl)
     qtbot.keyClick(table_widget, Qt.Key.Key_Delete)
-    qtbot.keyClick(
-        table_widget, Qt.Key.Key_F, modifier=Qt.KeyboardModifier.ControlModifier
-    )
+    qtbot.keyClick(table_widget, Qt.Key.Key_F, modifier=_Ctrl)
     table_widget.resize(100, 100)
     qtbot
 

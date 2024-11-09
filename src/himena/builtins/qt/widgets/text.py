@@ -482,7 +482,7 @@ class QDefaultTextEdit(QtW.QWidget):
         self._footer._tab_spaces_combobox.setCurrentText(str(spaces))
         return self
 
-    def to_model(self) -> WidgetDataModel:
+    def to_model(self) -> WidgetDataModel[str]:
         return WidgetDataModel(
             value=self.toPlainText(),
             type=self.model_type(),

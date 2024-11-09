@@ -194,6 +194,7 @@ class MainWindow(Generic[_W]):
     def add_data(
         self,
         data: Any,
+        *,
         type: str | None = None,
         title: str | None = None,
     ) -> SubWindow[_W]:

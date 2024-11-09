@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Any
 
 from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
@@ -42,7 +43,7 @@ class QDefaultTableWidget(QtW.QTableWidget):
         self._modified = False
         return self
 
-    def to_model(self) -> WidgetDataModel:
+    def to_model(self) -> WidgetDataModel[list[list[Any]]]:
         return WidgetDataModel(
             value=self._to_list(
                 slice(0, self.rowCount()), slice(0, self.columnCount())
