@@ -1,5 +1,4 @@
 import numpy as np
-from qtpy.QtWidgets import QApplication
 from qtpy.QtCore import Qt
 from himena.builtins.qt.widgets import (
     QDefaultTextEdit,
@@ -20,14 +19,19 @@ def test_text_edit(qtbot: QtBot):
 
     assert text_edit.to_model().value == "a\nb"
     assert text_edit.toPlainText() == "a\nb"
+    # move to the end
     qtbot.keyClick(main, Qt.Key.Key_End, modifier=_Ctrl)
+    qtbot.keyClick(main, Qt.Key.Key_Down)
+    qtbot.keyClick(main, Qt.Key.Key_End, modifier=_Ctrl)
+    qtbot.keyClick(main, Qt.Key.Key_Down)
+    qtbot.keyClick(main, Qt.Key.Key_End, modifier=_Ctrl)
+
     qtbot.keyClick(main, Qt.Key.Key_Return)
     qtbot.keyClick(main, Qt.Key.Key_Tab)
     qtbot.keyClick(main, Qt.Key.Key_Backtab)
     qtbot.keyClick(main, Qt.Key.Key_Tab)
     qtbot.keyClick(main, Qt.Key.Key_O)
     qtbot.keyClick(main, Qt.Key.Key_P)
-    QApplication.processEvents()
     assert text_edit.to_model().value.splitlines() == ["a", "b", "    op"]
     qtbot.keyClick(main, Qt.Key.Key_Home)
     qtbot.keyClick(main, Qt.Key.Key_Up, modifier=Qt.KeyboardModifier.AltModifier)
