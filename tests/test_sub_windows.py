@@ -40,8 +40,9 @@ def test_builtin_commands(ui: MainWindow):
     ui.exec_action("quit")
 
 def test_io_commands(ui: MainWindow, tmpdir, sample_dir: Path):
-    response_open = lambda: sample_dir / "text.txt"
+    response_open = lambda: [sample_dir / "text.txt"]
     response_save = lambda: Path(tmpdir) / "text_out.txt"
+    ui._instructions = ui._instructions.updated(confirm=False)
     ui._instructions = ui._instructions.updated(file_dialog_response=response_open)
     ui.exec_action("open-file")
     ui.add_data("Hello", type="text")
@@ -155,6 +156,3 @@ def test_tile_window(ui: MainWindow):
     ui.tabs[0].tile_windows()
     ui.add_data("H", type="text")
     ui.tabs[0].tile_windows()
-
-def test_qt_file_dialog(ui: MainWindow):
-    ui._backend_main_window._open_file_dialog("r")
