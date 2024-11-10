@@ -1,14 +1,13 @@
 from pathlib import Path
 
 import numpy as np
-from himena import (
-    new_window,
+from himena import new_window, WidgetDataModel
+from himena.qt import register_frontend_widget
+from himena.plugins import (
     register_reader_provider,
     register_writer_provider,
-    WidgetDataModel
+    register_function,
 )
-from himena.qt import register_frontend_widget
-from himena.plugins import get_plugin_interface
 from wgpu.gui.qt import WgpuWidget
 import imageio.v3 as iio
 import pygfx as gfx
@@ -77,9 +76,8 @@ def my_writer_provider(model: WidgetDataModel, path: Path):
         iio.imwrite(path, model.value)
     return _write_image
 
-interf = get_plugin_interface("tools/image_processing")
 
-@interf.register_function(title="Gaussian Filter", types="image")
+@register_function(title="Gaussian Filter", types="image", menus="tools/image_processing")
 def gaussian_filter(model: WidgetDataModel[np.ndarray]) -> WidgetDataModel[np.ndarray]:
     from scipy import ndimage as ndi
 
@@ -90,13 +88,13 @@ def gaussian_filter(model: WidgetDataModel[np.ndarray]) -> WidgetDataModel[np.nd
         im = ndi.gaussian_filter(im, sigma=3)
     return WidgetDataModel(value=im, type="image", title=model.title + "-Gaussian")
 
-@interf.register_function(title="Invert", types="image")
+@register_function(title="Invert", types="image", menus="tools/image_processing")
 def invert(model: WidgetDataModel) -> WidgetDataModel:
     return WidgetDataModel(value=-model.value, type="image", title=model.title + "-Inverted")
 
 
 def main():
-    ui = new_window(plugins=[interf])
+    ui = new_window()
     im = iio.imread("imageio:astronaut.png")
     ui.add_data(im, type="image", title="Astronaut")
     ui.show(run=True)

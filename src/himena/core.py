@@ -5,7 +5,6 @@ from app_model import Application
 from himena.profile import AppProfile, load_app_profile
 
 if TYPE_CHECKING:
-    from himena.plugins.core import PluginInterface
     from himena.widgets import MainWindow
     from qtpy import QtWidgets as QtW
 
@@ -13,7 +12,7 @@ if TYPE_CHECKING:
 def new_window(
     profile: str | AppProfile | None = None,
     *,
-    plugins: list[str | PluginInterface] = [],
+    plugins: list[str] = [],
     app: str = "himena",
 ) -> MainWindow[QtW.QWidget]:
     from himena.qt import MainWindowQt

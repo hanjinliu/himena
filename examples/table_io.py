@@ -4,10 +4,9 @@ import pandas as pd
 from qtpy import QtWidgets as QtW
 from himena import (
     new_window,
-    register_reader_provider,
-    register_writer_provider,
     WidgetDataModel,
 )
+from himena.plugins import register_reader_provider, register_writer_provider
 from himena.qt import register_frontend_widget
 
 PANDAS_TABLE_TYPE = "table.pandas"

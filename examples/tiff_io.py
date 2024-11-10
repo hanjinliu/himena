@@ -4,10 +4,12 @@ from typing import Any
 import numpy as np
 from tifffile import TiffFile, imwrite
 from himena import (
-    register_reader_provider,
-    register_writer_provider,
     WidgetDataModel,
     new_window,
+)
+from himena.plugins import (
+    register_reader_provider,
+    register_writer_provider,
 )
 from himena.qt import register_frontend_widget
 from himena.builtins.qt.widgets import QDefaultImageView

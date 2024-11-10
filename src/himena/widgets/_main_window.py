@@ -263,10 +263,14 @@ class MainWindow(Generic[_W]):
         connection(fn.make_connection(self, param_widget))
         return param_widget
 
-    def read_file(self, file_path: str | Path | list[str | Path]) -> SubWindow[_W]:
+    def read_file(
+        self,
+        file_path: str | Path | list[str | Path],
+        plugin: str | None = None,
+    ) -> SubWindow[_W]:
         """Read local file(s) and open as a new sub-window."""
         _, tabarea = self._current_or_new_tab()
-        return tabarea.read_file(file_path)
+        return tabarea.read_file(file_path, plugin=plugin)
 
     def read_session(self, path: str | Path) -> None:
         """Read a session file and open the session."""

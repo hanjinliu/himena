@@ -105,10 +105,11 @@ class WidgetDataModel(GenericModel[_T]):
         description="Method descriptor.",
     )
 
-    def with_value(self, value: _U, type: str | None = None) -> "WidgetDataModel[_U]":
+    def with_value(
+        self,
+        value: _U,
+    ) -> "WidgetDataModel[_U]":
         update = {"value": value}
-        if type is not None:
-            update["type"] = type
         return self.model_copy(update=update)
 
     def _with_source(
@@ -217,6 +218,8 @@ def is_subtype(string: str, supertype: str) -> bool:
 
 ReaderFunction = Callable[[Path], WidgetDataModel]
 WriterFunction = Callable[[WidgetDataModel, Path], None]
+ReaderProvider = Callable[["Path | list[Path]"], ReaderFunction]
+WriterProvider = Callable[[WidgetDataModel], WriterFunction]
 
 
 class WindowRect(NamedTuple):

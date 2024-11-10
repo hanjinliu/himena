@@ -1,12 +1,11 @@
 """Builtin QtConsole plugin."""
 
-from himena.plugins import get_plugin_interface
-
-__himena_plugin__ = get_plugin_interface("tools")
+from himena.plugins import register_dock_widget
 
 
-@__himena_plugin__.register_dock_widget(
+@register_dock_widget(
     title="Console",
+    menus=["tools"],
     area="bottom",
     keybindings=["Ctrl+Shift+C"],
     singleton=True,

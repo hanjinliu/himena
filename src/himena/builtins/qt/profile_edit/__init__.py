@@ -1,12 +1,11 @@
 """Builtin QtConsole plugin."""
 
-from himena.plugins import get_plugin_interface
-
-__himena_plugin__ = get_plugin_interface("tools")
+from himena.plugins import register_dialog
 
 
-@__himena_plugin__.register_dialog(
+@register_dialog(
     title="Edit Profile",
+    menus=["tools"],
     command_id="builtins:profile_edit",
 )
 def edit_profile():

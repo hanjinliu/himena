@@ -19,3 +19,8 @@ class ImageMeta(BaseModel):
     scale: list[float] | None = Field(None, description="Scale of the image.")
     origin: list[float] | None = Field(None, description="Origin of the image.")
     colormaps: Any | None = Field(None, description="Color map of the image.")
+    channel_axis: int | None = Field(None, description="Channel axis of the image.")
+    is_rgb: bool = Field(False, description="Whether the image is RGB.")
+    current_indices: list[int] | None = Field(
+        None, description="Current slice indices to render the image in GUI."
+    )

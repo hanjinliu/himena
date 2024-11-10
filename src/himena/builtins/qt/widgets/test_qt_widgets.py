@@ -84,6 +84,7 @@ def test_image_view(qtbot: QtBot):
     )
     image_view = QDefaultImageView()
     image_view.update_model(model)
+    qtbot.addWidget(image_view)
     assert len(image_view._sliders) == 0
 
     # RGB
@@ -103,6 +104,8 @@ def test_image_view(qtbot: QtBot):
     )
     image_view = QDefaultImageView()
     image_view.update_model(model)
+    image_view._sliders[0].setValue(1)
+    image_view._sliders[2].setValue(2)
 
 
 def test_find_text(qtbot: QtBot):

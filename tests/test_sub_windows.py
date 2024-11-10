@@ -235,7 +235,7 @@ def test_register_frontend_widget(ui: MainWindow):
     assert type(win2.widget) is QCustomTextView
 
 def test_register_folder(ui: MainWindow, sample_dir: Path):
-    from himena.io import register_reader_provider
+    from himena.plugins import register_reader_provider
 
     def _read(fp: Path):
         files = list(fp.glob("*.*"))

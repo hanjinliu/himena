@@ -1,5 +1,6 @@
 import sys
 from enum import Enum
+import string
 from types import SimpleNamespace
 
 if sys.version_info >= (3, 11):
@@ -21,6 +22,8 @@ ConventionalTextFileNames = frozenset(
     ["LICENSE", "Makefile", "dockerfile", ".gitignore", ".gitattributes", ".vimrc",
      ".viminfo", ".pypirc"]
 )  # fmt: skip
+
+ALLOWED_LETTERS = string.ascii_letters + string.digits + "_- "
 
 
 class StandardTypes(SimpleNamespace):

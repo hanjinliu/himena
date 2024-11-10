@@ -11,3 +11,4 @@ def register_magicgui_types():
     register_type(bool, widget_type=ToggleSwitch)
     register_type(int, widget_type=IntEdit)
     register_type(float, widget_type=FloatEdit)
+    # register_type(list[int], widget_type=ListLineEdit)

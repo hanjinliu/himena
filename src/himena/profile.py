@@ -4,7 +4,9 @@ from pathlib import Path
 from typing import Iterable
 import warnings
 from platformdirs import user_data_dir
+from pydantic import field_validator
 from pydantic_compat import BaseModel, Field
+from himena.consts import ALLOWED_LETTERS
 
 USER_DATA_DIR = Path(user_data_dir("himena"))
 
@@ -74,6 +76,13 @@ class AppProfile(BaseModel):
         with open(path, "w") as f:
             json.dump(self.model_dump(), f, indent=4)
         return None
+
+    @field_validator("name")
+    def _validate_name(cls, value):
+        # check if value is a valid file name
+        if not all(c in ALLOWED_LETTERS for c in value):
+            raise ValueError(f"Invalid profile name: {value}")
+        return value
 
 
 def load_app_profile(name: str) -> AppProfile:

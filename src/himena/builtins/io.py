@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
-from himena.io import register_writer_provider
+from himena.plugins import register_reader_provider, register_writer_provider
 from himena.types import WidgetDataModel
 from himena.consts import StandardTypes, BasicTextFileTypes, ConventionalTextFileNames
-from himena import register_reader_provider
 
 if TYPE_CHECKING:
     import numpy as np

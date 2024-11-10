@@ -34,5 +34,4 @@ def ui(qtbot: QtBot):
 
 @pytest.fixture
 def sample_dir() -> Path:
-
     return Path(__file__).parent / "samples"

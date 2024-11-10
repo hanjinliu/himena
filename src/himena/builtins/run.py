@@ -1,15 +1,14 @@
 """Run actions."""
 
-from himena.plugins import get_plugin_interface
+from himena.plugins import register_function
 from himena.types import WidgetDataModel
 from himena.model_meta import TextMeta
-from himena.consts import StandardTypes
-
-__himena_plugin__ = get_plugin_interface("tools")
+from himena.consts import StandardTypes, MenuId
 
 
-@__himena_plugin__.register_function(
+@register_function(
     types=StandardTypes.TEXT,
+    menus=[MenuId.TOOLS_TEXT],
     keybindings="Ctrl+F5",
 )
 def run_script(model: WidgetDataModel[str]):

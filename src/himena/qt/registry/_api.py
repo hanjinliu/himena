@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 from typing import Callable, TypeVar, Union, overload
+import logging
 from qtpy import QtWidgets as QtW
 
 from himena.types import WidgetDataModel, is_subtype
@@ -7,6 +9,7 @@ from himena.qt.registry._widgets import QFallbackWidget
 
 WidgetClass = Union[Callable[[WidgetDataModel], QtW.QWidget], type[QtW.QWidget]]
 
+_LOGGER = logging.getLogger(__name__)
 # NOTE: Different applications may use different widgets for the same data type.
 _APP_TYPE_TO_QWIDGET: dict[str | None, dict[str, WidgetClass]] = {}
 
@@ -80,11 +83,16 @@ def pick_widget_class(app_name: str, type: str) -> WidgetClass:
         _map_for_app = _APP_TYPE_TO_QWIDGET.get(None, {})
 
     if type in _map_for_app:
-        return _map_for_app[type]
+        widget_class = _map_for_app[type]
+        _LOGGER.info("Picked widget class %r for type %r", widget_class, type)
+        return widget_class
 
     # pick supertype widget class
     supertype_keys = [key for key in _map_for_app if is_subtype(type, key)]
     if supertype_keys:
         key = max(supertype_keys, key=lambda x: x.count("."))
-        return _map_for_app[key]
+        widget_class = _map_for_app[key]
+        _LOGGER.info("Picked widget class %r for type %r", widget_class, type)
+        return widget_class
+    _LOGGER.info("No widget class found for type %r", type)
     return QFallbackWidget

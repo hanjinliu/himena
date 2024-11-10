@@ -3,7 +3,7 @@ from qtpy import QtWidgets as QtW
 import re
 from himena import new_window, WidgetDataModel
 from himena.qt import register_frontend_widget
-from himena.plugins import get_plugin_interface
+from himena.plugins import register_function
 
 
 @register_frontend_widget("text")
@@ -30,9 +30,8 @@ class MyNonSavableEdit(QtW.QTextEdit):
     def update_model(self, model: WidgetDataModel):
         self.setPlainText(model.value)
 
-interf = get_plugin_interface("tools/my_menu")
 
-@interf.register_function(types="html")
+@register_function(types="html", menus=["tools/my_menu"])
 def to_plain_text(model: WidgetDataModel) -> WidgetDataModel:
     pattern = re.compile("<.*?>")
     model.value = re.sub(pattern, "", model.value)
@@ -40,7 +39,7 @@ def to_plain_text(model: WidgetDataModel) -> WidgetDataModel:
     model.title = model.title + " (plain)"
     return model
 
-@interf.register_function(types=["text", "html"])
+@register_function(types=["text", "html"], menus=["tools/my_menu"])
 def to_basic_widget(model: WidgetDataModel) -> WidgetDataModel:
     if model.type != "text":
         return None
@@ -49,7 +48,7 @@ def to_basic_widget(model: WidgetDataModel) -> WidgetDataModel:
     return model
 
 def main():
-    ui = new_window(plugins=[interf])
+    ui = new_window()
     ui.add_data("<i>Text</i>", type="text.html", title="test window")
     ui.show(run=True)
 

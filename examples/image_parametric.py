@@ -3,13 +3,11 @@ from scipy import ndimage as ndi
 from typing import Annotated
 
 from himena import new_window
-from himena.plugins import get_plugin_interface
+from himena.plugins import register_function
 from himena.types import WidgetDataModel, Parametric
 from himena.consts import StandardTypes
 
-interf = get_plugin_interface()
-
-@interf.register_function(title="Gaussian Filter", types=StandardTypes.IMAGE)
+@register_function(title="Gaussian Filter", types=StandardTypes.IMAGE)
 def gaussian_filter(model: WidgetDataModel[np.ndarray]) -> Parametric:
     def func_gauss(sigma: float = 1.0) -> WidgetDataModel[np.ndarray]:
         im = model.value
@@ -24,7 +22,7 @@ def gaussian_filter(model: WidgetDataModel[np.ndarray]) -> Parametric:
         )
     return func_gauss
 
-@interf.register_function(title="Median Filter", types=StandardTypes.IMAGE)
+@register_function(title="Median Filter", types=StandardTypes.IMAGE)
 def median_filter(model: WidgetDataModel[np.ndarray]) -> Parametric:
     def func_median(radius: int = 1) -> WidgetDataModel[np.ndarray]:
         im = model.value
@@ -40,7 +38,7 @@ def median_filter(model: WidgetDataModel[np.ndarray]) -> Parametric:
         )
     return func_median
 
-@interf.register_function(title="Subtract images", types=StandardTypes.IMAGE)
+@register_function(title="Subtract images", types=StandardTypes.IMAGE)
 def subtract_images() -> Parametric:
     def func_sub(
         a: Annotated[WidgetDataModel[np.ndarray], {"types": StandardTypes.IMAGE}],
@@ -54,7 +52,7 @@ def subtract_images() -> Parametric:
     return func_sub
 
 def main():
-    ui = new_window(plugins=[interf])
+    ui = new_window()
     im = np.random.default_rng(123).normal(size=(100, 100))
     ui.add_data(im, type=StandardTypes.IMAGE, title="Noise")
     ui.show(run=True)

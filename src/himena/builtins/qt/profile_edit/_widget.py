@@ -97,6 +97,7 @@ class QPluginsListWidget(QtW.QListWidget):
     def enter_new_plugin(self):
         self.addItem("")
         new_item = self.item(self.count() - 1)
+        new_item.setFlags(new_item.flags() | QtCore.Qt.ItemFlag.ItemIsEditable)
         assert new_item is not None
         self.editItem(new_item)
 
@@ -139,6 +140,12 @@ class QPluginsListWidget(QtW.QListWidget):
                 self.enter_new_plugin()
         else:
             return super().keyPressEvent(e)
+
+    def mouseDoubleClickEvent(self, e: QtGui.QMouseEvent) -> None:
+        if self._item_editable and self.itemAt(e.pos()) is None:
+            self.enter_new_plugin()
+        else:
+            super().mouseDoubleClickEvent(e)
 
 
 class QPluginsEditButtons(QtW.QWidget):
