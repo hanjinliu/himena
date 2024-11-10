@@ -93,18 +93,20 @@ class QtErrorMessageBox(QtW.QMessageBox):
         self = cls(type(e).__name__, e, parent)
         self.exec_()
 
+    def _exc_info(self) -> ExcInfo:
+        return (
+            self._exc.__class__,
+            self._exc,
+            self._exc.__traceback__,
+        )
+
     def _get_traceback(self) -> str:
         if self._exc is None:
             import traceback
 
             tb = traceback.format_exc()
         else:
-            exc_info = (
-                self._exc.__class__,
-                self._exc,
-                self._exc.__traceback__,
-            )
-            tb = get_tb_formatter()(exc_info, as_html=True)
+            tb = get_tb_formatter()(self._exc_info(), as_html=True)
         return tb
 
 
@@ -129,109 +131,16 @@ def get_tb_formatter() -> Callable[[ExcInfo, bool, str], str]:
         The ``as_html`` determines whether the traceback is formatted in html
         or plain text.
     """
-
     try:
-        import IPython.core.ultratb
-        import numpy as np
+        import IPython.core.ultratb  # noqa: F401
 
-        def format_exc_info(info: ExcInfo, as_html: bool, color="Neutral") -> str:
-            # avoid verbose printing of the array data
-            with np.printoptions(precision=5, threshold=10, edgeitems=2):
-                vbtb = IPython.core.ultratb.VerboseTB(color_scheme=color)
-                if as_html:
-                    ansi_string = (
-                        vbtb.text(*info)
-                        .replace(" ", "&nbsp;")
-                        .replace("<", "&lt;")
-                        .replace(">", "&gt;")
-                        .replace("\n", "<br>")
-                    )
-                    html = "".join(ansi2html(ansi_string))
-                    html = (
-                        f"<span style='font-family: monaco,{MonospaceFontFamily},"
-                        "monospace;'>" + html + "</span>"
-                    )
-                    tb_text = html
-                else:
-                    tb_text = vbtb.text(*info)
-            return tb_text
+        format_exc_info = format_exc_info_ipython
 
     except ModuleNotFoundError:
-        import traceback
-
         if sys.version_info < (3, 11):
-            import cgitb
-
-            # cgitb does not support error chaining...
-            # see https://peps.python.org/pep-3134/#enhanced-reporting
-            # this is a workaround
-            def cgitb_chain(exc: Exception) -> Generator[str, None, None]:
-                """Recurse through exception stack and chain cgitb_html calls."""
-                if exc.__cause__:
-                    yield from cgitb_chain(exc.__cause__)
-                    yield (
-                        '<br><br><font color="#51B432">The above exception was '
-                        "the direct cause of the following exception:</font><br>"
-                    )
-                elif exc.__context__:
-                    yield from cgitb_chain(exc.__context__)
-                    yield (
-                        '<br><br><font color="#51B432">During handling of the '
-                        "above exception, another exception occurred:</font><br>"
-                    )
-                yield cgitb_html(exc)
-
-            def cgitb_html(exc: Exception) -> str:
-                """Format exception with cgitb.html."""
-                info = (type(exc), exc, exc.__traceback__)
-                return cgitb.html(info)
-
-            def format_exc_info(info: ExcInfo, as_html: bool, color=None) -> str:
-                # avoid verbose printing of the array data
-                with np.printoptions(precision=5, threshold=10, edgeitems=2):
-                    if as_html:
-                        html = "\n".join(cgitb_chain(info[1]))
-                        # cgitb has a lot of hardcoded colors that don't work for us
-                        # remove bgcolor, and let theme handle it
-                        html = re.sub('bgcolor="#.*"', "", html)
-                        # remove superfluous whitespace
-                        html = html.replace("<br>\n", "\n")
-                        # but retain it around the <small> bits
-                        html = re.sub(r"(<tr><td><small.*</tr>)", "<br>\\1<br>", html)
-                        # weird 2-part syntax is a workaround for hard-to-grep text.
-                        html = html.replace(
-                            "<p>A problem occurred in a Python script.  "
-                            "Here is the sequence of",
-                            "",
-                        )
-                        html = html.replace(
-                            "function calls leading up to the error, "
-                            "in the order they occurred.</p>",
-                            "<br>",
-                        )
-                        # remove hardcoded fonts
-                        html = html.replace('face="helvetica, arial"', "")
-                        html = (
-                            "<span style='font-family: monaco,courier,monospace;'>"
-                            + html
-                            + "</span>"
-                        )
-                        tb_text = html
-                    else:
-                        # if we don't need HTML, just use traceback
-                        tb_text = "".join(traceback.format_exception(*info))
-                return tb_text
-
+            format_exc_info = format_exc_info_py310
         else:
-
-            def format_exc_info(info: ExcInfo, as_html: bool, color=None) -> str:
-                # avoid verbose printing of the array data
-                with np.printoptions(precision=5, threshold=10, edgeitems=2):
-                    tb_text = "".join(traceback.format_exception(*info))
-                    if as_html:
-                        tb_text = "<pre>" + tb_text + "</pre>"
-                return tb_text
-
+            format_exc_info = format_exc_info_py311
     return format_exc_info
 
 
@@ -253,6 +162,111 @@ ANSI_STYLES = {
     36: {"color": "cyan"},
     37: {"color": "white"},
 }
+
+
+def format_exc_info_ipython(info: ExcInfo, as_html: bool, color="Neutral") -> str:
+    import numpy as np
+    import IPython.core.ultratb
+
+    # avoid verbose printing of the array data
+    with np.printoptions(precision=5, threshold=10, edgeitems=2):
+        vbtb = IPython.core.ultratb.VerboseTB(color_scheme=color)
+        if as_html:
+            ansi_string = (
+                vbtb.text(*info)
+                .replace(" ", "&nbsp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\n", "<br>")
+            )
+            html = "".join(ansi2html(ansi_string))
+            html = (
+                f"<span style='font-family: monaco,{MonospaceFontFamily},"
+                "monospace;'>" + html + "</span>"
+            )
+            tb_text = html
+        else:
+            tb_text = vbtb.text(*info)
+    return tb_text
+
+
+# cgitb does not support error chaining...
+# see https://peps.python.org/pep-3134/#enhanced-reporting
+# this is a workaround
+def cgitb_chain(exc: Exception) -> Generator[str, None, None]:
+    """Recurse through exception stack and chain cgitb_html calls."""
+    if exc.__cause__:
+        yield from cgitb_chain(exc.__cause__)
+        yield (
+            '<br><br><font color="#51B432">The above exception was '
+            "the direct cause of the following exception:</font><br>"
+        )
+    elif exc.__context__:
+        yield from cgitb_chain(exc.__context__)
+        yield (
+            '<br><br><font color="#51B432">During handling of the '
+            "above exception, another exception occurred:</font><br>"
+        )
+    yield cgitb_html(exc)
+
+
+def cgitb_html(exc: Exception) -> str:
+    """Format exception with cgitb.html."""
+    import cgitb
+
+    info = (type(exc), exc, exc.__traceback__)
+    return cgitb.html(info)
+
+
+def format_exc_info_py310(info: ExcInfo, as_html: bool, color=None) -> str:
+    import numpy as np
+    import traceback
+
+    # avoid verbose printing of the array data
+    with np.printoptions(precision=5, threshold=10, edgeitems=2):
+        if as_html:
+            html = "\n".join(cgitb_chain(info[1]))
+            # cgitb has a lot of hardcoded colors that don't work for us
+            # remove bgcolor, and let theme handle it
+            html = re.sub('bgcolor="#.*"', "", html)
+            # remove superfluous whitespace
+            html = html.replace("<br>\n", "\n")
+            # but retain it around the <small> bits
+            html = re.sub(r"(<tr><td><small.*</tr>)", "<br>\\1<br>", html)
+            # weird 2-part syntax is a workaround for hard-to-grep text.
+            html = html.replace(
+                "<p>A problem occurred in a Python script.  " "Here is the sequence of",
+                "",
+            )
+            html = html.replace(
+                "function calls leading up to the error, "
+                "in the order they occurred.</p>",
+                "<br>",
+            )
+            # remove hardcoded fonts
+            html = html.replace('face="helvetica, arial"', "")
+            html = (
+                "<span style='font-family: monaco,courier,monospace;'>"
+                + html
+                + "</span>"
+            )
+            tb_text = html
+        else:
+            # if we don't need HTML, just use traceback
+            tb_text = "".join(traceback.format_exception(*info))
+    return tb_text
+
+
+def format_exc_info_py311(info: ExcInfo, as_html: bool, color=None) -> str:
+    import numpy as np
+    import traceback
+
+    # avoid verbose printing of the array data
+    with np.printoptions(precision=5, threshold=10, edgeitems=2):
+        tb_text = "".join(traceback.format_exception(*info))
+        if as_html:
+            tb_text = "<pre>" + tb_text + "</pre>"
+    return tb_text
 
 
 def ansi2html(
