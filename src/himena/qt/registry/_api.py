@@ -46,11 +46,8 @@ def register_frontend_widget(
 
     >>> @register_frontend_widget("text")
     ... class MyTextEdit(QtW.QPlainTextEdit):
-    ...     @classmethod
-    ...     def from_model(cls, fd: WidgetDataModel):
-    ...         self = cls()
-    ...         self.setPlainText(fd.value)
-    ...         return self
+    ...     def update_model(cls, model: WidgetDataModel):
+    ...         self.setPlainText(model.value)
     """
 
     if app is not None and not isinstance(app, str):
@@ -62,9 +59,9 @@ def register_frontend_widget(
                 "Widget class must be a subclass of `QtW.QWidget`, "
                 f"got {wdt_class!r}"
             )
-        if not hasattr(wdt_class, "from_model"):
+        if not hasattr(wdt_class, "update_model"):
             raise TypeError(
-                f"Widget class {wdt_class!r} does not have a `from_model` method."
+                f"Widget class {wdt_class!r} does not have a `update_model` method."
             )
         if app not in _APP_TYPE_TO_QWIDGET:
             _APP_TYPE_TO_QWIDGET[app] = {}

@@ -13,7 +13,8 @@ _Ctrl = Qt.KeyboardModifier.ControlModifier
 
 def test_text_edit(qtbot: QtBot):
     model = WidgetDataModel(value="a\nb", type="text")
-    text_edit = QDefaultTextEdit.from_model(model)
+    text_edit = QDefaultTextEdit()
+    text_edit.update_model(model)
     qtbot.addWidget(text_edit)
     main = text_edit._main_text_edit
 
@@ -63,7 +64,8 @@ def test_text_edit(qtbot: QtBot):
 
 def test_table_edit(qtbot: QtBot):
     model = WidgetDataModel(value=[["a", "b"], [0, 1]], type="table")
-    table_widget = QDefaultTableWidget.from_model(model)
+    table_widget = QDefaultTableWidget()
+    table_widget.update_model(model)
     qtbot.addWidget(table_widget)
     qtbot.keyClick(table_widget, Qt.Key.Key_A, modifier=_Ctrl)
     qtbot.keyClick(table_widget, Qt.Key.Key_C, modifier=_Ctrl)
@@ -80,14 +82,16 @@ def test_image_view(qtbot: QtBot):
     model = WidgetDataModel(
         value=np.arange(100, dtype=np.uint8).reshape(10, 10), type="image"
     )
-    image_view = QDefaultImageView.from_model(model)
+    image_view = QDefaultImageView()
+    image_view.update_model(model)
     assert len(image_view._sliders) == 0
 
     # RGB
     model = WidgetDataModel(
         value=np.zeros((100, 100, 3), dtype=np.uint16), type="image"
     )
-    image_view = QDefaultImageView.from_model(model)
+    image_view = QDefaultImageView()
+    image_view.update_model(model)
     assert len(image_view._sliders) == 0
     image_view._interpolation_check_box.setChecked(False)
     image_view._interpolation_check_box.setChecked(True)
@@ -97,12 +101,14 @@ def test_image_view(qtbot: QtBot):
     model = WidgetDataModel(
         value=rng.random((10, 5, 3, 100, 100), dtype=np.float32), type="image"
     )
-    image_view = QDefaultImageView.from_model(model)
+    image_view = QDefaultImageView()
+    image_view.update_model(model)
 
 
 def test_find_text(qtbot: QtBot):
     model = WidgetDataModel(value="a\nb\nc\nbc", type="text")
-    text_edit = QDefaultTextEdit.from_model(model)
+    text_edit = QDefaultTextEdit()
+    text_edit.update_model(model)
     qtbot.addWidget(text_edit)
     qtbot.keyClick(text_edit, Qt.Key.Key_F, modifier=_Ctrl)
     finder = text_edit._main_text_edit._finder_widget
@@ -116,7 +122,8 @@ def test_find_text(qtbot: QtBot):
 
 def test_find_table(qtbot: QtBot):
     model = WidgetDataModel(value=[["a", "b"], ["c", "bc"]], type="table")
-    table_widget = QDefaultTableWidget.from_model(model)
+    table_widget = QDefaultTableWidget()
+    table_widget.update_model(model)
     qtbot.addWidget(table_widget)
     qtbot.keyClick(table_widget, Qt.Key.Key_F, modifier=_Ctrl)
     finder = table_widget._finder_widget

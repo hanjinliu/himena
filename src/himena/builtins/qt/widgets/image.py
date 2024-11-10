@@ -50,55 +50,46 @@ class _QImageLabel(QtW.QLabel):
 
 
 class QDefaultImageView(QtW.QWidget):
-    def __init__(self, model: WidgetDataModel[NDArray[np.uint8]]):
+    def __init__(self):
         import numpy as np
 
         super().__init__()
         layout = QtW.QVBoxLayout(self)
-        arr = np.asarray(model.value)
-        ndim = arr.ndim - 2
-        if arr.shape[-1] in (3, 4):
-            ndim -= 1
-        sl_0 = (0,) * ndim
-        self._image_label = _QImageLabel(self.as_image_array(arr[sl_0]))
-        layout.addWidget(self._image_label)
-
         self._sliders: list[QtW.QSlider] = []
-        for i in range(ndim):
-            slider = QLabeledSlider(QtCore.Qt.Orientation.Horizontal)
-            self._sliders.append(slider)
-            layout.addWidget(slider, alignment=QtCore.Qt.AlignmentFlag.AlignBottom)
-            slider.setRange(0, model.value.shape[i] - 1)
-            slider.valueChanged.connect(self._slider_changed)
+
+        self._image_label = _QImageLabel(np.zeros((1, 1), dtype=np.uint8))
+        layout.addWidget(self._image_label)
 
         self._interpolation_check_box = QtW.QCheckBox()
         self._interpolation_check_box.setText("smooth")
         self._interpolation_check_box.setChecked(True)
         self._interpolation_check_box.stateChanged.connect(self._interpolation_changed)
         layout.addWidget(self._interpolation_check_box)
+        self._arr: NDArray[np.int8] | None = None
+
+    def update_model(self, model: WidgetDataModel[NDArray[np.uint8]]):
+        import numpy as np
+
+        arr = np.asarray(model.value)
+        ndim = arr.ndim - 2
+        if arr.shape[-1] in (3, 4) and ndim > 0:
+            ndim -= 1
+
+        sl_0 = (0,) * ndim
+        self._image_label.set_array(self.as_image_array(arr[sl_0]))
+
+        nsliders = len(self._sliders)
+        if nsliders > ndim:
+            for i in range(ndim, nsliders):
+                self._sliders[i].setVisible(False)
+        elif nsliders < ndim:
+            for i in range(nsliders, ndim):
+                self._make_slider(model.value.shape[i])
+        self._slider_changed()
         self._arr = arr
 
-    def _slider_changed(self):
-        sl = tuple(sl.value() for sl in self._sliders)
-        arr = self.as_image_array(self._arr[sl])
-        self._image_label.set_array(arr)
-
-    def _interpolation_changed(self, checked: bool):
-        if checked:
-            tr = QtCore.Qt.TransformationMode.SmoothTransformation
-        else:
-            tr = QtCore.Qt.TransformationMode.FastTransformation
-        self._image_label._transformation = tr
-        self._image_label._update_pixmap()
-
-    @classmethod
-    def from_model(cls, model: WidgetDataModel) -> QDefaultImageView:
-        self = cls(model)
-        if model.source is not None:
-            self.setObjectName(model.source.name)
-        return self
-
     def to_model(self) -> WidgetDataModel[NDArray[np.uint8]]:
+        assert self._arr is not None
         return WidgetDataModel(
             value=self._arr,
             type=self.model_type(),
@@ -128,3 +119,26 @@ class QDefaultImageView(QtW.QWidget):
         else:
             raise ValueError(f"Unsupported data type: {arr.dtype}")
         return np.ascontiguousarray(arr0)
+
+    def _slider_changed(self):
+        if self._arr is None:
+            return
+        sl = tuple(sl.value() for sl in self._sliders)
+        arr = self.as_image_array(self._arr[sl])
+        self._image_label.set_array(arr)
+
+    def _interpolation_changed(self, checked: bool):
+        if checked:
+            tr = QtCore.Qt.TransformationMode.SmoothTransformation
+        else:
+            tr = QtCore.Qt.TransformationMode.FastTransformation
+        self._image_label._transformation = tr
+        self._image_label._update_pixmap()
+
+    def _make_slider(self, size: int):
+        slider = QLabeledSlider(QtCore.Qt.Orientation.Horizontal)
+        self._sliders.append(slider)
+        self.layout().addWidget(slider, alignment=QtCore.Qt.AlignmentFlag.AlignBottom)
+        slider.setRange(0, size - 1)
+        slider.valueChanged.connect(self._slider_changed)
+        return slider

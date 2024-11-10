@@ -13,9 +13,7 @@ class QFallbackWidget(QtW.QPlainTextEdit):
         self.setReadOnly(True)
         self.setFont(QtGui.QFont(MonospaceFontFamily))
 
-    @classmethod
-    def from_model(cls, model: WidgetDataModel) -> QFallbackWidget:
-        self = cls()
+    def update_model(self, model: WidgetDataModel):
         self.setPlainText(
             f"No widget registered for:\n\ntype: {model.type!r}\nvalue: {model.value!r}"
         )

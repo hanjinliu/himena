@@ -13,40 +13,44 @@ from wgpu.gui.qt import WgpuWidget
 import imageio.v3 as iio
 import pygfx as gfx
 
-# `@register_frontend_widget` is a decorator that registers a widget class as a frontend
-# widget for the given file type. The class must have an `from_model` method to convert
-# data model to its instance. By further providing `to_model` method, the widget can
-# be converted back to data model.
 @register_frontend_widget("image")
 class WgpuImageWidget(WgpuWidget):
-    def __init__(self, model: WidgetDataModel[np.ndarray]):
+    def __init__(self):
         super().__init__()
-        self._model = model
+        self._renderer = gfx.WgpuRenderer(self)
+        self._scene = gfx.Scene()
 
-    @classmethod
-    def from_model(cls, model: WidgetDataModel[np.ndarray]):
-        self = cls(model)
-        renderer = gfx.WgpuRenderer(self)
-        scene = gfx.Scene()
-        image = gfx.Image(
-            gfx.Geometry(grid=gfx.Texture(model.value, dim=2)),
-            gfx.ImageBasicMaterial(clim=(0, 255), pick_write=True),
-        )
-        scene.add(image)
+        self._arr = None
+        self._current_image = None
+        self._camera = gfx.OrthographicCamera()
+        self._camera.show_object(self._scene, view_dir=(0, 0, -1))
+        self._camera.local.scale_y = -1
 
-        camera = gfx.OrthographicCamera(model.value.shape[0], model.value.shape[1])
-        camera.show_object(scene, view_dir=(0, 0, -1))
-        camera.local.scale_y = -1
-
-        def animate():
-            renderer.render(scene, camera)
-            self.request_draw()
-
-        self.request_draw(animate)
+        self.request_draw(self._animate)
         return self
 
+    def _animate(self):
+        self._renderer.render(self._scene, self._camera)
+        self.request_draw()
+
+    def set_image(self, arr):
+        if self._current_image is not None:
+            self._scene.remove(self._current_image)
+        image = gfx.Image(
+            gfx.Geometry(grid=gfx.Texture(arr, dim=2)),
+            gfx.ImageBasicMaterial(clim=(0, 255), pick_write=True),
+        )
+        self._scene.add(image)
+        self._current_image = image
+        self._arr = arr
+
+    def update_model(self, model: WidgetDataModel[np.ndarray]):
+        self._camera.width = model.value.shape[1]
+        self._camera.height = model.value.shape[0]
+        return self.set_image(model.value)
+
     def to_model(self) -> WidgetDataModel:
-        return WidgetDataModel(value=self._model.value, type="image", title=self._model.title)
+        return WidgetDataModel(value=self._arr, type="image")
 
 # `@register_reader_provider` is a decorator that registers a function as one that
 # provides a reader for the given file path.

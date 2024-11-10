@@ -223,11 +223,8 @@ def test_register_frontend_widget(ui: MainWindow):
     from qtpy.QtWidgets import QLabel
 
     class QCustomTextView(QLabel):
-        @classmethod
-        def from_model(cls, model: WidgetDataModel):
-            self = cls()
-            self.setText(model.value)
-            return self
+        def update_model(self, model: WidgetDataModel):
+            return self.setText(model.value)
 
     model = WidgetDataModel(value="abc", type="text.xyz")
     win = ui.add_data_model(model)

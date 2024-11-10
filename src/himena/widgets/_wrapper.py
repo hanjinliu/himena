@@ -135,9 +135,7 @@ class SubWindow(WidgetWrapper[_W]):
     @property
     def is_importable(self) -> bool:
         """Whether the widget accept importing values."""
-        return hasattr(self.widget, "from_model") and isinstance(
-            vars(type(self.widget))["from_model"], (classmethod, staticmethod)
-        )
+        return hasattr(self.widget, "update_model")
 
     @property
     def is_exportable(self) -> bool:

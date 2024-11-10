@@ -26,11 +26,9 @@ class QDefaultTableWidget(QtW.QTableWidget):
         def _():
             self._modified = True
 
-    @classmethod
-    def from_model(cls, model: WidgetDataModel) -> QDefaultTableWidget:
+    def update_model(self, model: WidgetDataModel):
         import numpy as np
 
-        self = cls()
         table = np.asarray(model.value, dtype=str)
         self.setRowCount(table.shape[0])
         self.setColumnCount(table.shape[1])
@@ -41,7 +39,7 @@ class QDefaultTableWidget(QtW.QTableWidget):
         if model.source is not None:
             self.setObjectName(model.source.name)
         self._modified = False
-        return self
+        return None
 
     def to_model(self) -> WidgetDataModel[list[list[Any]]]:
         return WidgetDataModel(

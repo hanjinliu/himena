@@ -10,33 +10,31 @@ from himena import (
 )
 from himena.qt import register_frontend_widget
 
-PANDAS_TABLE_TYPE = object()
+PANDAS_TABLE_TYPE = "table.pandas"
 
 # `@register_frontend_widget` is a decorator that registers a widget class as a frontend
-# widget for the given file type. The class must have an `from_model` method to convert
-# data model to its instance. By further providing `to_model` method, the widget can
-# be converted back to data model.
+# widget for the given file type. The class must have an `update_model` method to update
+# the state based on the data model. By further providing `to_model` method, the widget
+# can be converted back to data model.
 @register_frontend_widget(PANDAS_TABLE_TYPE)
 class DataFrameWidget(QtW.QTableWidget):
-    def __init__(self, model: WidgetDataModel[pd.DataFrame]):
+    def __init__(self):
+        self._data_model = None
+
+    def update_model(self, model: WidgetDataModel[pd.DataFrame]):
         df = model.value
-        super().__init__(df.shape[0], df.shape[1])
         # set table items
+        self.setRowCount(df.shape[0])
+        self.setColumnCount(df.shape[1])
         for i, col in enumerate(df.columns):
             self.setHorizontalHeaderItem(i, QtW.QTableWidgetItem(col))
             for j, value in enumerate(df[col]):
                 self.setItem(j, i, QtW.QTableWidgetItem(str(value)))
         for j, index in enumerate(df.index):
             self.setVerticalHeaderItem(j, QtW.QTableWidgetItem(str(index)))
-        self._model = model
-
-    @classmethod
-    def from_model(cls, model: WidgetDataModel[pd.DataFrame]):
-        self = cls(model)
-        return self
 
     def to_model(self) -> WidgetDataModel:
-        return self._model
+        return self._data_model
 
 # `@register_reader_provider` is a decorator that registers a function as one that
 # provides a reader for the given file path.

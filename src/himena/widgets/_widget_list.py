@@ -204,7 +204,8 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
     def add_data_model(self, model: WidgetDataModel) -> SubWindow[_W]:
         """Add a widget data model as a widget."""
         cls = self._main_window()._pick_widget_class(model.type)
-        widget = cls.from_model(model)
+        widget = cls()
+        widget.update_model(model)  # type: ignore
         sub_win = self.add_widget(widget, title=model.title)
         if isinstance(method := model.method, LocalReaderMethod):
             sub_win.update_default_save_path(method.path)

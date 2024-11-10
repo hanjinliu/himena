@@ -8,39 +8,27 @@ from himena.plugins import get_plugin_interface
 
 @register_frontend_widget("text")
 class MyTextEdit(QtW.QPlainTextEdit):
-    def __init__(self, model: WidgetDataModel):
-        super().__init__()
+    def update_model(self, model: WidgetDataModel):
         self.setPlainText(model.value)
-        self._model = model
-
-    @classmethod
-    def from_model(cls, model: WidgetDataModel):
-        return cls(model)
 
     def to_model(self) -> WidgetDataModel:
-        return self._model
+        return WidgetDataModel(value=self.toPlainText(), type="text")
 
 @register_frontend_widget("html")
 class MyHtmlEdit(QtW.QTextEdit):
     def __init__(self, model: WidgetDataModel):
         super().__init__()
-        self.setHtml(model.value)
-        self._model = model
 
-    @classmethod
-    def from_model(cls, model: WidgetDataModel):
-        return cls(model)
+    def update_model(self, model: WidgetDataModel):
+        self.setHtml(model.value)
 
     def to_model(self) -> WidgetDataModel:
-        return self._model.model_copy()
+        return WidgetDataModel(value=self.toHtml(), type="text.html")
 
 @register_frontend_widget("cannot-save")
 class MyNonSavableEdit(QtW.QTextEdit):
-    @classmethod
-    def from_model(cls, model: WidgetDataModel):
-        self = cls()
+    def update_model(self, model: WidgetDataModel):
         self.setPlainText(model.value)
-        return self
 
 interf = get_plugin_interface("tools/my_menu")
 
@@ -62,7 +50,7 @@ def to_basic_widget(model: WidgetDataModel) -> WidgetDataModel:
 
 def main():
     ui = new_window(plugins=[interf])
-    ui.add_data("<i>Text</i>", type="html", title="test window")
+    ui.add_data("<i>Text</i>", type="text.html", title="test window")
     ui.show(run=True)
 
 if __name__ == "__main__":

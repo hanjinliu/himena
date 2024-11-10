@@ -7,9 +7,8 @@ from himena.qt import register_frontend_widget
 from himena.types import WidgetDataModel
 
 class MyNDViewer(NDViewer):
-    @classmethod
-    def from_model(cls, model: WidgetDataModel):
-        return cls(model.value)
+    def update_model(self, model: WidgetDataModel):
+        return self.set_data(model.value)
 
 register_frontend_widget(StandardTypes.IMAGE, MyNDViewer)
 

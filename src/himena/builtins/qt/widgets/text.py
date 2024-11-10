@@ -461,9 +461,7 @@ class QDefaultTextEdit(QtW.QWidget):
     def setFocus(self):
         self._main_text_edit.setFocus()
 
-    @classmethod
-    def from_model(cls, model: WidgetDataModel) -> QDefaultTextEdit:
-        self = cls()
+    def update_model(self, model: WidgetDataModel[str]):
         self.initPlainText(model.value)
         lang = None
         spaces = 4
@@ -485,7 +483,7 @@ class QDefaultTextEdit(QtW.QWidget):
             self._footer._language_combobox.setCurrentText(lang)
             self._footer._emit_language_changed()
         self._footer._tab_spaces_combobox.setCurrentText(str(spaces))
-        return self
+        return None
 
     def to_model(self) -> WidgetDataModel[str]:
         cursor = self._main_text_edit.textCursor()
@@ -526,13 +524,9 @@ class QDefaultTextEdit(QtW.QWidget):
 
 
 class QDefaultHTMLEdit(QDefaultTextEdit):
-    @classmethod
-    def from_model(cls, model: WidgetDataModel) -> QDefaultTextEdit:
-        self = cls()
+    def update_model(self, model: WidgetDataModel[str]):
         self.initPlainText(model.value)
-        if model.source is not None:
-            self.setObjectName(model.source.name)
-            # set default language
+        # set default language
         self._footer._language_combobox.setCurrentText("HTML")
         self._footer._emit_language_changed()
         return self

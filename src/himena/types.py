@@ -83,11 +83,7 @@ class WidgetDataModel(GenericModel[_T]):
     """
 
     value: _T = Field(..., description="Internal value.")
-    method: MethodDescriptor | None = Field(
-        default=None,
-        description="Method descriptor.",
-    )
-    type: str | None = Field(default=None, description="Type of the internal data.")
+    type: str = Field(..., description="Type of the internal data.")
     title: str | None = Field(
         default=None,
         description="Default title for the widget.",
@@ -104,6 +100,10 @@ class WidgetDataModel(GenericModel[_T]):
         default=None,
         description="Additional data that may be used for specific widgets.",
     )  # fmt: skip
+    method: MethodDescriptor | None = Field(
+        default=None,
+        description="Method descriptor.",
+    )
 
     def with_value(self, value: _U, type: str | None = None) -> "WidgetDataModel[_U]":
         update = {"value": value}
@@ -323,7 +323,8 @@ class Parametric(Generic[_T]):
         def _call_and_process(**kwargs):
             model = self(**kwargs)
             cls = ui._backend_main_window._pick_widget_class(model.type)
-            widget = cls.from_model(model)
+            widget = cls()
+            widget.update_model(model)  # type: ignore
             rect = param_widget.rect
             i_tab, i_win = param_widget._find_me(ui)
             del ui.tabs[i_tab][i_win]
