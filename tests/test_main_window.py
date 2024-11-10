@@ -37,6 +37,7 @@ def test_type_map_and_session(tmpdir, ui: MainWindow, sample_dir):
     assert ui.tabs[1][1].rect == (80, 40, 160, 130)
 
 def test_command_palette_events(ui: MainWindowQt, qtbot: QtBot):
+    ui.show()
     ui.exec_action("show-command-palette")
     qmain: QMainWindow = ui._backend_main_window
     qtbot.add_widget(qmain)

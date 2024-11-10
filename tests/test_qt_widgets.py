@@ -57,16 +57,16 @@ def test_subwindow_drag(ui: MainWindow, qtbot: QtBot):
         pos=point - QtCore.QPoint(2, 2),
     )
     qtbot.mousePress(
-        qmain,
+        qwin,
         QtCore.Qt.MouseButton.LeftButton,
         pos=point - QtCore.QPoint(2, 2),
     )
     qtbot.mouseMove(
-        qmain,
+        qwin,
         pos=point + QtCore.QPoint(15, 15)
     )
     qtbot.mouseRelease(
-        qmain,
+        qwin,
         QtCore.Qt.MouseButton.LeftButton,
         pos=point + QtCore.QPoint(15, 15),
     )

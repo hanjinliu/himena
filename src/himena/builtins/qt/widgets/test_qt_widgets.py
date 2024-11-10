@@ -98,3 +98,31 @@ def test_image_view(qtbot: QtBot):
         value=rng.random((10, 5, 3, 100, 100), dtype=np.float32), type="image"
     )
     image_view = QDefaultImageView.from_model(model)
+
+
+def test_find_text(qtbot: QtBot):
+    model = WidgetDataModel(value="a\nb\nc\nbc", type="text")
+    text_edit = QDefaultTextEdit.from_model(model)
+    qtbot.addWidget(text_edit)
+    qtbot.keyClick(text_edit, Qt.Key.Key_F, modifier=_Ctrl)
+    finder = text_edit._main_text_edit._finder_widget
+    assert finder is not None
+    finder._line_edit.setText("b")
+    qtbot.keyClick(finder, Qt.Key.Key_Enter)
+    qtbot.keyClick(finder, Qt.Key.Key_Enter, modifier=Qt.KeyboardModifier.ShiftModifier)
+    finder._btn_next.click()
+    finder._btn_prev.click()
+
+
+def test_find_table(qtbot: QtBot):
+    model = WidgetDataModel(value=[["a", "b"], ["c", "bc"]], type="table")
+    table_widget = QDefaultTableWidget.from_model(model)
+    qtbot.addWidget(table_widget)
+    qtbot.keyClick(table_widget, Qt.Key.Key_F, modifier=_Ctrl)
+    finder = table_widget._finder_widget
+    assert finder is not None
+    finder._line_edit.setText("b")
+    qtbot.keyClick(finder, Qt.Key.Key_Enter)
+    qtbot.keyClick(finder, Qt.Key.Key_Enter, modifier=Qt.KeyboardModifier.ShiftModifier)
+    finder._btn_next.click()
+    finder._btn_prev.click()

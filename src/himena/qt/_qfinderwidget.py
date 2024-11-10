@@ -10,7 +10,7 @@ _X = TypeVar("_W", bound=QtW.QWidget)
 
 
 class _QFinderBaseWidget(QtW.QDialog, Generic[_X]):
-    def __init__(self, parent: _W | None = None):
+    def __init__(self, parent: _W):
         super().__init__(parent, Qt.WindowType.SubWindow)
         _layout = QtW.QHBoxLayout(self)
         _layout.setContentsMargins(2, 2, 2, 2)
@@ -23,23 +23,38 @@ class _QFinderBaseWidget(QtW.QDialog, Generic[_X]):
         _layout.addWidget(_line)
         _layout.addWidget(_btn_prev)
         _layout.addWidget(_btn_next)
-        _btn_prev.clicked.connect(self._find_prev)
-        _btn_next.clicked.connect(self._find_next)
-        _line.textChanged.connect(self._find_next)
+        _btn_prev.clicked.connect(self._btn_prev_clicked)
+        _btn_next.clicked.connect(self._btn_next_clicked)
+        _line.textChanged.connect(self._find_update)
         self._line_edit = _line
+        self._btn_prev = _btn_prev
+        self._btn_next = _btn_next
+        self._parent_widget = parent
 
     # fmt: off
     if TYPE_CHECKING:
         def parentWidget(self) -> _W: ...
     # fmt: on
 
-    def lineEdit(self) -> QtW.QLineEdit:
-        return self._line_edit
+    def show(self):
+        super().show()
+        self._line_edit.setFocus()
+
+    def _btn_prev_clicked(self):
+        self._find_prev()
+        self._line_edit.setFocus()
+
+    def _btn_next_clicked(self):
+        self._find_next()
+        self._line_edit.setFocus()
 
     def _find_prev(self):
         raise NotImplementedError
 
     def _find_next(self):
+        raise NotImplementedError
+
+    def _find_update(self):
         raise NotImplementedError
 
     def keyPressEvent(self, a0: QtGui.QKeyEvent) -> None:
@@ -78,40 +93,58 @@ class QFinderWidget(_QFinderBaseWidget[_W]):
             qtext.moveCursor(QtGui.QTextCursor.MoveOperation.Start)
             qtext.find(text)
 
+    _find_update = _find_next
+
 
 class QTableFinderWidget(_QFinderBaseWidget[QtW.QTableWidget]):
     def _find_prev(self):
         line_text = self._line_edit.text()
         if line_text == "":
             return
-        qtable = self.parentWidget()
-        index = qtable.currentIndex()
-        i = index.row() * qtable.columnCount() + index.column()
-        nr, nc = qtable.rowCount(), qtable.columnCount()
+        i, nr, nc = self._get_current_state()
+        i -= 1
 
         for ith in itertools.chain(range(i, -1, -1), range(nr * nc - 1, i, -1)):
-            r, c = divmod(ith, nc)
-            text = qtable.item(r, c).text()
-            if text == "":
-                continue
-            if line_text in text:
-                qtable.setCurrentCell(r, c)
+            if self._run_until_found(line_text, ith, nc):
                 return
 
     def _find_next(self):
         line_text = self._line_edit.text()
         if line_text == "":
             return
-        qtable = self.parentWidget()
+        i, nr, nc = self._get_current_state()
+        i += 1
+
+        for ith in itertools.chain(range(i, nr * nc), range(i)):
+            if self._run_until_found(line_text, ith, nc):
+                return
+
+    def _find_update(self):
+        line_text = self._line_edit.text()
+        if line_text == "":
+            return
+        i, nr, nc = self._get_current_state()
+
+        for ith in itertools.chain(range(i, nr * nc), range(i)):
+            if self._run_until_found(line_text, ith, nc):
+                return
+
+    def _get_current_state(self) -> tuple[int, int, int]:
+        qtable = self._parent_widget
         index = qtable.currentIndex()
         i = index.row() * qtable.columnCount() + index.column()
         nr, nc = qtable.rowCount(), qtable.columnCount()
+        return i, nr, nc
 
-        for ith in itertools.chain(range(i, nr * nc), range(i)):
-            r, c = divmod(ith, nc)
-            text = qtable.item(r, c).text()
-            if text == "":
-                continue
-            if line_text in text:
-                qtable.setCurrentCell(r, c)
-                return
+    def _run_until_found(self, line_text: str, ith: int, nc: int) -> bool:
+        r, c = divmod(ith, nc)
+        item = self._parent_widget.item(r, c)
+        if item is None:
+            return False
+        text = self._parent_widget.item(r, c).text()
+        if text == "":
+            return False
+        if line_text in text:
+            self._parent_widget.setCurrentCell(r, c)
+            return True
+        return False

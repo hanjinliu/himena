@@ -38,3 +38,9 @@ QCommandLabel:hover {
 QClickableLabel {
     color: $(highlight-3);
 }
+
+QToggleSwitch {
+    qproperty-onColor: $(highlight-2);
+    qproperty-offColor: $(background-2);
+    qproperty-handleColor: $(background-2);
+}

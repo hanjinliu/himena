@@ -371,7 +371,6 @@ class QMainTextEdit(QtW.QPlainTextEdit):
         if self._finder_widget is None:
             self._finder_widget = QFinderWidget(self)
         self._finder_widget.show()
-        self._finder_widget.lineEdit().setFocus()
         self._align_finder()
 
     def resizeEvent(self, event):
