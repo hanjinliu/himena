@@ -9,6 +9,7 @@ import weakref
 
 from psygnal import Signal
 from himena import anchor as _anchor
+from himena import io
 from himena.types import BackendInstructions, WindowState, WidgetDataModel, WindowRect
 from himena._descriptors import (
     SaveBehavior,
@@ -173,6 +174,12 @@ class SubWindow(WidgetWrapper[_W]):
         if model.method is None:
             model.method = self._widget_data_model_method
         return model
+
+    def write_model(self, path: str | Path, plugin: str | None = None) -> None:
+        """Write the widget data to a file."""
+        io.write(self.to_model(), path, plugin=plugin)
+        self.update_default_save_path(path)
+        return None
 
     def _set_state(self, value: WindowState, inst: BackendInstructions | None = None):
         if inst is None:

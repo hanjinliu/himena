@@ -9,7 +9,7 @@ from app_model.types import (
 )
 from himena.consts import StandardTypes, MenuId
 from himena.widgets import MainWindow
-from himena.io import get_readers, get_writers, ReaderTuple
+from himena import io
 from himena.types import (
     ClipboardDataModel,
     WidgetDataModel,
@@ -28,7 +28,7 @@ SAVE_SCR_SHOT = "01_save-screenshot"
 EXIT_GROUP = "99_exit"
 
 
-def _read_and_update_source(reader: ReaderTuple, source: Path) -> WidgetDataModel:
+def _read_and_update_source(reader: io.ReaderTuple, source: Path) -> WidgetDataModel:
     """Update the `method` attribute if it is not set."""
     model = reader.read(source)
     if model.method is None:
@@ -53,8 +53,7 @@ def open_file_from_dialog(ui: MainWindow) -> list[WidgetDataModel]:
         return None
     reader_path_sets: list[tuple[ReaderFunction, Any]] = []
     for file_path in file_paths:
-        readers_matched = get_readers(file_path)
-        reader_path_sets.append((readers_matched[0], file_path))
+        reader_path_sets.append((io.pick_reader(file_path), file_path))
     out = [
         _read_and_update_source(reader, file_path)
         for reader, file_path in reader_path_sets
@@ -75,8 +74,7 @@ def open_folder_from_dialog(ui: MainWindow) -> WidgetDataModel:
     file_path = ui.exec_file_dialog(mode="d")
     if file_path is None:
         return None
-    readers = get_readers(file_path)
-    out = _read_and_update_source(readers[0], file_path)
+    out = _read_and_update_source(io.pick_reader(file_path), file_path)
     ui._recent_manager.append_recent_files([file_path])
     ui._recent_manager.update_menu()
     return out
@@ -97,8 +95,7 @@ def save_from_dialog(ui: MainWindow) -> None:
     """Save (overwrite) the current sub-window as a file."""
     fd, sub_win = ui._provide_file_output()
     if save_path := sub_win.save_behavior.get_save_path(ui, fd):
-        writers = get_writers(fd)
-        writers[0](fd, save_path)  # run save function
+        io.write(fd, save_path)
         sub_win.update_default_save_path(save_path)
     return None
 
@@ -115,8 +112,7 @@ def save_as_from_dialog(ui: MainWindow) -> None:
     """Save the current sub-window as a new file."""
     fd, sub_win = ui._provide_file_output()
     if save_path := sub_win.save_behavior.get_save_path(ui, fd):
-        writers = get_writers(fd)
-        writers[0](fd, save_path)
+        io.write(fd, save_path)
         sub_win.update_default_save_path(save_path)
     return None
 

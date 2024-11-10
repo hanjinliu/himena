@@ -3,6 +3,7 @@ import pytest
 from pathlib import Path
 from qtpy.QtWidgets import QApplication
 from app_model import Application
+from pytestqt.qtbot import QtBot
 
 @pytest.fixture(scope="session", autouse=True)
 def patch_user_data_dir(request: pytest.FixtureRequest):
@@ -13,12 +14,13 @@ def patch_user_data_dir(request: pytest.FixtureRequest):
             yield
 
 @pytest.fixture
-def ui():
+def ui(qtbot: QtBot):
     from himena import new_window
 
     app = "test-app"
     window = new_window(app=app)
     window._instructions = window._instructions.updated(confirm=False)
+    qtbot.add_widget(window._backend_main_window)
     try:
         yield window
     finally:

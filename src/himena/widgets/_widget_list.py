@@ -8,7 +8,7 @@ import weakref
 
 from psygnal import Signal
 from himena._descriptors import LocalReaderMethod
-from himena.io import get_readers
+from himena import io
 from himena.types import NewWidgetBehavior, WidgetDataModel, WindowState, WindowRect
 from himena.widgets._wrapper import _HasMainWindowRef, SubWindow, DockWidget
 
@@ -212,14 +212,17 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
             sub_win._update_widget_data_model_method(method)
         return sub_win
 
-    def read_file(self, file_path: str | Path | list[str | Path]) -> SubWindow[_W]:
+    def read_file(
+        self,
+        file_path: str | Path | list[str | Path],
+        plugin: str | None = None,
+    ) -> SubWindow[_W]:
         """Read local file(s) and open as a new sub-window in this tab."""
         if hasattr(file_path, "__iter__") and not isinstance(file_path, (str, Path)):
             fp = [Path(f) for f in file_path]
         else:
             fp = Path(file_path)
-        readers = get_readers(fp)
-        reader = readers[0]
+        reader = io.pick_reader(fp, plugin=plugin)
         model = reader.read(fp)._with_source(source=fp, plugin=reader.plugin)
         out = self.add_data_model(model)
         main = self._main_window()._himena_main_window
