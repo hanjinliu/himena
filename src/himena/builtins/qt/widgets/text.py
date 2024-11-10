@@ -6,7 +6,8 @@ from qtpy import QtGui, QtCore
 from superqt import QSearchableComboBox
 
 from himena.consts import StandardTypes, StandardSubtypes
-from himena.types import TextFileMeta, WidgetDataModel
+from himena.types import WidgetDataModel
+from himena.model_meta import TextMeta
 from himena.qt._qt_consts import MonospaceFontFamily
 
 from himena._utils import OrderedSet, lru_cache
@@ -466,9 +467,14 @@ class QDefaultTextEdit(QtW.QWidget):
         self.initPlainText(model.value)
         lang = None
         spaces = 4
-        if isinstance(model.additional_data, TextFileMeta):
+        if isinstance(model.additional_data, TextMeta):
             lang = model.additional_data.language
             spaces = model.additional_data.spaces
+            if sel := model.additional_data.selection:
+                cursor = self._main_text_edit.textCursor()
+                cursor.setPosition(sel[0])
+                cursor.setPosition(sel[1], QtGui.QTextCursor.MoveMode.KeepAnchor)
+                self._main_text_edit.setTextCursor(cursor)
         if model.source is None:
             self._main_text_edit.document().setModified(True)
         elif lang is None:
@@ -482,13 +488,18 @@ class QDefaultTextEdit(QtW.QWidget):
         return self
 
     def to_model(self) -> WidgetDataModel[str]:
+        cursor = self._main_text_edit.textCursor()
+        font = self._main_text_edit.font()
         return WidgetDataModel(
             value=self.toPlainText(),
             type=self.model_type(),
             extension_default=".txt",
-            additional_data=TextFileMeta(
+            additional_data=TextMeta(
                 language=self._footer._language_combobox.currentText(),
                 spaces=int(self._footer._tab_spaces_combobox.currentText()),
+                selection=(cursor.selectionStart(), cursor.selectionEnd()),
+                font_family=font.family(),
+                font_size=font.pointSizeF(),
             ),
         )
 

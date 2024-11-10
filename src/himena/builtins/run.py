@@ -1,7 +1,8 @@
 """Run actions."""
 
 from himena.plugins import get_plugin_interface
-from himena.types import WidgetDataModel, TextFileMeta
+from himena.types import WidgetDataModel
+from himena.model_meta import TextMeta
 from himena.consts import StandardTypes
 
 __himena_plugin__ = get_plugin_interface("tools")
@@ -14,7 +15,7 @@ __himena_plugin__ = get_plugin_interface("tools")
 def run_script(model: WidgetDataModel[str]):
     """Run a Python script."""
     script = model.value
-    if isinstance(model.additional_data, TextFileMeta):
+    if isinstance(model.additional_data, TextMeta):
         if model.additional_data.language.lower() == "python":
             exec(script)
         else:

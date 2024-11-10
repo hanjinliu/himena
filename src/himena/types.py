@@ -368,10 +368,3 @@ class BackendInstructions(BaseModel):
 
     def updated(self, **kwargs) -> "BackendInstructions":
         return self.model_copy(update=kwargs)
-
-
-class TextFileMeta(BaseModel):
-    """Preset for describing a text file metadata."""
-
-    language: str | None = Field(None, description="Language of the text file.")
-    spaces: int = Field(4, description="Number of spaces for indentation.")

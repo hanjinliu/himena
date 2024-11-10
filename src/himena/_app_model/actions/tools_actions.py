@@ -2,7 +2,8 @@ from typing import Callable
 from app_model.types import KeyBindingRule, KeyCode, KeyMod
 import json
 from himena.consts import MenuId, StandardTypes
-from himena.types import Parametric, WidgetDataModel, TextFileMeta
+from himena.types import Parametric, WidgetDataModel
+from himena.model_meta import TextMeta
 from himena.widgets import MainWindow
 from himena._app_model.actions._registry import ACTIONS, SUBMENUS
 from himena._app_model._context import AppContext as _ctx
@@ -87,13 +88,21 @@ def format_json(model: WidgetDataModel) -> Parametric:
     """Format JSON."""
 
     def format_json_data(indent: int = 2) -> WidgetDataModel[str]:
+        if not isinstance(meta := model.additional_data, TextMeta):
+            meta = TextMeta()
         return WidgetDataModel(
             value=json.dumps(json.loads(model.value), indent=indent),
             type=model.type,
             title=f"{model.title} (formatted)",
             extension_default=".json",
             extensions=model.extensions,
-            additional_data=TextFileMeta(language="JSON", spaces=indent),
+            additional_data=TextMeta(
+                language="JSON",
+                spaces=indent,
+                selection=meta.selection,
+                font_family=meta.font_family,
+                font_size=meta.font_size,
+            ),
         )
 
     return format_json_data
