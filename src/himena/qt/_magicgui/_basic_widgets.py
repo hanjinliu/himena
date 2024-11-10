@@ -158,7 +158,7 @@ class IntEdit(LineEdit):
     def get_value(self) -> int:
         val = super().get_value()
         if val is None and not self._nullable:
-            raise ValueError(f"Must specify a value for {self.label}")
+            raise ValueError(f"Must specify a value for {self.label!r}")
         return val
 
     @LineEdit.value.setter

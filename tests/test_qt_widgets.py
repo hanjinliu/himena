@@ -1,4 +1,5 @@
 from qtpy import QtCore
+from qtpy.QtWidgets import QApplication
 from himena import MainWindow
 from himena.qt._qmain_window import QMainWindow
 from himena.qt._qsub_window import QSubWindow, QSubWindowTitleBar
@@ -52,10 +53,6 @@ def test_subwindow_drag(ui: MainWindow, qtbot: QtBot):
 
     point = qwin.rect().bottomRight()
 
-    qtbot.mouseMove(
-        qwin,
-        pos=point - QtCore.QPoint(2, 2),
-    )
     qtbot.mousePress(
         qwin,
         QtCore.Qt.MouseButton.LeftButton,
@@ -63,14 +60,14 @@ def test_subwindow_drag(ui: MainWindow, qtbot: QtBot):
     )
     qtbot.mouseMove(
         qwin,
-        pos=point + QtCore.QPoint(15, 15)
+        pos=point + QtCore.QPoint(1, 1)
     )
     qtbot.mouseRelease(
         qwin,
         QtCore.Qt.MouseButton.LeftButton,
-        pos=point + QtCore.QPoint(15, 15),
+        pos=point + QtCore.QPoint(1, 1),
     )
-
+    QApplication.processEvents()
     qtbot.mousePress(
         qtitlebar,
         QtCore.Qt.MouseButton.LeftButton,
@@ -78,13 +75,14 @@ def test_subwindow_drag(ui: MainWindow, qtbot: QtBot):
     )
     qtbot.mouseMove(
         qtitlebar,
-        pos=qtitlebar.rect().center() + QtCore.QPoint(30, 0),
+        pos=qtitlebar.rect().center() + QtCore.QPoint(12, 0),
     )
     qtbot.mouseRelease(
         qtitlebar,
         QtCore.Qt.MouseButton.LeftButton,
-        pos=qtitlebar.rect().center() + QtCore.QPoint(30, 0),
+        pos=qtitlebar.rect().center() + QtCore.QPoint(12, 0),
     )
+    QApplication.processEvents()
     qtbot.mousePress(
         qtitlebar,
         QtCore.Qt.MouseButton.LeftButton,
@@ -93,11 +91,12 @@ def test_subwindow_drag(ui: MainWindow, qtbot: QtBot):
     )
     qtbot.mouseMove(
         qtitlebar,
-        pos=qtitlebar.rect().center() + QtCore.QPoint(30, 0),
+        pos=qtitlebar.rect().center() + QtCore.QPoint(12, 0),
     )
     qtbot.mouseRelease(
         qtitlebar,
         QtCore.Qt.MouseButton.LeftButton,
         modifier=QtCore.Qt.KeyboardModifier.ControlModifier,
-        pos=qtitlebar.rect().center() + QtCore.QPoint(30, 0),
+        pos=qtitlebar.rect().center() + QtCore.QPoint(12, 0),
     )
+    QApplication.processEvents()

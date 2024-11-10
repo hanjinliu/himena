@@ -27,6 +27,7 @@ class StandardTypes(SimpleNamespace):
     TEXT = "text"
     TABLE = "table"
     IMAGE = "image"
+    PARAMETERS = "parameters"
 
 
 class StandardSubtypes(SimpleNamespace):

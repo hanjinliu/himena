@@ -32,9 +32,11 @@ def _num_tabs(ui: "MainWindow") -> int:
 
 def _active_window_model_type(ui: "MainWindow") -> str | None:
     if (area := ui.tabs.current()) and (win := area.current()) and win.is_exportable:
-        out = win.to_model().type
+        out = win.model_type()
         if out is None:
-            return None
+            out = win.to_model().type
+            if out is None:
+                return None
         return out.split(".")[0]
     return None
 

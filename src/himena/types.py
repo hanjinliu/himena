@@ -163,9 +163,7 @@ class WidgetDataModel(GenericModel[_T]):
         return [s if s.startswith(".") else f".{s}" for s in v]
 
     def __repr__(self):
-        value_repr = repr(self.value)
-        if len(value_repr) > 24:
-            value_repr = value_repr[:24] + "..."
+        value_repr = f"<{type(self.value).__name__}>"
         if source := self.source:
             source_repr = source.as_posix()
         else:

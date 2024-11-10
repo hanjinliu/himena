@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 from timeit import default_timer as timer
 import logging
 from typing import Callable, Literal, TypeVar, TYPE_CHECKING, cast
@@ -8,7 +9,7 @@ from pathlib import Path
 import app_model
 from qtpy import QtWidgets as QtW, QtGui, QtCore
 from app_model.backends.qt import QModelMainWindow, QModelMenu
-from himena.consts import MenuId
+from himena.consts import MenuId, StandardTypes
 from himena._app_model import _formatter
 from himena.qt._qtab_widget import QTabWidget
 from himena.qt._qsub_window import QSubWindow, QSubWindowArea
@@ -20,6 +21,7 @@ from himena.types import (
     DockArea,
     DockAreaString,
     ClipboardDataModel,
+    WidgetDataModel,
     WindowState,
     WindowRect,
     BackendInstructions,
@@ -504,7 +506,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             raise ValueError(f"Invalid target name {target!r}.")
         return ArrayQImage(qimg)
 
-    def _parametric_widget(self, sig) -> QtW.QWidget:
+    def _parametric_widget(self, sig: inspect.Signature) -> QtW.QWidget:
         from magicgui.widgets import Container, PushButton
 
         container = Container.from_signature(sig)
@@ -519,7 +521,11 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             btn.clicked.connect(_callback)
 
         _LOGGER.info("Created parametric widget for %r", sig)
-        return container.native, connect
+        qwidget = container.native
+        assert isinstance(qwidget, QtW.QWidget)
+        qwidget.to_model = _to_model.__get__(qwidget)
+        qwidget.model_type = _model_type.__get__(qwidget)
+        return qwidget, connect
 
     def _move_focus_to(self, win: QtW.QWidget) -> None:
         win.setFocus()
@@ -527,10 +533,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
 
 def _is_root_menu_id(app: app_model.Application, menu_id: str) -> bool:
-    if menu_id in (
-        MenuId.TOOLBAR,
-        app.menus.COMMAND_PALETTE_ID,
-    ):
+    if menu_id in (MenuId.TOOLBAR, app.menus.COMMAND_PALETTE_ID):
         return False
     return "/" not in menu_id.replace("//", "")
 
@@ -549,3 +552,16 @@ def _ext_to_filter(ext: str) -> str:
         return "*"
     else:
         return f"*.{ext}"
+
+
+def _to_model(self: QtW.QWidget):
+    from magicgui.widgets import Container
+
+    container: Container = self._magic_widget
+    assert isinstance(container, Container)
+    params = container.asdict()
+    return WidgetDataModel(value=params, type=StandardTypes.PARAMETERS)
+
+
+def _model_type(self: QtW.QWidget) -> str:
+    return StandardTypes.PARAMETERS

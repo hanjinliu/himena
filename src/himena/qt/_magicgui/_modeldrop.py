@@ -6,6 +6,7 @@ from magicgui.types import Undefined
 from magicgui.application import use_app
 from magicgui.backends._qtpy.widgets import QBaseValueWidget
 from himena.qt._qmodeldrop import QModelDrop
+from himena.types import WidgetDataModel
 
 
 class QMagicguiModelDrop(QBaseValueWidget):
@@ -22,7 +23,7 @@ class QMagicguiModelDrop(QBaseValueWidget):
         )
 
 
-class ModelDrop(ValueWidget):
+class ModelDrop(ValueWidget[WidgetDataModel]):
     def __init__(self, value=Undefined, **kwargs):
         app = use_app()
         assert app.native
@@ -40,6 +41,12 @@ class ModelDrop(ValueWidget):
             backend_kwargs={"types": types},
             **kwargs,
         )
+
+    def get_value(self) -> WidgetDataModel:
+        out = super().get_value()
+        if out is None and not self._nullable:
+            raise ValueError(f"No model is specified to {self.label!r}.")
+        return out
 
 
 def _assert_str(t):

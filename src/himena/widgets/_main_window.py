@@ -89,9 +89,11 @@ class MainWindow(Generic[_W]):
         return self._backend_main_window._clipboard_data()
 
     @clipboard.setter
-    def clipboard(self, data: ClipboardDataModel) -> None:
+    def clipboard(self, data: str | ClipboardDataModel) -> None:
         """Set the clipboard data."""
-        if not isinstance(data, ClipboardDataModel):
+        if isinstance(data, str):
+            data = ClipboardDataModel(data, type="text")
+        elif not isinstance(data, ClipboardDataModel):
             raise ValueError("Clipboard data must be a ClipboardDataModel instance.")
         self._backend_main_window._set_clipboard_data(data)
         return None
@@ -107,7 +109,7 @@ class MainWindow(Generic[_W]):
         return self.tabs[n_tab]
 
     def window_for_id(self, identifier: int) -> SubWindow[_W] | None:
-        """Retrieve a widget by its identifier."""
+        """Retrieve a sub-window by its identifier."""
         for win in self.iter_windows():
             if win._identifier == identifier:
                 return win

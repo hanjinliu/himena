@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from himena.io import register_writer_provider
 from himena.types import WidgetDataModel
 from himena.consts import StandardTypes, BasicTextFileTypes, ConventionalTextFileNames
@@ -104,6 +104,14 @@ def _write_image(model: WidgetDataModel[np.ndarray], path: Path) -> None:
     return None
 
 
+def _write_parameters(model: WidgetDataModel[dict[str, Any]], path: Path) -> None:
+    """Write parameters to a json file."""
+    import json
+
+    with open(path, "w") as f:
+        json.dump(model.value, f)
+
+
 @register_writer_provider
 def default_writer_provider(model: WidgetDataModel):
     """Get default writer."""
@@ -115,5 +123,7 @@ def default_writer_provider(model: WidgetDataModel):
         return _write_csv
     elif model.is_subtype_of(StandardTypes.IMAGE):
         return _write_image
+    elif model.is_subtype_of(StandardTypes.PARAMETERS):
+        return _write_parameters
     else:
         return None
