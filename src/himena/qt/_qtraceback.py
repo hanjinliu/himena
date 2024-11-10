@@ -93,7 +93,7 @@ class QtErrorMessageBox(QtW.QMessageBox):
         self = cls(type(e).__name__, e, parent)
         self.exec_()
 
-    def _get_traceback(self):
+    def _get_traceback(self) -> str:
         if self._exc is None:
             import traceback
 

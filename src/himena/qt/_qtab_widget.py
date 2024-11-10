@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import sys
-from typing import Iterator
 from qtpy import QtWidgets as QtW
 from qtpy import QtCore, QtGui
 from himena.qt._qclickable_label import QClickableLabel
@@ -46,6 +45,7 @@ class QTabWidget(QtW.QTabWidget):
         self.setTabBar(self._tabbar)
         self._line_edit = QRenameLineEdit(self)
         self._current_edit_index = None
+        self._startup_widget: QStartupWidget | None = None
 
         @self._line_edit.rename_requested.connect
         def _(new_name: str):
@@ -84,7 +84,7 @@ class QTabWidget(QtW.QTabWidget):
             self.setTabBarAutoHide(False)
         widget = QSubWindowArea()
         self.addTab(widget, tab_name)
-        widget.subWindowActivated.connect(lambda: self.newWindowActivated.emit())
+        widget.subWindowActivated.connect(self._emit_new_window_activated)
         return widget
 
     def remove_tab_area(self, index: int) -> None:
@@ -95,18 +95,15 @@ class QTabWidget(QtW.QTabWidget):
             self._add_startup_widget()
         return None
 
+    def _emit_new_window_activated(self) -> None:
+        self.newWindowActivated.emit()
+
     def _add_startup_widget(self):
         self.addTab(self._startup_widget, ".welcome")
         self.setTabBarAutoHide(True)
 
     def _is_startup_only(self) -> bool:
         return self.count() == 1 and self.widget(0) == self._startup_widget
-
-    def iter_widgets(self) -> Iterator[QtW.QWidget]:
-        """Iterate over all widgets in the tab widget."""
-        for idx in self.count():
-            area = self.widget_area(idx)
-            yield from area.iter_widgets()
 
     def mousePressEvent(self, event: QtGui.QMouseEvent) -> None:
         self._line_edit.setHidden(True)

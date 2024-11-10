@@ -177,7 +177,7 @@ def unset_anchor(ui: MainWindow) -> None:
 @ACTIONS.append_from_fn(
     id="anchor-window-top-left",
     title="Anchor window to top-left corner",
-    menus=[MenuId.WINDOW_ALIGN],
+    menus=[MenuId.WINDOW_ANCHOR],
     enablement=_ctx.num_sub_windows > 0,
 )
 def anchor_at_top_left(ui: MainWindow) -> None:
@@ -189,7 +189,7 @@ def anchor_at_top_left(ui: MainWindow) -> None:
 @ACTIONS.append_from_fn(
     id="anchor-window-top-right",
     title="Anchor window to top-right corner",
-    menus=[MenuId.WINDOW_ALIGN],
+    menus=[MenuId.WINDOW_ANCHOR],
     enablement=_ctx.num_sub_windows > 0,
 )
 def anchor_at_top_right(ui: MainWindow) -> None:
@@ -201,7 +201,7 @@ def anchor_at_top_right(ui: MainWindow) -> None:
 @ACTIONS.append_from_fn(
     id="anchor-window-bottom-left",
     title="Anchor window to bottom-left corner",
-    menus=[MenuId.WINDOW_ALIGN],
+    menus=[MenuId.WINDOW_ANCHOR],
     enablement=_ctx.num_sub_windows > 0,
 )
 def anchor_at_bottom_left(ui: MainWindow) -> None:
@@ -213,7 +213,7 @@ def anchor_at_bottom_left(ui: MainWindow) -> None:
 @ACTIONS.append_from_fn(
     id="anchor-window-bottom-right",
     title="Anchor window to bottom-right corner",
-    menus=[MenuId.WINDOW_ALIGN],
+    menus=[MenuId.WINDOW_ANCHOR],
     enablement=_ctx.num_sub_windows > 0,
 )
 def anchor_at_bottom_right(ui: MainWindow) -> None:

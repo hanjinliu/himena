@@ -6,6 +6,8 @@ from qtpy.QtCore import Qt
 from pathlib import Path
 from pytestqt.qtbot import QtBot
 
+from himena.types import WidgetDataModel
+
 def test_type_map_and_session(tmpdir, ui: MainWindow, sample_dir):
     tab0 = ui.add_tab()
     tab0.read_file(sample_dir / "text.txt").update(rect=(30, 40, 120, 150))
@@ -48,3 +50,25 @@ def test_command_palette_events(ui: MainWindowQt, qtbot: QtBot):
     qtbot.keyClick(qline, Qt.Key.Key_Up)
     qtbot.keyClick(qline, Qt.Key.Key_PageUp)
     qtbot.keyClick(qline, Qt.Key.Key_Escape)
+
+def test_goto_widget(ui: MainWindowQt, qtbot: QtBot):
+    ui.show()
+    tab0 = ui.add_tab(title="Tab 0")
+    tab0.add_data_model(WidgetDataModel(value="a", type="text", title="A"))
+    tab0.add_data_model(WidgetDataModel(value="b", type="text", title="B"))
+    tab1 = ui.add_tab(title="Tab 1")
+    tab1.add_data_model(WidgetDataModel(value="c", type="text", title="C"))
+    tab1.add_data_model(WidgetDataModel(value="d", type="text", title="D"))
+    tab1.add_data_model(WidgetDataModel(value="e", type="text", title="E"))
+
+    ui.exec_action("go-to-window")
+    qmain: QMainWindow = ui._backend_main_window
+    qmain._goto_widget.show()
+    qtbot.keyClick(qmain._goto_widget, Qt.Key.Key_Down)
+    qtbot.keyClick(qmain._goto_widget, Qt.Key.Key_Up)
+    qtbot.keyClick(qmain._goto_widget, Qt.Key.Key_Right)
+    qtbot.keyClick(qmain._goto_widget, Qt.Key.Key_Left)
+    qtbot.keyClick(qmain._goto_widget, Qt.Key.Key_Down)
+    qtbot.keyClick(qmain._goto_widget, Qt.Key.Key_Return)
+    ui.exec_action("go-to-window")
+    qtbot.keyClick(qmain._goto_widget, Qt.Key.Key_Escape)
