@@ -18,7 +18,7 @@ class TableMeta(BaseModel):
     current_position: list[int] | None = Field(
         None, description="Current position of (row, columns)."
     )
-    selections: list[tuple[slice, slice]] = Field(
+    selections: list[tuple[tuple[int, int], tuple[int, int]]] = Field(
         default_factory=list,
         description="Selections of the table. Each selection is a pair of slices.",
     )

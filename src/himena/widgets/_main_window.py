@@ -23,7 +23,7 @@ from himena.session import from_yaml
 from himena.widgets._backend import BackendMainWindow
 from himena.widgets._hist import ActivationHistory
 from himena.widgets._widget_list import TabList, TabArea, DockWidgetList
-from himena.widgets._wrapper import SubWindow, DockWidget
+from himena.widgets._wrapper import ParametricWidget, SubWindow, DockWidget
 
 _W = TypeVar("_W")  # backend widget type
 _T = TypeVar("_T")  # internal data type
@@ -228,14 +228,14 @@ class MainWindow(Generic[_W]):
         _, tabarea = self._current_or_new_tab()
         return tabarea.add_data_model(model_data)
 
-    def add_parametric_element(
+    def add_function(
         self,
         func: Callable[..., _T],
         *,
         title: str | None = None,
-    ) -> SubWindow[_W]:
+    ) -> ParametricWidget[_W]:
         """
-        Add a sub-window that generates a model from a function.
+        Add a function as a parametric sub-window.
 
         The input function must return a `WidgetDataModel` instance, which can be
         interpreted by the application.
@@ -257,10 +257,26 @@ class MainWindow(Generic[_W]):
             title = fn.name
         sig = fn.get_signature()
         back_main = self._backend_main_window
-        back_param_widget, connection = back_main._parametric_widget(sig)
-        param_widget = self.add_widget(back_param_widget, title=title)
+        fn_widget = back_main._signature_to_widget(sig)
+        param_widget = self.add_parametric_widget(fn_widget, title=title)
+        param_widget.btn_clicked.connect(fn._widget_callback)
+        _LOGGER.info("Created parametric widget for %r", sig)
+        return param_widget
 
-        connection(fn.make_connection(self, param_widget))
+    def add_parametric_widget(
+        self,
+        widget: _W,
+        *,
+        title: str | None = None,
+    ) -> ParametricWidget[_W]:
+        if not hasattr(widget, "get_params"):
+            raise TypeError("Parametric widget must have `get_params` method.")
+        widget0 = self._backend_main_window._process_parametric_widget(widget)
+        _, area = self._current_or_new_tab()
+        param_widget = area.add_parametric_widget(widget0, title=title)
+        self._backend_main_window._connect_parametric_widget_events(
+            param_widget, widget0
+        )
         return param_widget
 
     def read_file(
@@ -303,7 +319,11 @@ class MainWindow(Generic[_W]):
                 raise ValueError(f"Action {id!r} does not accept parameters.")
             if tab := self.tabs.current():
                 param_widget = tab[-1]
-                result.make_connection(self, param_widget)(**with_params)
+                if not isinstance(param_widget, ParametricWidget):
+                    raise ValueError(
+                        f"Parametric widget expected but got {param_widget}."
+                    )
+                result._callback_with_params(param_widget, with_params)
             else:
                 raise RuntimeError("Unreachable code.")
         return None
@@ -397,7 +417,7 @@ class MainWindow(Generic[_W]):
         if i_tab is None or i_win is None or target_index == i_tab:
             return None
         title = self.tabs[i_tab][i_win].title
-        win = self.tabs[i_tab].pop(i_win)
+        win = self.tabs[i_tab]._pop_no_emit(i_win)
         old_rect = win.rect
         if target_index < 0:
             self.add_tab()

@@ -63,12 +63,16 @@ def filter_text(model: WidgetDataModel[str]) -> Parametric[str]:
             for line in model.value.splitlines()
             if _include(line) and not _exclude(line)
         )
+        if isinstance(model.additional_data, TextMeta):
+            meta = model.additional_data.model_copy(update={"selection": None})
+        else:
+            meta = TextMeta()
         return WidgetDataModel(
             value=new_text,
             type=model.type,
             title=f"{model.title} (filtered)",
             extensions=model.extensions,
-            additional_data=model.additional_data,
+            additional_data=meta,
         )
 
     return filter_text_data

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Generic, TYPE_CHECKING, TypeVar
+from typing import Any, Generic, TYPE_CHECKING, TypeVar
 from uuid import uuid4
 import weakref
 
@@ -89,6 +89,9 @@ class SubWindow(WidgetWrapper[_W]):
         super().__init__(widget, main_window=main_window, identifier=identifier)
         self._save_behavior: SaveBehavior = SaveToNewPath()
         self._widget_data_model_method: MethodDescriptor = ProgramaticMethod()
+        self._child_windows: weakref.WeakSet[SubWindow[_W]] = weakref.WeakSet()
+        self._alive = False
+        self.closed.connect(self._close_callback)
 
     def __repr__(self) -> str:
         return (
@@ -147,6 +150,11 @@ class SubWindow(WidgetWrapper[_W]):
         """Whether the content of the widget has been modified."""
         is_modified_func = getattr(self.widget, "is_modified", None)
         return callable(is_modified_func) and is_modified_func()
+
+    @property
+    def is_alive(self) -> bool:
+        """Whether the sub-window is present in a main window."""
+        return self._alive
 
     def size_hint(self) -> tuple[int, int] | None:
         """Size hint of the sub-window."""
@@ -236,6 +244,18 @@ class SubWindow(WidgetWrapper[_W]):
             self.anchor = anchor
         return self
 
+    def add_child(
+        self,
+        widget: _W,
+        *,
+        title: str | None = None,
+    ) -> SubWindow[_W]:
+        main = self._main_window()._himena_main_window
+        i_tab, _ = self._find_me(main)
+        child = main.tabs[i_tab].add_widget(widget, title=title)
+        self._child_windows.add(child)
+        return child
+
     def _anchor_from_str(sub_win: SubWindow[_W], anchor: str):
         rect = sub_win.rect
         w0, h0 = sub_win._main_window()._area_size()
@@ -266,6 +286,58 @@ class SubWindow(WidgetWrapper[_W]):
             return None
         i_tab, i_win = self._find_me(main)
         del main.tabs[i_tab][i_win]
+
+    def _close_all_children(self, main: MainWindow) -> None:
+        for child in self._child_windows:
+            child._close_all_children(main)
+            child._close_me(main, confirm=False)
+
+    def _close_callback(self):
+        main = self._main_window()._himena_main_window
+        self._close_all_children(main)
+        self._alive = False
+
+
+class ParametricWidget(SubWindow[_W]):
+    btn_clicked = Signal(object)  # emit self
+    params_changed = Signal(object)
+
+    def get_params(self) -> dict[str, Any]:
+        """Get the parameters of the widget."""
+        params = self.widget.get_params()
+        if not isinstance(params, dict):
+            raise TypeError(
+                f"`get_param` of {self.widget!r} must return a dict, got {type(params)}"
+            )
+        return params
+
+    def _emit_btn_clicked(self) -> None:
+        return self.btn_clicked.emit(self)
+
+    def _emit_param_changed(self) -> None:
+        return self.params_changed.emit(self)
+
+    def _process_model_output(self, model: WidgetDataModel) -> SubWindow[_W]:
+        ui = self._main_window()._himena_main_window
+        cls = ui._backend_main_window._pick_widget_class(model.type)
+        widget = cls()  # the internal widget
+        widget.update_model(model)  # type: ignore
+        i_tab, i_win = self._find_me(ui)
+        del ui.tabs[i_tab][i_win]
+        result_widget = ui.tabs[i_tab].add_widget(
+            widget, title=model.title, autosize=False
+        )
+        rect = self.rect
+        if size_hint := result_widget.size_hint():
+            new_rect = (rect.left, rect.top, size_hint[0], size_hint[1])
+        else:
+            new_rect = rect
+        result_widget.rect = new_rect
+        return result_widget
+
+    def _process_other_output(self, return_value):
+        ui = self._main_window()._himena_main_window
+        ui.model_app.injection_store.process(return_value)
 
 
 class DockWidget(WidgetWrapper[_W]):

@@ -11,13 +11,12 @@ from himena.types import (
     DockArea,
     DockAreaString,
     WindowRect,
-    Connection,
     BackendInstructions,
 )
 
 if TYPE_CHECKING:
     from himena.widgets._main_window import MainWindow
-    from himena.widgets._wrapper import SubWindow, DockWidget
+    from himena.widgets._wrapper import SubWindow, DockWidget, ParametricWidget
     import numpy as np
     from numpy.typing import NDArray
 
@@ -185,7 +184,11 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     ):
         raise NotImplementedError
 
-    def _connect_window_events(self, sub: SubWindow, backend: _W):
+    def _connect_window_events(
+        self,
+        wrapper: SubWindow[_W],
+        backend: _W,
+    ):
         raise NotImplementedError
 
     def _update_context(self) -> None:
@@ -200,7 +203,19 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     def _screenshot(self, target: str) -> NDArray[np.uint8]:
         raise NotImplementedError
 
-    def _parametric_widget(self, sig: inspect.Signature) -> tuple[_W, Connection]:
+    def _process_parametric_widget(self, widget: _W) -> _W:
+        # widget implements "get_params". This method will return a new widget that
+        # can be directly passed to ui.add_widget().
+        raise NotImplementedError
+
+    def _connect_parametric_widget_events(
+        self,
+        wrapper: ParametricWidget[_W],
+        widget: _W,
+    ) -> None:
+        raise NotImplementedError
+
+    def _signature_to_widget(self, sig: inspect.Signature) -> _W:
         raise NotImplementedError
 
     def _move_focus_to(self, widget: _W) -> None:

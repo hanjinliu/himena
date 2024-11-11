@@ -16,7 +16,7 @@ from himena._descriptors import MethodDescriptor, LocalReaderMethod, ConverterMe
 from himena._enum import StrEnum
 
 if TYPE_CHECKING:
-    from himena.widgets import MainWindow, SubWindow
+    from himena.widgets import ParametricWidget
     from himena.io import PluginInfo
 
 
@@ -280,6 +280,8 @@ class Parametric(Generic[_T]):
     def __init__(
         self,
         func: Callable[..., WidgetDataModel[_T]],
+        *,
+        auto_close: bool = True,
         sources: list[MethodDescriptor] = [],
         action_id: str | None = None,
     ):
@@ -294,6 +296,7 @@ class Parametric(Generic[_T]):
         else:
             self._func = func
         wraps(func)(self)
+        self._auto_close = auto_close
         self._sources = list(sources)
         self._action_id = action_id
 
@@ -319,32 +322,23 @@ class Parametric(Generic[_T]):
             originals=self.sources, action_id=self.action_id, parameters=parameters
         )
 
-    def get_signature(self):
+    def get_signature(self) -> inspect.Signature:
+        """Get the signature of the internal function."""
         return inspect.signature(self._func)
 
-    def make_connection(self, ui: "MainWindow", param_widget: "SubWindow"):
-        def _call_and_process(**kwargs):
-            model = self(**kwargs)
-            cls = ui._backend_main_window._pick_widget_class(model.type)
-            widget = cls()
-            widget.update_model(model)  # type: ignore
-            rect = param_widget.rect
-            i_tab, i_win = param_widget._find_me(ui)
-            del ui.tabs[i_tab][i_win]
-            result_widget = ui.tabs[i_tab].add_widget(
-                widget, title=model.title, autosize=False
-            )
-            if size_hint := result_widget.size_hint():
-                new_rect = (rect.left, rect.top, size_hint[0], size_hint[1])
-            else:
-                new_rect = rect
-            result_widget.rect = new_rect
+    def _widget_callback(self, param_widget: "ParametricWidget"):
+        self._callback_with_params(param_widget, param_widget.get_params())
+
+    def _callback_with_params(self, widget: "ParametricWidget", kwargs: dict[str, Any]):
+        return_value = self(**kwargs)
+        if isinstance(return_value, WidgetDataModel):
+            result_widget = widget._process_model_output(return_value)
             if self.sources:
                 new_method = self.to_converter_method(kwargs)
                 result_widget._update_widget_data_model_method(new_method)
-            return None
-
-        return _call_and_process
+        else:
+            widget._process_other_output(return_value)
+        return None
 
 
 Connection = Callable[[Callable[[WidgetDataModel], None]], None]

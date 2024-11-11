@@ -10,7 +10,12 @@ from psygnal import Signal
 from himena._descriptors import LocalReaderMethod
 from himena import io
 from himena.types import NewWidgetBehavior, WidgetDataModel, WindowState, WindowRect
-from himena.widgets._wrapper import _HasMainWindowRef, SubWindow, DockWidget
+from himena.widgets._wrapper import (
+    _HasMainWindowRef,
+    SubWindow,
+    ParametricWidget,
+    DockWidget,
+)
 
 if TYPE_CHECKING:
     from himena.widgets import BackendMainWindow
@@ -73,7 +78,14 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
 
     def __delitem__(self, index_or_name: int | str) -> None:
         index = self._norm_index_or_name(index_or_name)
-        return self._main_window()._del_widget_at(self._i_tab, index)
+        widget = self._pop_no_emit(index)
+        widget.closed.emit()
+
+    def _pop_no_emit(self, index: int):
+        main = self._main_window()
+        widget = self[index]
+        main._del_widget_at(self._i_tab, index)
+        return widget
 
     def _norm_index_or_name(self, index_or_name: int | str) -> int:
         if isinstance(index_or_name, str):
@@ -111,6 +123,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
             )
 
         main._move_focus_to(sub_window.widget)
+        sub_window._alive = True
         return None
 
     def current(self, default: _T = None) -> SubWindow[_W] | _T:
@@ -172,6 +185,30 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         """
         main = self._main_window()
         sub_window = SubWindow(widget=widget, main_window=main)
+        self._process_new_widget(sub_window, title, autosize)
+        main._move_focus_to(widget)
+        return sub_window
+
+    def add_parametric_widget(
+        self,
+        widget: _W,
+        *,
+        title: str | None = None,
+        autosize: bool = True,
+    ) -> ParametricWidget[_W]:
+        main = self._main_window()
+        sub_window = ParametricWidget(widget=widget, main_window=main)
+        self._process_new_widget(sub_window, title, autosize)
+        main._move_focus_to(widget)
+        return sub_window
+
+    def _process_new_widget(
+        self,
+        sub_window: SubWindow[_W],
+        title: str | None = None,
+        autosize: bool = True,
+    ) -> None:
+        main = self._main_window()
         if title is None:
             title = "Window"
         out = main.add_widget(sub_window.widget, self._i_tab, title)
@@ -198,8 +235,8 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
                 else:
                     _, _, width, height = sub_window.rect
                 sub_window.rect = WindowRect(left, top, width, height)
-        main._move_focus_to(widget)
-        return sub_window
+        sub_window._alive = True
+        return None
 
     def add_data_model(self, model: WidgetDataModel) -> SubWindow[_W]:
         """Add a widget data model as a widget."""

@@ -43,7 +43,7 @@ def _norm_menus(menus: str | Sequence[str]) -> list[str]:
 def register_function(
     func: None = None,
     *,
-    menus: str | Sequence[str] = ("plugins",),
+    menus: str | Sequence[str] = "plugins",
     title: str | None = None,
     types: str | Sequence[str] | None = None,
     enablement: BoolOp | None = None,
@@ -56,7 +56,7 @@ def register_function(
 def register_function(
     func: _F,
     *,
-    menus: str | Sequence[str] = ("plugins",),
+    menus: str | Sequence[str] = "plugins",
     title: str | None = None,
     types: str | Sequence[str] | None = None,
     enablement: BoolOp | None = None,
@@ -68,7 +68,7 @@ def register_function(
 def register_function(
     func=None,
     *,
-    menus=("plugins",),
+    menus="plugins",
     title=None,
     types=None,
     enablement=None,
@@ -82,6 +82,10 @@ def register_function(
 
     Parameters
     ----------
+    func : callable, optional
+        Function to register as an action.
+    menus : str or sequence of str, default "plugins"
+        Menu(s) to add the action. Submenus are separated by `/`.
     title : str, optional
         Title of the action. Name of the function will be used if not given.
     types: hashable or sequence of hashable, optional

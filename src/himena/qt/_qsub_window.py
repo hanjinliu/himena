@@ -262,8 +262,7 @@ class QSubWindow(QtW.QMdiSubWindow):
             _setter(self._last_geometry)
             self._title_bar._toggle_size_btn.setIcon(_icon_max())
             self._widget.setVisible(True)
-            if self._title_bar.is_upper_than_area():
-                self.move(self.pos().x(), 0)
+            self._title_bar._fix_position()
         elif state == WindowState.FULL:
             if self._window_state is WindowState.NORMAL:
                 self._last_geometry = self.geometry()
@@ -564,8 +563,7 @@ class QSubWindowTitleBar(QtW.QFrame):
         self._is_ctrl_drag = False
         if event.button() == Qt.MouseButton.LeftButton:
             self._drag_position = None
-            if self.is_upper_than_area():
-                self._subwindow.state_change_requested.emit(WindowState.MAX)
+            self._fix_position()
         return super().mouseReleaseEvent(event)
 
     def mouseDoubleClickEvent(self, event: QtGui.QMouseEvent):
@@ -584,10 +582,13 @@ class QSubWindowTitleBar(QtW.QFrame):
                 sub._set_rect(sub.rect.resize_relative(1 / 1.1, 1 / 1.1))
         return super().wheelEvent(event)
 
-    def is_upper_than_area(self) -> bool:
+    def _fix_position(self):
         self_pos = self.mapToGlobal(self._subwindow.rect().topLeft())
         parent_pos = self._subwindow.parentWidget().mapToGlobal(QtCore.QPoint(0, 0))
-        return self_pos.y() < parent_pos.y()
+        if self_pos.y() < parent_pos.y():
+            self._subwindow.move(self._subwindow.pos().x(), 0)
+        if self_pos.x() < parent_pos.x():
+            self._subwindow.move(0, self._subwindow.pos().y())
 
     def _show_context_menu(self):
         return self._show_context_menu_at(QtGui.QCursor.pos())

@@ -9,19 +9,19 @@ from pathlib import Path
 import app_model
 from qtpy import QtWidgets as QtW, QtGui, QtCore
 from app_model.backends.qt import QModelMainWindow, QModelMenu
-from himena.consts import MenuId, StandardTypes
+from himena.consts import MenuId
 from himena._app_model import _formatter
 from himena.qt._qtab_widget import QTabWidget
 from himena.qt._qsub_window import QSubWindow, QSubWindowArea
 from himena.qt._qdock_widget import QDockWidget
 from himena.qt._qcommand_palette import QCommandPalette
+from himena.qt._qparametric import QParametricWidget
 from himena.qt._qgoto import QGotoWidget
 from himena import anchor as _anchor
 from himena.types import (
     DockArea,
     DockAreaString,
     ClipboardDataModel,
-    WidgetDataModel,
     WindowState,
     WindowRect,
     BackendInstructions,
@@ -35,6 +35,7 @@ from himena.qt._utils import (
     set_clipboard_data,
     ArrayQImage,
 )
+from himena.widgets._wrapper import ParametricWidget
 
 if TYPE_CHECKING:
     from himena.widgets._main_window import SubWindow, MainWindow
@@ -506,26 +507,30 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             raise ValueError(f"Invalid target name {target!r}.")
         return ArrayQImage(qimg)
 
-    def _parametric_widget(self, sig: inspect.Signature) -> QtW.QWidget:
-        from magicgui.widgets import Container, PushButton
+    def _process_parametric_widget(
+        self,
+        widget: QtW.QWidget,
+    ) -> QtW.QWidget:
+        return QParametricWidget(widget)
+
+    def _connect_parametric_widget_events(
+        self,
+        wrapper: ParametricWidget[QParametricWidget],
+        widget: QParametricWidget,
+    ) -> None:
+        widget._call_btn.clicked.connect(wrapper._emit_btn_clicked)
+        widget.param_changed.connect(wrapper._emit_param_changed)
+
+    def _signature_to_widget(self, sig: inspect.Signature) -> QtW.QWidget:
+        from magicgui.widgets import Container
 
         container = Container.from_signature(sig)
-        btn = PushButton(text="Run", gui_only=True)
-        container.append(btn)
-
-        def connect(fn):
-            def _callback(*_):
-                values = container.asdict()
-                return fn(**values)
-
-            btn.clicked.connect(_callback)
-
-        _LOGGER.info("Created parametric widget for %r", sig)
+        container.margins = (0, 0, 0, 0)
         qwidget = container.native
         assert isinstance(qwidget, QtW.QWidget)
-        qwidget.to_model = _to_model.__get__(qwidget)
-        qwidget.model_type = _model_type.__get__(qwidget)
-        return qwidget, connect
+        qwidget.get_params = container.asdict
+        qwidget.connect_changed_signal = container.changed.connect
+        return qwidget
 
     def _move_focus_to(self, win: QtW.QWidget) -> None:
         win.setFocus()
@@ -552,16 +557,3 @@ def _ext_to_filter(ext: str) -> str:
         return "*"
     else:
         return f"*.{ext}"
-
-
-def _to_model(self: QtW.QWidget):
-    from magicgui.widgets import Container
-
-    container: Container = self._magic_widget
-    assert isinstance(container, Container)
-    params = container.asdict()
-    return WidgetDataModel(value=params, type=StandardTypes.PARAMETERS)
-
-
-def _model_type(self: QtW.QWidget) -> str:
-    return StandardTypes.PARAMETERS

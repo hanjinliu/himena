@@ -107,7 +107,7 @@ def init_application(app: Application) -> Application:
     def _process_parametric(fn: Parametric) -> None:
         _LOGGER.debug("processing %r", fn)
         ins = current_instance(app.name)
-        ins.add_parametric_element(fn)
+        ins.add_function(fn)
         return None
 
     return app
