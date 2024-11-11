@@ -283,6 +283,7 @@ def register_new_provider(
     *,
     title: str | None = None,
     keybindings: KeyBindingsType | None = None,
+    menus: str | Sequence[str] = "file/new",
     command_id: str | None = None,
 ) -> _F: ...
 @overload
@@ -291,6 +292,7 @@ def register_new_provider(
     *,
     title: str | None = None,
     keybindings: KeyBindingsType | None = None,
+    menus: str = "file/new",
     command_id: str | None = None,
 ) -> Callable[[_F], _F]: ...
 
@@ -300,6 +302,7 @@ def register_new_provider(
     *,
     title=None,
     keybindings=None,
+    menus="file/new",
     command_id=None,
 ):
     """
@@ -316,6 +319,8 @@ def register_new_provider(
         Title of the window.
     keybindings : keybinding type, optional
         Keybindings to trigger the action.
+    menus : str or sequence of str, default "file/new"
+        Menu(s) to add the action. Submenus are separated by `/`.
     command_id : str, optional
         Custom command ID.
     """
@@ -327,7 +332,7 @@ def register_new_provider(
             title=_normalize_title(title, f),
             tooltip=_tooltip_from_func(f),
             callback=f,
-            menus=["file/new"],
+            menus=_norm_menus(menus),
             keybindings=kbs,
         )
         _ACTIONS[action.id] = action

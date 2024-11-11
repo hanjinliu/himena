@@ -12,6 +12,18 @@ class TextMeta(BaseModel):
     font_size: float | None = Field(None, description="Font size.")
 
 
+class TableMeta(BaseModel):
+    """Preset for describing a table file metadata."""
+
+    current_position: list[int] | None = Field(
+        None, description="Current position of (row, columns)."
+    )
+    selections: list[tuple[slice, slice]] = Field(
+        default_factory=list,
+        description="Selections of the table. Each selection is a pair of slices.",
+    )
+
+
 class ImageMeta(BaseModel):
     """Preset for describing an image file metadata."""
 

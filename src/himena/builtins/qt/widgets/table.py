@@ -5,6 +5,7 @@ from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
 from himena.consts import StandardTypes
 from himena.types import WidgetDataModel
+from himena.model_meta import TableMeta
 from himena.qt._qfinderwidget import QTableFinderWidget
 
 
@@ -36,8 +37,11 @@ class QDefaultTableWidget(QtW.QTableWidget):
             for j in range(self.columnCount()):
                 self.setItem(i, j, QtW.QTableWidgetItem(table[i, j]))
             self.setRowHeight(i, 22)
-        if model.source is not None:
-            self.setObjectName(model.source.name)
+        if isinstance(meta := model.additional_data, TableMeta):
+            if (pos := meta.current_position) is not None:
+                self.setCurrentCell(*pos)
+            for r, c in meta.selections:
+                self.setRangeSelected(QtW.QTableWidgetSelectionRange(*r, *c), True)
         self._modified = False
         return None
 
@@ -48,6 +52,10 @@ class QDefaultTableWidget(QtW.QTableWidget):
             ),
             type=self.model_type(),
             extension_default=".csv",
+            additional_data=TableMeta(
+                current_position=(self.currentRow(), self.currentColumn()),
+                selections=[_sel_range_to_slices(r) for r in self.selectedRanges()],
+            ),
         )
 
     def model_type(self):
@@ -157,3 +165,9 @@ class QDefaultTableWidget(QtW.QTableWidget):
                 fd.move(self.width() - fd.width() - vbar.width() - 3, 5)
             else:
                 fd.move(self.width() - fd.width() - 3, 5)
+
+
+def _sel_range_to_slices(rng: QtW.QTableWidgetSelectionRange) -> tuple[slice, slice]:
+    row = slice(rng.topRow(), rng.bottomRow() + 1)
+    col = slice(rng.leftColumn(), rng.rightColumn() + 1)
+    return row, col
