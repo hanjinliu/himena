@@ -171,7 +171,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         widget: _W,
         *,
         title: str | None = None,
-        autosize: bool = True,
+        auto_size: bool = True,
     ) -> SubWindow[_W]:
         """
         Add a widget to the sub window.
@@ -192,7 +192,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         """
         main = self._main_window()
         sub_window = SubWindow(widget=widget, main_window=main)
-        self._process_new_widget(sub_window, title, autosize)
+        self._process_new_widget(sub_window, title, auto_size)
         main._move_focus_to(widget)
         return sub_window
 
@@ -202,6 +202,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         *,
         title: str | None = None,
         preview: bool = False,
+        auto_close: bool = True,
     ) -> ParametricWidget[_W]:
         """
         Add a function as a parametric sub-window.
@@ -225,7 +226,11 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         back_main = self._main_window()
         fn_widget = back_main._signature_to_widget(sig, preview=preview)
         param_widget = self.add_parametric_widget(
-            fn_widget, func, title=title, preview=preview
+            fn_widget,
+            func,
+            title=title,
+            preview=preview,
+            auto_close=auto_close,
         )
         return param_widget
 
@@ -236,7 +241,8 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         *,
         title: str | None = None,
         preview: bool = False,
-        autosize: bool = True,
+        auto_close: bool = True,
+        auto_size: bool = True,
     ) -> ParametricWidget[_W]:
         if not hasattr(widget, "get_params"):
             raise TypeError("Parametric widget must have `get_params` method.")
@@ -244,8 +250,9 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         widget0 = main._process_parametric_widget(widget)
         fn = Parametric(callback)
         param_widget = ParametricWidget(widget0, fn, main_window=main)
+        param_widget._auto_close = auto_close
         main._connect_parametric_widget_events(param_widget, widget0)
-        self._process_new_widget(param_widget, title, autosize)
+        self._process_new_widget(param_widget, title, auto_size)
         if preview:
             param_widget.params_changed.connect(param_widget._widget_preview_callback)
         main._move_focus_to(widget)
@@ -255,7 +262,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         self,
         sub_window: SubWindow[_W],
         title: str | None = None,
-        autosize: bool = True,
+        auto_size: bool = True,
     ) -> None:
         main = self._main_window()
         if title is None:
@@ -276,7 +283,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
             )
         else:
             main._set_current_sub_window_index(len(self) - 1)
-            if autosize:
+            if auto_size:
                 left = 4 + 24 * (nwindows % 5)
                 top = 4 + 24 * (nwindows % 5)
                 if size_hint := sub_window.size_hint():

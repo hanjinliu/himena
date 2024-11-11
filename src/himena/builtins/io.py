@@ -61,7 +61,7 @@ def _read_tsv(file_path: Path) -> WidgetDataModel:
     )
 
 
-@register_reader_provider
+@register_reader_provider(priority=-1)
 def default_reader_provider(file_path: Path | list[Path]):
     """Get default reader."""
     if isinstance(file_path, list):
@@ -111,7 +111,7 @@ def _write_parameters(model: WidgetDataModel[dict[str, Any]], path: Path) -> Non
         json.dump(model.value, f)
 
 
-@register_writer_provider
+@register_writer_provider(priority=-1)
 def default_writer_provider(model: WidgetDataModel):
     """Get default writer."""
     if model.type is None:

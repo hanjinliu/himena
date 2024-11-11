@@ -104,7 +104,11 @@ def _is_parametric(a):
     return Parametric in (get_origin(a), a)
 
 
-def make_function_callback(f: _F, action_id: str) -> _F:
+def make_function_callback(
+    f: _F,
+    action_id: str,
+    preview: bool = False,
+) -> _F:
     try:
         sig = inspect.signature(f)
     except Exception:
@@ -145,7 +149,12 @@ def make_function_callback(f: _F, action_id: str) -> _F:
             if len(originals) > 0:
                 out.method = ConverterMethod(originals=originals, action_id=action_id)
         elif callable(out) and f.__annotations__["return"] is Parametric:
-            out = Parametric(out, sources=originals, action_id=action_id)
+            out = Parametric(
+                out,
+                sources=originals,
+                action_id=action_id,
+                preview=preview,
+            )
         return out
 
     return _new_f

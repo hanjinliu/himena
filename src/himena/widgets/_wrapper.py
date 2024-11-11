@@ -341,6 +341,7 @@ class ParametricWidget(SubWindow[_W]):
         self._callback = callback
         self.btn_clicked.connect(self._widget_callback)
         self._preview_window_ref = _do_nothing
+        self._auto_close = True
 
     def get_params(self) -> dict[str, Any]:
         """Get the parameters of the widget."""
@@ -356,6 +357,10 @@ class ParametricWidget(SubWindow[_W]):
 
     def _widget_preview_callback(self, widget: ParametricWidget):
         if not widget.is_preview_enabled():
+            if prev := self._preview_window_ref():
+                self._preview_window_ref = _do_nothing
+                self._child_windows.discard(prev)
+                prev._close_me(self._main_window()._himena_main_window)
             return None
         try:
             kwargs = widget.get_params()
@@ -386,11 +391,12 @@ class ParametricWidget(SubWindow[_W]):
                 self._preview_window_ref = _do_nothing
                 self._child_windows.discard(prev)
                 result_widget = prev
+                result_widget.title = return_value.title  # title needs update
                 with suppress(AttributeError):
                     result_widget.is_editable = True
-                ui = self._main_window()._himena_main_window
-                i_tab, i_win = self._find_me(ui)
-                del ui.tabs[i_tab][i_win]
+                if self._auto_close:
+                    ui = self._main_window()._himena_main_window
+                    self._close_me(ui)
             else:
                 result_widget = self._process_model_output(return_value)
             if self._callback.sources:
@@ -417,9 +423,10 @@ class ParametricWidget(SubWindow[_W]):
         ui = self._main_window()._himena_main_window
         widget = self._model_to_new_window(model)
         i_tab, i_win = self._find_me(ui)
-        del ui.tabs[i_tab][i_win]
+        if self._auto_close:
+            del ui.tabs[i_tab][i_win]
         result_widget = ui.tabs[i_tab].add_widget(
-            widget, title=model.title, autosize=False
+            widget, title=model.title, auto_size=False
         )
         rect = self.rect
         if size_hint := result_widget.size_hint():

@@ -282,6 +282,7 @@ class Parametric(Generic[_T]):
         auto_close: bool = True,
         sources: list[MethodDescriptor] = [],
         action_id: str | None = None,
+        preview: bool = False,
     ):
         if isinstance(func, Parametric):
             if len(sources) > 0 or action_id is not None:
@@ -295,6 +296,7 @@ class Parametric(Generic[_T]):
             self._func = func
         wraps(func)(self)
         self._auto_close = auto_close
+        self._preview = preview
         self._sources = list(sources)
         self._action_id = action_id
 
@@ -314,6 +316,11 @@ class Parametric(Generic[_T]):
     @property
     def action_id(self) -> str | None:
         return self._action_id
+
+    @property
+    def preview(self) -> bool:
+        """Whether preview is enabled."""
+        return self._preview
 
     def to_converter_method(self, parameters: dict[str, Any]) -> ConverterMethod:
         return ConverterMethod(
