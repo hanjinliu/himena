@@ -521,8 +521,12 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         widget._call_btn.clicked.connect(wrapper._emit_btn_clicked)
         widget.param_changed.connect(wrapper._emit_param_changed)
 
-    def _signature_to_widget(self, sig: inspect.Signature) -> QtW.QWidget:
-        from magicgui.widgets import Container
+    def _signature_to_widget(
+        self,
+        sig: inspect.Signature,
+        preview: bool = False,
+    ) -> QtW.QWidget:
+        from magicgui.widgets import Container, CheckBox
 
         container = Container.from_signature(sig)
         container.margins = (0, 0, 0, 0)
@@ -530,6 +534,10 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         assert isinstance(qwidget, QtW.QWidget)
         qwidget.get_params = container.asdict
         qwidget.connect_changed_signal = container.changed.connect
+        if preview:
+            checkbox = CheckBox(value=False, text="Preview")
+            container.append(checkbox)
+            qwidget.is_preview_enabled = checkbox.get_value
         return qwidget
 
     def _move_focus_to(self, win: QtW.QWidget) -> None:

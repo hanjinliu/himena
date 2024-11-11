@@ -1,5 +1,4 @@
 from functools import wraps
-import inspect
 from pathlib import Path
 from typing import (
     Any,
@@ -16,7 +15,6 @@ from himena._descriptors import MethodDescriptor, LocalReaderMethod, ConverterMe
 from himena._enum import StrEnum
 
 if TYPE_CHECKING:
-    from himena.widgets import ParametricWidget
     from himena.io import PluginInfo
 
 
@@ -321,24 +319,6 @@ class Parametric(Generic[_T]):
         return ConverterMethod(
             originals=self.sources, action_id=self.action_id, parameters=parameters
         )
-
-    def get_signature(self) -> inspect.Signature:
-        """Get the signature of the internal function."""
-        return inspect.signature(self._func)
-
-    def _widget_callback(self, param_widget: "ParametricWidget"):
-        self._callback_with_params(param_widget, param_widget.get_params())
-
-    def _callback_with_params(self, widget: "ParametricWidget", kwargs: dict[str, Any]):
-        return_value = self(**kwargs)
-        if isinstance(return_value, WidgetDataModel):
-            result_widget = widget._process_model_output(return_value)
-            if self.sources:
-                new_method = self.to_converter_method(kwargs)
-                result_widget._update_widget_data_model_method(new_method)
-        else:
-            widget._process_other_output(return_value)
-        return None
 
 
 Connection = Callable[[Callable[[WidgetDataModel], None]], None]

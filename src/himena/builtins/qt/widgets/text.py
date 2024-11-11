@@ -513,6 +513,12 @@ class QDefaultTextEdit(QtW.QWidget):
     def set_modified(self, value: bool) -> None:
         self._main_text_edit.document().setModified(value)
 
+    def is_editable(self) -> bool:
+        return not self._main_text_edit.isReadOnly()
+
+    def set_editable(self, value: bool) -> None:
+        self._main_text_edit.setReadOnly(not value)
+
     def keyPressEvent(self, a0: QtGui.QKeyEvent | None) -> None:
         if (
             a0.key() == QtCore.Qt.Key.Key_F

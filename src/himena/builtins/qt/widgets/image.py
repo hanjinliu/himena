@@ -102,6 +102,9 @@ class QDefaultImageView(QtW.QWidget):
     def size_hint(self) -> tuple[int, int]:
         return 400, 400
 
+    def is_editable(self) -> bool:
+        return False
+
     def as_image_array(self, arr: np.ndarray) -> NDArray[np.uint8]:
         import numpy as np
 

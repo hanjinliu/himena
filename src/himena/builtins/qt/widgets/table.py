@@ -12,6 +12,7 @@ from himena.qt._qfinderwidget import QTableFinderWidget
 class QDefaultTableWidget(QtW.QTableWidget):
     def __init__(self):
         super().__init__()
+        self._edit_trigger = self.editTriggers()
         self._modified = False
         self.horizontalHeader().setFixedHeight(18)
         self._finder_widget = None
@@ -69,6 +70,16 @@ class QDefaultTableWidget(QtW.QTableWidget):
 
     def set_modified(self, value: bool) -> None:
         self._modified = value
+
+    def is_editable(self) -> bool:
+        return self.editTriggers() != QtW.QAbstractItemView.EditTrigger.NoEditTriggers
+
+    def set_editable(self, value: bool) -> None:
+        if value:
+            trig = self._edit_trigger
+        else:
+            trig = QtW.QAbstractItemView.EditTrigger.NoEditTriggers
+        self.setEditTriggers(trig)
 
     def _to_list(self, rsl: slice, csl: slice) -> list[list[str]]:
         values: list[list[str]] = []

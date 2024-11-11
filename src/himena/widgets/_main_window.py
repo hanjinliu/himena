@@ -233,6 +233,7 @@ class MainWindow(Generic[_W]):
         func: Callable[..., _T],
         *,
         title: str | None = None,
+        preview: bool = False,
     ) -> ParametricWidget[_W]:
         """
         Add a function as a parametric sub-window.
@@ -252,32 +253,18 @@ class MainWindow(Generic[_W]):
         SubWindow
             The sub-window instance that represents the output model.
         """
-        fn = Parametric(func)
-        if title is None:
-            title = fn.name
-        sig = fn.get_signature()
-        back_main = self._backend_main_window
-        fn_widget = back_main._signature_to_widget(sig)
-        param_widget = self.add_parametric_widget(fn_widget, title=title)
-        param_widget.btn_clicked.connect(fn._widget_callback)
-        _LOGGER.info("Created parametric widget for %r", sig)
-        return param_widget
+        _, tabarea = self._current_or_new_tab()
+        return tabarea.add_function(func, title=title, preview=preview)
 
     def add_parametric_widget(
         self,
         widget: _W,
+        callback: Callable,
         *,
         title: str | None = None,
     ) -> ParametricWidget[_W]:
-        if not hasattr(widget, "get_params"):
-            raise TypeError("Parametric widget must have `get_params` method.")
-        widget0 = self._backend_main_window._process_parametric_widget(widget)
         _, area = self._current_or_new_tab()
-        param_widget = area.add_parametric_widget(widget0, title=title)
-        self._backend_main_window._connect_parametric_widget_events(
-            param_widget, widget0
-        )
-        return param_widget
+        return area.add_parametric_widget(widget, callback, title=title)
 
     def read_file(
         self,
@@ -323,7 +310,7 @@ class MainWindow(Generic[_W]):
                     raise ValueError(
                         f"Parametric widget expected but got {param_widget}."
                     )
-                result._callback_with_params(param_widget, with_params)
+                param_widget._callback_with_params(with_params)
             else:
                 raise RuntimeError("Unreachable code.")
         return None
@@ -350,6 +337,7 @@ class MainWindow(Generic[_W]):
     ) -> list[Path] | None: ...
 
     def exec_file_dialog(self, mode, extension_default=None, allowed_extensions=None):
+        """Execute a file dialog to get file path(s)."""
         if res := self._instructions.file_dialog_response:
             return res()
         return self._backend_main_window._open_file_dialog(

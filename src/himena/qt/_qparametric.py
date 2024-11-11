@@ -31,3 +31,8 @@ class QParametricWidget(QtW.QWidget):
 
     def _on_param_changed(self) -> None:
         self.param_changed.emit()
+
+    def is_preview_enabled(self) -> bool:
+        if hasattr(self._central_widget, "connect_changed_signal"):
+            return self._central_widget.is_preview_enabled()
+        return False

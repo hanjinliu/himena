@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from contextlib import suppress
+import logging
 from pathlib import Path
 from typing import Any, Generic, TYPE_CHECKING, TypeVar
 from uuid import uuid4
@@ -10,7 +12,13 @@ import weakref
 from psygnal import Signal
 from himena import anchor as _anchor
 from himena import io
-from himena.types import BackendInstructions, WindowState, WidgetDataModel, WindowRect
+from himena.types import (
+    BackendInstructions,
+    Parametric,
+    WindowState,
+    WidgetDataModel,
+    WindowRect,
+)
 from himena._descriptors import (
     SaveBehavior,
     SaveToNewPath,
@@ -23,6 +31,7 @@ if TYPE_CHECKING:
     from himena.widgets import BackendMainWindow, MainWindow
 
 _W = TypeVar("_W")  # backend widget type
+_LOGGER = logging.getLogger(__name__)
 
 
 class _HasMainWindowRef(Generic[_W]):
@@ -136,6 +145,19 @@ class SubWindow(WidgetWrapper[_W]):
         self._set_rect(value, inst)
 
     @property
+    def is_editable(self) -> bool:
+        """Whether the widget is editable."""
+        is_editable_func = getattr(self.widget, "is_editable", None)
+        return callable(is_editable_func) and is_editable_func()
+
+    @is_editable.setter
+    def is_editable(self, value: bool) -> None:
+        set_editable_func = getattr(self.widget, "set_editable", None)
+        if not callable(set_editable_func):
+            raise AttributeError("Widget does not have `set_editable` method.")
+        set_editable_func(value)
+
+    @property
     def is_importable(self) -> bool:
         """Whether the widget accept importing values."""
         return hasattr(self.widget, "update_model")
@@ -158,11 +180,11 @@ class SubWindow(WidgetWrapper[_W]):
 
     def size_hint(self) -> tuple[int, int] | None:
         """Size hint of the sub-window."""
-        return getattr(self.widget, "size_hint", lambda: None)()
+        return getattr(self.widget, "size_hint", _do_nothing)()
 
     def model_type(self) -> str | None:
         """Type of the widget data model."""
-        return getattr(self.widget, "model_type", lambda: None)()
+        return getattr(self.widget, "model_type", _do_nothing)()
 
     def to_model(self) -> WidgetDataModel:
         """Export the widget data."""
@@ -180,6 +202,12 @@ class SubWindow(WidgetWrapper[_W]):
         if model.method is None:
             model.method = self._widget_data_model_method
         return model
+
+    def update_model(self, model: WidgetDataModel) -> None:
+        """Import the widget data."""
+        if not self.is_importable:
+            raise ValueError("Widget does not have `update_model` method.")
+        self.widget.update_model(model)
 
     def write_model(self, path: str | Path, plugin: str | None = None) -> None:
         """Write the widget data to a file."""
@@ -302,6 +330,18 @@ class ParametricWidget(SubWindow[_W]):
     btn_clicked = Signal(object)  # emit self
     params_changed = Signal(object)
 
+    def __init__(
+        self,
+        widget: _W,
+        callback: Parametric,
+        main_window: BackendMainWindow[_W],
+        identifier: int | None = None,
+    ):
+        super().__init__(widget, main_window, identifier)
+        self._callback = callback
+        self.btn_clicked.connect(self._widget_callback)
+        self._preview_window_ref = _do_nothing
+
     def get_params(self) -> dict[str, Any]:
         """Get the parameters of the widget."""
         params = self.widget.get_params()
@@ -311,6 +351,62 @@ class ParametricWidget(SubWindow[_W]):
             )
         return params
 
+    def _widget_callback(self):
+        self._callback_with_params(self.get_params())
+
+    def _widget_preview_callback(self, widget: ParametricWidget):
+        if not widget.is_preview_enabled():
+            return None
+        try:
+            kwargs = widget.get_params()
+            return_value = self._callback(**kwargs)
+        except Exception as e:
+            _LOGGER.warning(f"Error in preview callback: {e}")
+            return None
+        if not isinstance(return_value, WidgetDataModel):
+            raise NotImplementedError("Preview is only supported for WidgetDataModel")
+        if prev := self._preview_window_ref():
+            prev.update_model(return_value)
+        else:
+            # create a new preview window
+            result_widget = widget._model_to_new_window(return_value)
+            title = f"{return_value.title} (preview)"
+            prev = self.add_child(result_widget, title=title)
+            with suppress(AttributeError):
+                prev.is_editable = False
+            self._preview_window_ref = weakref.ref(prev)
+            self._main_window()._move_focus_to(self.widget)
+        return None
+
+    def _callback_with_params(self, kwargs: dict[str, Any]):
+        return_value = self._callback(**kwargs)
+        if isinstance(return_value, WidgetDataModel):
+            if prev := self._preview_window_ref():
+                # no need to create a new window
+                self._preview_window_ref = _do_nothing
+                self._child_windows.discard(prev)
+                result_widget = prev
+                with suppress(AttributeError):
+                    result_widget.is_editable = True
+                ui = self._main_window()._himena_main_window
+                i_tab, i_win = self._find_me(ui)
+                del ui.tabs[i_tab][i_win]
+            else:
+                result_widget = self._process_model_output(return_value)
+            if self._callback.sources:
+                new_method = self._callback.to_converter_method(kwargs)
+                result_widget._update_widget_data_model_method(new_method)
+        else:
+            self._process_other_output(return_value)
+        return None
+
+    def is_preview_enabled(self) -> bool:
+        """Whether the widget supports preview."""
+        is_preview_enabled_func = getattr(
+            self.widget, "is_preview_enabled", _do_nothing
+        )
+        return callable(is_preview_enabled_func) and is_preview_enabled_func()
+
     def _emit_btn_clicked(self) -> None:
         return self.btn_clicked.emit(self)
 
@@ -319,9 +415,7 @@ class ParametricWidget(SubWindow[_W]):
 
     def _process_model_output(self, model: WidgetDataModel) -> SubWindow[_W]:
         ui = self._main_window()._himena_main_window
-        cls = ui._backend_main_window._pick_widget_class(model.type)
-        widget = cls()  # the internal widget
-        widget.update_model(model)  # type: ignore
+        widget = self._model_to_new_window(model)
         i_tab, i_win = self._find_me(ui)
         del ui.tabs[i_tab][i_win]
         result_widget = ui.tabs[i_tab].add_widget(
@@ -334,6 +428,13 @@ class ParametricWidget(SubWindow[_W]):
             new_rect = rect
         result_widget.rect = new_rect
         return result_widget
+
+    def _model_to_new_window(self, model: WidgetDataModel) -> SubWindow[_W]:
+        ui = self._main_window()._himena_main_window
+        cls = ui._backend_main_window._pick_widget_class(model.type)
+        widget = cls()  # the internal widget
+        widget.update_model(model)  # type: ignore
+        return widget
 
     def _process_other_output(self, return_value):
         ui = self._main_window()._himena_main_window
@@ -376,3 +477,7 @@ class DockWidget(WidgetWrapper[_W]):
 
 def _widget_repr(widget: _W) -> str:
     return f"<{type(widget).__name__}>"
+
+
+def _do_nothing() -> None:
+    return None

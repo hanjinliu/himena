@@ -1,15 +1,22 @@
 from __future__ import annotations
 
 from abc import abstractmethod
+import inspect
 from pathlib import Path
-from typing import Generic, TYPE_CHECKING, Iterator, TypeVar
+from typing import Callable, Generic, TYPE_CHECKING, Iterator, TypeVar
 from collections.abc import Sequence
 import weakref
 
 from psygnal import Signal
 from himena._descriptors import LocalReaderMethod
 from himena import io
-from himena.types import NewWidgetBehavior, WidgetDataModel, WindowState, WindowRect
+from himena.types import (
+    NewWidgetBehavior,
+    Parametric,
+    WidgetDataModel,
+    WindowState,
+    WindowRect,
+)
 from himena.widgets._wrapper import (
     _HasMainWindowRef,
     SubWindow,
@@ -189,18 +196,60 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         main._move_focus_to(widget)
         return sub_window
 
+    def add_function(
+        self,
+        func: Callable[..., _T],
+        *,
+        title: str | None = None,
+        preview: bool = False,
+    ) -> ParametricWidget[_W]:
+        """
+        Add a function as a parametric sub-window.
+
+        The input function must return a `WidgetDataModel` instance, which can be
+        interpreted by the application.
+
+        Parameters
+        ----------
+        fn : function (...) -> WidgetDataModel
+            Function that generates a model from the input parameters.
+        title : str, optional
+            Title of the sub-window.
+
+        Returns
+        -------
+        SubWindow
+            The sub-window instance that represents the output model.
+        """
+        sig = inspect.signature(func)
+        back_main = self._main_window()
+        fn_widget = back_main._signature_to_widget(sig, preview=preview)
+        param_widget = self.add_parametric_widget(
+            fn_widget, func, title=title, preview=preview
+        )
+        return param_widget
+
     def add_parametric_widget(
         self,
         widget: _W,
+        callback: Callable,
         *,
         title: str | None = None,
+        preview: bool = False,
         autosize: bool = True,
     ) -> ParametricWidget[_W]:
+        if not hasattr(widget, "get_params"):
+            raise TypeError("Parametric widget must have `get_params` method.")
         main = self._main_window()
-        sub_window = ParametricWidget(widget=widget, main_window=main)
-        self._process_new_widget(sub_window, title, autosize)
+        widget0 = main._process_parametric_widget(widget)
+        fn = Parametric(callback)
+        param_widget = ParametricWidget(widget0, fn, main_window=main)
+        main._connect_parametric_widget_events(param_widget, widget0)
+        self._process_new_widget(param_widget, title, autosize)
+        if preview:
+            param_widget.params_changed.connect(param_widget._widget_preview_callback)
         main._move_focus_to(widget)
-        return sub_window
+        return param_widget
 
     def _process_new_widget(
         self,

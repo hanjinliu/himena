@@ -215,7 +215,11 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     ) -> None:
         raise NotImplementedError
 
-    def _signature_to_widget(self, sig: inspect.Signature) -> _W:
+    def _signature_to_widget(
+        self,
+        sig: inspect.Signature,
+        preview: bool = False,
+    ) -> _W:
         raise NotImplementedError
 
     def _move_focus_to(self, widget: _W) -> None:
