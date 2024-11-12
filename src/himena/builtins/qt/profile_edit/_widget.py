@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from qtpy import QtWidgets as QtW, QtGui, QtCore
 from qtpy.QtCore import Qt
-from himena.qt._qt_consts import MonospaceFontFamily
+from himena.consts import MonospaceFontFamily
 from himena.profile import define_app_profile, iter_app_profiles, AppProfile
 from himena.plugins import dry_install_plugins
 

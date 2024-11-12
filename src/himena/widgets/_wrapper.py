@@ -438,7 +438,7 @@ class ParametricWidget(SubWindow[_W]):
 
     def _model_to_new_window(self, model: WidgetDataModel) -> SubWindow[_W]:
         ui = self._main_window()._himena_main_window
-        cls = ui._backend_main_window._pick_widget_class(model.type)
+        cls = ui._pick_widget_class(model)
         widget = cls()  # the internal widget
         widget.update_model(model)  # type: ignore
         return widget

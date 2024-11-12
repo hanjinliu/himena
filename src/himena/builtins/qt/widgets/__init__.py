@@ -7,10 +7,10 @@ from himena.consts import StandardTypes, StandardSubtypes
 
 def register_default_widget_types() -> None:
     """Register default widget types."""
-    register_frontend_widget(StandardTypes.TEXT, QDefaultTextEdit, override=False)
-    register_frontend_widget(StandardSubtypes.HTML, QDefaultHTMLEdit, override=False)
-    register_frontend_widget(StandardTypes.TABLE, QDefaultTableWidget, override=False)
-    register_frontend_widget(StandardTypes.IMAGE, QDefaultImageView, override=False)
+    register_frontend_widget(StandardTypes.TEXT, QDefaultTextEdit, priority=-1)
+    register_frontend_widget(StandardSubtypes.HTML, QDefaultHTMLEdit, priority=-1)
+    register_frontend_widget(StandardTypes.TABLE, QDefaultTableWidget, priority=-1)
+    register_frontend_widget(StandardTypes.IMAGE, QDefaultImageView, priority=-1)
 
 
 register_default_widget_types()

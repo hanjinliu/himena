@@ -1,17 +1,22 @@
 from __future__ import annotations
 
-from typing import Callable, TypeVar, Union, overload
-import logging
+from typing import Callable, TypeVar, overload, NamedTuple
 from qtpy import QtWidgets as QtW
 
-from himena.types import WidgetDataModel, is_subtype
+from himena.types import is_subtype
 from himena.qt.registry._widgets import QFallbackWidget
 
-WidgetClass = Union[Callable[[WidgetDataModel], QtW.QWidget], type[QtW.QWidget]]
+WidgetClass = type[QtW.QWidget]
 
-_LOGGER = logging.getLogger(__name__)
+
+class WidgetClassTuple(NamedTuple):
+    type: str
+    widget_class: WidgetClass
+    priority: int = 0
+
+
 # NOTE: Different applications may use different widgets for the same data type.
-_APP_TYPE_TO_QWIDGET: dict[str | None, dict[str, WidgetClass]] = {}
+_APP_TYPE_TO_QWIDGET: dict[str | None, list[WidgetClassTuple]] = {}
 
 _F = TypeVar("_F", bound=WidgetClass)
 
@@ -21,7 +26,7 @@ def register_frontend_widget(
     type_: str,
     widget_class: _F,
     app: str | None,
-    override: bool = True,
+    priority: int = 0,
 ) -> _F: ...
 
 
@@ -30,16 +35,11 @@ def register_frontend_widget(
     type_: str,
     widget_class: None,
     app: str | None,
-    override: bool = True,
+    priority: int = 0,
 ) -> Callable[[_F], _F]: ...
 
 
-def register_frontend_widget(
-    type_,
-    widget_class=None,
-    app=None,
-    override=True,
-):
+def register_frontend_widget(type_, widget_class=None, app=None, priority=0):
     """
     Register a Qt widget class as a frontend widget for the given file type.
 
@@ -55,6 +55,8 @@ def register_frontend_widget(
 
     if app is not None and not isinstance(app, str):
         raise TypeError(f"App name must be a string, got {app!r}")
+    if not isinstance(type_, str):
+        raise TypeError(f"Type must be a string, got {type_!r}")
 
     def _inner(wdt_class):
         if not (isinstance(wdt_class, type) and issubclass(wdt_class, QtW.QWidget)):
@@ -67,32 +69,21 @@ def register_frontend_widget(
                 f"Widget class {wdt_class!r} does not have a `update_model` method."
             )
         if app not in _APP_TYPE_TO_QWIDGET:
-            _APP_TYPE_TO_QWIDGET[app] = {}
-        if type_ not in _APP_TYPE_TO_QWIDGET[app] or override:
-            _APP_TYPE_TO_QWIDGET[app][type_] = wdt_class
+            _APP_TYPE_TO_QWIDGET[app] = []
+        _APP_TYPE_TO_QWIDGET[app].append(WidgetClassTuple(type_, wdt_class, priority))
         return wdt_class
 
     return _inner if widget_class is None else _inner(widget_class)
 
 
-def pick_widget_class(app_name: str, type: str) -> WidgetClass:
-    """Pick a widget class for the given file type."""
+def list_widget_class(
+    app_name: str,
+    type: str,
+) -> tuple[list[WidgetClassTuple], type[QFallbackWidget]]:
+    """List registered widget classes for the given app and super-type."""
+    widget_list = _APP_TYPE_TO_QWIDGET.get(None, [])
     if app_name in _APP_TYPE_TO_QWIDGET:
-        _map_for_app = _APP_TYPE_TO_QWIDGET[app_name]
-    else:
-        _map_for_app = _APP_TYPE_TO_QWIDGET.get(None, {})
-
-    if type in _map_for_app:
-        widget_class = _map_for_app[type]
-        _LOGGER.info("Picked widget class %r for type %r", widget_class, type)
-        return widget_class
-
-    # pick supertype widget class
-    supertype_keys = [key for key in _map_for_app if is_subtype(type, key)]
-    if supertype_keys:
-        key = max(supertype_keys, key=lambda x: x.count("."))
-        widget_class = _map_for_app[key]
-        _LOGGER.info("Picked widget class %r for type %r", widget_class, type)
-        return widget_class
-    _LOGGER.info("No widget class found for type %r", type)
-    return QFallbackWidget
+        widget_list = _APP_TYPE_TO_QWIDGET[app_name] + widget_list
+    return [
+        item for item in widget_list if is_subtype(type, item.type)
+    ], QFallbackWidget

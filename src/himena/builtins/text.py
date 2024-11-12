@@ -2,10 +2,10 @@
 
 from typing import Callable
 import json
-from himena.plugins import register_function
+from himena.plugins import register_function, configure_gui
 from himena.types import Parametric, WidgetDataModel
 from himena.model_meta import TextMeta
-from himena.consts import StandardTypes
+from himena.consts import StandardSubtypes, StandardTypes, MonospaceFontFamily
 
 
 @register_function(
@@ -79,6 +79,45 @@ def format_json(model: WidgetDataModel) -> Parametric:
         )
 
     return format_json_data
+
+
+@register_function(
+    types=StandardTypes.TEXT,
+    menus=["tools/text"],
+    title="Compare texts ...",
+)
+def compare_texts() -> Parametric:
+    """Compare two texts by lines."""
+
+    @configure_gui(
+        text_1={"types": [StandardTypes.TEXT]},
+        text_2={"types": [StandardTypes.TEXT]},
+    )
+    def run_compare_texts(text_1: WidgetDataModel[str], text_2: WidgetDataModel[str]):
+        import difflib
+
+        _format_map = {
+            "+": '<span style="color: green;">{}</span>',
+            "-": '<span style="color: red;">{}</span>',
+            "?": '<span style="color: blue;">{}</span>',
+        }
+
+        output_lines: list[str] = []
+        for diff in difflib.ndiff(text_1.value.splitlines(), text_2.value.splitlines()):
+            output_line = _format_map.get(diff[0], "{}").format(diff)
+            output_lines.append(output_line)
+        value = (
+            f"<span style='font-family: monaco,{MonospaceFontFamily},monospace;'>"
+            + "<br>".join(output_lines)
+            + "</span>"
+        )
+        return WidgetDataModel(
+            value=value,
+            type=StandardSubtypes.HTML,
+            title=f"{text_1.title} vs {text_2.title}",
+        )
+
+    return run_compare_texts
 
 
 @register_function(

@@ -23,6 +23,14 @@ ConventionalTextFileNames = frozenset(
      ".viminfo", ".pypirc"]
 )  # fmt: skip
 
+# Monospace font
+if sys.platform == "win32":
+    MonospaceFontFamily = "Consolas"
+elif sys.platform == "darwin":
+    MonospaceFontFamily = "Menlo"
+else:
+    MonospaceFontFamily = "Monospace"
+
 ALLOWED_LETTERS = string.ascii_letters + string.digits + "_- "
 
 

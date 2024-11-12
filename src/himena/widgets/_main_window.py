@@ -10,6 +10,7 @@ from psygnal import SignalGroup, Signal
 from himena._app_model._context import AppContext
 from himena._descriptors import ProgramaticMethod
 from himena._open_recent import RecentFileManager, RecentSessionManager
+from himena._utils import import_object
 from himena.types import (
     ClipboardDataModel,
     Parametric,
@@ -436,3 +437,25 @@ class MainWindow(Generic[_W]):
         _LOGGER.info("Window activated: %r-th window in %r-th tab", i_win, i_tab)
         self.events.window_activated.emit(tab[i_win])
         return None
+
+    def _pick_widget_class(self, model: WidgetDataModel) -> type[_W]:
+        """Pick the most suitable widget class for the given model."""
+        if model.force_open_with:
+            return import_object(model.force_open_with)
+        widget_classes, fallback_class = self._backend_main_window._list_widget_class(
+            model.type
+        )
+        if not widget_classes:
+            return fallback_class
+        complete_match = [
+            (priority, cls)
+            for cls_type, cls, priority in widget_classes
+            if cls_type == model.type
+        ]
+        if complete_match:
+            return max(complete_match, key=lambda x: x[0])[1]
+        subtype_match = [
+            ((cls_type.count("."), priority), cls)
+            for cls_type, cls, priority in widget_classes
+        ]
+        return max(subtype_match, key=lambda x: x[0])[1]

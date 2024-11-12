@@ -29,7 +29,7 @@ from himena.types import (
 from himena.style import get_style
 from himena.app import get_event_loop_handler
 from himena import widgets
-from himena.qt.registry import pick_widget_class
+from himena.qt.registry import list_widget_class
 from himena.qt._utils import (
     get_clipboard_data,
     set_clipboard_data,
@@ -296,8 +296,8 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         window = _get_subwindow(widget)
         return window.setWindowTitle(title)
 
-    def _pick_widget_class(self, type: str) -> QtW.QWidget:
-        return pick_widget_class(self._app_name, type)
+    def _list_widget_class(self, type: str):
+        return list_widget_class(self._app_name, type)
 
     def _open_file_dialog(
         self,

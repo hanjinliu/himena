@@ -160,8 +160,15 @@ def make_function_callback(
     return _new_f
 
 
-def make_new_callback(
-    f: _F,
-    action_id: str,
-) -> _F:
+def make_new_callback(f: _F, action_id: str) -> _F:
     return make_function_callback(f, action_id, preview=False)
+
+
+def import_object(full_name: str) -> Any:
+    """Import object by a period-separated full name."""
+    import importlib
+
+    mod_name, func_name = full_name.rsplit(".", 1)
+    mod = importlib.import_module(mod_name)
+    obj = getattr(mod, func_name)
+    return obj

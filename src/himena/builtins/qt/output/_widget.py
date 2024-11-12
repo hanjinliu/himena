@@ -6,7 +6,7 @@ import logging
 from qtpy import QtWidgets as QtW, QtGui
 from qtpy.QtCore import Qt, Signal
 from himena.qt._qfinderwidget import QFinderWidget
-from himena.qt._qt_consts import MonospaceFontFamily
+from himena.consts import MonospaceFontFamily
 
 
 class QLogger(QtW.QPlainTextEdit):

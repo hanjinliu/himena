@@ -174,7 +174,11 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     def _run_app(self):
         raise NotImplementedError
 
-    def _pick_widget_class(self, type: str) -> type[_W]:
+    def _list_widget_class(
+        self,
+        type: str,
+    ) -> tuple[list[tuple[str, type[_W], int]], type[_W]]:
+        # (list of available classes, fallback class)
         raise NotImplementedError
 
     def _connect_activation_signal(

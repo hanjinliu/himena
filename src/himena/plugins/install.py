@@ -18,7 +18,10 @@ def install_plugins(app: Application, plugins: list[str]):
         if isinstance(name, str):
             if name.endswith(".py"):
                 name = name[:-3]
-            import_module(name)
+            try:
+                import_module(name)
+            except ModuleNotFoundError:
+                _LOGGER.error(f"Plugin {name} not found.")
         else:
             raise TypeError(f"Invalid plugin type: {type(name)}")
         _msec = (timer() - _time_0) * 1000

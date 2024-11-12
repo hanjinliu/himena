@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from qtpy import QtWidgets as QtW, QtGui
 from himena.types import WidgetDataModel
-from himena.qt._qt_consts import MonospaceFontFamily
+from himena.consts import MonospaceFontFamily
 
 
 class QFallbackWidget(QtW.QPlainTextEdit):

@@ -5,7 +5,7 @@ import sys
 from typing import Callable, Generator, TYPE_CHECKING
 
 from qtpy import QtWidgets as QtW, QtGui, QtCore
-from himena.qt._qt_consts import MonospaceFontFamily
+from himena.consts import MonospaceFontFamily
 
 if TYPE_CHECKING:
     from types import TracebackType

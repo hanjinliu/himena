@@ -163,8 +163,10 @@ class IntEdit(LineEdit):
 
     @LineEdit.value.setter
     def value(self, value):
-        if value is None and not self._nullable:
-            raise ValueError(f"Value for {self.label} cannot be None")
+        if value is None:
+            if not self._nullable:
+                raise ValueError(f"Value for {self.label} cannot be None")
+            value = ""
         LineEdit.value.fset(self, value)
 
 
@@ -202,9 +204,12 @@ class FloatEdit(LineEdit):
 
     @LineEdit.value.setter
     def value(self, value):
-        if value is None and not self._nullable:
-            raise ValueError(f"Value for {self.label} cannot be None")
-        value_str = float_to_str(value)
+        if value is None:
+            if not self._nullable:
+                raise ValueError(f"Value for {self.label} cannot be None")
+            value_str = ""
+        else:
+            value_str = float_to_str(value)
         LineEdit.value.fset(self, value_str)
 
 

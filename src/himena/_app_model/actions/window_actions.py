@@ -8,7 +8,7 @@ from app_model.types import (
 from himena._descriptors import SaveToPath
 from himena.consts import MenuId, StandardTypes
 from himena.widgets import MainWindow
-from himena.types import ClipboardDataModel, WindowState, WidgetDataModel
+from himena.types import ClipboardDataModel, Parametric, WindowState, WidgetDataModel
 from himena._app_model._context import AppContext as _ctx
 from himena._app_model.actions._registry import ACTIONS, SUBMENUS
 
@@ -50,9 +50,8 @@ def close_current_window(ui: MainWindow) -> None:
     id="duplicate-window",
     title="Duplicate window",
     enablement=_ctx.is_active_window_exportable,
-    menus=[
-        {"id": MenuId.WINDOW, "group": EDIT_GROUP},
-    ],
+    menus=[{"id": MenuId.WINDOW, "group": EDIT_GROUP}],
+    keybindings=[{"primary": KeyChord(_CtrlK, _CtrlShift | KeyCode.KeyD)}],
     need_function_callback=True,
 )
 def duplicate_window(model: WidgetDataModel) -> WidgetDataModel:
@@ -68,6 +67,30 @@ def duplicate_window(model: WidgetDataModel) -> WidgetDataModel:
         else:
             model.title = model.title + " [1]"
     return model
+
+
+@ACTIONS.append_from_fn(
+    id="duplicate-with",
+    title="Duplicate with ...",
+    enablement=_ctx.is_active_window_exportable,
+    menus=[{"id": MenuId.WINDOW, "group": EDIT_GROUP}],
+    need_function_callback=True,
+)
+def duplicate_with(ui: MainWindow, model: WidgetDataModel) -> Parametric:
+    """Duplicate the selected sub-window with a new title."""
+    from himena.plugins import configure_gui
+
+    choices: list[tuple[str, str]] = []
+    widget_classes, _ = ui._backend_main_window._list_widget_class(model.type)
+    for _, cls, _ in widget_classes:
+        name = f"{cls.__module__}.{cls.__name__}"
+        choices.append((f"{cls.__name__} ({name})", name))
+
+    @configure_gui(plugin_name={"choices": choices})
+    def choose_a_plugin(plugin_name: str) -> WidgetDataModel:
+        return model.model_copy(update={"force_open_with": plugin_name})
+
+    return choose_a_plugin
 
 
 @ACTIONS.append_from_fn(

@@ -4,7 +4,12 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from himena.plugins import register_reader_provider, register_writer_provider
 from himena.types import WidgetDataModel
-from himena.consts import StandardTypes, BasicTextFileTypes, ConventionalTextFileNames
+from himena.consts import (
+    StandardSubtypes,
+    StandardTypes,
+    BasicTextFileTypes,
+    ConventionalTextFileNames,
+)
 
 if TYPE_CHECKING:
     import numpy as np
@@ -12,12 +17,19 @@ if TYPE_CHECKING:
 
 def _read_text(file_path: Path) -> WidgetDataModel:
     """Read text file."""
-    with open(file_path) as f:
-        return WidgetDataModel(
-            value=f.read(),
-            type=StandardTypes.TEXT,
-            source=Path(file_path),
-        )
+    return WidgetDataModel(
+        value=file_path.read_text(),
+        type=StandardTypes.TEXT,
+        source=file_path,
+    )
+
+
+def _read_html(file_path: Path) -> WidgetDataModel:
+    return WidgetDataModel(
+        value=file_path.read_text(),
+        type=StandardSubtypes.HTML,
+        source=file_path,
+    )
 
 
 def _read_simple_image(file_path: Path) -> WidgetDataModel:
@@ -66,7 +78,9 @@ def default_reader_provider(file_path: Path | list[Path]):
     """Get default reader."""
     if isinstance(file_path, list):
         return None
-    if file_path.suffix in BasicTextFileTypes:
+    if file_path.suffix in (".html", ".htm"):
+        return _read_html
+    elif file_path.suffix in BasicTextFileTypes:
         return _read_text
     elif file_path.suffix == ".csv":
         return _read_csv

@@ -8,7 +8,7 @@ from superqt import QSearchableComboBox
 from himena.consts import StandardTypes, StandardSubtypes
 from himena.types import WidgetDataModel
 from himena.model_meta import TextMeta
-from himena.qt._qt_consts import MonospaceFontFamily
+from himena.consts import MonospaceFontFamily
 
 from himena._utils import OrderedSet, lru_cache
 from himena.qt._qfinderwidget import QFinderWidget
@@ -452,17 +452,11 @@ class QDefaultTextEdit(QtW.QWidget):
         layout.addWidget(self._main_text_edit)
         layout.addWidget(self._footer)
 
-    def initPlainText(self, text: str):
-        self._main_text_edit.setPlainText(text)
-
-    def toPlainText(self) -> str:
-        return self._main_text_edit.toPlainText()
-
     def setFocus(self):
         self._main_text_edit.setFocus()
 
     def update_model(self, model: WidgetDataModel[str]):
-        self.initPlainText(model.value)
+        self._main_text_edit.setPlainText(model.value)
         lang = None
         spaces = 4
         if isinstance(model.additional_data, TextMeta):
@@ -489,7 +483,7 @@ class QDefaultTextEdit(QtW.QWidget):
         cursor = self._main_text_edit.textCursor()
         font = self._main_text_edit.font()
         return WidgetDataModel(
-            value=self.toPlainText(),
+            value=self._main_text_edit.toPlainText(),
             type=self.model_type(),
             extension_default=".txt",
             additional_data=TextMeta(
@@ -529,16 +523,57 @@ class QDefaultTextEdit(QtW.QWidget):
         return super().keyPressEvent(a0)
 
 
-class QDefaultHTMLEdit(QDefaultTextEdit):
+class QDefaultHTMLEdit(QtW.QWidget):
+    def __init__(self):
+        super().__init__()
+        self._main_text_edit = QtW.QTextEdit(self)
+        layout = QtW.QVBoxLayout(self)
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._main_text_edit)
+
+    def initPlainText(self, text: str):
+        self._main_text_edit.setHtml(text)
+
+    def toPlainText(self) -> str:
+        return self._main_text_edit.toPlainText()
+
+    def setFocus(self):
+        self._main_text_edit.setFocus()
+
     def update_model(self, model: WidgetDataModel[str]):
         self.initPlainText(model.value)
-        # set default language
-        self._footer._language_combobox.setCurrentText("HTML")
-        self._footer._emit_language_changed()
-        return self
+        return None
 
-    def to_model(self) -> WidgetDataModel:
+    def to_model(self) -> WidgetDataModel[str]:
+        cursor = self._main_text_edit.textCursor()
+        font = self._main_text_edit.font()
         return WidgetDataModel(
-            value=self.toPlainText(),
-            type=StandardSubtypes.HTML,
+            value=self._main_text_edit.toHtml(),
+            type=self.model_type(),
+            extension_default=".html",
+            additional_data=TextMeta(
+                language="HTML",
+                selection=(cursor.selectionStart(), cursor.selectionEnd()),
+                font_family=font.family(),
+                font_size=font.pointSizeF(),
+            ),
         )
+
+    def model_type(self):
+        return StandardSubtypes.HTML
+
+    def size_hint(self) -> tuple[int, int]:
+        return 400, 300
+
+    def is_modified(self) -> bool:
+        return False
+
+    def set_modified(self, value: bool) -> None:
+        self._main_text_edit.document().setModified(value)
+
+    def is_editable(self) -> bool:
+        return False
+
+    def set_editable(self, value: bool) -> None:
+        self._main_text_edit.setReadOnly(not value)

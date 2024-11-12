@@ -318,7 +318,9 @@ class QSubWindow(QtW.QMdiSubWindow):
         if self._current_button == Qt.MouseButton.NoButton:
             self.setCursor(resize_state.to_cursor_shape())
         elif self._current_button & Qt.MouseButton.LeftButton:
-            min_size = self._widget.minimumSize().expandedTo(
+            # NOTE: Method "minimusSizeHint" represents the minimum size of the widget
+            # as a window
+            min_size = self._widget.minimumSizeHint().expandedTo(
                 self._title_bar.minimumSize()
             )
             max_size = self._widget.maximumSize()

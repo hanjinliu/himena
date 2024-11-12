@@ -2,14 +2,15 @@ from __future__ import annotations
 
 from logging import getLogger
 from qtpy import QtWidgets as QtW, QtCore, QtGui
-from himena.types import WidgetDataModel
+from qtpy.QtCore import Qt
+from himena.types import WidgetDataModel, is_subtype
 from himena.qt._qsub_window import QSubWindow
 from himena.qt._utils import get_main_window
 
 _LOGGER = getLogger(__name__)
 
 
-class QModelDrop(QtW.QWidget):
+class QModelDrop(QtW.QGroupBox):
     """Widget for dropping model data from a subwindow."""
 
     valueChanged = QtCore.Signal(WidgetDataModel)
@@ -23,14 +24,12 @@ class QModelDrop(QtW.QWidget):
         self.setAcceptDrops(True)
         self._drop_area = QtW.QLabel("Drop here", self)
         self._drop_area.setAlignment(
-            QtCore.Qt.AlignmentFlag.AlignCenter | QtCore.Qt.AlignmentFlag.AlignVCenter
+            Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignVCenter
         )
-        self._drop_area.setFixedHeight(THUMBNAIL_SIZE.height())
+        self._drop_area.setFixedHeight(THUMBNAIL_SIZE.height() + 2)
         self._thumbnail = _QImageLabel()
         layout = QtW.QHBoxLayout(self)
-        layout.setAlignment(
-            QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter
-        )
+        layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         layout.addWidget(self._thumbnail)
         layout.addWidget(self._drop_area)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -43,7 +42,7 @@ class QModelDrop(QtW.QWidget):
             if not hasattr(widget, "to_model"):
                 _LOGGER.debug("Ignoring drop event")
                 event.ignore()
-                event.setDropAction(QtCore.Qt.DropAction.IgnoreAction)
+                event.setDropAction(Qt.DropAction.IgnoreAction)
                 return
             model_type = getattr(widget, "model_type", lambda: None)()
             _LOGGER.info("Entered model type %s", model_type)
@@ -52,7 +51,7 @@ class QModelDrop(QtW.QWidget):
                 event.accept()
                 return
         event.ignore()
-        event.setDropAction(QtCore.Qt.DropAction.IgnoreAction)
+        event.setDropAction(Qt.DropAction.IgnoreAction)
 
     def dropEvent(self, event: QtGui.QDropEvent):
         if isinstance(src := event.source(), QSubWindow):
@@ -75,7 +74,7 @@ class QModelDrop(QtW.QWidget):
         src_wrapper.closed.connect(self._on_source_closed)
         self._drop_area.setText(src.windowTitle())
         self._drop_area.setAlignment(
-            QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
         )
         self._thumbnail.set_pixmap(
             src._pixmap_resized(THUMBNAIL_SIZE, QtGui.QColor("#f0f0f0"))
@@ -98,7 +97,7 @@ class QModelDrop(QtW.QWidget):
     def _is_type_maches(self, model_type: str) -> bool:
         if self._allowed_types is None:
             return True
-        return any(model_type == t for t in self._allowed_types)
+        return any(is_subtype(model_type, t) for t in self._allowed_types)
 
 
 THUMBNAIL_SIZE = QtCore.QSize(50, 50)
@@ -107,9 +106,7 @@ THUMBNAIL_SIZE = QtCore.QSize(50, 50)
 class _QImageLabel(QtW.QLabel):
     def __init__(self):
         super().__init__()
-        self.setAlignment(
-            QtCore.Qt.AlignmentFlag.AlignCenter | QtCore.Qt.AlignmentFlag.AlignTop
-        )
+        self.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
         self.setSizePolicy(
             QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Expanding
         )
@@ -121,8 +118,8 @@ class _QImageLabel(QtW.QLabel):
         self.setPixmap(
             pixmap.scaled(
                 sz,
-                QtCore.Qt.AspectRatioMode.KeepAspectRatio,
-                QtCore.Qt.TransformationMode.SmoothTransformation,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
             )
         )
 

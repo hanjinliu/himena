@@ -102,6 +102,10 @@ class WidgetDataModel(GenericModel[_T]):
         default=None,
         description="Method descriptor.",
     )
+    force_open_with: str | None = Field(
+        default=None,
+        description="Force open with a specific plugin if given.",
+    )
 
     def with_value(
         self,
