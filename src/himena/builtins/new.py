@@ -48,9 +48,10 @@ def seaborn_test_data() -> Parametric:
 
 
 @register_new_provider(
+    title="Random image ...",
     command_id="builtins:random-image",
 )
-def random_image(ui: MainWindow) -> Parametric:
+def random_image() -> Parametric:
     """Generate an random image."""
 
     def generate_random_image(

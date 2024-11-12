@@ -49,7 +49,6 @@ class MenuId(StrEnum):
     WINDOW_NTH = "window/nth"
     VIEW = "view"
     TOOLS = "tools"
-    TOOLS_TEXT = "tools/text"
     TOOLBAR = "toolbar"
 
     def __str__(self) -> str:

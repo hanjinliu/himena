@@ -1,6 +1,6 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from qtpy.QtWidgets import QApplication
+from qtpy import QtWidgets as QtW
 from himena import MainWindow, anchor
 from himena.types import ClipboardDataModel, WidgetDataModel
 from himena.qt import register_frontend_widget, MainWindowQt
@@ -158,18 +158,23 @@ def test_view_menu_commands(ui: MainWindow, sample_dir: Path):
     ui.exec_action("close-tab")
 
 def test_tools_menu(ui: MainWindow):
-    win = ui.add_data("a\nb\nc\nbc", type="text")
+    ui.add_data("a\nb\nc\nbc", type="text")
     ui.tabs[0].current_index = 0
-    ui.exec_action("filter-text", with_params={"include": "b"})
+    ui.exec_action("builtins:filter-text", with_params={"include": "b"})
     assert ui.current_window.to_model().value == "b\nbc"
     ui.tabs[0].current_index = 0
-    ui.exec_action("filter-text", with_params={"exclude": "b"})
+    ui.exec_action("builtins:filter-text", with_params={"exclude": "b"})
     assert ui.current_window.to_model().value == "a\nc"
+    ui.tabs[0].current_index = 0
+    ui.exec_action(
+        "builtins:filter-text",
+        with_params={"exclude": "b", "case_sensitive": False},
+    )
 
     ui.clear()
     ui.add_data('{"a": [1, 2], "b": null}', type="text.json")
     ui.tabs[0].current_index = 0
-    ui.exec_action("format-json", with_params={})
+    ui.exec_action("builtins:format-json", with_params={})
 
 def test_custom_widget(ui: MainWindow):
     from qtpy.QtWidgets import QLabel
@@ -308,3 +313,13 @@ def test_move_window(ui: MainWindow):
     assert win not in tab0
     assert win in tab1
     assert tab1[0]._identifier == win._identifier
+
+def test_child_window(ui: MainWindow):
+    win = ui.add_data("A", type="text")
+    text_edit = QtW.QTextEdit()
+    child = win.add_child(text_edit, title="Child")
+    assert len(ui.tabs.current()) == 2
+    del ui.tabs.current()[0]
+    assert len(ui.tabs.current()) == 0
+    assert not win.is_alive
+    assert not child.is_alive

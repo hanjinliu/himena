@@ -1,11 +1,7 @@
-from typing import Callable
 from app_model.types import KeyBindingRule, KeyCode, KeyMod
-import json
-from himena.consts import MenuId, StandardTypes
-from himena.types import Parametric, WidgetDataModel
-from himena.model_meta import TextMeta
+from himena.consts import MenuId
 from himena.widgets import MainWindow
-from himena._app_model.actions._registry import ACTIONS, SUBMENUS
+from himena._app_model.actions._registry import ACTIONS
 from himena._app_model._context import AppContext as _ctx
 
 
@@ -37,90 +33,3 @@ def show_command_palette(ui: MainWindow) -> None:
 def go_to_window(ui: MainWindow) -> None:
     """Go to an existing window."""
     ui._backend_main_window._show_command_palette("goto")
-
-
-@ACTIONS.append_from_fn(
-    id="filter-text",
-    title="Filter text ...",
-    menus=[MenuId.TOOLS_TEXT],
-    enablement=_ctx.active_window_model_type == StandardTypes.TEXT,
-    need_function_callback=True,
-)
-def filter_text(model: WidgetDataModel[str]) -> Parametric[str]:
-    """Go to an existing window."""
-
-    def filter_text_data(include: str = "", exclude: str = "") -> WidgetDataModel[str]:
-        if include == "":
-            _include = _const_func(True)
-        else:
-            _include = _contains_func(include)
-        if exclude == "":
-            _exclude = _const_func(False)
-        else:
-            _exclude = _contains_func(exclude)
-        new_text = "\n".join(
-            line
-            for line in model.value.splitlines()
-            if _include(line) and not _exclude(line)
-        )
-        if isinstance(model.additional_data, TextMeta):
-            meta = model.additional_data.model_copy(update={"selection": None})
-        else:
-            meta = TextMeta()
-        return WidgetDataModel(
-            value=new_text,
-            type=model.type,
-            title=f"{model.title} (filtered)",
-            extensions=model.extensions,
-            additional_data=meta,
-        )
-
-    return filter_text_data
-
-
-SUBMENUS.append_from(MenuId.TOOLS, MenuId.TOOLS_TEXT, title="Text")
-
-
-@ACTIONS.append_from_fn(
-    id="format-json",
-    title="Format JSON ...",
-    menus=[MenuId.TOOLS_TEXT],
-    enablement=_ctx.active_window_model_type == StandardTypes.TEXT,
-    need_function_callback=True,
-)
-def format_json(model: WidgetDataModel) -> Parametric:
-    """Format JSON."""
-
-    def format_json_data(indent: int = 2) -> WidgetDataModel[str]:
-        if not isinstance(meta := model.additional_data, TextMeta):
-            meta = TextMeta()
-        return WidgetDataModel(
-            value=json.dumps(json.loads(model.value), indent=indent),
-            type=model.type,
-            title=f"{model.title} (formatted)",
-            extension_default=".json",
-            extensions=model.extensions,
-            additional_data=TextMeta(
-                language="JSON",
-                spaces=indent,
-                selection=meta.selection,
-                font_family=meta.font_family,
-                font_size=meta.font_size,
-            ),
-        )
-
-    return format_json_data
-
-
-def _const_func(x) -> Callable[[str], bool]:
-    def _func(line: str):
-        return x
-
-    return _func
-
-
-def _contains_func(x) -> Callable[[str], bool]:
-    def _func(line: str):
-        return x in line
-
-    return _func

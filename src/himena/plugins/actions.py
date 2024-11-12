@@ -336,15 +336,16 @@ def register_new_provider(
     kbs = _normalize_keybindings(keybindings)
 
     def _inner(f: Callable):
+        _id = _command_id_from_func(f, command_id)
         action = Action(
-            id=_command_id_from_func(f, command_id),
+            id=_id,
             title=_normalize_title(title, f),
             tooltip=_tooltip_from_func(f),
-            callback=f,
+            callback=_utils.make_new_callback(f, action_id=_id),
             menus=_norm_menus(menus),
             keybindings=kbs,
         )
-        _ACTIONS[action.id] = action
+        _ACTIONS[_id] = action
         return f
 
     return _inner if func is None else _inner(func)

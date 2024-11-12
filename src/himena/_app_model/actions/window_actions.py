@@ -53,7 +53,6 @@ def close_current_window(ui: MainWindow) -> None:
     menus=[
         {"id": MenuId.WINDOW, "group": EDIT_GROUP},
     ],
-    keybindings=[{"primary": _CtrlShift | KeyCode.KeyD}],
     need_function_callback=True,
 )
 def duplicate_window(model: WidgetDataModel) -> WidgetDataModel:

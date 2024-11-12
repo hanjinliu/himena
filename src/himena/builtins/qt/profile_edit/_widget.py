@@ -1,23 +1,26 @@
 from __future__ import annotations
 
 from qtpy import QtWidgets as QtW, QtGui, QtCore
+from qtpy.QtCore import Qt
 from himena.qt._qt_consts import MonospaceFontFamily
 from himena.profile import define_app_profile, iter_app_profiles, AppProfile
 from himena.plugins import dry_install_plugins
 
 
 class QProfileEditor(QtW.QWidget):
+    """Widget to edit application profiles."""
+
     def __init__(self):
         super().__init__()
         layout = QtW.QVBoxLayout()
         self._combo_box = QtW.QComboBox(self)
         self._name_label = QtW.QLineEdit(self)
         self._name_label.setPlaceholderText("Profile name")
-        self._list_widget = QPluginsListWidget(self)
+        self._plugins_editor = QPluginsEditor(self)
         self._edit_buttons = QPluginsEditButtons(self)
         layout.addWidget(self._combo_box)
         layout.addWidget(self._name_label)
-        layout.addWidget(self._list_widget)
+        layout.addWidget(self._plugins_editor)
         layout.addWidget(self._edit_buttons)
         self.setLayout(layout)
 
@@ -35,11 +38,12 @@ class QProfileEditor(QtW.QWidget):
         prof = self._combo_box.itemData(index)
         if isinstance(prof, AppProfile):
             self._name_label.setText(prof.name)
-            self._list_widget.set_profile(prof)
+            self._plugins_editor.set_profile(prof)
 
     def _set_edit_mode(self, editable: bool):
-        self._list_widget.set_item_editable(editable)
+        self._plugins_editor.set_item_editable(editable)
         self._name_label.setReadOnly(not editable)
+        self._name_label.setVisible(not editable)
         self._edit_buttons.set_edit_mode(editable)
 
     def _start_edit(self):
@@ -62,15 +66,17 @@ class QProfileEditor(QtW.QWidget):
             )
             if answer == QtW.QMessageBox.StandardButton.No:
                 return
-        plugins = self._list_widget.get_plugin_list()
+        plugins = self._plugins_editor.get_plugin_list()
         try:
             dry_install_plugins(plugins)
         except Exception:
             self._profile_changed(self._combo_box.currentIndex())  # reset inputs
             raise
         else:
+            idx = self._combo_box.currentIndex()
             define_app_profile(self._name_label.text(), plugins)
             self._reload_profiles()
+            self._combo_box.setCurrentIndex(idx)
 
     def _reload_profiles(self):
         self._combo_box.clear()
@@ -81,71 +87,48 @@ class QProfileEditor(QtW.QWidget):
         self._profile_changed(0)
 
 
-class QPluginsListWidget(QtW.QListWidget):
+_KEYS_ACCEPT = frozenset(
+    {Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Delete, Qt.Key.Key_Home,
+     Qt.Key.Key_End, Qt.Key.Key_Left, Qt.Key.Key_Right, Qt.Key.Key_Up, Qt.Key.Key_Down,
+     Qt.Key.Key_Backspace, Qt.Key.Key_PageUp, Qt.Key.Key_PageDown, Qt.Key.Key_Period,
+     Qt.Key.Key_Underscore},
+)  # fmt: skip
+
+
+def _is_allowed_key(key: int) -> bool:
+    return (
+        key in _KEYS_ACCEPT
+        or Qt.Key.Key_0 <= key <= Qt.Key.Key_9
+        or Qt.Key.Key_A <= key <= Qt.Key.Key_Z
+    )
+
+
+class QPluginsEditor(QtW.QPlainTextEdit):
     def __init__(self, parent: QtW.QWidget | None = None) -> None:
         super().__init__(parent)
         self.setFont(QtGui.QFont(MonospaceFontFamily))
-        self._item_editable = False
+        self.setReadOnly(True)
 
     def set_profile(self, profile: AppProfile):
-        self.clear()
-        for plugin in profile.plugins:
-            item = QtW.QListWidgetItem(plugin, self)
-            item.setFlags(item.flags() | QtCore.Qt.ItemFlag.ItemIsEditable)
-            self.addItem(item)
-
-    def enter_new_plugin(self):
-        self.addItem("")
-        new_item = self.item(self.count() - 1)
-        new_item.setFlags(new_item.flags() | QtCore.Qt.ItemFlag.ItemIsEditable)
-        assert new_item is not None
-        self.editItem(new_item)
+        self.setPlainText("\n".join(profile.plugins))
 
     def set_item_editable(self, editable: bool):
-        if editable:
-            _trig = (
-                QtW.QAbstractItemView.EditTrigger.DoubleClicked
-                | QtW.QAbstractItemView.EditTrigger.EditKeyPressed
-            )
-        else:
-            _trig = QtW.QAbstractItemView.EditTrigger.NoEditTriggers
-        self.setEditTriggers(_trig)
-        self._item_editable = editable
+        self.setReadOnly(not editable)
 
     def get_plugin_list(self) -> list[str]:
-        plugins: list[str] = []
-        for i in range(self.count()):
-            item = self.item(i)
-            if item is None:
-                continue
-            text = item.text()
-            if text == "":
-                continue
-            plugins.append(text)
-        return plugins
+        text = self.toPlainText()
+        return [_l.strip() for _l in text.splitlines() if _l.strip() != ""]
 
-    def keyPressEvent(self, e: QtGui.QKeyEvent | None) -> None:
-        if (
-            e.modifiers() == QtCore.Qt.KeyboardModifier.NoModifier
-            and e.key() == QtCore.Qt.Key.Key_Delete
-        ):
-            if self._item_editable:
-                for item in self.selectedItems():
-                    self.takeItem(self.row(item))
-        elif (
-            e.modifiers() & QtCore.Qt.KeyboardModifier.ControlModifier
-            and e.key() == QtCore.Qt.Key.Key_N
-        ):
-            if self._item_editable:
-                self.enter_new_plugin()
-        else:
-            return super().keyPressEvent(e)
+    def event(self, ev: QtCore.QEvent) -> bool:
+        if ev.type() == QtCore.QEvent.Type.KeyPress:
+            assert isinstance(ev, QtGui.QKeyEvent)
+            _key = ev.key()
+            if _is_allowed_key(_key):
+                return super().event(ev)
+            else:
+                return True
 
-    def mouseDoubleClickEvent(self, e: QtGui.QMouseEvent) -> None:
-        if self._item_editable and self.itemAt(e.pos()) is None:
-            self.enter_new_plugin()
-        else:
-            super().mouseDoubleClickEvent(e)
+        return super().event(ev)
 
 
 class QPluginsEditButtons(QtW.QWidget):

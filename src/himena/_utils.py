@@ -129,7 +129,7 @@ def make_function_callback(
     else:
         return f
 
-    if len(keys_model) == 0:
+    if len(keys_model) == 0 and f.__annotations__["return"] is not Parametric:
         return f
 
     @wraps(f)
@@ -158,3 +158,10 @@ def make_function_callback(
         return out
 
     return _new_f
+
+
+def make_new_callback(
+    f: _F,
+    action_id: str,
+) -> _F:
+    return make_function_callback(f, action_id, preview=False)

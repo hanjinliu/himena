@@ -24,6 +24,13 @@ class TableMeta(BaseModel):
     )
 
 
+class Roi(BaseModel):
+    """A region of interest (ROI) model."""
+
+    value: Any = Field(..., description="Value of the ROI.")
+    type: str = Field(..., description="Type of the ROI.")
+
+
 class ImageMeta(BaseModel):
     """Preset for describing an image file metadata."""
 
@@ -36,3 +43,5 @@ class ImageMeta(BaseModel):
     current_indices: list[int] | None = Field(
         None, description="Current slice indices to render the image in GUI."
     )
+    current_roi: Roi | None = Field(None, description="Current region of interest.")
+    rois: list[Roi] = Field(default_factory=list, description="Regions of interest.")
