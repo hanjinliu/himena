@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, asdict
+import warnings
 from himena._utils import lru_cache
 import json
 from pathlib import Path
@@ -13,17 +14,23 @@ class Theme:
     background: str
     foreground: str
     base_color: str
-    highlight0: str
-    highlight1: str
-    background0: str
-    background1: str
+    foreground_dim: str
+    highlight_dim: str
+    highlight_strong: str
+    background_dim: str
+    background_strong: str
     inv_color: str
 
     @classmethod
     def from_global(cls, name: str) -> Theme:
         theme = get_global_styles().get(name, None)
         if theme is None:
-            raise ValueError(f"Theme {name!r} not found")
+            warnings.warn(
+                f"Theme {name} not found. Using default theme.",
+                UserWarning,
+                stacklevel=2,
+            )
+            theme = get_global_styles()["light-purple"]
         js = asdict(theme)
         self = cls(**js)
         return self
@@ -56,13 +63,15 @@ def get_global_styles() -> dict[str, Theme]:
             bg = Color(style["background"])
             fg = Color(style["foreground"])
             base = Color(style["base_color"])
-            if "background0" not in style:
-                style["background0"] = _mix_colors(bg, fg, 0.1).hex
-            if "background1" not in style:
-                style["background1"] = _mix_colors(bg, fg, -0.1).hex
-            if "highlight0" not in style:
-                style["highlight0"] = _mix_colors(base, bg, 0.6).hex
-            if "highlight1" not in style:
-                style["highlight1"] = _mix_colors(base, bg, 0.75).hex
+            if "foreground_dim" not in style:
+                style["foreground_dim"] = _mix_colors(fg, bg, 0.6).hex
+            if "background_dim" not in style:
+                style["background_dim"] = _mix_colors(bg, fg, 0.1).hex
+            if "background_strong" not in style:
+                style["background_strong"] = _mix_colors(bg, fg, -0.1).hex
+            if "highlight_dim" not in style:
+                style["highlight_dim"] = _mix_colors(base, bg, 0.6).hex
+            if "highlight_strong" not in style:
+                style["highlight_strong"] = _mix_colors(base, bg, 0.75).hex
             global_styles[name] = Theme(**style)
     return global_styles

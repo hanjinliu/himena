@@ -9,11 +9,11 @@ QWidget {
 }
 
 QWidget[emphasized="true"] {
-    background-color: #[highlight0];
+    background-color: #[highlight_dim];
 }
 
 QWidget[emphasized="true"] > QFrame {
-    background-color: #[highlight0];
+    background-color: #[highlight_dim];
 }
 
 QWidget:!enabled {
@@ -39,27 +39,27 @@ QFrame:!enabled {
 /* QPushButton */
 
 QPushButton {
-  background-color: #[background0];
+  background-color: #[background_dim];
   border-radius: 2px;
   padding: 4px;
   border: 0px;
 }
 
 QPushButton:hover {
-  background-color: #[highlight0];
+  background-color: #[highlight_dim];
 }
 
 QPushButton:pressed {
-  background-color: #[highlight1];
+  background-color: #[highlight_strong];
 }
 
 QPushButton:checked {
-  background-color: #[highlight1];
+  background-color: #[highlight_strong];
 }
 
 QPushButton:disabled {
   background-color: #[background];
-  color: #[background1];
+  color: #[background_strong];
   border-radius: 2px;
   padding: 4px;
   border: 0px;
@@ -69,7 +69,7 @@ QPushButton:disabled {
 
 QComboBox {
   border-radius: 2px;
-  background-color: #[background0];
+  background-color: #[background_dim];
   color: #[foreground];
   padding: 1px, 1px, 4px, 4px;
 }
@@ -80,7 +80,7 @@ QComboBox {
 QScrollBar {
   border: none;
   border-radius: 2px;
-  background: #[background0];
+  background: #[background_dim];
 }
 
 QScrollBar:horizontal {
@@ -96,12 +96,12 @@ QScrollBar:vertical {
 }
 
 QScrollBar::handle {
-  background: #[highlight0];
+  background: #[highlight_dim];
   border-radius: 5px;
 }
 
 QScrollBar::handle:hover {
-  background: #[highlight1];
+  background: #[highlight_strong];
   border-radius: 5px;
 }
 
@@ -117,14 +117,14 @@ QScrollBar::add-line,
 QScrollBar::sub-line {
     height: 0px;
     width: 0px;
-    background-color: #[background0];
+    background-color: #[background_dim];
 }
 
 QScrollBar::add-page,
 QScrollBar::sub-page {
     height: 0px;
     width: 0px;
-    background-color: #[background0];
+    background-color: #[background_dim];
 }
 
 
@@ -138,13 +138,13 @@ QSlider {
 
 QSlider::groove:horizontal {
    border: 0px;
-   background-color: #[background0];
+   background-color: #[background_dim];
    height: 6px;
    border-radius: 2px;
 }
 
 QSlider::handle:horizontal {
-   background-color: #[highlight0];
+   background-color: #[highlight_dim];
    border: 0px;
    width: 12px;
    margin-top: -5px;
@@ -153,17 +153,17 @@ QSlider::handle:horizontal {
 }
 
 QSlider::handle:hover {
-   background-color: #[highlight1];
+   background-color: #[highlight_strong];
 }
 
 /* ----------------- QToolBar ------------------ */
 
 QToolBar {
-    border: none;
+    border-bottom: 1px solid #[foreground_dim];
     background-color: #[background];
     color: #[foreground];
-    margin: 0px;
-    padding: 0px;
+    margin: 1px;
+    padding: 1px;
 }
 
 QToolButton {
@@ -178,7 +178,7 @@ QToolButton:hover {
     border: 2px solid lightgray;
     border-radius: 4px;
     padding: 2px;
-    background-color: #[highlight1];
+    background-color: #[highlight_strong];
     color: #[foreground];
 }
 
@@ -191,11 +191,11 @@ QPlainTextEdit, QTextEdit {
     min-height: 35px;
     padding: 2px;
     border-radius: 2px;
-    border: 1px solid #[highlight1];
-    selection-background-color: #[highlight0];
+    border: 1px solid #[highlight_strong];
+    selection-background-color: #[highlight_dim];
 }
 .inverted {
-    background-color: #[highlight0];
+    background-color: #[highlight_dim];
     color: #[background];
 }
 .error { color: red; }
@@ -216,39 +216,38 @@ QPlainTextEdit > QWidget {
 QListView {
     background-color: #[background];
     color: #[foreground];
-    border: 1px solid #[highlight1];
+    border: 1px solid #[highlight_strong];
     border-radius: 2px;
-    selection-background-color: #[highlight0];
+    selection-background-color: #[highlight_dim];
 }
 
 QListView:item:hover {
-    background-color: #[highlight0];
+    background-color: #[highlight_dim];
     color: #[foreground];
 }
 
 QListView:item:selected {
-    background-color: #[highlight0];
+    background-color: #[highlight_dim];
     color: #[foreground];
 }
 
 
 /* ----------------- QMenuBar ------------------ */
 
-/* QMenuBar::item {
-    padding: 2px;
-    border-radius: 3px;
-} */
+QMenuBar {
+    border-bottom: 1px solid #[foreground_dim];
+}
 
 QMenuBar::item:selected {
-   background-color: #[highlight0];
+   background-color: #[highlight_dim];
 }
 
 QMenu::item:hover {
-    background-color: #[highlight0];
+    background-color: #[highlight_dim];
 }
 
 QMenu::item:selected {
-    background-color: #[highlight0];
+    background-color: #[highlight_dim];
 }
 
 QMenu:!enabled {
@@ -265,20 +264,20 @@ QLabel {
 }
 
 QLineEdit {
-    background-color: #[background0];
+    background-color: #[background_dim];
     color: #[foreground];
     min-height: 16px;
     padding: 1px;
     border-radius: 1px;
-    selection-background-color: #[highlight0];
+    selection-background-color: #[highlight_dim];
 }
 
 QLineEdit:hover {
-    border-bottom: 1px solid #[highlight0];
+    border-bottom: 1px solid #[highlight_dim];
 }
 
 QGroupBox {
-    border: 1px solid #[highlight0];
+    border: 1px solid #[highlight_dim];
     border-radius: 2px;
     margin-top: 1ex;
     background-color: #[background];
@@ -302,7 +301,7 @@ QRadioButton {
 }
 
 QProgressBar {
-    border: 1px solid #[highlight0];
+    border: 1px solid #[highlight_dim];
     border-radius: 2px;
     background-color: #[background];
     color: #[foreground];
@@ -310,7 +309,7 @@ QProgressBar {
 }
 
 QProgressBar::chunk {
-    background-color: #[highlight0];
+    background-color: #[highlight_dim];
     width: 20px;
 }
 
@@ -331,7 +330,7 @@ QTabWidget {
 }
 
 QTabWidget::pane {
-    border: 1px solid #[highlight0];
+    border: 1px solid #[highlight_dim];
     background-color: #[background];
     top: -1px;
 }
@@ -340,58 +339,58 @@ QTabWidget::pane {
 QTabWidget::tab-bar {
     left: 0;
     background-color: #[background];
-    color: #[highlight0];
+    color: #[highlight_dim];
 }
 
 QTabBar::tab:top {
-    border: 1px solid #[foreground];
+    border: 1px solid #[foreground_dim];
     border-bottom: 0px;
     border-top-left-radius: 4px;
     border-top-right-radius: 4px;
     padding: 3px 6px;
-    height: 14px;
+    height: 10px;
     margin-top: 4px;
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #[background0], stop:1 #[background1]);
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #[background_dim], stop:1 #[background_strong]);
     color: #[foreground];
 }
 
 QTabBar::tab:top:hover {
-    height: 16px;
+    height: 12px;
     margin-top: 2px;
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #[background0], stop:1 #[highlight1]);
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #[background_dim], stop:1 #[highlight_strong]);
     color: #[foreground];
 }
 
 QTabBar::tab:top:selected {
-    height: 18px;
+    height: 14px;
     margin-top: 0px;
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #[highlight1], stop:1 #[highlight0]);
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #[highlight_strong], stop:1 #[highlight_dim]);
     color: #[foreground];
 }
 
 QTabBar::tab:bottom {
-    border: 1px solid #[foreground];
+    border: 1px solid #[foreground_dim];
     border-top: 0px;
     border-bottom-left-radius: 4px;
     border-bottom-right-radius: 4px;
     padding: 3px 6px;
-    height: 14px;
+    height: 10px;
     margin-bottom: 4px;
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #[background1], stop:1 #[background0]);
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #[background_strong], stop:1 #[background_dim]);
     color: #[foreground];
 }
 
 QTabBar::tab:bottom:hover {
-    height: 16px;
+    height: 12px;
     margin-bottom: 2px;
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #[highlight0], stop:1 #[background0]);
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #[highlight_dim], stop:1 #[background_dim]);
     color: #[foreground];
 }
 
 QTabBar::tab:bottom:selected {
-    height: 18px;
+    height: 14px;
     margin-bottom: 0px;
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #[highlight1], stop:1 #[highlight0]);
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #[highlight_strong], stop:1 #[highlight_dim]);
     color: #[foreground];
 }
 
@@ -399,7 +398,7 @@ QTabBar::tab:bottom:selected {
 /* ----------------- others ------------------ */
 
 QMdiArea {
-    qproperty-background: #[background0];
+    qproperty-background: #[background_dim];
 }
 
 QSubWindow {
@@ -411,20 +410,20 @@ QSubWindow:focus {
 }
 
 QSubWindowTitleBar[isCurrent=false] {
-    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #[background], stop:1 #[background0]);
+    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #[background], stop:1 #[background_dim]);
 }
 
 QSubWindowTitleBar[isCurrent=true] {
-    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #[highlight0], stop:1 #[background0]);
+    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #[highlight_dim], stop:1 #[background_dim]);
 }
 
 QTitleBarToolButton:hover {
-    border: 1px solid #[highlight0];
+    border: 1px solid #[highlight_dim];
     border-radius: 3px;
 }
 
 QCommandLabel:hover {
-    background-color: #[highlight0];
+    background-color: #[highlight_dim];
     color: #[foreground];
 }
 
@@ -433,7 +432,7 @@ QClickableLabel {
 }
 
 QToggleSwitch {
-    qproperty-onColor: #[highlight1];
-    qproperty-offColor: #[background0];
-    qproperty-handleColor: #[background0];
+    qproperty-onColor: #[highlight_strong];
+    qproperty-offColor: #[background_dim];
+    qproperty-handleColor: #[background_dim];
 }
