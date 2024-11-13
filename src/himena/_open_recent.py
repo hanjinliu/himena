@@ -122,6 +122,7 @@ class RecentFileManager:
             all_info = all_info[-self._n_history :]
         with open(_path, "w") as f:
             json.dump(all_info, f, indent=2)
+        self.update_menu()
         return None
 
     def action_for_file(

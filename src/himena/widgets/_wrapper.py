@@ -405,8 +405,14 @@ class ParametricWindow(SubWindow[_W]):
             if self._callback.sources:
                 new_method = self._callback.to_converter_method(kwargs)
                 result_widget._update_widget_data_model_method(new_method)
+        elif isinstance(return_value, Parametric):
+            result_widget = self._process_parametric_output(return_value)
+            if self._callback.sources:
+                new_method = self._callback.to_converter_method(kwargs)
+                result_widget._update_widget_data_model_method(new_method)
         else:
-            self._process_other_output(return_value)
+            annot = getattr(self._callback, "__annotations__", {})
+            self._process_other_output(return_value, annot.get("return", None))
         return None
 
     def is_preview_enabled(self) -> bool:
@@ -431,13 +437,27 @@ class ParametricWindow(SubWindow[_W]):
         result_widget = ui.tabs[i_tab].add_widget(
             widget, title=model.title, auto_size=False
         )
+        self._coerce_rect(result_widget)
+        return result_widget
+
+    def _process_parametric_output(self, fn: Parametric) -> ParametricWindow[_W]:
+        ui = self._main_window()._himena_main_window
+        i_tab, i_win = self._find_me(ui)
+        if self._auto_close:
+            del ui.tabs[i_tab][i_win]
+
+        result_widget = ui.add_function(fn, preview=fn.preview)
+        self._coerce_rect(result_widget)
+        return result_widget
+
+    def _coerce_rect(self, result_widget: SubWindow[_W]):
         rect = self.rect
         if size_hint := result_widget.size_hint():
             new_rect = (rect.left, rect.top, size_hint[0], size_hint[1])
         else:
             new_rect = rect
         result_widget.rect = new_rect
-        return result_widget
+        return None
 
     def _model_to_new_window(self, model: WidgetDataModel) -> SubWindow[_W]:
         ui = self._main_window()._himena_main_window
@@ -446,9 +466,10 @@ class ParametricWindow(SubWindow[_W]):
         widget.update_model(model)  # type: ignore
         return widget
 
-    def _process_other_output(self, return_value):
+    def _process_other_output(self, return_value: Any, type_hint: Any | None = None):
+        _LOGGER.info("Got output: %r with type hint %r", type(return_value), type_hint)
         ui = self._main_window()._himena_main_window
-        ui.model_app.injection_store.process(return_value)
+        ui.model_app.injection_store.process(return_value, type_hint=type_hint)
 
 
 class DockWidget(WidgetWrapper[_W]):

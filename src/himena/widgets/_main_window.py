@@ -309,7 +309,6 @@ class MainWindow(Generic[_W]):
         session = from_yaml(fp)
         session.to_gui(self)
         self._recent_session_manager.append_recent_files([fp])
-        self._recent_session_manager.update_menu()
         return None
 
     def save_session(self, path: str | Path) -> None:
@@ -480,3 +479,28 @@ class MainWindow(Generic[_W]):
             for cls_type, cls, priority in widget_classes
         ]
         return max(subtype_match, key=lambda x: x[0])[1]
+
+    def _prep_choose_plugin_func(
+        self,
+        model: WidgetDataModel,
+    ) -> Parametric:
+        from himena.plugins import configure_gui
+
+        widget_classes, _ = self._backend_main_window._list_widget_class(model.type)
+
+        choices: list[tuple[str, str]] = []
+        for _, cls, _ in widget_classes:
+            name = f"{cls.__module__}.{cls.__name__}"
+            choices.append((f"{cls.__name__}\n({name})", name))
+
+        def choose_a_plugin(plugin_name: str) -> WidgetDataModel:
+            return model.with_open_plugin(plugin_name)
+
+        return configure_gui(
+            choose_a_plugin,
+            plugin_name={
+                "choices": choices,
+                "widget_type": "RadioButtons",
+                "value": choices[0][1],
+            },
+        )

@@ -9,9 +9,10 @@ from app_model.types import (
 )
 from himena.consts import StandardTypes, MenuId
 from himena.widgets import MainWindow
-from himena import io
+from himena import io, _utils
 from himena.types import (
     ClipboardDataModel,
+    Parametric,
     WidgetDataModel,
     ReaderFunction,
 )
@@ -59,8 +60,40 @@ def open_file_from_dialog(ui: MainWindow) -> list[WidgetDataModel]:
         for reader, file_path in reader_path_sets
     ]
     ui._recent_manager.append_recent_files(file_paths)
-    ui._recent_manager.update_menu()
     return out
+
+
+@ACTIONS.append_from_fn(
+    id="open-file-with",
+    title="Open File With ...",
+    menus=[{"id": MenuId.FILE, "group": READ_GROUP}],
+    need_function_callback=True,
+)
+def open_file_with_from_dialog(ui: MainWindow) -> Parametric:
+    """Open file with selected plugin."""
+    from himena.plugins import configure_gui
+
+    file_path = ui.exec_file_dialog(mode="r")
+    if file_path is None:
+        return None
+    readers = io.get_readers(file_path)
+
+    # prepare reader plugin choices
+    choices_reader = [(f"{r.reader.__name__}\n({r.plugin.name})", r) for r in readers]
+
+    @configure_gui(
+        reader={
+            "choices": choices_reader,
+            "widget_type": "RadioButtons",
+            "value": choices_reader[0][1],
+        }
+    )
+    def choose_a_plugin(reader: io.ReaderTuple) -> Parametric:
+        model = _read_and_update_source(reader, file_path)
+        ui._recent_manager.append_recent_files([file_path])
+        return ui._prep_choose_plugin_func(model)
+
+    return _utils.make_function_callback(choose_a_plugin, command_id="open-file-with")
 
 
 @ACTIONS.append_from_fn(
@@ -76,7 +109,6 @@ def open_folder_from_dialog(ui: MainWindow) -> WidgetDataModel:
         return None
     out = _read_and_update_source(io.pick_reader(file_path), file_path)
     ui._recent_manager.append_recent_files([file_path])
-    ui._recent_manager.update_menu()
     return out
 
 

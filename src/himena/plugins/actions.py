@@ -132,7 +132,7 @@ def register_function(
             id=_id,
             title=_title,
             tooltip=_tooltip_from_func(f),
-            callback=_utils.make_function_callback(f, action_id=_id, preview=preview),
+            callback=_utils.make_function_callback(f, command_id=_id, preview=preview),
             menus=_norm_menus(menus),
             enablement=_enablement,
             keybindings=kbs,

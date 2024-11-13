@@ -14,6 +14,7 @@ from typing import (
 import inspect
 from types import TracebackType
 from functools import wraps
+import warnings
 from himena.types import WidgetDataModel, Parametric
 from himena._descriptors import ProgramaticMethod, ConverterMethod
 
@@ -106,12 +107,13 @@ def _is_parametric(a):
 
 def make_function_callback(
     f: _F,
-    action_id: str,
+    command_id: str,
     preview: bool = False,
 ) -> _F:
     try:
         sig = inspect.signature(f)
     except Exception:
+        warnings.warn(f"Failed to get signature of {f!r}")
         return f
 
     keys_model: list[str] = []
@@ -147,12 +149,12 @@ def make_function_callback(
                 originals.append(method)
         if isinstance(out, WidgetDataModel):
             if len(originals) > 0:
-                out.method = ConverterMethod(originals=originals, action_id=action_id)
+                out.method = ConverterMethod(originals=originals, action_id=command_id)
         elif callable(out) and f.__annotations__["return"] is Parametric:
             out = Parametric(
                 out,
                 sources=originals,
-                action_id=action_id,
+                action_id=command_id,
                 preview=preview,
             )
         return out

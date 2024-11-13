@@ -130,6 +130,9 @@ class WidgetDataModel(GenericModel[_T]):
             to_update.update({"title": source.name})
         return self.model_copy(update=to_update)
 
+    def with_open_plugin(self, open_with: str) -> "WidgetDataModel[_T]":
+        return self.model_copy(update={"force_open_with": open_with})
+
     @property
     def source(self) -> Path | None:
         """The direct source path of the data."""

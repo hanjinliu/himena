@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     import numpy as np
 
 
-def _read_text(file_path: Path) -> WidgetDataModel:
+def default_text_reader(file_path: Path) -> WidgetDataModel:
     """Read text file."""
     return WidgetDataModel(
         value=file_path.read_text(),
@@ -24,7 +24,7 @@ def _read_text(file_path: Path) -> WidgetDataModel:
     )
 
 
-def _read_html(file_path: Path) -> WidgetDataModel:
+def default_html_reader(file_path: Path) -> WidgetDataModel:
     return WidgetDataModel(
         value=file_path.read_text(),
         type=StandardSubtypes.HTML,
@@ -32,7 +32,7 @@ def _read_html(file_path: Path) -> WidgetDataModel:
     )
 
 
-def _read_simple_image(file_path: Path) -> WidgetDataModel:
+def default_image_reader(file_path: Path) -> WidgetDataModel:
     """Read image file."""
     import numpy as np
     from PIL import Image
@@ -45,7 +45,7 @@ def _read_simple_image(file_path: Path) -> WidgetDataModel:
     )
 
 
-def _read_csv(file_path: Path) -> WidgetDataModel:
+def default_csv_reader(file_path: Path) -> WidgetDataModel:
     """Read CSV file."""
     import csv
 
@@ -59,7 +59,7 @@ def _read_csv(file_path: Path) -> WidgetDataModel:
     )
 
 
-def _read_tsv(file_path: Path) -> WidgetDataModel:
+def default_tsv_reader(file_path: Path) -> WidgetDataModel:
     """Read TSV file."""
     import csv
 
@@ -79,28 +79,28 @@ def default_reader_provider(file_path: Path | list[Path]):
     if isinstance(file_path, list):
         return None
     if file_path.suffix in (".html", ".htm"):
-        return _read_html
+        return default_html_reader
     elif file_path.suffix in BasicTextFileTypes:
-        return _read_text
+        return default_text_reader
     elif file_path.suffix == ".csv":
-        return _read_csv
+        return default_csv_reader
     elif file_path.suffix == ".tsv":
-        return _read_tsv
+        return default_tsv_reader
     elif file_path.suffix in {".png", ".jpg", ".jpeg"}:
-        return _read_simple_image
+        return default_image_reader
     elif file_path.name in ConventionalTextFileNames:
-        return _read_text
+        return default_text_reader
     return None
 
 
-def _write_text(model: WidgetDataModel[str], path: Path) -> None:
+def default_text_writer(model: WidgetDataModel[str], path: Path) -> None:
     """Write text file."""
     with open(path, "w") as f:
         f.write(model.value)
     return None
 
 
-def _write_csv(model: WidgetDataModel[list[list[str]]], path: Path) -> None:
+def default_csv_writer(model: WidgetDataModel[list[list[str]]], path: Path) -> None:
     """Write CSV file."""
     import csv
 
@@ -109,7 +109,7 @@ def _write_csv(model: WidgetDataModel[list[list[str]]], path: Path) -> None:
         writer.writerows(model.value)
 
 
-def _write_image(model: WidgetDataModel[np.ndarray], path: Path) -> None:
+def default_image_writer(model: WidgetDataModel[np.ndarray], path: Path) -> None:
     """Write image file."""
     from PIL import Image
 
@@ -117,7 +117,9 @@ def _write_image(model: WidgetDataModel[np.ndarray], path: Path) -> None:
     return None
 
 
-def _write_parameters(model: WidgetDataModel[dict[str, Any]], path: Path) -> None:
+def default_parameter_writer(
+    model: WidgetDataModel[dict[str, Any]], path: Path
+) -> None:
     """Write parameters to a json file."""
     import json
 
@@ -131,12 +133,12 @@ def default_writer_provider(model: WidgetDataModel):
     if model.type is None:
         return None
     if model.is_subtype_of(StandardTypes.TEXT):
-        return _write_text
+        return default_text_writer
     elif model.is_subtype_of(StandardTypes.TABLE):
-        return _write_csv
+        return default_csv_writer
     elif model.is_subtype_of(StandardTypes.IMAGE):
-        return _write_image
+        return default_image_writer
     elif model.is_subtype_of(StandardTypes.PARAMETERS):
-        return _write_parameters
+        return default_parameter_writer
     else:
         return None

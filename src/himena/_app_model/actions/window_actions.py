@@ -88,7 +88,7 @@ def duplicate_with(ui: MainWindow, model: WidgetDataModel) -> Parametric:
 
     @configure_gui(plugin_name={"choices": choices, "widget_type": "RadioButtons"})
     def choose_a_plugin(plugin_name: str) -> WidgetDataModel:
-        return model.model_copy(update={"force_open_with": plugin_name})
+        return model.with_open_plugin(plugin_name)
 
     return choose_a_plugin
 

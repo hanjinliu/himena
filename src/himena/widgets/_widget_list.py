@@ -320,7 +320,6 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         out = self.add_data_model(model)
         main = self._main_window()._himena_main_window
         main._recent_manager.append_recent_files([fp])
-        main._recent_manager.update_menu()
         return out
 
     def save_session(self, file_path: str | Path) -> None:
