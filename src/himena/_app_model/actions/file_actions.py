@@ -64,13 +64,13 @@ def open_file_from_dialog(ui: MainWindow) -> list[WidgetDataModel]:
 
 
 @ACTIONS.append_from_fn(
-    id="open-file-with",
-    title="Open File With ...",
+    id="open-file-using",
+    title="Open File Using ...",
     menus=[{"id": MenuId.FILE, "group": READ_GROUP}],
     need_function_callback=True,
 )
-def open_file_with_from_dialog(ui: MainWindow) -> Parametric:
-    """Open file with selected plugin."""
+def open_file_using_from_dialog(ui: MainWindow) -> Parametric:
+    """Open file using selected plugin."""
     from himena.plugins import configure_gui
 
     file_path = ui.exec_file_dialog(mode="r")
@@ -147,6 +147,39 @@ def save_as_from_dialog(ui: MainWindow) -> None:
         io.write(fd, save_path)
         sub_win.update_default_save_path(save_path)
     return None
+
+
+@ACTIONS.append_from_fn(
+    id="save-as-using",
+    title="Save As Using ...",
+    menus=[{"id": MenuId.FILE, "group": WRITE_GROUP}],
+    need_function_callback=True,
+    enablement=_ctx.is_active_window_exportable,
+)
+def save_as_using_from_dialog(ui: MainWindow, model: WidgetDataModel) -> Parametric:
+    """Save the current sub-window using selected plugin."""
+    from himena.plugins import configure_gui
+
+    writers = io.get_writers(model)
+
+    # prepare reader plugin choices
+    choices_writer = [(f"{w.writer.__name__}\n({w.plugin.name})", w) for w in writers]
+
+    @configure_gui(
+        writer={
+            "choices": choices_writer,
+            "widget_type": "RadioButtons",
+            "value": choices_writer[0][1],
+        }
+    )
+    def choose_a_plugin(writer: io.WriterTuple) -> None:
+        file_path = ui.exec_file_dialog(mode="w")
+        if file_path is None:
+            return None
+        writer.write(model, file_path)
+        return None
+
+    return choose_a_plugin
 
 
 @ACTIONS.append_from_fn(

@@ -105,6 +105,8 @@ def init_application(app: Application) -> Application:
 
     @app.injection_store.mark_processor
     def _process_parametric(fn: Parametric) -> None:
+        if fn is None:
+            return None
         _LOGGER.debug("processing %r", fn)
         ins = current_instance(app.name)
         ins.add_function(fn, preview=fn.preview)
