@@ -96,7 +96,7 @@ class QFinderWidget(_QFinderBaseWidget[_W]):
     _find_update = _find_next
 
 
-class QTableFinderWidget(_QFinderBaseWidget[QtW.QTableWidget]):
+class QTableFinderWidget(_QFinderBaseWidget[QtW.QTableView]):
     def _find_prev(self):
         line_text = self._line_edit.text()
         if line_text == "":
@@ -132,19 +132,22 @@ class QTableFinderWidget(_QFinderBaseWidget[QtW.QTableWidget]):
     def _get_current_state(self) -> tuple[int, int, int]:
         qtable = self._parent_widget
         index = qtable.currentIndex()
-        i = index.row() * qtable.columnCount() + index.column()
-        nr, nc = qtable.rowCount(), qtable.columnCount()
+        model = qtable.model()
+        i = index.row() * model.columnCount() + index.column()
+        nr, nc = model.rowCount(), model.columnCount()
         return i, nr, nc
 
     def _run_until_found(self, line_text: str, ith: int, nc: int) -> bool:
         r, c = divmod(ith, nc)
-        item = self._parent_widget.item(r, c)
-        if item is None:
+        model = self._parent_widget.model()
+        index = model.index(r, c)
+        displayed: str = model.data(index, Qt.ItemDataRole.DisplayRole)
+        if not isinstance(displayed, str):
             return False
-        text = self._parent_widget.item(r, c).text()
-        if text == "":
+
+        if displayed == "":
             return False
-        if line_text in text:
-            self._parent_widget.setCurrentCell(r, c)
+        if line_text in displayed:
+            self._parent_widget.setCurrentIndex(index)
             return True
         return False

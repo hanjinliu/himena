@@ -51,11 +51,14 @@ pyqt6 = ["pyqt6"]
 all = [
   "IPython",
   "qtconsole",
+  "openpyxl",
 ]
 testing = [
   "pytest",
   "pytest-qt",
   "pytest-cov",
+  "pandas",
+  "polars",
   "himena[all]"
 ]
 

@@ -120,7 +120,7 @@ _DEFAULT_FORMATTERS: dict[int, Callable[[Any], str]] = {
 
 
 class QDataFrameView(QTableBase):
-    """A table widget for viewing any dataframe that implements `__dataframe__()`"""
+    """A table widget for viewing dataframe."""
 
     def update_model(self, model: WidgetDataModel):
         df = model.value

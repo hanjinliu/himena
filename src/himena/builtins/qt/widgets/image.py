@@ -30,6 +30,19 @@ class _QImageLabel(QtW.QLabel):
             val = np.stack(
                 [val] * 3 + [np.full(val.shape, 255, dtype=np.uint8)], axis=2
             )
+        else:
+            if val.shape[2] == 3:
+                val = np.ascontiguousarray(
+                    np.concatenate(
+                        [val, np.full(val.shape[:2] + (1,), 255, dtype=np.uint8)],
+                        axis=2,
+                    )
+                )
+            elif val.shape[2] != 4:
+                raise ValueError(
+                    "The shape of an RGB image must be (M, N), (M, N, 3) or (M, N, 4), "
+                    f"got {val.shape!r}."
+                )
         image = QtGui.QImage(
             val, val.shape[1], val.shape[0], QtGui.QImage.Format.Format_RGBA8888
         )
@@ -64,6 +77,7 @@ class QDefaultImageView(QtW.QWidget):
         self._interpolation_check_box = QLabeledToggleSwitch()
         self._interpolation_check_box.setText("smooth")
         self._interpolation_check_box.setChecked(True)
+        self._interpolation_check_box.setMaximumHeight(36)
         self._interpolation_check_box.toggled.connect(self._interpolation_changed)
         layout.addWidget(self._interpolation_check_box)
         self._arr: NDArray[np.int8] | None = None

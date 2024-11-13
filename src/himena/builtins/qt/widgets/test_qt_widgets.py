@@ -1,10 +1,14 @@
 import numpy as np
+import pytest
 from qtpy.QtCore import Qt
 from himena.builtins.qt.widgets import (
     QDefaultTextEdit,
     QDefaultTableWidget,
     QDefaultImageView,
+    QDataFrameView,
 )
+import pandas as pd
+import polars as pl
 from himena import WidgetDataModel
 from pytestqt.qtbot import QtBot
 
@@ -136,3 +140,25 @@ def test_find_table(qtbot: QtBot):
     qtbot.keyClick(finder, Qt.Key.Key_Enter, modifier=Qt.KeyboardModifier.ShiftModifier)
     finder._btn_next.click()
     finder._btn_prev.click()
+
+
+@pytest.mark.parametrize(
+    "df",
+    [
+        pd.DataFrame({"a": [1, -2], "b": [3.0, -4.0], "str": ["a", "b"]}),
+        pl.DataFrame({"a": [1, -2], "b": [3.0, -4.0], "str": ["a", "b"]}),
+    ],
+)
+def test_dataframe(qtbot: QtBot, df):
+    model = WidgetDataModel(value=df, type="dataframe")
+    table_widget = QDataFrameView()
+    table_widget.update_model(model)
+    qtbot.addWidget(table_widget)
+    qtbot.keyClick(table_widget, Qt.Key.Key_F, modifier=_Ctrl)
+    finder = table_widget._finder_widget
+    assert finder is not None
+    finder._line_edit.setText("b")
+    qtbot.keyClick(finder, Qt.Key.Key_Enter)
+    qtbot.keyClick(finder, Qt.Key.Key_Enter, modifier=Qt.KeyboardModifier.ShiftModifier)
+    assert type(table_widget.to_model().value) is type(df)
+    table_widget.is_modified()
