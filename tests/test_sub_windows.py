@@ -1,8 +1,10 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import MagicMock
 from qtpy import QtWidgets as QtW
 from himena import MainWindow, anchor
-from himena.types import ClipboardDataModel, WidgetDataModel
+from himena.plugins.actions import register_function
+from himena.types import ClipboardDataModel, ParametricWidgetTuple, WidgetDataModel
 from himena.qt import register_frontend_widget, MainWindowQt
 from himena.builtins.qt import widgets as _qtw
 

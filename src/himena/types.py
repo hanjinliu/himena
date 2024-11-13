@@ -335,7 +335,12 @@ class Parametric(Generic[_T]):
         )
 
 
-Connection = Callable[[Callable[[WidgetDataModel], None]], None]
+class ParametricWidgetTuple(NamedTuple):
+    """Used for a return annotation to add a custom parametric widget."""
+
+    widget: Any
+    callback: Callable[..., Any]
+    title: str | None = None
 
 
 class BackendInstructions(BaseModel):

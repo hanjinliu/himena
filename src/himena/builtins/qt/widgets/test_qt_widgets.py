@@ -19,7 +19,7 @@ def test_text_edit(qtbot: QtBot):
     main = text_edit._main_text_edit
 
     assert text_edit.to_model().value == "a\nb"
-    assert text_edit.toPlainText() == "a\nb"
+    assert text_edit._main_text_edit.toPlainText() == "a\nb"
     # move to the end
     cursor = main.textCursor()
     cursor.setPosition(len(main.toPlainText()))
