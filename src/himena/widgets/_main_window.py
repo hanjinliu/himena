@@ -487,6 +487,8 @@ class MainWindow(Generic[_W]):
         from himena.plugins import configure_gui
 
         widget_classes, _ = self._backend_main_window._list_widget_class(model.type)
+        if len(widget_classes) == 0:
+            raise ValueError(f"No widget class registered for {model.type!r}")
 
         choices: list[tuple[str, str]] = []
         for _, cls, _ in widget_classes:

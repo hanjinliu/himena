@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 from app_model.types import (
     KeyBindingRule,
     KeyCode,
@@ -35,6 +35,10 @@ def _read_and_update_source(reader: io.ReaderTuple, source: Path) -> WidgetDataM
     if model.method is None:
         model = model._with_source(source=source, plugin=reader.plugin)
     return model
+
+
+def _name_of(f: Callable) -> str:
+    return getattr(f, "__name__", str(f))
 
 
 @ACTIONS.append_from_fn(
@@ -79,7 +83,7 @@ def open_file_using_from_dialog(ui: MainWindow) -> Parametric:
     readers = io.get_readers(file_path)
 
     # prepare reader plugin choices
-    choices_reader = [(f"{r.reader.__name__}\n({r.plugin.name})", r) for r in readers]
+    choices_reader = [(f"{_name_of(r.reader)}\n({r.plugin.name})", r) for r in readers]
 
     @configure_gui(
         reader={
@@ -163,7 +167,7 @@ def save_as_using_from_dialog(ui: MainWindow, model: WidgetDataModel) -> Paramet
     writers = io.get_writers(model)
 
     # prepare reader plugin choices
-    choices_writer = [(f"{w.writer.__name__}\n({w.plugin.name})", w) for w in writers]
+    choices_writer = [(f"{_name_of(w.writer)}\n({w.plugin.name})", w) for w in writers]
 
     @configure_gui(
         writer={

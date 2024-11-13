@@ -26,8 +26,8 @@
     "light-purple": {
         "background": "#F0F0F0",
         "foreground": "#000000",
-        "base_color": "#A675F2",
-        "inv_color": "#005806"
+        "base_color": "#9E41E7",
+        "inv_color": "#26832C"
     },
     "light-gray": {
         "background": "#F0F0F0",

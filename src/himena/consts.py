@@ -39,6 +39,8 @@ class StandardTypes(SimpleNamespace):
     TABLE = "table"
     IMAGE = "image"
     PARAMETERS = "parameters"
+    DATAFRAME = "dataframe"
+    EXCEL = "excel"
 
 
 class StandardSubtypes(SimpleNamespace):

@@ -16,6 +16,7 @@ class Theme:
     base_color: str
     foreground_dim: str
     highlight_dim: str
+    highlight: str
     highlight_strong: str
     background_dim: str
     background_strong: str
@@ -70,8 +71,10 @@ def get_global_styles() -> dict[str, Theme]:
             if "background_strong" not in style:
                 style["background_strong"] = _mix_colors(bg, fg, -0.1).hex
             if "highlight_dim" not in style:
-                style["highlight_dim"] = _mix_colors(base, bg, 0.6).hex
+                style["highlight_dim"] = _mix_colors(base, bg, 0.8).hex
+            if "highlight" not in style:
+                style["highlight"] = _mix_colors(base, bg, 0.6).hex
             if "highlight_strong" not in style:
-                style["highlight_strong"] = _mix_colors(base, bg, 0.75).hex
+                style["highlight_strong"] = _mix_colors(base, bg, 0.4).hex
             global_styles[name] = Theme(**style)
     return global_styles

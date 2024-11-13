@@ -178,7 +178,7 @@ QToolButton:hover {
     border: 2px solid lightgray;
     border-radius: 4px;
     padding: 2px;
-    background-color: #[highlight_strong];
+    background-color: #[highlight_dim];
     color: #[foreground];
 }
 
@@ -394,6 +394,59 @@ QTabBar::tab:bottom:selected {
     color: #[foreground];
 }
 
+/* ----------------- QTableView / QHeaderView ----------------- */
+
+QHeaderView:section {
+    border: 1px solid #[foreground_dim];
+    background-color: #[highlight];
+    color: #[foreground];
+    margin: 0px;
+}
+
+QHeaderView:section:hover {
+    border: 1px solid #[foreground_dim];
+    background-color: #[highlight_strong];
+    color: #[foreground];
+}
+
+QHeaderView:section:checked {
+    border: 1px solid #[foreground_dim];
+    background-color: #[highlight_strong];
+    color: #[foreground];
+}
+
+QTableView {
+    border: 1px solid gray;
+    background-color: #[background];
+    color: #[foreground];
+    gridline-color: #[foreground_dim];
+}
+
+QTableView:focus {
+    border: 2px solid gray;
+    background-color: #[background];
+    color: #[foreground];
+}
+
+QTableView:item:hover {
+    background-color: #[highlight_dim];
+    color: #[foreground];
+}
+
+QTableView:item:focus {
+    background-color: #[highlight_dim];
+    color: #[foreground];
+}
+
+QTableView:item:selected {
+    background-color: #[highlight_dim];
+    color: #[foreground];
+}
+
+QTableView:item:checked {
+    background-color: #[highlight_dim];
+    color: #[foreground];
+}
 
 /* ----------------- others ------------------ */
 
@@ -414,7 +467,7 @@ QSubWindowTitleBar[isCurrent=false] {
 }
 
 QSubWindowTitleBar[isCurrent=true] {
-    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #[highlight_dim], stop:1 #[background_dim]);
+    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #[highlight_strong], stop:1 #[background_dim]);
 }
 
 QTitleBarToolButton:hover {

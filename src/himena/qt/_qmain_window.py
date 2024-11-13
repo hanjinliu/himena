@@ -191,7 +191,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _connect_window_events(self, sub: SubWindow, qsub: QSubWindow):
         @qsub.state_change_requested.connect
         def _(state: WindowState):
-            sub.state = state
+            sub._set_state(state)
 
         @qsub.close_requested.connect
         def _():

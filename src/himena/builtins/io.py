@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from himena.plugins import register_reader_provider, register_writer_provider
@@ -91,6 +92,74 @@ def default_reader_provider(file_path: Path | list[Path]):
     elif file_path.name in ConventionalTextFileNames:
         return default_text_reader
     return None
+
+
+class DataFrameReader:
+    def __init__(self, module: str, method: str, kwargs: dict[str, Any]):
+        self._module = module
+        self._method = method
+        self._kwargs = kwargs
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}<{self._module}.{self._method}>"
+
+    def __call__(self, file_path: Path) -> WidgetDataModel:
+        mod = importlib.import_module(self._module)
+        method = getattr(mod, self._method)
+        df = method(file_path, **self._kwargs)
+        return WidgetDataModel(value=df, type=StandardTypes.DATAFRAME)
+
+
+@register_reader_provider(priority=-5)
+def pandas_reader_provider(file_path: Path) -> WidgetDataModel:
+    """Read dataframe using pandas."""
+    if file_path.suffix in (".html", ".htm"):
+        _reader = "pandas", "read_html", {}
+    elif file_path.suffix == ".csv":
+        _reader = "pandas", "read_csv", {}
+    elif file_path.suffix == ".tsv":
+        _reader = "pandas", "read_csv", {"sep": "\t"}
+    elif file_path.suffix == ".json":
+        _reader = "pandas", "read_json", {}
+    elif file_path.suffix in (".pq", ".parquet"):
+        _reader = "pandas", "read_parquet", {}
+    elif file_path.suffix == ".feather":
+        _reader = "pandas", "read_feather", {}
+    else:
+        return None
+    return DataFrameReader(*_reader)
+
+
+@register_reader_provider(priority=-5)
+def polars_reader_provider(file_path: Path) -> WidgetDataModel:
+    """Read dataframe using polars."""
+    if file_path.suffix == ".csv":
+        _reader = "polars", "read_csv", {}
+    elif file_path.suffix == ".tsv":
+        _reader = "polars", "read_csv", {"sep": "\t"}
+    elif file_path.suffix == ".feather":
+        _reader = "polars", "read_ipc", {}
+    elif file_path.suffix == ".json":
+        _reader = "polars", "read_json", {}
+    elif file_path.suffix in (".parquet", ".pq"):
+        _reader = "polars", "read_parquet", {}
+    else:
+        return None
+    return DataFrameReader(*_reader)
+
+
+@register_reader_provider(priority=-5)
+def pyarrow_reader_provider(file_path: Path) -> WidgetDataModel:
+    """Read dataframe using pyarrow."""
+    if file_path.suffix == ".csv":
+        _reader = "pyarrow.csv", "read_csv", {}
+    elif file_path.suffix == ".feather":
+        _reader = "pyarrow.feather", "read_feather", {}
+    elif file_path.suffix in (".parquet", ".pq"):
+        _reader = "pyarrow.parquet", "read_table", {}
+    else:
+        return None
+    return DataFrameReader(*_reader)
 
 
 def default_text_writer(model: WidgetDataModel[str], path: Path) -> None:

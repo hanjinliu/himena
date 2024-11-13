@@ -24,6 +24,8 @@ class QDefaultTableWidget(QtW.QTableWidget):
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
 
+        self.setSelectionMode(QtW.QAbstractItemView.SelectionMode.ExtendedSelection)
+
         @self.itemChanged.connect
         def _():
             self._modified = True
@@ -41,8 +43,9 @@ class QDefaultTableWidget(QtW.QTableWidget):
         if isinstance(meta := model.additional_data, TableMeta):
             if (pos := meta.current_position) is not None:
                 self.setCurrentCell(*pos)
-            for r, c in meta.selections:
-                self.setRangeSelected(QtW.QTableWidgetSelectionRange(*r, *c), True)
+            for (r0, r1), (c0, c1) in meta.selections:
+                rng = QtW.QTableWidgetSelectionRange(r0, c0 - 1, r1, c1 - 1)
+                self.setRangeSelected(rng, True)
         self._modified = False
         return None
 
@@ -55,7 +58,7 @@ class QDefaultTableWidget(QtW.QTableWidget):
             extension_default=".csv",
             additional_data=TableMeta(
                 current_position=(self.currentRow(), self.currentColumn()),
-                selections=[_sel_range_to_slices(r) for r in self.selectedRanges()],
+                selections=[_sel_range_to_tuples(r) for r in self.selectedRanges()],
             ),
         )
 
@@ -178,7 +181,9 @@ class QDefaultTableWidget(QtW.QTableWidget):
                 fd.move(self.width() - fd.width() - 3, 5)
 
 
-def _sel_range_to_slices(rng: QtW.QTableWidgetSelectionRange) -> tuple[slice, slice]:
-    row = slice(rng.topRow(), rng.bottomRow() + 1)
-    col = slice(rng.leftColumn(), rng.rightColumn() + 1)
+def _sel_range_to_tuples(
+    rng: QtW.QTableWidgetSelectionRange,
+) -> tuple[tuple[int, int], tuple[int, int]]:
+    row = (rng.topRow(), rng.bottomRow() + 1)
+    col = (rng.leftColumn(), rng.rightColumn() + 1)
     return row, col
