@@ -6,25 +6,14 @@ from qtpy import QtGui, QtCore
 from himena.consts import StandardTypes
 from himena.types import WidgetDataModel
 from himena.model_meta import TableMeta
-from himena.qt._qfinderwidget import QTableFinderWidget
+from himena.builtins.qt.widgets._table_base import QTableBase
 
 
-class QDefaultTableWidget(QtW.QTableWidget):
+class QDefaultTableWidget(QtW.QTableWidget, QTableBase):
     def __init__(self):
-        super().__init__()
+        QtW.QTableWidget.__init__(self)
+        QTableBase.__init__(self)
         self._edit_trigger = self.editTriggers()
-        self._modified = False
-        self.horizontalHeader().setFixedHeight(18)
-        self._finder_widget = None
-
-        # scroll by pixel
-        self.setVerticalScrollMode(QtW.QAbstractItemView.ScrollMode.ScrollPerPixel)
-        self.setHorizontalScrollMode(QtW.QAbstractItemView.ScrollMode.ScrollPerPixel)
-        # scroll bar policy
-        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-
-        self.setSelectionMode(QtW.QAbstractItemView.SelectionMode.ExtendedSelection)
 
         @self.itemChanged.connect
         def _():
@@ -39,7 +28,6 @@ class QDefaultTableWidget(QtW.QTableWidget):
         for i in range(self.rowCount()):
             for j in range(self.columnCount()):
                 self.setItem(i, j, QtW.QTableWidgetItem(table[i, j]))
-            self.setRowHeight(i, 22)
         if isinstance(meta := model.additional_data, TableMeta):
             if (pos := meta.current_position) is not None:
                 self.setCurrentCell(*pos)
@@ -56,26 +44,17 @@ class QDefaultTableWidget(QtW.QTableWidget):
             ),
             type=self.model_type(),
             extension_default=".csv",
-            additional_data=TableMeta(
-                current_position=(self.currentRow(), self.currentColumn()),
-                selections=[_sel_range_to_tuples(r) for r in self.selectedRanges()],
-            ),
+            additional_data=self._prep_table_meta(),
         )
 
     def model_type(self):
         return StandardTypes.TABLE
-
-    def size_hint(self) -> tuple[int, int]:
-        return 400, 300
 
     def is_modified(self) -> bool:
         return self._modified
 
     def set_modified(self, value: bool) -> None:
         self._modified = value
-
-    def is_editable(self) -> bool:
-        return self.editTriggers() != QtW.QAbstractItemView.EditTrigger.NoEditTriggers
 
     def set_editable(self, value: bool) -> None:
         if value:
@@ -160,30 +139,3 @@ class QDefaultTableWidget(QtW.QTableWidget):
             self._find_string()
             return
         return super().keyPressEvent(e)
-
-    def _find_string(self):
-        if self._finder_widget is None:
-            self._finder_widget = QTableFinderWidget(self)
-        self._finder_widget.show()
-        self._align_finder()
-
-    def resizeEvent(self, event):
-        if self._finder_widget is not None:
-            self._align_finder()
-        super().resizeEvent(event)
-
-    def _align_finder(self):
-        if fd := self._finder_widget:
-            vbar = self.verticalScrollBar()
-            if vbar.isVisible():
-                fd.move(self.width() - fd.width() - vbar.width() - 3, 5)
-            else:
-                fd.move(self.width() - fd.width() - 3, 5)
-
-
-def _sel_range_to_tuples(
-    rng: QtW.QTableWidgetSelectionRange,
-) -> tuple[tuple[int, int], tuple[int, int]]:
-    row = (rng.topRow(), rng.bottomRow() + 1)
-    col = (rng.leftColumn(), rng.rightColumn() + 1)
-    return row, col

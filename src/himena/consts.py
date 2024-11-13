@@ -20,7 +20,11 @@ BasicTextFileTypes = frozenset(
 
 ConventionalTextFileNames = frozenset(
     ["LICENSE", "Makefile", "dockerfile", ".gitignore", ".gitattributes", ".vimrc",
-     ".viminfo", ".pypirc"]
+     ".viminfo", ".pypirc", "MANIFEST.in",]
+)  # fmt: skip
+
+ExcelFileTypes = frozenset(
+    [".xls", ".xlsx", ".xlsm", ".xlsb", ".xltx", ".xltm", ".xlam"]
 )  # fmt: skip
 
 # Monospace font

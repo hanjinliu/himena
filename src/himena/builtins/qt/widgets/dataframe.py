@@ -5,13 +5,12 @@ import sys
 import logging
 from typing import TYPE_CHECKING, Any, Callable, NamedTuple
 
-from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
 from qtpy.QtCore import Qt
 from himena.consts import StandardTypes
 from himena.types import WidgetDataModel
 from himena.model_meta import TableMeta
-from himena.qt._qfinderwidget import QTableFinderWidget
+from himena.builtins.qt.widgets._table_base import QTableBase
 
 if TYPE_CHECKING:
     from typing import TypeGuard
@@ -120,25 +119,8 @@ _DEFAULT_FORMATTERS: dict[int, Callable[[Any], str]] = {
 }
 
 
-class QDataFrameView(QtW.QTableView):
+class QDataFrameView(QTableBase):
     """A table widget for viewing any dataframe that implements `__dataframe__()`"""
-
-    def __init__(self, parent: QtW.QWidget | None = None) -> None:
-        super().__init__(parent)
-        self.horizontalHeader().setFixedHeight(18)
-        self.verticalHeader().setDefaultSectionSize(22)
-        self.setEditTriggers(QtW.QAbstractItemView.EditTrigger.NoEditTriggers)
-
-        # scroll by pixel
-        self.setVerticalScrollMode(QtW.QAbstractItemView.ScrollMode.ScrollPerPixel)
-        self.setHorizontalScrollMode(QtW.QAbstractItemView.ScrollMode.ScrollPerPixel)
-        # scroll bar policy
-        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-
-        self.setSelectionMode(QtW.QAbstractItemView.SelectionMode.ExtendedSelection)
-
-        self._finder_widget = None
 
     def update_model(self, model: WidgetDataModel):
         df = model.value
@@ -162,34 +144,18 @@ class QDataFrameView(QtW.QTableView):
         return None
 
     def to_model(self) -> WidgetDataModel[list[list[Any]]]:
-        index = self.currentIndex()
-        qselections = self.selectionModel().selection()
-        selections = []
-        for qselection in qselections:
-            r = qselection.left(), qselection.right()
-            c = qselection.top(), qselection.bottom()
-            selections.append((r, c))
         return WidgetDataModel(
             value=self.model().df.unwrap(),
             type=self.model_type(),
             extension_default=".csv",
-            additional_data=TableMeta(
-                current_position=(index.row(), index.column()),
-                selections=selections,
-            ),
+            additional_data=self._prep_table_meta(),
         )
 
     def model_type(self) -> str:
         return StandardTypes.DATAFRAME
 
-    def size_hint(self) -> tuple[int, int]:
-        return 400, 300
-
     def is_modified(self) -> bool:
         return False
-
-    def is_editable(self) -> bool:
-        return self.editTriggers() != QtW.QAbstractItemView.EditTrigger.NoEditTriggers
 
     def keyPressEvent(self, e: QtGui.QKeyEvent) -> None:
         if e.matches(QtGui.QKeySequence.StandardKey.Copy):
@@ -201,25 +167,6 @@ class QDataFrameView(QtW.QTableView):
             self._find_string()
             return
         return super().keyPressEvent(e)
-
-    def _find_string(self):
-        if self._finder_widget is None:
-            self._finder_widget = QTableFinderWidget(self)
-        self._finder_widget.show()
-        self._align_finder()
-
-    def resizeEvent(self, event):
-        if self._finder_widget is not None:
-            self._align_finder()
-        super().resizeEvent(event)
-
-    def _align_finder(self):
-        if fd := self._finder_widget:
-            vbar = self.verticalScrollBar()
-            if vbar.isVisible():
-                fd.move(self.width() - fd.width() - vbar.width() - 3, 5)
-            else:
-                fd.move(self.width() - fd.width() - 3, 5)
 
     def copy_data(self):
         model = self.selectionModel()

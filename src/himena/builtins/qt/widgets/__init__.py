@@ -3,6 +3,7 @@ from himena.builtins.qt.widgets.text import QDefaultTextEdit, QDefaultHTMLEdit
 from himena.builtins.qt.widgets.table import QDefaultTableWidget
 from himena.builtins.qt.widgets.dataframe import QDataFrameView
 from himena.builtins.qt.widgets.image import QDefaultImageView
+from himena.builtins.qt.widgets.excel import QTableStack
 from himena.consts import StandardTypes, StandardSubtypes
 
 
@@ -13,6 +14,7 @@ def register_default_widget_types() -> None:
     register_frontend_widget(StandardTypes.TABLE, QDefaultTableWidget, priority=-1)
     register_frontend_widget(StandardTypes.IMAGE, QDefaultImageView, priority=-1)
     register_frontend_widget(StandardTypes.DATAFRAME, QDataFrameView, priority=-1)
+    register_frontend_widget(StandardTypes.EXCEL, QTableStack, priority=-1)
 
 
 register_default_widget_types()

@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
+
 from himena.plugins import register_reader_provider, register_writer_provider
 from himena.types import WidgetDataModel
 from himena.consts import (
@@ -10,6 +11,7 @@ from himena.consts import (
     StandardTypes,
     BasicTextFileTypes,
     ConventionalTextFileNames,
+    ExcelFileTypes,
 )
 
 if TYPE_CHECKING:
@@ -74,6 +76,25 @@ def default_tsv_reader(file_path: Path) -> WidgetDataModel:
     )
 
 
+def default_excel_reader(file_path: Path) -> WidgetDataModel:
+    """Read Excel file."""
+    import openpyxl
+
+    wb = openpyxl.load_workbook(file_path)
+    data = {}
+    for sheet in wb.sheetnames:
+        ws = wb[sheet]
+        sheet_data = []
+        for row in ws.iter_rows(values_only=True):
+            sheet_data.append([str(cell) if cell is not None else "" for cell in row])
+        data[sheet] = sheet_data
+
+    return WidgetDataModel(
+        value=data,
+        type=StandardTypes.EXCEL,
+    )
+
+
 @register_reader_provider(priority=-1)
 def default_reader_provider(file_path: Path | list[Path]):
     """Get default reader."""
@@ -91,6 +112,8 @@ def default_reader_provider(file_path: Path | list[Path]):
         return default_image_reader
     elif file_path.name in ConventionalTextFileNames:
         return default_text_reader
+    elif file_path.suffix in ExcelFileTypes:
+        return default_excel_reader
     return None
 
 
@@ -196,6 +219,23 @@ def default_parameter_writer(
         json.dump(model.value, f)
 
 
+def default_excel_writer(
+    model: WidgetDataModel[dict[str, list[list[str]]]],
+    path: Path,
+) -> None:
+    """Write Excel file."""
+    import openpyxl
+    from openpyxl.worksheet._write_only import WriteOnlyWorksheet
+
+    wb = openpyxl.Workbook(write_only=True)
+    for sheet_name, table in model.value.items():
+        ws: WriteOnlyWorksheet = wb.create_sheet(sheet_name)
+        for row in table:
+            ws.append(row)
+    wb.save(path)
+    return None
+
+
 @register_writer_provider(priority=-1)
 def default_writer_provider(model: WidgetDataModel):
     """Get default writer."""
@@ -209,5 +249,7 @@ def default_writer_provider(model: WidgetDataModel):
         return default_image_writer
     elif model.is_subtype_of(StandardTypes.PARAMETERS):
         return default_parameter_writer
+    elif model.is_subtype_of(StandardTypes.EXCEL):
+        return default_excel_writer
     else:
         return None

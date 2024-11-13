@@ -7,6 +7,7 @@ from app_model.types import (
     KeyChord,
     StandardKeyBinding,
 )
+from himena._descriptors import SaveBehavior
 from himena.consts import StandardTypes, MenuId
 from himena.widgets import MainWindow
 from himena import io, _utils
@@ -147,7 +148,7 @@ def save_from_dialog(ui: MainWindow) -> None:
 def save_as_from_dialog(ui: MainWindow) -> None:
     """Save the current sub-window as a new file."""
     fd, sub_win = ui._provide_file_output()
-    if save_path := sub_win.save_behavior.get_save_path(ui, fd):
+    if save_path := SaveBehavior().get_save_path(ui, fd):
         io.write(fd, save_path)
         sub_win.update_default_save_path(save_path)
     return None
