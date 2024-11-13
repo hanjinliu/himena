@@ -21,17 +21,17 @@ def new_window(
     plugins = list(plugins)
     if isinstance(profile, str):
         app_prof = load_app_profile(profile)
-        plugins = app_prof.plugins + plugins
     elif isinstance(profile, AppProfile):
-        plugins = profile.plugins + plugins
+        app_prof = profile
     elif profile is None:
-        plugins = AppProfile().plugins + plugins
+        app_prof = AppProfile.default()
     else:
         raise TypeError("`profile` must be a str or an AppProfile object.")
+    plugins = app_prof.plugins + plugins
     if plugins:
         from himena.plugins import install_plugins
 
         install_plugins(model_app, plugins)
-    main_window = MainWindowQt(model_app)
+    main_window = MainWindowQt(model_app, theme=app_prof.theme)
     main_window._backend_main_window._update_context()
     return main_window

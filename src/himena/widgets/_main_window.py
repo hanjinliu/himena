@@ -11,6 +11,7 @@ from himena._app_model._context import AppContext
 from himena._descriptors import ProgramaticMethod
 from himena._open_recent import RecentFileManager, RecentSessionManager
 from himena._utils import import_object
+from himena.style import Theme
 from himena.types import (
     ClipboardDataModel,
     Parametric,
@@ -24,7 +25,7 @@ from himena.session import from_yaml
 from himena.widgets._backend import BackendMainWindow
 from himena.widgets._hist import ActivationHistory
 from himena.widgets._widget_list import TabList, TabArea, DockWidgetList
-from himena.widgets._wrapper import ParametricWidget, SubWindow, DockWidget
+from himena.widgets._wrapper import ParametricWindow, SubWindow, DockWidget
 
 _W = TypeVar("_W")  # backend widget type
 _T = TypeVar("_T")  # internal data type
@@ -41,7 +42,12 @@ class MainWindowEvents(SignalGroup, Generic[_W]):
 class MainWindow(Generic[_W]):
     """The main window object."""
 
-    def __init__(self, backend: BackendMainWindow[_W], app: Application) -> None:
+    def __init__(
+        self,
+        backend: BackendMainWindow[_W],
+        app: Application,
+        theme: Theme,
+    ) -> None:
         from himena.widgets._initialize import set_current_instance
 
         self.events: MainWindowEvents[_W] = MainWindowEvents()
@@ -63,6 +69,21 @@ class MainWindow(Generic[_W]):
         self._recent_manager.update_menu()
         self._recent_session_manager = RecentSessionManager.default(app)
         self._recent_session_manager.update_menu()
+        self.theme = theme
+
+    @property
+    def theme(self) -> Theme:
+        """Get the current color theme of the main window."""
+        return self._theme
+
+    @theme.setter
+    def theme(self, theme: str | Theme) -> None:
+        """Set the style of the main window."""
+        if isinstance(theme, str):
+            theme = Theme.from_global(theme)
+        self._theme = theme
+        self._backend_main_window._update_widget_theme(theme)
+        return None
 
     @property
     def tabs(self) -> TabList[_W]:
@@ -236,7 +257,7 @@ class MainWindow(Generic[_W]):
         title: str | None = None,
         preview: bool = False,
         auto_close: bool = True,
-    ) -> ParametricWidget[_W]:
+    ) -> ParametricWindow[_W]:
         """
         Add a function as a parametric sub-window.
 
@@ -267,7 +288,7 @@ class MainWindow(Generic[_W]):
         *,
         title: str | None = None,
         auto_close: bool = True,
-    ) -> ParametricWidget[_W]:
+    ) -> ParametricWindow[_W]:
         _, area = self._current_or_new_tab()
         return area.add_parametric_widget(
             widget, callback, title=title, auto_close=auto_close
@@ -313,7 +334,7 @@ class MainWindow(Generic[_W]):
                 raise ValueError(f"Action {id!r} does not accept parameters.")
             if tab := self.tabs.current():
                 param_widget = tab[-1]
-                if not isinstance(param_widget, ParametricWidget):
+                if not isinstance(param_widget, ParametricWindow):
                     raise ValueError(
                         f"Parametric widget expected but got {param_widget}."
                     )

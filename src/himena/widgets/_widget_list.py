@@ -20,7 +20,7 @@ from himena.types import (
 from himena.widgets._wrapper import (
     _HasMainWindowRef,
     SubWindow,
-    ParametricWidget,
+    ParametricWindow,
     DockWidget,
 )
 
@@ -173,8 +173,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         title: str | None = None,
         auto_size: bool = True,
     ) -> SubWindow[_W]:
-        """
-        Add a widget to the sub window.
+        """Add a widget to the sub window.
 
         Parameters
         ----------
@@ -203,7 +202,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         title: str | None = None,
         preview: bool = False,
         auto_close: bool = True,
-    ) -> ParametricWidget[_W]:
+    ) -> ParametricWindow[_W]:
         """
         Add a function as a parametric sub-window.
 
@@ -243,13 +242,13 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         preview: bool = False,
         auto_close: bool = True,
         auto_size: bool = True,
-    ) -> ParametricWidget[_W]:
+    ) -> ParametricWindow[_W]:
         if not hasattr(widget, "get_params"):
             raise TypeError("Parametric widget must have `get_params` method.")
         main = self._main_window()
         widget0 = main._process_parametric_widget(widget)
         fn = Parametric(callback)
-        param_widget = ParametricWidget(widget0, fn, main_window=main)
+        param_widget = ParametricWindow(widget0, fn, main_window=main)
         param_widget._auto_close = auto_close
         main._connect_parametric_widget_events(param_widget, widget0)
         self._process_new_widget(param_widget, title, auto_size)

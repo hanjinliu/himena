@@ -15,8 +15,9 @@ from himena.types import (
 )
 
 if TYPE_CHECKING:
+    from himena.style import Theme
     from himena.widgets._main_window import MainWindow
-    from himena.widgets._wrapper import SubWindow, DockWidget, ParametricWidget
+    from himena.widgets._wrapper import SubWindow, DockWidget, ParametricWindow
     import numpy as np
     from numpy.typing import NDArray
 
@@ -25,6 +26,9 @@ _W = TypeVar("_W")  # backend widget type
 
 class BackendMainWindow(Generic[_W]):  # pragma: no cover
     _himena_main_window: MainWindow
+
+    def _update_widget_theme(self, theme: Theme):
+        raise NotImplementedError
 
     def _current_tab_index(self) -> int | None:
         raise NotImplementedError
@@ -214,7 +218,7 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
 
     def _connect_parametric_widget_events(
         self,
-        wrapper: ParametricWidget[_W],
+        wrapper: ParametricWindow[_W],
         widget: _W,
     ) -> None:
         raise NotImplementedError

@@ -6,6 +6,7 @@ from qtpy import QtGui, QtCore
 from superqt import QLabeledSlider
 from himena.consts import StandardTypes
 from himena.types import WidgetDataModel
+from himena.qt._magicgui._toggle_switch import QLabeledToggleSwitch
 
 if TYPE_CHECKING:
     import numpy as np
@@ -60,10 +61,10 @@ class QDefaultImageView(QtW.QWidget):
         self._image_label = _QImageLabel(np.zeros((1, 1), dtype=np.uint8))
         layout.addWidget(self._image_label)
 
-        self._interpolation_check_box = QtW.QCheckBox()
+        self._interpolation_check_box = QLabeledToggleSwitch()
         self._interpolation_check_box.setText("smooth")
         self._interpolation_check_box.setChecked(True)
-        self._interpolation_check_box.stateChanged.connect(self._interpolation_changed)
+        self._interpolation_check_box.toggled.connect(self._interpolation_changed)
         layout.addWidget(self._interpolation_check_box)
         self._arr: NDArray[np.int8] | None = None
 

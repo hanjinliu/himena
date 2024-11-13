@@ -84,9 +84,9 @@ def duplicate_with(ui: MainWindow, model: WidgetDataModel) -> Parametric:
     widget_classes, _ = ui._backend_main_window._list_widget_class(model.type)
     for _, cls, _ in widget_classes:
         name = f"{cls.__module__}.{cls.__name__}"
-        choices.append((f"{cls.__name__} ({name})", name))
+        choices.append((f"{cls.__name__}\n({name})", name))
 
-    @configure_gui(plugin_name={"choices": choices})
+    @configure_gui(plugin_name={"choices": choices, "widget_type": "RadioButtons"})
     def choose_a_plugin(plugin_name: str) -> WidgetDataModel:
         return model.model_copy(update={"force_open_with": plugin_name})
 

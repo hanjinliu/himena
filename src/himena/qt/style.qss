@@ -1,46 +1,439 @@
 QMainWindow {
-    color: $(foreground-1);
-    background-color: $(background-1);
+    color: #[foreground];
+    background-color: #[background];
+}
+
+QWidget {
+    background-color: #[background];
+    color: #[foreground];
+}
+
+QWidget[emphasized="true"] {
+    background-color: #[highlight0];
+}
+
+QWidget[emphasized="true"] > QFrame {
+    background-color: #[highlight0];
+}
+
+QWidget:!enabled {
+    background-color: #[background];
+    color: gray;
+}
+
+/* separator */
+QToolBar > QWidget {
+    background-color: gray
+}
+
+QToolBar > QToolButton {
+    background-color: #[background];
+}
+
+QFrame:!enabled {
+    background-color: #[background];
+    color: gray;
+    border-color: gray;
+}
+
+/* QPushButton */
+
+QPushButton {
+  background-color: #[background0];
+  border-radius: 2px;
+  padding: 4px;
+  border: 0px;
+}
+
+QPushButton:hover {
+  background-color: #[highlight0];
+}
+
+QPushButton:pressed {
+  background-color: #[highlight1];
+}
+
+QPushButton:checked {
+  background-color: #[highlight1];
+}
+
+QPushButton:disabled {
+  background-color: #[background];
+  color: #[background1];
+  border-radius: 2px;
+  padding: 4px;
+  border: 0px;
+}
+
+/* ----- QComboBox ----- */
+
+QComboBox {
+  border-radius: 2px;
+  background-color: #[background0];
+  color: #[foreground];
+  padding: 1px, 1px, 4px, 4px;
 }
 
 
+/* QScrollBar */
+
+QScrollBar {
+  border: none;
+  border-radius: 2px;
+  background: #[background0];
+}
+
+QScrollBar:horizontal {
+    min-height: 10px;
+    max-height: 10px;
+    margin: 0px 8px;
+}
+
+QScrollBar:vertical {
+    min-width: 10px;
+    max-width: 10px;
+    margin: 8px 0px;
+}
+
+QScrollBar::handle {
+  background: #[highlight0];
+  border-radius: 5px;
+}
+
+QScrollBar::handle:hover {
+  background: #[highlight1];
+  border-radius: 5px;
+}
+
+QScrollBar::handle:horizontal {
+    min-width: 26px;
+}
+
+QScrollBar::handle:vertical {
+    min-height: 26px;
+}
+
+QScrollBar::add-line,
+QScrollBar::sub-line {
+    height: 0px;
+    width: 0px;
+    background-color: #[background0];
+}
+
+QScrollBar::add-page,
+QScrollBar::sub-page {
+    height: 0px;
+    width: 0px;
+    background-color: #[background0];
+}
+
+
+
+/* ----------------- QSlider ------------------ */
+
+
+QSlider {
+   background-color: none;
+}
+
+QSlider::groove:horizontal {
+   border: 0px;
+   background-color: #[background0];
+   height: 6px;
+   border-radius: 2px;
+}
+
+QSlider::handle:horizontal {
+   background-color: #[highlight0];
+   border: 0px;
+   width: 12px;
+   margin-top: -5px;
+   margin-bottom: -5px;
+   border-radius: 8px;
+}
+
+QSlider::handle:hover {
+   background-color: #[highlight1];
+}
+
+/* ----------------- QToolBar ------------------ */
+
+QToolBar {
+    border: none;
+    background-color: #[background];
+    color: #[foreground];
+    margin: 0px;
+    padding: 0px;
+}
+
+QToolButton {
+    border: none;
+    border-radius: 4px;
+    padding: 2px;
+    background-color: #[background];
+    color: #[foreground];
+}
+
+QToolButton:hover {
+    border: 2px solid lightgray;
+    border-radius: 4px;
+    padding: 2px;
+    background-color: #[highlight1];
+    color: #[foreground];
+}
+
+
+/* Text including QtConsole */
+QPlainTextEdit, QTextEdit {
+    background-color: #[background];
+    background-clip: padding;
+    color: #[foreground];
+    min-height: 35px;
+    padding: 2px;
+    border-radius: 2px;
+    border: 1px solid #[highlight1];
+    selection-background-color: #[highlight0];
+}
+.inverted {
+    background-color: #[highlight0];
+    color: #[background];
+}
+.error { color: red; }
+.in-prompt-number { font-weight: bold; }
+.out-prompt-number { font-weight: bold; }
+.in-prompt { color: #[base_color]; }
+.out-prompt { color: #[base_color]; }
+
+/* the area behind the scrollbar */
+QTextEdit > QWidget {
+    background-color: #[background];
+}
+
+QPlainTextEdit > QWidget {
+    background-color: #[background];
+}
+
+QListView {
+    background-color: #[background];
+    color: #[foreground];
+    border: 1px solid #[highlight1];
+    border-radius: 2px;
+    selection-background-color: #[highlight0];
+}
+
+QListView:item:hover {
+    background-color: #[highlight0];
+    color: #[foreground];
+}
+
+QListView:item:selected {
+    background-color: #[highlight0];
+    color: #[foreground];
+}
+
+
+/* ----------------- QMenuBar ------------------ */
+
+/* QMenuBar::item {
+    padding: 2px;
+    border-radius: 3px;
+} */
+
+QMenuBar::item:selected {
+   background-color: #[highlight0];
+}
+
+QMenu::item:hover {
+    background-color: #[highlight0];
+}
+
+QMenu::item:selected {
+    background-color: #[highlight0];
+}
+
+QMenu:!enabled {
+    color: gray;
+}
+
+/* ----------------- other builtins ------------------ */
+QStatusBar::item{
+    border: none;
+}
+
+QLabel {
+    background-color: none;
+}
+
+QLineEdit {
+    background-color: #[background0];
+    color: #[foreground];
+    min-height: 16px;
+    padding: 1px;
+    border-radius: 1px;
+    selection-background-color: #[highlight0];
+}
+
+QLineEdit:hover {
+    border-bottom: 1px solid #[highlight0];
+}
+
+QGroupBox {
+    border: 1px solid #[highlight0];
+    border-radius: 2px;
+    margin-top: 1ex;
+    background-color: #[background];
+    color: #[foreground];
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    left: 5px;
+    background-color: #[background];
+    color: #[base_color];
+}
+
+QCheckBox {
+    background-color: none;
+}
+
+QRadioButton {
+    background: none;
+}
+
+QProgressBar {
+    border: 1px solid #[highlight0];
+    border-radius: 2px;
+    background-color: #[background];
+    color: #[foreground];
+    text-align: center;
+}
+
+QProgressBar::chunk {
+    background-color: #[highlight0];
+    width: 20px;
+}
+
+QToolTip {
+    background-color: #[background];
+    color: #[foreground];
+    padding: 1px;
+    border-radius: 2px;
+}
+
+/* ----------------- QTabWidget ------------------ */
+
+
+QTabWidget {
+    background-color: #[background];
+    color: #[foreground];
+    padding: 0px;
+}
+
+QTabWidget::pane {
+    border: 1px solid #[highlight0];
+    background-color: #[background];
+    top: -1px;
+}
+
+/* In MacOS, the positions of tabs are centered. */
+QTabWidget::tab-bar {
+    left: 0;
+    background-color: #[background];
+    color: #[highlight0];
+}
+
+QTabBar::tab:top {
+    border: 1px solid #[foreground];
+    border-bottom: 0px;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    padding: 3px 6px;
+    height: 14px;
+    margin-top: 4px;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #[background0], stop:1 #[background1]);
+    color: #[foreground];
+}
+
+QTabBar::tab:top:hover {
+    height: 16px;
+    margin-top: 2px;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #[background0], stop:1 #[highlight1]);
+    color: #[foreground];
+}
+
+QTabBar::tab:top:selected {
+    height: 18px;
+    margin-top: 0px;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #[highlight1], stop:1 #[highlight0]);
+    color: #[foreground];
+}
+
+QTabBar::tab:bottom {
+    border: 1px solid #[foreground];
+    border-top: 0px;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+    padding: 3px 6px;
+    height: 14px;
+    margin-bottom: 4px;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #[background1], stop:1 #[background0]);
+    color: #[foreground];
+}
+
+QTabBar::tab:bottom:hover {
+    height: 16px;
+    margin-bottom: 2px;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #[highlight0], stop:1 #[background0]);
+    color: #[foreground];
+}
+
+QTabBar::tab:bottom:selected {
+    height: 18px;
+    margin-bottom: 0px;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #[highlight1], stop:1 #[highlight0]);
+    color: #[foreground];
+}
+
+
+/* ----------------- others ------------------ */
+
 QMdiArea {
-    qproperty-background: $(background-2);
+    qproperty-background: #[background0];
 }
 
 QSubWindow {
-    border: none;
-    background-color: $(background-1)
+    background-color: #[background]
 }
 
 QSubWindow:focus {
-    background-color: $(background-1)
+    background-color: #[background]
 }
 
 QSubWindowTitleBar[isCurrent=false] {
-    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 $(background-1), stop:1 $(background-2));
+    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #[background], stop:1 #[background0]);
 }
 
 QSubWindowTitleBar[isCurrent=true] {
-    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 $(highlight-1), stop:1 $(background-2));
+    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #[highlight0], stop:1 #[background0]);
 }
 
 QTitleBarToolButton:hover {
-    border: 1px solid $(highlight-1);
+    border: 1px solid #[highlight0];
     border-radius: 3px;
 }
 
 QCommandLabel:hover {
-    background-color: $(highlight-1);
-    color: $(foreground-1);
+    background-color: #[highlight0];
+    color: #[foreground];
 }
 
 QClickableLabel {
-    color: $(highlight-3);
+    color: #[base_color];
 }
 
 QToggleSwitch {
-    qproperty-onColor: $(highlight-2);
-    qproperty-offColor: $(background-2);
-    qproperty-handleColor: $(background-2);
+    qproperty-onColor: #[highlight1];
+    qproperty-offColor: #[background0];
+    qproperty-handleColor: #[background0];
 }

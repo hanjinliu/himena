@@ -26,7 +26,6 @@ from himena.types import (
     WindowRect,
     BackendInstructions,
 )
-from himena.style import get_style
 from himena.app import get_event_loop_handler
 from himena import widgets
 from himena.qt.registry import list_widget_class
@@ -35,10 +34,11 @@ from himena.qt._utils import (
     set_clipboard_data,
     ArrayQImage,
 )
-from himena.widgets._wrapper import ParametricWidget
+from himena.widgets._wrapper import ParametricWindow
 
 if TYPE_CHECKING:
     from himena.widgets._main_window import SubWindow, MainWindow
+    from himena.style import Theme
 
 _STYLE_QSS_PATH = Path(__file__).parent / "style.qss"
 _ICON_PATH = Path(__file__).parent.parent / "resources" / "icon.svg"
@@ -93,24 +93,12 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         )
         self._goto_widget = QGotoWidget(self)
 
-        style = get_style("default")
-        style_text = (
-            _STYLE_QSS_PATH.read_text()
-            .replace("$(foreground-1)", style.foreground.level_1)
-            .replace("$(foreground-2)", style.foreground.level_2)
-            .replace("$(foreground-3)", style.foreground.level_3)
-            .replace("$(background-1)", style.background.level_1)
-            .replace("$(background-2)", style.background.level_2)
-            .replace("$(background-3)", style.background.level_3)
-            .replace("$(highlight-1)", style.highlight.level_1)
-            .replace("$(highlight-2)", style.highlight.level_2)
-            .replace("$(highlight-3)", style.highlight.level_3)
-        )
-        self.setStyleSheet(style_text)
-
         self._anim_subwindow = QtCore.QPropertyAnimation()
         self.setMinimumSize(400, 300)
         self.resize(800, 600)
+
+    def _update_widget_theme(self, style: Theme):
+        self.setStyleSheet(style.format_text(_STYLE_QSS_PATH.read_text()))
 
     def add_dock_widget(
         self,
@@ -515,7 +503,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def _connect_parametric_widget_events(
         self,
-        wrapper: ParametricWidget[QParametricWidget],
+        wrapper: ParametricWindow[QParametricWidget],
         widget: QParametricWidget,
     ) -> None:
         widget._call_btn.clicked.connect(wrapper._emit_btn_clicked)
@@ -526,7 +514,8 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         sig: inspect.Signature,
         preview: bool = False,
     ) -> QtW.QWidget:
-        from magicgui.widgets import Container, CheckBox
+        from magicgui.widgets import Container
+        from himena.qt._magicgui import ToggleSwitch
 
         container = Container.from_signature(sig)
         container.margins = (0, 0, 0, 0)
@@ -535,7 +524,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         qwidget.get_params = container.asdict
         qwidget.connect_changed_signal = container.changed.connect
         if preview:
-            checkbox = CheckBox(value=False, text="Preview")
+            checkbox = ToggleSwitch(value=False, text="Preview")
             container.append(checkbox)
             qwidget.is_preview_enabled = checkbox.get_value
         return qwidget

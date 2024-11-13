@@ -278,6 +278,7 @@ class SubWindow(WidgetWrapper[_W]):
         *,
         title: str | None = None,
     ) -> SubWindow[_W]:
+        """Add a child sub-window, which is automatically closed when the parent is closed."""  # noqa: E501
         main = self._main_window()._himena_main_window
         i_tab, _ = self._find_me(main)
         child = main.tabs[i_tab].add_widget(widget, title=title)
@@ -326,7 +327,9 @@ class SubWindow(WidgetWrapper[_W]):
         self._alive = False
 
 
-class ParametricWidget(SubWindow[_W]):
+class ParametricWindow(SubWindow[_W]):
+    """Subwindow with a parametric widget inside."""
+
     btn_clicked = Signal(object)  # emit self
     params_changed = Signal(object)
 
@@ -355,7 +358,7 @@ class ParametricWidget(SubWindow[_W]):
     def _widget_callback(self):
         self._callback_with_params(self.get_params())
 
-    def _widget_preview_callback(self, widget: ParametricWidget):
+    def _widget_preview_callback(self, widget: ParametricWindow):
         if not widget.is_preview_enabled():
             if prev := self._preview_window_ref():
                 self._preview_window_ref = _do_nothing

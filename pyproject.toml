@@ -30,6 +30,7 @@ dependencies = [
   "qtpy>=2.3.1",
   "superqt[iconify]>=0.6.1",
   "magicgui>=0.9.1",
+  "cmap>=0.4.0",
   "platformdirs",
   "pygments>=2.18.0",
   "pyyaml>=6.0.1",

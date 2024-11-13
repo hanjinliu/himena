@@ -57,7 +57,7 @@ class AppProfile(BaseModel):
     plugins: list[str] = Field(
         default_factory=_default_plugins, description="List of plugins to load."
     )
-    theme: str = Field(default="default", description="Theme to use.")
+    theme: str = Field(default="light-purple", description="Theme to use.")
 
     @classmethod
     def from_json(cls, path) -> "AppProfile":
