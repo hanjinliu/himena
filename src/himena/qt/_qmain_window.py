@@ -86,7 +86,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         )
         self._command_palette_recent = QCommandPalette(
             self._app,
-            menu_id=MenuId.FILE_RECENT,
+            menu_id=MenuId.RECENT_ALL,
             parent=self,
             exclude=["open-recent"],
             formatter=_formatter.formatter_recent,
@@ -137,7 +137,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(widget)
         dialog.setLayout(layout)
-        dialog.exec_()
+        dialog.exec()
         return None
 
     def _dock_widget_title(self, widget: QtW.QWidget) -> str:

@@ -64,6 +64,7 @@ class MenuId(StrEnum):
     VIEW = "view"
     TOOLS = "tools"
     TOOLBAR = "toolbar"
+    RECENT_ALL = ".recent-all"
 
     def __str__(self) -> str:
         return self.value

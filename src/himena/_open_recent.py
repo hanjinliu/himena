@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 from app_model.types import Action
+from logging import getLogger
 import json
 from himena.consts import MenuId, ActionCategory
 from himena.profile import data_dir
@@ -11,6 +12,8 @@ from datetime import datetime
 if TYPE_CHECKING:
     from app_model import Application
     from himena.widgets._main_window import MainWindow
+
+_LOGGER = getLogger(__name__)
 
 
 class OpenRecentFunction:
@@ -64,6 +67,7 @@ class RecentFileManager:
         ]
         self._disposer()
         self._disposer = self._app.register_actions(actions)
+        _LOGGER.debug("Recent files updated: %r", [p.name for p in file_paths])
         self._app.menus.menus_changed.emit({self._menu_id})
         return None
 
@@ -133,9 +137,12 @@ class RecentFileManager:
         """Make an Action for opening a file."""
         id, title = self.id_title_for_file(file)
         if in_menu:
-            menus = [{"id": self._menu_id, "group": self._group}]
+            menus = [
+                {"id": MenuId.RECENT_ALL},
+                {"id": self._menu_id, "group": self._group},
+            ]
         else:
-            menus = []
+            menus = [{"id": MenuId.RECENT_ALL}]
         return Action(
             id=id,
             title=title,
@@ -149,10 +156,14 @@ class RecentFileManager:
         return OpenRecentFunction(file)
 
     def id_title_for_file(self, file: Path | list[Path]) -> tuple[str, str]:
-        """Return the ID for the file."""
+        """Return ID and title for the file."""
         if isinstance(file, Path):
             id = f"open-{file}"
-            title = str(file)
+            home = Path.home()
+            if file.is_relative_to(home):
+                title = ("~" / file.relative_to(home)).as_posix()
+            else:
+                title = file.as_posix()
         else:
             name = ";".join([f.name for f in file])
             id = f"open-{name}"
