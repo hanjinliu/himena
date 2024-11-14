@@ -4,7 +4,7 @@ from logging import getLogger
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt
 from himena.types import WidgetDataModel, is_subtype
-from himena.qt._qsub_window import QSubWindow
+from himena.qt._qsub_window import QSubWindow, QSubWindowArea
 from himena.qt._utils import get_main_window
 
 _LOGGER = getLogger(__name__)
@@ -50,22 +50,34 @@ class QModelDrop(QtW.QGroupBox):
                 _LOGGER.debug("Accepting drop event")
                 event.accept()
                 return
+        elif isinstance(area := event.source(), QSubWindowArea):
+            subwindows = area.subWindowList()
+            if len(subwindows) == 1:
+                event.accept()
+                return
         event.ignore()
         event.setDropAction(Qt.DropAction.IgnoreAction)
 
     def dropEvent(self, event: QtGui.QDropEvent):
-        if isinstance(src := event.source(), QSubWindow):
-            widget = src.main_widget()
-            model_type = getattr(widget, "model_type", lambda: None)()
-            _LOGGER.info("Dropped model type %s", model_type)
-            if self._is_type_maches(model_type):
-                (i_tab, i_src), main = src._find_me_and_main()
-                src_wrapper = main.tabs[i_tab][i_src]
-                self._target_id = src_wrapper._identifier
-                src_wrapper.closed.connect(self._on_source_closed)
-                _LOGGER.info("Dropped model %s", src.windowTitle())
-                self.set_subwindow(src)
-                self.valueChanged.emit(widget.to_model())
+        if isinstance(win := event.source(), QSubWindow):
+            self._drop_qsubwindow(win)
+        elif isinstance(area := event.source(), QSubWindowArea):
+            subwindows = area.subWindowList()
+            if len(subwindows) == 1:
+                self._drop_qsubwindow(subwindows[0])
+
+    def _drop_qsubwindow(self, win: QSubWindow):
+        widget = win.main_widget()
+        model_type = getattr(widget, "model_type", lambda: None)()
+        _LOGGER.info("Dropped model type %s", model_type)
+        if self._is_type_maches(model_type):
+            (i_tab, i_src), main = win._find_me_and_main()
+            src_wrapper = main.tabs[i_tab][i_src]
+            self._target_id = src_wrapper._identifier
+            src_wrapper.closed.connect(self._on_source_closed)
+            _LOGGER.info("Dropped model %s", win.windowTitle())
+            self.set_subwindow(win)
+            self.valueChanged.emit(widget.to_model())
 
     def set_subwindow(self, src: QSubWindow):
         (i_tab, i_src), main = src._find_me_and_main()

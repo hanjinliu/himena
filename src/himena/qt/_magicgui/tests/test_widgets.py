@@ -1,4 +1,9 @@
-from himena.qt._magicgui._basic_widgets import QIntLineEdit, QDoubleLineEdit
+from himena.qt._magicgui._basic_widgets import (
+    QIntLineEdit,
+    QDoubleLineEdit,
+    QCommaSeparatedIntLineEdit,
+    QCommaSeparatedDoubleLineEdit
+)
 from qtpy.QtCore import Qt
 from pytestqt.qtbot import QtBot
 
@@ -71,3 +76,37 @@ def test_double_line_edit_exponential(qtbot: QtBot):
     assert line.text() == "3.1e3"
     qtbot.keyClick(line, Qt.Key.Key_PageDown)
     assert line.text() == "3.1e2"
+
+def test_int_list_line_edit(qtbot: QtBot):
+    line = QCommaSeparatedIntLineEdit()
+    qtbot.addWidget(line)
+    assert line.text() == ""
+
+    qtbot.keyClick(line, Qt.Key.Key_1)
+    qtbot.keyClick(line, Qt.Key.Key_Comma)
+    assert line.text() == "1,"
+    qtbot.keyClick(line, Qt.Key.Key_2)
+    qtbot.keyClick(line, Qt.Key.Key_Comma)
+    qtbot.keyClick(line, Qt.Key.Key_Space)
+    qtbot.keyClick(line, Qt.Key.Key_3)
+    assert line.text() == "1,2, 3"
+    qtbot.keyClick(line, Qt.Key.Key_Comma)
+    qtbot.keyClick(line, Qt.Key.Key_Comma)
+    assert line.text() == "1,2, 3,"
+
+def test_float_list_line_edit(qtbot: QtBot):
+    line = QCommaSeparatedDoubleLineEdit()
+    qtbot.addWidget(line)
+    assert line.text() == ""
+
+    qtbot.keyClick(line, Qt.Key.Key_1)
+    qtbot.keyClick(line, Qt.Key.Key_Comma)
+    assert line.text() == "1,"
+    qtbot.keyClick(line, Qt.Key.Key_2)
+    qtbot.keyClick(line, Qt.Key.Key_Comma)
+    qtbot.keyClick(line, Qt.Key.Key_Space)
+    qtbot.keyClick(line, Qt.Key.Key_3)
+    assert line.text() == "1,2, 3"
+    qtbot.keyClick(line, Qt.Key.Key_Comma)
+    qtbot.keyClick(line, Qt.Key.Key_Comma)
+    assert line.text() == "1,2, 3,"

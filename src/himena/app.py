@@ -54,10 +54,10 @@ class QtEventLoopHandler(EventLoopHandler["QApplication"]):
         """Start the event loop."""
         if not gui_is_active("qt"):
             with ExceptionHandler(hook=self._excepthook) as _:
-                self.get_app().exec_()
+                self.get_app().exec()
             return None
 
-        return self.get_app().exec_()
+        return self.get_app().exec()
 
     def instance(self) -> QApplication | None:
         from qtpy.QtWidgets import QApplication
@@ -74,10 +74,12 @@ class QtEventLoopHandler(EventLoopHandler["QApplication"]):
 
     def _excepthook(self, exc_type: type[Exception], exc_value: Exception, exc_tb):
         """Exception hook used during application execution."""
+        from qtpy.QtGui import QDrag
         from himena.qt._qtraceback import QtErrorMessageBox
         from himena.widgets import current_instance
 
         viewer = current_instance(self._name)
+        QDrag.cancel()
         QtErrorMessageBox.raise_(exc_value, parent=viewer._backend_main_window)
         return None
 

@@ -1,20 +1,21 @@
 from __future__ import annotations
 
 import sys
-from qtpy import QtWidgets as QtW
-from qtpy import QtCore, QtGui
+from qtpy import QtWidgets as QtW, QtCore, QtGui
+from qtpy.QtCore import Qt
 from himena.qt._qclickable_label import QClickableLabel
 from himena.qt._qsub_window import QSubWindowArea, QSubWindow
 from himena.qt._qrename import QRenameLineEdit
-from himena.qt._utils import get_main_window
+from himena.qt._utils import get_main_window, build_qmodel_menu
 
 
 class QTabBar(QtW.QTabBar):
     """Tab bar used for the main widget"""
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent: QtW.QTabWidget | None):
+        super().__init__(parent)
         self.setAcceptDrops(True)
+        self._pressed_pos = QtCore.QPoint()
 
     def dragEnterEvent(self, e: QtGui.QDragEnterEvent) -> None:
         e.accept()
@@ -33,6 +34,33 @@ class QTabBar(QtW.QTabBar):
         main = get_main_window(self)
         main.move_window(main.tabs[i_tab][i_win], target_index)
 
+    def mousePressEvent(self, event: QtGui.QMouseEvent):
+        self._pressed_pos = event.pos()
+        if event.button() == Qt.MouseButton.LeftButton:
+            i_tab = self.tabAt(self._pressed_pos)
+            if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+                if area := self.tab_widget().widget_area(i_tab):
+                    drag = QtGui.QDrag(area)
+                    mime_data = QtCore.QMimeData()
+                    text = f"himena-tab:{i_tab}"
+                    mime_data.setText(text)
+                    drag.setMimeData(mime_data)
+                    drag.setPixmap(area._pixmap_resized(QtCore.QSize(150, 150)))
+                    drag.exec()
+        return None
+
+    def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
+        i_tab_released = self.tabAt(event.pos())
+        i_tab_pressed = self.tabAt(self._pressed_pos)
+        if i_tab_released == i_tab_pressed:
+            self.setCurrentIndex(i_tab_released)
+            if event.button() == Qt.MouseButton.RightButton:
+                build_qmodel_menu
+        return super().mouseReleaseEvent(event)
+
+    def tab_widget(self) -> QTabWidget:
+        return self.parentWidget()
+
 
 class QTabWidget(QtW.QTabWidget):
     """Tab widget used for the main widget"""
@@ -41,7 +69,7 @@ class QTabWidget(QtW.QTabWidget):
 
     def __init__(self):
         super().__init__()
-        self._tabbar = QTabBar()
+        self._tabbar = QTabBar(self)
         self.setTabBar(self._tabbar)
         self._line_edit = QRenameLineEdit(self)
         self._current_edit_index = None
@@ -162,7 +190,10 @@ class QTabWidget(QtW.QTabWidget):
 
     def dragEnterEvent(self, e: QtGui.QDragEnterEvent) -> None:
         # This override is necessary for accepting drops from files.
-        e.accept()
+        if isinstance(e.source(), QSubWindowArea):
+            e.ignore()
+        else:
+            e.accept()
 
     def dropEvent(self, event: QtGui.QDropEvent) -> None:
         mime_data = event.mimeData()

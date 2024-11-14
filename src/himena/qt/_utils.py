@@ -3,11 +3,15 @@ from __future__ import annotations
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
+
+from app_model.backends.qt import QModelMenu
 import qtpy
 from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
 from himena.types import ClipboardDataModel
 from himena.consts import StandardTypes, StandardSubtypes
+from himena._utils import lru_cache
+
 
 if TYPE_CHECKING:
     import numpy as np
@@ -98,3 +102,14 @@ def get_main_window(widget: QtW.QWidget) -> MainWindowQt:
         if isinstance(parent, QtW.QMainWindow):
             return parent._himena_main_window
     raise ValueError("No mainwindow found.")
+
+
+def build_qmodel_menu(menu_id: str, app: str, parent: QtW.QWidget) -> QModelMenu:
+    menu = _build_qmodel_menu(menu_id, app)
+    menu.setParent(parent, menu.windowFlags())
+    return menu
+
+
+@lru_cache(maxsize=8)
+def _build_qmodel_menu(menu_id: str, app: str) -> QModelMenu:
+    return QModelMenu(menu_id=menu_id, app=app)

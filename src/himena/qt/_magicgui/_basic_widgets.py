@@ -35,6 +35,44 @@ class QDoubleOrNoneValidator(QtGui.QDoubleValidator):
         return super().validate(a0, a1)
 
 
+class QCommaSeparatedValidator(QtGui.QValidator):
+    _ChildValidator: QtGui.QValidator
+
+    def validate(
+        self,
+        a0: str | None,
+        a1: int,
+    ) -> tuple[QtGui.QValidator.State, str, int]:
+        if a0 == "" or a0 is None:
+            return QtGui.QValidator.State.Acceptable, "", a1
+        if a0.strip().endswith(","):
+            if a0.strip().endswith(",,"):
+                return QtGui.QValidator.State.Invalid, a0, a1
+            return QtGui.QValidator.State.Intermediate, a0, a1
+        state_list = [
+            self._ChildValidator.validate(part.strip(), 0)[0] for part in a0.split(",")
+        ]
+        is_valid = all(
+            state == QtGui.QValidator.State.Acceptable for state in state_list
+        )
+        is_intermediate = all(
+            state != QtGui.QValidator.State.Invalid for state in state_list
+        )
+        if is_valid:
+            return QtGui.QValidator.State.Acceptable, a0, a1
+        if is_intermediate:
+            return QtGui.QValidator.State.Intermediate, a0, a1
+        return QtGui.QValidator.State.Invalid, a0, a1
+
+
+class QCommaSeparatedIntValidator(QCommaSeparatedValidator):
+    _ChildValidator = QtGui.QIntValidator()
+
+
+class QCommaSeparatedDoubleValidator(QCommaSeparatedValidator):
+    _ChildValidator = QtGui.QDoubleValidator()
+
+
 class QValuedLineEdit(QtW.QLineEdit):
     _validator_class: type[QIntOrNoneValidator | QDoubleOrNoneValidator]
 
@@ -129,6 +167,18 @@ class QDoubleLineEdit(QValuedLineEdit):
         return diff
 
 
+class QCommaSeparatedIntLineEdit(QtW.QLineEdit):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setValidator(QCommaSeparatedIntValidator(self))
+
+
+class QCommaSeparatedDoubleLineEdit(QtW.QLineEdit):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setValidator(QCommaSeparatedDoubleValidator(self))
+
+
 class QIntEdit(QBaseStringWidget):
     _qwidget: QIntLineEdit
 
@@ -210,6 +260,80 @@ class FloatEdit(LineEdit):
             value_str = ""
         else:
             value_str = float_to_str(value)
+        LineEdit.value.fset(self, value_str)
+
+
+class QIntListEdit(QBaseStringWidget):
+    _qwidget: QCommaSeparatedIntLineEdit
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__(
+            QCommaSeparatedIntLineEdit, "text", "setText", "textChanged", **kwargs
+        )
+
+
+class IntListEdit(LineEdit):
+    def __init__(self, value=Undefined, **kwargs):
+        app = use_app()
+        assert app.native
+        ValueWidget.__init__(
+            self,
+            value=value,
+            widget_type=QIntListEdit,
+            **kwargs,
+        )
+
+    def get_value(self) -> list[int]:
+        val = super().get_value()
+        if val is None and not self._nullable:
+            raise ValueError(f"Must specify a value for {self.label}")
+        if val.strip() == "":
+            return []
+        return [int(part) for part in val.split(",")]
+
+    @LineEdit.value.setter
+    def value(self, value):
+        if value is None:
+            value_str = ""
+        else:
+            value_str = ", ".join(str(part) for part in value)
+        LineEdit.value.fset(self, value_str)
+
+
+class QFloatListEdit(QBaseStringWidget):
+    _qwidget: QCommaSeparatedDoubleLineEdit
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__(
+            QCommaSeparatedDoubleLineEdit, "text", "setText", "textChanged", **kwargs
+        )
+
+
+class FloatListEdit(LineEdit):
+    def __init__(self, value=Undefined, **kwargs):
+        app = use_app()
+        assert app.native
+        ValueWidget.__init__(
+            self,
+            value=value,
+            widget_type=QFloatListEdit,
+            **kwargs,
+        )
+
+    def get_value(self) -> list[float]:
+        val = super().get_value()
+        if val is None and not self._nullable:
+            raise ValueError(f"Must specify a value for {self.label}")
+        if val.strip() == "":
+            return []
+        return [float(part) for part in val.split(",")]
+
+    @LineEdit.value.setter
+    def value(self, value):
+        if value is None:
+            value_str = ""
+        else:
+            value_str = ",".join(float_to_str(part) for part in value)
         LineEdit.value.fset(self, value_str)
 
 

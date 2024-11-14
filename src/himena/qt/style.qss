@@ -142,12 +142,28 @@ QSlider::groove:horizontal {
    border-radius: 2px;
 }
 
-QSlider::handle:horizontal {
-   background-color: #[highlight_dim];
+QSlider::groove:vertical {
    border: 0px;
-   width: 12px;
+   background-color: #[background_dim];
+   width: 6px;
+   border-radius: 2px;
+}
+
+QSlider::handle:horizontal {
+   background-color: #[highlight];
+   border: 0px;
+   width: 16px;
    margin-top: -5px;
    margin-bottom: -5px;
+   border-radius: 8px;
+}
+
+QSlider::handle:vertical {
+   background-color: #[highlight];
+   border: 0px;
+   height: 16px;
+   margin-left: -5px;
+   margin-right: -5px;
    border-radius: 8px;
 }
 
@@ -349,7 +365,7 @@ QTabBar::tab:top {
     padding: 3px 6px;
     height: 10px;
     margin-top: 4px;
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #[background_dim], stop:1 #[background_strong]);
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #[background_dim], stop:1 #[background]);
     color: #[foreground];
 }
 
@@ -487,4 +503,8 @@ QToggleSwitch {
     qproperty-onColor: #[highlight_strong];
     qproperty-offColor: #[background_dim];
     qproperty-handleColor: #[background_dim];
+}
+
+QTitleBarToolButton {
+    background-color: transparent;
 }

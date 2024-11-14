@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable, Iterator
-from app_model.backends.qt import QModelMenu
 from qtpy import QtWidgets as QtW
 from qtpy import QtCore, QtGui
 from qtpy.QtCore import Qt
@@ -11,7 +10,7 @@ from himena import anchor as _anchor
 from himena.consts import MenuId
 from himena._utils import lru_cache
 from himena.types import WindowState, WindowRect
-from himena.qt._utils import get_main_window
+from himena.qt._utils import get_main_window, build_qmodel_menu
 from himena.qt._qwindow_resize import ResizeState
 from himena.qt._qrename import QRenameLineEdit
 
@@ -65,14 +64,14 @@ class QSubWindowArea(QtW.QMdiArea):
     def mousePressEvent(self, event: QtGui.QMouseEvent):
         self._last_drag_pos = self._last_press_pos = event.pos()
         if (
-            event.buttons() == Qt.MouseButton.LeftButton
+            event.button() == Qt.MouseButton.LeftButton
             and event.modifiers() & Qt.KeyboardModifier.ControlModifier
         ):
             self.setCursor(Qt.CursorShape.ClosedHandCursor)
         return None
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent):
-        if event.buttons() == Qt.MouseButton.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             if self._last_drag_pos is None:
                 return None
             if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
@@ -85,8 +84,16 @@ class QSubWindowArea(QtW.QMdiArea):
         return None
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
+        # reset cursor state
         self.setCursor(Qt.CursorShape.ArrowCursor)
         self._last_press_pos = self._last_drag_pos = None
+
+        # context menu
+
+        if event.button() == Qt.MouseButton.RightButton:
+            app = get_main_window(self).model_app
+            menu = build_qmodel_menu(MenuId.FILE_NEW, app, self)
+            menu.exec(event.globalPos())
         return None
 
     def hideEvent(self, a0: QtGui.QHideEvent | None) -> None:
@@ -117,6 +124,13 @@ class QSubWindowArea(QtW.QMdiArea):
                     (sub_qsize.width(), sub_qsize.height()),
                 ):
                     sub_window.setGeometry(rect.left, rect.top, rect.width, rect.height)
+
+    def _pixmap_resized(
+        self,
+        size: QtCore.QSize,
+        outline: QtGui.QColor | None = None,
+    ) -> QtGui.QPixmap:
+        return pixmap_resized(self, size, outline)
 
     if TYPE_CHECKING:
 
@@ -349,17 +363,7 @@ class QSubWindow(QtW.QMdiSubWindow):
         size: QtCore.QSize,
         outline: QtGui.QColor | None = None,
     ) -> QtGui.QPixmap:
-        pixmap = self.grab().scaled(
-            size,
-            Qt.AspectRatioMode.KeepAspectRatio,
-            Qt.TransformationMode.SmoothTransformation,
-        )
-        if outline is not None:
-            painter = QtGui.QPainter(pixmap)
-            painter.setPen(QtGui.QPen(outline, 2))
-            painter.drawRect(pixmap.rect())
-            painter.end()
-        return pixmap
+        return pixmap_resized(self, size, outline)
 
     def _find_me(self) -> tuple[int, int]:
         return self._find_me_and_main()[0]
@@ -387,7 +391,6 @@ class QTitleBarToolButton(QtW.QToolButton):
         self.setFixedSize(_TITLE_HEIGHT - 2, _TITLE_HEIGHT - 2)
         self.setIcon(icon)
         self.setIconSize(QtCore.QSize(_TITLE_HEIGHT - 3, _TITLE_HEIGHT - 3))
-        self.setStyleSheet("QTitleBarToolButton {background-color: transparent;}")
         self.setToolTip(tooltip)
         self.clicked.connect(callback)
 
@@ -613,6 +616,19 @@ class QSubWindowTitleBar(QtW.QFrame):
         return None
 
 
-@lru_cache(maxsize=12)
-def build_qmodel_menu(menu_id: str, app: str, parent: QtW.QWidget) -> QModelMenu:
-    return QModelMenu(menu_id=menu_id, app=app, parent=parent)
+def pixmap_resized(
+    widget: QtW.QWidget,
+    size: QtCore.QSize,
+    outline: QtGui.QColor | None = None,
+) -> QtGui.QPixmap:
+    pixmap = widget.grab().scaled(
+        size,
+        Qt.AspectRatioMode.KeepAspectRatio,
+        Qt.TransformationMode.SmoothTransformation,
+    )
+    if outline is not None:
+        painter = QtGui.QPainter(pixmap)
+        painter.setPen(QtGui.QPen(outline, 2))
+        painter.drawRect(pixmap.rect())
+        painter.end()
+    return pixmap

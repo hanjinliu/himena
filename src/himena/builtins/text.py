@@ -82,7 +82,6 @@ def format_json(model: WidgetDataModel) -> Parametric:
 
 
 @register_function(
-    types=StandardTypes.TEXT,
     menus=["tools/text"],
     title="Compare texts ...",
 )

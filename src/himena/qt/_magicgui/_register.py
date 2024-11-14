@@ -1,5 +1,10 @@
 from magicgui import register_type
-from himena.qt._magicgui._basic_widgets import IntEdit, FloatEdit
+from himena.qt._magicgui._basic_widgets import (
+    IntEdit,
+    FloatEdit,
+    IntListEdit,
+    FloatListEdit,
+)
 from himena.qt._magicgui._modeldrop import ModelDrop
 from himena.qt._magicgui._toggle_switch import ToggleSwitch
 from himena.types import WidgetDataModel
@@ -11,4 +16,5 @@ def register_magicgui_types():
     register_type(bool, widget_type=ToggleSwitch)
     register_type(int, widget_type=IntEdit)
     register_type(float, widget_type=FloatEdit)
-    # register_type(list[int], widget_type=ListLineEdit)
+    register_type(list[int], widget_type=IntListEdit)
+    register_type(list[float], widget_type=FloatListEdit)

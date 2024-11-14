@@ -102,4 +102,4 @@ class QWorkspaceFileTree(QtW.QTreeView):
         drag.setMimeData(mime)
         cursor = QtGui.QCursor(QtCore.Qt.CursorShape.OpenHandCursor)
         drag.setDragCursor(cursor.pixmap(), QtCore.Qt.DropAction.MoveAction)
-        drag.exec_(QtCore.Qt.DropAction.MoveAction)
+        drag.exec(QtCore.Qt.DropAction.MoveAction)
