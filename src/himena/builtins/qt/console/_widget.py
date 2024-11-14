@@ -6,11 +6,13 @@ from typing import TYPE_CHECKING
 from contextlib import suppress
 
 from qtpy.QtCore import Signal
-from qtpy import QtWidgets as QtW
+from qtpy import QtWidgets as QtW, QtGui
 from qtconsole.rich_jupyter_widget import RichJupyterWidget
 from himena._utils import lru_cache
+from himena.qt._utils import get_stylesheet_path
 
 if TYPE_CHECKING:
+    from himena.style import Theme
     from himena.widgets import MainWindow
 
     class RichJupyterWidget(RichJupyterWidget, QtW.QWidget):
@@ -125,6 +127,19 @@ class QtConsole(RichJupyterWidget):
         super().showEvent(event)
         self.setFocus()
         return None
+
+    def theme_changed_callback(self, theme: Theme):
+        """Update the console theme."""
+        # need to set stylesheet via style_sheet property
+        self.style_sheet = theme.format_text(get_stylesheet_path().read_text())
+
+        # Set syntax styling and highlighting using theme
+        if theme.is_light_background():
+            self.syntax_style = "default"
+        else:
+            self.syntax_style = "native"
+        bracket_color = QtGui.QColor(theme.highlight_dim)
+        self._bracket_matcher.format.setBackground(bracket_color)
 
 
 @lru_cache(maxsize=1)

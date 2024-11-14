@@ -2,7 +2,7 @@ from pathlib import Path
 
 import numpy as np
 from himena import new_window, WidgetDataModel
-from himena.qt import register_frontend_widget
+from himena.qt import register_widget
 from himena.plugins import (
     register_reader_provider,
     register_writer_provider,
@@ -12,7 +12,7 @@ from wgpu.gui.qt import WgpuWidget
 import imageio.v3 as iio
 import pygfx as gfx
 
-@register_frontend_widget("image")
+@register_widget("image")
 class WgpuImageWidget(WgpuWidget):
     def __init__(self):
         super().__init__()

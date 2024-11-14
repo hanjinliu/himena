@@ -5,7 +5,7 @@ from qtpy import QtWidgets as QtW
 from himena import MainWindow, anchor
 from himena.plugins.actions import register_function
 from himena.types import ClipboardDataModel, ParametricWidgetTuple, WidgetDataModel
-from himena.qt import register_frontend_widget, MainWindowQt
+from himena.qt import register_widget, MainWindowQt
 from himena.builtins.qt import widgets as _qtw
 
 def test_new_window(ui: MainWindow):
@@ -226,7 +226,7 @@ def test_fallback_widget(ui: MainWindow):
     win = ui.add_data_model(model)
     assert isinstance(win.widget, QFallbackWidget)
 
-def test_register_frontend_widget(ui: MainWindow):
+def test_register_widget(ui: MainWindow):
     from qtpy.QtWidgets import QLabel
 
     class QCustomTextView(QLabel):
@@ -236,7 +236,7 @@ def test_register_frontend_widget(ui: MainWindow):
     model = WidgetDataModel(value="abc", type="text.xyz")
     win = ui.add_data_model(model)
     assert type(win.widget) is _qtw.QDefaultTextEdit
-    register_frontend_widget("text.xyz", QCustomTextView)
+    register_widget("text.xyz", QCustomTextView)
 
     win2 = ui.add_data_model(model)
     assert type(win2.widget) is QCustomTextView

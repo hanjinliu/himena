@@ -7,15 +7,15 @@ from himena import (
     WidgetDataModel,
 )
 from himena.plugins import register_reader_provider, register_writer_provider
-from himena.qt import register_frontend_widget
+from himena.qt import register_widget
 
 PANDAS_TABLE_TYPE = "table.pandas"
 
-# `@register_frontend_widget` is a decorator that registers a widget class as a frontend
+# `@register_widget` is a decorator that registers a widget class as a frontend
 # widget for the given file type. The class must have an `update_model` method to update
 # the state based on the data model. By further providing `to_model` method, the widget
 # can be converted back to data model.
-@register_frontend_widget(PANDAS_TABLE_TYPE)
+@register_widget(PANDAS_TABLE_TYPE)
 class DataFrameWidget(QtW.QTableWidget):
     def __init__(self):
         self._data_model = None

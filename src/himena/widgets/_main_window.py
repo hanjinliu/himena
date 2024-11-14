@@ -83,6 +83,16 @@ class MainWindow(Generic[_W]):
             theme = Theme.from_global(theme)
         self._theme = theme
         self._backend_main_window._update_widget_theme(theme)
+
+        # update icon colors
+
+        # if child implements "theme_changed_callback", call it
+        for win in self.iter_windows():
+            if hasattr(win.widget, "theme_changed_callback"):
+                win.widget.theme_changed_callback(theme)
+        for dock in self.dock_widgets:
+            if hasattr(dock.widget, "theme_changed_callback"):
+                dock.widget.theme_changed_callback(theme)
         return None
 
     @property

@@ -2,11 +2,11 @@ from qtpy import QtWidgets as QtW
 
 import re
 from himena import new_window, WidgetDataModel
-from himena.qt import register_frontend_widget
+from himena.qt import register_widget
 from himena.plugins import register_function
 
 
-@register_frontend_widget("text")
+@register_widget("text")
 class MyTextEdit(QtW.QPlainTextEdit):
     def update_model(self, model: WidgetDataModel):
         self.setPlainText(model.value)
@@ -14,7 +14,7 @@ class MyTextEdit(QtW.QPlainTextEdit):
     def to_model(self) -> WidgetDataModel:
         return WidgetDataModel(value=self.toPlainText(), type="text")
 
-@register_frontend_widget("html")
+@register_widget("html")
 class MyHtmlEdit(QtW.QTextEdit):
     def __init__(self, model: WidgetDataModel):
         super().__init__()
@@ -25,7 +25,7 @@ class MyHtmlEdit(QtW.QTextEdit):
     def to_model(self) -> WidgetDataModel:
         return WidgetDataModel(value=self.toHtml(), type="text.html")
 
-@register_frontend_widget("cannot-save")
+@register_widget("cannot-save")
 class MyNonSavableEdit(QtW.QTextEdit):
     def update_model(self, model: WidgetDataModel):
         self.setPlainText(model.value)

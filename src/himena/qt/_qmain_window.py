@@ -32,6 +32,7 @@ from himena.qt.registry import list_widget_class
 from himena.qt._utils import (
     get_clipboard_data,
     set_clipboard_data,
+    get_stylesheet_path,
     ArrayQImage,
 )
 from himena.widgets._wrapper import ParametricWindow
@@ -40,7 +41,6 @@ if TYPE_CHECKING:
     from himena.widgets._main_window import SubWindow, MainWindow
     from himena.style import Theme
 
-_STYLE_QSS_PATH = Path(__file__).parent / "style.qss"
 _ICON_PATH = Path(__file__).parent.parent / "resources" / "icon.svg"
 _T = TypeVar("_T", bound=QtW.QWidget)
 _LOGGER = logging.getLogger(__name__)
@@ -98,7 +98,12 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self.resize(800, 600)
 
     def _update_widget_theme(self, style: Theme):
-        self.setStyleSheet(style.format_text(_STYLE_QSS_PATH.read_text()))
+        self.setStyleSheet(style.format_text(get_stylesheet_path().read_text()))
+        # TODO: update toolbar icon color
+        # if style.is_light_background():
+        #     icon_theme = "light"
+        # else:
+        #     icon_theme = "dark"
 
     def add_dock_widget(
         self,

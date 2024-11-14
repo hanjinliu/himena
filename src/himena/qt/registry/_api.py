@@ -22,7 +22,7 @@ _F = TypeVar("_F", bound=WidgetClass)
 
 
 @overload
-def register_frontend_widget(
+def register_widget(
     type_: str,
     widget_class: _F,
     app: str | None,
@@ -31,7 +31,7 @@ def register_frontend_widget(
 
 
 @overload
-def register_frontend_widget(
+def register_widget(
     type_: str,
     widget_class: None,
     app: str | None,
@@ -39,7 +39,7 @@ def register_frontend_widget(
 ) -> Callable[[_F], _F]: ...
 
 
-def register_frontend_widget(type_, widget_class=None, app=None, priority=0):
+def register_widget(type_, widget_class=None, app=None, priority=0):
     """
     Register a Qt widget class as a frontend widget for the given file type.
 
@@ -47,7 +47,7 @@ def register_frontend_widget(type_, widget_class=None, app=None, priority=0):
     `QtW.QWidget`. If `app` is given, the widget class is registered for the given app.
     Otherwise, the widget class is registered globally as a fallback widget class.
 
-    >>> @register_frontend_widget("text")
+    >>> @register_widget("text")
     ... class MyTextEdit(QtW.QPlainTextEdit):
     ...     def update_model(cls, model: WidgetDataModel):
     ...         self.setPlainText(model.value)

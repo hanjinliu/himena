@@ -40,6 +40,10 @@ class Theme:
             text = text.replace(f"#[{name}]", f"{value}")
         return text
 
+    def is_light_background(self) -> bool:
+        color = ColorTuple.from_hex(self.background)
+        return (color.r + color.g + color.b) / 3 > 127.5
+
 
 class ColorTuple(NamedTuple):
     r: int

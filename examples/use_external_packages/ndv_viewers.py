@@ -3,14 +3,14 @@ import numpy as np
 
 from himena import new_window
 from himena.consts import StandardTypes
-from himena.qt import register_frontend_widget
+from himena.qt import register_widget
 from himena.types import WidgetDataModel
 
 class MyNDViewer(NDViewer):
     def update_model(self, model: WidgetDataModel):
         return self.set_data(model.value)
 
-register_frontend_widget(StandardTypes.IMAGE, MyNDViewer)
+register_widget(StandardTypes.IMAGE, MyNDViewer)
 
 def main():
     ui = new_window()

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Iterator
+from typing import Iterator, TYPE_CHECKING
 
 from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
@@ -13,6 +13,8 @@ from himena.consts import MonospaceFontFamily
 from himena._utils import OrderedSet, lru_cache
 from himena.qt._qfinderwidget import QFinderWidget
 
+if TYPE_CHECKING:
+    from himena.style import Theme
 
 _POPULAR_LANGUAGES = [
     "Plain Text", "Python", "C++", "C", "Java", "JavaScript", "HTML", "CSS", "SQL",
@@ -40,7 +42,7 @@ def change_point_size(cur_font: QtGui.QFont, step: int) -> QtGui.QFont:
     return cur_font
 
 
-@lru_cache
+@lru_cache(maxsize=1)
 def get_languages() -> OrderedSet[str]:
     from pygments.lexers import get_all_lexers
 
@@ -83,20 +85,23 @@ class QMainTextEdit(QtW.QPlainTextEdit):
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self._tab_size = 4
         self._highlight = None
+        self._language: str = "Plain Text"
+        self._code_theme = "default"
         self._finder_widget = None
 
     def is_modified(self) -> bool:
         return self.document().isModified()
 
-    def syntax_highlight(self, lang: str | None = "python", theme: str = "default"):
+    def syntax_highlight(self, lang: str | None = None):
         """Highlight syntax."""
+        self._language = lang
         if lang is None or lang == "Plain Text":
             if self._highlight is not None:
                 self._highlight.setDocument(None)
             return None
         from superqt.utils import CodeSyntaxHighlight
 
-        highlight = CodeSyntaxHighlight(self.document(), lang, theme=theme)
+        highlight = CodeSyntaxHighlight(self.document(), lang, theme=self._code_theme)
         self._highlight = highlight
         return None
 
@@ -512,6 +517,15 @@ class QDefaultTextEdit(QtW.QWidget):
 
     def set_editable(self, value: bool) -> None:
         self._main_text_edit.setReadOnly(not value)
+
+    def theme_changed_callback(self, theme: Theme):
+        text_edit = self._main_text_edit
+        if theme.is_light_background():
+            text_edit._code_theme = "default"
+            text_edit.syntax_highlight(text_edit._language)
+        else:
+            text_edit._code_theme = "native"
+            text_edit.syntax_highlight(text_edit._language)
 
     def keyPressEvent(self, a0: QtGui.QKeyEvent | None) -> None:
         if (
