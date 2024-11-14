@@ -508,3 +508,23 @@ QToggleSwitch {
 QTitleBarToolButton {
     background-color: transparent;
 }
+
+QDockWidgetTitleFrame {
+    border: 0px;
+    border-bottom: 1px solid #[foreground_dim];
+    background-color: none;
+}
+
+QCloseTabToolButton {
+    color: transparent;
+    background-color: transparent;
+    margin: 0px;
+}
+
+QCloseTabToolButton:hover {
+    color: #[foreground_dim];
+    border: 1px solid #[foreground_dim];
+    border-radius: 4px;
+    margin: 0px;
+    padding: 1px;
+}

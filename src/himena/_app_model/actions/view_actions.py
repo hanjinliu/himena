@@ -43,8 +43,8 @@ def close_current_tab(ui: MainWindow) -> None:
     if len(win_modified) > 0:
         _modified_msg = "\n".join([f"- {win.title}" for win in win_modified])
         if not ui.exec_confirmation_dialog(
-            f"Some windows in the tab are modified:\n{_modified_msg}\n"
-            "Close without saving?"
+            f"Some windows in this tab are not saved yet:\n{_modified_msg}\n"
+            "Close the tab without saving?"
         ):
             return None
     ui.tabs.pop(idx)

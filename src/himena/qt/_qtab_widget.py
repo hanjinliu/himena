@@ -9,6 +9,24 @@ from himena.qt._qrename import QRenameLineEdit
 from himena.qt._utils import get_main_window, build_qmodel_menu
 
 
+class QCloseTabToolButton(QtW.QToolButton):
+    def __init__(self, area: QSubWindowArea):
+        super().__init__()
+        self._subwindow_area = area
+        self.setText("✕")
+        self.setFixedSize(12, 12)
+        self.clicked.connect(self.close_area)
+        self.setToolTip("Close this tab")
+
+    def close_area(self):
+        main = get_main_window(self)
+        tab_widget = main._backend_main_window._tab_widget
+        for i in range(tab_widget.count()):
+            if tab_widget.widget_area(i) is self._subwindow_area:
+                tab_widget.setCurrentIndex(i)
+                main.exec_action("close-tab")
+
+
 class QTabBar(QtW.QTabBar):
     """Tab bar used for the main widget"""
 
@@ -92,6 +110,14 @@ class QTabWidget(QtW.QTabWidget):
         self.newWindowActivated.connect(self._repolish)
         self.currentChanged.connect(self._repolish)
 
+        # "new tab" button
+        tb = QtW.QToolButton()
+        tb.setText("+")
+        tb.setFont(QtGui.QFont("Arial", 12, weight=15))
+        tb.setToolTip("New Tab")
+        tb.clicked.connect(lambda: get_main_window(self).add_tab())
+        self.setCornerWidget(tb)
+
     def _init_startup(self):
         self._startup_widget = QStartupWidget(self)
         self._add_startup_widget()
@@ -110,10 +136,14 @@ class QTabWidget(QtW.QTabWidget):
         if self._is_startup_only():
             self.removeTab(0)
             self.setTabBarAutoHide(False)
-        widget = QSubWindowArea()
-        self.addTab(widget, tab_name)
-        widget.subWindowActivated.connect(self._emit_new_window_activated)
-        return widget
+        area = QSubWindowArea()
+        self.addTab(area, tab_name)
+        area.subWindowActivated.connect(self._emit_new_window_activated)
+        btn = QCloseTabToolButton(area)
+        self.tabBar().setTabButton(
+            self.count() - 1, QtW.QTabBar.ButtonPosition.RightSide, btn
+        )
+        return area
 
     def remove_tab_area(self, index: int) -> None:
         if self._is_startup_only():

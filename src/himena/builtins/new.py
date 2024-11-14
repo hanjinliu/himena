@@ -1,13 +1,13 @@
 """New file actions."""
 
 from typing import Literal
-from himena.plugins import register_new_provider
+import csv
+from io import StringIO
+
+from himena.plugins import register_new_provider, configure_gui
 from himena.types import WidgetDataModel, Parametric
 from himena.widgets import MainWindow
 from himena.consts import StandardTypes
-import csv
-import requests
-from io import StringIO
 
 
 @register_new_provider(
@@ -23,25 +23,33 @@ def new_text(ui: MainWindow) -> WidgetDataModel:
     return WidgetDataModel(value="", type=StandardTypes.TEXT, title=f"Untitled-{nwin}")
 
 
+DATASET_SOURCE = "https://raw.githubusercontent.com/mwaskom/seaborn-data/master"
+DATASET_NAMES_URL = f"{DATASET_SOURCE}/dataset_names.txt"
+
+
 @register_new_provider(
     title="Seaborn test data",
     command_id="builtins:fetch-seaborn-test-data",
 )
 def seaborn_test_data() -> Parametric:
     """New table from a seaborn test data."""
+    from urllib.request import urlopen
 
+    # get dataset names
+    with urlopen(DATASET_NAMES_URL) as resp:
+        txt = resp.read()
+
+    assert isinstance(txt, bytes)
+    dataset_names = [name.strip() for name in txt.decode().split("\n")]
+    choices = [name for name in dataset_names if name]
+
+    @configure_gui(name={"choices": choices})
     def fetch_data(name: str = "iris") -> WidgetDataModel:
-        url = (
-            f"https://raw.githubusercontent.com/mwaskom/seaborn-data/master/{name}.csv"
-        )
-
         # read without using pandas
-        response = requests.get(url)
-        response.raise_for_status()  # Ensure we notice bad responses
+        with urlopen(f"{DATASET_SOURCE}/{name}.csv") as resp:
+            data = resp.read().decode()
 
-        data = response.text
         csv_data = list(csv.reader(StringIO(data)))
-
         return WidgetDataModel(value=csv_data, type=StandardTypes.TABLE, title=name)
 
     return fetch_data

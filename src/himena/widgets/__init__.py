@@ -1,4 +1,5 @@
 from himena.widgets._main_window import MainWindow, BackendMainWindow
+from himena.widgets._widget_list import TabArea
 from himena.widgets._wrapper import SubWindow, ParametricWindow, DockWidget
 from himena.widgets._initialize import (
     current_instance,
@@ -9,6 +10,7 @@ from himena.widgets._initialize import (
 
 __all__ = [
     "MainWindow",
+    "TabArea",
     "BackendMainWindow",
     "SubWindow",
     "ParametricWindow",
