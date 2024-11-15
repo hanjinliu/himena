@@ -41,6 +41,7 @@ ALLOWED_LETTERS = string.ascii_letters + string.digits + "_- "
 class StandardTypes(SimpleNamespace):
     TEXT = "text"
     TABLE = "table"
+    ARRAY = "array"
     IMAGE = "image"
     PARAMETERS = "parameters"
     DATAFRAME = "dataframe"
@@ -49,6 +50,12 @@ class StandardTypes(SimpleNamespace):
 
 class StandardSubtypes(SimpleNamespace):
     HTML = "text.html"
+
+    @staticmethod
+    def array(ndim: int) -> str:
+        if not isinstance(ndim, int):
+            raise ValueError("ndim must be an integer")
+        return f"array.{ndim}d"
 
 
 class MenuId(StrEnum):

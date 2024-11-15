@@ -2,29 +2,23 @@ from __future__ import annotations
 
 from typing import Callable, TypeVar, overload
 from himena.types import WidgetDataModel, ReaderProvider, WriterProvider
-from himena.io import (
-    PluginInfo,
-    ReaderProviderTuple,
-    WriterProviderTuple,
-    _READER_PROVIDERS,
-    _WRITER_PROVIDERS,
-)
+from himena import io
 from himena._utils import get_widget_data_model_variable
 
 _RP = TypeVar("_RP", bound=ReaderProvider)
 _WP = TypeVar("_WP", bound=WriterProvider)
 
 
-def _plugin_info_from_func(func: Callable) -> PluginInfo | None:
+def _plugin_info_from_func(func: Callable) -> io.PluginInfo | None:
     if hasattr(func, "__module__"):
         module = func.__module__
         if hasattr(func, "__qualname__"):
             qual = func.__qualname__
             if not qual.isidentifier():
                 return None
-            return PluginInfo(module, qual)
+            return io.PluginInfo(module, qual)
         if hasattr(func, "__name__"):
-            return PluginInfo(module, func.__name__)
+            return io.PluginInfo(module, func.__name__)
     return None
 
 
@@ -45,7 +39,8 @@ def register_reader_provider(provider=None, priority=0):
     ... def my_reader_provider(path):
     ...     if Path(path).suffix != ".txt":
     ...         return None
-    ...     def _read_text(path):  # this is the reader function
+    ...     # this is the reader function
+    ...     def _read_text(path):
     ...         with open(path) as f:
     ...             return WidgetDataModel(value=f.read(), type="text", source=path)
     ...     return _read_text
@@ -56,7 +51,8 @@ def register_reader_provider(provider=None, priority=0):
         if not callable(func):
             raise ValueError("Provider must be callable.")
         plugin = _plugin_info_from_func(func)
-        _READER_PROVIDERS.append(ReaderProviderTuple(func, priority, plugin))
+        ins = io.ReaderProviderStore().instance()
+        ins.add(func, priority, plugin)
         return func
 
     return _inner if provider is None else _inner(provider)
@@ -79,8 +75,9 @@ def register_writer_provider(provider=None, priority=0):
     ... def my_writer_provider(model: WidgetDataModel):
     ...     if not isinstance(model.value, str) or model.source.suffix != ".txt":
     ...         return None
-    ...     def _write_text(model: WidgetDataModel):  # this is the writer function
-    ...         with open(model.source, "w") as f:
+    ...     # this is the writer function
+    ...     def _write_text(model: WidgetDataModel, path):
+    ...         with open(path, "w") as f:
     ...             f.write(model.value)
     ...     return _write_text
     """
@@ -90,8 +87,8 @@ def register_writer_provider(provider=None, priority=0):
         if not callable(func):
             raise ValueError("Provider must be callable.")
         plugin = _plugin_info_from_func(func)
-        tup = WriterProviderTuple(TypedProvider.try_convert(func), priority, plugin)
-        _WRITER_PROVIDERS.append(tup)
+        ins = io.WriterProviderStore().instance()
+        ins.add(TypedProvider.try_convert(func), priority, plugin)
         return func
 
     return _inner if provider is None else _inner(provider)

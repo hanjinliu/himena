@@ -322,7 +322,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
             fp = [Path(f) for f in file_path]
         else:
             fp = Path(file_path)
-        reader = io.pick_reader(fp, plugin=plugin)
+        reader = io.ReaderProviderStore.instance().pick(fp, plugin=plugin)
         model = reader.read(fp)._with_source(source=fp, plugin=reader.plugin)
         out = self.add_data_model(model)
         main = self._main_window()._himena_main_window

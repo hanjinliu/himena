@@ -10,17 +10,40 @@ from himena.widgets import MainWindow
 from himena.consts import StandardTypes
 
 
+def _get_n_windows(ui: MainWindow) -> int:
+    if tab := ui.tabs.current():
+        return len(tab)
+    return 0
+
+
 @register_new_provider(
     keybindings="Ctrl+N",
     command_id="builtins:new-text",
 )
 def new_text(ui: MainWindow) -> WidgetDataModel:
     """New text file."""
-    if tab := ui.tabs.current():
-        nwin = len(tab)
-    else:
-        nwin = 0
-    return WidgetDataModel(value="", type=StandardTypes.TEXT, title=f"Untitled-{nwin}")
+    nwin = _get_n_windows(ui)
+    return WidgetDataModel(
+        value="",
+        type=StandardTypes.TEXT,
+        extension_default=".txt",
+        title=f"Untitled-{nwin}",
+    )
+
+
+@register_new_provider(
+    command_id="builtins:new-table",
+)
+def new_table(ui: MainWindow) -> WidgetDataModel:
+    """New table."""
+    nwin = _get_n_windows(ui)
+    value = [["", "", ""], ["", "", ""], ["", "", ""]]
+    return WidgetDataModel(
+        value=value,
+        type=StandardTypes.TABLE,
+        extension_default=".csv",
+        title=f"Table-{nwin}",
+    )
 
 
 DATASET_SOURCE = "https://raw.githubusercontent.com/mwaskom/seaborn-data/master"

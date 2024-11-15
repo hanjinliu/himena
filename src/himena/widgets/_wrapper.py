@@ -211,7 +211,7 @@ class SubWindow(WidgetWrapper[_W]):
 
     def write_model(self, path: str | Path, plugin: str | None = None) -> None:
         """Write the widget data to a file."""
-        io.write(self.to_model(), path, plugin=plugin)
+        io.WriterProviderStore.instance().run(self.to_model(), path, plugin=plugin)
         self.update_default_save_path(path)
         return None
 

@@ -116,7 +116,7 @@ class QTabWidget(QtW.QTabWidget):
         tb.setFont(QtGui.QFont("Arial", 12, weight=15))
         tb.setToolTip("New Tab")
         tb.clicked.connect(lambda: get_main_window(self).add_tab())
-        self.setCornerWidget(tb)
+        self.setCornerWidget(tb, Qt.Corner.TopRightCorner)
 
     def _init_startup(self):
         self._startup_widget = QStartupWidget(self)

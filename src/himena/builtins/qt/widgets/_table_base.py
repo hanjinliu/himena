@@ -220,6 +220,7 @@ def _label(text: str):
 
 def _int_line_edit(tooltip: str, text_changed_callback) -> QIntLineEdit:
     out = QIntLineEdit()
+    out.setObjectName("TableIndex")
     out.setToolTip(tooltip)
     out.setAlignment(Qt.AlignmentFlag.AlignRight)
     out.textChanged.connect(text_changed_callback)

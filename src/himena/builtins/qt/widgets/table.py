@@ -35,8 +35,7 @@ class QDefaultTableWidget(QtW.QTableWidget, QTableBase):
             for (r0, r1), (c0, c1) in meta.selections:
                 rng = QtW.QTableWidgetSelectionRange(r0, c0 - 1, r1, c1 - 1)
                 self.setRangeSelected(rng, True)
-        self.setVerticalHeaderLabels([str(i) for i in range(self.rowCount())])
-        self.setHorizontalHeaderLabels([str(i) for i in range(self.columnCount())])
+        self._relabel_headers()
         self._modified = False
         self._control.update_for_table(self)
         return None
@@ -50,6 +49,10 @@ class QDefaultTableWidget(QtW.QTableWidget, QTableBase):
             extension_default=".csv",
             additional_data=self._prep_table_meta(),
         )
+
+    def _relabel_headers(self):
+        self.setVerticalHeaderLabels([str(i) for i in range(self.rowCount())])
+        self.setHorizontalHeaderLabels([str(i) for i in range(self.columnCount())])
 
     def model_type(self):
         return StandardTypes.TABLE
@@ -111,10 +114,17 @@ class QDefaultTableWidget(QtW.QTableWidget, QTableBase):
         # paste in the text
         row0, col0 = sel_idx[0].row(), sel_idx[0].column()
         data = [line.split("\t") for line in text.splitlines()]
+        # expand the table if necessary
+        needs_relabel = False
         if (row0 + len(data)) > self.rowCount():
             self.setRowCount(row0 + len(data))
+            needs_relabel = True
         if data and (col0 + len(data[0])) > self.columnCount():
             self.setColumnCount(col0 + len(data[0]))
+            needs_relabel = True
+        if needs_relabel:
+            self._relabel_headers()
+        # paste the data
         for r, line in enumerate(data):
             for c, cell in enumerate(line):
                 try:
@@ -130,6 +140,36 @@ class QDefaultTableWidget(QtW.QTableWidget, QTableBase):
     def _delete_selection(self):
         for item in self.selectedItems():
             item.setText("")
+
+    def _insert_row_below(self):
+        row = self.currentRow()
+        self.insertRow(row + 1)
+        self._relabel_headers()
+
+    def _insert_row_above(self):
+        row = self.currentRow()
+        self.insertRow(row)
+        self._relabel_headers()
+
+    def _insert_column_right(self):
+        col = self.currentColumn()
+        self.insertColumn(col + 1)
+        self._relabel_headers()
+
+    def _insert_column_left(self):
+        col = self.currentColumn()
+        self.insertColumn(col)
+        self._relabel_headers()
+
+    def _delete_selected_rows(self):
+        for row in sorted({i.row() for i in self.selectedItems()}, reverse=True):
+            self.removeRow(row)
+        self._relabel_headers()
+
+    def _delete_selected_columns(self):
+        for col in sorted({i.column() for i in self.selectedItems()}, reverse=True):
+            self.removeColumn(col)
+        self._relabel_headers()
 
     def keyPressEvent(self, e: QtGui.QKeyEvent):
         _Ctrl = QtCore.Qt.KeyboardModifier.ControlModifier
@@ -159,9 +199,39 @@ class QTableControl(QtW.QWidget):
         layout.setAlignment(_R_CENTER)
         self._label = QtW.QLabel("")
         self._label.setAlignment(_R_CENTER)
+
+        # toolbuttons
+        self._insert_menu_button = QtW.QPushButton()
+        self._insert_menu_button.setText("Insert")  # or "icons8:plus"
+        self._insert_menu_button.setMenu(self._make_insert_menu(table))
+        self._remove_menu_button = QtW.QPushButton()
+        self._remove_menu_button.setText("Remove")
+        self._remove_menu_button.setMenu(self._make_remove_menu(table))
+
+        empty = QtW.QWidget()
+        empty.setSizePolicy(
+            QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Preferred
+        )
+        layout.addWidget(empty)  # empty space
         layout.addWidget(self._label)
+        layout.addWidget(self._insert_menu_button)
+        layout.addWidget(self._remove_menu_button)
         layout.addWidget(QSelectionRangeEdit(table))
 
     def update_for_table(self, table: QDefaultTableWidget):
         self._label.setText(f"Shape ({table.rowCount()}, {table.columnCount()})")
         return None
+
+    def _make_insert_menu(self, table: QDefaultTableWidget):
+        menu = QtW.QMenu(self)
+        menu.addAction("Row above", table._insert_row_above)
+        menu.addAction("Row below", table._insert_row_below)
+        menu.addAction("Column left", table._insert_column_left)
+        menu.addAction("Column right", table._insert_column_right)
+        return menu
+
+    def _make_remove_menu(self, table: QDefaultTableWidget):
+        menu = QtW.QMenu(self)
+        menu.addAction("Rows", table._delete_selected_rows)
+        menu.addAction("Columns", table._delete_selected_columns)
+        return menu

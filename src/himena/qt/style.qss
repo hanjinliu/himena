@@ -528,3 +528,7 @@ QCloseTabToolButton:hover {
 QSelectionRangeEdit {
     margin: 0px;
 }
+
+QIntLineEdit#TableIndex {
+    background-color: #[background];
+}

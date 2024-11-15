@@ -1,5 +1,3 @@
-"""Run actions."""
-
 from typing import Callable
 import json
 from himena.plugins import register_function, configure_gui

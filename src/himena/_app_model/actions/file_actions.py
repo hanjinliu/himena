@@ -58,8 +58,9 @@ def open_file_from_dialog(ui: MainWindow) -> list[WidgetDataModel]:
     if file_paths is None or len(file_paths) == 0:
         return None
     reader_path_sets: list[tuple[ReaderFunction, Any]] = []
+    ins = io.ReaderProviderStore.instance()
     for file_path in file_paths:
-        reader_path_sets.append((io.pick_reader(file_path), file_path))
+        reader_path_sets.append((ins.pick(file_path), file_path))
     out = [
         _read_and_update_source(reader, file_path)
         for reader, file_path in reader_path_sets
@@ -112,7 +113,8 @@ def open_folder_from_dialog(ui: MainWindow) -> WidgetDataModel:
     file_path = ui.exec_file_dialog(mode="d")
     if file_path is None:
         return None
-    out = _read_and_update_source(io.pick_reader(file_path), file_path)
+    ins = io.ReaderProviderStore.instance()
+    out = _read_and_update_source(ins.pick(file_path), file_path)
     ui._recent_manager.append_recent_files([file_path])
     return out
 
@@ -132,7 +134,7 @@ def save_from_dialog(ui: MainWindow) -> None:
     """Save (overwrite) the current sub-window as a file."""
     fd, sub_win = ui._provide_file_output()
     if save_path := sub_win.save_behavior.get_save_path(ui, fd):
-        io.write(fd, save_path)
+        io.WriterProviderStore.instance().run(fd, save_path)
         sub_win.update_default_save_path(save_path)
     return None
 
@@ -149,7 +151,7 @@ def save_as_from_dialog(ui: MainWindow) -> None:
     """Save the current sub-window as a new file."""
     fd, sub_win = ui._provide_file_output()
     if save_path := SaveBehavior().get_save_path(ui, fd):
-        io.write(fd, save_path)
+        io.WriterProviderStore.instance().run(fd, save_path)
         sub_win.update_default_save_path(save_path)
     return None
 
@@ -165,7 +167,7 @@ def save_as_using_from_dialog(ui: MainWindow, model: WidgetDataModel) -> Paramet
     """Save the current sub-window using selected plugin."""
     from himena.plugins import configure_gui
 
-    writers = io.get_writers(model)
+    writers = io.WriterProviderStore().instance().get(model)
 
     # prepare reader plugin choices
     choices_writer = [(f"{_name_of(w.writer)}\n({w.plugin.name})", w) for w in writers]
