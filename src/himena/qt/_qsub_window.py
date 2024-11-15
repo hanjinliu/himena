@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable, Iterator
+from logging import getLogger
+
 from qtpy import QtWidgets as QtW
 from qtpy import QtCore, QtGui
 from qtpy.QtCore import Qt
@@ -17,6 +19,8 @@ from himena.qt._qrename import QRenameLineEdit
 if TYPE_CHECKING:
     from himena.qt._qmain_window import QMainWindow
     from himena.qt.main_window import MainWindowQt
+
+_LOGGER = getLogger(__name__)
 
 
 class QSubWindowArea(QtW.QMdiArea):
@@ -262,7 +266,7 @@ class QSubWindow(QtW.QMdiSubWindow):
             _setter = self.setGeometry
         if state == WindowState.MIN:
             if self._window_state is WindowState.NORMAL:
-                self._last_geometry = self.geometry()
+                self._store_current_geometry()
             self.resize(124, self._title_bar.height() + 8)
             n_minimized = sum(
                 1
@@ -272,7 +276,7 @@ class QSubWindow(QtW.QMdiSubWindow):
             self._set_minimized(self.parentWidget().geometry(), n_minimized)
         elif state == WindowState.MAX:
             if self._window_state is WindowState.NORMAL:
-                self._last_geometry = self.geometry()
+                self._store_current_geometry()
             _setter(self.parentWidget().geometry())
             self._title_bar._toggle_size_btn.setIcon(_icon_normal())
             self._widget.setVisible(True)
@@ -283,7 +287,7 @@ class QSubWindow(QtW.QMdiSubWindow):
             self._title_bar._fix_position()
         elif state == WindowState.FULL:
             if self._window_state is WindowState.NORMAL:
-                self._last_geometry = self.geometry()
+                self._store_current_geometry()
             _setter(self.parentWidget().geometry())
         else:
             raise RuntimeError(f"Invalid window state value: {state}")
@@ -293,6 +297,10 @@ class QSubWindow(QtW.QMdiSubWindow):
         self._window_state = state
         self._current_button: int = Qt.MouseButton.NoButton
         return None
+
+    def _store_current_geometry(self):
+        self._last_geometry = self.geometry()
+        _LOGGER.debug("Storing current geometry %r", self._last_geometry)
 
     def _set_minimized(self, geometry: QtCore.QRect, number: int = 0):
         self.move(2, geometry.height() - (self._title_bar.height() + 8) * (number + 1))
@@ -472,6 +480,7 @@ class QSubWindowTitleBar(QtW.QFrame):
 
         self._drag_position: QtCore.QPoint | None = None
         self._is_ctrl_drag: bool = False
+        self._is_double_clicking: bool = False
         self._resize_position: QtCore.QPoint | None = None
         self._subwindow = subwindow
         self.setProperty("isCurrent", False)
@@ -519,63 +528,76 @@ class QSubWindowTitleBar(QtW.QFrame):
     # drag events for moving the window
     def mousePressEvent(self, event: QtGui.QMouseEvent):
         self._is_ctrl_drag = False
+        if self._is_double_clicking:
+            return super().mousePressEvent(event)
         if event.button() == Qt.MouseButton.LeftButton:
+            _subwin = self._subwindow
             if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
                 self._is_ctrl_drag = True
-                drag = QtGui.QDrag(self._subwindow)
+                drag = QtGui.QDrag(_subwin)
                 mime_data = QtCore.QMimeData()
-                i_tab, i_win = self._subwindow._find_me()
+                i_tab, i_win = _subwin._find_me()
                 text = f"himena-subwindow:{i_tab},{i_win}"
                 mime_data.setText(text)
                 drag.setMimeData(mime_data)
-                drag.setPixmap(self._subwindow._pixmap_resized(QtCore.QSize(150, 150)))
+                drag.setPixmap(_subwin._pixmap_resized(QtCore.QSize(150, 150)))
                 drag.exec()
             else:
-                if self._subwindow._window_state == WindowState.MIN:
+                if _subwin._window_state == WindowState.MIN:
                     # cannot move minimized window
                     return
-                self._drag_position = (
-                    event.globalPos() - self._subwindow.frameGeometry().topLeft()
-                )
+                self._store_drag_position(event.globalPos())
         return super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent):
-        _subwindow = self._subwindow
+        _subwin = self._subwindow
         if (
             event.buttons() == Qt.MouseButton.LeftButton
             and self._drag_position is not None
-            and _subwindow._resize_state is ResizeState.NONE
+            and _subwin._resize_state is ResizeState.NONE
             and not self._is_ctrl_drag
         ):
-            if _subwindow._window_state == WindowState.MAX:
+            if _subwin._window_state == WindowState.MAX:
                 # change to normal without moving
                 self._toggle_size_btn.setIcon(_icon_max())
-                _subwindow._widget.setVisible(True)
-                _subwindow._window_state = WindowState.NORMAL
-            new_pos = event.globalPos() - self._drag_position
-            offset = self.height() - 4
-            if new_pos.y() < -offset:
-                new_pos.setY(-offset)
-            _subwindow.move(new_pos)
-            # update window anchor
-            g = _subwindow.geometry()
-            main_qsize = _subwindow._qt_mdiarea().size()
-            _subwindow._window_anchor = (
-                _subwindow._window_anchor.update_for_window_rect(
-                    (main_qsize.width(), main_qsize.height()),
-                    WindowRect.from_numbers(g.left(), g.top(), g.width(), g.height()),
+                _subwin._widget.setVisible(True)
+                _subwin._window_state = WindowState.NORMAL
+                # restore the last size
+                _last_geo = _subwin._last_geometry
+                _next_geo = QtCore.QRect(
+                    event.pos().x() - _last_geo.width() // 2,
+                    event.pos().y() - _TITLE_HEIGHT // 2,
+                    _last_geo.width(),
+                    _last_geo.height(),
                 )
+                _subwin.setGeometry(_next_geo)
+                self._store_drag_position(event.globalPos())
+            else:
+                new_pos = event.globalPos() - self._drag_position
+                offset = self.height() - 4
+                if new_pos.y() < -offset:
+                    new_pos.setY(-offset)
+                _subwin.move(new_pos)
+
+            # update window anchor
+            g = _subwin.geometry()
+            main_qsize = _subwin._qt_mdiarea().size()
+            _subwin._window_anchor = _subwin._window_anchor.update_for_window_rect(
+                (main_qsize.width(), main_qsize.height()),
+                WindowRect.from_numbers(g.left(), g.top(), g.width(), g.height()),
             )
         return super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
         self._is_ctrl_drag = False
+        self._is_double_clicking = False
         if event.button() == Qt.MouseButton.LeftButton:
             self._drag_position = None
             self._fix_position()
         return super().mouseReleaseEvent(event)
 
     def mouseDoubleClickEvent(self, event: QtGui.QMouseEvent):
+        self._is_double_clicking = True
         if event.button() == Qt.MouseButton.LeftButton:
             self._toggle_size()
         return super().mouseDoubleClickEvent(event)
@@ -591,8 +613,12 @@ class QSubWindowTitleBar(QtW.QFrame):
                 sub._set_rect(sub.rect.resize_relative(1 / 1.1, 1 / 1.1))
         return super().wheelEvent(event)
 
+    def _store_drag_position(self, global_pos: QtCore.QPoint):
+        subwin = self._subwindow
+        self._drag_position = global_pos - subwin.frameGeometry().topLeft()
+
     def _fix_position(self):
-        self_pos = self.mapToGlobal(self._subwindow.rect().topLeft())
+        self_pos = self.mapToGlobal(self._subwindow.rect().topRight())
         parent_pos = self._subwindow.parentWidget().mapToGlobal(QtCore.QPoint(0, 0))
         if self_pos.y() < parent_pos.y():
             self._subwindow.move(self._subwindow.pos().x(), 0)

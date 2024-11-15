@@ -67,21 +67,40 @@ class QLogger(QtW.QPlainTextEdit):
 
 
 class QtOutputWidget(QtW.QTabWidget):
+    log_level_changed = Signal(str)
+
     def __init__(self):
         super().__init__()
+        # stdout
+        stdout_container = QtW.QWidget()
         self._stdout = QLogger()
+        layout = QtW.QVBoxLayout(stdout_container)
+        layout.addWidget(self._stdout)
+
+        # logging
+        logger_container = QtW.QWidget()
+        self._log_level = QtW.QComboBox()
+        self._log_level.addItems(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
+        self._log_level.setCurrentIndex(1)
         self._logger = QLogger()
-        self.addTab(self._stdout, "stdout")
-        self.addTab(self._logger, "log")
+        layout = QtW.QVBoxLayout(logger_container)
+        layout.addWidget(self._log_level)
+        layout.addWidget(self._logger)
+        self._log_level.currentTextChanged.connect(self.log_level_changed.emit)
+
+        # add tabs
+        self.addTab(stdout_container, "stdout")
+        self.addTab(logger_container, "log")
 
 
 class OutputInterface(logging.Handler):
     def __init__(self):
         super().__init__()
         self._widget = QtOutputWidget()
-        logger = logging.getLogger()
-        self._default_handlers = logger.handlers
-        logger.setLevel(logging.INFO)
+        self._logger = logging.getLogger()
+        self._default_handlers = self._logger.handlers.copy()
+        self._logger.setLevel(logging.INFO)
+        self._widget.log_level_changed.connect(self.set_log_level)
 
     def write(self, msg) -> None:
         """Handle the print event."""
@@ -97,6 +116,11 @@ class OutputInterface(logging.Handler):
         self._widget._logger.appendText(f"{record.levelname}: {log_entry}\n")
         return None
 
+    def set_log_level(self, level: str):
+        log_level = getattr(logging, level)
+        self._logger.setLevel(log_level)
+        return None
+
     def connect_stdout(self):
         sys.stdout = self
 
@@ -107,13 +131,13 @@ class OutputInterface(logging.Handler):
         self.disconnect_logger()
 
     def connect_logger(self):
-        default = logging.getLogger()
+        default = self._logger
         for handler in default.handlers:
             default.removeHandler(handler)
         default.addHandler(self)
 
     def disconnect_logger(self):
-        default = logging.getLogger()
+        default = self._logger
         for handler in default.handlers:
             default.removeHandler(handler)
         for handler in self._default_handlers:
