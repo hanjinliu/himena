@@ -1,21 +1,20 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-import sys
 import logging
-from typing import TYPE_CHECKING, Any, Callable, NamedTuple
+from typing import TYPE_CHECKING, Any, NamedTuple
 
 from qtpy import QtGui, QtCore, QtWidgets as QtW
 from qtpy.QtCore import Qt
 from himena.consts import StandardTypes
 from himena.types import WidgetDataModel
 from himena.model_meta import TableMeta
-from himena.builtins.qt.widgets._table_base import QTableBase, QSelectionRangeEdit
+from himena.builtins.qt.widgets._table_base import (
+    QTableBase,
+    QSelectionRangeEdit,
+    format_table_value,
+)
+from himena._data_wrappers import wrap_dataframe, DataFrameWrapper
 
-if TYPE_CHECKING:
-    from typing import TypeGuard
-    import pandas as pd
-    import polars as pl
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -51,7 +50,7 @@ class QDataFrameModel(QtCore.QAbstractTableModel):
         if r < self.rowCount() and c < self.columnCount():
             value = df[r, c]
             dtype = df.get_dtype(c)
-            text = _DEFAULT_FORMATTERS.get(dtype.kind, str)(value)
+            text = format_table_value(value, dtype.kind)
             return text
         return QtCore.QVariant()
 
@@ -84,41 +83,6 @@ class QDataFrameModel(QtCore.QAbstractTableModel):
         return f"{name} (dtype: {dtype.name})"
 
 
-def _format_float(value, ndigits: int = 4) -> str:
-    """convert string to int or float if possible"""
-    if value is None:
-        return "null"
-    if 0.1 <= abs(value) < 10 ** (ndigits + 1) or value == 0:
-        text = f"{value:.{ndigits}f}"
-    else:
-        text = f"{value:.{ndigits-1}e}"
-
-    return text
-
-
-def _format_int(value, ndigits: int = 4) -> str:
-    if value is None:
-        return "null"
-    if 0.1 <= abs(value) < 10 ** (ndigits + 1) or value == 0:
-        text = str(value)
-    else:
-        text = f"{value:.{ndigits-1}e}"
-
-    return text
-
-
-def _format_datetime(value):
-    return str(value)
-
-
-_DEFAULT_FORMATTERS: dict[int, Callable[[Any], str]] = {
-    "i": _format_int,
-    "u": _format_int,
-    "f": _format_float,
-    "t": _format_datetime,
-}
-
-
 class QDataFrameView(QTableBase):
     """A table widget for viewing dataframe."""
 
@@ -127,14 +91,7 @@ class QDataFrameView(QTableBase):
         self._control: QDataFrameViewControl | None = None
 
     def update_model(self, model: WidgetDataModel):
-        df = model.value
-        if is_pandas_dataframe(df):
-            self.setModel(QDataFrameModel(PandasWrapper(df)))
-        elif is_polars_dataframe(df):
-            self.setModel(QDataFrameModel(PolarsWrapper(df)))
-        else:
-            raise ValueError(f"Unsupported dataframe type: {type(df)}")
-
+        self.setModel(QDataFrameModel(wrap_dataframe(model.value)))
         self.setSelectionModel(QtCore.QItemSelectionModel(self.model()))
 
         if isinstance(meta := model.additional_data, TableMeta):
@@ -223,144 +180,6 @@ class QDataFrameViewControl(QtW.QWidget):
             f"{model.df.type_name()} ({model.rowCount()}, {model.columnCount()})"
         )
         return None
-
-
-def is_pandas_dataframe(df) -> TypeGuard[pd.DataFrame]:
-    typ = type(df)
-    if (
-        typ.__name__ != "DataFrame"
-        or "pandas" not in sys.modules
-        or typ.__module__.split(".")[0] != "pandas"
-    ):
-        return False
-    import pandas as pd
-
-    return isinstance(df, pd.DataFrame)
-
-
-def is_polars_dataframe(df) -> TypeGuard[pl.DataFrame]:
-    typ = type(df)
-    if (
-        typ.__name__ != "DataFrame"
-        or "polars" not in sys.modules
-        or typ.__module__.split(".")[0] != "polars"
-    ):
-        return False
-    import polars as pl
-
-    return isinstance(df, pl.DataFrame)
-
-
-class DataFrameWrapper(ABC):
-    def __init__(self, df):
-        self._df = df
-
-    def unwrap(self):
-        return self._df
-
-    @abstractmethod
-    def __getitem__(self, key: tuple[int, int]) -> Any:
-        raise NotImplementedError
-
-    @abstractmethod
-    def num_rows(self) -> int:
-        raise NotImplementedError
-
-    @abstractmethod
-    def num_columns(self) -> int:
-        raise NotImplementedError
-
-    @abstractmethod
-    def column_names(self) -> list[str]:
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_dtype(self, index: int) -> DtypeTuple:
-        raise NotImplementedError
-
-    @abstractmethod
-    def to_csv_string(self, r0: int, r1: int, c0: int, c1: int) -> str:
-        raise NotImplementedError
-
-    def type_name(self) -> str:
-        mod = type(self._df).__module__.split(".")[0]
-        return f"{mod}.{type(self._df).__name__}"
-
-
-class PandasWrapper(DataFrameWrapper):
-    def __init__(self, df: pd.DataFrame):
-        self._df = df
-
-    def __getitem__(self, key: tuple[int, int]) -> Any:
-        return self._df.iloc[key]
-
-    def num_rows(self) -> int:
-        return self._df.shape[0]
-
-    def num_columns(self) -> int:
-        return self._df.shape[1]
-
-    def column_names(self) -> list[str]:
-        return self._df.columns.tolist()
-
-    def get_dtype(self, index: int) -> DtypeTuple:
-        import numpy as np
-
-        pd_dtype = self._df.dtypes.iloc[index]
-        if isinstance(pd_dtype, np.dtype):
-            return DtypeTuple(pd_dtype.name, pd_dtype.kind)
-        return DtypeTuple(str(pd_dtype), getattr(pd_dtype, "kind", "O"))
-
-    def to_csv_string(self, r0: int, r1: int, c0: int, c1: int) -> str:
-        return self._df.iloc[r0:r1, c0:c1].to_csv(sep="\t")
-
-
-class PolarsWrapper(DataFrameWrapper):
-    def __init__(self, df: pl.DataFrame):
-        self._df = df
-
-    def __getitem__(self, key: tuple[int, int]) -> Any:
-        return self._df[key]
-
-    def num_rows(self) -> int:
-        return self._df.shape[0]
-
-    def num_columns(self) -> int:
-        return self._df.shape[1]
-
-    def column_names(self) -> list[str]:
-        return self._df.columns
-
-    def get_dtype(self, index: int) -> DtypeTuple:
-        import polars as pl
-
-        pl_dtype = self._df.dtypes[index]
-        if pl_dtype == pl.Int8:
-            return DtypeTuple("Int8", "i")
-        if pl_dtype == pl.Int16:
-            return DtypeTuple("Int16", "i")
-        if pl_dtype == pl.Int32:
-            return DtypeTuple("Int32", "i")
-        if pl_dtype == pl.Int64:
-            return DtypeTuple("Int64", "i")
-        if pl_dtype == pl.UInt8:
-            return DtypeTuple("UInt8", "u")
-        if pl_dtype == pl.UInt16:
-            return DtypeTuple("UInt16", "u")
-        if pl_dtype == pl.UInt32:
-            return DtypeTuple("UInt32", "u")
-        if pl_dtype == pl.UInt64:
-            return DtypeTuple("UInt64", "u")
-        if pl_dtype == pl.Float32:
-            return DtypeTuple("Float32", "f")
-        if pl_dtype == pl.Float64:
-            return DtypeTuple("Float64", "f")
-        if pl_dtype == pl.Boolean:
-            return DtypeTuple("Boolean", "b")
-        return DtypeTuple(str(pl_dtype), "O")
-
-    def to_csv_string(self, r0: int, r1: int, c0: int, c1: int) -> str:
-        return self._df[r0:r1, c0:c1].write_csv(separator="\t")
 
 
 class DtypeTuple(NamedTuple):

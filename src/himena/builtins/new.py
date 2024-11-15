@@ -4,10 +4,10 @@ from typing import Literal
 import csv
 from io import StringIO
 
-from himena.plugins import register_new_provider, configure_gui
+from himena.plugins import register_function, configure_gui
 from himena.types import WidgetDataModel, Parametric
 from himena.widgets import MainWindow
-from himena.consts import StandardTypes
+from himena.consts import StandardTypes, MenuId
 
 
 def _get_n_windows(ui: MainWindow) -> int:
@@ -16,8 +16,9 @@ def _get_n_windows(ui: MainWindow) -> int:
     return 0
 
 
-@register_new_provider(
+@register_function(
     keybindings="Ctrl+N",
+    menus=MenuId.FILE_NEW,
     command_id="builtins:new-text",
 )
 def new_text(ui: MainWindow) -> WidgetDataModel:
@@ -31,7 +32,8 @@ def new_text(ui: MainWindow) -> WidgetDataModel:
     )
 
 
-@register_new_provider(
+@register_function(
+    menus=MenuId.FILE_NEW,
     command_id="builtins:new-table",
 )
 def new_table(ui: MainWindow) -> WidgetDataModel:
@@ -50,11 +52,12 @@ DATASET_SOURCE = "https://raw.githubusercontent.com/mwaskom/seaborn-data/master"
 DATASET_NAMES_URL = f"{DATASET_SOURCE}/dataset_names.txt"
 
 
-@register_new_provider(
-    title="Seaborn test data",
-    command_id="builtins:fetch-seaborn-test-data",
+@register_function(
+    title="Seaborn sample data ...",
+    menus=MenuId.FILE_SAMPLES,
+    command_id="builtins:fetch-seaborn-sample-data",
 )
-def seaborn_test_data() -> Parametric:
+def seaborn_sample_data() -> Parametric:
     """New table from a seaborn test data."""
     from urllib.request import urlopen
 
@@ -78,8 +81,9 @@ def seaborn_test_data() -> Parametric:
     return fetch_data
 
 
-@register_new_provider(
+@register_function(
     title="Random image ...",
+    menus=MenuId.FILE_NEW,
     command_id="builtins:random-image",
 )
 def random_image() -> Parametric:

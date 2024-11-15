@@ -201,7 +201,7 @@ def register_dialog(
 def register_dock_widget(
     widget_factory: _F,
     *,
-    menus: str | Sequence[str] = ("plugins",),
+    menus: str | Sequence[str] = "plugins",
     title: str | None = None,
     area: DockArea | DockAreaString = DockArea.RIGHT,
     allowed_areas: Sequence[DockArea | DockAreaString] | None = None,
@@ -215,7 +215,7 @@ def register_dock_widget(
 def register_dock_widget(
     widget_factory: None = None,
     *,
-    menus: str | Sequence[str] = ("plugins",),
+    menus: str | Sequence[str] = "plugins",
     title: str | None = None,
     area: DockArea | DockAreaString = DockArea.RIGHT,
     allowed_areas: Sequence[DockArea | DockAreaString] | None = None,
@@ -228,7 +228,7 @@ def register_dock_widget(
 def register_dock_widget(
     widget_factory=None,
     *,
-    menus=("plugins",),
+    menus="plugins",
     title: str | None = None,
     area: DockArea | DockAreaString = DockArea.RIGHT,
     allowed_areas: Sequence[DockArea | DockAreaString] | None = None,
@@ -284,71 +284,6 @@ def register_dock_widget(
         return wf
 
     return _inner if widget_factory is None else _inner(widget_factory)
-
-
-@overload
-def register_new_provider(
-    func: _F,
-    *,
-    title: str | None = None,
-    keybindings: KeyBindingsType | None = None,
-    menus: str | Sequence[str] = "file/new",
-    command_id: str | None = None,
-) -> _F: ...
-@overload
-def register_new_provider(
-    func: None = None,
-    *,
-    title: str | None = None,
-    keybindings: KeyBindingsType | None = None,
-    menus: str = "file/new",
-    command_id: str | None = None,
-) -> Callable[[_F], _F]: ...
-
-
-def register_new_provider(
-    func=None,
-    *,
-    title=None,
-    keybindings=None,
-    menus="file/new",
-    command_id=None,
-):
-    """
-    Register a function as a "New File" action.
-
-    The registered function must provide a `WidgetDataModel` as the return value,
-    which is directly passed to the main window to create a new sub-window.
-
-    Parameters
-    ----------
-    func : callable, optional
-        Function that create a `WidgetDataModel` instance.
-    title : str, optional
-        Title of the window.
-    keybindings : keybinding type, optional
-        Keybindings to trigger the action.
-    menus : str or sequence of str, default "file/new"
-        Menu(s) to add the action. Submenus are separated by `/`.
-    command_id : str, optional
-        Custom command ID.
-    """
-    kbs = _normalize_keybindings(keybindings)
-
-    def _inner(f: Callable):
-        _id = _command_id_from_func(f, command_id)
-        action = Action(
-            id=_id,
-            title=_normalize_title(title, f),
-            tooltip=_tooltip_from_func(f),
-            callback=_utils.make_new_callback(f, action_id=_id),
-            menus=_norm_menus(menus),
-            keybindings=kbs,
-        )
-        _ACTIONS[_id] = action
-        return f
-
-    return _inner if func is None else _inner(func)
 
 
 def install_to(app: Application):

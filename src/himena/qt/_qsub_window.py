@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import suppress
 from typing import TYPE_CHECKING, Callable, Iterator
 from logging import getLogger
 
@@ -244,7 +245,12 @@ class QSubWindow(QtW.QMdiSubWindow):
 
     def setWindowTitle(self, title: str):
         self._title_bar._title_label.setText(title)
-        self._title_bar.setToolTip(title)
+        attrs: list[str] = [f"<b>title</b>: {title!r}"]
+        if hasattr(self._widget, "model_type"):
+            with suppress(Exception):
+                attrs.append(f"<b>type</b>: {self._widget.model_type()!r}")
+        tooltip = "<br>".join(attrs)
+        self._title_bar.setToolTip(tooltip)
 
     def _subwindow_area(self) -> QSubWindowArea:
         return self.parentWidget().parentWidget()

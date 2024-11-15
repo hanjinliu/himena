@@ -4,7 +4,6 @@ from himena.plugins.actions import (
     register_function,
     register_dialog,
     register_dock_widget,
-    register_new_provider,
 )
 from himena.plugins.install import install_plugins, dry_install_plugins
 
@@ -18,5 +17,4 @@ __all__ = [
     "register_function",
     "register_dialog",
     "register_dock_widget",
-    "register_new_provider",
 ]

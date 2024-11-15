@@ -95,6 +95,17 @@ def default_excel_reader(file_path: Path) -> WidgetDataModel:
     )
 
 
+def default_array_reader(file_path: Path) -> WidgetDataModel:
+    """Read array file."""
+    import numpy as np
+
+    arr = np.load(file_path)
+    return WidgetDataModel(
+        value=arr,
+        type=StandardTypes.ARRAY,
+    )
+
+
 @register_reader_provider(priority=-1)
 def default_reader_provider(file_path: Path | list[Path]):
     """Get default reader."""
@@ -114,6 +125,8 @@ def default_reader_provider(file_path: Path | list[Path]):
         return default_text_reader
     elif file_path.suffix in ExcelFileTypes:
         return default_excel_reader
+    elif file_path.suffix in {".npy", ".npz"}:
+        return default_array_reader
     return None
 
 

@@ -62,6 +62,7 @@ class MenuId(StrEnum):
     FILE = "file"
     FILE_RECENT = "file/recent"
     FILE_NEW = "file/new"
+    FILE_SAMPLES = "file/samples"
     FILE_SCREENSHOT = "file/screenshot"
     WINDOW = "window"
     WINDOW_RESIZE = "window/resize"

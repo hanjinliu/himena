@@ -1,4 +1,5 @@
 from himena.qt import register_widget
+from himena.builtins.qt.widgets.array import QDefaultArrayView
 from himena.builtins.qt.widgets.text import QDefaultTextEdit, QDefaultHTMLEdit
 from himena.builtins.qt.widgets.table import QDefaultTableWidget
 from himena.builtins.qt.widgets.dataframe import QDataFrameView
@@ -9,6 +10,7 @@ from himena.consts import StandardTypes, StandardSubtypes
 
 def register_default_widget_types() -> None:
     """Register default widget types."""
+    register_widget(StandardTypes.ARRAY, QDefaultArrayView, priority=-1)
     register_widget(StandardTypes.TEXT, QDefaultTextEdit, priority=-1)
     register_widget(StandardSubtypes.HTML, QDefaultHTMLEdit, priority=-1)
     register_widget(StandardTypes.TABLE, QDefaultTableWidget, priority=-1)
