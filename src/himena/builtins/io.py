@@ -171,20 +171,6 @@ def polars_reader_provider(file_path: Path) -> WidgetDataModel:
     return DataFrameReader(*_reader)
 
 
-@register_reader_provider(priority=-5)
-def pyarrow_reader_provider(file_path: Path) -> WidgetDataModel:
-    """Read dataframe using pyarrow."""
-    if file_path.suffix == ".csv":
-        _reader = "pyarrow.csv", "read_csv", {}
-    elif file_path.suffix == ".feather":
-        _reader = "pyarrow.feather", "read_feather", {}
-    elif file_path.suffix in (".parquet", ".pq"):
-        _reader = "pyarrow.parquet", "read_table", {}
-    else:
-        return None
-    return DataFrameReader(*_reader)
-
-
 def default_text_writer(model: WidgetDataModel[str], path: Path) -> None:
     """Write text file."""
     with open(path, "w") as f:

@@ -405,7 +405,7 @@ def _get_indents(text: str, tab_spaces: int = 4) -> str:
     return "".join(chars)
 
 
-class QTextFooter(QtW.QWidget):
+class QTextControl(QtW.QWidget):
     languageChanged = QtCore.Signal(str)
     tabChanged = QtCore.Signal(int)
 
@@ -447,7 +447,7 @@ class QDefaultTextEdit(QtW.QWidget):
     def __init__(self):
         super().__init__()
         self._main_text_edit = QMainTextEdit(self)
-        self._footer = QTextFooter(self)
+        self._footer = QTextControl()
 
         self._footer.languageChanged.connect(self._main_text_edit.syntax_highlight)
         self._footer.tabChanged.connect(self._main_text_edit.set_tab_size)
@@ -455,7 +455,9 @@ class QDefaultTextEdit(QtW.QWidget):
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._main_text_edit)
-        layout.addWidget(self._footer)
+
+    def control_widget(self) -> QTextControl:
+        return self._footer
 
     def setFocus(self):
         self._main_text_edit.setFocus()

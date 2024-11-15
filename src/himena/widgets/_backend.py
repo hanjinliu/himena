@@ -42,6 +42,15 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     def _set_current_sub_window_index(self, i_window: int) -> None:
         raise NotImplementedError
 
+    def _set_control_widget(self, widget: _W, control: _W | None) -> None:
+        raise NotImplementedError
+
+    def _update_control_widget(self, current: _W | None) -> None:
+        raise NotImplementedError
+
+    def _remove_control_widget(self, widget: _W) -> None:
+        raise NotImplementedError
+
     def _window_state(self, widget: _W) -> WindowState:
         raise NotImplementedError
 

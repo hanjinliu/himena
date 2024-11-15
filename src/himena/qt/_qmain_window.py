@@ -15,6 +15,7 @@ from himena.qt._qtab_widget import QTabWidget
 from himena.qt._qsub_window import QSubWindow, QSubWindowArea
 from himena.qt._qdock_widget import QDockWidget
 from himena.qt._qcommand_palette import QCommandPalette
+from himena.qt._qcontrolstack import QControlStack
 from himena.qt._qparametric import QParametricWidget
 from himena.qt._qgoto import QGotoWidget
 from himena import anchor as _anchor
@@ -77,6 +78,10 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self._toolbar = self.addModelToolBar(menu_id=MenuId.TOOLBAR)
         self._toolbar.setMovable(False)
         self._toolbar.setFixedHeight(32)
+        self._toolbar.addSeparator()
+        self._control_stack = QControlStack(self._toolbar)
+        self._toolbar.addWidget(self._control_stack)
+
         self.setCentralWidget(self._tab_widget)
 
         self._command_palette_general = QCommandPalette(
@@ -159,6 +164,15 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         if isinstance(dock := widget.parentWidget(), QtW.QDockWidget):
             return dock.setVisible(visible)
         raise ValueError(f"{widget!r} does not have a dock widget parent.")
+
+    def _set_control_widget(self, widget: QtW.QWidget, control: QtW.QWidget) -> None:
+        self._control_stack.add_control_widget(widget, control)
+
+    def _update_control_widget(self, current: QtW.QWidget) -> None:
+        self._control_stack.update_control_widget(current)
+
+    def _remove_control_widget(self, widget: QtW.QWidget) -> None:
+        self._control_stack.remove_control_widget(widget)
 
     def _del_dock_widget(self, widget: QtW.QWidget) -> None:
         if isinstance(dock := widget.parentWidget(), QtW.QDockWidget):

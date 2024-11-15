@@ -90,9 +90,10 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
 
     def _pop_no_emit(self, index: int):
         main = self._main_window()
-        widget = self[index]
+        win = self[index]
         main._del_widget_at(self._i_tab, index)
-        return widget
+        main._remove_control_widget(win.widget)
+        return win
 
     def _norm_index_or_name(self, index_or_name: int | str) -> int:
         if isinstance(index_or_name, str):
@@ -115,7 +116,10 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
 
     def append(self, sub_window: SubWindow[_W], title: str) -> None:
         main = self._main_window()
-        out = main.add_widget(sub_window.widget, self._i_tab, title)
+        inner_widget = sub_window.widget
+        out = main.add_widget(inner_widget, self._i_tab, title)
+        if hasattr(inner_widget, "control_widget"):
+            main._set_control_widget(inner_widget, inner_widget.control_widget())
 
         main._connect_window_events(sub_window, out)
         sub_window.title = title
@@ -124,12 +128,12 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         main._set_current_tab_index(self._i_tab)
         if main._himena_main_window._new_widget_behavior is NewWidgetBehavior.TAB:
             main._set_window_state(
-                sub_window.widget,
+                inner_widget,
                 WindowState.FULL,
                 main._himena_main_window._instructions.updated(animate=False),
             )
 
-        main._move_focus_to(sub_window.widget)
+        main._move_focus_to(inner_widget)
         sub_window._alive = True
         return None
 
@@ -266,7 +270,10 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         main = self._main_window()
         if title is None:
             title = "Window"
-        out = main.add_widget(sub_window.widget, self._i_tab, title)
+        inner_widget = sub_window.widget
+        out = main.add_widget(inner_widget, self._i_tab, title)
+        if hasattr(inner_widget, "control_widget"):
+            main._set_control_widget(inner_widget, inner_widget.control_widget())
 
         main._connect_window_events(sub_window, out)
         sub_window.title = title
@@ -276,7 +283,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         nwindows = len(self)
         if main._himena_main_window._new_widget_behavior is NewWidgetBehavior.TAB:
             main._set_window_state(
-                sub_window.widget,
+                inner_widget,
                 WindowState.FULL,
                 main._himena_main_window._instructions.updated(animate=False),
             )

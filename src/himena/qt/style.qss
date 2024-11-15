@@ -18,12 +18,7 @@ QWidget[emphasized="true"] > QFrame {
 
 QWidget:!enabled {
     background-color: #[background];
-    color: gray;
-}
-
-/* separator */
-QToolBar > QWidget {
-    background-color: gray
+    color: #[foreground_dim];
 }
 
 QToolBar > QToolButton {
@@ -32,8 +27,8 @@ QToolBar > QToolButton {
 
 QFrame:!enabled {
     background-color: #[background];
-    color: gray;
-    border-color: gray;
+    color: #[foreground_dim];
+    border-color: #[foreground_dim];
 }
 
 /* QPushButton */
@@ -68,12 +63,12 @@ QPushButton:disabled {
 /* ----- QComboBox ----- */
 
 QComboBox {
-  border-radius: 2px;
-  background-color: #[background_dim];
+  border: 1px solid #[foreground_dim];
+  border-radius: 4px;
+  background-color: #[background];
   color: #[foreground];
-  padding: 1px, 1px, 4px, 4px;
+  padding: 3px;
 }
-
 
 /* QScrollBar */
 
@@ -284,6 +279,7 @@ QLineEdit {
     min-height: 16px;
     padding: 1px;
     border-radius: 1px;
+    selection-color: #[foreground];
     selection-background-color: #[highlight_dim];
 }
 
@@ -527,4 +523,8 @@ QCloseTabToolButton:hover {
     border-radius: 4px;
     margin: 0px;
     padding: 1px;
+}
+
+QSelectionRangeEdit {
+    margin: 0px;
 }

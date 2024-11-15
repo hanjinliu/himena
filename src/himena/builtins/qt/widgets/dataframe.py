@@ -5,12 +5,12 @@ import sys
 import logging
 from typing import TYPE_CHECKING, Any, Callable, NamedTuple
 
-from qtpy import QtGui, QtCore
+from qtpy import QtGui, QtCore, QtWidgets as QtW
 from qtpy.QtCore import Qt
 from himena.consts import StandardTypes
 from himena.types import WidgetDataModel
 from himena.model_meta import TableMeta
-from himena.builtins.qt.widgets._table_base import QTableBase
+from himena.builtins.qt.widgets._table_base import QTableBase, QSelectionRangeEdit
 
 if TYPE_CHECKING:
     from typing import TypeGuard
@@ -122,6 +122,10 @@ _DEFAULT_FORMATTERS: dict[int, Callable[[Any], str]] = {
 class QDataFrameView(QTableBase):
     """A table widget for viewing dataframe."""
 
+    def __init__(self):
+        super().__init__()
+        self._control: QDataFrameViewControl | None = None
+
     def update_model(self, model: WidgetDataModel):
         df = model.value
         if is_pandas_dataframe(df):
@@ -130,6 +134,9 @@ class QDataFrameView(QTableBase):
             self.setModel(QDataFrameModel(PolarsWrapper(df)))
         else:
             raise ValueError(f"Unsupported dataframe type: {type(df)}")
+
+        self.setSelectionModel(QtCore.QItemSelectionModel(self.model()))
+
         if isinstance(meta := model.additional_data, TableMeta):
             if (pos := meta.current_position) is not None:
                 index = self.model().index(*pos)
@@ -140,6 +147,10 @@ class QDataFrameView(QTableBase):
                     index_bottom_right = self.model().index(r1, c1)
                     sel = QtCore.QItemSelection(index_top_left, index_bottom_right)
                     smod.select(sel, QtCore.QItemSelectionModel.SelectionFlag.Select)
+
+        if self._control is None:
+            self._control = QDataFrameViewControl(self)
+        self._control.update_for_table(self)
         self.update()
         return None
 
@@ -156,6 +167,9 @@ class QDataFrameView(QTableBase):
 
     def is_modified(self) -> bool:
         return False
+
+    def control_widget(self):
+        return self._control
 
     def keyPressEvent(self, e: QtGui.QKeyEvent) -> None:
         if e.matches(QtGui.QKeySequence.StandardKey.Copy):
@@ -187,6 +201,28 @@ class QDataFrameView(QTableBase):
     if TYPE_CHECKING:
 
         def model(self) -> QDataFrameModel: ...
+
+
+_R_CENTER = QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter
+
+
+class QDataFrameViewControl(QtW.QWidget):
+    def __init__(self, table: QDataFrameView):
+        super().__init__()
+        layout = QtW.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setAlignment(_R_CENTER)
+        self._label = QtW.QLabel("")
+        self._label.setAlignment(_R_CENTER)
+        layout.addWidget(self._label)
+        layout.addWidget(QSelectionRangeEdit(table))
+
+    def update_for_table(self, table: QDataFrameView):
+        model = table.model()
+        self._label.setText(
+            f"{model.df.type_name()} ({model.rowCount()}, {model.columnCount()})"
+        )
+        return None
 
 
 def is_pandas_dataframe(df) -> TypeGuard[pd.DataFrame]:
@@ -245,6 +281,10 @@ class DataFrameWrapper(ABC):
     @abstractmethod
     def to_csv_string(self, r0: int, r1: int, c0: int, c1: int) -> str:
         raise NotImplementedError
+
+    def type_name(self) -> str:
+        mod = type(self._df).__module__.split(".")[0]
+        return f"{mod}.{type(self._df).__name__}"
 
 
 class PandasWrapper(DataFrameWrapper):
@@ -324,5 +364,7 @@ class PolarsWrapper(DataFrameWrapper):
 
 
 class DtypeTuple(NamedTuple):
+    """Normalized dtype description."""
+
     name: str
     kind: str

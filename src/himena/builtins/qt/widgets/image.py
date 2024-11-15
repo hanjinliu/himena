@@ -74,12 +74,8 @@ class QDefaultImageView(QtW.QWidget):
         self._image_label = _QImageLabel(np.zeros((1, 1), dtype=np.uint8))
         layout.addWidget(self._image_label)
 
-        self._interpolation_check_box = QLabeledToggleSwitch()
-        self._interpolation_check_box.setText("smooth")
-        self._interpolation_check_box.setChecked(True)
-        self._interpolation_check_box.setMaximumHeight(36)
-        self._interpolation_check_box.toggled.connect(self._interpolation_changed)
-        layout.addWidget(self._interpolation_check_box)
+        self._control = QImageViewControl()
+        self._control.interpolation_changed.connect(self._interpolation_changed)
         self._arr: NDArray[np.int8] | None = None
 
     def update_model(self, model: WidgetDataModel[NDArray[np.uint8]]):
@@ -119,6 +115,9 @@ class QDefaultImageView(QtW.QWidget):
 
     def is_editable(self) -> bool:
         return False
+
+    def control_widget(self) -> QtW.QWidget:
+        return self._control
 
     def as_image_array(self, arr: np.ndarray) -> NDArray[np.uint8]:
         import numpy as np
@@ -160,3 +159,20 @@ class QDefaultImageView(QtW.QWidget):
         slider.setRange(0, size - 1)
         slider.valueChanged.connect(self._slider_changed)
         return slider
+
+
+class QImageViewControl(QtW.QWidget):
+    interpolation_changed = QtCore.Signal(bool)
+
+    def __init__(self):
+        super().__init__()
+        layout = QtW.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+
+        self._interpolation_check_box = QLabeledToggleSwitch()
+        self._interpolation_check_box.setText("smooth")
+        self._interpolation_check_box.setChecked(True)
+        self._interpolation_check_box.setMaximumHeight(36)
+        self._interpolation_check_box.toggled.connect(self.interpolation_changed.emit)
+        layout.addWidget(self._interpolation_check_box)

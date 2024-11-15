@@ -6,7 +6,7 @@ from qtpy import QtGui, QtCore
 from himena.consts import StandardTypes
 from himena.types import WidgetDataModel
 from himena.model_meta import TableMeta
-from himena.builtins.qt.widgets._table_base import QTableBase
+from himena.builtins.qt.widgets._table_base import QTableBase, QSelectionRangeEdit
 
 
 class QDefaultTableWidget(QtW.QTableWidget, QTableBase):
@@ -14,6 +14,7 @@ class QDefaultTableWidget(QtW.QTableWidget, QTableBase):
         QtW.QTableWidget.__init__(self)
         QTableBase.__init__(self)
         self._edit_trigger = self.editTriggers()
+        self._control = QTableControl(self)
 
         @self.itemChanged.connect
         def _():
@@ -34,7 +35,10 @@ class QDefaultTableWidget(QtW.QTableWidget, QTableBase):
             for (r0, r1), (c0, c1) in meta.selections:
                 rng = QtW.QTableWidgetSelectionRange(r0, c0 - 1, r1, c1 - 1)
                 self.setRangeSelected(rng, True)
+        self.setVerticalHeaderLabels([str(i) for i in range(self.rowCount())])
+        self.setHorizontalHeaderLabels([str(i) for i in range(self.columnCount())])
         self._modified = False
+        self._control.update_for_table(self)
         return None
 
     def to_model(self) -> WidgetDataModel[list[list[Any]]]:
@@ -62,6 +66,9 @@ class QDefaultTableWidget(QtW.QTableWidget, QTableBase):
         else:
             trig = QtW.QAbstractItemView.EditTrigger.NoEditTriggers
         self.setEditTriggers(trig)
+
+    def control_widget(self) -> QTableControl:
+        return self._control
 
     def _to_list(self, rsl: slice, csl: slice) -> list[list[str]]:
         values: list[list[str]] = []
@@ -139,3 +146,22 @@ class QDefaultTableWidget(QtW.QTableWidget, QTableBase):
             self._find_string()
             return
         return super().keyPressEvent(e)
+
+
+_R_CENTER = QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter
+
+
+class QTableControl(QtW.QWidget):
+    def __init__(self, table: QDefaultTableWidget):
+        super().__init__()
+        layout = QtW.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setAlignment(_R_CENTER)
+        self._label = QtW.QLabel("")
+        self._label.setAlignment(_R_CENTER)
+        layout.addWidget(self._label)
+        layout.addWidget(QSelectionRangeEdit(table))
+
+    def update_for_table(self, table: QDefaultTableWidget):
+        self._label.setText(f"Shape ({table.rowCount()}, {table.columnCount()})")
+        return None

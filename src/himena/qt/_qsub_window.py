@@ -89,11 +89,15 @@ class QSubWindowArea(QtW.QMdiArea):
         self._last_press_pos = self._last_drag_pos = None
 
         # context menu
-
         if event.button() == Qt.MouseButton.RightButton:
-            app = get_main_window(self).model_app
-            menu = build_qmodel_menu(MenuId.FILE_NEW, app, self)
-            menu.exec(event.globalPos())
+            # check if any window is under the cursor
+            for sub_window in self.subWindowList():
+                if sub_window.rect().contains(sub_window.mapFromParent(event.pos())):
+                    break
+            else:
+                app = get_main_window(self).model_app
+                menu = build_qmodel_menu(MenuId.FILE_NEW, app, self)
+                menu.exec(event.globalPos())
         return None
 
     def hideEvent(self, a0: QtGui.QHideEvent | None) -> None:

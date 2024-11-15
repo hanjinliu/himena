@@ -449,6 +449,7 @@ class MainWindow(Generic[_W]):
         self.tabs[target_index].append(win, title)
         win.rect = old_rect
         self.tabs.current_index = i_tab
+        return None
 
     def _window_activated(self):
         back = self._backend_main_window
@@ -463,9 +464,11 @@ class MainWindow(Generic[_W]):
         if i_win is None:
             return None
         if len(tab) <= i_win:
-            return None
+            return back._update_control_widget(None)
         _LOGGER.info("Window activated: %r-th window in %r-th tab", i_win, i_tab)
-        self.events.window_activated.emit(tab[i_win])
+        win = tab[i_win]
+        back._update_control_widget(win.widget)
+        self.events.window_activated.emit(win)
         return None
 
     def _pick_widget_class(self, model: WidgetDataModel) -> type[_W]:
