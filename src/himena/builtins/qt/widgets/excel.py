@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW
 from himena.builtins.qt.widgets.table import QDefaultTableWidget
 from himena.types import WidgetDataModel
-from himena.consts import StandardTypes
+from himena.consts import StandardType
 
 _EDIT_DISABLED = QtW.QAbstractItemView.EditTrigger.NoEditTriggers
 _EDIT_ENABLED = (
@@ -23,7 +23,7 @@ class QTableStack(QtW.QTabWidget):
         for sheet_name, table in model.value.items():
             table_widget = QDefaultTableWidget()
             table_widget.update_model(
-                WidgetDataModel(value=table, type=StandardTypes.TABLE)
+                WidgetDataModel(value=table, type=StandardType.TABLE)
             )
             self.addTab(table_widget, sheet_name)
         return None
@@ -39,7 +39,7 @@ class QTableStack(QtW.QTabWidget):
         )
 
     def model_type(self):
-        return StandardTypes.EXCEL
+        return StandardType.EXCEL
 
     def is_modified(self) -> bool:
         return any(self.widget(i).is_modified() for i in range(self.count()))

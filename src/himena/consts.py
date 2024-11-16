@@ -38,24 +38,23 @@ else:
 ALLOWED_LETTERS = string.ascii_letters + string.digits + "_- "
 
 
-class StandardTypes(SimpleNamespace):
+class StandardType(SimpleNamespace):
     TEXT = "text"
     TABLE = "table"
     ARRAY = "array"
-    IMAGE = "image"
     PARAMETERS = "parameters"
     DATAFRAME = "dataframe"
     EXCEL = "excel"
 
 
-class StandardSubtypes(SimpleNamespace):
+class StandardSubtype(SimpleNamespace):
     HTML = "text.html"
-
-    @staticmethod
-    def array(ndim: int) -> str:
-        if not isinstance(ndim, int):
-            raise ValueError("ndim must be an integer")
-        return f"array.{ndim}d"
+    IMAGE = "array.image"
+    ARRAY_1D = "array.1d"
+    ARRAY_2D = "array.2d"
+    ARRAY_3D = "array.3d"
+    ARRAY_4D = "array.4d"
+    ARRAY_5D = "array.5d"
 
 
 class MenuId(StrEnum):

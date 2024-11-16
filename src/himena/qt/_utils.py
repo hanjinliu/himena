@@ -9,7 +9,7 @@ import qtpy
 from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
 from himena.types import ClipboardDataModel
-from himena.consts import StandardTypes, StandardSubtypes
+from himena.consts import StandardType, StandardSubtype
 from himena._utils import lru_cache
 
 
@@ -40,12 +40,12 @@ def get_clipboard_data() -> ClipboardDataModel | None:
     if md is None:
         return None
     if md.hasHtml():
-        return ClipboardDataModel(value=md.html(), type=StandardSubtypes.HTML)
+        return ClipboardDataModel(value=md.html(), type=StandardSubtype.HTML)
     elif md.hasImage():
         arr = ArrayQImage(clipboard.image())
-        return ClipboardDataModel(value=arr, type=StandardTypes.IMAGE)
+        return ClipboardDataModel(value=arr, type=StandardSubtype.IMAGE)
     elif md.hasText():
-        return ClipboardDataModel(value=md.text(), type=StandardTypes.TEXT)
+        return ClipboardDataModel(value=md.text(), type=StandardType.TEXT)
     return None
 
 
@@ -53,12 +53,12 @@ def set_clipboard_data(data: ClipboardDataModel) -> None:
     clipboard = QtW.QApplication.clipboard()
     if clipboard is None:
         return
-    if data.is_subtype_of(StandardTypes.TEXT):
-        if data.is_subtype_of(StandardSubtypes.HTML):
+    if data.is_subtype_of(StandardType.TEXT):
+        if data.is_subtype_of(StandardSubtype.HTML):
             md = QtCore.QMimeData()
             md.setHtml(str(data.value))
         clipboard.setText(str(data.value))
-    elif data.type == StandardTypes.IMAGE:
+    elif data.type == StandardSubtype.IMAGE:
         if isinstance(data.value, ArrayQImage):
             img = data.value.qimage
         else:

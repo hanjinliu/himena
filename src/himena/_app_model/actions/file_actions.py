@@ -8,7 +8,7 @@ from app_model.types import (
     StandardKeyBinding,
 )
 from himena._descriptors import SaveBehavior
-from himena.consts import StandardTypes, MenuId
+from himena.consts import StandardSubtype, MenuId
 from himena.widgets import MainWindow
 from himena import io, _utils
 from himena.types import (
@@ -192,7 +192,6 @@ def save_as_using_from_dialog(ui: MainWindow, model: WidgetDataModel) -> Paramet
 @ACTIONS.append_from_fn(
     id="open-recent",
     title="Open Recent ...",
-    icon="mdi:recent",
     menus=[{"id": MenuId.FILE_RECENT, "group": "02_more", "order": 99}],
     keybindings=[
         KeyBindingRule(primary=KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.KeyR))
@@ -201,6 +200,17 @@ def save_as_using_from_dialog(ui: MainWindow, model: WidgetDataModel) -> Paramet
 def open_recent(ui: MainWindow) -> WidgetDataModel:
     """Open a recent file as a sub-window."""
     return ui._backend_main_window._show_command_palette("recent")
+
+
+@ACTIONS.append_from_fn(
+    id="new",
+    title="New ...",
+    menus=[{"id": MenuId.FILE_NEW, "group": "02_more", "order": 99}],
+    keybindings=[StandardKeyBinding.New],
+)
+def open_new(ui: MainWindow) -> WidgetDataModel:
+    """Open a new file as a sub-window."""
+    return ui._backend_main_window._show_command_palette("new")
 
 
 @ACTIONS.append_from_fn(
@@ -290,7 +300,7 @@ def quit_main_window(ui: MainWindow) -> None:
 def copy_screenshot(ui: MainWindow) -> ClipboardDataModel:
     """Copy a screenshot of the main window to the clipboard."""
     data = ui._backend_main_window._screenshot("main")
-    return ClipboardDataModel(value=data, type=StandardTypes.IMAGE)
+    return ClipboardDataModel(value=data, type=StandardSubtype.IMAGE)
 
 
 @ACTIONS.append_from_fn(
@@ -302,7 +312,7 @@ def copy_screenshot(ui: MainWindow) -> ClipboardDataModel:
 def copy_screenshot_area(ui: MainWindow) -> ClipboardDataModel:
     """Copy a screenshot of the tab area to the clipboard."""
     data = ui._backend_main_window._screenshot("area")
-    return ClipboardDataModel(value=data, type=StandardTypes.IMAGE)
+    return ClipboardDataModel(value=data, type=StandardSubtype.IMAGE)
 
 
 @ACTIONS.append_from_fn(
@@ -314,7 +324,7 @@ def copy_screenshot_area(ui: MainWindow) -> ClipboardDataModel:
 def copy_screenshot_window(ui: MainWindow) -> ClipboardDataModel:
     """Copy a screenshot of the sub window to the clipboard."""
     data = ui._backend_main_window._screenshot("window")
-    return ClipboardDataModel(value=data, type=StandardTypes.IMAGE)
+    return ClipboardDataModel(value=data, type=StandardSubtype.IMAGE)
 
 
 def _save_screenshot(ui: MainWindow, target: str) -> None:

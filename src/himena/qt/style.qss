@@ -532,3 +532,7 @@ QSelectionRangeEdit {
 QIntLineEdit#TableIndex {
     background-color: #[background];
 }
+
+_QHistogram {
+    border: 1px solid #[foreground_dim];
+}

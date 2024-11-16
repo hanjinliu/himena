@@ -5,18 +5,18 @@ from himena.builtins.qt.widgets.table import QDefaultTableWidget
 from himena.builtins.qt.widgets.dataframe import QDataFrameView
 from himena.builtins.qt.widgets.image import QDefaultImageView
 from himena.builtins.qt.widgets.excel import QTableStack
-from himena.consts import StandardTypes, StandardSubtypes
+from himena.consts import StandardType, StandardSubtype
 
 
 def register_default_widget_types() -> None:
     """Register default widget types."""
-    register_widget(StandardTypes.ARRAY, QDefaultArrayView, priority=-1)
-    register_widget(StandardTypes.TEXT, QDefaultTextEdit, priority=-1)
-    register_widget(StandardSubtypes.HTML, QDefaultHTMLEdit, priority=-1)
-    register_widget(StandardTypes.TABLE, QDefaultTableWidget, priority=-1)
-    register_widget(StandardTypes.IMAGE, QDefaultImageView, priority=-1)
-    register_widget(StandardTypes.DATAFRAME, QDataFrameView, priority=-1)
-    register_widget(StandardTypes.EXCEL, QTableStack, priority=-1)
+    register_widget(StandardType.ARRAY, QDefaultArrayView, priority=-1)
+    register_widget(StandardType.TEXT, QDefaultTextEdit, priority=-1)
+    register_widget(StandardSubtype.HTML, QDefaultHTMLEdit, priority=-1)
+    register_widget(StandardType.TABLE, QDefaultTableWidget, priority=-1)
+    register_widget(StandardSubtype.IMAGE, QDefaultImageView, priority=-1)
+    register_widget(StandardType.DATAFRAME, QDataFrameView, priority=-1)
+    register_widget(StandardType.EXCEL, QTableStack, priority=-1)
 
 
 register_default_widget_types()

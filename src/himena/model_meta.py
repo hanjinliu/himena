@@ -45,3 +45,5 @@ class ImageMeta(BaseModel):
     )
     current_roi: Roi | None = Field(None, description="Current region of interest.")
     rois: list[Roi] = Field(default_factory=list, description="Regions of interest.")
+    labels: Any | None = Field(None, description="Labels of the image.")
+    interpolation: str | None = Field(None, description="Interpolation method.")

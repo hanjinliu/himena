@@ -5,7 +5,7 @@ from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
 from superqt import QSearchableComboBox
 
-from himena.consts import StandardTypes, StandardSubtypes
+from himena.consts import StandardType, StandardSubtype
 from himena.types import WidgetDataModel
 from himena.model_meta import TextMeta
 from himena.consts import MonospaceFontFamily
@@ -503,7 +503,7 @@ class QDefaultTextEdit(QtW.QWidget):
         )
 
     def model_type(self):
-        return StandardTypes.TEXT
+        return StandardType.TEXT
 
     def size_hint(self) -> tuple[int, int]:
         return 400, 300
@@ -577,7 +577,7 @@ class QDefaultHTMLEdit(QtW.QWidget):
         )
 
     def model_type(self):
-        return StandardSubtypes.HTML
+        return StandardSubtype.HTML
 
     def size_hint(self) -> tuple[int, int]:
         return 400, 300

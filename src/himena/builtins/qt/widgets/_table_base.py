@@ -78,6 +78,9 @@ class QTableBase(QtW.QTableView):
 
         self.setSelectionMode(QtW.QAbstractItemView.SelectionMode.ExtendedSelection)
 
+    def selectAll(self):
+        super().selectAll()
+
     def size_hint(self) -> tuple[int, int]:
         return 400, 300
 

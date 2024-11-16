@@ -6,7 +6,7 @@ from app_model.types import (
     StandardKeyBinding,
 )
 from himena._descriptors import SaveToPath
-from himena.consts import MenuId, StandardTypes
+from himena.consts import MenuId, StandardType
 from himena.widgets import MainWindow
 from himena.types import ClipboardDataModel, Parametric, WindowState, WidgetDataModel
 from himena._app_model._context import AppContext as _ctx
@@ -84,7 +84,7 @@ def duplicate_with(ui: MainWindow, model: WidgetDataModel) -> Parametric:
     widget_classes, _ = ui._backend_main_window._list_widget_class(model.type)
     for _, cls, _ in widget_classes:
         name = f"{cls.__module__}.{cls.__name__}"
-        choices.append((f"{cls.__name__}\n({name})", name))
+        choices.append((f"<b>{cls.__name__}</b><br>({name})", name))
 
     @configure_gui(
         plugin_name={
@@ -130,7 +130,7 @@ def copy_path_to_clipboard(ui: MainWindow) -> ClipboardDataModel:
     """Copy the path of the current window to the clipboard."""
     if window := ui.current_window:
         if isinstance(sv := window.save_behavior, SaveToPath):
-            return ClipboardDataModel(value=sv.path, type=StandardTypes.TEXT)
+            return ClipboardDataModel(value=sv.path, type=StandardType.TEXT)
     return None
 
 

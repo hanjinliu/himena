@@ -3,7 +3,7 @@ import importlib
 from himena.plugins import register_function
 from himena.types import Parametric, WidgetDataModel
 from himena.model_meta import TextMeta
-from himena.consts import StandardTypes
+from himena.consts import StandardType
 
 
 def _table_to_latex(table: list[list[str]]) -> str:
@@ -21,7 +21,7 @@ def _table_to_latex(table: list[list[str]]) -> str:
 
 @register_function(
     title="Convert table to text ...",
-    types=StandardTypes.TABLE,
+    types=StandardType.TABLE,
     menus=["tools/table"],
     preview=True,
     command_id="builtins:table-to-text",
@@ -64,7 +64,7 @@ def table_to_text(model: WidgetDataModel) -> Parametric[str]:
             raise ValueError(f"Unknown format: {format}")
         return WidgetDataModel(
             value=s + end_of_text,
-            type=StandardTypes.TEXT,
+            type=StandardType.TEXT,
             title=f"{model.title} (as text)",
             extension_default=ext_default,
             additional_data=TextMeta(language=language),
@@ -75,7 +75,7 @@ def table_to_text(model: WidgetDataModel) -> Parametric[str]:
 
 @register_function(
     title="Convert table to DataFrame ...",
-    types=StandardTypes.TABLE,
+    types=StandardType.TABLE,
     menus=["tools/table"],
     command_id="builtins:table-to-dataframe",
 )
@@ -93,7 +93,7 @@ def table_to_dataframe(model: WidgetDataModel) -> Parametric[str]:
         return WidgetDataModel(
             value=df,
             title=f"{model.title} (as dataframe)",
-            type=StandardTypes.DATAFRAME,
+            type=StandardType.DATAFRAME,
         )
 
     return convert_table_to_dataframe

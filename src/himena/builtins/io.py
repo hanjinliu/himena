@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING, Any
 from himena.plugins import register_reader_provider, register_writer_provider
 from himena.types import WidgetDataModel
 from himena.consts import (
-    StandardSubtypes,
-    StandardTypes,
+    StandardSubtype,
+    StandardType,
     BasicTextFileTypes,
     ConventionalTextFileNames,
     ExcelFileTypes,
@@ -22,7 +22,7 @@ def default_text_reader(file_path: Path) -> WidgetDataModel:
     """Read text file."""
     return WidgetDataModel(
         value=file_path.read_text(),
-        type=StandardTypes.TEXT,
+        type=StandardType.TEXT,
         source=file_path,
     )
 
@@ -30,7 +30,7 @@ def default_text_reader(file_path: Path) -> WidgetDataModel:
 def default_html_reader(file_path: Path) -> WidgetDataModel:
     return WidgetDataModel(
         value=file_path.read_text(),
-        type=StandardSubtypes.HTML,
+        type=StandardSubtype.HTML,
         source=file_path,
     )
 
@@ -44,7 +44,7 @@ def default_image_reader(file_path: Path) -> WidgetDataModel:
 
     return WidgetDataModel(
         value=arr,
-        type=StandardTypes.IMAGE,
+        type=StandardSubtype.IMAGE,
     )
 
 
@@ -58,7 +58,7 @@ def default_csv_reader(file_path: Path) -> WidgetDataModel:
 
     return WidgetDataModel(
         value=data,
-        type=StandardTypes.TABLE,
+        type=StandardType.TABLE,
     )
 
 
@@ -72,7 +72,7 @@ def default_tsv_reader(file_path: Path) -> WidgetDataModel:
 
     return WidgetDataModel(
         value=data,
-        type=StandardTypes.TABLE,
+        type=StandardType.TABLE,
     )
 
 
@@ -91,7 +91,7 @@ def default_excel_reader(file_path: Path) -> WidgetDataModel:
 
     return WidgetDataModel(
         value=data,
-        type=StandardTypes.EXCEL,
+        type=StandardType.EXCEL,
     )
 
 
@@ -102,7 +102,7 @@ def default_array_reader(file_path: Path) -> WidgetDataModel:
     arr = np.load(file_path)
     return WidgetDataModel(
         value=arr,
-        type=StandardTypes.ARRAY,
+        type=StandardType.ARRAY,
     )
 
 
@@ -143,7 +143,7 @@ class DataFrameReader:
         mod = importlib.import_module(self._module)
         method = getattr(mod, self._method)
         df = method(file_path, **self._kwargs)
-        return WidgetDataModel(value=df, type=StandardTypes.DATAFRAME)
+        return WidgetDataModel(value=df, type=StandardType.DATAFRAME)
 
 
 @register_reader_provider(priority=-5)
@@ -240,15 +240,15 @@ def default_writer_provider(model: WidgetDataModel):
     """Get default writer."""
     if model.type is None:
         return None
-    if model.is_subtype_of(StandardTypes.TEXT):
+    if model.is_subtype_of(StandardType.TEXT):
         return default_text_writer
-    elif model.is_subtype_of(StandardTypes.TABLE):
+    elif model.is_subtype_of(StandardType.TABLE):
         return default_csv_writer
-    elif model.is_subtype_of(StandardTypes.IMAGE):
+    elif model.is_subtype_of(StandardSubtype.IMAGE):
         return default_image_writer
-    elif model.is_subtype_of(StandardTypes.PARAMETERS):
+    elif model.is_subtype_of(StandardType.PARAMETERS):
         return default_parameter_writer
-    elif model.is_subtype_of(StandardTypes.EXCEL):
+    elif model.is_subtype_of(StandardType.EXCEL):
         return default_excel_writer
     else:
         return None

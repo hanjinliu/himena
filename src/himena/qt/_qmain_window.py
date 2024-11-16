@@ -95,6 +95,15 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             parent=self,
             exclude=["open-recent"],
             formatter=_formatter.formatter_recent,
+            placeholder="Open recent file ...",
+        )
+        self._command_palette_new = QCommandPalette(
+            self._app,
+            menu_id=MenuId.FILE_NEW,
+            parent=self,
+            exclude=["new"],
+            formatter=_formatter.formatter_general,
+            placeholder="Create a new window ...",
         )
         self._goto_widget = QGotoWidget(self)
 
@@ -391,6 +400,9 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             self._command_palette_recent.show()
         elif kind == "goto":
             self._goto_widget.show()
+        elif kind == "new":
+            self._command_palette_new.update_context(self)
+            self._command_palette_new.show()
         else:
             raise NotImplementedError
 

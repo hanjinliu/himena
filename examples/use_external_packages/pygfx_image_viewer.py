@@ -3,6 +3,7 @@ from pathlib import Path
 import numpy as np
 from himena import new_window, WidgetDataModel
 from himena.qt import register_widget
+from himena.consts import StandardSubtype
 from himena.plugins import (
     register_reader_provider,
     register_writer_provider,
@@ -12,7 +13,7 @@ from wgpu.gui.qt import WgpuWidget
 import imageio.v3 as iio
 import pygfx as gfx
 
-@register_widget("image")
+@register_widget(StandardSubtype.IMAGE)
 class WgpuImageWidget(WgpuWidget):
     def __init__(self):
         super().__init__()
@@ -49,7 +50,7 @@ class WgpuImageWidget(WgpuWidget):
         return self.set_image(model.value)
 
     def to_model(self) -> WidgetDataModel:
-        return WidgetDataModel(value=self._arr, type="image")
+        return WidgetDataModel(value=self._arr, type=StandardSubtype.IMAGE)
 
 # `@register_reader_provider` is a decorator that registers a function as one that
 # provides a reader for the given file path.
@@ -60,7 +61,7 @@ def my_reader_provider(file_path):
 
     def _read_image(file_path):
         im = iio.imread(file_path)
-        return WidgetDataModel(value=im, type="image")
+        return WidgetDataModel(value=im, type=StandardSubtype.IMAGE)
 
     return _read_image
 
@@ -77,7 +78,7 @@ def my_writer_provider(model: WidgetDataModel, path: Path):
     return _write_image
 
 
-@register_function(title="Gaussian Filter", types="image", menus="tools/image_processing")
+@register_function(title="Gaussian Filter", types=StandardSubtype.IMAGE, menus="tools/image_processing")
 def gaussian_filter(model: WidgetDataModel[np.ndarray]) -> WidgetDataModel[np.ndarray]:
     from scipy import ndimage as ndi
 
@@ -86,17 +87,17 @@ def gaussian_filter(model: WidgetDataModel[np.ndarray]) -> WidgetDataModel[np.nd
         im = ndi.gaussian_filter(im, sigma=3, axes=(0, 1))
     else:
         im = ndi.gaussian_filter(im, sigma=3)
-    return WidgetDataModel(value=im, type="image", title=model.title + "-Gaussian")
+    return WidgetDataModel(value=im, type=StandardSubtype.IMAGE, title=model.title + "-Gaussian")
 
-@register_function(title="Invert", types="image", menus="tools/image_processing")
+@register_function(title="Invert", types=StandardSubtype.IMAGE, menus="tools/image_processing")
 def invert(model: WidgetDataModel) -> WidgetDataModel:
-    return WidgetDataModel(value=-model.value, type="image", title=model.title + "-Inverted")
+    return WidgetDataModel(value=-model.value, type=StandardSubtype.IMAGE, title=model.title + "-Inverted")
 
 
 def main():
     ui = new_window()
     im = iio.imread("imageio:astronaut.png")
-    ui.add_data(im, type="image", title="Astronaut")
+    ui.add_data(im, type=StandardSubtype.IMAGE, title="Astronaut")
     ui.show(run=True)
 
 if __name__ == "__main__":

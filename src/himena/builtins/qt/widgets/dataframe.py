@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, NamedTuple
 
 from qtpy import QtGui, QtCore, QtWidgets as QtW
 from qtpy.QtCore import Qt
-from himena.consts import StandardTypes
+from himena.consts import StandardType
 from himena.types import WidgetDataModel
 from himena.model_meta import TableMeta
 from himena.builtins.qt.widgets._table_base import (
@@ -120,7 +120,7 @@ class QDataFrameView(QTableBase):
         )
 
     def model_type(self) -> str:
-        return StandardTypes.DATAFRAME
+        return StandardType.DATAFRAME
 
     def is_modified(self) -> bool:
         return False

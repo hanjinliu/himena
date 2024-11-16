@@ -3,6 +3,7 @@ from tempfile import TemporaryDirectory
 from unittest.mock import MagicMock
 from qtpy import QtWidgets as QtW
 from himena import MainWindow, anchor
+from himena.consts import StandardSubtype
 from himena.plugins.actions import register_function
 from himena.types import ClipboardDataModel, ParametricWidgetTuple, WidgetDataModel
 from himena.qt import register_widget, MainWindowQt
@@ -38,7 +39,7 @@ def test_builtin_commands(ui: MainWindow):
     ui.exec_action("builtins:output")
     ui.exec_action("builtins:new-text")
     assert len(ui.tabs[0]) == 1
-    ui.exec_action("builtins:fetch-seaborn-test-data")
+    ui.exec_action("builtins:fetch-seaborn-sample-data")
     ui.exec_action("quit")
 
 def test_io_commands(ui: MainWindow, tmpdir, sample_dir: Path):
@@ -111,13 +112,13 @@ def test_screenshot_commands(ui: MainWindow, sample_dir: Path, tmpdir):
     # copy
     ui.clipboard = ClipboardDataModel(value="", type="text")  # just for initialization
     ui.exec_action("copy-screenshot")
-    assert ui.clipboard.type == "image"
+    assert ui.clipboard.type == StandardSubtype.IMAGE
     ui.clipboard = ClipboardDataModel(value="", type="text")  # just for initialization
     ui.exec_action("copy-screenshot-area")
-    assert ui.clipboard.type == "image"
+    assert ui.clipboard.type == StandardSubtype.IMAGE
     ui.clipboard = ClipboardDataModel(value="", type="text")  # just for initialization
     ui.exec_action("copy-screenshot-window")
-    assert ui.clipboard.type == "image"
+    assert ui.clipboard.type == StandardSubtype.IMAGE
 
     # save
     ui._instructions = ui._instructions.updated(

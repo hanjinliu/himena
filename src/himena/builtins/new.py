@@ -1,13 +1,12 @@
 """New file actions."""
 
-from typing import Literal
 import csv
 from io import StringIO
 
 from himena.plugins import register_function, configure_gui
 from himena.types import WidgetDataModel, Parametric
 from himena.widgets import MainWindow
-from himena.consts import StandardTypes, MenuId
+from himena.consts import StandardType, StandardSubtype, MenuId
 
 
 def _get_n_windows(ui: MainWindow) -> int:
@@ -16,33 +15,26 @@ def _get_n_windows(ui: MainWindow) -> int:
     return 0
 
 
-@register_function(
-    keybindings="Ctrl+N",
-    menus=MenuId.FILE_NEW,
-    command_id="builtins:new-text",
-)
+@register_function(menus=MenuId.FILE_NEW, command_id="builtins:new-text")
 def new_text(ui: MainWindow) -> WidgetDataModel:
     """New text file."""
     nwin = _get_n_windows(ui)
     return WidgetDataModel(
         value="",
-        type=StandardTypes.TEXT,
+        type=StandardType.TEXT,
         extension_default=".txt",
         title=f"Untitled-{nwin}",
     )
 
 
-@register_function(
-    menus=MenuId.FILE_NEW,
-    command_id="builtins:new-table",
-)
+@register_function(menus=MenuId.FILE_NEW, command_id="builtins:new-table")
 def new_table(ui: MainWindow) -> WidgetDataModel:
     """New table."""
     nwin = _get_n_windows(ui)
     value = [["", "", ""], ["", "", ""], ["", "", ""]]
     return WidgetDataModel(
         value=value,
-        type=StandardTypes.TABLE,
+        type=StandardType.TABLE,
         extension_default=".csv",
         title=f"Table-{nwin}",
     )
@@ -76,34 +68,46 @@ def seaborn_sample_data() -> Parametric:
             data = resp.read().decode()
 
         csv_data = list(csv.reader(StringIO(data)))
-        return WidgetDataModel(value=csv_data, type=StandardTypes.TABLE, title=name)
+        return WidgetDataModel(value=csv_data, type=StandardType.TABLE, title=name)
 
     return fetch_data
 
 
 @register_function(
-    title="Random image ...",
+    title="Constant array ...",
     menus=MenuId.FILE_NEW,
-    command_id="builtins:random-image",
+    command_id="builtins:constant-array",
 )
-def random_image() -> Parametric:
-    """Generate an random image."""
+def constant_array(ui: MainWindow) -> Parametric:
+    """Generate an array filled with a constant value."""
+    import numpy as np
+    from himena.qt._magicgui import NumericDTypeEdit
+    from himena.plugins import configure_gui
 
-    def generate_random_image(
+    @configure_gui(dtype={"widget_type": NumericDTypeEdit})
+    def generate_constant_array(
         shape: list[int] = (256, 256),
-        distribution: Literal["uniform", "normal"] = "uniform",
-        seed: int | None = None,
+        dtype="uint8",
+        value: str = "0",
+        interpret_as_image: bool = False,
     ):
-        import numpy as np
-
-        rng = np.random.default_rng(seed)
-
-        if distribution == "uniform":
-            image = rng.integers(0, 256, shape, dtype=np.uint8)
-        elif distribution == "normal":
-            image = rng.normal(0, 1, shape).astype(np.float32)
+        _dtype = np.dtype(dtype)
+        if _dtype.kind == "f":
+            _value = float(value)
+        elif _dtype.kind in "iu":
+            _value = int(value)
+        elif _dtype.kind == "b":
+            _value = bool(value)
+        elif _dtype.kind == "c":
+            _value = complex(value)
         else:
-            raise ValueError(f"Invalid distribution: {distribution}")
-        return WidgetDataModel(value=image, type=StandardTypes.IMAGE)
+            _value = value
+        arr = np.full(shape, _value, dtype=dtype)
+        if interpret_as_image:
+            type = StandardSubtype.IMAGE
+        else:
+            type = StandardType.ARRAY
+        nwin = _get_n_windows(ui)
+        return WidgetDataModel(value=arr, type=type, title=f"Untitled-{nwin}")
 
-    return generate_random_image
+    return generate_constant_array

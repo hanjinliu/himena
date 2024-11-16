@@ -3,12 +3,12 @@ import json
 from himena.plugins import register_function, configure_gui
 from himena.types import Parametric, WidgetDataModel
 from himena.model_meta import TextMeta
-from himena.consts import StandardSubtypes, StandardTypes, MonospaceFontFamily
+from himena.consts import StandardSubtype, StandardType, MonospaceFontFamily
 
 
 @register_function(
     title="Filter text ...",
-    types=StandardTypes.TEXT,
+    types=StandardType.TEXT,
     menus=["tools/text"],
     preview=True,
     command_id="builtins:filter-text",
@@ -52,7 +52,7 @@ def filter_text(model: WidgetDataModel[str]) -> Parametric[str]:
 @register_function(
     title="Format JSON ...",
     menus=["tools/text"],
-    types=StandardTypes.TEXT,
+    types=StandardType.TEXT,
     command_id="builtins:format-json",
 )
 def format_json(model: WidgetDataModel) -> Parametric:
@@ -87,8 +87,8 @@ def compare_texts() -> Parametric:
     """Compare two texts by lines."""
 
     @configure_gui(
-        text_1={"types": [StandardTypes.TEXT]},
-        text_2={"types": [StandardTypes.TEXT]},
+        text_1={"types": [StandardType.TEXT]},
+        text_2={"types": [StandardType.TEXT]},
     )
     def run_compare_texts(text_1: WidgetDataModel[str], text_2: WidgetDataModel[str]):
         import difflib
@@ -110,7 +110,7 @@ def compare_texts() -> Parametric:
         )
         return WidgetDataModel(
             value=value,
-            type=StandardSubtypes.HTML,
+            type=StandardSubtype.HTML,
             title=f"{text_1.title} vs {text_2.title}",
         )
 
@@ -118,7 +118,7 @@ def compare_texts() -> Parametric:
 
 
 @register_function(
-    types=StandardTypes.TEXT,
+    types=StandardType.TEXT,
     menus=["tools/text"],
     keybindings="Ctrl+F5",
 )

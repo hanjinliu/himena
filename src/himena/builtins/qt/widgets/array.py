@@ -1,19 +1,18 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from qtpy import QtGui, QtCore, QtWidgets as QtW
 from qtpy.QtCore import Qt
 from himena._data_wrappers import ArrayWrapper, wrap_array
-from himena.consts import StandardTypes
+from himena.consts import StandardType, MonospaceFontFamily
 from himena.types import WidgetDataModel
 from himena.builtins.qt.widgets._table_base import (
     QTableBase,
     QSelectionRangeEdit,
     format_table_value,
 )
-
 
 if TYPE_CHECKING:
     import numpy as np
@@ -25,17 +24,22 @@ class QArrayModel(QtCore.QAbstractTableModel):
     """Table model for data frame."""
 
     def __init__(self, arr: np.ndarray, parent=None):
+        import numpy as np
+
         super().__init__(parent)
         self._arr_slice = arr  # 2D
         if arr.ndim != 2:
             raise ValueError("Only 2D array is supported.")
-        self._dtype_kind = arr.dtype.kind
+        if arr.dtype.names is not None:
+            raise ValueError("Structured array is not supported.")
+        self._dtype = np.dtype(arr.dtype)
+        self._nrows, self._ncols = arr.shape
 
     def rowCount(self, parent=None):
-        return self._arr_slice.shape[0]
+        return self._nrows
 
     def columnCount(self, parent=None):
-        return self._arr_slice.shape[1]
+        return self._ncols
 
     def data(
         self,
@@ -44,17 +48,16 @@ class QArrayModel(QtCore.QAbstractTableModel):
     ):
         if not index.isValid():
             return QtCore.QVariant()
+        if role == Qt.ItemDataRole.TextAlignmentRole:
+            return Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
         if role != Qt.ItemDataRole.DisplayRole:
             return QtCore.QVariant()
         r, c = index.row(), index.column()
         if r < self.rowCount() and c < self.columnCount():
             value = self._arr_slice[r, c]
-            text = format_table_value(value, self._dtype_kind)
+            text = format_table_value(value, self._dtype.kind)
             return text
         return QtCore.QVariant()
-
-    def flags(self, index):
-        return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
 
     def headerData(
         self,
@@ -73,8 +76,31 @@ class QArraySliceView(QTableBase):
         import numpy as np
 
         super().__init__()
+        self.horizontalHeader().setFixedHeight(18)
+        self.verticalHeader().setDefaultSectionSize(20)
+        self.horizontalHeader().setDefaultSectionSize(55)
         self.setModel(QArrayModel(np.zeros((0, 0))))
         self.setSelectionModel(QtCore.QItemSelectionModel(self.model()))
+        self.setFont(QtGui.QFont(MonospaceFontFamily, 10))
+
+    def update_width_by_dtype(self):
+        kind = self.model()._dtype.kind
+        depth = self.model()._dtype.itemsize
+        if kind in "ui":
+            self._update_width(depth * 40)
+        elif kind == "f":
+            self._update_width(depth * 65)
+        elif kind == "c":
+            self._update_width(depth * 65 + 24)
+        else:
+            self._update_width(depth * 40)
+
+    def _update_width(self, width: int):
+        header = self.horizontalHeader()
+        header.setDefaultSectionSize(width)
+        # header.resizeSections(QtW.QHeaderView.ResizeMode.Fixed)
+        for i in range(header.count()):
+            header.resizeSection(i, width)
 
     def set_array(self, arr: np.ndarray):
         if arr.ndim != 2:
@@ -105,17 +131,46 @@ class QArraySliceView(QTableBase):
             _LOGGER.warning("Multiple selections.")
             return
 
-        qsel = next(iter(qselections))
+        qsel: QtCore.QItemSelectionRange = next(iter(qselections))
         r0, r1 = qsel.left(), qsel.right() + 1
         c0, c1 = qsel.top(), qsel.bottom() + 1
         buf = StringIO()
-        np.savetxt(buf, self.model()._arr_slice[r0:r1, c0:c1], delimiter=",")
+        np.savetxt(
+            buf,
+            self.model()._arr_slice[r0:r1, c0:c1],
+            delimiter=",",
+            fmt=dtype_to_fmt(self.model()._dtype),
+        )
         clipboard = QtGui.QGuiApplication.clipboard()
         clipboard.setText(buf.getvalue())
 
     if TYPE_CHECKING:
 
         def model(self) -> QArrayModel: ...
+
+
+def dtype_to_fmt(dtype: np.dtype) -> str:
+    """Choose a proper format string for the dtype to convert to text."""
+    if dtype.kind == "fc":
+        dtype = cast(np.number, dtype)
+        s = 1 if dtype.kind == "f" else 2
+        if dtype.itemsize / s == 2:
+            # 16bit has 10bit (~10^3) fraction
+            return "%.4e"
+        if dtype.itemsize / s == 4:
+            # 32bit has 23bit (~10^7) fraction
+            return "%.8e"
+        if dtype.itemsize / s == 8:
+            # 64bit has 52bit (~10^15) fraction
+            return "%.16e"
+        if dtype.itemsize / s == 16:
+            # 128bit has 112bit (~10^33) fraction
+            return "%.34e"
+        raise RuntimeError(f"Unsupported float dtype: {dtype}")
+
+    if dtype.kind in "iub":
+        return "%d"
+    return "%s"
 
 
 class QDefaultArrayView(QtW.QWidget):
@@ -139,10 +194,6 @@ class QDefaultArrayView(QtW.QWidget):
         self._control: QArrayViewControl | None = None
 
     def update_spinbox_for_shape(self, shape: tuple[int, ...]):
-        if len(shape) < 3:
-            for sb in self._spinboxes:
-                sb.setVisible(False)
-            return
         nspin = len(self._spinboxes)
         if nspin < len(shape) - 2:
             for _i in range(nspin, len(shape) - 2):
@@ -159,6 +210,8 @@ class QDefaultArrayView(QtW.QWidget):
                 self._spinbox_group.layout().removeWidget(sb)
                 sb.deleteLater()
                 self._spinboxes.remove(sb)
+
+        self._spinbox_group.setVisible(len(shape) > 2)
 
     def _spinbox_changed(self):
         arr = self._arr
@@ -194,6 +247,7 @@ class QDefaultArrayView(QtW.QWidget):
         if self._control is None:
             self._control = QArrayViewControl(self._table)
         self._control.update_for_array(self._arr)
+        self._table.update_width_by_dtype()
         self.update()
         return None
 
@@ -205,7 +259,7 @@ class QDefaultArrayView(QtW.QWidget):
         )
 
     def model_type(self) -> str:
-        return f"{StandardTypes.ARRAY}.{self._arr.ndim}d"
+        return f"{StandardType.ARRAY}.{self._arr.ndim}d"
 
     def is_modified(self) -> bool:
         return False

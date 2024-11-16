@@ -3,7 +3,7 @@ from typing import Any
 
 from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
-from himena.consts import StandardTypes
+from himena.consts import StandardType
 from himena.types import WidgetDataModel
 from himena.model_meta import TableMeta
 from himena.builtins.qt.widgets._table_base import QTableBase, QSelectionRangeEdit
@@ -55,7 +55,7 @@ class QDefaultTableWidget(QtW.QTableWidget, QTableBase):
         self.setHorizontalHeaderLabels([str(i) for i in range(self.columnCount())])
 
     def model_type(self):
-        return StandardTypes.TABLE
+        return StandardType.TABLE
 
     def is_modified(self) -> bool:
         return self._modified
@@ -192,7 +192,7 @@ _R_CENTER = QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVC
 
 
 class QTableControl(QtW.QWidget):
-    def __init__(self, table: QDefaultTableWidget):
+    def __init__(self, table: QTableBase):
         super().__init__()
         layout = QtW.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)

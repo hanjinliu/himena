@@ -23,10 +23,12 @@ class QCommandPalette(QtW.QWidget):
         parent: QtW.QWidget | None = None,
         exclude: Iterable[str] = (),
         formatter: Callable[[Action], str] = lambda x: x.title,
+        placeholder: str = "Search commands by name ...",
     ):
         super().__init__(parent)
 
         self._line = QCommandLineEdit()
+        self._line.setPlaceholderText(placeholder)
         self._list = QCommandList(self, formatter)
         _layout = QtW.QVBoxLayout(self)
         _layout.addWidget(self._line)

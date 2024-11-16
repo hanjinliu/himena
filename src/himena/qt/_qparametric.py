@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Any
 
 from qtpy import QtWidgets as QtW, QtCore
-from himena.consts import StandardTypes
+from himena.consts import StandardType
 from himena.types import WidgetDataModel
 
 
@@ -24,10 +24,10 @@ class QParametricWidget(QtW.QWidget):
 
     def to_model(self) -> WidgetDataModel[dict[str, Any]]:
         params = self.get_params()
-        return WidgetDataModel(value=params, type=StandardTypes.PARAMETERS)
+        return WidgetDataModel(value=params, type=StandardType.PARAMETERS)
 
     def model_type(self: QtW.QWidget) -> str:
-        return StandardTypes.PARAMETERS
+        return StandardType.PARAMETERS
 
     def _on_param_changed(self) -> None:
         self.param_changed.emit()

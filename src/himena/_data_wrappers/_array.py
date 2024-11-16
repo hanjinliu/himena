@@ -68,7 +68,7 @@ class ArrayWrapper(Generic[ArrayT]):
 
     @abstractmethod
     def get_slice(self, sl: tuple[int, ...]) -> np.ndarray:
-        raise NotImplementedError
+        """Return a 2D slice of the array as a numpy array."""
 
     @property
     @abstractmethod
@@ -79,13 +79,10 @@ class ArrayWrapper(Generic[ArrayT]):
     @abstractmethod
     def shape(self) -> tuple[int, ...]:
         """Return the shape of the array."""
-        shape = getattr(self._arr, "shape", None)
-        if not isinstance(shape, Sequence) or not all(
-            isinstance(x, int) for x in shape
-        ):
-            raise NotImplementedError(f"Cannot determine sizes for {type(self._arr)}")
-        dims = range(len(shape))
-        return {dim: int(size) for dim, size in zip(dims, shape)}
+
+    def axis_names(self) -> list[str]:
+        """Return the names of the axes."""
+        return [str(i) for i in range(self.ndim)]
 
     @property
     def ndim(self) -> int:
@@ -100,7 +97,7 @@ class XarrayWrapper(ArrayWrapper["xr.DataArray"]):
     """Wrapper for xarray DataArray objects."""
 
     def get_slice(self, sl: tuple[int, ...]) -> np.ndarray:
-        return self._arr.isel(dict(enumerate(sl))).values
+        return self._arr[sl].values
 
     @property
     def dtype(self) -> np.dtype:
@@ -109,6 +106,9 @@ class XarrayWrapper(ArrayWrapper["xr.DataArray"]):
     @property
     def shape(self) -> tuple[int, ...]:
         return self._arr.shape
+
+    def axis_names(self) -> list[str]:
+        return [str(_a) for _a in self._arr.dims]
 
 
 class TensorstoreWrapper(ArrayWrapper["ts.TensorStore"]):
@@ -135,7 +135,10 @@ class TensorstoreWrapper(ArrayWrapper["ts.TensorStore"]):
             labels = zattr_dict["_ARRAY_DIMENSIONS"]
 
         if isinstance(labels, Sequence) and len(labels) == len(self._data.domain):
-            self._data = self.arr[ts.d[:].label[self._labels]]
+            self._labels: list[Hashable] = [str(x) for x in labels]
+            self._data = self.data[ts.d[:].label[self._labels]]
+        else:
+            self._labels = list(range(len(self._data.domain)))
 
     def get_slice(self, sl: tuple[int, ...]) -> np.ndarray:
         return self._data[sl].read().result()
@@ -147,6 +150,9 @@ class TensorstoreWrapper(ArrayWrapper["ts.TensorStore"]):
     @property
     def shape(self) -> tuple[int, ...]:
         return self._data.domain.shape
+
+    def axis_names(self) -> list[str]:
+        return [str(_a) for _a in self._labels]
 
 
 class ArrayLikeWrapper(ArrayWrapper, Generic[ArrayT]):
@@ -174,14 +180,6 @@ class DaskWrapper(ArrayWrapper["da.Array"]):
     def get_slice(self, sl: tuple[int, ...]) -> np.ndarray:
         return self._arr[sl].compute()
 
-    @property
-    def dtype(self) -> np.dtype:
-        return self._arr.dtype
-
-    @property
-    def shape(self) -> tuple[int, ...]:
-        return self._arr.shape
-
 
 class CLArrayWrapper(ArrayLikeWrapper["cl_array.Array"]):
     """Wrapper for pyopencl array objects."""
@@ -197,19 +195,26 @@ class SparseArrayWrapper(ArrayLikeWrapper["sparse.Array"]):
         return np.asarray(data.todense())
 
 
+class ZarrArrayWrapper(ArrayLikeWrapper["zarr.Array"]):
+    """Wrapper for zarr array objects."""
+
+    def __init__(self, data: Any) -> None:
+        super().__init__(data)
+        self._names = []
+        if "_ARRAY_DIMENSIONS" in data.attrs:
+            self._names = data.attrs["_ARRAY_DIMENSIONS"]
+        else:
+            self._names = list(range(data.ndim))
+
+    def axis_names(self) -> list[str]:
+        return [str(k) for k in self._names]
+
+
 class TorchTensorWrapper(ArrayWrapper["torch.Tensor"]):
     """Wrapper for torch tensor objects."""
 
     def get_slice(self, sl: tuple[int, ...]) -> np.ndarray:
         return self.arr[sl].numpy(force=True)
-
-    @property
-    def dtype(self) -> np.dtype:
-        return self.arr.dtype
-
-    @property
-    def shape(self) -> tuple[int, ...]:
-        return self.arr.shape
 
 
 class CupyArrayWrapper(ArrayLikeWrapper["cupy.ndarray"]):
