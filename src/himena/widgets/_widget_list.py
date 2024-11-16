@@ -8,7 +8,7 @@ from collections.abc import Sequence
 import weakref
 
 from psygnal import Signal
-from himena._descriptors import LocalReaderMethod
+from himena._descriptors import ConverterMethod, LocalReaderMethod
 from himena import io
 from himena.types import (
     NewWidgetBehavior,
@@ -308,6 +308,8 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         sub_win = self.add_widget(widget, title=model.title)
         if isinstance(method := model.method, LocalReaderMethod):
             sub_win.update_default_save_path(method.path)
+        elif isinstance(model.method, ConverterMethod):
+            sub_win._set_modified(True)
         if (method := model.method) is not None:
             sub_win._update_widget_data_model_method(method)
         return sub_win

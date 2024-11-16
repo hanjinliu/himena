@@ -129,12 +129,12 @@ def make_function_callback(
                 originals.append(method)
         if isinstance(out, WidgetDataModel):
             if len(originals) > 0:
-                out.method = ConverterMethod(originals=originals, action_id=command_id)
+                out.method = ConverterMethod(originals=originals, command_id=command_id)
         elif callable(out) and f.__annotations__["return"] is Parametric:
             out = Parametric(
                 out,
                 sources=originals,
-                action_id=command_id,
+                command_id=command_id,
                 preview=preview,
             )
         return out

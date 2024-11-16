@@ -70,14 +70,14 @@ def duplicate_window(model: WidgetDataModel) -> WidgetDataModel:
 
 
 @ACTIONS.append_from_fn(
-    id="duplicate-with",
-    title="Duplicate with ...",
+    id="view-as",
+    title="View as ...",
     enablement=_ctx.is_active_window_exportable,
     menus=[{"id": MenuId.WINDOW, "group": EDIT_GROUP}],
     need_function_callback=True,
 )
 def duplicate_with(ui: MainWindow, model: WidgetDataModel) -> Parametric:
-    """Duplicate the selected sub-window with a new title."""
+    """View the selected sub-window with other registered widget."""
     from himena.plugins import configure_gui
 
     choices: list[tuple[str, str]] = []

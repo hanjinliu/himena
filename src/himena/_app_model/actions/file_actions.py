@@ -209,6 +209,7 @@ def save_as_using_from_dialog(ui: MainWindow, model: WidgetDataModel) -> Paramet
     keybindings=[
         KeyBindingRule(primary=KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.KeyR))
     ],
+    recording=False,
 )
 def open_recent(ui: MainWindow) -> WidgetDataModel:
     """Open a recent file as a sub-window."""
@@ -223,6 +224,7 @@ def open_recent(ui: MainWindow) -> WidgetDataModel:
         {"id": MenuId.STARTUP, "group": READ_GROUP},
     ],
     keybindings=[StandardKeyBinding.New],
+    recording=False,
 )
 def open_new(ui: MainWindow) -> WidgetDataModel:
     """Open a new file as a sub-window."""

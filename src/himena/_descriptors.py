@@ -53,7 +53,7 @@ class ConverterMethod(MethodDescriptor):
     """Describes that one was converted from another widget data model."""
 
     originals: list[MethodDescriptor]
-    action_id: str
+    command_id: str
     parameters: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -66,7 +66,7 @@ def dict_to_method(data: dict) -> MethodDescriptor:
     if data["type"] == "converter":
         return ConverterMethod(
             originals=[dict_to_method(d) for d in data["originals"]],
-            action_id=data["action_id"],
+            command_id=data["command_id"],
             parameters=data["parameters"],
         )
     raise ValueError(f"Unknown method type: {data['type']}")
@@ -86,7 +86,7 @@ def method_to_dict(method: MethodDescriptor) -> dict:
         return {
             "type": "converter",
             "originals": [method_to_dict(m) for m in method.originals],
-            "action_id": method.action_id,
+            "command_id": method.command_id,
             "parameters": method.parameters,
         }
     raise ValueError(f"Unknown method type: {method}")

@@ -4,6 +4,7 @@ from typing import TypeVar, Callable
 from app_model.types import Action, SubmenuItem
 
 from himena._utils import make_function_callback
+from himena.consts import NO_RECORDING_FIELD
 
 _F = TypeVar("_F", bound=Callable)
 
@@ -14,22 +15,27 @@ class ActionList(list[Action]):
         id: str,
         title: str,
         icon: str | None = None,
+        status_tip: str | None = None,
         menus=None,
         enablement=None,
         keybindings=None,
         need_function_callback: bool = False,
+        recording: bool = True,
     ) -> Callable[[_F], _F]:
         def inner(fn: _F) -> _F:
             if need_function_callback:
                 callback = make_function_callback(fn, id)
             else:
                 callback = fn
+            if not recording:
+                setattr(callback, NO_RECORDING_FIELD, True)
             action = Action(
                 id=id,
                 title=title,
                 icon=icon,
                 callback=callback,
                 tooltip=fn.__doc__,
+                status_tip=status_tip,
                 menus=menus,
                 keybindings=keybindings,
                 enablement=enablement,

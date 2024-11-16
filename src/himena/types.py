@@ -301,24 +301,24 @@ class Parametric(Generic[_T]):
         *,
         auto_close: bool = True,
         sources: list[MethodDescriptor] = [],
-        action_id: str | None = None,
+        command_id: str | None = None,
         preview: bool = False,
     ):
         if isinstance(func, Parametric):
-            if len(sources) > 0 or action_id is not None:
+            if len(sources) > 0 or command_id is not None:
                 raise TypeError(
                     "The first argument must not be a Parametric if sources are given."
                 )
             self._func = func._func
             sources = func.sources
-            action_id = func.action_id
+            command_id = func.command_id
         else:
             self._func = func
         wraps(func)(self)
         self._auto_close = auto_close
         self._preview = preview
         self._sources = list(sources)
-        self._action_id = action_id
+        self._command_id = command_id
 
     def __call__(self, *args, **kwargs) -> WidgetDataModel[_T]:
         return self._func(*args, **kwargs)
@@ -334,8 +334,8 @@ class Parametric(Generic[_T]):
         return self._sources
 
     @property
-    def action_id(self) -> str | None:
-        return self._action_id
+    def command_id(self) -> str | None:
+        return self._command_id
 
     @property
     def preview(self) -> bool:
@@ -345,7 +345,7 @@ class Parametric(Generic[_T]):
     def to_method(self, parameters: dict[str, Any]) -> MethodDescriptor:
         if src := self.sources:
             return ConverterMethod(
-                originals=src, action_id=self.action_id, parameters=parameters
+                originals=src, command_id=self.command_id, parameters=parameters
             )
         return ProgramaticMethod()
 
@@ -359,7 +359,7 @@ class ParametricWidgetTuple(NamedTuple):
 
 
 class BackendInstructions(BaseModel):
-    """Instructions for the backend."""
+    """Instructions for the backend that are only relevant to user interface."""
 
     animate: bool = Field(
         default=True,

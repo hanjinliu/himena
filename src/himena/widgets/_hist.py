@@ -5,7 +5,7 @@ from typing import TypeVar, Generic
 _T = TypeVar("_T")
 
 
-class ActivationHistory(Generic[_T]):
+class HistoryContainer(Generic[_T]):
     def __init__(self, max_size: int = 20):
         self._hist: list[_T] = []
         self._max_size = max_size
@@ -15,7 +15,7 @@ class ActivationHistory(Generic[_T]):
         if len(self._hist) > self._max_size:
             self._hist.pop(0)
 
-    def last(self) -> _T | None:
-        if len(self._hist) > 1:
-            return self._hist[-2]
+    def get_from_last(self, num: int) -> _T | None:
+        if len(self._hist) >= num:
+            return self._hist[-num]
         return None

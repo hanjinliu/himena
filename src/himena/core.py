@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from app_model import Application
 from himena.profile import AppProfile, load_app_profile
 
 if TYPE_CHECKING:
@@ -16,8 +15,9 @@ def new_window(
     app: str = "himena",
 ) -> MainWindow[QtW.QWidget]:
     from himena.qt import MainWindowQt
+    from himena._app_model import get_model_app
 
-    model_app = Application.get_or_create(app)
+    model_app = get_model_app(app)
     plugins = list(plugins)
     if isinstance(profile, str):
         app_prof = load_app_profile(profile)

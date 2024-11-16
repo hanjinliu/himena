@@ -3,14 +3,14 @@ from __future__ import annotations
 from logging import getLogger
 from pathlib import Path
 from typing import Any, Callable, Generic, Iterator, Literal, TypeVar, overload
-from app_model import Application
 from app_model.expressions import create_context
 from psygnal import SignalGroup, Signal
 
-from himena._app_model._context import AppContext
-from himena._descriptors import LocalReaderMethod, ProgramaticMethod
+from himena._app_model import AppContext, HimenaApplication
+from himena._descriptors import ProgramaticMethod
 from himena._open_recent import RecentFileManager, RecentSessionManager
 from himena._utils import import_object
+from himena.consts import NO_RECORDING_FIELD
 from himena.style import Theme
 from himena.types import (
     ClipboardDataModel,
@@ -23,7 +23,7 @@ from himena.types import (
 )
 from himena.session import from_yaml
 from himena.widgets._backend import BackendMainWindow
-from himena.widgets._hist import ActivationHistory
+from himena.widgets._hist import HistoryContainer
 from himena.widgets._widget_list import TabList, TabArea, DockWidgetList
 from himena.widgets._wrapper import ParametricWindow, SubWindow, DockWidget
 
@@ -45,7 +45,7 @@ class MainWindow(Generic[_W]):
     def __init__(
         self,
         backend: BackendMainWindow[_W],
-        app: Application,
+        app: HimenaApplication,
         theme: Theme,
     ) -> None:
         from himena.widgets._initialize import set_current_instance
@@ -56,8 +56,10 @@ class MainWindow(Generic[_W]):
         self._new_widget_behavior = NewWidgetBehavior.WINDOW
         self._model_app = app
         self._instructions = BackendInstructions()
-        self._history_tab = ActivationHistory[int]()
+        self._history_tab = HistoryContainer[int]()
+        self._history_command = HistoryContainer[str](max_size=50)
         set_current_instance(app.name, self)
+        app.commands.executed.connect(self._on_command_execution)
         backend._connect_activation_signal(
             self._tab_activated,
             self._window_activated,
@@ -106,7 +108,7 @@ class MainWindow(Generic[_W]):
         return self._dock_widget_list
 
     @property
-    def model_app(self) -> Application:
+    def model_app(self) -> HimenaApplication:
         """The app-model application instance."""
         return self._model_app
 
@@ -494,33 +496,8 @@ class MainWindow(Generic[_W]):
         ]
         return max(subtype_match, key=lambda x: x[0])[1]
 
-    def _prep_choose_plugin_func(
-        self,
-        model: WidgetDataModel,
-        plugin: str | None = None,
-    ) -> Parametric:
-        from himena.plugins import configure_gui
-
-        widget_classes, _ = self._backend_main_window._list_widget_class(model.type)
-        if len(widget_classes) == 0:
-            raise ValueError(f"No widget class registered for {model.type!r}")
-
-        choices: list[tuple[str, str]] = []
-        for _, cls, _ in widget_classes:
-            name = f"{cls.__module__}.{cls.__name__}"
-            choices.append((f"{cls.__name__}\n({name})", name))
-
-        def choose_a_plugin(plugin_name: str) -> WidgetDataModel:
-            return model.with_open_plugin(
-                plugin_name,
-                method=LocalReaderMethod(path=model.source, plugin=plugin),
-            )
-
-        return configure_gui(
-            choose_a_plugin,
-            plugin_name={
-                "choices": choices,
-                "widget_type": "RadioButtons",
-                "value": choices[0][1],
-            },
-        )
+    def _on_command_execution(self, id: str):
+        if action := self.model_app._registered_actions.get(id):
+            if getattr(action.callback, NO_RECORDING_FIELD, False):
+                return None
+            self._history_command.add(id)

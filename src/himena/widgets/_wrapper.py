@@ -20,6 +20,7 @@ from himena.types import (
     WindowRect,
 )
 from himena._descriptors import (
+    ConverterMethod,
     SaveBehavior,
     SaveToNewPath,
     SaveToPath,
@@ -74,13 +75,18 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
     def update_default_save_path(self, path: str | Path) -> None:
         """Update the save behavior of the widget."""
         self._save_behavior = SaveToPath(path=Path(path), ask_overwrite=True)
-        if hasattr(self.widget, "set_modified"):
-            self.widget.set_modified(False)
+        self._set_modified(False)
         return None
 
     def _update_widget_data_model_method(self, method: MethodDescriptor | None) -> None:
         """Update the method descriptor of the widget."""
         self._widget_data_model_method = method or ProgramaticMethod()
+        return None
+
+    def _set_modified(self, value: bool) -> None:
+        """Set the modified state of the widget."""
+        if hasattr(self.widget, "set_modified"):
+            self.widget.set_modified(value)
         return None
 
 
@@ -310,7 +316,9 @@ class SubWindow(WidgetWrapper[_W]):
         if (
             self.is_modified
             and confirm
-            and not main.exec_confirmation_dialog(f"Close {self.title} without saving?")
+            and not main.exec_confirmation_dialog(
+                f"Close {self.title!r} without saving?"
+            )
         ):
             return None
         i_tab, i_win = self._find_me(main)
@@ -319,7 +327,8 @@ class SubWindow(WidgetWrapper[_W]):
     def _close_all_children(self, main: MainWindow) -> None:
         for child in self._child_windows:
             child._close_all_children(main)
-            child._close_me(main, confirm=False)
+            if child.is_alive:
+                child._close_me(main, confirm=False)
 
     def _close_callback(self):
         main = self._main_window()._himena_main_window
@@ -331,7 +340,7 @@ class ParametricWindow(SubWindow[_W]):
     """Subwindow with a parametric widget inside."""
 
     btn_clicked = Signal(object)  # emit self
-    params_changed = Signal(object)
+    params_changed = Signal(object)  # emit self
 
     def __init__(
         self,
@@ -355,12 +364,18 @@ class ParametricWindow(SubWindow[_W]):
             )
         return params
 
+    def _get_preview_window(self) -> SubWindow[_W] | None:
+        """Return the preview window if it is alive."""
+        if (prev := self._preview_window_ref()) and prev.is_alive:
+            return prev
+        return None
+
     def _widget_callback(self):
         self._callback_with_params(self.get_params())
 
     def _widget_preview_callback(self, widget: ParametricWindow):
         if not widget.is_preview_enabled():
-            if prev := self._preview_window_ref():
+            if prev := self._get_preview_window():
                 self._preview_window_ref = _do_nothing
                 self._child_windows.discard(prev)
                 prev._close_me(self._main_window()._himena_main_window)
@@ -373,7 +388,7 @@ class ParametricWindow(SubWindow[_W]):
             return None
         if not isinstance(return_value, WidgetDataModel):
             raise NotImplementedError("Preview is only supported for WidgetDataModel")
-        if prev := self._preview_window_ref():
+        if prev := self._get_preview_window():
             prev.update_model(return_value)
         else:
             # create a new preview window
@@ -389,7 +404,7 @@ class ParametricWindow(SubWindow[_W]):
     def _callback_with_params(self, kwargs: dict[str, Any]):
         return_value = self._callback(**kwargs)
         if isinstance(return_value, WidgetDataModel):
-            if prev := self._preview_window_ref():
+            if prev := self._get_preview_window():
                 # no need to create a new window
                 self._preview_window_ref = _do_nothing
                 self._child_windows.discard(prev)
@@ -413,6 +428,8 @@ class ParametricWindow(SubWindow[_W]):
             else:
                 new_method = return_value.method
             result_widget._update_widget_data_model_method(new_method)
+            if isinstance(new_method, ConverterMethod):
+                result_widget._set_modified(True)
         elif isinstance(return_value, Parametric):
             result_widget = self._process_parametric_output(return_value)
             _LOGGER.info("Got parametric widget: %r", result_widget)

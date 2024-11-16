@@ -20,7 +20,7 @@ from app_model.expressions import BoolOp
 
 from himena._app_model import AppContext as ctx
 from himena.types import DockArea, DockAreaString
-from himena.consts import MenuId
+from himena.consts import MenuId, NO_RECORDING_FIELD
 from himena import _utils
 
 if TYPE_CHECKING:
@@ -342,6 +342,7 @@ class DockWidgetCallback:
         self._widget_ref: Callable[[], None | DockWidget] = lambda: None
         wraps(func)(self)
         self.__annotations__ = {"ui": "MainWindow"}
+        setattr(self, NO_RECORDING_FIELD, True)  # showing dock widget is not recorded
 
     def __call__(self, ui: MainWindow) -> None:
         if self._singleton:

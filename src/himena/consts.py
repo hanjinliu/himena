@@ -82,3 +82,6 @@ class ActionCategory(StrEnum):
 class ActionGroup(StrEnum):
     RECENT_FILE = "00_recent_files"
     RECENT_SESSION = "21_recent_sessions"
+
+
+NO_RECORDING_FIELD = "__himena_no_recording__"

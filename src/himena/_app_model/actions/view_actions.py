@@ -56,10 +56,11 @@ def close_current_tab(ui: MainWindow) -> None:
     enablement=_ctx.num_tabs > 1,
     menus=[MenuId.VIEW],
     keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.Tab)],
+    recording=False,
 )
 def goto_last_tab(ui: MainWindow) -> None:
     """Go to the last tab."""
-    if (idx := ui._history_tab.last()) is not None:
+    if (idx := ui._history_tab.get_from_last(2)) is not None:
         ui.tabs.current_index = idx
 
 

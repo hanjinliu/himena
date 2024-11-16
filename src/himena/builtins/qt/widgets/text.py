@@ -474,13 +474,11 @@ class QDefaultTextEdit(QtW.QWidget):
                 cursor.setPosition(sel[0])
                 cursor.setPosition(sel[1], QtGui.QTextCursor.MoveMode.KeepAnchor)
                 self._main_text_edit.setTextCursor(cursor)
-        if model.source is None:
-            self._main_text_edit.document().setModified(True)
-        elif lang is None:
-            # set default language
-            lang = find_language_from_path(model.source.name)
-
-        if lang:
+        if lang is None:
+            if src := model.source:
+                # set default language
+                lang = find_language_from_path(src.name)
+        else:
             self._footer._language_combobox.setCurrentText(lang)
             self._footer._emit_language_changed()
         self._footer._tab_spaces_combobox.setCurrentText(str(spaces))
