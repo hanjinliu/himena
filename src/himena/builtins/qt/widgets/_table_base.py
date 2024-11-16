@@ -123,9 +123,13 @@ class QTableBase(QtW.QTableView):
 class QSelectionRangeEdit(QtW.QGroupBox):
     sliceChanged = Signal(object)
 
-    def __init__(self, table: QtW.QTableView, parent: QtW.QWidget | None = None):
+    def __init__(
+        self,
+        table: QtW.QTableView | None = None,
+        parent: QtW.QWidget | None = None,
+    ):
         super().__init__(parent)
-        self._qtable = table
+        self._qtable: QtW.QTableView | None = None
         self.setLayout(QtW.QHBoxLayout())
         self.setContentsMargins(0, 0, 0, 0)
         self.layout().setContentsMargins(0, 0, 0, 0)
@@ -151,10 +155,20 @@ class QSelectionRangeEdit(QtW.QGroupBox):
         layout.addWidget(cbox)
         layout.addWidget(QtW.QLabel(")"))
 
-        self._qtable.selectionModel().selectionChanged.connect(self._selection_changed)
+        if table is not None:
+            self.connect_table(table)
         self.sliceChanged.connect(self._slice_changed)
-        self.setSlice(((0, 1), (0, 1)))
         self.setMaximumWidth(190)
+
+    def connect_table(self, table: QtW.QTableView):
+        if self._qtable is not None:
+            self._qtable.selectionModel().selectionChanged.disconnect(
+                self._selection_changed
+            )
+        self._qtable = table
+        self._qtable.selectionModel().selectionChanged.connect(self._selection_changed)
+        self.setSlice(((0, 1), (0, 1)))
+        self._selection_changed()
 
     def _int_gt(self, s: str, default: int) -> int:
         if s.strip() == "":
@@ -167,6 +181,8 @@ class QSelectionRangeEdit(QtW.QGroupBox):
         return min(int(s), default)
 
     def _selection_changed(self):
+        if self._qtable is None:
+            return
         sel = list(self._qtable.selectionModel().selection())
         if len(sel) == 0:
             return
@@ -178,6 +194,8 @@ class QSelectionRangeEdit(QtW.QGroupBox):
         self.setSlice(((rstart, rstop), (cstart, cstop)))
 
     def _slice_changed(self, sl: tuple[tuple[int, int], tuple[int, int]]):
+        if self._qtable is None:
+            return
         rsl, csl = sl
         rstart, rstop = rsl
         cstart, cstop = csl
@@ -196,6 +214,8 @@ class QSelectionRangeEdit(QtW.QGroupBox):
         return None
 
     def slice(self) -> tuple[tuple[int, int], tuple[int, int]]:
+        if self._qtable is None:
+            return ((0, 1), (0, 1))
         rsl = (
             self._int_gt(self._r_start.text(), 0),
             self._int_lt(self._r_stop.text(), self._qtable.model().rowCount()),

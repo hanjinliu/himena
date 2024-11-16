@@ -16,6 +16,7 @@ from himena.consts import (
 
 if TYPE_CHECKING:
     import numpy as np
+    from openpyxl.worksheet.worksheet import Worksheet
 
 
 def default_text_reader(file_path: Path) -> WidgetDataModel:
@@ -80,13 +81,20 @@ def default_excel_reader(file_path: Path) -> WidgetDataModel:
     """Read Excel file."""
     import openpyxl
 
-    wb = openpyxl.load_workbook(file_path)
+    wb = openpyxl.load_workbook(file_path, data_only=False)
     data = {}
     for sheet in wb.sheetnames:
         ws = wb[sheet]
         sheet_data = []
-        for row in ws.iter_rows(values_only=True):
-            sheet_data.append([str(cell) if cell is not None else "" for cell in row])
+        for row in ws.iter_rows():
+            row_input = []
+            for cell in row:
+                if cell.value is None:
+                    row_input.append("")
+                else:
+                    row_input.append(str(cell.value))
+            sheet_data.append(row_input)
+
         data[sheet] = sheet_data
 
     return WidgetDataModel(
@@ -224,13 +232,24 @@ def default_excel_writer(
 ) -> None:
     """Write Excel file."""
     import openpyxl
-    from openpyxl.worksheet._write_only import WriteOnlyWorksheet
 
-    wb = openpyxl.Workbook(write_only=True)
+    wb = openpyxl.Workbook()
+    if active_sheet := wb.active:
+        wb.remove(active_sheet)
     for sheet_name, table in model.value.items():
-        ws: WriteOnlyWorksheet = wb.create_sheet(sheet_name)
-        for row in table:
-            ws.append(row)
+        ws: Worksheet = wb.create_sheet(sheet_name)
+        for r, row in enumerate(table):
+            for c, cell_str in enumerate(row):
+                if cell_str.startswith("="):
+                    cell_data_type = "f"
+                else:
+                    try:
+                        float(cell_str)
+                        cell_data_type = "n"
+                    except ValueError:
+                        cell_data_type = "s"
+                ws.cell(r + 1, c + 1).value = cell_str
+                ws.cell(r + 1, c + 1).data_type = cell_data_type
     wb.save(path)
     return None
 

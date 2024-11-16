@@ -5,6 +5,8 @@ import sys
 from typing import Callable, Generator, TYPE_CHECKING
 
 from qtpy import QtWidgets as QtW, QtGui, QtCore
+from psygnal import EmitLoopError
+
 from himena.consts import MonospaceFontFamily
 
 if TYPE_CHECKING:
@@ -88,10 +90,18 @@ class QtErrorMessageBox(QtW.QMessageBox):
         return returned
 
     @classmethod
+    def from_exc(cls, e: Exception, parent=None):
+        """Construct message box from a exception."""
+        # unwrap EmitLoopError
+        while isinstance(e, EmitLoopError):
+            e = e.__cause__
+        self = cls(type(e).__name__, e, parent)
+        return self
+
+    @classmethod
     def raise_(cls, e: Exception, parent=None):
         """Raise exception in the message box."""
-        self = cls(type(e).__name__, e, parent)
-        self.exec_()
+        return cls.from_exc(e, parent=parent).exec_()
 
     def _exc_info(self) -> ExcInfo:
         return (

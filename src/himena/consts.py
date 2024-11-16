@@ -51,10 +51,6 @@ class StandardSubtype(SimpleNamespace):
     HTML = "text.html"
     IMAGE = "array.image"
     ARRAY_1D = "array.1d"
-    ARRAY_2D = "array.2d"
-    ARRAY_3D = "array.3d"
-    ARRAY_4D = "array.4d"
-    ARRAY_5D = "array.5d"
 
 
 class MenuId(StrEnum):
@@ -71,7 +67,8 @@ class MenuId(StrEnum):
     VIEW = "view"
     TOOLS = "tools"
     TOOLBAR = "toolbar"
-    RECENT_ALL = ".recent-all"
+    RECENT_ALL = "file/.recent-all"
+    STARTUP = "file/.startup"
 
     def __str__(self) -> str:
         return self.value
@@ -80,3 +77,8 @@ class MenuId(StrEnum):
 class ActionCategory(StrEnum):
     OPEN_RECENT = "open-recent"
     GOTO_WINDOW = "go-to-window"
+
+
+class ActionGroup(StrEnum):
+    RECENT_FILE = "00_recent_files"
+    RECENT_SESSION = "21_recent_sessions"

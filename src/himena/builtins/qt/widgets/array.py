@@ -259,7 +259,7 @@ class QDefaultArrayView(QtW.QWidget):
         )
 
     def model_type(self) -> str:
-        return f"{StandardType.ARRAY}.{self._arr.ndim}d"
+        return StandardType.ARRAY
 
     def is_modified(self) -> bool:
         return False

@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 import sys
+from typing import Callable
+from app_model import Application
+from app_model.types import MenuItem
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt
+
 from himena.qt._qclickable_label import QClickableLabel
 from himena.qt._qsub_window import QSubWindowArea, QSubWindow
-from himena.qt._qrename import QRenameLineEdit
+from himena.qt._qrename import QTabRenameLineEdit
 from himena.qt._utils import get_main_window, build_qmodel_menu
+from himena.consts import ActionGroup, MenuId
 
 
 class QCloseTabToolButton(QtW.QToolButton):
@@ -89,18 +94,12 @@ class QTabWidget(QtW.QTabWidget):
         super().__init__()
         self._tabbar = QTabBar(self)
         self.setTabBar(self._tabbar)
-        self._line_edit = QRenameLineEdit(self)
+        self._line_edit = QTabRenameLineEdit(self)
         self._current_edit_index = None
         self._startup_widget: QStartupWidget | None = None
 
-        @self._line_edit.rename_requested.connect
-        def _(new_name: str):
-            if self._current_edit_index is not None:
-                self.setTabText(self._current_edit_index, new_name)
-
         self.setTabBarAutoHide(False)
         self.currentChanged.connect(self._on_current_changed)
-        self.tabBarDoubleClicked.connect(self._start_editing_tab)
         self.setSizePolicy(
             QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Expanding
         )
@@ -159,20 +158,16 @@ class QTabWidget(QtW.QTabWidget):
     def _add_startup_widget(self):
         self.addTab(self._startup_widget, ".welcome")
         self.setTabBarAutoHide(True)
+        self._startup_widget.rebuild()
 
     def _is_startup_only(self) -> bool:
         return self.count() == 1 and self.widget(0) == self._startup_widget
-
-    def mousePressEvent(self, event: QtGui.QMouseEvent) -> None:
-        self._line_edit.setHidden(True)
-        return super().mousePressEvent(event)
 
     def _on_current_changed(self, index: int) -> None:
         if widget := self.widget_area(index):
             widget._reanchor_windows()
             if len(widget.subWindowList()) > 0:
                 self.newWindowActivated.emit()
-            self._line_edit.setHidden(True)
 
     def _repolish(self) -> None:
         if area := self.current_widget_area():
@@ -180,43 +175,6 @@ class QTabWidget(QtW.QTabWidget):
             cur = area.currentSubWindow()
             for i, win in enumerate(wins):
                 win.set_is_current(win == cur)
-
-    def _tab_rect(self, index: int) -> QtCore.QRect:
-        """Get QRect of the tab at index."""
-        rect = self.tabBar().tabRect(index)
-
-        # NOTE: East/South tab returns wrong value (Bug in Qt?)
-        if self.tabPosition() == QtW.QTabWidget.TabPosition.East:
-            w = self.rect().width() - rect.width()
-            rect.translate(w, 0)
-        elif self.tabPosition() == QtW.QTabWidget.TabPosition.South:
-            h = self.rect().height() - rect.height()
-            rect.translate(0, h)
-
-        return rect
-
-    def _move_line_edit(
-        self,
-        rect: QtCore.QRect,
-        text: str,
-    ) -> QtW.QLineEdit:
-        geometry = self._line_edit.geometry()
-        geometry.setWidth(rect.width())
-        geometry.setHeight(rect.height())
-        geometry.moveCenter(rect.center())
-        geometry.adjust(4, 4, -2, -2)
-        self._line_edit.setGeometry(geometry)
-        self._line_edit.setText(text)
-        self._line_edit.setHidden(False)
-        self._line_edit.setFocus()
-        self._line_edit.selectAll()
-
-    def _start_editing_tab(self, index: int):
-        """Enter edit table name mode."""
-        rect = self._tab_rect(index)
-        self._current_edit_index = index
-        self._move_line_edit(rect, self.tabText(index))
-        return None
 
     def dragEnterEvent(self, e: QtGui.QDragEnterEvent) -> None:
         # This override is necessary for accepting drops from files.
@@ -253,30 +211,88 @@ class QTabWidget(QtW.QTabWidget):
         return self.currentWidget()
 
 
-class QStartupWidget(QtW.QWidget):
+class QStartupWidget(QtW.QScrollArea):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self._app = get_main_window(self).model_app
+        self._to_delete: list[QtW.QWidget] = []
+
         _layout = QtW.QVBoxLayout(self)
         _layout.setContentsMargins(12, 12, 12, 12)
         _layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
 
-        ctrl = "⌘" if sys.platform == "darwin" else "Ctrl"
-        self._open_file_btn = self.make_button("open-file", f"{ctrl}+O")
-        self._open_recent_btn = self.make_button("open-recent", f"{ctrl}+K, {ctrl}+R")
-        self._load_session_btn = self.make_button("load-session", f"{ctrl}+L")
+        _group_top = QtW.QGroupBox("Start")
+        _layout_top = QtW.QVBoxLayout(_group_top)
+        _layout_top.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
+        _layout.addWidget(_group_top)
+        _group_top.setSizePolicy(
+            QtW.QSizePolicy.Policy.MinimumExpanding,
+            QtW.QSizePolicy.Policy.MinimumExpanding,
+        )
 
-        _layout.addWidget(self._open_file_btn)
-        _layout.addWidget(self._open_recent_btn)
-        _layout.addWidget(self._load_session_btn)
+        _widget_bottom = QtW.QWidget()
+        _layout_bottom = QtW.QHBoxLayout(_widget_bottom)
+        _layout_bottom.setContentsMargins(0, 0, 0, 0)
+        _layout.addWidget(_widget_bottom)
+
+        _group_bottom_left = QtW.QGroupBox("Recent Files")
+        self._layout_bottom_left = QtW.QVBoxLayout(_group_bottom_left)
+        self._layout_bottom_left.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
+        _layout_bottom.addWidget(_group_bottom_left)
+
+        _group_bottom_right = QtW.QGroupBox("Recent Sessions")
+        self._layout_bottom_right = QtW.QVBoxLayout(_group_bottom_right)
+        self._layout_bottom_right.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
+        _layout_bottom.addWidget(_group_bottom_right)
+
         self.setMinimumSize(0, 0)
+        self._add_buttons(_layout_top, MenuId.STARTUP)
         return None
 
-    def make_button(self, command_id: str, shortcut: str) -> QClickableLabel:
+    def _make_button(self, command_id: str, app: Application) -> QClickableLabel:
         def callback():
-            get_main_window(self).model_app.commands.execute_command(command_id)
+            app.commands.execute_command(command_id)
 
-        cmd = get_main_window(self).model_app.commands[command_id]
-
-        label = QClickableLabel(f"{cmd.title} ({shortcut})")
+        cmd = app.commands[command_id]
+        if kb := app.keybindings.get_keybinding(command_id):
+            kb_text = kb.keybinding.to_text(sys.platform)
+            text = f"{cmd.title} ({kb_text})"
+        else:
+            text = cmd.title
+        label = QClickableLabel(text)
         label.clicked.connect(callback)
         return label
+
+    def rebuild(self):
+        for btn in self._to_delete:
+            btn.deleteLater()
+        self._to_delete.clear()
+
+        btns_files = self._add_buttons(
+            self._layout_bottom_left, MenuId.FILE_RECENT, self._is_recent_file
+        )
+        btns_sessions = self._add_buttons(
+            self._layout_bottom_right, MenuId.FILE_RECENT, self._is_recent_session
+        )
+        self._to_delete.extend(btns_files)
+        self._to_delete.extend(btns_sessions)
+
+    def _is_recent_file(self, menu: MenuItem) -> bool:
+        return menu.group == ActionGroup.RECENT_FILE
+
+    def _is_recent_session(self, menu: MenuItem) -> bool:
+        return menu.group == ActionGroup.RECENT_SESSION
+
+    def _add_buttons(
+        self,
+        layout: QtW.QVBoxLayout,
+        menu_id: str,
+        filt: Callable[[MenuItem], bool] = lambda x: True,
+    ) -> list[QClickableLabel]:
+        added: list[QClickableLabel] = []
+        for menu in self._app.menus.get_menu(menu_id):
+            if isinstance(menu, MenuItem) and filt(menu):
+                btn = self._make_button(menu.command.id, self._app)
+                layout.addWidget(btn)
+                added.append(btn)
+        return added

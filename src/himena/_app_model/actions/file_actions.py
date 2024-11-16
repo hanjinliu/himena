@@ -50,6 +50,7 @@ def _name_of(f: Callable) -> str:
     menus=[
         {"id": MenuId.FILE, "group": READ_GROUP},
         {"id": MenuId.TOOLBAR, "group": READ_GROUP},
+        {"id": MenuId.STARTUP, "group": READ_GROUP},
     ],
     keybindings=[StandardKeyBinding.Open],
 )
@@ -75,7 +76,10 @@ def open_file_from_dialog(ui: MainWindow) -> list[WidgetDataModel]:
 @ACTIONS.append_from_fn(
     id="open-file-using",
     title="Open File Using ...",
-    menus=[{"id": MenuId.FILE, "group": READ_GROUP}],
+    menus=[
+        {"id": MenuId.FILE, "group": READ_GROUP},
+        {"id": MenuId.STARTUP, "group": READ_GROUP},
+    ],
     keybindings=[
         KeyBindingRule(primary=KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.KeyO))
     ],
@@ -214,7 +218,10 @@ def open_recent(ui: MainWindow) -> WidgetDataModel:
 @ACTIONS.append_from_fn(
     id="new",
     title="New ...",
-    menus=[{"id": MenuId.FILE_NEW, "group": "02_more", "order": 99}],
+    menus=[
+        {"id": MenuId.FILE_NEW, "group": "02_more", "order": 99},
+        {"id": MenuId.STARTUP, "group": READ_GROUP},
+    ],
     keybindings=[StandardKeyBinding.New],
 )
 def open_new(ui: MainWindow) -> WidgetDataModel:
@@ -242,7 +249,10 @@ def paste_from_clipboard(ui: MainWindow) -> WidgetDataModel:
 @ACTIONS.append_from_fn(
     id="load-session",
     title="Load Session ...",
-    menus=[{"id": MenuId.FILE, "group": READ_GROUP}],
+    menus=[
+        {"id": MenuId.FILE, "group": READ_GROUP},
+        {"id": MenuId.STARTUP, "group": READ_GROUP},
+    ],
     keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyL)],
 )
 def load_session_from_dialog(ui: MainWindow) -> None:

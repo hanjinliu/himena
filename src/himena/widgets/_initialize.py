@@ -48,6 +48,8 @@ def init_application(app: Application) -> Application:
 
     app.register_actions(ACTIONS)
     app.menus.append_menu_items(SUBMENUS)
+    _subs = ", ".join(menu.title for _, menu in SUBMENUS)
+    _LOGGER.info(f"Initialized submenus: {_subs}")
 
     app.injection_store.namespace = {
         "MainWindow": MainWindow,

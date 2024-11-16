@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from app_model.types import Action
 from logging import getLogger
 import json
-from himena.consts import MenuId, ActionCategory
+from himena.consts import MenuId, ActionCategory, ActionGroup
 from himena.profile import data_dir
 from datetime import datetime
 
@@ -47,7 +47,7 @@ class RecentFileManager:
         app: Application,
         menu_id: MenuId = MenuId.FILE_RECENT,
         file_name: str = "recent.json",
-        group: str = "00_recent_files",
+        group: str = ActionGroup.RECENT_FILE,
         n_history: int = 60,
         n_history_menu: int = 8,
     ):
@@ -171,12 +171,8 @@ class RecentFileManager:
     def id_title_for_file(self, file: _PathInput) -> tuple[str, str]:
         """Return ID and title for the file."""
         if isinstance(file, Path):
-            id = f"open-{file}"
-            home = Path.home()
-            if file.is_relative_to(home):
-                title = ("~" / file.relative_to(home)).as_posix()
-            else:
-                title = file.as_posix()
+            title = _title_for_file(file)
+            id = f"open-{title}"
         else:
             name = ";".join([f.name for f in file])
             id = f"open-{name}"
@@ -190,7 +186,7 @@ class RecentSessionManager(RecentFileManager):
         return cls(
             app,
             file_name="recent_sessions.json",
-            group="21_recent_sessions",
+            group=ActionGroup.RECENT_SESSION,
             n_history=20,
             n_history_menu=3,
         )
@@ -200,8 +196,9 @@ class RecentSessionManager(RecentFileManager):
 
     def id_title_for_file(self, file: Path) -> tuple[str, str]:
         """Return the ID for the file."""
-        id = f"load-session-{file}"
-        title = f"{file} [Session]"
+        fp = _title_for_file(file)
+        id = f"load-session-{fp}"
+        title = f"{fp} [Session]"
         return id, title
 
 
@@ -210,3 +207,12 @@ def _norm_path_input(each: _PathInput) -> str | list[str]:
         return [p.as_posix() for p in each]
     else:
         return each.as_posix()
+
+
+def _title_for_file(file: Path) -> str:
+    home = Path.home()
+    if file.is_relative_to(home):
+        title = ("~" / file.relative_to(home)).as_posix()
+    else:
+        title = file.as_posix()
+    return title
