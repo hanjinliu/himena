@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Any, Callable
+from logging import getLogger
 from app_model.types import (
     KeyBindingRule,
     KeyCode,
@@ -7,7 +8,7 @@ from app_model.types import (
     KeyChord,
     StandardKeyBinding,
 )
-from himena._descriptors import SaveBehavior
+from himena._descriptors import LocalReaderMethod, SaveBehavior
 from himena.consts import StandardSubtype, MenuId
 from himena.widgets import MainWindow
 from himena import io, _utils
@@ -15,12 +16,12 @@ from himena.types import (
     ClipboardDataModel,
     Parametric,
     WidgetDataModel,
-    ReaderFunction,
 )
 from himena._app_model._context import AppContext as _ctx
 from himena._app_model.actions._registry import ACTIONS, SUBMENUS
 
 _CtrlK = KeyMod.CtrlCmd | KeyCode.KeyK
+_LOGGER = getLogger(__name__)
 
 READ_GROUP = "00_io_read"
 WRITE_GROUP = "01_io_write"
@@ -57,7 +58,7 @@ def open_file_from_dialog(ui: MainWindow) -> list[WidgetDataModel]:
     file_paths = ui.exec_file_dialog(mode="rm")
     if file_paths is None or len(file_paths) == 0:
         return None
-    reader_path_sets: list[tuple[ReaderFunction, Any]] = []
+    reader_path_sets: list[tuple[io.ReaderTuple, Any]] = []
     ins = io.ReaderProviderStore.instance()
     for file_path in file_paths:
         reader_path_sets.append((ins.pick(file_path), file_path))
@@ -65,7 +66,9 @@ def open_file_from_dialog(ui: MainWindow) -> list[WidgetDataModel]:
         _read_and_update_source(reader, file_path)
         for reader, file_path in reader_path_sets
     ]
-    ui._recent_manager.append_recent_files(file_paths)
+    ui._recent_manager.append_recent_files(
+        [(fp, reader.plugin.to_str()) for reader, fp in reader_path_sets]
+    )
     return out
 
 
@@ -73,7 +76,9 @@ def open_file_from_dialog(ui: MainWindow) -> list[WidgetDataModel]:
     id="open-file-using",
     title="Open File Using ...",
     menus=[{"id": MenuId.FILE, "group": READ_GROUP}],
-    need_function_callback=True,
+    keybindings=[
+        KeyBindingRule(primary=KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.KeyO))
+    ],
 )
 def open_file_using_from_dialog(ui: MainWindow) -> Parametric:
     """Open file using selected plugin."""
@@ -82,7 +87,7 @@ def open_file_using_from_dialog(ui: MainWindow) -> Parametric:
     file_path = ui.exec_file_dialog(mode="r")
     if file_path is None:
         return None
-    readers = io.get_readers(file_path)
+    readers = io.ReaderProviderStore.instance().get(file_path)
 
     # prepare reader plugin choices
     choices_reader = [(f"{_name_of(r.reader)}\n({r.plugin.name})", r) for r in readers]
@@ -94,12 +99,15 @@ def open_file_using_from_dialog(ui: MainWindow) -> Parametric:
             "value": choices_reader[0][1],
         }
     )
-    def choose_a_plugin(reader: io.ReaderTuple) -> Parametric:
+    def choose_a_plugin(reader: io.ReaderTuple) -> WidgetDataModel:
+        _LOGGER.info("Reading file %s using %r", file_path, reader)
         model = _read_and_update_source(reader, file_path)
-        ui._recent_manager.append_recent_files([file_path])
-        return ui._prep_choose_plugin_func(model)
+        plugin = reader.plugin.to_str()
+        ui._recent_manager.append_recent_files([(file_path, plugin)])
+        model.method = LocalReaderMethod(path=file_path, plugin=plugin)
+        return model
 
-    return _utils.make_function_callback(choose_a_plugin, command_id="open-file-with")
+    return _utils.make_opener_callback(choose_a_plugin)
 
 
 @ACTIONS.append_from_fn(
@@ -114,8 +122,9 @@ def open_folder_from_dialog(ui: MainWindow) -> WidgetDataModel:
     if file_path is None:
         return None
     ins = io.ReaderProviderStore.instance()
-    out = _read_and_update_source(ins.pick(file_path), file_path)
-    ui._recent_manager.append_recent_files([file_path])
+    reader = ins.pick(file_path)
+    out = _read_and_update_source(reader, file_path)
+    ui._recent_manager.append_recent_files([(file_path, reader.plugin.to_str())])
     return out
 
 

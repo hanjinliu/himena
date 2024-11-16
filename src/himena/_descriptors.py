@@ -36,7 +36,6 @@ class LocalReaderMethod(MethodDescriptor):
         if self.plugin is None:
             raise ValueError("No plugin found.")
 
-        mod_name, func_name = self.plugin.rsplit(".", 1)
         reader_provider = import_object(self.plugin)
         reader = reader_provider(self.path)
         model = reader(self.path)
@@ -45,7 +44,7 @@ class LocalReaderMethod(MethodDescriptor):
         if model.method is None:
             model = model._with_source(
                 source=self.path,
-                plugin=PluginInfo(module=mod_name, name=func_name),
+                plugin=PluginInfo.from_str(self.plugin),
             )
         return model
 

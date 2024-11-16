@@ -84,7 +84,7 @@ def duplicate_with(ui: MainWindow, model: WidgetDataModel) -> Parametric:
     widget_classes, _ = ui._backend_main_window._list_widget_class(model.type)
     for _, cls, _ in widget_classes:
         name = f"{cls.__module__}.{cls.__name__}"
-        choices.append((f"<b>{cls.__name__}</b><br>({name})", name))
+        choices.append((f"{cls.__name__}\n({name})", name))
 
     @configure_gui(
         plugin_name={

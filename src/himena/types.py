@@ -11,7 +11,12 @@ from typing import (
     TYPE_CHECKING,
 )
 from pydantic_compat import BaseModel, Field, field_validator
-from himena._descriptors import MethodDescriptor, LocalReaderMethod, ConverterMethod
+from himena._descriptors import (
+    MethodDescriptor,
+    LocalReaderMethod,
+    ConverterMethod,
+    ProgramaticMethod,
+)
 from himena._enum import StrEnum
 
 if TYPE_CHECKING:
@@ -130,8 +135,16 @@ class WidgetDataModel(GenericModel[_T]):
             to_update.update({"title": source.name})
         return self.model_copy(update=to_update)
 
-    def with_open_plugin(self, open_with: str) -> "WidgetDataModel[_T]":
-        return self.model_copy(update={"force_open_with": open_with})
+    def with_open_plugin(
+        self,
+        open_with: str,
+        *,
+        method: MethodDescriptor | None = None,
+    ) -> "WidgetDataModel[_T]":
+        update = {"force_open_with": open_with}
+        if method is not None:
+            update["method"] = method
+        return self.model_copy(update=update)
 
     @property
     def source(self) -> Path | None:
@@ -329,10 +342,12 @@ class Parametric(Generic[_T]):
         """Whether preview is enabled."""
         return self._preview
 
-    def to_converter_method(self, parameters: dict[str, Any]) -> ConverterMethod:
-        return ConverterMethod(
-            originals=self.sources, action_id=self.action_id, parameters=parameters
-        )
+    def to_method(self, parameters: dict[str, Any]) -> MethodDescriptor:
+        if src := self.sources:
+            return ConverterMethod(
+                originals=src, action_id=self.action_id, parameters=parameters
+            )
+        return ProgramaticMethod()
 
 
 class ParametricWidgetTuple(NamedTuple):

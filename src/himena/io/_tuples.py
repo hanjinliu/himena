@@ -22,6 +22,12 @@ class PluginInfo(NamedTuple):
         """Return the string representation of the plugin."""
         return f"{self.module}.{self.name}"
 
+    @classmethod
+    def from_str(cls, s: str) -> PluginInfo:
+        """Create a PluginInfo from a string."""
+        mod_name, func_name = s.rsplit(".", 1)
+        return PluginInfo(module=mod_name, name=func_name)
+
 
 class ReaderProviderTuple(NamedTuple):
     provider: ReaderProvider

@@ -87,13 +87,13 @@ class QArraySliceView(QTableBase):
         kind = self.model()._dtype.kind
         depth = self.model()._dtype.itemsize
         if kind in "ui":
-            self._update_width(depth * 40)
+            self._update_width(min(depth * 40, 55))
         elif kind == "f":
-            self._update_width(depth * 65)
+            self._update_width(min(depth * 40, 55))
         elif kind == "c":
-            self._update_width(depth * 65 + 24)
+            self._update_width(min(depth * 40 + 8, 55))
         else:
-            self._update_width(depth * 40)
+            self._update_width(55)
 
     def _update_width(self, width: int):
         header = self.horizontalHeader()

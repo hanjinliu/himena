@@ -1,11 +1,9 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import MagicMock
 from qtpy import QtWidgets as QtW
 from himena import MainWindow, anchor
 from himena.consts import StandardSubtype
-from himena.plugins.actions import register_function
-from himena.types import ClipboardDataModel, ParametricWidgetTuple, WidgetDataModel
+from himena.types import ClipboardDataModel, WidgetDataModel
 from himena.qt import register_widget, MainWindowQt
 from himena.builtins.qt import widgets as _qtw
 
@@ -59,6 +57,10 @@ def test_io_commands(ui: MainWindow, tmpdir, sample_dir: Path):
     ui.exec_action("load-session")
     ui.exec_action("save-tab-session")
 
+    response_open = lambda: [sample_dir / "table.csv"]
+    ui._instructions = ui._instructions.updated(file_dialog_response=response_open)
+    ui.exec_action("open-file-using")
+
 def test_window_commands(ui: MainWindowQt, sample_dir: Path):
     ui.exec_action("show-command-palette")
     ui.read_file(sample_dir / "text.txt")
@@ -91,7 +93,6 @@ def test_window_commands(ui: MainWindowQt, sample_dir: Path):
     ui.exec_action("align-window-bottom")
     ui.exec_action("align-window-center")
 
-
     # state
     ui.exec_action("minimize-window")
     ui.exec_action("maximize-window")
@@ -99,6 +100,7 @@ def test_window_commands(ui: MainWindowQt, sample_dir: Path):
     ui.exec_action("toggle-full-screen")
     ui.exec_action("close-window")
     ui.exec_action("show-command-palette")
+    ui.exec_action("new")
 
     ui.read_file(sample_dir / "text.txt")
     assert len(ui.tabs) == 1

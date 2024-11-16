@@ -142,8 +142,15 @@ def make_function_callback(
     return _new_f
 
 
-def make_new_callback(f: _F, action_id: str) -> _F:
-    return make_function_callback(f, action_id, preview=False)
+def make_opener_callback(f: _F) -> _F:
+    @wraps(f)
+    def _new_f(*args, **kwargs):
+        out = f(*args, **kwargs)
+        if not isinstance(out, WidgetDataModel):
+            raise RuntimeError(f"Expected WidgetDataModel, got {out!r}")
+        return out
+
+    return Parametric(_new_f)
 
 
 def import_object(full_name: str) -> Any:

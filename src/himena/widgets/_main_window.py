@@ -8,7 +8,7 @@ from app_model.expressions import create_context
 from psygnal import SignalGroup, Signal
 
 from himena._app_model._context import AppContext
-from himena._descriptors import ProgramaticMethod
+from himena._descriptors import LocalReaderMethod, ProgramaticMethod
 from himena._open_recent import RecentFileManager, RecentSessionManager
 from himena._utils import import_object
 from himena.style import Theme
@@ -318,7 +318,8 @@ class MainWindow(Generic[_W]):
         fp = Path(path)
         session = from_yaml(fp)
         session.to_gui(self)
-        self._recent_session_manager.append_recent_files([fp])
+        # always plugin=None for reading session
+        self._recent_session_manager.append_recent_files([(fp, None)])
         return None
 
     def save_session(self, path: str | Path) -> None:
@@ -465,7 +466,7 @@ class MainWindow(Generic[_W]):
             return None
         if len(tab) <= i_win:
             return back._update_control_widget(None)
-        _LOGGER.info("Window activated: %r-th window in %r-th tab", i_win, i_tab)
+        _LOGGER.debug("Window activated: %r-th window in %r-th tab", i_win, i_tab)
         win = tab[i_win]
         back._update_control_widget(win.widget)
         self.events.window_activated.emit(win)
@@ -496,6 +497,7 @@ class MainWindow(Generic[_W]):
     def _prep_choose_plugin_func(
         self,
         model: WidgetDataModel,
+        plugin: str | None = None,
     ) -> Parametric:
         from himena.plugins import configure_gui
 
@@ -509,7 +511,10 @@ class MainWindow(Generic[_W]):
             choices.append((f"{cls.__name__}\n({name})", name))
 
         def choose_a_plugin(plugin_name: str) -> WidgetDataModel:
-            return model.with_open_plugin(plugin_name)
+            return model.with_open_plugin(
+                plugin_name,
+                method=LocalReaderMethod(path=model.source, plugin=plugin),
+            )
 
         return configure_gui(
             choose_a_plugin,

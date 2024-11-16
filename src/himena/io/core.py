@@ -9,6 +9,7 @@ from himena.io._tuples import (
     WriterProviderTuple,
     ReaderTuple,
     WriterTuple,
+    PluginInfo,
 )
 from himena.types import WidgetDataModel
 
@@ -112,8 +113,9 @@ def _pick_from_list(choices: list[_T], plugin: str | None) -> _T:
     if plugin is None:
         out = _pick_by_priority(choices)
     else:
+        plugin_info = PluginInfo.from_str(plugin)
         for each in choices:
-            if each.plugin == plugin:
+            if each.plugin == plugin_info:
                 out = each
                 break
         else:

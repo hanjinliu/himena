@@ -326,7 +326,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         model = reader.read(fp)._with_source(source=fp, plugin=reader.plugin)
         out = self.add_data_model(model)
         main = self._main_window()._himena_main_window
-        main._recent_manager.append_recent_files([fp])
+        main._recent_manager.append_recent_files([(fp, reader.plugin.to_str())])
         return out
 
     def save_session(self, file_path: str | Path) -> None:
