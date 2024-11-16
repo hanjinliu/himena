@@ -15,7 +15,17 @@ class HistoryContainer(Generic[_T]):
         if len(self._hist) > self._max_size:
             self._hist.pop(0)
 
+    def get(self, num: int) -> _T | None:
+        """Get the item at the given index if exists."""
+        if len(self._hist) > num:
+            return self._hist[num]
+        return None
+
     def get_from_last(self, num: int) -> _T | None:
+        """Get the item at the given index from the last if exists."""
         if len(self._hist) >= num:
             return self._hist[-num]
         return None
+
+    def count(self) -> int:
+        return len(self._hist)
