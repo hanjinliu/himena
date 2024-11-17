@@ -126,7 +126,7 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     def _show_command_palette(self, kind: str) -> None:
         raise NotImplementedError
 
-    def _exit_main_window(self) -> None:
+    def _exit_main_window(self, confirm: bool = False) -> None:
         raise NotImplementedError
 
     def _get_widget_list(self, i_tab: int) -> list[tuple[str, _W]]:

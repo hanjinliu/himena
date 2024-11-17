@@ -419,7 +419,7 @@ class MainWindow(Generic[_W]):
 
     def close(self) -> None:
         """Close the main window."""
-        self._backend_main_window._exit_main_window()
+        self._backend_main_window._exit_main_window(confirm=False)
         return None
 
     @property

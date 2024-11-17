@@ -284,7 +284,7 @@ def save_tab_session_from_dialog(ui: MainWindow) -> None:
 )
 def quit_main_window(ui: MainWindow) -> None:
     """Quit the application."""
-    ui._backend_main_window._exit_main_window()
+    ui._backend_main_window._exit_main_window(confirm=True)
 
 
 @ACTIONS.append_from_fn(

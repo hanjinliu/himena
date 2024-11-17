@@ -112,6 +112,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self._goto_widget = QGotoWidget(self)
 
         self._anim_subwindow = QtCore.QPropertyAnimation()
+        self._confirm_close = True
         self.setMinimumSize(400, 300)
         self.resize(800, 600)
 
@@ -248,6 +249,20 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             self.resize(min(size.width(), minw), min(size.height(), minh))
         return None
 
+    def close(self):
+        """Close the main window."""
+        return super().close()
+
+    def closeEvent(self, event: QtGui.QCloseEvent) -> None:
+        if (
+            event.spontaneous()
+            and self._confirm_close
+            and not self._check_modified_files()
+        ):
+            event.ignore()
+            return
+        return super().closeEvent(event)
+
     def event(self, e: QtCore.QEvent) -> bool:
         if e.type() in {
             QtCore.QEvent.Type.WindowActivate,
@@ -262,6 +277,14 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             widgets.remove_instance(self._app_name, self._himena_main_window)
 
         return res
+
+    def _check_modified_files(self) -> bool:
+        ui = self._himena_main_window
+        if any(win.is_modified for win in ui.iter_windows()):
+            return ui.exec_confirmation_dialog(
+                "There are unsaved changes. Exit anyway?"
+            )
+        return True
 
     def _update_context(self) -> None:
         _time_0 = timer()
@@ -410,8 +433,10 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         else:
             raise NotImplementedError
 
-    def _exit_main_window(self) -> None:
-        self.close()
+    def _exit_main_window(self, confirm: bool = False) -> None:
+        if confirm and not self._check_modified_files():
+            return None
+        return self.close()
 
     def _get_tab_name_list(self) -> list[str]:
         if self._tab_widget._is_startup_only():
