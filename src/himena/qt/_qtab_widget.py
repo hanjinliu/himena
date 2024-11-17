@@ -225,10 +225,6 @@ class QStartupWidget(QtW.QScrollArea):
         _layout_top = QtW.QVBoxLayout(_group_top)
         _layout_top.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
         _layout.addWidget(_group_top)
-        _group_top.setSizePolicy(
-            QtW.QSizePolicy.Policy.MinimumExpanding,
-            QtW.QSizePolicy.Policy.MinimumExpanding,
-        )
 
         _widget_bottom = QtW.QWidget()
         _layout_bottom = QtW.QHBoxLayout(_widget_bottom)
@@ -246,6 +242,10 @@ class QStartupWidget(QtW.QScrollArea):
         _layout_bottom.addWidget(_group_bottom_right)
 
         self.setMinimumSize(0, 0)
+        # top:bottm = 1:2
+        _layout.setStretch(0, 1)
+        _layout.setStretch(1, 2)
+
         self._add_buttons(_layout_top, MenuId.STARTUP)
         return None
 

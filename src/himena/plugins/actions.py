@@ -103,16 +103,7 @@ def register_function(
     command_id : str, optional
         Command ID. If not given, the function qualname will be used.
     """
-    if types is not None:
-        if enablement is not None:
-            raise TypeError("Cannot give both `types` and `enablement`.")
-        elif isinstance(types, Sequence) and not isinstance(types, str):
-            enablement = reduce(
-                operator.or_,
-                [ctx.active_window_model_type == t for t in types],
-            )
-        else:
-            enablement = ctx.active_window_model_type == types
+    category, enablement = _norm_category_enablement(types, enablement)
     kbs = _normalize_keybindings(keybindings)
 
     def _inner(f: _F) -> _F:
@@ -135,12 +126,37 @@ def register_function(
             callback=_utils.make_function_callback(f, command_id=_id, preview=preview),
             menus=_norm_menus(menus),
             enablement=_enablement,
+            category=category,
+            group=None,
             keybindings=kbs,
         )
         _ACTIONS[_id] = action
         return f
 
     return _inner if func is None else _inner(func)
+
+
+def _norm_category_enablement(
+    types: str | Sequence[str] | None,
+    enablement: BoolOp | None,
+) -> tuple[str | None, BoolOp | None]:
+    if types is not None:
+        if isinstance(types, Sequence) and not isinstance(types, str):
+            type_enablement = reduce(
+                operator.or_,
+                [ctx.active_window_model_type == t for t in types],
+            )
+            category = f"model_type:{'|'.join(types)}"
+        else:
+            type_enablement = ctx.active_window_model_type == types
+            category = f"model_type:{types}"
+        if enablement is None:
+            enablement = type_enablement
+        else:
+            enablement = enablement & type_enablement
+    else:
+        category = None
+    return category, enablement
 
 
 @overload

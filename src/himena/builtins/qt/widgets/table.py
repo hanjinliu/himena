@@ -20,7 +20,7 @@ class QDefaultTableWidget(QtW.QTableWidget, QTableBase):
         def _():
             self._modified = True
 
-    def update_model(self, model: WidgetDataModel):
+    def update_model(self, model: WidgetDataModel[list[list[Any]]]) -> None:
         import numpy as np
 
         table = np.asarray(model.value, dtype=str)

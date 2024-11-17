@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from app_model.types import Action
 from logging import getLogger
 import json
-from himena.consts import MenuId, ActionCategory, ActionGroup
+from himena.consts import MenuId, ActionCategory, ActionGroup, NO_RECORDING_FIELD
 from himena.profile import data_dir
 from datetime import datetime
 
@@ -22,6 +22,7 @@ class OpenRecentFunction:
     def __init__(self, file: _PathInput, plugin: str | None = None):
         self._file = file
         self._plugin = plugin
+        setattr(self, NO_RECORDING_FIELD, True)  # don't record "open" command
 
     def __call__(self, ui: MainWindow):
         ui.read_file(self._file, plugin=self._plugin)

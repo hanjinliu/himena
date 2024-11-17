@@ -161,3 +161,17 @@ def import_object(full_name: str) -> Any:
     mod = importlib.import_module(mod_name)
     obj = getattr(mod, func_name)
     return obj
+
+
+def add_title_suffix(title: str) -> str:
+    """Add [n] suffix to the title."""
+    if (
+        (last_part := title.rsplit(" ", 1)[-1]).startswith("[")
+        and last_part.endswith("]")
+        and last_part[1:-1].isdigit()
+    ):
+        nth = int(last_part[1:-1])
+        title = title.rsplit(" ", 1)[0] + f" [{nth + 1}]"
+    else:
+        title = title + " [1]"
+    return title

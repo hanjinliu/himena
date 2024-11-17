@@ -74,15 +74,23 @@ class WidgetDataModel(GenericModel[_T]):
     ----------
     value : Any
         Internal value.
-    source : Path, optional
-        Path of the source file if exists.
     type : str, optional
         Type of the internal data. Type hierarchy is separated by dots. For example,
         "text.plain" is a subtype of "text".
     title : str, optional
-        Title for the widget.
+        Title for the widget. If not given, the title will be generated from the source
+        path when this model is added to the GUI.
+    extension_default : str, optional
+        Default file extension for saving. This is used when the user saves the data
+        without specifying the file extension.
     extensions : list[str], optional
         List of allowed file extensions to save this data.
+    additional_data : Any, optional
+        Additional data that may be used for specific widgets.
+    method : MethodDescriptor, optional
+        Method descriptor.
+    force_open_with : str, optional
+        Force open with a specific plugin if given.
     """
 
     value: _T = Field(..., description="Internal value.")

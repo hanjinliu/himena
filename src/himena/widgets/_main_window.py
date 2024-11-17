@@ -56,8 +56,8 @@ class MainWindow(Generic[_W]):
         self._new_widget_behavior = NewWidgetBehavior.WINDOW
         self._model_app = app
         self._instructions = BackendInstructions()
-        self._history_tab = HistoryContainer[int]()
-        self._history_command = HistoryContainer[str](max_size=50)
+        self._history_tab = HistoryContainer[int](max_size=20)
+        self._history_command = HistoryContainer[str](max_size=200)
         set_current_instance(app.name, self)
         app.commands.executed.connect(self._on_command_execution)
         backend._connect_activation_signal(

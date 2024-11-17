@@ -1,6 +1,5 @@
 from typing import Literal
-import importlib
-from himena.plugins import register_function
+from himena.plugins import register_function, configure_gui
 from himena.types import Parametric, WidgetDataModel
 from himena.model_meta import TextMeta
 from himena.consts import StandardType
@@ -82,22 +81,60 @@ def table_to_text(model: WidgetDataModel) -> Parametric[str]:
 def table_to_dataframe(model: WidgetDataModel) -> Parametric[str]:
     """Convert a table data into a DataFrame."""
     from io import StringIO
+    from himena._data_wrappers import list_installed_dataframe_packages, read_csv
 
-    def convert_table_to_dataframe(
-        module: Literal["pandas", "polars"] = "pandas",
-    ) -> WidgetDataModel[str]:
-        mod = importlib.import_module(module)
+    pkgs = list_installed_dataframe_packages()
+    if len(pkgs) == 0:
+        raise ValueError(
+            "No DataFrame package is installed. Please install one of the following "
+            "packages: `pandas`, `polars`, `pyarrow`."
+        )
+
+    @configure_gui(module={"choices": pkgs})
+    def convert_table_to_dataframe(module) -> WidgetDataModel[str]:
         csv = "\n".join(",".join(row) for row in model.value)
         buf = StringIO(csv)
-        df = mod.read_csv(buf)
+        df = read_csv(module, buf)
         return WidgetDataModel(
             value=df,
             title=f"{model.title} (as dataframe)",
             type=StandardType.DATAFRAME,
+            extension_default=".csv",
         )
 
     return convert_table_to_dataframe
 
 
-# TODO: table_to_array_2d
-# TODO: table_to_image
+@register_function(
+    title="Convert table to array ...",
+    types=StandardType.TABLE,
+    menus=["tools/table"],
+    command_id="builtins:table-to-array",
+)
+def table_to_array(model: WidgetDataModel) -> WidgetDataModel:
+    """Convert a table data into an array."""
+    import numpy as np
+
+    arr_str = np.array(model.value)
+
+    def _try_astype(arr_str: np.ndarray, dtype) -> tuple[np.ndarray, bool]:
+        try:
+            arr = arr_str.astype(dtype)
+            ok = True
+        except ValueError:
+            arr = arr_str
+            ok = False
+        return arr, ok
+
+    arr, ok = _try_astype(arr_str, int)
+    if not ok:
+        arr, ok = _try_astype(arr_str, float)
+    if not ok:
+        arr = _try_astype(arr_str, complex)
+
+    return WidgetDataModel(
+        value=arr,
+        type=StandardType.ARRAY,
+        title=model.title,
+        extension_default=".npy",
+    )

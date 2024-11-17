@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Callable, Any
 from qtpy import QtWidgets as QtW
-from qtpy import QtCore
+from qtpy import QtCore, QtGui
 from qtpy.QtCore import Qt, Signal
 from himena.model_meta import TableMeta
 from himena.qt._qfinderwidget import QTableFinderWidget
@@ -61,12 +61,25 @@ def format_table_value(value: Any, fmt: str) -> str:
     return _DEFAULT_FORMATTERS.get(fmt, str)(value)
 
 
+class QItemDelegate(QtW.QStyledItemDelegate):
+    def createEditor(
+        self,
+        parent: QtW.QWidget,
+        option,
+        index: QtCore.QModelIndex,
+    ) -> QTableEditor:
+        editor = QTableEditor(parent)
+        editor.setText(index.data())
+        return editor
+
+
 class QTableBase(QtW.QTableView):
     def __init__(self):
         super().__init__()
         self.horizontalHeader().setFixedHeight(18)
         self.verticalHeader().setDefaultSectionSize(22)
         self.horizontalHeader().setDefaultSectionSize(75)
+        self.setItemDelegate(QItemDelegate())
         self._finder_widget: QTableFinderWidget | None = None
 
         # scroll by pixel
@@ -118,6 +131,22 @@ class QTableBase(QtW.QTableView):
             current_position=(index.row(), index.column()),
             selections=selections,
         )
+
+
+class QTableEditor(QtW.QLineEdit):
+    def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
+        """Handle key press events."""
+        pos = self.cursorPosition()
+        nchar = len(self.text())
+        if event.key() == Qt.Key.Key_Left and pos == 0:
+            self.parentWidget().setFocus()
+            self.parentWidget().keyPressEvent(event)
+            return None
+        elif event.key() == Qt.Key.Key_Right and pos == nchar:
+            self.parentWidget().setFocus()
+            self.parentWidget().keyPressEvent(event)
+            return None
+        return super().keyPressEvent(event)
 
 
 class QSelectionRangeEdit(QtW.QGroupBox):

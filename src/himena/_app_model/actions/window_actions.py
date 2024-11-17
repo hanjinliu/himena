@@ -11,7 +11,7 @@ from himena.widgets import MainWindow
 from himena.types import ClipboardDataModel, Parametric, WindowState, WidgetDataModel
 from himena._app_model._context import AppContext as _ctx
 from himena._app_model.actions._registry import ACTIONS, SUBMENUS
-
+from himena import _utils
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -57,15 +57,7 @@ def close_current_window(ui: MainWindow) -> None:
 def duplicate_window(model: WidgetDataModel) -> WidgetDataModel:
     """Duplicate the selected sub-window."""
     if model.title is not None:
-        if (
-            (last_part := model.title.rsplit(" ", 1)[-1]).startswith("[")
-            and last_part.endswith("]")
-            and last_part[1:-1].isdigit()
-        ):
-            nth = int(last_part[1:-1])
-            model.title = model.title.rsplit(" ", 1)[0] + f" [{nth + 1}]"
-        else:
-            model.title = model.title + " [1]"
+        model.title = _utils.add_title_suffix(model.title)
     return model
 
 
@@ -76,8 +68,8 @@ def duplicate_window(model: WidgetDataModel) -> WidgetDataModel:
     menus=[{"id": MenuId.WINDOW, "group": EDIT_GROUP}],
     need_function_callback=True,
 )
-def duplicate_with(ui: MainWindow, model: WidgetDataModel) -> Parametric:
-    """View the selected sub-window with other registered widget."""
+def view_as(ui: MainWindow, model: WidgetDataModel) -> Parametric:
+    """Open the selected sub-window with other registered widget."""
     from himena.plugins import configure_gui
 
     choices: list[tuple[str, str]] = []

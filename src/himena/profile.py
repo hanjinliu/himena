@@ -45,6 +45,7 @@ def _default_plugins() -> list[str]:
         if path.name == "__pycache__":
             continue
         out.append(f"himena.builtins.qt.{path.name}")
+    out.append("himena.builtins.tools")
     for path in _builtins_dir.glob("*.py"):
         out.append(f"himena.builtins.{path.stem}")
     return out

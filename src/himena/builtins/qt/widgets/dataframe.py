@@ -151,7 +151,7 @@ class QDataFrameView(QTableBase):
         qsel = next(iter(qselections))
         r0, r1 = qsel.left(), qsel.right() + 1
         c0, c1 = qsel.top(), qsel.bottom() + 1
-        csv_text = self.model().df.to_csv_string(r0, r1, c0, c1)
+        csv_text = self.model().df.get_subset(r0, r1, c0, c1).to_csv_string("\t")
         clipboard = QtGui.QGuiApplication.clipboard()
         clipboard.setText(csv_text)
 

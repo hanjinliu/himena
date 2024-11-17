@@ -10,7 +10,7 @@ from app_model.types import (
 )
 from himena._descriptors import LocalReaderMethod, SaveBehavior
 from himena.consts import StandardSubtype, MenuId
-from himena.widgets import MainWindow
+from himena.widgets import MainWindow, SubWindow
 from himena import io, _utils
 from himena.types import (
     ClipboardDataModel,
@@ -143,11 +143,11 @@ def open_folder_from_dialog(ui: MainWindow) -> WidgetDataModel:
     keybindings=[StandardKeyBinding.Save],
     enablement=_ctx.is_active_window_exportable,
 )
-def save_from_dialog(ui: MainWindow) -> None:
+def save_from_dialog(ui: MainWindow, sub_win: SubWindow) -> None:
     """Save (overwrite) the current sub-window as a file."""
-    fd, sub_win = ui._provide_file_output()
-    if save_path := sub_win.save_behavior.get_save_path(ui, fd):
-        io.WriterProviderStore.instance().run(fd, save_path)
+    model = sub_win.to_model()
+    if save_path := sub_win.save_behavior.get_save_path(ui, model):
+        io.WriterProviderStore.instance().run(model, save_path)
         sub_win.update_default_save_path(save_path)
     return None
 
@@ -160,11 +160,11 @@ def save_from_dialog(ui: MainWindow) -> None:
     keybindings=[StandardKeyBinding.SaveAs],
     enablement=_ctx.is_active_window_exportable,
 )
-def save_as_from_dialog(ui: MainWindow) -> None:
+def save_as_from_dialog(ui: MainWindow, sub_win: SubWindow) -> None:
     """Save the current sub-window as a new file."""
-    fd, sub_win = ui._provide_file_output()
-    if save_path := SaveBehavior().get_save_path(ui, fd):
-        io.WriterProviderStore.instance().run(fd, save_path)
+    model = sub_win.to_model()
+    if save_path := SaveBehavior().get_save_path(ui, model):
+        io.WriterProviderStore.instance().run(model, save_path)
         sub_win.update_default_save_path(save_path)
     return None
 
@@ -176,10 +176,11 @@ def save_as_from_dialog(ui: MainWindow) -> None:
     need_function_callback=True,
     enablement=_ctx.is_active_window_exportable,
 )
-def save_as_using_from_dialog(ui: MainWindow, model: WidgetDataModel) -> Parametric:
+def save_as_using_from_dialog(ui: MainWindow, sub_win: SubWindow) -> Parametric:
     """Save the current sub-window using selected plugin."""
     from himena.plugins import configure_gui
 
+    model = sub_win.to_model()
     writers = io.WriterProviderStore().instance().get(model)
 
     # prepare reader plugin choices
@@ -193,10 +194,11 @@ def save_as_using_from_dialog(ui: MainWindow, model: WidgetDataModel) -> Paramet
         }
     )
     def choose_a_plugin(writer: io.WriterTuple) -> None:
-        file_path = ui.exec_file_dialog(mode="w")
-        if file_path is None:
+        save_path = ui.exec_file_dialog(mode="w")
+        if save_path is None:
             return None
-        writer.write(model, file_path)
+        writer.write(model, save_path)
+        sub_win.update_default_save_path(save_path)
         return None
 
     return choose_a_plugin
@@ -307,6 +309,7 @@ def save_tab_session_from_dialog(ui: MainWindow) -> None:
     title="Quit",
     menus=[{"id": MenuId.FILE, "group": EXIT_GROUP}],
     keybindings=[StandardKeyBinding.Quit],
+    recording=False,
 )
 def quit_main_window(ui: MainWindow) -> None:
     """Quit the application."""

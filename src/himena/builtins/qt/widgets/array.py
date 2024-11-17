@@ -28,6 +28,7 @@ class QArrayModel(QtCore.QAbstractTableModel):
 
         super().__init__(parent)
         self._arr_slice = arr  # 2D
+        self._slice: tuple[int, ...] = ()
         if arr.ndim != 2:
             raise ValueError("Only 2D array is supported.")
         if arr.dtype.names is not None:
@@ -50,6 +51,10 @@ class QArrayModel(QtCore.QAbstractTableModel):
             return QtCore.QVariant()
         if role == Qt.ItemDataRole.TextAlignmentRole:
             return Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+        if role == Qt.ItemDataRole.ToolTipRole:
+            r, c = index.row(), index.column()
+            array_indices = ", ".join(str(i) for i in self._slice + (r, c))
+            return f"A[{array_indices}] = {self._arr_slice[r, c]}"
         if role != Qt.ItemDataRole.DisplayRole:
             return QtCore.QVariant()
         r, c = index.row(), index.column()
@@ -102,10 +107,11 @@ class QArraySliceView(QTableBase):
         for i in range(header.count()):
             header.resizeSection(i, width)
 
-    def set_array(self, arr: np.ndarray):
+    def set_array(self, arr: np.ndarray, slice_):
         if arr.ndim != 2:
             raise ValueError("Only 2D array is supported.")
         self.model()._arr_slice = arr
+        self.model()._slice = slice_
         self.update()
 
     def keyPressEvent(self, e: QtGui.QKeyEvent) -> None:
@@ -219,7 +225,7 @@ class QDefaultArrayView(QtW.QWidget):
             return
         sl = self._get_slice()
         arr = self._arr.get_slice(sl)
-        self._table.set_array(arr)
+        self._table.set_array(arr, sl)
 
     def _get_slice(self) -> tuple[int, ...]:
         return tuple(sb.value() for sb in self._spinboxes)

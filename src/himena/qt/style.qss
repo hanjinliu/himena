@@ -537,3 +537,14 @@ QIntLineEdit#TableIndex {
 _QHistogram {
     border: 1px solid #[foreground_dim];
 }
+
+QToolButton#QCommandHistory-RunButton {
+    background-color: transparent;
+    margin: 0px;
+}
+
+QToolButton#QCommandHistory-RunButton:hover {
+    background-color: transparent;
+    margin: 0px;
+    padding: 1px;
+}
