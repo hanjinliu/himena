@@ -3,9 +3,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
-from superqt import QLabeledSlider
+from superqt import QLabeledSlider, QLabeledDoubleRangeSlider
 from himena.consts import StandardType
 from himena.model_meta import ImageMeta
+from himena.qt._utils import qsignal_blocker
 from himena.types import WidgetDataModel
 from himena._data_wrappers import ArrayWrapper, wrap_array
 from himena.qt._magicgui._toggle_switch import QLabeledToggleSwitch
@@ -78,31 +79,49 @@ class QDefaultImageView(QtW.QWidget):
 
         self._control = QImageViewControl()
         self._control.interpolation_changed.connect(self._interpolation_changed)
+        self._control.clim_changed.connect(self._clim_changed)
+        self._control.auto_contrast_requested.connect(self._auto_contrast)
         self._arr: ArrayWrapper | None = None
+        self._clim: tuple[float, float] = (0, 255)
+        self._minmax: tuple[float, float] = (0, 255)
 
     def update_model(self, model: WidgetDataModel):
         arr = wrap_array(model.value)
-        ndim = arr.ndim - 2
-        if arr.shape[-1] in (3, 4) and ndim > 0:
-            ndim -= 1
+        ndim_rem = arr.ndim - 2
+        if arr.shape[-1] in (3, 4) and ndim_rem > 0:
+            ndim_rem -= 1
 
-        sl_0 = (0,) * ndim
-        self._image_label.set_array(self.as_image_array(arr.get_slice(sl_0)))
+        sl_0 = (0,) * ndim_rem
+        img_slice = arr.get_slice(sl_0)
+        if img_slice.dtype.kind == "c":
+            img_slice = np.abs(img_slice)  # complex to float
+
+        # guess clim
+        self._minmax = self._clim = _guess_clim(arr, img_slice)
+        with qsignal_blocker(self._control._clim_slider):
+            self._control._clim_slider.setRange(*self._minmax)
+            self._control._clim_slider.setValue(self._clim)
+        self._image_label.set_array(self.as_image_array(img_slice, self._clim))
 
         nsliders = len(self._sliders)
-        if nsliders > ndim:
-            for i in range(ndim, nsliders):
+        if nsliders > ndim_rem:
+            for i in range(ndim_rem, nsliders):
                 slider = self._sliders.pop()
                 self.layout().removeWidget(slider)
                 slider.deleteLater()
-        elif nsliders < ndim:
-            for i in range(nsliders, ndim):
+        elif nsliders < ndim_rem:
+            for i in range(nsliders, ndim_rem):
                 self._make_slider(arr.shape[i])
         # update axis names
         for aname, slider in zip(arr.axis_names(), self._sliders):
             slider._label.setText(aname)
         self._arr = arr
-        self._slider_changed()
+
+        self._slider_changed(img_slice=img_slice)
+        if img_slice.dtype.kind in "cf":
+            self._control._clim_slider.setDecimals(2)
+        else:
+            self._control._clim_slider.setDecimals(0)
 
     def to_model(self) -> WidgetDataModel[NDArray[np.uint8]]:
         assert self._arr is not None
@@ -111,13 +130,15 @@ class QDefaultImageView(QtW.QWidget):
             interp = "linear"
         else:
             interp = "nearest"
+        clim = self._clim
         return WidgetDataModel(
             value=self._arr.arr,
             type=self.model_type(),
             extension_default=".png",
             additional_data=ImageMeta(
-                current_indices=[sl.value() for sl in self._sliders],
+                current_indices=[sl._slider.value() for sl in self._sliders],
                 interpolation=interp,
+                contrast_limits=clim,
             ),
         )
 
@@ -133,34 +154,38 @@ class QDefaultImageView(QtW.QWidget):
     def control_widget(self) -> QtW.QWidget:
         return self._control
 
-    def as_image_array(self, arr: np.ndarray) -> NDArray[np.uint8]:
+    def as_image_array(
+        self,
+        arr: NDArray[np.number],
+        clim: tuple[float, float],
+    ) -> NDArray[np.uint8]:
         import numpy as np
 
-        if arr.dtype == "uint8":
-            arr0 = arr
-        elif arr.dtype == "uint16":
-            arr0 = (arr / 256).astype("uint8")
-        elif arr.dtype.kind == "f":
-            min_ = arr.min()
-            max_ = arr.max()
-            if min_ < max_:
-                arr0 = ((arr - min_) / (max_ - min_) * 255).astype("uint8")
-            else:
-                arr0 = np.zeros(arr.shape, dtype=np.uint8)
+        cmin, cmax = clim
+        if arr.dtype.kind == "b":
+            arr_normed = np.where(arr, np.uint8(255), np.uint8(0))
+        elif cmax > cmin:
+            arr_normed = (
+                ((arr - cmin) / (cmax - cmin) * 255).clip(0, 255).astype(np.uint8)
+            )
         else:
-            raise ValueError(f"Unsupported data type: {arr.dtype}")
-        out = np.ascontiguousarray(arr0)
-        if out.dtype.kind == "c":
-            out = np.abs(out)
+            arr_normed = np.zeros(arr.shape, dtype=np.uint8)
+
+        out = np.ascontiguousarray(arr_normed)
         return out
 
-    def _slider_changed(self):
+    def _slider_changed(self, *, img_slice=None):
+        # `image_slice` given only when it is available (for performance)
         if self._arr is None:
             return
+        if img_slice is None:
+            img_slice = self._current_image_slice()
+        self._image_label.set_array(self.as_image_array(img_slice, self._clim))
+        self._control._histogram.set_hist_for_array(img_slice, self._clim, self._minmax)
+
+    def _current_image_slice(self) -> NDArray[np.number]:
         sl = tuple(sl._slider.value() for sl in self._sliders)
-        img_slice = self._arr.get_slice(sl)
-        self._image_label.set_array(self.as_image_array(img_slice))
-        self._control._histogram.set_hist_for_array(img_slice)
+        return self._arr.get_slice(sl)
 
     def _interpolation_changed(self, checked: bool):
         if checked:
@@ -169,6 +194,21 @@ class QDefaultImageView(QtW.QWidget):
             tr = QtCore.Qt.TransformationMode.FastTransformation
         self._image_label._transformation = tr
         self._image_label._update_pixmap()
+
+    def _clim_changed(self, clim: tuple[float, float]):
+        self._clim = clim
+        self._slider_changed()
+
+    def _auto_contrast(self):
+        if self._arr is None:
+            return
+        img_slice = self._current_image_slice()
+        min_, max_ = img_slice.min(), img_slice.max()
+        self._clim = min_, max_
+        with qsignal_blocker(self._control._clim_slider):
+            self._control._clim_slider.setValue(self._clim)
+        self._minmax = min(self._minmax[0], min_), max(self._minmax[1], max_)
+        self._slider_changed(img_slice=img_slice)
 
     def _make_slider(self, size: int) -> _QAxisSlider:
         slider = _QAxisSlider()
@@ -194,6 +234,8 @@ class _QAxisSlider(QtW.QWidget):
 
 class QImageViewControl(QtW.QWidget):
     interpolation_changed = QtCore.Signal(bool)
+    clim_changed = QtCore.Signal(tuple)
+    auto_contrast_requested = QtCore.Signal()
 
     def __init__(self):
         super().__init__()
@@ -206,6 +248,22 @@ class QImageViewControl(QtW.QWidget):
         spacer.setSizePolicy(
             QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Expanding
         )
+
+        self._auto_contrast_btn = QtW.QPushButton("Auto")
+        self._auto_contrast_btn.clicked.connect(self.auto_contrast_requested.emit)
+        self._auto_contrast_btn.setToolTip("Auto contrast")
+        self._clim_slider = QLabeledDoubleRangeSlider(QtCore.Qt.Orientation.Horizontal)
+        self._clim_slider.setToolTip("Contrast limits")
+        self._clim_slider.setRange(0, 255)
+        self._clim_slider.valueChanged.connect(self.clim_changed.emit)
+        self._clim_slider.setEdgeLabelMode(self._clim_slider.EdgeLabelMode.NoLabel)
+        self._clim_slider.setHandleLabelPosition(
+            self._clim_slider.LabelPosition.LabelsAbove
+        )
+
+        self._histogram.setFixedWidth(120)
+        self._clim_slider.setFixedWidth(120)
+
         self._interpolation_check_box = QLabeledToggleSwitch()
         self._interpolation_check_box.setText("smooth")
         self._interpolation_check_box.setChecked(True)
@@ -213,6 +271,8 @@ class QImageViewControl(QtW.QWidget):
         self._interpolation_check_box.toggled.connect(self.interpolation_changed.emit)
 
         layout.addWidget(spacer)
+        layout.addWidget(self._auto_contrast_btn)
+        layout.addWidget(self._clim_slider)
         layout.addWidget(self._histogram)
         layout.addWidget(self._interpolation_check_box)
 
@@ -222,27 +282,34 @@ class _QHistogram(_QImageLabel):
         import numpy as np
 
         super().__init__(np.zeros((64, 256), dtype=np.uint8))
-        self.setFixedWidth(120)
+        self.setToolTip("Histogram of the image intensity")
 
-    def set_hist_for_array(self, arr: NDArray[np.number]):
+    def set_hist_for_array(
+        self,
+        arr: NDArray[np.number],
+        clim: tuple[float, float],
+        minmax: tuple[float, float],
+    ):
         import numpy as np
 
-        if arr.dtype.kind in "uif":
-            _min, _max = arr.min(), arr.max()
-        else:
-            return  # not supported
+        _min, _max = minmax
         nbin = 128
+        h0 = 64
         if _max > _min:
             normed = ((arr - _min) / (_max - _min) * nbin).astype(np.uint8) // 2
             hist = np.bincount(normed.ravel(), minlength=nbin)
-            hist = hist / hist.max() * 64
-            indices = np.repeat(np.arange(64)[::-1, None], nbin, axis=1)
-            alpha = np.zeros((64, nbin), dtype=np.uint8)
+            hist = hist / hist.max() * h0
+            indices = np.repeat(np.arange(h0)[::-1, None], nbin, axis=1)
+            alpha = np.zeros((h0, nbin), dtype=np.uint8)
             alpha[indices < hist[None]] = 255
-            colors = np.zeros((64, nbin, 3), dtype=np.uint8)
+            colors = np.zeros((h0, nbin, 3), dtype=np.uint8)
             hist_image = np.concatenate([colors, alpha[:, :, None]], axis=2)
+            cmin_x = (clim[0] - _min) / (_max - _min) * (nbin - 2) + 1
+            cmax_x = (clim[1] - _min) / (_max - _min) * (nbin - 2)
+            hist_image[:, int(cmin_x)] = (255, 0, 0, 255)
+            hist_image[:, int(cmax_x)] = (255, 0, 0, 255)
         else:
-            hist_image = np.zeros((64, nbin, 4), dtype=np.uint8)
+            hist_image = np.zeros((h0, nbin, 4), dtype=np.uint8)
         image = QtGui.QImage(
             hist_image,
             hist_image.shape[1],
@@ -261,3 +328,43 @@ class _QHistogram(_QImageLabel):
                 self._transformation,
             )
         )
+
+
+def _guess_clim(
+    arr: ArrayWrapper, image_slice: NDArray[np.number]
+) -> tuple[float, float]:
+    ndim_rem = arr.ndim - 2
+    if image_slice.dtype.kind == "b":
+        clim = (0, 1)
+    else:
+        if ndim_rem == 0:
+            clim = (image_slice.min(), image_slice.max())
+        else:
+            dim3_size = arr.shape[-3]
+            if dim3_size == 1:
+                clim = (image_slice.min(), image_slice.max())
+            elif dim3_size < 4:
+                sl_last = (0,) * (ndim_rem - 1) + (dim3_size - 1,)
+                image_slice_last = arr.get_slice(sl_last)
+                clim = (
+                    min(image_slice.min(), image_slice_last.min()),
+                    max(image_slice.max(), image_slice_last.max()),
+                )
+            else:
+                sl_last = (0,) * (ndim_rem - 1) + (dim3_size - 1,)
+                sl_middle = (0,) * (ndim_rem - 1) + (dim3_size // 2,)
+                image_slice_last = arr.get_slice(sl_last)
+                image_slice_middle = arr.get_slice(sl_middle)
+                clim = (
+                    min(
+                        image_slice.min(),
+                        image_slice_last.min(),
+                        image_slice_middle.min(),
+                    ),
+                    max(
+                        image_slice.max(),
+                        image_slice_last.max(),
+                        image_slice_middle.max(),
+                    ),
+                )
+    return clim

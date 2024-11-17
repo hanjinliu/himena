@@ -58,3 +58,6 @@ class ImageMeta(ArrayMeta):
     rois: list[Roi] = Field(default_factory=list, description="Regions of interest.")
     labels: Any | None = Field(None, description="Labels of the image.")
     interpolation: str | None = Field(None, description="Interpolation method.")
+    contrast_limits: tuple[float, float] | list[tuple[float, float]] | None = Field(
+        None, description="Contrast limits of the image, possible for each channel."
+    )
