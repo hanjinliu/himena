@@ -24,6 +24,12 @@ class TableMeta(BaseModel):
     )
 
 
+class ExcelMeta(TableMeta):
+    """Preset for describing an Excel file metadata."""
+
+    current_sheet: str | None = Field(None, description="Current sheet name.")
+
+
 class ArrayMeta(BaseModel):
     """Preset for describing an array metadata."""
 

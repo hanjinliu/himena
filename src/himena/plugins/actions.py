@@ -184,11 +184,16 @@ def _norm_register_function_args(
         else:
             enablement = enablement & type_enablement
 
+    # Registered functions that are specific to a certain model type will also be
+    # added to the model menu tool button in the top-right corner of the sub window.
+    # To efficiently make QModelMenu, the "menus" attribute of each type of function
+    # will be reallocated from "/model_menu/XYZ" to "/model_menu:TYPE/XYZ".
     menu_out: list[str] = []
     model_menu_found = False
     pref = "/model_menu"
     reg = AppActionRegistry.instance()
     for menu in _norm_menus(menus):
+        # if "/model_menu/..." submenu is specified by the user, reallocate it.
         if _is_model_menu_prefix(menu):
             _, _, other = menu.split("/", maxsplit=2)
             _LOGGER.debug("Reallocated: %r ", menu)
@@ -207,8 +212,10 @@ def _norm_register_function_args(
         else:
             menu_out.append(menu)
     if not model_menu_found:
+        # if "/model_menu/..." submenu is not specified by the user, they will be added
+        # under the root of the model menu.
         for _type in _types:
-            new_place = f"{pref}{_type}"
+            new_place = f"{pref}:{_type}"
             menu_out.append(new_place)
             _LOGGER.debug("Menu added: %r", new_place)
     return enablement, menu_out

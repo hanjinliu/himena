@@ -18,6 +18,43 @@ def _table_to_latex(table: list[list[str]]) -> str:
     return latex
 
 
+def _table_to_text(
+    data: list[list[str]],
+    format: Literal["CSV", "TSV", "Markdown", "Latex", "rST", "HTML"] = "CSV",
+    end_of_text: Literal["", "\n"] = "\n",
+) -> tuple[str, str, str]:
+    from tabulate import tabulate
+
+    format = format.lower()
+    if format == "markdown":
+        s = tabulate(data, tablefmt="github")
+        ext_default = ".md"
+        language = "markdown"
+    elif format == "latex":
+        s = _table_to_latex(data)
+        ext_default = ".tex"
+        language = "latex"
+    elif format == "html":
+        s = tabulate(data, tablefmt="html")
+        ext_default = ".html"
+        language = "html"
+    elif format == "rst":
+        s = tabulate(data, tablefmt="rst")
+        ext_default = ".rst"
+        language = "rst"
+    elif format == "csv":
+        s = "\n".join(",".join(row) for row in data)
+        ext_default = ".csv"
+        language = None
+    elif format == "tsv":
+        s = "\n".join("\t".join(row) for row in data)
+        ext_default = ".tsv"
+        language = None
+    else:
+        raise ValueError(f"Unknown format: {format}")
+    return s + end_of_text, ext_default, language
+
+
 @register_function(
     title="Convert table to text ...",
     types=StandardType.TABLE,
@@ -32,37 +69,9 @@ def table_to_text(model: WidgetDataModel) -> Parametric[str]:
         format: Literal["CSV", "TSV", "Markdown", "Latex", "rST", "HTML"] = "CSV",
         end_of_text: Literal["", "\n"] = "\n",
     ) -> WidgetDataModel[str]:
-        from tabulate import tabulate
-
-        format = format.lower()
-        if format == "markdown":
-            s = tabulate(model.value, tablefmt="github")
-            ext_default = ".md"
-            language = "markdown"
-        elif format == "latex":
-            s = _table_to_latex(model.value)
-            ext_default = ".tex"
-            language = "latex"
-        elif format == "html":
-            s = tabulate(model.value, tablefmt="html")
-            ext_default = ".html"
-            language = "html"
-        elif format == "rst":
-            s = tabulate(model.value, tablefmt="rst")
-            ext_default = ".rst"
-            language = "rst"
-        elif format == "csv":
-            s = "\n".join(",".join(row) for row in model.value)
-            ext_default = ".csv"
-            language = None
-        elif format == "tsv":
-            s = "\n".join("\t".join(row) for row in model.value)
-            ext_default = ".tsv"
-            language = None
-        else:
-            raise ValueError(f"Unknown format: {format}")
+        value, ext_default, language = _table_to_text(model.value, format, end_of_text)
         return WidgetDataModel(
-            value=s + end_of_text,
+            value=value,
             type=StandardType.TEXT,
             title=f"{model.title} (as text)",
             extension_default=ext_default,

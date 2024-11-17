@@ -17,3 +17,4 @@ class MainWindowQt(MainWindow[QtW.QWidget]):
         super().__init__(backend, app, theme)
         backend._himena_main_window = self
         backend._tab_widget._init_startup()
+        backend._update_context()

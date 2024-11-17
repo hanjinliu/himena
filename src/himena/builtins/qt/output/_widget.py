@@ -23,7 +23,7 @@ class QLogger(QtW.QPlainTextEdit):
 
         self._finder_widget = None
 
-    def update_text(self, obj):
+    def update_text(self, obj: str):
         self.moveCursor(QtGui.QTextCursor.MoveOperation.End)
         self.insertPlainText(obj)
         self.moveCursor(QtGui.QTextCursor.MoveOperation.End)

@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 import json
 from pathlib import Path
-from typing import Iterable
+from typing import Any, Iterable
 import warnings
 from platformdirs import user_data_dir
 from pydantic import field_validator
@@ -59,6 +59,10 @@ class AppProfile(BaseModel):
         default_factory=_default_plugins, description="List of plugins to load."
     )
     theme: str = Field(default="light-purple", description="Theme to use.")
+    startup_commands: list[tuple[str, dict[str, Any] | None]] = Field(
+        default_factory=list,
+        description="Startup commands that will be executed when the app starts.",
+    )
 
     @classmethod
     def from_json(cls, path) -> "AppProfile":

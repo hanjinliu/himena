@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from qtpy import QtWidgets as QtW, QtCore
+from himena.model_meta import ExcelMeta
 from himena.qt._qrename import QTabRenameLineEdit
 from himena.builtins.qt.widgets.table import QDefaultTableWidget
 from himena.builtins.qt.widgets._table_base import QSelectionRangeEdit
@@ -49,6 +50,8 @@ class QExcelTableStack(QtW.QTabWidget):
         return None
 
     def to_model(self) -> WidgetDataModel[dict[str, list[list[str]]]]:
+        index = self.currentIndex()
+        table_meta = self.widget(index)._prep_table_meta()
         return WidgetDataModel(
             value={
                 self.tabText(i): self.widget(i).to_model().value
@@ -56,6 +59,11 @@ class QExcelTableStack(QtW.QTabWidget):
             },
             type=self.model_type(),
             extension_default=".xlsx",
+            additional_data=ExcelMeta(
+                current_position=table_meta.current_position,
+                selections=table_meta.selections,
+                current_sheet=self.tabText(index),
+            ),
         )
 
     def control_widget(self) -> QExcelTableStackControl:

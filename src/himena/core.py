@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from logging import getLogger
 from himena.profile import AppProfile, load_app_profile
 
 if TYPE_CHECKING:
     from himena.widgets import MainWindow
     from qtpy import QtWidgets as QtW
+
+_LOGGER = getLogger(__name__)
 
 
 def new_window(
@@ -14,6 +17,7 @@ def new_window(
     plugins: list[str] = [],
     app: str = "himena",
 ) -> MainWindow[QtW.QWidget]:
+    """Create a new window with the specified profile and additional plugins."""
     from himena.qt import MainWindowQt
     from himena._app_model import get_model_app
 
@@ -32,6 +36,18 @@ def new_window(
         from himena.plugins import install_plugins
 
         install_plugins(model_app, plugins)
+    # create the main window
     main_window = MainWindowQt(model_app, theme=app_prof.theme)
-    main_window._backend_main_window._update_context()
+
+    # execute startup commands (don't raise exceptions, just log them)
+    exceptions: list[tuple[str, dict, Exception]] = []
+    for cmd, kwargs in app_prof.startup_commands:
+        try:
+            main_window.exec_action(cmd, with_params=kwargs)
+        except Exception as e:
+            exceptions.append((cmd, kwargs, e))
+    if exceptions:
+        _LOGGER.error("Exceptions occurred during startup commands:")
+        for cmd, kwargs, exc in exceptions:
+            _LOGGER.error("  %r (parameters=%r): %s", cmd, kwargs, exc)
     return main_window

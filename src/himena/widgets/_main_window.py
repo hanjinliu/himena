@@ -351,7 +351,7 @@ class MainWindow(Generic[_W]):
                         f"Parametric widget expected but got {param_widget}."
                     )
                 param_widget._callback_with_params(with_params)
-            else:
+            else:  # pragma: no cover
                 raise RuntimeError("Unreachable code.")
         return None
 

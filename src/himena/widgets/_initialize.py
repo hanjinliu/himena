@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TypeVar
 from logging import getLogger
 from app_model import Application
@@ -83,7 +84,7 @@ def init_application(app: Application) -> Application:
         return current_instance(app.name)._provide_file_output()[0]
 
     @app.injection_store.mark_processor
-    def _process_file_input(file_data: WidgetDataModel) -> None:
+    def _process_data_model(file_data: WidgetDataModel) -> None:
         _LOGGER.debug("processing %r", file_data)
         ins = current_instance(app.name)
         ins.add_data_model(file_data)
@@ -93,7 +94,20 @@ def init_application(app: Application) -> Application:
     def _process_file_inputs(file_data: list[WidgetDataModel]) -> None:
         _LOGGER.debug("processing %r", file_data)
         for each in file_data:
-            _process_file_input(each)
+            _process_data_model(each)
+
+    @app.injection_store.mark_processor
+    def _process_file_path(path: Path) -> None:
+        ins = current_instance(app.name)
+        ins.read_file(path, plugin=None)
+        return None
+
+    @app.injection_store.mark_processor
+    def _process_file_paths(paths: list[Path]) -> None:
+        ins = current_instance(app.name)
+        for path in paths:
+            ins.read_file(path, plugin=None)
+        return None
 
     @app.injection_store.mark_provider
     def _get_clipboard_data() -> ClipboardDataModel:
