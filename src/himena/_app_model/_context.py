@@ -30,14 +30,44 @@ def _num_tabs(ui: "MainWindow") -> int:
     return ui.tabs.len()
 
 
-def _active_window_model_type(ui: "MainWindow") -> str | None:
+def _get_model_types(ui: "MainWindow") -> str | None:
     if (area := ui.tabs.current()) and (win := area.current()) and win.is_exportable:
         out = win.model_type()
         if out is None:
             out = win.to_model().type
             if out is None:
                 return None
-        return out.split(".")[0]
+        return out.split(".")
+    return None
+
+
+def _active_window_model_type(ui: "MainWindow") -> str | None:
+    if out := _get_model_types(ui):
+        return out[0]
+    return None
+
+
+def _active_window_model_subtype_1(ui: "MainWindow") -> str | None:
+    if out := _get_model_types(ui):
+        if len(out) < 2:
+            return None
+        return out[1]
+    return None
+
+
+def _active_window_model_subtype_2(ui: "MainWindow") -> str | None:
+    if out := _get_model_types(ui):
+        if len(out) < 3:
+            return None
+        return out[2]
+    return None
+
+
+def _active_window_model_subtype_3(ui: "MainWindow") -> str | None:
+    if out := _get_model_types(ui):
+        if len(out) < 4:
+            return None
+        return out[3]
     return None
 
 
@@ -64,8 +94,23 @@ class AppContext(ContextNamespace["MainWindow"]):
     )
     active_window_model_type = ContextKey(
         None,
-        "hash of the type of the model of the active window",
+        "type of the model of the active window",
         _active_window_model_type,
+    )
+    active_window_model_subtype_1 = ContextKey(
+        None,
+        "subtype of the model of the active window",
+        _active_window_model_subtype_1,
+    )
+    active_window_model_subtype_2 = ContextKey(
+        None,
+        "subtype of the model of the active window",
+        _active_window_model_subtype_2,
+    )
+    active_window_model_subtype_3 = ContextKey(
+        None,
+        "subtype of the model of the active window",
+        _active_window_model_subtype_3,
     )
 
     def _update(self, ui):

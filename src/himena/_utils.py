@@ -3,6 +3,7 @@ from typing import (
     Callable,
     Any,
     Hashable,
+    Iterable,
     Iterator,
     MutableSet,
     TypeVar,
@@ -58,8 +59,8 @@ _T = TypeVar("_T", bound=Hashable)
 
 
 class OrderedSet(MutableSet[_T]):
-    def __init__(self):
-        self._dict: dict[_T, None] = {}
+    def __init__(self, iterable: Iterable[_T] = ()):
+        self._dict: dict[_T, None] = dict.fromkeys(iterable)
 
     def __contains__(self, other) -> bool:
         return other in self._dict

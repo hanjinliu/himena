@@ -12,6 +12,7 @@ from app_model.backends.qt import QModelMainWindow, QModelMenu
 from himena.consts import MenuId
 from himena._app_model import _formatter
 from himena.qt._qtab_widget import QTabWidget
+from himena.qt._qstatusbar import QStatusBar
 from himena.qt._qsub_window import QSubWindow, QSubWindowArea
 from himena.qt._qdock_widget import QDockWidget
 from himena.qt._qcommand_palette import QCommandPalette
@@ -83,6 +84,9 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self._toolbar.addWidget(self._control_stack)
 
         self.setCentralWidget(self._tab_widget)
+
+        self._status_bar = QStatusBar()
+        self.setStatusBar(self._status_bar)
 
         self._command_palette_general = QCommandPalette(
             self._app,

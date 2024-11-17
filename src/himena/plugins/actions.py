@@ -178,10 +178,7 @@ def _norm_register_function_args(
     else:
         _types = types
     if len(_types) > 0:
-        type_enablement = reduce(
-            operator.or_,
-            [ctx.active_window_model_type == t for t in _types],
-        )
+        type_enablement = _types_to_expression(_types)
         if enablement is None:
             enablement = type_enablement
         else:
@@ -189,22 +186,51 @@ def _norm_register_function_args(
 
     menu_out: list[str] = []
     model_menu_found = False
+    pref = "/model_menu"
+    reg = AppActionRegistry.instance()
     for menu in _norm_menus(menus):
         if _is_model_menu_prefix(menu):
             _, _, other = menu.split("/", maxsplit=2)
+            _LOGGER.debug("Reallocated: %r ", menu)
             for _type in _types:
-                new_place = f"/model_menu:{_type}/{other}"
+                new_place = f"{pref}:{_type}/{other}"
                 menu_out.append(new_place)
-                _LOGGER.debug("Reallocated: %r ---> %r", menu, new_place)
+                _LOGGER.debug("  ---> %r", new_place)
+            if menu in reg._submenu_titles:
+                _LOGGER.debug("Submenu reallocated: %r ", menu)
+                rest = menu[len(pref) :]
+                for _type in _types:
+                    new_place = f"{pref}:{_type}{rest}"
+                    reg._submenu_titles[new_place] = reg._submenu_titles[menu]
+                    _LOGGER.debug("  ---> %r", new_place)
             model_menu_found = True
         else:
             menu_out.append(menu)
     if not model_menu_found:
         for _type in _types:
-            new_place = f"/model_menu:{_type}"
+            new_place = f"{pref}{_type}"
             menu_out.append(new_place)
             _LOGGER.debug("Menu added: %r", new_place)
     return enablement, menu_out
+
+
+def _types_to_expression(types: list[str]) -> BoolOp:
+    return reduce(operator.or_, map(_type_to_expression, types))
+
+
+def _type_to_expression(typ: str) -> BoolOp:
+    subtypes = typ.split(".")
+    nsub = len(subtypes)
+    out = ctx.active_window_model_type == subtypes[0]
+    if nsub >= 2:
+        out &= ctx.active_window_model_subtype_1 == subtypes[1]
+        if nsub >= 3:
+            out &= ctx.active_window_model_subtype_2 == subtypes[2]
+            if nsub >= 4:
+                out &= ctx.active_window_model_subtype_3 == subtypes[3]
+                if nsub >= 5:
+                    raise ValueError(f"The maximum number of subtypes are 4, got {typ}")
+    return out
 
 
 def _is_model_menu_prefix(menu_id: str) -> bool:

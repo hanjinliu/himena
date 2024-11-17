@@ -4,14 +4,18 @@ from app_model.types import (
     KeyCode,
     KeyMod,
 )
+from himena._utils import OrderedSet
 from himena.consts import MenuId
+from himena.plugins._signature import configure_gui
 from himena.widgets import MainWindow
 from himena.types import (
+    Parametric,
     WindowState,
     WindowRect,
 )
 from himena._app_model._context import AppContext as _ctx
 from himena._app_model.actions._registry import ACTIONS
+from himena.widgets._wrapper import SubWindow
 
 WINDOW_GROUP = "00_window"
 
@@ -138,6 +142,44 @@ def tile_windows(ui: MainWindow) -> None:
     """Tile all the windows."""
     if area := ui.tabs.current():
         area.tile_windows()
+
+
+@ACTIONS.append_from_fn(
+    id="collect-windows",
+    title="Collect windows from other tabs",
+    menus=[{"id": MenuId.VIEW, "group": WINDOW_GROUP}],
+    enablement=_ctx.num_tabs > 1,
+    need_function_callback=True,
+)
+def collect_windows(ui: MainWindow) -> Parametric:
+    """Collect windows based on their titles."""
+    from fnmatch import fnmatch, fnmatchcase
+
+    existing_types = OrderedSet(win.model_type() for win in ui.iter_windows())
+
+    @configure_gui(
+        model_type={"choices": list(existing_types), "value": None},
+    )
+    def run_collect_windows(
+        pattern: str = "*",
+        case_sensitive: bool = True,
+        model_type: str | None = None,
+    ) -> None:
+        windows_to_move: list[SubWindow] = []
+        _match = fnmatchcase if case_sensitive else fnmatch
+        target_index = ui.tabs.current_index
+        for win in ui.iter_windows():
+            if not _match(win.title, pattern):
+                continue
+            if model_type is None or win.model_type() == model_type:
+                windows_to_move.append(win)
+        if windows_to_move:
+            for win in windows_to_move:
+                ui.move_window(win, target_index)
+        ui.tabs.current_index = target_index
+        return None
+
+    return run_collect_windows
 
 
 @ACTIONS.append_from_fn(
