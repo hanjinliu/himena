@@ -2,6 +2,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from qtpy import QtWidgets as QtW
 from himena import MainWindow, anchor
+from himena._descriptors import ConverterMethod, LocalReaderMethod, SaveToNewPath
 from himena.consts import StandardType
 from himena.types import ClipboardDataModel, WidgetDataModel
 from himena.qt import register_widget, MainWindowQt
@@ -57,7 +58,7 @@ def test_io_commands(ui: MainWindow, tmpdir, sample_dir: Path):
     ui.exec_action("load-session")
     ui.exec_action("save-tab-session")
 
-    response_open = lambda: [sample_dir / "table.csv"]
+    response_open = lambda: sample_dir / "table.csv"
     ui._instructions = ui._instructions.updated(file_dialog_response=response_open)
     ui.exec_action("open-file-using")
 
@@ -328,3 +329,20 @@ def test_child_window(ui: MainWindow):
     assert len(ui.tabs.current()) == 0
     assert not win.is_alive
     assert not child.is_alive
+
+def test_save_behavior(ui: MainWindow, tmpdir):
+    ui.exec_action("builtins:new-text")
+    win = ui.current_window
+    assert win is not None
+    assert not win.is_modified
+    ui.exec_action("duplicate-window")
+    win2 = ui.current_window
+    assert win2.is_modified
+    assert isinstance(win2._widget_data_model_method, ConverterMethod)
+    assert isinstance(win2.save_behavior, SaveToNewPath)
+
+    response_save = lambda: Path(tmpdir) / "text_out.txt"
+    ui._instructions = ui._instructions.updated(file_dialog_response=response_save)
+    ui.exec_action("save-as")
+    assert not win2.is_modified
+    assert isinstance(win2._widget_data_model_method, ConverterMethod)

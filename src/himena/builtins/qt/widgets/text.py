@@ -478,7 +478,8 @@ class QDefaultTextEdit(QtW.QWidget):
             if src := model.source:
                 # set default language
                 lang = find_language_from_path(src.name)
-        else:
+        # if language could be inferred, set it
+        if lang:
             self._footer._language_combobox.setCurrentText(lang)
             self._footer._emit_language_changed()
         self._footer._tab_spaces_combobox.setCurrentText(str(spaces))

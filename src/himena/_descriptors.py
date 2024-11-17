@@ -132,4 +132,6 @@ class SaveToPath(SaveBehavior):
             )
             if not ok:
                 return None
+            # If overwrite is allowed, don't ask again.
+            self.ask_overwrite = False
         return self.path

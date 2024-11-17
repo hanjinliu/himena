@@ -2,7 +2,16 @@ from __future__ import annotations
 
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Callable, Generic, Iterator, Literal, TypeVar, overload
+from typing import (
+    Any,
+    Callable,
+    Generic,
+    Iterator,
+    Literal,
+    TypeVar,
+    overload,
+    TYPE_CHECKING,
+)
 from app_model.expressions import create_context
 from psygnal import SignalGroup, Signal
 
@@ -26,6 +35,9 @@ from himena.widgets._backend import BackendMainWindow
 from himena.widgets._hist import HistoryContainer
 from himena.widgets._widget_list import TabList, TabArea, DockWidgetList
 from himena.widgets._wrapper import ParametricWindow, SubWindow, DockWidget
+
+if TYPE_CHECKING:
+    from himena.widgets._widget_list import PathOrPaths
 
 _W = TypeVar("_W")  # backend widget type
 _T = TypeVar("_T")  # internal data type
@@ -308,12 +320,17 @@ class MainWindow(Generic[_W]):
 
     def read_file(
         self,
-        file_path: str | Path | list[str | Path],
+        file_path: PathOrPaths,
         plugin: str | None = None,
     ) -> SubWindow[_W]:
         """Read local file(s) and open as a new sub-window."""
         _, tabarea = self._current_or_new_tab()
         return tabarea.read_file(file_path, plugin=plugin)
+
+    def read_files(self, file_paths: PathOrPaths):
+        """Read multiple files and open as new sub-windows in a same tab."""
+        _, tabarea = self._current_or_new_tab()
+        return tabarea.read_files(file_paths)
 
     def read_session(self, path: str | Path) -> None:
         """Read a session file and open the session."""

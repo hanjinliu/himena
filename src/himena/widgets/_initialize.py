@@ -98,6 +98,8 @@ def init_application(app: Application) -> Application:
 
     @app.injection_store.mark_processor
     def _process_file_path(path: Path) -> None:
+        if path is None:
+            return None
         ins = current_instance(app.name)
         ins.read_file(path, plugin=None)
         return None
@@ -105,8 +107,7 @@ def init_application(app: Application) -> Application:
     @app.injection_store.mark_processor
     def _process_file_paths(paths: list[Path]) -> None:
         ins = current_instance(app.name)
-        for path in paths:
-            ins.read_file(path, plugin=None)
+        ins.read_files(paths)
         return None
 
     @app.injection_store.mark_provider

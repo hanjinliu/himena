@@ -28,6 +28,8 @@ from himena.widgets._wrapper import (
 if TYPE_CHECKING:
     from himena.widgets import BackendMainWindow
 
+    PathOrPaths = str | Path | list[str | Path]
+
 _W = TypeVar("_W")  # backend widget type
 _T = TypeVar("_T")  # type of the default value
 _LOGGER = getLogger(__name__)
@@ -319,20 +321,31 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
 
     def read_file(
         self,
-        file_path: str | Path | list[str | Path],
+        file_path: PathOrPaths,
         plugin: str | None = None,
     ) -> SubWindow[_W]:
         """Read local file(s) and open as a new sub-window in this tab."""
-        if hasattr(file_path, "__iter__") and not isinstance(file_path, (str, Path)):
-            fp = [Path(f) for f in file_path]
-        else:
-            fp = Path(file_path)
-        reader = io.ReaderProviderStore.instance().pick(fp, plugin=plugin)
-        model = reader.read(fp)._with_source(source=fp, plugin=reader.plugin)
-        out = self.add_data_model(model)
-        main = self._main_window()._himena_main_window
-        main._recent_manager.append_recent_files([(fp, reader.plugin.to_str())])
-        return out
+        return self.read_files([file_path], plugin=plugin)[0]
+
+    def read_files(
+        self,
+        file_paths: PathOrPaths,
+        plugin: str | None = None,
+    ) -> list[SubWindow[_W]]:
+        """Read multiple files and open as new sub-windows in this tab."""
+        reader_path_sets: list[tuple[io.ReaderTuple, PathOrPaths]] = []
+        ins = io.ReaderProviderStore.instance()
+        for file_path in file_paths:
+            reader_path_sets.append((ins.pick(file_path, plugin=plugin), file_path))
+        models = [
+            io.read_and_update_source(reader, file_path)
+            for reader, file_path in reader_path_sets
+        ]
+        ui = self._main_window()._himena_main_window
+        ui._recent_manager.append_recent_files(
+            [(fp, reader.plugin.to_str()) for reader, fp in reader_path_sets]
+        )
+        return [self.add_data_model(model) for model in models]
 
     def save_session(self, file_path: str | Path) -> None:
         """Save the current session to a file."""

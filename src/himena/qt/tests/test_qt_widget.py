@@ -26,7 +26,7 @@ def test_tab_widget(qtbot: QtBot):
     tab_widget.show()
     qtbot.addWidget(tab_widget)
     tab_widget.add_tab_area("X")
-    tab_widget._start_editing_tab(0)
+    tab_widget._line_edit.start_edit(0)
     tab_widget._line_edit.setText("Y")
     qtbot.keyClick(tab_widget._line_edit, Qt.Key.Key_Return)
     assert tab_widget.tabText(0) == "Y"

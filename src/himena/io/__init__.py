@@ -5,7 +5,7 @@ from ._tuples import (
     ReaderProviderTuple,
     WriterProviderTuple,
 )
-from .core import ReaderProviderStore, WriterProviderStore
+from .core import ReaderProviderStore, WriterProviderStore, read_and_update_source
 
 __all__ = [
     "ReaderProviderTuple",
@@ -15,4 +15,5 @@ __all__ = [
     "PluginInfo",
     "ReaderProviderStore",
     "WriterProviderStore",
+    "read_and_update_source",
 ]

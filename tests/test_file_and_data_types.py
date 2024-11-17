@@ -1,7 +1,7 @@
 from pathlib import Path
 from himena import MainWindow
 from himena.types import LocalReaderMethod
-from himena.consts import StandardType, StandardType
+from himena.consts import StandardType
 
 def test_reading_files(ui: MainWindow, sample_dir: Path):
     tab0 = ui.add_tab()
@@ -21,6 +21,4 @@ def test_reading_files(ui: MainWindow, sample_dir: Path):
     win = tab0.read_file(sample_dir / "excel.xlsx")
     assert win.model_type() == StandardType.EXCEL
     win = tab0.read_file(sample_dir / "array.npy")
-    assert win.model_type() == StandardType.ARRAY
-    win = tab0.read_file(sample_dir / "array.npz")
     assert win.model_type() == StandardType.ARRAY

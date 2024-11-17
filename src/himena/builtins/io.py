@@ -132,7 +132,7 @@ def default_reader_provider(file_path: Path | list[Path]):
         return default_text_reader
     elif file_path.suffix in ExcelFileTypes:
         return default_excel_reader
-    elif file_path.suffix in {".npy", ".npz"}:
+    elif file_path.suffix == ".npy":
         return default_array_reader
     return None
 
@@ -176,6 +176,8 @@ def pandas_reader_provider(file_path: Path) -> WidgetDataModel:
 @register_reader_provider(priority=-5)
 def polars_reader_provider(file_path: Path) -> WidgetDataModel:
     """Read dataframe using polars."""
+    if isinstance(file_path, list):
+        return None
     if file_path.suffix == ".csv":
         _reader = "polars", "read_csv", {}
     elif file_path.suffix == ".tsv":

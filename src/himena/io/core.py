@@ -128,3 +128,11 @@ def _pick_from_list(choices: list[_T], plugin: str | None) -> _T:
 
 def _warn_failed_provider(provider, e: Exception):
     return _LOGGER.error(f"Error in reader provider {provider!r}: {e}")
+
+
+def read_and_update_source(reader: ReaderTuple, source: Path) -> WidgetDataModel:
+    """Update the `method` attribute if it is not set."""
+    model = reader.read(source)
+    if model.method is None:
+        model = model._with_source(source=source, plugin=reader.plugin)
+    return model

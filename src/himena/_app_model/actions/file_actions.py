@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Callable
+from typing import Callable
 from logging import getLogger
 from app_model.types import (
     KeyBindingRule,
@@ -8,7 +8,7 @@ from app_model.types import (
     KeyChord,
     StandardKeyBinding,
 )
-from himena._descriptors import LocalReaderMethod, SaveBehavior
+from himena._descriptors import LocalReaderMethod, SaveToNewPath
 from himena.consts import StandardType, MenuId
 from himena.widgets import MainWindow, SubWindow
 from himena import io, _utils
@@ -31,14 +31,6 @@ SAVE_SCR_SHOT = "01_save-screenshot"
 EXIT_GROUP = "99_exit"
 
 
-def _read_and_update_source(reader: io.ReaderTuple, source: Path) -> WidgetDataModel:
-    """Update the `method` attribute if it is not set."""
-    model = reader.read(source)
-    if model.method is None:
-        model = model._with_source(source=source, plugin=reader.plugin)
-    return model
-
-
 def _name_of(f: Callable) -> str:
     return getattr(f, "__name__", str(f))
 
@@ -54,23 +46,9 @@ def _name_of(f: Callable) -> str:
     ],
     keybindings=[StandardKeyBinding.Open],
 )
-def open_file_from_dialog(ui: MainWindow) -> list[WidgetDataModel]:
+def open_file_from_dialog(ui: MainWindow) -> list[Path]:
     """Open file(s). Multiple files will be opened as separate sub-windows."""
-    file_paths = ui.exec_file_dialog(mode="rm")
-    if file_paths is None or len(file_paths) == 0:
-        return None
-    reader_path_sets: list[tuple[io.ReaderTuple, Any]] = []
-    ins = io.ReaderProviderStore.instance()
-    for file_path in file_paths:
-        reader_path_sets.append((ins.pick(file_path), file_path))
-    out = [
-        _read_and_update_source(reader, file_path)
-        for reader, file_path in reader_path_sets
-    ]
-    ui._recent_manager.append_recent_files(
-        [(fp, reader.plugin.to_str()) for reader, fp in reader_path_sets]
-    )
-    return out
+    return ui.exec_file_dialog(mode="rm") or []
 
 
 @ACTIONS.append_from_fn(
@@ -105,7 +83,7 @@ def open_file_using_from_dialog(ui: MainWindow) -> Parametric:
     )
     def choose_a_plugin(reader: io.ReaderTuple) -> WidgetDataModel:
         _LOGGER.info("Reading file %s using %r", file_path, reader)
-        model = _read_and_update_source(reader, file_path)
+        model = io.read_and_update_source(reader, file_path)
         plugin = reader.plugin.to_str()
         ui._recent_manager.append_recent_files([(file_path, plugin)])
         model.method = LocalReaderMethod(path=file_path, plugin=plugin)
@@ -120,16 +98,9 @@ def open_file_using_from_dialog(ui: MainWindow) -> Parametric:
     icon="material-symbols:folder-open",
     menus=[{"id": MenuId.FILE, "group": READ_GROUP}],
 )
-def open_folder_from_dialog(ui: MainWindow) -> WidgetDataModel:
+def open_folder_from_dialog(ui: MainWindow) -> Path:
     """Open a folder as a sub-window."""
-    file_path = ui.exec_file_dialog(mode="d")
-    if file_path is None:
-        return None
-    ins = io.ReaderProviderStore.instance()
-    reader = ins.pick(file_path)
-    out = _read_and_update_source(reader, file_path)
-    ui._recent_manager.append_recent_files([(file_path, reader.plugin.to_str())])
-    return out
+    return ui.exec_file_dialog(mode="d")
 
 
 @ACTIONS.append_from_fn(
@@ -163,7 +134,7 @@ def save_from_dialog(ui: MainWindow, sub_win: SubWindow) -> None:
 def save_as_from_dialog(ui: MainWindow, sub_win: SubWindow) -> None:
     """Save the current sub-window as a new file."""
     model = sub_win.to_model()
-    if save_path := SaveBehavior().get_save_path(ui, model):
+    if save_path := SaveToNewPath().get_save_path(ui, model):
         io.WriterProviderStore.instance().run(model, save_path)
         sub_win.update_default_save_path(save_path)
     return None

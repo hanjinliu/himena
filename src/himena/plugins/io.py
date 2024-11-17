@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Callable, TypeVar, overload
+from pathlib import Path
+from typing import Callable, ForwardRef, TypeVar, overload
 from himena.types import WidgetDataModel, ReaderProvider, WriterProvider
 from himena import io
 from himena._utils import get_widget_data_model_variable
@@ -52,10 +53,27 @@ def register_reader_provider(provider=None, priority=0):
             raise ValueError("Provider must be callable.")
         plugin = _plugin_info_from_func(func)
         ins = io.ReaderProviderStore().instance()
+
+        if hasattr(func, "__annotations__"):
+            annot_types = list(func.__annotations__.values())
+            if len(annot_types) == 1 and annot_types[0] in (
+                Path,
+                "Path",
+                ForwardRef("Path"),
+            ):
+                func = _skip_if_list_of_paths(func)
+
         ins.add(func, priority, plugin)
         return func
 
     return _inner if provider is None else _inner(provider)
+
+
+def _skip_if_list_of_paths(func: Callable) -> Callable:
+    def _new(*args, **kwargs):
+        if isinstance(args[0], list):
+            return None
+        return func(*args, **kwargs)
 
 
 @overload
