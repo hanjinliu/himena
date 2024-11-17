@@ -242,7 +242,7 @@ class QStartupWidget(QtW.QScrollArea):
         _layout_bottom.addWidget(_group_bottom_right)
 
         self.setMinimumSize(0, 0)
-        # top:bottm = 1:2
+        # top:bottom = 1:2
         _layout.setStretch(0, 1)
         _layout.setStretch(1, 2)
 

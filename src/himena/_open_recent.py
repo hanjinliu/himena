@@ -25,6 +25,7 @@ class OpenRecentFunction:
         setattr(self, NO_RECORDING_FIELD, True)  # don't record "open" command
 
     def __call__(self, ui: MainWindow):
+        _LOGGER.debug("Calling OpenRecentFunction for %s", self._file)
         ui.read_file(self._file, plugin=self._plugin)
 
     def to_str(self) -> str:

@@ -2,7 +2,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from qtpy import QtWidgets as QtW
 from himena import MainWindow, anchor
-from himena.consts import StandardSubtype
+from himena.consts import StandardType
 from himena.types import ClipboardDataModel, WidgetDataModel
 from himena.qt import register_widget, MainWindowQt
 from himena.builtins.qt import widgets as _qtw
@@ -114,13 +114,13 @@ def test_screenshot_commands(ui: MainWindow, sample_dir: Path, tmpdir):
     # copy
     ui.clipboard = ClipboardDataModel(value="", type="text")  # just for initialization
     ui.exec_action("copy-screenshot")
-    assert ui.clipboard.type == StandardSubtype.IMAGE
+    assert ui.clipboard.type == StandardType.IMAGE
     ui.clipboard = ClipboardDataModel(value="", type="text")  # just for initialization
     ui.exec_action("copy-screenshot-area")
-    assert ui.clipboard.type == StandardSubtype.IMAGE
+    assert ui.clipboard.type == StandardType.IMAGE
     ui.clipboard = ClipboardDataModel(value="", type="text")  # just for initialization
     ui.exec_action("copy-screenshot-window")
-    assert ui.clipboard.type == StandardSubtype.IMAGE
+    assert ui.clipboard.type == StandardType.IMAGE
 
     # save
     ui._instructions = ui._instructions.updated(

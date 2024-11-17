@@ -10,7 +10,7 @@ from himena.builtins.qt.widgets import (
 import pandas as pd
 import polars as pl
 from himena import WidgetDataModel
-from himena.consts import StandardSubtype
+from himena.consts import StandardType
 from pytestqt.qtbot import QtBot
 
 _Ctrl = Qt.KeyboardModifier.ControlModifier
@@ -85,7 +85,7 @@ def test_table_edit(qtbot: QtBot):
 def test_image_view(qtbot: QtBot):
     # grayscale
     model = WidgetDataModel(
-        value=np.arange(100, dtype=np.uint8).reshape(10, 10), type=StandardSubtype.IMAGE
+        value=np.arange(100, dtype=np.uint8).reshape(10, 10), type=StandardType.IMAGE
     )
     image_view = QDefaultImageView()
     image_view.update_model(model)
@@ -94,7 +94,7 @@ def test_image_view(qtbot: QtBot):
 
     # RGB
     model = WidgetDataModel(
-        value=np.zeros((100, 100, 3), dtype=np.uint16), type=StandardSubtype.IMAGE
+        value=np.zeros((100, 100, 3), dtype=np.uint16), type=StandardType.IMAGE
     )
     image_view = QDefaultImageView()
     image_view.update_model(model)
@@ -106,7 +106,7 @@ def test_image_view(qtbot: QtBot):
     rng = np.random.default_rng(14442)
     model = WidgetDataModel(
         value=rng.random((10, 5, 3, 100, 100), dtype=np.float32),
-        type=StandardSubtype.IMAGE,
+        type=StandardType.IMAGE,
     )
     image_view = QDefaultImageView()
     image_view.update_model(model)

@@ -30,13 +30,45 @@ if TYPE_CHECKING:
 
 _F = TypeVar("_F", bound=Callable)
 _LOGGER = logging.getLogger(__name__)
-_ACTIONS: dict[str, Action] = {}
+
+
+class AppActionRegistry:
+    _global_instance: AppActionRegistry | None = None
+
+    def __init__(self):
+        self._actions: dict[str, Action] = {}
+        self._submenu_titles: dict[str, str] = {}
+
+    @classmethod
+    def instance(cls) -> AppActionRegistry:
+        """Get the global instance of the registry."""
+        if cls._global_instance is None:
+            cls._global_instance = cls()
+        return cls._global_instance
+
+    @property
+    def actions(self) -> dict[str, Action]:
+        return self._actions
+
+    def submenu_title(self, id: str) -> str:
+        if title := self._submenu_titles.get(id):
+            return title
+        return id.split("/")[-1].title()
+
+    @property
+    def submenu_titles(self) -> dict[str, str]:
+        return self._submenu_titles
 
 
 def _norm_menus(menus: str | Sequence[str]) -> list[str]:
     if isinstance(menus, str):
         return [menus]
     return list(menus)
+
+
+def configure_submenu(submenu_id: str, title: str) -> None:
+    """Register a title for a submenu."""
+    AppActionRegistry.instance()._submenu_titles[submenu_id] = title
 
 
 @overload
@@ -103,7 +135,7 @@ def register_function(
     command_id : str, optional
         Command ID. If not given, the function qualname will be used.
     """
-    category, enablement = _norm_category_enablement(types, enablement)
+    enablement, menus = _norm_register_function_args(types, enablement, menus)
     kbs = _normalize_keybindings(keybindings)
 
     def _inner(f: _F) -> _F:
@@ -126,37 +158,60 @@ def register_function(
             callback=_utils.make_function_callback(f, command_id=_id, preview=preview),
             menus=_norm_menus(menus),
             enablement=_enablement,
-            category=category,
-            group=None,
             keybindings=kbs,
         )
-        _ACTIONS[_id] = action
+        AppActionRegistry.instance()._actions[_id] = action
         return f
 
     return _inner if func is None else _inner(func)
 
 
-def _norm_category_enablement(
+def _norm_register_function_args(
     types: str | Sequence[str] | None,
     enablement: BoolOp | None,
-) -> tuple[str | None, BoolOp | None]:
-    if types is not None:
-        if isinstance(types, Sequence) and not isinstance(types, str):
-            type_enablement = reduce(
-                operator.or_,
-                [ctx.active_window_model_type == t for t in types],
-            )
-            category = f"model_type:{'|'.join(types)}"
-        else:
-            type_enablement = ctx.active_window_model_type == types
-            category = f"model_type:{types}"
+    menus: str | Sequence[str] | None,
+) -> tuple[BoolOp | None, list[str]]:
+    if isinstance(types, str):
+        _types = [types]
+    elif types is None:
+        _types = []
+    else:
+        _types = types
+    if len(_types) > 0:
+        type_enablement = reduce(
+            operator.or_,
+            [ctx.active_window_model_type == t for t in _types],
+        )
         if enablement is None:
             enablement = type_enablement
         else:
             enablement = enablement & type_enablement
-    else:
-        category = None
-    return category, enablement
+
+    menu_out: list[str] = []
+    model_menu_found = False
+    for menu in _norm_menus(menus):
+        if _is_model_menu_prefix(menu):
+            _, _, other = menu.split("/", maxsplit=2)
+            for _type in _types:
+                new_place = f"/model_menu:{_type}/{other}"
+                menu_out.append(new_place)
+                _LOGGER.debug("Reallocated: %r ---> %r", menu, new_place)
+            model_menu_found = True
+        else:
+            menu_out.append(menu)
+    if not model_menu_found:
+        for _type in _types:
+            new_place = f"/model_menu:{_type}"
+            menu_out.append(new_place)
+            _LOGGER.debug("Menu added: %r", new_place)
+    return enablement, menu_out
+
+
+def _is_model_menu_prefix(menu_id: str) -> bool:
+    ids = menu_id.split("/")
+    if len(ids) < 3:
+        return False
+    return (ids[0], ids[1]) == ("", "model_menu")
 
 
 @overload
@@ -296,7 +351,7 @@ def register_dock_widget(
             keybindings=kbs,
             toggled=toggle_rule,
         )
-        _ACTIONS[action.id] = action
+        AppActionRegistry.instance()._actions[action.id] = action
         return wf
 
     return _inner if widget_factory is None else _inner(widget_factory)
@@ -313,11 +368,12 @@ def install_to(app: Application):
                 existing_menu_ids.add(each.submenu)
 
     added_menu_ids: set[str] = set()
-    for action in _ACTIONS.values():
+    reg = AppActionRegistry.instance()
+    for action in reg.actions.values():
         if action.menus is not None:
             ids = [a.id for a in action.menus]
             added_menu_ids.update(ids)
-    app.register_actions(_ACTIONS.values())
+    app.register_actions(reg.actions.values())
 
     # add submenus if not exists
     to_add: list[tuple[str, SubmenuItem]] = []
@@ -330,7 +386,8 @@ def install_to(app: Application):
             if submenu in existing_menu_ids:
                 continue
             _LOGGER.info("Adding submenu: %s", submenu)
-            item = SubmenuItem(title=place_components[i].title(), submenu=submenu)
+            title = reg.submenu_title(submenu)
+            item = SubmenuItem(title=title, submenu=submenu)
             to_add.append((menu_id, item))
 
     app.menus.append_menu_items(to_add)

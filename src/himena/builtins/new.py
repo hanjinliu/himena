@@ -6,7 +6,7 @@ from io import StringIO
 from himena.plugins import register_function, configure_gui
 from himena.types import WidgetDataModel, Parametric
 from himena.widgets import MainWindow
-from himena.consts import StandardType, StandardSubtype, MenuId
+from himena.consts import StandardType, MenuId
 
 
 def _get_n_windows(ui: MainWindow) -> int:
@@ -104,7 +104,7 @@ def constant_array(ui: MainWindow) -> Parametric:
             _value = value
         arr = np.full(shape, _value, dtype=dtype)
         if interpret_as_image:
-            type = StandardSubtype.IMAGE
+            type = StandardType.IMAGE
         else:
             type = StandardType.ARRAY
         nwin = _get_n_windows(ui)

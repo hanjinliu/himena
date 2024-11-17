@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
 from superqt import QLabeledSlider
-from himena.consts import StandardSubtype
+from himena.consts import StandardType
 from himena.model_meta import ImageMeta
 from himena.types import WidgetDataModel
 from himena._data_wrappers import ArrayWrapper, wrap_array
@@ -122,7 +122,7 @@ class QDefaultImageView(QtW.QWidget):
         )
 
     def model_type(self) -> str:
-        return StandardSubtype.IMAGE
+        return StandardType.IMAGE
 
     def size_hint(self) -> tuple[int, int]:
         return 400, 400

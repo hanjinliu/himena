@@ -24,6 +24,14 @@ class TableMeta(BaseModel):
     )
 
 
+class ArrayMeta(BaseModel):
+    """Preset for describing an array metadata."""
+
+    current_indices: list[int] | None = Field(
+        None, description="Current slice indices to render the array in GUI."
+    )
+
+
 class Roi(BaseModel):
     """A region of interest (ROI) model."""
 
@@ -31,7 +39,7 @@ class Roi(BaseModel):
     type: str = Field(..., description="Type of the ROI.")
 
 
-class ImageMeta(BaseModel):
+class ImageMeta(ArrayMeta):
     """Preset for describing an image file metadata."""
 
     axes: list[str] | None = Field(None, description="Axes of the image.")
@@ -40,9 +48,6 @@ class ImageMeta(BaseModel):
     colormaps: Any | None = Field(None, description="Color map of the image.")
     channel_axis: int | None = Field(None, description="Channel axis of the image.")
     is_rgb: bool = Field(False, description="Whether the image is RGB.")
-    current_indices: list[int] | None = Field(
-        None, description="Current slice indices to render the image in GUI."
-    )
     current_roi: Roi | None = Field(None, description="Current region of interest.")
     rois: list[Roi] = Field(default_factory=list, description="Regions of interest.")
     labels: Any | None = Field(None, description="Labels of the image.")

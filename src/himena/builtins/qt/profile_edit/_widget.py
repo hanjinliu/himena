@@ -16,6 +16,7 @@ class QProfileEditor(QtW.QWidget):
         self._combo_box = QtW.QComboBox(self)
         self._name_label = QtW.QLineEdit(self)
         self._name_label.setPlaceholderText("Profile name")
+        self._name_label.setVisible(False)
         self._plugins_editor = QPluginsEditor(self)
         self._edit_buttons = QPluginsEditButtons(self)
         layout.addWidget(self._combo_box)
@@ -43,7 +44,7 @@ class QProfileEditor(QtW.QWidget):
     def _set_edit_mode(self, editable: bool):
         self._plugins_editor.set_item_editable(editable)
         self._name_label.setReadOnly(not editable)
-        self._name_label.setVisible(not editable)
+        self._name_label.setVisible(editable)
         self._edit_buttons.set_edit_mode(editable)
 
     def _start_edit(self):

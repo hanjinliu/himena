@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Any
 from himena.plugins import register_reader_provider, register_writer_provider
 from himena.types import WidgetDataModel
 from himena.consts import (
-    StandardSubtype,
     StandardType,
     BasicTextFileTypes,
     ConventionalTextFileNames,
@@ -31,7 +30,7 @@ def default_text_reader(file_path: Path) -> WidgetDataModel:
 def default_html_reader(file_path: Path) -> WidgetDataModel:
     return WidgetDataModel(
         value=file_path.read_text(),
-        type=StandardSubtype.HTML,
+        type=StandardType.HTML,
         source=file_path,
     )
 
@@ -45,7 +44,7 @@ def default_image_reader(file_path: Path) -> WidgetDataModel:
 
     return WidgetDataModel(
         value=arr,
-        type=StandardSubtype.IMAGE,
+        type=StandardType.IMAGE,
     )
 
 
@@ -263,7 +262,7 @@ def default_writer_provider(model: WidgetDataModel):
         return default_text_writer
     elif model.is_subtype_of(StandardType.TABLE):
         return default_csv_writer
-    elif model.is_subtype_of(StandardSubtype.IMAGE):
+    elif model.is_subtype_of(StandardType.IMAGE):
         return default_image_writer
     elif model.is_subtype_of(StandardType.PARAMETERS):
         return default_parameter_writer

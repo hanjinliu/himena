@@ -39,18 +39,20 @@ ALLOWED_LETTERS = string.ascii_letters + string.digits + "_- "
 
 
 class StandardType(SimpleNamespace):
-    TEXT = "text"
-    TABLE = "table"
-    ARRAY = "array"
-    PARAMETERS = "parameters"
-    DATAFRAME = "dataframe"
-    EXCEL = "excel"
+    """Conventions for standard model types."""
 
+    TEXT = "text"  # any text
+    TABLE = "table"  # 2D data without any special structure
+    ARRAY = "array"  # nD grid data such as numpy array
+    PARAMETERS = "parameters"  # dictionary of parameters
+    DATAFRAME = "dataframe"  # DataFrame object
+    EXCEL = "excel"  # Excel file
 
-class StandardSubtype(SimpleNamespace):
-    HTML = "text.html"
-    IMAGE = "array.image"
-    ARRAY_1D = "array.1d"
+    # subtypes
+    HTML = "text.html"  # HTML text
+    IMAGE = "array.image"  # image data
+    ARRAY_1D = "array.1d"  # 1D array, a special case of "array"
+    COORDINATES = "array.coordinates"  # (N, D) array, such as D-dimensional point cloud
 
 
 class MenuId(StrEnum):
@@ -69,6 +71,7 @@ class MenuId(StrEnum):
     TOOLBAR = "toolbar"
     RECENT_ALL = "file/.recent-all"
     STARTUP = "file/.startup"
+    MODEL_MENU = "/model_menu"
 
     def __str__(self) -> str:
         return self.value

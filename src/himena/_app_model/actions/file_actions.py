@@ -9,7 +9,7 @@ from app_model.types import (
     StandardKeyBinding,
 )
 from himena._descriptors import LocalReaderMethod, SaveBehavior
-from himena.consts import StandardSubtype, MenuId
+from himena.consts import StandardType, MenuId
 from himena.widgets import MainWindow, SubWindow
 from himena import io, _utils
 from himena.types import (
@@ -324,7 +324,7 @@ def quit_main_window(ui: MainWindow) -> None:
 def copy_screenshot(ui: MainWindow) -> ClipboardDataModel:
     """Copy a screenshot of the main window to the clipboard."""
     data = ui._backend_main_window._screenshot("main")
-    return ClipboardDataModel(value=data, type=StandardSubtype.IMAGE)
+    return ClipboardDataModel(value=data, type=StandardType.IMAGE)
 
 
 @ACTIONS.append_from_fn(
@@ -336,7 +336,7 @@ def copy_screenshot(ui: MainWindow) -> ClipboardDataModel:
 def copy_screenshot_area(ui: MainWindow) -> ClipboardDataModel:
     """Copy a screenshot of the tab area to the clipboard."""
     data = ui._backend_main_window._screenshot("area")
-    return ClipboardDataModel(value=data, type=StandardSubtype.IMAGE)
+    return ClipboardDataModel(value=data, type=StandardType.IMAGE)
 
 
 @ACTIONS.append_from_fn(
@@ -348,7 +348,7 @@ def copy_screenshot_area(ui: MainWindow) -> ClipboardDataModel:
 def copy_screenshot_window(ui: MainWindow) -> ClipboardDataModel:
     """Copy a screenshot of the sub window to the clipboard."""
     data = ui._backend_main_window._screenshot("window")
-    return ClipboardDataModel(value=data, type=StandardSubtype.IMAGE)
+    return ClipboardDataModel(value=data, type=StandardType.IMAGE)
 
 
 def _save_screenshot(ui: MainWindow, target: str) -> None:

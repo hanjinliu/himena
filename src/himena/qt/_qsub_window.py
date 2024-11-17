@@ -9,6 +9,7 @@ from qtpy import QtCore, QtGui
 from qtpy.QtCore import Qt
 from superqt import QIconifyIcon
 from superqt.utils import qthrottled
+
 from himena import anchor as _anchor
 from himena.consts import MenuId
 from himena._utils import lru_cache
@@ -156,8 +157,13 @@ def _get_icon(name: str, rotate=None):
 
 
 @lru_cache(maxsize=1)
-def _icon_menu() -> QtGui.QIcon:
+def _icon_window_menu() -> QtGui.QIcon:
     return _get_icon("material-symbols:menu")
+
+
+@lru_cache(maxsize=1)
+def _icon_model_menu() -> QtGui.QIcon:
+    return _get_icon("octicon:ai-model-16")
 
 
 @lru_cache(maxsize=1)
@@ -416,18 +422,32 @@ class QTitleBarToolButton(QtW.QToolButton):
 class QSubWindowTitleBar(QtW.QFrame):
     def __init__(self, subwindow: QSubWindow, title: str):
         super().__init__()
+        self._drag_position: QtCore.QPoint | None = None
+        self._is_ctrl_drag: bool = False
+        self._is_double_clicking: bool = False
+        self._resize_position: QtCore.QPoint | None = None
+        self._subwindow = subwindow
+
         self.setFrameShape(QtW.QFrame.Shape.StyledPanel)
         self.setFrameShadow(QtW.QFrame.Shadow.Raised)
         self.setFixedHeight(_TITLE_HEIGHT)
         self.setMinimumWidth(100)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.customContextMenuRequested.connect(self._show_context_menu)
 
-        self._menu_btn = QTitleBarToolButton(
-            icon=_icon_menu(),
+        self._window_menu_btn = QTitleBarToolButton(
+            icon=_icon_window_menu(),
             tooltip="Menu for this window",
-            callback=self._show_context_menu_at_button,
+            callback=self._show_window_menu,
         )
+        if callable(getattr(self._subwindow._widget, "model_type", None)):
+            self._model_menu_btn = QTitleBarToolButton(
+                icon=_icon_model_menu(),
+                tooltip="Menu specific to the model",
+                callback=self._show_model_menu,
+            )
+        else:
+            self._model_menu_btn = QtW.QWidget()
+            self._model_menu_btn.setVisible(False)
 
         self._index_label = QtW.QLabel()
         self._index_label.setAlignment(
@@ -477,18 +497,14 @@ class QSubWindowTitleBar(QtW.QFrame):
         layout = QtW.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(1)
-        layout.addWidget(self._menu_btn)
+        layout.addWidget(self._window_menu_btn)
+        layout.addWidget(self._model_menu_btn)
         layout.addWidget(self._index_label)
         layout.addWidget(self._title_label)
         layout.addWidget(self._minimize_btn, alignment=Qt.AlignmentFlag.AlignRight)
         layout.addWidget(self._toggle_size_btn, alignment=Qt.AlignmentFlag.AlignRight)
         layout.addWidget(self._close_btn, alignment=Qt.AlignmentFlag.AlignRight)
 
-        self._drag_position: QtCore.QPoint | None = None
-        self._is_ctrl_drag: bool = False
-        self._is_double_clicking: bool = False
-        self._resize_position: QtCore.QPoint | None = None
-        self._subwindow = subwindow
         self.setProperty("isCurrent", False)
 
     def _start_renaming(self):
@@ -631,16 +647,29 @@ class QSubWindowTitleBar(QtW.QFrame):
         if self_pos.x() < parent_pos.x():
             self._subwindow.move(0, self._subwindow.pos().y())
 
-    def _show_context_menu(self):
-        return self._show_context_menu_at(QtGui.QCursor.pos())
+    def _show_model_menu(self):
+        model_type = self._subwindow._widget.model_type()
+        ui = get_main_window(self)
+        model_subtypes = model_type.split(".")
+        supertype_menus: list[QtW.QMenu] = []
+        _id = f"/model_menu:{model_type}"
+        context_menu = build_qmodel_menu(_id, app=ui.model_app.name, parent=self)
+        # also add supertype actions
+        for num in range(1, len(model_subtypes)):
+            _typ = ".".join(model_subtypes[:num])
+            _id = f"/model_menu:{_typ}"
+            _menu = build_qmodel_menu(_id, app=ui.model_app.name, parent=self)
+            _menu.setTitle(f'"{_typ}" menu')
+            supertype_menus.append(_menu)
+        if supertype_menus:
+            context_menu.addSeparator()
+            for menu in supertype_menus:
+                if not menu.isEmpty():
+                    context_menu.addMenu(menu)
 
-    def _show_context_menu_at_button(self):
-        pos_local = self._menu_btn.rect().bottomLeft()
-        pos_global = self._menu_btn.mapToGlobal(pos_local)
-        return self._show_context_menu_at(pos_global)
+        return self._exec_menu_at_button(context_menu, self._model_menu_btn)
 
-    def _show_context_menu_at(self, pos: QtCore.QPoint):
-        """Show the context menu at the given position."""
+    def _show_window_menu(self):
         main = get_main_window(self)
         app = main._model_app
 
@@ -648,7 +677,12 @@ class QSubWindowTitleBar(QtW.QFrame):
         ctx = main._ctx_keys
         ctx._update(main)
         context_menu.update_from_context(ctx.dict())
-        context_menu.exec(pos)
+        return self._exec_menu_at_button(context_menu, self._window_menu_btn)
+
+    def _exec_menu_at_button(self, menu: QtW.QMenu, btn: QtW.QToolButton):
+        pos_local = btn.rect().bottomLeft()
+        pos_global = btn.mapToGlobal(pos_local)
+        menu.exec(pos_global)
         return None
 
 

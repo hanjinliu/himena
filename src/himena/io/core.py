@@ -47,14 +47,16 @@ class ReaderProviderStore(ProviderStore[ReaderProviderTuple]):
             except Exception as e:
                 _warn_failed_provider(info.provider, e)
             else:
-                if out:
-                    if callable(out):
-                        matched.append(ReaderTuple(out, info.priority, info.plugin))
-                    else:
-                        warnings.warn(
-                            f"Reader provider {info.provider!r} returned {out!r}, which is "
-                            "not callable."
-                        )
+                if out is None:
+                    _LOGGER.debug("Reader provider %r did not match", info.provider)
+                elif callable(out):
+                    matched.append(ReaderTuple(out, info.priority, info.plugin))
+                else:
+                    _LOGGER.warning(
+                        f"Reader provider {info.provider!r} returned {out!r}, which "
+                        "is not callable."
+                    )
+        _LOGGER.debug("Matched reader providers: %r", [x[0] for x in matched])
         if not matched and not empty_ok:
             if isinstance(path, list):
                 msg = [p.name for p in path]
@@ -119,18 +121,10 @@ def _pick_from_list(choices: list[_T], plugin: str | None) -> _T:
                 out = each
                 break
         else:
-            warnings.warn(
-                f"Plugin {plugin} not found, using the default one.",
-                UserWarning,
-                stacklevel=2,
-            )
+            _LOGGER.warning(f"Plugin {plugin} not found, using the default one.")
             out = _pick_by_priority(choices)
     return out
 
 
 def _warn_failed_provider(provider, e: Exception):
-    return warnings.warn(
-        f"Error in reader provider {provider!r}: {e}",
-        RuntimeWarning,
-        stacklevel=3,
-    )
+    return _LOGGER.error(f"Error in reader provider {provider!r}: {e}")

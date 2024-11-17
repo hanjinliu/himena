@@ -4,6 +4,8 @@ from himena.plugins.actions import (
     register_function,
     register_dialog,
     register_dock_widget,
+    configure_submenu,
+    AppActionRegistry,
 )
 from himena.plugins.install import install_plugins, dry_install_plugins
 
@@ -17,4 +19,6 @@ __all__ = [
     "register_function",
     "register_dialog",
     "register_dock_widget",
+    "configure_submenu",
+    "AppActionRegistry",
 ]

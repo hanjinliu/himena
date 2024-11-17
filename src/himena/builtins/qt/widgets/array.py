@@ -7,6 +7,7 @@ from qtpy import QtGui, QtCore, QtWidgets as QtW
 from qtpy.QtCore import Qt
 from himena._data_wrappers import ArrayWrapper, wrap_array
 from himena.consts import StandardType, MonospaceFontFamily
+from himena.model_meta import ArrayMeta
 from himena.types import WidgetDataModel
 from himena.builtins.qt.widgets._table_base import (
     QTableBase,
@@ -262,6 +263,9 @@ class QDefaultArrayView(QtW.QWidget):
             value=self._arr.arr,
             type=self.model_type(),
             extension_default=".npy",
+            additional_data=ArrayMeta(
+                current_indices=self._get_slice(),
+            ),
         )
 
     def model_type(self) -> str:
