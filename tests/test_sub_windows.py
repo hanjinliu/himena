@@ -137,7 +137,9 @@ def test_view_menu_commands(ui: MainWindow, sample_dir: Path):
     ui.exec_action("close-tab")
     ui.exec_action("new-tab")
     ui.read_file(sample_dir / "text.txt")
+    assert ui.tabs.current().current_index == 0
     ui.read_file(sample_dir / "text.txt")
+    assert ui.tabs.current().current_index == 1
     ui.exec_action("new-tab")
     ui.read_file(sample_dir / "text.txt")
     assert ui.tabs.current_index == 1

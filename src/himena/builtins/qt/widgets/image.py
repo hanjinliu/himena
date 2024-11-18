@@ -98,8 +98,11 @@ class QDefaultImageView(QtW.QWidget):
 
         # guess clim
         self._minmax = self._clim = _guess_clim(arr, img_slice)
+        if self._minmax[0] == self._minmax[1]:
+            self._minmax = self._minmax[0], self._minmax[0] + 1
+        self._control._clim_slider.setMinimum(self._minmax[0])
+        self._control._clim_slider.setMaximum(self._minmax[1])
         with qsignal_blocker(self._control._clim_slider):
-            self._control._clim_slider.setRange(*self._minmax)
             self._control._clim_slider.setValue(self._clim)
         self._image_label.set_array(self.as_image_array(img_slice, self._clim))
 
@@ -252,14 +255,8 @@ class QImageViewControl(QtW.QWidget):
         self._auto_contrast_btn = QtW.QPushButton("Auto")
         self._auto_contrast_btn.clicked.connect(self.auto_contrast_requested.emit)
         self._auto_contrast_btn.setToolTip("Auto contrast")
-        self._clim_slider = QLabeledDoubleRangeSlider(QtCore.Qt.Orientation.Horizontal)
-        self._clim_slider.setToolTip("Contrast limits")
-        self._clim_slider.setRange(0, 255)
+        self._clim_slider = _QContrastRangeSlider()
         self._clim_slider.valueChanged.connect(self.clim_changed.emit)
-        self._clim_slider.setEdgeLabelMode(self._clim_slider.EdgeLabelMode.NoLabel)
-        self._clim_slider.setHandleLabelPosition(
-            self._clim_slider.LabelPosition.LabelsAbove
-        )
 
         self._histogram.setFixedWidth(120)
         self._clim_slider.setFixedWidth(120)
@@ -275,6 +272,15 @@ class QImageViewControl(QtW.QWidget):
         layout.addWidget(self._clim_slider)
         layout.addWidget(self._histogram)
         layout.addWidget(self._interpolation_check_box)
+
+
+class _QContrastRangeSlider(QLabeledDoubleRangeSlider):
+    def __init__(self):
+        super().__init__(QtCore.Qt.Orientation.Horizontal)
+        self.setToolTip("Contrast limits")
+        self.setEdgeLabelMode(self.EdgeLabelMode.NoLabel)
+        self.setHandleLabelPosition(self.LabelPosition.LabelsAbove)
+        self.setRange(0, 255)
 
 
 class _QHistogram(_QImageLabel):

@@ -476,14 +476,12 @@ class MainWindow(Generic[_W]):
         back._update_context()
         i_tab = back._current_tab_index()
         if i_tab is None:
-            return None
+            return back._update_control_widget(None)
         tab = self.tabs[i_tab]
         if len(tab) == 0:
-            return None
+            return back._update_control_widget(None)
         i_win = back._current_sub_window_index()
-        if i_win is None:
-            return None
-        if len(tab) <= i_win:
+        if i_win is None or len(tab) <= i_win:
             return back._update_control_widget(None)
         _LOGGER.debug("Window activated: %r-th window in %r-th tab", i_win, i_tab)
         win = tab[i_win]

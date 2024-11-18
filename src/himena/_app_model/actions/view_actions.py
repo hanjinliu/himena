@@ -106,16 +106,18 @@ def merge_tabs(ui: MainWindow) -> None:
     menus=[
         {"id": MenuId.VIEW, "group": WINDOW_GROUP},
     ],
-    enablement=_ctx.num_sub_windows > 1,
+    enablement=(_ctx.num_sub_windows > 1) & _ctx.is_subwindow_focused,
 )
 def minimize_others(ui: MainWindow):
     """Minimize all sub-windows except the current one."""
     if area := ui.tabs.current():
-        cur_window = area.current()
-        for window in area:
-            if cur_window is window:
-                continue
-            window.state = WindowState.MIN
+        if cur_window := area.current():
+            for window in area:
+                if cur_window is window:
+                    continue
+                window.state = WindowState.MIN
+            return
+    raise RuntimeError("No window focused.")
 
 
 @ACTIONS.append_from_fn(

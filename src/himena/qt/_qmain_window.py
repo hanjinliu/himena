@@ -312,7 +312,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         if area is None:
             return None
         sub = area.currentSubWindow()
-        if sub is None:
+        if sub is None or not sub.is_current():
             return None
         return area.subWindowList().index(sub)
 
@@ -526,7 +526,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         cb_win: Callable[[], SubWindow[QtW.QWidget]],
     ):
         self._tab_widget.currentChanged.connect(cb_tab)
-        self._tab_widget.newWindowActivated.connect(cb_win)
+        self._tab_widget.activeWindowChanged.connect(cb_win)
 
     def _add_model_menu(
         self,

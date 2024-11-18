@@ -1,7 +1,7 @@
 from __future__ import annotations
 import sys
 from contextlib import suppress
-
+import textwrap
 import logging
 from qtpy import QtWidgets as QtW, QtGui
 from qtpy.QtCore import Qt, Signal
@@ -24,6 +24,9 @@ class QLogger(QtW.QPlainTextEdit):
         self._finder_widget = None
 
     def update_text(self, obj: str):
+        text = "\n".join(textwrap.wrap(obj, width=200))
+        if obj.endswith("\n"):
+            text += "\n"
         self.moveCursor(QtGui.QTextCursor.MoveOperation.End)
         self.insertPlainText(obj)
         self.moveCursor(QtGui.QTextCursor.MoveOperation.End)

@@ -210,6 +210,7 @@ def open_new(ui: MainWindow) -> WidgetDataModel:
     icon="material-symbols:content-paste",
     menus=[{"id": MenuId.FILE, "group": READ_GROUP}],
     keybindings=[StandardKeyBinding.Paste],
+    enablement=~_ctx.is_subwindow_focused,
 )
 def paste_from_clipboard(ui: MainWindow) -> WidgetDataModel:
     """Paste the clipboard data as a sub-window."""

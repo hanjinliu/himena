@@ -105,14 +105,16 @@ class QDefaultTableWidget(QtW.QTableWidget, QTableBase):
 
     def _paste_from_clipboard(self):
         sel_idx = self.selectedIndexes()
-        if not sel_idx:
-            return
+        if sel_idx:
+            idx = sel_idx[0]
+        else:
+            idx = self.currentIndex()
         text = QtW.QApplication.clipboard().text()
         if not text:
             return
 
         # paste in the text
-        row0, col0 = sel_idx[0].row(), sel_idx[0].column()
+        row0, col0 = idx.row(), idx.column()
         data = [line.split("\t") for line in text.splitlines()]
         # expand the table if necessary
         needs_relabel = False
@@ -175,14 +177,14 @@ class QDefaultTableWidget(QtW.QTableWidget, QTableBase):
         _Ctrl = QtCore.Qt.KeyboardModifier.ControlModifier
         if e.modifiers() & _Ctrl and e.key() == QtCore.Qt.Key.Key_C:
             return self._copy_to_clipboard()
-        if e.modifiers() & _Ctrl and e.key() == QtCore.Qt.Key.Key_V:
+        elif e.modifiers() & _Ctrl and e.key() == QtCore.Qt.Key.Key_V:
             return self._paste_from_clipboard()
-        if e.modifiers() & _Ctrl and e.key() == QtCore.Qt.Key.Key_X:
+        elif e.modifiers() & _Ctrl and e.key() == QtCore.Qt.Key.Key_X:
             self._copy_to_clipboard()
             return self._delete_selection()
-        if e.key() in (QtCore.Qt.Key.Key_Delete, QtCore.Qt.Key.Key_Backspace):
+        elif e.key() in (QtCore.Qt.Key.Key_Delete, QtCore.Qt.Key.Key_Backspace):
             return self._delete_selection()
-        if e.modifiers() & _Ctrl and e.key() == QtCore.Qt.Key.Key_F:
+        elif e.modifiers() & _Ctrl and e.key() == QtCore.Qt.Key.Key_F:
             self._find_string()
             return
         return super().keyPressEvent(e)

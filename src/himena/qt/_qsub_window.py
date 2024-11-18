@@ -26,11 +26,14 @@ _LOGGER = getLogger(__name__)
 
 
 class QSubWindowArea(QtW.QMdiArea):
+    area_focused = QtCore.Signal()
+
     def __init__(self):
         super().__init__()
         self.viewport().setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self._last_press_pos: QtCore.QPoint | None = None
         self._last_drag_pos: QtCore.QPoint | None = None
+        # self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
 
     def addSubWindow(self, sub_window: QSubWindow):
         super().addSubWindow(sub_window)
@@ -94,17 +97,34 @@ class QSubWindowArea(QtW.QMdiArea):
         self.setCursor(Qt.CursorShape.ArrowCursor)
         self._last_press_pos = self._last_drag_pos = None
 
-        # context menu
-        if event.button() == Qt.MouseButton.RightButton:
-            # check if any window is under the cursor
-            for sub_window in self.subWindowList():
-                if sub_window.rect().contains(sub_window.mapFromParent(event.pos())):
-                    break
-            else:
+        # check if any window is under the cursor
+        for sub_window in self.subWindowList():
+            if sub_window.rect().contains(sub_window.mapFromParent(event.pos())):
+                if not sub_window.is_current():
+                    sub_window.set_is_current(True)
+                    self.subWindowActivated.emit(sub_window)
+                break
+        else:
+            if event.button() == Qt.MouseButton.RightButton:
+                # context menu
                 app = get_main_window(self).model_app
                 menu = build_qmodel_menu(MenuId.FILE_NEW, app, self)
                 menu.exec(event.globalPos())
+
         return None
+
+    def eventFilter(self, obj, a0: QtCore.QEvent) -> bool:
+        if a0.type() == QtCore.QEvent.Type.FocusIn:
+            if obj is not self:
+                if isinstance(obj, QtW.QStyle):
+                    return False
+                else:
+                    if win := self.currentSubWindow():
+                        self.subWindowActivated.emit(win)
+            else:
+                self.area_focused.emit()
+                _LOGGER.debug("TabArea focused.")
+        return super().eventFilter(obj, a0)
 
     def hideEvent(self, a0: QtGui.QHideEvent | None) -> None:
         self._last_drag_pos = self._last_press_pos = None
@@ -318,6 +338,9 @@ class QSubWindow(QtW.QMdiSubWindow):
         self.move(2, geometry.height() - (self._title_bar.height() + 8) * (number + 1))
         self._title_bar._toggle_size_btn.setIcon(_icon_normal())
         self._widget.setVisible(False)
+
+    def is_current(self) -> bool:
+        return self._title_bar.property("isCurrent")
 
     def set_is_current(self, is_current: bool):
         """Set the isCurrent state of the sub-window and update styles."""

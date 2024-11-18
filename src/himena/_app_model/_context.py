@@ -20,6 +20,13 @@ def _active_window_state(ui: "MainWindow"):
     return WindowState.NORMAL
 
 
+def _is_active_window_focused(ui: "MainWindow") -> bool:
+    if area := ui.tabs.current():
+        if area.current() is not None:
+            return True
+    return False
+
+
 def _num_sub_windows(ui: "MainWindow") -> int:
     if area := ui.tabs.current():
         return area.len()
@@ -81,6 +88,11 @@ class AppContext(ContextNamespace["MainWindow"]):
         WindowState.NORMAL,
         "state of the sub-window",
         _active_window_state,
+    )
+    is_subwindow_focused = ContextKey(
+        False,
+        "if a sub-window is focused",
+        _is_active_window_focused,
     )
     num_tabs = ContextKey(
         0,

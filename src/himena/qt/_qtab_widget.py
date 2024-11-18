@@ -88,7 +88,7 @@ class QTabBar(QtW.QTabBar):
 class QTabWidget(QtW.QTabWidget):
     """Tab widget used for the main widget"""
 
-    newWindowActivated = QtCore.Signal()
+    activeWindowChanged = QtCore.Signal(bool)  # True if a window is active
 
     def __init__(self):
         super().__init__()
@@ -106,8 +106,7 @@ class QTabWidget(QtW.QTabWidget):
         self.setMinimumSize(200, 200)
         self.setAcceptDrops(True)
 
-        self.newWindowActivated.connect(self._repolish)
-        self.currentChanged.connect(self._repolish)
+        self.activeWindowChanged.connect(self._repolish)
 
         # "new tab" button
         tb = QtW.QToolButton()
@@ -137,7 +136,8 @@ class QTabWidget(QtW.QTabWidget):
             self.setTabBarAutoHide(False)
         area = QSubWindowArea()
         self.addTab(area, tab_name)
-        area.subWindowActivated.connect(self._emit_new_window_activated)
+        area.subWindowActivated.connect(self._subwindow_activated)
+        area.area_focused.connect(self._area_focused)
         btn = QCloseTabToolButton(area)
         self.tabBar().setTabButton(
             self.count() - 1, QtW.QTabBar.ButtonPosition.RightSide, btn
@@ -152,8 +152,11 @@ class QTabWidget(QtW.QTabWidget):
             self._add_startup_widget()
         return None
 
-    def _emit_new_window_activated(self) -> None:
-        self.newWindowActivated.emit()
+    def _subwindow_activated(self) -> None:
+        self.activeWindowChanged.emit(True)
+
+    def _area_focused(self) -> None:
+        self.activeWindowChanged.emit(False)
 
     def _add_startup_widget(self):
         self.addTab(self._startup_widget, ".welcome")
@@ -166,13 +169,18 @@ class QTabWidget(QtW.QTabWidget):
     def _on_current_changed(self, index: int) -> None:
         if widget := self.widget_area(index):
             widget._reanchor_windows()
-            if len(widget.subWindowList()) > 0:
-                self.newWindowActivated.emit()
+            has_active_subwindow = any(
+                win.is_current() for win in widget.subWindowList()
+            )
+            self.activeWindowChanged.emit(has_active_subwindow)
 
-    def _repolish(self) -> None:
+    def _repolish(self, subwindow_focused: bool = True) -> None:
         if area := self.current_widget_area():
             wins = area.subWindowList()
-            cur = area.currentSubWindow()
+            if subwindow_focused:
+                cur = area.currentSubWindow()
+            else:
+                cur = None
             for i, win in enumerate(wins):
                 win.set_is_current(win == cur)
 
