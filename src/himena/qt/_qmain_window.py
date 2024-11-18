@@ -241,12 +241,14 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             widget._reanchor_windows()
         return None
 
-    def show(self):
+    def show(self, run: bool = False):
         super().show()
         size = self.size()
         minw, minh = 600, 400
         if size.width() < minw or size.height() < minh:
             self.resize(min(size.width(), minw), min(size.height(), minh))
+        if run:
+            get_event_loop_handler("qt", self._app_name).run_app()
         return None
 
     def close(self):
@@ -295,9 +297,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         _msec = (timer() - _time_0) * 1000
         _LOGGER.debug("Context update took %.3f msec", _msec)
 
-    def _run_app(self):
-        return get_event_loop_handler("qt", self._app_name).run_app()
-
     def _current_tab_index(self) -> int | None:
         idx = self._tab_widget.currentIndex()
         if idx == -1:
@@ -317,12 +316,13 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         return area.subWindowList().index(sub)
 
     def _set_current_sub_window_index(self, i_window: int) -> None:
-        assert i_window >= 0
+        assert i_window is None or i_window >= 0
         area = self._tab_widget.current_widget_area()
         subwindows = area.subWindowList()
         for i in range(len(subwindows)):
             subwindows[i].set_is_current(i == i_window)
-        area.setActiveSubWindow(subwindows[i_window])
+        if i_window is not None:
+            area.setActiveSubWindow(subwindows[i_window])
         return None
 
     def _tab_title(self, i_tab: int) -> str:
@@ -398,27 +398,10 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         answer = QtW.QMessageBox.question(self, "Confirmation", message)
         return answer == QtW.QMessageBox.StandardButton.Yes
 
-    def _open_selection_dialog(self, msg: str, options: list[str]) -> list[str] | None:
-        dialog = QtW.QDialog(self)
-        dialog.setWindowTitle("Selection")
-        layout = QtW.QVBoxLayout(dialog)
-        layout.addWidget(QtW.QLabel(msg))
-        lw = QtW.QListWidget()
-        lw.setSelectionMode(QtW.QAbstractItemView.SelectionMode.MultiSelection)
-        lw.addItems(options)
-        layout.addWidget(lw)
-        buttons = QtW.QDialogButtonBox(
-            QtW.QDialogButtonBox.StandardButton.Ok
-            | QtW.QDialogButtonBox.StandardButton.Cancel
-        )
-        layout.addWidget(buttons)
-        buttons.accepted.connect(dialog.accept)
-        buttons.rejected.connect(dialog.reject)
-        if dialog.exec_():
-            return [item.text() for item in lw.selectedItems()]
-        return None
-
-    def _show_command_palette(self, kind: Literal["general", "recent", "goto"]) -> None:
+    def _show_command_palette(
+        self,
+        kind: Literal["general", "recent", "goto", "new"],
+    ) -> None:
         if kind == "general":
             self._command_palette_general.update_context(self)
             self._command_palette_general.show()

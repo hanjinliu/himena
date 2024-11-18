@@ -343,7 +343,10 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         ]
         ui = self._main_window()._himena_main_window
         ui._recent_manager.append_recent_files(
-            [(fp, reader.plugin.to_str()) for reader, fp in reader_path_sets]
+            [
+                (fp, reader.plugin.to_str() if reader.plugin else None)
+                for reader, fp in reader_path_sets
+            ]
         )
         return [self.add_data_model(model) for model in models]
 

@@ -412,9 +412,7 @@ class MainWindow(Generic[_W]):
         run : bool, default False
             If True, run the application event loop.
         """
-        self._backend_main_window.show()
-        if run:
-            self._backend_main_window._run_app()
+        self._backend_main_window.show(run)
         return None
 
     def close(self) -> None:

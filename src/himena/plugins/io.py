@@ -56,11 +56,8 @@ def register_reader_provider(provider=None, priority=0):
 
         if hasattr(func, "__annotations__"):
             annot_types = list(func.__annotations__.values())
-            if len(annot_types) == 1 and annot_types[0] in (
-                Path,
-                "Path",
-                ForwardRef("Path"),
-            ):
+            _allowed = (Path, "Path", ForwardRef("Path"))
+            if len(annot_types) == 1 and annot_types[0] in _allowed:
                 func = _skip_if_list_of_paths(func)
 
         ins.add(func, priority, plugin)
@@ -74,6 +71,8 @@ def _skip_if_list_of_paths(func: Callable) -> Callable:
         if isinstance(args[0], list):
             return None
         return func(*args, **kwargs)
+
+    return _new
 
 
 @overload

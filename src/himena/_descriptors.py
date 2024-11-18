@@ -76,20 +76,21 @@ def method_to_dict(method: MethodDescriptor) -> dict:
     """Convert a method descriptor to a dictionary."""
     if isinstance(method, ProgramaticMethod):
         return {"type": "programatic"}
-    if isinstance(method, LocalReaderMethod):
+    elif isinstance(method, LocalReaderMethod):
         return {
             "type": "local_reader",
             "path": str(method.path),
             "plugin": method.plugin,
         }
-    if isinstance(method, ConverterMethod):
+    elif isinstance(method, ConverterMethod):
         return {
             "type": "converter",
             "originals": [method_to_dict(m) for m in method.originals],
             "command_id": method.command_id,
             "parameters": method.parameters,
         }
-    raise ValueError(f"Unknown method type: {method}")
+    else:
+        raise ValueError(f"Unknown method type: {method}")
 
 
 class SaveBehavior(BaseModel):

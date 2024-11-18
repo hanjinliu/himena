@@ -1,4 +1,3 @@
-from typing import Any
 from app_model.types import (
     KeyBindingRule,
     KeyCode,
@@ -11,7 +10,6 @@ from himena.widgets import MainWindow
 from himena.types import (
     Parametric,
     WindowState,
-    WindowRect,
 )
 from himena._app_model._context import AppContext as _ctx
 from himena._app_model.actions._registry import ACTIONS
@@ -73,31 +71,25 @@ def goto_last_tab(ui: MainWindow) -> None:
     title="Merge Tabs ...",
     enablement=_ctx.num_tabs > 1,
     menus=[MenuId.VIEW],
+    need_function_callback=True,
 )
-def merge_tabs(ui: MainWindow) -> None:
+def merge_tabs(ui: MainWindow) -> Parametric:
     """Select tabs and merge them."""
-    # TODO: use `move_window`
     if len(ui.tabs) < 2:
         return
-    names = ui._backend_main_window._open_selection_dialog(
-        "Selects tab to merge", ui.tabs.names
-    )
-    if names is None:
-        return
-    all_window_info: list[tuple[Any, str, WindowState, WindowRect]] = []
-    for name in names:
-        for window in ui.tabs[name]:
-            all_window_info.append(
-                (window.widget, window.title, window.state, window.rect)
-            )
-    for name in names:
-        del ui.tabs[name]
-    new_tab = ui.add_tab(names[0])
-    for widget, title, state, rect in all_window_info:
-        new_window = new_tab.add_widget(widget, title=title)
-        new_window.state = state
-        if state is WindowState.NORMAL:
-            new_window.rect = rect
+
+    @configure_gui(names={"choices": ui.tabs.names, "widget_type": "Select"})
+    def choose_tabs_to_merge(names: list[str]) -> None:
+        if len(names) < 2:
+            return
+        i_tab = ui.tabs.names.index(names[0])
+        for name in names[1:]:
+            for window in ui.tabs[name]:
+                ui.move_window(window, i_tab)
+            del ui.tabs[name]
+        return None
+
+    return choose_tabs_to_merge
 
 
 @ACTIONS.append_from_fn(

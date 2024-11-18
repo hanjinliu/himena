@@ -17,7 +17,7 @@ from himena.types import (
 if TYPE_CHECKING:
     from himena.style import Theme
     from himena.widgets._main_window import MainWindow
-    from himena.widgets._wrapper import SubWindow, DockWidget, ParametricWindow
+    from himena.widgets._wrapper import SubWindow, ParametricWindow
     import numpy as np
     from numpy.typing import NDArray
 
@@ -27,32 +27,55 @@ _W = TypeVar("_W")  # backend widget type
 class BackendMainWindow(Generic[_W]):  # pragma: no cover
     _himena_main_window: MainWindow
 
+    def __init_subclass__(cls) -> None:
+        for name in dir(BackendMainWindow):
+            if not hasattr(cls, name):
+                raise NotImplementedError(f"Method {name} is not implemented.")
+
     def _update_widget_theme(self, theme: Theme):
-        raise NotImplementedError
+        """Update the theme of the main window."""
 
     def _current_tab_index(self) -> int | None:
-        raise NotImplementedError
+        """Get the current tab index.
+
+        If there is no tab, return None.
+        """
 
     def _set_current_tab_index(self, i_tab: int) -> None:
-        raise NotImplementedError
+        """Update the current tab index."""
 
     def _current_sub_window_index(self) -> int | None:
-        raise NotImplementedError
+        """Get the current sub window index in the current tab.
 
-    def _set_current_sub_window_index(self, i_window: int) -> None:
-        raise NotImplementedError
+        If there is no sub window, or the tab area itself is selected, return None.
+        """
+
+    def _set_current_sub_window_index(self, i_window: int | None) -> None:
+        """Update the current sub window index in the current tab.
+
+        if `i_window` is None, the tab area itself will be selected (all the windows
+        will be deselected). `i_window` is asserted to be non-negative.
+        """
 
     def _set_control_widget(self, widget: _W, control: _W | None) -> None:
-        raise NotImplementedError
+        """Set the control widget for the given sub window widget.
+
+        A control widget appears on the top-right corner of the toolbar, which will be
+        used to display the state of the widget, edit the widget efficiently, etc. For
+        example, a font size spinbox for a text editor widget.
+        """
 
     def _update_control_widget(self, current: _W | None) -> None:
-        raise NotImplementedError
+        """Switch the control widget to another one in the existing ones.
+
+        If None is given, the control widget will be just hidden.
+        """
 
     def _remove_control_widget(self, widget: _W) -> None:
-        raise NotImplementedError
+        """Remove the control widget for the given sub window widget from the stack."""
 
     def _window_state(self, widget: _W) -> WindowState:
-        raise NotImplementedError
+        """The state (min, normal, etc.) of the window."""
 
     def _set_window_state(
         self,
@@ -60,22 +83,25 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
         state: WindowState,
         inst: BackendInstructions,
     ) -> None:
-        raise NotImplementedError
+        """Update the state of the window.
+
+        The BackendInstructions indicates the animation or other effects to be applied.
+        """
 
     def _tab_title(self, i_tab: int) -> str:
-        raise NotImplementedError
+        """Get the title of the tab at the index."""
 
     def _set_tab_title(self, i_tab: int, title: str) -> None:
-        raise NotImplementedError
+        """Update the title of the tab at the index."""
 
     def _window_title(self, widget: _W) -> str:
-        raise NotImplementedError
+        """Get the title of the window."""
 
     def _set_window_title(self, widget: _W, title: str) -> None:
-        raise NotImplementedError
+        """Update the title of the window."""
 
     def _window_rect(self, widget: _W) -> WindowRect:
-        raise NotImplementedError
+        """Get the rectangle relative to the tab area of the window."""
 
     def _set_window_rect(
         self,
@@ -83,16 +109,19 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
         rect: WindowRect,
         inst: BackendInstructions,
     ) -> None:
-        raise NotImplementedError
+        """Update the rectangle of the window.
+
+        The BackendInstructions indicates the animation or other effects to be applied.
+        """
 
     def _window_anchor(self, widget: _W) -> WindowAnchor:
-        raise NotImplementedError
+        """Get the anchor of the window."""
 
     def _set_window_anchor(self, widget: _W, anchor: WindowAnchor) -> None:
-        raise NotImplementedError
+        """Update the anchor of the window."""
 
     def _area_size(self) -> tuple[int, int]:
-        raise NotImplementedError
+        """Get the size of the tab area."""
 
     @overload
     def _open_file_dialog(
@@ -110,46 +139,44 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     ) -> list[Path] | None: ...
 
     def _open_file_dialog(self, mode, extension_default=None, allowed_extensions=None):
-        raise NotImplementedError
+        """Open a file dialog."""
 
     def _open_confirmation_dialog(self, message: str) -> bool:
-        raise NotImplementedError
-
-    def _open_selection_dialog(self, msg: str, options: list[str]) -> list[str] | None:
-        raise NotImplementedError
-
-    def _request_values(
-        self, msg: str, spec: dict[str, type]
-    ) -> dict[str, object] | None:
-        raise NotImplementedError
+        """Open a confirmation dialog (Yes or None)."""
 
     def _show_command_palette(self, kind: str) -> None:
-        raise NotImplementedError
+        """Show the command palette widget of the given kind."""
 
     def _exit_main_window(self, confirm: bool = False) -> None:
-        raise NotImplementedError
+        """Close the main window (confirm if needed)."""
 
     def _get_widget_list(self, i_tab: int) -> list[tuple[str, _W]]:
-        raise NotImplementedError
+        """Get the list of widgets in the tab."""
 
     def _del_widget_at(self, i_tab: int, i_window: int) -> None:
-        raise NotImplementedError
+        """Delete the `i_window`-th window in the `i_tab`-th tab."""
 
     def _get_tab_name_list(self) -> list[str]:
-        raise NotImplementedError
+        """Get the list of tab names."""
 
     def _del_tab_at(self, i_tab: int) -> None:
-        # NOTE: backend does not need to close the subwindows one by one
-        raise NotImplementedError
+        """Delete the `i_tab`-th tab.
+
+        Backend does not need to close the subwindows one by one (will be done on the
+        wrapper side).
+        """
 
     def _rename_window_at(self, i_tab: int, i_window: int) -> None:
-        raise NotImplementedError
+        """Start renaming the `i_window`-th window in the `i_tab`-th tab."""
 
     def add_widget(self, widget: _W, i_tab: int, title: str) -> _W:
-        raise NotImplementedError
+        """Add a sub window containing the widget to the tab at the index.
+
+        Return the backend widget.
+        """
 
     def add_tab(self, title: str) -> None:
-        raise NotImplementedError
+        """Add a empty tab with the title."""
 
     def add_dock_widget(
         self,
@@ -157,87 +184,94 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
         title: str | None,
         area: DockAreaString | DockArea | None = DockArea.RIGHT,
         allowed_areas: list[DockAreaString | DockArea] | None = None,
-        keybindings=None,
-    ) -> DockWidget[_W]:
-        raise NotImplementedError
+    ) -> _W:
+        """Add a dock widget containing the widget to the main window.
+
+        Return the backend dock widget.
+        """
 
     def add_dialog_widget(self, widget: _W, title: str | None):
-        raise NotImplementedError
+        """Add a dialog widget containing the widget to the main window.
+
+        A dialog will freeze the entire window.
+        """
 
     ### dock widgets ###
     def _dock_widget_visible(self, widget: _W) -> bool:
-        raise NotImplementedError
+        """Whether the dock widget is visible."""
 
     def _set_dock_widget_visible(self, widget: _W, visible: bool) -> None:
-        raise NotImplementedError
+        """Update the visibility of the dock widget."""
 
     def _dock_widget_title(self, widget: _W) -> str:
-        raise NotImplementedError
+        """Get the title of the dock widget."""
 
     def _set_dock_widget_title(self, widget: _W, title: str) -> None:
-        raise NotImplementedError
+        """Update the title of the dock widget."""
 
     def _del_dock_widget(self, widget: _W) -> None:
-        raise NotImplementedError
+        """Delete the dock widget."""
 
     ### others ###
     def show(self, run: bool = False) -> None:
-        raise NotImplementedError
-
-    def _run_app(self):
-        raise NotImplementedError
+        """Show the main window and run the app immediately if `run` is True"""
 
     def _list_widget_class(
         self,
         type: str,
     ) -> tuple[list[tuple[str, type[_W], int]], type[_W]]:
-        # (list of available classes, fallback class)
-        raise NotImplementedError
+        """List the available widget classes of the given type.
+
+        The method will return (list of (widget model type, widget_class, priority),
+        fallback class)
+        """
 
     def _connect_activation_signal(
         self,
         cb_tab: Callable[[int], int],
         cb_win: Callable[[], SubWindow[_W]],
     ):
-        raise NotImplementedError
+        """Connect the activation signal of the backend main window to the callbacks."""
 
     def _connect_window_events(
         self,
         wrapper: SubWindow[_W],
         backend: _W,
     ):
-        raise NotImplementedError
+        """Connect the events between the wrapper sub window and the backend widget."""
 
     def _update_context(self) -> None:
-        raise NotImplementedError
+        """Update the application context."""
 
     def _clipboard_data(self) -> ClipboardDataModel | None:
-        raise NotImplementedError
+        """Get the clipboard data."""
 
     def _set_clipboard_data(self, data: ClipboardDataModel) -> None:
-        raise NotImplementedError
+        """Set the clipboard data."""
 
     def _screenshot(self, target: str) -> NDArray[np.uint8]:
-        raise NotImplementedError
+        """Take a screenshot of the target area."""
 
     def _process_parametric_widget(self, widget: _W) -> _W:
-        # widget implements "get_params". This method will return a new widget that
-        # can be directly passed to ui.add_widget().
-        raise NotImplementedError
+        """Process a parametric widget so that it can be added to the main window.
+
+        The incoming widget must implements the `get_params` method, which gives the
+        dictionary of parameters.
+        """
 
     def _connect_parametric_widget_events(
         self,
         wrapper: ParametricWindow[_W],
         widget: _W,
     ) -> None:
-        raise NotImplementedError
+        """Connect the events between the wrapper parametric window and the backend."""
 
     def _signature_to_widget(
         self,
         sig: inspect.Signature,
         preview: bool = False,
     ) -> _W:
-        raise NotImplementedError
+        """Convert a function signature to a widget that can run it."""
 
     def _move_focus_to(self, widget: _W) -> None:
-        raise NotImplementedError
+        """Move the focus to the widget."""

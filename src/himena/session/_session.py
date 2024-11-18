@@ -32,6 +32,8 @@ class WindowRectModel(BaseModel):
 
 
 class WindowDescription(BaseModel):
+    """A model that describes a window state."""
+
     title: str
     method: dict[str, Any]
     rect: WindowRectModel
@@ -41,6 +43,7 @@ class WindowDescription(BaseModel):
 
     @classmethod
     def from_gui(cls, window: "SubWindow") -> "WindowDescription":
+        """Construct a WindowDescription from a SubWindow instance."""
         return WindowDescription(
             title=window.title,
             method=method_to_dict(window._widget_data_model_method),

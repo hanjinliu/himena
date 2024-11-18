@@ -279,6 +279,8 @@ def test_register_folder(ui: MainWindow, sample_dir: Path):
         file_dialog_response=response_open,
     )
     ui.exec_action("open-folder")
+    assert ui.tabs.current_index == 0
+    assert ui.tabs.current().len() == 1
 
 def test_clipboard(ui: MainWindow, sample_dir: Path):
     cmodel = ClipboardDataModel(value="XXX", type="text")

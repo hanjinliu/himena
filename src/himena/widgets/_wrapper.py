@@ -308,7 +308,9 @@ class SubWindow(WidgetWrapper[_W]):
     def _find_me(self, main: MainWindow) -> tuple[int, int]:
         for i_tab, tab in main.tabs.enumerate():
             for i_win, win in tab.enumerate():
-                if win is self:
+                # NOTE: should not be `win is self`, because the wrapper may be
+                # recreated
+                if win.widget is self.widget:
                     return i_tab, i_win
         raise RuntimeError(f"SubWindow {self.title} not found in main window.")
 

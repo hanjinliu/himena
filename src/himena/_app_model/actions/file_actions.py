@@ -84,7 +84,10 @@ def open_file_using_from_dialog(ui: MainWindow) -> Parametric:
     def choose_a_plugin(reader: io.ReaderTuple) -> WidgetDataModel:
         _LOGGER.info("Reading file %s using %r", file_path, reader)
         model = io.read_and_update_source(reader, file_path)
-        plugin = reader.plugin.to_str()
+        if reader.plugin is not None:
+            plugin = reader.plugin.to_str()
+        else:
+            plugin = None
         ui._recent_manager.append_recent_files([(file_path, plugin)])
         model.method = LocalReaderMethod(path=file_path, plugin=plugin)
         return model
