@@ -137,6 +137,11 @@ def default_reader_provider(file_path: Path | list[Path]):
     return None
 
 
+@register_reader_provider(priority=-10)
+def read_as_text_anyway_provider(file_path: Path) -> WidgetDataModel:
+    return default_text_reader
+
+
 class DataFrameReader:
     def __init__(self, module: str, method: str, kwargs: dict[str, Any]):
         self._module = module
@@ -204,7 +209,7 @@ def default_csv_writer(model: WidgetDataModel[list[list[str]]], path: Path) -> N
     """Write CSV file."""
     import csv
 
-    with open(path, "w") as f:
+    with open(path, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerows(model.value)
 
@@ -255,6 +260,15 @@ def default_excel_writer(
     return None
 
 
+def default_array_writer(
+    model: WidgetDataModel[np.ndarray],
+    path: Path,
+) -> None:
+    """Write array file."""
+    np.save(path, model.value)
+    return None
+
+
 @register_writer_provider(priority=-1)
 def default_writer_provider(model: WidgetDataModel):
     """Get default writer."""
@@ -270,5 +284,7 @@ def default_writer_provider(model: WidgetDataModel):
         return default_parameter_writer
     elif model.is_subtype_of(StandardType.EXCEL):
         return default_excel_writer
+    elif model.is_subtype_of(StandardType.ARRAY):
+        return default_array_writer
     else:
         return None

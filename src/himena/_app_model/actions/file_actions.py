@@ -8,7 +8,7 @@ from app_model.types import (
     KeyChord,
     StandardKeyBinding,
 )
-from himena._descriptors import LocalReaderMethod, SaveToNewPath
+from himena._descriptors import LocalReaderMethod, SaveToNewPath, SaveToPath
 from himena.consts import StandardType, MenuId
 from himena.widgets import MainWindow, SubWindow
 from himena import io, _utils
@@ -81,7 +81,7 @@ def open_file_using_from_dialog(ui: MainWindow) -> Parametric:
             "value": choices_reader[0][1],
         }
     )
-    def choose_a_plugin(reader: io.ReaderTuple) -> WidgetDataModel:
+    def choose_a_plugin(reader: io.ReaderTuple) -> None:
         _LOGGER.info("Reading file %s using %r", file_path, reader)
         model = io.read_and_update_source(reader, file_path)
         if reader.plugin is not None:
@@ -90,7 +90,9 @@ def open_file_using_from_dialog(ui: MainWindow) -> Parametric:
             plugin = None
         ui._recent_manager.append_recent_files([(file_path, plugin)])
         model.method = LocalReaderMethod(path=file_path, plugin=plugin)
-        return model
+        win = ui.add_data_model(model)
+        win.update_default_save_path(file_path, plugin)
+        return None
 
     return _utils.make_opener_callback(choose_a_plugin)
 
@@ -119,10 +121,7 @@ def open_folder_from_dialog(ui: MainWindow) -> Path:
 )
 def save_from_dialog(ui: MainWindow, sub_win: SubWindow) -> None:
     """Save (overwrite) the current sub-window as a file."""
-    model = sub_win.to_model()
-    if save_path := sub_win.save_behavior.get_save_path(ui, model):
-        io.WriterProviderStore.instance().run(model, save_path)
-        sub_win.update_default_save_path(save_path)
+    sub_win._save_from_dialog(ui)
     return None
 
 
@@ -136,10 +135,7 @@ def save_from_dialog(ui: MainWindow, sub_win: SubWindow) -> None:
 )
 def save_as_from_dialog(ui: MainWindow, sub_win: SubWindow) -> None:
     """Save the current sub-window as a new file."""
-    model = sub_win.to_model()
-    if save_path := SaveToNewPath().get_save_path(ui, model):
-        io.WriterProviderStore.instance().run(model, save_path)
-        sub_win.update_default_save_path(save_path)
+    sub_win._save_from_dialog(ui, behavior=SaveToNewPath())
     return None
 
 
@@ -150,32 +146,24 @@ def save_as_from_dialog(ui: MainWindow, sub_win: SubWindow) -> None:
     need_function_callback=True,
     enablement=_ctx.is_active_window_exportable,
 )
-def save_as_using_from_dialog(ui: MainWindow, sub_win: SubWindow) -> Parametric:
+def save_as_using_from_dialog(ui: MainWindow, sub_win: SubWindow):
     """Save the current sub-window using selected plugin."""
-    from himena.plugins import configure_gui
-
     model = sub_win.to_model()
     writers = io.WriterProviderStore().instance().get(model)
 
     # prepare reader plugin choices
     choices_writer = [(f"{_name_of(w.writer)}\n({w.plugin.name})", w) for w in writers]
 
-    @configure_gui(
-        writer={
-            "choices": choices_writer,
-            "widget_type": "RadioButtons",
-            "value": choices_writer[0][1],
-        }
+    writer = ui.exec_choose_one_dialog(
+        title="Choose a plugin",
+        message="Choose a plugin to save the file.",
+        choices=choices_writer,
+        how="radiobuttons",
     )
-    def choose_a_plugin(writer: io.WriterTuple) -> None:
-        save_path = ui.exec_file_dialog(mode="w")
-        if save_path is None:
-            return None
-        writer.write(model, save_path)
-        sub_win.update_default_save_path(save_path)
-        return None
-
-    return choose_a_plugin
+    if writer is None:
+        return None  # no choice selected
+    sub_win._save_from_dialog(ui, behavior=SaveToNewPath(), plugin=writer.plugin)
+    return None
 
 
 @ACTIONS.append_from_fn(
@@ -252,6 +240,47 @@ def load_session_from_dialog(ui: MainWindow) -> None:
 )
 def save_session_from_dialog(ui: MainWindow) -> None:
     """Save current application state to a session."""
+    need_save: list[SubWindow] = []
+    need_overwrite: list[SubWindow] = []
+    for win in ui.iter_windows():
+        if win._determine_read_from() is None:
+            need_save.append(win)
+        elif win.is_modified:
+            if isinstance(win.save_behavior, SaveToPath):
+                need_overwrite.append(win)
+            else:
+                need_save.append(win)
+    if need_save:
+        _list = "\n - ".join([win.title for win in need_save])
+        res = ui.exec_choose_one_dialog(
+            title="Not saved windows",
+            message=(
+                f"Following windows are not saved yet.<br>{_list}<br><br>"
+                "Do you want to save them?"
+            ),
+            choices=["Save one by one", "Just skip them", "Cancel"],
+        )
+        if res == "Save one by one":
+            for win in need_save:
+                ui._backend_main_window._move_focus_to(win.widget)
+                if not win._save_from_dialog(ui, behavior=SaveToNewPath()):
+                    return None
+        elif res == "Just skip them":
+            pass
+        else:
+            return None
+    if need_overwrite:
+        res = ui.exec_choose_one_dialog(
+            title="Modified windows",
+            message="",
+            choices=["Overwrite all", "Cancel"],
+        )
+        if res == "Overwrite all":
+            for win in need_overwrite:
+                assert isinstance(win.save_behavior, SaveToPath)
+                win.write_model(win.save_behavior.path, win.save_behavior.plugin)
+        else:
+            return None
     if path := ui.exec_file_dialog(
         mode="w",
         extension_default=".session.yaml",

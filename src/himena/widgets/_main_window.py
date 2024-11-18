@@ -335,24 +335,30 @@ class MainWindow(Generic[_W]):
     def read_session(self, path: str | Path) -> None:
         """Read a session file and open the session."""
         fp = Path(path)
-        session = from_yaml(fp)
-        session.to_gui(self)
-        # always plugin=None for reading session
+        from_yaml(fp).update_gui(self)
+        # always plugin=None for reading a session file as a session
         self._recent_session_manager.append_recent_files([(fp, None)])
+        self.set_status_tip(f"Session loaded: {fp}", duration=5)
         return None
 
     def save_session(self, path: str | Path) -> None:
         """Save the current session to a file."""
         from himena.session import AppSession
 
-        session = AppSession.from_gui(self)
-        session.dump_yaml(path)
+        path = Path(path)
+        AppSession.from_gui(self).dump_yaml(path)
+        self.set_status_tip(f"Session saved to {path}")
         return None
 
     def clear(self) -> None:
         """Clear all widgets in the main window."""
         self.tabs.clear()
         self.dock_widgets.clear()
+        return None
+
+    def set_status_tip(self, text: str, duration: float = 10.0) -> None:
+        """Set the status tip of the main window."""
+        self._backend_main_window._set_status_tip(text, duration)
         return None
 
     def exec_action(self, id: str, with_params: dict[str, Any] | None = None) -> None:
@@ -376,7 +382,43 @@ class MainWindow(Generic[_W]):
         """Execute a confirmation dialog (True if Yes is selected)."""
         if not self._instructions.confirm:
             return True
-        return self._backend_main_window._open_confirmation_dialog(msg)
+        return self._backend_main_window._request_choice_dialog(
+            title="Confirmation",
+            message=msg,
+            choices=[("Yes", True), ("No", False)],
+        )
+
+    @overload
+    def exec_choose_one_dialog(
+        self,
+        title: str,
+        message: str,
+        choices: list[tuple[str, _T]],
+        how: Literal["buttons", "radiobuttons"] = "buttons",
+    ) -> _T | None: ...
+    @overload
+    def exec_choose_one_dialog(
+        self,
+        title: str,
+        message: str,
+        choices: list[str],
+        how: Literal["buttons", "radiobuttons"] = "buttons",
+    ) -> str | None: ...
+
+    def exec_choose_one_dialog(self, title, message, choices, how="buttons"):
+        """Execute a dialog to choose one from the given choices."""
+        if res := self._instructions.choose_one_dialog_response:
+            return res()
+        _choices_normed = []
+        for choice in choices:
+            if isinstance(choice, str):
+                _choices_normed.append((choice, choice))
+            else:
+                text, value = choice
+                _choices_normed.append((text, value))
+        return self._backend_main_window._request_choice_dialog(
+            title, message, _choices_normed, how=how
+        )
 
     @overload
     def exec_file_dialog(

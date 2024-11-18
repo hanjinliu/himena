@@ -102,6 +102,7 @@ class QMainTextEdit(QtW.QPlainTextEdit):
         from superqt.utils import CodeSyntaxHighlight
 
         highlight = CodeSyntaxHighlight(self.document(), lang, theme=self._code_theme)
+        highlight.formatter.format = superqt_format_path.__get__(highlight.formatter)
         self._highlight = highlight
         return None
 
@@ -592,3 +593,10 @@ class QDefaultHTMLEdit(QtW.QWidget):
 
     def set_editable(self, value: bool) -> None:
         self._main_text_edit.setReadOnly(not value)
+
+
+def superqt_format_path(self, tokensource, outfile):
+    self.data = []
+
+    for token, value in tokensource:
+        self.data.extend([self._style.get(token, QtGui.QTextCharFormat())] * len(value))

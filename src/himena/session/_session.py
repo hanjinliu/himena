@@ -6,7 +6,7 @@ import yaml
 
 from himena._descriptors import dict_to_method, method_to_dict
 from himena.types import WindowState, WindowRect
-from himena import anchor
+from himena import anchor, io
 from himena.widgets._widget_list import TabArea
 
 if TYPE_CHECKING:
@@ -17,6 +17,8 @@ _LOGGER = getLogger(__name__)
 
 
 class WindowRectModel(BaseModel):
+    """A model version of a window rectangle."""
+
     left: int = Field(...)
     top: int = Field(...)
     width: int = Field(...)
@@ -31,6 +33,13 @@ class WindowRectModel(BaseModel):
         return WindowRect(self.left, self.top, self.width, self.height)
 
 
+class ReadFromModel(BaseModel):
+    """A model that describes how to read a model."""
+
+    path: Path | list[Path] = Field(...)
+    plugin: str | None = Field(default=None)
+
+
 class WindowDescription(BaseModel):
     """A model that describes a window state."""
 
@@ -40,10 +49,14 @@ class WindowDescription(BaseModel):
     state: WindowState = Field(default=WindowState.NORMAL)
     anchor: dict[str, Any] = Field(default_factory=lambda: {"type": "no-anchor"})
     identifier: int = Field(default=0)
+    read_from: ReadFromModel = Field(...)
 
     @classmethod
     def from_gui(cls, window: "SubWindow") -> "WindowDescription":
         """Construct a WindowDescription from a SubWindow instance."""
+        read_from = window._determine_read_from()
+        if read_from is None:
+            raise ValueError("Cannot determine where to read the model from.")
         return WindowDescription(
             title=window.title,
             method=method_to_dict(window._widget_data_model_method),
@@ -51,6 +64,7 @@ class WindowDescription(BaseModel):
             state=window.state,
             anchor=anchor.anchor_to_dict(window.anchor),
             identifier=window._identifier,
+            read_from=ReadFromModel(path=read_from[0], plugin=read_from[1]),
         )
 
 
@@ -59,7 +73,7 @@ class TabSession(BaseModel):
 
     name: str = Field(default="")
     windows: list[WindowDescription] = Field(default_factory=list)
-    current_index: int = Field(default=0)
+    current_index: int | None = Field(default=None)
 
     @classmethod
     def from_gui(cls, tab: TabArea) -> "TabSession":
@@ -69,22 +83,30 @@ class TabSession(BaseModel):
             windows=[WindowDescription.from_gui(window) for window in tab],
         )
 
-    def to_gui(self, main: "MainWindow[_W]") -> None:
+    def update_gui(self, main: "MainWindow[_W]") -> None:
         area = main.add_tab(self.name)
         cur_index = self.current_index
+        store = io.ReaderProviderStore().instance()
         for window_session in self.windows:
+            method_desc = dict_to_method(window_session.method)
             try:
-                method_desc = dict_to_method(window_session.method)
-                model = method_desc.get_model(main.model_app)
-            except Exception:
+                model = store.run(
+                    path=window_session.read_from.path,
+                    plugin=window_session.read_from.plugin,
+                )
+            except Exception as e:
                 cur_index -= 1
-                continue  # TODO: inform user
+                _LOGGER.warning(
+                    "Could not load a window %r: %s", window_session.title, e
+                )
+                continue
             window = area.add_data_model(model)
             window.title = window_session.title
             window.rect = window_session.rect.to_tuple()
             window.state = window_session.state
             window.anchor = anchor.dict_to_anchor(window_session.anchor)
-        if cur_index >= 0:
+            window._widget_data_model_method = method_desc
+        if 0 <= cur_index < len(area):
             area.current_index = cur_index
         return None
 
@@ -109,25 +131,9 @@ class AppSession(BaseModel):
             current_index=main.tabs.current_index,
         )
 
-    def to_gui(self, main: "MainWindow[_W]") -> None:
+    def update_gui(self, main: "MainWindow[_W]") -> None:
         for tab_session in self.tabs:
-            area = main.add_tab(tab_session.name)
-            cur_index = tab_session.current_index
-            for window_session in tab_session.windows:
-                try:
-                    method_desc = dict_to_method(window_session.method)
-                    model = method_desc.get_model(main.model_app)
-                except Exception:
-                    cur_index -= 1
-                    continue  # TODO: inform user
-                window = area.add_data_model(model)
-                _LOGGER.info("Got model: %r", model)
-                window.title = window_session.title
-                window.rect = window_session.rect.to_tuple()
-                window.state = window_session.state
-                window.anchor = anchor.dict_to_anchor(window_session.anchor)
-            if cur_index >= 0:
-                area.current_index = cur_index
+            tab_session.update_gui(main)
         return None
 
     def dump_yaml(self, path: str | Path) -> None:

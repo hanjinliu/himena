@@ -312,7 +312,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         widget.update_model(model)  # type: ignore
         sub_win = self.add_widget(widget, title=model.title)
         if isinstance(method := model.method, LocalReaderMethod):
-            sub_win.update_default_save_path(method.path)
+            sub_win.update_default_save_path(method.path, plugin=method.plugin)
         elif isinstance(model.method, ConverterMethod):
             sub_win._set_modified(True)
         if (method := model.method) is not None:
@@ -348,7 +348,13 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
                 for reader, fp in reader_path_sets
             ]
         )
-        return [self.add_data_model(model) for model in models]
+        out = [self.add_data_model(model) for model in models]
+        if len(out) == 1:
+            ui.set_status_tip(f"File opened: {out[0].title}", duration=5)
+        elif len(out) > 1:
+            _titles = ", ".join(w.title for w in out)
+            ui.set_status_tip(f"File opened: {_titles}", duration=5)
+        return out
 
     def save_session(self, file_path: str | Path) -> None:
         """Save the current session to a file."""

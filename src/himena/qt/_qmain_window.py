@@ -3,6 +3,7 @@ from __future__ import annotations
 import inspect
 from timeit import default_timer as timer
 import logging
+import textwrap
 from typing import Callable, Literal, TypeVar, TYPE_CHECKING, cast
 from pathlib import Path
 
@@ -45,6 +46,7 @@ if TYPE_CHECKING:
 
 _ICON_PATH = Path(__file__).parent.parent / "resources" / "icon.svg"
 _T = TypeVar("_T", bound=QtW.QWidget)
+_V = TypeVar("_V")
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -394,9 +396,19 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             raise ValueError(f"Invalid file mode {mode!r}.")
         return None
 
-    def _open_confirmation_dialog(self, message: str) -> bool:
-        answer = QtW.QMessageBox.question(self, "Confirmation", message)
-        return answer == QtW.QMessageBox.StandardButton.Yes
+    def _request_choice_dialog(
+        self,
+        title: str,
+        message: str,
+        choices: list[tuple[str, _V]],
+        how: Literal["buttons", "radiobuttons"] = "buttons",
+    ) -> _V | None:
+        if how == "buttons":
+            return QChoicesDialog.request(title, message, choices, parent=self)
+        else:
+            return QChoicesDialog.request_radiobuttons(
+                title, message, choices, parent=self
+            )
 
     def _show_command_palette(
         self,
@@ -576,6 +588,9 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         win.setFocus()
         return None
 
+    def _set_status_tip(self, tip: str, duration: float) -> None:
+        self._status_bar.showMessage(tip, int(duration * 1000))
+
 
 def _is_root_menu_id(app: app_model.Application, menu_id: str) -> bool:
     if menu_id in (MenuId.TOOLBAR, app.menus.COMMAND_PALETTE_ID):
@@ -597,3 +612,85 @@ def _ext_to_filter(ext: str) -> str:
         return "*"
     else:
         return f"*.{ext}"
+
+
+class QChoicesDialog(QtW.QDialog):
+    def __init__(self, parent: QtW.QWidget | None = None):
+        super().__init__(parent)
+        self._result = None
+        self.accepted.connect(self.close)
+        self._layout = QtW.QVBoxLayout(self)
+        self._layout.setContentsMargins(4, 4, 4, 4)
+
+    def set_result_callback(self, value: _V, accept: bool) -> None:
+        def _set_result():
+            self._result = value
+            if accept:
+                return self.accept()
+
+        return _set_result
+
+    @classmethod
+    def request(
+        cls,
+        title: str,
+        message: str,
+        choices: list[tuple[str, _V]],
+        parent: QtW.QWidget | None = None,
+    ) -> _V | None:
+        self = cls(parent)
+        self.init_message(title, message)
+        button_group = QtW.QDialogButtonBox(self)
+        shortcut_registered = set()
+        for choice, value in choices:
+            button = QtW.QPushButton(choice)
+            button_group.addButton(button, button_group.ButtonRole.AcceptRole)
+            button.clicked.connect(self.set_result_callback(value, accept=True))
+            shortcut = choice[0].lower()
+            if shortcut not in shortcut_registered:
+                button.setShortcut(shortcut)
+                shortcut_registered.add(shortcut)
+        self._layout.addWidget(button_group)
+        if self.exec() == QtW.QDialog.DialogCode.Accepted:
+            return self._result
+        return None
+
+    @classmethod
+    def request_radiobuttons(
+        cls,
+        title: str,
+        message: str,
+        choices: list[tuple[str, _V]],
+        parent: QtW.QWidget | None = None,
+    ) -> _V | None:
+        self = cls(parent)
+        self.init_message(title, message)
+        button_group = QtW.QButtonGroup(self)
+        button_group.setExclusive(True)
+        for choice, value in choices:
+            button = QtW.QRadioButton(choice)
+            button_group.addButton(button)
+            button.clicked.connect(self.set_result_callback(value, accept=False))
+            self._layout.addWidget(button)
+            button.setChecked(choice == choices[0][0])
+
+        ok_cancel = QtW.QDialogButtonBox()
+        ok_cancel.addButton(QtW.QDialogButtonBox.StandardButton.Ok)
+        ok_cancel.addButton(QtW.QDialogButtonBox.StandardButton.Cancel)
+        ok_cancel.accepted.connect(self.accept)
+        ok_cancel.rejected.connect(self.reject)
+        self._layout.addWidget(ok_cancel)
+        if self.exec() == QtW.QDialog.DialogCode.Accepted:
+            return self._result
+        return None
+
+    def init_message(self, title: str, message: str) -> None:
+        self.setWindowTitle(title)
+        message = "\n".join(textwrap.wrap(message, width=80))
+        if len(message) < 800:
+            label = QtW.QLabel(message)
+        else:
+            label = QtW.QTextEdit()
+            label.setPlainText(message)
+        self._layout.addWidget(label)
+        return None

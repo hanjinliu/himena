@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 _W = TypeVar("_W")  # backend widget type
+_T = TypeVar("_T")
 
 
 class BackendMainWindow(Generic[_W]):  # pragma: no cover
@@ -141,8 +142,14 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     def _open_file_dialog(self, mode, extension_default=None, allowed_extensions=None):
         """Open a file dialog."""
 
-    def _open_confirmation_dialog(self, message: str) -> bool:
-        """Open a confirmation dialog (Yes or None)."""
+    def _request_choice_dialog(
+        self,
+        title: str,
+        message: str,
+        choices: list[tuple[str, _T]],
+        how: Literal["buttons", "radiobuttons"] = "buttons",
+    ) -> _T | None:
+        """Request a choice dialog and return the clicked text."""
 
     def _show_command_palette(self, kind: str) -> None:
         """Show the command palette widget of the given kind."""
@@ -275,3 +282,6 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
 
     def _move_focus_to(self, widget: _W) -> None:
         """Move the focus to the widget."""
+
+    def _set_status_tip(self, tip: str, duration: int) -> None:
+        """Set the status tip of the main window for a duration (s)."""

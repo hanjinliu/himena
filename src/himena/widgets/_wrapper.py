@@ -21,6 +21,7 @@ from himena.types import (
 )
 from himena._descriptors import (
     ConverterMethod,
+    LocalReaderMethod,
     SaveBehavior,
     SaveToNewPath,
     SaveToPath,
@@ -72,9 +73,15 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         """Get the save behavior of the widget."""
         return self._save_behavior
 
-    def update_default_save_path(self, path: str | Path) -> None:
+    def update_default_save_path(
+        self,
+        path: str | Path,
+        plugin: str | None = None,
+    ) -> None:
         """Update the save behavior of the widget."""
-        self._save_behavior = SaveToPath(path=Path(path), ask_overwrite=True)
+        self._save_behavior = SaveToPath(
+            path=Path(path), ask_overwrite=True, plugin=plugin
+        )
         self._set_modified(False)
         return None
 
@@ -217,7 +224,13 @@ class SubWindow(WidgetWrapper[_W]):
 
     def write_model(self, path: str | Path, plugin: str | None = None) -> None:
         """Write the widget data to a file."""
-        io.WriterProviderStore.instance().run(self.to_model(), path, plugin=plugin)
+        return self._write_model(path, plugin, self.to_model())
+
+    def _write_model(
+        self, path: str | Path, plugin: str | None, model: WidgetDataModel
+    ) -> None:
+        path = Path(path)
+        io.WriterProviderStore.instance().run(model, path, plugin=plugin)
         self.update_default_save_path(path)
         return None
 
@@ -315,16 +328,35 @@ class SubWindow(WidgetWrapper[_W]):
         raise RuntimeError(f"SubWindow {self.title} not found in main window.")
 
     def _close_me(self, main: MainWindow, confirm: bool = False) -> None:
-        if (
-            self.is_modified
-            and confirm
-            and not main.exec_confirmation_dialog(
-                f"Close {self.title!r} without saving?"
+        if self.is_modified and confirm:
+            request = main.exec_choose_one_dialog(
+                title="Closing window",
+                message=f"Save changes to {self.title!r}?",
+                choices=["Yes", "No", "Cancel"],
             )
-        ):
-            return None
+            if request is None or request == "Cancel":
+                return None
+            elif request == "Yes" and not self._save_from_dialog(main):
+                return None
+
         i_tab, i_win = self._find_me(main)
         del main.tabs[i_tab][i_win]
+
+    def _save_from_dialog(
+        self,
+        main: MainWindow,
+        behavior: SaveBehavior | None = None,
+        plugin: str | None = None,
+    ) -> bool:
+        """Save this window to a new path, return if saved."""
+        if behavior is None:
+            behavior = self.save_behavior
+        model = self.to_model()
+        if save_path := behavior.get_save_path(main, model):
+            self._write_model(save_path, plugin=plugin, model=model)
+            main.set_status_tip(f"Saved {self.title!r} to {save_path}", duration=5)
+            return True
+        return False
 
     def _close_all_children(self, main: MainWindow) -> None:
         for child in self._child_windows:
@@ -336,6 +368,15 @@ class SubWindow(WidgetWrapper[_W]):
         main = self._main_window()._himena_main_window
         self._close_all_children(main)
         self._alive = False
+
+    def _determine_read_from(self) -> tuple[Path, str | None] | None:
+        method = self._widget_data_model_method
+        if isinstance(method, LocalReaderMethod):
+            return method.path, method.plugin
+        elif isinstance(save_bh := self.save_behavior, SaveToPath):
+            return save_bh.path, None
+        else:
+            return None
 
 
 class ParametricWindow(SubWindow[_W]):

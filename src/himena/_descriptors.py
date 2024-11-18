@@ -114,12 +114,19 @@ class SaveToNewPath(SaveBehavior):
 
 
 class SaveToPath(SaveBehavior):
-    """Describes that the widget should be saved to a specific path."""
+    """Describes that the widget should be saved to a specific path.
+
+    A subwindow that has been saved once should always be tagged with this behavior.
+    """
 
     path: Path
     ask_overwrite: bool = Field(
         default=True,
         description="Ask before overwriting the file if `path` already exists.",
+    )
+    plugin: str | None = Field(
+        default=None,
+        description="The plugin to use if the file is read back.",
     )
 
     def get_save_path(
@@ -128,11 +135,18 @@ class SaveToPath(SaveBehavior):
         model: "WidgetDataModel",
     ) -> Path | None:
         if self.path.exists() and self.ask_overwrite:
-            ok = main.exec_confirmation_dialog(
-                f"{self.path} already exists, overwrite?"
+            res = main.exec_choose_one_dialog(
+                title="Overwrite?",
+                message=f"{self.path}\nalready exists, overwrite?",
+                choices=["Yes", "Select another path", "Cancel"],
             )
-            if not ok:
+            if res == "Cancel":
                 return None
+            elif res == "Select another path":
+                if path := SaveToNewPath().get_save_path(main, model):
+                    self.path = path
+                else:
+                    return None
             # If overwrite is allowed, don't ask again.
             self.ask_overwrite = False
         return self.path

@@ -379,6 +379,12 @@ class BackendInstructions(BaseModel):
         description="Whether to show a confirmation dialog",
         frozen=True,
     )
+    choose_one_dialog_response: Callable[[], Any] | None = Field(
+        default=None,
+        description="If provided, choose-one dialog will be skipped and this function "
+        "will be called to get the response.",
+        frozen=True,
+    )
     file_dialog_response: Callable[[], Any] | None = Field(
         default=None,
         description="If provided, file dialog will be skipped and this function will "
