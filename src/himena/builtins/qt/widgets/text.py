@@ -6,6 +6,7 @@ from qtpy import QtGui, QtCore
 from superqt import QSearchableComboBox
 
 from himena.consts import StandardType
+from himena.qt._utils import qsignal_blocker
 from himena.types import WidgetDataModel
 from himena.model_meta import TextMeta
 from himena.consts import MonospaceFontFamily
@@ -410,8 +411,9 @@ class QTextControl(QtW.QWidget):
     languageChanged = QtCore.Signal(str)
     tabChanged = QtCore.Signal(int)
 
-    def __init__(self, parent: QtW.QWidget | None = None):
-        super().__init__(parent)
+    def __init__(self, text_edit: QMainTextEdit):
+        super().__init__()
+        self._text_edit = text_edit
 
         self._language_combobox = QSearchableComboBox()
         self._language_combobox.addItems(get_languages())
@@ -427,9 +429,14 @@ class QTextControl(QtW.QWidget):
             lambda x: self.tabChanged.emit(int(x))
         )
 
+        self._line_num_edit = QtW.QSpinBox()
+        self._line_num_edit.setRange(1, self._text_edit.blockCount())
+        self._line_num_edit.valueChanged.connect(self._move_cursor_to_line)
+
         layout = QtW.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        layout.addWidget(_labeled("Ln:", self._line_num_edit))
         layout.addWidget(_labeled("Spaces:", self._tab_spaces_combobox))
         layout.addWidget(_labeled("Language:", self._language_combobox))
 
@@ -443,25 +450,46 @@ class QTextControl(QtW.QWidget):
     def _emit_language_changed(self):
         self.languageChanged.emit(self._language_combobox.currentText())
 
+    def _move_cursor_to_line(self, line: int):
+        cursor = self._text_edit.textCursor()
+        cursor.setPosition(0)
+        cursor.movePosition(
+            QtGui.QTextCursor.MoveOperation.NextBlock,
+            QtGui.QTextCursor.MoveMode.KeepAnchor,
+            line - 1,
+        )
+        self._text_edit.setTextCursor(cursor)
+
 
 class QDefaultTextEdit(QtW.QWidget):
     def __init__(self):
         super().__init__()
         self._main_text_edit = QMainTextEdit(self)
-        self._footer = QTextControl()
+        self._control = QTextControl(self._main_text_edit)
 
-        self._footer.languageChanged.connect(self._main_text_edit.syntax_highlight)
-        self._footer.tabChanged.connect(self._main_text_edit.set_tab_size)
+        self._control.languageChanged.connect(self._main_text_edit.syntax_highlight)
+        self._control.tabChanged.connect(self._main_text_edit.set_tab_size)
+        self._main_text_edit.cursorPositionChanged.connect(self._update_line_numbers)
+        self._main_text_edit.blockCountChanged.connect(self._update_block_count)
         layout = QtW.QVBoxLayout(self)
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._main_text_edit)
 
     def control_widget(self) -> QTextControl:
-        return self._footer
+        return self._control
 
     def setFocus(self):
         self._main_text_edit.setFocus()
+
+    def _update_line_numbers(self):
+        line_num = self._main_text_edit.textCursor().blockNumber() + 1
+        with qsignal_blocker(self._control._line_num_edit):
+            self._control._line_num_edit.setValue(line_num)
+
+    def _update_block_count(self, count: int):
+        with qsignal_blocker(self._control._line_num_edit):
+            self._control._line_num_edit.setRange(1, count)
 
     def update_model(self, model: WidgetDataModel[str]):
         self._main_text_edit.setPlainText(model.value)
@@ -481,9 +509,9 @@ class QDefaultTextEdit(QtW.QWidget):
                 lang = find_language_from_path(src.name)
         # if language could be inferred, set it
         if lang:
-            self._footer._language_combobox.setCurrentText(lang)
-            self._footer._emit_language_changed()
-        self._footer._tab_spaces_combobox.setCurrentText(str(spaces))
+            self._control._language_combobox.setCurrentText(lang)
+            self._control._emit_language_changed()
+        self._control._tab_spaces_combobox.setCurrentText(str(spaces))
         return None
 
     def to_model(self) -> WidgetDataModel[str]:
@@ -494,8 +522,8 @@ class QDefaultTextEdit(QtW.QWidget):
             type=self.model_type(),
             extension_default=".txt",
             additional_data=TextMeta(
-                language=self._footer._language_combobox.currentText(),
-                spaces=int(self._footer._tab_spaces_combobox.currentText()),
+                language=self._control._language_combobox.currentText(),
+                spaces=int(self._control._tab_spaces_combobox.currentText()),
                 selection=(cursor.selectionStart(), cursor.selectionEnd()),
                 font_family=font.family(),
                 font_size=font.pointSizeF(),

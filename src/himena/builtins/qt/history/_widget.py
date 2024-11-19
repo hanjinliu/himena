@@ -158,7 +158,7 @@ class QCommandListModel(QtCore.QAbstractListModel):
 
     def rowCount(self, parent=None):
         if ui := self._ui_ref():
-            return ui._history_command.count()
+            return ui._history_command.len()
         return 0
 
     def _action_at(self, row: int) -> Action | None:

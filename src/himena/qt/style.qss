@@ -61,6 +61,16 @@ QPushButton:disabled {
   border: 0px;
 }
 
+/* ----- QSpinBox ----- */
+
+QSpinBox {
+    border: 1px solid #[foreground_dim];
+    border-radius: 4px;
+    background-color: #[background];
+    color: #[foreground];
+    padding: 3px;
+}
+
 /* ----- QComboBox ----- */
 
 QComboBox {

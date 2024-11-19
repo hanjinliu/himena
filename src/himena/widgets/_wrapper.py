@@ -378,6 +378,15 @@ class SubWindow(WidgetWrapper[_W]):
         else:
             return None
 
+    def _update_from_returned_model(self, model: WidgetDataModel) -> SubWindow[_W]:
+        if isinstance(method := model.method, LocalReaderMethod):
+            self.update_default_save_path(method.path, plugin=method.plugin)
+        elif isinstance(model.method, ConverterMethod):
+            self._set_modified(True)
+        if (method := model.method) is not None:
+            self._update_widget_data_model_method(method)
+        return self
+
 
 class ParametricWindow(SubWindow[_W]):
     """Subwindow with a parametric widget inside."""
@@ -508,7 +517,7 @@ class ParametricWindow(SubWindow[_W]):
             widget, title=model.title, auto_size=False
         )
         self._coerce_rect(result_widget)
-        return result_widget
+        return result_widget._update_from_returned_model(model)
 
     def _process_parametric_output(self, fn: Parametric) -> ParametricWindow[_W]:
         ui = self._main_window()._himena_main_window

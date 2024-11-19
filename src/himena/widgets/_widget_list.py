@@ -9,7 +9,6 @@ from collections.abc import Sequence
 import weakref
 
 from psygnal import Signal
-from himena._descriptors import ConverterMethod, LocalReaderMethod
 from himena import io
 from himena.types import (
     NewWidgetBehavior,
@@ -311,13 +310,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         widget = cls()
         widget.update_model(model)  # type: ignore
         sub_win = self.add_widget(widget, title=model.title)
-        if isinstance(method := model.method, LocalReaderMethod):
-            sub_win.update_default_save_path(method.path, plugin=method.plugin)
-        elif isinstance(model.method, ConverterMethod):
-            sub_win._set_modified(True)
-        if (method := model.method) is not None:
-            sub_win._update_widget_data_model_method(method)
-        return sub_win
+        return sub_win._update_from_returned_model(model)
 
     def read_file(
         self,
@@ -336,6 +329,10 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         reader_path_sets: list[tuple[io.ReaderTuple, PathOrPaths]] = []
         ins = io.ReaderProviderStore.instance()
         for file_path in file_paths:
+            if isinstance(file_path, (str, Path)):
+                file_path = Path(file_path)
+            else:
+                file_path = [Path(p) for p in file_path]
             reader_path_sets.append((ins.pick(file_path, plugin=plugin), file_path))
         models = [
             io.read_and_update_source(reader, file_path)

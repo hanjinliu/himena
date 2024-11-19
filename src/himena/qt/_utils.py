@@ -33,7 +33,7 @@ def get_stylesheet_path() -> Path:
 
 
 def get_clipboard_data() -> ClipboardDataModel | None:
-    clipboard = QtW.QApplication.clipboard()
+    clipboard = QtGui.QGuiApplication.clipboard()
     if clipboard is None:
         return None
     md = clipboard.mimeData()

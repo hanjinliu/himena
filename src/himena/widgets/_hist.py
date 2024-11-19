@@ -27,5 +27,8 @@ class HistoryContainer(Generic[_T]):
             return self._hist[-num]
         return None
 
-    def count(self) -> int:
+    def len(self) -> int:
+        return len(self._hist)
+
+    def __len__(self) -> int:
         return len(self._hist)

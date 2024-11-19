@@ -3,14 +3,16 @@ from __future__ import annotations
 import re
 import sys
 from typing import Callable, Generator, TYPE_CHECKING
+import weakref
 
 from qtpy import QtWidgets as QtW, QtGui, QtCore
 from psygnal import EmitLoopError
 
-from himena.consts import MonospaceFontFamily
+from himena.consts import MonospaceFontFamily, StandardType
 
 if TYPE_CHECKING:
     from types import TracebackType
+    from himena.qt._qmain_window import QMainWindow
 
     ExcInfo = tuple[type[BaseException], BaseException, TracebackType]
 
@@ -50,7 +52,12 @@ class QtTracebackDialog(QtW.QDialog):
 class QtErrorMessageBox(QtW.QMessageBox):
     """An message box widget for displaying Python exception."""
 
-    def __init__(self, title: str, text_or_exception: str | Exception, parent):
+    def __init__(
+        self,
+        title: str,
+        text_or_exception: str | Exception,
+        parent: QMainWindow,
+    ):
         if isinstance(text_or_exception, str):
             text = text_or_exception
             exc = None
@@ -62,13 +69,15 @@ class QtErrorMessageBox(QtW.QMessageBox):
             else:
                 text = ""
             exc = text_or_exception
-        self._old_focus = QtW.QApplication.focusWidget()
+        self._main_window = weakref.ref(parent)
         MBox = QtW.QMessageBox
         super().__init__(
             MBox.Icon.Critical,
             str(title),
             str(text),
-            MBox.StandardButton.Ok | MBox.StandardButton.Help,
+            MBox.StandardButton.Ok
+            | MBox.StandardButton.Help
+            | MBox.StandardButton.Apply,
             parent=parent,
         )
 
@@ -78,6 +87,10 @@ class QtErrorMessageBox(QtW.QMessageBox):
         self.traceback_button.setText("Show trackback (T)")
         self.traceback_button.setShortcut("T")
 
+        self.open_file_button = self.button(MBox.StandardButton.Apply)
+        self.open_file_button.setText("Open file (O)")
+        self.open_file_button.setShortcut("O")
+
     def exec_(self):
         returned = super().exec_()
         if returned == QtW.QMessageBox.StandardButton.Help:
@@ -85,12 +98,20 @@ class QtErrorMessageBox(QtW.QMessageBox):
             dlg = QtTracebackDialog(self)
             dlg.setText(tb)
             dlg.exec_()
-        if self._old_focus is not None:
-            self._old_focus.setFocus()
+        elif returned == QtW.QMessageBox.StandardButton.Apply:
+            filename = self._exc.__traceback__.tb_frame.f_code.co_filename
+            if main := self._main_window():
+                ui = main._himena_main_window
+                ui.read_file(filename)
+                ui.add_data(
+                    self._get_traceback(), type=StandardType.HTML, title="Traceback"
+                )
+        if main := self._main_window():
+            main.setFocus()
         return returned
 
     @classmethod
-    def from_exc(cls, e: Exception, parent=None):
+    def from_exc(cls, e: Exception, parent: QMainWindow):
         """Construct message box from a exception."""
         # unwrap EmitLoopError
         while isinstance(e, EmitLoopError):
@@ -99,7 +120,7 @@ class QtErrorMessageBox(QtW.QMessageBox):
         return self
 
     @classmethod
-    def raise_(cls, e: Exception, parent=None):
+    def raise_(cls, e: Exception, parent: QMainWindow):
         """Raise exception in the message box."""
         return cls.from_exc(e, parent=parent).exec_()
 

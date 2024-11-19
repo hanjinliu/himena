@@ -220,7 +220,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         tab = self._tab_widget.widget_area(i_tab)
         _LOGGER.info("Adding widget of title %r to tab %r", title, i_tab)
         subwindow = tab.add_widget(widget, title)
-        QtW.QApplication.processEvents()
         return subwindow
 
     def _connect_window_events(self, sub: SubWindow, qsub: QSubWindow):

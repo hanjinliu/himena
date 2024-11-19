@@ -1,12 +1,14 @@
 from pathlib import Path
+from pytestqt.qtbot import QtBot
 from tempfile import TemporaryDirectory
 from qtpy import QtWidgets as QtW
 from himena import MainWindow, anchor
-from himena._descriptors import ConverterMethod, LocalReaderMethod, SaveToNewPath
+from himena._descriptors import ConverterMethod, LocalReaderMethod, ProgramaticMethod, SaveToNewPath, SaveToPath
 from himena.consts import StandardType
 from himena.types import ClipboardDataModel, WidgetDataModel
 from himena.qt import register_widget, MainWindowQt
 from himena.builtins.qt import widgets as _qtw
+import himena.io
 
 def test_new_window(ui: MainWindow):
     ui.show()
@@ -46,9 +48,18 @@ def test_io_commands(ui: MainWindow, tmpdir, sample_dir: Path):
     response_save = lambda: Path(tmpdir) / "text_out.txt"
     ui._instructions = ui._instructions.updated(file_dialog_response=response_open)
     ui.exec_action("open-file")
+    assert isinstance(ui.current_window.save_behavior, SaveToPath)
+    assert isinstance(ui.current_window._widget_data_model_method, LocalReaderMethod)
+    assert ui.current_window._widget_data_model_method.path == response_open()[0]
+
     ui.add_data("Hello", type="text")
+    assert isinstance(ui.current_window.save_behavior, SaveToNewPath)
+    assert isinstance(ui.current_window._widget_data_model_method, ProgramaticMethod)
     ui._instructions = ui._instructions.updated(file_dialog_response=response_save)
     ui.exec_action("save")
+    assert isinstance(ui.current_window.save_behavior, SaveToPath)
+    assert ui.current_window.save_behavior.path == response_save()
+    assert isinstance(ui.current_window._widget_data_model_method, ProgramaticMethod)
     ui.exec_action("save-as")
 
     # session
@@ -56,11 +67,18 @@ def test_io_commands(ui: MainWindow, tmpdir, sample_dir: Path):
     ui._instructions = ui._instructions.updated(file_dialog_response=response_session)
     ui.exec_action("save-session")
     ui.exec_action("load-session")
+
     ui.exec_action("save-tab-session")
 
     response_open = lambda: sample_dir / "table.csv"
     ui._instructions = ui._instructions.updated(file_dialog_response=response_open)
-    ui.exec_action("open-file-using")
+    param = himena.io.ReaderProviderStore.instance().get(response_open())[2]
+    ui.exec_action("open-file-using", with_params={"reader": param})
+    assert isinstance(ui.current_window.save_behavior, SaveToPath)
+    assert isinstance(ui.current_window._widget_data_model_method, LocalReaderMethod)
+    assert ui.current_window._widget_data_model_method.path == response_open()
+    assert param.plugin is not None
+    assert ui.current_window._widget_data_model_method.plugin == param.plugin.to_str()
 
 def test_window_commands(ui: MainWindowQt, sample_dir: Path):
     ui.exec_action("show-command-palette")
@@ -282,7 +300,8 @@ def test_register_folder(ui: MainWindow, sample_dir: Path):
     assert ui.tabs.current_index == 0
     assert ui.tabs.current().len() == 1
 
-def test_clipboard(ui: MainWindow, sample_dir: Path):
+def test_clipboard(ui: MainWindow, sample_dir: Path, qtbot: QtBot):
+    qtbot.addWidget(ui._backend_main_window)
     cmodel = ClipboardDataModel(value="XXX", type="text")
     ui.clipboard = cmodel
 

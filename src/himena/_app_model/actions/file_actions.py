@@ -11,7 +11,7 @@ from app_model.types import (
 from himena._descriptors import LocalReaderMethod, SaveToNewPath, SaveToPath
 from himena.consts import StandardType, MenuId
 from himena.widgets import MainWindow, SubWindow
-from himena import io, _utils
+from himena import io
 from himena.types import (
     ClipboardDataModel,
     Parametric,
@@ -61,6 +61,7 @@ def open_file_from_dialog(ui: MainWindow) -> list[Path]:
     keybindings=[
         KeyBindingRule(primary=KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.KeyO))
     ],
+    need_function_callback=True,
 )
 def open_file_using_from_dialog(ui: MainWindow) -> Parametric:
     """Open file using selected plugin."""
@@ -81,7 +82,7 @@ def open_file_using_from_dialog(ui: MainWindow) -> Parametric:
             "value": choices_reader[0][1],
         }
     )
-    def choose_a_plugin(reader: io.ReaderTuple) -> None:
+    def choose_a_plugin(reader: io.ReaderTuple) -> WidgetDataModel:
         _LOGGER.info("Reading file %s using %r", file_path, reader)
         model = io.read_and_update_source(reader, file_path)
         if reader.plugin is not None:
@@ -90,11 +91,9 @@ def open_file_using_from_dialog(ui: MainWindow) -> Parametric:
             plugin = None
         ui._recent_manager.append_recent_files([(file_path, plugin)])
         model.method = LocalReaderMethod(path=file_path, plugin=plugin)
-        win = ui.add_data_model(model)
-        win.update_default_save_path(file_path, plugin)
-        return None
+        return model
 
-    return _utils.make_opener_callback(choose_a_plugin)
+    return choose_a_plugin
 
 
 @ACTIONS.append_from_fn(

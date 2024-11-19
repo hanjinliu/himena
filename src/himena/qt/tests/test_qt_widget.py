@@ -1,5 +1,6 @@
 import sys
 from himena.qt._qtraceback import QtErrorMessageBox, QtTracebackDialog
+from qtpy import QtWidgets as QtW
 from qtpy.QtCore import Qt
 from pytestqt.qtbot import QtBot
 
@@ -7,7 +8,8 @@ def test_qt_traceback(qtbot: QtBot):
     from himena.qt._qtraceback import format_exc_info_py310, format_exc_info_py311
 
     exception = ValueError("Test value error")
-    msgbox = QtErrorMessageBox("Test", exception, parent=None)
+    widget = QtW.QWidget()
+    msgbox = QtErrorMessageBox("Test", exception, parent=widget)
     qtbot.addWidget(msgbox)
     tb = msgbox._get_traceback()
     tb_dlg = QtTracebackDialog(msgbox)

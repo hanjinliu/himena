@@ -112,9 +112,7 @@ def rename_window(ui: MainWindow) -> None:
 @ACTIONS.append_from_fn(
     id="copy-path-to-clipboard",
     title="Copy path to clipboard",
-    menus=[
-        {"id": MenuId.WINDOW, "group": EDIT_GROUP},
-    ],
+    menus=[{"id": MenuId.WINDOW, "group": EDIT_GROUP}],
     enablement=_ctx.num_sub_windows > 0,
     keybindings=[{"primary": KeyChord(_CtrlK, _CtrlShift | KeyCode.KeyC)}],
 )
@@ -122,7 +120,7 @@ def copy_path_to_clipboard(ui: MainWindow) -> ClipboardDataModel:
     """Copy the path of the current window to the clipboard."""
     if window := ui.current_window:
         if isinstance(sv := window.save_behavior, SaveToPath):
-            return ClipboardDataModel(value=sv.path, type=StandardType.TEXT)
+            return ClipboardDataModel(value=str(sv.path), type=StandardType.TEXT)
     return None
 
 

@@ -4,7 +4,7 @@ from typing import Any, TypeVar, TYPE_CHECKING
 from pydantic_compat import BaseModel, Field
 import yaml
 
-from himena._descriptors import dict_to_method, method_to_dict
+from himena._descriptors import SaveToPath, dict_to_method, method_to_dict
 from himena.types import WindowState, WindowRect
 from himena import anchor, io
 from himena.widgets._widget_list import TabArea
@@ -84,11 +84,11 @@ class TabSession(BaseModel):
         )
 
     def update_gui(self, main: "MainWindow[_W]") -> None:
+        """Update the GUI state based on the session."""
         area = main.add_tab(self.name)
         cur_index = self.current_index
         store = io.ReaderProviderStore().instance()
         for window_session in self.windows:
-            method_desc = dict_to_method(window_session.method)
             try:
                 model = store.run(
                     path=window_session.read_from.path,
@@ -100,12 +100,16 @@ class TabSession(BaseModel):
                     "Could not load a window %r: %s", window_session.title, e
                 )
                 continue
+            model.method = dict_to_method(window_session.method)
             window = area.add_data_model(model)
             window.title = window_session.title
             window.rect = window_session.rect.to_tuple()
             window.state = window_session.state
             window.anchor = anchor.dict_to_anchor(window_session.anchor)
-            window._widget_data_model_method = method_desc
+            window._save_behavior = SaveToPath(
+                path=window_session.read_from.path,
+                plugin=window_session.read_from.plugin,
+            )
         if 0 <= cur_index < len(area):
             area.current_index = cur_index
         return None
@@ -132,8 +136,11 @@ class AppSession(BaseModel):
         )
 
     def update_gui(self, main: "MainWindow[_W]") -> None:
+        """Update the GUI state based on the session."""
+        cur_index = self.current_index
         for tab_session in self.tabs:
             tab_session.update_gui(main)
+        main.tabs.current_index = self.current_index + cur_index
         return None
 
     def dump_yaml(self, path: str | Path) -> None:
