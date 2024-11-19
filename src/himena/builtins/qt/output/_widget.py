@@ -154,11 +154,11 @@ class OutputInterface(logging.Handler):
         return self._widget
 
 
-def get_interface(id: str = "default") -> OutputInterface:
+def get_widget(id: str = "default") -> QtOutputWidget:
     if id in OutputInterface._instances:
         return OutputInterface._instances[id]
     interf = OutputInterface()
     interf.connect_stdout()
     interf.connect_logger()
     OutputInterface._instances[id] = interf
-    return interf
+    return interf.widget

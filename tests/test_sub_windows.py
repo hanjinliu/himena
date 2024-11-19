@@ -311,7 +311,9 @@ def test_clipboard(ui: MainWindow, sample_dir: Path, qtbot: QtBot):
 
     sample_path = sample_dir / "text.txt"
     ui.read_file(sample_path)
+    QtW.QApplication.processEvents()
     ui.exec_action("copy-path-to-clipboard")
+    QtW.QApplication.processEvents()
     assert ui.clipboard.value == str(sample_path)
     ui.exec_action("copy-data-to-clipboard")
     assert ui.clipboard.value == sample_path.read_text()
