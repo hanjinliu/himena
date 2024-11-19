@@ -1,7 +1,7 @@
 from typing import Literal
 from himena.model_meta import TextMeta
 from himena.plugins import register_function
-from himena.types import WidgetDataModel
+from himena.types import Parametric, WidgetDataModel
 from himena.consts import StandardType
 from himena.builtins.tools.table import _table_to_text
 
@@ -16,9 +16,10 @@ def dataframe_to_table(model: WidgetDataModel) -> WidgetDataModel[list[list[str]
     """Convert a table data into a DataFrame."""
     from himena._data_wrappers import wrap_dataframe
 
+    df = wrap_dataframe(model.value)
     return WidgetDataModel(
-        value=wrap_dataframe(model.value).to_list(),
-        title=f"{model.title} (as dataframe)",
+        value=[df.column_names()] + df.to_list(),
+        title=model.title,
         type=StandardType.TABLE,
         extension_default=".csv",
     )
@@ -30,7 +31,7 @@ def dataframe_to_table(model: WidgetDataModel) -> WidgetDataModel[list[list[str]
     menus=["tools/dataframe"],
     command_id="builtins:dataframe-to-text",
 )
-def dataframe_to_text(model: WidgetDataModel) -> WidgetDataModel[str]:
+def dataframe_to_text(model: WidgetDataModel) -> Parametric:
     """Convert a table data into a DataFrame."""
     from himena._data_wrappers import wrap_dataframe
 
@@ -43,8 +44,10 @@ def dataframe_to_text(model: WidgetDataModel) -> WidgetDataModel[str]:
         value, ext_default, language = _table_to_text(table_input, format, end_of_text)
         return WidgetDataModel(
             value=value,
-            title=f"{model.title} (as dataframe)",
+            title=model.title,
             type=StandardType.TEXT,
             extension_default=ext_default,
             additional_data=TextMeta(language=language),
         )
+
+    return convert_table_to_text

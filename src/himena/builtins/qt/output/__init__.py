@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     singleton=True,
     command_id="builtins:output",
 )
-def install_output_widget(ui: MainWindow):
+def install_output_widget(ui: "MainWindow"):
     """Standard output widget."""
     from himena.builtins.qt.output._widget import get_widget
 

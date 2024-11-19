@@ -73,7 +73,11 @@ def open_file_using_from_dialog(ui: MainWindow) -> Parametric:
     readers = io.ReaderProviderStore.instance().get(file_path)
 
     # prepare reader plugin choices
-    choices_reader = [(f"{_name_of(r.reader)}\n({r.plugin.name})", r) for r in readers]
+    choices_reader = sorted(
+        [(f"{_name_of(r.reader)}\n({r.plugin.name})", r) for r in readers],
+        key=lambda x: x[1].priority,
+        reverse=True,
+    )
 
     @configure_gui(
         reader={

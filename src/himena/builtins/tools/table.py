@@ -93,20 +93,15 @@ def table_to_dataframe(model: WidgetDataModel) -> Parametric[str]:
     from himena._data_wrappers import list_installed_dataframe_packages, read_csv
 
     pkgs = list_installed_dataframe_packages()
-    if len(pkgs) == 0:
-        raise ValueError(
-            "No DataFrame package is installed. Please install one of the following "
-            "packages: `pandas`, `polars`, `pyarrow`."
-        )
 
-    @configure_gui(module={"choices": pkgs})
+    @configure_gui(module={"choices": ["dict"] + pkgs})
     def convert_table_to_dataframe(module) -> WidgetDataModel[str]:
         csv = "\n".join(",".join(row) for row in model.value)
         buf = StringIO(csv)
         df = read_csv(module, buf)
         return WidgetDataModel(
             value=df,
-            title=f"{model.title} (as dataframe)",
+            title=model.title,
             type=StandardType.DATAFRAME,
             extension_default=".csv",
         )

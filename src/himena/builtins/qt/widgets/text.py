@@ -6,7 +6,6 @@ from qtpy import QtGui, QtCore
 from superqt import QSearchableComboBox
 
 from himena.consts import StandardType
-from himena.qt._utils import qsignal_blocker
 from himena.types import WidgetDataModel
 from himena.model_meta import TextMeta
 from himena.consts import MonospaceFontFamily
@@ -45,6 +44,7 @@ def change_point_size(cur_font: QtGui.QFont, step: int) -> QtGui.QFont:
 
 @lru_cache(maxsize=1)
 def get_languages() -> OrderedSet[str]:
+    """Get all languages supported by pygments."""
     from pygments.lexers import get_all_lexers
 
     langs: OrderedSet[str] = OrderedSet()
@@ -55,8 +55,8 @@ def get_languages() -> OrderedSet[str]:
     return langs
 
 
-@lru_cache(maxsize=20)
 def find_language_from_path(path: str) -> str | None:
+    """Detect language from file path."""
     from pygments.lexers import get_lexer_for_filename
     from pygments.util import ClassNotFound
 
@@ -429,14 +429,14 @@ class QTextControl(QtW.QWidget):
             lambda x: self.tabChanged.emit(int(x))
         )
 
-        self._line_num_edit = QtW.QSpinBox()
-        self._line_num_edit.setRange(1, self._text_edit.blockCount())
-        self._line_num_edit.valueChanged.connect(self._move_cursor_to_line)
+        self._line_num = QtW.QLabel()
+        self._line_num.setFixedWidth(50)
 
         layout = QtW.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        layout.addWidget(_labeled("Ln:", self._line_num_edit))
+        layout.addWidget(QtW.QWidget())  # spacer
+        layout.addWidget(_labeled("Ln:", self._line_num))
         layout.addWidget(_labeled("Spaces:", self._tab_spaces_combobox))
         layout.addWidget(_labeled("Language:", self._language_combobox))
 
@@ -470,7 +470,6 @@ class QDefaultTextEdit(QtW.QWidget):
         self._control.languageChanged.connect(self._main_text_edit.syntax_highlight)
         self._control.tabChanged.connect(self._main_text_edit.set_tab_size)
         self._main_text_edit.cursorPositionChanged.connect(self._update_line_numbers)
-        self._main_text_edit.blockCountChanged.connect(self._update_block_count)
         layout = QtW.QVBoxLayout(self)
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -484,12 +483,7 @@ class QDefaultTextEdit(QtW.QWidget):
 
     def _update_line_numbers(self):
         line_num = self._main_text_edit.textCursor().blockNumber() + 1
-        with qsignal_blocker(self._control._line_num_edit):
-            self._control._line_num_edit.setValue(line_num)
-
-    def _update_block_count(self, count: int):
-        with qsignal_blocker(self._control._line_num_edit):
-            self._control._line_num_edit.setRange(1, count)
+        self._control._line_num.setText(str(line_num))
 
     def update_model(self, model: WidgetDataModel[str]):
         self._main_text_edit.setPlainText(model.value)

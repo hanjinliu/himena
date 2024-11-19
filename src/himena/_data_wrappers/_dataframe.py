@@ -9,6 +9,7 @@ from himena._utils import lru_cache
 
 if TYPE_CHECKING:
     from typing import TypeGuard
+    import numpy as np
     import pandas as pd
     import polars as pl
     import pyarrow as pa
@@ -25,7 +26,26 @@ def list_installed_dataframe_packages() -> list[str]:
     return installed
 
 
+def _csv_to_dict(file) -> dict[str, np.ndarray]:
+    import csv
+    import numpy as np
+
+    reader = csv.reader(file)
+    header = next(reader)
+    df = {col: [] for col in header}
+    for row in reader:
+        for col, value in zip(header, row):
+            df[col].append(value)
+    return {k: np.asarray(v) for k, v in df.items()}
+
+
 def read_csv(mod: str, file) -> Any:
+    if mod == "dict":
+        if isinstance(file, io.StringIO):
+            return _csv_to_dict(file)
+
+        with open(file) as f:
+            return _csv_to_dict(f)
     if mod in ("pandas", "polars"):
         return importlib.import_module(mod).read_csv(file, header=0)
     elif mod == "pyarrow":
@@ -114,6 +134,44 @@ class DataFrameWrapper(ABC):
     def type_name(self) -> str:
         mod = type(self._df).__module__.split(".")[0]
         return f"{mod}.{type(self._df).__name__}"
+
+
+class DictWrapper(DataFrameWrapper):
+    def __init__(self, df: dict[str, np.ndarray]):
+        self._df = df
+        self._columns = list(df.keys())
+
+    def __getitem__(self, key: tuple[int, int]) -> Any:
+        return self._df[self._columns[key[1]]][key[0]]
+
+    def get_subset(self, r0, r1, c0, c1) -> DictWrapper:
+        keys = list(self._df.keys())[c0:c1]
+        return DictWrapper({k: self._df[k][r0:r1] for k in keys})
+
+    def num_rows(self) -> int:
+        if len(self._df) == 0:
+            return 0
+        return len(next(iter(self._df.values())))
+
+    def num_columns(self) -> int:
+        return len(self._df)
+
+    def column_names(self) -> list[str]:
+        return self._columns
+
+    def get_dtype(self, index: int) -> DtypeTuple:
+        cname = self._columns[index]
+        dtype = self._df[cname].dtype
+        return DtypeTuple(dtype.name, dtype.kind)
+
+    def to_csv_string(self, separator: str) -> str:
+        lines: list[str] = []
+        for i in range(self.num_rows()):
+            lines.append(separator.join(str(self._df[k][i]) for k in self._columns))
+        return "\n".join(lines)
+
+    def to_list(self) -> list[list[Any]]:
+        return [[self._df[k][i] for k in self._columns] for i in range(self.num_rows())]
 
 
 class PandasWrapper(DataFrameWrapper):
@@ -279,4 +337,8 @@ def wrap_dataframe(df) -> DataFrameWrapper:
         return PolarsWrapper(df)
     if is_pyarrow_table(df):
         return PyarrowWrapper(df)
+    if isinstance(df, dict):
+        import numpy as np
+
+        return DictWrapper({k: np.asarray(v) for k, v in df.items()})
     raise TypeError(f"Unsupported dataframe type: {type(df)}")
