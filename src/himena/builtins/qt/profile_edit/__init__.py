@@ -1,15 +1,20 @@
-"""Builtin QtConsole plugin."""
+from __future__ import annotations
 
-from himena.plugins import register_dialog
+from typing import TYPE_CHECKING
+from himena.plugins import register_function
+
+if TYPE_CHECKING:
+    from himena.widgets import MainWindow
 
 
-@register_dialog(
-    title="Edit Profile",
+@register_function(
+    title="Settings ...",
     menus=["tools"],
     command_id="builtins:profile_edit",
+    keybindings=["Ctrl+,"],
 )
-def edit_profile():
-    """Python interpreter widget."""
+def edit_profile(ui: MainWindow):
+    """Open a dialog to edit the application profile."""
     from himena.builtins.qt.profile_edit._widget import QProfileEditor
 
-    return QProfileEditor()
+    return QProfileEditor(ui.model_app).exec()

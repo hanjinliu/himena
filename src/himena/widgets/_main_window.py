@@ -235,9 +235,6 @@ class MainWindow(Generic[_W]):
         self._dock_widget_list._add_dock_widget(dock)
         return dock
 
-    def exec_dialog(self, widget: _W, *, title: str | None = None):
-        return self._backend_main_window.add_dialog_widget(widget, title=title)
-
     def add_data(
         self,
         data: Any,

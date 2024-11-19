@@ -143,3 +143,13 @@ matrix.backend.features = [
 ]
 [tool.ruff]
 exclude = ["**/tests/*.py"]
+
+[project.entry-points."himena.plugin"]
+"builtins:io" = "himena.builtins.io"
+"builtins:new" = "himena.builtins.new"
+"Debug" = "himena.builtins.debug"
+"QtConsole" = "himena.builtins.qt.console"
+"File Explorer" = "himena.builtins.qt.filetree"
+"Command History" = "himena.builtins.qt.history"
+"Output" = "himena.builtins.qt.output"
+"Widgets" = "himena.builtins.qt.widgets"

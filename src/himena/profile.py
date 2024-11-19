@@ -82,6 +82,10 @@ class AppProfile(BaseModel):
             json.dump(self.model_dump(), f, indent=4)
         return None
 
+    def with_name(self, name: str) -> "AppProfile":
+        """Return a new profile with a new name."""
+        return self.model_copy(update={"name": name})
+
     @field_validator("name")
     def _validate_name(cls, value):
         # check if value is a valid file name
@@ -94,7 +98,10 @@ def load_app_profile(name: str) -> AppProfile:
     path = profile_dir() / f"{name}.json"
     if path.exists():
         return AppProfile.from_json(path)
-    return AppProfile.default()
+    raise ValueError(
+        f"Profile {name!r} does not exist. Please create a new profile with:\n"
+        f"$ himena {name} --new"
+    )
 
 
 def iter_app_profiles() -> Iterable[AppProfile]:
@@ -106,7 +113,23 @@ def iter_app_profiles() -> Iterable[AppProfile]:
 
 
 def define_app_profile(name: str, plugins: list[str]):
+    """Define (probably upadte) a profile."""
     path = profile_dir() / f"{name}.json"
     profile = AppProfile(name=name, plugins=plugins)
     profile.save(path)
     return None
+
+
+def new_app_profile(name: str) -> None:
+    """Create a new profile."""
+    path = profile_dir() / f"{name}.json"
+    if path.exists():
+        raise ValueError(f"Profile {name!r} already exists.")
+    profile = AppProfile.default().with_name(name)
+    return profile.save(path)
+
+
+def remove_app_profile(name: str) -> None:
+    """Remove an existing profile."""
+    path = profile_dir() / f"{name}.json"
+    return path.unlink()

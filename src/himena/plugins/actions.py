@@ -6,6 +6,7 @@ import logging
 from uuid import uuid4
 from typing import (
     Callable,
+    Iterator,
     Mapping,
     Sequence,
     TypeVar,
@@ -38,6 +39,7 @@ class AppActionRegistry:
     def __init__(self):
         self._actions: dict[str, Action] = {}
         self._submenu_titles: dict[str, str] = {}
+        self._installed_plugins: list[str] = []
 
     @classmethod
     def instance(cls) -> AppActionRegistry:
@@ -47,8 +49,11 @@ class AppActionRegistry:
         return cls._global_instance
 
     @property
-    def actions(self) -> dict[str, Action]:
-        return self._actions
+    def installed_plugins(self) -> list[str]:
+        return self._installed_plugins
+
+    def iter_actions(self, app: Application) -> Iterator[Action]:
+        yield from self._actions.values()
 
     def submenu_title(self, id: str) -> str:
         if title := self._submenu_titles.get(id):
@@ -58,6 +63,40 @@ class AppActionRegistry:
     @property
     def submenu_titles(self) -> dict[str, str]:
         return self._submenu_titles
+
+    def install_to(self, app: Application):
+        # look for existing menu items
+        existing_menu_ids = {_id.value for _id in MenuId}
+        for menu_id, menu in app.menus:
+            existing_menu_ids.add(menu_id)
+            for each in menu:
+                if isinstance(each, SubmenuItem):
+                    existing_menu_ids.add(each.submenu)
+
+        added_menu_ids: set[str] = set()
+        for action in self.iter_actions(app):
+            if action.menus is not None:
+                ids = [a.id for a in action.menus]
+                added_menu_ids.update(ids)
+        app.register_actions(self.iter_actions(app))
+
+        # add submenus if not exists
+        to_add: list[tuple[str, SubmenuItem]] = []
+
+        for place in added_menu_ids - existing_menu_ids:
+            place_components = place.split("/")
+            for i in range(1, len(place_components)):
+                menu_id = "/".join(place_components[:i])
+                submenu = "/".join(place_components[: i + 1])
+                if submenu in existing_menu_ids:
+                    continue
+                _LOGGER.info("Adding submenu: %s", submenu)
+                title = self.submenu_title(submenu)
+                item = SubmenuItem(title=title, submenu=submenu)
+                to_add.append((menu_id, item))
+
+        app.menus.append_menu_items(to_add)
+        return None
 
 
 def _norm_menus(menus: str | Sequence[str]) -> list[str]:
@@ -248,60 +287,6 @@ def _is_model_menu_prefix(menu_id: str) -> bool:
 
 
 @overload
-def register_dialog(
-    widget_factory: _F,
-    *,
-    menus: str | Sequence[str] = ("plugins",),
-    title: str | None = None,
-    types: str | Sequence[str] | None = None,
-    enablement: BoolOp | None = None,
-    keybindings: Sequence[KeyBindingRule] | None = None,
-    command_id: str | None = None,
-) -> _F: ...
-
-
-@overload
-def register_dialog(
-    widget_factory: None = None,
-    *,
-    menus: str | Sequence[str] = ("plugins",),
-    title: str | None = None,
-    types: str | Sequence[str] | None = None,
-    enablement: BoolOp | None = None,
-    keybindings: Sequence[KeyBindingRule] | None = None,
-    command_id: str | None = None,
-) -> Callable[[_F], _F]: ...
-
-
-def register_dialog(
-    widget_factory=None,
-    *,
-    menus=("plugins",),
-    title: str | None = None,
-    types=None,
-    enablement=None,
-    keybindings=None,
-    command_id=None,
-):
-    def _inner(wf):
-        def _exec_dialog(ui: MainWindow):
-            widget = wf()
-            return ui.exec_dialog(widget, title=title)
-
-        return register_function(
-            _exec_dialog,
-            title=title,
-            menus=menus,
-            types=types,
-            enablement=enablement,
-            keybindings=keybindings,
-            command_id=command_id,
-        )
-
-    return _inner if widget_factory is None else _inner(widget_factory)
-
-
-@overload
 def register_dock_widget(
     widget_factory: _F,
     *,
@@ -388,43 +373,6 @@ def register_dock_widget(
         return wf
 
     return _inner if widget_factory is None else _inner(widget_factory)
-
-
-def install_to(app: Application):
-    """Installl plugins to the application."""
-    # look for existing menu items
-    existing_menu_ids = {_id.value for _id in MenuId}
-    for menu_id, menu in app.menus:
-        existing_menu_ids.add(menu_id)
-        for each in menu:
-            if isinstance(each, SubmenuItem):
-                existing_menu_ids.add(each.submenu)
-
-    added_menu_ids: set[str] = set()
-    reg = AppActionRegistry.instance()
-    for action in reg.actions.values():
-        if action.menus is not None:
-            ids = [a.id for a in action.menus]
-            added_menu_ids.update(ids)
-    app.register_actions(reg.actions.values())
-
-    # add submenus if not exists
-    to_add: list[tuple[str, SubmenuItem]] = []
-
-    for place in added_menu_ids - existing_menu_ids:
-        place_components = place.split("/")
-        for i in range(1, len(place_components)):
-            menu_id = "/".join(place_components[:i])
-            submenu = "/".join(place_components[: i + 1])
-            if submenu in existing_menu_ids:
-                continue
-            _LOGGER.info("Adding submenu: %s", submenu)
-            title = reg.submenu_title(submenu)
-            item = SubmenuItem(title=title, submenu=submenu)
-            to_add.append((menu_id, item))
-
-    app.menus.append_menu_items(to_add)
-    return None
 
 
 class DockWidgetCallback:

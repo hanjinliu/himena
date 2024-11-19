@@ -197,12 +197,6 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
         Return the backend dock widget.
         """
 
-    def add_dialog_widget(self, widget: _W, title: str | None):
-        """Add a dialog widget containing the widget to the main window.
-
-        A dialog will freeze the entire window.
-        """
-
     ### dock widgets ###
     def _dock_widget_visible(self, widget: _W) -> bool:
         """Whether the dock widget is visible."""
