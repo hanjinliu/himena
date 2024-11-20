@@ -602,7 +602,7 @@ class QChoicesDialog(QtW.QDialog):
         self._result = None
         self.accepted.connect(self.close)
         self._layout = QtW.QVBoxLayout(self)
-        self._layout.setContentsMargins(4, 4, 4, 4)
+        self._layout.setSpacing(10)
 
     def set_result_callback(self, value: _V, accept: bool) -> None:
         def _set_result():

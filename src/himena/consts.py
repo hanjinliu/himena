@@ -73,6 +73,8 @@ class MenuId(StrEnum):
     VIEW = "view"
     TOOLS = "tools"
     TOOLBAR = "toolbar"
+    HELP = "help"
+
     RECENT_ALL = "file/.recent-all"
     STARTUP = "file/.startup"
     MODEL_MENU = "/model_menu"

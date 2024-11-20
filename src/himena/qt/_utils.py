@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+import html
+import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -54,16 +56,24 @@ def set_clipboard_data(data: ClipboardDataModel) -> None:
     if clipboard is None:
         return
     if data.is_subtype_of(StandardType.TEXT):
+        _text = str(data.value)
         if data.is_subtype_of(StandardType.HTML):
             md = QtCore.QMimeData()
-            md.setHtml(str(data.value))
-        clipboard.setText(str(data.value))
+            md.setHtml(_text)
+            md.setText(html.unescape(remove_html_tags(_text.replace("<br>", "\n"))))
+            clipboard.setMimeData(md)
+        else:
+            clipboard.setText(str(data.value))
     elif data.type == StandardType.IMAGE:
         if isinstance(data.value, ArrayQImage):
             img = data.value.qimage
         else:
             raise NotImplementedError
         clipboard.setImage(img)
+
+
+def remove_html_tags(text: str) -> str:
+    return re.sub(r"<[^>]*>", "", text)
 
 
 def qimage_to_ndarray(img: QtGui.QImage) -> NDArray[np.uint8]:

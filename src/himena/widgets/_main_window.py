@@ -141,6 +141,7 @@ class MainWindow(Generic[_W]):
             data = ClipboardDataModel(value=data, type="text")
         elif not isinstance(data, ClipboardDataModel):
             raise ValueError("Clipboard data must be a ClipboardDataModel instance.")
+        _LOGGER.info("Setting clipboard data: %r", data)
         self._backend_main_window._set_clipboard_data(data)
         return None
 
@@ -403,7 +404,21 @@ class MainWindow(Generic[_W]):
     ) -> str | None: ...
 
     def exec_choose_one_dialog(self, title, message, choices, how="buttons"):
-        """Execute a dialog to choose one from the given choices."""
+        """Execute a dialog to choose one from the given choices.
+
+        Parameters
+        ----------
+        title : str
+            Window title of the dialog.
+        message : str
+            HTML Message to show in the dialog.
+        choices : list
+            List of choices. Each choice can be a string or a tuple of (text, value).
+            This method will return the selected value.
+        how : str, default "buttons"
+            How to show the choices. "buttons" for horizontal buttons, "radiobuttons"
+            for vertically arranged radio buttons.
+        """
         if res := self._instructions.choose_one_dialog_response:
             return res()
         _choices_normed = []
