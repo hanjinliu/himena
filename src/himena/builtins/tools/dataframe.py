@@ -39,8 +39,9 @@ def dataframe_to_text(model: WidgetDataModel) -> Parametric:
 
     def convert_table_to_text(
         format: Literal["CSV", "TSV", "Markdown", "Latex", "rST", "HTML"] = "CSV",
-        end_of_text: Literal["", "\n"] = "\n",
+        end_of_text: Literal["", "\\n"] = "\\n",
     ) -> WidgetDataModel[str]:
+        end_of_text = "\n" if end_of_text == "\\n" else ""
         value, ext_default, language = _table_to_text(table_input, format, end_of_text)
         return WidgetDataModel(
             value=value,

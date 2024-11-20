@@ -92,9 +92,9 @@ def table_to_dataframe(model: WidgetDataModel) -> Parametric[str]:
     from io import StringIO
     from himena._data_wrappers import list_installed_dataframe_packages, read_csv
 
-    pkgs = list_installed_dataframe_packages()
+    pkgs = ["dict"] + list_installed_dataframe_packages()
 
-    @configure_gui(module={"choices": ["dict"] + pkgs})
+    @configure_gui(module={"choices": pkgs})
     def convert_table_to_dataframe(module) -> WidgetDataModel[str]:
         csv = "\n".join(",".join(row) for row in model.value)
         buf = StringIO(csv)

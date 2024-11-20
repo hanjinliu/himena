@@ -154,12 +154,7 @@ def text_to_dataframe(model: WidgetDataModel[str]) -> Parametric:
     from io import StringIO
     from himena._data_wrappers import list_installed_dataframe_packages
 
-    pkgs = list_installed_dataframe_packages()
-    if len(pkgs) == 0:
-        raise ValueError(
-            "No DataFrame package is installed. Please install one of the following "
-            "packages: `pandas`, `polars`, `pyarrow`."
-        )
+    pkgs = ["dict"] + list_installed_dataframe_packages()
 
     @configure_gui(module={"choices": pkgs, "value": pkgs[0]})
     def convert_text_to_dataframe(module) -> WidgetDataModel[str]:
