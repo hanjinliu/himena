@@ -352,7 +352,7 @@ QTabWidget {
 }
 
 QTabWidget::pane {
-    border: 1px solid #[highlight_dim];
+    border: 1px solid #[background_dim];
     background-color: #[background];
     top: -1px;
 }
@@ -477,11 +477,7 @@ QMdiArea {
 }
 
 QSubWindow {
-    background-color: #[background]
-}
-
-QSubWindow:focus {
-    background-color: #[background]
+    background-color: #[background_dim];
 }
 
 QSubWindowTitleBar[isCurrent=false] {

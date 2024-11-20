@@ -212,8 +212,7 @@ class QCentralWidget(QtW.QWidget):
     def __init__(self, parent):
         super().__init__(parent)
         layout = QtW.QVBoxLayout()
-        pad = 0
-        layout.setContentsMargins(pad, pad, pad, pad)
+        layout.setContentsMargins(1, 0, 1, 1)
         layout.setSpacing(0)
         self.setLayout(layout)
 
@@ -247,16 +246,7 @@ class QSubWindow(QtW.QMdiSubWindow):
         spacer.layout().addWidget(widget)
         self._central_widget.layout().addWidget(spacer)
         self._last_geometry = self.geometry()
-
         self._anim_geometry = QtCore.QPropertyAnimation(self, b"geometry")
-        # BUG: this causes the window to be unresponsive sometimes
-        # add shadow effect
-        # self._shadow_effect = QtW.QGraphicsDropShadowEffect(self)
-        # self._shadow_effect.setBlurRadius(14)
-        # self._shadow_effect.setColor(QtGui.QColor(0, 0, 0, 100))
-        # self._shadow_effect.setOffset(0, 0)
-        # self.setGraphicsEffect(self._shadow_effect)
-
         self.setAcceptDrops(True)
 
     def main_widget(self) -> QtW.QWidget:
