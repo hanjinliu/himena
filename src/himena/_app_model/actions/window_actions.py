@@ -39,11 +39,12 @@ def close_current_window(ui: MainWindow) -> None:
     i_tab = ui.tabs.current_index
     if i_tab is None:
         return None
-    i_window = ui.tabs[i_tab].current_index
+    tab = ui.tabs[i_tab]
+    i_window = tab.current_index
     if i_window is None:
         return None
     _LOGGER.info(f"Closing window {i_window} in tab {i_tab}")
-    ui.tabs[i_tab][i_window]._close_me(ui, ui._instructions.confirm)
+    tab[i_window]._close_me(ui, ui._instructions.confirm)
 
 
 @ACTIONS.append_from_fn(

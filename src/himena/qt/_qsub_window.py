@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from contextlib import suppress
-from typing import TYPE_CHECKING, Callable, Iterator
+from typing import TYPE_CHECKING, Callable, Iterator, cast
 from logging import getLogger
 
 from qtpy import QtWidgets as QtW
@@ -21,6 +21,7 @@ from himena.qt._qrename import QRenameLineEdit
 if TYPE_CHECKING:
     from himena.qt._qmain_window import QMainWindow
     from himena.qt.main_window import MainWindowQt
+    from himena.widgets import SubWindow
 
 _LOGGER = getLogger(__name__)
 
@@ -271,15 +272,12 @@ class QSubWindow(QtW.QMdiSubWindow):
 
     def setWindowTitle(self, title: str):
         self._title_bar._title_label.setText(title)
-        attrs: list[str] = [f"<b>title</b>: {title!r}"]
-        if hasattr(self._widget, "model_type"):
-            with suppress(Exception):
-                attrs.append(f"<b>type</b>: {self._widget.model_type()!r}")
-        tooltip = "<br>".join(attrs)
-        self._title_bar.setToolTip(tooltip)
 
     def _subwindow_area(self) -> QSubWindowArea:
         return self.parentWidget().parentWidget()
+
+    def _my_wrapper(self) -> SubWindow:
+        return self._widget._himena_widget
 
     @property
     def state(self) -> WindowState:
@@ -296,6 +294,7 @@ class QSubWindow(QtW.QMdiSubWindow):
             _setter = self._set_geometry_animated
         else:
             _setter = self.setGeometry
+
         if state == WindowState.MIN:
             if self._window_state is WindowState.NORMAL:
                 self._store_current_geometry()
@@ -323,6 +322,9 @@ class QSubWindow(QtW.QMdiSubWindow):
             _setter(self.parentWidget().geometry())
         else:
             raise RuntimeError(f"Invalid window state value: {state}")
+
+        self._title_bar._window_menu_btn.setVisible(state is not WindowState.MIN)
+        self._title_bar._model_menu_btn.setVisible(state is not WindowState.MIN)
         self._title_bar.setVisible(state is not WindowState.FULL)
         self._title_bar._minimize_btn.setVisible(state is not WindowState.MIN)
         self._widget.setVisible(state is not WindowState.MIN)
@@ -569,6 +571,24 @@ class QSubWindowTitleBar(QtW.QFrame):
 
     def _close(self):
         return self._subwindow.close_requested.emit()
+
+    def _make_tooltip(self):
+        qwin = self._subwindow
+        attrs: list[str] = [f"<b>Title</b>: {self._title_label.text()}"]
+        if hasattr(qwin._widget, "model_type"):
+            with suppress(Exception):
+                attrs.append(f"<b>Type</b>: {qwin._widget.model_type()}")
+        sub = qwin._my_wrapper()
+        attrs.append(f"<b>Save behavior</b>: {sub.save_behavior!r}")
+        tooltip = "<br>".join(attrs)
+        return tooltip
+
+    def event(self, a0: QtCore.QEvent) -> bool:
+        if a0.type() == QtCore.QEvent.Type.ToolTip:
+            a0 = cast(QtGui.QHelpEvent, a0)
+            QtW.QToolTip.showText(a0.globalPos(), self._make_tooltip())
+            return True
+        return super().event(a0)
 
     # drag events for moving the window
     def mousePressEvent(self, event: QtGui.QMouseEvent):

@@ -4,8 +4,7 @@ import logging
 
 
 def test_stdout(qtbot: QtBot):
-    interf = get_widget()
-    widget = interf.widget
+    widget = get_widget()
     qtbot.addWidget(widget)
     assert widget._stdout.toPlainText() == ""
     print("Hello")

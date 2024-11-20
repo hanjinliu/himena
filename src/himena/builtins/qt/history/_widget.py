@@ -21,10 +21,13 @@ class QCommandHistory(QtW.QWidget):
         layout.addWidget(self._command_list)
         ui.model_app.commands.executed.connect(self._command_executed)
         self._ui_ref = weakref.ref(ui)
+        self._command_list._update_index_widgets()
 
     def _command_executed(self, command_id: str) -> None:
         num = len(self._ui_ref()._history_command)
-        self._command_list.model().beginInsertRows(QtCore.QModelIndex(), 0, num - 1)
+        self._command_list.model().beginInsertRows(
+            QtCore.QModelIndex(), num - 1, num - 1
+        )
         self.update()
         self._command_list.model().endInsertRows()
         self._command_list._update_index_widgets()
@@ -54,6 +57,8 @@ class QCommandList(QtW.QListView):
     def _update_index_widgets(self):
         for row in range(self.model().rowCount()):
             index = self.model().index(row)
+            if not index.isValid():
+                return None
             if action := self.model()._action_at(row):
                 title = action.title
             else:
@@ -115,9 +120,13 @@ class QCommandIndexWidget(QtW.QWidget):
         layout.addWidget(self._label)
         self.setMouseTracking(True)
         self._listwidget_ref = weakref.ref(listwidget)
+        self._button.clicked.connect(self._emit_self)
 
     def setText(self, text: str):
         self._label.setText(text)
+
+    def _emit_self(self):
+        self.btn_clicked.emit(self)
 
     def set_button_visible(self, visible: bool):
         self._button.setEnabled(visible)

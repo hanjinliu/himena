@@ -24,12 +24,12 @@ def _plugin_info_from_func(func: Callable) -> io.PluginInfo | None:
 
 
 @overload
-def register_reader_provider(provider: _RP, *, priority: int = 0) -> _RP: ...
+def register_reader_provider(provider: _RP, *, priority: int = 100) -> _RP: ...
 @overload
-def register_reader_provider(*, priority: int = 0) -> Callable[[_RP], _RP]: ...
+def register_reader_provider(*, priority: int = 100) -> Callable[[_RP], _RP]: ...
 
 
-def register_reader_provider(provider=None, priority=0):
+def register_reader_provider(provider=None, priority=100):
     """
     Register reader provider function.
 
@@ -76,12 +76,12 @@ def _skip_if_list_of_paths(func: Callable) -> Callable:
 
 
 @overload
-def register_writer_provider(provider: _WP, *, priority: int = 0) -> _WP: ...
+def register_writer_provider(provider: _WP, *, priority: int = 100) -> _WP: ...
 @overload
-def register_writer_provider(*, priority: int = 0) -> _WP: ...
+def register_writer_provider(*, priority: int = 100) -> _WP: ...
 
 
-def register_writer_provider(provider=None, priority=0):
+def register_writer_provider(provider=None, priority=100):
     """
     Register writer provider function.
 

@@ -20,8 +20,12 @@ if TYPE_CHECKING:
 
 def default_text_reader(file_path: Path) -> WidgetDataModel:
     """Read text file."""
+    try:
+        value = file_path.read_text()
+    except UnicodeDecodeError:
+        value = file_path.read_text(encoding="utf-8")
     return WidgetDataModel(
-        value=file_path.read_text(),
+        value=value,
         type=StandardType.TEXT,
         source=file_path,
     )
@@ -113,7 +117,7 @@ def default_array_reader(file_path: Path) -> WidgetDataModel:
     )
 
 
-@register_reader_provider(priority=-1)
+@register_reader_provider(priority=50)
 def default_reader_provider(file_path: Path | list[Path]):
     """Get default reader."""
     if isinstance(file_path, list):
@@ -137,9 +141,18 @@ def default_reader_provider(file_path: Path | list[Path]):
     return None
 
 
-@register_reader_provider(priority=-10)
+@register_reader_provider(priority=-100)
 def read_as_text_anyway_provider(file_path: Path) -> WidgetDataModel:
     return default_text_reader
+
+
+def fallback_reader(file_path: Path | list[Path]) -> WidgetDataModel:
+    return WidgetDataModel(value=file_path, type=StandardType.READER_NOT_FOUND)
+
+
+@register_reader_provider(priority=0)
+def read_as_unknown_provider(file_path: Path) -> WidgetDataModel:
+    return fallback_reader
 
 
 def _read_json_as_dict(file_path: Path) -> dict[str, Any]:
@@ -213,16 +226,16 @@ class DataFrameReader:
         return WidgetDataModel(value=df, type=StandardType.DATAFRAME)
 
 
-@register_reader_provider(priority=-5)
+@register_reader_provider(priority=-50)
 def dict_reader_provider(file_path: Path) -> WidgetDataModel:
-    """Read dictionary from json file."""
+    """Read a table as a dict-type dataframe."""
     if file_path.suffix in (".json", ".csv", ".tsv"):
         return read_as_dict
     else:
         return None
 
 
-@register_reader_provider(priority=-5)
+@register_reader_provider(priority=-50)
 def pandas_reader_provider(file_path: Path) -> WidgetDataModel:
     """Read dataframe using pandas."""
     if file_path.suffix in (".html", ".htm"):
@@ -242,7 +255,7 @@ def pandas_reader_provider(file_path: Path) -> WidgetDataModel:
     return DataFrameReader(*_reader)
 
 
-@register_reader_provider(priority=-5)
+@register_reader_provider(priority=-50)
 def polars_reader_provider(file_path: Path) -> WidgetDataModel:
     """Read dataframe using polars."""
     if isinstance(file_path, list):
@@ -333,7 +346,7 @@ def default_array_writer(
     return None
 
 
-@register_writer_provider(priority=-1)
+@register_writer_provider(priority=50)
 def default_writer_provider(model: WidgetDataModel):
     """Get default writer."""
     if model.type is None:

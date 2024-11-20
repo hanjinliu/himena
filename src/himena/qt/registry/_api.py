@@ -12,7 +12,7 @@ WidgetClass = type[QtW.QWidget]
 class WidgetClassTuple(NamedTuple):
     type: str
     widget_class: WidgetClass
-    priority: int = 0
+    priority: int = 100
 
 
 # NOTE: Different applications may use different widgets for the same data type.
@@ -26,7 +26,7 @@ def register_widget(
     type_: str,
     widget_class: _F,
     app: str | None,
-    priority: int = 0,
+    priority: int = 100,
 ) -> _F: ...
 
 
@@ -35,11 +35,11 @@ def register_widget(
     type_: str,
     widget_class: None,
     app: str | None,
-    priority: int = 0,
+    priority: int = 100,
 ) -> Callable[[_F], _F]: ...
 
 
-def register_widget(type_, widget_class=None, app=None, priority=0):
+def register_widget(type_, widget_class=None, app=None, priority=100):
     """
     Register a Qt widget class as a frontend widget for the given file type.
 

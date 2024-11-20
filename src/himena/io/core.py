@@ -39,9 +39,16 @@ class ReaderProviderStore(ProviderStore[ReaderProviderTuple]):
         tup = ReaderProviderTuple(provider, priority, plugin)
         self._providers.append(tup)
 
-    def get(self, path: Path | list[Path], empty_ok: bool = False) -> list[ReaderTuple]:
+    def get(
+        self,
+        path: Path | list[Path],
+        empty_ok: bool = False,
+        min_priority: int = 0,
+    ) -> list[ReaderTuple]:
         matched: list[ReaderTuple] = []
         for info in self._providers:
+            if info.priority < min_priority:
+                continue
             try:
                 out = info.provider(path)
             except Exception as e:
@@ -77,9 +84,16 @@ class WriterProviderStore(ProviderStore[WriterProviderTuple]):
         tup = WriterProviderTuple(provider, priority, plugin)
         self._providers.append(tup)
 
-    def get(self, model: WidgetDataModel, empty_ok: bool = False) -> list[WriterTuple]:
+    def get(
+        self,
+        model: WidgetDataModel,
+        empty_ok: bool = False,
+        min_priority: int = 0,
+    ) -> list[WriterTuple]:
         matched: list[WriterTuple] = []
         for info in self._providers:
+            if info.priority < min_priority:
+                continue
             try:
                 out = info.provider(model)
             except Exception as e:

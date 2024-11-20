@@ -70,7 +70,8 @@ def open_file_using_from_dialog(ui: MainWindow) -> Parametric:
     file_path = ui.exec_file_dialog(mode="r")
     if file_path is None:
         return None
-    readers = io.ReaderProviderStore.instance().get(file_path)
+    _store = io.ReaderProviderStore.instance()
+    readers = _store.get(file_path, min_priority=-float("inf"))
 
     # prepare reader plugin choices
     choices_reader = sorted(
