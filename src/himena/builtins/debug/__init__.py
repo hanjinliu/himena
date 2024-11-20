@@ -47,3 +47,20 @@ def open_user_preferences() -> list[Path]:
     output.append(data_dir() / "recent.json")
     output.append(data_dir() / "recent_sessions.json")
     return output
+
+
+@register_function(
+    menus=TOOLS_DEBUG,
+    title="Test preview",
+    command_id="debug:test-preview",
+    preview=True,
+)
+def preview_test() -> Parametric:
+    def testing_preview(a: int, b: str, is_previewing: bool = False) -> WidgetDataModel:
+        out = f"a = {a!r}\nb ={b!r}"
+        if is_previewing:
+            out += "\n(preview)"
+        print(f"called with {a=}, {b=}, {is_previewing=}")
+        return WidgetDataModel(value=out, type="text")
+
+    return testing_preview

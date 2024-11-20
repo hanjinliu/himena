@@ -391,6 +391,7 @@ class SubWindow(WidgetWrapper[_W]):
 class ParametricWindow(SubWindow[_W]):
     """Subwindow with a parametric widget inside."""
 
+    _IS_PREVIEWING = "is_previewing"
     btn_clicked = Signal(object)  # emit self
     params_changed = Signal(object)  # emit self
 
@@ -406,6 +407,10 @@ class ParametricWindow(SubWindow[_W]):
         self.btn_clicked.connect(self._widget_callback)
         self._preview_window_ref = _do_nothing
         self._auto_close = True
+
+        # check if callback has "is_previewing" argument
+        sig = callback.get_signature()
+        self._has_is_previewing = self._IS_PREVIEWING in sig.parameters
 
     def get_params(self) -> dict[str, Any]:
         """Get the parameters of the widget."""
@@ -434,6 +439,8 @@ class ParametricWindow(SubWindow[_W]):
             return None
         try:
             kwargs = widget.get_params()
+            if self._has_is_previewing:
+                kwargs[self._IS_PREVIEWING] = True
             return_value = self._callback(**kwargs)
         except Exception as e:
             _LOGGER.warning(f"Error in preview callback: {e}")
@@ -454,14 +461,20 @@ class ParametricWindow(SubWindow[_W]):
         return None
 
     def _callback_with_params(self, kwargs: dict[str, Any]):
+        kwargs = {**kwargs, self._IS_PREVIEWING: False}
         return_value = self._callback(**kwargs)
         if isinstance(return_value, WidgetDataModel):
             if prev := self._get_preview_window():
-                # no need to create a new window
+                # no need to create a new window, just use the preview window
                 self._preview_window_ref = _do_nothing
                 self._child_windows.discard(prev)
                 result_widget = prev
                 result_widget.title = return_value.title  # title needs update
+
+                # if callback has "is_previewing" argument, the returned value may
+                # differ, thus the widget needs update.
+                if self._has_is_previewing:
+                    result_widget.update_model(return_value)
                 with suppress(AttributeError):
                     result_widget.is_editable = True
                 if self._auto_close:

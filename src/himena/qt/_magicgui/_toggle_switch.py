@@ -12,6 +12,11 @@ class QToggleSwitch(QtW.QWidget):
     A iPhone style toggle switch.
     See https://stackoverflow.com/questions/14780517/toggle-switch-in-qt
 
+     ooooo
+    ooooooo:::::
+    ooooooo:::::
+     ooooo
+
     Properties
     ----------
     - onColor: QtGui.QColor
@@ -26,16 +31,18 @@ class QToggleSwitch(QtW.QWidget):
         self.setSizePolicy(
             QtW.QSizePolicy.Policy.Minimum, QtW.QSizePolicy.Policy.Expanding
         )
-        self._height = 16
+        self._height = 12
         self._on_color = QtGui.QColor("#4D79C7")
         self._off_color = QtGui.QColor("#909090")
         self._handle_color = QtGui.QColor("#d5d5d5")
         self.offset = self._height / 2
         self._checked = False
-        self._margin = 3
+        self._margin = 2
         self._anim = QtCore.QPropertyAnimation(self, b"offset", self)
 
-        self.setFixedSize(38, 22)
+        self.setFixedSize(
+            (self._height + self._margin) * 2, self._height + self._margin * 2
+        )
         self.toggled.connect(self._set_checked)
 
     @Property(QtGui.QColor)

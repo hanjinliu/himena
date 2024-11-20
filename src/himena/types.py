@@ -1,4 +1,5 @@
 from functools import wraps
+import inspect
 from pathlib import Path
 from typing import (
     Any,
@@ -356,6 +357,10 @@ class Parametric(Generic[_T]):
                 originals=src, command_id=self.command_id, parameters=parameters
             )
         return ProgramaticMethod()
+
+    def get_signature(self) -> inspect.Signature:
+        self.__signature__ = inspect.signature(self._func)
+        return self.__signature__
 
 
 class ParametricWidgetTuple(NamedTuple):

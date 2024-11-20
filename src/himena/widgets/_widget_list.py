@@ -230,6 +230,10 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         """
         sig = inspect.signature(func)
         back_main = self._main_window()
+        _is_prev_arg = ParametricWindow._IS_PREVIEWING
+        if preview and _is_prev_arg in sig.parameters:
+            parameters = [p for p in sig.parameters.values() if p.name != _is_prev_arg]
+            sig = sig.replace(parameters=parameters)
         fn_widget = back_main._signature_to_widget(sig, preview=preview)
         param_widget = self.add_parametric_widget(
             fn_widget,
