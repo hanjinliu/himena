@@ -4,10 +4,12 @@ from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
 from superqt import QLabeledSlider, QLabeledDoubleRangeSlider
+
 from himena.consts import StandardType
 from himena.model_meta import ImageMeta
 from himena.qt._utils import qsignal_blocker
 from himena.types import WidgetDataModel
+from himena.plugins import protocol_override
 from himena._data_wrappers import ArrayWrapper, wrap_array
 from himena.qt._magicgui._toggle_switch import QLabeledToggleSwitch
 
@@ -85,6 +87,7 @@ class QDefaultImageView(QtW.QWidget):
         self._clim: tuple[float, float] = (0, 255)
         self._minmax: tuple[float, float] = (0, 255)
 
+    @protocol_override
     def update_model(self, model: WidgetDataModel):
         arr = wrap_array(model.value)
         ndim_rem = arr.ndim - 2
@@ -126,6 +129,7 @@ class QDefaultImageView(QtW.QWidget):
         else:
             self._control._clim_slider.setDecimals(0)
 
+    @protocol_override
     def to_model(self) -> WidgetDataModel[NDArray[np.uint8]]:
         assert self._arr is not None
 
@@ -145,15 +149,19 @@ class QDefaultImageView(QtW.QWidget):
             ),
         )
 
+    @protocol_override
     def model_type(self) -> str:
         return StandardType.IMAGE
 
+    @protocol_override
     def size_hint(self) -> tuple[int, int]:
         return 400, 400
 
+    @protocol_override
     def is_editable(self) -> bool:
         return False
 
+    @protocol_override
     def control_widget(self) -> QtW.QWidget:
         return self._control
 

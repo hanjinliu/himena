@@ -197,7 +197,12 @@ class SubWindow(WidgetWrapper[_W]):
 
     def model_type(self) -> str | None:
         """Type of the widget data model."""
-        return getattr(self.widget, "model_type", _do_nothing)()
+        if not self.is_exportable:
+            return None
+        _type = getattr(self.widget, "model_type", _do_nothing)()
+        if _type is None:
+            _type = self.to_model().type
+        return _type
 
     def to_model(self) -> WidgetDataModel:
         """Export the widget data."""
@@ -386,6 +391,27 @@ class SubWindow(WidgetWrapper[_W]):
         if (method := model.method) is not None:
             self._update_widget_data_model_method(method)
         return self
+
+    def _is_mergeable_with(self, source: SubWindow[_W]) -> bool:
+        widget = self.widget
+        if not hasattr(widget, "merge_model"):
+            return False
+        if hasattr(widget, "mergeable_model_types"):
+            types = widget.mergeable_model_types()
+            if source.model_type() in types:
+                return True
+        elif hasattr(widget, "merge_model"):
+            return True
+        return False
+
+    def _process_merge_model(self, source: SubWindow[_W]) -> bool:
+        if hasattr(self.widget, "merge_model"):
+            self.widget.merge_model(source.to_model())
+            ui = self._main_window()._himena_main_window
+            source._close_me(ui)
+            ui._backend_main_window._move_focus_to(source.widget)
+            return True
+        return False
 
 
 class ParametricWindow(SubWindow[_W]):

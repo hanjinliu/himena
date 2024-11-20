@@ -3,9 +3,11 @@ from typing import Any
 
 from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
+
 from himena.consts import StandardType
 from himena.types import WidgetDataModel
 from himena.model_meta import TableMeta
+from himena.plugins import protocol_override
 from himena.builtins.qt.widgets._table_base import QTableBase, QSelectionRangeEdit
 
 
@@ -20,6 +22,7 @@ class QDefaultTableWidget(QtW.QTableWidget, QTableBase):
         def _():
             self._modified = True
 
+    @protocol_override
     def update_model(self, model: WidgetDataModel[list[list[Any]]]) -> None:
         import numpy as np
 
@@ -40,6 +43,7 @@ class QDefaultTableWidget(QtW.QTableWidget, QTableBase):
         self._control.update_for_table(self)
         return None
 
+    @protocol_override
     def to_model(self) -> WidgetDataModel[list[list[Any]]]:
         return WidgetDataModel(
             value=self._to_list(
@@ -54,15 +58,19 @@ class QDefaultTableWidget(QtW.QTableWidget, QTableBase):
         self.setVerticalHeaderLabels([str(i) for i in range(self.rowCount())])
         self.setHorizontalHeaderLabels([str(i) for i in range(self.columnCount())])
 
+    @protocol_override
     def model_type(self):
         return StandardType.TABLE
 
+    @protocol_override
     def is_modified(self) -> bool:
         return self._modified
 
+    @protocol_override
     def set_modified(self, value: bool) -> None:
         self._modified = value
 
+    @protocol_override
     def set_editable(self, value: bool) -> None:
         if value:
             trig = self._edit_trigger
@@ -70,6 +78,7 @@ class QDefaultTableWidget(QtW.QTableWidget, QTableBase):
             trig = QtW.QAbstractItemView.EditTrigger.NoEditTriggers
         self.setEditTriggers(trig)
 
+    @protocol_override
     def control_widget(self) -> QTableControl:
         return self._control
 

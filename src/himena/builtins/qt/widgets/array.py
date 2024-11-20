@@ -5,10 +5,12 @@ from typing import TYPE_CHECKING, Any, cast
 
 from qtpy import QtGui, QtCore, QtWidgets as QtW
 from qtpy.QtCore import Qt
+
 from himena._data_wrappers import ArrayWrapper, wrap_array
 from himena.consts import StandardType, MonospaceFontFamily
 from himena.model_meta import ArrayMeta
 from himena.types import WidgetDataModel
+from himena.plugins import protocol_override
 from himena.builtins.qt.widgets._table_base import (
     QTableBase,
     QSelectionRangeEdit,
@@ -238,6 +240,7 @@ class QDefaultArrayView(QtW.QWidget):
         spinbox.valueChanged.connect(self._spinbox_changed)
         self._spinboxes.append(spinbox)
 
+    @protocol_override
     def update_model(self, model: WidgetDataModel):
         import numpy as np
 
@@ -258,6 +261,7 @@ class QDefaultArrayView(QtW.QWidget):
         self.update()
         return None
 
+    @protocol_override
     def to_model(self) -> WidgetDataModel[list[list[Any]]]:
         return WidgetDataModel(
             value=self._arr.arr,
@@ -268,12 +272,15 @@ class QDefaultArrayView(QtW.QWidget):
             ),
         )
 
+    @protocol_override
     def model_type(self) -> str:
         return StandardType.ARRAY
 
+    @protocol_override
     def is_modified(self) -> bool:
         return False
 
+    @protocol_override
     def control_widget(self):
         return self._control
 

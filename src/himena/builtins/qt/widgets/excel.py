@@ -3,12 +3,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from qtpy import QtWidgets as QtW, QtCore
+
 from himena.model_meta import ExcelMeta
 from himena.qt._qrename import QTabRenameLineEdit
 from himena.builtins.qt.widgets.table import QDefaultTableWidget
 from himena.builtins.qt.widgets._table_base import QSelectionRangeEdit
 from himena.types import WidgetDataModel
 from himena.consts import StandardType
+from himena.plugins import protocol_override
 
 _EDIT_DISABLED = QtW.QAbstractItemView.EditTrigger.NoEditTriggers
 _EDIT_ENABLED = (
@@ -36,6 +38,7 @@ class QExcelTableStack(QtW.QTabWidget):
         self._control.update_for_table(self.widget(index))
         return None
 
+    @protocol_override
     def update_model(self, model: WidgetDataModel[dict[str, list[list[str]]]]):
         self.clear()
         for sheet_name, table in model.value.items():
@@ -49,6 +52,7 @@ class QExcelTableStack(QtW.QTabWidget):
             self._control.update_for_table(self.widget(0))
         return None
 
+    @protocol_override
     def to_model(self) -> WidgetDataModel[dict[str, list[list[str]]]]:
         index = self.currentIndex()
         table_meta = self.widget(index)._prep_table_meta()
@@ -66,29 +70,57 @@ class QExcelTableStack(QtW.QTabWidget):
             ),
         )
 
+    @protocol_override
     def control_widget(self) -> QExcelTableStackControl:
         return self._control
 
+    @protocol_override
     def model_type(self):
         return StandardType.EXCEL
 
+    @protocol_override
     def is_modified(self) -> bool:
         return any(self.widget(i).is_modified() for i in range(self.count()))
 
+    @protocol_override
     def set_modified(self, value: bool) -> None:
         for i in range(self.count()):
             self.widget(i).set_modified(value)
 
+    @protocol_override
     def size_hint(self) -> tuple[int, int]:
         return 400, 300
 
+    @protocol_override
     def is_editable(self) -> bool:
         return self._edit_trigger == _EDIT_ENABLED
 
+    @protocol_override
     def set_editable(self, value: bool) -> None:
         self._edit_trigger = _EDIT_ENABLED if value else _EDIT_DISABLED
         for i in range(self.count()):
             self.widget(i).set_editable(value)
+
+    @protocol_override
+    def mergeable_model_types(self) -> list[str]:
+        return [StandardType.EXCEL, StandardType.TABLE]
+
+    @protocol_override
+    def merge_model(self, model: WidgetDataModel) -> None:
+        if model.type == StandardType.EXCEL:
+            assert isinstance(model.value, dict)
+            for key, value in model.value.items():
+                table_widget = QExcelSheet()
+                table_widget.update_model(
+                    WidgetDataModel(value=value, type=StandardType.TABLE)
+                )
+                self.addTab(table_widget, key)
+        elif model.type == StandardType.TABLE:
+            table_widget = QExcelSheet()
+            table_widget.update_model(model)
+            self.addTab(table_widget, model.title)
+        else:
+            raise ValueError(f"Cannot merge {model.type} with {StandardType.EXCEL}")
 
     if TYPE_CHECKING:
 

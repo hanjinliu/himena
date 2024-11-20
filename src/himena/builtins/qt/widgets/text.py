@@ -5,10 +5,10 @@ from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
 from superqt import QSearchableComboBox
 
-from himena.consts import StandardType
+from himena.consts import StandardType, MonospaceFontFamily
 from himena.types import WidgetDataModel
 from himena.model_meta import TextMeta
-from himena.consts import MonospaceFontFamily
+from himena.plugins import protocol_override
 
 from himena._utils import OrderedSet, lru_cache
 from himena.qt._qfinderwidget import QFinderWidget
@@ -475,6 +475,7 @@ class QDefaultTextEdit(QtW.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._main_text_edit)
 
+    @protocol_override
     def control_widget(self) -> QTextControl:
         return self._control
 
@@ -485,6 +486,7 @@ class QDefaultTextEdit(QtW.QWidget):
         line_num = self._main_text_edit.textCursor().blockNumber() + 1
         self._control._line_num.setText(str(line_num))
 
+    @protocol_override
     def update_model(self, model: WidgetDataModel[str]):
         self._main_text_edit.setPlainText(model.value)
         lang = None
@@ -508,6 +510,7 @@ class QDefaultTextEdit(QtW.QWidget):
         self._control._tab_spaces_combobox.setCurrentText(str(spaces))
         return None
 
+    @protocol_override
     def to_model(self) -> WidgetDataModel[str]:
         cursor = self._main_text_edit.textCursor()
         font = self._main_text_edit.font()
@@ -524,24 +527,31 @@ class QDefaultTextEdit(QtW.QWidget):
             ),
         )
 
+    @protocol_override
     def model_type(self):
         return StandardType.TEXT
 
+    @protocol_override
     def size_hint(self) -> tuple[int, int]:
         return 400, 300
 
+    @protocol_override
     def is_modified(self) -> bool:
         return self._main_text_edit.is_modified()
 
+    @protocol_override
     def set_modified(self, value: bool) -> None:
         self._main_text_edit.document().setModified(value)
 
+    @protocol_override
     def is_editable(self) -> bool:
         return not self._main_text_edit.isReadOnly()
 
+    @protocol_override
     def set_editable(self, value: bool) -> None:
         self._main_text_edit.setReadOnly(not value)
 
+    @protocol_override
     def theme_changed_callback(self, theme: Theme):
         text_edit = self._main_text_edit
         if theme.is_light_background():

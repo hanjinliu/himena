@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, NamedTuple
 
 from qtpy import QtGui, QtCore, QtWidgets as QtW
 from qtpy.QtCore import Qt
+
 from himena.consts import StandardType
 from himena.types import WidgetDataModel
 from himena.model_meta import TableMeta
@@ -13,6 +14,7 @@ from himena.builtins.qt.widgets._table_base import (
     QSelectionRangeEdit,
     format_table_value,
 )
+from himena.plugins import protocol_override
 from himena._data_wrappers import wrap_dataframe, DataFrameWrapper
 
 
@@ -90,6 +92,7 @@ class QDataFrameView(QTableBase):
         super().__init__()
         self._control: QDataFrameViewControl | None = None
 
+    @protocol_override
     def update_model(self, model: WidgetDataModel):
         self.setModel(QDataFrameModel(wrap_dataframe(model.value)))
         self.setSelectionModel(QtCore.QItemSelectionModel(self.model()))
@@ -111,6 +114,7 @@ class QDataFrameView(QTableBase):
         self.update()
         return None
 
+    @protocol_override
     def to_model(self) -> WidgetDataModel[list[list[Any]]]:
         return WidgetDataModel(
             value=self.model().df.unwrap(),
@@ -119,12 +123,15 @@ class QDataFrameView(QTableBase):
             additional_data=self._prep_table_meta(),
         )
 
+    @protocol_override
     def model_type(self) -> str:
         return StandardType.DATAFRAME
 
+    @protocol_override
     def is_modified(self) -> bool:
         return False
 
+    @protocol_override
     def control_widget(self):
         return self._control
 

@@ -11,6 +11,7 @@ from superqt import QIconifyIcon
 from superqt.utils import qthrottled
 
 from himena import anchor as _anchor
+from himena._descriptors import LocalReaderMethod
 from himena.consts import MenuId
 from himena._utils import lru_cache
 from himena.types import WindowState, WindowRect
@@ -256,6 +257,8 @@ class QSubWindow(QtW.QMdiSubWindow):
         # self._shadow_effect.setOffset(0, 0)
         # self.setGraphicsEffect(self._shadow_effect)
 
+        self.setAcceptDrops(True)
+
     def main_widget(self) -> QtW.QWidget:
         return self._widget
 
@@ -425,6 +428,22 @@ class QSubWindow(QtW.QMdiSubWindow):
                     return (i_tab, i_win), main
         raise RuntimeError("Could not find the sub-window in the main window.")
 
+    def dragEnterEvent(self, a0: QtGui.QDragEnterEvent | None) -> None:
+        if a0 is not None and isinstance(src := a0.source(), QSubWindow):
+            if self._my_wrapper()._is_mergeable_with(src._my_wrapper()):
+                a0.accept()
+                return None
+        a0.ignore()
+        return None
+
+    def dropEvent(self, a0: QtGui.QDropEvent | None) -> None:
+        if a0 is not None and isinstance(src := a0.source(), QSubWindow):
+            if self._my_wrapper()._process_merge_model(src._my_wrapper()):
+                a0.accept()
+                return None
+        a0.ignore()
+        return None
+
 
 _TITLE_HEIGHT = 18
 
@@ -531,6 +550,7 @@ class QSubWindowTitleBar(QtW.QFrame):
         layout.addWidget(self._close_btn, alignment=Qt.AlignmentFlag.AlignRight)
 
         self.setProperty("isCurrent", False)
+        self.setAcceptDrops(True)
 
     def _start_renaming(self):
         self._line_edit.show()
@@ -601,9 +621,11 @@ class QSubWindowTitleBar(QtW.QFrame):
                 self._is_ctrl_drag = True
                 drag = QtGui.QDrag(_subwin)
                 mime_data = QtCore.QMimeData()
-                i_tab, i_win = _subwin._find_me()
-                text = f"himena-subwindow:{i_tab},{i_win}"
-                mime_data.setText(text)
+                if isinstance(
+                    _meth := self._subwindow._my_wrapper()._widget_data_model_method,
+                    LocalReaderMethod,
+                ):
+                    mime_data.setUrls([QtCore.QUrl(_meth.path.as_uri())])
                 drag.setMimeData(mime_data)
                 drag.setPixmap(_subwin._pixmap_resized(QtCore.QSize(150, 150)))
                 drag.exec()
@@ -677,6 +699,12 @@ class QSubWindowTitleBar(QtW.QFrame):
             else:
                 sub._set_rect(sub.rect.resize_relative(1 / 1.1, 1 / 1.1))
         return super().wheelEvent(event)
+
+    def dragEnterEvent(self, a0: QtGui.QDragEnterEvent | None) -> None:
+        return self._subwindow.dragEnterEvent(a0)
+
+    def dropEvent(self, a0: QtGui.QDropEvent | None) -> None:
+        return self._subwindow.dropEvent(a0)
 
     def _store_drag_position(self, global_pos: QtCore.QPoint):
         subwin = self._subwindow
