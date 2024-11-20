@@ -487,7 +487,8 @@ class ParametricWindow(SubWindow[_W]):
         return None
 
     def _callback_with_params(self, kwargs: dict[str, Any]):
-        kwargs = {**kwargs, self._IS_PREVIEWING: False}
+        if self._has_is_previewing:
+            kwargs = {**kwargs, self._IS_PREVIEWING: False}
         return_value = self._callback(**kwargs)
         if isinstance(return_value, WidgetDataModel):
             if prev := self._get_preview_window():

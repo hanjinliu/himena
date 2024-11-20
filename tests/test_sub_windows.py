@@ -72,7 +72,8 @@ def test_io_commands(ui: MainWindow, tmpdir, sample_dir: Path):
 
     response_open = lambda: sample_dir / "table.csv"
     ui._instructions = ui._instructions.updated(file_dialog_response=response_open)
-    param = himena.io.ReaderProviderStore.instance().get(response_open())[2]
+    store = himena.io.ReaderProviderStore.instance()
+    param = store.get(response_open(), min_priority=-500)[2]
     ui.exec_action("open-file-using", with_params={"reader": param})
     assert isinstance(ui.current_window.save_behavior, SaveToPath)
     assert isinstance(ui.current_window._widget_data_model_method, LocalReaderMethod)
