@@ -20,6 +20,7 @@ from himena._descriptors import ProgramaticMethod
 from himena._open_recent import RecentFileManager, RecentSessionManager
 from himena._utils import import_object
 from himena.consts import NO_RECORDING_FIELD
+from himena.profile import AppProfile, load_app_profile
 from himena.style import Theme
 from himena.types import (
     ClipboardDataModel,
@@ -108,6 +109,11 @@ class MainWindow(Generic[_W]):
             if hasattr(dock.widget, "theme_changed_callback"):
                 dock.widget.theme_changed_callback(theme)
         return None
+
+    @property
+    def app_profile(self) -> AppProfile:
+        """Get the current application profile object."""
+        return load_app_profile(self._model_app.name)
 
     @property
     def tabs(self) -> TabList[_W]:

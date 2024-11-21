@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+import logging
 import weakref
 from app_model import Action
 from qtpy import QtWidgets as QtW, QtCore, QtGui
@@ -11,6 +12,8 @@ from himena._utils import lru_cache
 
 if TYPE_CHECKING:
     from himena.widgets import MainWindow
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class QCommandHistory(QtW.QWidget):
@@ -24,10 +27,9 @@ class QCommandHistory(QtW.QWidget):
         self._command_list._update_index_widgets()
 
     def _command_executed(self, command_id: str) -> None:
+        _LOGGER.info("Command executed: %s", command_id)
         num = len(self._ui_ref()._history_command)
-        self._command_list.model().beginInsertRows(
-            QtCore.QModelIndex(), num - 1, num - 1
-        )
+        self._command_list.model().beginInsertRows(QtCore.QModelIndex(), 0, num - 1)
         self.update()
         self._command_list.model().endInsertRows()
         self._command_list._update_index_widgets()
@@ -60,13 +62,15 @@ class QCommandList(QtW.QListView):
             if not index.isValid():
                 return None
             if action := self.model()._action_at(row):
+                id = action.id
                 title = action.title
             else:
+                id = ""
                 title = ""
             if widget := self.indexWidget(index):
                 widget.setText(title)
             else:
-                widget = QCommandIndexWidget(title, self)
+                widget = QCommandIndexWidget(id, title, self)
                 self.setIndexWidget(index, widget)
                 widget.btn_clicked.connect(self._execute_action_at_widget)
 
@@ -95,47 +99,84 @@ class QCommandList(QtW.QListView):
         ) -> QCommandIndexWidget | None: ...
 
 
-@lru_cache(maxsize=1)
-def _icon_run(light_background: bool) -> QIconifyIcon:
+def _color(light_background: bool):
     if light_background:
         color = "#222222"
     else:
         color = "#E6E6E6"
-    return QIconifyIcon("fa:play", color=color)
+    return color
+
+
+@lru_cache(maxsize=1)
+def _icon_run(light_background: bool) -> QIconifyIcon:
+    return QIconifyIcon("fa:play", color=_color(light_background))
+
+
+@lru_cache(maxsize=1)
+def _icon_copy(light_background: bool) -> QIconifyIcon:
+    return QIconifyIcon(
+        "heroicons-outline:clipboard-copy", color=_color(light_background)
+    )
+
+
+def make_btn(tooltip: str):
+    btn = QtW.QToolButton()
+    btn.setObjectName("QCommandHistory-RunButton")
+    btn.setIcon(QtGui.QIcon())
+    btn.setFixedWidth(20)
+    btn.setToolTip(tooltip)
+    return btn
 
 
 class QCommandIndexWidget(QtW.QWidget):
     btn_clicked = QtCore.Signal(object)
 
-    def __init__(self, text: str, listwidget: QCommandList):
+    def __init__(self, id: str, text: str, listwidget: QCommandList):
         super().__init__()
+        self._action_id = id
         layout = QtW.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
         self._label = QtW.QLabel(text)
-        self._button = QtW.QToolButton()
-        self._button.setObjectName("QCommandHistory-RunButton")
-        self._button.setIcon(QtGui.QIcon())
-        self._button.setFixedWidth(20)
-        layout.addWidget(self._button)
+        self._btn_run = make_btn("Run this command")
+        self._btn_copy = make_btn("Copy this command ID")
+        layout.addWidget(self._btn_run)
+        layout.addWidget(self._btn_copy)
         layout.addWidget(self._label)
         self.setMouseTracking(True)
         self._listwidget_ref = weakref.ref(listwidget)
-        self._button.clicked.connect(self._emit_self)
+        self._btn_run.clicked.connect(self._emit_run_clicked)
 
     def setText(self, text: str):
         self._label.setText(text)
 
-    def _emit_self(self):
+    def _emit_run_clicked(self):
         self.btn_clicked.emit(self)
 
+    def _emit_copy_clicked(self):
+        if self._action_id:
+            if clipboard := QtW.QApplication.clipboard():
+                clipboard.setText(self._action_id)
+
+    def _is_light_background(self) -> bool:
+        try:
+            return self._listwidget_ref().model()._ui_ref().theme.is_light_background()
+        except Exception:
+            return False
+
     def set_button_visible(self, visible: bool):
-        self._button.setEnabled(visible)
+        self._btn_run.setEnabled(visible)
         if visible:
-            self._button.setIcon(QtGui.QIcon(_icon_run(True)))
-            self._button.setCursor(Qt.CursorShape.PointingHandCursor)
+            light_bg = self._is_light_background()
+            self._btn_run.setIcon(QtGui.QIcon(_icon_run(light_bg)))
+            self._btn_copy.setIcon(QtGui.QIcon(_icon_copy(light_bg)))
+            self._btn_run.setCursor(Qt.CursorShape.PointingHandCursor)
+            self._btn_copy.setCursor(Qt.CursorShape.PointingHandCursor)
         else:
-            self._button.setIcon(QtGui.QIcon())
-            self._button.setCursor(Qt.CursorShape.ArrowCursor)
+            self._btn_run.setIcon(QtGui.QIcon())
+            self._btn_copy.setIcon(QtGui.QIcon())
+            self._btn_run.setCursor(Qt.CursorShape.ArrowCursor)
+            self._btn_copy.setCursor(Qt.CursorShape.ArrowCursor)
 
     def enterEvent(self, event: QtCore.QEvent) -> None:
         listwidget = self._listwidget_ref()

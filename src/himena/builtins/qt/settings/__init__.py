@@ -10,11 +10,11 @@ if TYPE_CHECKING:
 @register_function(
     title="Settings ...",
     menus=["tools"],
-    command_id="builtins:profile_edit",
+    command_id="builtins:settings",
     keybindings=["Ctrl+,"],
 )
-def edit_profile(ui: MainWindow):
+def show_setting_dialog(ui: MainWindow):
     """Open a dialog to edit the application profile."""
-    from himena.builtins.qt.profile_edit._widget import QProfileEditor
+    from himena.builtins.qt.settings._widget import QSettingsDialog
 
-    return QProfileEditor(ui.model_app).exec()
+    return QSettingsDialog(ui).exec()

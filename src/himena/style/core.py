@@ -10,6 +10,7 @@ from pathlib import Path
 
 @dataclass(frozen=True)
 class Theme:
+    name: str
     background: str
     foreground: str
     base_color: str
@@ -90,5 +91,5 @@ def get_global_styles() -> dict[str, Theme]:
                 style["highlight"] = _mix_colors(base, bg, 0.6).hex
             if "highlight_strong" not in style:
                 style["highlight_strong"] = _mix_colors(base, bg, 0.4).hex
-            global_styles[name] = Theme(**style)
+            global_styles[name] = Theme(name=name, **style)
     return global_styles

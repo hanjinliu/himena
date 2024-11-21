@@ -1,56 +1,49 @@
 from __future__ import annotations
 
-from typing import Iterator, NamedTuple
+from typing import Iterator, NamedTuple, TYPE_CHECKING
 
-from app_model import Application
 from qtpy import QtWidgets as QtW, QtGui
 from qtpy.QtCore import Qt
 from himena.consts import MonospaceFontFamily
-from himena.profile import define_app_profile
 from himena.plugins import AppActionRegistry
 
+if TYPE_CHECKING:
+    from himena.widgets import MainWindow
 
-class QProfileEditor(QtW.QDialog):
-    """Widget to edit application profiles."""
 
-    def __init__(self, app: Application):
+class QPluginListEditor(QtW.QWidget):
+    """Widget to edit plugin list."""
+
+    def __init__(self, ui: MainWindow):
         super().__init__()
-        self._app = app
+        self._ui = ui
+        self._app = ui.model_app
         layout = QtW.QVBoxLayout(self)
         self._name_label = QtW.QLineEdit(self)
-        self._name_label.setText(app.name)
+        self._name_label.setText(self._app.name)
         self._name_label.setReadOnly(True)
-        self._plugins_editor = QProfileTree(self)
-        self._ok_button = QtW.QPushButton("OK", self)
+        self._plugins_editor = QAvaliablePluginsTree(self)
         self._apply_button = QtW.QPushButton("Apply", self)
-        self._cancel_button = QtW.QPushButton("Cancel", self)
         self._button_group = QtW.QWidget(self)
         button_layout = QtW.QHBoxLayout(self._button_group)
         button_layout.setContentsMargins(0, 0, 0, 0)
         button_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
-        button_layout.addWidget(self._ok_button)
         button_layout.addWidget(self._apply_button)
-        button_layout.addWidget(self._cancel_button)
 
         layout.addWidget(self._name_label)
         layout.addWidget(self._plugins_editor)
         layout.addWidget(self._button_group)
 
-        self._ok_button.clicked.connect(self._finish_edit)
         self._apply_button.clicked.connect(self._apply_changes)
-        self._cancel_button.clicked.connect(self.reject)
-
-    def _finish_edit(self):
-        self._apply_changes()
-        self.accept()
 
     def _apply_changes(self):
         plugins = self._plugins_editor.get_plugin_list()
-        define_app_profile(self._name_label.text(), plugins)
+        new_prof = self._ui.app_profile.with_plugins(plugins)
         AppActionRegistry.instance().install_to(self._app)
+        new_prof.save()
 
 
-class QProfileTree(QtW.QTreeWidget):
+class QAvaliablePluginsTree(QtW.QTreeWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         font = QtGui.QFont(MonospaceFontFamily)
@@ -101,14 +94,6 @@ class QProfileTree(QtW.QTreeWidget):
         if item.parent() is None:
             for i in range(item.childCount()):
                 item.child(i).setCheckState(0, item.checkState(0))
-
-
-def _not(x: Qt.CheckState) -> Qt.CheckState:
-    if x == Qt.CheckState.Checked:
-        state = Qt.CheckState.Unchecked
-    else:
-        state = Qt.CheckState.Checked
-    return state
 
 
 class HimenaPluginInfo(NamedTuple):

@@ -61,7 +61,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         app_model_app = widgets.init_application(app)
         super().__init__(app_model_app)
         self._qt_app.setApplicationName(app.name)
-        self.setWindowTitle(app.name)
+        self.setWindowTitle("himena")
         self.setWindowIcon(QtGui.QIcon(_ICON_PATH.as_posix()))
         self._tab_widget = QTabWidget()
         default_menu_ids = {

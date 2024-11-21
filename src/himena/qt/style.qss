@@ -20,10 +20,10 @@ QWidget:!enabled {
     background-color: #[background];
     color: #[foreground_dim];
 }
-
+/*
 QToolBar > QToolButton {
     background-color: #[background];
-}
+} */
 
 QFrame:!enabled {
     background-color: #[background];
@@ -203,6 +203,13 @@ QToolButton:hover {
     color: #[foreground];
 }
 
+QToolButton:checked {
+    border: 1px solid lightgray;
+    border-radius: 4px;
+    padding: 2px;
+    background-color: #[highlight_dim];
+    color: #[foreground];
+}
 
 /* Text including QtConsole */
 QPlainTextEdit, QTextEdit {

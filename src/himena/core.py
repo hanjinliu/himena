@@ -15,13 +15,11 @@ def new_window(
     profile: str | AppProfile | None = None,
     *,
     plugins: list[str] = [],
-    app: str = "himena",
 ) -> MainWindow[QtW.QWidget]:
     """Create a new window with the specified profile and additional plugins."""
     from himena.qt import MainWindowQt
     from himena._app_model import get_model_app
 
-    model_app = get_model_app(app)
     plugins = list(plugins)
     if isinstance(profile, str):
         app_prof = load_app_profile(profile)
@@ -31,6 +29,7 @@ def new_window(
         app_prof = AppProfile.default()
     else:
         raise TypeError("`profile` must be a str or an AppProfile object.")
+    model_app = get_model_app(app_prof.name)
     plugins = app_prof.plugins + plugins
     if plugins:
         from himena.plugins import install_plugins

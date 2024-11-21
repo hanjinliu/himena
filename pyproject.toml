@@ -52,6 +52,7 @@ all = [
   "IPython",
   "qtconsole",
   "openpyxl",
+  "matplotlib",
 ]
 testing = [
   "pytest",
@@ -151,5 +152,7 @@ exclude = ["**/tests/*.py"]
 "QtConsole" = "himena.builtins.qt.console"
 "File Explorer" = "himena.builtins.qt.filetree"
 "Command History" = "himena.builtins.qt.history"
+"Plotting" = "himena.builtins.qt.plot"
+"Settings" = "himena.builtins.qt.settings"
 "Output" = "himena.builtins.qt.output"
 "Widgets" = "himena.builtins.qt.widgets"

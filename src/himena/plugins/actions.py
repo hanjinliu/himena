@@ -53,7 +53,9 @@ class AppActionRegistry:
         return self._installed_plugins
 
     def iter_actions(self, app: Application) -> Iterator[Action]:
-        yield from self._actions.values()
+        for id_, action in self._actions.items():
+            if id_ not in app.commands:
+                yield action
 
     def submenu_title(self, id: str) -> str:
         if title := self._submenu_titles.get(id):

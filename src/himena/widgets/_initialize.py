@@ -20,8 +20,10 @@ _APP_INSTANCES: dict[str, list[MainWindow]] = {}
 _LOGGER = getLogger(__name__)
 
 
-def current_instance(name: str) -> MainWindow[_W]:
+def current_instance(name: str | None = None) -> MainWindow[_W]:
     """Get current instance of the main window (raise if not exists)."""
+    if name is None:
+        name = next(iter(_APP_INSTANCES))
     return _APP_INSTANCES[name][-1]
 
 

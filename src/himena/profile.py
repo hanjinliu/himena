@@ -54,7 +54,9 @@ def _default_plugins() -> list[str]:
 class AppProfile(BaseModel):
     """Model of a profile."""
 
-    name: str = Field(default="default", description="Name of the profile.")
+    name: str = Field(
+        default="default", description="Name of the profile.", frozen=True
+    )
     plugins: list[str] = Field(
         default_factory=_default_plugins, description="List of plugins to load."
     )
@@ -76,8 +78,10 @@ class AppProfile(BaseModel):
         """Return the default profile."""
         return AppProfile()
 
-    def save(self, path):
+    def save(self, path: str | Path | None = None) -> None:
         """Save profile as a json file."""
+        if path is None:
+            path = profile_dir() / f"{self.name}.json"
         with open(path, "w") as f:
             json.dump(self.model_dump(), f, indent=4)
         return None
@@ -85,6 +89,10 @@ class AppProfile(BaseModel):
     def with_name(self, name: str) -> "AppProfile":
         """Return a new profile with a new name."""
         return self.model_copy(update={"name": name})
+
+    def with_plugins(self, plugins: list[str]) -> "AppProfile":
+        """Return a new profile with new plugins."""
+        return self.model_copy(update={"plugins": plugins})
 
     @field_validator("name")
     def _validate_name(cls, value):
