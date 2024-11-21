@@ -97,7 +97,7 @@ class QtOutputWidget(QtW.QTabWidget):
 
 
 class OutputInterface(logging.Handler):
-    _instances = {}
+    _instances: dict[str, OutputInterface] = {}
 
     def __init__(self):
         super().__init__()
@@ -155,8 +155,6 @@ class OutputInterface(logging.Handler):
 
 
 def get_widget(id: str = "default") -> QtOutputWidget:
-    if id in OutputInterface._instances:
-        return OutputInterface._instances[id]
     interf = OutputInterface()
     interf.connect_stdout()
     interf.connect_logger()

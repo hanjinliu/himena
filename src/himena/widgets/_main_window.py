@@ -34,6 +34,7 @@ from himena.types import (
 from himena.session import from_yaml
 from himena.widgets._backend import BackendMainWindow
 from himena.widgets._hist import HistoryContainer
+from himena.widgets._initialize import remove_instance
 from himena.widgets._widget_list import TabList, TabArea, DockWidgetList
 from himena.widgets._wrapper import ParametricWindow, SubWindow, DockWidget
 
@@ -58,7 +59,7 @@ class MainWindow(Generic[_W]):
     def __init__(
         self,
         backend: BackendMainWindow[_W],
-        app: HimenaApplication,
+        app: HimenaApplication,  # must be initialized
         theme: Theme,
     ) -> None:
         from himena.widgets._initialize import set_current_instance
@@ -478,6 +479,7 @@ class MainWindow(Generic[_W]):
     def close(self) -> None:
         """Close the main window."""
         self._backend_main_window._exit_main_window(confirm=False)
+        remove_instance(self.model_app.name, self)
         return None
 
     @property

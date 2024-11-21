@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 import importlib
+import importlib.metadata
+import importlib.resources
 import io
 import sys
 from typing import TYPE_CHECKING, Any, NamedTuple
@@ -17,12 +19,10 @@ if TYPE_CHECKING:
 
 @lru_cache(maxsize=1)
 def list_installed_dataframe_packages() -> list[str]:
-    import pkg_resources
-
-    installed = []
-    for entry in pkg_resources.working_set:
-        if entry.key in {"pandas", "polars", "pyarrow"}:
-            installed.append(entry.key)
+    installed: list[str] = []
+    for entry in importlib.metadata.distributions():
+        if entry.name in {"pandas", "polars", "pyarrow"}:
+            installed.append(entry.name)
     return installed
 
 

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TypeVar
+from typing import TypeVar, TYPE_CHECKING
 from logging import getLogger
+import weakref
 from app_model import Application
 from himena.types import (
     Parametric,
@@ -10,9 +11,11 @@ from himena.types import (
     ClipboardDataModel,
     ParametricWidgetTuple,
 )
-from himena.widgets._main_window import MainWindow
 from himena.widgets._widget_list import TabArea
 from himena.widgets._wrapper import SubWindow
+
+if TYPE_CHECKING:
+    from himena.widgets._main_window import MainWindow
 
 _W = TypeVar("_W")  # backend widget type
 
@@ -37,20 +40,44 @@ def set_current_instance(name: str, instance: MainWindow[_W]) -> None:
     return None
 
 
+def cleanup():
+    """Close all instances and clear the list."""
+    for instances in _APP_INSTANCES.copy().values():
+        for instance in instances:
+            instance.close()
+    _APP_INSTANCES.clear()
+
+
 def remove_instance(name: str, instance: MainWindow[_W]) -> None:
     """Remove the instance from the list."""
     if name in _APP_INSTANCES:
         instances = _APP_INSTANCES[name]
         if instance in instances:
             instances.remove(instance)
+            instance.model_app.destroy(instance.model_app.name)
+        if not instances:
+            _APP_INSTANCES.pop(name, None)
     return None
+
+
+def _app_destroyed(app_name) -> None:
+    """Remove the application from the list."""
+    _APP_INSTANCES.pop(app_name, None)
+
+
+_APP_INITIALIZED = weakref.WeakSet[Application]()
 
 
 def init_application(app: Application) -> Application:
     from himena._app_model.actions import ACTIONS, SUBMENUS
+    from himena.widgets._main_window import MainWindow
+
+    if app in _APP_INITIALIZED:
+        return app
 
     app.register_actions(ACTIONS)
     app.menus.append_menu_items(SUBMENUS)
+    app.destroyed.connect(_app_destroyed)
     _subs = ", ".join(menu.title for _, menu in SUBMENUS)
     _LOGGER.info(f"Initialized submenus: {_subs}")
 
@@ -146,4 +173,5 @@ def init_application(app: Application) -> Application:
         ins = current_instance(app.name)
         ins.add_parametric_widget(tup.widget, tup.callback, title=tup.title)
 
+    _APP_INITIALIZED.add(app)
     return app

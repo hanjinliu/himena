@@ -1,4 +1,5 @@
 import tempfile
+import warnings
 import pytest
 from pathlib import Path
 from qtpy.QtWidgets import QApplication
@@ -14,12 +15,29 @@ def patch_user_data_dir(request: pytest.FixtureRequest):
             yield
 
 @pytest.fixture
-def ui(qtbot: QtBot):
+def ui(qtbot: QtBot, request: pytest.FixtureRequest):
     from himena import new_window
+    from himena._app_model._application import HimenaApplication
+    from himena.widgets._initialize import _APP_INSTANCES, cleanup
 
-    app = "test-app"
-    window = new_window(app=app)
+    if _APP_INSTANCES:
+        existing = []
+        for ins in _APP_INSTANCES.values():
+            for each in ins:
+                pytest_name = getattr(each, "_pytest_name", "None")
+                existing.append(f"{each} ({pytest_name})")
+        existing_str = '    \n'.join(existing)
+        cleanup()
+        warnings.warn(
+            f"Instances not cleaned up in the previous session.\n"
+            f"Existing instances:\n    {existing_str}",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+    window = new_window()
+    app = window.model_app
     window._instructions = window._instructions.updated(confirm=False)
+    window._pytest_name = request.node.name
     qtbot.add_widget(window._backend_main_window)
     try:
         yield window
@@ -27,6 +45,8 @@ def ui(qtbot: QtBot):
         Application.destroy(app)
         window.close()
         assert app not in Application._instances
+        assert app not in HimenaApplication._instances
+        assert len(_APP_INSTANCES) == 0
 
         QApplication.processEvents()
         QApplication.processEvents()

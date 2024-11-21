@@ -74,9 +74,12 @@ class AppProfile(BaseModel):
         return cls(**data)
 
     @classmethod
-    def default(self) -> "AppProfile":
+    def default(cls, save: bool = False) -> "AppProfile":
         """Return the default profile."""
-        return AppProfile()
+        prof = AppProfile()
+        if save and not (profile_dir() / f"{prof.name}.json").exists():
+            prof.save()
+        return prof
 
     def save(self, path: str | Path | None = None) -> None:
         """Save profile as a json file."""

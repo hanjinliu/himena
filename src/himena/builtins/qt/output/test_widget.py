@@ -12,8 +12,7 @@ def test_stdout(qtbot: QtBot):
 
 
 def test_logger(qtbot: QtBot):
-    interf = get_widget()
-    widget = interf.widget
+    widget = get_widget()
     qtbot.addWidget(widget)
     assert widget._logger.toPlainText() == ""
     logger = logging.getLogger("test")

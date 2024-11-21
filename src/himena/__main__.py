@@ -94,3 +94,6 @@ def main():
         new=args.new,
         remove=args.remove,
     )
+    from himena.widgets._initialize import cleanup
+
+    cleanup()

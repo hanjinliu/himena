@@ -20,6 +20,7 @@ class QStartupCommandsPanel(QtW.QWidget):
         self._apply_button.clicked.connect(self._apply_changes)
         self._msg_label = QtW.QLabel(self._footer)
         self._msg_label.setMaximumWidth(280)
+        _footer_layout.setContentsMargins(0, 0, 0, 0)
         _footer_layout.addWidget(self._apply_button)
         _footer_layout.addWidget(self._msg_label)
         layout = QtW.QVBoxLayout(self)

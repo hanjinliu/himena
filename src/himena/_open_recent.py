@@ -62,7 +62,7 @@ class RecentFileManager:
         self._n_history_menu = n_history_menu
 
     def update_menu(self):
-        """Update the app name for the recent file list."""
+        """Update the menu for the recent file list."""
         file_args = self._list_args_for_recent()[::-1]
         if len(file_args) == 0:
             return None

@@ -54,12 +54,12 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     _himena_main_window: MainWindow
 
     def __init__(self, app: app_model.Application):
+        # app must be initialized
         _app_instance = get_event_loop_handler("qt", app.name)
         self._qt_app = cast(QtW.QApplication, _app_instance.get_app())
         self._app_name = app.name
 
-        app_model_app = widgets.init_application(app)
-        super().__init__(app_model_app)
+        super().__init__(app)
         self._qt_app.setApplicationName(app.name)
         self.setWindowTitle("himena")
         self.setWindowIcon(QtGui.QIcon(_ICON_PATH.as_posix()))
@@ -73,8 +73,8 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         default_menu_ids.update(
             {
                 menu_id: menu_id.replace("_", " ").title()
-                for menu_id, _ in app_model_app.menus
-                if _is_root_menu_id(app_model_app, menu_id)
+                for menu_id, _ in app.menus
+                if _is_root_menu_id(app, menu_id)
             }
         )
         self._menubar = self.setModelMenuBar(default_menu_ids)
@@ -234,10 +234,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         if run:
             get_event_loop_handler("qt", self._app_name).run_app()
         return None
-
-    def close(self):
-        """Close the main window."""
-        return super().close()
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
         if (
