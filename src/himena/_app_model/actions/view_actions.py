@@ -2,6 +2,7 @@ from app_model.types import (
     KeyBindingRule,
     KeyCode,
     KeyMod,
+    StandardKeyBinding,
 )
 from himena._utils import OrderedSet
 from himena.consts import MenuId
@@ -22,7 +23,7 @@ WINDOW_GROUP = "00_window"
     id="new-tab",
     title="New Tab",
     menus=[MenuId.VIEW],
-    keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyT)],
+    keybindings=[StandardKeyBinding.AddTab],
 )
 def new_tab(ui: MainWindow) -> None:
     """Create a new tab."""

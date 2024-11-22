@@ -72,11 +72,23 @@ class ReaderProviderStore(ProviderStore[ReaderProviderTuple]):
             raise ValueError(f"No reader functions available for {msg!r}")
         return matched
 
-    def pick(self, path: Path, plugin: str | None = None) -> ReaderTuple:
-        return _pick_from_list(self.get(path), plugin)
+    def pick(
+        self,
+        path: Path,
+        *,
+        plugin: str | None = None,
+        min_priority: int = 0,
+    ) -> ReaderTuple:
+        return _pick_from_list(self.get(path, min_priority=min_priority), plugin)
 
-    def run(self, path: Path, plugin: str | None = None) -> WidgetDataModel:
-        return self.pick(path, plugin=plugin).read(path)
+    def run(
+        self,
+        path: Path,
+        *,
+        plugin: str | None = None,
+    ) -> WidgetDataModel:
+        reader = self.pick(path, plugin=plugin, min_priority=-float("inf"))
+        return reader.read(path)
 
 
 class WriterProviderStore(ProviderStore[WriterProviderTuple]):
@@ -112,13 +124,19 @@ class WriterProviderStore(ProviderStore[WriterProviderTuple]):
             raise ValueError(f"No writer functions available for {model.type!r}")
         return matched
 
-    def pick(self, model: WidgetDataModel, plugin: str | None = None) -> WriterTuple:
-        return _pick_from_list(self.get(model), plugin)
+    def pick(
+        self,
+        model: WidgetDataModel,
+        plugin: str | None = None,
+        min_priority: int = 0,
+    ) -> WriterTuple:
+        return _pick_from_list(self.get(model, min_priority=min_priority), plugin)
 
     def run(
-        self, model: WidgetDataModel, path: Path, plugin: str | None = None
+        self, model: WidgetDataModel, path: Path, *, plugin: str | None = None
     ) -> None:
-        return self.pick(model, plugin=plugin).write(model, path)
+        writer = self.pick(model, plugin=plugin, min_priority=-float("inf"))
+        return writer.write(model, path)
 
 
 def _pick_by_priority(tuples: list[_T]) -> _T:

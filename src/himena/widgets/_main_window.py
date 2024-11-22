@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import Future
 from logging import getLogger
 from pathlib import Path
 from typing import (
@@ -72,6 +73,7 @@ class MainWindow(Generic[_W]):
         self._instructions = BackendInstructions()
         self._history_tab = HistoryContainer[int](max_size=20)
         self._history_command = HistoryContainer[str](max_size=200)
+        self._history_closed = HistoryContainer[tuple[Path, str | None]](max_size=10)
         set_current_instance(app.name, self)
         app.commands.executed.connect(self._on_command_execution)
         backend._connect_activation_signal(
@@ -571,7 +573,10 @@ class MainWindow(Generic[_W]):
         ]
         return max(subtype_match, key=lambda x: x[0])[1]
 
-    def _on_command_execution(self, id: str):
+    def _on_command_execution(self, id: str, result: Future):
+        if exc := result.exception():
+            _LOGGER.exception("Command %r failed: %r", id, exc)
+            return
         if action := self.model_app._registered_actions.get(id):
             if getattr(action.callback, NO_RECORDING_FIELD, False):
                 return None

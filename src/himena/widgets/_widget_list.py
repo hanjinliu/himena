@@ -10,6 +10,7 @@ import weakref
 
 from psygnal import Signal
 from himena import io
+from himena._descriptors import SaveToPath
 from himena.types import (
     NewWidgetBehavior,
     Parametric,
@@ -96,6 +97,8 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         win = self[index]
         main._del_widget_at(self._i_tab, index)
         main._remove_control_widget(win.widget)
+        if isinstance(sb := win.save_behavior, SaveToPath):
+            main._himena_main_window._history_closed.add((sb.path, sb.plugin))
         return win
 
     def _norm_index_or_name(self, index_or_name: int | str) -> int:

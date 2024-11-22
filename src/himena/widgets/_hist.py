@@ -11,6 +11,7 @@ class HistoryContainer(Generic[_T]):
         self._max_size = max_size
 
     def add(self, item: _T) -> None:
+        """Add item to the history."""
         self._hist.append(item)
         if len(self._hist) > self._max_size:
             self._hist.pop(0)
@@ -25,6 +26,12 @@ class HistoryContainer(Generic[_T]):
         """Get the item at the given index from the last if exists."""
         if len(self._hist) >= num:
             return self._hist[-num]
+        return None
+
+    def pop_last(self) -> _T | None:
+        """Pop the last item if exists."""
+        if self._hist:
+            return self._hist.pop()
         return None
 
     def len(self) -> int:

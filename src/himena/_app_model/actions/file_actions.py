@@ -16,6 +16,7 @@ from himena.types import (
     ClipboardDataModel,
     Parametric,
     WidgetDataModel,
+    Cancelled,
 )
 from himena._app_model._context import AppContext as _ctx
 from himena._app_model.actions._registry import ACTIONS, SUBMENUS
@@ -48,7 +49,9 @@ def _name_of(f: Callable) -> str:
 )
 def open_file_from_dialog(ui: MainWindow) -> list[Path]:
     """Open file(s). Multiple files will be opened as separate sub-windows."""
-    return ui.exec_file_dialog(mode="rm") or []
+    if result := ui.exec_file_dialog(mode="rm"):
+        return result
+    raise Cancelled
 
 
 @ACTIONS.append_from_fn(
@@ -69,7 +72,7 @@ def open_file_using_from_dialog(ui: MainWindow) -> Parametric:
 
     file_path = ui.exec_file_dialog(mode="r")
     if file_path is None:
-        return None
+        raise Cancelled
     _store = io.ReaderProviderStore.instance()
     readers = _store.get(file_path, min_priority=-float("inf"))
 
@@ -109,7 +112,9 @@ def open_file_using_from_dialog(ui: MainWindow) -> Parametric:
 )
 def open_folder_from_dialog(ui: MainWindow) -> Path:
     """Open a folder as a sub-window."""
-    return ui.exec_file_dialog(mode="d")
+    if path := ui.exec_file_dialog(mode="d"):
+        return path
+    raise Cancelled
 
 
 @ACTIONS.append_from_fn(
@@ -123,10 +128,11 @@ def open_folder_from_dialog(ui: MainWindow) -> Path:
     keybindings=[StandardKeyBinding.Save],
     enablement=_ctx.is_active_window_exportable,
 )
-def save_from_dialog(ui: MainWindow, sub_win: SubWindow) -> None:
+def save_from_dialog(ui: MainWindow, sub_win: SubWindow):
     """Save (overwrite) the current sub-window as a file."""
-    sub_win._save_from_dialog(ui)
-    return None
+    if path := sub_win._save_from_dialog(ui):
+        return path
+    raise Cancelled
 
 
 @ACTIONS.append_from_fn(
@@ -137,10 +143,11 @@ def save_from_dialog(ui: MainWindow, sub_win: SubWindow) -> None:
     keybindings=[StandardKeyBinding.SaveAs],
     enablement=_ctx.is_active_window_exportable,
 )
-def save_as_from_dialog(ui: MainWindow, sub_win: SubWindow) -> None:
+def save_as_from_dialog(ui: MainWindow, sub_win: SubWindow):
     """Save the current sub-window as a new file."""
-    sub_win._save_from_dialog(ui, behavior=SaveToNewPath())
-    return None
+    if path := sub_win._save_from_dialog(ui, behavior=SaveToNewPath()):
+        return path
+    raise Cancelled
 
 
 @ACTIONS.append_from_fn(
@@ -165,9 +172,11 @@ def save_as_using_from_dialog(ui: MainWindow, sub_win: SubWindow):
         how="radiobuttons",
     )
     if writer is None:
-        return None  # no choice selected
-    sub_win._save_from_dialog(ui, behavior=SaveToNewPath(), plugin=writer.plugin)
-    return None
+        raise Cancelled  # no choice selected
+    if not sub_win._save_from_dialog(
+        ui, behavior=SaveToNewPath(), plugin=writer.plugin
+    ):
+        raise Cancelled
 
 
 @ACTIONS.append_from_fn(
@@ -211,7 +220,7 @@ def paste_from_clipboard(ui: MainWindow) -> WidgetDataModel:
     """Paste the clipboard data as a sub-window."""
     if data := ui._backend_main_window._clipboard_data():
         return data.to_widget_data_model()
-    return None
+    raise Cancelled
 
 
 ### Load/save session
@@ -233,7 +242,7 @@ def load_session_from_dialog(ui: MainWindow) -> None:
         allowed_extensions=[".session.yaml"],
     ):
         ui.read_session(path)
-    return None
+    raise Cancelled
 
 
 @ACTIONS.append_from_fn(
@@ -268,11 +277,11 @@ def save_session_from_dialog(ui: MainWindow) -> None:
             for win in need_save:
                 ui._backend_main_window._move_focus_to(win.widget)
                 if not win._save_from_dialog(ui, behavior=SaveToNewPath()):
-                    return None
+                    raise Cancelled
         elif res == "Just skip them":
             pass
         else:
-            return None
+            raise Cancelled
     if need_overwrite:
         res = ui.exec_choose_one_dialog(
             title="Modified windows",
@@ -284,14 +293,14 @@ def save_session_from_dialog(ui: MainWindow) -> None:
                 assert isinstance(win.save_behavior, SaveToPath)
                 win.write_model(win.save_behavior.path, win.save_behavior.plugin)
         else:
-            return None
+            raise Cancelled
     if path := ui.exec_file_dialog(
         mode="w",
         extension_default=".session.yaml",
         allowed_extensions=[".session.yaml"],
     ):
         ui.save_session(path)
-    return None
+    raise Cancelled
 
 
 @ACTIONS.append_from_fn(
@@ -309,7 +318,7 @@ def save_tab_session_from_dialog(ui: MainWindow) -> None:
     ):
         if tab := ui.tabs.current():
             tab.save_session(path)
-    return None
+    raise Cancelled
 
 
 @ACTIONS.append_from_fn(
@@ -366,7 +375,7 @@ def _save_screenshot(ui: MainWindow, target: str) -> None:
     arr = ui._backend_main_window._screenshot(target)
     save_path = ui.exec_file_dialog(mode="w")
     if save_path is None:
-        return
+        raise Cancelled
     img = Image.fromarray(np.asarray(arr))
     img.save(save_path)
 

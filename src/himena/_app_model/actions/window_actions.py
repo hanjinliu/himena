@@ -8,10 +8,16 @@ from app_model.types import (
 from himena._descriptors import SaveToPath
 from himena.consts import MenuId, StandardType
 from himena.widgets import MainWindow
-from himena.types import ClipboardDataModel, Parametric, WindowState, WidgetDataModel
+from himena.types import (
+    Cancelled,
+    ClipboardDataModel,
+    Parametric,
+    WindowState,
+    WidgetDataModel,
+)
 from himena._app_model._context import AppContext as _ctx
 from himena._app_model.actions._registry import ACTIONS, SUBMENUS
-from himena import _utils
+from himena import _utils, io
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -38,13 +44,29 @@ def close_current_window(ui: MainWindow) -> None:
     """Close the selected sub-window."""
     i_tab = ui.tabs.current_index
     if i_tab is None:
-        return None
+        raise Cancelled
     tab = ui.tabs[i_tab]
     i_window = tab.current_index
     if i_window is None:
-        return None
+        raise Cancelled
     _LOGGER.info(f"Closing window {i_window} in tab {i_tab}")
     tab[i_window]._close_me(ui, ui._instructions.confirm)
+
+
+@ACTIONS.append_from_fn(
+    id="open-last-closed-window",
+    title="Open last closed window",
+    menus=[{"id": MenuId.WINDOW, "group": EXIT_GROUP}],
+    keybindings=[{"primary": _CtrlShift | KeyCode.KeyT}],
+)
+def open_last_closed_window(ui: MainWindow) -> WidgetDataModel:
+    """Open the last closed window."""
+    if last := ui._history_closed.pop_last():
+        path, plugin = last
+        store = io.ReaderProviderStore().instance()
+        model = store.run(path=path, plugin=plugin)
+        return model
+    raise Cancelled
 
 
 @ACTIONS.append_from_fn(
@@ -122,7 +144,7 @@ def copy_path_to_clipboard(ui: MainWindow) -> ClipboardDataModel:
     if window := ui.current_window:
         if isinstance(sv := window.save_behavior, SaveToPath):
             return ClipboardDataModel(value=str(sv.path), type=StandardType.TEXT)
-    return None
+    raise Cancelled
 
 
 @ACTIONS.append_from_fn(
@@ -138,7 +160,7 @@ def copy_data_to_clipboard(ui: MainWindow) -> ClipboardDataModel:
     """Copy the data of the current window to the clipboard."""
     if window := ui.current_window:
         return window.to_model().to_clipboard_data_model()
-    return None
+    raise Cancelled
 
 
 @ACTIONS.append_from_fn(

@@ -399,3 +399,7 @@ class BackendInstructions(BaseModel):
 
     def updated(self, **kwargs) -> "BackendInstructions":
         return self.model_copy(update=kwargs)
+
+
+class Cancelled(Exception):
+    """Exception raised when the user cancels the operation."""
