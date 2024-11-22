@@ -1,3 +1,4 @@
+import datetime
 from pathlib import Path
 from typing import Callable
 from logging import getLogger
@@ -240,6 +241,7 @@ def load_session_from_dialog(ui: MainWindow) -> None:
     if path := ui.exec_file_dialog(
         mode="r",
         allowed_extensions=[".session.yaml"],
+        group="session",
     ):
         ui.read_session(path)
     raise Cancelled
@@ -294,10 +296,13 @@ def save_session_from_dialog(ui: MainWindow) -> None:
                 win.write_model(win.save_behavior.path, win.save_behavior.plugin)
         else:
             raise Cancelled
+    datetime_str = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     if path := ui.exec_file_dialog(
         mode="w",
         extension_default=".session.yaml",
         allowed_extensions=[".session.yaml"],
+        start_path=f"App-{datetime_str}.session.yaml",
+        group="session",
     ):
         ui.save_session(path)
     raise Cancelled
@@ -311,10 +316,13 @@ def save_session_from_dialog(ui: MainWindow) -> None:
 )
 def save_tab_session_from_dialog(ui: MainWindow) -> None:
     """Save current application state to a session."""
+    datetime_str = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     if path := ui.exec_file_dialog(
         mode="w",
         extension_default=".session.yaml",
         allowed_extensions=[".session.yaml"],
+        start_path=f"Tab-{datetime_str}.session.yaml",
+        group="session",
     ):
         if tab := ui.tabs.current():
             tab.save_session(path)
@@ -373,7 +381,12 @@ def _save_screenshot(ui: MainWindow, target: str) -> None:
     import numpy as np
 
     arr = ui._backend_main_window._screenshot(target)
-    save_path = ui.exec_file_dialog(mode="w")
+    save_path = ui.exec_file_dialog(
+        mode="w",
+        extension_default=".png",
+        start_path="Screenshot.png",
+        group="screenshot",
+    )
     if save_path is None:
         raise Cancelled
     img = Image.fromarray(np.asarray(arr))

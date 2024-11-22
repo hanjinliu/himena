@@ -106,7 +106,24 @@ class SaveBehavior(BaseModel):
             mode="w",
             extension_default=model.extension_default,
             allowed_extensions=model.extensions,
+            start_path=self._determine_save_path(model),
         )
+
+    @staticmethod
+    def _determine_save_path(model: "WidgetDataModel") -> str | None:
+        if model.title is None:
+            if model.extension_default is None:
+                start_path = None
+            else:
+                start_path = f"Untitled{model.extension_default}"
+        else:
+            if Path(model.title).suffix in model.extensions:
+                start_path = model.title
+            elif model.extension_default is not None:
+                start_path = Path(model.title).stem + model.extension_default
+            else:
+                start_path = model.title
+        return start_path
 
 
 class SaveToNewPath(SaveBehavior):

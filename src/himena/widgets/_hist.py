@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TypeVar, Generic
 
 _T = TypeVar("_T")
@@ -39,3 +40,21 @@ class HistoryContainer(Generic[_T]):
 
     def __len__(self) -> int:
         return len(self._hist)
+
+
+class FileDialogHistoryDict:
+    def __init__(self):
+        self._dict: dict[str, Path] = {}
+
+    def update(self, group_name: str, value: Path) -> None:
+        self._dict[group_name] = value
+
+    def get_path(self, group_name: str, filename: str | None = None) -> Path:
+        d = self._dict.get(group_name, Path.cwd())
+        if filename:
+            return d / filename
+        while not d.exists():
+            d = d.parent
+            if d == Path.home() or d == Path("."):
+                break
+        return d

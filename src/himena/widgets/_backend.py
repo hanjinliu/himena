@@ -130,6 +130,8 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
         mode: Literal["r", "d", "w"] = "r",
         extension_default: str | None = None,
         allowed_extensions: list[str] | None = None,
+        caption: str | None = None,
+        start_path: Path | None = None,
     ) -> Path | None: ...
     @overload
     def _open_file_dialog(
@@ -137,9 +139,18 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
         mode: Literal["rm"],
         extension_default: str | None = None,
         allowed_extensions: list[str] | None = None,
+        caption: str | None = None,
+        start_path: Path | None = None,
     ) -> list[Path] | None: ...
 
-    def _open_file_dialog(self, mode, extension_default=None, allowed_extensions=None):
+    def _open_file_dialog(
+        self,
+        mode,
+        extension_default=None,
+        allowed_extensions=None,
+        caption=None,
+        start_path=None,
+    ):
         """Open a file dialog."""
 
     def _request_choice_dialog(

@@ -327,6 +327,8 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         mode: str = "r",
         extension_default: str | None = None,
         allowed_extensions: list[str] | None = None,
+        caption: str | None = None,
+        start_path: Path | None = None,
     ) -> Path | list[Path] | None:
         if allowed_extensions:
             filter_str = (
@@ -339,7 +341,8 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         if mode == "r":
             path, _ = QtW.QFileDialog.getOpenFileName(
                 self,
-                caption="Open File",
+                caption=caption or "Open File",
+                directory=start_path.as_posix() if start_path else None,
                 filter=filter_str,
             )
             if path:
@@ -347,7 +350,8 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         elif mode == "w":
             path, _ = QtW.QFileDialog.getSaveFileName(
                 self,
-                caption="Save File",
+                caption=caption or "Save File",
+                directory=start_path.as_posix() if start_path else None,
                 filter=filter_str,
             )
             if path:
@@ -358,7 +362,8 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         elif mode == "rm":
             paths, _ = QtW.QFileDialog.getOpenFileNames(
                 self,
-                caption="Open Files",
+                caption=caption or "Open Files",
+                directory=start_path.as_posix() if start_path else None,
                 filter=filter_str,
             )
             if paths:
@@ -366,7 +371,8 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         elif mode == "d":
             path = QtW.QFileDialog.getExistingDirectory(
                 self,
-                caption="Open Directory",
+                caption=caption or "Open Directory",
+                directory=start_path.as_posix() if start_path else None,
             )
             if path:
                 return Path(path)

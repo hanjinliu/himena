@@ -32,7 +32,8 @@ class CommandsRegistry(_CommandsRegistry):
         future: Future = Future()
         try:
             future.set_result(cmd(*args, **kwargs))
-        except Cancelled:
+        except Cancelled as exc:
+            future.set_result(exc)
             return future  # do not record
         except Exception as e:
             if self._raise_synchronous_exceptions:

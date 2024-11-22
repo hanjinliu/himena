@@ -34,7 +34,7 @@ from himena.types import (
 )
 from himena.session import from_yaml
 from himena.widgets._backend import BackendMainWindow
-from himena.widgets._hist import HistoryContainer
+from himena.widgets._hist import HistoryContainer, FileDialogHistoryDict
 from himena.widgets._initialize import remove_instance
 from himena.widgets._widget_list import TabList, TabArea, DockWidgetList
 from himena.widgets._wrapper import ParametricWindow, SubWindow, DockWidget
@@ -74,6 +74,7 @@ class MainWindow(Generic[_W]):
         self._history_tab = HistoryContainer[int](max_size=20)
         self._history_command = HistoryContainer[str](max_size=200)
         self._history_closed = HistoryContainer[tuple[Path, str | None]](max_size=10)
+        self._file_dialog_hist = FileDialogHistoryDict()
         set_current_instance(app.name, self)
         app.commands.executed.connect(self._on_command_execution)
         backend._connect_activation_signal(
@@ -445,26 +446,66 @@ class MainWindow(Generic[_W]):
     def exec_file_dialog(
         self,
         mode: Literal["r", "d", "w"] = "r",
+        *,
         extension_default: str | None = None,
         allowed_extensions: list[str] | None = None,
+        caption: str | None = None,
+        start_path: str | Path | None = None,
+        group: str | None = None,
     ) -> Path | None: ...
     @overload
     def exec_file_dialog(
         self,
         mode: Literal["rm"],
+        *,
         extension_default: str | None = None,
         allowed_extensions: list[str] | None = None,
+        caption: str | None = None,
+        start_path: str | Path | None = None,
+        group: str | None = None,
     ) -> list[Path] | None: ...
 
-    def exec_file_dialog(self, mode, extension_default=None, allowed_extensions=None):
+    def exec_file_dialog(
+        self,
+        mode: Literal["r", "d", "w", "rm"] = "r",
+        *,
+        extension_default=None,
+        allowed_extensions=None,
+        caption=None,
+        start_path=None,
+        group: str | None = None,
+    ):
         """Execute a file dialog to get file path(s)."""
+        if mode not in {"r", "d", "w", "rm"}:
+            raise ValueError(f"`mode` must be 'r', 'd', 'w' or 'rm', got {mode!r}.")
         if res := self._instructions.file_dialog_response:
             return res()
-        return self._backend_main_window._open_file_dialog(
+        if group is None:
+            group = mode
+
+        if mode == "w":
+            if start_path is None:
+                _start_path = self._file_dialog_hist.get_path(group)
+            elif Path(start_path).parent != Path("."):
+                _start_path = Path(start_path)
+            else:  # filename only is given
+                _start_path = self._file_dialog_hist.get_path(group, str(start_path))
+        else:
+            _start_path = Path(start_path or self._file_dialog_hist.get_path(group))
+        result = self._backend_main_window._open_file_dialog(
             mode,
             extension_default=extension_default,
             allowed_extensions=allowed_extensions,
+            caption=caption,
+            start_path=_start_path,
         )
+        if result is None:
+            return None
+        if mode in ["r", "w", "d"]:
+            self._file_dialog_hist.update(group, result.parent)
+        elif result:
+            self._file_dialog_hist.update(group, result[0].parent)
+        return result
 
     def show(self, run: bool = False) -> None:
         """
