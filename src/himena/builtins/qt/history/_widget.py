@@ -29,10 +29,12 @@ class QCommandHistory(QtW.QWidget):
     def _command_executed(self, command_id: str) -> None:
         _LOGGER.info("Command executed: %s", command_id)
         num = len(self._ui_ref()._history_command)
-        self._command_list.model().beginInsertRows(QtCore.QModelIndex(), 0, num - 1)
-        self.update()
-        self._command_list.model().endInsertRows()
+        self._command_list.model().beginInsertRows(
+            QtCore.QModelIndex(), num - 1, num - 1
+        )
+        self._command_list.model().insertRow(num - 1, QtCore.QModelIndex())
         self._command_list._update_index_widgets()
+        self._command_list.model().endInsertRows()
 
 
 class QCommandList(QtW.QListView):
@@ -135,17 +137,18 @@ class QCommandIndexWidget(QtW.QWidget):
         super().__init__()
         self._action_id = id
         layout = QtW.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(5, 0, 0, 0)
         layout.setSpacing(0)
         self._label = QtW.QLabel(text)
         self._btn_run = make_btn("Run this command")
         self._btn_copy = make_btn("Copy this command ID")
-        layout.addWidget(self._btn_run)
-        layout.addWidget(self._btn_copy)
-        layout.addWidget(self._label)
+        layout.addWidget(self._label, stretch=100, alignment=Qt.AlignmentFlag.AlignLeft)
+        layout.addWidget(self._btn_copy, alignment=Qt.AlignmentFlag.AlignRight)
+        layout.addWidget(self._btn_run, alignment=Qt.AlignmentFlag.AlignRight)
         self.setMouseTracking(True)
         self._listwidget_ref = weakref.ref(listwidget)
         self._btn_run.clicked.connect(self._emit_run_clicked)
+        self._btn_copy.clicked.connect(self._emit_copy_clicked)
 
     def setText(self, text: str):
         self._label.setText(text)
@@ -154,9 +157,8 @@ class QCommandIndexWidget(QtW.QWidget):
         self.btn_clicked.emit(self)
 
     def _emit_copy_clicked(self):
-        if self._action_id:
-            if clipboard := QtW.QApplication.clipboard():
-                clipboard.setText(self._action_id)
+        if self._action_id and (clipboard := QtW.QApplication.clipboard()):
+            clipboard.setText(self._action_id)
 
     def _is_light_background(self) -> bool:
         try:
@@ -222,12 +224,13 @@ class QCommandListModel(QtCore.QAbstractListModel):
 
     def data(self, index, role):
         if not index.isValid():
-            return None
+            return QtCore.QVariant()
         if role == Qt.ItemDataRole.ToolTipRole:
             if action := self._action_at(index.row()):
                 return action.tooltip
         elif role == Qt.ItemDataRole.StatusTipRole:
             if action := self._action_at(index.row()):
                 return action.status_tip
-
-        return None
+        elif role == Qt.ItemDataRole.DisplayRole:
+            return ""
+        return QtCore.QVariant()

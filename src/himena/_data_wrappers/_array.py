@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
     import dask.array as da
     import numpy.typing as npt
-    import pyopencl.array as cl_array
+    import pyopencl.array
     import sparse
     import tensorstore as ts
     import xarray as xr
@@ -181,11 +181,11 @@ class DaskWrapper(ArrayWrapper["da.Array"]):
         return self._arr[sl].compute()
 
 
-class CLArrayWrapper(ArrayLikeWrapper["cl_array.Array"]):
+class CLArrayWrapper(ArrayLikeWrapper["pyopencl.array.Array"]):
     """Wrapper for pyopencl array objects."""
 
     @staticmethod
-    def _asarray(data: cl_array.Array) -> np.ndarray:
+    def _asarray(data: pyopencl.array.Array) -> np.ndarray:
         return np.asarray(data.get())
 
 
@@ -210,7 +210,7 @@ class ZarrArrayWrapper(ArrayLikeWrapper["zarr.Array"]):
         return [str(k) for k in self._names]
 
 
-class TorchTensorWrapper(ArrayWrapper["torch.Tensor"]):
+class TorchTensorWrapper(ArrayWrapper["Tensor"]):
     """Wrapper for torch tensor objects."""
 
     def get_slice(self, sl: tuple[int, ...]) -> np.ndarray:
@@ -244,11 +244,11 @@ def is_dask(data: Any) -> TypeGuard[da.Array]:
     return False
 
 
-def is_cl_array(data: Any) -> TypeGuard[cl_array.Array]:
+def is_cl_array(data: Any) -> TypeGuard[pyopencl.array.Array]:
     if _see_imported_module(data, "pyopencl"):
-        import pyopencl.array as cl_array
+        import pyopencl.array
 
-        return isinstance(data, cl_array.Array)
+        return isinstance(data, pyopencl.array.Array)
     return False
 
 
@@ -319,4 +319,4 @@ def wrap_array(arr: Any) -> ArrayWrapper:
         return ArrayLikeWrapper(arr)
     if is_cupy(arr):
         return CupyArrayWrapper(arr)
-    raise NotImplementedError(f"Unsupported array type: {type(arr)}")
+    return ArrayLikeWrapper(arr)

@@ -28,6 +28,17 @@ class ArrayQImage:
     def __array__(self, dtype=None) -> NDArray[np.uint8]:
         return qimage_to_ndarray(self.qimage)
 
+    def __getitem__(self, key) -> NDArray[np.uint8]:
+        return self.__array__()[key]
+
+    @property
+    def shape(self) -> tuple[int, ...]:
+        return self.__array__().shape
+
+    @property
+    def dtype(self) -> np.dtype:
+        return np.uint8
+
 
 def get_stylesheet_path() -> Path:
     """Get the path to the stylesheet file"""

@@ -561,3 +561,7 @@ QToolButton#QCommandHistory-RunButton:hover {
     margin: 0px;
     padding: 1px;
 }
+
+NavigationToolbar2QT {
+    border: none;
+}

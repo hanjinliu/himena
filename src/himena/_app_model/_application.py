@@ -12,11 +12,14 @@ def get_model_app(name: str) -> Application:
 
 
 class HimenaApplication(Application):
+    """The Application class for Himena."""
+
     def __init__(self, name: str):
         super().__init__(name, commands_reg_class=CommandsRegistry)
         self._registered_actions: dict[str, Action] = {}
 
     def register_actions(self, actions: list[Action]) -> Callable[[], None]:
+        actions = list(actions)
         disp = super().register_actions(actions)
         for action in actions:
             self._registered_actions[action.id] = action

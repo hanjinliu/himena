@@ -67,6 +67,7 @@ class AppActionRegistry:
         return self._submenu_titles
 
     def install_to(self, app: Application):
+        """Install actions and submenus to the application."""
         # look for existing menu items
         existing_menu_ids = {_id.value for _id in MenuId}
         for menu_id, menu in app.menus:

@@ -64,3 +64,21 @@ def preview_test() -> Parametric:
         return WidgetDataModel(value=out, type="text")
 
     return testing_preview
+
+
+@register_function(
+    menus=TOOLS_DEBUG,
+    title="Test plot",
+    command_id="debug:test-plot",
+    preview=True,
+)
+def plot_test() -> Parametric:
+    import himena.plotting as hplt
+
+    def run(a: int, b: int = 4) -> WidgetDataModel:
+        fig = hplt.figure()
+        fig.axes.plot([0, 1, 2], [2, a, b], color="red")
+        fig.axes.title = "Test plot"
+        return WidgetDataModel(value=fig, type="matplotlib-figure")
+
+    return run

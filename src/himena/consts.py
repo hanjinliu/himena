@@ -54,6 +54,9 @@ class StandardType(SimpleNamespace):
     ARRAY_1D = "array.1d"  # 1D array, a special case of "array"
     COORDINATES = "array.coordinates"  # (N, D) array, such as D-dimensional point cloud
 
+    # matplotlib
+    MPL_FIGURE = "matplotlib-figure"  # matplotlib figure object
+
     # fallback when no reader is found for the file (which means that the file could be
     # opened as a text file)
     READER_NOT_FOUND = "reader_not_found"

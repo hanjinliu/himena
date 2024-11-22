@@ -1,8 +1,10 @@
 from typing import Literal
+from himena._data_wrappers._dataframe import wrap_dataframe
 from himena.model_meta import TextMeta
 from himena.plugins import register_function
 from himena.types import Parametric, WidgetDataModel
 from himena.consts import StandardType
+from himena.model_meta import DataFrameMeta
 from himena.builtins.tools.table import _table_to_text
 
 
@@ -52,3 +54,24 @@ def dataframe_to_text(model: WidgetDataModel) -> Parametric:
         )
 
     return convert_table_to_text
+
+
+@register_function(
+    types=StandardType.DATAFRAME,
+    menus=["tools/dataframe"],
+    command_id="builtins:dataframe-plot-scatter",
+)
+def plot_scatter(model: WidgetDataModel) -> WidgetDataModel:
+    """Plot the array as a scatter plot."""
+    if not isinstance(meta := model.additional_data, DataFrameMeta):
+        raise TypeError(
+            "Widget does not have DataFrameMeta thus cannot determine the slice indices."
+        )
+    sels = meta.selections
+    if len(sels) == 0:
+        raise ValueError("No selections are made.")
+    if len(sels) == 1:
+        (r0, r1), (c0, c1) = sels[0]
+        wrap_dataframe(model.value).get_subset(r0, r1, c0, c1)
+
+        # return WidgetDataModel

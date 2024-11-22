@@ -24,6 +24,10 @@ class TableMeta(BaseModel):
     )
 
 
+class DataFrameMeta(TableMeta):
+    pass
+
+
 class ExcelMeta(TableMeta):
     """Preset for describing an Excel file metadata."""
 
@@ -35,6 +39,16 @@ class ArrayMeta(BaseModel):
 
     current_indices: list[int] | None = Field(
         None, description="Current slice indices to render the array in GUI."
+    )
+    selections: list[Any] = Field(
+        default_factory=list,
+        description="Selections of the array. This attribute should be any sliceable "
+        "objects that can passed to the backend array object.",
+    )
+    unit: Any | None = Field(
+        None,
+        description="Unit of the array values. This attribute may be a scalar or an "
+        "array.",
     )
 
 
@@ -49,7 +63,7 @@ class ImageMeta(ArrayMeta):
     """Preset for describing an image file metadata."""
 
     axes: list[str] | None = Field(None, description="Axes of the image.")
-    scale: list[float] | None = Field(None, description="Scale of the image.")
+    scale: list[float] | None = Field(None, description="Pixel scale of the image.")
     origin: list[float] | None = Field(None, description="Origin of the image.")
     colormaps: Any | None = Field(None, description="Color map of the image.")
     channel_axis: int | None = Field(None, description="Channel axis of the image.")
