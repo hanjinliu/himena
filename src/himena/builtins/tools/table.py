@@ -1,11 +1,14 @@
-from typing import Literal
+from typing import Literal, TYPE_CHECKING
 from himena.plugins import register_function, configure_gui
 from himena.types import Parametric, WidgetDataModel
 from himena.model_meta import TextMeta
 from himena.consts import StandardType
 
+if TYPE_CHECKING:
+    import numpy as np
 
-def _table_to_latex(table: list[list[str]]) -> str:
+
+def _table_to_latex(table: "np.ndarray") -> str:
     """Convert a table to LaTeX."""
     header = table[0]
     body = table[1:]
@@ -19,7 +22,7 @@ def _table_to_latex(table: list[list[str]]) -> str:
 
 
 def _table_to_text(
-    data: list[list[str]],
+    data: "np.ndarray",
     format: Literal["CSV", "TSV", "Markdown", "Latex", "rST", "HTML"] = "CSV",
     end_of_text: Literal["", "\n"] = "\n",
 ) -> tuple[str, str, str]:
@@ -73,7 +76,7 @@ def table_to_text(model: WidgetDataModel) -> Parametric[str]:
         return WidgetDataModel(
             value=value,
             type=StandardType.TEXT,
-            title=f"{model.title} (as text)",
+            title=model.title,
             extension_default=ext_default,
             additional_data=TextMeta(language=language),
         )
@@ -87,17 +90,18 @@ def table_to_text(model: WidgetDataModel) -> Parametric[str]:
     menus=["tools/table"],
     command_id="builtins:table-to-dataframe",
 )
-def table_to_dataframe(model: WidgetDataModel) -> Parametric[str]:
+def table_to_dataframe(model: WidgetDataModel["np.ndarray"]) -> Parametric[str]:
     """Convert a table data into a DataFrame."""
     from io import StringIO
+    import numpy as np
     from himena._data_wrappers import list_installed_dataframe_packages, read_csv
 
     pkgs = ["dict"] + list_installed_dataframe_packages()
 
     @configure_gui(module={"choices": pkgs})
     def convert_table_to_dataframe(module) -> WidgetDataModel[str]:
-        csv = "\n".join(",".join(row) for row in model.value)
-        buf = StringIO(csv)
+        buf = StringIO()
+        np.savetxt(buf, model.value, fmt="%s", delimiter=",")
         df = read_csv(module, buf)
         return WidgetDataModel(
             value=df,
@@ -115,13 +119,11 @@ def table_to_dataframe(model: WidgetDataModel) -> Parametric[str]:
     menus=["tools/table"],
     command_id="builtins:table-to-array",
 )
-def table_to_array(model: WidgetDataModel) -> WidgetDataModel:
+def table_to_array(model: WidgetDataModel["np.ndarray"]) -> WidgetDataModel:
     """Convert a table data into an array."""
-    import numpy as np
+    arr_str = model.value
 
-    arr_str = np.array(model.value)
-
-    def _try_astype(arr_str: np.ndarray, dtype) -> tuple[np.ndarray, bool]:
+    def _try_astype(arr_str: "np.ndarray", dtype) -> tuple["np.ndarray", bool]:
         try:
             arr = arr_str.astype(dtype)
             ok = True

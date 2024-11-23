@@ -52,32 +52,29 @@ def default_image_reader(file_path: Path) -> WidgetDataModel:
     )
 
 
+def _read_txt_as_numpy(file_path: Path, delimiter: str):
+    import numpy as np
+
+    arr = np.loadtxt(
+        file_path,
+        dtype=np.dtypes.StringDType(),
+        delimiter=delimiter,
+    )
+    return WidgetDataModel(
+        value=arr,
+        type=StandardType.TABLE,
+        extension_default=file_path.suffix,
+    )
+
+
 def default_csv_reader(file_path: Path) -> WidgetDataModel:
     """Read CSV file."""
-    import csv
-
-    with open(file_path) as f:
-        reader = csv.reader(f)
-        data = list(reader)
-
-    return WidgetDataModel(
-        value=data,
-        type=StandardType.TABLE,
-    )
+    return _read_txt_as_numpy(file_path, ",")
 
 
 def default_tsv_reader(file_path: Path) -> WidgetDataModel:
     """Read TSV file."""
-    import csv
-
-    with open(file_path) as f:
-        reader = csv.reader(f, delimiter="\t")
-        data = list(reader)
-
-    return WidgetDataModel(
-        value=data,
-        type=StandardType.TABLE,
-    )
+    return _read_txt_as_numpy(file_path, "\t")
 
 
 def default_excel_reader(file_path: Path) -> WidgetDataModel:
@@ -103,6 +100,7 @@ def default_excel_reader(file_path: Path) -> WidgetDataModel:
     return WidgetDataModel(
         value=data,
         type=StandardType.EXCEL,
+        extension_default=file_path.suffix,
     )
 
 
@@ -282,13 +280,11 @@ def default_text_writer(model: WidgetDataModel[str], path: Path) -> None:
     return None
 
 
-def default_csv_writer(model: WidgetDataModel[list[list[str]]], path: Path) -> None:
+def default_csv_writer(model: WidgetDataModel[np.ndarray], path: Path) -> None:
     """Write CSV file."""
-    import csv
+    import numpy as np
 
-    with open(path, "w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerows(model.value)
+    np.savetxt(path, model.value, fmt="%s")
 
 
 def default_image_writer(model: WidgetDataModel[np.ndarray], path: Path) -> None:
@@ -310,7 +306,7 @@ def default_parameter_writer(
 
 
 def default_excel_writer(
-    model: WidgetDataModel[dict[str, list[list[str]]]],
+    model: WidgetDataModel[dict[str, np.ndarray]],
     path: Path,
 ) -> None:
     """Write Excel file."""

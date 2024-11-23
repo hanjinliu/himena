@@ -23,7 +23,7 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dependencies = [
-  "numpy",
+  "numpy>=2.0.0",
   "app_model>=0.2.7",
   "pydantic>=1.10",
   "pydantic_compat>=0.1.2",

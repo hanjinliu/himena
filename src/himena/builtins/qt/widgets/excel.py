@@ -12,6 +12,9 @@ from himena.types import WidgetDataModel
 from himena.consts import StandardType
 from himena.plugins import protocol_override
 
+if TYPE_CHECKING:
+    import numpy as np
+
 _EDIT_DISABLED = QtW.QAbstractItemView.EditTrigger.NoEditTriggers
 _EDIT_ENABLED = (
     QtW.QAbstractItemView.EditTrigger.DoubleClicked
@@ -39,7 +42,7 @@ class QExcelTableStack(QtW.QTabWidget):
         return None
 
     @protocol_override
-    def update_model(self, model: WidgetDataModel[dict[str, list[list[str]]]]):
+    def update_model(self, model: WidgetDataModel[dict[str, np.ndarray]]):
         self.clear()
         for sheet_name, table in model.value.items():
             table_widget = QExcelSheet()
@@ -53,7 +56,7 @@ class QExcelTableStack(QtW.QTabWidget):
         return None
 
     @protocol_override
-    def to_model(self) -> WidgetDataModel[dict[str, list[list[str]]]]:
+    def to_model(self) -> WidgetDataModel[dict[str, np.ndarray]]:
         index = self.currentIndex()
         table_meta = self.widget(index)._prep_table_meta()
         return WidgetDataModel(

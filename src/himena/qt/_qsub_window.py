@@ -435,9 +435,6 @@ class QSubWindow(QtW.QMdiSubWindow):
         return None
 
 
-_TITLE_HEIGHT = 18
-
-
 class QTitleBarToolButton(QtW.QToolButton):
     def __init__(
         self,
@@ -446,11 +443,18 @@ class QTitleBarToolButton(QtW.QToolButton):
         callback: Callable[[], None],
     ):
         super().__init__()
-        self.setFixedSize(_TITLE_HEIGHT - 2, _TITLE_HEIGHT - 2)
         self.setIcon(icon)
-        self.setIconSize(QtCore.QSize(_TITLE_HEIGHT - 3, _TITLE_HEIGHT - 3))
         self.setToolTip(tooltip)
         self.clicked.connect(callback)
+
+    def _set_size(self, size: int):
+        self.setFixedSize(size, size)
+        self.setIconSize(QtCore.QSize(size - 1, size - 1))
+
+
+class QDummyToolButton(QtW.QWidget):
+    def _set_size(self, size: int):
+        self.setFixedSize(size, size)
 
 
 class QSubWindowTitleBar(QtW.QFrame):
@@ -464,7 +468,6 @@ class QSubWindowTitleBar(QtW.QFrame):
 
         self.setFrameShape(QtW.QFrame.Shape.StyledPanel)
         self.setFrameShadow(QtW.QFrame.Shadow.Raised)
-        self.setFixedHeight(_TITLE_HEIGHT)
         self.setMinimumWidth(100)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
 
@@ -480,7 +483,7 @@ class QSubWindowTitleBar(QtW.QFrame):
                 callback=self._show_model_menu,
             )
         else:
-            self._model_menu_btn = QtW.QWidget()
+            self._model_menu_btn = QDummyToolButton()
             self._model_menu_btn.setVisible(False)
 
         self._index_label = QtW.QLabel()
@@ -491,7 +494,6 @@ class QSubWindowTitleBar(QtW.QFrame):
         _index_font.setPointSize(8)
         _index_font.setBold(True)
         self._index_label.setFont(_index_font)
-        self._index_label.setFixedHeight(_TITLE_HEIGHT)
         self._index_label.setFixedWidth(20)
         self._index_label.setContentsMargins(0, 0, 0, 0)
         self._index_label.setSizePolicy(
@@ -500,7 +502,6 @@ class QSubWindowTitleBar(QtW.QFrame):
 
         self._title_label = QtW.QLabel(title)
         self._title_label.setIndent(3)
-        self._title_label.setFixedHeight(_TITLE_HEIGHT)
         self._title_label.setContentsMargins(0, 0, 0, 0)
         self._title_label.setSizePolicy(
             QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Fixed
@@ -541,6 +542,17 @@ class QSubWindowTitleBar(QtW.QFrame):
 
         self.setProperty("isCurrent", False)
         self.setAcceptDrops(True)
+        self._set_bar_size(18)
+
+    def _set_bar_size(self, height: int):
+        self.setFixedHeight(height)
+        self._index_label.setFixedHeight(height)
+        self._title_label.setFixedHeight(height)
+        self._window_menu_btn._set_size(height - 1)
+        self._model_menu_btn._set_size(height - 1)
+        self._minimize_btn._set_size(height - 1)
+        self._toggle_size_btn._set_size(height - 1)
+        self._close_btn._set_size(height - 1)
 
     def _start_renaming(self):
         self._line_edit.show()
@@ -643,7 +655,7 @@ class QSubWindowTitleBar(QtW.QFrame):
                 _last_geo = _subwin._last_geometry
                 _next_geo = QtCore.QRect(
                     event.pos().x() - _last_geo.width() // 2,
-                    event.pos().y() - _TITLE_HEIGHT // 2,
+                    event.pos().y() - self.height() // 2,
                     _last_geo.width(),
                     _last_geo.height(),
                 )

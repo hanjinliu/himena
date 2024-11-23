@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, TYPE_CHECKING
 from himena._data_wrappers._dataframe import wrap_dataframe
 from himena.model_meta import TextMeta
 from himena.plugins import register_function
@@ -7,6 +7,9 @@ from himena.consts import StandardType
 from himena.model_meta import DataFrameMeta
 from himena.builtins.tools.table import _table_to_text
 
+if TYPE_CHECKING:
+    import numpy as np
+
 
 @register_function(
     title="Convert DataFrame to Table ...",
@@ -14,7 +17,7 @@ from himena.builtins.tools.table import _table_to_text
     menus=["tools/dataframe"],
     command_id="builtins:dataframe-to-table",
 )
-def dataframe_to_table(model: WidgetDataModel) -> WidgetDataModel[list[list[str]]]:
+def dataframe_to_table(model: WidgetDataModel) -> WidgetDataModel["np.ndarray"]:
     """Convert a table data into a DataFrame."""
     from himena._data_wrappers import wrap_dataframe
 

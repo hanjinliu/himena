@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any
+from typing import TYPE_CHECKING
 
 from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
@@ -9,6 +9,9 @@ from himena.types import WidgetDataModel
 from himena.model_meta import TableMeta
 from himena.plugins import protocol_override
 from himena.builtins.qt.widgets._table_base import QTableBase, QSelectionRangeEdit
+
+if TYPE_CHECKING:
+    import numpy as np
 
 
 class QDefaultTableWidget(QtW.QTableWidget, QTableBase):
@@ -23,10 +26,10 @@ class QDefaultTableWidget(QtW.QTableWidget, QTableBase):
             self._modified = True
 
     @protocol_override
-    def update_model(self, model: WidgetDataModel[list[list[Any]]]) -> None:
+    def update_model(self, model: WidgetDataModel[np.ndarray]) -> None:
         import numpy as np
 
-        table = np.asarray(model.value, dtype=str)
+        table = np.asarray(model.value, dtype=np.dtypes.StringDType())
         self.setRowCount(table.shape[0])
         self.setColumnCount(table.shape[1])
         for i in range(self.rowCount()):
@@ -44,9 +47,9 @@ class QDefaultTableWidget(QtW.QTableWidget, QTableBase):
         return None
 
     @protocol_override
-    def to_model(self) -> WidgetDataModel[list[list[Any]]]:
+    def to_model(self) -> WidgetDataModel[np.ndarray]:
         return WidgetDataModel(
-            value=self._to_list(
+            value=self._to_array(
                 slice(0, self.rowCount()), slice(0, self.columnCount())
             ),
             type=self.model_type(),
@@ -82,7 +85,9 @@ class QDefaultTableWidget(QtW.QTableWidget, QTableBase):
     def control_widget(self) -> QTableControl:
         return self._control
 
-    def _to_list(self, rsl: slice, csl: slice) -> list[list[str]]:
+    def _to_array(self, rsl: slice, csl: slice) -> np.ndarray:
+        import numpy as np
+
         values: list[list[str]] = []
         for r in range(rsl.start, rsl.stop):
             cells: list[str] = []
@@ -93,7 +98,7 @@ class QDefaultTableWidget(QtW.QTableWidget, QTableBase):
                 else:
                     cells.append("")
             values.append(cells)
-        return values
+        return np.array(values, dtype=np.dtypes.StringDType())
 
     def _copy_to_clipboard(self):
         selranges = self.selectedRanges()
@@ -104,11 +109,11 @@ class QDefaultTableWidget(QtW.QTableWidget, QTableBase):
 
         # copy first selection range
         sel = selranges[0]
-        values = self._to_list(
+        values = self._to_array(
             slice(sel.topRow(), sel.bottomRow() + 1),
             slice(sel.leftColumn(), sel.rightColumn() + 1),
         )
-        if values:
+        if values.size > 0:
             string = "\n".join(["\t".join(cells) for cells in values])
             QtW.QApplication.clipboard().setText(string)
 

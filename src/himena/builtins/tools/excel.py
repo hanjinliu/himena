@@ -1,7 +1,11 @@
+from typing import TYPE_CHECKING
 from himena.model_meta import ExcelMeta, TableMeta
 from himena.plugins import register_function
 from himena.types import WidgetDataModel
 from himena.consts import StandardType
+
+if TYPE_CHECKING:
+    import numpy as np
 
 
 @register_function(
@@ -11,14 +15,13 @@ from himena.consts import StandardType
     command_id="builtins:duplicate-sheet-as-table",
 )
 def duplicate_sheet_as_table(
-    model: WidgetDataModel[dict[str, list[list[str]]]],
-) -> WidgetDataModel[list[list[str]]]:
+    model: WidgetDataModel[dict[str, "np.ndarray"]],
+) -> WidgetDataModel["np.ndarray"]:
     """Convert a table data into a DataFrame."""
     meta, sheet = _meta_and_sheet(model)
-    table = model.value[sheet]
 
     return WidgetDataModel(
-        value=table,
+        value=model.value[sheet],
         title=f"{model.title} ({sheet})",
         type=StandardType.TABLE,
         extension_default=".csv",
