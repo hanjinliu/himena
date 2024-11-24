@@ -394,7 +394,7 @@ class SubWindow(WidgetWrapper[_W]):
 
     def _is_mergeable_with(self, source: SubWindow[_W]) -> bool:
         widget = self.widget
-        if not hasattr(widget, "merge_model"):
+        if not (hasattr(widget, "merge_model") and source.is_exportable):
             return False
         if hasattr(widget, "mergeable_model_types"):
             types = widget.mergeable_model_types()

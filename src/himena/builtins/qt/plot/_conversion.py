@@ -1,18 +1,38 @@
+from cmap import Color
 from matplotlib import pyplot as plt
 from himena.plotting import models, layout
 
 
 def _convert_plot_model(model: models.BasePlotModel, ax: plt.Axes):
     if isinstance(model, models.Scatter):
-        ax.scatter(model.x, model.y, s=model.size, c=model.color)
+        ax.scatter(
+            model.x, model.y, s=model.size ** 2, c=Color(model.color).hex,
+            marker=model.symbol, linewidths=model.edge_width,
+            edgecolors=model.edge_color, label=model.name,
+        )  # fmt: skip
     elif isinstance(model, models.Line):
-        ax.plot(model.x, model.y, c=model.color)
+        ax.plot(
+            model.x, model.y, color=model.color, linewidth=model.width,
+            linestyle=model.style, label=model.name,
+        )  # fmt: skip
     elif isinstance(model, models.Bar):
-        ax.bar(model.x, model.y, color=model.color)
+        ax.bar(
+            model.x, model.y, color=model.color, hatch=model.hatch, bottom=model.bottom,
+            width=model.bar_width, edgecolor=model.edge_color, label=model.name,
+            linewidth=model.edge_width, linestyle=model.edge_style,
+        )  # fmt: skip
     elif isinstance(model, models.Histogram):
-        ax.hist(model.data, bins=model.bins, color=model.color, range=model.range)
+        ax.hist(
+            model.data, bins=model.bins, color=model.color, range=model.range,
+            orientation=model.orient, hatch=model.hatch, edgecolor=model.edge_color,
+            linewidth=model.edge_width, linestyle=model.edge_style, label=model.name,
+        )  # fmt: skip
     elif isinstance(model, models.ErrorBar):
-        ax.errorbar(model.x, model.y, xerr=model.x_error, yerr=model.y_error)
+        ax.errorbar(
+            model.x, model.y, xerr=model.x_error, yerr=model.y_error,
+            capsize=model.capsize, color=model.color, linewidth=model.width,
+            linestyle=model.style, label=model.name,
+        )  # fmt: skip
     else:
         raise ValueError(f"Unsupported plot model: {model}")
 

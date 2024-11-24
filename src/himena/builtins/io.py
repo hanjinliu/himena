@@ -284,7 +284,11 @@ def default_csv_writer(model: WidgetDataModel[np.ndarray], path: Path) -> None:
     """Write CSV file."""
     import numpy as np
 
-    np.savetxt(path, model.value, fmt="%s")
+    if path.suffix == ".tsv":
+        delimiter = "\t"
+    else:
+        delimiter = ","
+    np.savetxt(path, model.value, fmt="%s", delimiter=delimiter)
 
 
 def default_image_writer(model: WidgetDataModel[np.ndarray], path: Path) -> None:

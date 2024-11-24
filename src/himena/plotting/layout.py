@@ -44,7 +44,12 @@ class Axes(BaseModel):
     x: Axis | None = Field(None, description="X-axis settings.")
     y: Axis | None = Field(None, description="Y-axis settings.")
 
-    def scatter(self, x: Sequence[float], y: Sequence[float], **kwargs) -> _m.Scatter:
+    def scatter(
+        self,
+        x: Sequence[float],
+        y: Sequence[float],
+        **kwargs,
+    ) -> _m.Scatter:
         model = _m.Scatter(x=x, y=y, **kwargs)
         self.models.append(model)
         return model
@@ -72,6 +77,12 @@ class Axes(BaseModel):
 
 class SingleAxes(BaseLayoutModel):
     axes: Axes = Field(default_factory=Axes, description="Child axes.")
+
+    def merge_with(self, other: "SingleAxes") -> "SingleAxes":
+        new_axes = self.axes.model_copy(
+            update={"models": self.axes.models + other.axes.models}
+        )
+        return SingleAxes(axes=new_axes)
 
 
 class Layout1D(BaseLayoutModel):

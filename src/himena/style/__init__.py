@@ -1,3 +1,3 @@
-from himena.style.core import Theme, ColorTuple
+from himena.style.core import Theme
 
-__all__ = ["Theme", "ColorTuple"]
+__all__ = ["Theme"]

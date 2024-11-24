@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, asdict
-from typing import NamedTuple
 import warnings
 from himena._utils import lru_cache
 import json
 from pathlib import Path
+from cmap import Color
 
 
 @dataclass(frozen=True)
@@ -42,31 +42,20 @@ class Theme:
         return text
 
     def is_light_background(self) -> bool:
-        color = ColorTuple.from_hex(self.background)
-        return (color.r + color.g + color.b) / 3 > 127.5
+        color = Color(self.background)
+        return sum(color.rgba[:3]) / 3 > 0.5
 
 
-class ColorTuple(NamedTuple):
-    r: int
-    g: int
-    b: int
-
-    @property
-    def hex(self) -> str:
-        return f"#{self.r:02x}{self.g:02x}{self.b:02x}"
-
-    @classmethod
-    def from_hex(cls, hex: str) -> ColorTuple:
-        hex = hex.lstrip("#")
-        return cls(*(int(hex[i : i + 2], 16) for i in (0, 2, 4)))
-
-
-def _mix_colors(x: ColorTuple, y: ColorTuple, ratio: float) -> ColorTuple:
+def _mix_colors(x: Color, y: Color, ratio: float) -> Color:
     """Mix two colors."""
-    return ColorTuple(
-        r=int(x.r * (1 - ratio) + y.r * ratio),
-        g=int(x.g * (1 - ratio) + y.g * ratio),
-        b=int(x.b * (1 - ratio) + y.b * ratio),
+    xr, xg, xb, _ = x.rgba
+    yr, yg, yb, _ = y.rgba
+    return Color(
+        [
+            xr * (1 - ratio) + yr * ratio,
+            xg * (1 - ratio) + yg * ratio,
+            xb * (1 - ratio) + yb * ratio,
+        ]
     )
 
 
@@ -76,9 +65,9 @@ def get_global_styles() -> dict[str, Theme]:
     with open(Path(__file__).parent / "defaults.json") as f:
         js: dict = json.load(f)
         for name, style in js.items():
-            bg = ColorTuple.from_hex(style["background"])
-            fg = ColorTuple.from_hex(style["foreground"])
-            base = ColorTuple.from_hex(style["base_color"])
+            bg = Color(style["background"])
+            fg = Color(style["foreground"])
+            base = Color(style["base_color"])
             if "foreground_dim" not in style:
                 style["foreground_dim"] = _mix_colors(fg, bg, 0.6).hex
             if "background_dim" not in style:

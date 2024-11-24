@@ -33,6 +33,7 @@ class SelectionEdit(ValuedContainerWidget[tuple[slice, slice]]):
             labels=False,
             **kwargs,
         )
+        self.margins = (0, 0, 0, 0)
 
     def _get_selection(self):
         self.set_value(self._selection_getter())

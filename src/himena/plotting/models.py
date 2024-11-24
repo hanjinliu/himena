@@ -1,11 +1,11 @@
 from __future__ import annotations
-from typing import Any, Literal, Sequence
+from typing import Any, Literal
 
 from pydantic_compat import BaseModel, Field
 
 
 class BasePlotModel(BaseModel):
-    pass
+    name: str | None = Field(None, description="Name of the plot.")
 
 
 class Scatter(BasePlotModel):
@@ -23,8 +23,8 @@ class Scatter(BasePlotModel):
 
 
 class Line(BasePlotModel):
-    x: Sequence[float] = Field(..., description="X-axis values.")
-    y: Sequence[float] = Field(..., description="Y-axis values.")
+    x: Any = Field(..., description="X-axis values.")
+    y: Any = Field(..., description="Y-axis values.")
     color: Any | None = Field(None, description="Color of the line.")
     width: float | None = Field(None, description="Width of the line.")
     style: Any | None = Field(None, description="Style of the line.")
@@ -32,9 +32,13 @@ class Line(BasePlotModel):
 
 
 class Bar(BasePlotModel):
-    x: Sequence[float] = Field(..., description="X-axis values.")
-    y: Sequence[float] = Field(..., description="Y-axis values.")
-    bottom: float | Sequence[float] = Field(0, description="Bottom values of the bars.")
+    x: Any = Field(..., description="X-axis values.")
+    y: Any = Field(..., description="Y-axis values.")
+    bottom: float | Any = Field(0, description="Bottom values of the bars.")
+    bar_width: float | None = Field(None, description="Width of the bars.")
+    orient: Literal["vertical", "horizontal"] = Field(
+        "vertical", description="Orientation of the bar plots."
+    )
     color: Any | None = Field(None, description="Color of the bars.")
     hatch: Any | None = Field(None, description="Hatch pattern of the bars.")
     edge_color: Any | None = Field(None, description="Edge color of the bars.")
@@ -43,20 +47,18 @@ class Bar(BasePlotModel):
 
 
 class ErrorBar(BasePlotModel):
-    x: Sequence[float] = Field(..., description="X-axis values.")
-    y: Sequence[float] = Field(..., description="Y-axis values.")
-    x_error: Sequence[float] | None = Field(None, description="X-axis error values.")
-    y_error: Sequence[float] | None = Field(None, description="Y-axis error values.")
+    x: Any = Field(..., description="X-axis values.")
+    y: Any = Field(..., description="Y-axis values.")
+    x_error: Any | None = Field(None, description="X-axis error values.")
+    y_error: Any | None = Field(None, description="Y-axis error values.")
     capsize: float | None = Field(None, description="Cap size of the error bars.")
-    color: Any | None = Field(None, description="Color of the error bars.")
-    hatch: Any | None = Field(None, description="Hatch pattern of the error bars.")
-    edge_color: Any | None = Field(None, description="Edge color of the error bars.")
-    edge_width: float | None = Field(None, description="Edge width of the error bars.")
-    edge_style: Any | None = Field(None, description="Edge style of the error bars.")
+    color: Any | None = Field(None, description="Edge color of the error bars.")
+    width: float | None = Field(None, description="Edge width of the error bars.")
+    style: Any | None = Field(None, description="Edge style of the error bars.")
 
 
 class Histogram(BasePlotModel):
-    data: Sequence[float] = Field(..., description="Data values.")
+    data: Any = Field(..., description="Data values.")
     bins: int = Field(10, description="Number of bins.")
     range: tuple[float, float] | None = Field(
         None, description="Range of the histogram."
