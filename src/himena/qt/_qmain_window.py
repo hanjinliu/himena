@@ -553,10 +553,12 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         sig: inspect.Signature,
         preview: bool = False,
     ) -> QtW.QWidget:
-        from magicgui.widgets import Container
-        from himena.qt._magicgui import ToggleSwitch
+        from magicgui.signature import MagicSignature
+        from himena.qt._magicgui import ToggleSwitch, get_type_map
 
-        container = Container.from_signature(sig)
+        container = MagicSignature.from_signature(sig).to_container(
+            type_map=get_type_map()
+        )
         container.margins = (0, 0, 0, 0)
         qwidget = container.native
         assert isinstance(qwidget, QtW.QWidget)

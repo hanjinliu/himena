@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+from enum import Enum, auto
 from typing import TYPE_CHECKING
 
 from qtpy import QtWidgets as QtW
@@ -14,12 +16,23 @@ if TYPE_CHECKING:
     import numpy as np
 
 
+class HeaderFormat(Enum):
+    """Enum of how to index table header."""
+
+    NumberZeroIndexed = auto()
+    NumberOneIndexed = auto()
+    Alphabetic = auto()
+
+
 class QDefaultTableWidget(QtW.QTableWidget, QTableBase):
+    HeaderFormat = HeaderFormat
+
     def __init__(self):
         QtW.QTableWidget.__init__(self)
         QTableBase.__init__(self)
         self._edit_trigger = self.editTriggers()
-        self._control = QTableControl(self)
+        self._control = None
+        self._header_format = HeaderFormat.NumberZeroIndexed
 
         @self.itemChanged.connect
         def _():
@@ -43,6 +56,8 @@ class QDefaultTableWidget(QtW.QTableWidget, QTableBase):
                 self.setRangeSelected(rng, True)
         self._relabel_headers()
         self._modified = False
+        if self._control is None:
+            self._control = QTableControl(self)
         self._control.update_for_table(self)
         return None
 
@@ -58,8 +73,16 @@ class QDefaultTableWidget(QtW.QTableWidget, QTableBase):
         )
 
     def _relabel_headers(self):
-        self.setVerticalHeaderLabels([str(i) for i in range(self.rowCount())])
-        self.setHorizontalHeaderLabels([str(i) for i in range(self.columnCount())])
+        nrows, ncols = self.rowCount(), self.columnCount()
+        if self._header_format is HeaderFormat.NumberZeroIndexed:
+            self.setVerticalHeaderLabels([str(i) for i in range(nrows)])
+            self.setHorizontalHeaderLabels([str(i) for i in range(ncols)])
+        elif self._header_format is HeaderFormat.NumberOneIndexed:
+            self.setVerticalHeaderLabels([str(i) for i in range(1, nrows + 1)])
+            self.setHorizontalHeaderLabels([str(i) for i in range(1, ncols + 1)])
+        else:
+            self.setVerticalHeaderLabels([str(i) for i in range(1, nrows + 1)])
+            self.setHorizontalHeaderLabels(char_arange(0, ncols).tolist())
 
     @protocol_override
     def model_type(self):
@@ -251,3 +274,51 @@ class QTableControl(QtW.QWidget):
         menu.addAction("Rows", table._delete_selected_rows)
         menu.addAction("Columns", table._delete_selected_columns)
         return menu
+
+
+ORD_A = ord("A")
+CHARS = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ") + [""]
+LONGEST = CHARS[:-1]
+
+
+def _iter_char(start: int, stop: int):
+    import numpy as np
+
+    if stop >= 26**4:
+        raise ValueError("Stop must be less than 26**4 - 1")
+    base_repr = np.base_repr(start, 26)
+    current = np.zeros(4, dtype=np.int8)
+    offset = 4 - len(base_repr)
+    for i, d in enumerate(base_repr):
+        current[i + offset] = int(d, 26)
+
+    current[:3] -= 1
+    for _ in range(start, stop):
+        yield "".join(CHARS[s] for s in current)
+        current[3] += 1
+        for i in [3, 2, 1]:
+            if current[i] >= 26:
+                over = current[i] - 25
+                current[i] = 0
+                current[i - 1] += over
+
+
+def char_arange(start: int, stop: int | None = None):
+    """
+    A char version of np.arange.
+
+    Examples
+    --------
+    >>> char_arange(3)  # array(["A", "B", "C"])
+    >>> char_arange(25, 28)  # array(["Z", "AA", "AB"])
+    """
+    import numpy as np
+
+    global LONGEST
+    if stop is None:
+        start, stop = 0, start
+    nmax = len(LONGEST)
+    if stop <= nmax:
+        return np.array(LONGEST[start:stop], dtype="<U4")
+    LONGEST = np.append(LONGEST, np.fromiter(_iter_char(nmax, stop), dtype="<U4"))
+    return LONGEST[start:].copy()

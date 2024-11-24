@@ -11,12 +11,10 @@ class BasePlotModel(BaseModel):
 class Scatter(BasePlotModel):
     """Plot model for scatter plot."""
 
-    x: Sequence[float] = Field(..., description="X-axis values.")
-    y: Sequence[float] = Field(..., description="Y-axis values.")
+    x: Any = Field(..., description="X-axis values.")
+    y: Any = Field(..., description="Y-axis values.")
     symbol: Any | None = Field(None, description="Symbol of the markers.")
-    size: float | Sequence[float] | None = Field(
-        None, description="Size of the markers."
-    )
+    size: Any | None = Field(None, description="Size of the markers.")
     color: Any | None = Field(None, description="Color of the markers.")
     hatch: Any | None = Field(None, description="Hatch pattern of the markers.")
     edge_color: Any | None = Field(None, description="Edge color of the markers.")

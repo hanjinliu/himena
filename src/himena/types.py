@@ -94,7 +94,7 @@ class WidgetDataModel(GenericModel[_T]):
         Force open with a specific plugin if given.
     """
 
-    value: _T = Field(..., description="Internal value.")
+    value: _T = Field(..., description="Internal value.", kw_only=False)
     type: str = Field(..., description="Type of the internal data.")
     title: str | None = Field(
         default=None,
@@ -399,7 +399,3 @@ class BackendInstructions(BaseModel):
 
     def updated(self, **kwargs) -> "BackendInstructions":
         return self.model_copy(update=kwargs)
-
-
-class Cancelled(Exception):
-    """Exception raised when the user cancels the operation."""

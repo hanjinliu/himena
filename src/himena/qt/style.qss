@@ -78,7 +78,7 @@ QComboBox {
   border-radius: 4px;
   background-color: #[background];
   color: #[foreground];
-  padding: 3px;
+  padding: 1px;
 }
 
 /* QScrollBar */

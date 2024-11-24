@@ -22,13 +22,6 @@ _EDIT_ENABLED = (
 )
 
 
-class QExcelSheet(QDefaultTableWidget):
-    def _relabel_headers(self):
-        # A, B, ..., Z, AA, AB, ...
-        chars = char_arange(self.columnCount())
-        self.setHorizontalHeaderLabels(chars.tolist())
-
-
 class QExcelTableStack(QtW.QTabWidget):
     def __init__(self):
         super().__init__()
@@ -45,7 +38,8 @@ class QExcelTableStack(QtW.QTabWidget):
     def update_model(self, model: WidgetDataModel[dict[str, np.ndarray]]):
         self.clear()
         for sheet_name, table in model.value.items():
-            table_widget = QExcelSheet()
+            table_widget = QDefaultTableWidget()
+            table_widget._header_format = QDefaultTableWidget.HeaderFormat.Alphabetic
             table_widget.update_model(
                 WidgetDataModel(value=table, type=StandardType.TABLE)
             )
@@ -113,13 +107,17 @@ class QExcelTableStack(QtW.QTabWidget):
         if model.type == StandardType.EXCEL:
             assert isinstance(model.value, dict)
             for key, value in model.value.items():
-                table_widget = QExcelSheet()
+                table_widget = QDefaultTableWidget()
+                table_widget._header_format = (
+                    QDefaultTableWidget.HeaderFormat.Alphabetic
+                )
                 table_widget.update_model(
                     WidgetDataModel(value=value, type=StandardType.TABLE)
                 )
                 self.addTab(table_widget, key)
         elif model.type == StandardType.TABLE:
-            table_widget = QExcelSheet()
+            table_widget = QDefaultTableWidget()
+            table_widget._header_format = QDefaultTableWidget.HeaderFormat.Alphabetic
             table_widget.update_model(model)
             self.addTab(table_widget, model.title)
         else:
@@ -139,10 +137,13 @@ class QExcelTableStackControl(QtW.QWidget):
         layout = QtW.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(_R_CENTER)
+        # self._header_format = QtW.QComboBox()
+        # self._header_format.addItems(["0, 1, 2, ...", "1, 2, 3, ...", "A, B, C, ..."])
         self._value_line_edit = QtW.QLineEdit()
         self._label = QtW.QLabel("")
         self._label.setAlignment(_R_CENTER)
         self._selection_range = QSelectionRangeEdit()
+        # layout.addWidget(self._header_format)
         layout.addWidget(self._value_line_edit)
         layout.addWidget(self._label)
         layout.addWidget(self._selection_range)
@@ -171,51 +172,3 @@ class QExcelTableStackControl(QtW.QWidget):
         qtable.model().setData(qtable.currentIndex(), text)
         qtable.setFocus()
         return None
-
-
-ORD_A = ord("A")
-CHARS = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ") + [""]
-LONGEST = CHARS[:-1]
-
-
-def _iter_char(start: int, stop: int):
-    import numpy as np
-
-    if stop >= 26**4:
-        raise ValueError("Stop must be less than 26**4 - 1")
-    base_repr = np.base_repr(start, 26)
-    current = np.zeros(4, dtype=np.int8)
-    offset = 4 - len(base_repr)
-    for i, d in enumerate(base_repr):
-        current[i + offset] = int(d, 26)
-
-    current[:3] -= 1
-    for _ in range(start, stop):
-        yield "".join(CHARS[s] for s in current)
-        current[3] += 1
-        for i in [3, 2, 1]:
-            if current[i] >= 26:
-                over = current[i] - 25
-                current[i] = 0
-                current[i - 1] += over
-
-
-def char_arange(start: int, stop: int | None = None):
-    """
-    A char version of np.arange.
-
-    Examples
-    --------
-    >>> char_arange(3)  # array(["A", "B", "C"])
-    >>> char_arange(25, 28)  # array(["Z", "AA", "AB"])
-    """
-    import numpy as np
-
-    global LONGEST
-    if stop is None:
-        start, stop = 0, start
-    nmax = len(LONGEST)
-    if stop <= nmax:
-        return np.array(LONGEST[start:stop], dtype="<U4")
-    LONGEST = np.append(LONGEST, np.fromiter(_iter_char(nmax, stop), dtype="<U4"))
-    return LONGEST[start:].copy()

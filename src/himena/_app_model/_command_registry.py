@@ -5,7 +5,7 @@ from typing import Any
 from psygnal import Signal
 from app_model.registries import CommandsRegistry as _CommandsRegistry
 
-from himena.types import Cancelled
+from himena.exceptions import Cancelled
 
 
 class CommandsRegistry(_CommandsRegistry):

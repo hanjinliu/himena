@@ -1,7 +1,7 @@
 from typing import Any, Literal, Sequence, TYPE_CHECKING
 
 from pydantic_compat import BaseModel, Field
-from himena.plotting import models
+from himena.plotting import models as _m
 from himena.plotting.models import BasePlotModel
 
 if TYPE_CHECKING:
@@ -44,20 +44,30 @@ class Axes(BaseModel):
     x: Axis | None = Field(None, description="X-axis settings.")
     y: Axis | None = Field(None, description="Y-axis settings.")
 
-    def scatter(self, x: Sequence[float], y: Sequence[float], **kwargs) -> None:
-        self.models.append(models.Scatter(x=x, y=y, **kwargs))
+    def scatter(self, x: Sequence[float], y: Sequence[float], **kwargs) -> _m.Scatter:
+        model = _m.Scatter(x=x, y=y, **kwargs)
+        self.models.append(model)
+        return model
 
-    def plot(self, x: Sequence[float], y: Sequence[float], **kwargs) -> None:
-        self.models.append(models.Line(x=x, y=y, **kwargs))
+    def plot(self, x: Sequence[float], y: Sequence[float], **kwargs) -> _m.Line:
+        model = _m.Line(x=x, y=y, **kwargs)
+        self.models.append(model)
+        return model
 
-    def bar(self, x: Sequence[float], y: Sequence[float], **kwargs) -> None:
-        self.models.append(models.Bar(x=x, y=y, **kwargs))
+    def bar(self, x: Sequence[float], y: Sequence[float], **kwargs) -> _m.Bar:
+        model = _m.Bar(x=x, y=y, **kwargs)
+        self.models.append(model)
+        return model
 
-    def errorbar(self, x: Sequence[float], y: Sequence[float], **kwargs) -> None:
-        self.models.append(models.ErrorBar(x=x, y=y, **kwargs))
+    def errorbar(self, x: Sequence[float], y: Sequence[float], **kwargs) -> _m.ErrorBar:
+        model = _m.ErrorBar(x=x, y=y, **kwargs)
+        self.models.append(model)
+        return model
 
-    def hist(self, data: Sequence[float], **kwargs) -> None:
-        self.models.append(models.Histogram(data=data, **kwargs))
+    def hist(self, data: Sequence[float], **kwargs) -> _m.Histogram:
+        model = _m.Histogram(data=data, **kwargs)
+        self.models.append(model)
+        return model
 
 
 class SingleAxes(BaseLayoutModel):

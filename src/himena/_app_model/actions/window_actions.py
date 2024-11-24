@@ -9,7 +9,6 @@ from himena._descriptors import SaveToPath
 from himena.consts import MenuId, StandardType
 from himena.widgets import MainWindow
 from himena.types import (
-    Cancelled,
     ClipboardDataModel,
     Parametric,
     WindowState,
@@ -18,6 +17,7 @@ from himena.types import (
 from himena._app_model._context import AppContext as _ctx
 from himena._app_model.actions._registry import ACTIONS, SUBMENUS
 from himena import _utils, io
+from himena.exceptions import Cancelled
 
 _LOGGER = logging.getLogger(__name__)
 

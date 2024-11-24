@@ -17,10 +17,10 @@ from himena.types import (
     ClipboardDataModel,
     Parametric,
     WidgetDataModel,
-    Cancelled,
 )
 from himena._app_model._context import AppContext as _ctx
 from himena._app_model.actions._registry import ACTIONS, SUBMENUS
+from himena.exceptions import Cancelled
 
 _CtrlK = KeyMod.CtrlCmd | KeyCode.KeyK
 _LOGGER = getLogger(__name__)

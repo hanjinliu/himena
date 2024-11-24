@@ -131,9 +131,17 @@ class DataFrameWrapper(ABC):
     def to_list(self) -> list[list[Any]]:
         raise NotImplementedError
 
+    @abstractmethod
+    def column_to_array(self, name: str) -> np.ndarray:
+        """Return a column of the dataframe as an 1D numpy array."""
+
     def type_name(self) -> str:
         mod = type(self._df).__module__.split(".")[0]
         return f"{mod}.{type(self._df).__name__}"
+
+    @property
+    def shape(self) -> tuple[int, int]:
+        return self.num_rows(), self.num_columns()
 
 
 class DictWrapper(DataFrameWrapper):
@@ -173,6 +181,9 @@ class DictWrapper(DataFrameWrapper):
     def to_list(self) -> list[list[Any]]:
         return [[self._df[k][i] for k in self._columns] for i in range(self.num_rows())]
 
+    def column_to_array(self, name: str) -> np.ndarray:
+        return self._df[name]
+
 
 class PandasWrapper(DataFrameWrapper):
     def __init__(self, df: pd.DataFrame):
@@ -206,6 +217,9 @@ class PandasWrapper(DataFrameWrapper):
 
     def to_list(self) -> list[list[Any]]:
         return self._df.values.tolist()
+
+    def column_to_array(self, name: str) -> np.ndarray:
+        return self._df[name].to_numpy()
 
 
 class PolarsWrapper(DataFrameWrapper):
@@ -260,6 +274,9 @@ class PolarsWrapper(DataFrameWrapper):
 
     def to_list(self) -> list[list[Any]]:
         return [list(row) for row in self._df.iter_rows()]
+
+    def column_to_array(self, name: str) -> np.ndarray:
+        return self._df[name].to_numpy()
 
 
 class PyarrowWrapper(DataFrameWrapper):
@@ -321,6 +338,9 @@ class PyarrowWrapper(DataFrameWrapper):
 
     def to_list(self) -> list[list[Any]]:
         return [list(a.values()) for a in self._df.to_pylist()]
+
+    def column_to_array(self, name: str) -> np.ndarray:
+        return self._df[name].as_numpy()
 
 
 class DtypeTuple(NamedTuple):

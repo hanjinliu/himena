@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from himena.qt import register_widget
+from himena.consts import StandardType
 from himena._utils import lru_cache
 
 BACKEND_HIMENA = "module://himena.builtins.qt.plot._canvas"
@@ -25,7 +26,7 @@ def register_mpl_widget():
         return
     from himena.builtins.qt.plot._canvas import QMatplotlibCanvas
 
-    register_widget("matplotlib-figure", QMatplotlibCanvas)
+    register_widget(StandardType.PLOT, QMatplotlibCanvas, priority=0)
 
 
 register_mpl_widget()

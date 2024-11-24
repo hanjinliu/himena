@@ -49,7 +49,7 @@ class QMatplotlibCanvas(QtW.QWidget):
 
     @protocol_override
     def model_type(self) -> str:
-        return StandardType.MPL_FIGURE
+        return StandardType.PLOT
 
     @protocol_override
     def control_widget(self) -> QtW.QWidget:
@@ -93,7 +93,7 @@ def show(close=True, block=None):
         for figure_manager in Gcf.get_all_fig_managers():
             ui.add_data(
                 figure_manager.canvas.figure,
-                type=StandardType.MPL_FIGURE,
+                type=StandardType.PLOT,
                 title="Plot",
             )
     finally:

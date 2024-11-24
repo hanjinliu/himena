@@ -1,4 +1,4 @@
-from magicgui import register_type
+from magicgui.type_map import TypeMap
 from himena.qt._magicgui._basic_widgets import (
     IntEdit,
     FloatEdit,
@@ -9,12 +9,20 @@ from himena.qt._magicgui._modeldrop import ModelDrop
 from himena.qt._magicgui._toggle_switch import ToggleSwitch
 from himena.types import WidgetDataModel
 
+TYPE_MAP = TypeMap()
+
 
 def register_magicgui_types():
     """Register magicgui types."""
-    register_type(WidgetDataModel, widget_type=ModelDrop)
-    register_type(bool, widget_type=ToggleSwitch)
-    register_type(int, widget_type=IntEdit)
-    register_type(float, widget_type=FloatEdit)
-    register_type(list[int], widget_type=IntListEdit)
-    register_type(list[float], widget_type=FloatListEdit)
+
+    TYPE_MAP.register_type(WidgetDataModel, widget_type=ModelDrop)
+    TYPE_MAP.register_type(bool, widget_type=ToggleSwitch)
+    TYPE_MAP.register_type(int, widget_type=IntEdit)
+    TYPE_MAP.register_type(float, widget_type=FloatEdit)
+    TYPE_MAP.register_type(list[int], widget_type=IntListEdit)
+    TYPE_MAP.register_type(list[float], widget_type=FloatListEdit)
+
+
+def get_type_map():
+    """Get the magicgui type map for himena."""
+    return TYPE_MAP
