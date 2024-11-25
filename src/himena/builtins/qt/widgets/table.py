@@ -134,7 +134,11 @@ class QDefaultTableWidget(QTableBase):
             table = np.empty((0, 0), dtype=np.dtypes.StringDType())
         else:
             table = np.asarray(model.value, dtype=np.dtypes.StringDType())
-        self.setModel(QStringArrayModel(table))
+        if self.model() is None:
+            self.setModel(QStringArrayModel(table))
+            self.model().dataChanged.connect(self.set_modified)
+        else:
+            self.model()._arr = table
         if isinstance(meta := model.additional_data, TableMeta):
             if (pos := meta.current_position) is not None:
                 index = self.model().index(*pos)
@@ -151,7 +155,6 @@ class QDefaultTableWidget(QTableBase):
         if self._control is None:
             self._control = QTableControl(self)
         self._control.update_for_table(self)
-        self.model().dataChanged.connect(self.set_modified)
         return None
 
     @protocol_override
@@ -249,6 +252,7 @@ class QDefaultTableWidget(QTableBase):
 
         # paste the data
         arr[row0 : row0 + lr, col0 : col0 + lc] = arr_paste
+        self.model()._arr = arr
 
         # select what was just pasted
         topleft = self.model().index(row0, col0)

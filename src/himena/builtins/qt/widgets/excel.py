@@ -22,9 +22,30 @@ _EDIT_ENABLED = (
 )
 
 
+class QRightClickableTabBar(QtW.QTabBar):
+    right_clicked = QtCore.Signal(int)
+
+    def __init__(self, parent: QtW.QWidget | None = None) -> None:
+        super().__init__(parent)
+        self._last_right_clicked = None
+
+    def mousePressEvent(self, a0: QtGui.QMouseEvent | None) -> None:
+        if a0 is not None and a0.button() == QtCore.Qt.MouseButton.RightButton:
+            self._last_right_clicked = self.tabAt(a0.pos())
+        return super().mousePressEvent(a0)
+
+    def mouseReleaseEvent(self, a0: QtGui.QMouseEvent | None) -> None:
+        if a0 is not None and a0.button() == QtCore.Qt.MouseButton.RightButton:
+            if self.tabAt(a0.pos()) == self._last_right_clicked:
+                self.right_clicked.emit(self._last_right_clicked)
+        self._last_right_clicked = None
+        return super().mouseReleaseEvent(a0)
+
+
 class QExcelTableStack(QtW.QTabWidget):
     def __init__(self):
         super().__init__()
+        self.setTabBar(QRightClickableTabBar())
         self._edit_trigger = _EDIT_ENABLED
         self._control = QExcelTableStackControl()
         self.currentChanged.connect(self._on_tab_changed)
@@ -37,10 +58,24 @@ class QExcelTableStack(QtW.QTabWidget):
         tb.setToolTip("New Tab")
         tb.clicked.connect(self._add_new_tab)
         self.setCornerWidget(tb, QtCore.Qt.Corner.TopRightCorner)
+        self.tabBar().right_clicked.connect(self._tabbar_right_clicked)
 
     def _on_tab_changed(self, index: int):
         self._control.update_for_table(self.widget(index))
         return None
+
+    def _tabbar_right_clicked(self, index: int):
+        if index < 0:  # Clicked on the empty space
+            return
+        else:  # Clicked on an existing tab
+            menu = QtW.QMenu(self)
+            rename_action = menu.addAction("Rename Tab")
+            delete_action = menu.addAction("Delete Tab")
+            action = menu.exec_(QtGui.QCursor.pos())
+            if action == rename_action:
+                self._line_edit.start_edit(index)
+            elif action == delete_action:
+                self.removeTab(index)
 
     def _add_new_tab(self):
         table = QDefaultTableWidget()
@@ -54,13 +89,11 @@ class QExcelTableStack(QtW.QTabWidget):
     @protocol_override
     def update_model(self, model: WidgetDataModel[dict[str, np.ndarray]]):
         self.clear()
-        for sheet_name, table in model.value.items():
-            table_widget = QDefaultTableWidget()
-            table_widget.setHeaderFormat(QDefaultTableWidget.HeaderFormat.Alphabetic)
-            table_widget.update_model(
-                WidgetDataModel(value=table, type=StandardType.TABLE)
-            )
-            self.addTab(table_widget, sheet_name)
+        for sheet_name, each in model.value.items():
+            table = QDefaultTableWidget()
+            table.update_model(WidgetDataModel(value=each, type=StandardType.TABLE))
+            table.setHeaderFormat(QDefaultTableWidget.HeaderFormat.Alphabetic)
+            self.addTab(table, sheet_name)
         if self.count() > 0:
             self.setCurrentIndex(0)
             self._control.update_for_table(self.widget(0))
@@ -141,6 +174,7 @@ class QExcelTableStack(QtW.QTabWidget):
     if TYPE_CHECKING:
 
         def widget(self, index: int) -> QDefaultTableWidget: ...
+        def tabBar(self) -> QRightClickableTabBar: ...
 
 
 _R_CENTER = QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter

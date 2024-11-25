@@ -39,6 +39,18 @@ def new_table(ui: MainWindow) -> WidgetDataModel:
     )
 
 
+@register_function(menus=MenuId.FILE_NEW, command_id="builtins:new-excel")
+def new_excel(ui: MainWindow) -> WidgetDataModel:
+    """New table."""
+    nwin = _get_n_windows(ui)
+    return WidgetDataModel(
+        value={"Sheet-1": None},
+        type=StandardType.EXCEL,
+        extension_default=".xlsx",
+        title=f"Excel-{nwin}",
+    )
+
+
 DATASET_SOURCE = "https://raw.githubusercontent.com/mwaskom/seaborn-data/master"
 DATASET_NAMES_URL = f"{DATASET_SOURCE}/dataset_names.txt"
 

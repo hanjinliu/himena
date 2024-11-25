@@ -1,40 +1,90 @@
+from __future__ import annotations
+
+from typing import Callable, overload, TypeVar, TYPE_CHECKING
 from cmap import Color
-from matplotlib import pyplot as plt
 from himena.plotting import models, layout
+
+if TYPE_CHECKING:
+    from matplotlib import pyplot as plt
+
+_CONVERSION_RULES: dict[
+    type[models.BasePlotModel], Callable[[models.BasePlotModel, plt.Axes], None]
+] = {}
+
+_F = TypeVar("_F", bound=Callable)
+
+
+@overload
+def register_plot_model(
+    model_class: type[models.BasePlotModel],
+    rule: _F,
+) -> _F: ...
+@overload
+def register_plot_model(
+    model_class: type[models.BasePlotModel],
+    rule: None,
+) -> Callable[[_F], _F]: ...
+
+
+def register_plot_model(
+    model_class: type[models.BasePlotModel],
+    rule: Callable[[models.BasePlotModel, plt.Axes], None] | None = None,
+):
+    def inner(f):
+        _CONVERSION_RULES[model_class] = f
+        return f
+
+    return inner if rule is None else inner(rule)
 
 
 def _convert_plot_model(model: models.BasePlotModel, ax: plt.Axes):
-    if isinstance(model, models.Scatter):
-        ax.scatter(
-            model.x, model.y, s=model.size ** 2, c=Color(model.color).hex,
-            marker=model.symbol, linewidths=model.edge_width,
-            edgecolors=model.edge_color, label=model.name,
-        )  # fmt: skip
-    elif isinstance(model, models.Line):
-        ax.plot(
-            model.x, model.y, color=model.color, linewidth=model.width,
-            linestyle=model.style, label=model.name,
-        )  # fmt: skip
-    elif isinstance(model, models.Bar):
-        ax.bar(
-            model.x, model.y, color=model.color, hatch=model.hatch, bottom=model.bottom,
-            width=model.bar_width, edgecolor=model.edge_color, label=model.name,
-            linewidth=model.edge_width, linestyle=model.edge_style,
-        )  # fmt: skip
-    elif isinstance(model, models.Histogram):
-        ax.hist(
-            model.data, bins=model.bins, color=model.color, range=model.range,
-            orientation=model.orient, hatch=model.hatch, edgecolor=model.edge_color,
-            linewidth=model.edge_width, linestyle=model.edge_style, label=model.name,
-        )  # fmt: skip
-    elif isinstance(model, models.ErrorBar):
-        ax.errorbar(
-            model.x, model.y, xerr=model.x_error, yerr=model.y_error,
-            capsize=model.capsize, color=model.color, linewidth=model.width,
-            linestyle=model.style, label=model.name,
-        )  # fmt: skip
-    else:
-        raise ValueError(f"Unsupported plot model: {model}")
+    if model.__class__ in _CONVERSION_RULES:
+        return _CONVERSION_RULES[model.__class__](model, ax)
+    raise ValueError(f"Unsupported plot model: {model}")
+
+
+@register_plot_model(models.Scatter)
+def _(model: models.Scatter, ax: plt.Axes):
+    ax.scatter(
+        model.x, model.y, s=model.size ** 2, c=Color(model.color).hex,
+        marker=model.symbol, linewidths=model.edge_width,
+        edgecolors=model.edge_color, label=model.name,
+    )  # fmt: skip
+
+
+@register_plot_model(models.Line)
+def _(model: models.Line, ax: plt.Axes):
+    ax.plot(
+        model.x, model.y, color=model.color, linewidth=model.width,
+        linestyle=model.style, label=model.name,
+    )  # fmt: skip
+
+
+@register_plot_model(models.Bar)
+def _(model: models.Bar, ax: plt.Axes):
+    ax.bar(
+        model.x, model.y, color=model.color, hatch=model.hatch, bottom=model.bottom,
+        width=model.bar_width, edgecolor=model.edge_color, label=model.name,
+        linewidth=model.edge_width, linestyle=model.edge_style,
+    )  # fmt: skip
+
+
+@register_plot_model(models.Histogram)
+def _(model: models.Histogram, ax: plt.Axes):
+    ax.hist(
+        model.data, bins=model.bins, color=model.color, range=model.range,
+        orientation=model.orient, hatch=model.hatch, edgecolor=model.edge_color,
+        linewidth=model.edge_width, linestyle=model.edge_style, label=model.name,
+    )  # fmt: skip
+
+
+@register_plot_model(models.ErrorBar)
+def _(model: models.ErrorBar, ax: plt.Axes):
+    ax.errorbar(
+        model.x, model.y, xerr=model.x_error, yerr=model.y_error,
+        capsize=model.capsize, color=model.color, linewidth=model.width,
+        linestyle=model.style, label=model.name,
+    )  # fmt: skip
 
 
 def _convert_axes(ax: layout.Axes, ax_mpl: plt.Axes):

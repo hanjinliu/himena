@@ -161,7 +161,7 @@ def init_application(app: Application) -> Application:
             return None
         _LOGGER.debug("processing %r", fn)
         ins = current_instance(app.name)
-        ins.add_function(fn, preview=fn.preview)
+        ins.add_function(fn, preview=fn.preview, title=fn.name)
         return None
 
     @app.injection_store.mark_processor

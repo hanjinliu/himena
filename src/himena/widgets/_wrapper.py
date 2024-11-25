@@ -214,7 +214,7 @@ class SubWindow(WidgetWrapper[_W]):
                 "`to_model` method must return an instance of WidgetDataModel, got "
                 f"{type(model)}"
             )
-        # TODO: check the model type
+
         if model.title is None:
             model.title = self.title
         if model.method is None:
@@ -286,6 +286,7 @@ class SubWindow(WidgetWrapper[_W]):
         title: str | None = None,
         anchor: _anchor.WindowAnchor | str | None = None,
     ) -> SubWindow[_W]:
+        """A helper method to update window properties."""
         if rect is not None:
             self.rect = rect
         if state is not None:

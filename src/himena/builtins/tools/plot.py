@@ -48,7 +48,7 @@ def scatter_plot(win: SubWindow) -> Parametric:
             yarrs, _iter_face(face), _iter_edge(edge, prefix="edge_")
         ):
             fig.axes.scatter(xarr, yarr, symbol=symbol, size=size, **_face, **_edge)
-        return WidgetDataModel(value=fig, type=StandardType.PLOT)
+        return WidgetDataModel(value=fig, type=StandardType.PLOT, title="Plot")
 
     return configure_plot
 
@@ -63,7 +63,7 @@ def line_plot(win: SubWindow) -> Parametric:
     @configure_gui(
         x={"widget_type": SelectionEdit, "getter": lambda: _range_getter(win)},
         y={"widget_type": SelectionEdit, "getter": lambda: _range_getter(win)},
-        edge={"widget_type": EdgePropertyEdit},
+        edge={"widget_type": EdgePropertyEdit, "value": {"width": 2.0}},
     )
     def configure_plot(
         x: tuple[slice, slice] | None,
@@ -74,7 +74,7 @@ def line_plot(win: SubWindow) -> Parametric:
         xarr, yarrs = _get_xy_data(win, x, y, fig.axes)
         for yarr, _edge in zip(yarrs, _iter_edge(edge)):
             fig.axes.plot(xarr, yarr, **_edge)
-        return WidgetDataModel(value=fig, type=StandardType.PLOT)
+        return WidgetDataModel(value=fig, type=StandardType.PLOT, title="Plot")
 
     return configure_plot
 
@@ -113,7 +113,7 @@ def bar_plot(win: SubWindow) -> Parametric:
             fig.axes.bar(
                 xarr, yarr, bottom=_bottom, bar_width=bar_width, **_face, **_edge
             )
-        return WidgetDataModel(value=fig, type=StandardType.PLOT)
+        return WidgetDataModel(value=fig, type=StandardType.PLOT, title="Plot")
 
     return configure_plot
 
@@ -130,7 +130,7 @@ def errorbar_plot(win: SubWindow) -> Parametric:
         y={"widget_type": SelectionEdit, "getter": lambda: _range_getter(win)},
         xerr={"widget_type": SelectionEdit, "getter": lambda: _range_getter(win)},
         yerr={"widget_type": SelectionEdit, "getter": lambda: _range_getter(win)},
-        edge={"widget_type": EdgePropertyEdit},
+        edge={"widget_type": EdgePropertyEdit, "value": {"width": 2.0}},
     )
     def configure_plot(
         x: tuple[slice, slice] | None,
@@ -154,7 +154,7 @@ def errorbar_plot(win: SubWindow) -> Parametric:
             fig.axes.errorbar(
                 xarr, yarr, x_error=_xerr, y_error=_yerr, capsize=capsize, **_edge
             )
-        return WidgetDataModel(value=fig, type=StandardType.PLOT)
+        return WidgetDataModel(value=fig, type=StandardType.PLOT, title="Plot")
 
     return configure_plot
 
