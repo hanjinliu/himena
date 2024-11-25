@@ -4,6 +4,7 @@ import importlib
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import numpy as np
 from himena.plugins import register_reader_provider, register_writer_provider
 from himena.types import WidgetDataModel
 from himena.consts import (
@@ -14,7 +15,6 @@ from himena.consts import (
 )
 
 if TYPE_CHECKING:
-    import numpy as np
     from openpyxl.worksheet.worksheet import Worksheet
 
 
@@ -41,7 +41,6 @@ def default_html_reader(file_path: Path) -> WidgetDataModel:
 
 def default_image_reader(file_path: Path) -> WidgetDataModel:
     """Read image file."""
-    import numpy as np
     from PIL import Image
 
     arr = np.array(Image.open(file_path))
@@ -53,8 +52,6 @@ def default_image_reader(file_path: Path) -> WidgetDataModel:
 
 
 def _read_txt_as_numpy(file_path: Path, delimiter: str):
-    import numpy as np
-
     arr = np.loadtxt(
         file_path,
         dtype=np.dtypes.StringDType(),
@@ -106,8 +103,6 @@ def default_excel_reader(file_path: Path) -> WidgetDataModel:
 
 def default_array_reader(file_path: Path) -> WidgetDataModel:
     """Read array file."""
-    import numpy as np
-
     arr = np.load(file_path)
     return WidgetDataModel(
         value=arr,
@@ -155,7 +150,6 @@ def read_as_unknown_provider(file_path: Path) -> WidgetDataModel:
 
 def _read_json_as_dict(file_path: Path) -> dict[str, Any]:
     import json
-    import numpy as np
 
     with open(file_path) as f:
         data = json.load(f)
@@ -176,7 +170,6 @@ def _read_json_as_dict(file_path: Path) -> dict[str, Any]:
 
 def _read_csv_as_dict(file_path: Path, sep: str) -> dict[str, Any]:
     import csv
-    import numpy as np
 
     with open(file_path) as f:
         reader = csv.reader(f, delimiter=sep)
@@ -282,8 +275,6 @@ def default_text_writer(model: WidgetDataModel[str], path: Path) -> None:
 
 def default_csv_writer(model: WidgetDataModel[np.ndarray], path: Path) -> None:
     """Write CSV file."""
-    import numpy as np
-
     if path.suffix == ".tsv":
         delimiter = "\t"
     else:

@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW, QtCore
+import numpy as np
 
-if TYPE_CHECKING:
-    import numpy as np
 
 _SUPPORTED_DTYPE_DEPTH = {
     "int": [8, 16, 32, 64],
@@ -44,8 +42,6 @@ class QNumericDTypeEdit(QtW.QWidget):
         self._combo_depth.setCurrentIndex(0)
 
     def _cast_dtype(self, dtype) -> np.dtype:
-        import numpy as np
-
         return np.dtype(dtype)
 
     def dtype(self) -> np.dtype:

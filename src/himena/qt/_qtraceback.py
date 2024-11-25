@@ -5,6 +5,7 @@ import sys
 from typing import Callable, Generator, TYPE_CHECKING
 import weakref
 
+import numpy as np
 from qtpy import QtWidgets as QtW, QtGui, QtCore
 from psygnal import EmitLoopError
 
@@ -196,7 +197,6 @@ ANSI_STYLES = {
 
 
 def format_exc_info_ipython(info: ExcInfo, as_html: bool, color="Neutral") -> str:
-    import numpy as np
     import IPython.core.ultratb
 
     # avoid verbose printing of the array data
@@ -250,7 +250,6 @@ def cgitb_html(exc: Exception) -> str:
 
 
 def format_exc_info_py310(info: ExcInfo, as_html: bool, color=None) -> str:
-    import numpy as np
     import traceback
 
     # avoid verbose printing of the array data
@@ -289,7 +288,6 @@ def format_exc_info_py310(info: ExcInfo, as_html: bool, color=None) -> str:
 
 
 def format_exc_info_py311(info: ExcInfo, as_html: bool, color=None) -> str:
-    import numpy as np
     import traceback
 
     # avoid verbose printing of the array data

@@ -1,11 +1,10 @@
-from typing import Literal, TYPE_CHECKING
+from typing import Literal
+import numpy as np
+
 from himena.plugins import register_function, configure_gui
 from himena.types import Parametric, WidgetDataModel
 from himena.model_meta import TextMeta
 from himena.consts import StandardType
-
-if TYPE_CHECKING:
-    import numpy as np
 
 
 def _table_to_latex(table: "np.ndarray") -> str:
@@ -93,7 +92,6 @@ def table_to_text(model: WidgetDataModel) -> Parametric[str]:
 def table_to_dataframe(model: WidgetDataModel["np.ndarray"]) -> Parametric[str]:
     """Convert a table data into a DataFrame."""
     from io import StringIO
-    import numpy as np
     from himena._data_wrappers import list_installed_dataframe_packages, read_csv
 
     pkgs = ["dict"] + list_installed_dataframe_packages()

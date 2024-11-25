@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 from qtpy import QtGui, QtCore, QtWidgets as QtW
 from qtpy.QtCore import Qt
+import numpy as np
 
 from himena._data_wrappers import ArrayWrapper, wrap_array
 from himena.consts import StandardType, MonospaceFontFamily
@@ -17,8 +18,6 @@ from himena.builtins.qt.widgets._table_base import (
     format_table_value,
 )
 
-if TYPE_CHECKING:
-    import numpy as np
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -27,8 +26,6 @@ class QArrayModel(QtCore.QAbstractTableModel):
     """Table model for data frame."""
 
     def __init__(self, arr: np.ndarray, parent=None):
-        import numpy as np
-
         super().__init__(parent)
         self._arr_slice = arr  # 2D
         self._slice: tuple[int, ...] = ()
@@ -81,8 +78,6 @@ class QArraySliceView(QTableBase):
     """A table widget for viewing 2-D array."""
 
     def __init__(self):
-        import numpy as np
-
         super().__init__()
         self.horizontalHeader().setFixedHeight(18)
         self.verticalHeader().setDefaultSectionSize(20)
@@ -130,7 +125,6 @@ class QArraySliceView(QTableBase):
 
     def copy_data(self):
         from io import StringIO
-        import numpy as np
 
         model = self.selectionModel()
         if not model.hasSelection():
@@ -242,8 +236,6 @@ class QDefaultArrayView(QtW.QWidget):
 
     @protocol_override
     def update_model(self, model: WidgetDataModel):
-        import numpy as np
-
         arr = wrap_array(model.value)
         self._arr = arr
         self.update_spinbox_for_shape(arr.shape)

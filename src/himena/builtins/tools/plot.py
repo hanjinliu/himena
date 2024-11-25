@@ -2,6 +2,8 @@ from typing import TYPE_CHECKING, Iterator
 import itertools
 
 from cmap import Color, Colormap
+import numpy as np
+
 from himena.plugins import register_function, configure_gui
 from himena.types import Parametric, WidgetDataModel
 from himena.consts import StandardType
@@ -13,7 +15,6 @@ from himena import plotting
 from himena.exceptions import DeadSubwindowError
 
 if TYPE_CHECKING:
-    import numpy as np
     from himena.qt._magicgui._face_edge import FacePropertyDict, EdgePropertyDict
 
 _TABLE_LIKE = [StandardType.TABLE, StandardType.DATAFRAME, StandardType.EXCEL]
@@ -202,7 +203,6 @@ def _get_xy_data(
     y: tuple[slice, slice] | None,
     axes: plotting.layout.Axes,
 ) -> "tuple[np.ndarray, list[np.ndarray]]":
-    import numpy as np
     from himena._data_wrappers import wrap_dataframe
 
     if y is None:
@@ -240,8 +240,6 @@ def _table_to_xy_data(
     y: tuple[slice, slice],
     axes: plotting.layout.Axes,
 ) -> "tuple[np.ndarray, list[np.ndarray]]":
-    import numpy as np
-
     # TODO: if the first value is string, use it as labels.
     yarr = np.asarray(value[y], dtype=np.float64)
     if x is None:

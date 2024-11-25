@@ -79,13 +79,6 @@ class QMatplotlibCanvas(QtW.QWidget):
             and isinstance(self._plot_models, layout.BaseLayoutModel)
         ):
             raise ValueError("Both models must be BaseLayoutModel")
-
-        if not (
-            isinstance(self._plot_models, layout.SingleAxes)
-            and isinstance(model.value, layout.SingleAxes)
-        ):
-            raise NotImplementedError("Merging multiple axes is not supported yet")
-
         self._plot_models = self._plot_models.merge_with(model.value)
         convert_plot_layout(self._plot_models, self.figure)
         self._canvas.draw()

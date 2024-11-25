@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from qtpy import QtWidgets as QtW, QtCore
+from qtpy import QtWidgets as QtW, QtCore, QtGui
 
 from himena.model_meta import ExcelMeta
 from himena.qt._qrename import QTabRenameLineEdit
@@ -30,8 +30,25 @@ class QExcelTableStack(QtW.QTabWidget):
         self.currentChanged.connect(self._on_tab_changed)
         self._line_edit = QTabRenameLineEdit(self, allow_duplicate=False)
 
+        # corner widget for adding new tab
+        tb = QtW.QToolButton()
+        tb.setText("+")
+        tb.setFont(QtGui.QFont("Arial", 12, weight=15))
+        tb.setToolTip("New Tab")
+        tb.clicked.connect(self._add_new_tab)
+        self.setCornerWidget(tb, QtCore.Qt.Corner.TopRightCorner)
+
     def _on_tab_changed(self, index: int):
         self._control.update_for_table(self.widget(index))
+        return None
+
+    def _add_new_tab(self):
+        table = QDefaultTableWidget()
+        table.update_model(WidgetDataModel(value=None, type=StandardType.TABLE))
+        table.setHeaderFormat(QDefaultTableWidget.HeaderFormat.Alphabetic)
+        self.addTab(table, f"Sheet-{self.count() + 1}")
+        self.setCurrentIndex(self.count() - 1)
+        self._control.update_for_table(table)
         return None
 
     @protocol_override
@@ -39,7 +56,7 @@ class QExcelTableStack(QtW.QTabWidget):
         self.clear()
         for sheet_name, table in model.value.items():
             table_widget = QDefaultTableWidget()
-            table_widget._header_format = QDefaultTableWidget.HeaderFormat.Alphabetic
+            table_widget.setHeaderFormat(QDefaultTableWidget.HeaderFormat.Alphabetic)
             table_widget.update_model(
                 WidgetDataModel(value=table, type=StandardType.TABLE)
             )
@@ -107,19 +124,17 @@ class QExcelTableStack(QtW.QTabWidget):
         if model.type == StandardType.EXCEL:
             assert isinstance(model.value, dict)
             for key, value in model.value.items():
-                table_widget = QDefaultTableWidget()
-                table_widget._header_format = (
-                    QDefaultTableWidget.HeaderFormat.Alphabetic
-                )
-                table_widget.update_model(
+                table = QDefaultTableWidget()
+                table.setHeaderFormat(QDefaultTableWidget.HeaderFormat.Alphabetic)
+                table.update_model(
                     WidgetDataModel(value=value, type=StandardType.TABLE)
                 )
-                self.addTab(table_widget, key)
+                self.addTab(table, key)
         elif model.type == StandardType.TABLE:
-            table_widget = QDefaultTableWidget()
-            table_widget._header_format = QDefaultTableWidget.HeaderFormat.Alphabetic
-            table_widget.update_model(model)
-            self.addTab(table_widget, model.title)
+            table = QDefaultTableWidget()
+            table.setHeaderFormat(QDefaultTableWidget.HeaderFormat.Alphabetic)
+            table.update_model(model)
+            self.addTab(table, model.title)
         else:
             raise ValueError(f"Cannot merge {model.type} with {StandardType.EXCEL}")
 
@@ -144,7 +159,18 @@ class QExcelTableStackControl(QtW.QWidget):
         self._label.setAlignment(_R_CENTER)
         self._selection_range = QSelectionRangeEdit()
         # layout.addWidget(self._header_format)
+
+        # toolbuttons
+        self._insert_menu_button = QtW.QPushButton()
+        self._insert_menu_button.setText("Ins")  # or "icons8:plus"
+        self._insert_menu_button.setMenu(self._make_insert_menu())
+        self._remove_menu_button = QtW.QPushButton()
+        self._remove_menu_button.setText("Rem")
+        self._remove_menu_button.setMenu(self._make_delete_menu())
+
         layout.addWidget(self._value_line_edit)
+        layout.addWidget(self._insert_menu_button)
+        layout.addWidget(self._remove_menu_button)
         layout.addWidget(self._label)
         layout.addWidget(self._selection_range)
         self._value_line_edit.editingFinished.connect(self.update_for_editing)
@@ -157,18 +183,71 @@ class QExcelTableStackControl(QtW.QWidget):
         self.update_for_current_index(table.currentIndex())
         return None
 
+    @property
+    def _current_table(self) -> QDefaultTableWidget | None:
+        return self._selection_range._qtable
+
     def update_for_current_index(self, index: QtCore.QModelIndex):
-        qtable = self._selection_range._qtable
+        qtable = self._current_table
         if qtable is None:
             return None
-        self._value_line_edit.setText(qtable.model().data(index))
+        text = qtable.model().data(index)
+        if not isinstance(text, str):
+            text = ""
+        self._value_line_edit.setText(text)
         return None
 
     def update_for_editing(self):
-        qtable = self._selection_range._qtable
+        qtable = self._current_table
         if qtable is None:
             return None
         text = self._value_line_edit.text()
-        qtable.model().setData(qtable.currentIndex(), text)
+        qtable.model().setData(
+            qtable.currentIndex(), text, QtCore.Qt.ItemDataRole.EditRole
+        )
         qtable.setFocus()
+        return None
+
+    def _make_insert_menu(self):
+        menu = QtW.QMenu(self)
+        menu.addAction("Row above", self._insert_row_above)
+        menu.addAction("Row below", self._insert_row_below)
+        menu.addAction("Column left", self._insert_column_left)
+        menu.addAction("Column right", self._insert_column_right)
+        return menu
+
+    def _make_delete_menu(self):
+        menu = QtW.QMenu(self)
+        menu.addAction("Rows", self._remove_selected_rows)
+        menu.addAction("Columns", self._remove_selected_columns)
+        return menu
+
+    def _insert_row_above(self):
+        if qtable := self._current_table:
+            qtable._insert_row_above()
+        return None
+
+    def _insert_row_below(self):
+        if qtable := self._current_table:
+            qtable._insert_row_below()
+        return None
+
+    def _insert_column_left(self):
+        if qtable := self._current_table:
+            qtable._insert_column_left()
+        return None
+
+    def _insert_column_right(self):
+        if qtable := self._current_table:
+            qtable._insert_column_right()
+        return None
+
+    def _remove_selected_rows(self):
+        if qtable := self._current_table:
+            qtable._remove_selected_rows()
+        return None
+
+    def _remove_selected_columns(self):
+        if qtable := self._current_table:
+            qtable._remove_selected_columns()
         return None

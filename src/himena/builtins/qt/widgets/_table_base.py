@@ -62,6 +62,10 @@ def format_table_value(value: Any, fmt: str) -> str:
 
 
 class QItemDelegate(QtW.QStyledItemDelegate):
+    def __init__(self, parent: QtCore.QObject | None = None) -> None:
+        super().__init__(parent)
+        self._current_editor: QTableEditor | None = None
+
     def createEditor(
         self,
         parent: QtW.QWidget,
@@ -69,6 +73,7 @@ class QItemDelegate(QtW.QStyledItemDelegate):
         index: QtCore.QModelIndex,
     ) -> QTableEditor:
         editor = QTableEditor(parent)
+        self._current_editor = editor
         editor.setText(index.data())
         return editor
 
@@ -131,6 +136,9 @@ class QTableBase(QtW.QTableView):
             current_position=(index.row(), index.column()),
             selections=selections,
         )
+
+    def itemDelegate(self) -> QItemDelegate:
+        return super().itemDelegate()
 
 
 class QTableEditor(QtW.QLineEdit):

@@ -7,11 +7,11 @@ import importlib.resources
 import io
 import sys
 from typing import TYPE_CHECKING, Any, NamedTuple
+import numpy as np
 from himena._utils import lru_cache
 
 if TYPE_CHECKING:
     from typing import TypeGuard
-    import numpy as np
     import pandas as pd
     import polars as pl
     import pyarrow as pa
@@ -28,7 +28,6 @@ def list_installed_dataframe_packages() -> list[str]:
 
 def _csv_to_dict(file) -> dict[str, np.ndarray]:
     import csv
-    import numpy as np
 
     reader = csv.reader(file)
     header = next(reader)
@@ -205,8 +204,6 @@ class PandasWrapper(DataFrameWrapper):
         return self._df.columns.tolist()
 
     def get_dtype(self, index: int) -> DtypeTuple:
-        import numpy as np
-
         pd_dtype = self._df.dtypes.iloc[index]
         if isinstance(pd_dtype, np.dtype):
             return DtypeTuple(pd_dtype.name, pd_dtype.kind)
@@ -358,7 +355,5 @@ def wrap_dataframe(df) -> DataFrameWrapper:
     if is_pyarrow_table(df):
         return PyarrowWrapper(df)
     if isinstance(df, dict):
-        import numpy as np
-
         return DictWrapper({k: np.asarray(v) for k, v in df.items()})
     raise TypeError(f"Unsupported dataframe type: {type(df)}")

@@ -31,9 +31,8 @@ def new_text(ui: MainWindow) -> WidgetDataModel:
 def new_table(ui: MainWindow) -> WidgetDataModel:
     """New table."""
     nwin = _get_n_windows(ui)
-    value = [["", "", ""], ["", "", ""], ["", "", ""]]
     return WidgetDataModel(
-        value=value,
+        value=None,
         type=StandardType.TABLE,
         extension_default=".csv",
         title=f"Table-{nwin}",

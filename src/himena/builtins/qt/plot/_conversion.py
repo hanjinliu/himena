@@ -78,7 +78,7 @@ def convert_plot_layout(lo: layout.BaseLayoutModel, fig: plt.Figure):
         _shape = (1, len(lo.axes)) if isinstance(lo, layout.Row) else (len(lo.axes), 1)
         if len(fig.axes) != len(lo.axes):
             fig.clear()
-            axes = fig.subplots(*_shape, sharex=lo.sharex, sharey=lo.sharey)
+            axes = fig.subplots(*_shape, sharex=lo.share_x, sharey=lo.share_y)
         else:
             axes = fig.axes
         for ax, ax_mpl in zip(lo.axes, axes):

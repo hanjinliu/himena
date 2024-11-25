@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
 from superqt import QLabeledSlider, QLabeledDoubleRangeSlider
+import numpy as np
 
 from himena.consts import StandardType
 from himena.model_meta import ImageMeta
@@ -14,7 +15,6 @@ from himena._data_wrappers import ArrayWrapper, wrap_array
 from himena.qt._magicgui._toggle_switch import QLabeledToggleSwitch
 
 if TYPE_CHECKING:
-    import numpy as np
     from numpy.typing import NDArray
 
 
@@ -29,8 +29,6 @@ class _QImageLabel(QtW.QLabel):
         self.set_array(val)
 
     def set_array(self, val: NDArray[np.uint8]):
-        import numpy as np
-
         if val.ndim == 2:
             val = np.stack(
                 [val] * 3 + [np.full(val.shape, 255, dtype=np.uint8)], axis=2
@@ -70,8 +68,6 @@ class _QImageLabel(QtW.QLabel):
 
 class QDefaultImageView(QtW.QWidget):
     def __init__(self):
-        import numpy as np
-
         super().__init__()
         layout = QtW.QVBoxLayout(self)
         self._sliders: list[_QAxisSlider] = []
@@ -170,8 +166,6 @@ class QDefaultImageView(QtW.QWidget):
         arr: NDArray[np.number],
         clim: tuple[float, float],
     ) -> NDArray[np.uint8]:
-        import numpy as np
-
         cmin, cmax = clim
         if arr.dtype.kind == "b":
             arr_normed = np.where(arr, np.uint8(255), np.uint8(0))
@@ -293,8 +287,6 @@ class _QContrastRangeSlider(QLabeledDoubleRangeSlider):
 
 class _QHistogram(_QImageLabel):
     def __init__(self):
-        import numpy as np
-
         super().__init__(np.zeros((64, 256), dtype=np.uint8))
         self.setToolTip("Histogram of the image intensity")
 
@@ -304,8 +296,6 @@ class _QHistogram(_QImageLabel):
         clim: tuple[float, float],
         minmax: tuple[float, float],
     ):
-        import numpy as np
-
         _min, _max = minmax
         nbin = 128
         h0 = 64

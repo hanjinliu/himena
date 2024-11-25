@@ -1,4 +1,4 @@
-from typing import Any, Literal, Sequence, TYPE_CHECKING
+from typing import Any, Literal, Sequence, TYPE_CHECKING, SupportsIndex
 
 from pydantic_compat import BaseModel, Field
 from himena.plotting import models as _m
@@ -13,6 +13,9 @@ class BaseLayoutModel(BaseModel):
     vpad: float | None = Field(None, description="Vertical padding.")
     hspace: float | None = Field(None, description="Horizontal space.")
     vspace: float | None = Field(None, description="Vertical space.")
+
+    def merge_with(self, other: "BaseLayoutModel") -> "BaseLayoutModel":
+        raise NotImplementedError
 
 
 class StyledText(BaseModel):
@@ -50,26 +53,31 @@ class Axes(BaseModel):
         y: Sequence[float],
         **kwargs,
     ) -> _m.Scatter:
+        """Add a scatter plot model to the axes."""
         model = _m.Scatter(x=x, y=y, **kwargs)
         self.models.append(model)
         return model
 
     def plot(self, x: Sequence[float], y: Sequence[float], **kwargs) -> _m.Line:
+        """Add a line plot model to the axes."""
         model = _m.Line(x=x, y=y, **kwargs)
         self.models.append(model)
         return model
 
     def bar(self, x: Sequence[float], y: Sequence[float], **kwargs) -> _m.Bar:
+        """Add a bar plot model to the axes."""
         model = _m.Bar(x=x, y=y, **kwargs)
         self.models.append(model)
         return model
 
     def errorbar(self, x: Sequence[float], y: Sequence[float], **kwargs) -> _m.ErrorBar:
+        """Add an error bar plot model to the axes."""
         model = _m.ErrorBar(x=x, y=y, **kwargs)
         self.models.append(model)
         return model
 
     def hist(self, data: Sequence[float], **kwargs) -> _m.Histogram:
+        """Add a histogram plot model to the axes."""
         model = _m.Histogram(data=data, **kwargs)
         self.models.append(model)
         return model
@@ -89,10 +97,10 @@ class Layout1D(BaseLayoutModel):
     """Layout model for 1D layout."""
 
     axes: list[Axes] = Field(default_factory=list, description="Child layouts.")
-    sharex: bool = Field(False, description="Share x-axis or not.")
-    sharey: bool = Field(False, description="Share y-axis or not.")
+    share_x: bool = Field(False, description="Share x-axis or not.")
+    share_y: bool = Field(False, description="Share y-axis or not.")
 
-    def __getitem__(self, key) -> Axes:
+    def __getitem__(self, key: SupportsIndex) -> Axes:
         return self.axes[key]
 
     @classmethod
@@ -101,6 +109,15 @@ class Layout1D(BaseLayoutModel):
         for _ in range(num):
             layout.axes.append(Axes())
         return layout
+
+    def merge_with(self, other: "Self") -> "Self":
+        if not isinstance(other, type(self)):
+            raise ValueError(f"Cannot merge {type(self)} with {type(other)}")
+        new_axes = [
+            a.model_copy(update={"models": a.models + b.models})
+            for a, b in zip(self.axes, other.axes)
+        ]
+        return type(self)(axes=new_axes, share_x=self.share_x, share_y=self.share_y)
 
 
 class Row(Layout1D):
@@ -125,3 +142,15 @@ class Grid(BaseLayoutModel):
         for _ in range(rows):
             layout.axes.append([Axes() for _ in range(cols)])
         return layout
+
+    def merge_with(self, other: "Self") -> "Self":
+        if not isinstance(other, type(self)):
+            raise ValueError(f"Cannot merge {type(self)} with {type(other)}")
+        new_axes = [
+            [
+                a.model_copy(update={"models": a.models + b.models})
+                for a, b in zip(row_a, row_b)
+            ]
+            for row_a, row_b in zip(self.axes, other.axes)
+        ]
+        return type(self)(axes=new_axes)

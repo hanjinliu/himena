@@ -77,6 +77,10 @@ class OrderedSet(MutableSet[_T]):
     def discard(self, value: _T) -> None:
         self._dict.pop(value, None)
 
+    def update(self, other: Iterable[_T]) -> None:
+        for value in other:
+            self.add(value)
+
 
 def _is_widget_data_model(a):
     return WidgetDataModel in (get_origin(a), a)

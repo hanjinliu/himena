@@ -76,7 +76,7 @@ class AppActionRegistry:
                 if isinstance(each, SubmenuItem):
                     existing_menu_ids.add(each.submenu)
 
-        added_menu_ids: set[str] = set()
+        added_menu_ids = _utils.OrderedSet[str]()
         for action in self.iter_actions(app):
             if action.menus is not None:
                 ids = [a.id for a in action.menus]

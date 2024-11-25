@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import numpy as np
 from app_model.backends.qt import QModelMenu
 import qtpy
 from qtpy import QtWidgets as QtW
@@ -16,7 +17,6 @@ from himena._utils import lru_cache
 
 
 if TYPE_CHECKING:
-    import numpy as np
     from numpy.typing import NDArray
     from himena.qt import MainWindowQt
 
@@ -88,8 +88,6 @@ def remove_html_tags(text: str) -> str:
 
 
 def qimage_to_ndarray(img: QtGui.QImage) -> NDArray[np.uint8]:
-    import numpy as np
-
     if img.format() != QtGui.QImage.Format.Format_ARGB32:
         img = img.convertToFormat(QtGui.QImage.Format.Format_ARGB32)
     b = img.constBits()
