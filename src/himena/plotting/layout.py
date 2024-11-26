@@ -1,11 +1,13 @@
 from typing import Any, Literal, Sequence, TYPE_CHECKING, SupportsIndex
 
+import numpy as np
 from pydantic_compat import BaseModel, Field
 from himena.plotting import models as _m
-from himena.plotting.models import BasePlotModel
+from himena.plotting.models import BasePlotModel, parse_edge, parse_face_edge
 
 if TYPE_CHECKING:
     from typing import Self
+    from numpy.typing import NDArray
 
 
 class BaseLayoutModel(BaseModel):
@@ -44,41 +46,84 @@ class Axes(BaseModel):
         default_factory=list, description="Child plot models."
     )
     title: str | StyledText | None = Field(None, description="Title of the axes.")
-    x: Axis | None = Field(None, description="X-axis settings.")
-    y: Axis | None = Field(None, description="Y-axis settings.")
+    x: Axis = Field(default_factory=Axis, description="X-axis settings.")
+    y: Axis = Field(default_factory=Axis, description="Y-axis settings.")
 
     def scatter(
         self,
         x: Sequence[float],
         y: Sequence[float],
+        *,
+        symbol: str = "o",
+        size: float | None = None,
         **kwargs,
     ) -> _m.Scatter:
         """Add a scatter plot model to the axes."""
-        model = _m.Scatter(x=x, y=y, **kwargs)
+        model = _m.Scatter(
+            x=x, y=y, symbol=symbol, size=size, **parse_face_edge(kwargs)
+        )
         self.models.append(model)
         return model
 
     def plot(self, x: Sequence[float], y: Sequence[float], **kwargs) -> _m.Line:
         """Add a line plot model to the axes."""
-        model = _m.Line(x=x, y=y, **kwargs)
+        model = _m.Line(x=x, y=y, **parse_edge(kwargs))
         self.models.append(model)
         return model
 
-    def bar(self, x: Sequence[float], y: Sequence[float], **kwargs) -> _m.Bar:
+    def bar(
+        self,
+        x: Sequence[float],
+        y: Sequence[float],
+        *,
+        bottom: "float | Sequence[float] | NDArray[np.number]" = 0,
+        bar_width: float | None = None,
+        orient: Literal["vertical", "horizontal"] = "vertical",
+        **kwargs,
+    ) -> _m.Bar:
         """Add a bar plot model to the axes."""
-        model = _m.Bar(x=x, y=y, **kwargs)
+        model = _m.Bar(
+            x=x, y=y, bottom=bottom, bar_width=bar_width, orient=orient,
+            **parse_face_edge(kwargs),
+        )  # fmt: skip
         self.models.append(model)
         return model
 
-    def errorbar(self, x: Sequence[float], y: Sequence[float], **kwargs) -> _m.ErrorBar:
+    def errorbar(
+        self,
+        x: Sequence[float],
+        y: Sequence[float],
+        *,
+        x_error: "float | Sequence[float] | NDArray[np.number] | None" = None,
+        y_error: "float | Sequence[float] | NDArray[np.number] | None" = None,
+        capsize: float | None = None,
+        **kwargs,
+    ) -> _m.ErrorBar:
         """Add an error bar plot model to the axes."""
-        model = _m.ErrorBar(x=x, y=y, **kwargs)
+        model = _m.ErrorBar(
+            x=x,
+            y=y,
+            x_error=x_error,
+            y_error=y_error,
+            capsize=capsize,
+            **parse_edge(kwargs),
+        )
         self.models.append(model)
         return model
 
-    def hist(self, data: Sequence[float], **kwargs) -> _m.Histogram:
+    def hist(
+        self,
+        data: "Sequence[float] | NDArray[np.number]",
+        *,
+        bins: int = 10,
+        range: tuple[float, float] | None = None,
+        orient: Literal["vertical", "horizontal"] = "vertical",
+        **kwargs,
+    ) -> _m.Histogram:
         """Add a histogram plot model to the axes."""
-        model = _m.Histogram(data=data, **kwargs)
+        model = _m.Histogram(
+            data=data, bins=bins, range=range, orient=orient, **parse_face_edge(kwargs)
+        )
         self.models.append(model)
         return model
 

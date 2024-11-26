@@ -8,7 +8,7 @@ from qtpy.QtCore import Qt
 
 from himena.consts import StandardType
 from himena.types import WidgetDataModel
-from himena.model_meta import TableMeta
+from himena.model_meta import DataFrameMeta, TableMeta
 from himena.builtins.qt.widgets._table_base import (
     QTableBase,
     QSelectionRangeEdit,
@@ -120,7 +120,7 @@ class QDataFrameView(QTableBase):
             value=self.model().df.unwrap(),
             type=self.model_type(),
             extension_default=".csv",
-            additional_data=self._prep_table_meta(),
+            additional_data=self._prep_table_meta(cls=DataFrameMeta),
         )
 
     @protocol_override

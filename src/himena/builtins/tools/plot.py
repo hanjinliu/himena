@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from himena.qt._magicgui._face_edge import FacePropertyDict, EdgePropertyDict
 
 _TABLE_LIKE = [StandardType.TABLE, StandardType.DATAFRAME, StandardType.EXCEL]
-_MENU = "tools/plot"
+_MENU = ["tools/plot", "/model_menu/plot"]
 
 
 @register_function(
@@ -162,7 +162,7 @@ def errorbar_plot(win: SubWindow) -> Parametric:
 @register_function(
     title="Edit plot ...",
     types=[StandardType.PLOT],
-    menus=_MENU,
+    menus="tools/plot",
     command_id="builtins:edit-plot",
 )
 def edit_plot(win: SubWindow) -> Parametric:

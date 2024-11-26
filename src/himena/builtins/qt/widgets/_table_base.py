@@ -124,7 +124,7 @@ class QTableBase(QtW.QTableView):
             else:
                 fd.move(self.width() - fd.width() - 3, 5)
 
-    def _prep_table_meta(self) -> TableMeta:
+    def _prep_table_meta(self, cls=TableMeta) -> TableMeta:
         qselections = self.selectionModel().selection()
         selections = []
         for qselection in qselections:
@@ -132,7 +132,7 @@ class QTableBase(QtW.QTableView):
             c = qselection.left(), qselection.right() + 1
             selections.append((r, c))
         index = self.currentIndex()
-        return TableMeta(
+        return cls(
             current_position=(index.row(), index.column()),
             selections=selections,
         )

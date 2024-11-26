@@ -117,15 +117,16 @@ class QSubWindowArea(QtW.QMdiArea):
 
     def eventFilter(self, obj, a0: QtCore.QEvent) -> bool:
         if a0.type() == QtCore.QEvent.Type.FocusIn:
-            if obj is not self:
-                if isinstance(obj, QtW.QStyle):
-                    return False
+            with suppress(RuntimeError):
+                if obj is not self:
+                    if isinstance(obj, QtW.QStyle):
+                        return False
+                    else:
+                        if win := self.currentSubWindow():
+                            self.subWindowActivated.emit(win)
                 else:
-                    if win := self.currentSubWindow():
-                        self.subWindowActivated.emit(win)
-            else:
-                self.area_focused.emit()
-                _LOGGER.debug("TabArea focused.")
+                    self.area_focused.emit()
+                    _LOGGER.debug("TabArea focused.")
         return super().eventFilter(obj, a0)
 
     def hideEvent(self, a0: QtGui.QHideEvent | None) -> None:

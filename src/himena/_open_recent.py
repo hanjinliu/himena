@@ -19,6 +19,8 @@ _LOGGER = getLogger(__name__)
 
 
 class OpenRecentFunction:
+    """Function that open a recent file using the specified plugin."""
+
     def __init__(self, file: _PathInput, plugin: str | None = None):
         self._file = file
         self._plugin = plugin

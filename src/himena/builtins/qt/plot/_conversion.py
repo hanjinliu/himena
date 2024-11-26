@@ -30,6 +30,8 @@ def register_plot_model(
     model_class: type[models.BasePlotModel],
     rule: Callable[[models.BasePlotModel, plt.Axes], None] | None = None,
 ):
+    """Register a matplotlib-specific conversion rule for a plot model."""
+
     def inner(f):
         _CONVERSION_RULES[model_class] = f
         return f
@@ -46,35 +48,35 @@ def _convert_plot_model(model: models.BasePlotModel, ax: plt.Axes):
 @register_plot_model(models.Scatter)
 def _(model: models.Scatter, ax: plt.Axes):
     ax.scatter(
-        model.x, model.y, s=model.size ** 2, c=Color(model.color).hex,
-        marker=model.symbol, linewidths=model.edge_width,
-        edgecolors=model.edge_color, label=model.name,
+        model.x, model.y, s=model.size ** 2, c=Color(model.face.color).hex,
+        marker=model.symbol, linewidths=model.edge.width, hatch=model.face.hatch,
+        edgecolors=model.edge.color, edgestyle=model.edge.style, label=model.name,
     )  # fmt: skip
 
 
 @register_plot_model(models.Line)
 def _(model: models.Line, ax: plt.Axes):
     ax.plot(
-        model.x, model.y, color=model.color, linewidth=model.width,
-        linestyle=model.style, label=model.name,
+        model.x, model.y, color=model.edge.color, linewidth=model.edge.width,
+        linestyle=model.edge.style, label=model.name,
     )  # fmt: skip
 
 
 @register_plot_model(models.Bar)
 def _(model: models.Bar, ax: plt.Axes):
     ax.bar(
-        model.x, model.y, color=model.color, hatch=model.hatch, bottom=model.bottom,
-        width=model.bar_width, edgecolor=model.edge_color, label=model.name,
-        linewidth=model.edge_width, linestyle=model.edge_style,
+        model.x, model.y, color=model.face.color, hatch=model.face.hatch,
+        bottom=model.bottom, width=model.bar_width, edgecolor=model.edge.color,
+        label=model.name, linewidth=model.edge.width, linestyle=model.edge.style,
     )  # fmt: skip
 
 
 @register_plot_model(models.Histogram)
 def _(model: models.Histogram, ax: plt.Axes):
     ax.hist(
-        model.data, bins=model.bins, color=model.color, range=model.range,
-        orientation=model.orient, hatch=model.hatch, edgecolor=model.edge_color,
-        linewidth=model.edge_width, linestyle=model.edge_style, label=model.name,
+        model.data, bins=model.bins, range=model.range, color=model.face.color,
+        hatch=model.face.hatch, orientation=model.orient, edgecolor=model.edge.color,
+        linewidth=model.edge.width, linestyle=model.edge.style, label=model.name,
     )  # fmt: skip
 
 
@@ -82,8 +84,8 @@ def _(model: models.Histogram, ax: plt.Axes):
 def _(model: models.ErrorBar, ax: plt.Axes):
     ax.errorbar(
         model.x, model.y, xerr=model.x_error, yerr=model.y_error,
-        capsize=model.capsize, color=model.color, linewidth=model.width,
-        linestyle=model.style, label=model.name,
+        capsize=model.capsize, color=model.edge.color, linewidth=model.edge.width,
+        linestyle=model.edge.style, label=model.name,
     )  # fmt: skip
 
 

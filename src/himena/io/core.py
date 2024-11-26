@@ -79,6 +79,10 @@ class ReaderProviderStore(ProviderStore[ReaderProviderTuple]):
         plugin: str | None = None,
         min_priority: int = 0,
     ) -> ReaderTuple:
+        """Pick a reader that match the inputs."""
+        if plugin is not None:
+            # if plugin is given, force to use it
+            min_priority = -float("inf")
         return _pick_from_list(self.get(path, min_priority=min_priority), plugin)
 
     def run(
@@ -130,6 +134,10 @@ class WriterProviderStore(ProviderStore[WriterProviderTuple]):
         plugin: str | None = None,
         min_priority: int = 0,
     ) -> WriterTuple:
+        """Pick a writer that match the inputs to write the model."""
+        if plugin is not None:
+            # if plugin is given, force to use it
+            min_priority = -float("inf")
         return _pick_from_list(self.get(model, min_priority=min_priority), plugin)
 
     def run(

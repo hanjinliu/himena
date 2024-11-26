@@ -45,8 +45,10 @@ def read_csv(mod: str, file) -> Any:
 
         with open(file) as f:
             return _csv_to_dict(f)
-    if mod in ("pandas", "polars"):
+    if mod == "pandas":
         return importlib.import_module(mod).read_csv(file, header=0)
+    elif mod == "polars":
+        return importlib.import_module(mod).read_csv(file, has_header=True)
     elif mod == "pyarrow":
         if isinstance(file, io.StringIO):
             # pyarrow does not support StringIO

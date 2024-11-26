@@ -100,6 +100,7 @@ def table_to_dataframe(model: WidgetDataModel["np.ndarray"]) -> Parametric[str]:
     def convert_table_to_dataframe(module) -> WidgetDataModel[str]:
         buf = StringIO()
         np.savetxt(buf, model.value, fmt="%s", delimiter=",")
+        buf.seek(0)
         df = read_csv(module, buf)
         return WidgetDataModel(
             value=df,

@@ -12,7 +12,7 @@ from himena.plotting import layout
 from himena.builtins.qt.plot._conversion import convert_plot_layout
 
 
-class QMatplotlibCanvas(QtW.QWidget):
+class QMatplotlibCanvasBase(QtW.QWidget):
     def __init__(self):
         super().__init__()
         layout = QtW.QVBoxLayout(self)
@@ -26,20 +26,61 @@ class QMatplotlibCanvas(QtW.QWidget):
         return self._canvas.figure
 
     @protocol_override
+    def control_widget(self) -> QtW.QWidget:
+        return self._toolbar
+
+    @protocol_override
+    def size_hint(self) -> tuple[int, int]:
+        return 400, 300
+
+    def _prep_toolbar(self):
+        toolbar = backend_qtagg.NavigationToolbar2QT(self._canvas, self)
+        spacer = QtW.QWidget()
+        spacer.setSizePolicy(
+            QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Preferred
+        )
+        toolbar.insertWidget(toolbar.actions()[0], spacer)
+        return toolbar
+
+
+class QMatplotlibCanvas(QMatplotlibCanvasBase):
+    @protocol_override
     def update_model(self, model: WidgetDataModel):
         was_none = self._canvas is None
         if was_none:
-            if isinstance(model.value, Figure):
-                self._canvas = FigureCanvasQTAgg(model.value)
-            else:
-                self._canvas = FigureCanvasQTAgg()
+            self._canvas = FigureCanvasQTAgg(model.value)
             self.layout().addWidget(self._canvas)
             self._toolbar = self._prep_toolbar()
         if isinstance(model.value, Figure):
             if not was_none:
                 raise ValueError("Figure is already set")
-            del self.to_model
-        elif isinstance(model.value, layout.BaseLayoutModel):
+        else:
+            raise ValueError(f"Unsupported model: {model.value}")
+        if was_none:
+            self._toolbar.pan()
+
+    @protocol_override
+    def to_model(self) -> WidgetDataModel:
+        return WidgetDataModel(
+            value=self.figure,
+            type=self.model_type(),
+            title="Plot",
+        )
+
+    @protocol_override
+    def model_type(self) -> str:
+        return StandardType.MPL_FIGURE
+
+
+class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
+    @protocol_override
+    def update_model(self, model: WidgetDataModel):
+        was_none = self._canvas is None
+        if was_none:
+            self._canvas = FigureCanvasQTAgg()
+            self.layout().addWidget(self._canvas)
+            self._toolbar = self._prep_toolbar()
+        if isinstance(model.value, layout.BaseLayoutModel):
             convert_plot_layout(model.value, self.figure)
             self._canvas.draw()
             self._plot_models = model.value
@@ -50,27 +91,15 @@ class QMatplotlibCanvas(QtW.QWidget):
 
     @protocol_override
     def to_model(self) -> WidgetDataModel:
-        if self._plot_models is not None:
-            return WidgetDataModel(
-                value=self._plot_models,
-                type=StandardType.PLOT,
-                title="Plot",
-            )
-        return None
+        return WidgetDataModel(
+            value=self.figure,
+            type=self.model_type(),
+            title="Plot",
+        )
 
     @protocol_override
     def model_type(self) -> str:
-        if self._plot_models is None and self._canvas is not None:
-            return "matplotlib-figure"
         return StandardType.PLOT
-
-    @protocol_override
-    def control_widget(self) -> QtW.QWidget:
-        return self._toolbar
-
-    @protocol_override
-    def size_hint(self) -> tuple[int, int]:
-        return 400, 300
 
     @protocol_override
     def merge_model(self, model: WidgetDataModel):
@@ -86,15 +115,6 @@ class QMatplotlibCanvas(QtW.QWidget):
     @protocol_override
     def mergeable_model_types(self) -> list[str]:
         return [StandardType.PLOT]
-
-    def _prep_toolbar(self):
-        toolbar = backend_qtagg.NavigationToolbar2QT(self._canvas, self)
-        spacer = QtW.QWidget()
-        spacer.setSizePolicy(
-            QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Preferred
-        )
-        toolbar.insertWidget(toolbar.actions()[0], spacer)
-        return toolbar
 
 
 class FigureCanvasQTAgg(backend_qtagg.FigureCanvasQTAgg):
@@ -121,7 +141,7 @@ def show(close=True, block=None):
         for figure_manager in Gcf.get_all_fig_managers():
             ui.add_data(
                 figure_manager.canvas.figure,
-                type=StandardType.PLOT,
+                type=StandardType.MPL_FIGURE,
                 title="Plot",
             )
     finally:

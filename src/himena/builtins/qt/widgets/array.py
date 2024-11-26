@@ -222,6 +222,8 @@ class QDefaultArrayView(QtW.QWidget):
             return
         sl = self._get_slice()
         arr = self._arr.get_slice(sl)
+        if arr.ndim < 2:
+            arr = arr.reshape(-1, 1)
         self._table.set_array(arr, sl)
 
     def _get_slice(self) -> tuple[int, ...]:
@@ -240,7 +242,7 @@ class QDefaultArrayView(QtW.QWidget):
         self._arr = arr
         self.update_spinbox_for_shape(arr.shape)
         if arr.ndim < 2:
-            self._table.setModel(QArrayModel(np.atleast_2d(arr.get_slice(()))))
+            self._table.setModel(QArrayModel(arr.get_slice(()).reshape(-1, 1)))
         else:
             sl = self._get_slice()
             self._table.setModel(QArrayModel(arr.get_slice(sl)))

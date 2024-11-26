@@ -8,6 +8,38 @@ class BasePlotModel(BaseModel):
     name: str | None = Field(None, description="Name of the plot.")
 
 
+class Face(BaseModel):
+    color: Any | None = Field(None, description="Color of the face.")
+    hatch: Any | None = Field(None, description="Hatch pattern of the face.")
+
+
+class Edge(BaseModel):
+    color: Any | None = Field(None, description="Color of the edge.")
+    width: float | None = Field(None, description="Width of the edge.")
+    style: Any | None = Field(None, description="Style of the edge.")
+
+
+def parse_edge(kwargs: dict[str, Any]) -> dict:
+    color = kwargs.pop("color", kwargs.pop("edge_color", None))
+    width = kwargs.pop("width", kwargs.pop("edge_width", None))
+    style = kwargs.pop("style", kwargs.pop("edge_style", None))
+    name = kwargs.pop("name", None)
+    if kwargs:
+        raise ValueError(f"Extra keyword arguments: {list(kwargs.keys())!r}")
+    edge = Edge(color=color, width=width, style=style)
+    return {"edge": edge, "name": name}
+
+
+def parse_face_edge(kwargs: dict[str, Any]) -> dict:
+    color = kwargs.pop("color", kwargs.pop("face_color", None))
+    hatch = kwargs.pop("hatch", kwargs.pop("face_hatch", None))
+    kwargs = parse_edge(kwargs)
+    if kwargs.get("color") is None:
+        kwargs["color"] = color
+    face = Face(color=color, hatch=hatch)
+    return {"face": face, **kwargs}
+
+
 class Scatter(BasePlotModel):
     """Plot model for scatter plot."""
 
@@ -15,19 +47,18 @@ class Scatter(BasePlotModel):
     y: Any = Field(..., description="Y-axis values.")
     symbol: Any | None = Field(None, description="Symbol of the markers.")
     size: Any | None = Field(None, description="Size of the markers.")
-    color: Any | None = Field(None, description="Color of the markers.")
-    hatch: Any | None = Field(None, description="Hatch pattern of the markers.")
-    edge_color: Any | None = Field(None, description="Edge color of the markers.")
-    edge_width: float | None = Field(None, description="Edge width of the markers.")
-    edge_style: Any | None = Field(None, description="Edge style of the markers.")
+    face: Face = Field(
+        default_factory=Face, description="Properties of the marker faces."
+    )
+    edge: Edge = Field(
+        default_factory=Edge, description="Properties of the marker edges."
+    )
 
 
 class Line(BasePlotModel):
     x: Any = Field(..., description="X-axis values.")
     y: Any = Field(..., description="Y-axis values.")
-    color: Any | None = Field(None, description="Color of the line.")
-    width: float | None = Field(None, description="Width of the line.")
-    style: Any | None = Field(None, description="Style of the line.")
+    edge: Edge = Field(default_factory=Edge, description="Properties of the line.")
     marker: Scatter | None = Field(None, description="Marker of the line.")
 
 
@@ -39,11 +70,8 @@ class Bar(BasePlotModel):
     orient: Literal["vertical", "horizontal"] = Field(
         "vertical", description="Orientation of the bar plots."
     )
-    color: Any | None = Field(None, description="Color of the bars.")
-    hatch: Any | None = Field(None, description="Hatch pattern of the bars.")
-    edge_color: Any | None = Field(None, description="Edge color of the bars.")
-    edge_width: float | None = Field(None, description="Edge width of the bars.")
-    edge_style: Any | None = Field(None, description="Edge style of the bars.")
+    face: Face = Field(default_factory=Face, description="Properties of the bars.")
+    edge: Edge = Field(default_factory=Edge, description="Properties of the bars.")
 
 
 class ErrorBar(BasePlotModel):
@@ -52,9 +80,20 @@ class ErrorBar(BasePlotModel):
     x_error: Any | None = Field(None, description="X-axis error values.")
     y_error: Any | None = Field(None, description="Y-axis error values.")
     capsize: float | None = Field(None, description="Cap size of the error bars.")
-    color: Any | None = Field(None, description="Edge color of the error bars.")
-    width: float | None = Field(None, description="Edge width of the error bars.")
-    style: Any | None = Field(None, description="Edge style of the error bars.")
+    edge: Edge = Field(
+        default_factory=Edge, description="Properties of the error bars."
+    )
+
+
+class Band(BasePlotModel):
+    x: Any = Field(..., description="X-axis values.")
+    y0: Any = Field(..., description="Y-axis values of the lower bound.")
+    y1: Any = Field(..., description="Y-axis values of the upper bound.")
+    orient: Literal["vertical", "horizontal"] = Field(
+        "vertical", description="Orientation of the band fill."
+    )
+    face: Face = Field(default_factory=Face, description="Properties of the band fill.")
+    edge: Edge = Field(default_factory=Edge, description="Properties of the band fill.")
 
 
 class Histogram(BasePlotModel):
@@ -66,8 +105,9 @@ class Histogram(BasePlotModel):
     orient: Literal["vertical", "horizontal"] = Field(
         "vertical", description="Orientation of the histogram."
     )
-    color: Any | None = Field(None, description="Color of the histogram.")
-    hatch: Any | None = Field(None, description="Hatch pattern of the histogram.")
-    edge_color: Any | None = Field(None, description="Edge color of the histogram.")
-    edge_width: float | None = Field(None, description="Edge width of the histogram.")
-    edge_style: Any | None = Field(None, description="Edge style of the histogram.")
+    face: Face = Field(
+        default_factory=Face, description="Properties of the histogram face."
+    )
+    edge: Edge = Field(
+        default_factory=Edge, description="Properties of the histogram edge."
+    )

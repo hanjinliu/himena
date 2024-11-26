@@ -41,6 +41,7 @@ ALLOWED_LETTERS = string.ascii_letters + string.digits + "_- "
 class StandardType(SimpleNamespace):
     """Conventions for standard model types."""
 
+    ### Basic types ###
     TEXT = "text"  # any text
     TABLE = "table"  # 2D data without any special structure
     ARRAY = "array"  # nD grid data such as numpy array
@@ -48,14 +49,26 @@ class StandardType(SimpleNamespace):
     DATAFRAME = "dataframe"  # DataFrame object
     EXCEL = "excel"  # Excel file (~= tabbed tables)
 
-    # subtypes
-    HTML = "text.html"  # HTML text
-    IMAGE = "array.image"  # image data
-    ARRAY_1D = "array.1d"  # 1D array, a special case of "array"
-    COORDINATES = "array.coordinates"  # (N, D) array, such as D-dimensional point cloud
+    ### Subtypes ###
+    # HTML text
+    HTML = "text.html"
+    # SVG text
+    SVG = "text.svg"
+    # image data
+    IMAGE = "array.image"
+    # 1D numerical array
+    ARRAY_1D = "array.1d"
+    # (N, D) numerical array, such as D-dimensional point cloud
+    COORDINATES = "array.coordinates"
 
-    # plotting
+    ### plotting ###
     PLOT = "plot"  # objects that plot standard
+    MPL_FIGURE = "matplotlib-figure"  # matplotlib figure object
+
+    ### 3D ###
+    SURFACE = "surface"  # vertices, faces and values for 3D surface plot
+
+    IPYNB = "ipynb"  # Jupyter notebook file
 
     # fallback when no reader is found for the file (which means that the file could be
     # opened as a text file)
