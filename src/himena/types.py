@@ -89,8 +89,9 @@ class WidgetDataModel(GenericModel[_T]):
         without specifying the file extension.
     extensions : list[str], optional
         List of allowed file extensions to save this data.
-    additional_data : Any, optional
-        Additional data that may be used for specific widgets.
+    metadata : Any, optional
+        Metadata that may be used for storing additional information of the internal
+        data or describing the state of the widget.
     method : MethodDescriptor, optional
         Method descriptor.
     force_open_with : str, optional
@@ -111,9 +112,10 @@ class WidgetDataModel(GenericModel[_T]):
         default_factory=list,
         description="List of allowed file extensions.",
     )
-    additional_data: object | None = Field(
+    metadata: object | None = Field(
         default=None,
-        description="Additional data that may be used for specific widgets.",
+        description="Metadata that may be used for storing additional information of "
+        "the internal data or describing the state of the widget.",
     )  # fmt: skip
     method: MethodDescriptor | None = Field(
         default=None,
@@ -129,14 +131,14 @@ class WidgetDataModel(GenericModel[_T]):
         value: _U,
         type: str | None = None,
         *,
-        additional_data: object | None = _void,
+        metadata: object | None = _void,
     ) -> "WidgetDataModel[_U]":
         """Return a model with the new value."""
         update = {"value": value}
         if type is not None:
             update["type"] = type
-        if additional_data is not _void:
-            update["additional_data"] = additional_data
+        if metadata is not _void:
+            update["metadata"] = metadata
         update.update(
             method=None,
             force_open_with=None,
@@ -395,14 +397,6 @@ class Parametric(Generic[_T]):
     def get_signature(self) -> inspect.Signature:
         self.__signature__ = inspect.signature(self._func)
         return self.__signature__
-
-
-class ParametricWidgetTuple(NamedTuple):
-    """Used for a return annotation to add a custom parametric widget."""
-
-    widget: Any
-    callback: Callable[..., Any]
-    title: str | None = None
 
 
 class BackendInstructions(BaseModel):

@@ -146,3 +146,54 @@ def test_float_list_line_edit(qtbot: QtBot):
     qtbot.keyClick(line, Qt.Key.Key_Comma)
     qtbot.keyClick(line, Qt.Key.Key_Comma)
     assert line.text() == "1,2, 3,"
+
+def test_int_line_edit_range(qtbot: QtBot):
+    from himena.qt._qlineedit import QIntLineEdit
+
+    line = QIntLineEdit()
+    qtbot.addWidget(line)
+    line.setMinimum(10)
+    line.setMaximum(100)
+    line.setText("10")
+    assert line.text() == "10"
+    line.stepUp()
+    assert line.text() == "11"
+    line.stepDown()
+    assert line.text() == "10"
+    line.stepDown()
+    assert line.text() == "10"
+    # check upper limit
+    line.setText("100")
+    line.stepDown()
+    assert line.text() == "99"
+    line.stepUp()
+    assert line.text() == "100"
+    line.stepUp()
+    assert line.text() == "100"
+
+def test_float_line_edit_range(qtbot: QtBot):
+    from himena.qt._qlineedit import QDoubleLineEdit
+
+    line = QDoubleLineEdit()
+    qtbot.addWidget(line)
+
+    line = QDoubleLineEdit()
+    qtbot.addWidget(line)
+    line.setMinimum(0.0)
+    line.setMaximum(1.0)
+    line.setText("0.0")
+    assert line.text() == "0.0"
+    line.stepUp()
+    assert line.text() == "0.1"
+    line.stepDown()
+    assert line.text() == "0.0"
+    line.stepDown()
+    assert line.text() == "0.0"
+    # check upper limit
+    line.setText("1.0")
+    line.stepDown()
+    assert line.text() == "0.9"
+    line.stepUp()
+    assert line.text() == "1.0"
+    line.stepUp()
+    assert line.text() == "1.0"

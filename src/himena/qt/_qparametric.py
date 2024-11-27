@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Any
 
 from qtpy import QtWidgets as QtW, QtCore
-from himena.consts import StandardType
+from himena.consts import StandardType, ParametricWidgetProtocolNames as PWPN
 from himena.types import WidgetDataModel
 
 
@@ -16,11 +16,11 @@ class QParametricWidget(QtW.QWidget):
         layout = QtW.QVBoxLayout(self)
         layout.addWidget(central)
         layout.addWidget(self._call_btn)
-        if hasattr(central, "connect_changed_signal"):
-            self._central_widget.connect_changed_signal(self._on_param_changed)
+        if connector := getattr(central, PWPN.CONNECT_CHANGED_SIGNAL, None):
+            connector(self._on_param_changed)
 
     def get_params(self) -> dict[str, Any]:
-        return self._central_widget.get_params()
+        return getattr(self._central_widget, PWPN.GET_PARAMS)()
 
     def to_model(self) -> WidgetDataModel[dict[str, Any]]:
         params = self.get_params()
@@ -33,6 +33,6 @@ class QParametricWidget(QtW.QWidget):
         self.param_changed.emit()
 
     def is_preview_enabled(self) -> bool:
-        if hasattr(self._central_widget, "connect_changed_signal"):
-            return self._central_widget.is_preview_enabled()
+        if isfunc := getattr(self._central_widget, PWPN.IS_PREVIEW_ENABLED, None):
+            return isfunc()
         return False

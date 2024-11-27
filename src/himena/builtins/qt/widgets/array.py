@@ -263,7 +263,7 @@ class QDefaultArrayView(QtW.QWidget):
             value=self._arr.arr,
             type=self.model_type(),
             extension_default=".npy",
-            additional_data=ArrayMeta(
+            metadata=ArrayMeta(
                 current_indices=self._get_slice(),
             ),
         )

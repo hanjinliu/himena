@@ -77,7 +77,7 @@ def table_to_text(model: WidgetDataModel) -> Parametric[str]:
             type=StandardType.TEXT,
             title=model.title,
             extension_default=ext_default,
-            additional_data=TextMeta(language=language),
+            metadata=TextMeta(language=language),
         )
 
     return convert_table_to_text

@@ -280,7 +280,7 @@ def test_register_folder(ui: MainWindow, sample_dir: Path):
         return WidgetDataModel(
             value=code.read_text(),
             type="text.with-meta",
-            additional_data=meta,
+            metadata=meta,
         )
 
     @register_reader_provider

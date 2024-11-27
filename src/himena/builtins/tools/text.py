@@ -38,8 +38,8 @@ def filter_text(model: WidgetDataModel[str]) -> Parametric[str]:
             for line in model.value.splitlines()
             if _include(line) and not _exclude(line)
         )
-        if isinstance(model.additional_data, TextMeta):
-            meta = model.additional_data.model_copy(update={"selection": None})
+        if isinstance(model.metadata, TextMeta):
+            meta = model.metadata.model_copy(update={"selection": None})
         else:
             meta = TextMeta()
         return WidgetDataModel(
@@ -47,7 +47,7 @@ def filter_text(model: WidgetDataModel[str]) -> Parametric[str]:
             type=model.type,
             title=f"{model.title} (filtered)",
             extensions=model.extensions,
-            additional_data=meta,
+            metadata=meta,
         )
 
     return filter_text_data
@@ -63,7 +63,7 @@ def format_json(model: WidgetDataModel) -> Parametric:
     """Format JSON."""
 
     def format_json_data(indent: int = 2) -> WidgetDataModel[str]:
-        if not isinstance(meta := model.additional_data, TextMeta):
+        if not isinstance(meta := model.metadata, TextMeta):
             meta = TextMeta()
         return WidgetDataModel(
             value=json.dumps(json.loads(model.value), indent=indent),
@@ -71,7 +71,7 @@ def format_json(model: WidgetDataModel) -> Parametric:
             title=f"{model.title} (formatted)",
             extension_default=".json",
             extensions=model.extensions,
-            additional_data=TextMeta(
+            metadata=TextMeta(
                 language="JSON",
                 spaces=indent,
                 selection=meta.selection,
@@ -92,11 +92,11 @@ def format_json(model: WidgetDataModel) -> Parametric:
 def run_script(model: WidgetDataModel[str]):
     """Run a Python script."""
     script = model.value
-    if isinstance(model.additional_data, TextMeta):
-        if model.additional_data.language.lower() == "python":
+    if isinstance(model.metadata, TextMeta):
+        if model.metadata.language.lower() == "python":
             exec(script)
         else:
-            raise ValueError(f"Cannot run {model.additional_data.language}.")
+            raise ValueError(f"Cannot run {model.metadata.language}.")
     else:
         raise ValueError("Unknown language.")
     return None
@@ -193,7 +193,7 @@ def change_separator(model: WidgetDataModel[str]) -> Parametric:
             type=model.type,
             title=_utils.add_title_suffix(model.title),
             extensions=model.extensions,
-            additional_data=model.additional_data,
+            metadata=model.metadata,
         )
 
     return change_separator_data

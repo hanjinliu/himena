@@ -318,14 +318,21 @@ class MainWindow(Generic[_W]):
     def add_parametric_widget(
         self,
         widget: _W,
-        callback: Callable,
+        callback: Callable | None = None,
         *,
         title: str | None = None,
+        preview: bool = False,
         auto_close: bool = True,
+        auto_size: bool = True,
     ) -> ParametricWindow[_W]:
         _, area = self._current_or_new_tab()
         return area.add_parametric_widget(
-            widget, callback, title=title, auto_close=auto_close
+            widget,
+            callback,
+            title=title,
+            preview=preview,
+            auto_close=auto_close,
+            auto_size=auto_size,
         )
 
     def read_file(

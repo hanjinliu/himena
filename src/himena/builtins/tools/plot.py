@@ -182,7 +182,7 @@ def _range_getter(win: SubWindow):
     types = [StandardType.TABLE, StandardType.DATAFRAME, StandardType.EXCEL]
     if model.type not in types:
         raise ValueError(f"Cannot plot model of type {model.type!r}")
-    if not isinstance(meta := model.additional_data, TableMeta):
+    if not isinstance(meta := model.metadata, TableMeta):
         raise ValueError("Excel must have TableMeta as the additional data.")
 
     if len(meta.selections) == 0:
@@ -225,7 +225,7 @@ def _get_xy_data(
             axes.x.label = column_names_x[0]
         axes.y.label = df.column_names()[y[0].start]
     elif model.type == StandardType.EXCEL:
-        if not isinstance(meta := model.additional_data, ExcelMeta):
+        if not isinstance(meta := model.metadata, ExcelMeta):
             raise ValueError("Must be a ExcelMeta")
         table = model.value[meta.current_sheet]
         xarr, yarrs = _table_to_xy_data(table, x, y, axes)

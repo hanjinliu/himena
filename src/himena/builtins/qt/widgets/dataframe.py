@@ -97,7 +97,7 @@ class QDataFrameView(QTableBase):
         self.setModel(QDataFrameModel(wrap_dataframe(model.value)))
         self.setSelectionModel(QtCore.QItemSelectionModel(self.model()))
 
-        if isinstance(meta := model.additional_data, TableMeta):
+        if isinstance(meta := model.metadata, TableMeta):
             if (pos := meta.current_position) is not None:
                 index = self.model().index(*pos)
                 self.setCurrentIndex(index)
@@ -120,7 +120,7 @@ class QDataFrameView(QTableBase):
             value=self.model().df.unwrap(),
             type=self.model_type(),
             extension_default=".csv",
-            additional_data=self._prep_table_meta(cls=DataFrameMeta),
+            metadata=self._prep_table_meta(cls=DataFrameMeta),
         )
 
     @protocol_override

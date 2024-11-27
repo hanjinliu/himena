@@ -147,7 +147,7 @@ class QDefaultImageView(QtW.QWidget):
             value=self._arr.arr,
             type=self.model_type(),
             extension_default=".png",
-            additional_data=ImageMeta(
+            metadata=ImageMeta(
                 current_indices=current_slices,
                 interpolation=interp,
                 contrast_limits=clim,

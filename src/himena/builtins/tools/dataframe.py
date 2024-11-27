@@ -52,7 +52,7 @@ def dataframe_to_text(model: WidgetDataModel) -> Parametric:
             title=model.title,
             type=StandardType.TEXT,
             extension_default=ext_default,
-            additional_data=TextMeta(language=language),
+            metadata=TextMeta(language=language),
         )
 
     return convert_table_to_text
@@ -81,7 +81,7 @@ def dataframe_to_text(model: WidgetDataModel) -> Parametric:
     command_id="builtins:series-as-array",
 )
 def series_as_array(model: WidgetDataModel) -> WidgetDataModel:
-    if not isinstance(meta := model.additional_data, TableMeta):
+    if not isinstance(meta := model.metadata, TableMeta):
         raise TypeError(
             "Widget does not have DataFrameMeta thus cannot determine the slice indices."
         )

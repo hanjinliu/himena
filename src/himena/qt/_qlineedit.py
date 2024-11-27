@@ -1,5 +1,6 @@
 from __future__ import annotations
 import operator
+import math
 from decimal import Decimal
 
 from qtpy import QtWidgets as QtW, QtGui
@@ -106,6 +107,21 @@ class QValuedLineEdit(QtW.QLineEdit):
         else:
             return super().keyPressEvent(a0)
 
+    def minimum(self):
+        return self.validator().bottom()
+
+    def setMinimum(self, min_):
+        self.validator().setBottom(min_)
+
+    def maximum(self):
+        return self.validator().top()
+
+    def setMaximum(self, max_):
+        self.validator().setTop(max_)
+
+    def validator(self) -> QIntOrNoneValidator | QDoubleOrNoneValidator:
+        return super().validator()
+
 
 class QIntLineEdit(QValuedLineEdit):
     _validator_class = QIntOrNoneValidator
@@ -116,7 +132,7 @@ class QIntLineEdit(QValuedLineEdit):
             return None
         val = int(text)
         diff: int = 100 if large else 1
-        self.setText(str(val + diff))
+        self.setText(str(min(val + diff, self.validator().top())))
 
     def stepDown(self, large: bool = False):
         text = self.text()
@@ -124,7 +140,7 @@ class QIntLineEdit(QValuedLineEdit):
             return None
         val = int(text)
         diff: int = 100 if large else 1
-        self.setText(str(val - diff))
+        self.setText(str(max(val - diff, self.validator().bottom())))
 
 
 class QDoubleLineEdit(QValuedLineEdit):
@@ -143,17 +159,27 @@ class QDoubleLineEdit(QValuedLineEdit):
         if "e" in text:
             val_text, exp_text = text.split("e")
             if large:
+                exp_min = math.log10(self.validator().bottom())
+                exp_max = math.log10(self.validator().top())
                 exp_dec = Decimal(exp_text)
                 diff = self._calc_diff(exp_dec, False)
-                self.setText(val_text + "e" + str(op(exp_dec, diff)))
+                exp_ = op(exp_dec, diff)
+                exp_ = max(min(exp_, exp_max), exp_min)
+                self.setText(val_text + "e" + str(exp_))
             else:
+                val_min = self.validator().bottom() / 10 ** int(exp_text)
+                val_max = self.validator().top() / 10 ** int(exp_text)
                 val_dec = Decimal(val_text)
                 diff = self._calc_diff(val_dec, False)
-                self.setText(str(op(val_dec, diff)) + "e" + exp_text)
+                val = op(val_dec, diff)
+                val = max(min(val, val_max), val_min)
+                self.setText(str(val) + "e" + exp_text)
         else:
             dec = Decimal(text)
             diff = self._calc_diff(dec, large)
-            self.setText(str(op(dec, diff)))
+            val = op(dec, diff)
+            val = max(min(val, self.validator().top()), self.validator().bottom())
+            self.setText(str(val))
 
     def _calc_diff(self, dec: Decimal, large: bool):
         exponent = dec.as_tuple().exponent

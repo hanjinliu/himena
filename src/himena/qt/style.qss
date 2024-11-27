@@ -34,31 +34,49 @@ QFrame:!enabled {
 /* QPushButton */
 
 QPushButton {
-  background-color: #[background_dim];
-  color: #[foreground];
-  border-radius: 2px;
-  padding: 4px;
-  border: 0px;
+    background-color: #[background_dim];
+    color: #[foreground];
+    border-radius: 2px;
+    padding: 4px;
+    border: 0px;
 }
 
 QPushButton:hover {
-  background-color: #[highlight_dim];
+    background-color: #[highlight_dim];
 }
 
 QPushButton:pressed {
-  background-color: #[highlight_strong];
+    background-color: #[highlight_strong];
 }
 
 QPushButton:checked {
-  background-color: #[highlight_strong];
+    background-color: #[highlight_strong];
 }
 
 QPushButton:disabled {
-  background-color: #[background];
-  color: #[foreground_dim];
-  border-radius: 2px;
-  padding: 4px;
-  border: 0px;
+    background-color: #[background];
+    color: #[foreground_dim];
+    border-radius: 2px;
+    padding: 4px;
+    border: 0px;
+}
+
+
+QCollapsible > QPushButton {
+    color: #[foreground];
+    background-color: #[background];
+}
+
+QCollapsible > QPushButton:hover {
+    background-color: #[background];
+}
+
+QCollapsible > QPushButton:pressed {
+    background-color: #[background];
+}
+
+QCollapsible > QPushButton:checked {
+    background-color: #[background];
 }
 
 /* ----- QSpinBox ----- */

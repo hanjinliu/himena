@@ -25,7 +25,7 @@ def duplicate_sheet_as_table(
         title=f"{model.title} ({sheet})",
         type=StandardType.TABLE,
         extension_default=".csv",
-        additional_data=TableMeta(
+        metadata=TableMeta(
             current_position=meta.current_position,
             selections=meta.selections,
         ),
@@ -33,7 +33,7 @@ def duplicate_sheet_as_table(
 
 
 def _meta_and_sheet(model: WidgetDataModel) -> tuple[ExcelMeta, str]:
-    if not isinstance(meta := model.additional_data, ExcelMeta):
+    if not isinstance(meta := model.metadata, ExcelMeta):
         raise ValueError("The input model is not an Excel model.")
     if (sheet := meta.current_sheet) is None:
         raise ValueError("The current sheet is not specified.")

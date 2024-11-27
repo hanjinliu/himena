@@ -110,7 +110,7 @@ class QExcelTableStack(QtW.QTabWidget):
             },
             type=self.model_type(),
             extension_default=".xlsx",
-            additional_data=ExcelMeta(
+            metadata=ExcelMeta(
                 current_position=table_meta.current_position,
                 selections=table_meta.selections,
                 current_sheet=self.tabText(index),

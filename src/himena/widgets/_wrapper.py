@@ -12,6 +12,7 @@ import weakref
 from psygnal import Signal
 from himena import anchor as _anchor
 from himena import io
+from himena.consts import ParametricWidgetProtocolNames as PWPN
 from himena.types import (
     BackendInstructions,
     Parametric,
@@ -422,7 +423,7 @@ class SubWindow(WidgetWrapper[_W]):
 class ParametricWindow(SubWindow[_W]):
     """Subwindow with a parametric widget inside."""
 
-    _IS_PREVIEWING = "is_previewing"
+    _IS_PREVIEWING = "is_previewing"  # keyword argument used for preview flag
     btn_clicked = Signal(object)  # emit self
     params_changed = Signal(object)  # emit self
 
@@ -445,11 +446,15 @@ class ParametricWindow(SubWindow[_W]):
 
     def get_params(self) -> dict[str, Any]:
         """Get the parameters of the widget."""
-        params = self.widget.get_params()
-        if not isinstance(params, dict):
-            raise TypeError(
-                f"`get_param` of {self.widget!r} must return a dict, got {type(params)}"
-            )
+        if hasattr(self.widget, PWPN.GET_PARAMS):
+            params = getattr(self.widget, PWPN.GET_PARAMS)()
+            if not isinstance(params, dict):
+                raise TypeError(
+                    f"`{PWPN.GET_PARAMS}` of {self.widget!r} must return a dict, got "
+                    f"{type(params)}."
+                )
+        else:
+            params = {}
         return params
 
     def _get_preview_window(self) -> SubWindow[_W] | None:
@@ -541,10 +546,8 @@ class ParametricWindow(SubWindow[_W]):
 
     def is_preview_enabled(self) -> bool:
         """Whether the widget supports preview."""
-        is_preview_enabled_func = getattr(
-            self.widget, "is_preview_enabled", _do_nothing
-        )
-        return callable(is_preview_enabled_func) and is_preview_enabled_func()
+        isfunc = getattr(self.widget, PWPN.IS_PREVIEW_ENABLED, None)
+        return callable(isfunc) and isfunc()
 
     def _emit_btn_clicked(self) -> None:
         return self.btn_clicked.emit(self)

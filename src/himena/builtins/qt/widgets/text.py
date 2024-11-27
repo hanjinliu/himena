@@ -491,10 +491,10 @@ class QDefaultTextEdit(QtW.QWidget):
         self._main_text_edit.setPlainText(model.value)
         lang = None
         spaces = 4
-        if isinstance(model.additional_data, TextMeta):
-            lang = model.additional_data.language
-            spaces = model.additional_data.spaces
-            if sel := model.additional_data.selection:
+        if isinstance(model.metadata, TextMeta):
+            lang = model.metadata.language
+            spaces = model.metadata.spaces
+            if sel := model.metadata.selection:
                 cursor = self._main_text_edit.textCursor()
                 cursor.setPosition(sel[0])
                 cursor.setPosition(sel[1], QtGui.QTextCursor.MoveMode.KeepAnchor)
@@ -518,7 +518,7 @@ class QDefaultTextEdit(QtW.QWidget):
             value=self._main_text_edit.toPlainText(),
             type=self.model_type(),
             extension_default=".txt",
-            additional_data=TextMeta(
+            metadata=TextMeta(
                 language=self._control._language_combobox.currentText(),
                 spaces=int(self._control._tab_spaces_combobox.currentText()),
                 selection=(cursor.selectionStart(), cursor.selectionEnd()),
@@ -600,7 +600,7 @@ class QDefaultHTMLEdit(QtW.QWidget):
             value=self._main_text_edit.toHtml(),
             type=self.model_type(),
             extension_default=".html",
-            additional_data=TextMeta(
+            metadata=TextMeta(
                 language="HTML",
                 selection=(cursor.selectionStart(), cursor.selectionEnd()),
                 font_family=font.family(),

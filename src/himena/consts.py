@@ -118,4 +118,11 @@ class ActionGroup(StrEnum):
     RECENT_SESSION = "21_recent_sessions"
 
 
+class ParametricWidgetProtocolNames:
+    GET_PARAMS = "get_params"
+    GET_OUTPUT = "get_output"
+    IS_PREVIEW_ENABLED = "is_preview_enabled"
+    CONNECT_CHANGED_SIGNAL = "connect_changed_signal"
+
+
 NO_RECORDING_FIELD = "__himena_no_recording__"

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Generic, TypeVar
 
 from magicgui.widgets import LineEdit
 from magicgui.widgets.bases import ValueWidget
@@ -15,7 +16,71 @@ from himena.qt._qlineedit import (
 __all__ = ["IntEdit", "FloatEdit"]
 
 
-class QIntEdit(QBaseStringWidget):
+class QBaseRangedStringWidget(QBaseStringWidget):
+    def _mgui_get_min(self) -> float:
+        """Get the minimum possible value."""
+        val = self._qwidget.minimum()
+        return val
+
+    def _mgui_set_min(self, value: float):
+        """Set the minimum possible value."""
+        self._qwidget.setMinimum(value)
+
+    def _mgui_get_max(self) -> float:
+        """Set the maximum possible value."""
+        val = self._qwidget.maximum()
+        return self._post_get_hook(val)
+
+    def _mgui_set_max(self, value: float):
+        """Set the maximum possible value."""
+        self._update_precision(maximum=value)
+        val = self._pre_set_hook(value)
+        self._qwidget.setMaximum(val)
+
+
+_T = TypeVar("_T")
+
+
+class RangedLineEdit(LineEdit, Generic[_T]):
+    def __init__(
+        self,
+        value=Undefined,
+        min=Undefined,
+        max=Undefined,
+        widget_type=None,
+        **kwargs,
+    ):
+        app = use_app()
+        assert app.native
+        ValueWidget.__init__(
+            self,
+            value=value,
+            widget_type=widget_type,
+            **kwargs,
+        )
+        if min is not Undefined:
+            self.min = min
+        if max is not Undefined:
+            self.max = max
+
+    @property
+    def min(self) -> _T:
+        return self._widget._mgui_get_min()
+
+    @min.setter
+    def min(self, value: _T):
+        self._widget._mgui_set_min(value)
+
+    @property
+    def max(self) -> _T:
+        return self._widget._mgui_get_max()
+
+    @max.setter
+    def max(self, value: _T):
+        self._widget._mgui_set_max(value)
+
+
+class QIntEdit(QBaseRangedStringWidget):
     _qwidget: QIntLineEdit
 
     def __init__(self, **kwargs) -> None:
@@ -30,13 +95,18 @@ class QIntEdit(QBaseStringWidget):
         return str(value)
 
 
-class IntEdit(LineEdit):
-    def __init__(self, value=Undefined, **kwargs):
-        app = use_app()
-        assert app.native
-        ValueWidget.__init__(
-            self,
+class IntEdit(RangedLineEdit):
+    def __init__(
+        self,
+        value=Undefined,
+        min=Undefined,
+        max=Undefined,
+        **kwargs,
+    ):
+        super().__init__(
             value=value,
+            min=min,
+            max=max,
             widget_type=QIntEdit,
             **kwargs,
         )
@@ -56,7 +126,7 @@ class IntEdit(LineEdit):
         LineEdit.value.fset(self, value)
 
 
-class QFloatEdit(QBaseStringWidget):
+class QFloatEdit(QBaseRangedStringWidget):
     _qwidget: QDoubleLineEdit
 
     def __init__(self, **kwargs) -> None:
@@ -71,13 +141,18 @@ class QFloatEdit(QBaseStringWidget):
         return str(value)
 
 
-class FloatEdit(LineEdit):
-    def __init__(self, value=Undefined, **kwargs):
-        app = use_app()
-        assert app.native
-        ValueWidget.__init__(
-            self,
+class FloatEdit(RangedLineEdit):
+    def __init__(
+        self,
+        value=Undefined,
+        min=Undefined,
+        max=Undefined,
+        **kwargs,
+    ):
+        super().__init__(
             value=value,
+            min=min,
+            max=max,
             widget_type=QFloatEdit,
             **kwargs,
         )

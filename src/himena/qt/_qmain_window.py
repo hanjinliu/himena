@@ -12,6 +12,7 @@ import app_model
 from qtpy import QtWidgets as QtW, QtGui, QtCore
 from app_model.backends.qt import QModelMainWindow, QModelMenu
 from himena.consts import MenuId
+from himena.consts import ParametricWidgetProtocolNames as PWPN
 from himena._app_model import _formatter
 from himena.qt._qtab_widget import QTabWidget
 from himena.qt._qstatusbar import QStatusBar
@@ -39,7 +40,6 @@ from himena.qt._utils import (
     get_stylesheet_path,
     ArrayQImage,
 )
-from himena.widgets._wrapper import ParametricWindow
 
 if TYPE_CHECKING:
     from himena.widgets._main_window import SubWindow, MainWindow
@@ -570,7 +570,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def _connect_parametric_widget_events(
         self,
-        wrapper: ParametricWindow[QParametricWidget],
+        wrapper: widgets.ParametricWindow[QParametricWidget],
         widget: QParametricWidget,
     ) -> None:
         widget._call_btn.clicked.connect(wrapper._emit_btn_clicked)
@@ -592,12 +592,12 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         container.margins = (0, 0, 0, 0)
         qwidget = container.native
         assert isinstance(qwidget, QtW.QWidget)
-        qwidget.get_params = container.asdict
-        qwidget.connect_changed_signal = container.changed.connect
+        setattr(qwidget, PWPN.GET_PARAMS, container.asdict)
+        setattr(qwidget, PWPN.CONNECT_CHANGED_SIGNAL, container.changed.connect)
         if preview:
             checkbox = ToggleSwitch(value=False, text="Preview")
             container.append(checkbox)
-            qwidget.is_preview_enabled = checkbox.get_value
+            setattr(qwidget, PWPN.IS_PREVIEW_ENABLED, checkbox.get_value)
         return qwidget
 
     def _move_focus_to(self, win: QtW.QWidget) -> None:

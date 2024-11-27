@@ -11,6 +11,7 @@ import weakref
 from psygnal import Signal
 from himena import io
 from himena._descriptors import SaveToPath
+from himena.consts import ParametricWidgetProtocolNames as PWPN
 from himena.types import (
     NewWidgetBehavior,
     Parametric,
@@ -255,15 +256,49 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
     def add_parametric_widget(
         self,
         widget: _W,
-        callback: Callable,
+        callback: Callable | None = None,
         *,
         title: str | None = None,
         preview: bool = False,
         auto_close: bool = True,
         auto_size: bool = True,
     ) -> ParametricWindow[_W]:
-        if not hasattr(widget, "get_params"):
-            raise TypeError("Parametric widget must have `get_params` method.")
+        """Add a custom parametric widget and its callback as a subwindow.
+
+        This method creates a parametric window inside the workspace, so that the
+        calculation can be done with the user-defined parameters.
+
+        Parameters
+        ----------
+        widget : _W
+            The parametric widget implemented with `get_params` and/or `get_output`.
+        callback : callable, optional
+            The callback function that will be called with the parameters set by the
+            widget.
+        title : str, optional
+            Title of the window to manage parameters.
+        preview : bool, default False
+            If true, the parametric widget will be check for whether preview is enabled
+            everytime the parameter changed, and if preview is enabled, a preview window
+            is created to show the preview result.
+        auto_close : bool, default True
+            If true, close the parametric window after the function call.
+        auto_size : bool, default True
+            If true, the output window will be auto-sized to the size of the parametric
+            window.
+
+        Returns
+        -------
+        ParametricWindow[_W]
+            A wrapper containing the backend widget.
+        """
+        if callback is None:
+            if not hasattr(widget, PWPN.GET_OUTPUT):
+                raise TypeError(
+                    f"Parametric widget must have `{PWPN.GET_OUTPUT}` method if "
+                    "callback is not given."
+                )
+            callback = getattr(widget, PWPN.GET_OUTPUT)
         main = self._main_window()
         widget0 = main._process_parametric_widget(widget)
         fn = Parametric(callback)
@@ -272,6 +307,15 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         main._connect_parametric_widget_events(param_widget, widget0)
         self._process_new_widget(param_widget, title, auto_size)
         if preview:
+            if not (
+                hasattr(widget, PWPN.CONNECT_CHANGED_SIGNAL)
+                and hasattr(widget, PWPN.IS_PREVIEW_ENABLED)
+            ):
+                raise TypeError(
+                    f"If preview=True, the backend widget {widget!r} must implements "
+                    f"methods {PWPN.CONNECT_CHANGED_SIGNAL!r} and "
+                    f"{PWPN.IS_PREVIEW_ENABLED!r}"
+                )
             param_widget.params_changed.connect(param_widget._widget_preview_callback)
         main._move_focus_to(widget)
         return param_widget

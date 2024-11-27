@@ -9,7 +9,6 @@ from himena.types import (
     Parametric,
     WidgetDataModel,
     ClipboardDataModel,
-    ParametricWidgetTuple,
 )
 from himena.widgets._widget_list import TabArea
 from himena.widgets._wrapper import SubWindow
@@ -163,15 +162,6 @@ def init_application(app: Application) -> Application:
         ins = current_instance(app.name)
         ins.add_function(fn, preview=fn.preview, **fn.gui_config)
         return None
-
-    @app.injection_store.mark_processor
-    def _process_parametric_widget(tup: ParametricWidgetTuple) -> None:
-        if tup is None:
-            return None
-        tup = ParametricWidgetTuple(*tup)
-        _LOGGER.debug("processing %r", tup)
-        ins = current_instance(app.name)
-        ins.add_parametric_widget(tup.widget, tup.callback, title=tup.title)
 
     _APP_INITIALIZED.add(app)
     return app

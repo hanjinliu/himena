@@ -139,7 +139,7 @@ class QDefaultTableWidget(QTableBase):
             self.model().dataChanged.connect(self.set_modified)
         else:
             self.model()._arr = table
-        if isinstance(meta := model.additional_data, TableMeta):
+        if isinstance(meta := model.metadata, TableMeta):
             if (pos := meta.current_position) is not None:
                 index = self.model().index(*pos)
                 self.setCurrentIndex(index)
@@ -163,7 +163,7 @@ class QDefaultTableWidget(QTableBase):
             value=self.model()._arr,
             type=self.model_type(),
             extension_default=".csv",
-            additional_data=self._prep_table_meta(),
+            metadata=self._prep_table_meta(),
         )
 
     @protocol_override
