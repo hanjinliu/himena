@@ -85,33 +85,36 @@ def duplicate_window(model: WidgetDataModel) -> WidgetDataModel:
 
 
 @ACTIONS.append_from_fn(
-    id="view-as",
-    title="View as ...",
+    id="view-data-in",
+    title="View data in ...",
     enablement=_ctx.is_active_window_exportable,
     menus=[{"id": MenuId.WINDOW, "group": EDIT_GROUP}],
     need_function_callback=True,
 )
-def view_as(ui: MainWindow, model: WidgetDataModel) -> Parametric:
-    """Open the selected sub-window with other registered widget."""
+def view_data_in(ui: MainWindow, model: WidgetDataModel) -> Parametric:
+    """View the internal data of the selected sub-window in other registered widget."""
     from himena.plugins import configure_gui
 
     choices: list[tuple[str, str]] = []
     widget_classes, _ = ui._backend_main_window._list_widget_class(model.type)
     for _, cls, _ in widget_classes:
         name = f"{cls.__module__}.{cls.__name__}"
-        choices.append((f"{cls.__name__}\n({name})", name))
+        display_name = _utils.get_display_name(cls)
+        choices.append((display_name, name))
 
     @configure_gui(
         plugin_name={
             "choices": choices,
             "widget_type": "RadioButtons",
             "value": choices[0][1],
-        }
+        },
+        title="Choose a widget ...",
+        show_parameter_labels=False,
     )
-    def choose_a_plugin(plugin_name: str) -> WidgetDataModel:
+    def choose_a_widget(plugin_name: str) -> WidgetDataModel:
         return model.with_open_plugin(plugin_name)
 
-    return choose_a_plugin
+    return choose_a_widget
 
 
 @ACTIONS.append_from_fn(

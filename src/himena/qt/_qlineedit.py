@@ -1,6 +1,5 @@
 from __future__ import annotations
 import operator
-import math
 from decimal import Decimal
 
 from qtpy import QtWidgets as QtW, QtGui
@@ -159,12 +158,14 @@ class QDoubleLineEdit(QValuedLineEdit):
         if "e" in text:
             val_text, exp_text = text.split("e")
             if large:
-                exp_min = math.log10(self.validator().bottom())
-                exp_max = math.log10(self.validator().top())
                 exp_dec = Decimal(exp_text)
                 diff = self._calc_diff(exp_dec, False)
                 exp_ = op(exp_dec, diff)
-                exp_ = max(min(exp_, exp_max), exp_min)
+                if (
+                    Decimal(val_text) * 10**exp_ > self.validator().top()
+                    or Decimal(val_text) * 10**exp_ < self.validator().bottom()
+                ):
+                    return None
                 self.setText(val_text + "e" + str(exp_))
             else:
                 val_min = self.validator().bottom() / 10 ** int(exp_text)

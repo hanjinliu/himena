@@ -18,6 +18,7 @@ _ALLOWED_METHODS = frozenset(
         "theme_changed_callback",
         "merge_model",
         "mergeable_model_types",
+        "display_name",
     ]
 )
 

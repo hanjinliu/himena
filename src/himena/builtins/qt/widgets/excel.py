@@ -87,6 +87,11 @@ class QExcelTableStack(QtW.QTabWidget):
         return None
 
     @protocol_override
+    @classmethod
+    def display_name(cls) -> str:
+        return "Built-in Excel File Editor"
+
+    @protocol_override
     def update_model(self, model: WidgetDataModel[dict[str, np.ndarray]]):
         self.clear()
         for sheet_name, each in model.value.items():

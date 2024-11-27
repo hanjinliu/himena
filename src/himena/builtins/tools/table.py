@@ -94,9 +94,7 @@ def table_to_dataframe(model: WidgetDataModel["np.ndarray"]) -> Parametric[str]:
     from io import StringIO
     from himena._data_wrappers import list_installed_dataframe_packages, read_csv
 
-    pkgs = ["dict"] + list_installed_dataframe_packages()
-
-    @configure_gui(module={"choices": pkgs})
+    @configure_gui(module={"choices": list_installed_dataframe_packages()})
     def convert_table_to_dataframe(module) -> WidgetDataModel[str]:
         buf = StringIO()
         np.savetxt(buf, model.value, fmt="%s", delimiter=",")

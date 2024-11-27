@@ -88,6 +88,11 @@ class QDefaultImageView(QtW.QWidget):
         self._minmax: tuple[float, float] = (0, 255)
 
     @protocol_override
+    @classmethod
+    def display_name(cls) -> str:
+        return "Built-in Image Viewer"
+
+    @protocol_override
     def update_model(self, model: WidgetDataModel):
         arr = wrap_array(model.value)
         ndim_rem = arr.ndim - 2

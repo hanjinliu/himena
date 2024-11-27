@@ -376,7 +376,7 @@ def test_save_behavior(ui: MainWindow, tmpdir):
 
     ui.current_window = win2
     ui.exec_action(
-        "view-as",
+        "view-data-in",
         with_params={"plugin_name": "himena.builtins.qt.widgets.text.QDefaultTextEdit"}
     )
     win3 = ui.current_window

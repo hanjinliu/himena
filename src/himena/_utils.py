@@ -55,6 +55,15 @@ def has_widget_data_model_argument(func: Callable) -> bool:
     return False
 
 
+def get_display_name(cls: type) -> str:
+    if isinstance(vars(cls).get("display_name"), classmethod):
+        title = cls.display_name()
+    else:
+        title = cls.__name__
+    name = f"{cls.__module__}.{cls.__name__}"
+    return f"{title}\n({name})"
+
+
 _T = TypeVar("_T", bound=Hashable)
 
 

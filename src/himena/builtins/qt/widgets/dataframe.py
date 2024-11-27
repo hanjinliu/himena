@@ -93,6 +93,11 @@ class QDataFrameView(QTableBase):
         self._control: QDataFrameViewControl | None = None
 
     @protocol_override
+    @classmethod
+    def display_name(cls) -> str:
+        return "Built-in DataFrame Viewer"
+
+    @protocol_override
     def update_model(self, model: WidgetDataModel):
         self.setModel(QDataFrameModel(wrap_dataframe(model.value)))
         self.setSelectionModel(QtCore.QItemSelectionModel(self.model()))

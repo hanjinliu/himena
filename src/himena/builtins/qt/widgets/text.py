@@ -476,6 +476,11 @@ class QDefaultTextEdit(QtW.QWidget):
         layout.addWidget(self._main_text_edit)
 
     @protocol_override
+    @classmethod
+    def display_name(cls) -> str:
+        return "Built-in Text Editor"
+
+    @protocol_override
     def control_widget(self) -> QTextControl:
         return self._control
 
@@ -589,10 +594,17 @@ class QDefaultHTMLEdit(QtW.QWidget):
     def setFocus(self):
         self._main_text_edit.setFocus()
 
+    @protocol_override
+    @classmethod
+    def display_name(cls) -> str:
+        return "Built-in HTML Text Editor"
+
+    @protocol_override
     def update_model(self, model: WidgetDataModel[str]):
         self.initPlainText(model.value)
         return None
 
+    @protocol_override
     def to_model(self) -> WidgetDataModel[str]:
         cursor = self._main_text_edit.textCursor()
         font = self._main_text_edit.font()
@@ -608,21 +620,27 @@ class QDefaultHTMLEdit(QtW.QWidget):
             ),
         )
 
+    @protocol_override
     def model_type(self):
         return StandardType.HTML
 
+    @protocol_override
     def size_hint(self) -> tuple[int, int]:
         return 400, 300
 
+    @protocol_override
     def is_modified(self) -> bool:
         return False
 
+    @protocol_override
     def set_modified(self, value: bool) -> None:
         self._main_text_edit.document().setModified(value)
 
+    @protocol_override
     def is_editable(self) -> bool:
         return False
 
+    @protocol_override
     def set_editable(self, value: bool) -> None:
         self._main_text_edit.setReadOnly(not value)
 

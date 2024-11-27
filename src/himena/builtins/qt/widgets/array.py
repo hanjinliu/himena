@@ -239,6 +239,11 @@ class QDefaultArrayView(QtW.QWidget):
         self._spinboxes.append(spinbox)
 
     @protocol_override
+    @classmethod
+    def display_name(cls) -> str:
+        return "Bulit-in Array Viewer"
+
+    @protocol_override
     def update_model(self, model: WidgetDataModel):
         arr = wrap_array(model.value)
         self._arr = arr

@@ -13,7 +13,7 @@ from superqt.utils import qthrottled
 from himena import anchor as _anchor
 from himena._descriptors import LocalReaderMethod
 from himena.consts import MenuId
-from himena._utils import lru_cache
+from himena._utils import lru_cache, get_display_name
 from himena.types import WindowState, WindowRect
 from himena.qt._utils import get_main_window, build_qmodel_menu
 from himena.qt._qwindow_resize import ResizeState
@@ -601,6 +601,7 @@ class QSubWindowTitleBar(QtW.QFrame):
         if hasattr(qwin._widget, "model_type"):
             with suppress(Exception):
                 attrs.append(f"<b>Type</b>: {qwin._widget.model_type()}")
+        attrs.append(f"<b>Widget</b>: {get_display_name(qwin._widget.__class__)}")
         sub = qwin._my_wrapper()
         attrs.append(f"<b>Save behavior</b>: {sub.save_behavior!r}")
         tooltip = "<br>".join(attrs)

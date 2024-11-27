@@ -129,6 +129,11 @@ class QDefaultTableWidget(QTableBase):
             model._header_format = value
 
     @protocol_override
+    @classmethod
+    def display_name(cls) -> str:
+        return "Built-in Table Data Editor"
+
+    @protocol_override
     def update_model(self, model: WidgetDataModel[np.ndarray]) -> None:
         if model.value is None:
             table = np.empty((0, 0), dtype=np.dtypes.StringDType())

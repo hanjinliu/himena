@@ -131,6 +131,8 @@ def default_reader_provider(file_path: Path | list[Path]):
         return default_excel_reader
     elif file_path.suffix == ".npy":
         return default_array_reader
+    elif file_path.suffix in {".parquet", ".pq"}:
+        return DataFrameReader("pandas", "read_parquet", {})
     return None
 
 
@@ -148,59 +150,6 @@ def read_as_unknown_provider(file_path: Path) -> WidgetDataModel:
     return fallback_reader
 
 
-def _read_json_as_dict(file_path: Path) -> dict[str, Any]:
-    import json
-
-    with open(file_path) as f:
-        data = json.load(f)
-    if not isinstance(data, dict):
-        raise ValueError("The file is not a dictionary.")
-    df = {}
-    sizes: list[int] = []
-    for k, v in data.items():
-        if isinstance(v, list):
-            sizes.append(len(v))
-            df[k] = np.array(v)
-        else:
-            raise ValueError("The dictionary has non-list values.")
-    if len(set(sizes)) > 1:
-        raise ValueError("The dictionary has inconsistent sizes.")
-    return WidgetDataModel(value=df, type=StandardType.DATAFRAME)
-
-
-def _read_csv_as_dict(file_path: Path, sep: str) -> dict[str, Any]:
-    import csv
-
-    with open(file_path) as f:
-        reader = csv.reader(f, delimiter=sep)
-        data = list(reader)
-    if not data:
-        raise ValueError("The CSV file is empty.")
-    header = data[0]
-    if not header:
-        raise ValueError("The CSV file has no header.")
-    df = {}
-    sizes: list[int] = []
-    for i, k in enumerate(header):
-        v = [row[i] for row in data[1:]]
-        sizes.append(len(v))
-        df[k] = np.array(v)
-    if len(set(sizes)) > 1:
-        raise ValueError("The CSV file has inconsistent sizes.")
-    return WidgetDataModel(value=df, type=StandardType.DATAFRAME)
-
-
-def read_as_dict(file_path: Path) -> WidgetDataModel:
-    if file_path.suffix == ".json":
-        return _read_json_as_dict(file_path)
-    elif file_path.suffix == ".csv":
-        return _read_csv_as_dict(file_path, ",")
-    elif file_path.suffix == ".tsv":
-        return _read_csv_as_dict(file_path, "\t")
-    else:
-        raise ValueError(f"Cannot read {file_path.stem} as a dict.")
-
-
 class DataFrameReader:
     def __init__(self, module: str, method: str, kwargs: dict[str, Any]):
         self._module = module
@@ -215,15 +164,6 @@ class DataFrameReader:
         method = getattr(mod, self._method)
         df = method(file_path, **self._kwargs)
         return WidgetDataModel(value=df, type=StandardType.DATAFRAME)
-
-
-@register_reader_provider(priority=-50)
-def dict_reader_provider(file_path: Path) -> WidgetDataModel:
-    """Read a table as a dict-type dataframe."""
-    if file_path.suffix in (".json", ".csv", ".tsv"):
-        return read_as_dict
-    else:
-        return None
 
 
 @register_reader_provider(priority=-50)
@@ -337,6 +277,16 @@ def default_array_writer(
     return None
 
 
+def default_dataframe_writer(
+    model: WidgetDataModel[dict[str, np.ndarray]],
+    path: Path,
+) -> None:
+    """Write dataframe file."""
+    from himena._data_wrappers import wrap_dataframe
+
+    return wrap_dataframe(model.value).write(path)
+
+
 @register_writer_provider(priority=50)
 def default_writer_provider(model: WidgetDataModel):
     """Get default writer."""
@@ -354,5 +304,7 @@ def default_writer_provider(model: WidgetDataModel):
         return default_excel_writer
     elif model.is_subtype_of(StandardType.ARRAY):
         return default_array_writer
+    elif model.is_subtype_of(StandardType.DATAFRAME):
+        return default_dataframe_writer
     else:
         return None

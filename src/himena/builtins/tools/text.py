@@ -1,4 +1,3 @@
-import importlib
 from typing import Callable
 import json
 import csv
@@ -152,15 +151,12 @@ def text_to_array(model: WidgetDataModel[str]) -> WidgetDataModel:
 def text_to_dataframe(model: WidgetDataModel[str]) -> Parametric:
     """Convert text to an dataframe-type widget."""
     from io import StringIO
-    from himena._data_wrappers import list_installed_dataframe_packages
+    from himena._data_wrappers import list_installed_dataframe_packages, read_csv
 
-    pkgs = ["dict"] + list_installed_dataframe_packages()
-
-    @configure_gui(module={"choices": pkgs, "value": pkgs[0]})
+    @configure_gui(module={"choices": list_installed_dataframe_packages()})
     def convert_text_to_dataframe(module) -> WidgetDataModel[str]:
-        mod = importlib.import_module(module)
         buf = StringIO(model.value)
-        df = mod.read_csv(buf)
+        df = read_csv(module, buf)
         return WidgetDataModel(
             value=df,
             title=model.title,

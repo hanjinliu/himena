@@ -5,9 +5,11 @@ import importlib
 import importlib.metadata
 import importlib.resources
 import io
+from pathlib import Path
 import sys
 from typing import TYPE_CHECKING, Any, NamedTuple
 import numpy as np
+from himena.consts import ExcelFileTypes
 from himena._utils import lru_cache
 
 if TYPE_CHECKING:
@@ -19,6 +21,7 @@ if TYPE_CHECKING:
 
 @lru_cache(maxsize=1)
 def list_installed_dataframe_packages() -> list[str]:
+    """Return a list of installed dataframe package names."""
     installed: list[str] = []
     for entry in importlib.metadata.distributions():
         if entry.name in {"pandas", "polars", "pyarrow"}:
@@ -26,25 +29,7 @@ def list_installed_dataframe_packages() -> list[str]:
     return installed
 
 
-def _csv_to_dict(file) -> dict[str, np.ndarray]:
-    import csv
-
-    reader = csv.reader(file)
-    header = next(reader)
-    df = {col: [] for col in header}
-    for row in reader:
-        for col, value in zip(header, row):
-            df[col].append(value)
-    return {k: np.asarray(v) for k, v in df.items()}
-
-
 def read_csv(mod: str, file) -> Any:
-    if mod == "dict":
-        if isinstance(file, io.StringIO):
-            return _csv_to_dict(file)
-
-        with open(file) as f:
-            return _csv_to_dict(f)
     if mod == "pandas":
         return importlib.import_module(mod).read_csv(file, header=0)
     elif mod == "polars":
@@ -144,46 +129,9 @@ class DataFrameWrapper(ABC):
     def shape(self) -> tuple[int, int]:
         return self.num_rows(), self.num_columns()
 
-
-class DictWrapper(DataFrameWrapper):
-    def __init__(self, df: dict[str, np.ndarray]):
-        self._df = df
-        self._columns = list(df.keys())
-
-    def __getitem__(self, key: tuple[int, int]) -> Any:
-        return self._df[self._columns[key[1]]][key[0]]
-
-    def get_subset(self, r0, r1, c0, c1) -> DictWrapper:
-        keys = list(self._df.keys())[c0:c1]
-        return DictWrapper({k: self._df[k][r0:r1] for k in keys})
-
-    def num_rows(self) -> int:
-        if len(self._df) == 0:
-            return 0
-        return len(next(iter(self._df.values())))
-
-    def num_columns(self) -> int:
-        return len(self._df)
-
-    def column_names(self) -> list[str]:
-        return self._columns
-
-    def get_dtype(self, index: int) -> DtypeTuple:
-        cname = self._columns[index]
-        dtype = self._df[cname].dtype
-        return DtypeTuple(dtype.name, dtype.kind)
-
-    def to_csv_string(self, separator: str) -> str:
-        lines: list[str] = []
-        for i in range(self.num_rows()):
-            lines.append(separator.join(str(self._df[k][i]) for k in self._columns))
-        return "\n".join(lines)
-
-    def to_list(self) -> list[list[Any]]:
-        return [[self._df[k][i] for k in self._columns] for i in range(self.num_rows())]
-
-    def column_to_array(self, name: str) -> np.ndarray:
-        return self._df[name]
+    @abstractmethod
+    def write(self, file: str | Path):
+        """Write the dataframe to a file."""
 
 
 class PandasWrapper(DataFrameWrapper):
@@ -219,6 +167,32 @@ class PandasWrapper(DataFrameWrapper):
 
     def column_to_array(self, name: str) -> np.ndarray:
         return self._df[name].to_numpy()
+
+    def write(self, file: str | Path):
+        path = Path(file)
+        if path.suffix == ".tsv":
+            self._df.to_csv(path, sep="\t")
+        elif path.suffix == ".parquet":
+            self._df.to_parquet(path)
+        elif path.suffix == ".feather":
+            self._df.to_feather(path)
+        elif path.suffix == ".json":
+            self._df.to_json(path)
+        elif path.suffix in (".html", ".htm"):
+            self._df.to_html(path)
+        elif path.suffix in ExcelFileTypes:
+            self._df.to_excel(path)
+        elif path.suffix == ".pickle":
+            self._df.to_pickle(path)
+        elif path.suffix == ".md":
+            self._df.to_markdown(path)
+        elif path.suffix in (".csv", ".txt"):
+            self._df.to_csv(path)
+        else:
+            raise ValueError(
+                "Cannot write a pandas dataframe to a file with the given extension "
+                f"{path.suffix!r}"
+            )
 
 
 class PolarsWrapper(DataFrameWrapper):
@@ -276,6 +250,24 @@ class PolarsWrapper(DataFrameWrapper):
 
     def column_to_array(self, name: str) -> np.ndarray:
         return self._df[name].to_numpy()
+
+    def write(self, file: str | Path):
+        path = Path(file)
+        if path.suffix == ".tsv":
+            self._df.write_csv(path, separator="\t")
+        elif path.suffix in (".csv", ".txt"):
+            self._df.write_csv(path)
+        elif path.suffix == ".parquet":
+            self._df.write_parquet(path)
+        elif path.suffix == ".json":
+            self._df.write_json(path)
+        elif path.suffix in ExcelFileTypes:
+            self._df.write_excel(path)
+        else:
+            raise ValueError(
+                "Cannot write a pandas dataframe to a file with the given extension "
+                f"{path.suffix!r}"
+            )
 
 
 class PyarrowWrapper(DataFrameWrapper):
@@ -341,6 +333,28 @@ class PyarrowWrapper(DataFrameWrapper):
     def column_to_array(self, name: str) -> np.ndarray:
         return self._df[name].as_numpy()
 
+    def write(self, file: str | Path):
+        import pyarrow.csv
+        import pyarrow.parquet
+        import pyarrow.feather
+
+        path = Path(file)
+        if path.suffix == ".tsv":
+            pyarrow.csv.write_csv(
+                self._df, path, write_options=pyarrow.csv.WriteOptions(delimiter="\t")
+            )
+        elif path.suffix in (".csv", ".txt"):
+            pyarrow.csv.write_csv(self._df, path)
+        elif path.suffix == ".parquet":
+            pyarrow.parquet.write_table(self._df, path)
+        elif path.suffix == ".feather":
+            pyarrow.feather.write_feather(self._df, path)
+        else:
+            raise ValueError(
+                "Cannot write a pandas dataframe to a file with the given extension "
+                f"{path.suffix!r}"
+            )
+
 
 class DtypeTuple(NamedTuple):
     """Normalized dtype description."""
@@ -356,6 +370,4 @@ def wrap_dataframe(df) -> DataFrameWrapper:
         return PolarsWrapper(df)
     if is_pyarrow_table(df):
         return PyarrowWrapper(df)
-    if isinstance(df, dict):
-        return DictWrapper({k: np.asarray(v) for k, v in df.items()})
     raise TypeError(f"Unsupported dataframe type: {type(df)}")
