@@ -5,9 +5,9 @@ from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW, QtGui, QT6, QtCore
 from qtpy.QtCore import Qt
 
-from himena.builtins.qt.settings._theme import QThemePanel
-from himena.builtins.qt.settings._plugins import QPluginListEditor
-from himena.builtins.qt.settings._startup_commands import QStartupCommandsPanel
+from himena.qt.settings._theme import QThemePanel
+from himena.qt.settings._plugins import QPluginListEditor
+from himena.qt.settings._startup_commands import QStartupCommandsPanel
 
 if TYPE_CHECKING:
     from himena.widgets import MainWindow

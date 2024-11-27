@@ -13,6 +13,7 @@ from himena.consts import MonospaceFontFamily, StandardType
 
 if TYPE_CHECKING:
     from types import TracebackType
+    from warnings import WarningMessage
     from himena.qt._qmain_window import QMainWindow
 
     ExcInfo = tuple[type[BaseException], BaseException, TracebackType]
@@ -50,66 +51,62 @@ class QtTracebackDialog(QtW.QDialog):
             return super().keyPressEvent(a0)
 
 
-class QtErrorMessageBox(QtW.QMessageBox):
+class QtErrorMessageBox(QtW.QWidget):
     """An message box widget for displaying Python exception."""
 
     def __init__(
         self,
-        title: str,
-        text_or_exception: str | Exception,
+        text: str,
+        exc: Exception | None,
         parent: QMainWindow,
     ):
-        if isinstance(text_or_exception, str):
-            text = text_or_exception
-            exc = None
-        else:
-            if len(text_or_exception.args) > 0:
-                text = str(text_or_exception)
-                if len(text) > 1000:
-                    text = text[:1000] + "..."
-            else:
-                text = ""
-            exc = text_or_exception
         self._main_window = weakref.ref(parent)
-        MBox = QtW.QMessageBox
-        super().__init__(
-            MBox.Icon.Critical,
-            str(title),
-            str(text),
-            MBox.StandardButton.Ok
-            | MBox.StandardButton.Help
-            | MBox.StandardButton.Apply,
-            parent=parent,
-        )
+        super().__init__()
 
         self._exc = exc
+        self.text_edit = QtW.QPlainTextEdit(self)
+        self.text_edit.setReadOnly(True)
+        self.text_edit.setWordWrapMode(QtGui.QTextOption.WrapMode.WordWrap)
+        self.text_edit.setVerticalScrollBarPolicy(
+            QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
+        self.text_edit.setHorizontalScrollBarPolicy(
+            QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
+        self.text_edit.setFixedHeight(70)
+        self.text_edit.setPlainText(text)
 
-        self.traceback_button = self.button(MBox.StandardButton.Help)
-        self.traceback_button.setText("Show trackback (T)")
-        self.traceback_button.setShortcut("T")
+        layout = QtW.QVBoxLayout(self)
+        layout.addWidget(self.text_edit)
 
-        self.open_file_button = self.button(MBox.StandardButton.Apply)
-        self.open_file_button.setText("Open file (O)")
-        self.open_file_button.setShortcut("O")
+    def _traceback_button_clicked(self):
+        tb = self._get_traceback()
+        dlg = QtTracebackDialog(self)
+        dlg.setText(tb)
+        focus = QtW.QApplication.focusWidget()
+        dlg.exec()
+        if focus:
+            focus.setFocus()
 
-    def exec_(self):
-        returned = super().exec_()
-        if returned == QtW.QMessageBox.StandardButton.Help:
-            tb = self._get_traceback()
-            dlg = QtTracebackDialog(self)
-            dlg.setText(tb)
-            dlg.exec_()
-        elif returned == QtW.QMessageBox.StandardButton.Apply:
-            filename = self._exc.__traceback__.tb_frame.f_code.co_filename
-            if main := self._main_window():
-                ui = main._himena_main_window
-                ui.read_file(filename)
-                ui.add_data(
-                    self._get_traceback(), type=StandardType.HTML, title="Traceback"
-                )
+    def _open_file_button_clicked(self):
+        filename = self._exc.__traceback__.tb_frame.f_code.co_filename
         if main := self._main_window():
-            main.setFocus()
-        return returned
+            ui = main._himena_main_window
+            ui.read_file(filename)
+            ui.add_data(
+                self._get_traceback(), type=StandardType.HTML, title="Traceback"
+            )
+
+    def _enter_debugger_button_clicked(self):
+        import pdb
+
+        if hasattr(QtCore, "pyqtRemoveInputHook"):
+            QtCore.pyqtRemoveInputHook()
+        try:
+            pdb.post_mortem(self._exc.__traceback__)
+        finally:
+            if hasattr(QtCore, "pyqtRestoreInputHook"):
+                QtCore.pyqtRestoreInputHook()
 
     @classmethod
     def from_exc(cls, e: Exception, parent: QMainWindow):
@@ -117,13 +114,42 @@ class QtErrorMessageBox(QtW.QMessageBox):
         # unwrap EmitLoopError
         while isinstance(e, EmitLoopError):
             e = e.__cause__
-        self = cls(type(e).__name__, e, parent)
+
+        if len(e.args) > 0:
+            text = f"{type(e).__name__}: {e}"
+        else:
+            text = ""
+        self = cls(text, e, parent)
+
+        # prepare buttons specific to Exception
+        footer = QtW.QWidget()
+        layout = QtW.QHBoxLayout(footer)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        traceback_button = QtW.QPushButton("Trackback", self)
+        open_file_button = QtW.QPushButton("Open file", self)
+        enter_debugger_button = QtW.QPushButton("Debug", self)
+
+        traceback_button.clicked.connect(self._traceback_button_clicked)
+        open_file_button.clicked.connect(self._open_file_button_clicked)
+        enter_debugger_button.clicked.connect(self._enter_debugger_button_clicked)
+
+        layout.addWidget(traceback_button)
+        layout.addWidget(open_file_button)
+        layout.addWidget(enter_debugger_button)
+        self.layout().addWidget(footer)
         return self
 
     @classmethod
-    def raise_(cls, e: Exception, parent: QMainWindow):
-        """Raise exception in the message box."""
-        return cls.from_exc(e, parent=parent).exec_()
+    def from_warning(cls, w: WarningMessage, parent: QMainWindow):
+        if isinstance(w.message, Warning):
+            text = str(w.message)
+            exc = w.message
+        else:
+            text = w.message
+            exc = None
+        self = cls(text, exc, parent)
+        return self
 
     def _exc_info(self) -> ExcInfo:
         return (

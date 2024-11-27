@@ -37,7 +37,7 @@ class ExcelMeta(TableMeta):
 class ArrayMeta(BaseModel):
     """Preset for describing an array metadata."""
 
-    current_indices: list[int] | None = Field(
+    current_indices: tuple[Any, ...] | None = Field(
         None, description="Current slice indices to render the array in GUI."
     )
     selections: list[Any] = Field(

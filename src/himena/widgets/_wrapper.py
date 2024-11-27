@@ -60,6 +60,9 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         if identifier is None:
             identifier = uuid4().int
         self._identifier = identifier
+        self._save_behavior: SaveBehavior = SaveToNewPath()
+        self._widget_data_model_method: MethodDescriptor = ProgramaticMethod()
+        self._is_modified_fallback_value = False
 
     @property
     def widget(self) -> _W:
@@ -90,10 +93,19 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         self._widget_data_model_method = method or ProgramaticMethod()
         return None
 
+    @property
+    def is_modified(self) -> bool:
+        """Whether the content of the widget has been modified."""
+        if hasattr(self.widget, "is_modified"):
+            return self.widget.is_modified()
+        return self._is_modified_fallback_value
+
     def _set_modified(self, value: bool) -> None:
         """Set the modified state of the widget."""
         if hasattr(self.widget, "set_modified"):
             self.widget.set_modified(value)
+        else:
+            self._is_modified_fallback_value = value
         return None
 
 
@@ -109,8 +121,6 @@ class SubWindow(WidgetWrapper[_W]):
         identifier: int | None = None,
     ):
         super().__init__(widget, main_window=main_window, identifier=identifier)
-        self._save_behavior: SaveBehavior = SaveToNewPath()
-        self._widget_data_model_method: MethodDescriptor = ProgramaticMethod()
         self._child_windows: weakref.WeakSet[SubWindow[_W]] = weakref.WeakSet()
         self._alive = False
         self.closed.connect(self._close_callback)
@@ -179,12 +189,6 @@ class SubWindow(WidgetWrapper[_W]):
     def is_exportable(self) -> bool:
         """Whether the widget can export its data."""
         return hasattr(self.widget, "to_model")
-
-    @property
-    def is_modified(self) -> bool:
-        """Whether the content of the widget has been modified."""
-        is_modified_func = getattr(self.widget, "is_modified", None)
-        return callable(is_modified_func) and is_modified_func()
 
     @property
     def is_alive(self) -> bool:

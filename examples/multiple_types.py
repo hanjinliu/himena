@@ -3,18 +3,23 @@ from qtpy import QtWidgets as QtW
 import re
 from himena import new_window, WidgetDataModel
 from himena.qt import register_widget
+from himena.consts import StandardType
 from himena.plugins import register_function
 
+# Register three widget classes that:
+# 1. display text as a plain text and can be saved
+# 2. display text as an HTML text and can be saved
+# 3. display text as a plain text but cannot be saved
 
-@register_widget("text")
+@register_widget(StandardType.TEXT)
 class MyTextEdit(QtW.QPlainTextEdit):
     def update_model(self, model: WidgetDataModel):
         self.setPlainText(model.value)
 
     def to_model(self) -> WidgetDataModel:
-        return WidgetDataModel(value=self.toPlainText(), type="text")
+        return WidgetDataModel(value=self.toPlainText(), type=StandardType.TEXT)
 
-@register_widget("html")
+@register_widget(StandardType.HTML)
 class MyHtmlEdit(QtW.QTextEdit):
     def __init__(self, model: WidgetDataModel):
         super().__init__()
@@ -23,7 +28,7 @@ class MyHtmlEdit(QtW.QTextEdit):
         self.setHtml(model.value)
 
     def to_model(self) -> WidgetDataModel:
-        return WidgetDataModel(value=self.toHtml(), type="text.html")
+        return WidgetDataModel(value=self.toHtml(), type=StandardType.HTML)
 
 @register_widget("cannot-save")
 class MyNonSavableEdit(QtW.QTextEdit):
@@ -31,17 +36,17 @@ class MyNonSavableEdit(QtW.QTextEdit):
         self.setPlainText(model.value)
 
 
-@register_function(types="html", menus=["tools/my_menu"])
+@register_function(types=StandardType.HTML, menus=["tools/my_menu"])
 def to_plain_text(model: WidgetDataModel) -> WidgetDataModel:
     pattern = re.compile("<.*?>")
     model.value = re.sub(pattern, "", model.value)
-    model.type = "text"
+    model.type = StandardType.TEXT
     model.title = model.title + " (plain)"
     return model
 
-@register_function(types=["text", "html"], menus=["tools/my_menu"])
+@register_function(types=[StandardType.TEXT, StandardType.HTML], menus=["tools/my_menu"])
 def to_basic_widget(model: WidgetDataModel) -> WidgetDataModel:
-    if model.type != "text":
+    if model.type != StandardType.TEXT:
         return None
     model.type = "cannot-save"
     model.title = model.title + " (cannot save)"

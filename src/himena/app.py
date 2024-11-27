@@ -2,19 +2,32 @@ from __future__ import annotations
 
 import sys
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar
+from typing import TYPE_CHECKING, Generic, TypeVar
+from psygnal import Signal
+from himena.exceptions import ExceptionHandler
 
 if TYPE_CHECKING:
-    from types import TracebackType
     from IPython import InteractiveShell
     from qtpy.QtWidgets import QApplication
+    from warnings import WarningMessage
 
 _A = TypeVar("_A")  # the backend application type
 
 
 class EventLoopHandler(ABC, Generic[_A]):
+    errored = Signal(Exception)
+    warned = Signal(object)
+    _instances: dict[str, QtEventLoopHandler] = {}
+
     def __init__(self, name: str):
         self._name = name
+        self._instances[name] = self
+
+    @classmethod
+    def create(cls, name: str):
+        if name not in cls._instances:
+            cls._instances[name] = QtEventLoopHandler(name)
+        return cls._instances[name]
 
     @abstractmethod
     def get_app(self) -> _A:
@@ -53,13 +66,17 @@ class QtEventLoopHandler(EventLoopHandler["QApplication"]):
     def run_app(self):
         """Start the event loop."""
         if not gui_is_active("qt"):
-            with ExceptionHandler(hook=self._excepthook) as _:
+            with ExceptionHandler(
+                hook=self._except_hook,
+                warning_hook=self._warn_hook,
+            ) as _:
                 self.get_app().exec()
             return None
 
         return self.get_app().exec()
 
     def instance(self) -> QApplication | None:
+        """Get QApplication instance or None if it does not exist."""
         from qtpy.QtWidgets import QApplication
 
         return QApplication.instance()
@@ -72,16 +89,13 @@ class QtEventLoopHandler(EventLoopHandler["QApplication"]):
                 shell.enable_gui("qt")
         return None
 
-    def _excepthook(self, exc_type: type[Exception], exc_value: Exception, exc_tb):
+    def _except_hook(self, exc_type: type[Exception], exc_value: Exception, exc_tb):
         """Exception hook used during application execution."""
-        from qtpy.QtGui import QDrag
-        from himena.qt._qtraceback import QtErrorMessageBox
-        from himena.widgets import current_instance
+        return self.errored.emit(exc_value)
 
-        viewer = current_instance(self._name)
-        QDrag.cancel()
-        QtErrorMessageBox.raise_(exc_value, parent=viewer._backend_main_window)
-        return None
+    def _warn_hook(self, warning: WarningMessage):
+        """Warning hook used during application execution."""
+        return self.warned.emit(warning)
 
 
 class EmptyEventLoopHandler(EventLoopHandler):
@@ -94,9 +108,9 @@ class EmptyEventLoopHandler(EventLoopHandler):
 
 def get_event_loop_handler(backend: str, app_name: str) -> EventLoopHandler:
     if backend == "qt":
-        return QtEventLoopHandler(app_name)
+        return QtEventLoopHandler.create(app_name)
     else:
-        return EmptyEventLoopHandler(app_name)
+        return EmptyEventLoopHandler.create(app_name)
 
 
 def get_ipython_shell() -> InteractiveShell | None:
@@ -106,22 +120,4 @@ def get_ipython_shell() -> InteractiveShell | None:
 
         return get_ipython()
     else:
-        return None
-
-
-class ExceptionHandler:
-    """Handle exceptions in the GUI thread."""
-
-    def __init__(
-        self, hook: Callable[[type[Exception], Exception, TracebackType], Any]
-    ):
-        self._excepthook = hook
-
-    def __enter__(self):
-        self._original_excepthook = sys.excepthook
-        sys.excepthook = self._excepthook
-        return self
-
-    def __exit__(self, exc_type, exc_value, exc_traceback):
-        sys.excepthook = self._original_excepthook
         return None

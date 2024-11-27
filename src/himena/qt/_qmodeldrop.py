@@ -101,7 +101,11 @@ class QModelDrop(QtW.QGroupBox):
         return None
 
     def set_value(self, value: WidgetDataModel | None):
-        raise NotImplementedError
+        if value is None:
+            self._drop_area.setText("Drop here")
+            self._thumbnail.unset_pixmap()
+        else:
+            raise ValueError("Cannot set WidgetDataModel directly.")
 
     def _on_source_closed(self):
         self._target_id = None

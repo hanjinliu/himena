@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 import weakref
 from typing import TYPE_CHECKING
@@ -18,8 +19,26 @@ if TYPE_CHECKING:
     class RichJupyterWidget(RichJupyterWidget, QtW.QWidget):
         """To fix typing problem"""
 
-
 # Modified from napari_console https://github.com/napari/napari-console
+
+if sys.platform.startswith("win"):
+    import asyncio
+
+    try:
+        from asyncio import (
+            WindowsProactorEventLoopPolicy,
+            WindowsSelectorEventLoopPolicy,
+        )
+    except ImportError:
+        pass
+        # not affected
+    else:
+        if type(asyncio.get_event_loop_policy()) is WindowsProactorEventLoopPolicy:
+            # WindowsProactorEventLoopPolicy is not compatible with tornado 6
+            # fallback to the pre-3.8 default of Selector
+            asyncio.set_event_loop_policy(WindowsSelectorEventLoopPolicy())
+
+
 class QtConsole(RichJupyterWidget):
     codeExecuted = Signal(str)
 

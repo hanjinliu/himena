@@ -17,6 +17,9 @@ from himena.qt._magicgui._toggle_switch import QLabeledToggleSwitch
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
+# The default image viewer widget that implemented with 2D slicing on nD array,
+# adjusting contrast, and interpolation.
+
 
 class _QImageLabel(QtW.QLabel):
     def __init__(self, val):
@@ -80,6 +83,7 @@ class QDefaultImageView(QtW.QWidget):
         self._control.clim_changed.connect(self._clim_changed)
         self._control.auto_contrast_requested.connect(self._auto_contrast)
         self._arr: ArrayWrapper | None = None
+        self._is_modified = False
         self._clim: tuple[float, float] = (0, 255)
         self._minmax: tuple[float, float] = (0, 255)
 
@@ -96,14 +100,15 @@ class QDefaultImageView(QtW.QWidget):
             img_slice = np.abs(img_slice)  # complex to float
 
         # guess clim
-        self._minmax = self._clim = _guess_clim(arr, img_slice)
+        self._minmax = _clim = _guess_clim(arr, img_slice)
         if self._minmax[0] == self._minmax[1]:
             self._minmax = self._minmax[0], self._minmax[0] + 1
         self._control._clim_slider.setMinimum(self._minmax[0])
         self._control._clim_slider.setMaximum(self._minmax[1])
         with qsignal_blocker(self._control._clim_slider):
-            self._control._clim_slider.setValue(self._clim)
-        self._image_label.set_array(self.as_image_array(img_slice, self._clim))
+            self._control._clim_slider.setValue(_clim)
+        self._image_label.set_array(self.as_image_array(img_slice, _clim))
+        self._clim = _clim
 
         nsliders = len(self._sliders)
         if nsliders > ndim_rem:
@@ -134,12 +139,16 @@ class QDefaultImageView(QtW.QWidget):
         else:
             interp = "nearest"
         clim = self._clim
+        current_slices = tuple(sl._slider.value() for sl in self._sliders) + (
+            slice(None),
+            slice(None),
+        )
         return WidgetDataModel(
             value=self._arr.arr,
             type=self.model_type(),
             extension_default=".png",
             additional_data=ImageMeta(
-                current_indices=[sl._slider.value() for sl in self._sliders],
+                current_indices=current_slices,
                 interpolation=interp,
                 contrast_limits=clim,
             ),
@@ -166,6 +175,7 @@ class QDefaultImageView(QtW.QWidget):
         arr: NDArray[np.number],
         clim: tuple[float, float],
     ) -> NDArray[np.uint8]:
+        """Convert any array to one that can be passed to QImage."""
         cmin, cmax = clim
         if arr.dtype.kind == "b":
             arr_normed = np.where(arr, np.uint8(255), np.uint8(0))
@@ -339,36 +349,35 @@ def _guess_clim(
 ) -> tuple[float, float]:
     ndim_rem = arr.ndim - 2
     if image_slice.dtype.kind == "b":
-        clim = (0, 1)
+        return (0, 1)
+    if ndim_rem == 0:
+        clim = (image_slice.min(), image_slice.max())
     else:
-        if ndim_rem == 0:
+        dim3_size = arr.shape[-3]
+        if dim3_size == 1:
             clim = (image_slice.min(), image_slice.max())
+        elif dim3_size < 4:
+            sl_last = (0,) * (ndim_rem - 1) + (dim3_size - 1,)
+            image_slice_last = arr.get_slice(sl_last)
+            clim = (
+                min(image_slice.min(), image_slice_last.min()),
+                max(image_slice.max(), image_slice_last.max()),
+            )
         else:
-            dim3_size = arr.shape[-3]
-            if dim3_size == 1:
-                clim = (image_slice.min(), image_slice.max())
-            elif dim3_size < 4:
-                sl_last = (0,) * (ndim_rem - 1) + (dim3_size - 1,)
-                image_slice_last = arr.get_slice(sl_last)
-                clim = (
-                    min(image_slice.min(), image_slice_last.min()),
-                    max(image_slice.max(), image_slice_last.max()),
-                )
-            else:
-                sl_last = (0,) * (ndim_rem - 1) + (dim3_size - 1,)
-                sl_middle = (0,) * (ndim_rem - 1) + (dim3_size // 2,)
-                image_slice_last = arr.get_slice(sl_last)
-                image_slice_middle = arr.get_slice(sl_middle)
-                clim = (
-                    min(
-                        image_slice.min(),
-                        image_slice_last.min(),
-                        image_slice_middle.min(),
-                    ),
-                    max(
-                        image_slice.max(),
-                        image_slice_last.max(),
-                        image_slice_middle.max(),
-                    ),
-                )
+            sl_last = (0,) * (ndim_rem - 1) + (dim3_size - 1,)
+            sl_middle = (0,) * (ndim_rem - 1) + (dim3_size // 2,)
+            image_slice_last = arr.get_slice(sl_last)
+            image_slice_middle = arr.get_slice(sl_middle)
+            clim = (
+                min(
+                    image_slice.min(),
+                    image_slice_last.min(),
+                    image_slice_middle.min(),
+                ),
+                max(
+                    image_slice.max(),
+                    image_slice_last.max(),
+                    image_slice_middle.max(),
+                ),
+            )
     return clim

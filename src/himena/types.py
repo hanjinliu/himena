@@ -67,6 +67,9 @@ else:
             return cls
 
 
+_void = object()
+
+
 class WidgetDataModel(GenericModel[_T]):
     """
     A data model that represents a widget containing an internal data.
@@ -124,8 +127,20 @@ class WidgetDataModel(GenericModel[_T]):
     def with_value(
         self,
         value: _U,
+        type: str | None = None,
+        *,
+        additional_data: object | None = _void,
     ) -> "WidgetDataModel[_U]":
+        """Return a model with the new value."""
         update = {"value": value}
+        if type is not None:
+            update["type"] = type
+        if additional_data is not _void:
+            update["additional_data"] = additional_data
+        update.update(
+            method=None,
+            force_open_with=None,
+        )  # these parameters must be reset
         return self.model_copy(update=update)
 
     def _with_source(
@@ -301,6 +316,14 @@ class WindowRect(NamedTuple):
         )
 
 
+class GuiConfiguration(BaseModel):
+    """Configuration for parametric widget."""
+
+    title: str | None = None
+    auto_close: bool = True
+    show_parameter_labels: bool = True
+
+
 class Parametric(Generic[_T]):
     """Parametric function that returns a widget data model."""
 
@@ -308,7 +331,6 @@ class Parametric(Generic[_T]):
         self,
         func: Callable[..., WidgetDataModel[_T]],
         *,
-        auto_close: bool = True,
         sources: list[MethodDescriptor] = [],
         command_id: str | None = None,
         preview: bool = False,
@@ -324,7 +346,6 @@ class Parametric(Generic[_T]):
         else:
             self._func = func
         wraps(func)(self)
-        self._auto_close = auto_close
         self._preview = preview
         self._sources = list(sources)
         self._command_id = command_id
@@ -350,6 +371,19 @@ class Parametric(Generic[_T]):
     def preview(self) -> bool:
         """Whether preview is enabled."""
         return self._preview
+
+    @property
+    def gui_config(self) -> dict[str, Any]:
+        if isinstance(
+            config := getattr(self._func, "__himena_gui_config__", None),
+            GuiConfiguration,
+        ):
+            out = config.model_dump()
+        else:
+            out = {}
+        if out.get("title") is None:
+            out["title"] = self.name
+        return {}
 
     def to_method(self, parameters: dict[str, Any]) -> MethodDescriptor:
         if src := self.sources:

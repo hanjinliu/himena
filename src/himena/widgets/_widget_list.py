@@ -209,8 +209,9 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         self,
         func: Callable[..., _T],
         *,
-        title: str | None = None,
         preview: bool = False,
+        title: str | None = None,
+        show_parameter_labels: bool = True,
         auto_close: bool = True,
     ) -> ParametricWindow[_W]:
         """
@@ -237,7 +238,11 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         if preview and _is_prev_arg in sig.parameters:
             parameters = [p for p in sig.parameters.values() if p.name != _is_prev_arg]
             sig = sig.replace(parameters=parameters)
-        fn_widget = back_main._signature_to_widget(sig, preview=preview)
+        fn_widget = back_main._signature_to_widget(
+            sig,
+            show_parameter_labels=show_parameter_labels,
+            preview=preview,
+        )
         param_widget = self.add_parametric_widget(
             fn_widget,
             func,

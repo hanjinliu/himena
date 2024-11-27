@@ -17,9 +17,7 @@ def duplicate_this_slice(model: WidgetDataModel) -> WidgetDataModel:
     """Duplicate the slice of the array."""
     arr_sliced = _get_current_array_2d(model)
     meta_sliced = ArrayMeta(current_indices=[])
-    return model.model_copy(
-        update={"value": arr_sliced, "additional_data": meta_sliced}
-    )
+    return model.with_value(arr_sliced, additional_data=meta_sliced)
 
 
 def _get_current_array_2d(model: WidgetDataModel) -> "np.ndarray":

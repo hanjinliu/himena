@@ -226,8 +226,10 @@ class QDefaultArrayView(QtW.QWidget):
             arr = arr.reshape(-1, 1)
         self._table.set_array(arr, sl)
 
-    def _get_slice(self) -> tuple[int, ...]:
-        return tuple(sb.value() for sb in self._spinboxes)
+    def _get_slice(self) -> tuple[int | slice, ...]:
+        if self._arr.ndim < 2:
+            return (slice(None),)
+        return tuple(sb.value() for sb in self._spinboxes) + (slice(None), slice(None))
 
     def _make_spinbox(self, max_value: int):
         spinbox = QtW.QSpinBox()

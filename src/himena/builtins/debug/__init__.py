@@ -17,6 +17,28 @@ def raise_exception():
 
 @register_function(
     menus=TOOLS_DEBUG,
+    title="Just warn",
+    command_id="debug:warning",
+)
+def raise_warning():
+    import warnings
+
+    warnings.warn("This is a test warning", UserWarning, stacklevel=2)
+
+
+@register_function(
+    menus=TOOLS_DEBUG,
+    title="Raise when warning",
+    command_id="debug:raise-when-warning",
+)
+def raise_when_warning():
+    import warnings
+
+    warnings.simplefilter("error")
+
+
+@register_function(
+    menus=TOOLS_DEBUG,
     title="Test model drop",
     command_id="debug:test-model-drop",
 )

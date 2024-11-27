@@ -28,6 +28,7 @@ _LOGGER = getLogger(__name__)
 READ_GROUP = "00_io_read"
 WRITE_GROUP = "01_io_write"
 SCR_SHOT_GROUP = "21_screenshot"
+SETTINGS_GROUP = "31_settings"
 COPY_SCR_SHOT = "00_copy-screenshot"
 SAVE_SCR_SHOT = "01_save-screenshot"
 EXIT_GROUP = "99_exit"
@@ -374,6 +375,18 @@ def copy_screenshot_window(ui: MainWindow) -> ClipboardDataModel:
     """Copy a screenshot of the sub window to the clipboard."""
     data = ui._backend_main_window._screenshot("window")
     return ClipboardDataModel(value=data, type=StandardType.IMAGE)
+
+
+@ACTIONS.append_from_fn(
+    id="settings",
+    title="Settings ...",
+    menus=[{"id": MenuId.FILE, "group": SETTINGS_GROUP}],
+)
+def show_setting_dialog(ui: MainWindow):
+    """Open a dialog to edit the application profile."""
+    from himena.qt.settings import QSettingsDialog
+
+    return QSettingsDialog(ui).exec()
 
 
 def _save_screenshot(ui: MainWindow, target: str) -> None:

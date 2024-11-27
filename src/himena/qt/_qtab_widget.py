@@ -89,6 +89,7 @@ class QTabWidget(QtW.QTabWidget):
     """Tab widget used for the main widget"""
 
     activeWindowChanged = QtCore.Signal(bool)  # True if a window is active
+    resized = QtCore.Signal()
 
     def __init__(self):
         super().__init__()

@@ -35,7 +35,7 @@ class QSubWindowArea(QtW.QMdiArea):
         self.viewport().setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self._last_press_pos: QtCore.QPoint | None = None
         self._last_drag_pos: QtCore.QPoint | None = None
-        # self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
+        self.setActivationOrder(QtW.QMdiArea.WindowOrder.ActivationHistoryOrder)
 
     def addSubWindow(self, sub_window: QSubWindow):
         super().addSubWindow(sub_window)

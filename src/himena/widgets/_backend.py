@@ -281,6 +281,7 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     def _signature_to_widget(
         self,
         sig: inspect.Signature,
+        show_parameter_labels: bool = True,
         preview: bool = False,
     ) -> _W:
         """Convert a function signature to a widget that can run it."""

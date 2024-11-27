@@ -372,3 +372,12 @@ def test_save_behavior(ui: MainWindow, tmpdir):
     ui.exec_action("save-as")
     assert not win2.is_modified
     assert isinstance(win2._widget_data_model_method, ConverterMethod)
+    assert isinstance(win2.save_behavior, SaveToPath)
+
+    ui.current_window = win2
+    ui.exec_action(
+        "view-as",
+        with_params={"plugin_name": "himena.builtins.qt.widgets.text.QDefaultTextEdit"}
+    )
+    win3 = ui.current_window
+    assert isinstance(win3.save_behavior, SaveToNewPath)

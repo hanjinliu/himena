@@ -286,8 +286,9 @@ class MainWindow(Generic[_W]):
         self,
         func: Callable[..., _T],
         *,
-        title: str | None = None,
         preview: bool = False,
+        title: str | None = None,
+        show_parameter_labels: bool = True,
         auto_close: bool = True,
     ) -> ParametricWindow[_W]:
         """
@@ -310,8 +311,9 @@ class MainWindow(Generic[_W]):
         """
         _, tabarea = self._current_or_new_tab()
         return tabarea.add_function(
-            func, title=title, preview=preview, auto_close=auto_close
-        )
+            func, title=title, preview=preview,
+            show_parameter_labels=show_parameter_labels, auto_close=auto_close,
+        )  # fmt: skip
 
     def add_parametric_widget(
         self,
@@ -535,6 +537,21 @@ class MainWindow(Generic[_W]):
         if idx_win is None:
             return None
         return self.tabs[idx_tab][idx_win]
+
+    @current_window.setter
+    def current_window(self, win: SubWindow[_W] | None) -> None:
+        """Set the current sub-window."""
+        if win is None:
+            self._backend_main_window._set_current_tab_index(None)
+            self._backend_main_window._set_current_sub_window_index(None)
+            return None
+        for i_tab, tab in self.tabs.enumerate():
+            for i_win, sub in tab.enumerate():
+                if sub is win:
+                    self._backend_main_window._set_current_tab_index(i_tab)
+                    self._backend_main_window._set_current_sub_window_index(i_win)
+                    return None
+        return None
 
     def iter_windows(self) -> Iterator[SubWindow[_W]]:
         """Iterate over all the sub-windows in this main window."""

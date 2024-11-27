@@ -18,11 +18,12 @@ PANDAS_TABLE_TYPE = "table.pandas"
 @register_widget(PANDAS_TABLE_TYPE)
 class DataFrameWidget(QtW.QTableWidget):
     def __init__(self):
+        super().__init__()
         self._data_model = None
 
     def update_model(self, model: WidgetDataModel[pd.DataFrame]):
         df = model.value
-        # set table items
+        # set table items one by one
         self.setRowCount(df.shape[0])
         self.setColumnCount(df.shape[1])
         for i, col in enumerate(df.columns):
@@ -31,6 +32,7 @@ class DataFrameWidget(QtW.QTableWidget):
                 self.setItem(j, i, QtW.QTableWidgetItem(str(value)))
         for j, index in enumerate(df.index):
             self.setVerticalHeaderItem(j, QtW.QTableWidgetItem(str(index)))
+        self._data_model = model
 
     def to_model(self) -> WidgetDataModel:
         return self._data_model
@@ -38,12 +40,12 @@ class DataFrameWidget(QtW.QTableWidget):
 # `@register_reader_provider` is a decorator that registers a function as one that
 # provides a reader for the given file path.
 @register_reader_provider
-def my_reader_provider(file_path):
-    if Path(file_path).suffix == ".csv":
+def my_reader_provider(file_path: Path):
+    if file_path.suffix == ".csv":
         def _read(file_path):
             df = pd.read_csv(file_path)
             return WidgetDataModel(value=df, type=PANDAS_TABLE_TYPE)
-    elif Path(file_path).suffix == ".xlsx":
+    elif file_path.suffix == ".xlsx":
         def _read(file_path):
             df = pd.read_excel(file_path)
             return WidgetDataModel(value=df, type=PANDAS_TABLE_TYPE)

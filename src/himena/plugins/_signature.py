@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Annotated, Callable, TypeVar, get_origin, get_args, Any, overload
 import inspect
+from himena.types import GuiConfiguration
 
 
 def _is_annotated(annotation: Any) -> bool:
@@ -30,12 +31,32 @@ _F = TypeVar("_F", bound=Callable)
 
 
 @overload
-def configure_gui(f: _F, **kwargs) -> _F: ...
+def configure_gui(
+    f: _F,
+    *,
+    title: str | None = None,
+    auto_close: bool = True,
+    show_parameter_labels: bool = True,
+    **kwargs,
+) -> _F: ...
 @overload
-def configure_gui(**kwargs) -> Callable[[_F], _F]: ...
+def configure_gui(
+    *,
+    title: str | None = None,
+    auto_close: bool = True,
+    show_parameter_labels: bool = True,
+    **kwargs,
+) -> Callable[[_F], _F]: ...
 
 
-def configure_gui(f=None, **kwargs):
+def configure_gui(
+    f=None,
+    *,
+    title: str | None = None,
+    auto_close: bool = True,
+    show_parameter_labels: bool = True,
+    **kwargs,
+):
     """Configure the GUI options for each parameter of a function.
 
     The usage is the same as `magicgui`'s `@magicgui` decorator.
@@ -53,14 +74,30 @@ def configure_gui(f=None, **kwargs):
                 raise TypeError(f"{k!r} is not a valid parameter for {f!r}.")
             param = sig.parameters[k]
             if not _is_annotated(param.annotation):
-                param = param.replace(annotation=Annotated[param.annotation, v])
+                annot = _prioritize_choices(param.annotation, v)
+                param = param.replace(annotation=Annotated[annot, v])
             else:
                 typ, meta = _split_annotated_type(param.annotation)
                 meta.update(v)
+                typ = _prioritize_choices(typ, meta)
                 param = param.replace(annotation=Annotated[typ, meta])
             new_params[k] = param
         sig = sig.replace(parameters=list(new_params.values()))
         f.__signature__ = sig
+        f.__annotations__ = {k: v.annotation for k, v in sig.parameters.items()}
+        f.__himena_gui_config__ = GuiConfiguration(
+            title=title,
+            auto_close=auto_close,
+            show_parameter_labels=show_parameter_labels,
+        )
         return f
 
     return _inner if f is None else _inner(f)
+
+
+def _prioritize_choices(annotation, options: dict[str, Any]):
+    if "choices" in options:
+        typ = Any
+    else:
+        typ = annotation
+    return typ

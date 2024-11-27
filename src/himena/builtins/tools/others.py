@@ -14,8 +14,6 @@ def open_as_text_anyway(ui: MainWindow, win: SubWindow) -> WidgetDataModel[str]:
     model = win.to_model()
     if model.type != StandardType.READER_NOT_FOUND:
         raise ValueError(f"Invalid model type: {model.type}")
-    out = model.model_copy(
-        update={"value": model.source.read_text(), "type": StandardType.TEXT}
-    )
+    out = model.with_value(model.source.read_text(), type=StandardType.TEXT)
     win._close_me(ui)
     return out

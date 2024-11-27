@@ -6,6 +6,7 @@ import logging
 import textwrap
 from typing import Callable, Literal, TypeVar, TYPE_CHECKING, cast
 from pathlib import Path
+import warnings
 
 import app_model
 from qtpy import QtWidgets as QtW, QtGui, QtCore
@@ -55,9 +56,10 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def __init__(self, app: app_model.Application):
         # app must be initialized
-        _app_instance = get_event_loop_handler("qt", app.name)
-        self._qt_app = cast(QtW.QApplication, _app_instance.get_app())
+        _event_loop_handler = get_event_loop_handler("qt", app.name)
+        self._qt_app = cast(QtW.QApplication, _event_loop_handler.get_app())
         self._app_name = app.name
+        self._event_loop_handler = _event_loop_handler
 
         super().__init__(app)
         self._qt_app.setApplicationName(app.name)
@@ -118,6 +120,10 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self.setMinimumSize(400, 300)
         self.resize(800, 600)
 
+        # connect notifications
+        self._event_loop_handler.errored.connect(self._on_error)
+        self._event_loop_handler.warned.connect(self._on_warning)
+
     def _update_widget_theme(self, style: Theme):
         self.setStyleSheet(style.format_text(get_stylesheet_path().read_text()))
         # TODO: update toolbar icon color
@@ -125,6 +131,24 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         #     icon_theme = "light"
         # else:
         #     icon_theme = "dark"
+
+    def _on_error(self, exc: Exception) -> None:
+        from himena.qt._qtraceback import QtErrorMessageBox
+        from himena.qt._qnotification import QNotificationWidget
+
+        mbox = QtErrorMessageBox.from_exc(exc, parent=self)
+        notification = QNotificationWidget(self._tab_widget)
+        notification.addWidget(mbox)
+        return notification.show_and_hide_lager()
+
+    def _on_warning(self, warning: warnings.WarningMessage) -> None:
+        from himena.qt._qtraceback import QtErrorMessageBox
+        from himena.qt._qnotification import QNotificationWidget
+
+        mbox = QtErrorMessageBox.from_warning(warning, parent=self)
+        notification = QNotificationWidget(self._tab_widget)
+        notification.addWidget(mbox)
+        return notification.show_and_hide_lager()
 
     def add_dock_widget(
         self,
@@ -165,6 +189,10 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         raise ValueError(f"{widget!r} does not have a dock widget parent.")
 
     def _set_control_widget(self, widget: QtW.QWidget, control: QtW.QWidget) -> None:
+        if not isinstance(control, QtW.QWidget):
+            raise TypeError(
+                f"`control_widget` did not return a QWidget (got {type(control)})."
+            )
         self._control_stack.add_control_widget(widget, control)
 
     def _update_control_widget(self, current: QtW.QWidget) -> None:
@@ -551,13 +579,15 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _signature_to_widget(
         self,
         sig: inspect.Signature,
+        show_parameter_labels: bool = True,
         preview: bool = False,
     ) -> QtW.QWidget:
         from magicgui.signature import MagicSignature
         from himena.qt._magicgui import ToggleSwitch, get_type_map
 
         container = MagicSignature.from_signature(sig).to_container(
-            type_map=get_type_map()
+            type_map=get_type_map(),
+            labels=show_parameter_labels,
         )
         container.margins = (0, 0, 0, 0)
         qwidget = container.native

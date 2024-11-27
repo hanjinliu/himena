@@ -35,6 +35,7 @@ elif sys.platform == "darwin":
 else:
     MonospaceFontFamily = "Monospace"
 
+# Allowed for profile names
 ALLOWED_LETTERS = string.ascii_letters + string.digits + "_- "
 
 
@@ -52,12 +53,20 @@ class StandardType(SimpleNamespace):
     ### Subtypes ###
     # HTML text
     HTML = "text.html"
+
     # SVG text
     SVG = "text.svg"
+
     # image data
     IMAGE = "array.image"
+    # binary image data that will be used as a mask
+    IMAGE_BINARY = "array.image.binary"
+    # image label data (e.g., segmentation)
+    IMAGE_LABELS = "array.image.labels"
+
     # 1D numerical array
     ARRAY_1D = "array.1d"
+
     # (N, D) numerical array, such as D-dimensional point cloud
     COORDINATES = "array.coordinates"
 
