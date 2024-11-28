@@ -22,6 +22,8 @@ class QParametricWidget(QtW.QWidget):
         layout.addWidget(self._call_btn)
         if connector := getattr(central, PWPN.CONNECT_CHANGED_SIGNAL, None):
             connector(self._on_param_changed)
+        if hasattr(central, "__himena_model_track__"):
+            self.__himena_model_track__ = central.__himena_model_track__
 
     def get_params(self) -> dict[str, Any]:
         return getattr(self._central_widget, PWPN.GET_PARAMS)()

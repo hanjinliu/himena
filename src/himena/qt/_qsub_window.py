@@ -632,12 +632,20 @@ class QSubWindowTitleBar(QtW.QFrame):
                     mime_data.setUrls([QtCore.QUrl(_meth.path.as_uri())])
                 drag.setMimeData(mime_data)
                 drag.setPixmap(_subwin._pixmap_resized(QtCore.QSize(150, 150)))
-                drag.exec()
+                self._subwindow.hide()
+                try:
+                    drag.exec()
+                finally:
+                    # NOTE: if subwindow is dropped to another tab, the old one will be
+                    # removed from the MdiArea. In this case, the subwindow should not
+                    # be shown again.
+                    if self._subwindow.parent():
+                        self._subwindow.show()
             else:
                 if _subwin._window_state == WindowState.MIN:
                     # cannot move minimized window
                     return
-                self._store_drag_position(event.globalPos())
+            self._store_drag_position(event.globalPos())
         return super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent):

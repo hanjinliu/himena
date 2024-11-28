@@ -5,9 +5,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from himena._utils import read_text
 from himena.plugins import register_reader_provider, register_writer_provider
 from himena.types import WidgetDataModel
+from himena.model_meta import TextMeta
 from himena.consts import (
     StandardType,
     BasicTextFileTypes,
@@ -21,18 +21,32 @@ if TYPE_CHECKING:
 
 def default_text_reader(file_path: Path) -> WidgetDataModel:
     """Read text file."""
-    return WidgetDataModel(
-        value=read_text(file_path),
-        type=StandardType.TEXT,
-        source=file_path,
-    )
+    return _read_text(file_path, StandardType.TEXT)
 
 
 def default_html_reader(file_path: Path) -> WidgetDataModel:
+    """Read HTML file."""
+    return _read_text(file_path, StandardType.HTML)
+
+
+def _read_text(file: Path, typ: str) -> tuple[str, str]:
+    """Read text file with auto-detected encoding."""
+    import chardet
+
+    with file.open("rb") as f:
+        detector = chardet.UniversalDetector()
+        for line in f:
+            detector.feed(line)
+            if detector.done:
+                break
+        detector.close()
+    encoding = detector.result["encoding"]
+    value = file.read_text(encoding=encoding)
     return WidgetDataModel(
-        value=read_text(file_path),
-        type=StandardType.HTML,
-        source=file_path,
+        value=value,
+        type=typ,
+        source=file,
+        metadata=TextMeta(encoding=encoding),
     )
 
 
@@ -205,9 +219,9 @@ def polars_reader_provider(file_path: Path) -> WidgetDataModel:
 
 def default_text_writer(model: WidgetDataModel[str], path: Path) -> None:
     """Write text file."""
-    with open(path, "w") as f:
-        f.write(model.value)
-    return None
+    if isinstance(meta := model.metadata, TextMeta):
+        encoding = meta.encoding
+    return path.write_text(model.value, encoding=encoding)
 
 
 def default_csv_writer(model: WidgetDataModel[np.ndarray], path: Path) -> None:
@@ -251,6 +265,7 @@ def default_excel_writer(
         ws: Worksheet = wb.create_sheet(sheet_name)
         for r, row in enumerate(table):
             for c, cell_str in enumerate(row):
+                cell_str: str
                 if cell_str.startswith("="):
                     cell_data_type = "f"
                 else:

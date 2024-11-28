@@ -432,11 +432,14 @@ class QTextControl(QtW.QWidget):
         self._line_num = QtW.QLabel()
         self._line_num.setFixedWidth(50)
 
+        self._encoding = QtW.QLabel("utf-8")
+
         layout = QtW.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         layout.addWidget(QtW.QWidget())  # spacer
         layout.addWidget(_labeled("Ln:", self._line_num))
+        layout.addWidget(self._encoding)
         layout.addWidget(_labeled("Spaces:", self._tab_spaces_combobox))
         layout.addWidget(_labeled("Language:", self._language_combobox))
 
@@ -496,6 +499,7 @@ class QDefaultTextEdit(QtW.QWidget):
         self._main_text_edit.setPlainText(model.value)
         lang = None
         spaces = 4
+        encoding = "utf-8"
         if isinstance(model.metadata, TextMeta):
             lang = model.metadata.language
             spaces = model.metadata.spaces
@@ -513,6 +517,8 @@ class QDefaultTextEdit(QtW.QWidget):
             self._control._language_combobox.setCurrentText(lang)
             self._control._emit_language_changed()
         self._control._tab_spaces_combobox.setCurrentText(str(spaces))
+        if encoding:
+            self._control._encoding.setText(encoding)
         return None
 
     @protocol_override

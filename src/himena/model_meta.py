@@ -10,6 +10,7 @@ class TextMeta(BaseModel):
     selection: tuple[int, int] | None = Field(None, description="Selection range.")
     font_family: str | None = Field(None, description="Font family.")
     font_size: float | None = Field(None, description="Font size.")
+    encoding: str | None = Field(None, description="Encoding of the text file.")
 
 
 class TableMeta(BaseModel):

@@ -1,5 +1,4 @@
 from __future__ import annotations
-from pathlib import Path
 from typing import (
     Callable,
     Any,
@@ -99,21 +98,6 @@ class OrderedSet(MutableSet[_T]):
             self.add(value)
 
 
-def read_text(file: Path) -> str:
-    """Read text file with auto-detected encoding."""
-    import chardet
-
-    with file.open("rb") as f:
-        detector = chardet.UniversalDetector()
-        for line in f:
-            detector.feed(line)
-            if detector.done:
-                break
-        detector.close()
-    encoding = detector.result["encoding"]
-    return file.read_text(encoding=encoding)
-
-
 def _is_widget_data_model(a):
     return WidgetDataModel in (get_origin(a), a)
 
@@ -145,6 +129,8 @@ def make_function_callback(
         f_annot["return"] = WidgetDataModel
     elif _is_parametric(sig.return_annotation):
         f_annot["return"] = Parametric
+    elif sig.return_annotation is ParametricWidgetProtocol:
+        f_annot["return"] = ParametricWidgetProtocol
     else:
         return f
 
@@ -170,7 +156,7 @@ def make_function_callback(
         if isinstance(out, WidgetDataModel):
             if len(originals) > 0:
                 out.method = ConverterMethod(originals=originals, command_id=command_id)
-        elif f_annot.get("return") in [Parametric, ParametricWidgetProtocol]:
+        elif f_annot.get("return") in (Parametric, ParametricWidgetProtocol):
             out.__himena_model_track__ = ModelTrack(
                 sources=originals, command_id=command_id
             )
