@@ -356,13 +356,11 @@ class QSubWindow(QtW.QMdiSubWindow):
         return super().event(a0)
 
     def _check_resize_state(
-        self,
-        mouse_pos: QtCore.QPoint,
-        thickness: int = 6,
+        self, mouse_pos: QtCore.QPoint, thickness: int = 6, thickness_top: int = 4
     ) -> ResizeState:
         is_left = mouse_pos.x() < thickness
         is_right = mouse_pos.x() > self.width() - thickness
-        is_top = mouse_pos.y() < thickness
+        is_top = mouse_pos.y() < thickness_top
         is_bottom = mouse_pos.y() > self.height() - thickness
         return ResizeState.from_bools(is_left, is_right, is_top, is_bottom)
 
@@ -429,6 +427,7 @@ class QSubWindow(QtW.QMdiSubWindow):
 
     def dropEvent(self, a0: QtGui.QDropEvent | None) -> None:
         if a0 is not None and isinstance(src := a0.source(), QSubWindow):
+            # merge data
             if self._my_wrapper()._process_merge_model(src._my_wrapper()):
                 a0.accept()
                 return None
@@ -622,6 +621,7 @@ class QSubWindowTitleBar(QtW.QFrame):
         if event.button() == Qt.MouseButton.LeftButton:
             _subwin = self._subwindow
             if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+                # start dragging subwindow
                 self._is_ctrl_drag = True
                 drag = QtGui.QDrag(_subwin)
                 mime_data = QtCore.QMimeData()
@@ -664,6 +664,7 @@ class QSubWindowTitleBar(QtW.QFrame):
                 _subwin.setGeometry(_next_geo)
                 self._store_drag_position(event.globalPos())
             else:
+                # drag the subwindow
                 new_pos = event.globalPos() - self._drag_position
                 offset = self.height() - 4
                 if new_pos.y() < -offset:

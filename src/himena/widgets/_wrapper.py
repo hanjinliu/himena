@@ -3,19 +3,23 @@
 from __future__ import annotations
 
 from contextlib import suppress
+import inspect
 import logging
 from pathlib import Path
-from typing import Any, Generic, TYPE_CHECKING, TypeVar
+from typing import Any, Callable, Generic, TYPE_CHECKING, TypeVar
 from uuid import uuid4
 import weakref
 
 from psygnal import Signal
 from himena import anchor as _anchor
 from himena import io
+from himena._utils import get_gui_config
 from himena.consts import ParametricWidgetProtocolNames as PWPN
 from himena.types import (
     BackendInstructions,
+    ModelTrack,
     Parametric,
+    ParametricWidgetProtocol,
     WindowState,
     WidgetDataModel,
     WindowRect,
@@ -430,7 +434,7 @@ class ParametricWindow(SubWindow[_W]):
     def __init__(
         self,
         widget: _W,
-        callback: Parametric,
+        callback: Callable,
         main_window: BackendMainWindow[_W],
         identifier: int | None = None,
     ):
@@ -441,8 +445,9 @@ class ParametricWindow(SubWindow[_W]):
         self._auto_close = True
 
         # check if callback has "is_previewing" argument
-        sig = callback.get_signature()
+        sig = inspect.signature(callback)
         self._has_is_previewing = self._IS_PREVIEWING in sig.parameters
+        self._return_annotation = sig.return_annotation
 
     def get_params(self) -> dict[str, Any]:
         """Get the parameters of the widget."""
@@ -500,6 +505,7 @@ class ParametricWindow(SubWindow[_W]):
         if self._has_is_previewing:
             kwargs = {**kwargs, self._IS_PREVIEWING: False}
         return_value = self._callback(**kwargs)
+        tracker = self._get_model_track()
         if isinstance(return_value, WidgetDataModel):
             if prev := self._get_preview_window():
                 # no need to create a new window, just use the preview window
@@ -520,8 +526,8 @@ class ParametricWindow(SubWindow[_W]):
             else:
                 result_widget = self._process_model_output(return_value)
             _LOGGER.info("Got subwindow: %r", result_widget)
-            if self._callback.sources:
-                new_method = self._callback.to_method(kwargs)
+            if tracker.sources:
+                new_method = tracker.to_method(kwargs)
                 _LOGGER.info(
                     "Inherited method %r, where the original method was %r",
                     new_method,
@@ -532,17 +538,23 @@ class ParametricWindow(SubWindow[_W]):
             result_widget._update_widget_data_model_method(new_method)
             if isinstance(new_method, ConverterMethod):
                 result_widget._set_modified(True)
-        elif isinstance(return_value, Parametric):
+        elif self._return_annotation in [Parametric, "Parametric"]:
             result_widget = self._process_parametric_output(return_value)
             _LOGGER.info("Got parametric widget: %r", result_widget)
-            if self._callback.sources:
-                new_method = self._callback.to_method(kwargs)
+            if tracker.sources:
+                new_method = tracker.to_method(kwargs)
                 result_widget._update_widget_data_model_method(new_method)
                 _LOGGER.info("Inherited method: %r", new_method)
         else:
             annot = getattr(self._callback, "__annotations__", {})
             self._process_other_output(return_value, annot.get("return", None))
         return None
+
+    def _get_model_track(self) -> ModelTrack:
+        model_track = getattr(self._callback, "__himena_model_track__", ModelTrack())
+        if not isinstance(model_track, ModelTrack):
+            model_track = ModelTrack()
+        return model_track
 
     def is_preview_enabled(self) -> bool:
         """Whether the widget supports preview."""
@@ -567,13 +579,26 @@ class ParametricWindow(SubWindow[_W]):
         self._coerce_rect(result_widget)
         return result_widget._update_from_returned_model(model)
 
-    def _process_parametric_output(self, fn: Parametric) -> ParametricWindow[_W]:
+    def _process_parametric_output(self, fn) -> ParametricWindow[_W]:
         ui = self._main_window()._himena_main_window
         i_tab, i_win = self._find_me(ui)
         if self._auto_close:
             del ui.tabs[i_tab][i_win]
 
-        result_widget = ui.add_function(fn, preview=fn.preview)
+        result_widget = ui.add_function(fn, **get_gui_config(fn))
+        self._coerce_rect(result_widget)
+        return result_widget
+
+    def _process_parametric_widget_protocol_output(
+        self,
+        out: ParametricWidgetProtocol,
+    ) -> ParametricWindow[_W]:
+        ui = self._main_window()._himena_main_window
+        i_tab, i_win = self._find_me(ui)
+        if self._auto_close:
+            del ui.tabs[i_tab][i_win]
+
+        result_widget = ui.add_parametric_widget(out, **get_gui_config(out))
         self._coerce_rect(result_widget)
         return result_widget
 

@@ -4,14 +4,18 @@ from pathlib import Path
 from typing import TypeVar, TYPE_CHECKING
 from logging import getLogger
 import weakref
+from magicgui.widgets import FunctionGui
 from app_model import Application
+from himena.consts import ParametricWidgetProtocolNames as PWPN
 from himena.types import (
     Parametric,
     WidgetDataModel,
     ClipboardDataModel,
+    ParametricWidgetProtocol,
 )
 from himena.widgets._widget_list import TabArea
 from himena.widgets._wrapper import SubWindow
+from himena._utils import get_gui_config
 
 if TYPE_CHECKING:
     from himena.widgets._main_window import MainWindow
@@ -160,7 +164,36 @@ def init_application(app: Application) -> Application:
             return None
         _LOGGER.debug("processing %r", fn)
         ins = current_instance(app.name)
-        ins.add_function(fn, preview=fn.preview, **fn.gui_config)
+        ins.add_function(fn, **get_gui_config(fn))
+        return None
+
+    @app.injection_store.mark_processor
+    def _process_parametric_widget_protocol(widget: ParametricWidgetProtocol) -> None:
+        if widget is None:
+            return None
+        _LOGGER.debug("processing %r", widget)
+        ins = current_instance(app.name)
+        if isinstance(widget, FunctionGui):
+            widget.get_params = widget.asdict
+            ins.add_parametric_widget(
+                widget,
+                callback=widget.__call__,
+                title=widget.label,
+                preview=False,
+                auto_close=False,
+                auto_size=False,
+            )
+        else:
+            ins.add_parametric_widget(
+                widget,
+                title=getattr(widget, PWPN.GET_TITLE, lambda: None)(),
+                preview=(
+                    hasattr(widget, PWPN.IS_PREVIEW_ENABLED)
+                    and hasattr(widget, PWPN.CONNECT_CHANGED_SIGNAL)
+                ),
+                auto_close=getattr(widget, PWPN.GET_AUTO_CLOSE, lambda: True)(),
+                auto_size=getattr(widget, PWPN.GET_AUTO_SIZE, lambda: True)(),
+            )
         return None
 
     _APP_INITIALIZED.add(app)

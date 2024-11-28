@@ -78,6 +78,7 @@ class StandardType(SimpleNamespace):
     SURFACE = "surface"  # vertices, faces and values for 3D surface plot
 
     IPYNB = "ipynb"  # Jupyter notebook file
+    GROUPBY = "groupby"  # DataFrame GroupBy object
 
     # fallback when no reader is found for the file (which means that the file could be
     # opened as a text file)
@@ -123,6 +124,9 @@ class ParametricWidgetProtocolNames:
     GET_OUTPUT = "get_output"
     IS_PREVIEW_ENABLED = "is_preview_enabled"
     CONNECT_CHANGED_SIGNAL = "connect_changed_signal"
+    GET_TITLE = "get_title"
+    GET_AUTO_CLOSE = "auto_close"
+    GET_AUTO_SIZE = "auto_size"
 
 
 NO_RECORDING_FIELD = "__himena_no_recording__"

@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
+from himena._utils import read_text
 from himena.plugins import register_reader_provider, register_writer_provider
 from himena.types import WidgetDataModel
 from himena.consts import (
@@ -20,12 +21,8 @@ if TYPE_CHECKING:
 
 def default_text_reader(file_path: Path) -> WidgetDataModel:
     """Read text file."""
-    try:
-        value = file_path.read_text()
-    except UnicodeDecodeError:
-        value = file_path.read_text(encoding="utf-8")
     return WidgetDataModel(
-        value=value,
+        value=read_text(file_path),
         type=StandardType.TEXT,
         source=file_path,
     )
@@ -33,7 +30,7 @@ def default_text_reader(file_path: Path) -> WidgetDataModel:
 
 def default_html_reader(file_path: Path) -> WidgetDataModel:
     return WidgetDataModel(
-        value=file_path.read_text(),
+        value=read_text(file_path),
         type=StandardType.HTML,
         source=file_path,
     )

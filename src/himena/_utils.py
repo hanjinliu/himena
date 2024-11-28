@@ -1,4 +1,5 @@
 from __future__ import annotations
+from pathlib import Path
 from typing import (
     Callable,
     Any,
@@ -14,7 +15,14 @@ from typing import (
 import inspect
 from functools import wraps
 import warnings
-from himena.types import WidgetDataModel, Parametric
+
+from himena.types import (
+    ParametricWidgetProtocol,
+    WidgetDataModel,
+    Parametric,
+    ModelTrack,
+    GuiConfiguration,
+)
 from himena._descriptors import ProgramaticMethod, ConverterMethod
 
 if TYPE_CHECKING:
@@ -91,18 +99,32 @@ class OrderedSet(MutableSet[_T]):
             self.add(value)
 
 
+def read_text(file: Path) -> str:
+    """Read text file with auto-detected encoding."""
+    import chardet
+
+    with file.open("rb") as f:
+        detector = chardet.UniversalDetector()
+        for line in f:
+            detector.feed(line)
+            if detector.done:
+                break
+        detector.close()
+    encoding = detector.result["encoding"]
+    return file.read_text(encoding=encoding)
+
+
 def _is_widget_data_model(a):
     return WidgetDataModel in (get_origin(a), a)
 
 
 def _is_parametric(a):
-    return Parametric in (get_origin(a), a)
+    return a is Parametric
 
 
 def make_function_callback(
     f: _F,
     command_id: str,
-    preview: bool = False,
 ) -> _F:
     try:
         sig = inspect.signature(f)
@@ -110,22 +132,26 @@ def make_function_callback(
         warnings.warn(f"Failed to get signature of {f!r}")
         return f
 
+    f_annot = f.__annotations__
     keys_model: list[str] = []
     for key, param in sig.parameters.items():
         if _is_widget_data_model(param.annotation):
             keys_model.append(key)
 
     for key in keys_model:
-        f.__annotations__[key] = WidgetDataModel
+        f_annot[key] = WidgetDataModel
 
     if _is_widget_data_model(sig.return_annotation):
-        f.__annotations__["return"] = WidgetDataModel
+        f_annot["return"] = WidgetDataModel
     elif _is_parametric(sig.return_annotation):
-        f.__annotations__["return"] = Parametric
+        f_annot["return"] = Parametric
     else:
         return f
 
-    if len(keys_model) == 0 and f.__annotations__["return"] is not Parametric:
+    if len(keys_model) == 0 and f_annot.get("return") not in {
+        Parametric,
+        ParametricWidgetProtocol,
+    }:
         return f
 
     @wraps(f)
@@ -144,16 +170,29 @@ def make_function_callback(
         if isinstance(out, WidgetDataModel):
             if len(originals) > 0:
                 out.method = ConverterMethod(originals=originals, command_id=command_id)
-        elif callable(out) and f.__annotations__["return"] is Parametric:
-            out = Parametric(
-                out,
-                sources=originals,
-                command_id=command_id,
-                preview=preview,
+        elif f_annot.get("return") in [Parametric, ParametricWidgetProtocol]:
+            out.__himena_model_track__ = ModelTrack(
+                sources=originals, command_id=command_id
             )
         return out
 
     return _new_f
+
+
+def get_gui_config(fn) -> dict[str, Any]:
+    if isinstance(
+        config := getattr(fn, "__himena_gui_config__", None),
+        GuiConfiguration,
+    ):
+        out = config.model_dump()
+    else:
+        out = {}
+    if out.get("title") is None:
+        if hasattr(fn, "__name__"):
+            out["title"] = fn.__name__
+        else:
+            out["title"] = str(fn)
+    return out
 
 
 def import_object(full_name: str) -> Any:

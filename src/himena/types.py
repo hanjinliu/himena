@@ -1,5 +1,3 @@
-from functools import wraps
-import inspect
 from pathlib import Path
 from typing import (
     Any,
@@ -131,6 +129,7 @@ class WidgetDataModel(GenericModel[_T]):
         value: _U,
         type: str | None = None,
         *,
+        title: str | None = None,
         metadata: object | None = _void,
     ) -> "WidgetDataModel[_U]":
         """Return a model with the new value."""
@@ -139,6 +138,8 @@ class WidgetDataModel(GenericModel[_T]):
             update["type"] = type
         if metadata is not _void:
             update["metadata"] = metadata
+        if title is not None:
+            update["title"] = title
         update.update(
             method=None,
             force_open_with=None,
@@ -319,84 +320,61 @@ class WindowRect(NamedTuple):
 
 
 class GuiConfiguration(BaseModel):
-    """Configuration for parametric widget."""
+    """Configuration for parametric widget (interpreted by the injection processor)"""
 
     title: str | None = None
+    preview: bool = False
     auto_close: bool = True
     show_parameter_labels: bool = True
 
 
-class Parametric(Generic[_T]):
-    """Parametric function that returns a widget data model."""
+class ModelTrack(BaseModel):
+    """Model to track how model is created."""
 
-    def __init__(
-        self,
-        func: Callable[..., WidgetDataModel[_T]],
-        *,
-        sources: list[MethodDescriptor] = [],
-        command_id: str | None = None,
-        preview: bool = False,
-    ):
-        if isinstance(func, Parametric):
-            if len(sources) > 0 or command_id is not None:
-                raise TypeError(
-                    "The first argument must not be a Parametric if sources are given."
-                )
-            self._func = func._func
-            sources = func.sources
-            command_id = func.command_id
-        else:
-            self._func = func
-        wraps(func)(self)
-        self._preview = preview
-        self._sources = list(sources)
-        self._command_id = command_id
-
-    def __call__(self, *args, **kwargs) -> WidgetDataModel[_T]:
-        return self._func(*args, **kwargs)
-
-    @property
-    def name(self) -> str:
-        if hasattr(self._func, "__name__"):
-            return self._func.__name__
-        return str(self._func)
-
-    @property
-    def sources(self) -> list[MethodDescriptor]:
-        return self._sources
-
-    @property
-    def command_id(self) -> str | None:
-        return self._command_id
-
-    @property
-    def preview(self) -> bool:
-        """Whether preview is enabled."""
-        return self._preview
-
-    @property
-    def gui_config(self) -> dict[str, Any]:
-        if isinstance(
-            config := getattr(self._func, "__himena_gui_config__", None),
-            GuiConfiguration,
-        ):
-            out = config.model_dump()
-        else:
-            out = {}
-        if out.get("title") is None:
-            out["title"] = self.name
-        return {}
+    sources: list[MethodDescriptor] = Field(default_factory=list)
+    command_id: str | None = None
 
     def to_method(self, parameters: dict[str, Any]) -> MethodDescriptor:
-        if src := self.sources:
+        if self.command_id is not None:
             return ConverterMethod(
-                originals=src, command_id=self.command_id, parameters=parameters
+                originals=self.sources,
+                command_id=self.command_id,
+                parameters=parameters,
             )
         return ProgramaticMethod()
 
-    def get_signature(self) -> inspect.Signature:
-        self.__signature__ = inspect.signature(self._func)
-        return self.__signature__
+
+class Parametric:
+    """Callback for a parametric function.
+
+    This type can be interpreted by the injection store processor. For example, in the
+    following code, `my_plugin_function` will be converted into a parametric widget
+    with inputs `a` and `b`..
+
+    >>> from himena.plugin import register_function
+    >>> @register_function(...)
+    >>> def my_plugin_function(...) -> Parametric:
+    ...     def callback_func(a: int, b: str) -> WidgetDataModel:
+    ...         ...
+    ...     return my_plugin_function
+    """
+
+    def __new__(cls, *args, **kwargs) -> None:
+        if cls is Parametric:
+            raise TypeError("Parametric cannot be instantiated.")
+        return super().__new__(cls)
+
+
+class ParametricWidgetProtocol:
+    """Protocol used for return annotation of a parametric widget."""
+
+    def __new__(cls, *args, **kwargs) -> None:
+        if cls is ParametricWidgetProtocol:
+            raise TypeError("ParametricWidgetProtocol cannot be instantiated.")
+        return super().__new__(cls)
+
+    def get_output(self, *args, **kwargs) -> Any:
+        raise NotImplementedError
 
 
 class BackendInstructions(BaseModel):

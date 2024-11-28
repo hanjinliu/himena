@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Annotated
-from himena.plugins import register_function
+from himena.plugins import register_function, configure_gui
 from himena.types import Parametric, WidgetDataModel
 
 TOOLS_DEBUG = "tools/debug"
@@ -75,9 +75,9 @@ def open_user_preferences() -> list[Path]:
     menus=TOOLS_DEBUG,
     title="Test preview",
     command_id="debug:test-preview",
-    preview=True,
 )
 def preview_test() -> Parametric:
+    @configure_gui(preview=True)
     def testing_preview(a: int, b: str, is_previewing: bool = False) -> WidgetDataModel:
         out = f"a = {a!r}\nb ={b!r}"
         if is_previewing:
@@ -92,11 +92,11 @@ def preview_test() -> Parametric:
     menus=TOOLS_DEBUG,
     title="Test plot",
     command_id="debug:test-plot",
-    preview=True,
 )
 def plot_test() -> Parametric:
     import himena.plotting as hplt
 
+    @configure_gui(preview=True)
     def run(a: int, b: int = 4) -> WidgetDataModel:
         fig = hplt.figure()
         fig.axes.plot([0, 1, 2], [2, a, b], color="red")

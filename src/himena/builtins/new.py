@@ -72,7 +72,11 @@ def seaborn_sample_data() -> Parametric:
     dataset_names = [name.strip() for name in txt.decode().split("\n")]
     choices = [name for name in dataset_names if name]
 
-    @configure_gui(name={"choices": choices})
+    @configure_gui(
+        name={"choices": choices},
+        title="Choose a dataset ...",
+        show_parameter_labels=False,
+    )
     def fetch_data(name: str = "iris") -> WidgetDataModel:
         # read without using pandas
         with urlopen(f"{DATASET_SOURCE}/{name}.csv") as resp:

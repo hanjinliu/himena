@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     import pandas as pd
     import polars as pl
     import pyarrow as pa
+    import narwhals as nw
 
 
 @lru_cache(maxsize=1)
@@ -70,11 +71,20 @@ def is_polars_dataframe(df) -> TypeGuard[pl.DataFrame]:
     return False
 
 
-def is_pyarrow_table(df) -> TypeGuard[pl.DataFrame]:
+def is_pyarrow_table(df) -> TypeGuard[pa.Table]:
     if _see_imported_module(df, "pyarrow", "Table"):
         import pyarrow as pa
 
         return isinstance(df, pa.Table)
+    return False
+
+
+def is_narwhals_dataframe(df) -> TypeGuard[nw.DataFrame]:
+    if _see_imported_module(df, "narwhals"):
+        import narwhals as nw
+
+        nw.from_native
+        return isinstance(df, nw.DataFrame)
     return False
 
 
@@ -370,4 +380,6 @@ def wrap_dataframe(df) -> DataFrameWrapper:
         return PolarsWrapper(df)
     if is_pyarrow_table(df):
         return PyarrowWrapper(df)
+    if is_narwhals_dataframe(df):
+        return wrap_dataframe(df.to_native())
     raise TypeError(f"Unsupported dataframe type: {type(df)}")

@@ -4,17 +4,21 @@ from typing import Any
 from qtpy import QtWidgets as QtW, QtCore
 from himena.consts import StandardType, ParametricWidgetProtocolNames as PWPN
 from himena.types import WidgetDataModel
+from magicgui.widgets import Widget
 
 
 class QParametricWidget(QtW.QWidget):
     param_changed = QtCore.Signal()
 
-    def __init__(self, central: QtW.QWidget) -> None:
+    def __init__(self, central: QtW.QWidget | Widget) -> None:
         super().__init__()
         self._call_btn = QtW.QPushButton("Run", self)
         self._central_widget = central
         layout = QtW.QVBoxLayout(self)
-        layout.addWidget(central)
+        if isinstance(central, Widget):
+            layout.addWidget(central.native)
+        else:
+            layout.addWidget(central)
         layout.addWidget(self._call_btn)
         if connector := getattr(central, PWPN.CONNECT_CHANGED_SIGNAL, None):
             connector(self._on_param_changed)

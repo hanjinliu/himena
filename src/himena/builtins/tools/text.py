@@ -13,12 +13,12 @@ from himena import _utils
     title="Filter text ...",
     types=StandardType.TEXT,
     menus=["tools/text"],
-    preview=True,
     command_id="builtins:filter-text",
 )
-def filter_text(model: WidgetDataModel[str]) -> Parametric[str]:
+def filter_text(model: WidgetDataModel[str]) -> Parametric:
     """Filter text by its content."""
 
+    @configure_gui(preview=True)
     def filter_text_data(
         include: str = "",
         exclude: str = "",
@@ -107,18 +107,26 @@ def run_script(model: WidgetDataModel[str]):
     title="Convert text to table ...",
     command_id="builtins:text-to-table",
 )
-def text_to_table(model: WidgetDataModel[str]) -> WidgetDataModel:
+def text_to_table(model: WidgetDataModel[str]) -> Parametric:
     """Convert text to a table-type widget."""
-    lines = model.value.splitlines()
-    table = []
-    for line in lines:
-        table.append(line.split(","))
-    return WidgetDataModel(
-        value=table,
-        type=StandardType.TABLE,
-        title=model.title,
-        extension_default=".csv",
+
+    @configure_gui(
+        title="Convert text to table ...",
     )
+    def run(separator: str = ",") -> WidgetDataModel:
+        lines = model.value.splitlines()
+        table = []
+        sep = separator.encode().decode("unicode_escape")
+        for line in lines:
+            table.append(line.split(sep))
+        return WidgetDataModel(
+            value=table,
+            type=StandardType.TABLE,
+            title=model.title,
+            extension_default=".csv",
+        )
+
+    return run
 
 
 @register_function(

@@ -22,6 +22,8 @@ if TYPE_CHECKING:
 
 
 class ArrayQImage:
+    """Interface between QImage and numpy array"""
+
     def __init__(self, qimage: QtGui.QImage):
         self.qimage = qimage
 

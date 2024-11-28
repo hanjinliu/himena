@@ -119,7 +119,6 @@ def register_function(
     *,
     menus: str | Sequence[str] = "plugins",
     title: str | None = None,
-    preview: bool = False,
     types: str | Sequence[str] | None = None,
     enablement: BoolOp | None = None,
     keybindings: Sequence[KeyBindingRule] | None = None,
@@ -133,7 +132,6 @@ def register_function(
     *,
     menus: str | Sequence[str] = "plugins",
     title: str | None = None,
-    preview: bool = False,
     types: str | Sequence[str] | None = None,
     enablement: BoolOp | None = None,
     keybindings: Sequence[KeyBindingRule] | None = None,
@@ -146,7 +144,6 @@ def register_function(
     *,
     menus="plugins",
     title=None,
-    preview=False,
     types=None,
     enablement=None,
     keybindings=None,
@@ -165,8 +162,6 @@ def register_function(
         Menu(s) to add the action. Submenus are separated by `/`.
     title : str, optional
         Title of the action. Name of the function will be used if not given.
-    preview : bool, default False
-        If True, a preview checkbox will be added.
     types: hashable or sequence of hashable, optional
         The `type` parameter(s) allowed as the WidgetDataModel. If this parameter
         is given, action will be grayed out if the active window does not satisfy
@@ -197,7 +192,7 @@ def register_function(
             id=_id,
             title=_title,
             tooltip=_tooltip_from_func(f),
-            callback=_utils.make_function_callback(f, command_id=_id, preview=preview),
+            callback=_utils.make_function_callback(f, command_id=_id),
             menus=_norm_menus(menus),
             enablement=_enablement,
             keybindings=kbs,

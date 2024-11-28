@@ -3,7 +3,7 @@ import numpy as np
 
 from himena.plugins import register_function, configure_gui
 from himena.types import Parametric, WidgetDataModel
-from himena.model_meta import TextMeta
+from himena.model_meta import TableMeta, TextMeta
 from himena.consts import StandardType
 
 
@@ -61,12 +61,12 @@ def _table_to_text(
     title="Convert table to text ...",
     types=StandardType.TABLE,
     menus=["tools/table"],
-    preview=True,
     command_id="builtins:table-to-text",
 )
-def table_to_text(model: WidgetDataModel) -> Parametric[str]:
+def table_to_text(model: WidgetDataModel) -> Parametric:
     """Convert a table data into a text data."""
 
+    @configure_gui(preview=True)
     def convert_table_to_text(
         format: Literal["CSV", "TSV", "Markdown", "Latex", "rST", "HTML"] = "CSV",
         end_of_text: Literal["", "\n"] = "\n",
@@ -89,7 +89,7 @@ def table_to_text(model: WidgetDataModel) -> Parametric[str]:
     menus=["tools/table"],
     command_id="builtins:table-to-dataframe",
 )
-def table_to_dataframe(model: WidgetDataModel["np.ndarray"]) -> Parametric[str]:
+def table_to_dataframe(model: WidgetDataModel["np.ndarray"]) -> Parametric:
     """Convert a table data into a DataFrame."""
     from io import StringIO
     from himena._data_wrappers import list_installed_dataframe_packages, read_csv
@@ -141,3 +141,22 @@ def table_to_array(model: WidgetDataModel["np.ndarray"]) -> WidgetDataModel:
         title=model.title,
         extension_default=".npy",
     )
+
+
+@register_function(
+    title="Crop selection",
+    types=StandardType.TABLE,
+    menus=["tools/table"],
+    command_id="builtins:crop-selection",
+)
+def crop_selection(model: WidgetDataModel["np.ndarray"]) -> WidgetDataModel:
+    """Crop the table data at the selection."""
+    arr_str = model.value
+    if isinstance(meta := model.metadata, TableMeta):
+        sels = meta.selections
+        if sels is None or len(sels) != 0:
+            raise ValueError("Table must contain single selection to crop.")
+        (r0, r1), (c0, c1) = sels[0]
+        arr_new = arr_str[r0:r1, c0:c1]
+        return model.with_value(arr_new)
+    raise ValueError("Table must have a TableMeta as the metadata")

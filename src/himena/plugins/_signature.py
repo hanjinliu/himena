@@ -35,6 +35,7 @@ def configure_gui(
     f: _F,
     *,
     title: str | None = None,
+    preview: bool = False,
     auto_close: bool = True,
     show_parameter_labels: bool = True,
     **kwargs,
@@ -43,6 +44,7 @@ def configure_gui(
 def configure_gui(
     *,
     title: str | None = None,
+    preview: bool = False,
     auto_close: bool = True,
     show_parameter_labels: bool = True,
     **kwargs,
@@ -53,6 +55,7 @@ def configure_gui(
     f=None,
     *,
     title: str | None = None,
+    preview: bool = False,
     auto_close: bool = True,
     show_parameter_labels: bool = True,
     **kwargs,
@@ -87,6 +90,7 @@ def configure_gui(
         f.__annotations__ = {k: v.annotation for k, v in sig.parameters.items()}
         f.__himena_gui_config__ = GuiConfiguration(
             title=title,
+            preview=preview,
             auto_close=auto_close,
             show_parameter_labels=show_parameter_labels,
         )

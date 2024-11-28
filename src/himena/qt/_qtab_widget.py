@@ -200,6 +200,11 @@ class QTabWidget(QtW.QTabWidget):
             if isinstance(src := event.source(), QSubWindow):
                 self._tabbar._process_drop_event(src, -1)
         elif mime_data.hasUrls():
+            # subwindow drag and dropped nearby
+            if isinstance(win := event.source(), QSubWindow):
+                if win in self.current_widget_area().subWindowList():
+                    event.ignore()
+                return super().dropEvent(event)
             urls = mime_data.urls()
             for url in urls:
                 if url.isLocalFile():

@@ -14,7 +14,6 @@ from himena._descriptors import SaveToPath
 from himena.consts import ParametricWidgetProtocolNames as PWPN
 from himena.types import (
     NewWidgetBehavior,
-    Parametric,
     WidgetDataModel,
     WindowState,
     WindowRect,
@@ -223,10 +222,17 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
 
         Parameters
         ----------
-        fn : function (...) -> WidgetDataModel
+        func : function (...) -> WidgetDataModel
             Function that generates a model from the input parameters.
+        preview : bool, default False
+            If true, the parametric widget will be implemented with a preview toggle
+            button, and the preview window will be created when it is enabled.
         title : str, optional
-            Title of the sub-window.
+            Title of the parametric window.
+        show_parameter_labels : bool, default True
+            If true, the parameter labels will be shown in the parametric window.
+        auto_close : bool, default True
+            If true, close the parametric window after the function call.
 
         Returns
         -------
@@ -301,8 +307,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
             callback = getattr(widget, PWPN.GET_OUTPUT)
         main = self._main_window()
         widget0 = main._process_parametric_widget(widget)
-        fn = Parametric(callback)
-        param_widget = ParametricWindow(widget0, fn, main_window=main)
+        param_widget = ParametricWindow(widget0, callback, main_window=main)
         param_widget._auto_close = auto_close
         main._connect_parametric_widget_events(param_widget, widget0)
         self._process_new_widget(param_widget, title, auto_size)
@@ -317,7 +322,10 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
                     f"{PWPN.IS_PREVIEW_ENABLED!r}"
                 )
             param_widget.params_changed.connect(param_widget._widget_preview_callback)
-        main._move_focus_to(widget)
+        if hasattr(widget, "native"):
+            main._move_focus_to(widget.native)  # TODO: refactor this
+        else:
+            main._move_focus_to(widget)
         return param_widget
 
     def _process_new_widget(

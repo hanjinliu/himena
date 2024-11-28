@@ -381,6 +381,7 @@ def copy_screenshot_window(ui: MainWindow) -> ClipboardDataModel:
     id="settings",
     title="Settings ...",
     menus=[{"id": MenuId.FILE, "group": SETTINGS_GROUP}],
+    keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.Comma)],
 )
 def show_setting_dialog(ui: MainWindow):
     """Open a dialog to edit the application profile."""

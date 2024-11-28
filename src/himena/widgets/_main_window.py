@@ -25,7 +25,6 @@ from himena.profile import AppProfile, load_app_profile
 from himena.style import Theme
 from himena.types import (
     ClipboardDataModel,
-    Parametric,
     WidgetDataModel,
     NewWidgetBehavior,
     DockArea,
@@ -380,10 +379,8 @@ class MainWindow(Generic[_W]):
 
     def exec_action(self, id: str, with_params: dict[str, Any] | None = None) -> None:
         """Execute an action by its ID."""
-        result = self._model_app.commands.execute_command(id).result()
+        self._model_app.commands.execute_command(id).result()
         if with_params is not None:
-            if not isinstance(result, Parametric):
-                raise ValueError(f"Action {id!r} does not accept parameters.")
             if tab := self.tabs.current():
                 param_widget = tab[-1]
                 if not isinstance(param_widget, ParametricWindow):
