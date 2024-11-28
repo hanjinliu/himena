@@ -499,10 +499,11 @@ class QDefaultTextEdit(QtW.QWidget):
         self._main_text_edit.setPlainText(model.value)
         lang = None
         spaces = 4
-        encoding = "utf-8"
+        encoding = None
         if isinstance(model.metadata, TextMeta):
             lang = model.metadata.language
             spaces = model.metadata.spaces
+            encoding = model.metadata.encoding
             if sel := model.metadata.selection:
                 cursor = self._main_text_edit.textCursor()
                 cursor.setPosition(sel[0])

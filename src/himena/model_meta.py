@@ -23,6 +23,7 @@ class TableMeta(BaseModel):
         default_factory=list,
         description="Selections of the table. Each selection is a pair of slices.",
     )
+    separator: str | None = Field(None, description="Separator of the table.")
 
 
 class DataFrameMeta(TableMeta):

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 from himena.plugins import register_reader_provider, register_writer_provider
 from himena.types import WidgetDataModel
-from himena.model_meta import TextMeta
+from himena.model_meta import TableMeta, TextMeta
 from himena.consts import (
     StandardType,
     BasicTextFileTypes,
@@ -72,6 +72,7 @@ def _read_txt_as_numpy(file_path: Path, delimiter: str):
         value=arr,
         type=StandardType.TABLE,
         extension_default=file_path.suffix,
+        metadata=TableMeta(separator=delimiter),
     )
 
 
@@ -224,12 +225,16 @@ def default_text_writer(model: WidgetDataModel[str], path: Path) -> None:
     return path.write_text(model.value, encoding=encoding)
 
 
-def default_csv_writer(model: WidgetDataModel[np.ndarray], path: Path) -> None:
-    """Write CSV file."""
-    if path.suffix == ".tsv":
-        delimiter = "\t"
-    else:
-        delimiter = ","
+def default_table_writer(model: WidgetDataModel[np.ndarray], path: Path) -> None:
+    """Write table data to a text file."""
+    delimiter = None
+    if isinstance(meta := model.metadata, TableMeta):
+        delimiter = meta.separator
+    if delimiter is None:
+        if path.suffix == ".tsv":
+            delimiter = "\t"
+        else:
+            delimiter = ","
     np.savetxt(path, model.value, fmt="%s", delimiter=delimiter)
 
 
@@ -307,7 +312,7 @@ def default_writer_provider(model: WidgetDataModel):
     if model.is_subtype_of(StandardType.TEXT):
         return default_text_writer
     elif model.is_subtype_of(StandardType.TABLE):
-        return default_csv_writer
+        return default_table_writer
     elif model.is_subtype_of(StandardType.IMAGE):
         return default_image_writer
     elif model.is_subtype_of(StandardType.PARAMETERS):

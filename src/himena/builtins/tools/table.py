@@ -1,3 +1,4 @@
+from io import StringIO
 from typing import Literal
 import numpy as np
 
@@ -91,7 +92,6 @@ def table_to_text(model: WidgetDataModel) -> Parametric:
 )
 def table_to_dataframe(model: WidgetDataModel["np.ndarray"]) -> Parametric:
     """Convert a table data into a DataFrame."""
-    from io import StringIO
     from himena._data_wrappers import list_installed_dataframe_packages, read_csv
 
     @configure_gui(module={"choices": list_installed_dataframe_packages()})
@@ -154,9 +154,45 @@ def crop_selection(model: WidgetDataModel["np.ndarray"]) -> WidgetDataModel:
     arr_str = model.value
     if isinstance(meta := model.metadata, TableMeta):
         sels = meta.selections
-        if sels is None or len(sels) != 0:
+        if sels is None or len(sels) != 1:
             raise ValueError("Table must contain single selection to crop.")
         (r0, r1), (c0, c1) = sels[0]
         arr_new = arr_str[r0:r1, c0:c1]
-        return model.with_value(arr_new)
+        out = model.with_value(arr_new)
+        if isinstance(meta := out.metadata, TableMeta):
+            meta.selections = []
+        return out
     raise ValueError("Table must have a TableMeta as the metadata")
+
+
+@register_function(
+    title="Change separator ...",
+    types=StandardType.TABLE,
+    menus=["tools/table"],
+    command_id="builtins:table-change-separator",
+)
+def change_separator(model: WidgetDataModel["np.ndarray"]) -> Parametric:
+    """Change the separator of the table data."""
+    arr_str = model.value
+    if not isinstance(meta := model.metadata, TableMeta):
+        raise ValueError("Table must have a TableMeta as the metadata")
+    sep = meta.separator
+    if sep is None:
+        raise ValueError("Current separator of the table is unknown.")
+
+    @configure_gui(
+        title="Change separator",
+        preview=True,
+    )
+    def change_separator(separator: str = ",") -> WidgetDataModel:
+        buf = StringIO()
+        np.savetxt(buf, arr_str, fmt="%s", delimiter=sep)
+        buf.seek(0)
+        arr_new = np.loadtxt(
+            buf,
+            delimiter=separator.encode().decode("unicode_escape"),
+            dtype=np.dtypes.StringDType(),
+        )
+        return model.with_value(arr_new)
+
+    return change_separator

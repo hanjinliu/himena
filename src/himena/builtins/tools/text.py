@@ -1,5 +1,3 @@
-from typing import Callable
-import json
 import csv
 from io import StringIO
 from himena.plugins import register_function, configure_gui
@@ -7,79 +5,6 @@ from himena.types import Parametric, WidgetDataModel
 from himena.model_meta import TextMeta
 from himena.consts import StandardType
 from himena import _utils
-
-
-@register_function(
-    title="Filter text ...",
-    types=StandardType.TEXT,
-    menus=["tools/text"],
-    command_id="builtins:filter-text",
-)
-def filter_text(model: WidgetDataModel[str]) -> Parametric:
-    """Filter text by its content."""
-
-    @configure_gui(preview=True)
-    def filter_text_data(
-        include: str = "",
-        exclude: str = "",
-        case_sensitive: bool = True,
-    ) -> WidgetDataModel[str]:
-        if include == "":
-            _include = _const_func(True)
-        else:
-            _include = _contains_func(include, case_sensitive)
-        if exclude == "":
-            _exclude = _const_func(False)
-        else:
-            _exclude = _contains_func(exclude, case_sensitive)
-        new_text = "\n".join(
-            line
-            for line in model.value.splitlines()
-            if _include(line) and not _exclude(line)
-        )
-        if isinstance(model.metadata, TextMeta):
-            meta = model.metadata.model_copy(update={"selection": None})
-        else:
-            meta = TextMeta()
-        return WidgetDataModel(
-            value=new_text,
-            type=model.type,
-            title=f"{model.title} (filtered)",
-            extensions=model.extensions,
-            metadata=meta,
-        )
-
-    return filter_text_data
-
-
-@register_function(
-    title="Format JSON ...",
-    menus=["tools/text"],
-    types=StandardType.TEXT,
-    command_id="builtins:format-json",
-)
-def format_json(model: WidgetDataModel) -> Parametric:
-    """Format JSON."""
-
-    def format_json_data(indent: int = 2) -> WidgetDataModel[str]:
-        if not isinstance(meta := model.metadata, TextMeta):
-            meta = TextMeta()
-        return WidgetDataModel(
-            value=json.dumps(json.loads(model.value), indent=indent),
-            type=model.type,
-            title=f"{model.title} (formatted)",
-            extension_default=".json",
-            extensions=model.extensions,
-            metadata=TextMeta(
-                language="JSON",
-                spaces=indent,
-                selection=meta.selection,
-                font_family=meta.font_family,
-                font_size=meta.font_size,
-            ),
-        )
-
-    return format_json_data
 
 
 @register_function(
@@ -178,7 +103,7 @@ def text_to_dataframe(model: WidgetDataModel[str]) -> Parametric:
 @register_function(
     types=StandardType.TEXT,
     menus=["tools/text"],
-    command_id="builtins:change-separator",
+    command_id="builtins:text-change-separator",
 )
 def change_separator(model: WidgetDataModel[str]) -> Parametric:
     """Change the separator (in the sense of CSV or TSV) of a text."""
@@ -203,22 +128,19 @@ def change_separator(model: WidgetDataModel[str]) -> Parametric:
     return change_separator_data
 
 
-def _const_func(x) -> Callable[[str], bool]:
-    def _func(line: str):
-        return x
+@register_function(
+    types=StandardType.TEXT,
+    menus=["tools/text"],
+    command_id="builtins:text-change-encoding",
+)
+def change_encoding(model: WidgetDataModel[str]) -> Parametric:
+    """Change the encoding of a text."""
 
-    return _func
+    def change_encoding_data(encoding: str = "utf-8") -> WidgetDataModel[str]:
+        new_text = model.value.encode(encoding).decode(encoding)
+        out = model.with_value(new_text)
+        if isinstance(meta := model.metadata, TextMeta):
+            meta.encoding = encoding
+        return out
 
-
-def _contains_func(x: str, case_sensitive: bool) -> Callable[[str], bool]:
-    if case_sensitive:
-
-        def _func(line: str):
-            return x in line
-    else:
-        x0 = x.lower()
-
-        def _func(line: str):
-            return x0 in line.lower()
-
-    return _func
+    return change_encoding_data

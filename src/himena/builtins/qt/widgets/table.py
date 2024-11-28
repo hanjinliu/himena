@@ -139,12 +139,17 @@ class QDefaultTableWidget(QTableBase):
             table = np.empty((0, 0), dtype=np.dtypes.StringDType())
         else:
             table = np.asarray(model.value, dtype=np.dtypes.StringDType())
+            if table.ndim < 2:
+                table = table.reshape(-1, 1)
         if self.model() is None:
             self.setModel(QStringArrayModel(table))
             self.model().dataChanged.connect(self.set_modified)
         else:
             self.model()._arr = table
+        sep = None
         if isinstance(meta := model.metadata, TableMeta):
+            if meta.separator is not None:
+                sep = meta.separator
             if (pos := meta.current_position) is not None:
                 index = self.model().index(*pos)
                 self.setCurrentIndex(index)
@@ -160,15 +165,25 @@ class QDefaultTableWidget(QTableBase):
         if self._control is None:
             self._control = QTableControl(self)
         self._control.update_for_table(self)
+        if sep is not None:
+            self._control._separator_label.setText(f"Sep: {sep!r}")
+            self._control._separator = sep
+            self._control._separator_label.show()
+        else:
+            self._control._separator = None
+            self._control._separator_label.hide()
         return None
 
     @protocol_override
     def to_model(self) -> WidgetDataModel[np.ndarray]:
+        meta = self._prep_table_meta()
+        if sep := self._control._separator:
+            meta.separator = sep
         return WidgetDataModel(
             value=self.model()._arr,
             type=self.model_type(),
             extension_default=".csv",
-            metadata=self._prep_table_meta(),
+            metadata=meta,
         )
 
     @protocol_override
@@ -363,6 +378,9 @@ class QTableControl(QtW.QWidget):
         self._remove_menu_button.setText("Rem")
         self._remove_menu_button.setMenu(self._make_delete_menu(table))
 
+        self._separator_label = QtW.QLabel()
+        self._separator: str | None = None
+
         empty = QtW.QWidget()
         empty.setSizePolicy(
             QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Preferred
@@ -371,6 +389,7 @@ class QTableControl(QtW.QWidget):
         layout.addWidget(self._label)
         layout.addWidget(self._insert_menu_button)
         layout.addWidget(self._remove_menu_button)
+        layout.addWidget(self._separator_label)
         layout.addWidget(QSelectionRangeEdit(table))
 
     def update_for_table(self, table: QDefaultTableWidget):

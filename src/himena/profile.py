@@ -60,7 +60,7 @@ class AppProfile(BaseModel):
     plugins: list[str] = Field(
         default_factory=_default_plugins, description="List of plugins to load."
     )
-    theme: str = Field(default="light-purple", description="Theme to use.")
+    theme: str = Field(default="light-green", description="Theme to use.")
     startup_commands: list[tuple[str, dict[str, Any] | None]] = Field(
         default_factory=list,
         description="Startup commands that will be executed when the app starts.",
