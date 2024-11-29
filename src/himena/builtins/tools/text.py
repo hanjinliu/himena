@@ -1,5 +1,7 @@
 import csv
 from io import StringIO
+import re
+import html
 from himena.plugins import register_function, configure_gui
 from himena.types import Parametric, WidgetDataModel
 from himena.model_meta import TextMeta
@@ -144,3 +146,33 @@ def change_encoding(model: WidgetDataModel[str]) -> Parametric:
         return out
 
     return change_encoding_data
+
+
+@register_function(
+    types=StandardType.HTML,
+    menus=["tools/html"],
+    command_id="builtins:to-plain-text",
+)
+def to_plain_text(model: WidgetDataModel[str]) -> WidgetDataModel:
+    """Convert HTML to plain text."""
+    html_pattern = re.compile(r"<.*?>")
+    header_pattern = re.compile(r"<head>.*?</head>", re.DOTALL)
+    value = html.unescape(
+        html_pattern.sub("", header_pattern.sub("", model.value).replace("<br>", "\n"))
+    )
+    return model.with_value(value)
+
+
+@register_function(
+    types=StandardType.HTML,
+    menus=["tools/html"],
+    command_id="builtins:show-in-text-editor",
+    title="Show in text editor",
+)
+def show_in_text_editor(model: WidgetDataModel[str]) -> WidgetDataModel:
+    """Show HTML directly in text editor."""
+    return model.with_value(
+        value=model.value,
+        type=StandardType.TEXT,
+        metadata=TextMeta(language="html"),
+    )

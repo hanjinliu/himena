@@ -93,9 +93,14 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         self._set_modified(False)
         return None
 
-    def _update_widget_data_model_method(self, method: MethodDescriptor | None) -> None:
+    def _update_widget_data_model_method(
+        self,
+        method: MethodDescriptor | None,
+        overwrite: bool = True,
+    ) -> None:
         """Update the method descriptor of the widget."""
-        self._widget_data_model_method = method or ProgramaticMethod()
+        if self._widget_data_model_method is None or overwrite:
+            self._widget_data_model_method = method or ProgramaticMethod()
         return None
 
     @property
@@ -536,7 +541,7 @@ class ParametricWindow(SubWindow[_W]):
                 )
             else:
                 new_method = return_value.method
-            result_widget._update_widget_data_model_method(new_method)
+            result_widget._update_widget_data_model_method(new_method, overwrite=False)
             if isinstance(new_method, ConverterMethod):
                 result_widget._set_modified(True)
         elif self._return_annotation in (Parametric, ParametricWidgetProtocol):
@@ -547,7 +552,9 @@ class ParametricWindow(SubWindow[_W]):
             _LOGGER.info("Got parametric widget: %r", result_widget)
             if tracker.command_id is not None:
                 new_method = tracker.to_method(kwargs)
-                result_widget._update_widget_data_model_method(new_method)
+                result_widget._update_widget_data_model_method(
+                    new_method, overwrite=False
+                )
                 _LOGGER.info("Inherited method: %r", new_method)
         else:
             annot = getattr(self._callback, "__annotations__", {})

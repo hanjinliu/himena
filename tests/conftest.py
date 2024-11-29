@@ -1,6 +1,7 @@
 import tempfile
 import warnings
 import pytest
+import gc
 from pathlib import Path
 from qtpy.QtWidgets import QApplication
 from app_model import Application
@@ -51,6 +52,7 @@ def ui(qtbot: QtBot, request: pytest.FixtureRequest):
         QApplication.processEvents()
         QApplication.processEvents()
         QApplication.processEvents()
+        gc.collect()
 
 @pytest.fixture
 def sample_dir() -> Path:

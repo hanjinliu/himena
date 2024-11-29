@@ -583,3 +583,13 @@ QToolButton#QCommandHistory-RunButton:hover {
 NavigationToolbar2QT {
     border: none;
 }
+
+_QOverlayBase {
+    border: 1px solid #[highlight_dim];
+    border-radius: 3px;
+    background-color: #[background];
+}
+
+QColorSwatch {
+    border: 1px solid #[foreground_dim];
+}

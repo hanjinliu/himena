@@ -213,7 +213,6 @@ def open_new(ui: MainWindow) -> WidgetDataModel:
 @ACTIONS.append_from_fn(
     id="paste-as-window",
     title="Paste as window",
-    icon="material-symbols:content-paste",
     menus=[{"id": MenuId.FILE, "group": READ_GROUP}],
     keybindings=[StandardKeyBinding.Paste],
     enablement=~_ctx.is_subwindow_focused,
@@ -221,7 +220,17 @@ def open_new(ui: MainWindow) -> WidgetDataModel:
 def paste_from_clipboard(ui: MainWindow) -> WidgetDataModel:
     """Paste the clipboard data as a sub-window."""
     if data := ui._backend_main_window._clipboard_data():
-        return data.to_widget_data_model()
+        title = "Clipboard"
+        if (image := data.image) is not None:
+            return WidgetDataModel(value=image, type=StandardType.IMAGE, title=title)
+        elif files := data.files:
+            ui.read_files(files)
+            return None
+        elif html := data.html:
+            return WidgetDataModel(value=html, type=StandardType.HTML, title=title)
+        elif text := data.text:
+            return WidgetDataModel(value=text, type=StandardType.TEXT, title=title)
+        raise ValueError("No data to paste from clipboard.")
     raise Cancelled
 
 
@@ -350,7 +359,7 @@ def quit_main_window(ui: MainWindow) -> None:
 def copy_screenshot(ui: MainWindow) -> ClipboardDataModel:
     """Copy a screenshot of the main window to the clipboard."""
     data = ui._backend_main_window._screenshot("main")
-    return ClipboardDataModel(value=data, type=StandardType.IMAGE)
+    return ClipboardDataModel(image=data)
 
 
 @ACTIONS.append_from_fn(
@@ -362,7 +371,7 @@ def copy_screenshot(ui: MainWindow) -> ClipboardDataModel:
 def copy_screenshot_area(ui: MainWindow) -> ClipboardDataModel:
     """Copy a screenshot of the tab area to the clipboard."""
     data = ui._backend_main_window._screenshot("area")
-    return ClipboardDataModel(value=data, type=StandardType.IMAGE)
+    return ClipboardDataModel(image=data)
 
 
 @ACTIONS.append_from_fn(
@@ -374,7 +383,7 @@ def copy_screenshot_area(ui: MainWindow) -> ClipboardDataModel:
 def copy_screenshot_window(ui: MainWindow) -> ClipboardDataModel:
     """Copy a screenshot of the sub window to the clipboard."""
     data = ui._backend_main_window._screenshot("window")
-    return ClipboardDataModel(value=data, type=StandardType.IMAGE)
+    return ClipboardDataModel(image=data)
 
 
 @ACTIONS.append_from_fn(

@@ -17,6 +17,7 @@ from himena._descriptors import (
     ProgramaticMethod,
 )
 from himena._enum import StrEnum
+from himena.consts import StandardType
 
 if TYPE_CHECKING:
     from himena.io import PluginInfo
@@ -180,9 +181,15 @@ class WidgetDataModel(GenericModel[_T]):
             return self.method.path
         return None
 
-    def to_clipboard_data_model(self) -> "ClipboardDataModel[_T]":
+    def to_clipboard_data_model(self) -> "ClipboardDataModel":
         """Convert to a clipboard data model."""
-        return ClipboardDataModel(value=self.value, type=self.type)
+        if is_subtype(self.type, StandardType.TEXT):
+            return ClipboardDataModel(text=self.value)
+        elif is_subtype(self.type, StandardType.HTML):
+            return ClipboardDataModel(html=self.value)
+        elif is_subtype(self.type, StandardType.IMAGE):
+            return ClipboardDataModel(image=self.value)
+        raise ValueError(f"Cannot convert {self.type} to a clipboard data.")
 
     def is_subtype_of(self, supertype: str) -> bool:
         """Check if the type is a subtype of the given type."""
@@ -220,31 +227,25 @@ class WidgetDataModel(GenericModel[_T]):
         )
 
 
-class ClipboardDataModel(GenericModel[_T]):
+class ClipboardDataModel(BaseModel):
     """Data model for a clipboard data."""
 
-    value: _T = Field(..., description="Internal value.")
-    type: str | None = Field(default=None, description="Type of the internal data.")
-
-    def to_widget_data_model(self) -> WidgetDataModel[_T]:
-        return WidgetDataModel(value=self.value, type=self.type, title="Clipboard")
-
-    def is_subtype_of(self, supertype: str) -> bool:
-        """Check if the type is a subtype of the given type."""
-        return is_subtype(self.type, supertype)
-
-
-class DragDropDataModel(GenericModel[_T]):
-    """Data model for a drag and drop data."""
-
-    value: _T = Field(..., description="Internal value.")
-    type: str | None = Field(default=None, description="Type of the internal data.")
-    title: str = Field(default=None, description="Title for the widget.")
-    source: Path | None = Field(default=None, description="Path of the file.")
-    source_type: str | None = Field(default=None, description="Type of the source.")
-
-    def to_widget_data_model(self) -> WidgetDataModel[_T]:
-        return WidgetDataModel(value=self.value, type=self.type)
+    text: str | None = Field(
+        default=None,
+        description="Text in the clipboard if exists.",
+    )
+    html: str | None = Field(
+        default=None,
+        description="HTML in the clipboard if exists.",
+    )
+    image: Any | None = Field(
+        default=None,
+        description="Image in the clipboard if exists.",
+    )
+    files: list[Path] = Field(
+        default_factory=list,
+        description="List of file paths in the clipboard if exists.",
+    )
 
 
 def is_subtype(string: str, supertype: str) -> bool:

@@ -34,12 +34,7 @@ from himena.types import (
 from himena.app import get_event_loop_handler
 from himena import widgets
 from himena.qt.registry import list_widget_class
-from himena.qt._utils import (
-    get_clipboard_data,
-    set_clipboard_data,
-    get_stylesheet_path,
-    ArrayQImage,
-)
+from himena.qt._utils import get_stylesheet_path, ArrayQImage
 
 if TYPE_CHECKING:
     from himena.widgets._main_window import SubWindow, MainWindow
@@ -522,10 +517,40 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         return size.width(), size.height()
 
     def _clipboard_data(self) -> ClipboardDataModel | None:
-        return get_clipboard_data()
+        clipboard = QtGui.QGuiApplication.clipboard()
+        if clipboard is None:
+            return None
+        md = clipboard.mimeData()
+        model = ClipboardDataModel()
+        if md is None:
+            return None
+        if md.hasHtml():
+            model.html = md.html()
+        if md.hasImage():
+            model.image = ArrayQImage(clipboard.image())
+        if md.hasText():
+            model.text = md.text()
+        if md.hasUrls():
+            model.files = [Path(url.toLocalFile()) for url in md.urls()]
+        return model
 
     def _set_clipboard_data(self, data: ClipboardDataModel) -> None:
-        return set_clipboard_data(data)
+        clipboard = QtW.QApplication.clipboard()
+        if clipboard is None:
+            return
+        mime = QtCore.QMimeData()
+        if (html := data.html) is not None:
+            mime.setHtml(html)
+        if (text := data.text) is not None:
+            mime.setText(text)
+        if (img := data.image) is not None:
+            if isinstance(img, ArrayQImage):
+                img = img.qimage
+            else:
+                raise NotImplementedError("Only ArrayQImage is supported.")
+        if (files := data.files) is not None:
+            mime.setUrls([QtCore.QUrl.fromLocalFile(str(f)) for f in files])
+        return clipboard.setMimeData(mime)
 
     def _connect_activation_signal(
         self,

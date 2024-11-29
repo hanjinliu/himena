@@ -94,25 +94,25 @@ class _QOverlayBase(QtW.QDialog):
             return widget.rect()
         return QtCore.QRect()
 
-    def alignTopLeft(self, offset=(8, 8)):
+    def alignTopLeft(self, offset=(3, 3)):
         pos = self.viewRect().topLeft()
         pos.setX(pos.x() + offset[0])
         pos.setY(pos.y() + offset[1])
         self.move(pos)
 
-    def alignTopRight(self, offset=(26, 8)):
+    def alignTopRight(self, offset=(21, 3)):
         pos = self.viewRect().topRight()
         pos.setX(pos.x() - self.rect().width() - offset[0])
         pos.setY(pos.y() + offset[1])
         self.move(pos)
 
-    def alignBottomLeft(self, offset=(8, 8)):
+    def alignBottomLeft(self, offset=(3, 3)):
         pos = self.viewRect().bottomLeft()
         pos.setX(pos.x() + offset[0])
         pos.setY(pos.y() - self.rect().height() - offset[1])
         self.move(pos)
 
-    def alignBottomRight(self, offset=(26, 8)):
+    def alignBottomRight(self, offset=(21, 3)):
         pos = self.viewRect().bottomRight()
         pos.setX(pos.x() - self.rect().width() - offset[0])
         pos.setY(pos.y() - self.rect().height() - offset[1])

@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-import html
-import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -10,9 +8,7 @@ import numpy as np
 from app_model.backends.qt import QModelMenu
 import qtpy
 from qtpy import QtWidgets as QtW
-from qtpy import QtGui, QtCore
-from himena.types import ClipboardDataModel
-from himena.consts import StandardType
+from qtpy import QtGui
 from himena._utils import lru_cache
 
 
@@ -45,48 +41,6 @@ class ArrayQImage:
 def get_stylesheet_path() -> Path:
     """Get the path to the stylesheet file"""
     return Path(__file__).parent / "style.qss"
-
-
-def get_clipboard_data() -> ClipboardDataModel | None:
-    clipboard = QtGui.QGuiApplication.clipboard()
-    if clipboard is None:
-        return None
-    md = clipboard.mimeData()
-    if md is None:
-        return None
-    if md.hasHtml():
-        return ClipboardDataModel(value=md.html(), type=StandardType.HTML)
-    elif md.hasImage():
-        arr = ArrayQImage(clipboard.image())
-        return ClipboardDataModel(value=arr, type=StandardType.IMAGE)
-    elif md.hasText():
-        return ClipboardDataModel(value=md.text(), type=StandardType.TEXT)
-    return None
-
-
-def set_clipboard_data(data: ClipboardDataModel) -> None:
-    clipboard = QtW.QApplication.clipboard()
-    if clipboard is None:
-        return
-    if data.is_subtype_of(StandardType.TEXT):
-        _text = str(data.value)
-        if data.is_subtype_of(StandardType.HTML):
-            md = QtCore.QMimeData()
-            md.setHtml(_text)
-            md.setText(html.unescape(remove_html_tags(_text.replace("<br>", "\n"))))
-            clipboard.setMimeData(md)
-        else:
-            clipboard.setText(str(data.value))
-    elif data.type == StandardType.IMAGE:
-        if isinstance(data.value, ArrayQImage):
-            img = data.value.qimage
-        else:
-            raise NotImplementedError
-        clipboard.setImage(img)
-
-
-def remove_html_tags(text: str) -> str:
-    return re.sub(r"<[^>]*>", "", text)
 
 
 def qimage_to_ndarray(img: QtGui.QImage) -> NDArray[np.uint8]:

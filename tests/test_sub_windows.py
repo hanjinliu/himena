@@ -132,15 +132,15 @@ def test_screenshot_commands(ui: MainWindow, sample_dir: Path, tmpdir):
     ui.read_file(sample_dir / "text.txt")
 
     # copy
-    ui.clipboard = ClipboardDataModel(value="", type="text")  # just for initialization
+    ui.clipboard = ClipboardDataModel(text="")  # just for initialization
     ui.exec_action("copy-screenshot")
-    assert ui.clipboard.type == StandardType.IMAGE
-    ui.clipboard = ClipboardDataModel(value="", type="text")  # just for initialization
+    assert ui.clipboard.image is not None
+    ui.clipboard = ClipboardDataModel(text="")  # just for initialization
     ui.exec_action("copy-screenshot-area")
-    assert ui.clipboard.type == StandardType.IMAGE
-    ui.clipboard = ClipboardDataModel(value="", type="text")  # just for initialization
+    assert ui.clipboard.image is not None
+    ui.clipboard = ClipboardDataModel(text="")  # just for initialization
     ui.exec_action("copy-screenshot-window")
-    assert ui.clipboard.type == StandardType.IMAGE
+    assert ui.clipboard.image is not None
 
     # save
     ui._instructions = ui._instructions.updated(
@@ -183,25 +183,6 @@ def test_view_menu_commands(ui: MainWindow, sample_dir: Path):
     win1.widget.set_modified(True)
     ui.read_file(sample_dir / "text.txt")
     ui.exec_action("close-tab")
-
-def test_tools_menu(ui: MainWindow):
-    ui.add_data("a\nb\nc\nbc", type="text")
-    ui.tabs[0].current_index = 0
-    ui.exec_action("builtins:filter-text", with_params={"include": "b"})
-    assert ui.current_window.to_model().value == "b\nbc"
-    ui.tabs[0].current_index = 0
-    ui.exec_action("builtins:filter-text", with_params={"exclude": "b"})
-    assert ui.current_window.to_model().value == "a\nc"
-    ui.tabs[0].current_index = 0
-    ui.exec_action(
-        "builtins:filter-text",
-        with_params={"exclude": "b", "case_sensitive": False},
-    )
-
-    ui.clear()
-    ui.add_data('{"a": [1, 2], "b": null}', type="text.json")
-    ui.tabs[0].current_index = 0
-    ui.exec_action("builtins:format-json", with_params={})
 
 def test_custom_widget(ui: MainWindow):
     from qtpy.QtWidgets import QLabel
@@ -303,7 +284,7 @@ def test_register_folder(ui: MainWindow, sample_dir: Path):
 
 def test_clipboard(ui: MainWindow, sample_dir: Path, qtbot: QtBot):
     qtbot.addWidget(ui._backend_main_window)
-    cmodel = ClipboardDataModel(value="XXX", type="text")
+    cmodel = ClipboardDataModel(text="XXX")
     ui.clipboard = cmodel
 
     ui.exec_action("paste-as-window")

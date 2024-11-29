@@ -1,4 +1,5 @@
 from __future__ import annotations
+from contextlib import contextmanager
 from typing import Iterator, TYPE_CHECKING
 
 from qtpy import QtWidgets as QtW
@@ -12,6 +13,7 @@ from himena.plugins import protocol_override
 
 from himena._utils import OrderedSet, lru_cache
 from himena.qt._qfinderwidget import QFinderWidget
+from himena.qt._qcoloredit import QColorSwatch
 
 if TYPE_CHECKING:
     from himena.style import Theme
@@ -583,7 +585,7 @@ class QDefaultTextEdit(QtW.QWidget):
         return super().keyPressEvent(a0)
 
 
-class QDefaultHTMLEdit(QtW.QWidget):
+class QDefaultRichTextEdit(QtW.QWidget):
     def __init__(self):
         super().__init__()
         self._main_text_edit = QtW.QTextEdit(self)
@@ -591,6 +593,7 @@ class QDefaultHTMLEdit(QtW.QWidget):
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._main_text_edit)
+        self._control = QRichTextEditControl(self)
 
     def initPlainText(self, text: str):
         self._main_text_edit.setHtml(text)
@@ -651,8 +654,124 @@ class QDefaultHTMLEdit(QtW.QWidget):
     def set_editable(self, value: bool) -> None:
         self._main_text_edit.setReadOnly(not value)
 
+    @protocol_override
+    def control_widget(self) -> QRichTextEditControl:
+        return self._control
+
+
+def _make_btn(text: str, tooltip: str, callback) -> QtW.QPushButton:
+    btn = QtW.QPushButton(text)
+    btn.setFixedWidth(20)
+    btn.setToolTip(tooltip)
+    btn.clicked.connect(callback)
+    return btn
+
+
+def _make_color_swatch(label: str, tooltip: str, callback) -> QtW.QWidget:
+    group = QtW.QWidget()
+    layout = QtW.QHBoxLayout(group)
+    layout.setContentsMargins(0, 0, 0, 0)
+    swatch = QColorSwatch()
+    swatch.setQColor(QtGui.QColor(0, 0, 0, 0))
+    swatch.setToolTip(tooltip)
+    swatch.setFixedSize(25, 20)
+    swatch.colorChanged.connect(callback)
+    label_widget = QtW.QLabel(label)
+    label_widget.setAlignment(
+        QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter
+    )
+    label_widget.setFixedWidth(20)
+    layout.addWidget(label_widget)
+    layout.addWidget(swatch)
+    return group
+
+
+class QRichTextEditControl(QtW.QWidget):
+    def __init__(self, text_edit: QDefaultRichTextEdit):
+        super().__init__()
+        self._foreground_color_edit = _make_color_swatch(
+            label="FG:",
+            tooltip="Change Foreground Color",
+            callback=self._on_foreground_color_changed,
+        )
+        self._background_color_edit = _make_color_swatch(
+            label="BG:",
+            tooltip="Change Background Color",
+            callback=self._on_background_color_changed,
+        )
+        self._toggle_bold_button = _make_btn(
+            "B",
+            tooltip="Toggle Bold",
+            callback=self._on_toggle_bold,
+        )
+        self._toggle_it_button = _make_btn(
+            "I",
+            tooltip="Toggle Italic",
+            callback=self._on_toggle_italic,
+        )
+        self._toggle_underline_button = _make_btn(
+            "U",
+            tooltip="Toggle Underline",
+            callback=self._on_toggle_underline,
+        )
+        self._toggle_strike_button = _make_btn(
+            "S", tooltip="Toggle Strike", callback=self._on_toggle_strike
+        )
+        spacer = QtW.QWidget()
+        spacer.setSizePolicy(
+            QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Preferred
+        )
+        layout = QtW.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(spacer)
+        layout.addWidget(self._foreground_color_edit)
+        layout.addWidget(self._background_color_edit)
+        layout.addWidget(self._toggle_bold_button)
+        layout.addWidget(self._toggle_it_button)
+        layout.addWidget(self._toggle_underline_button)
+        layout.addWidget(self._toggle_strike_button)
+
+        self._text_edit = text_edit
+
+    def _on_foreground_color_changed(self, color: QtGui.QColor):
+        with self._merging_format() as fmt:
+            fmt.setForeground(color)
+
+    def _on_background_color_changed(self, color: QtGui.QColor):
+        with self._merging_format() as fmt:
+            fmt.setBackground(color)
+
+    def _on_toggle_bold(self):
+        with self._merging_format() as fmt:
+            fmt.setFontWeight(
+                QtGui.QFont.Weight.Bold
+                if not fmt.font().bold()
+                else QtGui.QFont.Weight.Normal
+            )
+
+    def _on_toggle_italic(self):
+        with self._merging_format() as fmt:
+            fmt.setFontItalic(not fmt.font().italic())
+
+    def _on_toggle_underline(self):
+        with self._merging_format() as fmt:
+            fmt.setFontUnderline(not fmt.font().underline())
+
+    def _on_toggle_strike(self):
+        with self._merging_format() as fmt:
+            fmt.setFontStrikeOut(not fmt.font().strikeOut())
+
+    @contextmanager
+    def _merging_format(self) -> Iterator[QtGui.QTextCharFormat]:
+        cursor = self._text_edit._main_text_edit.textCursor()
+        fmt = cursor.charFormat()
+        yield fmt
+        cursor.mergeCharFormat(fmt)
+        self._text_edit._main_text_edit.setTextCursor(cursor)
+
 
 def superqt_format_path(self, tokensource, outfile):
+    """Patch for superqt<=0.6.1 formatter."""
     self.data = []
 
     for token, value in tokensource:

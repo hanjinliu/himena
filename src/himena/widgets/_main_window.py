@@ -147,7 +147,7 @@ class MainWindow(Generic[_W]):
     def clipboard(self, data: str | ClipboardDataModel) -> None:
         """Set the clipboard data."""
         if isinstance(data, str):
-            data = ClipboardDataModel(value=data, type="text")
+            data = ClipboardDataModel(text=data)
         elif not isinstance(data, ClipboardDataModel):
             raise ValueError("Clipboard data must be a ClipboardDataModel instance.")
         _LOGGER.info("Setting clipboard data: %r", data)

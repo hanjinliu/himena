@@ -1,4 +1,5 @@
 import logging
+import warnings
 from app_model.types import (
     KeyCode,
     KeyMod,
@@ -6,7 +7,7 @@ from app_model.types import (
     StandardKeyBinding,
 )
 from himena._descriptors import SaveToPath
-from himena.consts import MenuId, StandardType
+from himena.consts import MenuId
 from himena.widgets import MainWindow
 from himena.types import (
     ClipboardDataModel,
@@ -66,6 +67,7 @@ def open_last_closed_window(ui: MainWindow) -> WidgetDataModel:
         store = io.ReaderProviderStore().instance()
         model = store.run(path=path, plugin=plugin)
         return model
+    warnings.warn("No window to reopen", UserWarning, stacklevel=2)
     raise Cancelled
 
 
@@ -146,7 +148,13 @@ def copy_path_to_clipboard(ui: MainWindow) -> ClipboardDataModel:
     """Copy the path of the current window to the clipboard."""
     if window := ui.current_window:
         if isinstance(sv := window.save_behavior, SaveToPath):
-            return ClipboardDataModel(value=str(sv.path), type=StandardType.TEXT)
+            return ClipboardDataModel(text=str(sv.path))
+        else:
+            warnings.warn(
+                "Window does not have the source path.", UserWarning, stacklevel=2
+            )
+    else:
+        warnings.warn("No window is focused.", UserWarning, stacklevel=2)
     raise Cancelled
 
 
@@ -163,6 +171,7 @@ def copy_data_to_clipboard(ui: MainWindow) -> ClipboardDataModel:
     """Copy the data of the current window to the clipboard."""
     if window := ui.current_window:
         return window.to_model().to_clipboard_data_model()
+    warnings.warn("No window is focused.", UserWarning, stacklevel=2)
     raise Cancelled
 
 

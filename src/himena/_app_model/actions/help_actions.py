@@ -77,5 +77,5 @@ def show_about(ui: MainWindow) -> None:
         choices=[("Copy", True), ("OK", False)],
         how="buttons",
     ):
-        ui.clipboard = ClipboardDataModel(value=info, type="text.html")
+        ui.clipboard = ClipboardDataModel(html=info)
     return None

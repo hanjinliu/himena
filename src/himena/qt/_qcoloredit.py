@@ -5,11 +5,12 @@ from qtpy.QtCore import Qt, Signal
 
 # modified from napari/_qt/widgets/qt_color_swatch.py
 class QColorSwatch(QtW.QFrame):
-    colorChanged = Signal()
+    colorChanged = Signal(QtGui.QColor)
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setFrameStyle(QtW.QFrame.Shape.Panel | QtW.QFrame.Shadow.Sunken)
         self._qcolor: QtGui.QColor = QtGui.QColor(255, 255, 255, 255)
         self.colorChanged.connect(self._update_swatch_style)
         self.setMinimumWidth(40)
@@ -22,8 +23,8 @@ class QColorSwatch(QtW.QFrame):
     def heightForWidth(self, w: int) -> int:
         return w
 
-    def _update_swatch_style(self, _=None) -> None:
-        rgba = f'rgba({",".join(str(x) for x in self.rgba)})'
+    def _update_swatch_style(self, color: QtGui.QColor) -> None:
+        rgba = f'rgba({",".join(str(x) for x in color.getRgb())})'
         return self.setStyleSheet("QColorSwatch {background-color: " + rgba + ";}")
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent) -> None:
@@ -42,7 +43,7 @@ class QColorSwatch(QtW.QFrame):
         old_color = self._qcolor
         self._qcolor = color
         if self._qcolor.getRgb() != old_color.getRgb():
-            self.colorChanged.emit()
+            self.colorChanged.emit(color)
 
 
 class QColorLineEdit(QtW.QLineEdit):
@@ -112,9 +113,10 @@ class QColorEdit(QtW.QWidget):
         self._line_edit.blockSignals(False)
         self.colorChanged.emit(qcolor.getRgb())
 
-    def _on_swatch_changed(self):
+    def _on_swatch_changed(self, qcolor: QtGui.QColor):
         self._color_swatch.blockSignals(True)
-        qcolor = self._color_swatch.qColor()
-        self._line_edit.setQColor(qcolor)
-        self._color_swatch.blockSignals(False)
+        try:
+            self._line_edit.setQColor(qcolor)
+        finally:
+            self._color_swatch.blockSignals(False)
         self.colorChanged.emit(qcolor.getRgb())
