@@ -10,8 +10,8 @@ from himena import (
 from himena.plugins import (
     register_reader_provider,
     register_writer_provider,
+    register_widget_class,
 )
-from himena.qt import register_widget
 from himena.builtins.qt.widgets import QDefaultImageView
 
 TIFF_TYPE = object()
@@ -48,7 +48,7 @@ def write_tiff_provider(model: WidgetDataModel[ImageAndMetadata], path: Path):
         return imwrite(path, model.value.image, **model.value.metadata)
     return write
 
-@register_widget(TIFF_TYPE)
+@register_widget_class(TIFF_TYPE)
 class QTiffView(QDefaultImageView):
     def __init__(self, model: WidgetDataModel[ImageAndMetadata]):
         simple_model = model.with_value(model.value.image)

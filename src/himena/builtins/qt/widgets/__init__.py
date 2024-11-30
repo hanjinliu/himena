@@ -1,4 +1,4 @@
-from himena.qt import register_widget
+from himena.plugins import register_widget_class
 from himena.builtins.qt.widgets.array import QDefaultArrayView
 from himena.builtins.qt.widgets.text import QDefaultTextEdit, QDefaultRichTextEdit
 from himena.builtins.qt.widgets.table import QDefaultTableWidget
@@ -11,14 +11,16 @@ from himena.consts import StandardType
 
 def register_default_widget_types() -> None:
     """Register default widget types."""
-    register_widget(StandardType.ARRAY, QDefaultArrayView, priority=50)
-    register_widget(StandardType.TEXT, QDefaultTextEdit, priority=50)
-    register_widget(StandardType.HTML, QDefaultRichTextEdit, priority=50)
-    register_widget(StandardType.TABLE, QDefaultTableWidget, priority=50)
-    register_widget(StandardType.IMAGE, QDefaultImageView, priority=50)
-    register_widget(StandardType.DATAFRAME, QDataFrameView, priority=50)
-    register_widget(StandardType.EXCEL, QExcelTableStack, priority=50)
-    register_widget(StandardType.READER_NOT_FOUND, QReaderNotFoundWidget, priority=0)
+    register_widget_class(StandardType.ARRAY, QDefaultArrayView, priority=50)
+    register_widget_class(StandardType.TEXT, QDefaultTextEdit, priority=50)
+    register_widget_class(StandardType.HTML, QDefaultRichTextEdit, priority=50)
+    register_widget_class(StandardType.TABLE, QDefaultTableWidget, priority=50)
+    register_widget_class(StandardType.IMAGE, QDefaultImageView, priority=50)
+    register_widget_class(StandardType.DATAFRAME, QDataFrameView, priority=50)
+    register_widget_class(StandardType.EXCEL, QExcelTableStack, priority=50)
+    register_widget_class(
+        StandardType.READER_NOT_FOUND, QReaderNotFoundWidget, priority=0
+    )
 
 
 register_default_widget_types()

@@ -2,18 +2,18 @@ from pathlib import Path
 
 import numpy as np
 from himena import new_window, WidgetDataModel
-from himena.qt import register_widget
 from himena.consts import StandardType
 from himena.plugins import (
     register_reader_provider,
     register_writer_provider,
     register_function,
+    register_widget_class,
 )
 from wgpu.gui.qt import WgpuWidget
 import imageio.v3 as iio
 import pygfx as gfx
 
-@register_widget(StandardType.IMAGE)
+@register_widget_class(StandardType.IMAGE)
 class WgpuImageWidget(WgpuWidget):
     def __init__(self):
         super().__init__()

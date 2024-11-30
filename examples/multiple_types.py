@@ -2,16 +2,15 @@ from qtpy import QtWidgets as QtW
 
 import re
 from himena import new_window, WidgetDataModel
-from himena.qt import register_widget
 from himena.consts import StandardType
-from himena.plugins import register_function
+from himena.plugins import register_function, register_widget_class
 
 # Register three widget classes that:
 # 1. display text as a plain text and can be saved
 # 2. display text as an HTML text and can be saved
 # 3. display text as a plain text but cannot be saved
 
-@register_widget(StandardType.TEXT)
+@register_widget_class(StandardType.TEXT)
 class MyTextEdit(QtW.QPlainTextEdit):
     def update_model(self, model: WidgetDataModel):
         self.setPlainText(model.value)
@@ -19,7 +18,7 @@ class MyTextEdit(QtW.QPlainTextEdit):
     def to_model(self) -> WidgetDataModel:
         return WidgetDataModel(value=self.toPlainText(), type=StandardType.TEXT)
 
-@register_widget(StandardType.HTML)
+@register_widget_class(StandardType.HTML)
 class MyHtmlEdit(QtW.QTextEdit):
     def __init__(self, model: WidgetDataModel):
         super().__init__()
@@ -30,7 +29,7 @@ class MyHtmlEdit(QtW.QTextEdit):
     def to_model(self) -> WidgetDataModel:
         return WidgetDataModel(value=self.toHtml(), type=StandardType.HTML)
 
-@register_widget("cannot-save")
+@register_widget_class("cannot-save")
 class MyNonSavableEdit(QtW.QTextEdit):
     def update_model(self, model: WidgetDataModel):
         self.setPlainText(model.value)

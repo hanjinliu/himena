@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from himena.qt import register_widget
+from himena.plugins import register_widget_class
 from himena.consts import StandardType
 from himena._utils import lru_cache
 from himena.builtins.qt.plot._conversion import register_plot_model
@@ -32,8 +32,8 @@ def register_mpl_widget():
         QModelMatplotlibCanvas,
     )
 
-    register_widget(StandardType.PLOT, QModelMatplotlibCanvas, priority=0)
-    register_widget(StandardType.MPL_FIGURE, QMatplotlibCanvas, priority=0)
+    register_widget_class(StandardType.PLOT, QModelMatplotlibCanvas, priority=0)
+    register_widget_class(StandardType.MPL_FIGURE, QMatplotlibCanvas, priority=0)
 
 
 register_mpl_widget()

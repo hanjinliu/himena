@@ -4,9 +4,8 @@ from tempfile import TemporaryDirectory
 from qtpy import QtWidgets as QtW
 from himena import MainWindow, anchor
 from himena._descriptors import ConverterMethod, LocalReaderMethod, ProgramaticMethod, SaveToNewPath, SaveToPath
-from himena.consts import StandardType
 from himena.types import ClipboardDataModel, WidgetDataModel
-from himena.qt import register_widget, MainWindowQt
+from himena.qt import register_widget_class, MainWindowQt
 from himena.builtins.qt import widgets as _qtw
 import himena.io
 
@@ -242,7 +241,7 @@ def test_register_widget(ui: MainWindow):
     model = WidgetDataModel(value="abc", type="text.xyz")
     win = ui.add_data_model(model)
     assert type(win.widget) is _qtw.QDefaultTextEdit
-    register_widget("text.xyz", QCustomTextView)
+    register_widget_class("text.xyz", QCustomTextView)
 
     win2 = ui.add_data_model(model)
     assert type(win2.widget) is QCustomTextView
