@@ -1,0 +1,78 @@
+site_name: himena
+site_description: An infinitely extensible and reusable applications framework.
+repo_name: himena
+repo_url: https://github.com/hanjinliu/himena
+
+copyright: Copyright (c) 2024 - 2024 Hanjin Liu
+
+theme:
+  name: material
+  features:
+    - content.code.annotate
+    - navigation.sections
+    - navigation.indexes
+    - navigation.footer
+    - toc.follow
+    - search.suggest
+    - search.share
+  font:
+    text: Roboto
+    code: Roboto Mono
+
+nav:
+  - Overview: index.md
+  - Quick Start: quick_start.md
+  - Developper's Guide:
+    - Overview: dev/index.md
+    - The WidgetDataMode Standard: dev/widget_data_model.md
+    - Model Types: dev/model_types.md
+    - Plugin System: dev/plugin_system.md
+    - Reader/Writer Functions: dev/io_provider.md
+    - Register Functions: dev/register_functions.md
+  - API Reference:
+    - api/plugins.md
+
+plugins:
+  - search
+  - autorefs
+  - mkdocstrings:
+      handlers:
+        python:
+          import:
+            - https://docs.python.org/3/objects.inv
+          options:
+            docstring_style: numpy
+            show_source: true
+            show_bases: false
+            show_signature_annotations: true
+  # - gen-files:
+  #     scripts:
+  #       - docs/_scripts/_screenshots.py
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.keys
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.arithmatex:
+      generic: true
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+# hooks:
+#   - docs/_scripts/_hooks.py
+
+extra_css:
+  - https://unpkg.com/mermaid@8.0.0/dist/mermaid.css
+
+extra_javascript:
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+  - https://unpkg.com/mermaid@8.0.0/dist/mermaid.min.js

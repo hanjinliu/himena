@@ -497,8 +497,10 @@ class QDefaultTextEdit(QtW.QWidget):
         self._control._line_num.setText(str(line_num))
 
     @protocol_override
-    def update_model(self, model: WidgetDataModel[str]):
-        self._main_text_edit.setPlainText(model.value)
+    def update_model(self, model: WidgetDataModel):
+        if not isinstance(value := model.value, str):
+            value = str(value)
+        self._main_text_edit.setPlainText(value)
         lang = None
         spaces = 4
         encoding = None

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Mapping
 
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 
@@ -92,13 +92,15 @@ class QExcelTableStack(QtW.QTabWidget):
         return "Built-in Excel File Editor"
 
     @protocol_override
-    def update_model(self, model: WidgetDataModel[dict[str, np.ndarray]]):
+    def update_model(self, model: WidgetDataModel):
+        if not isinstance(value := model.value, Mapping):
+            raise ValueError(f"Expected a dict, got {type(value)}")
         self.clear()
-        for sheet_name, each in model.value.items():
+        for sheet_name, each in value.items():
             table = QDefaultTableWidget()
             table.update_model(WidgetDataModel(value=each, type=StandardType.TABLE))
             table.setHeaderFormat(QDefaultTableWidget.HeaderFormat.Alphabetic)
-            self.addTab(table, sheet_name)
+            self.addTab(table, str(sheet_name))
         if self.count() > 0:
             self.setCurrentIndex(0)
             self._control.update_for_table(self.widget(0))
