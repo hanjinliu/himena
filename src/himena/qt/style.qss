@@ -585,8 +585,8 @@ NavigationToolbar2QT {
 }
 
 _QOverlayBase {
-    border: 1px solid #[highlight_dim];
-    border-radius: 3px;
+    border: 2px solid #[highlight_dim];
+    border-radius: 6px;
     background-color: #[background];
 }
 

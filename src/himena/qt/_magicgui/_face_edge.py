@@ -2,12 +2,13 @@ from __future__ import annotations
 from typing import Any, TYPE_CHECKING
 
 from magicgui.types import Undefined
-from magicgui.widgets import LineEdit
+from magicgui.widgets import LineEdit, ComboBox
 from magicgui.widgets.bases import ValuedContainerWidget
+from cmap import Color, Colormap
 from himena.qt._magicgui._color import ColorEdit, ColormapEdit
 from himena.qt._magicgui._basic_widgets import FloatEdit
 from himena.qt._magicgui._toggle_switch import ToggleSwitch
-from cmap import Color, Colormap
+from himena.consts import MonospaceFontFamily
 
 if TYPE_CHECKING:
     from typing import TypedDict, NotRequired
@@ -33,6 +34,7 @@ class ColorOrColorCycleEdit(ValuedContainerWidget):
             **kwargs,
         )
         self.margins = (0, 0, 0, 0)
+        self.min_height = 60
         self._use_color_cycle.changed.connect(self._update_visibility)
 
     def _update_visibility(self, v: bool):
@@ -73,7 +75,12 @@ class FacePropertyEdit(ValuedContainerWidget["FacePropertyDict"]):
             widgets=[self._face_color, self._face_hatch],
             **kwargs,
         )
+        self._face_color.changed.connect(self._emit_value_changed)
+        self._face_hatch.changed.connect(self._emit_value_changed)
         self.margins = (0, 0, 0, 0)
+
+    def _emit_value_changed(self):
+        self.changed.emit(self.get_value())
 
     def get_value(self) -> FacePropertyDict:
         return {
@@ -88,27 +95,55 @@ class FacePropertyEdit(ValuedContainerWidget["FacePropertyDict"]):
 
 
 class EdgePropertyEdit(ValuedContainerWidget["EdgePropertyDict"]):
+    _STYLE_CHOICES = [
+        ("———————", "-"),
+        ("— — — —", "--"),
+        ("-·-·-·-", "-."),
+        ("-··-··-", "-.."),
+        ("·······", ":"),
+    ]
+
     def __init__(self, value=Undefined, **kwargs):
         if value is None:
             value = Undefined
         self._edge_color = ColorOrColorCycleEdit(value="#000000", label="color")
-        self._edge_width = FloatEdit(value=1.0, label="width")
-        self._edge_style = LineEdit(value="", label="style")
+        self._edge_width = FloatEdit(value=1.0, label="width", min=0.0)
+        self._edge_style = ComboBox(
+            value="-", choices=self._STYLE_CHOICES, label="style"
+        )
+        self._edge_style.native.setStyleSheet(f"font-family: {MonospaceFontFamily}")
         super().__init__(
             value,
             widgets=[self._edge_color, self._edge_width, self._edge_style],
             **kwargs,
         )
+        self._edge_color.changed.connect(self._emit_value_changed)
+        self._edge_width.changed.connect(self._emit_value_changed)
+        self._edge_style.changed.connect(self._emit_value_changed)
+        self.changed.connect(self._on_property_changed)
+        self._on_property_changed(self.get_value())
 
     def get_value(self) -> EdgePropertyDict:
         return {
             "color": self._edge_color.value,
-            "width": self._edge_width.value,
+            "width": round(self._edge_width.value, 2),
             "style": self._edge_style.value,
         }
 
     def set_value(self, value: EdgePropertyDict):
         value = value or {}
-        self._edge_color.value = value.get("color", "black")
-        self._edge_width.value = value.get("width", 0.0)
-        self._edge_style.value = value.get("style", "")
+        with self.changed.blocked():
+            self._edge_color.value = value.get("color", "black")
+            self._edge_width.value = round(value.get("width", 0.0), 2)
+            self._edge_style.value = value.get("style", "-")
+        self._emit_value_changed()
+
+    def _emit_value_changed(self) -> None:
+        self.changed.emit(self.get_value())
+
+    def _on_property_changed(self, value: EdgePropertyDict):
+        if value is None:
+            return
+        enabled = value["width"] > 0.0
+        self._edge_color.enabled = enabled
+        self._edge_style.enabled = enabled

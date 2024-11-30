@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import (
     Any,
     Callable,
+    Sequence,
     Generic,
     Iterator,
     Literal,
@@ -21,7 +22,7 @@ from himena._descriptors import ProgramaticMethod
 from himena._open_recent import RecentFileManager, RecentSessionManager
 from himena._utils import import_object
 from himena.consts import NO_RECORDING_FIELD
-from himena.plugins import _checker
+from himena.plugins import _checker, actions as _actions
 from himena.profile import AppProfile, load_app_profile
 from himena.style import Theme
 from himena.types import (
@@ -40,10 +41,13 @@ from himena.widgets._widget_list import TabList, TabArea, DockWidgetList
 from himena.widgets._wrapper import ParametricWindow, SubWindow, DockWidget
 
 if TYPE_CHECKING:
+    from app_model.types import KeyBindingRule
+    from app_model.expressions import BoolOp
     from himena.widgets._widget_list import PathOrPaths
 
 _W = TypeVar("_W")  # backend widget type
 _T = TypeVar("_T")  # internal data type
+_F = TypeVar("_F")  # function type
 _LOGGER = getLogger(__name__)
 
 
@@ -376,6 +380,89 @@ class MainWindow(Generic[_W]):
         """Set the status tip of the main window."""
         self._backend_main_window._set_status_tip(text, duration)
         return None
+
+    @overload
+    def register_function(
+        self,
+        func: None = None,
+        *,
+        menus: str | Sequence[str] = "plugins",
+        title: str | None = None,
+        types: str | Sequence[str] | None = None,
+        enablement: BoolOp | None = None,
+        keybindings: Sequence[KeyBindingRule] | None = None,
+        command_id: str | None = None,
+    ) -> None: ...  # noqa: E501
+    @overload
+    def register_function(
+        self,
+        func: _F,
+        *,
+        menus: str | Sequence[str] = "plugins",
+        title: str | None = None,
+        types: str | Sequence[str] | None = None,
+        enablement: BoolOp | None = None,
+        keybindings: Sequence[KeyBindingRule] | None = None,
+        command_id: str | None = None,
+    ) -> _F: ...  # noqa: E501
+
+    def register_function(
+        self,
+        func=None,
+        *,
+        menus="plugins",
+        title=None,
+        types=None,
+        enablement=None,
+        keybindings=None,
+        command_id=None,
+    ):
+        """
+        Register a function as a callback in runtime.
+
+        Example
+        -------
+        >>> @ui.register_function(menus="plugins", title="Test functions)
+        >>> def test_function():
+        ...     print("test")
+
+        Parameters
+        ----------
+        func : callable, optional
+            Function to register as an action.
+        menus : str or sequence of str, default "plugins"
+            Menu(s) to add the action. Submenus are separated by `/`.
+        title : str, optional
+            Title of the action. Name of the function will be used if not given.
+        types: str or sequence of str, optional
+            The `type` parameter(s) allowed as the WidgetDataModel. If this parameter
+            is given, action will be grayed out if the active window does not satisfy
+            the listed types.
+        enablement: Expr, optional
+            Expression that describes when the action will be enabled. As this argument
+            is a generalized version of `types` argument, you cannot use both of them.
+        command_id : str, optional
+            Command ID. If not given, the function qualname will be used.
+        """
+
+        def _inner(f):
+            action = _actions.make_action_for_function(
+                f,
+                menus=menus,
+                title=title,
+                types=types,
+                enablement=enablement,
+                keybindings=keybindings,
+                command_id=command_id,
+            )
+            _actions.AppActionRegistry.instance().add_action(action)
+            added_menus = _actions.AppActionRegistry.instance().install_to(
+                self.model_app, [action]
+            )
+            self._backend_main_window._rebuild_for_runtime(added_menus)
+            return f
+
+        return _inner(func) if func else _inner
 
     def exec_action(self, id: str, with_params: dict[str, Any] | None = None) -> None:
         """Execute an action by its ID."""

@@ -21,6 +21,7 @@ _ALLOWED_METHODS = frozenset(
         "theme_changed_callback",
         "window_activated_callback",
         "window_closed_callback",
+        "window_resized_callback",
     ]
 )
 
@@ -42,6 +43,10 @@ def call_window_activated_callback(win):
 
 def call_theme_changed_callback(win, theme):
     return _call_callback(win, "theme_changed_callback", theme)
+
+
+def call_window_resized_callback(win, size: tuple[int, int]):
+    return _call_callback(win, "window_resized_callback", size)
 
 
 def _call_callback(win, callback_name: str, *args):

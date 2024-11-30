@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 from typing import Any, Callable, TYPE_CHECKING
 import warnings
+import threading
 
 if TYPE_CHECKING:
     from types import TracebackType
@@ -26,17 +27,20 @@ class ExceptionHandler:
     ):
         self._except_hook = hook
         self._warning_hook = warning_hook
+        self._original_excepthook = sys.excepthook
+        self._original_warning = warnings.showwarning
+        self._original_thread_excepthook = threading.excepthook
 
     def __enter__(self):
-        self._original_excepthook = sys.excepthook
         sys.excepthook = self._except_hook
-        self._original_warning = warnings.showwarning
+        threading.excepthook = self._except_hook
         if self._warning_hook is not None:
             warnings.showwarning = self.show_warning
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         sys.excepthook = self._original_excepthook
+        threading.excepthook = self._original_thread_excepthook
         if self._warning_hook is not None:
             warnings.showwarning = self._original_warning
         return None

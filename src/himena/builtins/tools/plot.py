@@ -15,10 +15,12 @@ from himena import plotting
 from himena.exceptions import DeadSubwindowError
 
 if TYPE_CHECKING:
+    from numpy.typing import NDArray
     from himena.qt._magicgui._face_edge import FacePropertyDict, EdgePropertyDict
 
 _TABLE_LIKE = [StandardType.TABLE, StandardType.DATAFRAME, StandardType.EXCEL]
 _MENU = ["tools/plot", "/model_menu/plot"]
+_EDGE_ONLY_VALUE = {"color": "tab10", "width": 2.0}
 
 
 @register_function(
@@ -44,10 +46,15 @@ def scatter_plot(win: SubWindow) -> Parametric:
     ) -> WidgetDataModel:
         fig = plotting.figure()
         xarr, yarrs = _get_xy_data(win, x, y, fig.axes)
-        for yarr, _face, _edge in zip(
+        for name_yarr, _face, _edge in zip(
             yarrs, _iter_face(face), _iter_edge(edge, prefix="edge_")
         ):
-            fig.axes.scatter(xarr, yarr, symbol=symbol, size=size, **_face, **_edge)
+            name, yarr = name_yarr
+            fig.axes.scatter(
+                xarr, yarr, symbol=symbol, size=size, name=name, **_face, **_edge
+            )
+        if len(yarrs) == 1:
+            fig.axes.y.label = name
         return WidgetDataModel(value=fig, type=StandardType.PLOT, title="Plot")
 
     return configure_plot
@@ -63,7 +70,7 @@ def line_plot(win: SubWindow) -> Parametric:
     @configure_gui(
         x={"widget_type": SelectionEdit, "getter": lambda: _range_getter(win)},
         y={"widget_type": SelectionEdit, "getter": lambda: _range_getter(win)},
-        edge={"widget_type": EdgePropertyEdit, "value": {"width": 2.0}},
+        edge={"widget_type": EdgePropertyEdit, "value": _EDGE_ONLY_VALUE},
     )
     def configure_plot(
         x: tuple[slice, slice] | None,
@@ -72,8 +79,11 @@ def line_plot(win: SubWindow) -> Parametric:
     ) -> WidgetDataModel:
         fig = plotting.figure()
         xarr, yarrs = _get_xy_data(win, x, y, fig.axes)
-        for yarr, _edge in zip(yarrs, _iter_edge(edge)):
-            fig.axes.plot(xarr, yarr, **_edge)
+        for name_yarr, _edge in zip(yarrs, _iter_edge(edge)):
+            name, yarr = name_yarr
+            fig.axes.plot(xarr, yarr, name=name, **_edge)
+        if len(yarrs) == 1:
+            fig.axes.y.label = name
         return WidgetDataModel(value=fig, type=StandardType.PLOT, title="Plot")
 
     return configure_plot
@@ -107,12 +117,14 @@ def bar_plot(win: SubWindow) -> Parametric:
         else:
             bottoms = itertools.repeat(None)
         xarr, yarrs = _get_xy_data(win, x, y, fig.axes)
-        for yarr, _bottom, _face, _edge in zip(
+        for name_yarr, _bottom, _face, _edge in zip(
             yarrs, bottoms, _iter_face(face), _iter_edge(edge, prefix="edge_")
         ):
+            name, yarr = name_yarr
             fig.axes.bar(
-                xarr, yarr, bottom=_bottom, bar_width=bar_width, **_face, **_edge
-            )
+                xarr, yarr, bottom=_bottom, bar_width=bar_width, name=name, **_face,
+                **_edge
+            )  # fmt: skip
         return WidgetDataModel(value=fig, type=StandardType.PLOT, title="Plot")
 
     return configure_plot
@@ -130,7 +142,7 @@ def errorbar_plot(win: SubWindow) -> Parametric:
         y={"widget_type": SelectionEdit, "getter": lambda: _range_getter(win)},
         xerr={"widget_type": SelectionEdit, "getter": lambda: _range_getter(win)},
         yerr={"widget_type": SelectionEdit, "getter": lambda: _range_getter(win)},
-        edge={"widget_type": EdgePropertyEdit, "value": {"width": 2.0}},
+        edge={"widget_type": EdgePropertyEdit, "value": _EDGE_ONLY_VALUE},
     )
     def configure_plot(
         x: tuple[slice, slice] | None,
@@ -150,10 +162,14 @@ def errorbar_plot(win: SubWindow) -> Parametric:
         else:
             yerrs = itertools.repeat(None)
         xarr, yarrs = _get_xy_data(win, x, y, fig.axes)
-        for yarr, _xerr, _yerr, _edge in zip(yarrs, xerrs, yerrs, _iter_edge(edge)):
+        for name_yarr, _xerr, _yerr, _edge in zip(
+            yarrs, xerrs, yerrs, _iter_edge(edge)
+        ):
+            name, yarr = name_yarr
             fig.axes.errorbar(
-                xarr, yarr, x_error=_xerr, y_error=_yerr, capsize=capsize, **_edge
-            )
+                xarr, yarr, x_error=_xerr, y_error=_yerr, capsize=capsize, name=name,
+                **_edge,
+            )  # fmt: skip
         return WidgetDataModel(value=fig, type=StandardType.PLOT, title="Plot")
 
     return configure_plot
@@ -202,73 +218,118 @@ def _get_xy_data(
     x: tuple[slice, slice] | None,
     y: tuple[slice, slice] | None,
     axes: plotting.layout.Axes,
-) -> "tuple[np.ndarray, list[np.ndarray]]":
+) -> "tuple[np.ndarray, list[tuple[str | None, np.ndarray]]]":
     from himena._data_wrappers import wrap_dataframe
 
     if y is None:
         raise ValueError("The y value must be given.")
     model = win.to_model()
     if model.type == StandardType.TABLE:
-        xarr, yarrs = _table_to_xy_data(model.value, x, y, axes)
+        xlabel, xarr, ys = _table_to_xy_data(model.value, x, y)
     elif model.type == StandardType.DATAFRAME:
         df = wrap_dataframe(model.value)
         column_names = df.column_names()[y[1].start, y[1].stop]
         rows = slice(y[0].start, y[0].stop)
-        yarrs = [df.column_to_array(cname)[rows] for cname in column_names]
+        ys = [(cname, df.column_to_array(cname)[rows]) for cname in column_names]
         if x is None:
-            xarr = np.arange(yarrs[0].size)
+            xarr = np.arange(ys[0][1].size)
+            xlabel = None
         else:
             column_names_x = df.column_names()[x[1].start, x[1].stop]
             if len(column_names_x) != 1:
                 raise ValueError("x must not be more than one column.")
             xarr = df.column_to_array(column_names_x[0])
-            axes.x.label = column_names_x[0]
-        axes.y.label = df.column_names()[y[0].start]
+            xlabel = column_names_x[0]
     elif model.type == StandardType.EXCEL:
         if not isinstance(meta := model.metadata, ExcelMeta):
             raise ValueError("Must be a ExcelMeta")
         table = model.value[meta.current_sheet]
-        xarr, yarrs = _table_to_xy_data(table, x, y, axes)
+        xlabel, xarr, ys = _table_to_xy_data(table, x, y)
     else:
         raise RuntimeError("Unreachable")
-    return xarr, yarrs
+    if xlabel:
+        axes.x.label = xlabel
+    return xarr, ys
 
 
 def _table_to_xy_data(
     value: "np.ndarray",
     x: tuple[slice, slice] | None,
     y: tuple[slice, slice],
-    axes: plotting.layout.Axes,
-) -> "tuple[np.ndarray, list[np.ndarray]]":
-    # TODO: if the first value is string, use it as labels.
-    yarr = np.asarray(value[y], dtype=np.float64)
+) -> "tuple[str | None, np.ndarray, list[tuple[str | None, np.ndarray]]]":
+    parser = TableValueParser.from_array(value[y])
     if x is None:
-        xarr = np.arange(yarr.shape[0], dtype=np.float64)
-        yarrs = list(yarr.T)
+        xarr = np.arange(parser.n_samples, dtype=np.float64)
+        xlabel = None
     else:
-        xarr = value[x]
-        if xarr.shape[0] == 1:
-            if xarr.shape[1] != yarr.shape[1]:
-                raise ValueError("Shape mismatch")
-            yarrs = list(yarr)
-        elif xarr.shape[1] == 1:
-            if xarr.shape[0] != yarr.shape[0]:
-                raise ValueError("Shape mismatch")
-            yarrs = list(yarr.T)
-        else:
-            raise ValueError("x must be 1D selection")
+        xlabel, xarr = parser.norm_x_value(value[x])
+    return xlabel, xarr, parser._label_and_values
 
-        xarr = xarr.ravel()
+
+class TableValueParser:
+    def __init__(
+        self,
+        label_and_values: "list[tuple[str | None, NDArray[np.float64]]]",
+        is_column_vector: bool = True,
+    ):
+        self._label_and_values = label_and_values
+        self._is_column_vector = is_column_vector
+
+    @classmethod
+    def from_columns(cls, value: "np.ndarray") -> "TableValueParser":
+        nr, nc = value.shape
+        if nr == 1:
+            return cls([(None, value[:, i].astype(np.float64)) for i in range(nc)])
         try:
-            xarr = np.asarray(xarr, dtype=np.float64)
-        except Exception:
-            # X values are not numerical. Label them at 0, 1, 2, ...
-            axes.x.ticks = [str(a) for a in xarr]
-            xarr = np.arange(xarr.size, dtype=np.float64)
-    return xarr, yarrs
+            value[0, :].astype(np.float64)  # try to cast to float
+        except ValueError:
+            # The first row is not numerical. Use it as labels.
+            return cls(
+                [(str(value[0, i]), value[1:, i].astype(np.float64)) for i in range(nc)]
+            )
+        else:
+            return cls([(None, value[:, i].astype(np.float64)) for i in range(nc)])
+
+    @classmethod
+    def from_rows(cls, value: "np.ndarray") -> "TableValueParser":
+        self = cls.from_columns(value.T)
+        self._is_column_vector = False
+        return self
+
+    @classmethod
+    def from_array(cls, value: "np.ndarray") -> "TableValueParser":
+        try:
+            return cls.from_columns(value)
+        except ValueError:
+            return cls.from_rows(value)
+
+    @property
+    def n_components(self) -> int:
+        return len(self._label_and_values)
+
+    @property
+    def n_samples(self) -> int:
+        return self._label_and_values[0][1].size
+
+    def norm_x_value(self, arr: "np.ndarray") -> "tuple[str, NDArray[np.float64]]":
+        # check if the first value is a label
+        if self._is_column_vector and arr.shape[1] != 1:
+            raise ValueError("The X values must be a 1D column vector.")
+        if not self._is_column_vector and arr.shape[0] != 1:
+            raise ValueError("The X values must be a 1D row vector.")
+        arr = arr.ravel()
+        try:
+            arr[:1].astype(np.float64)
+        except ValueError:
+            label, arr_number = str(arr[0]), arr[1:].astype(np.float64)
+        else:
+            label, arr_number = None, arr.astype(np.float64)
+        if arr_number.size != self.n_samples:
+            raise ValueError("The number of X values must be the same as the Y values.")
+        return label, arr_number
 
 
-def _iter_face(face: "FacePropertyDict", prefix: str = "") -> Iterator[dict]:
+def _iter_face(face: "FacePropertyDict | dict", prefix: str = "") -> Iterator[dict]:
     color = face.get("color", None)
     hatch = face.get("hatch", None)
     if isinstance(color, Colormap):
@@ -279,7 +340,7 @@ def _iter_face(face: "FacePropertyDict", prefix: str = "") -> Iterator[dict]:
         yield {f"{prefix}color": next(cycler), f"{prefix}hatch": hatch}
 
 
-def _iter_edge(edge: "EdgePropertyDict", prefix: str = "") -> Iterator[dict]:
+def _iter_edge(edge: "EdgePropertyDict | dict", prefix: str = "") -> Iterator[dict]:
     color = edge.get("color", None)
     width = edge.get("width", None)
     style = edge.get("style", None)

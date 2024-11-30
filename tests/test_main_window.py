@@ -72,3 +72,26 @@ def test_goto_widget(ui: MainWindowQt, qtbot: QtBot):
     qtbot.keyClick(qmain._goto_widget, Qt.Key.Key_Return)
     ui.exec_action("go-to-window")
     qtbot.keyClick(qmain._goto_widget, Qt.Key.Key_Escape)
+
+def test_register_function_in_runtime(ui: MainWindowQt, qtbot: QtBot):
+    qmain: QMainWindow = ui._backend_main_window
+    assert qmain._menubar.actions()[-2].menu().title() != "Plugins"
+
+    @ui.register_function(menus="plugins", title="F0", command_id="pytest:f0")
+    def f():
+        pass
+
+    assert qmain._menubar.actions()[-2].menu().title() == "Plugins"
+    assert qmain._menubar.actions()[-2].menu().actions()[0].text() == "F0"
+
+    @ui.register_function(menus="tools", title="F1", command_id="pytest:f1")
+    def f():
+        pass
+
+    assert qmain._menubar.actions()[-2].menu().title() == "Plugins"
+    titles = [a.text() for a in qmain._get_menu_action_by_id("tools").menu().actions()]
+    assert "F1" in titles
+
+    @ui.register_function(menus="plugins2/sub", title="F2", command_id="pytest:f2")
+    def f():
+        pass

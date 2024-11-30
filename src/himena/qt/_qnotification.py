@@ -199,7 +199,7 @@ class QNotificationWidget(_QOverlayBase):
 
         return None
 
-    def show_and_hide_lager(self, sec: float = 5):
+    def show_and_hide_later(self, sec: float = 5):
         """Show the overlay widget with animation and hide after a delay."""
         self.show()
         self.hideLater(sec)

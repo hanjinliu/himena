@@ -73,9 +73,20 @@ class AppActionRegistry:
     def submenu_titles(self) -> dict[str, str]:
         return self._submenu_titles
 
-    def install_to(self, app: Application):
-        """Install actions and submenus to the application."""
+    def install_to(
+        self,
+        app: Application,
+        actions: list[Action] | None = None,
+    ) -> list[str]:
+        """Install actions to the application.
+
+        This method automatically adds submenus if they are not already exists, and
+        returns the list of added root menu IDs. Note that this does NOT updates the
+        GUI menubar and toolbar.
+        """
         # look for existing menu items
+        if actions is None:
+            actions = list(self.iter_actions(app))
         existing_menu_ids = {_id.value for _id in MenuId}
         for menu_id, menu in app.menus:
             existing_menu_ids.add(menu_id)
@@ -84,17 +95,20 @@ class AppActionRegistry:
                     existing_menu_ids.add(each.submenu)
 
         added_menu_ids = _utils.OrderedSet[str]()
-        for action in self.iter_actions(app):
+        for action in actions:
             if action.menus is not None:
                 ids = [a.id for a in action.menus]
                 added_menu_ids.update(ids)
-        app.register_actions(self.iter_actions(app))
+        app.register_actions(actions)
 
         # add submenus if not exists
         to_add: list[tuple[str, SubmenuItem]] = []
+        new_menu_ids: list[str] = []
 
         for place in added_menu_ids - existing_menu_ids:
             place_components = place.split("/")
+            if len(place_components) == 1:
+                new_menu_ids.append(place)
             for i in range(1, len(place_components)):
                 menu_id = "/".join(place_components[:i])
                 submenu = "/".join(place_components[: i + 1])
@@ -106,7 +120,7 @@ class AppActionRegistry:
                 to_add.append((menu_id, item))
 
         app.menus.append_menu_items(to_add)
-        return None
+        return new_menu_ids
 
 
 def _norm_menus(menus: str | Sequence[str]) -> list[str]:
@@ -169,7 +183,7 @@ def register_function(
         Menu(s) to add the action. Submenus are separated by `/`.
     title : str, optional
         Title of the action. Name of the function will be used if not given.
-    types: hashable or sequence of hashable, optional
+    types: str or sequence of str, optional
         The `type` parameter(s) allowed as the WidgetDataModel. If this parameter
         is given, action will be grayed out if the active window does not satisfy
         the listed types.
@@ -179,30 +193,16 @@ def register_function(
     command_id : str, optional
         Command ID. If not given, the function qualname will be used.
     """
-    enablement, menus = _norm_register_function_args(types, enablement, menus)
-    kbs = _normalize_keybindings(keybindings)
 
     def _inner(f: _F) -> _F:
-        if title is None:
-            _title = f.__name__.replace("_", " ").title()
-        else:
-            _title = title
-        _enablement = enablement
-        if _utils.has_widget_data_model_argument(f):
-            _expr = ctx.is_active_window_exportable
-            if enablement is None:
-                _enablement = _expr
-            else:
-                _enablement = _expr & enablement
-        _id = _command_id_from_func(f, command_id)
-        action = Action(
-            id=_id,
-            title=_title,
-            tooltip=_tooltip_from_func(f),
-            callback=_utils.make_function_callback(f, command_id=_id),
-            menus=_norm_menus(menus),
-            enablement=_enablement,
-            keybindings=kbs,
+        action = make_action_for_function(
+            f,
+            menus=menus,
+            title=title,
+            types=types,
+            enablement=enablement,
+            keybindings=keybindings,
+            command_id=command_id,
         )
         AppActionRegistry.instance().add_action(action)
         return f
@@ -210,11 +210,46 @@ def register_function(
     return _inner if func is None else _inner(func)
 
 
+def make_action_for_function(
+    f: Callable,
+    *,
+    menus="plugins",
+    title=None,
+    types=None,
+    enablement=None,
+    keybindings=None,
+    command_id=None,
+):
+    types, enablement, menus = _norm_register_function_args(types, enablement, menus)
+    kbs = _normalize_keybindings(keybindings)
+    if title is None:
+        _title = f.__name__.replace("_", " ").title()
+    else:
+        _title = title
+    _enablement = enablement
+    if _utils.has_widget_data_model_argument(f):
+        _expr = ctx.is_active_window_exportable
+        if enablement is None:
+            _enablement = _expr
+        else:
+            _enablement = _expr & enablement
+    _id = _command_id_from_func(f, command_id)
+    return Action(
+        id=_id,
+        title=_title,
+        tooltip=_tooltip_from_func(f),
+        callback=_utils.make_function_callback(f, command_id=_id),
+        menus=_norm_menus(menus),
+        enablement=_enablement,
+        keybindings=kbs,
+    )
+
+
 def _norm_register_function_args(
     types: str | Sequence[str] | None,
     enablement: BoolOp | None,
     menus: str | Sequence[str] | None,
-) -> tuple[BoolOp | None, list[str]]:
+) -> tuple[list[str], BoolOp | None, list[str]]:
     if isinstance(types, str):
         _types = [types]
     elif types is None:
@@ -262,7 +297,7 @@ def _norm_register_function_args(
             new_place = f"{pref}:{_type}"
             menu_out.append(new_place)
             _LOGGER.debug("Menu added: %r", new_place)
-    return enablement, menu_out
+    return _types, enablement, menu_out
 
 
 def _types_to_expression(types: list[str]) -> BoolOp:

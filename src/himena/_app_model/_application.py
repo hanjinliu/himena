@@ -15,7 +15,11 @@ class HimenaApplication(Application):
     """The Application class for Himena."""
 
     def __init__(self, name: str):
-        super().__init__(name, commands_reg_class=CommandsRegistry)
+        super().__init__(
+            name,
+            commands_reg_class=CommandsRegistry,
+            raise_synchronous_exceptions=True,
+        )
         self._registered_actions: dict[str, Action] = {}
 
     def register_actions(self, actions: list[Action]) -> Callable[[], None]:

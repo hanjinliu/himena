@@ -17,8 +17,8 @@ class QMatplotlibCanvasBase(QtW.QWidget):
         super().__init__()
         layout = QtW.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        self._canvas = None
-        self._toolbar = None
+        self._canvas: FigureCanvasQTAgg | None = None
+        self._toolbar: backend_qtagg.NavigationToolbar2QT | None = None
         self._plot_models: layout.BaseLayoutModel | None = None
 
     @property
@@ -32,6 +32,11 @@ class QMatplotlibCanvasBase(QtW.QWidget):
     @protocol_override
     def size_hint(self) -> tuple[int, int]:
         return 400, 300
+
+    @protocol_override
+    def window_resized_callback(self, size: tuple[int, int]):
+        if size[0] > 40 and size[1] > 40:
+            self._canvas.figure.tight_layout()
 
     def _prep_toolbar(self):
         toolbar = backend_qtagg.NavigationToolbar2QT(self._canvas, self)

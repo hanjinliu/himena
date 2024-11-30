@@ -12,9 +12,10 @@ from superqt.utils import qthrottled
 
 from himena import anchor as _anchor
 from himena._descriptors import LocalReaderMethod
-from himena.consts import MenuId
 from himena._utils import lru_cache, get_display_name
+from himena.consts import MenuId
 from himena.types import WindowState, WindowRect
+from himena.plugins import _checker
 from himena.qt._utils import get_main_window, build_qmodel_menu
 from himena.qt._qwindow_resize import ResizeState
 from himena.qt._qrename import QRenameLineEdit
@@ -82,7 +83,8 @@ class QSubWindowArea(QtW.QMdiArea):
         return None
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent):
-        return self._mouse_move_event(event)
+        self._mouse_move_event(event)
+        return None
 
     @qthrottled(timeout=10)
     def _mouse_move_event(self, event: QtGui.QMouseEvent):
@@ -90,6 +92,7 @@ class QSubWindowArea(QtW.QMdiArea):
             if self._last_drag_pos is None:
                 return None
             if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+                # move all the windows
                 dpos = event.pos() - self._last_drag_pos
                 for sub_window in self.subWindowList():
                     sub_window.move(sub_window.pos() + dpos)
@@ -387,6 +390,9 @@ class QSubWindow(QtW.QMdiSubWindow):
                 self._window_anchor = self._window_anchor.update_for_window_rect(
                     (main_qsize.width(), main_qsize.height()),
                     WindowRect.from_numbers(g.left(), g.top(), g.width(), g.height()),
+                )
+                _checker.call_window_resized_callback(
+                    self._widget, (g.width(), g.height())
                 )
         return None
 

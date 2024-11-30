@@ -73,7 +73,7 @@ class QtErrorMessageBox(QtW.QWidget):
         self.text_edit.setHorizontalScrollBarPolicy(
             QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff
         )
-        self.text_edit.setFixedHeight(70)
+        self.text_edit.setFixedHeight(55)
         self.text_edit.setPlainText(text)
 
         layout = QtW.QVBoxLayout(self)

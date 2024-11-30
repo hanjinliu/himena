@@ -47,6 +47,8 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
+    """The Qt mainwindow implementation for himena."""
+
     _himena_main_window: MainWindow
 
     def __init__(self, app: app_model.Application):
@@ -74,7 +76,10 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
                 if _is_root_menu_id(app, menu_id)
             }
         )
+        # Menubar
         self._menubar = self.setModelMenuBar(default_menu_ids)
+
+        # Toolbar
         self._toolbar = self.addModelToolBar(menu_id=MenuId.TOOLBAR)
         self._toolbar.setMovable(False)
         self._toolbar.setFixedHeight(32)
@@ -134,7 +139,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         mbox = QtErrorMessageBox.from_exc(exc, parent=self)
         notification = QNotificationWidget(self._tab_widget)
         notification.addWidget(mbox)
-        return notification.show_and_hide_lager()
+        return notification.show_and_hide_later()
 
     def _on_warning(self, warning: warnings.WarningMessage) -> None:
         from himena.qt._qtraceback import QtErrorMessageBox
@@ -143,7 +148,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         mbox = QtErrorMessageBox.from_warning(warning, parent=self)
         notification = QNotificationWidget(self._tab_widget)
         notification.addWidget(mbox)
-        return notification.show_and_hide_lager()
+        return notification.show_and_hide_later()
 
     def add_dock_widget(
         self,
@@ -545,7 +550,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             mime.setText(text)
         if (img := data.image) is not None:
             if isinstance(img, ArrayQImage):
-                img = img.qimage
+                mime.setImageData(img.qimage)
             else:
                 raise NotImplementedError("Only ArrayQImage is supported.")
         if (files := data.files) is not None:
@@ -631,6 +636,31 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def _set_status_tip(self, tip: str, duration: float) -> None:
         self._status_bar.showMessage(tip, int(duration * 1000))
+
+    def _get_menu_action_by_id(self, name: str) -> QtW.QAction:
+        # Find the help menu
+        for action in self._menubar.actions():
+            if isinstance(menu := action.menu(), QModelMenu):
+                if menu._menu_id == name:
+                    action = action
+                    break
+        else:
+            raise RuntimeError(f"{name} menu not found.")
+        return action
+
+    def _rebuild_for_runtime(self, added_menus: list[str]) -> None:
+        # Find the help menu
+        help_menu_action = self._get_menu_action_by_id("help")
+
+        # insert the new menus to the menubar before the help menu
+        for menu_id in added_menus:
+            menu = QModelMenu(menu_id, self._app, menu_id.title(), self._menubar)
+            self._menubar.insertMenu(help_menu_action, menu)
+        # rebuild the menus
+        for action in self._menubar.actions():
+            if isinstance(menu := action.menu(), QModelMenu):
+                menu.rebuild()
+        return None
 
 
 def _is_root_menu_id(app: app_model.Application, menu_id: str) -> bool:
