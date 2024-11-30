@@ -108,7 +108,7 @@ class RecentFileManager:
         self,
         inputs: list[tuple[_PathInput, str | None]],
     ) -> None:
-        """Append file(s) with plugin to the user history."""
+        """Append file(s) with plugin to the user history (duplication OK)."""
         _path = data_dir() / self._file_name
         if _path.exists():
             with open(_path) as f:

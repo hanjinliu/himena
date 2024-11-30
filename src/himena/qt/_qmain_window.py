@@ -449,7 +449,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         tab = self._tab_widget.widget_area(i_tab)
         if tab is None:
             return []
-        return [(w.windowTitle(), w.main_widget()) for w in tab.subWindowList()]
+        return [(w.windowTitle(), w._widget) for w in tab.subWindowList()]
 
     def _del_widget_at(self, i_tab: int, i_window: int) -> None:
         if i_tab < 0 or i_window < 0:
@@ -580,7 +580,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
                 raise ValueError("No active area.")
         elif target == "window":
             if sub := self._tab_widget.current_widget_area().currentSubWindow():
-                qimg = sub.main_widget().grab().toImage()
+                qimg = sub._widget.grab().toImage()
             else:
                 raise ValueError("No active window.")
         else:

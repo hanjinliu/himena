@@ -35,6 +35,7 @@ class QSettingsDialog(QtW.QDialog):
         layout.addWidget(self._stack)
 
         self._setup_panels()
+        self._list.setCurrentRow(0)
 
     def addPanel(self, name: str, title: str, panel: QtW.QWidget) -> None:
         self._list.addItem(name)

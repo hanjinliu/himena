@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 def duplicate_sheet_as_table(
     model: WidgetDataModel[dict[str, "np.ndarray"]],
 ) -> WidgetDataModel["np.ndarray"]:
-    """Convert a table data into a DataFrame."""
+    """Convert the current sheet into a table."""
     meta, sheet = _meta_and_sheet(model)
 
     return WidgetDataModel(

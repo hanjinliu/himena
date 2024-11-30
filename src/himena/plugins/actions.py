@@ -48,6 +48,13 @@ class AppActionRegistry:
             cls._global_instance = cls()
         return cls._global_instance
 
+    def add_action(self, action: Action) -> None:
+        """Add an action to the registry."""
+        id_ = action.id
+        if id_ in self._actions:
+            raise ValueError(f"Action ID {id_} already exists.")
+        self._actions[id_] = action
+
     @property
     def installed_plugins(self) -> list[str]:
         return self._installed_plugins
@@ -197,7 +204,7 @@ def register_function(
             enablement=_enablement,
             keybindings=kbs,
         )
-        AppActionRegistry.instance()._actions[_id] = action
+        AppActionRegistry.instance().add_action(action)
         return f
 
     return _inner if func is None else _inner(func)
@@ -367,7 +374,7 @@ def register_dock_widget(
             keybindings=kbs,
             toggled=toggle_rule,
         )
-        AppActionRegistry.instance()._actions[action.id] = action
+        AppActionRegistry.instance().add_action(action)
         return wf
 
     return _inner if widget_factory is None else _inner(widget_factory)

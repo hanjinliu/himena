@@ -104,6 +104,16 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         return None
 
     @property
+    def is_importable(self) -> bool:
+        """Whether the widget accept importing values."""
+        return hasattr(self.widget, "update_model")
+
+    @property
+    def is_exportable(self) -> bool:
+        """Whether the widget can export its data."""
+        return hasattr(self.widget, "to_model")
+
+    @property
     def is_modified(self) -> bool:
         """Whether the content of the widget has been modified."""
         if hasattr(self.widget, "is_modified"):
@@ -115,6 +125,10 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         if hasattr(self.widget, "set_modified"):
             self.widget.set_modified(value)
         else:
+            if value and not self.is_exportable:
+                # If the backend widget cannot be converted to a model, there's no need
+                # to inform the user "save changes?".
+                return None
             self._is_modified_fallback_value = value
         return None
 
@@ -189,16 +203,6 @@ class SubWindow(WidgetWrapper[_W]):
         if not callable(set_editable_func):
             raise AttributeError("Widget does not have `set_editable` method.")
         set_editable_func(value)
-
-    @property
-    def is_importable(self) -> bool:
-        """Whether the widget accept importing values."""
-        return hasattr(self.widget, "update_model")
-
-    @property
-    def is_exportable(self) -> bool:
-        """Whether the widget can export its data."""
-        return hasattr(self.widget, "to_model")
 
     @property
     def is_alive(self) -> bool:
@@ -349,9 +353,13 @@ class SubWindow(WidgetWrapper[_W]):
 
     def _close_me(self, main: MainWindow, confirm: bool = False) -> None:
         if self.is_modified and confirm:
+            if isinstance(self.save_behavior, SaveToNewPath):
+                message = f"{self.title!r} is not saved yet. Save before closing?"
+            else:
+                message = f"Save changes to {self.title!r}?"
             request = main.exec_choose_one_dialog(
                 title="Closing window",
-                message=f"Save changes to {self.title!r}?",
+                message=message,
                 choices=["Yes", "No", "Cancel"],
             )
             if request is None or request == "Cancel":
@@ -623,7 +631,11 @@ class ParametricWindow(SubWindow[_W]):
     def _model_to_new_window(self, model: WidgetDataModel) -> SubWindow[_W]:
         ui = self._main_window()._himena_main_window
         cls = ui._pick_widget_class(model)
-        widget = cls()  # the internal widget
+        # construct the internal widget
+        try:
+            widget = cls(ui)
+        except TypeError:
+            widget = cls()
         widget.update_model(model)  # type: ignore
         return widget
 

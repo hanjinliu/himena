@@ -215,8 +215,8 @@ class QExcelTableStackControl(QtW.QWidget):
         self._value_line_edit.editingFinished.connect(self.update_for_editing)
 
     def update_for_table(self, table: QDefaultTableWidget):
-        model = table.model()
-        self._label.setText(f"Shape ({model.rowCount()}, {model.columnCount()})")
+        shape = table.model()._arr.shape
+        self._label.setText(f"Shape {shape!r}")
         self._selection_range.connect_table(table)
         table.selectionModel().currentChanged.connect(self.update_for_current_index)
         self.update_for_current_index(table.currentIndex())

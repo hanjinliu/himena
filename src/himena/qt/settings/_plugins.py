@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from typing import Iterator, NamedTuple, TYPE_CHECKING
 
-from qtpy import QtWidgets as QtW, QtGui
+from qtpy import QtWidgets as QtW, QtGui, QtCore
 from qtpy.QtCore import Qt
 from himena.consts import MonospaceFontFamily
 from himena.plugins import AppActionRegistry
+from himena.qt.settings._shared import QInstruction
 
 if TYPE_CHECKING:
     from himena.widgets import MainWindow
@@ -19,10 +20,12 @@ class QPluginListEditor(QtW.QWidget):
         self._ui = ui
         self._app = ui.model_app
         layout = QtW.QVBoxLayout(self)
-        self._name_label = QtW.QLineEdit(self)
-        self._name_label.setText(self._app.name)
-        self._name_label.setReadOnly(True)
+        self._instruction = QInstruction(
+            f"Select plugins to be included in <b><code>himena {self._app.name}</code>"
+            "</b>.<br>Click <b>Apply</b> to save changes.",
+        )
         self._plugins_editor = QAvaliablePluginsTree(self)
+        self._plugins_editor.stateChanged.connect(self._enabled_apply_button)
         self._apply_button = QtW.QPushButton("Apply", self)
         self._button_group = QtW.QWidget(self)
         button_layout = QtW.QHBoxLayout(self._button_group)
@@ -30,20 +33,27 @@ class QPluginListEditor(QtW.QWidget):
         button_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
         button_layout.addWidget(self._apply_button)
 
-        layout.addWidget(self._name_label)
+        layout.addWidget(self._instruction)
         layout.addWidget(self._plugins_editor)
         layout.addWidget(self._button_group)
 
         self._apply_button.clicked.connect(self._apply_changes)
+        self._apply_button.setEnabled(False)
 
     def _apply_changes(self):
         plugins = self._plugins_editor.get_plugin_list()
         new_prof = self._ui.app_profile.with_plugins(plugins)
         AppActionRegistry.instance().install_to(self._app)
         new_prof.save()
+        self._apply_button.setEnabled(False)
+
+    def _enabled_apply_button(self):
+        self._apply_button.setEnabled(True)
 
 
 class QAvaliablePluginsTree(QtW.QTreeWidget):
+    stateChanged = QtCore.Signal()
+
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         font = QtGui.QFont(MonospaceFontFamily)
@@ -94,6 +104,7 @@ class QAvaliablePluginsTree(QtW.QTreeWidget):
         if item.parent() is None:
             for i in range(item.childCount()):
                 item.child(i).setCheckState(0, item.checkState(0))
+        self.stateChanged.emit()
 
 
 class HimenaPluginInfo(NamedTuple):

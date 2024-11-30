@@ -295,15 +295,21 @@ def save_session_from_dialog(ui: MainWindow) -> None:
         else:
             raise Cancelled
     if need_overwrite:
+        _list = "\n - ".join([win.title for win in need_overwrite])
         res = ui.exec_choose_one_dialog(
             title="Modified windows",
-            message="",
-            choices=["Overwrite all", "Cancel"],
+            message=(
+                f"Following window are modified.<br>{_list}<br><br>"
+                "Do you want to overwrite them?"
+            ),
+            choices=["Overwrite all", "Keep original", "Cancel"],
         )
         if res == "Overwrite all":
             for win in need_overwrite:
                 assert isinstance(win.save_behavior, SaveToPath)
                 win.write_model(win.save_behavior.path, win.save_behavior.plugin)
+        elif res == "Keep original":
+            pass
         else:
             raise Cancelled
     datetime_str = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -311,7 +317,7 @@ def save_session_from_dialog(ui: MainWindow) -> None:
         mode="w",
         extension_default=".session.yaml",
         allowed_extensions=[".session.yaml"],
-        start_path=f"App-{datetime_str}.session.yaml",
+        start_path=f"himena-{datetime_str}.session.yaml",
         group="session",
     ):
         ui.save_session(path)

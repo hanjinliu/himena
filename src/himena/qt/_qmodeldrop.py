@@ -38,7 +38,7 @@ class QModelDrop(QtW.QGroupBox):
 
     def dragEnterEvent(self, event: QtGui.QDragEnterEvent):
         if isinstance(src := event.source(), QSubWindow):
-            widget = src.main_widget()
+            widget = src._widget
             if not hasattr(widget, "to_model"):
                 _LOGGER.debug("Ignoring drop event")
                 event.ignore()
@@ -67,7 +67,7 @@ class QModelDrop(QtW.QGroupBox):
                 self._drop_qsubwindow(subwindows[0])
 
     def _drop_qsubwindow(self, win: QSubWindow):
-        widget = win.main_widget()
+        widget = win._widget
         model_type = getattr(widget, "model_type", lambda: None)()
         _LOGGER.info("Dropped model type %s", model_type)
         if self._is_type_maches(model_type):

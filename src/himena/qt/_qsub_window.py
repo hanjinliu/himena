@@ -82,6 +82,10 @@ class QSubWindowArea(QtW.QMdiArea):
         return None
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent):
+        return self._mouse_move_event(event)
+
+    @qthrottled(timeout=10)
+    def _mouse_move_event(self, event: QtGui.QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
             if self._last_drag_pos is None:
                 return None
@@ -250,9 +254,6 @@ class QSubWindow(QtW.QMdiSubWindow):
         self._anim_geometry = QtCore.QPropertyAnimation(self, b"geometry")
         self.setAcceptDrops(True)
 
-    def main_widget(self) -> QtW.QWidget:
-        return self._widget
-
     def _qt_mdiarea(self) -> QMainWindow:
         parent = self
         while parent is not None:
@@ -413,7 +414,7 @@ class QSubWindow(QtW.QMdiSubWindow):
         main = get_main_window(self)
         for i_tab, tab in main.tabs.enumerate():
             for i_win, win in tab.enumerate():
-                if win.widget is self.main_widget():
+                if win.widget is self._widget:
                     return (i_tab, i_win), main
         raise RuntimeError("Could not find the sub-window in the main window.")
 

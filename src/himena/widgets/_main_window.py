@@ -21,6 +21,7 @@ from himena._descriptors import ProgramaticMethod
 from himena._open_recent import RecentFileManager, RecentSessionManager
 from himena._utils import import_object
 from himena.consts import NO_RECORDING_FIELD
+from himena.plugins import _checker
 from himena.profile import AppProfile, load_app_profile
 from himena.style import Theme
 from himena.types import (
@@ -106,11 +107,9 @@ class MainWindow(Generic[_W]):
 
         # if child implements "theme_changed_callback", call it
         for win in self.iter_windows():
-            if hasattr(win.widget, "theme_changed_callback"):
-                win.widget.theme_changed_callback(theme)
+            _checker.call_theme_changed_callback(win.widget, theme)
         for dock in self.dock_widgets:
-            if hasattr(dock.widget, "theme_changed_callback"):
-                dock.widget.theme_changed_callback(theme)
+            _checker.call_theme_changed_callback(dock.widget, theme)
         return None
 
     @property
@@ -364,6 +363,7 @@ class MainWindow(Generic[_W]):
         path = Path(path)
         AppSession.from_gui(self).dump_yaml(path)
         self.set_status_tip(f"Session saved to {path}")
+        self._recent_session_manager.append_recent_files([(path, None)])
         return None
 
     def clear(self) -> None:
@@ -610,6 +610,7 @@ class MainWindow(Generic[_W]):
         _LOGGER.debug("Window activated: %r-th window in %r-th tab", i_win, i_tab)
         win = tab[i_win]
         back._update_control_widget(win.widget)
+        _checker.call_window_activated_callback(win.widget)
         self.events.window_activated.emit(win)
         return None
 

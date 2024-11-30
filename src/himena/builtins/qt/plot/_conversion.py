@@ -50,7 +50,7 @@ def _(model: models.Scatter, ax: plt.Axes):
     ax.scatter(
         model.x, model.y, s=model.size ** 2, c=Color(model.face.color).hex,
         marker=model.symbol, linewidths=model.edge.width, hatch=model.face.hatch,
-        edgecolors=model.edge.color, edgestyle=model.edge.style, label=model.name,
+        edgecolors=model.edge.color, linestyle=model.edge.style, label=model.name,
     )  # fmt: skip
 
 
