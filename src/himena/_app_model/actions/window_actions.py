@@ -91,6 +91,7 @@ def duplicate_window(model: WidgetDataModel) -> WidgetDataModel:
     title="View data in ...",
     enablement=_ctx.is_active_window_exportable,
     menus=[{"id": MenuId.WINDOW, "group": EDIT_GROUP}],
+    keybindings=[{"primary": KeyChord(KeyMod.Alt | KeyCode.KeyV)}],
     need_function_callback=True,
 )
 def view_data_in(ui: MainWindow, model: WidgetDataModel) -> Parametric:
