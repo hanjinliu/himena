@@ -27,6 +27,7 @@ from himena.types import (
 from himena._descriptors import (
     ConverterMethod,
     LocalReaderMethod,
+    NoNeedToSave,
     SaveBehavior,
     SaveToNewPath,
     SaveToPath,
@@ -407,12 +408,18 @@ class SubWindow(WidgetWrapper[_W]):
             return None
 
     def _update_from_returned_model(self, model: WidgetDataModel) -> SubWindow[_W]:
+        """Update the sub-window based on the returned model."""
         if isinstance(method := model.method, LocalReaderMethod):
+            # file is directly read from the local path
             self.update_default_save_path(method.path, plugin=method.plugin)
         elif isinstance(model.method, ConverterMethod):
-            self._set_modified(True)
+            # model is created by some converter function
+            if not isinstance(model.save_behavior_override, NoNeedToSave):
+                self._set_modified(True)
         if (method := model.method) is not None:
             self._update_widget_data_model_method(method)
+        if save_behavior_override := model.save_behavior_override:
+            self._save_behavior = save_behavior_override
         return self
 
     def _is_mergeable_with(self, source: SubWindow[_W]) -> bool:
@@ -551,7 +558,8 @@ class ParametricWindow(SubWindow[_W]):
                 new_method = return_value.method
             result_widget._update_widget_data_model_method(new_method, overwrite=False)
             if isinstance(new_method, ConverterMethod):
-                result_widget._set_modified(True)
+                if not isinstance(return_value.save_behavior_override, NoNeedToSave):
+                    result_widget._set_modified(True)
         elif self._return_annotation in (Parametric, ParametricWidgetProtocol):
             is_func = self._return_annotation == Parametric
             result_widget = self._process_parametric_output(

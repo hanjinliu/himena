@@ -126,6 +126,10 @@ class SaveBehavior(BaseModel):
         return start_path
 
 
+class NoNeedToSave(SaveBehavior):
+    """Describes that the widget does not need to be saved."""
+
+
 class SaveToNewPath(SaveBehavior):
     """Describes that the widget should be saved to a new path."""
 

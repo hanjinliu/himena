@@ -7,6 +7,7 @@ import textwrap
 from typing import Callable, Literal, TypeVar, TYPE_CHECKING, cast
 from pathlib import Path
 import warnings
+import numpy as np
 
 import app_model
 from qtpy import QtWidgets as QtW, QtGui, QtCore
@@ -34,7 +35,7 @@ from himena.types import (
 from himena.app import get_event_loop_handler
 from himena import widgets
 from himena.qt.registry import list_widget_class
-from himena.qt._utils import get_stylesheet_path, ArrayQImage
+from himena.qt._utils import get_stylesheet_path, ArrayQImage, ndarray_to_qimage
 
 if TYPE_CHECKING:
     from himena.widgets._main_window import SubWindow, MainWindow
@@ -549,10 +550,11 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         if (text := data.text) is not None:
             mime.setText(text)
         if (img := data.image) is not None:
-            if isinstance(img, ArrayQImage):
-                mime.setImageData(img.qimage)
+            if not isinstance(img, ArrayQImage):
+                qimg = ndarray_to_qimage(np.asarray(img, dtype=np.uint8))
             else:
-                raise NotImplementedError("Only ArrayQImage is supported.")
+                qimg = img.qimage
+            mime.setImageData(qimg)
         if (files := data.files) is not None:
             mime.setUrls([QtCore.QUrl.fromLocalFile(str(f)) for f in files])
         return clipboard.setMimeData(mime)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from timeit import default_timer as timer
 from app_model import Application
 import logging
@@ -19,11 +20,17 @@ def install_plugins(app: Application, plugins: list[str]):
         _time_0 = timer()
         if isinstance(name, str):
             if name.endswith(".py"):
-                name = name[:-3]
-            try:
-                import_module(name)
-            except ModuleNotFoundError:
-                _LOGGER.error(f"Plugin {name} not found.")
+                if not Path(name).exists():
+                    _LOGGER.error(f"Plugin file {name} not found.")
+                    continue
+                import runpy
+
+                runpy.run_path(name)
+            else:
+                try:
+                    import_module(name)
+                except ModuleNotFoundError:
+                    _LOGGER.error(f"Plugin {name} not found.")
         else:
             raise TypeError(f"Invalid plugin type: {type(name)}")
         _msec = (timer() - _time_0) * 1000

@@ -23,15 +23,22 @@ class ArrayQImage:
     def __init__(self, qimage: QtGui.QImage):
         self.qimage = qimage
 
+    def __repr__(self) -> str:
+        array_repr = repr(self.to_numpy())[5:]  # remove "array"
+        return f"{self.__class__.__name__}{array_repr}"
+
     def __array__(self, dtype=None) -> NDArray[np.uint8]:
-        return qimage_to_ndarray(self.qimage)
+        return self.to_numpy()
 
     def __getitem__(self, key) -> NDArray[np.uint8]:
-        return self.__array__()[key]
+        return self.to_numpy()[key]
+
+    def to_numpy(self) -> NDArray[np.uint8]:
+        return qimage_to_ndarray(self.qimage)
 
     @property
     def shape(self) -> tuple[int, ...]:
-        return self.__array__().shape
+        return self.to_numpy().shape
 
     @property
     def dtype(self) -> np.dtype:
@@ -60,6 +67,7 @@ def qimage_to_ndarray(img: QtGui.QImage) -> NDArray[np.uint8]:
 
 
 def ndarray_to_qimage(arr: NDArray[np.uint8]) -> QtGui.QImage:
+    arr = np.ascontiguousarray(arr)
     if arr.ndim == 2:
         arr = np.stack([arr] * 3 + [np.full(arr.shape, 255, dtype=np.uint8)], axis=2)
     else:

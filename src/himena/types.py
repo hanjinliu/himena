@@ -15,6 +15,7 @@ from himena._descriptors import (
     LocalReaderMethod,
     ConverterMethod,
     ProgramaticMethod,
+    SaveBehavior,
 )
 from himena._enum import StrEnum
 from himena.consts import StandardType
@@ -66,7 +67,11 @@ else:
             return cls
 
 
-_void = object()
+class _Void:
+    pass
+
+
+_void = _Void()
 
 
 class WidgetDataModel(GenericModel[_T]):
@@ -97,7 +102,7 @@ class WidgetDataModel(GenericModel[_T]):
         Force open with a specific plugin if given.
     """
 
-    value: _T = Field(..., description="Internal value.", kw_only=False)
+    value: _T = Field(..., description="Internal value.")
     type: str = Field(..., description="Type of the internal data.")
     title: str | None = Field(
         default=None,
@@ -123,6 +128,10 @@ class WidgetDataModel(GenericModel[_T]):
     force_open_with: str | None = Field(
         default=None,
         description="Force open with a specific plugin if given.",
+    )
+    save_behavior_override: SaveBehavior | None = Field(
+        default=None,
+        description="Override the default save behavior.",
     )
 
     def with_value(
@@ -167,11 +176,14 @@ class WidgetDataModel(GenericModel[_T]):
         self,
         open_with: str,
         *,
-        method: MethodDescriptor | None = None,
+        method: MethodDescriptor | _Void | None = _void,
+        save_behavior_override: SaveBehavior | _Void | None = _void,
     ) -> "WidgetDataModel[_T]":
         update = {"force_open_with": open_with}
-        if method is not None:
+        if method is not _void:
             update["method"] = method
+        if save_behavior_override is not _void:
+            update["save_behavior_override"] = save_behavior_override
         return self.model_copy(update=update)
 
     @property

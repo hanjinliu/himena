@@ -10,7 +10,7 @@ from himena.consts import StandardType
 from himena.model_meta import ArrayMeta
 from himena.types import WidgetDataModel
 from himena.plugins import protocol_override
-from himena.qt._utils import ndarray_to_qimage, qimage_to_ndarray
+from himena.qt._utils import ndarray_to_qimage, qimage_to_ndarray, ArrayQImage
 from himena.qt._qcoloredit import QColorEdit
 from himena._utils import UndoRedoStack
 
@@ -49,9 +49,9 @@ class QDrawCanvas(QtW.QScrollArea):
         self._canvas_label.setSizePolicy(
             QtW.QSizePolicy.Policy.Fixed, QtW.QSizePolicy.Policy.Fixed
         )
-        _canvas = QtGui.QPixmap(200, 200)
-        _canvas.fill(QtCore.Qt.GlobalColor.white)
-        self._set_pixmap(_canvas)
+        pixmap = QtGui.QPixmap(200, 200)
+        pixmap.fill(QtCore.Qt.GlobalColor.white)
+        self._set_pixmap(pixmap)
 
         _layout = QtW.QVBoxLayout(self._central_widget)
         _layout.setAlignment(_TOP_LEFT)
@@ -213,6 +213,23 @@ class QDrawCanvas(QtW.QScrollArea):
         self._pixmap_before_paint = self._canvas_label.pixmap().copy()
         self._is_modified = True
 
+    def set_size(self, width: int, height: int):
+        old_pixmap = self._canvas_label.pixmap().copy()
+        new_pixmap = QtGui.QPixmap(width, height)
+        new_pixmap.fill(QtCore.Qt.GlobalColor.white)
+        painter = QtGui.QPainter(new_pixmap)
+        painter.drawPixmap(0, 0, old_pixmap)
+        painter.end()
+        self._set_pixmap(new_pixmap)
+        self._undo_redo_stack.push(
+            PasetResizeAction(
+                old=qimage_to_ndarray(old_pixmap.toImage()),
+                new=qimage_to_ndarray(new_pixmap.toImage()),
+            )
+        )
+        self._pixmap_before_paint = self._canvas_label.pixmap().copy()
+        self._is_modified = True
+
     def pick_color(self, pos: QtCore.QPoint) -> None:
         color = QtGui.QColor(self._canvas_label.pixmap().toImage().pixel(pos))
         self._control._color.setColor(color)
@@ -237,7 +254,6 @@ class QDrawCanvas(QtW.QScrollArea):
                 stack.append((x, y - 1))
             if y < h - 1:
                 stack.append((x, y + 1))
-        img = np.ascontiguousarray(img)
         new_pixmap = QtGui.QPixmap.fromImage(ndarray_to_qimage(img))
         self._set_pixmap(new_pixmap)
         self._add_paint_action_to_stack(old_pixmap, new_pixmap)
@@ -271,12 +287,10 @@ class QDrawCanvas(QtW.QScrollArea):
         y0, x0 = offset
         y1, x1 = y0 + after.shape[0], x0 + after.shape[1]
         arr[y0:y1, x0:x1] = after
-        arr = np.ascontiguousarray(arr)
         pixmap = QtGui.QPixmap.fromImage(ndarray_to_qimage(arr))
         self._set_pixmap(pixmap)
 
     def _undo_redo_paste_resize(self, after: np.ndarray):
-        after = np.ascontiguousarray(after)
         pixmap = QtGui.QPixmap.fromImage(ndarray_to_qimage(after))
         self._set_pixmap(pixmap)
 
@@ -287,10 +301,11 @@ class QDrawCanvas(QtW.QScrollArea):
         img = np.ascontiguousarray(model.value, dtype=np.uint8)
         pixmap = QtGui.QPixmap.fromImage(ndarray_to_qimage(img))
         self._set_pixmap(pixmap)
+        self._control._size_label.setText(f"{img.shape[1]} px x {img.shape[0]} px")
 
     @protocol_override
     def to_model(self) -> WidgetDataModel:
-        img = qimage_to_ndarray(self._canvas_label.pixmap().toImage())
+        img = ArrayQImage(self._canvas_label.pixmap().toImage())
         return WidgetDataModel(
             value=img,
             type=self.model_type(),
@@ -323,8 +338,9 @@ class QDrawCanvas(QtW.QScrollArea):
 
     @protocol_override
     def size_hint(self) -> tuple[int, int]:
-        return min(400, self._canvas_label.width()), min(
-            400, self._canvas_label.height()
+        return (
+            min(400, self._canvas_label.width() + 28),
+            min(400, self._canvas_label.height() + 28),
         )
 
     @protocol_override
@@ -367,9 +383,41 @@ class QDrawCanvasControl(QtW.QWidget):
             tooltip="Redo",
             callback=self._canvas.redo,
         )
+        self._size_label = QtW.QLabel("200 px x 200 px")
+        self._btn_set_size = _tool_btn(
+            icon_name="mdi:canvas",
+            tooltip="Set size of the canvas",
+        )
+        self._btn_set_size.setPopupMode(
+            QtW.QToolButton.ToolButtonPopupMode.InstantPopup
+        )
+        _set_size_widget = QtW.QWidget()
+        _size_widget_layout = QtW.QHBoxLayout(_set_size_widget)
+        _size_widget_layout.setContentsMargins(0, 0, 0, 0)
+        _size_widget_layout.addWidget(QtW.QLabel("Width:"))
+        self._width_spin = QtW.QSpinBox()
+        self._width_spin.setRange(10, 1000)
+        self._width_spin.setValue(200)
+        _size_widget_layout.addWidget(self._width_spin)
+        _size_widget_layout.addWidget(QtW.QLabel("Height:"))
+        self._height_spin = QtW.QSpinBox()
+        self._height_spin.setRange(10, 1000)
+        self._height_spin.setValue(200)
+        _size_widget_layout.addWidget(self._height_spin)
+        _btn_set_size_ok = QtW.QPushButton("OK")
+        _btn_set_size_ok.clicked.connect(self._set_size)
+        _btn_set_size_ok.setFixedWidth(32)
+        _size_widget_layout.addWidget(_btn_set_size_ok)
+        menu = QtW.QMenu()
+        action = QtW.QWidgetAction(menu)
+        action.setDefaultWidget(_set_size_widget)
+        menu.addAction(action)
+        self._btn_set_size.setMenu(menu)
 
         spacer = QtW.QWidget()
         _layout.addWidget(spacer)
+        _layout.addWidget(self._size_label)
+        _layout.addWidget(self._btn_set_size)
         _layout.addWidget(self._btn_undo)
         _layout.addWidget(self._btn_redo)
         _layout.addWidget(self._mode)
@@ -385,15 +433,22 @@ class QDrawCanvasControl(QtW.QWidget):
     def _on_mode_changed(self, mode: DrawMode):
         self._canvas._set_mode(mode)
 
+    def _set_size(self):
+        width = self._width_spin.value()
+        height = self._height_spin.value()
+        self._canvas.set_size(width, height)
+        self._size_label.setText(f"{width} px x {height} px")
+
 
 def _tool_btn(
-    icon_name: str, tooltip: str, callback, checkable: bool = False
+    icon_name: str, tooltip: str, callback=None, checkable: bool = False
 ) -> QtW.QToolButton:
     btn = QtW.QToolButton()
     btn.setIcon(QIconifyIcon(icon_name))
     btn.setCheckable(checkable)
     btn.setToolTip(tooltip)
-    btn.clicked.connect(callback)
+    if callback:
+        btn.clicked.connect(callback)
     return btn
 
 

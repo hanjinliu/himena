@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Sequence
 from logging import getLogger
 from himena.profile import AppProfile, load_app_profile
 
@@ -14,14 +14,14 @@ _LOGGER = getLogger(__name__)
 def new_window(
     profile: str | AppProfile | None = None,
     *,
-    plugins: list[str] = [],
+    plugins: Sequence[str] | None = None,
 ) -> MainWindow[QtW.QWidget]:
     """Create a new window with the specified profile and additional plugins."""
     from himena.qt import MainWindowQt
     from himena._app_model import get_model_app
     from himena.widgets._initialize import init_application
 
-    plugins = list(plugins)
+    plugins = list(plugins or [])
     if isinstance(profile, str):
         app_prof = load_app_profile(profile)
     elif isinstance(profile, AppProfile):

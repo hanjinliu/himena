@@ -39,7 +39,7 @@ def _main(
     profile: str | None = None,
     path: str | None = None,
     log_level: str = "WARNING",
-    plugin: str | None = None,
+    with_plugins: list[str] | None = None,
     new: str | None = None,
     remove: str | None = None,
 ):
@@ -68,32 +68,64 @@ def _main(
         profile = None
 
     logging.basicConfig(level=log_level)
-    ui = new_window(profile)
+    ui = new_window(profile, plugins=with_plugins)
     if path is not None:
-        ui.read_file(path, plugin=plugin)
-    else:
-        if plugin is not None:
-            print("Plugin option is ignored without a file path.")
+        ui.read_file(path)
     ui.show(run=not _is_testing())
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("profile", nargs="?", default=None)
-    parser.add_argument("path", nargs="?", default=None)
-    parser.add_argument("--log-level", nargs="?", default="WARNING")
-    parser.add_argument("--plugin", nargs="?", default=None)
-    parser.add_argument("--new", default=None)
-    parser.add_argument("--remove", default=None)
+    parser = argparse.ArgumentParser(
+        prog="himena", description="Start the himena GUI application."
+    )
+
+    ### Configure the parser ###
+    # fmt: off
+    parser.add_argument(
+        "profile", nargs="?", default=None,
+        help=(
+            "Profile name. If not given, the default profile is used. If a file path "
+            "is given, it will be interpreted as the next 'path' argument and this "
+            "argument will be set to None."
+        )
+    )
+    parser.add_argument(
+        "path", nargs="?", default=None,
+        help="File path to open with the GUI."
+    )
+    parser.add_argument(
+        "--log-level", nargs="?", default="WARNING",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the default log level.",
+    )
+    parser.add_argument(
+        "--with-plugins", nargs="+", default=None,
+        help=(
+            "Additional plugins to be loaded. Can be submodule names (xyz.abc) or file "
+            "paths."
+        )
+    )
+    parser.add_argument(
+        "--new", default=None,
+        help="Create a new profile with the given name."
+    )
+    parser.add_argument(
+        "--remove", default=None,
+        help="Remove the profile of the given name."
+    )
+    # fmt: on
+
+    # Run the main function with the parsed arguments
     args = parser.parse_args()
     _main(
         args.profile,
         args.path,
         log_level=args.log_level,
-        plugin=args.plugin,
+        with_plugins=args.with_plugins,
         new=args.new,
         remove=args.remove,
     )
     from himena.widgets._initialize import cleanup
 
     cleanup()
+    return None

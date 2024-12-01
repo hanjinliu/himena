@@ -13,6 +13,9 @@ _WP = TypeVar("_WP", bound=WriterProvider)
 def _plugin_info_from_func(func: Callable) -> io.PluginInfo | None:
     if hasattr(func, "__module__"):
         module = func.__module__
+        if module in ("__main__", "<run_path>"):
+            # this plugin will never be available. Skip it.
+            return None
         if hasattr(func, "__qualname__"):
             qual = func.__qualname__
             if not qual.isidentifier():
