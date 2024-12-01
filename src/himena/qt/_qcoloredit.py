@@ -86,9 +86,12 @@ class QColorEdit(QtW.QWidget):
         _layout.addWidget(self._color_swatch)
         _layout.addWidget(self._line_edit)
         _layout.setContentsMargins(0, 0, 0, 0)
-
+        self.setSizePolicy(
+            QtW.QSizePolicy.Policy.MinimumExpanding, QtW.QSizePolicy.Policy.Fixed
+        )
         self._color_swatch.colorChanged.connect(self._on_swatch_changed)
         self._line_edit.colorChanged.connect(self._on_line_edit_edited)
+        self.setSizePolicy(QtW.QSizePolicy.Policy.Fixed, QtW.QSizePolicy.Policy.Fixed)
 
     def color(self) -> QtGui.QColor:
         """Return the current color."""
@@ -97,8 +100,10 @@ class QColorEdit(QtW.QWidget):
     def rgba(self) -> tuple[float, float, float, float]:
         return self.color().getRgbF()
 
-    def setColor(self, color: QtGui.QColor):
+    def setColor(self, color: QtGui.QColor | Qt.GlobalColor):
         """Set value as the current color."""
+        if isinstance(color, Qt.GlobalColor):
+            color = QtGui.QColor(color)
         self._line_edit.setQColor(color)
         self._color_swatch.setQColor(color)
 

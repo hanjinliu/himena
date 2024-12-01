@@ -30,10 +30,10 @@ class QParametricWidget(QtW.QWidget):
 
     def to_model(self) -> WidgetDataModel[dict[str, Any]]:
         params = self.get_params()
-        return WidgetDataModel(value=params, type=StandardType.PARAMETERS)
+        return WidgetDataModel(value=params, type=StandardType.DICT)
 
     def model_type(self: QtW.QWidget) -> str:
-        return StandardType.PARAMETERS
+        return StandardType.DICT
 
     def _on_param_changed(self) -> None:
         self.param_changed.emit()

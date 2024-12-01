@@ -13,9 +13,10 @@ else:
 
 BasicTextFileTypes = frozenset(
     [".txt", ".md", ".json", ".xml", ".yaml", ".yml", ".toml", ".log", ".py", ".pyi",
-     ".pyx", ".c", ".cpp", ".h", ".hpp", ".java", ".js", ".ts", ".html", ".css",
+     ".pyx", ".c", ".cpp", ".h", ".hpp", ".java", ".js", ".ts", ".html", ".htm", ".css",
      ".scss", ".sass", ".php", ".rb", ".sh", ".bash", ".zsh", ".ps1", ".psm1", ".bat",
-     ".cmd", ".m", ".vbs", ".vba", ".r", ".rs", ".go"]
+     ".cmd", ".m", ".vbs", ".vba", ".r", ".rs", ".go", ".svg", ".tex", ".rst", ".ipynb",
+     ".lock",]
 )  # fmt: skip
 
 ConventionalTextFileNames = frozenset(
@@ -46,16 +47,16 @@ class StandardType(SimpleNamespace):
     TEXT = "text"  # any text
     TABLE = "table"  # 2D data without any special structure
     ARRAY = "array"  # nD grid data such as numpy array
-    PARAMETERS = "parameters"  # dictionary of parameters
+    DICT = "dict"  # dictionary
     DATAFRAME = "dataframe"  # DataFrame object
     EXCEL = "excel"  # Excel file (~= tabbed tables)
 
     ### Subtypes ###
-    # HTML text
-    HTML = "text.html"
-
-    # SVG text
-    SVG = "text.svg"
+    # text subtypes
+    HTML = "text.html"  # HTML text
+    SVG = "text.svg"  # SVG text
+    JSON = "text.json"  # JSON text
+    IPYNB = "text.json.ipynb"  # Jupyter notebook
 
     # image data
     IMAGE = "array.image"
@@ -77,12 +78,14 @@ class StandardType(SimpleNamespace):
     ### 3D ###
     SURFACE = "surface"  # vertices, faces and values for 3D surface plot
 
-    IPYNB = "ipynb"  # Jupyter notebook file
     GROUPBY = "groupby"  # DataFrame GroupBy object
 
     # fallback when no reader is found for the file (which means that the file could be
     # opened as a text file)
     READER_NOT_FOUND = "reader_not_found"
+
+    # fallback when no specific widget can be used for the data
+    ANY = "any"
 
 
 class MenuId(StrEnum):

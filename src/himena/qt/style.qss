@@ -86,7 +86,7 @@ QSpinBox {
     border-radius: 4px;
     background-color: #[background];
     color: #[foreground];
-    padding: 3px;
+    padding: 1px;
 }
 
 /* ----- QComboBox ----- */
@@ -592,4 +592,8 @@ _QOverlayBase {
 
 QColorSwatch {
     border: 1px solid #[foreground_dim];
+}
+
+QDrawCanvas {
+    background-color: #[background_dim];
 }

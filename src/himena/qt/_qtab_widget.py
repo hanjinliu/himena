@@ -225,7 +225,7 @@ class QTabWidget(QtW.QTabWidget):
         return self.currentWidget()
 
 
-class QStartupWidget(QtW.QScrollArea):
+class QStartupWidget(QtW.QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._app = get_main_window(self).model_app

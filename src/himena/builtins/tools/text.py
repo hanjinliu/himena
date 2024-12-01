@@ -164,15 +164,16 @@ def to_plain_text(model: WidgetDataModel[str]) -> WidgetDataModel:
 
 
 @register_function(
-    types=StandardType.HTML,
-    menus=["tools/html"],
+    types=[StandardType.HTML, StandardType.SVG, StandardType.IPYNB],
+    menus=["tools/text"],
     command_id="builtins:show-in-text-editor",
     title="Show in text editor",
 )
 def show_in_text_editor(model: WidgetDataModel[str]) -> WidgetDataModel:
-    """Show HTML directly in text editor."""
+    """Show special text data directly in text editor."""
+    language = model.type.rsplit(".", 1)[-1].lower()
     return model.with_value(
         value=model.value,
         type=StandardType.TEXT,
-        metadata=TextMeta(language="html"),
+        metadata=TextMeta(language=language),
     )

@@ -18,7 +18,7 @@ class QFallbackWidget(QtW.QPlainTextEdit):
     @protocol_override
     def update_model(self, model: WidgetDataModel):
         self.setPlainText(
-            f"No widget registered for:\n\ntype: {model.type!r}\nvalue: {model.value!r}"
+            f"No widget registered for:\n\ntype: {model.type!r}\nvalue:\n{model.value!r}"
         )
         self._model = model
         return

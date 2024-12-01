@@ -59,6 +59,27 @@ def qimage_to_ndarray(img: QtGui.QImage) -> NDArray[np.uint8]:
     return arr
 
 
+def ndarray_to_qimage(arr: NDArray[np.uint8]) -> QtGui.QImage:
+    if arr.ndim == 2:
+        arr = np.stack([arr] * 3 + [np.full(arr.shape, 255, dtype=np.uint8)], axis=2)
+    else:
+        if arr.shape[2] == 3:
+            arr = np.ascontiguousarray(
+                np.concatenate(
+                    [arr, np.full(arr.shape[:2] + (1,), 255, dtype=np.uint8)],
+                    axis=2,
+                )
+            )
+        elif arr.shape[2] != 4:
+            raise ValueError(
+                "The shape of an RGB image must be (M, N), (M, N, 3) or (M, N, 4), "
+                f"got {arr.shape!r}."
+            )
+    return QtGui.QImage(
+        arr, arr.shape[1], arr.shape[0], QtGui.QImage.Format.Format_RGBA8888
+    )
+
+
 @contextmanager
 def qsignal_blocker(widget: QtW.QWidget):
     was_blocked = widget.signalsBlocked()

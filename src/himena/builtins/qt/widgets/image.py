@@ -13,6 +13,7 @@ from himena.types import WidgetDataModel
 from himena.plugins import protocol_override
 from himena._data_wrappers import ArrayWrapper, wrap_array
 from himena.qt._magicgui._toggle_switch import QLabeledToggleSwitch
+from himena.qt._utils import ndarray_to_qimage
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -32,26 +33,7 @@ class _QImageLabel(QtW.QLabel):
         self.set_array(val)
 
     def set_array(self, val: NDArray[np.uint8]):
-        if val.ndim == 2:
-            val = np.stack(
-                [val] * 3 + [np.full(val.shape, 255, dtype=np.uint8)], axis=2
-            )
-        else:
-            if val.shape[2] == 3:
-                val = np.ascontiguousarray(
-                    np.concatenate(
-                        [val, np.full(val.shape[:2] + (1,), 255, dtype=np.uint8)],
-                        axis=2,
-                    )
-                )
-            elif val.shape[2] != 4:
-                raise ValueError(
-                    "The shape of an RGB image must be (M, N), (M, N, 3) or (M, N, 4), "
-                    f"got {val.shape!r}."
-                )
-        image = QtGui.QImage(
-            val, val.shape[1], val.shape[0], QtGui.QImage.Format.Format_RGBA8888
-        )
+        image = ndarray_to_qimage(val)
         self._pixmap_orig = QtGui.QPixmap.fromImage(image)
         self._update_pixmap()
 

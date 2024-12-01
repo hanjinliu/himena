@@ -5,6 +5,8 @@ from himena.builtins.qt.widgets.table import QDefaultTableWidget
 from himena.builtins.qt.widgets.dataframe import QDataFrameView
 from himena.builtins.qt.widgets.image import QDefaultImageView
 from himena.builtins.qt.widgets.excel import QExcelTableStack
+from himena.builtins.qt.widgets.ipynb import QIpynbEdit
+from himena.builtins.qt.widgets.draw import QDrawCanvas
 from himena.builtins.qt.widgets.reader_not_found import QReaderNotFoundWidget
 from himena.consts import StandardType
 
@@ -18,6 +20,8 @@ def register_default_widget_types() -> None:
     register_widget_class(StandardType.IMAGE, QDefaultImageView, priority=50)
     register_widget_class(StandardType.DATAFRAME, QDataFrameView, priority=50)
     register_widget_class(StandardType.EXCEL, QExcelTableStack, priority=50)
+    register_widget_class(StandardType.IPYNB, QIpynbEdit, priority=50)
+    register_widget_class(StandardType.IMAGE, QDrawCanvas, priority=0)
     register_widget_class(
         StandardType.READER_NOT_FOUND, QReaderNotFoundWidget, priority=0
     )

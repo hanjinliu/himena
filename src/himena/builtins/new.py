@@ -51,6 +51,19 @@ def new_excel(ui: MainWindow) -> WidgetDataModel:
     )
 
 
+@register_function(menus=MenuId.FILE_NEW, command_id="builtins:new-draw-canvas")
+def new_draw_canvas(ui: MainWindow) -> WidgetDataModel:
+    """New draw canvas."""
+    nwin = _get_n_windows(ui)
+    return WidgetDataModel(
+        value=None,
+        type=StandardType.IMAGE,
+        extension_default=".png",
+        title=f"Canvas-{nwin}",
+        force_open_with="himena.builtins.qt.widgets.QDrawCanvas",
+    )
+
+
 DATASET_SOURCE = "https://raw.githubusercontent.com/mwaskom/seaborn-data/master"
 DATASET_NAMES_URL = f"{DATASET_SOURCE}/dataset_names.txt"
 
