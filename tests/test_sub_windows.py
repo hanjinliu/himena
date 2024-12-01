@@ -1,9 +1,10 @@
 from pathlib import Path
+import pytest
 from pytestqt.qtbot import QtBot
 from tempfile import TemporaryDirectory
 from qtpy import QtWidgets as QtW
 from himena import MainWindow, anchor
-from himena._descriptors import ConverterMethod, LocalReaderMethod, ProgramaticMethod, SaveToNewPath, SaveToPath
+from himena._descriptors import ConverterMethod, LocalReaderMethod, NoNeedToSave, ProgramaticMethod, SaveToNewPath, SaveToPath
 from himena.types import ClipboardDataModel, WidgetDataModel
 from himena.qt import register_widget_class, MainWindowQt
 from himena.builtins.qt import widgets as _qtw
@@ -340,23 +341,55 @@ def test_save_behavior(ui: MainWindow, tmpdir):
     win = ui.current_window
     assert win is not None
     assert not win.is_modified
+
     ui.exec_action("duplicate-window")
     win2 = ui.current_window
-    assert win2.is_modified
+    assert not win2.is_modified
     assert isinstance(win2._widget_data_model_method, ConverterMethod)
-    assert isinstance(win2.save_behavior, SaveToNewPath)
+    # special case for duplicate-window
+    assert isinstance(win2.save_behavior, NoNeedToSave)
+
+    ui.current_window = win
+    ui.exec_action("builtins:show-in-text-editor")
+    win3 = ui.current_window
+    assert win3.is_modified
+    assert isinstance(win3._widget_data_model_method, ConverterMethod)
+    assert isinstance(win3.save_behavior, SaveToNewPath)
 
     response_save = lambda: Path(tmpdir) / "text_out.txt"
     ui._instructions = ui._instructions.updated(file_dialog_response=response_save)
     ui.exec_action("save-as")
-    assert not win2.is_modified
-    assert isinstance(win2._widget_data_model_method, ConverterMethod)
-    assert isinstance(win2.save_behavior, SaveToPath)
+    assert not win3.is_modified
+    assert isinstance(win3._widget_data_model_method, ConverterMethod)
+    assert isinstance(win3.save_behavior, SaveToPath)
 
-    ui.current_window = win2
+    ui.current_window = win3
     ui.exec_action(
         "view-data-in",
-        with_params={"plugin_name": "himena.builtins.qt.widgets.text.QDefaultTextEdit"}
+        with_params={"plugin": "himena.builtins.qt.widgets.text.QDefaultTextEdit"}
     )
     win3 = ui.current_window
-    assert isinstance(win3.save_behavior, SaveToNewPath)
+    assert isinstance(win3.save_behavior, NoNeedToSave)
+
+# NOTE: cannot pickle local object. Must be defined here.
+class MyObj:
+    def __init__(self, value):
+        self.value = value
+
+def test_dont_use_pickle(ui: MainWindow, tmpdir):
+    tmpdir = Path(tmpdir)
+    data = MyObj(124)
+    ui.add_data(data, type="myobj")
+    response = lambda: tmpdir / "test.txt"
+    ui._instructions = ui._instructions.updated(file_dialog_response=response)
+    with pytest.raises(ValueError):
+        ui.exec_action("save")
+    response = lambda: tmpdir / "test.pickle"
+    ui._instructions = ui._instructions.updated(file_dialog_response=response)
+    ui.exec_action("save")
+    assert response().exists()
+    ui._instructions = ui._instructions.updated(file_dialog_response=response)
+    ui.exec_action("open-file")
+    model = ui.current_window.to_model()
+    assert isinstance(model.value, MyObj)
+    assert model.value.value == 124

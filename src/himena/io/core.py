@@ -141,9 +141,14 @@ class WriterProviderStore(ProviderStore[WriterProviderTuple]):
         return _pick_from_list(self.get(model, min_priority=min_priority), plugin)
 
     def run(
-        self, model: WidgetDataModel, path: Path, *, plugin: str | None = None
+        self,
+        model: WidgetDataModel,
+        path: Path,
+        *,
+        plugin: str | None = None,
+        min_priority: int = -float("inf"),
     ) -> None:
-        writer = self.pick(model, plugin=plugin, min_priority=-float("inf"))
+        writer = self.pick(model, plugin=plugin, min_priority=min_priority)
         return writer.write(model, path)
 
 

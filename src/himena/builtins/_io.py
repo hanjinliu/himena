@@ -140,8 +140,11 @@ def default_pickle_reader(file_path: Path) -> WidgetDataModel:
     with file_path.open("rb") as f:
         value = pickle.load(f)
     if isinstance(value, WidgetDataModel):
+        # picke is created by himena.
         return value
-    return WidgetDataModel(value=value, type=StandardType.ANY)
+    else:
+        # pickle is created probably by other library. Just read as type "any".
+        return WidgetDataModel(value=value, type=StandardType.ANY)
 
 
 def fallback_reader(file_path: Path | list[Path]) -> WidgetDataModel:

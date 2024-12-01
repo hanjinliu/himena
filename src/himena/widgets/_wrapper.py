@@ -254,7 +254,11 @@ class SubWindow(WidgetWrapper[_W]):
         self, path: str | Path, plugin: str | None, model: WidgetDataModel
     ) -> None:
         path = Path(path)
-        io.WriterProviderStore.instance().run(model, path, plugin=plugin)
+        ins = io.WriterProviderStore.instance()
+        if path.suffix == ".pickle":
+            ins.run(model, path, plugin=plugin)
+        else:
+            ins.run(model, path, plugin=plugin, min_priority=0)
         self.update_default_save_path(path)
         return None
 

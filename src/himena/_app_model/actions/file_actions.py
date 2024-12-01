@@ -162,7 +162,8 @@ def save_as_from_dialog(ui: MainWindow, sub_win: SubWindow):
 def save_as_using_from_dialog(ui: MainWindow, sub_win: SubWindow):
     """Save the current sub-window using selected plugin."""
     model = sub_win.to_model()
-    writers = io.WriterProviderStore().instance().get(model)
+    ins = io.WriterProviderStore().instance()
+    writers = ins.get(model, min_priority=-float("inf"))
 
     # prepare reader plugin choices
     choices_writer = [(f"{_name_of(w.writer)}\n({w.plugin.name})", w) for w in writers]
