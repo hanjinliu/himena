@@ -74,8 +74,8 @@ class QGotoWidget(QtW.QWidget):
         cur = self._main._tab_widget.currentWidget()
         self.update_ui()
         center = self._main.mapFromGlobal(cur.mapToGlobal(cur.rect().center()))
-        dx = 188
-        dy = 270
+        dx = min(cur.width(), 280)
+        dy = min(cur.height(), 270)
         rect = QtCore.QRect(center.x() - dx // 2, center.y() - dy // 2, dx, dy)
         self.setGeometry(rect)
         super().show()

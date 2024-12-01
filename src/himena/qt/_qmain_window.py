@@ -3,7 +3,6 @@ from __future__ import annotations
 import inspect
 from timeit import default_timer as timer
 import logging
-import textwrap
 from typing import Callable, Literal, TypeVar, TYPE_CHECKING, cast
 from pathlib import Path
 import warnings
@@ -622,15 +621,13 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             labels=show_parameter_labels,
         )
         container.margins = (0, 0, 0, 0)
-        qwidget = container.native
-        assert isinstance(qwidget, QtW.QWidget)
-        setattr(qwidget, PWPN.GET_PARAMS, container.asdict)
-        setattr(qwidget, PWPN.CONNECT_CHANGED_SIGNAL, container.changed.connect)
+        setattr(container, PWPN.GET_PARAMS, container.asdict)
+        setattr(container, PWPN.CONNECT_CHANGED_SIGNAL, container.changed.connect)
         if preview:
             checkbox = ToggleSwitch(value=False, text="Preview")
             container.append(checkbox)
-            setattr(qwidget, PWPN.IS_PREVIEW_ENABLED, checkbox.get_value)
-        return qwidget
+            setattr(container, PWPN.IS_PREVIEW_ENABLED, checkbox.get_value)
+        return container
 
     def _move_focus_to(self, win: QtW.QWidget) -> None:
         win.setFocus()
@@ -759,11 +756,6 @@ class QChoicesDialog(QtW.QDialog):
 
     def init_message(self, title: str, message: str) -> None:
         self.setWindowTitle(title)
-        message = "\n".join(textwrap.wrap(message, width=80))
-        if len(message) < 800:
-            label = QtW.QLabel(message)
-        else:
-            label = QtW.QTextEdit()
-            label.setPlainText(message)
+        label = QtW.QLabel(message)
         self._layout.addWidget(label)
         return None

@@ -277,18 +277,18 @@ def save_session_from_dialog(ui: MainWindow) -> None:
             else:
                 need_save.append(win)
     if need_save:
-        _list = "\n - ".join([win.title for win in need_save])
+        _list = "".join([f"<li>{win.title}</li>" for win in need_save])
         res = ui.exec_choose_one_dialog(
             title="Not saved windows",
             message=(
-                f"Following windows are not saved yet.<br>{_list}<br><br>"
+                f"Following windows are not saved yet.<ul>{_list}</ul>"
                 "Do you want to save them?"
             ),
             choices=["Save one by one", "Just skip them", "Cancel"],
         )
         if res == "Save one by one":
             for win in need_save:
-                ui._backend_main_window._move_focus_to(win.widget)
+                ui.current_window = win
                 if not win._save_from_dialog(ui, behavior=SaveToNewPath()):
                     raise Cancelled
         elif res == "Just skip them":
@@ -296,11 +296,11 @@ def save_session_from_dialog(ui: MainWindow) -> None:
         else:
             raise Cancelled
     if need_overwrite:
-        _list = "\n - ".join([win.title for win in need_overwrite])
+        _list = "".join([f"<li>{win.title}</li>" for win in need_overwrite])
         res = ui.exec_choose_one_dialog(
             title="Modified windows",
             message=(
-                f"Following window are modified.<br>{_list}<br><br>"
+                f"Following window are modified.<ul>{_list}</ul>"
                 "Do you want to overwrite them?"
             ),
             choices=["Overwrite all", "Keep original", "Cancel"],

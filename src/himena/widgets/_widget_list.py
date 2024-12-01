@@ -324,10 +324,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
                     f"{PWPN.IS_PREVIEW_ENABLED!r}"
                 )
             param_widget.params_changed.connect(param_widget._widget_preview_callback)
-        if hasattr(widget, "native"):
-            main._move_focus_to(widget.native)  # TODO: refactor this
-        else:
-            main._move_focus_to(widget)
+        main._move_focus_to(widget0)
         return param_widget
 
     def _process_new_widget(

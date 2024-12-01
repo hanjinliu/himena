@@ -117,7 +117,7 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
                 f"Both models must be BaseLayoutModel, got {model.value!r} and "
                 f"{self._plot_models!r}"
             )
-        self._plot_models = self._plot_models.merge_with(model.value)
+        self._plot_models = model.value.merge_with(self._plot_models)
         convert_plot_layout(self._plot_models, self.figure)
         self._canvas.draw()
 

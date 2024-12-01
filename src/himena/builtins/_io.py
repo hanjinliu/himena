@@ -42,6 +42,7 @@ def default_text_reader(file_path: Path) -> WidgetDataModel:
         value=value,
         type=typ,
         source=file_path,
+        extension_default=file_path.suffix,
         metadata=TextMeta(encoding=encoding),
     )
 
@@ -55,6 +56,7 @@ def default_image_reader(file_path: Path) -> WidgetDataModel:
     return WidgetDataModel(
         value=arr,
         type=StandardType.IMAGE,
+        extension_default=file_path.suffix,
     )
 
 
