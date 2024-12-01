@@ -8,7 +8,7 @@ from himena._descriptors import ConverterMethod, LocalReaderMethod, NoNeedToSave
 from himena.types import ClipboardDataModel, WidgetDataModel
 from himena.qt import register_widget_class, MainWindowQt
 from himena.builtins.qt import widgets as _qtw
-import himena.io
+import himena._providers
 
 def test_new_window(ui: MainWindow):
     ui.show()
@@ -72,7 +72,7 @@ def test_io_commands(ui: MainWindow, tmpdir, sample_dir: Path):
 
     response_open = lambda: sample_dir / "table.csv"
     ui._instructions = ui._instructions.updated(file_dialog_response=response_open)
-    store = himena.io.ReaderProviderStore.instance()
+    store = himena._providers.ReaderProviderStore.instance()
     param = store.get(response_open(), min_priority=-500)[2]
     ui.exec_action("open-file-using", with_params={"reader": param})
     assert isinstance(ui.current_window.save_behavior, SaveToPath)

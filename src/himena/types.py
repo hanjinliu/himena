@@ -21,7 +21,7 @@ from himena._enum import StrEnum
 from himena.consts import StandardType
 
 if TYPE_CHECKING:
-    from himena.io import PluginInfo
+    from himena._providers import PluginInfo
 
 
 class DockArea(StrEnum):
@@ -133,6 +133,7 @@ class WidgetDataModel(GenericModel[_T]):
         default=None,
         description="Override the default save behavior.",
     )
+    editable: bool = Field(True, description="Whether the widget is editable.")
 
     def with_value(
         self,

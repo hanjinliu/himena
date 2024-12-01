@@ -3,14 +3,14 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Callable, ForwardRef, TypeVar, overload
 from himena.types import WidgetDataModel, ReaderProvider, WriterProvider
-from himena import io
+from himena import _providers
 from himena._utils import get_widget_data_model_variable
 
 _RP = TypeVar("_RP", bound=ReaderProvider)
 _WP = TypeVar("_WP", bound=WriterProvider)
 
 
-def _plugin_info_from_func(func: Callable) -> io.PluginInfo | None:
+def _plugin_info_from_func(func: Callable) -> _providers.PluginInfo | None:
     if hasattr(func, "__module__"):
         module = func.__module__
         if module == "__main__" or "<" in module:
@@ -20,9 +20,9 @@ def _plugin_info_from_func(func: Callable) -> io.PluginInfo | None:
             qual = func.__qualname__
             if not qual.isidentifier():
                 return None
-            return io.PluginInfo(module, qual)
+            return _providers.PluginInfo(module, qual)
         if hasattr(func, "__name__"):
-            return io.PluginInfo(module, func.__name__)
+            return _providers.PluginInfo(module, func.__name__)
     return None
 
 
@@ -55,7 +55,7 @@ def register_reader_provider(provider=None, priority=100):
         if not callable(func):
             raise ValueError("Provider must be callable.")
         plugin = _plugin_info_from_func(func)
-        ins = io.ReaderProviderStore().instance()
+        ins = _providers.ReaderProviderStore().instance()
 
         if hasattr(func, "__annotations__"):
             annot_types = list(func.__annotations__.values())
@@ -107,7 +107,7 @@ def register_writer_provider(provider=None, priority=100):
         if not callable(func):
             raise ValueError("Provider must be callable.")
         plugin = _plugin_info_from_func(func)
-        ins = io.WriterProviderStore().instance()
+        ins = _providers.WriterProviderStore().instance()
         ins.add(TypedProvider.try_convert(func), priority, plugin)
         return func
 

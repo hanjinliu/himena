@@ -12,7 +12,7 @@ from app_model.types import (
 from himena._descriptors import LocalReaderMethod, SaveToNewPath, SaveToPath
 from himena.consts import StandardType, MenuId
 from himena.widgets import MainWindow, SubWindow
-from himena import io
+from himena import _providers
 from himena.types import (
     ClipboardDataModel,
     Parametric,
@@ -75,7 +75,7 @@ def open_file_using_from_dialog(ui: MainWindow) -> Parametric:
     file_path = ui.exec_file_dialog(mode="r")
     if file_path is None:
         raise Cancelled
-    _store = io.ReaderProviderStore.instance()
+    _store = _providers.ReaderProviderStore.instance()
     readers = _store.get(file_path, min_priority=-float("inf"))
 
     # prepare reader plugin choices
@@ -92,9 +92,9 @@ def open_file_using_from_dialog(ui: MainWindow) -> Parametric:
             "value": choices_reader[0][1],
         }
     )
-    def choose_a_plugin(reader: io.ReaderTuple) -> WidgetDataModel:
+    def choose_a_plugin(reader: _providers.ReaderTuple) -> WidgetDataModel:
         _LOGGER.info("Reading file %s using %r", file_path, reader)
-        model = io.read_and_update_source(reader, file_path)
+        model = _providers.read_and_update_source(reader, file_path)
         if reader.plugin is not None:
             plugin = reader.plugin.to_str()
         else:
@@ -162,7 +162,7 @@ def save_as_from_dialog(ui: MainWindow, sub_win: SubWindow):
 def save_as_using_from_dialog(ui: MainWindow, sub_win: SubWindow):
     """Save the current sub-window using selected plugin."""
     model = sub_win.to_model()
-    ins = io.WriterProviderStore().instance()
+    ins = _providers.WriterProviderStore().instance()
     writers = ins.get(model, min_priority=-float("inf"))
 
     # prepare reader plugin choices

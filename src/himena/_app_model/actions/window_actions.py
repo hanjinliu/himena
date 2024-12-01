@@ -17,7 +17,7 @@ from himena.types import (
 )
 from himena._app_model._context import AppContext as _ctx
 from himena._app_model.actions._registry import ACTIONS, SUBMENUS
-from himena import _utils, io
+from himena import _utils, _providers
 from himena.exceptions import Cancelled
 
 _LOGGER = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ def open_last_closed_window(ui: MainWindow) -> WidgetDataModel:
     """Open the last closed window."""
     if last := ui._history_closed.pop_last():
         path, plugin = last
-        store = io.ReaderProviderStore().instance()
+        store = _providers.ReaderProviderStore().instance()
         model = store.run(path=path, plugin=plugin)
         return model
     warnings.warn("No window to reopen", UserWarning, stacklevel=2)

@@ -6,7 +6,7 @@ import yaml
 
 from himena._descriptors import SaveToPath, dict_to_method, method_to_dict
 from himena.types import WindowState, WindowRect
-from himena import anchor, io
+from himena import anchor, _providers
 from himena.widgets._widget_list import TabArea
 
 if TYPE_CHECKING:
@@ -87,7 +87,7 @@ class TabSession(BaseModel):
         """Update the GUI state based on the session."""
         area = main.add_tab(self.name)
         cur_index = self.current_index
-        store = io.ReaderProviderStore().instance()
+        store = _providers.ReaderProviderStore().instance()
         for window_session in self.windows:
             try:
                 model = store.run(

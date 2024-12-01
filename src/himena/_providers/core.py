@@ -4,7 +4,7 @@ from pathlib import Path
 from logging import getLogger
 from typing import Generic, TypeVar, TYPE_CHECKING
 import warnings
-from himena.io._tuples import (
+from himena._providers._tuples import (
     ReaderProviderTuple,
     WriterProviderTuple,
     ReaderTuple,

@@ -12,7 +12,7 @@ import weakref
 
 from psygnal import Signal
 from himena import anchor as _anchor
-from himena import io
+from himena import _providers
 from himena._utils import get_gui_config
 from himena.consts import ParametricWidgetProtocolNames as PWPN
 from himena.types import (
@@ -254,7 +254,7 @@ class SubWindow(WidgetWrapper[_W]):
         self, path: str | Path, plugin: str | None, model: WidgetDataModel
     ) -> None:
         path = Path(path)
-        ins = io.WriterProviderStore.instance()
+        ins = _providers.WriterProviderStore.instance()
         if path.suffix == ".pickle":
             ins.run(model, path, plugin=plugin)
         else:
@@ -424,6 +424,9 @@ class SubWindow(WidgetWrapper[_W]):
             self._update_widget_data_model_method(method)
         if save_behavior_override := model.save_behavior_override:
             self._save_behavior = save_behavior_override
+        if not model.editable:
+            with suppress(AttributeError):
+                self.is_editable = False
         return self
 
     def _is_mergeable_with(self, source: SubWindow[_W]) -> bool:

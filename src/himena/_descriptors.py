@@ -30,7 +30,7 @@ class LocalReaderMethod(MethodDescriptor):
     def get_model(self, app: "Application") -> "WidgetDataModel[Any]":
         """Get model by importing the reader plugin and actually read the file(s)."""
         from himena._utils import import_object
-        from himena.io import PluginInfo
+        from himena._providers import PluginInfo
         from himena.types import WidgetDataModel
 
         if self.plugin is None:

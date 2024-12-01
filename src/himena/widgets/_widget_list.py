@@ -9,7 +9,7 @@ from collections.abc import Sequence
 import weakref
 
 from psygnal import Signal
-from himena import io
+from himena import _providers
 from himena._descriptors import SaveToPath
 from himena.consts import ParametricWidgetProtocolNames as PWPN
 from himena.plugins import _checker
@@ -394,8 +394,8 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         plugin: str | None = None,
     ) -> list[SubWindow[_W]]:
         """Read multiple files and open as new sub-windows in this tab."""
-        reader_path_sets: list[tuple[io.ReaderTuple, PathOrPaths]] = []
-        ins = io.ReaderProviderStore.instance()
+        reader_path_sets: list[tuple[_providers.ReaderTuple, PathOrPaths]] = []
+        ins = _providers.ReaderProviderStore.instance()
         for file_path in file_paths:
             if isinstance(file_path, (str, Path)):
                 file_path = Path(file_path)
@@ -403,7 +403,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
                 file_path = [Path(p) for p in file_path]
             reader_path_sets.append((ins.pick(file_path, plugin=plugin), file_path))
         models = [
-            io.read_and_update_source(reader, file_path)
+            _providers.read_and_update_source(reader, file_path)
             for reader, file_path in reader_path_sets
         ]
         ui = self._main_window()._himena_main_window

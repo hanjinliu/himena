@@ -136,6 +136,10 @@ class DataFrameWrapper(ABC):
         return f"{mod}.{type(self._df).__name__}"
 
     @property
+    def dtypes(self) -> list[DtypeTuple]:
+        return [self.get_dtype(i) for i in range(self.num_columns())]
+
+    @property
     def shape(self) -> tuple[int, int]:
         return self.num_rows(), self.num_columns()
 

@@ -129,6 +129,10 @@ def _norm_menus(menus: str | Sequence[str]) -> list[str]:
     return list(menus)
 
 
+def _norm_menus_with_group(menus: str | Sequence[str], group: str) -> list[dict]:
+    return [{"id": menu, "group": group} for menu in _norm_menus(menus)]
+
+
 def configure_submenu(submenu_id: str, title: str) -> None:
     """Register a title for a submenu."""
     AppActionRegistry.instance()._submenu_titles[submenu_id] = title
@@ -234,12 +238,17 @@ def make_action_for_function(
         else:
             _enablement = _expr & enablement
     _id = _command_id_from_func(f, command_id)
+    if isinstance(command_id, str) and ":" in command_id:
+        group = command_id.split(":")[0]
+        menus_normed = _norm_menus_with_group(menus, group)
+    else:
+        menus_normed = menus
     return Action(
         id=_id,
         title=_title,
         tooltip=_tooltip_from_func(f),
         callback=_utils.make_function_callback(f, command_id=_id),
-        menus=_norm_menus(menus),
+        menus=menus_normed,
         enablement=_enablement,
         keybindings=kbs,
     )
