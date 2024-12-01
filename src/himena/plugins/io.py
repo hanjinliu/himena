@@ -13,7 +13,7 @@ _WP = TypeVar("_WP", bound=WriterProvider)
 def _plugin_info_from_func(func: Callable) -> io.PluginInfo | None:
     if hasattr(func, "__module__"):
         module = func.__module__
-        if module in ("__main__", "<run_path>"):
+        if module == "__main__" or "<" in module:
             # this plugin will never be available. Skip it.
             return None
         if hasattr(func, "__qualname__"):

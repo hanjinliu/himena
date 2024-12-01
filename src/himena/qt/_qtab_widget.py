@@ -226,6 +226,8 @@ class QTabWidget(QtW.QTabWidget):
 
 
 class QStartupWidget(QtW.QWidget):
+    """The widget for the startup tab."""
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self._app = get_main_window(self).model_app

@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Annotated
+from himena.consts import StandardType
 from himena.plugins import register_function, configure_gui
 from himena.types import Parametric, WidgetDataModel
 
@@ -83,7 +84,7 @@ def preview_test() -> Parametric:
         if is_previewing:
             out += "\n(preview)"
         print(f"called with {a=}, {b=}, {is_previewing=}")
-        return WidgetDataModel(value=out, type="text")
+        return WidgetDataModel(value=out, type=StandardType.TEXT)
 
     return testing_preview
 
@@ -101,6 +102,6 @@ def plot_test() -> Parametric:
         fig = hplt.figure()
         fig.axes.plot([0, 1, 2], [2, a, b], color="red")
         fig.axes.title = "Test plot"
-        return WidgetDataModel(value=fig, type="matplotlib-figure")
+        return WidgetDataModel(value=fig, type=StandardType.PLOT)
 
     return run

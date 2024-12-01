@@ -121,6 +121,9 @@ class RecentFileManager:
         to_remove: list[int] = []
         now = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
         for each_path_input, plugin in inputs:
+            if plugin == "himena.builtins.io.read_as_unknown_provider":
+                # This plugin should not be used again from the open recent menu.
+                plugin = None
             each = _norm_path_input(each_path_input)
             if each in existing_paths:
                 to_remove.append(existing_paths.index(each))

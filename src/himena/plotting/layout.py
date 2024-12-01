@@ -2,6 +2,7 @@ from typing import Any, Literal, Sequence, TYPE_CHECKING, SupportsIndex
 
 import numpy as np
 from pydantic_compat import BaseModel, Field
+from pydantic import field_serializer, field_validator
 from himena.plotting import models as _m
 from himena.plotting.models import BasePlotModel, parse_edge, parse_face_edge
 
@@ -18,6 +19,21 @@ class BaseLayoutModel(BaseModel):
 
     def merge_with(self, other: "BaseLayoutModel") -> "BaseLayoutModel":
         raise NotImplementedError
+
+    def model_dump_typed(self) -> dict:
+        return {"type": type(self).__name__.lower(), **self.model_dump()}
+
+    @classmethod
+    def construct(self, model_type: str, dict_: dict) -> "BaseLayoutModel":
+        if model_type == "singleaxes":
+            return SingleAxes.model_validate(dict_)
+        if model_type == "row":
+            return Row.model_validate(dict_)
+        if model_type == "column":
+            return Column.model_validate(dict_)
+        if model_type == "grid":
+            return Grid.model_validate(dict_)
+        raise ValueError(f"Unknown layout model type: {model_type!r}")
 
 
 class StyledText(BaseModel):
@@ -48,6 +64,23 @@ class Axes(BaseModel):
     title: str | StyledText | None = Field(None, description="Title of the axes.")
     x: Axis = Field(default_factory=Axis, description="X-axis settings.")
     y: Axis = Field(default_factory=Axis, description="Y-axis settings.")
+
+    @field_serializer("models")
+    def _serialize_models(self, models: list[BasePlotModel]) -> list[dict]:
+        return [model.model_dump_typed() for model in models]
+
+    @field_validator("models", mode="before")
+    def _validate_models(cls, models: list) -> list[BasePlotModel]:
+        out = []
+        for model in models:
+            if isinstance(model, dict):
+                model = model.copy()
+                model_type = model.pop("type")
+                model = _m.BasePlotModel.construct(model_type, model)
+            elif not isinstance(model, BasePlotModel):
+                raise ValueError(f"Must be a dict or BasePlotModel but got: {model!r}")
+            out.append(model)
+        return out
 
     def scatter(
         self,

@@ -163,6 +163,7 @@ def _pick_from_list(choices: list[_T], plugin: str | None) -> _T:
         else:
             _LOGGER.warning(f"Plugin {plugin} not found, using the default one.")
             out = _pick_by_priority(choices)
+    _LOGGER.debug("Picked: %r", out)
     return out
 
 

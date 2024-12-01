@@ -7,6 +7,25 @@ from pydantic_compat import BaseModel, Field
 class BasePlotModel(BaseModel):
     name: str | None = Field(None, description="Name of the plot.")
 
+    @staticmethod
+    def construct(type: str, dict_: dict[str, Any]) -> BasePlotModel:
+        if type == "scatter":
+            return Scatter(**dict_)
+        if type == "line":
+            return Line(**dict_)
+        if type == "bar":
+            return Bar(**dict_)
+        if type == "errorbar":
+            return ErrorBar(**dict_)
+        if type == "band":
+            return Band(**dict_)
+        if type == "histogram":
+            return Histogram(**dict_)
+        raise ValueError(f"Unknown plot type: {type!r}")
+
+    def model_dump_typed(self) -> dict[str, Any]:
+        return {"type": type(self).__name__.lower(), **self.model_dump()}
+
 
 class Face(BaseModel):
     color: Any | None = Field(None, description="Color of the face.")

@@ -17,14 +17,16 @@ def default_reader_provider(file_path: Path | list[Path]):
     """Get default reader."""
     if isinstance(file_path, list):
         return None
-    if file_path.suffix in BasicTextFileTypes:
-        return _io.default_text_reader
-    elif file_path.suffix == ".csv":
+    if file_path.suffix == ".csv":
         return _io.default_csv_reader
     elif file_path.suffix == ".tsv":
         return _io.default_tsv_reader
     elif file_path.suffix in {".png", ".jpg", ".jpeg"}:
         return _io.default_image_reader
+    elif file_path.suffixes == [".plot", ".json"]:
+        return _io.default_plot_reader
+    elif file_path.suffix in BasicTextFileTypes:
+        return _io.default_text_reader
     elif file_path.name in ConventionalTextFileNames:
         return _io.default_text_reader
     elif file_path.suffix in ExcelFileTypes:
@@ -41,17 +43,17 @@ def default_reader_provider(file_path: Path | list[Path]):
 
 
 @register_reader_provider(priority=-100)
-def read_as_text_anyway_provider(file_path: Path) -> WidgetDataModel:
+def read_as_text_anyway_provider(file_path: Path):
     return _io.default_text_reader
 
 
 @register_reader_provider(priority=0)
-def read_as_unknown_provider(file_path: Path) -> WidgetDataModel:
+def read_as_unknown_provider(file_path: Path):
     return _io.fallback_reader
 
 
 @register_reader_provider(priority=-50)
-def pandas_reader_provider(file_path: Path) -> WidgetDataModel:
+def pandas_reader_provider(file_path: Path):
     """Read dataframe using pandas."""
     if file_path.suffix in (".html", ".htm"):
         _reader = "pandas", "read_html", {}
@@ -107,6 +109,8 @@ def default_writer_provider(model: WidgetDataModel):
         return _io.default_excel_writer
     elif model.is_subtype_of(StandardType.ARRAY):
         return _io.default_array_writer
+    elif model.is_subtype_of(StandardType.PLOT):
+        return _io.default_plot_writer
     elif model.is_subtype_of(StandardType.DATAFRAME):
         return _io.default_dataframe_writer
     else:

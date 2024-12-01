@@ -97,8 +97,9 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
     @protocol_override
     def to_model(self) -> WidgetDataModel:
         return WidgetDataModel(
-            value=self.figure,
+            value=self._plot_models,
             type=self.model_type(),
+            extension_default=".plot.json",
             title="Plot",
         )
 
@@ -112,7 +113,10 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
             isinstance(model.value, layout.BaseLayoutModel)
             and isinstance(self._plot_models, layout.BaseLayoutModel)
         ):
-            raise ValueError("Both models must be BaseLayoutModel")
+            raise ValueError(
+                f"Both models must be BaseLayoutModel, got {model.value!r} and "
+                f"{self._plot_models!r}"
+            )
         self._plot_models = self._plot_models.merge_with(model.value)
         convert_plot_layout(self._plot_models, self.figure)
         self._canvas.draw()

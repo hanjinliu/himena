@@ -384,6 +384,8 @@ class QDrawCanvasControl(QtW.QWidget):
             callback=self._canvas.redo,
         )
         self._size_label = QtW.QLabel("200 px x 200 px")
+
+        # The "set size" button
         self._btn_set_size = _tool_btn(
             icon_name="mdi:canvas",
             tooltip="Set size of the canvas",
@@ -414,6 +416,7 @@ class QDrawCanvasControl(QtW.QWidget):
         menu.addAction(action)
         self._btn_set_size.setMenu(menu)
 
+        # add widgets to layout
         spacer = QtW.QWidget()
         _layout.addWidget(spacer)
         _layout.addWidget(self._size_label)

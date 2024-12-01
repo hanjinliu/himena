@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import json
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -11,8 +12,7 @@ from himena.consts import StandardType
 
 if TYPE_CHECKING:
     from openpyxl.worksheet.worksheet import Worksheet
-
-_SPECIAL_TEXTS = {}
+    from himena.plotting import layout
 
 
 def default_text_reader(file_path: Path) -> WidgetDataModel:
@@ -80,6 +80,24 @@ def default_csv_reader(file_path: Path) -> WidgetDataModel:
 def default_tsv_reader(file_path: Path) -> WidgetDataModel:
     """Read TSV file."""
     return _read_txt_as_numpy(file_path, "\t")
+
+
+def default_plot_reader(file_path: Path) -> WidgetDataModel:
+    """Write plot layout to a json file."""
+    from himena.plotting import layout
+
+    with open(file_path) as f:
+        js = json.load(f)
+        if not isinstance(js, dict):
+            raise ValueError(f"Expected a dictionary, got {type(js)}.")
+        if not (typ := js.pop("type")):
+            raise ValueError("'type' field not found in the JSON file.")
+        plot_layout = layout.BaseLayoutModel.construct(typ, js)
+    return WidgetDataModel(
+        value=plot_layout,
+        type=StandardType.PLOT,
+        extension_default=".plot.json",
+    )
 
 
 def default_excel_reader(file_path: Path) -> WidgetDataModel:
@@ -176,10 +194,19 @@ def default_image_writer(model: WidgetDataModel[np.ndarray], path: Path) -> None
 
 def default_dict_writer(model: WidgetDataModel[dict[str, Any]], path: Path) -> None:
     """Write parameters to a json file."""
-    import json
+    with path.open("w") as f:
+        json.dump(model.value, f, default=_json_default)
+    return None
 
-    with open(path, "w") as f:
-        json.dump(model.value, f)
+
+def default_plot_writer(
+    model: WidgetDataModel[layout.BaseLayoutModel], path: Path
+) -> None:
+    """Write plot layout to a json file."""
+    js = model.value.model_dump_typed()
+    with path.open("w") as f:
+        json.dump(js, f, default=_json_default)
+    return None
 
 
 def default_excel_writer(
@@ -240,3 +267,15 @@ def default_pickle_writer(
     with path.open("wb") as f:
         pickle.dump(model.value, f)
     return None
+
+
+def _json_default(obj):
+    import cmap
+
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, cmap.Color):
+        return obj.hex
+    elif isinstance(obj, cmap.Colormap):
+        return obj.name
+    raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable.")
