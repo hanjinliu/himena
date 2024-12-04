@@ -8,7 +8,7 @@ from qtpy.QtCore import Qt
 
 from himena.consts import StandardType
 from himena.types import WidgetDataModel
-from himena.model_meta import DataFrameMeta, TableMeta
+from himena.standards.model_meta import DataFrameMeta, TableMeta
 from himena.builtins.qt.widgets._table_base import (
     QTableBase,
     QSelectionRangeEdit,

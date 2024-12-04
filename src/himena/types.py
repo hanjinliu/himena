@@ -419,3 +419,12 @@ class BackendInstructions(BaseModel):
 
     def updated(self, **kwargs) -> "BackendInstructions":
         return self.model_copy(update=kwargs)
+
+
+class WidgetClassTuple(NamedTuple):
+    """Class for storing registered widget class."""
+
+    type: str
+    widget_class: "type"
+    priority: int = 100
+    widget_id: str | None = None

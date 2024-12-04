@@ -3,17 +3,23 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
-from superqt import QLabeledSlider, QLabeledDoubleRangeSlider
+from superqt import QLabeledDoubleRangeSlider
 import numpy as np
+from cmap import Colormap
 
 from himena.consts import StandardType
-from himena.model_meta import ImageMeta
+from himena.standards import roi, model_meta
 from himena.qt._utils import qsignal_blocker
 from himena.types import WidgetDataModel
 from himena.plugins import protocol_override
 from himena._data_wrappers import ArrayWrapper, wrap_array
 from himena.qt._magicgui._toggle_switch import QLabeledToggleSwitch
 from himena.qt._utils import ndarray_to_qimage
+from himena.builtins.qt.widgets._image_components import (
+    QImageGraphicsView,
+    QRoi,
+    QDimsSlider,
+)
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -55,11 +61,18 @@ class QDefaultImageView(QtW.QWidget):
     def __init__(self):
         super().__init__()
         layout = QtW.QVBoxLayout(self)
-        self._sliders: list[_QAxisSlider] = []
+        self._image_graphics_view = QImageGraphicsView()
+        self._image_graphics_view.hovered.connect(self._on_hovered)
+        self._dims_slider = QDimsSlider()
+        layout.addWidget(self._image_graphics_view)
+        layout.addWidget(self._dims_slider)
 
-        self._image_label = _QImageLabel(np.zeros((1, 1), dtype=np.uint8))
-        layout.addWidget(self._image_label)
+        self._image_graphics_view.roi_added.connect(self._on_roi_added)
+        self._image_graphics_view.roi_removed.connect(self._on_roi_removed)
 
+        self._dims_slider.valueChanged.connect(self._slider_changed)
+
+        self._roi_list = roi.RoiListModel()
         self._control = QImageViewControl()
         self._control.interpolation_changed.connect(self._interpolation_changed)
         self._control.clim_changed.connect(self._clim_changed)
@@ -67,7 +80,9 @@ class QDefaultImageView(QtW.QWidget):
         self._arr: ArrayWrapper | None = None
         self._is_modified = False
         self._clim: tuple[float, float] = (0, 255)
+        self._colormaps = [Colormap("gray")]
         self._minmax: tuple[float, float] = (0, 255)
+        self._current_image_slice = None
 
     @protocol_override
     @classmethod
@@ -76,6 +91,7 @@ class QDefaultImageView(QtW.QWidget):
 
     @protocol_override
     def update_model(self, model: WidgetDataModel):
+        was_empty = self._arr is None
         arr = wrap_array(model.value)
         ndim_rem = arr.ndim - 2
         if arr.shape[-1] in (3, 4) and ndim_rem > 0:
@@ -94,28 +110,20 @@ class QDefaultImageView(QtW.QWidget):
         self._control._clim_slider.setMaximum(self._minmax[1])
         with qsignal_blocker(self._control._clim_slider):
             self._control._clim_slider.setValue(_clim)
-        self._image_label.set_array(self.as_image_array(img_slice, _clim))
+        self._image_graphics_view.set_array(self.as_image_array(img_slice, _clim))
         self._clim = _clim
 
-        nsliders = len(self._sliders)
-        if nsliders > ndim_rem:
-            for i in range(ndim_rem, nsliders):
-                slider = self._sliders.pop()
-                self.layout().removeWidget(slider)
-                slider.deleteLater()
-        elif nsliders < ndim_rem:
-            for i in range(nsliders, ndim_rem):
-                self._make_slider(arr.shape[i])
-        # update axis names
-        for aname, slider in zip(arr.axis_names(), self._sliders):
-            slider._label.setText(aname)
+        self._dims_slider._refer_array(arr)
         self._arr = arr
 
-        self._slider_changed(img_slice=img_slice)
+        self._set_image_slice(img_slice, self._clim)
         if img_slice.dtype.kind in "cf":
             self._control._clim_slider.setDecimals(2)
         else:
             self._control._clim_slider.setDecimals(0)
+
+        if was_empty:
+            self._image_graphics_view.auto_range()
 
     @protocol_override
     def to_model(self) -> WidgetDataModel[NDArray[np.uint8]]:
@@ -126,18 +134,23 @@ class QDefaultImageView(QtW.QWidget):
         else:
             interp = "nearest"
         clim = self._clim
-        current_slices = tuple(sl._slider.value() for sl in self._sliders) + (
-            slice(None),
-            slice(None),
-        )
+        _all = slice(None)
+        current_indices = self._dims_slider.value()
+        current_slices = current_indices + (_all, _all)
+        if item := self._image_graphics_view._current_roi_item:
+            current_roi = item.toRoi(current_indices)
+        else:
+            current_roi = None
         return WidgetDataModel(
             value=self._arr.arr,
             type=self.model_type(),
             extension_default=".png",
-            metadata=ImageMeta(
+            metadata=model_meta.ImageMeta(
                 current_indices=current_slices,
                 interpolation=interp,
                 contrast_limits=clim,
+                rois=self._roi_list,
+                current_roi=current_roi,
             ),
         )
 
@@ -176,62 +189,55 @@ class QDefaultImageView(QtW.QWidget):
         out = np.ascontiguousarray(arr_normed)
         return out
 
-    def _slider_changed(self, *, img_slice=None):
+    def _slider_changed(self, value: tuple[int, ...]):
         # `image_slice` given only when it is available (for performance)
         if self._arr is None:
             return
-        if img_slice is None:
-            img_slice = self._current_image_slice()
-        self._image_label.set_array(self.as_image_array(img_slice, self._clim))
-        self._control._histogram.set_hist_for_array(img_slice, self._clim, self._minmax)
+        img_slice = self._arr.get_slice(value)
+        self._set_image_slice(img_slice, self._clim)
 
-    def _current_image_slice(self) -> NDArray[np.number]:
-        sl = tuple(sl._slider.value() for sl in self._sliders)
-        return self._arr.get_slice(sl)
+    def _set_image_slice(self, img: NDArray[np.number], clim: tuple[float, float]):
+        self._image_graphics_view.set_array(self.as_image_array(img, clim))
+        self._control._histogram.set_hist_for_array(img, clim, self._minmax)
+        self._current_image_slice = img
 
     def _interpolation_changed(self, checked: bool):
-        if checked:
-            tr = QtCore.Qt.TransformationMode.SmoothTransformation
-        else:
-            tr = QtCore.Qt.TransformationMode.FastTransformation
-        self._image_label._transformation = tr
-        self._image_label._update_pixmap()
+        self._image_graphics_view.setSmoothing(checked)
 
     def _clim_changed(self, clim: tuple[float, float]):
         self._clim = clim
-        self._slider_changed()
+        self._set_image_slice(self._current_image_slice, clim)
 
     def _auto_contrast(self):
         if self._arr is None:
             return
-        img_slice = self._current_image_slice()
+        sl = self._dims_slider.value()
+        img_slice = self._arr.get_slice(sl)
         min_, max_ = img_slice.min(), img_slice.max()
         self._clim = min_, max_
         with qsignal_blocker(self._control._clim_slider):
             self._control._clim_slider.setValue(self._clim)
         self._minmax = min(self._minmax[0], min_), max(self._minmax[1], max_)
-        self._slider_changed(img_slice=img_slice)
+        self._set_image_slice(img_slice, self._clim)
 
-    def _make_slider(self, size: int) -> _QAxisSlider:
-        slider = _QAxisSlider()
-        self._sliders.append(slider)
-        self.layout().addWidget(slider, alignment=QtCore.Qt.AlignmentFlag.AlignBottom)
-        slider._slider.setRange(0, size - 1)
-        slider._slider.valueChanged.connect(self._slider_changed)
-        return slider
+    def _on_roi_added(self, qroi: QRoi):
+        roi = qroi.toRoi(indices=self._dims_slider.value())
+        self._roi_list.rois.append(roi)
 
+    def _on_roi_removed(self, idx: int):
+        del self._roi_list.rois[idx]
 
-class _QAxisSlider(QtW.QWidget):
-    def __init__(self) -> None:
-        super().__init__()
-        layout = QtW.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        self._label = QtW.QLabel()
-        self._label.setFixedWidth(30)
-        self._slider = QLabeledSlider(QtCore.Qt.Orientation.Horizontal)
-
-        layout.addWidget(self._label)
-        layout.addWidget(self._slider)
+    def _on_hovered(self, pos: QtCore.QPointF):
+        x, y = pos.x(), pos.y()
+        if self._current_image_slice is None:
+            return
+        iy, ix = int(y), int(x)
+        ny, nx, *_ = self._current_image_slice.shape
+        if 0 <= iy < ny and 0 <= ix < nx:
+            intensity = self._current_image_slice[int(y), int(x)]
+            self._control._hover_info.setText(
+                f"x={x:.1f}, y={y:.1f}, value={intensity}"
+            )
 
 
 class QImageViewControl(QtW.QWidget):
@@ -262,11 +268,14 @@ class QImageViewControl(QtW.QWidget):
 
         self._interpolation_check_box = QLabeledToggleSwitch()
         self._interpolation_check_box.setText("smooth")
-        self._interpolation_check_box.setChecked(True)
+        self._interpolation_check_box.setChecked(False)
         self._interpolation_check_box.setMaximumHeight(36)
         self._interpolation_check_box.toggled.connect(self.interpolation_changed.emit)
 
+        self._hover_info = QtW.QLabel()
+
         layout.addWidget(spacer)
+        layout.addWidget(self._hover_info)
         layout.addWidget(self._auto_contrast_btn)
         layout.addWidget(self._clim_slider)
         layout.addWidget(self._histogram)

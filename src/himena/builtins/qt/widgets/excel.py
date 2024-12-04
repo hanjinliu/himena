@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Mapping
 
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 
-from himena.model_meta import ExcelMeta
+from himena.standards.model_meta import ExcelMeta
 from himena.qt._qrename import QTabRenameLineEdit
 from himena.builtins.qt.widgets.table import QDefaultTableWidget
 from himena.builtins.qt.widgets._table_base import QSelectionRangeEdit

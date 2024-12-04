@@ -18,10 +18,10 @@ def register_default_widget_types() -> None:
     register_widget_class(StandardType.HTML, QDefaultRichTextEdit, priority=50)
     register_widget_class(StandardType.TABLE, QDefaultTableWidget, priority=50)
     register_widget_class(StandardType.IMAGE, QDefaultImageView, priority=50)
+    register_widget_class(StandardType.IMAGE, QDrawCanvas, priority=0)
     register_widget_class(StandardType.DATAFRAME, QDataFrameView, priority=50)
     register_widget_class(StandardType.EXCEL, QExcelTableStack, priority=50)
     register_widget_class(StandardType.IPYNB, QIpynbEdit, priority=50)
-    register_widget_class(StandardType.IMAGE, QDrawCanvas, priority=0)
     register_widget_class(
         StandardType.READER_NOT_FOUND, QReaderNotFoundWidget, priority=0
     )

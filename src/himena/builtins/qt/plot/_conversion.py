@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing import Callable, overload, TypeVar, TYPE_CHECKING
 from cmap import Color
-from himena.plotting import models, layout
+from himena.standards import plotting as hplt
 
 if TYPE_CHECKING:
     from matplotlib import pyplot as plt
 
 _CONVERSION_RULES: dict[
-    type[models.BasePlotModel], Callable[[models.BasePlotModel, plt.Axes], None]
+    type[hplt.BasePlotModel], Callable[[hplt.BasePlotModel, plt.Axes], None]
 ] = {}
 
 _F = TypeVar("_F", bound=Callable)
@@ -16,19 +16,19 @@ _F = TypeVar("_F", bound=Callable)
 
 @overload
 def register_plot_model(
-    model_class: type[models.BasePlotModel],
+    model_class: type[hplt.BasePlotModel],
     rule: _F,
 ) -> _F: ...
 @overload
 def register_plot_model(
-    model_class: type[models.BasePlotModel],
+    model_class: type[hplt.BasePlotModel],
     rule: None,
 ) -> Callable[[_F], _F]: ...
 
 
 def register_plot_model(
-    model_class: type[models.BasePlotModel],
-    rule: Callable[[models.BasePlotModel, plt.Axes], None] | None = None,
+    model_class: type[hplt.BasePlotModel],
+    rule: Callable[[hplt.BasePlotModel, plt.Axes], None] | None = None,
 ):
     """Register a matplotlib-specific conversion rule for a plot model."""
 
@@ -39,14 +39,14 @@ def register_plot_model(
     return inner if rule is None else inner(rule)
 
 
-def _convert_plot_model(model: models.BasePlotModel, ax: plt.Axes):
+def _convert_plot_model(model: hplt.BasePlotModel, ax: plt.Axes):
     if model.__class__ in _CONVERSION_RULES:
         return _CONVERSION_RULES[model.__class__](model, ax)
     raise ValueError(f"Unsupported plot model: {model}")
 
 
-@register_plot_model(models.Scatter)
-def _(model: models.Scatter, ax: plt.Axes):
+@register_plot_model(hplt.Scatter)
+def _(model: hplt.Scatter, ax: plt.Axes):
     ax.scatter(
         model.x, model.y, s=model.size ** 2, c=Color(model.face.color).hex,
         marker=model.symbol, linewidths=model.edge.width, hatch=model.face.hatch,
@@ -54,16 +54,16 @@ def _(model: models.Scatter, ax: plt.Axes):
     )  # fmt: skip
 
 
-@register_plot_model(models.Line)
-def _(model: models.Line, ax: plt.Axes):
+@register_plot_model(hplt.Line)
+def _(model: hplt.Line, ax: plt.Axes):
     ax.plot(
         model.x, model.y, color=model.edge.color, linewidth=model.edge.width,
         linestyle=model.edge.style, label=model.name,
     )  # fmt: skip
 
 
-@register_plot_model(models.Bar)
-def _(model: models.Bar, ax: plt.Axes):
+@register_plot_model(hplt.Bar)
+def _(model: hplt.Bar, ax: plt.Axes):
     ax.bar(
         model.x, model.y, color=model.face.color, hatch=model.face.hatch,
         bottom=model.bottom, width=model.bar_width, edgecolor=model.edge.color,
@@ -71,8 +71,8 @@ def _(model: models.Bar, ax: plt.Axes):
     )  # fmt: skip
 
 
-@register_plot_model(models.Histogram)
-def _(model: models.Histogram, ax: plt.Axes):
+@register_plot_model(hplt.Histogram)
+def _(model: hplt.Histogram, ax: plt.Axes):
     ax.hist(
         model.data, bins=model.bins, range=model.range, color=model.face.color,
         hatch=model.face.hatch, orientation=model.orient, edgecolor=model.edge.color,
@@ -80,8 +80,8 @@ def _(model: models.Histogram, ax: plt.Axes):
     )  # fmt: skip
 
 
-@register_plot_model(models.ErrorBar)
-def _(model: models.ErrorBar, ax: plt.Axes):
+@register_plot_model(hplt.ErrorBar)
+def _(model: hplt.ErrorBar, ax: plt.Axes):
     ax.errorbar(
         model.x, model.y, xerr=model.x_error, yerr=model.y_error,
         capsize=model.capsize, color=model.edge.color, linewidth=model.edge.width,
@@ -89,7 +89,7 @@ def _(model: models.ErrorBar, ax: plt.Axes):
     )  # fmt: skip
 
 
-def _convert_axes(ax: layout.Axes, ax_mpl: plt.Axes):
+def _convert_axes(ax: hplt.Axes, ax_mpl: plt.Axes):
     if ax.title is not None:
         title, style = _parse_styled_text(ax.title)
         ax_mpl.set_title(title, **style)
@@ -117,8 +117,8 @@ def _convert_axes(ax: layout.Axes, ax_mpl: plt.Axes):
         _convert_plot_model(model, ax_mpl)
 
 
-def convert_plot_layout(lo: layout.BaseLayoutModel, fig: plt.Figure):
-    if isinstance(lo, layout.SingleAxes):
+def convert_plot_layout(lo: hplt.BaseLayoutModel, fig: plt.Figure):
+    if isinstance(lo, hplt.SingleAxes):
         if len(fig.axes) != 1:
             fig.clear()
             axes = fig.add_subplot(111)
@@ -126,8 +126,8 @@ def convert_plot_layout(lo: layout.BaseLayoutModel, fig: plt.Figure):
             axes = fig.axes[0]
         axes.clear()
         _convert_axes(lo.axes, axes)
-    elif isinstance(lo, layout.Layout1D):
-        _shape = (1, len(lo.axes)) if isinstance(lo, layout.Row) else (len(lo.axes), 1)
+    elif isinstance(lo, hplt.Layout1D):
+        _shape = (1, len(lo.axes)) if isinstance(lo, hplt.Row) else (len(lo.axes), 1)
         if len(fig.axes) != len(lo.axes):
             fig.clear()
             axes = fig.subplots(*_shape, sharex=lo.share_x, sharey=lo.share_y)
@@ -135,13 +135,13 @@ def convert_plot_layout(lo: layout.BaseLayoutModel, fig: plt.Figure):
             axes = fig.axes
         for ax, ax_mpl in zip(lo.axes, axes):
             _convert_axes(ax, ax_mpl)
-    elif isinstance(lo, layout.Grid):
+    elif isinstance(lo, hplt.Grid):
         raise NotImplementedError("Grid layout is not supported yet")
     else:
         raise ValueError(f"Unsupported layout model: {lo}")
 
 
-def _parse_styled_text(text: layout.StyledText | str) -> tuple[str, dict]:
+def _parse_styled_text(text: hplt.StyledText | str) -> tuple[str, dict]:
     if isinstance(text, str):
         return text, {}
     fontdict = {}

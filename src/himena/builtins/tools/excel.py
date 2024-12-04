@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from himena.model_meta import ExcelMeta, TableMeta
+from himena.standards.model_meta import ExcelMeta, TableMeta
 from himena.plugins import register_function
 from himena.types import WidgetDataModel
 from himena.consts import StandardType

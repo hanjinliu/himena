@@ -711,15 +711,15 @@ class MainWindow(Generic[_W]):
         if not widget_classes:
             return fallback_class
         complete_match = [
-            (priority, cls)
-            for cls_type, cls, priority in widget_classes
-            if cls_type == model.type
+            (tup.priority, tup.widget_class)
+            for tup in widget_classes
+            if tup.type == model.type
         ]
         if complete_match:
             return max(complete_match, key=lambda x: x[0])[1]
         subtype_match = [
-            ((cls_type.count("."), priority), cls)
-            for cls_type, cls, priority in widget_classes
+            ((tup.type.count("."), tup.priority), tup.widget_class)
+            for tup in widget_classes
         ]
         return max(subtype_match, key=lambda x: x[0])[1]
 

@@ -12,6 +12,7 @@ from himena.types import (
     DockAreaString,
     WindowRect,
     BackendInstructions,
+    WidgetClassTuple,
 )
 
 if TYPE_CHECKING:
@@ -231,7 +232,7 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     def _list_widget_class(
         self,
         type: str,
-    ) -> tuple[list[tuple[str, type[_W], int]], type[_W]]:
+    ) -> tuple[list[WidgetClassTuple], type[_W]]:
         """List the available widget classes of the given type.
 
         The method will return (list of (widget model type, widget_class, priority),

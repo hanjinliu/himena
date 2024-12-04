@@ -66,15 +66,15 @@ def qimage_to_ndarray(img: QtGui.QImage) -> NDArray[np.uint8]:
     return arr
 
 
-def ndarray_to_qimage(arr: NDArray[np.uint8]) -> QtGui.QImage:
+def ndarray_to_qimage(arr: NDArray[np.uint8], alpha: int = 255) -> QtGui.QImage:
     arr = np.ascontiguousarray(arr)
     if arr.ndim == 2:
-        arr = np.stack([arr] * 3 + [np.full(arr.shape, 255, dtype=np.uint8)], axis=2)
+        arr = np.stack([arr] * 3 + [np.full(arr.shape, alpha, dtype=np.uint8)], axis=2)
     else:
         if arr.shape[2] == 3:
             arr = np.ascontiguousarray(
                 np.concatenate(
-                    [arr, np.full(arr.shape[:2] + (1,), 255, dtype=np.uint8)],
+                    [arr, np.full(arr.shape[:2] + (1,), alpha, dtype=np.uint8)],
                     axis=2,
                 )
             )

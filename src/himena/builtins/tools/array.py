@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 from himena.plugins import register_function
 from himena.types import WidgetDataModel
 from himena.consts import StandardType
-from himena.model_meta import ArrayMeta, ImageMeta
+from himena.standards.model_meta import ArrayMeta, ImageMeta
 
 if TYPE_CHECKING:
     import numpy as np

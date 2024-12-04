@@ -7,12 +7,12 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from himena.types import WidgetDataModel
-from himena.model_meta import TableMeta, TextMeta
+from himena.standards.model_meta import TableMeta, TextMeta
 from himena.consts import StandardType
 
 if TYPE_CHECKING:
     from openpyxl.worksheet.worksheet import Worksheet
-    from himena.plotting import layout
+    from himena.standards import plotting as hplt
 
 
 def default_text_reader(file_path: Path) -> WidgetDataModel:
@@ -86,7 +86,7 @@ def default_tsv_reader(file_path: Path) -> WidgetDataModel:
 
 def default_plot_reader(file_path: Path) -> WidgetDataModel:
     """Write plot layout to a json file."""
-    from himena.plotting import layout
+    from himena.standards import plotting
 
     with open(file_path) as f:
         js = json.load(f)
@@ -94,7 +94,7 @@ def default_plot_reader(file_path: Path) -> WidgetDataModel:
             raise ValueError(f"Expected a dictionary, got {type(js)}.")
         if not (typ := js.pop("type")):
             raise ValueError("'type' field not found in the JSON file.")
-        plot_layout = layout.BaseLayoutModel.construct(typ, js)
+        plot_layout = plotting.BaseLayoutModel.construct(typ, js)
     return WidgetDataModel(
         value=plot_layout,
         type=StandardType.PLOT,
@@ -205,7 +205,7 @@ def default_dict_writer(model: WidgetDataModel[dict[str, Any]], path: Path) -> N
 
 
 def default_plot_writer(
-    model: WidgetDataModel[layout.BaseLayoutModel], path: Path
+    model: WidgetDataModel[hplt.BaseLayoutModel], path: Path
 ) -> None:
     """Write plot layout to a json file."""
     js = model.value.model_dump_typed()

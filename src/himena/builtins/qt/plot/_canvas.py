@@ -8,7 +8,7 @@ from qtpy import QtWidgets as QtW
 from himena.plugins import protocol_override
 from himena.types import WidgetDataModel
 from himena.consts import StandardType
-from himena.plotting import layout
+from himena.standards import plotting as hplt
 from himena.builtins.qt.plot._conversion import convert_plot_layout
 
 
@@ -19,7 +19,7 @@ class QMatplotlibCanvasBase(QtW.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         self._canvas: FigureCanvasQTAgg | None = None
         self._toolbar: backend_qtagg.NavigationToolbar2QT | None = None
-        self._plot_models: layout.BaseLayoutModel | None = None
+        self._plot_models: hplt.BaseLayoutModel | None = None
 
     @property
     def figure(self) -> Figure:
@@ -85,7 +85,7 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
             self._canvas = FigureCanvasQTAgg()
             self.layout().addWidget(self._canvas)
             self._toolbar = self._prep_toolbar()
-        if isinstance(model.value, layout.BaseLayoutModel):
+        if isinstance(model.value, hplt.BaseLayoutModel):
             convert_plot_layout(model.value, self.figure)
             self._canvas.draw()
             self._plot_models = model.value
@@ -110,8 +110,8 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
     @protocol_override
     def merge_model(self, model: WidgetDataModel):
         if not (
-            isinstance(model.value, layout.BaseLayoutModel)
-            and isinstance(self._plot_models, layout.BaseLayoutModel)
+            isinstance(model.value, hplt.BaseLayoutModel)
+            and isinstance(self._plot_models, hplt.BaseLayoutModel)
         ):
             raise ValueError(
                 f"Both models must be BaseLayoutModel, got {model.value!r} and "

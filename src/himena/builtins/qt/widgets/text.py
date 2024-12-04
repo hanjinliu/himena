@@ -8,7 +8,7 @@ from superqt import QSearchableComboBox
 
 from himena.consts import StandardType, MonospaceFontFamily
 from himena.types import WidgetDataModel
-from himena.model_meta import TextMeta
+from himena.standards.model_meta import TextMeta
 from himena.plugins import protocol_override
 
 from himena._utils import OrderedSet, lru_cache

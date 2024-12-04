@@ -8,10 +8,9 @@ from himena.plugins import register_function, configure_gui
 from himena.types import Parametric, WidgetDataModel
 from himena.consts import StandardType
 from himena.widgets import SubWindow
-from himena.model_meta import ExcelMeta, TableMeta
-from himena.plotting import layout
+from himena.standards.model_meta import ExcelMeta, TableMeta
+from himena.standards import plotting as hplt
 from himena.qt._magicgui import SelectionEdit, FacePropertyEdit, EdgePropertyEdit
-from himena import plotting
 from himena.exceptions import DeadSubwindowError
 
 if TYPE_CHECKING:
@@ -44,7 +43,7 @@ def scatter_plot(win: SubWindow) -> Parametric:
         face: dict = {},
         edge: dict = {},
     ) -> WidgetDataModel:
-        fig = plotting.figure()
+        fig = hplt.figure()
         xarr, yarrs = _get_xy_data(win, x, y, fig.axes)
         for name_yarr, _face, _edge in zip(
             yarrs, _iter_face(face), _iter_edge(edge, prefix="edge_")
@@ -77,7 +76,7 @@ def line_plot(win: SubWindow) -> Parametric:
         y: tuple[slice, slice],
         edge: dict = {},
     ) -> WidgetDataModel:
-        fig = plotting.figure()
+        fig = hplt.figure()
         xarr, yarrs = _get_xy_data(win, x, y, fig.axes)
         for name_yarr, _edge in zip(yarrs, _iter_edge(edge)):
             name, yarr = name_yarr
@@ -111,7 +110,7 @@ def bar_plot(win: SubWindow) -> Parametric:
         face: dict = {},
         edge: dict = {},
     ) -> WidgetDataModel:
-        fig = plotting.figure()
+        fig = hplt.figure()
         if bottom is not None:
             _, bottoms = _get_xy_data(win, x, bottom, fig.axes)
         else:
@@ -152,7 +151,7 @@ def errorbar_plot(win: SubWindow) -> Parametric:
         capsize: float = 0.0,
         edge: dict = {},
     ) -> WidgetDataModel:
-        fig = plotting.figure()
+        fig = hplt.figure()
         if xerr is not None:
             _, xerrs = _get_xy_data(win, x, xerr, fig.axes)
         else:
@@ -176,6 +175,42 @@ def errorbar_plot(win: SubWindow) -> Parametric:
 
 
 @register_function(
+    title="Band plot ...",
+    types=_TABLE_LIKE,
+    menus=_MENU,
+    command_id="builtins:band-plot",
+)
+def band_plot(win: SubWindow) -> Parametric:
+    @configure_gui(
+        x={"widget_type": SelectionEdit, "getter": lambda: _range_getter(win)},
+        y1={"widget_type": SelectionEdit, "getter": lambda: _range_getter(win)},
+        y2={"widget_type": SelectionEdit, "getter": lambda: _range_getter(win)},
+        face={"widget_type": FacePropertyEdit},
+        edge={"widget_type": EdgePropertyEdit},
+    )
+    def configure_plot(
+        x: tuple[slice, slice] | None,
+        y1: tuple[slice, slice],
+        y2: tuple[slice, slice],
+        face: dict = {},
+        edge: dict = {},
+    ) -> WidgetDataModel:
+        fig = hplt.figure()
+        xarr, ydata1 = _get_xy_data(win, x, y1, fig.axes)
+        _, ydata2 = _get_xy_data(win, x, y2, fig.axes)
+        if len(ydata1) == 1 and len(ydata2) == 1:
+            name, yar1 = ydata1[0]
+            _, yar2 = ydata2[0]
+            fig.axes.band(xarr, yar1, yar2, name=name, **face, **edge)
+        else:
+            raise ValueError("Only one pair of y values is allowed.")
+        fig.axes.y.label = name
+        return WidgetDataModel(value=fig, type=StandardType.PLOT, title="Plot")
+
+    return configure_plot
+
+
+@register_function(
     title="Edit plot ...",
     types=[StandardType.PLOT],
     menus="tools/plot",
@@ -183,9 +218,9 @@ def errorbar_plot(win: SubWindow) -> Parametric:
 )
 def edit_plot(win: SubWindow) -> Parametric:
     model = win.to_model()
-    if not isinstance(lo := model.value, layout.BaseLayoutModel):
+    if not isinstance(lo := model.value, hplt.BaseLayoutModel):
         raise ValueError("Invalid layout model")
-    if isinstance(lo, layout.SingleAxes):
+    if isinstance(lo, hplt.SingleAxes):
         pass
     # TODO
 
@@ -217,7 +252,7 @@ def _get_xy_data(
     win: SubWindow,
     x: tuple[slice, slice] | None,
     y: tuple[slice, slice] | None,
-    axes: plotting.layout.Axes,
+    axes: hplt.Axes,
 ) -> "tuple[np.ndarray, list[tuple[str | None, np.ndarray]]]":
     from himena._data_wrappers import wrap_dataframe
 

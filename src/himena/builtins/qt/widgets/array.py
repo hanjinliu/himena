@@ -9,7 +9,7 @@ import numpy as np
 
 from himena._data_wrappers import ArrayWrapper, wrap_array
 from himena.consts import StandardType, MonospaceFontFamily
-from himena.model_meta import ArrayMeta
+from himena.standards.model_meta import ArrayMeta
 from himena.types import WidgetDataModel
 from himena.plugins import protocol_override
 from himena.builtins.qt.widgets._table_base import (

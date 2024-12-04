@@ -4,7 +4,7 @@ from typing import Callable, Any
 from qtpy import QtWidgets as QtW
 from qtpy import QtCore, QtGui
 from qtpy.QtCore import Qt, Signal
-from himena.model_meta import TableMeta
+from himena.standards.model_meta import TableMeta
 from himena.qt._qfinderwidget import QTableFinderWidget
 from himena.qt._qlineedit import QIntLineEdit
 from himena.qt._utils import qsignal_blocker

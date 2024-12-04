@@ -7,7 +7,7 @@ from superqt import QIconifyIcon
 import numpy as np
 
 from himena.consts import StandardType
-from himena.model_meta import ArrayMeta
+from himena.standards.model_meta import ArrayMeta
 from himena.types import WidgetDataModel
 from himena.plugins import protocol_override
 from himena.qt._utils import ndarray_to_qimage, qimage_to_ndarray, ArrayQImage

@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from himena.widgets import MainWindow
-from himena import plotting as hplt
+import himena.standards.plotting as hplt
 from himena.builtins.qt.plot import BACKEND_HIMENA
 from himena.builtins.qt.plot._canvas import QMatplotlibCanvas
 

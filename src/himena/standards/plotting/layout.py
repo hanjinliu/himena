@@ -3,8 +3,7 @@ from typing import Any, Literal, Sequence, TYPE_CHECKING, SupportsIndex
 import numpy as np
 from pydantic_compat import BaseModel, Field
 from pydantic import field_serializer, field_validator
-from himena.plotting import models as _m
-from himena.plotting.models import BasePlotModel, parse_edge, parse_face_edge
+from himena.standards.plotting import models as _m
 
 if TYPE_CHECKING:
     from typing import Self
@@ -58,7 +57,7 @@ class Axis(BaseModel):
 class Axes(BaseModel):
     """Layout model for axes."""
 
-    models: list[BasePlotModel] = Field(
+    models: list[_m.BasePlotModel] = Field(
         default_factory=list, description="Child plot models."
     )
     title: str | StyledText | None = Field(None, description="Title of the axes.")
@@ -66,18 +65,18 @@ class Axes(BaseModel):
     y: Axis = Field(default_factory=Axis, description="Y-axis settings.")
 
     @field_serializer("models")
-    def _serialize_models(self, models: list[BasePlotModel]) -> list[dict]:
+    def _serialize_models(self, models: list[_m.BasePlotModel]) -> list[dict]:
         return [model.model_dump_typed() for model in models]
 
     @field_validator("models", mode="before")
-    def _validate_models(cls, models: list) -> list[BasePlotModel]:
+    def _validate_models(cls, models: list) -> list[_m.BasePlotModel]:
         out = []
         for model in models:
             if isinstance(model, dict):
                 model = model.copy()
                 model_type = model.pop("type")
                 model = _m.BasePlotModel.construct(model_type, model)
-            elif not isinstance(model, BasePlotModel):
+            elif not isinstance(model, _m.BasePlotModel):
                 raise ValueError(f"Must be a dict or BasePlotModel but got: {model!r}")
             out.append(model)
         return out
@@ -93,14 +92,14 @@ class Axes(BaseModel):
     ) -> _m.Scatter:
         """Add a scatter plot model to the axes."""
         model = _m.Scatter(
-            x=x, y=y, symbol=symbol, size=size, **parse_face_edge(kwargs)
+            x=x, y=y, symbol=symbol, size=size, **_m.parse_face_edge(kwargs)
         )
         self.models.append(model)
         return model
 
     def plot(self, x: Sequence[float], y: Sequence[float], **kwargs) -> _m.Line:
         """Add a line plot model to the axes."""
-        model = _m.Line(x=x, y=y, **parse_edge(kwargs))
+        model = _m.Line(x=x, y=y, **_m.parse_edge(kwargs))
         self.models.append(model)
         return model
 
@@ -117,7 +116,7 @@ class Axes(BaseModel):
         """Add a bar plot model to the axes."""
         model = _m.Bar(
             x=x, y=y, bottom=bottom, bar_width=bar_width, orient=orient,
-            **parse_face_edge(kwargs),
+            **_m.parse_face_edge(kwargs),
         )  # fmt: skip
         self.models.append(model)
         return model
@@ -139,8 +138,22 @@ class Axes(BaseModel):
             x_error=x_error,
             y_error=y_error,
             capsize=capsize,
-            **parse_edge(kwargs),
+            **_m.parse_edge(kwargs),
         )
+        self.models.append(model)
+        return model
+
+    def band(
+        self,
+        x: Sequence[float],
+        y1: Sequence[float],
+        y2: Sequence[float],
+        *,
+        orient: Literal["vertical", "horizontal"] = "vertical",
+        **kwargs,
+    ) -> _m.Band:
+        """Add a band plot model to the axes."""
+        model = _m.Band(x=x, y1=y1, y2=y2, orient=orient, **_m.parse_face_edge(kwargs))
         self.models.append(model)
         return model
 
@@ -155,8 +168,9 @@ class Axes(BaseModel):
     ) -> _m.Histogram:
         """Add a histogram plot model to the axes."""
         model = _m.Histogram(
-            data=data, bins=bins, range=range, orient=orient, **parse_face_edge(kwargs)
-        )
+            data=data, bins=bins, range=range, orient=orient,
+            **_m.parse_face_edge(kwargs),
+        )  # fmt: skip
         self.models.append(model)
         return model
 

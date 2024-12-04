@@ -1,6 +1,6 @@
 from typing import Literal, TYPE_CHECKING
 from himena._data_wrappers._dataframe import wrap_dataframe
-from himena.model_meta import TableMeta, TextMeta
+from himena.standards.model_meta import TableMeta, TextMeta
 from himena.plugins import register_function
 from himena.types import Parametric, WidgetDataModel
 from himena.consts import StandardType

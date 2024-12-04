@@ -1,5 +1,6 @@
 from typing import Any
 from pydantic_compat import BaseModel, Field
+from himena.standards import roi
 
 
 class TextMeta(BaseModel):
@@ -9,7 +10,7 @@ class TextMeta(BaseModel):
     spaces: int = Field(4, description="Number of spaces for indentation.")
     selection: tuple[int, int] | None = Field(None, description="Selection range.")
     font_family: str | None = Field(None, description="Font family.")
-    font_size: float | None = Field(None, description="Font size.")
+    font_size: float = Field(10, description="Font size.")
     encoding: str | None = Field(None, description="Encoding of the text file.")
 
 
@@ -54,13 +55,6 @@ class ArrayMeta(BaseModel):
     )
 
 
-class Roi(BaseModel):
-    """A region of interest (ROI) model."""
-
-    value: Any = Field(..., description="Value of the ROI.")
-    type: str = Field(..., description="Type of the ROI.")
-
-
 class ImageMeta(ArrayMeta):
     """Preset for describing an image file metadata."""
 
@@ -70,8 +64,12 @@ class ImageMeta(ArrayMeta):
     colormaps: Any | None = Field(None, description="Color map of the image.")
     channel_axis: int | None = Field(None, description="Channel axis of the image.")
     is_rgb: bool = Field(False, description="Whether the image is RGB.")
-    current_roi: Roi | None = Field(None, description="Current region of interest.")
-    rois: list[Roi] = Field(default_factory=list, description="Regions of interest.")
+    current_roi: roi.ImageRoi | None = Field(
+        None, description="Current region of interest."
+    )
+    rois: roi.RoiListModel = Field(
+        default_factory=roi.RoiListModel, description="Regions of interest."
+    )
     labels: Any | None = Field(None, description="Labels of the image.")
     interpolation: str | None = Field(None, description="Interpolation method.")
     contrast_limits: tuple[float, float] | list[tuple[float, float]] | None = Field(

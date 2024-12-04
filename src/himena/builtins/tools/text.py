@@ -4,7 +4,7 @@ import re
 import html
 from himena.plugins import register_function, configure_gui
 from himena.types import Parametric, WidgetDataModel
-from himena.model_meta import TextMeta
+from himena.standards.model_meta import TextMeta
 from himena.consts import StandardType
 from himena import _utils
 

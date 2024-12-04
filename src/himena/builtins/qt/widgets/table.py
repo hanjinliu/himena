@@ -11,7 +11,7 @@ from qtpy.QtCore import Qt
 
 from himena.consts import StandardType
 from himena.types import WidgetDataModel
-from himena.model_meta import TableMeta
+from himena.standards.model_meta import TableMeta
 from himena.plugins import protocol_override
 from himena.builtins.qt.widgets._table_base import QTableBase, QSelectionRangeEdit
 

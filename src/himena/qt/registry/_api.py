@@ -1,24 +1,16 @@
 from __future__ import annotations
 
-from typing import Callable, TypeVar, overload, NamedTuple
+from typing import Callable, TypeVar, overload
 from qtpy import QtWidgets as QtW
 
-from himena.types import is_subtype
+from himena.types import is_subtype, WidgetClassTuple
 from himena.qt.registry._widgets import QFallbackWidget
-
-WidgetClass = type[QtW.QWidget]
-
-
-class WidgetClassTuple(NamedTuple):
-    type: str
-    widget_class: WidgetClass
-    priority: int = 100
 
 
 # NOTE: Different applications may use different widgets for the same data type.
 _APP_TYPE_TO_QWIDGET: dict[str | None, list[WidgetClassTuple]] = {}
 
-_F = TypeVar("_F", bound=WidgetClass)
+_F = TypeVar("_F", bound=type)
 
 
 @overload

@@ -95,7 +95,7 @@ def preview_test() -> Parametric:
     command_id="debug:test-plot",
 )
 def plot_test() -> Parametric:
-    import himena.plotting as hplt
+    import himena.standards.plotting as hplt
 
     @configure_gui(preview=True)
     def run(a: int, b: int = 4) -> WidgetDataModel:
