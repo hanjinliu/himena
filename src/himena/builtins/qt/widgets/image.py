@@ -123,7 +123,9 @@ class QDefaultImageView(QtW.QWidget):
             self._control._clim_slider.setDecimals(0)
 
         if was_empty:
+            print(self._image_graphics_view.transform().m11())
             self._image_graphics_view.auto_range()
+            print(self._image_graphics_view.transform().m11())
 
     @protocol_override
     def to_model(self) -> WidgetDataModel[NDArray[np.uint8]]:
