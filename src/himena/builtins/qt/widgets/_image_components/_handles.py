@@ -59,7 +59,7 @@ class QHandleRect(QtW.QGraphicsRectItem):
             return super().mousePressEvent(event)
         if event.button() == Qt.MouseButton.LeftButton:
             view = self.view()
-            view.set_mode(self.view().Mode.SELECTION)
+            view.set_mode(self.view().Mode.SELECT)
             self.scene().setGrabSource(self)
         return super().mousePressEvent(event)
 

@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+import math
 from pathlib import Path
 from typing import (
     Any,
@@ -281,11 +283,14 @@ ReaderProvider = Callable[["Path | list[Path]"], ReaderFunction]
 WriterProvider = Callable[[WidgetDataModel], WriterFunction]
 
 
-class WindowRect(NamedTuple):
-    left: int
-    top: int
-    width: int
-    height: int
+@dataclass
+class Rect(Generic[_T]):
+    """Rectangle."""
+
+    left: _T
+    top: _T
+    width: _T
+    height: _T
 
     @property
     def right(self):
@@ -295,6 +300,29 @@ class WindowRect(NamedTuple):
     def bottom(self):
         return self.top + self.height
 
+    def __iter__(self):
+        return iter((self.left, self.top, self.width, self.height))
+
+    def adjust_to_int(
+        self,
+        how: Literal["inner", "outer"] = "inner",
+    ) -> "Rect[int]":
+        right = self.right
+        bottom = self.bottom
+        if how == "inner":
+            left = int(math.ceil(self.left))
+            top = int(math.ceil(self.top))
+            right = int(math.floor(right))
+            bottom = int(math.floor(bottom))
+        else:
+            left = int(math.floor(self.left))
+            top = int(math.floor(self.top))
+            right = int(math.ceil(right))
+            bottom = int(math.ceil(bottom))
+        return Rect(left, top, right - left, bottom - top)
+
+
+class WindowRect(Rect):
     @classmethod
     def from_numbers(self, left, top, width, height) -> "WindowRect":
         return WindowRect(int(left), int(top), int(width), int(height))

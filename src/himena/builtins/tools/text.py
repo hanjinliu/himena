@@ -150,7 +150,7 @@ def change_encoding(model: WidgetDataModel[str]) -> Parametric:
 
 @register_function(
     types=StandardType.HTML,
-    menus=["tools/html"],
+    menus=["tools/text"],
     command_id="builtins:to-plain-text",
 )
 def to_plain_text(model: WidgetDataModel[str]) -> WidgetDataModel:

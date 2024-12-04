@@ -12,7 +12,7 @@ class QDimsSlider(QtW.QWidget):
         super().__init__()
         self._sliders: list[_QAxisSlider] = []
         layout = QtW.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(2, 2, 2, 2)
         layout.setSpacing(2)
 
     def _refer_array(self, arr: ArrayWrapper):

@@ -19,6 +19,7 @@ from himena.builtins.qt.widgets._image_components import (
     QImageGraphicsView,
     QRoi,
     QDimsSlider,
+    QRoiButtons,
 )
 
 if TYPE_CHECKING:
@@ -61,15 +62,20 @@ class QDefaultImageView(QtW.QWidget):
     def __init__(self):
         super().__init__()
         layout = QtW.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        self._roi_buttons = QRoiButtons()
+        self._roi_buttons.mode_changed.connect(self._on_mode_changed)
         self._image_graphics_view = QImageGraphicsView()
         self._image_graphics_view.hovered.connect(self._on_hovered)
+        self._image_graphics_view.mode_changed.connect(self._roi_buttons.set_mode)
         self._dims_slider = QDimsSlider()
+        layout.addWidget(self._roi_buttons)
         layout.addWidget(self._image_graphics_view)
         layout.addWidget(self._dims_slider)
 
         self._image_graphics_view.roi_added.connect(self._on_roi_added)
         self._image_graphics_view.roi_removed.connect(self._on_roi_removed)
-
         self._dims_slider.valueChanged.connect(self._slider_changed)
 
         self._roi_list = roi.RoiListModel()
@@ -91,7 +97,6 @@ class QDefaultImageView(QtW.QWidget):
 
     @protocol_override
     def update_model(self, model: WidgetDataModel):
-        was_empty = self._arr is None
         arr = wrap_array(model.value)
         ndim_rem = arr.ndim - 2
         if arr.shape[-1] in (3, 4) and ndim_rem > 0:
@@ -111,6 +116,7 @@ class QDefaultImageView(QtW.QWidget):
         with qsignal_blocker(self._control._clim_slider):
             self._control._clim_slider.setValue(_clim)
         self._image_graphics_view.set_array(self.as_image_array(img_slice, _clim))
+        self._image_graphics_view.update()
         self._clim = _clim
 
         self._dims_slider._refer_array(arr)
@@ -121,11 +127,6 @@ class QDefaultImageView(QtW.QWidget):
             self._control._clim_slider.setDecimals(2)
         else:
             self._control._clim_slider.setDecimals(0)
-
-        if was_empty:
-            print(self._image_graphics_view.transform().m11())
-            self._image_graphics_view.auto_range()
-            print(self._image_graphics_view.transform().m11())
 
     @protocol_override
     def to_model(self) -> WidgetDataModel[NDArray[np.uint8]]:
@@ -191,6 +192,12 @@ class QDefaultImageView(QtW.QWidget):
         out = np.ascontiguousarray(arr_normed)
         return out
 
+    def setFocus(self):
+        return self._image_graphics_view.setFocus()
+
+    def leaveEvent(self, ev) -> None:
+        self._control._hover_info.setText("")
+
     def _slider_changed(self, value: tuple[int, ...]):
         # `image_slice` given only when it is available (for performance)
         if self._arr is None:
@@ -229,6 +236,9 @@ class QDefaultImageView(QtW.QWidget):
     def _on_roi_removed(self, idx: int):
         del self._roi_list.rois[idx]
 
+    def _on_mode_changed(self, mode):
+        self._image_graphics_view.switch_mode(mode)
+
     def _on_hovered(self, pos: QtCore.QPointF):
         x, y = pos.x(), pos.y()
         if self._current_image_slice is None:
@@ -240,6 +250,8 @@ class QDefaultImageView(QtW.QWidget):
             self._control._hover_info.setText(
                 f"x={x:.1f}, y={y:.1f}, value={intensity}"
             )
+        else:
+            self._control._hover_info.setText("")
 
 
 class QImageViewControl(QtW.QWidget):

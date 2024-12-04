@@ -30,7 +30,7 @@ _LOGGER = logging.getLogger(__name__)
 class Mode(Enum):
     """Mouse interaction modes for the image graphics view."""
 
-    SELECTION = auto()
+    SELECT = auto()
     PAN_ZOOM = auto()
     ROI_RECTANGLE = auto()
     ROI_ELLIPSE = auto()
@@ -102,7 +102,9 @@ class QImageGraphicsScene(QtW.QGraphicsScene):
 class QImageGraphicsView(QtW.QGraphicsView):
     roi_added = QtCore.Signal(QRoi)
     roi_removed = QtCore.Signal(int)
+    mode_changed = QtCore.Signal(Mode)
     hovered = QtCore.Signal(QtCore.QPointF)
+
     Mode = Mode
 
     def __init__(self):
@@ -119,12 +121,12 @@ class QImageGraphicsView(QtW.QGraphicsView):
         self._is_drawing_multipoints = False
         self._is_rois_visible = False
         self._selection_handles = RoiSelectionHandles(self)
+        self._initialized = False
 
-        self._image_widget = QImageGraphicsWidget()
         scene = QImageGraphicsScene()
-        scene.addItem(self._image_widget)
-
         super().__init__(scene)
+        self._image_widget = QImageGraphicsWidget()
+        scene.addItem(self._image_widget)
         self.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignHCenter)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -148,10 +150,11 @@ class QImageGraphicsView(QtW.QGraphicsView):
         self._mode = mode
         if mode in ROI_MODES:
             self.viewport().setCursor(Qt.CursorShape.CrossCursor)
-        elif mode is Mode.SELECTION:
+        elif mode is Mode.SELECT:
             self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
         elif mode is Mode.PAN_ZOOM:
             self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
+        self.mode_changed.emit(mode)
 
     def switch_mode(self, mode: Mode):
         self.set_mode(mode)
@@ -165,7 +168,7 @@ class QImageGraphicsView(QtW.QGraphicsView):
         return super().scene()
 
     def resizeEvent(self, event: QtGui.QResizeEvent):
-        # Dynamically resize the image to fit the view
+        # Dynamically resize the image to keep the current zoom factor
         old_size = event.oldSize()
         new_size = event.size()
         ratio = np.sqrt(
@@ -173,6 +176,15 @@ class QImageGraphicsView(QtW.QGraphicsView):
         )
         self.scale(ratio, ratio)
         return super().resizeEvent(event)
+
+    def showEvent(self, event: QtGui.QShowEvent):
+        super().showEvent(event)
+        if not (event.spontaneous() and self._initialized):
+            rect = self._image_widget.boundingRect()
+            factor = 1 / max(rect.width(), rect.height())
+            self.scale(factor, factor)
+            self.centerOn(rect.center())
+            self._initialized = True
 
     def wheelEvent(self, event):
         # Zoom in/out using the mouse wheel
@@ -276,7 +288,7 @@ class QImageGraphicsView(QtW.QGraphicsView):
                 self._selection_handles.connect_rect(self._current_roi_item)
             elif self._mode is Mode.ROI_POINT:
                 pass
-        elif self._mode is Mode.SELECTION:
+        elif self._mode is Mode.SELECT:
             self.select_item_at(self.mapToScene(event.pos()))
             self.scene().setGrabSource(self)
         elif self._mode is Mode.PAN_ZOOM:
@@ -327,7 +339,7 @@ class QImageGraphicsView(QtW.QGraphicsView):
                     x0, x1 = sorted([pos.x(), pos0.x()])
                     y0, y1 = sorted([pos.y(), pos0.y()])
                     self._current_roi_item.setRect(x0, y0, x1 - x0, y1 - y0)
-            elif self._mode is Mode.SELECTION:
+            elif self._mode is Mode.SELECT:
                 if item := self._current_roi_item:
                     delta = pos - self.mapToScene(self._pos_drag_prev)
                     item.translate(delta.x(), delta.y())
@@ -459,7 +471,7 @@ class QImageGraphicsView(QtW.QGraphicsView):
             elif _key == Qt.Key.Key_G:
                 self.switch_mode(Mode.ROI_POLYGON)
             elif _key == Qt.Key.Key_S:
-                self.switch_mode(Mode.SELECTION)
+                self.switch_mode(Mode.SELECT)
             elif _key == Qt.Key.Key_Z:
                 self.switch_mode(Mode.PAN_ZOOM)
             elif _key == Qt.Key.Key_T:

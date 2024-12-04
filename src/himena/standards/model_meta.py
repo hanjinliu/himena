@@ -54,6 +54,9 @@ class ArrayMeta(BaseModel):
         "array.",
     )
 
+    def without_selections(self) -> "ArrayMeta":
+        return self.model_copy(update={"selections": []})
+
 
 class ImageMeta(ArrayMeta):
     """Preset for describing an image file metadata."""
@@ -75,3 +78,6 @@ class ImageMeta(ArrayMeta):
     contrast_limits: tuple[float, float] | list[tuple[float, float]] | None = Field(
         None, description="Contrast limits of the image, possible for each channel."
     )
+
+    def without_rois(self) -> "ImageMeta":
+        return self.model_copy(update={"rois": roi.RoiListModel(), "current_roi": None})

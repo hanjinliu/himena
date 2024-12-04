@@ -16,7 +16,7 @@ from typing import (
 import numpy as np
 
 if TYPE_CHECKING:
-    from typing import Any, Protocol, TypeAlias, TypeGuard
+    from typing import Any, Protocol, TypeAlias, TypeGuard, Self
 
     import dask.array as da
     import numpy.typing as npt
@@ -49,18 +49,13 @@ ArrayT = TypeVar("ArrayT")
 
 
 class ArrayWrapper(Generic[ArrayT]):
-    """Interface for wrapping different array-like data types.
-
-    `DataWrapper.create` is a factory method that returns a DataWrapper instance
-    for the given data type. If your datastore type is not supported, you may implement
-    a new DataWrapper subclass to handle your data type.  To do this, import and
-    subclass DataWrapper, and (minimally) implement the supports and isel methods.
-    Ensure that your class is imported before the DataWrapper.create method is called,
-    and it will be automatically detected and used to wrap your data.
-    """
+    """Interface for wrapping different array-like data types."""
 
     def __init__(self, data: ArrayT) -> None:
         self._arr = data
+
+    def __getitem__(self, sl: tuple[Index, ...]) -> Self:
+        return self.__class__(self._arr[sl])
 
     @property
     def arr(self) -> ArrayT:
@@ -301,6 +296,8 @@ def is_cupy(data: Any) -> TypeGuard[cupy.ndarray]:
 
 
 def wrap_array(arr: Any) -> ArrayWrapper:
+    if isinstance(arr, ArrayWrapper):
+        return arr
     if is_numpy(arr):
         return ArrayLikeWrapper(arr)
     if is_dask(arr):
