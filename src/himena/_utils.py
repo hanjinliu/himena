@@ -64,11 +64,25 @@ def has_widget_data_model_argument(func: Callable) -> bool:
 
 
 def get_display_name(cls: type) -> str:
+    import importlib
+
     if isinstance(vars(cls).get("display_name"), classmethod):
         title = cls.display_name()
     else:
         title = cls.__name__
     name = f"{cls.__module__}.{cls.__name__}"
+    # look for simpler import path
+    submods = cls.__module__.split(".")
+    for i in range(1, len(submods)):
+        mod_name = ".".join(submods[:i])
+        try:
+            mod = importlib.import_module(mod_name)
+            if getattr(mod, cls.__name__, None) is cls:
+                name = f"{mod_name}.{cls.__name__}"
+                break
+        except Exception:
+            pass
+
     return f"{title}\n({name})"
 
 

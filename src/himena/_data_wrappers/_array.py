@@ -77,7 +77,7 @@ class ArrayWrapper(Generic[ArrayT]):
 
     def axis_names(self) -> list[str]:
         """Return the names of the axes."""
-        return [str(i) for i in range(self.ndim)]
+        return [f"axis-{i}" for i in range(self.ndim)]
 
     @property
     def ndim(self) -> int:

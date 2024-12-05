@@ -8,6 +8,7 @@ import numpy as np
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt
 
+from ._base import QBaseGraphicsView, QBaseGraphicsScene
 from ._roi_items import (
     QPointRoi,
     QPointsRoi,
@@ -87,19 +88,7 @@ class QImageGraphicsWidget(QtW.QGraphicsWidget):
         return QtCore.QRectF(0, 0, width, height)
 
 
-class QImageGraphicsScene(QtW.QGraphicsScene):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self._grab_source: QtW.QGraphicsItem | None = None
-
-    def grabSource(self) -> QtW.QGraphicsItem | None:
-        return self._grab_source
-
-    def setGrabSource(self, item: QtW.QGraphicsItem | None):
-        self._grab_source = item
-
-
-class QImageGraphicsView(QtW.QGraphicsView):
+class QImageGraphicsView(QBaseGraphicsView):
     roi_added = QtCore.Signal(QRoi)
     roi_removed = QtCore.Signal(int)
     mode_changed = QtCore.Signal(Mode)
@@ -114,7 +103,7 @@ class QImageGraphicsView(QtW.QGraphicsView):
         self._roi_items: list[QtW.QGraphicsItem] = []
         self._current_roi_item: QRoi | None = None
         self._is_current_roi_item_not_registered = False
-        self._roi_pen = QtGui.QPen(QtGui.QColor(225, 225, 0), 2)
+        self._roi_pen = QtGui.QPen(QtGui.QColor(225, 225, 0), 3)
         self._roi_pen.setCosmetic(True)
         self._mode = Mode.PAN_ZOOM
         self._last_mode_before_key_hold = Mode.PAN_ZOOM
@@ -123,25 +112,20 @@ class QImageGraphicsView(QtW.QGraphicsView):
         self._selection_handles = RoiSelectionHandles(self)
         self._initialized = False
 
-        scene = QImageGraphicsScene()
-        super().__init__(scene)
-        self._image_widget = QImageGraphicsWidget()
-        scene.addItem(self._image_widget)
-        self.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignHCenter)
-        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.setMouseTracking(True)
+        super().__init__()
+        self._image_widget = self.addItem(QImageGraphicsWidget())
         self.switch_mode(Mode.PAN_ZOOM)
 
-    def set_array(self, img: np.ndarray):
+    def set_array(self, img: np.ndarray, clear_rois: bool = True):
         """Set an image to display."""
         # NOTE: image must be ready for conversion to QImage (uint8, mono or RGB)
         self._image_widget.set_image(img)
         # ROI is stored in the parent widget.
-        scene = self.scene()
-        for item in self._roi_items:
-            scene.removeItem(item)
-        self._roi_items.clear()
+        if clear_rois:
+            scene = self.scene()
+            for item in self._roi_items:
+                scene.removeItem(item)
+            self._roi_items.clear()
 
     def mode(self) -> Mode:
         return self._mode
@@ -164,7 +148,7 @@ class QImageGraphicsView(QtW.QGraphicsView):
         # Enable or disable pixmap smoothing
         self._image_widget.setSmoothingEnabled(enabled)
 
-    def scene(self) -> QImageGraphicsScene:
+    def scene(self) -> QBaseGraphicsScene:
         return super().scene()
 
     def resizeEvent(self, event: QtGui.QResizeEvent):
@@ -174,7 +158,7 @@ class QImageGraphicsView(QtW.QGraphicsView):
         ratio = np.sqrt(
             new_size.width() / old_size.width() * new_size.height() / old_size.height()
         )
-        self.scale(ratio, ratio)
+        self.scale_and_update_handles(ratio)
         return super().resizeEvent(event)
 
     def showEvent(self, event: QtGui.QShowEvent):
@@ -182,7 +166,7 @@ class QImageGraphicsView(QtW.QGraphicsView):
         if not (event.spontaneous() and self._initialized):
             rect = self._image_widget.boundingRect()
             factor = 1 / max(rect.width(), rect.height())
-            self.scale(factor, factor)
+            self.scale_and_update_handles(factor)
             self.centerOn(rect.center())
             self._initialized = True
 
@@ -194,8 +178,14 @@ class QImageGraphicsView(QtW.QGraphicsView):
             zoom_factor = factor
         else:
             zoom_factor = 1 / factor
-        self.scale(zoom_factor, zoom_factor)
+        self.scale_and_update_handles(zoom_factor)
         return super().wheelEvent(event)
+
+    def scale_and_update_handles(self, factor: float):
+        """Scale the view and update the selection handle sizes."""
+        self.scale(factor, factor)
+        tr = self.transform()
+        self._selection_handles.update_handle_size(tr.m11())
 
     def auto_range(self):
         return self.fitInView(self.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
@@ -299,7 +289,6 @@ class QImageGraphicsView(QtW.QGraphicsView):
 
     def _mouse_move_pan_zoom(self, event: QtGui.QMouseEvent):
         delta = event.pos() - self._pos_drag_prev
-        # delta = self.mapToScene(event.pos()) - self.mapToScene(self._pos_drag_prev)
         self.move_items_by(delta.x(), delta.y())
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent):

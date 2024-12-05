@@ -15,8 +15,8 @@ class QDimsSlider(QtW.QWidget):
         layout.setContentsMargins(2, 2, 2, 2)
         layout.setSpacing(2)
 
-    def _refer_array(self, arr: ArrayWrapper):
-        ndim_rem = arr.ndim - 2
+    def _refer_array(self, arr: ArrayWrapper, is_rgb: bool = False):
+        ndim_rem = arr.ndim - 3 if is_rgb else arr.ndim - 2
         nsliders = len(self._sliders)
         if nsliders > ndim_rem:
             for i in range(ndim_rem, nsliders):
@@ -27,9 +27,13 @@ class QDimsSlider(QtW.QWidget):
             for i in range(nsliders, ndim_rem):
                 self._make_slider(arr.shape[i])
         # update axis names
+        _width_max = 0
         for aname, slider in zip(arr.axis_names(), self._sliders):
             slider.setText(aname)
-            slider.font()
+            width = slider._label.fontMetrics().width(aname)
+            _width_max = max(_width_max, width)
+        for slider in self._sliders:
+            slider._label.setFixedWidth(_width_max)
 
     def _make_slider(self, size: int) -> _QAxisSlider:
         slider = _QAxisSlider()

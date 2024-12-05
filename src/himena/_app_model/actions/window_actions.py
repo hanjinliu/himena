@@ -11,7 +11,6 @@ from himena.consts import MenuId
 from himena.widgets import MainWindow
 from himena.types import (
     ClipboardDataModel,
-    Parametric,
     WindowState,
     WidgetDataModel,
 )
@@ -85,40 +84,6 @@ def duplicate_window(model: WidgetDataModel) -> WidgetDataModel:
     if model.title is not None:
         update["title"] = _utils.add_title_suffix(model.title)
     return model.model_copy(update=update)
-
-
-@ACTIONS.append_from_fn(
-    id="view-data-in",
-    title="View data in ...",
-    enablement=_ctx.is_active_window_exportable,
-    menus=[{"id": MenuId.WINDOW, "group": EDIT_GROUP}],
-    keybindings=[{"primary": KeyMod.Alt | KeyCode.KeyV}],
-    need_function_callback=True,
-)
-def view_data_in(ui: MainWindow, model: WidgetDataModel) -> Parametric:
-    """View the internal data of the selected sub-window in other registered widget."""
-    from himena.plugins import configure_gui
-
-    choices: list[tuple[str, str]] = []
-    widget_classes, _ = ui._backend_main_window._list_widget_class(model.type)
-    for _, cls, _ in widget_classes:
-        name = f"{cls.__module__}.{cls.__name__}"
-        display_name = _utils.get_display_name(cls)
-        choices.append((display_name, name))
-
-    @configure_gui(
-        plugin={
-            "choices": choices,
-            "widget_type": "RadioButtons",
-            "value": choices[0][1],
-        },
-        title="Choose a widget ...",
-        show_parameter_labels=False,
-    )
-    def choose_a_widget(plugin: str) -> WidgetDataModel:
-        return model.with_open_plugin(plugin, save_behavior_override=NoNeedToSave())
-
-    return choose_a_widget
 
 
 @ACTIONS.append_from_fn(

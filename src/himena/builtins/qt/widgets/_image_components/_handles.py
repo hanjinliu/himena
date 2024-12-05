@@ -1,5 +1,4 @@
 from __future__ import annotations
-import logging
 from typing import TYPE_CHECKING
 from psygnal import Signal
 from qtpy import QtWidgets as QtW, QtCore, QtGui
@@ -16,9 +15,7 @@ from ._roi_items import (
 )
 
 if TYPE_CHECKING:
-    from ._graphics_view import QImageGraphicsView, QImageGraphicsScene
-
-_LOGGER = logging.getLogger(__name__)
+    from ._graphics_view import QImageGraphicsView, QBaseGraphicsScene
 
 
 class QHandleRect(QtW.QGraphicsRectItem):
@@ -50,6 +47,11 @@ class QHandleRect(QtW.QGraphicsRectItem):
         w, h = self.rect().width(), self.rect().height()
         self.setRect(x - w / 2, y - h / 2, w, h)
 
+    def setSize(self, size: float):
+        """Set the size of the rect."""
+        x, y = self.center().x(), self.center().y()
+        self.setRect(x - size / 2, y - size / 2, size, size)
+
     def translate(self, dx: float, dy: float):
         self.setRect(self.rect().translated(dx, dy))
 
@@ -77,12 +79,8 @@ class QHandleRect(QtW.QGraphicsRectItem):
     def view(self) -> QImageGraphicsView:
         return self.scene().views()[0]
 
-    def scene(self) -> QImageGraphicsScene:
+    def scene(self) -> QBaseGraphicsScene:
         return super().scene()
-
-    # def paint(self, painter: QtGui.QPainter, option: QtW.QStyleOptionGraphicsItem, widget: QtWidgets.QWidget | None):
-
-    #     super().paint(painter, option, widget)
 
 
 class RoiSelectionHandles:
@@ -117,6 +115,11 @@ class RoiSelectionHandles:
         if color:
             handle.setColor(color)
         return handle
+
+    def update_handle_size(self, scale: float):
+        self._handle_size = 4 / scale
+        for handle in self._handles:
+            handle.setSize(self._handle_size)
 
     def translate(self, dx: float, dy: float):
         for handle in self._handles:

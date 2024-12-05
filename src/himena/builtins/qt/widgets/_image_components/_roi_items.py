@@ -175,6 +175,7 @@ class QPointRoiBase(QRoi):
         super().__init__(parent)
         self._pen = QtGui.QPen(QtGui.QColor(0, 0, 0), 2)
         self._pen.setCosmetic(True)
+        self._pen.setJoinStyle(QtCore.Qt.PenJoinStyle.MiterJoin)
         self._brush = QtGui.QBrush(QtGui.QColor(225, 225, 0))
         self._size = 8
         symbol_square = QtGui.QPainterPath()

@@ -54,16 +54,11 @@ def crop_array(model: WidgetDataModel) -> WidgetDataModel:
     types=StandardType.IMAGE,
     menus=["tools/image"],
     command_id="builtins:crop-image",
+    keybindings=["Ctrl+Shift+X"],
 )
 def crop_image(model: WidgetDataModel) -> WidgetDataModel:
     """Crop the image."""
-    if not isinstance(meta := model.metadata, ImageMeta):
-        raise ValueError(
-            "This function is only applicable to models with ImageMeta, but got "
-            f"metadata of type {type(meta).__name__}."
-        )
-    if not (roi := meta.current_roi):
-        raise ValueError("ROI selection is required for this operation.")
+    roi, meta = _get_current_roi_and_meta(model)
     arr = wrap_array(model.value)
     if isinstance(roi, ImageRoi2D):
         bbox = roi.bbox().adjust_to_int()
@@ -89,3 +84,14 @@ def _get_current_array_2d(model: WidgetDataModel) -> "np.ndarray":
         raise ValueError("The `current_indices` attribute is not set.")
     arr = wrap_array(model.value)
     return arr.get_slice(tuple(indices))
+
+
+def _get_current_roi_and_meta(model: WidgetDataModel) -> tuple[ImageRoi2D, ImageMeta]:
+    if not isinstance(meta := model.metadata, ImageMeta):
+        raise ValueError(
+            "This function is only applicable to models with ImageMeta, but got "
+            f"metadata of type {type(meta).__name__}."
+        )
+    if not (roi := meta.current_roi):
+        raise ValueError("ROI selection is required for this operation.")
+    return roi, meta

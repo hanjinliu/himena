@@ -1,8 +1,6 @@
 import csv
 from io import StringIO
-import re
-import html
-from himena.plugins import register_function, configure_gui
+from himena.plugins import register_function
 from himena.types import Parametric, WidgetDataModel
 from himena.standards.model_meta import TextMeta
 from himena.consts import StandardType
@@ -26,80 +24,6 @@ def run_script(model: WidgetDataModel[str]):
     else:
         raise ValueError("Unknown language.")
     return None
-
-
-@register_function(
-    types=StandardType.TEXT,
-    menus=["tools/text"],
-    title="Convert text to table ...",
-    command_id="builtins:text-to-table",
-)
-def text_to_table(model: WidgetDataModel[str]) -> Parametric:
-    """Convert text to a table-type widget."""
-
-    @configure_gui(
-        title="Convert text to table ...",
-    )
-    def run(separator: str = ",") -> WidgetDataModel:
-        lines = model.value.splitlines()
-        table = []
-        sep = separator.encode().decode("unicode_escape")
-        for line in lines:
-            table.append(line.split(sep))
-        return WidgetDataModel(
-            value=table,
-            type=StandardType.TABLE,
-            title=model.title,
-            extension_default=".csv",
-        )
-
-    return run
-
-
-@register_function(
-    types=StandardType.TEXT,
-    menus=["tools/text"],
-    title="Convert text to array ...",
-    command_id="builtins:text-to-array",
-)
-def text_to_array(model: WidgetDataModel[str]) -> WidgetDataModel:
-    """Convert text to an array-type widget using numpy."""
-    import numpy as np
-    from io import StringIO
-
-    text = model.value
-    arr = np.loadtxt(StringIO(text), delimiter=",")
-    return WidgetDataModel(
-        value=arr,
-        type=StandardType.ARRAY,
-        title=model.title,
-        extension_default=".npy",
-    )
-
-
-@register_function(
-    types=StandardType.TEXT,
-    menus=["tools/text"],
-    title="Convert text to DataFrame ...",
-    command_id="builtins:text-to-dataframe",
-)
-def text_to_dataframe(model: WidgetDataModel[str]) -> Parametric:
-    """Convert text to an dataframe-type widget."""
-    from io import StringIO
-    from himena._data_wrappers import list_installed_dataframe_packages, read_csv
-
-    @configure_gui(module={"choices": list_installed_dataframe_packages()})
-    def convert_text_to_dataframe(module) -> WidgetDataModel[str]:
-        buf = StringIO(model.value)
-        df = read_csv(module, buf)
-        return WidgetDataModel(
-            value=df,
-            title=model.title,
-            type=StandardType.DATAFRAME,
-            extension_default=".csv",
-        )
-
-    return convert_text_to_dataframe
 
 
 @register_function(
@@ -146,21 +70,6 @@ def change_encoding(model: WidgetDataModel[str]) -> Parametric:
         return out
 
     return change_encoding_data
-
-
-@register_function(
-    types=StandardType.HTML,
-    menus=["tools/text"],
-    command_id="builtins:to-plain-text",
-)
-def to_plain_text(model: WidgetDataModel[str]) -> WidgetDataModel:
-    """Convert HTML to plain text."""
-    html_pattern = re.compile(r"<.*?>")
-    header_pattern = re.compile(r"<head>.*?</head>", re.DOTALL)
-    value = html.unescape(
-        html_pattern.sub("", header_pattern.sub("", model.value).replace("<br>", "\n"))
-    )
-    return model.with_value(value)
 
 
 @register_function(

@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import importlib
+import csv
 import json
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from himena.types import WidgetDataModel
-from himena.standards.model_meta import TableMeta, TextMeta
+from himena.standards.model_meta import ImageMeta, TableMeta, TextMeta
 from himena.consts import StandardType
 
 if TYPE_CHECKING:
@@ -52,20 +53,36 @@ def default_image_reader(file_path: Path) -> WidgetDataModel:
     from PIL import Image
 
     arr = np.array(Image.open(file_path))
+    is_rgb = arr.ndim == 3 and arr.shape[2] in (3, 4)
 
     return WidgetDataModel(
         value=arr,
         type=StandardType.IMAGE,
         extension_default=file_path.suffix,
+        metadata=ImageMeta(is_rgb=is_rgb, interpolation="linear"),
     )
 
 
 def _read_txt_as_numpy(file_path: Path, delimiter: str):
-    arr = np.loadtxt(
-        file_path,
-        dtype=np.dtypes.StringDType(),
-        delimiter=delimiter,
-    )
+    try:
+        arr = np.loadtxt(
+            file_path,
+            dtype=np.dtypes.StringDType(),
+            delimiter=delimiter,
+        )
+    except ValueError:
+        # If the file has different number of columns in each row, np.loadtxt fails.
+        with file_path.open("r") as f:
+            reader = csv.reader(f, delimiter=delimiter)
+            ncols = 0
+            rows = []
+            for row in reader:
+                rows.append(row)
+                ncols = max(ncols, len(row))
+            arr = np.zeros((len(rows), ncols), dtype=np.dtypes.StringDType())
+            for i, row in enumerate(rows):
+                arr[i, : len(row)] = row
+
     return WidgetDataModel(
         value=arr,
         type=StandardType.TABLE,

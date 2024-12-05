@@ -522,3 +522,59 @@ def _tooltip_from_func(func: Callable) -> str | None:
     else:
         tooltip = None
     return tooltip
+
+
+@overload
+def register_conversion_rule(
+    func: _F,
+    type_from: str,
+    type_to: str,
+    *,
+    keybindings: KeyBindingsType | None = None,
+    command_id: str | None = None,
+) -> _F: ...
+@overload
+def register_conversion_rule(
+    type_from: str,
+    type_to: str,
+    /,
+    *,
+    keybindings: KeyBindingsType | None = None,
+    command_id: str | None = None,
+) -> Callable[[_F], _F]: ...
+
+
+def register_conversion_rule(*args, **kwargs):
+    if len(args) == 0:
+        no_func = True
+    else:
+        if isinstance(args[0], str):
+            return register_conversion_rule(None, *args, **kwargs)
+        no_func = args[0] is None
+
+    def inner(func):
+        action = make_conversion_rule(func, *args, **kwargs)
+        AppActionRegistry.instance().add_action(action)
+        return func
+
+    return inner if no_func else inner(args[0])
+
+
+def make_conversion_rule(
+    func: Callable,
+    type_from: str,
+    type_to: str,
+    *,
+    keybindings: KeyBindingsType | None = None,
+    command_id: str | None = None,
+):
+    kbs = _normalize_keybindings(keybindings)
+    _id = _command_id_from_func(func, command_id)
+    return Action(
+        id=_id,
+        title=f"Convert {type_from} to {type_to}",
+        tooltip=_tooltip_from_func(func),
+        callback=_utils.make_function_callback(func, command_id=_id),
+        menus=[{"id": f"/model_menu:{type_from}/convert", "group": "conversion"}],
+        keybindings=kbs,
+    )

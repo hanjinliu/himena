@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
-from superqt import QLabeledDoubleRangeSlider
 import numpy as np
 from cmap import Colormap
 
@@ -20,6 +19,7 @@ from himena.builtins.qt.widgets._image_components import (
     QRoi,
     QDimsSlider,
     QRoiButtons,
+    QHistogramView,
 )
 
 if TYPE_CHECKING:
@@ -89,6 +89,7 @@ class QDefaultImageView(QtW.QWidget):
         self._colormaps = [Colormap("gray")]
         self._minmax: tuple[float, float] = (0, 255)
         self._current_image_slice = None
+        self._is_rgb = False
 
     @protocol_override
     @classmethod
@@ -99,8 +100,11 @@ class QDefaultImageView(QtW.QWidget):
     def update_model(self, model: WidgetDataModel):
         arr = wrap_array(model.value)
         ndim_rem = arr.ndim - 2
-        if arr.shape[-1] in (3, 4) and ndim_rem > 0:
+        if arr.shape[-1] in (3, 4) and arr.ndim > 2:
             ndim_rem -= 1
+            self._is_rgb = True
+        else:
+            self._is_rgb = False
 
         sl_0 = (0,) * ndim_rem
         img_slice = arr.get_slice(sl_0)
@@ -111,22 +115,26 @@ class QDefaultImageView(QtW.QWidget):
         self._minmax = _clim = _guess_clim(arr, img_slice)
         if self._minmax[0] == self._minmax[1]:
             self._minmax = self._minmax[0], self._minmax[0] + 1
-        self._control._clim_slider.setMinimum(self._minmax[0])
-        self._control._clim_slider.setMaximum(self._minmax[1])
-        with qsignal_blocker(self._control._clim_slider):
-            self._control._clim_slider.setValue(_clim)
         self._image_graphics_view.set_array(self.as_image_array(img_slice, _clim))
         self._image_graphics_view.update()
+        if arr.dtype.kind in "uib":
+            self._control._histogram.setValueFormat(".0f")
+        else:
+            self._control._histogram.setValueFormat(".2g")
         self._clim = _clim
 
-        self._dims_slider._refer_array(arr)
+        self._dims_slider._refer_array(arr, is_rgb=self._is_rgb)
         self._arr = arr
 
         self._set_image_slice(img_slice, self._clim)
-        if img_slice.dtype.kind in "cf":
-            self._control._clim_slider.setDecimals(2)
-        else:
-            self._control._clim_slider.setDecimals(0)
+
+        if isinstance(meta := model.metadata, model_meta.ImageMeta):
+            if meta.rois:
+                self._roi_list = meta.rois
+            if meta.interpolation == "linear":
+                self._control._interpolation_check_box.setChecked(True)
+            # TODO: consider other attributes
+        return None
 
     @protocol_override
     def to_model(self) -> WidgetDataModel[NDArray[np.uint8]]:
@@ -154,6 +162,7 @@ class QDefaultImageView(QtW.QWidget):
                 contrast_limits=clim,
                 rois=self._roi_list,
                 current_roi=current_roi,
+                is_rgb=self._is_rgb,
             ),
         )
 
@@ -206,8 +215,11 @@ class QDefaultImageView(QtW.QWidget):
         self._set_image_slice(img_slice, self._clim)
 
     def _set_image_slice(self, img: NDArray[np.number], clim: tuple[float, float]):
-        self._image_graphics_view.set_array(self.as_image_array(img, clim))
-        self._control._histogram.set_hist_for_array(img, clim, self._minmax)
+        with qsignal_blocker(self._control._histogram):
+            self._image_graphics_view.set_array(self.as_image_array(img, clim))
+            self._control._histogram.set_hist_for_array(
+                img, clim, self._minmax, is_rgb=self._is_rgb
+            )
         self._current_image_slice = img
 
     def _interpolation_changed(self, checked: bool):
@@ -215,7 +227,11 @@ class QDefaultImageView(QtW.QWidget):
 
     def _clim_changed(self, clim: tuple[float, float]):
         self._clim = clim
-        self._set_image_slice(self._current_image_slice, clim)
+        with qsignal_blocker(self._control._histogram):
+            self._image_graphics_view.set_array(
+                self.as_image_array(self._current_image_slice, clim),
+                clear_rois=False,
+            )
 
     def _auto_contrast(self):
         if self._arr is None:
@@ -224,8 +240,7 @@ class QDefaultImageView(QtW.QWidget):
         img_slice = self._arr.get_slice(sl)
         min_, max_ = img_slice.min(), img_slice.max()
         self._clim = min_, max_
-        with qsignal_blocker(self._control._clim_slider):
-            self._control._clim_slider.setValue(self._clim)
+        self._control._histogram.set_clim(self._clim)
         self._minmax = min(self._minmax[0], min_), max(self._minmax[1], max_)
         self._set_image_slice(img_slice, self._clim)
 
@@ -265,7 +280,6 @@ class QImageViewControl(QtW.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
 
-        self._histogram = _QHistogram()
         spacer = QtW.QWidget()
         spacer.setSizePolicy(
             QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Expanding
@@ -274,11 +288,10 @@ class QImageViewControl(QtW.QWidget):
         self._auto_contrast_btn = QtW.QPushButton("Auto")
         self._auto_contrast_btn.clicked.connect(self.auto_contrast_requested.emit)
         self._auto_contrast_btn.setToolTip("Auto contrast")
-        self._clim_slider = _QContrastRangeSlider()
-        self._clim_slider.valueChanged.connect(self.clim_changed.emit)
 
+        self._histogram = QHistogramView()
         self._histogram.setFixedWidth(120)
-        self._clim_slider.setFixedWidth(120)
+        self._histogram.clim_changed.connect(self.clim_changed.emit)
 
         self._interpolation_check_box = QLabeledToggleSwitch()
         self._interpolation_check_box.setText("smooth")
@@ -291,67 +304,8 @@ class QImageViewControl(QtW.QWidget):
         layout.addWidget(spacer)
         layout.addWidget(self._hover_info)
         layout.addWidget(self._auto_contrast_btn)
-        layout.addWidget(self._clim_slider)
         layout.addWidget(self._histogram)
         layout.addWidget(self._interpolation_check_box)
-
-
-class _QContrastRangeSlider(QLabeledDoubleRangeSlider):
-    def __init__(self):
-        super().__init__(QtCore.Qt.Orientation.Horizontal)
-        self.setToolTip("Contrast limits")
-        self.setEdgeLabelMode(self.EdgeLabelMode.NoLabel)
-        self.setHandleLabelPosition(self.LabelPosition.LabelsAbove)
-        self.setRange(0, 255)
-
-
-class _QHistogram(_QImageLabel):
-    def __init__(self):
-        super().__init__(np.zeros((64, 256), dtype=np.uint8))
-        self.setToolTip("Histogram of the image intensity")
-
-    def set_hist_for_array(
-        self,
-        arr: NDArray[np.number],
-        clim: tuple[float, float],
-        minmax: tuple[float, float],
-    ):
-        _min, _max = minmax
-        nbin = 128
-        h0 = 64
-        if _max > _min:
-            normed = ((arr - _min) / (_max - _min) * nbin).astype(np.uint8) // 2
-            hist = np.bincount(normed.ravel(), minlength=nbin)
-            hist = hist / hist.max() * h0
-            indices = np.repeat(np.arange(h0)[::-1, None], nbin, axis=1)
-            alpha = np.zeros((h0, nbin), dtype=np.uint8)
-            alpha[indices < hist[None]] = 255
-            colors = np.zeros((h0, nbin, 3), dtype=np.uint8)
-            hist_image = np.concatenate([colors, alpha[:, :, None]], axis=2)
-            cmin_x = (clim[0] - _min) / (_max - _min) * (nbin - 2) + 1
-            cmax_x = (clim[1] - _min) / (_max - _min) * (nbin - 2)
-            hist_image[:, int(cmin_x)] = (255, 0, 0, 255)
-            hist_image[:, int(cmax_x)] = (255, 0, 0, 255)
-        else:
-            hist_image = np.zeros((h0, nbin, 4), dtype=np.uint8)
-        image = QtGui.QImage(
-            hist_image,
-            hist_image.shape[1],
-            hist_image.shape[0],
-            QtGui.QImage.Format.Format_RGBA8888,
-        )
-        self._pixmap_orig = QtGui.QPixmap.fromImage(image)
-        self._update_pixmap()
-
-    def _update_pixmap(self):
-        sz = self.size()
-        self.setPixmap(
-            self._pixmap_orig.scaled(
-                sz,
-                QtCore.Qt.AspectRatioMode.IgnoreAspectRatio,
-                self._transformation,
-            )
-        )
 
 
 def _guess_clim(
