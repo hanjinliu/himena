@@ -3,13 +3,29 @@ from __future__ import annotations
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from psygnal import Signal
 import numpy as np
-from typing import Iterable, Iterator, TYPE_CHECKING
+from typing import Iterable, Iterator
 
 from himena.standards import roi
 from himena.consts import MonospaceFontFamily
 
-if TYPE_CHECKING:
-    pass
+
+def from_standard_roi(r: roi.ImageRoi, pen: QtGui.QPen) -> QRoi:
+    if isinstance(r, roi.LineRoi):
+        return QLineRoi(r.x1, r.y1, r.x2, r.y2).withPen(pen)
+    elif isinstance(r, roi.RectangleRoi):
+        return QRectangleRoi(r.x, r.y, r.width, r.height).withPen(pen)
+    elif isinstance(r, roi.EllipseRoi):
+        return QEllipseRoi(r.x, r.y, r.width, r.height).withPen(pen)
+    elif isinstance(r, roi.SegmentedLineRoi):
+        return QSegmentedLineRoi(r.xs, r.ys).withPen(pen)
+    elif isinstance(r, roi.PolygonRoi):
+        return QPolygonRoi(r.xs, r.ys).withPen(pen)
+    elif isinstance(r, roi.PointRoi):
+        return QPointRoi(r.x, r.y).withPen(pen)
+    elif isinstance(r, roi.PointsRoi):
+        return QPointsRoi(r.xs, r.ys).withPen(pen)
+    else:
+        raise ValueError(f"Unsupported ROI type: {type(roi)}")
 
 
 class QRoi(QtW.QGraphicsItem):

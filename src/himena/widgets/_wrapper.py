@@ -514,7 +514,10 @@ class ParametricWindow(SubWindow[_W]):
             _LOGGER.warning(f"Error in preview callback: {e}")
             return None
         if not isinstance(return_value, WidgetDataModel):
-            raise NotImplementedError("Preview is only supported for WidgetDataModel")
+            raise NotImplementedError(
+                "Preview is only supported for WidgetDataModel but the return value "
+                f"was {type(return_value)}"
+            )
         if prev := self._get_preview_window():
             prev.update_model(return_value)
         else:

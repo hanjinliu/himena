@@ -144,6 +144,7 @@ class WidgetDataModel(GenericModel[_T]):
         *,
         title: str | None = None,
         metadata: object | None = _void,
+        save_behavior_override: SaveBehavior | _Void | None = _void,
     ) -> "WidgetDataModel[_U]":
         """Return a model with the new value."""
         update = {"value": value}
@@ -153,6 +154,8 @@ class WidgetDataModel(GenericModel[_T]):
             update["metadata"] = metadata
         if title is not None:
             update["title"] = title
+        if save_behavior_override is not _void:
+            update["save_behavior_override"] = save_behavior_override
         update.update(
             method=None,
             force_open_with=None,

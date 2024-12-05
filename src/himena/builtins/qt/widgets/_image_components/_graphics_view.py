@@ -18,6 +18,7 @@ from ._roi_items import (
     QRectangleRoi,
     QEllipseRoi,
     QSegmentedLineRoi,
+    from_standard_roi,
 )
 from ._handles import QHandleRect, RoiSelectionHandles
 from himena.qt._utils import ndarray_to_qimage
@@ -126,6 +127,16 @@ class QImageGraphicsView(QBaseGraphicsView):
             for item in self._roi_items:
                 scene.removeItem(item)
             self._roi_items.clear()
+            if not self._is_current_roi_item_not_registered:
+                self.remove_current_item()
+
+    def set_rois(self, rois: list):
+        """Set ROIs to display."""
+        for roi in rois:
+            qroi = from_standard_roi(roi, self._roi_pen)
+            self.scene().addItem(qroi)
+            qroi.setVisible(self._is_rois_visible)
+            self._roi_items.append(qroi)
 
     def mode(self) -> Mode:
         return self._mode
@@ -278,6 +289,7 @@ class QImageGraphicsView(QBaseGraphicsView):
                 self._selection_handles.connect_rect(self._current_roi_item)
             elif self._mode is Mode.ROI_POINT:
                 pass
+
         elif self._mode is Mode.SELECT:
             self.select_item_at(self.mapToScene(event.pos()))
             self.scene().setGrabSource(self)
@@ -398,7 +410,7 @@ class QImageGraphicsView(QBaseGraphicsView):
 
     def set_current_roi(self, item: QtW.QGraphicsItem):
         self._current_roi_item = item
-        self._is_current_roi_item_just_added = True
+        self._is_current_roi_item_not_registered = True
         self.scene().addItem(item)
         _LOGGER.info(f"Set current ROI item to {item}")
 

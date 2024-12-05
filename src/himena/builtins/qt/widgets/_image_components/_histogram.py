@@ -238,7 +238,6 @@ class QHistogramItem(QtW.QGraphicsPathItem):
     def __init__(self):
         super().__init__()
         self._hist_path = QtGui.QPainterPath()
-        self._nbin = 128
         self._hist_brush = QtGui.QBrush(QtGui.QColor(100, 100, 100))
         self.setPen(QtGui.QPen(QtGui.QColor(0, 0, 0, 0)))
 
@@ -252,12 +251,20 @@ class QHistogramItem(QtW.QGraphicsPathItem):
         minmax: tuple[float, float],
     ):
         _min, _max = minmax
+        if arr.dtype in ("uint8", "uint8"):
+            _nbin = 64
+        else:
+            _nbin = 128
         # draw histogram
-        if _max > _min:
-            normed = ((arr - _min) / (_max - _min) * self._nbin).astype(np.uint8)
-            hist = np.bincount(normed.ravel(), minlength=self._nbin)
+        if arr.dtype.kind == "b":
+            edges = np.array([0, 1])
+            frac_true = np.sum(arr) / arr.size
+            hist = np.array([1 - frac_true, frac_true])
+        elif _max > _min:
+            normed = ((arr - _min) / (_max - _min) * _nbin).astype(np.uint8)
+            hist = np.bincount(normed.ravel(), minlength=_nbin)
             hist = hist / hist.max()
-            edges = np.linspace(_min, _max, self._nbin + 1)
+            edges = np.linspace(_min, _max, _nbin + 1)
         else:
             edges = np.array([_min, _max])
             hist = np.zeros(1)

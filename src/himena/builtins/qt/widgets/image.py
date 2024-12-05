@@ -12,50 +12,16 @@ from himena.qt._utils import qsignal_blocker
 from himena.types import WidgetDataModel
 from himena.plugins import protocol_override
 from himena._data_wrappers import ArrayWrapper, wrap_array
-from himena.qt._magicgui._toggle_switch import QLabeledToggleSwitch
-from himena.qt._utils import ndarray_to_qimage
 from himena.builtins.qt.widgets._image_components import (
     QImageGraphicsView,
     QRoi,
     QDimsSlider,
     QRoiButtons,
-    QHistogramView,
+    QImageViewControl,
 )
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
-
-# The default image viewer widget that implemented with 2D slicing on nD array,
-# adjusting contrast, and interpolation.
-
-
-class _QImageLabel(QtW.QLabel):
-    def __init__(self, val):
-        super().__init__()
-        self._transformation = QtCore.Qt.TransformationMode.SmoothTransformation
-        self.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        self.setSizePolicy(
-            QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Expanding
-        )
-        self.set_array(val)
-
-    def set_array(self, val: NDArray[np.uint8]):
-        image = ndarray_to_qimage(val)
-        self._pixmap_orig = QtGui.QPixmap.fromImage(image)
-        self._update_pixmap()
-
-    def _update_pixmap(self):
-        sz = self.size()
-        self.setPixmap(
-            self._pixmap_orig.scaled(
-                sz,
-                QtCore.Qt.AspectRatioMode.KeepAspectRatio,
-                self._transformation,
-            )
-        )
-
-    def resizeEvent(self, ev: QtGui.QResizeEvent) -> None:
-        self._update_pixmap()
 
 
 class QDefaultImageView(QtW.QWidget):
@@ -90,6 +56,7 @@ class QDefaultImageView(QtW.QWidget):
         self._minmax: tuple[float, float] = (0, 255)
         self._current_image_slice = None
         self._is_rgb = False
+        self._channel_axis: int | None = None
 
     @protocol_override
     @classmethod
@@ -99,6 +66,8 @@ class QDefaultImageView(QtW.QWidget):
     @protocol_override
     def update_model(self, model: WidgetDataModel):
         arr = wrap_array(model.value)
+        is_initialized = self._arr is not None
+        is_same_dimensionality = self._arr is not None and arr.ndim == self._arr.ndim
         ndim_rem = arr.ndim - 2
         if arr.shape[-1] in (3, 4) and arr.ndim > 2:
             ndim_rem -= 1
@@ -106,34 +75,54 @@ class QDefaultImageView(QtW.QWidget):
         else:
             self._is_rgb = False
 
-        sl_0 = (0,) * ndim_rem
+        # override widget state if metadata is available
+        axes = arr.axis_names()
+        check_smoothing = False
+        current_indices = None
+        self._arr = arr
+        if isinstance(meta := model.metadata, model_meta.ImageMeta):
+            # TODO: consider other attributes
+            if meta.rois:
+                self._roi_list = meta.rois
+            if meta.interpolation == "linear":
+                check_smoothing = True
+            if meta.axes:
+                axes = meta.axes
+            if meta.is_rgb:
+                self._is_rgb = True
+            if meta.channel_axis is not None:
+                self._channel_axis = meta.channel_axis
+            if meta.current_indices:
+                current_indices = meta.current_indices
+
+        if is_initialized and is_same_dimensionality:
+            sl_0 = self._dims_slider.value()
+        else:
+            sl_0 = (0,) * ndim_rem
         img_slice = arr.get_slice(sl_0)
         if img_slice.dtype.kind == "c":
             img_slice = np.abs(img_slice)  # complex to float
 
         # guess clim
         self._minmax = _clim = _guess_clim(arr, img_slice)
-        if self._minmax[0] == self._minmax[1]:
+        if self._is_rgb:
+            self._minmax = (0, 255)  # override for RGB images
+        elif self._minmax[0] == self._minmax[1]:
             self._minmax = self._minmax[0], self._minmax[0] + 1
-        self._image_graphics_view.set_array(self.as_image_array(img_slice, _clim))
-        self._image_graphics_view.update()
+
         if arr.dtype.kind in "uib":
             self._control._histogram.setValueFormat(".0f")
         else:
-            self._control._histogram.setValueFormat(".2g")
+            self._control._histogram.setValueFormat(".3g")
         self._clim = _clim
 
-        self._dims_slider._refer_array(arr, is_rgb=self._is_rgb)
-        self._arr = arr
-
         self._set_image_slice(img_slice, self._clim)
+        self._dims_slider._refer_array(arr, axes, is_rgb=self._is_rgb)
+        if current_indices is not None:
+            self._dims_slider.setValue(current_indices[: self._dims_slider.count()])
 
-        if isinstance(meta := model.metadata, model_meta.ImageMeta):
-            if meta.rois:
-                self._roi_list = meta.rois
-            if meta.interpolation == "linear":
-                self._control._interpolation_check_box.setChecked(True)
-            # TODO: consider other attributes
+        self._control._interpolation_check_box.setChecked(check_smoothing)
+        self._image_graphics_view.update()
         return None
 
     @protocol_override
@@ -220,6 +209,9 @@ class QDefaultImageView(QtW.QWidget):
             self._control._histogram.set_hist_for_array(
                 img, clim, self._minmax, is_rgb=self._is_rgb
             )
+            rois = self._roi_list.get_rois_on_slice(self._dims_slider.value())
+            self._image_graphics_view.set_rois(rois)
+
         self._current_image_slice = img
 
     def _interpolation_changed(self, checked: bool):
@@ -246,10 +238,10 @@ class QDefaultImageView(QtW.QWidget):
 
     def _on_roi_added(self, qroi: QRoi):
         roi = qroi.toRoi(indices=self._dims_slider.value())
-        self._roi_list.rois.append(roi)
+        self._roi_list.add_roi(roi)
 
     def _on_roi_removed(self, idx: int):
-        del self._roi_list.rois[idx]
+        del self._roi_list[idx]
 
     def _on_mode_changed(self, mode):
         self._image_graphics_view.switch_mode(mode)
@@ -262,50 +254,23 @@ class QDefaultImageView(QtW.QWidget):
         ny, nx, *_ = self._current_image_slice.shape
         if 0 <= iy < ny and 0 <= ix < nx:
             intensity = self._current_image_slice[int(y), int(x)]
-            self._control._hover_info.setText(
-                f"x={x:.1f}, y={y:.1f}, value={intensity}"
-            )
+            # NOTE: intensity could be an RGBA numpy array.
+            if isinstance(intensity, np.ndarray) or self._arr.dtype.kind == "b":
+                _int = str(intensity)
+            # TODO: complex array support
+            else:
+                fmt = self._control._histogram._line_low._value_fmt
+                _int = format(intensity, fmt)
+            self._control._hover_info.setText(f"x={x:.1f}, y={y:.1f}, value={_int}")
         else:
             self._control._hover_info.setText("")
 
+    # forward key events to image graphics view
+    def keyPressEvent(self, a0: QtGui.QKeyEvent | None) -> None:
+        return self._image_graphics_view.keyPressEvent(a0)
 
-class QImageViewControl(QtW.QWidget):
-    interpolation_changed = QtCore.Signal(bool)
-    clim_changed = QtCore.Signal(tuple)
-    auto_contrast_requested = QtCore.Signal()
-
-    def __init__(self):
-        super().__init__()
-        layout = QtW.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-
-        spacer = QtW.QWidget()
-        spacer.setSizePolicy(
-            QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Expanding
-        )
-
-        self._auto_contrast_btn = QtW.QPushButton("Auto")
-        self._auto_contrast_btn.clicked.connect(self.auto_contrast_requested.emit)
-        self._auto_contrast_btn.setToolTip("Auto contrast")
-
-        self._histogram = QHistogramView()
-        self._histogram.setFixedWidth(120)
-        self._histogram.clim_changed.connect(self.clim_changed.emit)
-
-        self._interpolation_check_box = QLabeledToggleSwitch()
-        self._interpolation_check_box.setText("smooth")
-        self._interpolation_check_box.setChecked(False)
-        self._interpolation_check_box.setMaximumHeight(36)
-        self._interpolation_check_box.toggled.connect(self.interpolation_changed.emit)
-
-        self._hover_info = QtW.QLabel()
-
-        layout.addWidget(spacer)
-        layout.addWidget(self._hover_info)
-        layout.addWidget(self._auto_contrast_btn)
-        layout.addWidget(self._histogram)
-        layout.addWidget(self._interpolation_check_box)
+    def keyReleaseEvent(self, a0: QtGui.QKeyEvent | None) -> None:
+        return self._image_graphics_view.keyReleaseEvent(a0)
 
 
 def _guess_clim(

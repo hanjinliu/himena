@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 from himena._data_wrappers._array import wrap_array
+from himena._descriptors import NoNeedToSave
 from himena.plugins import register_function
 from himena.standards.roi.core import ImageRoi2D
 from himena.types import WidgetDataModel, is_subtype
@@ -28,7 +29,9 @@ def duplicate_this_slice(model: WidgetDataModel) -> WidgetDataModel:
         meta_sliced = meta.model_copy(update=update)
     else:
         meta_sliced = ArrayMeta(current_indices=())
-    return model.with_value(arr_sliced, metadata=meta_sliced)
+    return model.with_value(
+        arr_sliced, metadata=meta_sliced, save_behavior_override=NoNeedToSave()
+    )
 
 
 @register_function(

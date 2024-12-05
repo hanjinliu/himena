@@ -4,6 +4,8 @@ from qtpy import QtWidgets as QtW, QtCore
 from himena._data_wrappers import ArrayWrapper
 from superqt import QLabeledSlider
 
+from himena.qt._utils import qsignal_blocker
+
 
 class QDimsSlider(QtW.QWidget):
     valueChanged = QtCore.Signal(tuple)
@@ -15,7 +17,16 @@ class QDimsSlider(QtW.QWidget):
         layout.setContentsMargins(2, 2, 2, 2)
         layout.setSpacing(2)
 
-    def _refer_array(self, arr: ArrayWrapper, is_rgb: bool = False):
+    def count(self) -> int:
+        """Number of sliders."""
+        return len(self._sliders)
+
+    def _refer_array(
+        self,
+        arr: ArrayWrapper,
+        axes: list[str],
+        is_rgb: bool = False,
+    ):
         ndim_rem = arr.ndim - 3 if is_rgb else arr.ndim - 2
         nsliders = len(self._sliders)
         if nsliders > ndim_rem:
@@ -28,7 +39,7 @@ class QDimsSlider(QtW.QWidget):
                 self._make_slider(arr.shape[i])
         # update axis names
         _width_max = 0
-        for aname, slider in zip(arr.axis_names(), self._sliders):
+        for aname, slider in zip(axes, self._sliders):
             slider.setText(aname)
             width = slider._label.fontMetrics().width(aname)
             _width_max = max(_width_max, width)
@@ -53,7 +64,9 @@ class QDimsSlider(QtW.QWidget):
         if len(value) != len(self._sliders):
             raise ValueError(f"Expected {len(self._sliders)} values, got {len(value)}")
         for slider, val in zip(self._sliders, value):
-            slider._slider.setValue(val)
+            with qsignal_blocker(slider):
+                slider._slider.setValue(val)
+        self.valueChanged.emit(value)
 
 
 class _QAxisSlider(QtW.QWidget):

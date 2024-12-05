@@ -124,6 +124,7 @@ def _is_parametric(a):
 def make_function_callback(
     f: _F,
     command_id: str,
+    title: str | None = None,
 ) -> _F:
     try:
         sig = inspect.signature(f)
@@ -175,14 +176,21 @@ def make_function_callback(
             out.__himena_model_track__ = ModelTrack(
                 sources=originals, command_id=command_id
             )
+            if title is not None:
+                cfg = getattr(out, _HIMENA_GUI_CONFIG, GuiConfiguration())
+                cfg.title = title
+                setattr(out, _HIMENA_GUI_CONFIG, cfg)
         return out
 
     return _new_f
 
 
+_HIMENA_GUI_CONFIG = "__himena_gui_config__"
+
+
 def get_gui_config(fn) -> dict[str, Any]:
     if isinstance(
-        config := getattr(fn, "__himena_gui_config__", None),
+        config := getattr(fn, _HIMENA_GUI_CONFIG, None),
         GuiConfiguration,
     ):
         out = config.model_dump()

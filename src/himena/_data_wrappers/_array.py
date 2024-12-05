@@ -150,7 +150,7 @@ class TensorstoreWrapper(ArrayWrapper["ts.TensorStore"]):
         return [str(_a) for _a in self._labels]
 
 
-class ArrayLikeWrapper(ArrayWrapper, Generic[ArrayT]):
+class ArrayLikeWrapper(ArrayWrapper[ArrayT]):
     """Wrapper for numpy duck array-like objects."""
 
     def get_slice(self, sl: tuple[int, ...]) -> np.ndarray:
@@ -169,7 +169,7 @@ class ArrayLikeWrapper(ArrayWrapper, Generic[ArrayT]):
         return self._arr.shape
 
 
-class DaskWrapper(ArrayWrapper["da.Array"]):
+class DaskWrapper(ArrayLikeWrapper["da.Array"]):
     """Wrapper for dask array objects."""
 
     def get_slice(self, sl: tuple[int, ...]) -> np.ndarray:

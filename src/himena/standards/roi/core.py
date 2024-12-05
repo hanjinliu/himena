@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import suppress
 import math
 from typing import TYPE_CHECKING, Any
 import numpy as np
@@ -257,7 +258,7 @@ class RoiListModel(BaseModel):
                 raise ValueError(f"Expected a dictionary for 'rois', got: {roi_dict!r}")
             roi_type = roi_dict.pop("type")
             roi = ImageRoi.construct(roi_type, roi_dict)
-            out.rois.append(roi)
+            out.add_roi(roi)
         return out
 
     def add_roi(self, roi: ImageRoi) -> None:
@@ -270,6 +271,18 @@ class RoiListModel(BaseModel):
         if indices not in self._slice_cache:
             self._slice_cache[indices] = []
         self._slice_cache[indices].append(roi)
+
+    def __getitem__(self, key: int) -> ImageRoi:
+        return self.rois[key]
+
+    def __delitem__(self, key: int) -> None:
+        roi = self.rois.pop(key)
+        if isinstance(roi, ImageRoiND):
+            indices = roi.indices
+        else:
+            indices = ()
+        with suppress(ValueError):
+            self._slice_cache[indices].remove(roi)
 
     def get_rois_on_slice(self, indices: tuple[int, ...]) -> list[ImageRoi]:
         """Return a list of ROIs on the given slice."""
