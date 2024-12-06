@@ -52,6 +52,7 @@ class QHistogramView(QBaseGraphicsView):
         clim: tuple[float, float],
         minmax: tuple[float, float],
         is_rgb: bool = False,
+        color: QtGui.QColor = QtGui.QColor(100, 100, 100),
     ):
         # coerce the number of histogram items
         n_hist = 3 if is_rgb else 1
@@ -71,7 +72,7 @@ class QHistogramView(QBaseGraphicsView):
                 item.with_brush(brush)
                 item.set_hist_for_array(arr[:, :, i], minmax)
         else:
-            brushes = [QtGui.QBrush(QtGui.QColor(100, 100, 100))]
+            brushes = [QtGui.QBrush(color)]
             self._hist_items[0].with_brush(brushes[0])
             self._hist_items[0].set_hist_for_array(arr, minmax)
 
@@ -197,14 +198,13 @@ class QClimLineItem(QtW.QGraphicsLineItem):
         if self._value_label.scene() is None:
             self.scene().addItem(self._value_label)
         self._value_label.setText(txt)
+        text_width = self._value_label.boundingRect().width()
         pos = QtCore.QPointF(self.value(), 0)
-        if pos.x() > self.scene().width() - 50:
-            text_width = self._value_label.boundingRect().width()
-            self._value_label.setPos(
-                self.mapToScene(pos) + QtCore.QPointF(-5 - text_width, 0)
-            )
+        if pos.x() + text_width / self._x_scale() > self._range[1]:
+            pos.setX(pos.x() - (text_width + 4) / self._x_scale())
         else:
-            self._value_label.setPos(self.mapToScene(pos) + QtCore.QPointF(5, 0))
+            pos.setX(pos.x() + 4 / self._x_scale())
+        self._value_label.setPos(self.mapToScene(pos))
         self._value_label.show()
 
     def _drag_event(self, event: QtW.QGraphicsSceneMouseEvent):
@@ -233,6 +233,15 @@ class QClimLineItem(QtW.QGraphicsLineItem):
     def scene(self) -> QBaseGraphicsScene:
         return super().scene()
 
+    def _x_scale(self) -> float:
+        view = self.scene().views()[0].transform()
+        return view.m11()
+
+    def boundingRect(self):
+        width = 10 / self._x_scale()
+        x = self.value()
+        return QtCore.QRectF(x - width / 2, 0, width, 1)
+
 
 class QHistogramItem(QtW.QGraphicsPathItem):
     def __init__(self):
@@ -253,8 +262,10 @@ class QHistogramItem(QtW.QGraphicsPathItem):
         _min, _max = minmax
         if arr.dtype in ("uint8", "uint8"):
             _nbin = 64
-        else:
+        elif arr.dtype in ("uint16", "int16"):
             _nbin = 128
+        else:
+            _nbin = 256
         # draw histogram
         if arr.dtype.kind == "b":
             edges = np.array([0, 1])

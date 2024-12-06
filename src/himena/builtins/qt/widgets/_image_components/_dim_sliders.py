@@ -44,7 +44,7 @@ class QDimsSlider(QtW.QWidget):
             width = slider._label.fontMetrics().width(aname)
             _width_max = max(_width_max, width)
         for slider in self._sliders:
-            slider._label.setFixedWidth(_width_max)
+            slider._label.setFixedWidth(_width_max + 10)
 
     def _make_slider(self, size: int) -> _QAxisSlider:
         slider = _QAxisSlider()
