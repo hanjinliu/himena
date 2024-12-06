@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
 from enum import Enum, auto
 import numpy as np
 from qtpy import QtWidgets as QtW, QtCore, QtGui
@@ -22,8 +21,6 @@ from ._roi_items import (
 from ._handles import QHandleRect, RoiSelectionHandles
 from himena.qt._utils import ndarray_to_qimage
 
-if TYPE_CHECKING:
-    pass
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -99,6 +96,7 @@ class QImageGraphicsView(QBaseGraphicsView):
         ### Attributes ###
         self._pos_drag_start: QtCore.QPoint | None = None
         self._pos_drag_prev: QtCore.QPoint | None = None
+        self._is_key_hold = False
         self._roi_items: list[QtW.QGraphicsItem] = []
         self._current_roi_item: QRoi | None = None
         self._is_current_roi_item_not_registered = False
@@ -368,9 +366,8 @@ class QImageGraphicsView(QBaseGraphicsView):
         return super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
-        if self._pos_drag_start == event.pos():
+        if self._pos_drag_start == event.pos():  # mouse click
             p0 = self.mapToScene(self._pos_drag_start)
-            # mouse click
             if (
                 self._mode in MULTIPOINT_ROI_MODES
                 and self._selection_handles.is_drawing_polygon()
@@ -450,8 +447,9 @@ class QImageGraphicsView(QBaseGraphicsView):
         _key = event.key()
         if _mods == Qt.KeyboardModifier.NoModifier:
             if _key == Qt.Key.Key_Space:
-                self._last_mode_before_key_hold = self._mode
-                self.set_mode(Mode.PAN_ZOOM)
+                if not self._is_key_hold:
+                    self._last_mode_before_key_hold = self._mode
+                    self.set_mode(Mode.PAN_ZOOM)
             elif _key == Qt.Key.Key_Up:
                 if item := self._current_roi_item:
                     item.translate(0, -1)
@@ -492,12 +490,16 @@ class QImageGraphicsView(QBaseGraphicsView):
             elif _key == Qt.Key.Key_T:
                 self.add_current_roi()
             elif _key in (Qt.Key.Key_Delete, Qt.Key.Key_Backspace):
-                self.remove_current_item(remove_from_list=True)
+                if not self._is_key_hold:
+                    self.remove_current_item(remove_from_list=True)
             elif _key == Qt.Key.Key_V:
-                self.toggle_roi_list_visibility()
+                if not self._is_key_hold:
+                    self.toggle_roi_list_visibility()
+        self._is_key_hold = True
         return super().keyPressEvent(event)
 
     def keyReleaseEvent(self, event: QtGui.QKeyEvent | None) -> None:
+        self._is_key_hold = False
         if event is None:
             return super().keyReleaseEvent(event)
         if event.key() == Qt.Key.Key_Space:

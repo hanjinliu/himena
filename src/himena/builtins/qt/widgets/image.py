@@ -14,6 +14,7 @@ from himena.standards import roi, model_meta
 from himena.qt._utils import qsignal_blocker
 from himena.types import WidgetDataModel
 from himena.plugins import protocol_override
+from himena.widgets import set_status_tip
 from himena._data_wrappers import ArrayWrapper, wrap_array
 from himena.builtins.qt.widgets._image_components import (
     QImageGraphicsView,
@@ -25,6 +26,7 @@ from himena.builtins.qt.widgets._image_components import (
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
+    from himena.builtins.qt.widgets._image_components._graphics_view import Mode
 
 
 class QDefaultImageView(QtW.QWidget):
@@ -137,21 +139,16 @@ class QDefaultImageView(QtW.QWidget):
             else:
                 ch.guess_clim(arr, self._channel_axis)
 
-        if arr.dtype.kind in "uib":
-            self._control._histogram.setValueFormat(".0f")
-        else:
-            self._control._histogram.setValueFormat(".3g")
+        self._control.update_for_state(
+            is_rgb=self._is_rgb,
+            nchannels=nchannels,
+            dtype=arr.dtype,
+        )
 
         img_slices = self._get_image_slices(sl_0)
         self._set_image_slices(img_slices)
 
         self._control._interpolation_check_box.setChecked(check_smoothing)
-        self._control.update_for_state(
-            is_rgb=self._is_rgb,
-            nchannels=nchannels,
-            is_complex=arr.dtype.kind == "c",
-        )
-        self._image_graphics_view.update()
         return None
 
     @protocol_override
@@ -207,8 +204,6 @@ class QDefaultImageView(QtW.QWidget):
         self._control._hover_info.setText("")
 
     def _composite_state(self) -> str:
-        if not self._control._channel_mode_combo.isVisible():
-            return "Mono"
         return self._control._channel_mode_combo.currentText()
 
     def _get_image_slices(
@@ -242,12 +237,10 @@ class QDefaultImageView(QtW.QWidget):
             return
         img_slices = self._get_image_slices(value)
         self._set_image_slices(img_slices)
-        rois = self._roi_list.get_rois_on_slice(value)
-        self._image_graphics_view.set_rois(rois)
 
     def _set_image_slice(self, img: NDArray[np.number], channel: ChannelInfo):
         idx = channel.channel_index or 0
-        alphas = self.prep_alphas(self._current_image_slices)
+        alphas = self.prep_alphas()
         with qsignal_blocker(self._control._histogram):
             self._image_graphics_view.set_array(
                 idx,
@@ -280,7 +273,8 @@ class QDefaultImageView(QtW.QWidget):
 
         This method is only used for updating the entire image slices.
         """
-        alphas = self.prep_alphas(imgs)
+        self._current_image_slices = imgs
+        alphas = self.prep_alphas()
         with qsignal_blocker(self._control._histogram):
             for i, (img, ch) in enumerate(zip(imgs, self._channels)):
                 self._image_graphics_view.set_array(
@@ -305,8 +299,6 @@ class QDefaultImageView(QtW.QWidget):
             rois = self._roi_list.get_rois_on_slice(self._dims_slider.value())
             self._image_graphics_view.set_rois(rois)
 
-        self._current_image_slices = imgs
-
     def _interpolation_changed(self, checked: bool):
         self._image_graphics_view.setSmoothing(checked)
 
@@ -314,7 +306,7 @@ class QDefaultImageView(QtW.QWidget):
         ch = self.current_channel()
         ch.clim = clim
         idx = ch.channel_index or 0
-        alphas = self.prep_alphas(self._current_image_slices)
+        alphas = self.prep_alphas()
         with qsignal_blocker(self._control._histogram):
             self._image_graphics_view.set_array(
                 idx,
@@ -348,11 +340,10 @@ class QDefaultImageView(QtW.QWidget):
         if img_slice.dtype.kind == "c":
             img_slice = self._control.complex_transform(img_slice)
         min_, max_ = img_slice.min(), img_slice.max()
-        clim = min_, max_
         ch = self.current_channel(sl)
-        ch.clim = clim
+        ch.clim = (min_, max_)
         ch.minmax = min(ch.minmax[0], min_), max(ch.minmax[1], max_)
-        self._control._histogram.set_clim(clim)
+        self._control._histogram.set_clim((min_, max_))
         self._set_image_slice(img_slice, ch)
 
     def _on_roi_added(self, qroi: QRoi):
@@ -362,8 +353,12 @@ class QDefaultImageView(QtW.QWidget):
     def _on_roi_removed(self, idx: int):
         del self._roi_list[idx]
 
-    def _on_roi_mode_changed(self, mode):
+    def _on_roi_mode_changed(self, mode: Mode):
         self._image_graphics_view.switch_mode(mode)
+        mode_name = mode.name.replace("_", " ")
+        if mode_name.startswith("ROI "):
+            mode_name = mode_name[4:]
+        set_status_tip(f"Switched to {mode_name} mode.")
 
     def _reset_image(self):
         imgs = self._get_image_slices(self._dims_slider.value())
@@ -403,7 +398,8 @@ class QDefaultImageView(QtW.QWidget):
     def keyReleaseEvent(self, a0: QtGui.QKeyEvent | None) -> None:
         return self._image_graphics_view.keyReleaseEvent(a0)
 
-    def prep_alphas(self, imgs: list[NDArray[np.number] | None]) -> list[int]:
+    def prep_alphas(self) -> list[int]:
+        imgs = self._current_image_slices
         alphas = [255] * len(self._channels)
         if self._composite_state() == "Comp.":
             first_img_idx = None

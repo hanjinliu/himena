@@ -44,6 +44,7 @@ class QImageViewControl(QtW.QWidget):
         self._complex_mode_combo = QtW.QComboBox()
         self._complex_mode_combo.addItems(["Real", "Imag", "Abs", "Log Abs", "Phase"])
         self._complex_mode_combo.setCurrentIndex(2)
+        self._complex_mode_combo.setToolTip("Method to display complex data")
         self._complex_mode_old = "Abs"
         self._complex_mode_combo.currentTextChanged.connect(self._complex_mode_changed)
 
@@ -52,6 +53,7 @@ class QImageViewControl(QtW.QWidget):
         self._channel_mode_combo.currentTextChanged.connect(
             self.channel_mode_change_requested.emit
         )
+        self._channel_mode_combo.setToolTip("Method to display multi-channel data")
         self._image_type = ImageType.SINGLE
 
         self._auto_contrast_btn = QtW.QPushButton("Auto")
@@ -85,7 +87,13 @@ class QImageViewControl(QtW.QWidget):
         self.complex_mode_change_requested.emit(self._complex_mode_old, cur)
         self._complex_mode_old = cur
 
-    def update_for_state(self, is_rgb: bool, nchannels: int, is_complex: bool):
+    def update_for_state(
+        self,
+        is_rgb: bool,
+        nchannels: int,
+        dtype,
+    ):
+        dtype = np.dtype(dtype)
         if is_rgb:
             kind = ImageType.RGB
         elif nchannels > 1:
@@ -107,7 +115,11 @@ class QImageViewControl(QtW.QWidget):
                 self._channel_mode_combo.hide()
             self._image_type = kind
             self._channel_mode_combo.setCurrentIndex(0)
-        self._complex_mode_combo.setVisible(is_complex)
+        self._complex_mode_combo.setVisible(dtype.kind == "c")
+        if dtype.kind in "uib":
+            self._histogram.setValueFormat(".0f")
+        else:
+            self._histogram.setValueFormat(".3g")
         return None
 
     def complex_transform(self, arr: np.ndarray) -> np.ndarray:
