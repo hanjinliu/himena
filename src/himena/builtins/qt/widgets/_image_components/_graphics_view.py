@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 from enum import Enum, auto
-from cmap import Colormap
 import numpy as np
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt
@@ -56,7 +55,6 @@ class QImageGraphicsWidget(QtW.QGraphicsWidget):
         self._qimage = QtGui.QImage()
         self._smoothing = False
         self._opacity = 255
-        self._colormap = Colormap("gray")
 
     def set_image(self, img: np.ndarray):
         """Set a (colored) image to display."""
@@ -114,13 +112,28 @@ class QImageGraphicsView(QBaseGraphicsView):
         self._initialized = False
 
         super().__init__()
-        self._image_widget = self.addItem(QImageGraphicsWidget())
+        self._image_widgets = [self.addItem(QImageGraphicsWidget())]
         self.switch_mode(Mode.PAN_ZOOM)
 
-    def set_array(self, img: np.ndarray, clear_rois: bool = True):
+    def set_n_images(self, num: int):
+        if num < 1:
+            raise ValueError("Number of images must be at least 1.")
+        for _ in range(num - len(self._image_widgets)):
+            self._image_widgets.append(self.addItem(QImageGraphicsWidget()))
+        for _ in range(len(self._image_widgets) - num):
+            widget = self._image_widgets.pop()
+            self.scene().removeItem(widget)
+            widget.deleteLater()
+
+    def set_array(self, idx: int, img: np.ndarray | None, clear_rois: bool = True):
         """Set an image to display."""
         # NOTE: image must be ready for conversion to QImage (uint8, mono or RGB)
-        self._image_widget.set_image(img)
+        widget = self._image_widgets[idx]
+        if img is None:
+            widget.setVisible(False)
+        else:
+            widget.set_image(img)
+            widget.setVisible(True)
         # ROI is stored in the parent widget.
         if clear_rois:
             scene = self.scene()
@@ -157,7 +170,8 @@ class QImageGraphicsView(QBaseGraphicsView):
 
     def setSmoothing(self, enabled: bool):
         # Enable or disable pixmap smoothing
-        self._image_widget.setSmoothingEnabled(enabled)
+        for im in self._image_widgets:
+            im.setSmoothingEnabled(enabled)
 
     def scene(self) -> QBaseGraphicsScene:
         return super().scene()
@@ -175,7 +189,7 @@ class QImageGraphicsView(QBaseGraphicsView):
     def showEvent(self, event: QtGui.QShowEvent):
         super().showEvent(event)
         if not (event.spontaneous() and self._initialized):
-            rect = self._image_widget.boundingRect()
+            rect = self._image_widgets[0].boundingRect()
             factor = 1 / max(rect.width(), rect.height())
             self.scale_and_update_handles(factor)
             self.centerOn(rect.center())
