@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 from enum import Enum
-from qtpy import QtWidgets as QtW, QtCore
+from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt
 
 if TYPE_CHECKING:
@@ -148,6 +148,12 @@ class QNotificationWidget(_QOverlayBase):
         self.geom_anim = QtCore.QPropertyAnimation(self, b"geometry", self)
         self._duration = duration
         self._timer: QtCore.QTimer | None = None
+        self._close_btn = QtW.QPushButton("✕")
+        self._close_btn.setFixedSize(20, 20)
+        self._close_btn.setParent(
+            self, self._close_btn.windowFlags() | Qt.WindowType.FramelessWindowHint
+        )
+        self._close_btn.clicked.connect(self._hide)
 
     def hideLater(self, sec: float = 5):
         """Hide overlay widget after a delay."""
@@ -159,6 +165,7 @@ class QNotificationWidget(_QOverlayBase):
         return None
 
     def _hide(self):
+        self._close_btn.hide()
         if self.isVisible():
             self.setVisible(False)
             self._timer = None
@@ -186,6 +193,7 @@ class QNotificationWidget(_QOverlayBase):
 
     def hide(self) -> None:
         """Hide the overlay widget with animation."""
+        self._close_btn.hide()
         self.opacity_anim.setDuration(self._duration)
         self.opacity_anim.setStartValue(0.9)
         self.opacity_anim.setEndValue(0)
@@ -208,9 +216,16 @@ class QNotificationWidget(_QOverlayBase):
     def enterEvent(self, a0: QtCore.QEvent) -> None:
         if self._timer is not None:
             self._timer.stop()
+        self._close_btn.show()
+        pos_loc = self.rect().topRight() - QtCore.QPoint(
+            self._close_btn.width() + 5, -5
+        )
+        self._close_btn.move(self.mapToGlobal(pos_loc))
         return super().enterEvent(a0)
 
     def leaveEvent(self, a0: QtCore.QEvent) -> None:
         if self._timer is not None:
             self._timer.start()
+        if not self.rect().contains(self.mapFromGlobal(QtGui.QCursor.pos())):
+            self._close_btn.hide()
         return super().leaveEvent(a0)

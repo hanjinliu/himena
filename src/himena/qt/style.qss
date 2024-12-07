@@ -92,19 +92,19 @@ QSpinBox {
 /* ----- QComboBox ----- */
 
 QComboBox {
-  border: 1px solid #[foreground_dim];
-  border-radius: 4px;
-  background-color: #[background];
-  color: #[foreground];
-  padding: 1px;
+    border: 1px solid #[foreground_dim];
+    border-radius: 4px;
+    background-color: #[background];
+    color: #[foreground];
+    padding: 1px;
 }
 
 /* QScrollBar */
 
 QScrollBar {
-  border: none;
-  border-radius: 2px;
-  background: #[background_dim];
+    border: none;
+    border-radius: 2px;
+    background: #[background_dim];
 }
 
 QScrollBar:horizontal {
@@ -120,13 +120,15 @@ QScrollBar:vertical {
 }
 
 QScrollBar::handle {
-  background: #[highlight_dim];
-  border-radius: 5px;
+    background: #[highlight_dim];
+    border-radius: 5px;
+    border: 1px solid #[highlight];
 }
 
 QScrollBar::handle:hover {
-  background: #[highlight_strong];
-  border-radius: 5px;
+    background: #[highlight_strong];
+    border-radius: 5px;
+    border: 1px solid #[highlight_strong];
 }
 
 QScrollBar::handle:horizontal {

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from itertools import cycle
 from typing import TYPE_CHECKING, Callable
-import warnings
 from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
 import numpy as np
@@ -83,55 +82,73 @@ class QDefaultImageView(QtW.QWidget):
         ndim_rem = arr.ndim - 2
         if arr.shape[-1] in (3, 4) and arr.ndim > 2:
             ndim_rem -= 1
-            self._is_rgb = True
+            _is_rgb = True
         else:
-            self._is_rgb = False
+            _is_rgb = False
 
         # override widget state if metadata is available
-        axes = arr.axis_names()
-        check_smoothing = self._is_rgb
-        current_indices = None
+        meta_default = model_meta.ImageMeta(
+            axes=arr.axis_names(),
+            interpolation="linear" if _is_rgb else "nearest",
+            is_rgb=_is_rgb,
+        )
         self._arr = arr
         if isinstance(meta := model.metadata, model_meta.ImageMeta):
             # TODO: consider other attributes
             if meta.rois:
-                self._roi_list = meta.rois
-            if meta.interpolation == "linear":
-                check_smoothing = True
+                meta_default.rois = meta.rois
+            if meta.interpolation:
+                meta_default.interpolation = meta.interpolation
             if meta.axes:
-                axes = meta.axes
+                meta_default.axes = meta.axes
             if meta.is_rgb:
-                self._is_rgb = True
+                meta_default.is_rgb = meta.is_rgb
             if meta.channel_axis is not None:
-                self._channel_axis = meta.channel_axis
+                meta_default.channel_axis = meta.channel_axis
             if meta.current_indices:
-                current_indices = meta.current_indices
+                meta_default.current_indices = meta.current_indices
+            if meta.channels:
+                meta_default.channels = meta.channels
 
-        if self._is_rgb:
-            if self._channel_axis not in (-1, arr.ndim - 1, None):
-                warnings.warn(
-                    "RGB image detected but channel axis is explicitly set to the axis "
-                    f"{self._channel_axis}. Ignoring the channel axis setting."
-                )
-            self._channel_axis = None
-        if is_initialized and is_same_dimensionality:
+        self._is_rgb = meta_default.is_rgb
+        if meta_default.current_indices is not None:
+            sl_0 = meta_default.current_indices[:ndim_rem]
+        elif is_initialized and is_same_dimensionality:
             sl_0 = self._dims_slider.value()
         else:
-            sl_0 = (0,) * ndim_rem
-
+            if meta_default.axes:
+                axis_names = [axis.name for axis in meta_default.axes][:ndim_rem]
+                print(axis_names)
+                sl_0 = tuple(
+                    size // 2 if aname.lower() == "z" else 0
+                    for aname, size in zip(axis_names, arr.shape)
+                )
+            else:
+                sl_0 = (0,) * ndim_rem
         # update sliders
-        self._dims_slider._refer_array(arr, axes, is_rgb=self._is_rgb)
-        if current_indices is not None:
-            self._dims_slider.setValue(current_indices[: self._dims_slider.count()])
+        self._dims_slider._refer_array(arr, meta_default.axes, is_rgb=self._is_rgb)
+        self._dims_slider.setValue(sl_0)
 
         # update channel info
-        if self._channel_axis is None:
+        if meta_default.channel_axis is None:
             nchannels = 1
         else:
-            nchannels = arr.shape[self._channel_axis]
+            nchannels = arr.shape[meta_default.channel_axis]
+
         if len(self._channels) != nchannels:
             self._image_graphics_view.set_n_images(nchannels)
+        if len(meta_default.channels) != nchannels:
             self._channels = prep_channel_infos(nchannels)
+        else:
+            self._channels = [
+                ChannelInfo.from_channel(i, c)
+                for i, c in enumerate(meta_default.channels)
+            ]
+        if _is_rgb:
+            self._channel_axis = None  # override channel axis for RGB images
+        else:
+            self._channel_axis = meta_default.channel_axis
+
         for ch in self._channels:
             if self._is_rgb:
                 ch.clim = (0, 255)
@@ -148,11 +165,13 @@ class QDefaultImageView(QtW.QWidget):
         img_slices = self._get_image_slices(sl_0)
         self._set_image_slices(img_slices)
 
-        self._control._interpolation_check_box.setChecked(check_smoothing)
+        self._control._interpolation_check_box.setChecked(
+            meta_default.interpolation == "linear"
+        )
         return None
 
     @protocol_override
-    def to_model(self) -> WidgetDataModel[NDArray[np.uint8]]:
+    def to_model(self) -> WidgetDataModel:
         assert self._arr is not None
 
         if self._control._interpolation_check_box.isChecked():
@@ -414,11 +433,11 @@ class QDefaultImageView(QtW.QWidget):
 
 
 class ChannelInfo(BaseModel):
+    name: str | None = Field(None)
     clim: tuple[float, float] = Field((0.0, 1.0))
     minmax: tuple[float, float] = Field((0.0, 1.0))
     colormap: Colormap = Field(default_factory=lambda: Colormap("gray"))
     channel_index: int | None = Field(None)
-    label: str | None = Field(None)
 
     def guess_clim(self, arr: ArrayWrapper, channel_axis: int | None = None):
         if arr.dtype.kind == "b":
@@ -548,6 +567,16 @@ class ChannelInfo(BaseModel):
 
     def as_gray(self) -> ChannelInfo:
         return self.model_copy(update={"colormap": Colormap("gray")})
+
+    @classmethod
+    def from_channel(cls, idx: int, channel: model_meta.ImageChannel) -> ChannelInfo:
+        return cls(
+            name=channel.name,
+            channel_index=idx,
+            colormap=Colormap(channel.colormap),
+            clim=channel.contrast_limits or (0, 1),
+            minmax=channel.contrast_limits or (0, 1),
+        )
 
 
 def prep_channel_infos(num: int) -> list[ChannelInfo]:
