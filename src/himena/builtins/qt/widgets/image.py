@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from itertools import cycle
+import logging
 from typing import TYPE_CHECKING, Callable
 from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
@@ -27,6 +28,8 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
     from himena.builtins.qt.widgets._image_components._graphics_view import Mode
 
+_LOGGER = logging.getLogger(__name__)
+
 
 class QDefaultImageView(QtW.QWidget):
     """The default nD image viewer widget for himena."""
@@ -35,7 +38,7 @@ class QDefaultImageView(QtW.QWidget):
         super().__init__()
         layout = QtW.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        layout.setSpacing(2)
         self._roi_buttons = QRoiButtons()
         self._roi_buttons.mode_changed.connect(self._on_roi_mode_changed)
         self._image_graphics_view = QImageGraphicsView()
@@ -66,7 +69,8 @@ class QDefaultImageView(QtW.QWidget):
         self._current_image_slices = None
         self._is_rgb = False
         self._channel_axis: int | None = None
-        self._channels = [ChannelInfo()]
+        self._channels: list[ChannelInfo] | None = None
+        self._model_type = StandardType.IMAGE
 
     @protocol_override
     @classmethod
@@ -87,7 +91,7 @@ class QDefaultImageView(QtW.QWidget):
             _is_rgb = False
 
         # override widget state if metadata is available
-        meta_default = model_meta.ImageMeta(
+        meta0 = model_meta.ImageMeta(
             axes=arr.axis_names(),
             interpolation="linear" if _is_rgb else "nearest",
             is_rgb=_is_rgb,
@@ -96,29 +100,28 @@ class QDefaultImageView(QtW.QWidget):
         if isinstance(meta := model.metadata, model_meta.ImageMeta):
             # TODO: consider other attributes
             if meta.rois:
-                meta_default.rois = meta.rois
+                meta0.rois = meta.rois
             if meta.interpolation:
-                meta_default.interpolation = meta.interpolation
+                meta0.interpolation = meta.interpolation
             if meta.axes:
-                meta_default.axes = meta.axes
+                meta0.axes = meta.axes
             if meta.is_rgb:
-                meta_default.is_rgb = meta.is_rgb
+                meta0.is_rgb = meta.is_rgb
             if meta.channel_axis is not None:
-                meta_default.channel_axis = meta.channel_axis
+                meta0.channel_axis = meta.channel_axis
             if meta.current_indices:
-                meta_default.current_indices = meta.current_indices
+                meta0.current_indices = meta.current_indices
             if meta.channels:
-                meta_default.channels = meta.channels
+                meta0.channels = meta.channels
 
-        self._is_rgb = meta_default.is_rgb
-        if meta_default.current_indices is not None:
-            sl_0 = meta_default.current_indices[:ndim_rem]
+        self._is_rgb = meta0.is_rgb
+        if meta0.current_indices is not None:
+            sl_0 = meta0.current_indices[:ndim_rem]
         elif is_initialized and is_same_dimensionality:
             sl_0 = self._dims_slider.value()
         else:
-            if meta_default.axes:
-                axis_names = [axis.name for axis in meta_default.axes][:ndim_rem]
-                print(axis_names)
+            if meta0.axes:
+                axis_names = [axis.name for axis in meta0.axes][:ndim_rem]
                 sl_0 = tuple(
                     size // 2 if aname.lower() == "z" else 0
                     for aname, size in zip(axis_names, arr.shape)
@@ -126,59 +129,78 @@ class QDefaultImageView(QtW.QWidget):
             else:
                 sl_0 = (0,) * ndim_rem
         # update sliders
-        self._dims_slider._refer_array(arr, meta_default.axes, is_rgb=self._is_rgb)
-        self._dims_slider.setValue(sl_0)
+        self._dims_slider._refer_array(arr, meta0.axes, is_rgb=self._is_rgb)
+        with qsignal_blocker(self._dims_slider):
+            self._dims_slider.setValue(sl_0)
 
         # update channel info
-        if meta_default.channel_axis is None:
+        if meta0.channel_axis is None:
             nchannels = 1
         else:
-            nchannels = arr.shape[meta_default.channel_axis]
+            nchannels = arr.shape[meta0.channel_axis]
 
-        if len(self._channels) != nchannels:
-            self._image_graphics_view.set_n_images(nchannels)
-        if len(meta_default.channels) != nchannels:
-            self._channels = prep_channel_infos(nchannels)
-        else:
-            self._channels = [
-                ChannelInfo.from_channel(i, c)
-                for i, c in enumerate(meta_default.channels)
-            ]
+        self._image_graphics_view.set_n_images(nchannels)
         if _is_rgb:
             self._channel_axis = None  # override channel axis for RGB images
         else:
-            self._channel_axis = meta_default.channel_axis
+            self._channel_axis = meta0.channel_axis
 
-        for ch in self._channels:
-            if self._is_rgb:
-                ch.clim = (0, 255)
-                ch.minmax = (0, 255)
+        with qsignal_blocker(self._control):
+            self._control.update_for_state(
+                is_rgb=self._is_rgb,
+                nchannels=nchannels,
+                dtype=arr.dtype,
+            )
+        img_slices = self._get_image_slices(sl_0, nchannels)
+
+        if self._channels is None:  # not initialized yet
+            # before calling ChannelInfo.from_channel, contrast_limits must be set
+            if len(meta0.channels) != nchannels:
+                ch0 = meta0.channels[0]
+                ch0.contrast_limits = self._clim_for_ith_channel(img_slices, 0)
+                channels = [
+                    ch0.model_copy(update={"colormap": None}) for _ in range(nchannels)
+                ]
             else:
-                ch.guess_clim(arr, self._channel_axis)
+                channels = meta0.channels
+                for i, ch in enumerate(channels):
+                    if ch.contrast_limits is None:
+                        ch.contrast_limits = self._clim_for_ith_channel(img_slices, i)
+            self._channels = [
+                ChannelInfo.from_channel(i, c) for i, c in enumerate(channels)
+            ]
+            if len(self._channels) == 1:
+                self._channels[0].colormap = Colormap("gray")
 
-        self._control.update_for_state(
-            is_rgb=self._is_rgb,
-            nchannels=nchannels,
-            dtype=arr.dtype,
-        )
-
-        img_slices = self._get_image_slices(sl_0)
         self._set_image_slices(img_slices)
-
-        self._control._interpolation_check_box.setChecked(
-            meta_default.interpolation == "linear"
-        )
+        self._control._interp_check_box.setChecked(meta0.interpolation == "linear")
+        self._model_type = model.type
         return None
+
+    def _clim_for_ith_channel(self, img_slices, ith: int):
+        if (ar0 := img_slices[ith]) is None:
+            sl = self._dims_slider.value()
+            if self._channel_axis is not None:
+                sl = list(sl)
+                sl[self._channel_axis] = ith
+                sl = tuple(sl)
+            ar0 = self._arr.get_slice(sl)
+        return ar0.min(), ar0.max()
 
     @protocol_override
     def to_model(self) -> WidgetDataModel:
         assert self._arr is not None
 
-        if self._control._interpolation_check_box.isChecked():
+        if self._control._interp_check_box.isChecked():
             interp = "linear"
         else:
             interp = "nearest"
-        clim = [ch.clim for ch in self._channels]
+        channels = [
+            model_meta.ImageChannel(
+                name=ch.name, contrast_limits=ch.clim, colormap=ch.colormap
+            )
+            for ch in self._channels
+        ]
         _all = slice(None)
         current_indices = self._dims_slider.value()
         current_slices = current_indices + (_all, _all)
@@ -186,14 +208,18 @@ class QDefaultImageView(QtW.QWidget):
             current_roi = item.toRoi(current_indices)
         else:
             current_roi = None
+        axes = self._dims_slider._to_image_axes()
+        if self._is_rgb:
+            axes.append(model_meta.ImageAxis(name="RGB"))
         return WidgetDataModel(
             value=self._arr.arr,
             type=self.model_type(),
             extension_default=".png",
             metadata=model_meta.ImageMeta(
+                axes=axes,
                 current_indices=current_slices,
                 interpolation=interp,
-                contrast_limits=clim,
+                channels=channels,
                 rois=self._roi_list,
                 current_roi=current_roi,
                 is_rgb=self._is_rgb,
@@ -202,7 +228,7 @@ class QDefaultImageView(QtW.QWidget):
 
     @protocol_override
     def model_type(self) -> str:
-        return StandardType.IMAGE
+        return self._model_type
 
     @protocol_override
     def size_hint(self) -> tuple[int, int]:
@@ -226,19 +252,21 @@ class QDefaultImageView(QtW.QWidget):
         return self._control._channel_mode_combo.currentText()
 
     def _get_image_slices(
-        self, value: tuple[int, ...]
+        self,
+        value: tuple[int, ...],
+        nchannels: int,
     ) -> list[NDArray[np.number] | None]:
         """Get numpy arrays for each channel (None mean hide the channel)."""
         if self._channel_axis is None:
             return [self._get_image_slice_for_channel(value)]
 
-        if len(self._channels) == 1 or self._composite_state() != "Comp.":
-            img_slices = [None] * len(self._channels)
+        if nchannels == 1 or self._composite_state() != "Comp.":
+            img_slices = [None] * nchannels
             idx = value[self._channel_axis]
             img_slices[idx] = self._get_image_slice_for_channel(value)
         else:
             img_slices = []
-            for i in range(len(self._channels)):
+            for i in range(nchannels):
                 sl = list(value)
                 sl[self._channel_axis] = i
                 img_slices.append(self._get_image_slice_for_channel(sl))
@@ -248,24 +276,23 @@ class QDefaultImageView(QtW.QWidget):
         self, value: tuple[int, ...]
     ) -> NDArray[np.number]:
         """Get numpy array for current channel."""
+        # return None if the array is not visible
         return self._arr.get_slice(tuple(value))
 
     def _slider_changed(self, value: tuple[int, ...]):
         # `image_slice` given only when it is available (for performance)
         if self._arr is None:
             return
-        img_slices = self._get_image_slices(value)
+        img_slices = self._get_image_slices(value, len(self._channels))
         self._set_image_slices(img_slices)
 
     def _set_image_slice(self, img: NDArray[np.number], channel: ChannelInfo):
         idx = channel.channel_index or 0
-        alphas = self.prep_alphas()
         with qsignal_blocker(self._control._histogram):
             self._image_graphics_view.set_array(
                 idx,
                 channel.transform_image(
                     img,
-                    alpha=alphas[idx],
                     complex_transform=self._control.complex_transform,
                     is_rgb=self._is_rgb,
                     is_gray=self._composite_state() == "Gray",
@@ -290,17 +317,17 @@ class QDefaultImageView(QtW.QWidget):
     ):
         """Set image slices using the channel information.
 
-        This method is only used for updating the entire image slices.
+        This method is only used for updating the entire image slices. Channels must be
+        correctly set before calling this method, as it uses the channel information to
+        transform the image slices.
         """
         self._current_image_slices = imgs
-        alphas = self.prep_alphas()
         with qsignal_blocker(self._control._histogram):
             for i, (img, ch) in enumerate(zip(imgs, self._channels)):
                 self._image_graphics_view.set_array(
                     i,
                     ch.transform_image(
                         img,
-                        alpha=alphas[i],
                         complex_transform=self._control.complex_transform,
                         is_rgb=self._is_rgb,
                         is_gray=self._composite_state() == "Gray",
@@ -325,13 +352,11 @@ class QDefaultImageView(QtW.QWidget):
         ch = self.current_channel()
         ch.clim = clim
         idx = ch.channel_index or 0
-        alphas = self.prep_alphas()
         with qsignal_blocker(self._control._histogram):
             self._image_graphics_view.set_array(
                 idx,
                 ch.transform_image(
                     self._current_image_slices[idx],
-                    alpha=alphas[idx],
                     complex_transform=self._control.complex_transform,
                     is_rgb=self._is_rgb,
                     is_gray=self._composite_state() == "Gray",
@@ -368,6 +393,7 @@ class QDefaultImageView(QtW.QWidget):
     def _on_roi_added(self, qroi: QRoi):
         roi = qroi.toRoi(indices=self._dims_slider.value())
         self._roi_list.add_roi(roi)
+        set_status_tip(f"{type(roi).__name__} added")
 
     def _on_roi_removed(self, idx: int):
         del self._roi_list[idx]
@@ -380,7 +406,7 @@ class QDefaultImageView(QtW.QWidget):
         set_status_tip(f"Switched to {mode_name} mode.")
 
     def _reset_image(self):
-        imgs = self._get_image_slices(self._dims_slider.value())
+        imgs = self._get_image_slices(self._dims_slider.value(), len(self._channels))
         self._set_image_slices(imgs)
 
     def _on_channel_mode_change(self, mode: str):
@@ -417,20 +443,6 @@ class QDefaultImageView(QtW.QWidget):
     def keyReleaseEvent(self, a0: QtGui.QKeyEvent | None) -> None:
         return self._image_graphics_view.keyReleaseEvent(a0)
 
-    def prep_alphas(self) -> list[int]:
-        imgs = self._current_image_slices
-        alphas = [255] * len(self._channels)
-        if self._composite_state() == "Comp.":
-            first_img_idx = None
-            for i in range(len(imgs)):
-                if imgs[i] is not None:
-                    first_img_idx = i
-                    break
-            alphas = [128] * len(imgs)
-            if first_img_idx is not None:
-                alphas[first_img_idx] = 255
-        return alphas
-
 
 class ChannelInfo(BaseModel):
     name: str | None = Field(None)
@@ -438,40 +450,6 @@ class ChannelInfo(BaseModel):
     minmax: tuple[float, float] = Field((0.0, 1.0))
     colormap: Colormap = Field(default_factory=lambda: Colormap("gray"))
     channel_index: int | None = Field(None)
-
-    def guess_clim(self, arr: ArrayWrapper, channel_axis: int | None = None):
-        if arr.dtype.kind == "b":
-            return (0, 1)
-        ndim = arr.ndim
-        sl = [slice(None)] * ndim
-        if self.channel_index is not None:
-            sl[channel_axis] = self.channel_index
-            if channel_axis < ndim - 3:  # such as (C, T, Z, Y, X), (C, Z, Y, X)
-                dim3 = -3
-            else:  # such as (T, Z, C, Y, X)
-                dim3 = -4
-        else:
-            dim3 = -2
-        slices: list[tuple[int | slice, ...]] = []
-        if -dim3 > ndim:
-            slices.append(tuple(sl))
-        else:
-            dim3_size = arr.shape[dim3]
-            if dim3_size < 4:
-                dim3_indices = [0, -1]
-            else:
-                dim3_indices = [0, dim3_size // 2, -1]
-            for i in dim3_indices:
-                sl[dim3] = i
-                slices.append(tuple(sl))
-        img_slices = [arr.get_slice(sl) for sl in slices]
-        if arr.dtype.kind == "c":
-            img_slices = [np.abs(img_slice) for img_slice in img_slices]
-        clim_min = min(img_slice.min() for img_slice in img_slices)
-        clim_max = max(img_slice.max() for img_slice in img_slices)
-        self.clim = clim_min, clim_max
-        self.minmax = self.clim
-        return None
 
     @field_validator("minmax")
     def _validate_minmax(cls, v, values):
@@ -485,7 +463,6 @@ class ChannelInfo(BaseModel):
     def transform_image(
         self,
         arr: NDArray[np.number] | None,
-        alpha: int = 255,
         complex_transform: Callable[
             [NDArray[np.complexfloating]], NDArray[np.number]
         ] = np.abs,
@@ -497,16 +474,13 @@ class ChannelInfo(BaseModel):
             return self.transform_image_rgb(arr, is_gray=is_gray)
         else:
             if is_gray:
-                return self.as_gray().transform_image(arr, alpha, complex_transform)
-            return self.transform_image_2d(arr, alpha, complex_transform)
+                return self.as_gray().transform_image(arr, complex_transform)
+            return self.transform_image_2d(arr, complex_transform)
 
     def transform_image_2d(
         self,
         arr: NDArray[np.number] | None,
-        alpha: int = 255,
-        complex_transform: Callable[
-            [NDArray[np.complexfloating]], NDArray[np.number]
-        ] = np.abs,
+        complex_transform: Callable[[NDArray[np.complexfloating]], NDArray[np.number]],
     ) -> NDArray[np.uint8] | None:
         """Transform the array to a displayable RGBA image."""
         if arr is None:
@@ -517,17 +491,17 @@ class ChannelInfo(BaseModel):
         if arr.dtype.kind == "c":
             arr = complex_transform(arr)
         if arr.dtype.kind == "b":
-            false_color = np.array(self.colormap(0, bytes=True))
-            true_color = np.array(self.colormap(1, bytes=True))
+            false_color = (np.array(self.colormap(0.0)) * 255).astype(np.uint8)
+            true_color = (np.array(self.colormap(1.0)) * 255).astype(np.uint8)
             arr_normed = np.where(arr[..., np.newaxis], true_color, false_color)
         elif cmax > cmin:
-            arr_normed = self.colormap((arr - cmin) / (cmax - cmin), bytes=True)
+            arr_normed = (self.colormap((arr - cmin) / (cmax - cmin)) * 255).astype(
+                np.uint8
+            )
         else:
             color = (np.array(self.colormap(0.5)) * 255).astype(np.uint8)
             arr_normed = np.empty(arr.shape + (4,), dtype=np.uint8)
             arr_normed[:] = color[np.newaxis, np.newaxis]
-        if alpha < 255:
-            arr_normed[:, :, -1] = alpha
         out = np.ascontiguousarray(arr_normed)
         assert out.dtype == np.uint8
         return out
@@ -569,33 +543,100 @@ class ChannelInfo(BaseModel):
         return self.model_copy(update={"colormap": Colormap("gray")})
 
     @classmethod
-    def from_channel(cls, idx: int, channel: model_meta.ImageChannel) -> ChannelInfo:
+    def from_channel(
+        cls,
+        idx: int,
+        channel: model_meta.ImageChannel,
+    ) -> ChannelInfo:
+        input_clim = channel.contrast_limits
+        if input_clim is None:
+            raise ValueError("Contrast limits are not set.")
+        if channel.colormap is None:
+            colormap = Colormap(f"cmap:{_DEFAULT_COLORMAPS[idx % 6]}")
+        else:
+            colormap = Colormap(channel.colormap)
         return cls(
             name=channel.name,
             channel_index=idx,
-            colormap=Colormap(channel.colormap),
-            clim=channel.contrast_limits or (0, 1),
-            minmax=channel.contrast_limits or (0, 1),
+            colormap=colormap,
+            clim=channel.contrast_limits,
+            minmax=channel.contrast_limits,
         )
+
+
+def guess_clim(
+    arr: ArrayWrapper,
+    channel_axis: int | None = None,
+    channel_index: int | None = None,
+    is_rgb: bool = False,
+) -> tuple[float, float]:
+    if is_rgb:
+        return (0, 255)
+    if arr.dtype.kind == "b":
+        return (0, 1)
+    if isinstance(np_ndarray := arr.arr, np.ndarray):
+        if channel_axis is not None and channel_index is not None:
+            np_ndarray = np_ndarray[(slice(None),) * channel_axis + (channel_index,)]
+        if np_ndarray.size < 1e7:
+            # not very large, just use min and max
+            return np_ndarray.min(), np_ndarray.max()
+        stride = np_ndarray.size // 1e7
+        np_ndarray_raveled = np_ndarray.ravel()
+        return np_ndarray_raveled[::stride].min(), np_ndarray_raveled[::stride].max()
+
+    ndim = arr.ndim
+    sl = [slice(None)] * ndim
+    if channel_index is not None and channel_axis is not None:
+        sl[channel_axis] = channel_index
+        if channel_axis < ndim - 3:  # such as (C, T, Z, Y, X), (C, Z, Y, X)
+            dim3 = -3
+        else:  # such as (T, Z, C, Y, X)
+            dim3 = -4
+    else:
+        dim3 = -2
+    slices: list[tuple[int | slice, ...]] = []
+    if -dim3 > ndim:
+        slices.append(tuple(sl))
+    else:
+        dim3_size = arr.shape[dim3]
+        if dim3_size < 4:
+            dim3_indices = [0, -1]
+        else:
+            dim3_indices = [0, dim3_size // 2, -1]
+        for i in dim3_indices:
+            sl[dim3] = i
+            slices.append(tuple(sl))
+    img_slices = [arr.get_slice(sl) for sl in slices]
+    if arr.dtype.kind == "c":
+        img_slices = [np.abs(img_slice) for img_slice in img_slices]
+    clim_min = min(img_slice.min() for img_slice in img_slices)
+    clim_max = max(img_slice.max() for img_slice in img_slices)
+    return clim_min, clim_max
+
+
+_DEFAULT_COLORMAPS = ["green", "magenta", "cyan", "yellow", "red", "blue"]
 
 
 def prep_channel_infos(num: int) -> list[ChannelInfo]:
     if num == 1:
-        return [ChannelInfo()]
-    elif num == 2:
-        colors = ["#00FF00", "#FF00FF"]
-    elif num == 3:
-        colors = ["#00FFFF", "#00FF00", "#FF00FF"]
-    elif num == 4:
-        colors = ["#00FFFF", "#00FF00", "#FF00FF", "#FF0000"]
+        names = ["gray"]
     else:
-        colors = list(cycle(["#00FFFF", "#00FF00", "#FF00FF", "#FF0000"]))
+        names = list(cycle(_DEFAULT_COLORMAPS))
     return [
-        ChannelInfo(colormap=Colormap(["#000000", color]), channel_index=idx)
-        for idx, color in enumerate(colors)
+        ChannelInfo(colormap=Colormap(f"cmap:{name}"), channel_index=idx)
+        for idx, name in enumerate(names)
     ]
 
 
 def color_for_colormap(cmap: Colormap) -> QtGui.QColor:
     """Get the representative color for the colormap."""
     return QtGui.QColor.fromRgbF(*cmap(0.5))
+
+
+def pick_atleast_one_slice(
+    img_slices: list[NDArray[np.number] | None],
+) -> NDArray[np.number] | None:
+    for img in img_slices:
+        if img is not None:
+            return img
+    return None

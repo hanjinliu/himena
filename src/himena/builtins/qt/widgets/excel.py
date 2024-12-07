@@ -59,6 +59,7 @@ class QExcelTableStack(QtW.QTabWidget):
         tb.clicked.connect(self._add_new_tab)
         self.setCornerWidget(tb, QtCore.Qt.Corner.TopRightCorner)
         self.tabBar().right_clicked.connect(self._tabbar_right_clicked)
+        self._model_type = StandardType.EXCEL
 
     def _on_tab_changed(self, index: int):
         self._control.update_for_table(self.widget(index))
@@ -104,6 +105,7 @@ class QExcelTableStack(QtW.QTabWidget):
         if self.count() > 0:
             self.setCurrentIndex(0)
             self._control.update_for_table(self.widget(0))
+        self._model_type = model.type
         return None
 
     @protocol_override
@@ -130,7 +132,7 @@ class QExcelTableStack(QtW.QTabWidget):
 
     @protocol_override
     def model_type(self):
-        return StandardType.EXCEL
+        return self._model_type
 
     @protocol_override
     def is_modified(self) -> bool:

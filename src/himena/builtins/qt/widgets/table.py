@@ -123,6 +123,7 @@ class QDefaultTableWidget(QTableBase):
         self.setEditTriggers(_EDITABLE)
         self._control = None
         self._modified = False
+        self._model_type = StandardType.TABLE
 
     def setHeaderFormat(self, value: HeaderFormat) -> None:
         if model := self.model():
@@ -172,6 +173,7 @@ class QDefaultTableWidget(QTableBase):
         else:
             self._control._separator = None
             self._control._separator_label.hide()
+        self._model_type = model.type
         return None
 
     @protocol_override
@@ -188,7 +190,7 @@ class QDefaultTableWidget(QTableBase):
 
     @protocol_override
     def model_type(self):
-        return StandardType.TABLE
+        return self._model_type
 
     @protocol_override
     def is_modified(self) -> bool:

@@ -195,6 +195,7 @@ class QDefaultArrayView(QtW.QWidget):
         self._spinboxes: list[QtW.QSpinBox] = []
         self._arr: ArrayWrapper | None = None
         self._control: QArrayViewControl | None = None
+        self._model_type = StandardType.ARRAY
 
     def update_spinbox_for_shape(self, shape: tuple[int, ...]):
         nspin = len(self._spinboxes)
@@ -259,6 +260,7 @@ class QDefaultArrayView(QtW.QWidget):
             self._control = QArrayViewControl(self._table)
         self._control.update_for_array(self._arr)
         self._table.update_width_by_dtype()
+        self._model_type = model.type
         self.update()
         return None
 
@@ -275,7 +277,7 @@ class QDefaultArrayView(QtW.QWidget):
 
     @protocol_override
     def model_type(self) -> str:
-        return StandardType.ARRAY
+        return self._model_type
 
     @protocol_override
     def is_modified(self) -> bool:

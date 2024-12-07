@@ -24,6 +24,7 @@ class QIpynbEdit(QtW.QScrollArea):
         _layout.setContentsMargins(0, 0, 0, 0)
         self._layout = _layout
         self._ipynb_orig = IpynbFile()
+        self._model_type = StandardType.IPYNB
 
     @protocol_override
     def update_model(self, model: WidgetDataModel):
@@ -33,6 +34,8 @@ class QIpynbEdit(QtW.QScrollArea):
         self.clear_all()
         for idx, cell in enumerate(self._ipynb_orig.cells):
             self.insert_cell(idx, cell)
+        self._model_type = model.type
+        return None
 
     @protocol_override
     def to_model(self) -> WidgetDataModel:
@@ -41,13 +44,13 @@ class QIpynbEdit(QtW.QScrollArea):
             ipynb.cells[idx].source = widget._text_edit.toPlainText()
         js_string = ipynb.model_dump_json(indent=2)
         return WidgetDataModel(
-            type=StandardType.IPYNB,
+            type=self.model_type(),
             value=js_string,
         )
 
     @protocol_override
     def model_type(self) -> str:
-        return StandardType.IPYNB
+        return self._model_type
 
     @protocol_override
     def is_modified(self) -> bool:

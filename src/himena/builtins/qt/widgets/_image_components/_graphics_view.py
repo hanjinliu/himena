@@ -46,16 +46,19 @@ MULTIPOINT_ROI_CLASSES = (QPolygonRoi, QSegmentedLineRoi, QPointsRoi)
 
 
 class QImageGraphicsWidget(QtW.QGraphicsWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, additive: bool = False):
         super().__init__(parent)
         self._img: np.ndarray = np.zeros((0, 0))
         self._qimage = QtGui.QImage()
         self._smoothing = False
-        self._opacity = 255
+        if additive:
+            self._comp_mode = QtGui.QPainter.CompositionMode.CompositionMode_Plus
+        else:
+            self._comp_mode = QtGui.QPainter.CompositionMode.CompositionMode_SourceOver
 
     def set_image(self, img: np.ndarray):
         """Set a (colored) image to display."""
-        qimg = ndarray_to_qimage(img, self._opacity)
+        qimg = ndarray_to_qimage(img)
         self._img = img
         self._qimage = qimg
         self.update()
@@ -67,6 +70,8 @@ class QImageGraphicsWidget(QtW.QGraphicsWidget):
     def paint(self, painter, option, widget=None):
         if self._qimage.isNull():
             return
+
+        painter.setCompositionMode(self._comp_mode)
         painter.setRenderHint(
             QtGui.QPainter.RenderHint.SmoothPixmapTransform, self._smoothing
         )
@@ -117,7 +122,10 @@ class QImageGraphicsView(QBaseGraphicsView):
         if num < 1:
             raise ValueError("Number of images must be at least 1.")
         for _ in range(num - len(self._image_widgets)):
-            self._image_widgets.append(self.addItem(QImageGraphicsWidget()))
+            additive = len(self._image_widgets) > 0
+            self._image_widgets.append(
+                self.addItem(QImageGraphicsWidget(additive=additive))
+            )
         for _ in range(len(self._image_widgets) - num):
             widget = self._image_widgets.pop()
             self.scene().removeItem(widget)

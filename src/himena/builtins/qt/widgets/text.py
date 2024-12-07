@@ -130,6 +130,7 @@ class QDefaultTextEdit(QtW.QWidget):
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._main_text_edit)
+        self._model_type = StandardType.TEXT
 
     @protocol_override
     @classmethod
@@ -175,6 +176,7 @@ class QDefaultTextEdit(QtW.QWidget):
         self._control._tab_spaces_combobox.setCurrentText(str(spaces))
         if encoding:
             self._control._encoding.setText(encoding)
+        self._model_type = model.type
         return None
 
     @protocol_override
@@ -196,7 +198,7 @@ class QDefaultTextEdit(QtW.QWidget):
 
     @protocol_override
     def model_type(self):
-        return StandardType.TEXT
+        return self._model_type
 
     @protocol_override
     def size_hint(self) -> tuple[int, int]:

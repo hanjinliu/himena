@@ -75,6 +75,10 @@ class ArrayWrapper(Generic[ArrayT]):
     def shape(self) -> tuple[int, ...]:
         """Return the shape of the array."""
 
+    @property
+    def size(self) -> int:
+        return np.prod(self.shape)
+
     def axis_names(self) -> list[str]:
         """Return the names of the axes."""
         return [f"axis-{i}" for i in range(self.ndim)]

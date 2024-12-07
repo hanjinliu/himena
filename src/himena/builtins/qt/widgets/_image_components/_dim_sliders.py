@@ -16,6 +16,10 @@ class QDimsSlider(QtW.QWidget):
         layout = QtW.QVBoxLayout(self)
         layout.setContentsMargins(2, 2, 2, 2)
         layout.setSpacing(2)
+        self._xy_axes: list[model_meta.ImageAxis] = [
+            model_meta.ImageAxis(name="y"),
+            model_meta.ImageAxis(name="x"),
+        ]
 
     def count(self) -> int:
         """Number of sliders."""
@@ -42,17 +46,25 @@ class QDimsSlider(QtW.QWidget):
         _index_width_max = 0
         for axis, slider in zip(axes, self._sliders):
             aname = axis.name
-            slider.setText(aname)
+            slider.update_from_axis(axis)
             # TODO: show scale, unit and origin
             width = slider._name_label.fontMetrics().width(aname)
             _axis_width_max = max(_axis_width_max, width)
-            width = slider._index_label.fontMetrics().width(
-                f"{arr.shape[i]}/{arr.shape[i]}"
-            )
+            _i_max = slider._slider.maximum()
+            width = slider._index_label.fontMetrics().width(f"{_i_max}/{_i_max}")
             _index_width_max = max(_index_width_max, width)
         for slider in self._sliders:
             slider._name_label.setFixedWidth(_axis_width_max + 6)
             slider._index_label.setFixedWidth(_index_width_max + 6)
+        if is_rgb:
+            self._xy_axes = axes[-3:-1]
+        else:
+            self._xy_axes = axes[-2:]
+
+    def _to_image_axes(self) -> list[model_meta.ImageAxis]:
+        axes = [slider.to_axis() for slider in self._sliders]
+        axes.extend(self._xy_axes)
+        return axes
 
     def _make_slider(self, size: int) -> _QAxisSlider:
         slider = _QAxisSlider()
@@ -75,6 +87,9 @@ class QDimsSlider(QtW.QWidget):
             with qsignal_blocker(slider):
                 slider._slider.setValue(val)
         self.valueChanged.emit(value)
+
+    def axis_names(self) -> list[str]:
+        return [slider.text() for slider in self._sliders]
 
 
 class _QAxisSlider(QtW.QWidget):
@@ -100,6 +115,20 @@ class _QAxisSlider(QtW.QWidget):
         layout.addWidget(self._slider)
         layout.addWidget(
             self._index_label, alignment=QtCore.Qt.AlignmentFlag.AlignRight
+        )
+        self._scale = 1.0
+        self._unit = ""
+        self._origin = 0.0
+
+    def update_from_axis(self, axis: model_meta.ImageAxis):
+        self._name_label.setText(axis.name)
+        self._scale = axis.scale
+        self._unit = axis.unit
+        self._origin = axis.origin
+
+    def to_axis(self) -> model_meta.ImageAxis:
+        return model_meta.ImageAxis(
+            name=self.text(), scale=self._scale, unit=self._unit, origin=self._origin
         )
 
     def text(self) -> str:

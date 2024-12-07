@@ -91,6 +91,7 @@ class QDataFrameView(QTableBase):
     def __init__(self):
         super().__init__()
         self._control: QDataFrameViewControl | None = None
+        self._model_type = StandardType.DATAFRAME
 
     @protocol_override
     @classmethod
@@ -116,6 +117,7 @@ class QDataFrameView(QTableBase):
         if self._control is None:
             self._control = QDataFrameViewControl(self)
         self._control.update_for_table(self)
+        self._model_type = model.type
         self.update()
         return None
 
@@ -130,7 +132,7 @@ class QDataFrameView(QTableBase):
 
     @protocol_override
     def model_type(self) -> str:
-        return StandardType.DATAFRAME
+        return self._model_type
 
     @protocol_override
     def is_modified(self) -> bool:

@@ -694,7 +694,6 @@ class MainWindow(Generic[_W]):
         i_win = back._current_sub_window_index()
         if i_win is None or len(tab) <= i_win:
             return back._update_control_widget(None)
-        _LOGGER.debug("Window activated: %r-th window in %r-th tab", i_win, i_tab)
         win = tab[i_win]
         back._update_control_widget(win.widget)
         _checker.call_window_activated_callback(win.widget)

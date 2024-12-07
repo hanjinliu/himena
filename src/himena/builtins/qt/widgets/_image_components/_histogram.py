@@ -5,6 +5,7 @@ import numpy as np
 from psygnal import Signal
 from qtpy import QtCore, QtGui, QtWidgets as QtW
 from ._base import QBaseGraphicsScene, QBaseGraphicsView
+from himena.qt._qlineedit import QDoubleLineEdit
 
 if TYPE_CHECKING:
     from numpy import ndarray as NDArray
@@ -85,10 +86,12 @@ class QHistogramView(QBaseGraphicsView):
         self._line_low.setValueFormat(fmt)
         self._line_high.setValueFormat(fmt)
 
-    def viewRect(self) -> QtCore.QRectF:
+    def viewRect(self, width: float | None = None) -> QtCore.QRectF:
         """The current view range as a QRectF."""
         x0, x1 = self._view_range
-        return QtCore.QRectF(x0, 0, x1 - x0, 1)
+        if width is None:
+            width = x1 - x0
+        return QtCore.QRectF(x0 - width * 0.03, 0, width * 1.06, 1)
 
     def setViewRange(self, x0: float, x1: float):
         self._view_range = (x0, x1)
@@ -100,12 +103,16 @@ class QHistogramView(QBaseGraphicsView):
 
     def showEvent(self, event: QtGui.QShowEvent):
         super().showEvent(event)
-        self.fitInView(self.viewRect(), QtCore.Qt.AspectRatioMode.IgnoreAspectRatio)
+        x0, x1 = self._minmax
+        self.fitInView(
+            self.viewRect(x1 - x0), QtCore.Qt.AspectRatioMode.IgnoreAspectRatio
+        )
 
     def mouseDoubleClickEvent(self, event: QtGui.QMouseEvent):
         x0, x1 = self._minmax
-        rect = QtCore.QRectF(x0, 0, x1 - x0, 1)
-        self.fitInView(rect, QtCore.Qt.AspectRatioMode.IgnoreAspectRatio)
+        self.fitInView(
+            self.viewRect(x1 - x0), QtCore.Qt.AspectRatioMode.IgnoreAspectRatio
+        )
 
     def wheelEvent(self, event: QtGui.QWheelEvent):
         delta = event.angleDelta().y()
@@ -179,6 +186,11 @@ class QClimLineItem(QtW.QGraphicsLineItem):
         if event.button() == QtCore.Qt.MouseButton.LeftButton:
             self._is_dragging = True
             self.scene().setGrabSource(self)
+        elif event.buttons() & QtCore.Qt.MouseButton.RightButton:
+            self.scene().setGrabSource(self)
+            menu = QClimMenu(self.scene().views()[0], self)
+            menu._edit.setFocus()
+            menu.exec(event.screenPos())
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event: QtW.QGraphicsSceneMouseEvent):
@@ -234,8 +246,10 @@ class QClimLineItem(QtW.QGraphicsLineItem):
         return super().scene()
 
     def _x_scale(self) -> float:
-        view = self.scene().views()[0].transform()
-        return view.m11()
+        return self.view().transform().m11()
+
+    def view(self) -> QHistogramView:
+        return self.scene().views()[0]
 
     def boundingRect(self):
         width = 10 / self._x_scale()
@@ -289,3 +303,32 @@ class QHistogramItem(QtW.QGraphicsPathItem):
         _path.closeSubpath()
         self.setPath(_path)
         self.update()
+
+
+class QClimMenu(QtW.QMenu):
+    def __init__(self, parent: QHistogramView, item: QClimLineItem):
+        super().__init__(parent)
+        self._hist_view = parent
+        self._item = item
+        self._edit = QDoubleLineEdit()
+        self._edit.setText(format(item.value(), item._value_fmt))
+        self._edit.editingFinished.connect(self._on_value_changed)
+        widget_action = QtW.QWidgetAction(self)
+        widget_action.setDefaultWidget(self._edit)
+        self.addAction(widget_action)
+
+    def _on_value_changed(self):
+        value = float(self._edit.text())
+        self._item.setValue(value)
+        # update min/max
+        if value < self._hist_view._minmax[0]:
+            self._hist_view.set_minmax((value, self._hist_view._minmax[1]))
+        elif value > self._hist_view._minmax[1]:
+            self._hist_view.set_minmax((self._hist_view._minmax[0], value))
+        # update view range
+        v0, v1 = self._hist_view._view_range
+        if value < v0:
+            self._hist_view.setViewRange(value, v1)
+        elif value > v1:
+            self._hist_view.setViewRange(v0, value)
+        self.close()

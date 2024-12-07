@@ -81,6 +81,9 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
         # Toolbar
         self._toolbar = self.addModelToolBar(menu_id=MenuId.TOOLBAR)
+        self._toolbar.setContextMenuPolicy(
+            QtCore.Qt.ContextMenuPolicy.PreventContextMenu
+        )
         self._toolbar.setMovable(False)
         self._toolbar.setFixedHeight(32)
         self._toolbar.addSeparator()

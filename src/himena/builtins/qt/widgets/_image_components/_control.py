@@ -64,11 +64,11 @@ class QImageViewControl(QtW.QWidget):
         self._histogram.setFixedWidth(120)
         self._histogram.clim_changed.connect(self.clim_changed.emit)
 
-        self._interpolation_check_box = QLabeledToggleSwitch()
-        self._interpolation_check_box.setText("smooth")
-        self._interpolation_check_box.setChecked(False)
-        self._interpolation_check_box.setMaximumHeight(36)
-        self._interpolation_check_box.toggled.connect(self.interpolation_changed.emit)
+        self._interp_check_box = QLabeledToggleSwitch()
+        self._interp_check_box.setText("smooth")
+        self._interp_check_box.setChecked(False)
+        self._interp_check_box.setMaximumHeight(36)
+        self._interp_check_box.toggled.connect(self.interpolation_changed.emit)
 
         self._hover_info = QtW.QLabel()
 
@@ -78,7 +78,7 @@ class QImageViewControl(QtW.QWidget):
         layout.addWidget(self._channel_mode_combo)
         layout.addWidget(self._auto_contrast_btn)
         layout.addWidget(self._histogram)
-        layout.addWidget(self._interpolation_check_box)
+        layout.addWidget(self._interp_check_box)
         self._complex_mode_combo.hide()
         self._channel_mode_combo.hide()
 

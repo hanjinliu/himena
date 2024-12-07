@@ -99,8 +99,8 @@ def test_image_view(qtbot: QtBot):
     image_view = QDefaultImageView()
     image_view.update_model(model)
     assert len(image_view._sliders) == 0
-    image_view._control._interpolation_check_box.setChecked(False)
-    image_view._control._interpolation_check_box.setChecked(True)
+    image_view._control._interp_check_box.setChecked(False)
+    image_view._control._interp_check_box.setChecked(True)
 
     # 5D
     rng = np.random.default_rng(14442)
