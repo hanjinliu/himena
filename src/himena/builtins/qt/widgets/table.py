@@ -13,7 +13,7 @@ from himena.consts import StandardType
 from himena.types import WidgetDataModel
 from himena.standards.model_meta import TableMeta
 from himena.plugins import protocol_override
-from himena.builtins.qt.widgets._table_base import QTableBase, QSelectionRangeEdit
+from himena.builtins.qt.widgets._table_components import QTableBase, QSelectionRangeEdit
 
 
 class HeaderFormat(Enum):
@@ -129,6 +129,9 @@ class QDefaultTableWidget(QTableBase):
         if model := self.model():
             model._header_format = value
 
+    def data_shape(self):
+        return self.model()._arr.shape
+
     @protocol_override
     @classmethod
     def display_name(cls) -> str:
@@ -154,12 +157,8 @@ class QDefaultTableWidget(QTableBase):
             if (pos := meta.current_position) is not None:
                 index = self.model().index(*pos)
                 self.setCurrentIndex(index)
-            if smod := self.selectionModel():
-                for (r0, r1), (c0, c1) in meta.selections:
-                    index_top_left = self.model().index(r0, c0)
-                    index_bottom_right = self.model().index(r1, c1)
-                    sel = QtCore.QItemSelection(index_top_left, index_bottom_right)
-                    smod.select(sel, QtCore.QItemSelectionModel.SelectionFlag.Select)
+            for (r0, r1), (c0, c1) in meta.selections:
+                self._selection_model.append((slice(r0, r1), slice(c0, c1)))
 
         self.update()
         self._modified = False
@@ -212,23 +211,8 @@ class QDefaultTableWidget(QTableBase):
     def control_widget(self) -> QTableControl:
         return self._control
 
-    def _selections_as_slices(self) -> list[tuple[slice, slice]]:
-        selranges = self.selectionModel().selection()
-        if selranges.count() != 1:
-            return
-
-        out = []
-        for isel in range(selranges.count()):
-            sel = selranges[isel]
-            sl = (
-                slice(sel.top(), sel.bottom() + 1),
-                slice(sel.left(), sel.right() + 1),
-            )
-            out.append(sl)
-        return out
-
     def _copy_to_clipboard(self):
-        sels = self._selections_as_slices()
+        sels = self._selection_model.ranges
         if len(sels) != 1:
             return
         sel = sels[0]
@@ -238,18 +222,14 @@ class QDefaultTableWidget(QTableBase):
             QtW.QApplication.clipboard().setText(string)
 
     def _paste_from_clipboard(self):
-        sel_idx = self.selectedIndexes()
-        if sel_idx:
-            idx = sel_idx[0]
-        else:
-            idx = self.currentIndex()
+        idx = self._selection_model.current_index
         text = QtW.QApplication.clipboard().text()
         if not text:
             return
 
         arr = self.model()._arr
         # paste in the text
-        row0, col0 = idx.row(), idx.column()
+        row0, col0 = idx.row, idx.column
         buf = StringIO(text)
         arr_paste = np.loadtxt(
             buf, dtype=np.dtypes.StringDType(), delimiter="\t", ndmin=2
@@ -277,55 +257,57 @@ class QDefaultTableWidget(QTableBase):
         self.model()._arr = arr
 
         # select what was just pasted
-        topleft = self.model().index(row0, col0)
-        bottomright = self.model().index(row0 + lr - 1, col0 + lc - 1)
-        item_selection = QtCore.QItemSelection(topleft, bottomright)
-        self.clearSelection()
-        self.selectionModel().select(
-            item_selection, QtCore.QItemSelectionModel.SelectionFlag.Select
+        self._selection_model.set_ranges(
+            [(slice(row0, row0 + lr), slice(col0, col0 + lc))]
         )
-
         self.update()
 
     def _delete_selection(self):
-        for sel in self._selections_as_slices():
+        for sel in self._selection_model.ranges:
             self.model()._arr[sel] = ""
+        self.update()
 
     def _insert_row_below(self):
-        row = self.currentIndex().row()
+        row = self._selection_model.current_index.row
         arr = self.model()._arr
         arr = np.insert(arr, row + 1, "", axis=0)
         self.model()._arr = arr
+        self.update()
 
     def _insert_row_above(self):
-        row = self.currentIndex().row()
+        row = self._selection_model.current_index.row
         arr = self.model()._arr
         arr = np.insert(arr, row, "", axis=0)
         self.model()._arr = arr
+        self.update()
 
     def _insert_column_right(self):
-        col = self.currentIndex().column()
+        col = self._selection_model.current_index.column
         arr = self.model()._arr
         arr = np.insert(arr, col + 1, "", axis=1)
         self.model()._arr = arr
+        self.update()
 
     def _insert_column_left(self):
-        col = self.currentIndex().column()
+        col = self._selection_model.current_index.column
         arr = self.model()._arr
         arr = np.insert(arr, col, "", axis=1)
         self.model()._arr = arr
+        self.update()
 
     def _remove_selected_rows(self):
         selected_rows = set[int]()
-        for sel in self._selections_as_slices():
+        for sel in self._selection_model.ranges:
             selected_rows.update(range(sel[0].start, sel[0].stop))
         self.model()._arr = np.delete(self.model()._arr, list(selected_rows), axis=0)
+        self.update()
 
     def _remove_selected_columns(self):
         selected_cols = set[int]()
-        for sel in self._selections_as_slices():
+        for sel in self._selection_model.ranges:
             selected_cols.update(range(sel[1].start, sel[1].stop))
         self.model()._arr = np.delete(self.model()._arr, list(selected_cols), axis=1)
+        self.update()
 
     def keyPressEvent(self, e: QtGui.QKeyEvent):
         _Ctrl = QtCore.Qt.KeyboardModifier.ControlModifier
@@ -349,7 +331,9 @@ class QDefaultTableWidget(QTableBase):
             )
             and Qt.Key.Key_Space <= e.key() <= Qt.Key.Key_ydiaeresis
         ):
-            self.edit(self.currentIndex())
+            index = self._selection_model.current_index
+            qindex = self.model().index(index.row, index.column)
+            self.edit(qindex)
             if editor := self.itemDelegate()._current_editor:
                 editor.setText(e.text())
             return

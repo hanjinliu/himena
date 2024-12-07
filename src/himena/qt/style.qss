@@ -599,3 +599,7 @@ QColorSwatch {
 QDrawCanvas {
     background-color: #[background_dim];
 }
+
+QTableBase {
+    qproperty-selectionColor: #[highlight];
+}

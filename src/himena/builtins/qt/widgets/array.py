@@ -12,7 +12,7 @@ from himena.consts import StandardType, MonospaceFontFamily
 from himena.standards.model_meta import ArrayMeta
 from himena.types import WidgetDataModel
 from himena.plugins import protocol_override
-from himena.builtins.qt.widgets._table_base import (
+from himena.builtins.qt.widgets._table_components import (
     QTableBase,
     QSelectionRangeEdit,
     format_table_value,
@@ -83,7 +83,6 @@ class QArraySliceView(QTableBase):
         self.verticalHeader().setDefaultSectionSize(20)
         self.horizontalHeader().setDefaultSectionSize(55)
         self.setModel(QArrayModel(np.zeros((0, 0))))
-        self.setSelectionModel(QtCore.QItemSelectionModel(self.model()))
         self.setFont(QtGui.QFont(MonospaceFontFamily, 10))
 
     def update_width_by_dtype(self):
@@ -126,21 +125,14 @@ class QArraySliceView(QTableBase):
     def copy_data(self):
         from io import StringIO
 
-        model = self.selectionModel()
-        if not model.hasSelection():
-            return
-        qselections = self.selectionModel().selection()
-        if len(qselections) > 1:
+        sels = self._selection_model.ranges
+        if len(sels) > 1:
             _LOGGER.warning("Multiple selections.")
             return
-
-        qsel: QtCore.QItemSelectionRange = next(iter(qselections))
-        r0, r1 = qsel.left(), qsel.right() + 1
-        c0, c1 = qsel.top(), qsel.bottom() + 1
         buf = StringIO()
         np.savetxt(
             buf,
-            self.model()._arr_slice[r0:r1, c0:c1],
+            self.model()._arr_slice[sels[0]],
             delimiter=",",
             fmt=dtype_to_fmt(self.model()._dtype),
         )
@@ -254,7 +246,6 @@ class QDefaultArrayView(QtW.QWidget):
         else:
             sl = self._get_slice()
             self._table.setModel(QArrayModel(arr.get_slice(sl)))
-        self._table.setSelectionModel(QtCore.QItemSelectionModel(self._table.model()))
 
         if self._control is None:
             self._control = QArrayViewControl(self._table)

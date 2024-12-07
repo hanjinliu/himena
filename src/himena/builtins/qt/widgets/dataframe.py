@@ -9,7 +9,7 @@ from qtpy.QtCore import Qt
 from himena.consts import StandardType
 from himena.types import WidgetDataModel
 from himena.standards.model_meta import DataFrameMeta, TableMeta
-from himena.builtins.qt.widgets._table_base import (
+from himena.builtins.qt.widgets._table_components import (
     QTableBase,
     QSelectionRangeEdit,
     format_table_value,
@@ -101,18 +101,15 @@ class QDataFrameView(QTableBase):
     @protocol_override
     def update_model(self, model: WidgetDataModel):
         self.setModel(QDataFrameModel(wrap_dataframe(model.value)))
-        self.setSelectionModel(QtCore.QItemSelectionModel(self.model()))
 
         if isinstance(meta := model.metadata, TableMeta):
+            self._selection_model.clear()
             if (pos := meta.current_position) is not None:
                 index = self.model().index(*pos)
                 self.setCurrentIndex(index)
-            if smod := self.selectionModel():
-                for (r0, r1), (c0, c1) in meta.selections:
-                    index_top_left = self.model().index(r0, c0)
-                    index_bottom_right = self.model().index(r1, c1)
-                    sel = QtCore.QItemSelection(index_top_left, index_bottom_right)
-                    smod.select(sel, QtCore.QItemSelectionModel.SelectionFlag.Select)
+                self._selection_model.current_index = pos
+            for (r0, r1), (c0, c1) in meta.selections:
+                self._selection_model.append((slice(r0, r1), slice(c0, c1)))
 
         if self._control is None:
             self._control = QDataFrameViewControl(self)
@@ -154,17 +151,14 @@ class QDataFrameView(QTableBase):
         return super().keyPressEvent(e)
 
     def copy_data(self):
-        model = self.selectionModel()
-        if not model.hasSelection():
-            return
-        qselections = self.selectionModel().selection()
-        if len(qselections) > 1:
+        sels = self._selection_model.ranges
+        if len(sels) > 1:
             _LOGGER.warning("Multiple selections.")
             return
 
-        qsel = next(iter(qselections))
-        r0, r1 = qsel.left(), qsel.right() + 1
-        c0, c1 = qsel.top(), qsel.bottom() + 1
+        rsl, csl = sels[0]
+        r0, r1 = rsl.start, rsl.stop
+        c0, c1 = csl.start, csl.stop
         csv_text = self.model().df.get_subset(r0, r1, c0, c1).to_csv_string("\t")
         clipboard = QtGui.QGuiApplication.clipboard()
         clipboard.setText(csv_text)

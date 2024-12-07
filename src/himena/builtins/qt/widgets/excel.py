@@ -4,10 +4,11 @@ from typing import TYPE_CHECKING, Mapping
 
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 
+from himena.builtins.qt.widgets._table_components._selection_model import Index
 from himena.standards.model_meta import ExcelMeta
 from himena.qt._qrename import QTabRenameLineEdit
 from himena.builtins.qt.widgets.table import QDefaultTableWidget
-from himena.builtins.qt.widgets._table_base import QSelectionRangeEdit
+from himena.builtins.qt.widgets._table_components import QSelectionRangeEdit
 from himena.types import WidgetDataModel
 from himena.consts import StandardType
 from himena.plugins import protocol_override
@@ -222,19 +223,22 @@ class QExcelTableStackControl(QtW.QWidget):
         shape = table.model()._arr.shape
         self._label.setText(f"Shape {shape!r}")
         self._selection_range.connect_table(table)
-        table.selectionModel().currentChanged.connect(self.update_for_current_index)
-        self.update_for_current_index(table.currentIndex())
+        table._selection_model.moved.connect(self.update_for_current_index)
+        self.update_for_current_index(
+            table._selection_model.current_index, table._selection_model.current_index
+        )
         return None
 
     @property
     def _current_table(self) -> QDefaultTableWidget | None:
         return self._selection_range._qtable
 
-    def update_for_current_index(self, index: QtCore.QModelIndex):
+    def update_for_current_index(self, old: Index, new: Index):
         qtable = self._current_table
         if qtable is None:
             return None
-        text = qtable.model().data(index)
+        qindex = qtable.model().index(new.row, new.column)
+        text = qtable.model().data(qindex)
         if not isinstance(text, str):
             text = ""
         self._value_line_edit.setText(text)
@@ -245,9 +249,9 @@ class QExcelTableStackControl(QtW.QWidget):
         if qtable is None:
             return None
         text = self._value_line_edit.text()
-        qtable.model().setData(
-            qtable.currentIndex(), text, QtCore.Qt.ItemDataRole.EditRole
-        )
+        index = qtable._selection_model.current_index
+        qindex = qtable.model().index(index.row, index.column)
+        qtable.model().setData(qindex, text, QtCore.Qt.ItemDataRole.EditRole)
         qtable.setFocus()
         return None
 
