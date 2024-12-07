@@ -450,7 +450,7 @@ class QImageGraphicsView(QBaseGraphicsView):
 
     def keyPressEvent(self, event: QtGui.QKeyEvent | None) -> None:
         if event is None:
-            return super().keyPressEvent(event)
+            return None
         _mods = event.modifiers()
         _key = event.key()
         if _mods == Qt.KeyboardModifier.NoModifier:
@@ -504,12 +504,12 @@ class QImageGraphicsView(QBaseGraphicsView):
                 if not self._is_key_hold:
                     self.toggle_roi_list_visibility()
         self._is_key_hold = True
-        return super().keyPressEvent(event)
+        return None
 
     def keyReleaseEvent(self, event: QtGui.QKeyEvent | None) -> None:
         self._is_key_hold = False
         if event is None:
-            return super().keyReleaseEvent(event)
+            return None
         if event.key() == Qt.Key.Key_Space:
             self.set_mode(self._last_mode_before_key_hold)
-        return super().keyReleaseEvent(event)
+        return None
