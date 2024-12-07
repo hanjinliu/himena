@@ -72,10 +72,18 @@ def configure_gui(
     def _inner(f):
         sig = inspect.signature(f)
         new_params = sig.parameters.copy()
+        if var_kwargs_name := _get_var_kwargs_name(sig):
+            new_params.pop(var_kwargs_name)
+
         for k, v in kwargs.items():
-            if k not in sig.parameters:
-                raise TypeError(f"{k!r} is not a valid parameter for {f!r}.")
-            param = sig.parameters[k]
+            if k not in new_params:
+                if var_kwargs_name is None:
+                    raise TypeError(f"{k!r} is not a valid parameter for {f!r}.")
+                # This allows using **kwargs in the target function so that magicgui
+                # widget can be created for a variable number of parameters.
+                param = inspect.Parameter(name=k, kind=inspect.Parameter.KEYWORD_ONLY)
+            else:
+                param = sig.parameters[k]
             if not _is_annotated(param.annotation):
                 annot = _prioritize_choices(param.annotation, v)
                 param = param.replace(annotation=Annotated[annot, v])
@@ -105,3 +113,11 @@ def _prioritize_choices(annotation, options: dict[str, Any]):
     else:
         typ = annotation
     return typ
+
+
+def _get_var_kwargs_name(sig: inspect.Signature) -> str | None:
+    """Get the name of the **kwargs parameter."""
+    for p in sig.parameters.values():
+        if p.kind == inspect.Parameter.VAR_KEYWORD:
+            return p.name
+    return None

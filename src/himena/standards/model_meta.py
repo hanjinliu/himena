@@ -31,7 +31,7 @@ class TableMeta(BaseModel):
 
 
 class DataFrameMeta(TableMeta):
-    pass
+    """Preset for describing a dataframe file metadata."""
 
 
 class ExcelMeta(TableMeta):

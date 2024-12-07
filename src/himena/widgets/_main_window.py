@@ -644,6 +644,13 @@ class MainWindow(Generic[_W]):
                     return None
         return None
 
+    @property
+    def current_model(self) -> WidgetDataModel | None:
+        """Get the current model of the active sub-window."""
+        if sub := self.current_window:
+            return sub.to_model()
+        return None
+
     def iter_windows(self) -> Iterator[SubWindow[_W]]:
         """Iterate over all the sub-windows in this main window."""
         for tab in self.tabs:

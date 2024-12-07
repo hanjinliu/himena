@@ -266,12 +266,17 @@ class QDefaultArrayView(QtW.QWidget):
 
     @protocol_override
     def to_model(self) -> WidgetDataModel[list[list[Any]]]:
+        selections = []
+        for (r0, r1), (c0, c1) in self._table._get_selections():
+            selections.append((slice(r0, r1), slice(c0, c1)))
+        self._spinbox_group
         return WidgetDataModel(
             value=self._arr.arr,
             type=self.model_type(),
             extension_default=".npy",
             metadata=ArrayMeta(
                 current_indices=self._get_slice(),
+                selections=selections,
             ),
         )
 

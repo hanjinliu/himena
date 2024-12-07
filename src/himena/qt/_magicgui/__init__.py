@@ -6,6 +6,7 @@ from himena.qt._magicgui._basic_widgets import IntEdit, FloatEdit
 from himena.qt._magicgui._selection import SelectionEdit
 from himena.qt._magicgui._modeldrop import ModelDrop
 from himena.qt._magicgui._dtypeedit import NumericDTypeEdit
+from himena.qt._magicgui._value_getter import SliderRangeGetter
 
 __all__ = [
     "get_type_map",
@@ -17,7 +18,8 @@ __all__ = [
     "IntEdit",
     "FloatEdit",
     "ModelDrop",
-    "SelectionEdit" "NumericDTypeEdit",
+    "NumericDTypeEdit",
     "SelectionEdit",
     "NumericDTypeEdit",
+    "SliderRangeGetter",
 ]

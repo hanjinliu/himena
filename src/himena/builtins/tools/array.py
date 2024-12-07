@@ -1,11 +1,12 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, TypeVar
 from himena._data_wrappers._array import wrap_array
 from himena._descriptors import NoNeedToSave
-from himena.plugins import register_function
+from himena.plugins import register_function, configure_gui
 from himena.standards.roi.core import ImageRoi2D
-from himena.types import WidgetDataModel, is_subtype
+from himena.types import Parametric, WidgetDataModel, is_subtype
 from himena.consts import StandardType
-from himena.standards.model_meta import ArrayMeta, ImageMeta
+from himena.standards.model_meta import ArrayMeta, ImageMeta, ImageAxis
+from himena.widgets._wrapper import SubWindow
 
 if TYPE_CHECKING:
     import numpy as np
@@ -23,9 +24,8 @@ def duplicate_this_slice(model: WidgetDataModel) -> WidgetDataModel:
         update = {"current_indices": ()}
         if isinstance(meta, ImageMeta):
             update["axes"] = meta.axes[-2:] if meta.axes is not None else None
-            update["scale"] = meta.scale[-2:] if meta.scale is not None else None
-            update["origin"] = meta.origin[-2:] if meta.origin is not None else None
             update["channel_axis"] = None
+            update["channels"] = None
         meta_sliced = meta.model_copy(update=update)
     else:
         meta_sliced = ArrayMeta(current_indices=())
@@ -41,16 +41,48 @@ def duplicate_this_slice(model: WidgetDataModel) -> WidgetDataModel:
 )
 def crop_array(model: WidgetDataModel) -> WidgetDataModel:
     """Crop the array."""
-    if is_subtype(model.type, StandardType.IMAGE):
+    if is_subtype(model.type, StandardType.IMAGE):  # interpret as an image
         return crop_image(model)
-
-    if not isinstance(meta := model.metadata, ArrayMeta):
-        raise ValueError("This function is only applicable to models with ArrayMeta.")
-    if len(sels := meta.selections) != 1:
-        raise ValueError("Single selection is required for this operation.")
-    sel = sels[0]
+    sel, meta = _get_current_selection_and_meta(model)
     arr_cropped = wrap_array(model.value)[sel]
     return model.with_value(arr_cropped, metadata=meta.without_selections())
+
+
+@register_function(
+    title="Crop Array (nD)",
+    types=StandardType.ARRAY,
+    menus=["tools/array"],
+    command_id="builtins:crop-array-nd",
+)
+def crop_array_nd(win: SubWindow) -> Parametric:
+    """Crop the array in nD."""
+    from himena.qt._magicgui import SliderRangeGetter
+
+    model = win.to_model()
+    if is_subtype(model.type, StandardType.IMAGE):  # interpret as an image
+        return crop_image_nd(model)
+
+    conf_kwargs = {}
+    for i in range(wrap_array(model.value).ndim - 2):
+        conf_kwargs[f"axis_{i}"] = {
+            "widget_type": SliderRangeGetter,
+            "getter": _make_getter(win, i),
+            "label": f"axis-{i}",
+        }
+
+    @configure_gui(**conf_kwargs)
+    def run_crop_image(**kwargs: tuple[int | None, int | None]):
+        model = win.to_model()  # NOTE: need to re-fetch the model
+        arr = wrap_array(model.value)
+        sel, meta = _get_current_selection_and_meta(model)
+        sl_nd = tuple(slice(x0, x1) for x0, x1 in kwargs.values())
+        sl = sl_nd + tuple(sel)
+        arr_cropped = arr[sl]
+        meta_out = meta.without_selections()
+        meta_out.current_indices = None  # shape changed, need to reset
+        return model.with_value(arr_cropped, metadata=meta_out)
+
+    return run_crop_image
 
 
 @register_function(
@@ -76,6 +108,54 @@ def crop_image(model: WidgetDataModel) -> WidgetDataModel:
     return model.with_value(arr_cropped, metadata=meta.without_rois())
 
 
+@register_function(
+    title="Crop Image (nD)",
+    types=StandardType.IMAGE,
+    menus=["tools/image"],
+    command_id="builtins:crop-image-nd",
+)
+def crop_image_nd(win: SubWindow) -> Parametric:
+    """Crop the image in nD."""
+    from himena.qt._magicgui import SliderRangeGetter
+
+    model = win.to_model()
+    ndim = wrap_array(model.value).ndim
+    meta = _cast_meta(model, ImageMeta)
+    if (axes := meta.axes) is None:
+        axes = [ImageAxis(name=f"axis-{i}") for i in range(ndim)]
+    index_yx_rgb = 2 + int(meta.is_rgb)
+    if ndim < index_yx_rgb + 1:
+        raise ValueError("Image only has 2D data.")
+
+    conf_kwargs = {}
+    for i, axis in enumerate(axes[:-index_yx_rgb]):
+        conf_kwargs[axis.name] = {
+            "widget_type": SliderRangeGetter,
+            "getter": _make_getter(win, i),
+            "label": axis.name,
+        }
+
+    @configure_gui(**conf_kwargs)
+    def run_crop_image(**kwargs: tuple[int | None, int | None]):
+        model = win.to_model()  # NOTE: need to re-fetch the model
+        arr = wrap_array(model.value)
+        roi, meta = _get_current_roi_and_meta(model)
+        sl_nd = tuple(slice(x0, x1) for x0, x1 in kwargs.values())
+        if isinstance(roi, ImageRoi2D):
+            bbox = roi.bbox().adjust_to_int()
+            ysl = slice(bbox.top, bbox.top + bbox.height + 1)
+            xsl = slice(bbox.left, bbox.left + bbox.width + 1)
+            sl = sl_nd + (ysl, xsl)
+            arr_cropped = arr[sl]
+        else:
+            raise NotImplementedError
+        meta_out = meta.without_rois()
+        meta_out.current_indices = None  # shape changed, need to reset
+        return model.with_value(arr_cropped, metadata=meta_out)
+
+    return run_crop_image
+
+
 def _get_current_array_2d(model: WidgetDataModel) -> "np.ndarray":
     from himena._data_wrappers import wrap_array
 
@@ -89,12 +169,42 @@ def _get_current_array_2d(model: WidgetDataModel) -> "np.ndarray":
     return arr.get_slice(tuple(indices))
 
 
-def _get_current_roi_and_meta(model: WidgetDataModel) -> tuple[ImageRoi2D, ImageMeta]:
-    if not isinstance(meta := model.metadata, ImageMeta):
+_C = TypeVar("_C", bound=type)
+
+
+def _cast_meta(model: WidgetDataModel, cls: type[_C]) -> _C:
+    if not isinstance(meta := model.metadata, cls):
         raise ValueError(
-            "This function is only applicable to models with ImageMeta, but got "
+            f"This function is only applicable to models with {cls.__name__}, but got "
             f"metadata of type {type(meta).__name__}."
         )
+    return meta
+
+
+def _get_current_roi_and_meta(model: WidgetDataModel) -> tuple[ImageRoi2D, ImageMeta]:
+    meta = _cast_meta(model, ImageMeta)
     if not (roi := meta.current_roi):
         raise ValueError("ROI selection is required for this operation.")
     return roi, meta
+
+
+def _get_current_selection_and_meta(
+    model: WidgetDataModel,
+) -> tuple[Any, ArrayMeta]:
+    meta = _cast_meta(model, ArrayMeta)
+    if len(sels := meta.selections) != 1:
+        raise ValueError(
+            f"Single selection is required for this operation (got {len(sels)} "
+            "selections)."
+        )
+    sel = sels[0]
+    return sel, meta
+
+
+def _make_getter(win: SubWindow, ith: int):
+    def _getter():
+        model = win.to_model()
+        meta = _cast_meta(model, ArrayMeta)
+        return meta.current_indices[ith]
+
+    return _getter

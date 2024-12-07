@@ -128,6 +128,11 @@ class QDefaultImageView(QtW.QWidget):
                 )
             else:
                 sl_0 = (0,) * ndim_rem
+        # the indices should be in the valid range
+        sl_0 = tuple(
+            min(max(0, s), size - 1) for s, size in zip(sl_0, arr.shape[:ndim_rem])
+        )
+
         # update sliders
         self._dims_slider._refer_array(arr, meta0.axes, is_rgb=self._is_rgb)
         with qsignal_blocker(self._dims_slider):
@@ -216,13 +221,14 @@ class QDefaultImageView(QtW.QWidget):
             type=self.model_type(),
             extension_default=".png",
             metadata=model_meta.ImageMeta(
-                axes=axes,
                 current_indices=current_slices,
-                interpolation=interp,
+                axes=axes,
                 channels=channels,
-                rois=self._roi_list,
+                channel_axis=self._channel_axis,
                 current_roi=current_roi,
+                rois=self._roi_list,
                 is_rgb=self._is_rgb,
+                interpolation=interp,
             ),
         )
 
