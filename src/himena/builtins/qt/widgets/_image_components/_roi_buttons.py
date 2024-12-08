@@ -28,39 +28,39 @@ class QRoiButtons(QtW.QWidget):
         )
         self._btn_panzoom = _tool_btn(
             icon_name="mdi:magnify-expand",
-            tooltip="Pan/zoom mode",
+            tooltip="Pan/zoom mode (Z, Space)",
         )
         self._btn_select = _tool_btn(
             icon_name="mdi:cursor-default",
-            tooltip="Select mode",
+            tooltip="Select mode (S)",
         )
         self._btn_rect = _tool_btn(
             icon_name="mdi:vector-rectangle",
-            tooltip="Add rectangles",
+            tooltip="Add rectangles (R)",
         )
         self._btn_ellipse = _tool_btn(
             icon_name="mdi:vector-ellipse",
-            tooltip="Add ellipses",
+            tooltip="Add ellipses (E)",
         )
         self._btn_line = _tool_btn(
             icon_name="mdi:vector-line",
-            tooltip="Add lines",
+            tooltip="Add lines (L)",
         )
         self._btn_segmented_line = _tool_btn(
             icon_name="mdi:vector-polyline",
-            tooltip="Add segmented lines",
+            tooltip="Add segmented lines (L x 2)",
         )
         self._btn_polygon = _tool_btn(
             icon_name="mdi:vector-polygon",
-            tooltip="Add polygons",
+            tooltip="Add polygons (G)",
         )
         self._btn_point = _tool_btn(
             icon_name="mdi:vector-point",
-            tooltip="Add points",
+            tooltip="Add points (P)",
         )
         self._btn_points = _tool_btn(
             icon_name="mdi:vector-point-plus",
-            tooltip="Add multiple points",
+            tooltip="Add multiple points (P x 2)",
         )
         self._button_group = QtW.QButtonGroup()
         self._button_group.addButton(self._btn_panzoom)

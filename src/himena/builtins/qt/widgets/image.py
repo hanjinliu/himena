@@ -47,36 +47,30 @@ class QImageView(QtW.QSplitter):
         layout.setSpacing(2)
         self._roi_buttons = QRoiButtons()
         self._roi_buttons.mode_changed.connect(self._on_roi_mode_changed)
-        self._image_graphics_view = QImageGraphicsView()
-        self._image_graphics_view.hovered.connect(self._on_hovered)
-        self._image_graphics_view.mode_changed.connect(self._roi_buttons.set_mode)
-        self._image_graphics_view.roi_visibility_changed.connect(
-            self._roi_visibility_changed
-        )
+        self._img_view = QImageGraphicsView()
+        self._img_view.hovered.connect(self._on_hovered)
+        self._img_view.mode_changed.connect(self._roi_buttons.set_mode)
+        self._img_view.roi_visibility_changed.connect(self._roi_visibility_changed)
         self._dims_slider = QDimsSlider()
-        self._roi_collection = QRoiCollection()
-        self._roi_collection.show_rois_changed.connect(
-            self._image_graphics_view.set_show_rois
+        self._roi_col = QRoiCollection()
+        self._roi_col.show_rois_changed.connect(self._img_view.set_show_rois)
+        self._roi_col.show_labels_changed.connect(self._img_view.set_show_labels)
+        self._roi_col.key_pressed.connect(self._img_view.keyPressEvent)
+        self._roi_col.key_released.connect(self._img_view.keyReleaseEvent)
+        self._roi_col.roi_item_clicked.connect(self._roi_item_clicked)
+        self._roi_col._add_btn.clicked.connect(self._img_view.add_current_roi)
+        self._roi_col._remove_btn.clicked.connect(
+            lambda: self._img_view.remove_current_item(remove_from_list=True)
         )
-        self._roi_collection.show_labels_changed.connect(
-            self._image_graphics_view.set_show_labels
-        )
-        self._roi_collection.key_pressed.connect(
-            self._image_graphics_view.keyPressEvent
-        )
-        self._roi_collection.key_released.connect(
-            self._image_graphics_view.keyReleaseEvent
-        )
-        self._roi_collection.roi_item_clicked.connect(self._roi_item_clicked)
-        self._roi_collection.layout().insertWidget(0, self._roi_buttons)
-        layout.addWidget(self._image_graphics_view)
+        self._roi_col.layout().insertWidget(0, self._roi_buttons)
+        layout.addWidget(self._img_view)
         layout.addWidget(self._dims_slider)
 
-        self._image_graphics_view.roi_added.connect(self._on_roi_added)
-        self._image_graphics_view.roi_removed.connect(self._on_roi_removed)
+        self._img_view.roi_added.connect(self._on_roi_added)
+        self._img_view.roi_removed.connect(self._on_roi_removed)
         self._dims_slider.valueChanged.connect(self._slider_changed)
 
-        self.addWidget(self._roi_collection)
+        self.addWidget(self._roi_col)
         self.setStretchFactor(0, 6)
         self.setStretchFactor(1, 1)
         self.setSizes([400, 0])
@@ -88,7 +82,7 @@ class QImageView(QtW.QSplitter):
         self._channel_axis: int | None = None
         self._channels: list[ChannelInfo] | None = None
         self._model_type = StandardType.IMAGE
-        self._image_graphics_view.add_image_layer()
+        self._img_view.add_image_layer()
 
     def createHandle(self):
         return QImageViewSplitterHandle(QtCore.Qt.Orientation.Horizontal, self)
@@ -160,7 +154,7 @@ class QImageView(QtW.QSplitter):
         else:
             nchannels = arr.shape[meta0.channel_axis]
 
-        self._image_graphics_view.set_n_images(nchannels)
+        self._img_view.set_n_images(nchannels)
         if _is_rgb:
             self._channel_axis = None  # override channel axis for RGB images
         else:
@@ -225,7 +219,7 @@ class QImageView(QtW.QSplitter):
         _all = slice(None)
         current_indices = self._dims_slider.value()
         current_slices = current_indices + (_all, _all)
-        if item := self._image_graphics_view._current_roi_item:
+        if item := self._img_view._current_roi_item:
             current_roi = item.toRoi(current_indices)
         else:
             current_roi = None
@@ -242,7 +236,7 @@ class QImageView(QtW.QSplitter):
                 channels=channels,
                 channel_axis=self._channel_axis,
                 current_roi=current_roi,
-                rois=self._roi_collection.to_standard_roi_list,
+                rois=self._roi_col.to_standard_roi_list,
                 is_rgb=self._is_rgb,
                 interpolation=interp,
             ),
@@ -272,8 +266,8 @@ class QImageView(QtW.QSplitter):
     def merge_model(self, model: WidgetDataModel):
         if model.type == StandardType.IMAGE_ROIS:
             if isinstance(roi_list := model.value, roi.RoiListModel):
-                self._roi_collection.update_from_standard_roi_list(roi_list)
-                self._image_graphics_view.clear_rois()
+                self._roi_col.update_from_standard_roi_list(roi_list)
+                self._img_view.clear_rois()
                 self._update_rois()
             self._is_modified = True
         elif model.type == StandardType.IMAGE_LABELS:
@@ -281,7 +275,7 @@ class QImageView(QtW.QSplitter):
         return None
 
     def setFocus(self):
-        return self._image_graphics_view.setFocus()
+        return self._img_view.setFocus()
 
     def leaveEvent(self, ev) -> None:
         self._control._hover_info.setText("")
@@ -291,11 +285,11 @@ class QImageView(QtW.QSplitter):
 
     def _roi_item_clicked(self, indices: tuple[int, ...], qroi: QRoi):
         self._dims_slider.setValue(indices)
-        self._image_graphics_view.select_item(qroi)
+        self._img_view.select_item(qroi)
 
     def _roi_visibility_changed(self, show_rois: bool):
-        with qsignal_blocker(self._roi_collection):
-            self._roi_collection._roi_visible_btn.setChecked(show_rois)
+        with qsignal_blocker(self._roi_col):
+            self._roi_col._roi_visible_btn.setChecked(show_rois)
 
     def _get_image_slices(
         self,
@@ -335,7 +329,7 @@ class QImageView(QtW.QSplitter):
     def _set_image_slice(self, img: NDArray[np.number], channel: ChannelInfo):
         idx = channel.channel_index or 0
         with qsignal_blocker(self._control._histogram):
-            self._image_graphics_view.set_array(
+            self._img_view.set_array(
                 idx,
                 channel.transform_image(
                     img,
@@ -344,7 +338,7 @@ class QImageView(QtW.QSplitter):
                     is_gray=self._composite_state() == "Gray",
                 ),
             )
-            self._image_graphics_view.clear_rois()
+            self._img_view.clear_rois()
             channel.minmax = (
                 min(img.min(), channel.minmax[0]),
                 max(img.max(), channel.minmax[1]),
@@ -373,7 +367,7 @@ class QImageView(QtW.QSplitter):
             return
         with qsignal_blocker(self._control._histogram):
             for i, (img, ch) in enumerate(zip(imgs, self._channels)):
-                self._image_graphics_view.set_array(
+                self._img_view.set_array(
                     i,
                     ch.transform_image(
                         img,
@@ -382,7 +376,7 @@ class QImageView(QtW.QSplitter):
                         is_gray=self._composite_state() == "Gray",
                     ),
                 )
-            self._image_graphics_view.clear_rois()
+            self._img_view.clear_rois()
             ch_cur = self.current_channel()
             idx = ch_cur.channel_index or 0
             self._control._histogram.set_hist_for_array(
@@ -395,8 +389,8 @@ class QImageView(QtW.QSplitter):
             self._update_rois()
 
     def _update_rois(self):
-        rois = self._roi_collection.get_rois_on_slice(self._dims_slider.value())
-        self._image_graphics_view.extend_qrois(rois)
+        rois = self._roi_col.get_rois_on_slice(self._dims_slider.value())
+        self._img_view.extend_qrois(rois)
 
     def current_channel(self, slider_value: tuple[int] | None = None) -> ChannelInfo:
         if slider_value is None:
@@ -412,18 +406,18 @@ class QImageView(QtW.QSplitter):
 
     def _on_roi_added(self, qroi: QRoi):
         if qroi.label() == "":
-            qroi.setLabel(str(len(self._roi_collection)))
+            qroi.setLabel(str(len(self._roi_col)))
         indices = self._dims_slider.value()
-        self._roi_collection.add(indices, qroi)
+        self._roi_col.add(indices, qroi)
         set_status_tip(f"Added a {qroi._roi_type()} ROI")
 
     def _on_roi_removed(self, idx: int):
         indices = self._dims_slider.value()
-        qroi = self._roi_collection.pop_roi(indices, idx)
+        qroi = self._roi_col.pop_roi(indices, idx)
         set_status_tip(f"Removed a {qroi._roi_type()} ROI")
 
     def _on_roi_mode_changed(self, mode: Mode):
-        self._image_graphics_view.switch_mode(mode)
+        self._img_view.switch_mode(mode)
         mode_name = mode.name.replace("_", " ")
         if mode_name.startswith("ROI "):
             mode_name = mode_name[4:]
@@ -455,10 +449,10 @@ class QImageView(QtW.QSplitter):
 
     # forward key events to image graphics view
     def keyPressEvent(self, a0: QtGui.QKeyEvent | None) -> None:
-        return self._image_graphics_view.keyPressEvent(a0)
+        return self._img_view.keyPressEvent(a0)
 
     def keyReleaseEvent(self, a0: QtGui.QKeyEvent | None) -> None:
-        return self._image_graphics_view.keyReleaseEvent(a0)
+        return self._img_view.keyReleaseEvent(a0)
 
 
 class ChannelInfo(BaseModel):

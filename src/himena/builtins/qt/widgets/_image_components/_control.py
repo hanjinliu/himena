@@ -134,7 +134,7 @@ class QImageViewControl(QtW.QWidget):
         return arr
 
     def _interpolation_changed(self, checked: bool):
-        self._image_view._image_graphics_view.setSmoothing(checked)
+        self._image_view._img_view.setSmoothing(checked)
 
     def _clim_changed(self, clim: tuple[float, float]):
         view = self._image_view
@@ -142,7 +142,7 @@ class QImageViewControl(QtW.QWidget):
         ch.clim = clim
         idx = ch.channel_index or 0
         with qsignal_blocker(self._histogram):
-            view._image_graphics_view.set_array(
+            view._img_view.set_array(
                 idx,
                 ch.transform_image(
                     view._current_image_slices[idx],

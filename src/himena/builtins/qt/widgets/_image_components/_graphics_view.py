@@ -609,6 +609,11 @@ class QImageGraphicsView(QBaseGraphicsView):
             elif _key == Qt.Key.Key_V:
                 if not self._is_key_hold:
                     self.set_show_rois(not self._is_rois_visible)
+        elif _mods == Qt.KeyboardModifier.ControlModifier:
+            if _key == Qt.Key.Key_A:
+                ny, nx = self._image_widgets[0]._img.shape[:2]
+                self.set_current_roi(QRectangleRoi(0, 0, nx, ny).withPen(self._roi_pen))
+                self._selection_handles.connect_rect(self._current_roi_item)
         self._is_key_hold = True
         return None
 

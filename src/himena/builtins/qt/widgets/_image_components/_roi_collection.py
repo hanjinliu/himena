@@ -31,15 +31,7 @@ def from_standard_roi(r: roi.ImageRoi, pen: QtGui.QPen) -> _roi_items.QRoi:
 Indices = tuple[int, ...]
 
 
-class QRoiCollection(QtW.QWidget):
-    """Object to store and manage multiple ROIs in nD images."""
-
-    show_rois_changed = QtCore.Signal(bool)
-    show_labels_changed = QtCore.Signal(bool)
-    roi_item_clicked = QtCore.Signal(tuple, _roi_items.QRoi)
-    key_pressed = QtCore.Signal(QtGui.QKeyEvent)
-    key_released = QtCore.Signal(QtGui.QKeyEvent)
-
+class QSimpleRoiCollection(QtW.QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._rois: list[tuple[Indices, _roi_items.QRoi]] = []
@@ -49,59 +41,13 @@ class QRoiCollection(QtW.QWidget):
         layout = QtW.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         self._list_view = QRoiListView(self)
-        self._list_view.clicked.connect(self._on_item_clicked)
-        self._list_view.key_pressed.connect(self.key_pressed)
-        self._list_view.key_released.connect(self.key_released)
 
         layout.addWidget(
             self._list_view, 100, alignment=QtCore.Qt.AlignmentFlag.AlignTop
         )
-        self._roi_visible_btn = QLabeledToggleSwitch()
-        self._roi_visible_btn.setText("Show ROIs")
-        self._roi_visible_btn.setChecked(False)
-        self._roi_labels_btn = QLabeledToggleSwitch()
-        self._roi_labels_btn.setText("Labels")
-        self._roi_labels_btn.setChecked(False)
-        self._roi_visible_btn.setSizePolicy(
-            QtW.QSizePolicy(
-                QtW.QSizePolicy.Policy.Minimum, QtW.QSizePolicy.Policy.Minimum
-            )
-        )
-        self._roi_labels_btn.setSizePolicy(
-            QtW.QSizePolicy(
-                QtW.QSizePolicy.Policy.Minimum, QtW.QSizePolicy.Policy.Minimum
-            )
-        )
-        layout.addWidget(
-            self._roi_visible_btn, alignment=QtCore.Qt.AlignmentFlag.AlignBottom
-        )
-        layout.addWidget(
-            self._roi_labels_btn, alignment=QtCore.Qt.AlignmentFlag.AlignBottom
-        )
-
-        self._roi_visible_btn.toggled.connect(self._on_roi_visible_btn_clicked)
-        self._roi_labels_btn.toggled.connect(self._on_roi_labels_btn_clicked)
-
-        self.setToolTip("List of ROIs in the image")
 
     def layout(self) -> QtW.QVBoxLayout:
         return super().layout()
-
-    def _on_roi_visible_btn_clicked(self, checked: bool):
-        if self._roi_labels_btn.isChecked() and not checked:
-            self._roi_labels_btn.setChecked(False)
-        self.show_rois_changed.emit(checked)
-
-    def _on_roi_labels_btn_clicked(self, checked: bool):
-        if checked and not self._roi_visible_btn.isChecked():
-            self._roi_visible_btn.setChecked(True)
-        self.show_labels_changed.emit(checked)
-
-    def _on_item_clicked(self, index: QtCore.QModelIndex):
-        r = index.row()
-        if 0 <= r < len(self._rois):
-            indices, roi = self._rois[r]
-            self.roi_item_clicked.emit(indices, roi)
 
     def update_from_standard_roi_list(self, rois: roi.RoiListModel) -> QRoiCollection:
         for r in rois:
@@ -165,6 +111,92 @@ class QRoiCollection(QtW.QWidget):
         return roi
 
 
+class QRoiCollection(QSimpleRoiCollection):
+    """Object to store and manage multiple ROIs in nD images."""
+
+    show_rois_changed = QtCore.Signal(bool)
+    show_labels_changed = QtCore.Signal(bool)
+    roi_item_clicked = QtCore.Signal(tuple, _roi_items.QRoi)
+    key_pressed = QtCore.Signal(QtGui.QKeyEvent)
+    key_released = QtCore.Signal(QtGui.QKeyEvent)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._list_view.clicked.connect(self._on_item_clicked)
+        self._list_view.key_pressed.connect(self.key_pressed)
+        self._list_view.key_released.connect(self.key_released)
+
+        self.layout().addWidget(
+            self._list_view, 100, alignment=QtCore.Qt.AlignmentFlag.AlignTop
+        )
+        self._add_btn = QtW.QPushButton("+")
+        self._add_btn.setToolTip("Register current ROI to the list")
+        self._add_btn.setFixedSize(14, 14)
+        self._add_btn.setSizePolicy(
+            QtW.QSizePolicy.Policy.Minimum, QtW.QSizePolicy.Policy.Minimum
+        )
+        self._remove_btn = QtW.QPushButton("-")
+        self._remove_btn.setToolTip("Remove selected ROI from the list")
+        self._remove_btn.setFixedSize(14, 14)
+        self._remove_btn.setSizePolicy(
+            QtW.QSizePolicy.Policy.Minimum, QtW.QSizePolicy.Policy.Minimum
+        )
+        _btn_layout = QtW.QHBoxLayout()
+        _btn_layout.setContentsMargins(0, 0, 0, 0)
+        _btn_layout.setSpacing(1)
+        _btn_layout.addWidget(QtW.QWidget(), 100)
+        _btn_layout.addWidget(
+            self._add_btn, alignment=QtCore.Qt.AlignmentFlag.AlignRight
+        )
+        _btn_layout.addWidget(
+            self._remove_btn, alignment=QtCore.Qt.AlignmentFlag.AlignRight
+        )
+        self.layout().addLayout(_btn_layout)
+        self._roi_visible_btn = QLabeledToggleSwitch()
+        self._roi_visible_btn.setText("Show ROIs")
+        self._roi_visible_btn.setChecked(False)
+        self._roi_labels_btn = QLabeledToggleSwitch()
+        self._roi_labels_btn.setText("Labels")
+        self._roi_labels_btn.setChecked(False)
+        self._roi_visible_btn.setSizePolicy(
+            QtW.QSizePolicy(
+                QtW.QSizePolicy.Policy.Minimum, QtW.QSizePolicy.Policy.Minimum
+            )
+        )
+        self._roi_labels_btn.setSizePolicy(
+            QtW.QSizePolicy(
+                QtW.QSizePolicy.Policy.Minimum, QtW.QSizePolicy.Policy.Minimum
+            )
+        )
+        self.layout().addWidget(
+            self._roi_visible_btn, alignment=QtCore.Qt.AlignmentFlag.AlignBottom
+        )
+        self.layout().addWidget(
+            self._roi_labels_btn, alignment=QtCore.Qt.AlignmentFlag.AlignBottom
+        )
+
+        self._roi_visible_btn.toggled.connect(self._on_roi_visible_btn_clicked)
+        self._roi_labels_btn.toggled.connect(self._on_roi_labels_btn_clicked)
+
+        self.setToolTip("List of ROIs in the image")
+
+    def _on_roi_visible_btn_clicked(self, checked: bool):
+        if self._roi_labels_btn.isChecked() and not checked:
+            self._roi_labels_btn.setChecked(False)
+        self.show_rois_changed.emit(checked)
+
+    def _on_roi_labels_btn_clicked(self, checked: bool):
+        if checked and not self._roi_visible_btn.isChecked():
+            self._roi_visible_btn.setChecked(True)
+        self.show_labels_changed.emit(checked)
+
+    def _on_item_clicked(self, index: QtCore.QModelIndex):
+        r = index.row()
+        if 0 <= r < len(self._rois):
+            indices, roi = self._rois[r]
+            self.roi_item_clicked.emit(indices, roi)
+
+
 class QRoiListView(QtW.QListView):
     # NOTE: list view usually has a focus. Key events have to be forwarded.
     key_pressed = QtCore.Signal(QtGui.QKeyEvent)
@@ -172,11 +204,6 @@ class QRoiListView(QtW.QListView):
 
     def __init__(self, parent: QRoiCollection):
         super().__init__(parent)
-        self.setSizePolicy(
-            QtW.QSizePolicy(
-                QtW.QSizePolicy.Policy.Maximum, QtW.QSizePolicy.Policy.Maximum
-            )
-        )
         self.setModel(QRoiListModel(parent))
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
@@ -187,6 +214,9 @@ class QRoiListView(QtW.QListView):
     def keyReleaseEvent(self, a0):
         self.key_released.emit(a0)
         return super().keyReleaseEvent(a0)
+
+    def sizeHint(self):
+        return QtCore.QSize(180, 900)  # set to a very large value to make it expanded
 
 
 class QRoiListModel(QtCore.QAbstractListModel):

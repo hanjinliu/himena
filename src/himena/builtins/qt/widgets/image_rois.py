@@ -6,7 +6,7 @@ from himena.plugins import protocol_override
 from himena.standards import roi
 from himena.consts import StandardType
 from himena.types import WidgetDataModel
-from ._image_components import QRoiCollection
+from ._image_components import QSimpleRoiCollection
 
 if TYPE_CHECKING:
     pass
@@ -23,9 +23,7 @@ class QImageRoiView(QtW.QWidget):
 
         layout = QtW.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        self._roi_collection = QRoiCollection()
-        self._roi_collection._roi_labels_btn.hide()
-        self._roi_collection._roi_visible_btn.hide()
+        self._roi_collection = QSimpleRoiCollection()
         layout.addWidget(self._roi_collection)
         self._control = QImageRoiControl()
         self._is_modified = False
