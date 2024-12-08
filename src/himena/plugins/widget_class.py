@@ -1,12 +1,16 @@
 from typing import Callable, overload, TypeVar
 from app_model.types import Action
 from himena._descriptors import NoNeedToSave
-from himena._utils import get_display_name, get_widget_id
+from himena._utils import get_display_name, get_widget_class_id
 from himena.plugins.actions import AppActionRegistry
 from himena.types import WidgetDataModel
 
 _T = TypeVar("_T")
 _WIDGET_ID_TO_WIDGET_CLASS: dict[str, type] = {}
+
+
+def get_widget_class(id: str) -> type | None:
+    return _WIDGET_ID_TO_WIDGET_CLASS.get(id)
 
 
 @overload
@@ -61,7 +65,7 @@ def register_widget_class(type_, widget_class=None, priority=100):
     def inner(wcls):
         import himena.qt
 
-        widget_id = get_widget_id(wcls)
+        widget_id = get_widget_class_id(wcls)
         if existing_class := _WIDGET_ID_TO_WIDGET_CLASS.get(widget_id):
             raise ValueError(
                 f"Widget class with ID {widget_id!r} already exists ({existing_class})."
@@ -80,7 +84,8 @@ class OpenDataInFunction:
 
     def __init__(self, type_: str, widget_class: type):
         self._display_name = get_display_name(widget_class)
-        self._plugin_id = f"{widget_class.__module__}.{widget_class.__name__}"
+        self._plugin_id = get_widget_class_id(widget_class)
+        self._action_id = "open-in:" + self._plugin_id
         self._type = type_
 
     def __call__(self, model: WidgetDataModel) -> WidgetDataModel:
@@ -94,7 +99,7 @@ class OpenDataInFunction:
     def to_action(self) -> Action:
         tooltip = f"Open this data in {self._display_name}"
         return Action(
-            id=self._plugin_id,
+            id=self._action_id,
             title=self._display_name,
             tooltip=tooltip,
             callback=self,

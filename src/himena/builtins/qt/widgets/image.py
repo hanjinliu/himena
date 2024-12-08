@@ -516,7 +516,10 @@ class ChannelInfo(BaseModel):
         if arr is None:
             return None
         cmin, cmax = self.clim
-        amp = 255 / (cmax - cmin)
+        if cmax == cmin:
+            amp = 128
+        else:
+            amp = 255 / (cmax - cmin)
         if is_gray:
             # make a gray image
             arr_gray = arr[..., 0] * 0.3 + arr[..., 1] * 0.59 + arr[..., 2] * 0.11

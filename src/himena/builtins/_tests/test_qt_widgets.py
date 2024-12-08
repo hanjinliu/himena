@@ -90,7 +90,7 @@ def test_image_view(qtbot: QtBot):
     image_view = QImageView()
     image_view.update_model(model)
     qtbot.addWidget(image_view)
-    assert len(image_view._sliders) == 0
+    assert len(image_view._dims_slider._sliders) == 0
 
     # RGB
     model = WidgetDataModel(
@@ -98,7 +98,7 @@ def test_image_view(qtbot: QtBot):
     )
     image_view = QImageView()
     image_view.update_model(model)
-    assert len(image_view._sliders) == 0
+    assert len(image_view._dims_slider._sliders) == 0
     image_view._control._interp_check_box.setChecked(False)
     image_view._control._interp_check_box.setChecked(True)
 
@@ -110,8 +110,8 @@ def test_image_view(qtbot: QtBot):
     )
     image_view = QImageView()
     image_view.update_model(model)
-    image_view._sliders[0]._slider.setValue(1)
-    image_view._sliders[2]._slider.setValue(2)
+    image_view._dims_slider._sliders[0]._slider.setValue(1)
+    image_view._dims_slider._sliders[2]._slider.setValue(2)
 
 
 def test_find_text(qtbot: QtBot):

@@ -37,6 +37,7 @@ class QSubWindowArea(QtW.QMdiArea):
         self._last_press_pos: QtCore.QPoint | None = None
         self._last_drag_pos: QtCore.QPoint | None = None
         self.setActivationOrder(QtW.QMdiArea.WindowOrder.ActivationHistoryOrder)
+        self._last_active_window: QSubWindow | None = None
 
     def addSubWindow(self, sub_window: QSubWindow):
         super().addSubWindow(sub_window)
@@ -126,13 +127,17 @@ class QSubWindowArea(QtW.QMdiArea):
         if a0.type() == QtCore.QEvent.Type.FocusIn:
             with suppress(RuntimeError):
                 if obj is not self:
-                    if isinstance(obj, QtW.QStyle):
+                    if isinstance(obj, (QtW.QStyle, QtW.QAbstractButton)):
                         return False
                     else:
-                        if win := self.currentSubWindow():
+                        if (
+                            win := self.currentSubWindow()
+                        ) is not self._last_active_window:
                             self.subWindowActivated.emit(win)
+                            self._last_active_window = win
                 else:
                     self.area_focused.emit()
+                    self._last_active_window = None
                     _LOGGER.debug("TabArea focused.")
         return super().eventFilter(obj, a0)
 

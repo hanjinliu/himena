@@ -122,7 +122,7 @@ QScrollBar:vertical {
 QScrollBar::handle {
     background: #[highlight_dim];
     border-radius: 5px;
-    border: 1px solid #[foreground];
+    border: 1px solid #[highlight_strong];
 }
 
 QScrollBar::handle:hover {

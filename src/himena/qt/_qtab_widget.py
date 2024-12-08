@@ -153,8 +153,9 @@ class QTabWidget(QtW.QTabWidget):
             self._add_startup_widget()
         return None
 
-    def _subwindow_activated(self) -> None:
-        self.activeWindowChanged.emit(True)
+    def _subwindow_activated(self, win: QSubWindow | None) -> None:
+        if win is not None:
+            self.activeWindowChanged.emit(True)
 
     def _area_focused(self) -> None:
         self.activeWindowChanged.emit(False)

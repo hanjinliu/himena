@@ -6,7 +6,7 @@ from qtpy.QtCore import Qt
 from pathlib import Path
 from pytestqt.qtbot import QtBot
 
-from himena.types import WidgetDataModel
+from himena.types import WidgetDataModel, WindowRect
 
 def test_type_map_and_session(tmpdir, ui: MainWindow, sample_dir):
     tab0 = ui.add_tab()
@@ -28,15 +28,15 @@ def test_type_map_and_session(tmpdir, ui: MainWindow, sample_dir):
     assert len(ui.tabs) == 2
     assert len(ui.tabs[0]) == 2
     assert ui.tabs[0][0].title == "text.txt"
-    assert ui.tabs[0][0].rect == (30, 40, 120, 150)
+    assert ui.tabs[0][0].rect == WindowRect(30, 40, 120, 150)
     assert ui.tabs[0][1].title == "json.json"
-    assert ui.tabs[0][1].rect == (150, 40, 250, 150)
+    assert ui.tabs[0][1].rect == WindowRect(150, 40, 250, 150)
     assert isinstance(ui.tabs[0][1].anchor, anchor.TopLeftConstAnchor)
     assert len(ui.tabs[1]) == 2
     assert ui.tabs[1][0].title == "My Image"
-    assert ui.tabs[1][0].rect == (30, 40, 160, 130)
+    assert ui.tabs[1][0].rect == WindowRect(30, 40, 160, 130)
     assert ui.tabs[1][1].title == "My HTML"
-    assert ui.tabs[1][1].rect == (80, 40, 160, 130)
+    assert ui.tabs[1][1].rect == WindowRect(80, 40, 160, 130)
 
 def test_command_palette_events(ui: MainWindowQt, qtbot: QtBot):
     ui.show()

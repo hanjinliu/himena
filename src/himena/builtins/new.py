@@ -60,7 +60,7 @@ def new_draw_canvas(ui: MainWindow) -> WidgetDataModel:
         type=StandardType.IMAGE,
         extension_default=".png",
         title=f"Canvas-{nwin}",
-        force_open_with="himena.builtins.qt.widgets.QDrawCanvas",
+        force_open_with="builtins:QDrawCanvas",
     )
 
 

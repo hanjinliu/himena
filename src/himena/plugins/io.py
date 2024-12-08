@@ -27,12 +27,21 @@ def _plugin_info_from_func(func: Callable) -> _providers.PluginInfo | None:
 
 
 @overload
-def register_reader_provider(provider: _RP, *, priority: int = 100) -> _RP: ...
+def register_reader_provider(
+    provider: _RP,
+    *,
+    priority: int = 100,
+    function_id: str | None = None,
+) -> _RP: ...
 @overload
-def register_reader_provider(*, priority: int = 100) -> Callable[[_RP], _RP]: ...
+def register_reader_provider(
+    *,
+    priority: int = 100,
+    function_id: str | None = None,
+) -> Callable[[_RP], _RP]: ...
 
 
-def register_reader_provider(provider=None, priority=100):
+def register_reader_provider(provider=None, *, priority=100, function_id=None):
     """
     Register reader provider function.
 

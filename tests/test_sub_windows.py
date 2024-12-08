@@ -5,7 +5,7 @@ from tempfile import TemporaryDirectory
 from qtpy import QtWidgets as QtW
 from himena import MainWindow, anchor
 from himena._descriptors import ConverterMethod, LocalReaderMethod, NoNeedToSave, ProgramaticMethod, SaveToNewPath, SaveToPath
-from himena.types import ClipboardDataModel, WidgetDataModel
+from himena.types import ClipboardDataModel, WidgetDataModel, WindowRect
 from himena.qt import register_widget_class, MainWindowQt
 from himena.builtins.qt import widgets as _qtw
 import himena._providers
@@ -194,8 +194,8 @@ def test_custom_widget(ui: MainWindow):
     assert len(ui.tabs[0]) == 1
     widget.title = "New title"
     assert widget.title == "New title"
-    widget.rect = (10, 20, 100, 200)
-    assert widget.rect == (10, 20, 100, 200)
+    widget.rect = WindowRect(10, 20, 100, 200)
+    assert widget.rect == WindowRect(10, 20, 100, 200)
     widget.anchor = "top-left"
     assert isinstance(widget.anchor, anchor.TopLeftConstAnchor)
     widget.anchor = "top-right"
@@ -364,10 +364,7 @@ def test_save_behavior(ui: MainWindow, tmpdir):
     assert isinstance(win3.save_behavior, SaveToPath)
 
     ui.current_window = win3
-    ui.exec_action(
-        "view-data-in",
-        with_params={"plugin": "himena.builtins.qt.widgets.text.QDefaultTextEdit"}
-    )
+    ui.exec_action("open-in:builtins:QTextEdit")
     win3 = ui.current_window
     assert isinstance(win3.save_behavior, NoNeedToSave)
 

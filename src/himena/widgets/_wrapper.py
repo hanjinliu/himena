@@ -13,7 +13,7 @@ import weakref
 from psygnal import Signal
 from himena import anchor as _anchor
 from himena import _providers
-from himena._utils import get_gui_config
+from himena._utils import get_gui_config, get_widget_class_id
 from himena.consts import ParametricWidgetProtocolNames as PWPN
 from himena.types import (
     BackendInstructions,
@@ -698,7 +698,8 @@ class DockWidget(WidgetWrapper[_W]):
 
 
 def _widget_repr(widget: _W) -> str:
-    return f"<{type(widget).__name__}>"
+    wid = get_widget_class_id(widget)
+    return f"<{wid}>"
 
 
 def _do_nothing() -> None:

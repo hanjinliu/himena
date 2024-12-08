@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from app_model.expressions import ContextKey, ContextNamespace
 from himena.types import WindowState
-from himena._utils import get_widget_id
+from himena._utils import get_widget_class_id
 
 if TYPE_CHECKING:
     from himena.widgets import MainWindow
@@ -82,7 +82,7 @@ def _active_window_model_subtype_3(ui: "MainWindow") -> str | None:
 def _active_window_widget_id(ui: "MainWindow") -> str | None:
     if area := ui.tabs.current():
         if win := area.current():
-            return get_widget_id(type(win.widget))
+            return get_widget_class_id(type(win.widget))
     return None
 
 

@@ -1,4 +1,4 @@
-from himena.plugins.widget_class import register_widget_class
+from himena.plugins.widget_class import register_widget_class, get_widget_class
 from himena.plugins._checker import protocol_override
 from himena.plugins._signature import configure_gui
 from himena.plugins.io import register_reader_provider, register_writer_provider
@@ -12,6 +12,7 @@ from himena.plugins.actions import (
 from himena.plugins.install import install_plugins
 
 __all__ = [
+    "get_widget_class",
     "protocol_override",
     "configure_gui",
     "get_plugin_interface",

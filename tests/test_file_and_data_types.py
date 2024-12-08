@@ -8,7 +8,7 @@ def test_reading_files(ui: MainWindow, sample_dir: Path):
     win = tab0.read_file(sample_dir / "text.txt")
     assert win.model_type() == StandardType.TEXT
     win = tab0.read_file(sample_dir / "json.json")
-    assert win.model_type() == StandardType.TEXT
+    assert win.model_type() == StandardType.JSON
     win = tab0.read_file(sample_dir / "table.csv")
     assert win.model_type() == StandardType.TABLE
     assert isinstance(method := win.to_model().method, LocalReaderMethod)

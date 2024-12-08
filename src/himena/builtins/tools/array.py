@@ -97,6 +97,10 @@ def crop_image(model: WidgetDataModel) -> WidgetDataModel:
     arr = wrap_array(model.value)
     if isinstance(roi, ImageRoi2D):
         bbox = roi.bbox().adjust_to_int()
+        if meta.is_rgb:
+            bbox = bbox.limit_to(arr.shape[-3:-1])
+        else:
+            bbox = bbox.limit_to(arr.shape[-2:])
         ysl = slice(bbox.top, bbox.top + bbox.height + 1)
         xsl = slice(bbox.left, bbox.left + bbox.width + 1)
         if meta.is_rgb:
@@ -143,6 +147,10 @@ def crop_image_nd(win: SubWindow) -> Parametric:
         sl_nd = tuple(slice(x0, x1) for x0, x1 in kwargs.values())
         if isinstance(roi, ImageRoi2D):
             bbox = roi.bbox().adjust_to_int()
+            if meta.is_rgb:
+                bbox = bbox.limit_to(arr.shape[-3:-1])
+            else:
+                bbox = bbox.limit_to(arr.shape[-2:])
             ysl = slice(bbox.top, bbox.top + bbox.height + 1)
             xsl = slice(bbox.left, bbox.left + bbox.width + 1)
             sl = sl_nd + (ysl, xsl)

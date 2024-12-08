@@ -8,7 +8,7 @@ from app_model.types import (
 )
 from himena._descriptors import SaveToPath, NoNeedToSave
 from himena.consts import MenuId
-from himena.widgets import MainWindow
+from himena.widgets import MainWindow, SubWindow
 from himena.types import (
     ClipboardDataModel,
     WindowState,
@@ -78,9 +78,13 @@ def open_last_closed_window(ui: MainWindow) -> WidgetDataModel:
     keybindings=[{"primary": KeyChord(_CtrlK, _CtrlShift | KeyCode.KeyD)}],
     need_function_callback=True,
 )
-def duplicate_window(model: WidgetDataModel) -> WidgetDataModel:
+def duplicate_window(win: SubWindow) -> WidgetDataModel:
     """Duplicate the selected sub-window."""
-    update = {"save_behavior_override": NoNeedToSave()}
+    model = win.to_model()
+    update = {
+        "save_behavior_override": NoNeedToSave(),
+        "force_open_with": _utils.get_widget_class_id(win.widget),
+    }
     if model.title is not None:
         update["title"] = _utils.add_title_suffix(model.title)
     return model.model_copy(update=update)

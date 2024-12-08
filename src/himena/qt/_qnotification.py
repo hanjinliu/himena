@@ -149,7 +149,7 @@ class QNotificationWidget(_QOverlayBase):
         self._duration = duration
         self._timer: QtCore.QTimer | None = None
         self._close_btn = QtW.QPushButton("✕")
-        self._close_btn.setFixedSize(20, 20)
+        self._close_btn.setFixedSize(15, 15)
         self._close_btn.setParent(
             self, self._close_btn.windowFlags() | Qt.WindowType.FramelessWindowHint
         )

@@ -64,7 +64,12 @@ def has_widget_data_model_argument(func: Callable) -> bool:
 
 
 @lru_cache
-def get_widget_id(cls: type) -> str:
+def get_widget_class_id(cls: type) -> str:
+    """Get the widget ID from the class.
+
+    Widget ID is always determined by the register_widget_class decorator. This ID is
+    used during the application to identify the widget class.
+    """
     import importlib
 
     if _widget_id := getattr(cls, "__himena_widget_id__", None):
@@ -85,6 +90,8 @@ def get_widget_id(cls: type) -> str:
         except Exception:
             pass
 
+    # replace the first "." with ":" to make names consistent
+    name = name.replace(".", ":", 1)
     return name
 
 
@@ -94,7 +101,7 @@ def get_display_name(cls: type) -> str:
             raise TypeError(f"Display name must be a string, got {type(title)}")
     else:
         title = cls.__name__
-    name = get_widget_id(cls)
+    name = get_widget_class_id(cls)
 
     return f"{title}\n({name})"
 
@@ -130,6 +137,12 @@ def _is_widget_data_model(a):
     return WidgetDataModel in (get_origin(a), a)
 
 
+def _is_subwindow(a):
+    from himena.widgets._wrapper import SubWindow
+
+    return SubWindow in (get_origin(a), a)
+
+
 def _is_parametric(a):
     return a is Parametric
 
@@ -139,6 +152,8 @@ def make_function_callback(
     command_id: str,
     title: str | None = None,
 ) -> _F:
+    from himena.widgets._wrapper import SubWindow
+
     try:
         sig = inspect.signature(f)
     except Exception:
@@ -147,15 +162,20 @@ def make_function_callback(
 
     f_annot = f.__annotations__
     keys_model: list[str] = []
+    keys_subwindow: list[str] = []
     for key, param in sig.parameters.items():
         if _is_widget_data_model(param.annotation):
             keys_model.append(key)
+        elif _is_subwindow(param.annotation):
+            keys_subwindow.append(key)
 
     for key in keys_model:
         f_annot[key] = WidgetDataModel
 
     if _is_widget_data_model(sig.return_annotation):
         f_annot["return"] = WidgetDataModel
+    elif _is_subwindow(sig.return_annotation):
+        f_annot["return"] = SubWindow
     elif _is_parametric(sig.return_annotation):
         f_annot["return"] = Parametric
     elif sig.return_annotation is ParametricWidgetProtocol:
@@ -163,7 +183,7 @@ def make_function_callback(
     else:
         return f
 
-    if len(keys_model) == 0 and f_annot.get("return") not in {
+    if len(keys_model) + len(keys_subwindow) == 0 and f_annot.get("return") not in {
         Parametric,
         ParametricWidgetProtocol,
     }:
@@ -174,14 +194,19 @@ def make_function_callback(
         bound = sig.bind(*args, **kwargs)
         out = f(*args, **kwargs)
         originals = []
-        for key in keys_model:
+        for key in keys_model + keys_subwindow:
             input_ = bound.arguments[key]
             if isinstance(input_, WidgetDataModel):
-                if input_.method is None:
-                    method = ProgramaticMethod()
-                else:
-                    method = input_.method
-                originals.append(method)
+                input_method = input_.method
+            elif isinstance(input_, SubWindow):
+                input_method = input_.to_model().method
+            else:
+                input_method = None
+            if input_method is None:
+                method = ProgramaticMethod()
+            else:
+                method = input_method
+            originals.append(method)
         if isinstance(out, WidgetDataModel):
             if len(originals) > 0:
                 out.method = ConverterMethod(originals=originals, command_id=command_id)
@@ -218,10 +243,13 @@ def get_gui_config(fn) -> dict[str, Any]:
 
 
 def import_object(full_name: str) -> Any:
-    """Import object by a period-separated full name."""
+    """Import object by a period-separated full name or the widget ID."""
     import importlib
+    from himena.plugins import get_widget_class
 
-    mod_name, func_name = full_name.rsplit(".", 1)
+    if obj := get_widget_class(full_name):
+        return obj
+    mod_name, func_name = full_name.replace(":", ".", 1).rsplit(".", 1)
     mod = importlib.import_module(mod_name)
     obj = getattr(mod, func_name)
     return obj

@@ -10,7 +10,7 @@ from himena.consts import StandardType
 from himena.standards.model_meta import ArrayMeta
 from himena.types import WidgetDataModel
 from himena.plugins import protocol_override
-from himena.qt._utils import ndarray_to_qimage, qimage_to_ndarray, ArrayQImage
+from himena.qt._utils import ndarray_to_qimage, qimage_to_ndarray
 from himena.qt._qcoloredit import QColorEdit
 from himena._utils import UndoRedoStack
 
@@ -310,7 +310,7 @@ class QDrawCanvas(QtW.QScrollArea):
 
     @protocol_override
     def to_model(self) -> WidgetDataModel:
-        img = ArrayQImage(self._canvas_label.pixmap().toImage())
+        img = qimage_to_ndarray(self._canvas_label.pixmap().toImage())
         return WidgetDataModel(
             value=img,
             type=self.model_type(),

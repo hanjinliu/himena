@@ -335,7 +335,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
     ) -> None:
         main = self._main_window()
         if title is None:
-            title = "Window"
+            title = f"Untitled-{len(self)}"
         inner_widget = sub_window.widget
         out = main.add_widget(inner_widget, self._i_tab, title)
         if hasattr(inner_widget, "control_widget"):
