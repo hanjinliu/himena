@@ -168,8 +168,11 @@ def dtype_to_fmt(dtype: np.dtype) -> str:
     return "%s"
 
 
-class QDefaultArrayView(QtW.QWidget):
+class QArrayView(QtW.QWidget):
     """A widget for viewing n-D array."""
+
+    __himena_widget_id__ = "builtins:QArrayView"
+    __himena_display_name__ = "Bulit-in Array Viewer"
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -232,11 +235,6 @@ class QDefaultArrayView(QtW.QWidget):
         self._spinboxes.append(spinbox)
 
     @protocol_override
-    @classmethod
-    def display_name(cls) -> str:
-        return "Bulit-in Array Viewer"
-
-    @protocol_override
     def update_model(self, model: WidgetDataModel):
         arr = wrap_array(model.value)
         self._arr = arr
@@ -288,7 +286,7 @@ _R_CENTER = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
 
 
 class QArrayViewControl(QtW.QWidget):
-    def __init__(self, view: QDefaultArrayView):
+    def __init__(self, view: QArrayView):
         super().__init__()
         layout = QtW.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)

@@ -9,7 +9,11 @@ from himena.plugins import protocol_override
 from himena.qt._utils import get_main_window
 
 
-class QReaderNotFoundWidget(QtW.QWidget):
+class QReaderNotFound(QtW.QWidget):
+    """Widget for showing file path and the summary of the content."""
+
+    __himena_widget_id__ = "builtins:QReaderNotFound"
+
     def __init__(self):
         super().__init__()
         layout = QtW.QVBoxLayout(self)

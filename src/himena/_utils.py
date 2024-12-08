@@ -63,13 +63,15 @@ def has_widget_data_model_argument(func: Callable) -> bool:
     return False
 
 
-def get_display_name(cls: type) -> str:
+@lru_cache
+def get_widget_id(cls: type) -> str:
     import importlib
 
-    if isinstance(vars(cls).get("display_name"), classmethod):
-        title = cls.display_name()
-    else:
-        title = cls.__name__
+    if _widget_id := getattr(cls, "__himena_widget_id__", None):
+        if not isinstance(_widget_id, str):
+            raise TypeError(f"Widget ID must be a string, got {type(_widget_id)}")
+        return _widget_id
+
     name = f"{cls.__module__}.{cls.__name__}"
     # look for simpler import path
     submods = cls.__module__.split(".")
@@ -82,6 +84,17 @@ def get_display_name(cls: type) -> str:
                 break
         except Exception:
             pass
+
+    return name
+
+
+def get_display_name(cls: type) -> str:
+    if title := getattr(cls, "__himena_display_name__", None):
+        if not isinstance(title, str):
+            raise TypeError(f"Display name must be a string, got {type(title)}")
+    else:
+        title = cls.__name__
+    name = get_widget_id(cls)
 
     return f"{title}\n({name})"
 

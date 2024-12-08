@@ -117,7 +117,12 @@ class QTextControl(QtW.QWidget):
         self._text_edit.setTextCursor(cursor)
 
 
-class QDefaultTextEdit(QtW.QWidget):
+class QTextEdit(QtW.QWidget):
+    """Default text editor widget."""
+
+    __himena_widget_id__ = "builtins:QTextEdit"
+    __himena_display_name__ = "Built-in Text Editor"
+
     def __init__(self):
         super().__init__()
         self._main_text_edit = QMainTextEdit(self)
@@ -131,11 +136,6 @@ class QDefaultTextEdit(QtW.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._main_text_edit)
         self._model_type = StandardType.TEXT
-
-    @protocol_override
-    @classmethod
-    def display_name(cls) -> str:
-        return "Built-in Text Editor"
 
     @protocol_override
     def control_widget(self) -> QTextControl:
@@ -240,7 +240,10 @@ class QDefaultTextEdit(QtW.QWidget):
         return super().keyPressEvent(a0)
 
 
-class QDefaultRichTextEdit(QtW.QWidget):
+class QRichTextEdit(QtW.QWidget):
+    __himena_widget_id__ = "builtins:QRichTextEdit"
+    __himena_display_name__ = "Built-in HTML Text Editor"
+
     def __init__(self):
         super().__init__()
         self._main_text_edit = QtW.QTextEdit(self)
@@ -258,11 +261,6 @@ class QDefaultRichTextEdit(QtW.QWidget):
 
     def setFocus(self):
         self._main_text_edit.setFocus()
-
-    @protocol_override
-    @classmethod
-    def display_name(cls) -> str:
-        return "Built-in HTML Text Editor"
 
     @protocol_override
     def update_model(self, model: WidgetDataModel[str]):
@@ -342,7 +340,7 @@ def _make_color_swatch(label: str, tooltip: str, callback) -> QtW.QWidget:
 
 
 class QRichTextEditControl(QtW.QWidget):
-    def __init__(self, text_edit: QDefaultRichTextEdit):
+    def __init__(self, text_edit: QRichTextEdit):
         super().__init__()
         self._foreground_color_edit = _make_color_swatch(
             label="FG:",

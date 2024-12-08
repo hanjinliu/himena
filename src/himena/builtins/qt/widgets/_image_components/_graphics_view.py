@@ -77,11 +77,15 @@ class QImageGraphicsWidget(QtW.QGraphicsWidget):
         )
         bounding_rect = self.boundingRect()
         painter.drawImage(bounding_rect, self._qimage)
-        is_light_bg = self.scene().backgroundBrush().color().lightness() > 128
+        is_light_bg = (
+            self.scene().views()[0].backgroundBrush().color().lightness() > 128
+        )
         if is_light_bg:
-            painter.setPen(QtGui.QPen(QtGui.QColor(0, 0, 0), 1))
+            pen = QtGui.QPen(QtGui.QColor(19, 19, 19), 1)
         else:
-            painter.setPen(QtGui.QPen(QtGui.QColor(255, 255, 255), 1))
+            pen = QtGui.QPen(QtGui.QColor(236, 236, 236), 1)
+        pen.setCosmetic(True)
+        painter.setPen(pen)
         painter.drawRect(bounding_rect)
 
     def boundingRect(self):

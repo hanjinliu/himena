@@ -33,11 +33,11 @@ def register_widget_class(
 
 def register_widget_class(type_, widget_class=None, app=None, priority=100):
     """
-    Register a Qt widget class as a frontend widget for the given model type.
+    Register a frontend Qt widget class for the given model type.
 
-    Registered function must take `WidgetDataModel` as the only argument and return a
-    `QtW.QWidget`. If `app` is given, the widget class is registered for the given app.
-    Otherwise, the widget class is registered globally as a fallback widget class.
+    The `__init__` method of the registered class must not take any argument. The class
+    must implement `update_model` method to update the widget state from a
+    WidgetDataModel.
 
     >>> @register_widget("text")
     ... class MyTextEdit(QtW.QPlainTextEdit):

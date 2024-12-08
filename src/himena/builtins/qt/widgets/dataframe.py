@@ -88,15 +88,13 @@ class QDataFrameModel(QtCore.QAbstractTableModel):
 class QDataFrameView(QTableBase):
     """A table widget for viewing dataframe."""
 
+    __himena_widget_id__ = "builtins:QDataFrameView"
+    __himena_display_name__ = "Built-in DataFrame Viewer"
+
     def __init__(self):
         super().__init__()
         self._control: QDataFrameViewControl | None = None
         self._model_type = StandardType.DATAFRAME
-
-    @protocol_override
-    @classmethod
-    def display_name(cls) -> str:
-        return "Built-in DataFrame Viewer"
 
     @protocol_override
     def update_model(self, model: WidgetDataModel):

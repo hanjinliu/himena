@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from itertools import cycle
-import logging
 from typing import TYPE_CHECKING, Callable
 from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
@@ -28,11 +27,12 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
     from himena.builtins.qt.widgets._image_components._graphics_view import Mode
 
-_LOGGER = logging.getLogger(__name__)
 
-
-class QDefaultImageView(QtW.QWidget):
+class QImageView(QtW.QWidget):
     """The default nD image viewer widget for himena."""
+
+    __himena_widget_id__ = "builtins:QImageView"
+    __himena_display_name__ = "Built-in Image Viewer"
 
     def __init__(self):
         super().__init__()
@@ -71,11 +71,6 @@ class QDefaultImageView(QtW.QWidget):
         self._channel_axis: int | None = None
         self._channels: list[ChannelInfo] | None = None
         self._model_type = StandardType.IMAGE
-
-    @protocol_override
-    @classmethod
-    def display_name(cls) -> str:
-        return "Built-in Image Viewer"
 
     @protocol_override
     def update_model(self, model: WidgetDataModel):

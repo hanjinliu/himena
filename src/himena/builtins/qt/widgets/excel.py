@@ -7,7 +7,7 @@ from qtpy import QtWidgets as QtW, QtCore, QtGui
 from himena.builtins.qt.widgets._table_components._selection_model import Index
 from himena.standards.model_meta import ExcelMeta
 from himena.qt._qrename import QTabRenameLineEdit
-from himena.builtins.qt.widgets.table import QDefaultTableWidget
+from himena.builtins.qt.widgets.table import QSpreadsheet
 from himena.builtins.qt.widgets._table_components import QSelectionRangeEdit
 from himena.types import WidgetDataModel
 from himena.consts import StandardType
@@ -43,7 +43,12 @@ class QRightClickableTabBar(QtW.QTabBar):
         return super().mouseReleaseEvent(a0)
 
 
-class QExcelTableStack(QtW.QTabWidget):
+class QExcelFileEdit(QtW.QTabWidget):
+    """Built-in Excel File Editor"""
+
+    __himena_widget_id__ = "builtins:QExcelFileEdit"
+    __himena_display_name__ = "Built-in Excel File Editor"
+
     def __init__(self):
         super().__init__()
         self.setTabBar(QRightClickableTabBar())
@@ -80,18 +85,13 @@ class QExcelTableStack(QtW.QTabWidget):
                 self.removeTab(index)
 
     def _add_new_tab(self):
-        table = QDefaultTableWidget()
+        table = QSpreadsheet()
         table.update_model(WidgetDataModel(value=None, type=StandardType.TABLE))
-        table.setHeaderFormat(QDefaultTableWidget.HeaderFormat.Alphabetic)
+        table.setHeaderFormat(QSpreadsheet.HeaderFormat.Alphabetic)
         self.addTab(table, f"Sheet-{self.count() + 1}")
         self.setCurrentIndex(self.count() - 1)
         self._control.update_for_table(table)
         return None
-
-    @protocol_override
-    @classmethod
-    def display_name(cls) -> str:
-        return "Built-in Excel File Editor"
 
     @protocol_override
     def update_model(self, model: WidgetDataModel):
@@ -99,9 +99,9 @@ class QExcelTableStack(QtW.QTabWidget):
             raise ValueError(f"Expected a dict, got {type(value)}")
         self.clear()
         for sheet_name, each in value.items():
-            table = QDefaultTableWidget()
+            table = QSpreadsheet()
             table.update_model(WidgetDataModel(value=each, type=StandardType.TABLE))
-            table.setHeaderFormat(QDefaultTableWidget.HeaderFormat.Alphabetic)
+            table.setHeaderFormat(QSpreadsheet.HeaderFormat.Alphabetic)
             self.addTab(table, str(sheet_name))
         if self.count() > 0:
             self.setCurrentIndex(0)
@@ -167,15 +167,15 @@ class QExcelTableStack(QtW.QTabWidget):
         if model.type == StandardType.EXCEL:
             assert isinstance(model.value, dict)
             for key, value in model.value.items():
-                table = QDefaultTableWidget()
-                table.setHeaderFormat(QDefaultTableWidget.HeaderFormat.Alphabetic)
+                table = QSpreadsheet()
+                table.setHeaderFormat(QSpreadsheet.HeaderFormat.Alphabetic)
                 table.update_model(
                     WidgetDataModel(value=value, type=StandardType.TABLE)
                 )
                 self.addTab(table, key)
         elif model.type == StandardType.TABLE:
-            table = QDefaultTableWidget()
-            table.setHeaderFormat(QDefaultTableWidget.HeaderFormat.Alphabetic)
+            table = QSpreadsheet()
+            table.setHeaderFormat(QSpreadsheet.HeaderFormat.Alphabetic)
             table.update_model(model)
             self.addTab(table, model.title)
         else:
@@ -183,7 +183,7 @@ class QExcelTableStack(QtW.QTabWidget):
 
     if TYPE_CHECKING:
 
-        def widget(self, index: int) -> QDefaultTableWidget: ...
+        def widget(self, index: int) -> QSpreadsheet: ...
         def tabBar(self) -> QRightClickableTabBar: ...
 
 
@@ -219,7 +219,7 @@ class QExcelTableStackControl(QtW.QWidget):
         layout.addWidget(self._selection_range)
         self._value_line_edit.editingFinished.connect(self.update_for_editing)
 
-    def update_for_table(self, table: QDefaultTableWidget):
+    def update_for_table(self, table: QSpreadsheet):
         shape = table.model()._arr.shape
         self._label.setText(f"Shape {shape!r}")
         self._selection_range.connect_table(table)
@@ -230,7 +230,7 @@ class QExcelTableStackControl(QtW.QWidget):
         return None
 
     @property
-    def _current_table(self) -> QDefaultTableWidget | None:
+    def _current_table(self) -> QSpreadsheet | None:
         return self._selection_range._qtable
 
     def update_for_current_index(self, old: Index, new: Index):

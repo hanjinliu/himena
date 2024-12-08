@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 from app_model.expressions import ContextKey, ContextNamespace
 from himena.types import WindowState
+from himena._utils import get_widget_id
 
 if TYPE_CHECKING:
     from himena.widgets import MainWindow
@@ -78,7 +79,16 @@ def _active_window_model_subtype_3(ui: "MainWindow") -> str | None:
     return None
 
 
+def _active_window_widget_id(ui: "MainWindow") -> str | None:
+    if area := ui.tabs.current():
+        if win := area.current():
+            return get_widget_id(type(win.widget))
+    return None
+
+
 class AppContext(ContextNamespace["MainWindow"]):
+    """Context namespace for the himena main window."""
+
     is_active_window_exportable = ContextKey(
         False,
         "if the current window is savable",
@@ -123,6 +133,11 @@ class AppContext(ContextNamespace["MainWindow"]):
         None,
         "subtype of the model of the active window",
         _active_window_model_subtype_3,
+    )
+    active_window_widget_id = ContextKey(
+        None,
+        "widget class id of the active window",
+        _active_window_widget_id,
     )
 
     def _update(self, ui):

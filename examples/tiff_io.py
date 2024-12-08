@@ -12,7 +12,7 @@ from himena.plugins import (
     register_writer_provider,
     register_widget_class,
 )
-from himena.builtins.qt.widgets import QDefaultImageView
+from himena.builtins.qt.widgets import QImageView
 
 TIFF_TYPE = "tiff"
 
@@ -49,7 +49,7 @@ def write_tiff_provider(model: WidgetDataModel[ImageAndMetadata], path: Path):
     return write
 
 @register_widget_class(TIFF_TYPE)
-class QTiffView(QDefaultImageView):
+class QTiffView(QImageView):
     def update_model(self, model: WidgetDataModel[ImageAndMetadata]):
         simple_model = WidgetDataModel(value=model.value.image, type=TIFF_TYPE)
         super().update_model(simple_model)

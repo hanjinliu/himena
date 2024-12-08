@@ -115,7 +115,11 @@ _EDITABLE = (
 _NOT_EDITABLE = QtW.QAbstractItemView.EditTrigger.NoEditTriggers
 
 
-class QDefaultTableWidget(QTableBase):
+class QSpreadsheet(QTableBase):
+    """Table widget for editing a 2D string array."""
+
+    __himena_widget_id__ = "builtins:QSpreadsheet"
+    __himena_widget_name__ = "Built-in Spreadsheet Editor"
     HeaderFormat = HeaderFormat
 
     def __init__(self):
@@ -131,11 +135,6 @@ class QDefaultTableWidget(QTableBase):
 
     def data_shape(self):
         return self.model()._arr.shape
-
-    @protocol_override
-    @classmethod
-    def display_name(cls) -> str:
-        return "Built-in Table Data Editor"
 
     @protocol_override
     def update_model(self, model: WidgetDataModel) -> None:
@@ -378,12 +377,12 @@ class QTableControl(QtW.QWidget):
         layout.addWidget(self._separator_label)
         layout.addWidget(QSelectionRangeEdit(table))
 
-    def update_for_table(self, table: QDefaultTableWidget):
+    def update_for_table(self, table: QSpreadsheet):
         shape = table.model()._arr.shape
         self._label.setText(f"Shape {shape!r}")
         return None
 
-    def _make_insert_menu(self, table: QDefaultTableWidget):
+    def _make_insert_menu(self, table: QSpreadsheet):
         menu = QtW.QMenu(self)
         menu.addAction("Row above", table._insert_row_above)
         menu.addAction("Row below", table._insert_row_below)
@@ -391,7 +390,7 @@ class QTableControl(QtW.QWidget):
         menu.addAction("Column right", table._insert_column_right)
         return menu
 
-    def _make_delete_menu(self, table: QDefaultTableWidget):
+    def _make_delete_menu(self, table: QSpreadsheet):
         menu = QtW.QMenu(self)
         menu.addAction("Rows", table._remove_selected_rows)
         menu.addAction("Columns", table._remove_selected_columns)

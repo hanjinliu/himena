@@ -1,11 +1,12 @@
 from typing import Callable, overload, TypeVar
 from app_model.types import Action
 from himena._descriptors import NoNeedToSave
-from himena._utils import get_display_name
+from himena._utils import get_display_name, get_widget_id
 from himena.plugins.actions import AppActionRegistry
 from himena.types import WidgetDataModel
 
 _T = TypeVar("_T")
+_WIDGET_ID_TO_WIDGET_CLASS: dict[str, type] = {}
 
 
 @overload
@@ -26,22 +27,46 @@ def register_widget_class(
 
 def register_widget_class(type_, widget_class=None, priority=100):
     """
-    Register a Qt widget class as a widget for the given model type.
+    Register a frontend widget class for the given model type.
 
-    Registered class must implements `update_model` method to interpret the content of
-    the incoming `WidgetDataModel`
+    The `__init__` method of the registered class must not take any argument. The class
+    must implement `update_model` method to update the widget state from a
+    WidgetDataModel.
 
-    Examples
-    --------
     >>> @register_widget("text")
     ... class MyTextEdit(QtW.QPlainTextEdit):
     ...     def update_model(self, model: WidgetDataModel):
     ...         self.setPlainText(model.value)
+
+    There are other method names that can be implemented to make the widget more
+    functional.
+
+    - `to_model(self) -> WidgetDataModel`:
+    - `model_type(self) -> str`:
+    - `control_widget(self) -> <widget>`:
+    - `is_modified(self) -> bool`:
+    - `set_modified(self, modified: bool)`:
+    - `size_hint(self) -> tuple[int, int]`:
+    - `is_editable(self) -> bool`:
+    - `set_editable(self, editable: bool)`:
+    - `merge_model(self, other: WidgetDataModel)`:
+    - `mergeable_model_types(self) -> list[str]`:
+    - `display_name(cls) -> str`:
+    - `theme_changed_callback(self, theme: Theme)`:
+    - `window_activated_callback(self)`:
+    - `window_closed_callback(self)`:
+    - `window_resized_callback(self, size: tuple[int, int])`:
     """
 
     def inner(wcls):
         import himena.qt
 
+        widget_id = get_widget_id(wcls)
+        if existing_class := _WIDGET_ID_TO_WIDGET_CLASS.get(widget_id):
+            raise ValueError(
+                f"Widget class with ID {widget_id!r} already exists ({existing_class})."
+            )
+        _WIDGET_ID_TO_WIDGET_CLASS[widget_id] = wcls
         himena.qt.register_widget_class(type_, wcls, priority=priority)
         fn = OpenDataInFunction(type_, wcls)
         AppActionRegistry.instance().add_action(fn.to_action())

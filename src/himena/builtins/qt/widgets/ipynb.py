@@ -12,6 +12,11 @@ from himena.builtins.qt.widgets._text_base import QMainTextEdit
 
 
 class QIpynbEdit(QtW.QScrollArea):
+    """The built-in ipynb (Jupyter Notebook) editor widget."""
+
+    __himena_widget_id__ = "builtins:QIpynbEdit"
+    __himena_widget_name__ = "Built-in Jupyter Notebook Editor"
+
     def __init__(self):
         super().__init__()
         self._central_widget = QtW.QWidget()
@@ -61,10 +66,6 @@ class QIpynbEdit(QtW.QScrollArea):
     @protocol_override
     def size_hint(self) -> tuple[int, int]:
         return 400, 360
-
-    @protocol_override
-    def display_name(self) -> str:
-        return "Built-in Jupyter Notebook Editor"
 
     def clear_all(self):
         for child in self._cell_widgets:

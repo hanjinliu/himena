@@ -241,7 +241,7 @@ def test_register_widget(ui: MainWindow):
 
     model = WidgetDataModel(value="abc", type="text.xyz")
     win = ui.add_data_model(model)
-    assert type(win.widget) is _qtw.QDefaultTextEdit
+    assert type(win.widget) is _qtw.QTextEdit
     register_widget_class("text.xyz", QCustomTextView)
 
     win2 = ui.add_data_model(model)

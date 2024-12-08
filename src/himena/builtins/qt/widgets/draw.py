@@ -37,6 +37,11 @@ class PasetResizeAction(NamedTuple):
 
 
 class QDrawCanvas(QtW.QScrollArea):
+    """A built-in drawing canvas widget."""
+
+    __himena_widget_id__ = "builtins:QDrawCanvas"
+    __himena_display_name__ = "Built-in Drawing Canvas"
+
     def __init__(self):
         super().__init__()
         self._central_widget = QtW.QWidget()
@@ -342,10 +347,6 @@ class QDrawCanvas(QtW.QScrollArea):
             min(400, self._canvas_label.width() + 28),
             min(400, self._canvas_label.height() + 28),
         )
-
-    @protocol_override
-    def display_name(self) -> str:
-        return "Built-in Drawing Canvas"
 
 
 class QDrawCanvasControl(QtW.QWidget):

@@ -11,12 +11,12 @@ from himena.types import WidgetDataModel
 def test_type_map_and_session(tmpdir, ui: MainWindow, sample_dir):
     tab0 = ui.add_tab()
     tab0.read_file(sample_dir / "text.txt").update(rect=(30, 40, 120, 150))
-    assert type(tab0.current().widget) is _qtw.QDefaultTextEdit
+    assert type(tab0.current().widget) is _qtw.QTextEdit
     tab0.read_file(sample_dir / "json.json").update(rect=(150, 40, 250, 150), anchor="top-left")
-    assert type(tab0.current().widget) is _qtw.QDefaultTextEdit
+    assert type(tab0.current().widget) is _qtw.QTextEdit
     tab1 = ui.add_tab()
     tab1.read_file(sample_dir / "image.png").update(rect=(30, 40, 160, 130), title="My Image")
-    assert type(tab1.current().widget) is _qtw.QDefaultImageView
+    assert type(tab1.current().widget) is _qtw.QImageView
     tab1.read_file(sample_dir / "html.html").update(rect=(80, 40, 160, 130), title="My HTML")
     # assert type(tab1.current().widget) is _qtw.QDefaultHTMLEdit ?
 
