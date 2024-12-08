@@ -33,6 +33,7 @@ class QHandleRect(QtW.QGraphicsRectItem):
         self._pos_drag_prev: QtCore.QPointF | None = None
         self._cursor_shape = Qt.CursorShape.PointingHandCursor
         self.setCursor(self._cursor_shape)
+        self.setZValue(100000)
 
     def setColor(self, color: QtGui.QColor):
         self.setBrush(QtGui.QBrush(color))

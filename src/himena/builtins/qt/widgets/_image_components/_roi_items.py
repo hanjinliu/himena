@@ -353,10 +353,10 @@ class QPointRoi(QPointRoiBase):
 
     def boundingRect(self) -> QtCore.QRectF:
         return QtCore.QRectF(
-            self._point.x() - self._size / 2,
-            self._point.y() - self._size / 2,
-            self._size,
-            self._size,
+            self._point.x() - self._size,
+            self._point.y() - self._size,
+            self._size * 2,
+            self._size * 2,
         )
 
     def _roi_type(self) -> str:
@@ -379,6 +379,7 @@ class QPointsRoi(QPointRoiBase):
     def update_point(self, idx: int, pos: QtCore.QPointF):
         self._points[idx] = pos
         self.changed.emit(self._points)
+        self._bounding_rect_cache = None
 
     def toRoi(self, indices) -> roi.PointsRoi:
         xs: list[float] = []
@@ -395,10 +396,12 @@ class QPointsRoi(QPointRoiBase):
             QtCore.QPointF(point.x() + dx, point.y() + dy) for point in self._points
         ]
         self.changed.emit(self._points)
+        self._bounding_rect_cache = self._bounding_rect_cache.translated(dx, dy)
 
     def add_point(self, pos: QtCore.QPointF):
         self._points.append(pos)
         self.changed.emit(self._points)
+        self._bounding_rect_cache = None
 
     def boundingRect(self) -> QtCore.QRectF:
         if self._bounding_rect_cache is None:

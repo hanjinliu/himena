@@ -61,6 +61,12 @@ class QImageView(QtW.QSplitter):
         self._roi_collection.show_labels_changed.connect(
             self._image_graphics_view.set_show_labels
         )
+        self._roi_collection.key_pressed.connect(
+            self._image_graphics_view.keyPressEvent
+        )
+        self._roi_collection.key_released.connect(
+            self._image_graphics_view.keyReleaseEvent
+        )
         self._roi_collection.roi_item_clicked.connect(self._roi_item_clicked)
         self._roi_collection.layout().insertWidget(0, self._roi_buttons)
         layout.addWidget(self._image_graphics_view)
@@ -285,7 +291,7 @@ class QImageView(QtW.QSplitter):
 
     def _roi_item_clicked(self, indices: tuple[int, ...], qroi: QRoi):
         self._dims_slider.setValue(indices)
-        self._image_graphics_view._current_roi_item = qroi
+        self._image_graphics_view.select_item(qroi)
 
     def _roi_visibility_changed(self, show_rois: bool):
         with qsignal_blocker(self._roi_collection):

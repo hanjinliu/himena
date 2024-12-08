@@ -360,6 +360,7 @@ class QImageGraphicsView(QBaseGraphicsView):
             self._selection_handles.connect_points(item)
         if isinstance(item, QRoi):
             self._current_roi_item = item
+            item.setVisible(True)
         self._is_current_roi_item_not_registered = False
 
     def select_item_at(self, pos: QtCore.QPointF):

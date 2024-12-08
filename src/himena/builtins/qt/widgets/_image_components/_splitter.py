@@ -28,6 +28,10 @@ class QImageViewSplitterHandle(QtW.QSplitterHandle):
 
     def mousePressEvent(self, a0: QtGui.QMouseEvent) -> None:
         """Collapse/expand side area."""
+        self.toggle()
+        return super().mousePressEvent(a0)
+
+    def toggle(self):
         parent = self.splitter()
         sizes = parent.sizes()
         if self.is_closed():
@@ -35,5 +39,4 @@ class QImageViewSplitterHandle(QtW.QSplitterHandle):
         else:
             self._sizes = sizes
             parent.setSizes([1, 0])
-
-        return super().mousePressEvent(a0)
+        return

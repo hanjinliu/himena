@@ -234,7 +234,7 @@ class QCommandLabel(QtW.QLabel):
         """Set command to this widget."""
         self._command_text = as_name
         self._command = cmd
-        self.setText(as_name)
+        self.setText(as_name.replace("\n", " "))
         self.setToolTip(cmd.tooltip)
 
     def command_text(self) -> str:

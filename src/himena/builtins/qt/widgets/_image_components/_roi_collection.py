@@ -37,6 +37,8 @@ class QRoiCollection(QtW.QWidget):
     show_rois_changed = QtCore.Signal(bool)
     show_labels_changed = QtCore.Signal(bool)
     roi_item_clicked = QtCore.Signal(tuple, _roi_items.QRoi)
+    key_pressed = QtCore.Signal(QtGui.QKeyEvent)
+    key_released = QtCore.Signal(QtGui.QKeyEvent)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -46,17 +48,11 @@ class QRoiCollection(QtW.QWidget):
         self._pen.setCosmetic(True)
         layout = QtW.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        self._list_view = QtW.QListView()
-        self._list_view.setSizePolicy(
-            QtW.QSizePolicy(
-                QtW.QSizePolicy.Policy.Maximum, QtW.QSizePolicy.Policy.Maximum
-            )
-        )
-        self._list_view.setModel(QRoiListModel(self))
+        self._list_view = QRoiListView(self)
         self._list_view.clicked.connect(self._on_item_clicked)
-        self._list_view.setHorizontalScrollBarPolicy(
-            QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff
-        )
+        self._list_view.key_pressed.connect(self.key_pressed)
+        self._list_view.key_released.connect(self.key_released)
+
         layout.addWidget(
             self._list_view, 100, alignment=QtCore.Qt.AlignmentFlag.AlignTop
         )
@@ -160,42 +156,69 @@ class QRoiCollection(QtW.QWidget):
         return out
 
     def pop_roi(self, indices: Indices, index: int) -> _roi_items.QRoi:
+        qindex = self._list_view.model().index(index)
+        self._list_view.model().beginRemoveRows(qindex, index, index)
         rois = self._slice_cache[indices]
         roi = rois.pop(index)
         self._rois.remove((indices, roi))
+        self._list_view.model().endRemoveRows()
         return roi
 
 
-class QRoiListModel(QtCore.QAbstractListModel):
-    def __init__(self, collection: QRoiCollection, parent=None):
+class QRoiListView(QtW.QListView):
+    # NOTE: list view usually has a focus. Key events have to be forwarded.
+    key_pressed = QtCore.Signal(QtGui.QKeyEvent)
+    key_released = QtCore.Signal(QtGui.QKeyEvent)
+
+    def __init__(self, parent: QRoiCollection):
         super().__init__(parent)
-        self._collection = collection
+        self.setSizePolicy(
+            QtW.QSizePolicy(
+                QtW.QSizePolicy.Policy.Maximum, QtW.QSizePolicy.Policy.Maximum
+            )
+        )
+        self.setModel(QRoiListModel(parent))
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+    def keyPressEvent(self, a0):
+        self.key_pressed.emit(a0)
+        return super().keyPressEvent(a0)
+
+    def keyReleaseEvent(self, a0):
+        self.key_released.emit(a0)
+        return super().keyReleaseEvent(a0)
+
+
+class QRoiListModel(QtCore.QAbstractListModel):
+    def __init__(self, col: QRoiCollection, parent=None):
+        super().__init__(parent)
+        self._col = col
 
     def rowCount(self, parent):
-        return len(self._collection)
+        return len(self._col)
 
     def data(self, index: QtCore.QModelIndex, role: int):
         if role == QtCore.Qt.ItemDataRole.DisplayRole:
             r = index.row()
-            if 0 <= r < len(self._collection):
-                return self._collection[r].label()
+            if 0 <= r < len(self._col):
+                return self._col[r].label()
             return None
         elif role == QtCore.Qt.ItemDataRole.DecorationRole:
             r = index.row()
-            if 0 <= r < len(self._collection):
-                return self._collection[r].makeThumbnail(12)
+            if 0 <= r < len(self._col):
+                return self._col[r].makeThumbnail(12)
         elif role == QtCore.Qt.ItemDataRole.FontRole:
-            font = self._collection.font()
+            font = self._col.font()
             font.setPointSize(10)
-            if index == self._collection._list_view.currentIndex():
+            if index == self._col._list_view.currentIndex():
                 font.setBold(True)
             return font
         elif role == QtCore.Qt.ItemDataRole.SizeHintRole:
             return QtCore.QSize(80, 14)
         elif role == QtCore.Qt.ItemDataRole.ToolTipRole:
             r = index.row()
-            if 0 <= r < len(self._collection):
-                _indices, _roi = self._collection._rois[r]
+            if 0 <= r < len(self._col):
+                _indices, _roi = self._col._rois[r]
                 _type = _roi._roi_type()
                 if len(_indices) > 0:
                     return f"{_type.title()} ROI on slice {_indices}"

@@ -325,10 +325,10 @@ class Rect(Generic[_T]):
         return Rect(left, top, right - left, bottom - top)
 
     def limit_to(self, limits: tuple[_T, _T]) -> "Rect[_T]":
-        left = max(self.left, limits[0])
-        top = max(self.top, limits[1])
-        right = min(self.right, limits[2])
-        bottom = min(self.bottom, limits[3])
+        left = max(self.left, 0)
+        top = max(self.top, 0)
+        right = min(self.right, limits[0])
+        bottom = min(self.bottom, limits[1])
         return Rect(left, top, right - left, bottom - top)
 
 
