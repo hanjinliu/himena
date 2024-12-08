@@ -9,27 +9,14 @@ from himena.standards import roi
 from himena.consts import MonospaceFontFamily
 
 
-def from_standard_roi(r: roi.ImageRoi, pen: QtGui.QPen) -> QRoi:
-    if isinstance(r, roi.LineRoi):
-        return QLineRoi(r.x1, r.y1, r.x2, r.y2).withPen(pen)
-    elif isinstance(r, roi.RectangleRoi):
-        return QRectangleRoi(r.x, r.y, r.width, r.height).withPen(pen)
-    elif isinstance(r, roi.EllipseRoi):
-        return QEllipseRoi(r.x, r.y, r.width, r.height).withPen(pen)
-    elif isinstance(r, roi.SegmentedLineRoi):
-        return QSegmentedLineRoi(r.xs, r.ys).withPen(pen)
-    elif isinstance(r, roi.PolygonRoi):
-        return QPolygonRoi(r.xs, r.ys).withPen(pen)
-    elif isinstance(r, roi.PointRoi):
-        return QPointRoi(r.x, r.y).withPen(pen)
-    elif isinstance(r, roi.PointsRoi):
-        return QPointsRoi(r.xs, r.ys).withPen(pen)
-    else:
-        raise ValueError(f"Unsupported ROI type: {type(roi)}")
-
-
 class QRoi(QtW.QGraphicsItem):
     """The base class for all ROI items."""
+
+    def label(self) -> str:
+        return getattr(self, "_roi_label", "")
+
+    def setLabel(self, label: str):
+        self._roi_label = label
 
     def toRoi(self, indices: Iterable[int | None]) -> roi.ImageRoi:
         raise NotImplementedError
@@ -37,8 +24,15 @@ class QRoi(QtW.QGraphicsItem):
     def translate(self, dx: float, dy: float):
         raise NotImplementedError
 
+    def makeThumbnail(self, size: int) -> QtGui.QPixmap:
+        raise NotImplementedError
+
     def withPen(self, pen: QtGui.QPen):
         self.setPen(pen)
+        return self
+
+    def withLabel(self, label: str | None):
+        self.setLabel(label or "")
         return self
 
     def paint_label(self, painter: QtGui.QPainter, label: str, pos: QtCore.QPointF):
@@ -60,6 +54,25 @@ class QRoi(QtW.QGraphicsItem):
         painter.setFont(_LABEL_TEXT_FONT)
         painter.drawText(pos, label)
 
+    def _thumbnail_transform(self, size: int) -> QtGui.QTransform:
+        rect = self.boundingRect()
+        transform = QtGui.QTransform()
+        rect_size = max(rect.width(), rect.height())
+        if rect_size == 0:
+            rect_size = 1
+        transform.translate(size / 2, size / 2)
+        transform.scale((size - 2) / rect_size, (size - 2) / rect_size)
+        transform.translate(-rect.center().x(), -rect.center().y())
+        return transform
+
+    def _pen_thumbnail(self) -> QtGui.QPen:
+        pen = QtGui.QPen(self.pen())
+        pen.setWidth(1)
+        return pen
+
+    def _roi_type(self) -> str:
+        return self.__class__.__name__
+
 
 class QLineRoi(QtW.QGraphicsLineItem, QRoi):
     changed = Signal(QtCore.QLineF)
@@ -67,7 +80,12 @@ class QLineRoi(QtW.QGraphicsLineItem, QRoi):
     def toRoi(self, indices) -> roi.LineRoi:
         line = self.line()
         return roi.LineRoi(
-            x1=line.x1(), y1=line.y1(), x2=line.x2(), y2=line.y2(), indices=indices
+            x1=line.x1(),
+            y1=line.y1(),
+            x2=line.x2(),
+            y2=line.y2(),
+            indices=indices,
+            name=self.label(),
         )
 
     def translate(self, dx: float, dy: float):
@@ -78,6 +96,20 @@ class QLineRoi(QtW.QGraphicsLineItem, QRoi):
     def setLine(self, *args):
         super().setLine(*args)
         self.changed.emit(self.line())
+
+    def makeThumbnail(self, size: int) -> QtGui.QPixmap:
+        pixmap = QtGui.QPixmap(size, size)
+        pixmap.fill(QtCore.Qt.GlobalColor.black)
+        painter = QtGui.QPainter(pixmap)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        painter.setPen(self._pen_thumbnail())
+        painter.setTransform(self._thumbnail_transform(size))
+        painter.drawLine(self.line())
+        painter.end()
+        return pixmap
+
+    def _roi_type(self) -> str:
+        return "line"
 
 
 class QRectRoiBase(QRoi):
@@ -93,6 +125,7 @@ class QRectangleRoi(QtW.QGraphicsRectItem, QRectRoiBase):
             width=rect.width(),
             height=rect.height(),
             indices=indices,
+            name=self.label(),
         )
 
     def setRect(self, *args):
@@ -103,6 +136,20 @@ class QRectangleRoi(QtW.QGraphicsRectItem, QRectRoiBase):
         new_rect = self.rect()
         new_rect.translate(dx, dy)
         self.setRect(new_rect)
+
+    def makeThumbnail(self, size: int) -> QtGui.QPixmap:
+        pixmap = QtGui.QPixmap(size, size)
+        pixmap.fill(QtCore.Qt.GlobalColor.black)
+        painter = QtGui.QPainter(pixmap)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        painter.setPen(self._pen_thumbnail())
+        painter.setTransform(self._thumbnail_transform(size))
+        painter.drawRect(self.rect())
+        painter.end()
+        return pixmap
+
+    def _roi_type(self) -> str:
+        return "rectangle"
 
 
 class QEllipseRoi(QtW.QGraphicsEllipseItem, QRectRoiBase):
@@ -116,6 +163,7 @@ class QEllipseRoi(QtW.QGraphicsEllipseItem, QRectRoiBase):
             width=rect.width(),
             height=rect.height(),
             indices=indices,
+            name=self.label(),
         )
 
     def setRect(self, *args):
@@ -126,6 +174,20 @@ class QEllipseRoi(QtW.QGraphicsEllipseItem, QRectRoiBase):
         new_rect = self.rect()
         new_rect.translate(dx, dy)
         self.setRect(new_rect)
+
+    def makeThumbnail(self, size: int) -> QtGui.QPixmap:
+        pixmap = QtGui.QPixmap(size, size)
+        pixmap.fill(QtCore.Qt.GlobalColor.black)
+        painter = QtGui.QPainter(pixmap)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        painter.setPen(self._pen_thumbnail())
+        painter.setTransform(self._thumbnail_transform(size))
+        painter.drawEllipse(self.rect())
+        painter.end()
+        return pixmap
+
+    def _roi_type(self) -> str:
+        return "ellipse"
 
 
 class QSegmentedLineRoi(QtW.QGraphicsPathItem, QRoi):
@@ -146,7 +208,7 @@ class QSegmentedLineRoi(QtW.QGraphicsPathItem, QRoi):
             element = path.elementAt(i)
             xs.append(element.x)
             ys.append(element.y)
-        return roi.SegmentedLineRoi(xs=xs, ys=ys, indices=indices)
+        return roi.SegmentedLineRoi(xs=xs, ys=ys, indices=indices, name=self.label())
 
     def setPath(self, *args):
         super().setPath(*args)
@@ -174,6 +236,20 @@ class QSegmentedLineRoi(QtW.QGraphicsPathItem, QRoi):
         path.setElementPositionAt(ith, pos.x(), pos.y())
         self.setPath(path)
 
+    def makeThumbnail(self, size: int) -> QtGui.QPixmap:
+        pixmap = QtGui.QPixmap(size, size)
+        pixmap.fill(QtCore.Qt.GlobalColor.black)
+        painter = QtGui.QPainter(pixmap)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        painter.setPen(self._pen_thumbnail())
+        painter.setTransform(self._thumbnail_transform(size))
+        painter.drawPath(self.path())
+        painter.end()
+        return pixmap
+
+    def _roi_type(self) -> str:
+        return "segmented line"
+
 
 class QPolygonRoi(QSegmentedLineRoi):
     def toRoi(self, indices) -> roi.PolygonRoi:
@@ -183,7 +259,10 @@ class QPolygonRoi(QSegmentedLineRoi):
             element = path.elementAt(i)
             xs.append(element.x)
             ys.append(element.y)
-        return roi.PolygonRoi(xs=xs, ys=ys, indices=indices)
+        return roi.PolygonRoi(xs=xs, ys=ys, indices=indices, name=self.label())
+
+    def _roi_type(self) -> str:
+        return "polygon"
 
 
 class QPointRoiBase(QRoi):
@@ -235,6 +314,17 @@ class QPointRoiBase(QRoi):
             painter.drawPath(self._symbol)
         self.scene().update()
 
+    def makeThumbnail(self, size: int) -> QtGui.QPixmap:
+        pixmap = QtGui.QPixmap(size, size)
+        pixmap.fill(QtCore.Qt.GlobalColor.black)
+        painter = QtGui.QPainter(pixmap)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        painter.setPen(self._pen_thumbnail())
+        painter.setTransform(self._thumbnail_transform(size))
+        painter.drawPath(self._symbol)
+        painter.end()
+        return pixmap
+
 
 class QPointRoi(QPointRoiBase):
     changed = Signal(QtCore.QPointF)
@@ -254,7 +344,9 @@ class QPointRoi(QPointRoiBase):
         self.changed.emit(self._point)
 
     def toRoi(self, indices) -> roi.PointRoi:
-        return roi.PointRoi(x=self._point.x(), y=self._point.y(), indices=indices)
+        return roi.PointRoi(
+            x=self._point.x(), y=self._point.y(), indices=indices, name=self.label()
+        )
 
     def translate(self, dx: float, dy: float):
         self.setPoint(QtCore.QPointF(self._point.x() + dx, self._point.y() + dy))
@@ -266,6 +358,9 @@ class QPointRoi(QPointRoiBase):
             self._size,
             self._size,
         )
+
+    def _roi_type(self) -> str:
+        return "point"
 
 
 class QPointsRoi(QPointRoiBase):
@@ -291,7 +386,9 @@ class QPointsRoi(QPointRoiBase):
         for point in self._points:
             xs.append(point.x())
             ys.append(point.y())
-        return roi.PointsRoi(xs=np.array(xs), ys=np.array(ys), indices=indices)
+        return roi.PointsRoi(
+            xs=np.array(xs), ys=np.array(ys), indices=indices, name=self.label()
+        )
 
     def translate(self, dx: float, dy: float):
         self._points = [
@@ -319,3 +416,6 @@ class QPointsRoi(QPointRoiBase):
 
     def _iter_points(self) -> Iterator[QtCore.QPointF]:
         yield from self._points
+
+    def _roi_type(self) -> str:
+        return "points"

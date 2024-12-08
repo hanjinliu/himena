@@ -116,10 +116,12 @@ def init_application(app: Application) -> Application:
         return current_instance(app.name)._provide_file_output()[0]
 
     @app.injection_store.mark_processor
-    def _process_data_model(file_data: WidgetDataModel) -> None:
-        _LOGGER.debug("processing %r", file_data)
+    def _process_data_model(model: WidgetDataModel) -> None:
+        if not isinstance(model, WidgetDataModel):
+            raise TypeError(f"Expected WidgetDataModel, got {type(model)}")
+        _LOGGER.debug("processing %r", model)
         ins = current_instance(app.name)
-        ins.add_data_model(file_data)
+        ins.add_data_model(model)
         return None
 
     @app.injection_store.mark_processor

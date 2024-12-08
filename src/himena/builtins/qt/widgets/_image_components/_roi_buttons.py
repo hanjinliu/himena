@@ -11,6 +11,7 @@ def _tool_btn(icon_name: str, tooltip: str) -> QtW.QToolButton:
     btn.setIcon(QIconifyIcon(icon_name))
     btn.setCheckable(True)
     btn.setToolTip(tooltip)
+    btn.setFixedSize(22, 22)
     return btn
 
 
@@ -19,10 +20,12 @@ class QRoiButtons(QtW.QWidget):
 
     def __init__(self):
         super().__init__()
-        layout = QtW.QHBoxLayout(self)
+        layout = QtW.QGridLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(1)
-        layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
+        layout.setAlignment(
+            QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignTop
+        )
         self._btn_panzoom = _tool_btn(
             icon_name="mdi:magnify-expand",
             tooltip="Pan/zoom mode",
@@ -72,15 +75,15 @@ class QRoiButtons(QtW.QWidget):
         self._button_group.setExclusive(True)
         self._button_group.buttonReleased.connect(self.btn_released)
 
-        layout.addWidget(self._btn_panzoom)
-        layout.addWidget(self._btn_select)
-        layout.addWidget(self._btn_rect)
-        layout.addWidget(self._btn_ellipse)
-        layout.addWidget(self._btn_line)
-        layout.addWidget(self._btn_segmented_line)
-        layout.addWidget(self._btn_polygon)
-        layout.addWidget(self._btn_point)
-        layout.addWidget(self._btn_points)
+        layout.addWidget(self._btn_panzoom, 0, 0)
+        layout.addWidget(self._btn_select, 0, 1)
+        layout.addWidget(self._btn_rect, 0, 2)
+        layout.addWidget(self._btn_ellipse, 1, 0)
+        layout.addWidget(self._btn_line, 1, 1)
+        layout.addWidget(self._btn_segmented_line, 1, 2)
+        layout.addWidget(self._btn_polygon, 2, 0)
+        layout.addWidget(self._btn_point, 2, 1)
+        layout.addWidget(self._btn_points, 2, 2)
 
         self._btn_map = {
             Mode.PAN_ZOOM: self._btn_panzoom,
@@ -94,7 +97,7 @@ class QRoiButtons(QtW.QWidget):
             Mode.ROI_POINTS: self._btn_points,
         }
         self._btn_map_inv = {v: k for k, v in self._btn_map.items()}
-        self.setFixedHeight(22)
+        self.setFixedHeight(70)
         self._btn_panzoom.setChecked(True)
 
     def set_mode(self, mode: Mode):

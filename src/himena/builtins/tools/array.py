@@ -2,10 +2,9 @@ from typing import TYPE_CHECKING, Any, TypeVar
 from himena._data_wrappers._array import wrap_array
 from himena._descriptors import NoNeedToSave
 from himena.plugins import register_function, configure_gui
-from himena.standards.roi.core import ImageRoi2D
 from himena.types import Parametric, WidgetDataModel, is_subtype
 from himena.consts import StandardType
-from himena.standards.model_meta import ArrayMeta, ImageMeta, ImageAxis
+from himena.standards.model_meta import ArrayMeta, ImageMeta, ImageAxis, roi as _roi
 from himena.widgets._wrapper import SubWindow
 
 if TYPE_CHECKING:
@@ -95,7 +94,7 @@ def crop_image(model: WidgetDataModel) -> WidgetDataModel:
     """Crop the image."""
     roi, meta = _get_current_roi_and_meta(model)
     arr = wrap_array(model.value)
-    if isinstance(roi, ImageRoi2D):
+    if isinstance(roi, _roi.ImageRoi2D):
         bbox = roi.bbox().adjust_to_int()
         if meta.is_rgb:
             bbox = bbox.limit_to(arr.shape[-3:-1])
@@ -145,7 +144,7 @@ def crop_image_nd(win: SubWindow) -> Parametric:
         arr = wrap_array(model.value)
         roi, meta = _get_current_roi_and_meta(model)
         sl_nd = tuple(slice(x0, x1) for x0, x1 in kwargs.values())
-        if isinstance(roi, ImageRoi2D):
+        if isinstance(roi, _roi.ImageRoi2D):
             bbox = roi.bbox().adjust_to_int()
             if meta.is_rgb:
                 bbox = bbox.limit_to(arr.shape[-3:-1])
@@ -162,6 +161,31 @@ def crop_image_nd(win: SubWindow) -> Parametric:
         return model.with_value(arr_cropped, metadata=meta_out)
 
     return run_crop_image
+
+
+@register_function(
+    title="Duplicate ROIs",
+    types=StandardType.IMAGE,
+    menus=["tools/image"],
+    command_id="builtins:duplicate-rois",
+)
+def duplicate_rois(model: WidgetDataModel) -> WidgetDataModel:
+    """Duplicate the ROIs."""
+    meta = _cast_meta(model, ImageMeta)
+    rois = meta.rois
+    if isinstance(rois, _roi.RoiListModel):
+        rois = rois.model_copy()
+    elif callable(rois):
+        rois = rois()
+        if not isinstance(rois, _roi.RoiListModel):
+            raise ValueError(f"Expected a RoiListModel, got {type(rois)}")
+    else:
+        raise ValueError("Expected a RoiListModel or a factory function.")
+    return WidgetDataModel(
+        value=rois,
+        type=StandardType.IMAGE_ROIS,
+        title=f"ROIs of {model.title}",
+    )
 
 
 def _get_current_array_2d(model: WidgetDataModel) -> "np.ndarray":
@@ -189,7 +213,9 @@ def _cast_meta(model: WidgetDataModel, cls: type[_C]) -> _C:
     return meta
 
 
-def _get_current_roi_and_meta(model: WidgetDataModel) -> tuple[ImageRoi2D, ImageMeta]:
+def _get_current_roi_and_meta(
+    model: WidgetDataModel,
+) -> tuple[_roi.ImageRoi2D, ImageMeta]:
     meta = _cast_meta(model, ImageMeta)
     if not (roi := meta.current_roi):
         raise ValueError("ROI selection is required for this operation.")

@@ -48,6 +48,6 @@ def series_as_array(model: WidgetDataModel) -> WidgetDataModel:
     return WidgetDataModel(
         value=series,
         title=f"{model.title} ({column_name})",
-        type=StandardType.ARRAY_1D,
+        type=StandardType.ARRAY,
         extension_default=".npy",
     )

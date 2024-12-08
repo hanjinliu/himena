@@ -89,6 +89,11 @@ class QTableBase(QtW.QTableView):
         self._current_color = QtGui.QColor("#A7A7A7")
         self._mouse_track = MouseTrack()
 
+    @property
+    def selection_model(self) -> SelectionModel:
+        """The custom selection model."""
+        return self._selection_model
+
     @QtCore.Property(QtGui.QColor)
     def selectionColor(self):
         return self._selection_color

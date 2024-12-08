@@ -65,9 +65,6 @@ class StandardType(SimpleNamespace):
     # image label data (e.g., segmentation)
     IMAGE_LABELS = "array.image.labels"
 
-    # 1D numerical array
-    ARRAY_1D = "array.1d"
-
     # (N, D) numerical array, such as D-dimensional point cloud
     COORDINATES = "array.coordinates"
 
@@ -78,7 +75,9 @@ class StandardType(SimpleNamespace):
     ### 3D ###
     SURFACE = "surface"  # vertices, faces and values for 3D surface plot
 
+    ### Other types ###
     GROUPBY = "groupby"  # DataFrame GroupBy object
+    IMAGE_ROIS = "image-rois"  # image regions of interest
 
     # fallback when no reader is found for the file (which means that the file could be
     # opened as a text file)

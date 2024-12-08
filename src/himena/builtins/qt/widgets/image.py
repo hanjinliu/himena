@@ -21,6 +21,8 @@ from himena.builtins.qt.widgets._image_components import (
     QDimsSlider,
     QRoiButtons,
     QImageViewControl,
+    QRoiCollection,
+    QImageViewSplitterHandle,
 )
 
 if TYPE_CHECKING:
@@ -28,15 +30,19 @@ if TYPE_CHECKING:
     from himena.builtins.qt.widgets._image_components._graphics_view import Mode
 
 
-class QImageView(QtW.QWidget):
+class QImageView(QtW.QSplitter):
     """The default nD image viewer widget for himena."""
 
     __himena_widget_id__ = "builtins:QImageView"
     __himena_display_name__ = "Built-in Image Viewer"
 
     def __init__(self):
-        super().__init__()
-        layout = QtW.QVBoxLayout(self)
+        super().__init__(QtCore.Qt.Orientation.Horizontal)
+        self.setHandleWidth(8)
+
+        widget_left = QtW.QWidget()
+        self.addWidget(widget_left)
+        layout = QtW.QVBoxLayout(widget_left)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
         self._roi_buttons = QRoiButtons()
@@ -44,8 +50,19 @@ class QImageView(QtW.QWidget):
         self._image_graphics_view = QImageGraphicsView()
         self._image_graphics_view.hovered.connect(self._on_hovered)
         self._image_graphics_view.mode_changed.connect(self._roi_buttons.set_mode)
+        self._image_graphics_view.roi_visibility_changed.connect(
+            self._roi_visibility_changed
+        )
         self._dims_slider = QDimsSlider()
-        layout.addWidget(self._roi_buttons)
+        self._roi_collection = QRoiCollection()
+        self._roi_collection.show_rois_changed.connect(
+            self._image_graphics_view.set_show_rois
+        )
+        self._roi_collection.show_labels_changed.connect(
+            self._image_graphics_view.set_show_labels
+        )
+        self._roi_collection.roi_item_clicked.connect(self._roi_item_clicked)
+        self._roi_collection.layout().insertWidget(0, self._roi_buttons)
         layout.addWidget(self._image_graphics_view)
         layout.addWidget(self._dims_slider)
 
@@ -53,24 +70,22 @@ class QImageView(QtW.QWidget):
         self._image_graphics_view.roi_removed.connect(self._on_roi_removed)
         self._dims_slider.valueChanged.connect(self._slider_changed)
 
-        self._roi_list = roi.RoiListModel()
-        self._control = QImageViewControl()
-        self._control.interpolation_changed.connect(self._interpolation_changed)
-        self._control.clim_changed.connect(self._clim_changed)
-        self._control.auto_contrast_requested.connect(self._auto_contrast)
-        self._control.channel_mode_change_requested.connect(
-            self._on_channel_mode_change
-        )
-        self._control.complex_mode_change_requested.connect(
-            self._on_complex_mode_change
-        )
-        self._arr: ArrayWrapper | None = None
-        self._is_modified = False
-        self._current_image_slices = None
-        self._is_rgb = False
+        self.addWidget(self._roi_collection)
+        self.setStretchFactor(0, 6)
+        self.setStretchFactor(1, 1)
+        self.setSizes([400, 0])
+        self._control = QImageViewControl(self)
+        self._arr: ArrayWrapper | None = None  # the internal array data for display
+        self._is_modified = False  # whether the widget is modified
+        self._current_image_slices = None  # cached numpy arrays for display
+        self._is_rgb = False  # whether the image is RGB
         self._channel_axis: int | None = None
         self._channels: list[ChannelInfo] | None = None
         self._model_type = StandardType.IMAGE
+        self._image_graphics_view.add_image_layer()
+
+    def createHandle(self):
+        return QImageViewSplitterHandle(QtCore.Qt.Orientation.Horizontal, self)
 
     @protocol_override
     def update_model(self, model: WidgetDataModel):
@@ -129,7 +144,7 @@ class QImageView(QtW.QWidget):
         )
 
         # update sliders
-        self._dims_slider._refer_array(arr, meta0.axes, is_rgb=self._is_rgb)
+        self._dims_slider.set_dimensions(arr.shape, meta0.axes, is_rgb=self._is_rgb)
         with qsignal_blocker(self._dims_slider):
             self._dims_slider.setValue(sl_0)
 
@@ -221,7 +236,7 @@ class QImageView(QtW.QWidget):
                 channels=channels,
                 channel_axis=self._channel_axis,
                 current_roi=current_roi,
-                rois=self._roi_list,
+                rois=self._roi_collection.to_standard_roi_list,
                 is_rgb=self._is_rgb,
                 interpolation=interp,
             ),
@@ -243,6 +258,22 @@ class QImageView(QtW.QWidget):
     def control_widget(self) -> QtW.QWidget:
         return self._control
 
+    @protocol_override
+    def mergeable_model_types(self) -> list[str]:
+        return [StandardType.IMAGE_ROIS, StandardType.IMAGE_LABELS]
+
+    @protocol_override
+    def merge_model(self, model: WidgetDataModel):
+        if model.type == StandardType.IMAGE_ROIS:
+            if isinstance(roi_list := model.value, roi.RoiListModel):
+                self._roi_collection.update_from_standard_roi_list(roi_list)
+                self._image_graphics_view.clear_rois()
+                self._update_rois()
+            self._is_modified = True
+        elif model.type == StandardType.IMAGE_LABELS:
+            raise NotImplementedError("Merging with labels is not implemented yet.")
+        return None
+
     def setFocus(self):
         return self._image_graphics_view.setFocus()
 
@@ -251,6 +282,14 @@ class QImageView(QtW.QWidget):
 
     def _composite_state(self) -> str:
         return self._control._channel_mode_combo.currentText()
+
+    def _roi_item_clicked(self, indices: tuple[int, ...], qroi: QRoi):
+        self._dims_slider.setValue(indices)
+        self._image_graphics_view._current_roi_item = qroi
+
+    def _roi_visibility_changed(self, show_rois: bool):
+        with qsignal_blocker(self._roi_collection):
+            self._roi_collection._roi_visible_btn.setChecked(show_rois)
 
     def _get_image_slices(
         self,
@@ -299,6 +338,7 @@ class QImageView(QtW.QWidget):
                     is_gray=self._composite_state() == "Gray",
                 ),
             )
+            self._image_graphics_view.clear_rois()
             channel.minmax = (
                 min(img.min(), channel.minmax[0]),
                 max(img.max(), channel.minmax[1]),
@@ -323,6 +363,8 @@ class QImageView(QtW.QWidget):
         transform the image slices.
         """
         self._current_image_slices = imgs
+        if self._channels is None:
+            return
         with qsignal_blocker(self._control._histogram):
             for i, (img, ch) in enumerate(zip(imgs, self._channels)):
                 self._image_graphics_view.set_array(
@@ -334,6 +376,7 @@ class QImageView(QtW.QWidget):
                         is_gray=self._composite_state() == "Gray",
                     ),
                 )
+            self._image_graphics_view.clear_rois()
             ch_cur = self.current_channel()
             idx = ch_cur.channel_index or 0
             self._control._histogram.set_hist_for_array(
@@ -343,27 +386,11 @@ class QImageView(QtW.QWidget):
                 is_rgb=self._is_rgb,
                 color=color_for_colormap(ch_cur.colormap),
             )
-            rois = self._roi_list.get_rois_on_slice(self._dims_slider.value())
-            self._image_graphics_view.set_rois(rois)
+            self._update_rois()
 
-    def _interpolation_changed(self, checked: bool):
-        self._image_graphics_view.setSmoothing(checked)
-
-    def _clim_changed(self, clim: tuple[float, float]):
-        ch = self.current_channel()
-        ch.clim = clim
-        idx = ch.channel_index or 0
-        with qsignal_blocker(self._control._histogram):
-            self._image_graphics_view.set_array(
-                idx,
-                ch.transform_image(
-                    self._current_image_slices[idx],
-                    complex_transform=self._control.complex_transform,
-                    is_rgb=self._is_rgb,
-                    is_gray=self._composite_state() == "Gray",
-                ),
-                clear_rois=False,
-            )
+    def _update_rois(self):
+        rois = self._roi_collection.get_rois_on_slice(self._dims_slider.value())
+        self._image_graphics_view.extend_qrois(rois)
 
     def current_channel(self, slider_value: tuple[int] | None = None) -> ChannelInfo:
         if slider_value is None:
@@ -377,27 +404,17 @@ class QImageView(QtW.QWidget):
             ch = self._channels[0]
         return ch
 
-    def _auto_contrast(self):
-        if self._arr is None:
-            return
-        sl = self._dims_slider.value()
-        img_slice = self._get_image_slice_for_channel(sl)
-        if img_slice.dtype.kind == "c":
-            img_slice = self._control.complex_transform(img_slice)
-        min_, max_ = img_slice.min(), img_slice.max()
-        ch = self.current_channel(sl)
-        ch.clim = (min_, max_)
-        ch.minmax = min(ch.minmax[0], min_), max(ch.minmax[1], max_)
-        self._control._histogram.set_clim((min_, max_))
-        self._set_image_slice(img_slice, ch)
-
     def _on_roi_added(self, qroi: QRoi):
-        roi = qroi.toRoi(indices=self._dims_slider.value())
-        self._roi_list.add_roi(roi)
-        set_status_tip(f"{type(roi).__name__} added")
+        if qroi.label() == "":
+            qroi.setLabel(str(len(self._roi_collection)))
+        indices = self._dims_slider.value()
+        self._roi_collection.add(indices, qroi)
+        set_status_tip(f"Added a {qroi._roi_type()} ROI")
 
     def _on_roi_removed(self, idx: int):
-        del self._roi_list[idx]
+        indices = self._dims_slider.value()
+        qroi = self._roi_collection.pop_roi(indices, idx)
+        set_status_tip(f"Removed a {qroi._roi_type()} ROI")
 
     def _on_roi_mode_changed(self, mode: Mode):
         self._image_graphics_view.switch_mode(mode)
@@ -409,13 +426,6 @@ class QImageView(QtW.QWidget):
     def _reset_image(self):
         imgs = self._get_image_slices(self._dims_slider.value(), len(self._channels))
         self._set_image_slices(imgs)
-
-    def _on_channel_mode_change(self, mode: str):
-        self._reset_image()
-
-    def _on_complex_mode_change(self, old: str, new: str):
-        self._reset_image()
-        # TODO: auto contrast and update colormap
 
     def _on_hovered(self, pos: QtCore.QPointF):
         x, y = pos.x(), pos.y()

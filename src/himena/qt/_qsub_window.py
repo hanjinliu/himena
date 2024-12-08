@@ -72,6 +72,7 @@ class QSubWindowArea(QtW.QMdiArea):
         self.addSubWindow(sub_window)
         sub_window.resize(size + QtCore.QSize(8, 8))
         self.relabel_widgets()
+        _checker.call_window_added_callback(widget)
         return sub_window
 
     def mousePressEvent(self, event: QtGui.QMouseEvent):

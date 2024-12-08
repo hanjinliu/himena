@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from enum import Enum, auto
 import numpy as np
 from qtpy import QtWidgets as QtW
@@ -7,6 +8,10 @@ from qtpy import QtCore
 
 from himena.qt._magicgui._toggle_switch import QLabeledToggleSwitch
 from himena.builtins.qt.widgets._image_components import QHistogramView
+from himena.qt._utils import qsignal_blocker
+
+if TYPE_CHECKING:
+    from himena.builtins.qt.widgets.image import QImageView
 
 
 class ImageType(Enum):
@@ -24,14 +29,9 @@ class ComplexMode(Enum):
 
 
 class QImageViewControl(QtW.QWidget):
-    interpolation_changed = QtCore.Signal(bool)
-    clim_changed = QtCore.Signal(tuple)
-    auto_contrast_requested = QtCore.Signal()
-    complex_mode_change_requested = QtCore.Signal(str, str)  # old, new
-    channel_mode_change_requested = QtCore.Signal(str)
-
-    def __init__(self):
+    def __init__(self, image_view: QImageView):
         super().__init__()
+        self._image_view = image_view
         layout = QtW.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
@@ -46,29 +46,31 @@ class QImageViewControl(QtW.QWidget):
         self._complex_mode_combo.setCurrentIndex(2)
         self._complex_mode_combo.setToolTip("Method to display complex data")
         self._complex_mode_old = "Abs"
-        self._complex_mode_combo.currentTextChanged.connect(self._complex_mode_changed)
+        self._complex_mode_combo.currentTextChanged.connect(
+            self._on_complex_mode_change
+        )
 
         self._channel_mode_combo = QtW.QComboBox()
         self._channel_mode_combo.addItems([""])
         self._channel_mode_combo.currentTextChanged.connect(
-            self.channel_mode_change_requested.emit
+            self._on_channel_mode_change
         )
         self._channel_mode_combo.setToolTip("Method to display multi-channel data")
         self._image_type = ImageType.SINGLE
 
         self._auto_contrast_btn = QtW.QPushButton("Auto")
-        self._auto_contrast_btn.clicked.connect(self.auto_contrast_requested.emit)
+        self._auto_contrast_btn.clicked.connect(self._auto_contrast)
         self._auto_contrast_btn.setToolTip("Auto contrast")
 
         self._histogram = QHistogramView()
         self._histogram.setFixedWidth(120)
-        self._histogram.clim_changed.connect(self.clim_changed.emit)
+        self._histogram.clim_changed.connect(self._clim_changed)
 
         self._interp_check_box = QLabeledToggleSwitch()
         self._interp_check_box.setText("smooth")
         self._interp_check_box.setChecked(False)
         self._interp_check_box.setMaximumHeight(36)
-        self._interp_check_box.toggled.connect(self.interpolation_changed.emit)
+        self._interp_check_box.toggled.connect(self._interpolation_changed)
 
         self._hover_info = QtW.QLabel()
 
@@ -81,11 +83,6 @@ class QImageViewControl(QtW.QWidget):
         layout.addWidget(self._interp_check_box)
         self._complex_mode_combo.hide()
         self._channel_mode_combo.hide()
-
-    def _complex_mode_changed(self):
-        cur = self._complex_mode_combo.currentText()
-        self.complex_mode_change_requested.emit(self._complex_mode_old, cur)
-        self._complex_mode_old = cur
 
     def update_for_state(
         self,
@@ -135,3 +132,46 @@ class QImageViewControl(QtW.QWidget):
         if self._complex_mode_combo.currentText() == "Phase":
             return np.angle(arr)
         return arr
+
+    def _interpolation_changed(self, checked: bool):
+        self._image_view._image_graphics_view.setSmoothing(checked)
+
+    def _clim_changed(self, clim: tuple[float, float]):
+        view = self._image_view
+        ch = view.current_channel()
+        ch.clim = clim
+        idx = ch.channel_index or 0
+        with qsignal_blocker(self._histogram):
+            view._image_graphics_view.set_array(
+                idx,
+                ch.transform_image(
+                    view._current_image_slices[idx],
+                    complex_transform=self.complex_transform,
+                    is_rgb=view._is_rgb,
+                    is_gray=view._composite_state() == "Gray",
+                ),
+            )
+
+    def _on_channel_mode_change(self, mode: str):
+        self._image_view._reset_image()
+
+    def _on_complex_mode_change(self):
+        cur = self._complex_mode_combo.currentText()
+        self._image_view._reset_image()
+        self._complex_mode_old = cur
+        # TODO: auto contrast and update colormap
+
+    def _auto_contrast(self):
+        view = self._image_view
+        if view._arr is None:
+            return
+        sl = view._dims_slider.value()
+        img_slice = view._get_image_slice_for_channel(sl)
+        if img_slice.dtype.kind == "c":
+            img_slice = self.complex_transform(img_slice)
+        min_, max_ = img_slice.min(), img_slice.max()
+        ch = view.current_channel(sl)
+        ch.clim = (min_, max_)
+        ch.minmax = min(ch.minmax[0], min_), max(ch.minmax[1], max_)
+        self._histogram.set_clim((min_, max_))
+        view._set_image_slice(img_slice, ch)

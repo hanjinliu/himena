@@ -2,6 +2,9 @@
 
 from himena.standards.roi.core import (
     ImageRoi,
+    ImageRoi2D,
+    ImageRoi3D,
+    ImageRoiND,
     RectangleRoi,
     RotatedRectangleRoi,
     EllipseRoi,
@@ -17,6 +20,9 @@ from himena.standards.roi.core import (
 
 __all__ = [
     "ImageRoi",
+    "ImageRoi2D",
+    "ImageRoi3D",
+    "ImageRoiND",
     "RectangleRoi",
     "RotatedRectangleRoi",
     "EllipseRoi",

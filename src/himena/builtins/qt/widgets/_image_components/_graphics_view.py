@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import logging
 from enum import Enum, auto
+from typing import Iterable
 import numpy as np
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt
+
 
 from ._base import QBaseGraphicsView, QBaseGraphicsScene
 from ._roi_items import (
@@ -16,7 +18,6 @@ from ._roi_items import (
     QRectangleRoi,
     QEllipseRoi,
     QSegmentedLineRoi,
-    from_standard_roi,
 )
 from ._handles import QHandleRect, RoiSelectionHandles
 from himena.qt._utils import ndarray_to_qimage
@@ -93,49 +94,144 @@ class QImageGraphicsWidget(QtW.QGraphicsWidget):
         return QtCore.QRectF(0, 0, width, height)
 
 
+class QImageBorderWidget(QtW.QGraphicsWidget):
+    """Just paint a border around a image."""
+
+    def __init__(self, shape: tuple[int, int]):
+        super().__init__()
+        self._shape = QtCore.QRectF(0, 0, *shape)
+
+    def boundingRect(self):
+        return self._shape
+
+    def paint(self, painter, option, widget=None):
+        bounding_rect = self.boundingRect()
+        is_light_bg = (
+            self.scene().views()[0].backgroundBrush().color().lightness() > 128
+        )
+        if is_light_bg:
+            pen = QtGui.QPen(QtGui.QColor(19, 19, 19), 1)
+        else:
+            pen = QtGui.QPen(QtGui.QColor(236, 236, 236), 1)
+        pen.setCosmetic(True)
+        painter.setPen(pen)
+        painter.setBrush(QtGui.QBrush(QtGui.QColor(0, 0, 0)))
+        painter.drawRect(bounding_rect)
+
+
+class QRoiLabels(QtW.QGraphicsItem):
+    """Item that shows labels for ROIs in the paint method"""
+
+    def __init__(self, view: QImageGraphicsView):
+        super().__init__()
+        self._view = view
+        self._show_labels = False
+        self._font = QtGui.QFont("Arial", 10)
+        self._bounding_rect = QtCore.QRectF(0, 0, 0, 0)
+
+    def paint(
+        self,
+        painter: QtGui.QPainter,
+        option: QtW.QStyleOptionGraphicsItem,
+        widget: QtW.QWidget,
+    ):
+        if not self._show_labels:
+            return
+        if not self._view._is_rois_visible:
+            return
+        scale = self.scene().views()[0].transform().m11()
+        self._font.setPointSizeF(9 / scale)
+        painter.setFont(self._font)
+        metrics = QtGui.QFontMetricsF(self._font)
+        for ith, roi in enumerate(self._view._roi_items):
+            pos = self.mapToScene(roi.boundingRect().center())
+            roi_label = roi.label() or str(ith)
+            width = metrics.width(roi_label)
+            height = metrics.height()
+            painter.setPen(QtGui.QPen(QtGui.QColor(0, 0, 0, 0), 1))
+            painter.setBrush(QtGui.QBrush(QtGui.QColor(0, 0, 0)))
+            rect = QtCore.QRectF(
+                pos.x() - width / 2, pos.y() - height / 2, width, height
+            )
+            painter.drawRect(rect.adjusted(-0.3, 0, 0.3, 0))
+            painter.setPen(QtGui.QPen(QtGui.QColor(255, 255, 255), 1))
+            painter.setBrush(QtGui.QBrush(QtGui.QColor(255, 255, 255)))
+            painter.drawText(rect, roi_label)
+
+    def boundingRect(self):
+        return self._bounding_rect
+
+    def set_bounding_rect(self, rect: QtCore.QRectF):
+        self._bounding_rect = rect
+        self.update()
+
+
 class QImageGraphicsView(QBaseGraphicsView):
     roi_added = QtCore.Signal(QRoi)
     roi_removed = QtCore.Signal(int)
+    roi_visibility_changed = QtCore.Signal(bool)
     mode_changed = QtCore.Signal(Mode)
     hovered = QtCore.Signal(QtCore.QPointF)
 
     Mode = Mode
 
-    def __init__(self):
+    def __init__(self, roi_visible: bool = False, roi_pen: QtGui.QPen | None = None):
         ### Attributes ###
         self._pos_drag_start: QtCore.QPoint | None = None
         self._pos_drag_prev: QtCore.QPoint | None = None
         self._is_key_hold = False
-        self._roi_items: list[QtW.QGraphicsItem] = []
+        self._roi_items: list[QRoi] = []
         self._current_roi_item: QRoi | None = None
         self._is_current_roi_item_not_registered = False
-        self._roi_pen = QtGui.QPen(QtGui.QColor(225, 225, 0), 3)
+        self._roi_pen = roi_pen or QtGui.QPen(QtGui.QColor(225, 225, 0), 3)
         self._roi_pen.setCosmetic(True)
         self._mode = Mode.PAN_ZOOM
         self._last_mode_before_key_hold = Mode.PAN_ZOOM
         self._is_drawing_multipoints = False
-        self._is_rois_visible = False
+        self._is_rois_visible = roi_visible
         self._selection_handles = RoiSelectionHandles(self)
         self._initialized = False
+        self._image_widgets: list[QImageGraphicsWidget] = []
+        self._border_widget: QImageBorderWidget | None = None
 
         super().__init__()
-        self._image_widgets = [self.addItem(QImageGraphicsWidget())]
         self.switch_mode(Mode.PAN_ZOOM)
+        self._qroi_labels = self.addItem(QRoiLabels(self))
+        self._qroi_labels.setZValue(10000)
+
+    def add_image_layer(self, additive: bool = False):
+        self._image_widgets.append(
+            self.addItem(QImageGraphicsWidget(additive=additive))
+        )
+        self._qroi_labels.set_bounding_rect(self._image_widgets[0].boundingRect())
+
+    def add_border_layer(self, shape: tuple[int, int]):
+        self._border_widget = self.addItem(QImageBorderWidget(shape))
+        self._qroi_labels.set_bounding_rect(self._border_widget.boundingRect())
 
     def set_n_images(self, num: int):
         if num < 1:
             raise ValueError("Number of images must be at least 1.")
         for _ in range(num - len(self._image_widgets)):
             additive = len(self._image_widgets) > 0
-            self._image_widgets.append(
-                self.addItem(QImageGraphicsWidget(additive=additive))
-            )
+            self.add_image_layer(additive=additive)
         for _ in range(len(self._image_widgets) - num):
             widget = self._image_widgets.pop()
             self.scene().removeItem(widget)
             widget.deleteLater()
 
-    def set_array(self, idx: int, img: np.ndarray | None, clear_rois: bool = True):
+    def set_show_rois(self, show: bool):
+        self._is_rois_visible = show
+        for item in self._roi_items:
+            item.setVisible(show)
+        self._qroi_labels.update()
+        self.roi_visibility_changed.emit(show)
+
+    def set_show_labels(self, show: bool):
+        self._qroi_labels._show_labels = show
+        self._qroi_labels.update()
+
+    def set_array(self, idx: int, img: np.ndarray | None):
         """Set an image to display."""
         # NOTE: image must be ready for conversion to QImage (uint8, mono or RGB)
         widget = self._image_widgets[idx]
@@ -144,22 +240,22 @@ class QImageGraphicsView(QBaseGraphicsView):
         else:
             widget.set_image(img)
             widget.setVisible(True)
-        # ROI is stored in the parent widget.
-        if clear_rois:
-            scene = self.scene()
-            for item in self._roi_items:
-                scene.removeItem(item)
-            self._roi_items.clear()
-            if not self._is_current_roi_item_not_registered:
-                self.remove_current_item()
+        self._qroi_labels.set_bounding_rect(self._image_widgets[0].boundingRect())
 
-    def set_rois(self, rois: list):
-        """Set ROIs to display."""
+    def clear_rois(self):
+        scene = self.scene()
+        for item in self._roi_items:
+            scene.removeItem(item)
+        self._roi_items.clear()
+        if not self._is_current_roi_item_not_registered:
+            self.remove_current_item()
+
+    def extend_qrois(self, rois: Iterable[QRoi]):
+        """Set Qt ROIs to display."""
         for roi in rois:
-            qroi = from_standard_roi(roi, self._roi_pen)
-            self.scene().addItem(qroi)
-            qroi.setVisible(self._is_rois_visible)
-            self._roi_items.append(qroi)
+            self.scene().addItem(roi)
+            roi.setVisible(self._is_rois_visible)
+            self._roi_items.append(roi)
 
     def mode(self) -> Mode:
         return self._mode
@@ -194,16 +290,25 @@ class QImageGraphicsView(QBaseGraphicsView):
             new_size.width() / old_size.width() * new_size.height() / old_size.height()
         )
         self.scale_and_update_handles(ratio)
+        if not self._initialized:
+            self.initialize()
         return super().resizeEvent(event)
 
-    def showEvent(self, event: QtGui.QShowEvent):
-        super().showEvent(event)
-        if not (event.spontaneous() and self._initialized):
+    def initialize(self):
+        if self._initialized:
+            return
+        if len(self._image_widgets) == 0:
+            if self._border_widget is None:
+                return
+            rect = self._border_widget.boundingRect()
+        else:
             rect = self._image_widgets[0].boundingRect()
-            factor = 1 / max(rect.width(), rect.height())
-            self.scale_and_update_handles(factor)
-            self.centerOn(rect.center())
-            self._initialized = True
+        if (size := max(rect.width(), rect.height())) <= 0:
+            return
+        factor = 1 / size
+        self.scale_and_update_handles(factor)
+        self.centerOn(rect.center())
+        self._initialized = True
 
     def wheelEvent(self, event):
         # Zoom in/out using the mouse wheel
@@ -445,12 +550,8 @@ class QImageGraphicsView(QBaseGraphicsView):
                 return
             _LOGGER.info(f"Added ROI item {item}")
             self._roi_items.append(item)
+            self._qroi_labels.update()
             self.roi_added.emit(item)
-
-    def toggle_roi_list_visibility(self):
-        self._is_rois_visible = not self._is_rois_visible
-        for item in self._roi_items:
-            item.setVisible(self._is_rois_visible)
 
     def keyPressEvent(self, event: QtGui.QKeyEvent | None) -> None:
         if event is None:
@@ -506,7 +607,7 @@ class QImageGraphicsView(QBaseGraphicsView):
                     self.remove_current_item(remove_from_list=True)
             elif _key == Qt.Key.Key_V:
                 if not self._is_key_hold:
-                    self.toggle_roi_list_visibility()
+                    self.set_show_rois(not self._is_rois_visible)
         self._is_key_hold = True
         return None
 

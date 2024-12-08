@@ -232,11 +232,13 @@ def make_action_for_function(
         _title = title
     _enablement = enablement
     if _utils.has_widget_data_model_argument(f):
-        _expr = ctx.is_active_window_exportable
-        if enablement is None:
-            _enablement = _expr
-        else:
-            _enablement = _expr & enablement
+        _enablement = _expr_and(_enablement, ctx.is_active_window_exportable)
+
+    if inner_widget_class := _utils.get_subwindow_variable(f):
+        # function is annotated with SubWindow[W]. Use W for enablement.
+        widget_id = _utils.get_widget_class_id(inner_widget_class)
+        _enablement = _expr_and(_enablement, ctx.active_window_widget_id == widget_id)
+
     _id = _command_id_from_func(f, command_id)
     if isinstance(command_id, str) and ":" in command_id:
         group = command_id.split(":")[0]
@@ -252,6 +254,12 @@ def make_action_for_function(
         enablement=_enablement,
         keybindings=kbs,
     )
+
+
+def _expr_and(expr: BoolOp | None, other: BoolOp) -> BoolOp:
+    if expr is None:
+        return other
+    return expr & other
 
 
 def _norm_register_function_args(

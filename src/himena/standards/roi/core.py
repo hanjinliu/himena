@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from contextlib import suppress
 import math
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Iterator
 import numpy as np
 from pydantic_compat import BaseModel, Field, field_validator
-from pydantic import PrivateAttr
 from himena.types import Rect
 
 if TYPE_CHECKING:
@@ -242,9 +240,6 @@ class RoiListModel(BaseModel):
     """List of ROIs, with useful methods."""
 
     rois: list[ImageRoi] = Field(default_factory=list, description="List of ROIs.")
-    _slice_cache: dict[tuple[int, ...], list[ImageRoi]] = PrivateAttr(
-        default_factory=dict
-    )
 
     def model_dump_typed(self) -> dict:
         return {"type": type(self).__name__.lower(), **self.model_dump()}
@@ -258,38 +253,11 @@ class RoiListModel(BaseModel):
                 raise ValueError(f"Expected a dictionary for 'rois', got: {roi_dict!r}")
             roi_type = roi_dict.pop("type")
             roi = ImageRoi.construct(roi_type, roi_dict)
-            out.add_roi(roi)
+            out.rois.append(roi)
         return out
-
-    def add_roi(self, roi: ImageRoi) -> None:
-        """Add a new ROI to the list."""
-        self.rois.append(roi)
-        if isinstance(roi, ImageRoiND):
-            indices = roi.indices
-        else:
-            indices = ()
-        if indices not in self._slice_cache:
-            self._slice_cache[indices] = []
-        self._slice_cache[indices].append(roi)
 
     def __getitem__(self, key: int) -> ImageRoi:
         return self.rois[key]
 
-    def __delitem__(self, key: int) -> None:
-        roi = self.rois.pop(key)
-        if isinstance(roi, ImageRoiND):
-            indices = roi.indices
-        else:
-            indices = ()
-        with suppress(ValueError):
-            self._slice_cache[indices].remove(roi)
-
-    def get_rois_on_slice(self, indices: tuple[int, ...]) -> list[ImageRoi]:
-        """Return a list of ROIs on the given slice."""
-        indices_to_collect = []
-        for i in range(len(indices)):
-            indices_to_collect.append(indices[i:])
-        out = []
-        for idx in indices_to_collect:
-            out.extend(self._slice_cache.get(idx, []))
-        return out
+    def __iter__(self) -> Iterator[ImageRoi]:
+        return iter(self.rois)

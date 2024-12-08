@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from qtpy import QtWidgets as QtW, QtCore
-from himena._data_wrappers import ArrayWrapper
 
 from himena.standards import model_meta
 from himena.qt._utils import qsignal_blocker
@@ -25,13 +24,14 @@ class QDimsSlider(QtW.QWidget):
         """Number of sliders."""
         return len(self._sliders)
 
-    def _refer_array(
+    def set_dimensions(
         self,
-        arr: ArrayWrapper,
+        shape: tuple[int, ...],
         axes: list[model_meta.ImageAxis],
         is_rgb: bool = False,
     ):
-        ndim_rem = arr.ndim - 3 if is_rgb else arr.ndim - 2
+        ndim = len(shape)
+        ndim_rem = ndim - 3 if is_rgb else ndim - 2
         nsliders = len(self._sliders)
         if nsliders > ndim_rem:
             for i in range(ndim_rem, nsliders):
@@ -40,7 +40,7 @@ class QDimsSlider(QtW.QWidget):
                 slider.deleteLater()
         elif nsliders < ndim_rem:
             for i in range(nsliders, ndim_rem):
-                self._make_slider(arr.shape[i])
+                self._make_slider(shape[i])
         # update axis names
         _axis_width_max = 0
         _index_width_max = 0

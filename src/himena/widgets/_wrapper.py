@@ -627,9 +627,8 @@ class ParametricWindow(SubWindow[_W]):
         is_func: bool = True,
     ) -> ParametricWindow[_W]:
         ui = self._main_window()._himena_main_window
-        i_tab, i_win = self._find_me(ui)
         if self._auto_close:
-            del ui.tabs[i_tab][i_win]
+            self._close_me(ui)
         if is_func:
             result_widget = ui.add_function(out, **get_gui_config(out))
         else:
@@ -661,6 +660,8 @@ class ParametricWindow(SubWindow[_W]):
         _LOGGER.info("Got output: %r with type hint %r", type(return_value), type_hint)
         ui = self._main_window()._himena_main_window
         ui.model_app.injection_store.process(return_value, type_hint=type_hint)
+        if self._auto_close:
+            self._close_me(ui)
 
 
 class DockWidget(WidgetWrapper[_W]):

@@ -1,4 +1,4 @@
-from typing import Any, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING, Callable
 from pydantic_compat import BaseModel, Field, field_validator
 from himena.standards import roi
 
@@ -98,7 +98,7 @@ class ImageMeta(ArrayMeta):
     current_roi: roi.ImageRoi | None = Field(
         None, description="Current region of interest."
     )
-    rois: roi.RoiListModel = Field(
+    rois: roi.RoiListModel | Callable[[], roi.RoiListModel] = Field(
         default_factory=roi.RoiListModel, description="Regions of interest."
     )
     labels: Any | None = Field(None, description="Labels of the image.")

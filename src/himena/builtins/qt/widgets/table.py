@@ -75,19 +75,22 @@ class QStringArrayModel(QtCore.QAbstractTableModel):
         if role == Qt.ItemDataRole.EditRole:
             r, c = index.row(), index.column()
             if r >= self._arr.shape[0] or c >= self._arr.shape[1]:
-                self._arr = np.pad(
-                    self._arr,
-                    [
-                        (0, max(r - self._arr.shape[0] + 1, 0)),
-                        (0, max(c - self._arr.shape[1] + 1, 0)),
-                    ],
-                    mode="constant",
-                    constant_values="",
-                )
+                self._expand_array(r, c)
             self._arr[r, c] = str(value)
             self.dataChanged.emit(index, index)
             return True
         return False
+
+    def _expand_array(self, r: int, c: int):
+        self._arr = np.pad(
+            self._arr,
+            [
+                (0, max(r - self._arr.shape[0] + 1, 0)),
+                (0, max(c - self._arr.shape[1] + 1, 0)),
+            ],
+            mode="constant",
+            constant_values="",
+        )
 
     def headerData(
         self,
