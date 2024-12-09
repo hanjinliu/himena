@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from enum import Enum, auto
 from io import StringIO
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Iterable, Literal
+from dataclasses import dataclass
 import numpy as np
 
 from qtpy import QtWidgets as QtW
@@ -14,6 +15,7 @@ from himena.types import WidgetDataModel
 from himena.standards.model_meta import TableMeta
 from himena.plugins import protocol_override
 from himena.builtins.qt.widgets._table_components import QTableBase, QSelectionRangeEdit
+from himena._utils import UndoRedoStack
 
 
 class HeaderFormat(Enum):
@@ -22,6 +24,91 @@ class HeaderFormat(Enum):
     NumberZeroIndexed = auto()
     NumberOneIndexed = auto()
     Alphabetic = auto()
+
+
+@dataclass
+class TableAction:
+    """Base class for table undo/redo actions."""
+
+    def invert(self) -> TableAction:
+        return self
+
+    def apply(self, table: QSpreadsheet):
+        raise NotImplementedError("Apply method must be implemented.")
+
+
+@dataclass
+class EditAction(TableAction):
+    old: str | np.ndarray
+    new: str | np.ndarray
+    index: tuple[int | slice, int | slice]
+
+    def invert(self) -> TableAction:
+        return EditAction(self.new, self.old, self.index)
+
+    def apply(self, table: QSpreadsheet):
+        return table.array_update(self.index, self.new, record_undo=False)
+
+
+@dataclass
+class ReshapeAction(TableAction):
+    old: tuple[int, int]
+    new: tuple[int, int]
+
+    def invert(self) -> TableAction:
+        return ReshapeAction(self.new, self.old)
+
+    def apply(self, table: QSpreadsheet):
+        r_old, c_old = self.old
+        r_new, c_new = self.new
+        if r_old == r_new and c_old == c_new:
+            pass
+        elif r_old < r_new and c_old < c_new:
+            table.array_expand(r_new - r_old, c_new - c_old)
+        elif r_old > r_new and c_old > c_new:
+            table.array_shrink(r_new, r_new)
+        else:
+            raise ValueError(
+                f"This reshape ({self.old} -> {self.new}) is not supported."
+            )
+
+
+@dataclass
+class InsertAction(TableAction):
+    index: int
+    axis: Literal[0, 1]
+    array: np.ndarray | None = None
+
+    def invert(self) -> TableAction:
+        return RemoveAction(self.index, self.axis, self.array)
+
+    def apply(self, table: QSpreadsheet):
+        table.array_insert(self.index, self.axis, self.array, record_undo=False)
+
+
+@dataclass
+class RemoveAction(TableAction):
+    index: int
+    axis: Literal[0, 1]
+    array: np.ndarray
+
+    def invert(self) -> TableAction:
+        return InsertAction(self.index, self.axis, self.array)
+
+    def apply(self, table: QSpreadsheet):
+        table.array_delete([self.index], self.axis, record_undo=False)
+
+
+@dataclass
+class ActionGroup(TableAction):
+    actions: list[TableAction]  # operation from actions[0] to actions[-1]
+
+    def invert(self) -> TableAction:
+        return ActionGroup([action.invert() for action in self.actions[::-1]])
+
+    def apply(self, table: QSpreadsheet):
+        for action in self.actions:
+            action.apply(table)
 
 
 _FLAGS = (
@@ -34,7 +121,7 @@ _FLAGS = (
 class QStringArrayModel(QtCore.QAbstractTableModel):
     """Table model for a string array."""
 
-    def __init__(self, arr: np.ndarray, parent=None):
+    def __init__(self, arr: np.ndarray, parent: QSpreadsheet):
         super().__init__(parent)
         self._arr = arr  # 2D
         if arr.ndim != 2:
@@ -43,6 +130,10 @@ class QStringArrayModel(QtCore.QAbstractTableModel):
             raise ValueError("Only string array is supported.")
         self._nrows, self._ncols = arr.shape
         self._header_format = HeaderFormat.NumberZeroIndexed
+
+    if TYPE_CHECKING:
+
+        def parent(self) -> QSpreadsheet: ...  # fmt: skip
 
     def rowCount(self, parent=None):
         return max(self._nrows + 1, 100)
@@ -73,24 +164,10 @@ class QStringArrayModel(QtCore.QAbstractTableModel):
 
     def setData(self, index: QtCore.QModelIndex, value: Any, role: int = ...) -> bool:
         if role == Qt.ItemDataRole.EditRole:
-            r, c = index.row(), index.column()
-            if r >= self._arr.shape[0] or c >= self._arr.shape[1]:
-                self._expand_array(r, c)
-            self._arr[r, c] = str(value)
-            self.dataChanged.emit(index, index)
+            qtable = self.parent()
+            qtable.array_update((index.row(), index.column()), value, record_undo=True)
             return True
         return False
-
-    def _expand_array(self, r: int, c: int):
-        self._arr = np.pad(
-            self._arr,
-            [
-                (0, max(r - self._arr.shape[0] + 1, 0)),
-                (0, max(c - self._arr.shape[1] + 1, 0)),
-            ],
-            mode="constant",
-            constant_values="",
-        )
 
     def headerData(
         self,
@@ -129,14 +206,14 @@ class QSpreadsheet(QTableBase):
         QTableBase.__init__(self)
         self.setEditTriggers(_EDITABLE)
         self._control = None
-        self._modified = False
         self._model_type = StandardType.TABLE
+        self._undo_stack = UndoRedoStack[TableAction](size=25)
 
     def setHeaderFormat(self, value: HeaderFormat) -> None:
         if model := self.model():
             model._header_format = value
 
-    def data_shape(self):
+    def data_shape(self) -> tuple[int, int]:
         return self.model()._arr.shape
 
     @protocol_override
@@ -148,11 +225,10 @@ class QSpreadsheet(QTableBase):
             if table.ndim < 2:
                 table = table.reshape(-1, 1)
         if self.model() is None:
-            self.setModel(QStringArrayModel(table))
-            self.model().dataChanged.connect(self.set_modified)
+            self.setModel(QStringArrayModel(table, self))
         else:
             self.model()._arr = table
-        sep = None
+        sep: str | None = None
         if isinstance(meta := model.metadata, TableMeta):
             if meta.separator is not None:
                 sep = meta.separator
@@ -162,8 +238,10 @@ class QSpreadsheet(QTableBase):
             for (r0, r1), (c0, c1) in meta.selections:
                 self._selection_model.append((slice(r0, r1), slice(c0, c1)))
 
+        self._undo_stack.clear()
         self.update()
-        self._modified = False
+
+        # update control widget
         if self._control is None:
             self._control = QTableControl(self)
         self._control.update_for_table(self)
@@ -195,11 +273,7 @@ class QSpreadsheet(QTableBase):
 
     @protocol_override
     def is_modified(self) -> bool:
-        return self._modified
-
-    @protocol_override
-    def set_modified(self, value: bool) -> None:
-        self._modified = value
+        return self._undo_stack.undoable()
 
     @protocol_override
     def set_editable(self, value: bool) -> None:
@@ -212,6 +286,96 @@ class QSpreadsheet(QTableBase):
     @protocol_override
     def control_widget(self) -> QTableControl:
         return self._control
+
+    def array_update(
+        self,
+        index: tuple[int, int],
+        value: str,
+        *,
+        record_undo: bool = True,
+    ) -> None:
+        """Update the data at the given index."""
+        r, c = index
+        arr = self.model()._arr
+        _ud_old_shape = arr.shape
+        if r >= arr.shape[0] or c >= arr.shape[1]:  # need expansion
+            _ud_old_data = ""
+            _ud_old_shape = arr.shape
+            self.array_expand(r + 1, c + 1)
+            _ud_new_shape = arr.shape
+            _action_reshape = ReshapeAction(_ud_old_shape, _ud_new_shape)
+            arr = self.model()._arr
+        else:
+            _ud_old_data = arr[r, c]
+            _action_reshape = None
+        arr[r, c] = str(value)
+        _ud_new_data = arr[r, c]
+        _action = EditAction(_ud_old_data, _ud_new_data, (r, c))
+        if _action_reshape is not None:
+            _action = ActionGroup([_action_reshape, _action])
+        if record_undo:
+            self._undo_stack.push(_action)
+
+    def array_expand(self, nr: int, nc: int):
+        """Expand the array to the given shape."""
+        nr0, nc0 = self.model()._arr.shape
+        self.model()._arr = np.pad(
+            self.model()._arr,
+            [(0, max(nr - nr0, 0)), (0, max(nc - nc0, 0))],
+            mode="constant",
+            constant_values="",
+        )
+
+    def array_shrink(self, nr: int, nc: int):
+        """Shrink the array to the given shape."""
+        self.model()._arr = self.model()._arr[:nr, :nc]
+
+    def array_insert(
+        self,
+        index: int,
+        axis: Literal[0, 1],
+        values: np.ndarray | None = None,
+        *,
+        record_undo: bool = True,
+    ) -> None:
+        """Insert an empty array at the given index."""
+        arr = self.model()._arr
+        if values is None:
+            self.model()._arr = np.insert(arr, index, "", axis=axis)
+        else:
+            self.model()._arr = np.insert(arr, index, values, axis=axis)
+        if record_undo:
+            self._undo_stack.push(InsertAction(index, axis, values))
+        self.update()
+
+    def array_delete(
+        self,
+        indices: int | Iterable[int],
+        axis: Literal[0, 1],
+        *,
+        record_undo: bool = True,
+    ):
+        """Remove the array at the given index."""
+        _action = ActionGroup(
+            [
+                RemoveAction(idx, axis, self.model()._arr[idx].copy())
+                for idx in sorted(indices, reverse=True)
+            ]
+        )
+        self.model()._arr = np.delete(self.model()._arr, list(indices), axis=axis)
+        self.update()
+        if record_undo:
+            self._undo_stack.push(_action)
+
+    def undo(self):
+        if action := self._undo_stack.undo():
+            action.invert().apply(self)
+            self.update()
+
+    def redo(self):
+        if action := self._undo_stack.redo():
+            action.apply(self)
+            self.update()
 
     def _copy_to_clipboard(self):
         sels = self._selection_model.ranges
@@ -229,13 +393,35 @@ class QSpreadsheet(QTableBase):
         if not text:
             return
 
-        arr = self.model()._arr
-        # paste in the text
-        row0, col0 = idx.row, idx.column
         buf = StringIO(text)
         arr_paste = np.loadtxt(
             buf, dtype=np.dtypes.StringDType(), delimiter="\t", ndmin=2
         )
+        # undo info
+        arr = self.model()._arr
+        row0, col0 = idx.row(), idx.column()
+        lr, lc = arr_paste.shape
+        sl = (slice(row0, row0 + lr), slice(col0, col0 + lc))
+        _ud_old_shape = self.data_shape()
+        _ud_old_data = arr[sl].copy()
+
+        self._paste_array((idx.row(), idx.column()), arr_paste)
+
+        # undo info
+        _ud_new_shape = self.data_shape()
+        _ud_new_data = arr_paste.copy()
+        _action_edit = EditAction(_ud_old_data, _ud_new_data, sl)
+        if _ud_old_shape == _ud_new_shape:
+            _action = _action_edit
+        else:
+            _action_reshape = ReshapeAction(_ud_old_shape, _ud_new_shape)
+            _action = ActionGroup([_action_reshape, _action_edit])
+        self._undo_stack.push(_action)
+
+    def _paste_array(self, origin: tuple[int, int], arr_paste: np.ndarray):
+        arr = self.model()._arr
+        # paste in the text
+        row0, col0 = origin
         lr, lc = arr_paste.shape
 
         # expand the table if necessary
@@ -265,51 +451,42 @@ class QSpreadsheet(QTableBase):
         self.update()
 
     def _delete_selection(self):
+        _actions = []
         for sel in self._selection_model.ranges:
+            old_array = self.model()._arr.copy()
+            new_array = np.zeros_like(old_array)
+            _actions.append(EditAction(old_array, new_array, sel))
             self.model()._arr[sel] = ""
         self.update()
+        self._undo_stack.push(ActionGroup(_actions))
 
     def _insert_row_below(self):
         row = self._selection_model.current_index.row
-        arr = self.model()._arr
-        arr = np.insert(arr, row + 1, "", axis=0)
-        self.model()._arr = arr
-        self.update()
+        self.array_insert(row + 1, 0)
 
     def _insert_row_above(self):
         row = self._selection_model.current_index.row
-        arr = self.model()._arr
-        arr = np.insert(arr, row, "", axis=0)
-        self.model()._arr = arr
-        self.update()
+        self.array_insert(row, 0)
 
     def _insert_column_right(self):
         col = self._selection_model.current_index.column
-        arr = self.model()._arr
-        arr = np.insert(arr, col + 1, "", axis=1)
-        self.model()._arr = arr
-        self.update()
+        self.array_insert(col + 1, 1)
 
     def _insert_column_left(self):
         col = self._selection_model.current_index.column
-        arr = self.model()._arr
-        arr = np.insert(arr, col, "", axis=1)
-        self.model()._arr = arr
-        self.update()
+        self.array_insert(col, 1)
 
     def _remove_selected_rows(self):
         selected_rows = set[int]()
         for sel in self._selection_model.ranges:
             selected_rows.update(range(sel[0].start, sel[0].stop))
-        self.model()._arr = np.delete(self.model()._arr, list(selected_rows), axis=0)
-        self.update()
+        self.array_delete(selected_rows, 0)
 
     def _remove_selected_columns(self):
         selected_cols = set[int]()
         for sel in self._selection_model.ranges:
             selected_cols.update(range(sel[1].start, sel[1].stop))
-        self.model()._arr = np.delete(self.model()._arr, list(selected_cols), axis=1)
-        self.update()
+        self.array_delete(selected_cols, 1)
 
     def keyPressEvent(self, e: QtGui.QKeyEvent):
         _Ctrl = QtCore.Qt.KeyboardModifier.ControlModifier
@@ -324,6 +501,12 @@ class QSpreadsheet(QTableBase):
             return self._delete_selection()
         elif e.modifiers() & _Ctrl and e.key() == QtCore.Qt.Key.Key_F:
             self._find_string()
+            return
+        elif e.modifiers() & _Ctrl and e.key() == QtCore.Qt.Key.Key_Z:
+            self.undo()
+            return
+        elif e.modifiers() & _Ctrl and e.key() == QtCore.Qt.Key.Key_Y:
+            self.redo()
             return
         elif (
             (not (e.modifiers() & _Ctrl))

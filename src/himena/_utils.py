@@ -323,3 +323,8 @@ class UndoRedoStack(Generic[_T]):
     def redoable(self) -> bool:
         """If redo is possible."""
         return len(self._stack_redo) > 0
+
+    def clear(self):
+        """Clear the stack."""
+        self._stack_undo.clear()
+        self._stack_redo.clear()
