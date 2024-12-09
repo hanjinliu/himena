@@ -108,7 +108,9 @@ def crop_image(model: WidgetDataModel) -> WidgetDataModel:
             arr_cropped = arr[..., ysl, xsl]
     else:
         raise NotImplementedError
-    return model.with_value(arr_cropped, metadata=meta.without_rois())
+    meta_out = meta.without_rois()
+    meta_out.current_roi = roi.shifted(-bbox.left, -bbox.top)
+    return model.with_value(arr_cropped, metadata=meta_out)
 
 
 @register_function(
@@ -186,6 +188,60 @@ def duplicate_rois(model: WidgetDataModel) -> WidgetDataModel:
         type=StandardType.IMAGE_ROIS,
         title=f"ROIs of {model.title}",
     )
+
+
+@register_function(
+    title="Binary operation ...",
+    menus=["tools/array"],
+    command_id="builtins:binary-operation",
+)
+def binary_operation() -> Parametric:
+    """Calculate +, -, *, /, etc. of two arrays.
+
+    Whether the operation succeeds or not depends on the internal array object. This
+    function simply applies the operation to the two arrays and returns the result.
+    """
+    import operator as _op
+
+    choices = [
+        ("Add (+)", _op.add), ("Subtract (-)", _op.sub), ("Multiply (*)", _op.mul),
+        ("Divide (/)", _op.truediv), ("Floor Divide (//)", _op.floordiv),
+        ("Modulo (%)", _op.mod), ("Power (**)", _op.pow), ("Bitwise AND (&)", _op.and_),
+        ("Bitwise OR (|)", _op.or_), ("Bitwise XOR (^)", _op.xor),
+    ]  # fmt: skip
+
+    @configure_gui(
+        x={"types": [StandardType.ARRAY]},
+        operation={"choices": choices},
+        y={"types": [StandardType.ARRAY]},
+    )
+    def run_calc(
+        x: WidgetDataModel,
+        operation,
+        y: WidgetDataModel,
+    ) -> WidgetDataModel:
+        arr_out = operation(x.value, y.value)
+        op_name = operation.__name__.strip("_")
+        return x.with_value(arr_out, title=f"{op_name} {x.title} and {y.title}")
+
+    return run_calc
+
+
+@register_function(
+    title="Data type ...",
+    menus=["tools/array"],
+    types=StandardType.ARRAY,
+    command_id="builtins:array-astype",
+)
+def array_astype(model: WidgetDataModel) -> Parametric:
+    """Convert the data type of the array using `astype` method."""
+    from himena.qt._magicgui import NumericDTypeEdit
+
+    @configure_gui(dtype={"widget_type": NumericDTypeEdit})
+    def run_astype(dtype) -> WidgetDataModel:
+        return model.with_value(model.value.astype(dtype))
+
+    return run_astype
 
 
 def _get_current_array_2d(model: WidgetDataModel) -> "np.ndarray":

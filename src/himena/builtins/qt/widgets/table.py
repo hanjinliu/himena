@@ -461,20 +461,16 @@ class QSpreadsheet(QTableBase):
         self._undo_stack.push(ActionGroup(_actions))
 
     def _insert_row_below(self):
-        row = self._selection_model.current_index.row
-        self.array_insert(row + 1, 0)
+        self.array_insert(self._selection_model.current_index.row + 1, 0)
 
     def _insert_row_above(self):
-        row = self._selection_model.current_index.row
-        self.array_insert(row, 0)
+        self.array_insert(self._selection_model.current_index.row, 0)
 
     def _insert_column_right(self):
-        col = self._selection_model.current_index.column
-        self.array_insert(col + 1, 1)
+        self.array_insert(self._selection_model.current_index.column + 1, 1)
 
     def _insert_column_left(self):
-        col = self._selection_model.current_index.column
-        self.array_insert(col, 1)
+        self.array_insert(self._selection_model.current_index.column, 1)
 
     def _remove_selected_rows(self):
         selected_rows = set[int]()

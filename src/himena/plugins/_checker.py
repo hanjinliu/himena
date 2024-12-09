@@ -22,6 +22,7 @@ _ALLOWED_METHODS = frozenset(
         "window_closed_callback",
         "window_resized_callback",
         "window_added_callback",
+        "get_user_context",
     ]
 )
 

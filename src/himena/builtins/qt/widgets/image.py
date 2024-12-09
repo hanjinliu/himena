@@ -8,6 +8,9 @@ import numpy as np
 from cmap import Colormap
 from pydantic_compat import BaseModel, Field, field_validator
 
+from himena.builtins.qt.widgets._image_components._roi_collection import (
+    from_standard_roi,
+)
 from himena.consts import StandardType
 from himena.standards import roi, model_meta
 from himena.qt._utils import qsignal_blocker
@@ -123,6 +126,8 @@ class QImageView(QtW.QSplitter):
                 meta0.current_indices = meta.current_indices
             if meta.channels:
                 meta0.channels = meta.channels
+            if meta.current_roi:
+                meta0.current_roi = meta.current_roi
 
         self._is_rgb = meta0.is_rgb
         if meta0.current_indices is not None:
@@ -188,6 +193,10 @@ class QImageView(QtW.QSplitter):
                 self._channels[0].colormap = Colormap("gray")
 
         self._set_image_slices(img_slices)
+        if meta0.current_roi:
+            self._img_view.set_current_roi(
+                from_standard_roi(meta0.current_roi, self._img_view._roi_pen)
+            )
         self._control._interp_check_box.setChecked(meta0.interpolation == "linear")
         self._model_type = model.type
         return None
@@ -424,6 +433,8 @@ class QImageView(QtW.QSplitter):
         set_status_tip(f"Switched to {mode_name} mode.")
 
     def _reset_image(self):
+        if self._channels is None:  # not initialized yet
+            return
         imgs = self._get_image_slices(self._dims_slider.value(), len(self._channels))
         self._set_image_slices(imgs)
 

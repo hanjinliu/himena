@@ -1,31 +1,26 @@
 from typing import TYPE_CHECKING
 from app_model.expressions import ContextKey, ContextNamespace
 from himena.types import WindowState
-from himena._utils import get_widget_class_id
+from himena._utils import get_widget_class_id, get_user_context
 
 if TYPE_CHECKING:
     from himena.widgets import MainWindow
 
 
 def _is_active_window_savable(ui: "MainWindow") -> bool:
-    if area := ui.tabs.current():
-        if win := area.current():
-            return win.is_exportable
+    if win := ui.current_window:
+        return win.is_exportable
     return False
 
 
 def _active_window_state(ui: "MainWindow"):
-    if area := ui.tabs.current():
-        if win := area.current():
-            return win.state
+    if win := ui.current_window:
+        return win.state
     return WindowState.NORMAL
 
 
 def _is_active_window_focused(ui: "MainWindow") -> bool:
-    if area := ui.tabs.current():
-        if area.current() is not None:
-            return True
-    return False
+    return ui.current_window is not None
 
 
 def _num_sub_windows(ui: "MainWindow") -> int:
@@ -39,7 +34,7 @@ def _num_tabs(ui: "MainWindow") -> int:
 
 
 def _get_model_types(ui: "MainWindow") -> str | None:
-    if (area := ui.tabs.current()) and (win := area.current()) and win.is_exportable:
+    if (win := ui.current_window) and win.is_exportable:
         out = win.model_type()
         if out is None:
             out = win.to_model().type
@@ -80,9 +75,15 @@ def _active_window_model_subtype_3(ui: "MainWindow") -> str | None:
 
 
 def _active_window_widget_id(ui: "MainWindow") -> str | None:
+    if win := ui.current_window:
+        return get_widget_class_id(type(win.widget))
+    return None
+
+
+def _get_user_context(ui: "MainWindow") -> dict | None:
     if area := ui.tabs.current():
         if win := area.current():
-            return get_widget_class_id(type(win.widget))
+            return get_user_context(win.widget)
     return None
 
 
@@ -138,6 +139,11 @@ class AppContext(ContextNamespace["MainWindow"]):
         None,
         "widget class id of the active window",
         _active_window_widget_id,
+    )
+    user_context = ContextKey(
+        None,
+        "User-defined context",
+        _get_user_context,
     )
 
     def _update(self, ui):

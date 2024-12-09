@@ -234,7 +234,7 @@ def make_action_for_function(
     if _utils.has_widget_data_model_argument(f):
         _enablement = _expr_and(_enablement, ctx.is_active_window_exportable)
 
-    if inner_widget_class := _utils.get_subwindow_variable(f):
+    if inner_widget_class := _utils.get_subwindow_type_arg(f):
         # function is annotated with SubWindow[W]. Use W for enablement.
         widget_id = _utils.get_widget_class_id(inner_widget_class)
         _enablement = _expr_and(_enablement, ctx.active_window_widget_id == widget_id)

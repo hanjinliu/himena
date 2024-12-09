@@ -1,14 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import numpy as np
 from magicgui.widgets.bases import ValueWidget
 from magicgui.types import Undefined
 from magicgui.application import use_app
 from magicgui.backends._qtpy.widgets import QBaseValueWidget
 from himena.qt._qdtypeedit import QNumericDTypeEdit
-
-if TYPE_CHECKING:
-    import numpy as np
 
 
 class QBaseNumericDTypeEdit(QBaseValueWidget):
@@ -18,7 +15,7 @@ class QBaseNumericDTypeEdit(QBaseValueWidget):
         )
 
 
-class NumericDTypeEdit(ValueWidget["np.dtype"]):
+class NumericDTypeEdit(ValueWidget[np.dtype]):
     def __init__(self, value=Undefined, **kwargs):
         app = use_app()
         assert app.native

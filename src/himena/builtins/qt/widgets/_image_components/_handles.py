@@ -1,4 +1,5 @@
 from __future__ import annotations
+import math
 from typing import TYPE_CHECKING
 from psygnal import Signal
 from qtpy import QtWidgets as QtW, QtCore, QtGui
@@ -11,6 +12,7 @@ from ._roi_items import (
     QPolygonRoi,
     QRectangleRoi,
     QEllipseRoi,
+    QRotatedRectangleRoi,
     QSegmentedLineRoi,
 )
 
@@ -93,7 +95,7 @@ class RoiSelectionHandles:
         self._pen = QtGui.QPen(Qt.GlobalColor.black, 2)
         self._pen.setCosmetic(True)
         self._brush = QtGui.QBrush(Qt.GlobalColor.white)
-        self._edge_color = QtGui.QColor(Qt.GlobalColor.red)
+        self._another_color = QtGui.QColor(Qt.GlobalColor.red)
         self._handles: list[QHandleRect] = []
         # This attribute is needed for drawing polygons and segmented lines.
         # When the mouse is hovering, the last vertice should not be considered as a
@@ -144,7 +146,7 @@ class RoiSelectionHandles:
         _line = line.line()
         h1 = self.make_handle_at(_line.p1())
         h2 = self.make_handle_at(_line.p2())
-        hc = self.make_handle_at(_line.center(), self._edge_color)
+        hc = self.make_handle_at(_line.center(), self._another_color)
         self._handles = [h1, h2, hc]
 
         @h1.moved_by_mouse.connect
@@ -180,16 +182,16 @@ class RoiSelectionHandles:
         h_tr = self.make_handle_at(_rect.topRight())
         h_bl = self.make_handle_at(_rect.bottomLeft())
         h_t = self.make_handle_at(
-            (_rect.topLeft() + _rect.topRight()) / 2, self._edge_color
+            (_rect.topLeft() + _rect.topRight()) / 2, self._another_color
         )
         h_b = self.make_handle_at(
-            (_rect.bottomLeft() + _rect.bottomRight()) / 2, self._edge_color
+            (_rect.bottomLeft() + _rect.bottomRight()) / 2, self._another_color
         )
         h_l = self.make_handle_at(
-            (_rect.topLeft() + _rect.bottomLeft()) / 2, self._edge_color
+            (_rect.topLeft() + _rect.bottomLeft()) / 2, self._another_color
         )
         h_r = self.make_handle_at(
-            (_rect.topRight() + _rect.bottomRight()) / 2, self._edge_color
+            (_rect.topRight() + _rect.bottomRight()) / 2, self._another_color
         )
         self._handles = [h_tl, h_br, h_tr, h_bl, h_t, h_b, h_l, h_r]
 
@@ -314,6 +316,39 @@ class RoiSelectionHandles:
                 )
             for i, h in enumerate(self._handles):
                 h.setCenter(ps[i])
+
+    def connect_rotated_rect(self, rect: QRotatedRectangleRoi):
+        self.clear_handles()
+        h_l = self.make_handle_at(rect.left())
+        h_r = self.make_handle_at(rect.right())
+        h_t = self.make_handle_at(rect.top(), self._another_color)
+        h_b = self.make_handle_at(rect.bottom(), self._another_color)
+
+        @h_t.moved_by_mouse.connect
+        @h_b.moved_by_mouse.connect
+        def _t_b_moved(ev: QtW.QGraphicsSceneMouseEvent):
+            ex = rect.vector_x()
+            ex = ex / math.sqrt(ex.x() ** 2 + ex.y() ** 2)  # unit vector
+            pos_rel = ev.pos() - rect.left()
+            pos_proj = ex * QtCore.QPointF.dotProduct(pos_rel, ex)
+            dist_vec = pos_rel - pos_proj
+            dist = math.sqrt(dist_vec.x() ** 2 + dist_vec.y() ** 2)
+            rect.setHeight(dist * 2)
+
+        @h_l.moved_by_mouse.connect
+        def _l_moved(ev: QtW.QGraphicsSceneMouseEvent):
+            rect.setLeft(ev.pos())
+
+        @h_r.moved_by_mouse.connect
+        def _r_moved(ev: QtW.QGraphicsSceneMouseEvent):
+            rect.setRight(ev.pos())
+
+        @rect.changed.connect
+        def _rect_changed():
+            h_l.setCenter(rect.left())
+            h_r.setCenter(rect.right())
+            h_t.setCenter(rect.top())
+            h_b.setCenter(rect.bottom())
 
     def _finish_drawing_path(self, path: QPolygonRoi | QSegmentedLineRoi):
         painter_path = path.path()

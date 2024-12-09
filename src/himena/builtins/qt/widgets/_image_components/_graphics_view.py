@@ -17,6 +17,7 @@ from ._roi_items import (
     QLineRoi,
     QRectangleRoi,
     QEllipseRoi,
+    QRotatedRectangleRoi,
     QSegmentedLineRoi,
 )
 from ._handles import QHandleRect, RoiSelectionHandles
@@ -32,6 +33,7 @@ class Mode(Enum):
     SELECT = auto()
     PAN_ZOOM = auto()
     ROI_RECTANGLE = auto()
+    ROI_ROTATED_RECTANGLE = auto()
     ROI_ELLIPSE = auto()
     ROI_POINT = auto()
     ROI_POINTS = auto()
@@ -40,8 +42,13 @@ class Mode(Enum):
     ROI_LINE = auto()
 
 
-SIMPLE_ROI_MODES = frozenset({Mode.ROI_RECTANGLE, Mode.ROI_ELLIPSE, Mode.ROI_POINT, Mode.ROI_LINE})  # fmt: skip
-MULTIPOINT_ROI_MODES = frozenset({Mode.ROI_POINTS, Mode.ROI_POLYGON, Mode.ROI_SEGMENTED_LINE})  # fmt: skip
+SIMPLE_ROI_MODES = frozenset({
+    Mode.ROI_RECTANGLE, Mode.ROI_ROTATED_RECTANGLE, Mode.ROI_ELLIPSE, Mode.ROI_POINT,
+    Mode.ROI_LINE
+})  # fmt: skip
+MULTIPOINT_ROI_MODES = frozenset({
+    Mode.ROI_POINTS, Mode.ROI_POLYGON, Mode.ROI_SEGMENTED_LINE
+})  # fmt: skip
 ROI_MODES = SIMPLE_ROI_MODES | MULTIPOINT_ROI_MODES
 MULTIPOINT_ROI_CLASSES = (QPolygonRoi, QSegmentedLineRoi, QPointsRoi)
 
@@ -358,6 +365,8 @@ class QImageGraphicsView(QBaseGraphicsView):
             self._selection_handles.connect_path(item)
         elif isinstance(item, QPointsRoi):
             self._selection_handles.connect_points(item)
+        elif isinstance(item, QRotatedRectangleRoi):
+            self._selection_handles.connect_rotated_rect(item)
         if isinstance(item, QRoi):
             self._current_roi_item = item
             item.setVisible(True)
@@ -388,7 +397,7 @@ class QImageGraphicsView(QBaseGraphicsView):
             if grabbing is not None and grabbing is not self:
                 return super().mousePressEvent(event)
             self.scene().setGrabSource(self)
-            if self._mode in MULTIPOINT_ROI_MODES:
+            if self.mode() in MULTIPOINT_ROI_MODES:
                 if not self._selection_handles.is_drawing_polygon():
                     is_poly = isinstance(
                         self._current_roi_item, (QPolygonRoi, QSegmentedLineRoi)
@@ -402,28 +411,31 @@ class QImageGraphicsView(QBaseGraphicsView):
                 return super().mousePressEvent(event)
             self.remove_current_item()
             p = self.mapToScene(self._pos_drag_start)
-            if self._mode is Mode.ROI_LINE:
+            if self.mode() is Mode.ROI_LINE:
                 self.set_current_roi(
                     QLineRoi(p.x(), p.y(), p.x(), p.y()).withPen(self._roi_pen)
                 )
                 self._selection_handles.connect_line(self._current_roi_item)
-            elif self._mode is Mode.ROI_RECTANGLE:
+            elif self.mode() is Mode.ROI_RECTANGLE:
                 self.set_current_roi(
                     QRectangleRoi(p.x(), p.y(), 0, 0).withPen(self._roi_pen)
                 )
                 self._selection_handles.connect_rect(self._current_roi_item)
-            elif self._mode is Mode.ROI_ELLIPSE:
+            elif self.mode() is Mode.ROI_ELLIPSE:
                 self.set_current_roi(
                     QEllipseRoi(p.x(), p.y(), 0, 0).withPen(self._roi_pen)
                 )
                 self._selection_handles.connect_rect(self._current_roi_item)
-            elif self._mode is Mode.ROI_POINT:
+            elif self.mode() is Mode.ROI_ROTATED_RECTANGLE:
+                self.set_current_roi(QRotatedRectangleRoi(p, p).withPen(self._roi_pen))
+                self._selection_handles.connect_rotated_rect(self._current_roi_item)
+            elif self.mode() is Mode.ROI_POINT:
                 pass
 
-        elif self._mode is Mode.SELECT:
+        elif self.mode() is Mode.SELECT:
             self.select_item_at(self.mapToScene(event.pos()))
             self.scene().setGrabSource(self)
-        elif self._mode is Mode.PAN_ZOOM:
+        elif self.mode() is Mode.PAN_ZOOM:
             self.viewport().setCursor(Qt.CursorShape.ClosedHandCursor)
             self.scene().setGrabSource(self)
 
@@ -460,24 +472,27 @@ class QImageGraphicsView(QBaseGraphicsView):
             ):
                 return super().mouseMoveEvent(event)
             pos0 = self.mapToScene(self._pos_drag_start)
-            if self._mode is Mode.PAN_ZOOM:
+            if self.mode() is Mode.PAN_ZOOM:
                 self._mouse_move_pan_zoom(event)
-            elif self._mode is Mode.ROI_LINE:
+            elif self.mode() is Mode.ROI_LINE:
                 if isinstance(item := self._current_roi_item, QLineRoi):
                     item.setLine(pos0.x(), pos0.y(), pos.x(), pos.y())
-            elif self._mode in (Mode.ROI_RECTANGLE, Mode.ROI_ELLIPSE):
+            elif self.mode() in (Mode.ROI_RECTANGLE, Mode.ROI_ELLIPSE):
                 if isinstance(self._current_roi_item, (QRectangleRoi, QEllipseRoi)):
                     x0, x1 = sorted([pos.x(), pos0.x()])
                     y0, y1 = sorted([pos.y(), pos0.y()])
                     self._current_roi_item.setRect(x0, y0, x1 - x0, y1 - y0)
-            elif self._mode is Mode.SELECT:
+            elif self.mode() is Mode.ROI_ROTATED_RECTANGLE:
+                if isinstance(self._current_roi_item, QRotatedRectangleRoi):
+                    self._current_roi_item.setRight(pos)
+            elif self.mode() is Mode.SELECT:
                 if item := self._current_roi_item:
                     delta = pos - self.mapToScene(self._pos_drag_prev)
                     item.translate(delta.x(), delta.y())
                 else:
                     # just forward to the pan-zoom mode
                     self._mouse_move_pan_zoom(event)
-            elif self._mode in (Mode.ROI_POINTS, Mode.ROI_POINT):
+            elif self.mode() in (Mode.ROI_POINTS, Mode.ROI_POINT):
                 self._mouse_move_pan_zoom(event)
 
             self._pos_drag_prev = event.pos()
@@ -562,7 +577,7 @@ class QImageGraphicsView(QBaseGraphicsView):
         if _mods == Qt.KeyboardModifier.NoModifier:
             if _key == Qt.Key.Key_Space:
                 if not self._is_key_hold:
-                    self._last_mode_before_key_hold = self._mode
+                    self._last_mode_before_key_hold = self.mode()
                     self.set_mode(Mode.PAN_ZOOM)
             elif _key == Qt.Key.Key_Up:
                 if item := self._current_roi_item:
@@ -581,17 +596,20 @@ class QImageGraphicsView(QBaseGraphicsView):
                     item.translate(1, 0)
                     self._selection_handles.translate(1, 0)
             elif _key == Qt.Key.Key_R:
-                self.switch_mode(Mode.ROI_RECTANGLE)
+                if self.mode() is Mode.ROI_RECTANGLE:
+                    self.switch_mode(Mode.ROI_ROTATED_RECTANGLE)
+                else:
+                    self.switch_mode(Mode.ROI_RECTANGLE)
             elif _key == Qt.Key.Key_E:
                 self.switch_mode(Mode.ROI_ELLIPSE)
             elif _key == Qt.Key.Key_P:
                 # switch similar modes in turn
-                if self._mode is Mode.ROI_POINT:
+                if self.mode() is Mode.ROI_POINT:
                     self.switch_mode(Mode.ROI_POINTS)
                 else:
                     self.switch_mode(Mode.ROI_POINT)
             elif _key == Qt.Key.Key_L:
-                if self._mode is Mode.ROI_LINE:
+                if self.mode() is Mode.ROI_LINE:
                     self.switch_mode(Mode.ROI_SEGMENTED_LINE)
                 else:
                     self.switch_mode(Mode.ROI_LINE)

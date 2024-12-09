@@ -101,9 +101,9 @@ class QRoiButtons(QtW.QWidget):
         self._btn_panzoom.setChecked(True)
 
     def set_mode(self, mode: Mode):
-        btn = self._btn_map[mode]
-        with qsignal_blocker(self._button_group):
-            btn.setChecked(True)
+        if btn := self._btn_map.get(mode):
+            with qsignal_blocker(self._button_group):
+                btn.setChecked(True)
 
     def btn_released(self, btn: QtW.QToolButton):
         mode = self._btn_map_inv[btn]

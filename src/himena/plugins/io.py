@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Callable, ForwardRef, TypeVar, overload
 from himena.types import WidgetDataModel, ReaderProvider, WriterProvider
 from himena import _providers
-from himena._utils import get_widget_data_model_variable
+from himena._utils import get_widget_data_model_type_arg
 
 _RP = TypeVar("_RP", bound=ReaderProvider)
 _WP = TypeVar("_WP", bound=WriterProvider)
@@ -141,6 +141,6 @@ class TypedProvider:
 
     @staticmethod
     def try_convert(func: Callable) -> Callable:
-        if arg := get_widget_data_model_variable(func):
+        if arg := get_widget_data_model_type_arg(func):
             return TypedProvider(func, arg)
         return func

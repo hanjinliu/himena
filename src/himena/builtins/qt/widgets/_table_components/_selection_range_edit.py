@@ -45,7 +45,7 @@ class QSelectionRangeEdit(QtW.QGroupBox):
         if table is not None:
             self.connect_table(table)
         self.sliceChanged.connect(self._slice_changed)
-        self.setMaximumWidth(190)
+        self.setMaximumWidth(150)
 
     def connect_table(self, table: QTableBase):
         if self._qtable is not None:
@@ -181,5 +181,5 @@ def _hbox(*widgets: QtW.QWidget) -> QtW.QWidget:
     layout.setSpacing(0)
     for widget in widgets:
         layout.addWidget(widget)
-    box.setFixedWidth(60)
+    box.setFixedWidth(42)
     return box

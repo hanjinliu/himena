@@ -55,6 +55,10 @@ class ImageRoi2D(ImageRoiND):
         """Return the bounding box of the ROI."""
         raise NotImplementedError
 
+    def shifted(self, dx: float, dy: float) -> Self:
+        """Return a new ROI translated by the given amount."""
+        raise NotImplementedError
+
 
 class ImageRoi3D(ImageRoiND):
     pass
@@ -83,23 +87,35 @@ class RotatedRoi2D(ImageRoi2D):
     angle: float = Field(..., description="Counter-clockwise angle in degrees.")
 
 
-class RotatedRectangleRoi(RectangleRoi, RotatedRoi2D):
-    """ROI that represents a rotated rectangle."""
+class RotatedRectangleRoi(RotatedRoi2D):
+    """ROI that represents a rotated rectangle.
+
+    Attribute `angle` is defined by the counter-clockwise rotation around the center of
+    the rectangle.
+    """
+
+    x: float = Field(..., description="X-coordinate of the center.")
+    y: float = Field(..., description="Y-coordinate of the center.")
+    width: float = Field(..., description="Width of the rectangle.")
+    height: float = Field(..., description="Height of the rectangle.")
+
+    def shifted(self, dx: float, dy: float) -> RotatedRectangleRoi:
+        return self.model_copy(update={"x": self.x + dx, "y": self.y + dy})
 
     def bbox(self) -> Rect[float]:
-        ang = math.radians(self.angle)
-        rot = np.array(
-            [[math.cos(ang), math.sin(ang)], [-math.sin(ang), math.cos(ang)]]
-        )
-        vecx = np.array([self.width, 0]) @ rot
-        vecy = np.array([0, self.height]) @ rot
-        top = min(0, vecx[0], vecx[0] + vecy[0], vecy[0])
-        bottom = max(0, vecx[0], vecx[0] + vecy[0], vecy[0])
-        left = min(0, vecx[1], vecx[1] + vecy[1], vecy[1])
-        right = max(0, vecx[1], vecx[1] + vecy[1], vecy[1])
-        width = right - left
-        height = bottom - top
-        return Rect(left, top, width, height)
+        center = np.array([self.y, self.x])
+        rad = math.radians(self.angle)
+        vx = np.array([math.cos(rad), math.sin(rad)]) * self.width
+        vy = np.array([-math.sin(rad), math.cos(rad)]) * self.height
+        p00 = center - vx / 2 - vy / 2
+        p01 = center - vx / 2 + vy / 2
+        p10 = center + vx / 2 - vy / 2
+        p11 = center + vx / 2 + vy / 2
+        xmin = min(p00[0], p01[0], p10[0], p11[0])
+        xmax = max(p00[0], p01[0], p10[0], p11[0])
+        ymin = min(p00[1], p01[1], p10[1], p11[1])
+        ymax = max(p00[1], p01[1], p10[1], p11[1])
+        return Rect(xmin, ymin, xmax - xmin, ymax - ymin)
 
 
 class EllipseRoi(ImageRoi2D):
@@ -139,12 +155,7 @@ class PointRoi(ImageRoi2D):
     y: float = Field(..., description="Y-coordinate of the point.")
 
     def shifted(self, dx: float, dy: float) -> PointRoi:
-        return self.model_copy(
-            update={
-                "x": self.x + dx,
-                "y": self.y + dy,
-            }
-        )
+        return self.model_copy(update={"x": self.x + dx, "y": self.y + dy})
 
     def bbox(self) -> Rect[float]:
         return Rect(self.x, self.y, 0, 0)
@@ -189,7 +200,7 @@ class SplineRoi(ImageRoi2D):
     degree: int = Field(3, description="Degree of the spline curve.", ge=1)
 
 
-class LineRoi(ImageRoi):
+class LineRoi(ImageRoi2D):
     x1: float = Field(..., description="X-coordinate of the first point.")
     y1: float = Field(..., description="Y-coordinate of the first point.")
     x2: float = Field(..., description="X-coordinate of the second point.")

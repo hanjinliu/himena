@@ -36,7 +36,7 @@ else:
     from functools import lru_cache  # noqa: F401
 
 
-def _get_variable(func: Callable, target: type) -> type | None:
+def _get_type_arg(func: Callable, target: type) -> type | None:
     annots = [v for k, v in func.__annotations__.items() if k != "return"]
     if len(annots) != 1:
         return None
@@ -50,8 +50,8 @@ def _get_variable(func: Callable, target: type) -> type | None:
     return annot.__args__[0]
 
 
-def get_widget_data_model_variable(func: Callable) -> type | None:
-    return _get_variable(func, WidgetDataModel)
+def get_widget_data_model_type_arg(func: Callable) -> type | None:
+    return _get_type_arg(func, WidgetDataModel)
 
 
 def has_widget_data_model_argument(func: Callable) -> bool:
@@ -67,10 +67,17 @@ def has_widget_data_model_argument(func: Callable) -> bool:
     return False
 
 
-def get_subwindow_variable(func: Callable) -> type | None:
+def get_subwindow_type_arg(func: Callable) -> type | None:
     from himena.widgets import SubWindow
 
-    return _get_variable(func, SubWindow)
+    return _get_type_arg(func, SubWindow)
+
+
+def get_user_context(widget: Any) -> Any:
+    """Get the user context from the widget."""
+    if user_context := getattr(widget, "user_context", None):
+        return user_context()
+    return None
 
 
 @lru_cache

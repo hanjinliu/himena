@@ -1,4 +1,6 @@
 from __future__ import annotations
+from contextlib import contextmanager
+import math
 
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from psygnal import Signal
@@ -188,6 +190,135 @@ class QEllipseRoi(QtW.QGraphicsEllipseItem, QRectRoiBase):
 
     def _roi_type(self) -> str:
         return "ellipse"
+
+
+class QRotatedRectangleRoi(QRoi):
+    changed = Signal(object)
+
+    def __init__(self, left: QtCore.QPointF, right: QtCore.QPointF, height: float = 50):
+        super().__init__()
+        dr = right - left
+        width = math.sqrt(dr.x() ** 2 + dr.y() ** 2)
+        center = (left + right) / 2
+        rad = math.atan2(dr.y(), dr.x())
+        self._center = center
+        self._angle = math.degrees(rad)
+        self._width = width
+        self._height = height
+        self._pen = QtGui.QPen()
+        self.setLeft(left)
+        self.setRight(right)
+
+    def vector_x(self) -> QtCore.QPointF:
+        rad = math.radians(self.angle())
+        return QtCore.QPointF(math.cos(rad), math.sin(rad)) * self._width
+
+    def vector_y(self) -> QtCore.QPointF:
+        rad = math.radians(self.angle())
+        return QtCore.QPointF(-math.sin(rad), math.cos(rad)) * self._height
+
+    def angle(self) -> float:
+        return self._angle
+
+    def left(self) -> QtCore.QPointF:
+        """Return the left anchor point."""
+        return self._center - self.vector_x() / 2
+
+    def right(self) -> QtCore.QPointF:
+        """Return the right anchor point."""
+        return self._center + self.vector_x() / 2
+
+    def top(self) -> QtCore.QPointF:
+        """Return the top anchor point."""
+        return self._center - self.vector_y() / 2
+
+    def bottom(self) -> QtCore.QPointF:
+        """Return the bottom anchor point."""
+        return self._center + self.vector_y() / 2
+
+    def center(self) -> QtCore.QPointF:
+        return self._center
+
+    def setLeft(self, left: QtCore.QPointF):
+        right = self.right()
+        vecx = right - left
+        with self._update_and_emit():
+            self._angle = math.degrees(math.atan2(vecx.y(), vecx.x()))
+            self._width = math.sqrt(vecx.x() ** 2 + vecx.y() ** 2)
+            self._center = (left + right) / 2
+
+    def setRight(self, right: QtCore.QPointF):
+        left = self.left()
+        vecx = right - left
+        with self._update_and_emit():
+            self._angle = math.degrees(math.atan2(vecx.y(), vecx.x()))
+            self._width = math.sqrt(vecx.x() ** 2 + vecx.y() ** 2)
+            self._center = (left + right) / 2
+
+    def setHeight(self, height: float):
+        with self._update_and_emit():
+            self._height = height
+
+    def toRoi(self, indices) -> roi.RotatedRectangleRoi:
+        return roi.RotatedRectangleRoi(
+            x=self._center.x(),
+            y=self._center.y(),
+            width=self._width,
+            height=self._height,
+            angle=self._angle,
+            indices=indices,
+            name=self.label(),
+        )
+
+    def pen(self) -> QtGui.QPen:
+        return self._pen
+
+    def setPen(self, pen: QtGui.QPen):
+        self._pen = QtGui.QPen(pen)
+        self.update()
+
+    def translate(self, dx: float, dy: float):
+        self._center += QtCore.QPointF(dx, dy)
+        self._update_and_emit()
+
+    def _update_and_emit(self):
+        self.update()
+        self.changed.emit(self)
+
+    @contextmanager
+    def _update_and_emit(self):
+        old_bbox = self.boundingRect()
+        yield
+        new_bbox = self.boundingRect()
+        self.changed.emit(self)
+        self.update()
+        if scene := self.scene():
+            scene.update(self.mapRectToScene(old_bbox.united(new_bbox)))
+
+    def _corner_points(self) -> list[QtCore.QPointF]:
+        center = self.center()
+        vx = self.vector_x()
+        vy = self.vector_y()
+        p00 = center - vx / 2 - vy / 2
+        p01 = center - vx / 2 + vy / 2
+        p10 = center + vx / 2 - vy / 2
+        p11 = center + vx / 2 + vy / 2
+        return p00, p01, p11, p10
+
+    def paint(self, painter, option, widget):
+        painter.setPen(self.pen())
+        painter.drawPolygon(*self._corner_points())
+
+    def boundingRect(self):
+        points = self._corner_points()
+        xmin = min(p.x() for p in points)
+        xmax = max(p.x() for p in points)
+        ymin = min(p.y() for p in points)
+        ymax = max(p.y() for p in points)
+        return QtCore.QRectF(xmin, ymin, xmax - xmin, ymax - ymin)
+
+    def _roi_type(self) -> str:
+        return "rotated rectangle"
 
 
 class QSegmentedLineRoi(QtW.QGraphicsPathItem, QRoi):
