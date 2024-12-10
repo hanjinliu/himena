@@ -44,6 +44,10 @@ def find_language_from_path(path: str) -> str | None:
     from pygments.lexers import get_lexer_for_filename
     from pygments.util import ClassNotFound
 
+    # pygment lexer for svg is not available
+    if path.endswith(".svg"):
+        return "XML"
+
     try:
         lexer = get_lexer_for_filename(path)
         return lexer.name

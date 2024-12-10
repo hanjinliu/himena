@@ -8,7 +8,7 @@
 
 ![](images/window.png)
 
-An infinitely extensible and reusable applications framework.
+`himena` is an infinitely extensible and reusable applications framework.
 
 Python has a lot of third-party GUI libraries for different purposes. They ususally
 implements their own reader/writer functions, widgets and plugins, which forces

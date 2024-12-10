@@ -130,6 +130,15 @@ class NoNeedToSave(SaveBehavior):
     """Describes that the widget does not need to be saved."""
 
 
+class CannotSave(SaveBehavior):
+    """Describes that the widget cannot be saved."""
+
+    reason: str
+
+    def get_save_path(self, main, model):
+        raise ValueError("Cannot save this widget.")
+
+
 class SaveToNewPath(SaveBehavior):
     """Describes that the widget should be saved to a new path."""
 

@@ -56,6 +56,39 @@ def open_file_from_dialog(ui: MainWindow) -> list[Path]:
     raise Cancelled
 
 
+def _get_reader_options(file_path: Path) -> dict:
+    _store = _providers.ReaderProviderStore.instance()
+    readers = _store.get(file_path, min_priority=-float("inf"))
+
+    # prepare reader plugin choices
+    choices_reader = sorted(
+        [(f"{_name_of(r.reader)}\n({r.plugin.name})", r) for r in readers],
+        key=lambda x: x[1].priority,
+        reverse=True,
+    )
+    return {
+        "choices": choices_reader,
+        "widget_type": "RadioButtons",
+        "value": choices_reader[0][1],
+    }
+
+
+def _open_file_using_reader(
+    file_path,
+    reader: _providers.ReaderTuple,
+    ui: MainWindow | None = None,
+) -> WidgetDataModel:
+    model = _providers.read_and_update_source(reader, file_path)
+    if reader.plugin is not None:
+        plugin = reader.plugin.to_str()
+    else:
+        plugin = None
+    if ui:
+        ui._recent_manager.append_recent_files([(file_path, plugin)])
+    model.method = LocalReaderMethod(path=file_path, plugin=plugin)
+    return model
+
+
 @ACTIONS.append_from_fn(
     id="open-file-using",
     title="Open File Using ...",
@@ -72,36 +105,13 @@ def open_file_using_from_dialog(ui: MainWindow) -> Parametric:
     """Open file using selected plugin."""
     from himena.plugins import configure_gui
 
-    file_path = ui.exec_file_dialog(mode="r")
-    if file_path is None:
+    if (file_path := ui.exec_file_dialog(mode="r")) is None:
         raise Cancelled
-    _store = _providers.ReaderProviderStore.instance()
-    readers = _store.get(file_path, min_priority=-float("inf"))
 
-    # prepare reader plugin choices
-    choices_reader = sorted(
-        [(f"{_name_of(r.reader)}\n({r.plugin.name})", r) for r in readers],
-        key=lambda x: x[1].priority,
-        reverse=True,
-    )
-
-    @configure_gui(
-        reader={
-            "choices": choices_reader,
-            "widget_type": "RadioButtons",
-            "value": choices_reader[0][1],
-        }
-    )
+    @configure_gui(reader=_get_reader_options(file_path))
     def choose_a_plugin(reader: _providers.ReaderTuple) -> WidgetDataModel:
         _LOGGER.info("Reading file %s using %r", file_path, reader)
-        model = _providers.read_and_update_source(reader, file_path)
-        if reader.plugin is not None:
-            plugin = reader.plugin.to_str()
-        else:
-            plugin = None
-        ui._recent_manager.append_recent_files([(file_path, plugin)])
-        model.method = LocalReaderMethod(path=file_path, plugin=plugin)
-        return model
+        return _open_file_using_reader(file_path, reader, ui)
 
     return choose_a_plugin
 
@@ -117,6 +127,33 @@ def open_folder_from_dialog(ui: MainWindow) -> Path:
     if path := ui.exec_file_dialog(mode="d"):
         return path
     raise Cancelled
+
+
+@ACTIONS.append_from_fn(
+    id="watch-file-using",
+    title="Watch File ...",
+    menus=[
+        {"id": MenuId.FILE, "group": READ_GROUP},
+        {"id": MenuId.STARTUP, "group": READ_GROUP},
+    ],
+    need_function_callback=True,
+)
+def watch_file_using_from_dialog(ui: MainWindow) -> Parametric:
+    """Watch file using selected plugin."""
+    from himena.plugins import configure_gui
+
+    if (file_path := ui.exec_file_dialog(mode="r")) is None:
+        raise Cancelled
+
+    @configure_gui(reader=_get_reader_options(file_path))
+    def choose_a_plugin(reader: _providers.ReaderTuple) -> None:
+        _LOGGER.info("Watch file %s using %r", file_path, reader)
+        model = _open_file_using_reader(file_path, reader)
+        win = ui.add_data_model(model)
+        win._switch_to_file_watch_mode()
+        return None
+
+    return choose_a_plugin
 
 
 @ACTIONS.append_from_fn(

@@ -88,8 +88,12 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         plugin: str | None = None,
     ) -> None:
         """Update the save behavior of the widget."""
+        if isinstance(self._save_behavior, SaveToPath):
+            ask_overwrite = self._save_behavior.ask_overwrite
+        else:
+            ask_overwrite = True
         self._save_behavior = SaveToPath(
-            path=Path(path), ask_overwrite=True, plugin=plugin
+            path=Path(path), ask_overwrite=ask_overwrite, plugin=plugin
         )
         self._set_modified(False)
         return None
@@ -449,6 +453,14 @@ class SubWindow(WidgetWrapper[_W]):
             ui._backend_main_window._move_focus_to(source.widget)
             return True
         return False
+
+    def _switch_to_file_watch_mode(self):
+        # TODO: don't use Qt in the future
+        from himena.qt._qtwatchfiles import QWatchFileObject
+
+        self.title = f"[Preview] {self.title}"
+        QWatchFileObject(self)
+        return None
 
 
 class ParametricWindow(SubWindow[_W]):

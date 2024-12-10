@@ -719,13 +719,14 @@ class MainWindow(Generic[_W]):
         complete_match = [
             (tup.priority, tup.widget_class)
             for tup in widget_classes
-            if tup.type == model.type
+            if tup.type == model.type and tup.priority >= 0
         ]
         if complete_match:
             return max(complete_match, key=lambda x: x[0])[1]
         subtype_match = [
             ((tup.type.count("."), tup.priority), tup.widget_class)
             for tup in widget_classes
+            if tup.priority >= 0
         ]
         return max(subtype_match, key=lambda x: x[0])[1]
 
