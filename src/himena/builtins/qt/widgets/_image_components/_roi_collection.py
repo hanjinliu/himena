@@ -236,7 +236,12 @@ class QRoiListModel(QtCore.QAbstractListModel):
         elif role == QtCore.Qt.ItemDataRole.DecorationRole:
             r = index.row()
             if 0 <= r < len(self._col):
-                return self._col[r].makeThumbnail(12)
+                pixmap = QtGui.QPixmap(24, 24)
+                pixmap.fill(QtCore.Qt.GlobalColor.black)
+                return self._col[r].makeThumbnail(pixmap).scaled(
+                    12, 12, QtCore.Qt.AspectRatioMode.KeepAspectRatio,
+                    QtCore.Qt.TransformationMode.SmoothTransformation
+                )  # fmt: skip
         elif role == QtCore.Qt.ItemDataRole.FontRole:
             font = self._col.font()
             font.setPointSize(10)

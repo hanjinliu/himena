@@ -249,7 +249,7 @@ def make_action_for_function(
         id=_id,
         title=_title,
         tooltip=_tooltip_from_func(f),
-        callback=_utils.make_function_callback(f, command_id=_id),
+        callback=_utils.make_function_callback(f, command_id=_id, title=_title),
         menus=menus_normed,
         enablement=_enablement,
         keybindings=kbs,
@@ -578,11 +578,12 @@ def make_conversion_rule(
 ):
     kbs = _normalize_keybindings(keybindings)
     _id = _command_id_from_func(func, command_id)
+    title = f"Convert {type_from} to {type_to}"
     return Action(
         id=_id,
-        title=f"Convert {type_from} to {type_to}",
+        title=title,
         tooltip=_tooltip_from_func(func),
-        callback=_utils.make_function_callback(func, command_id=_id),
+        callback=_utils.make_function_callback(func, command_id=_id, title=title),
         menus=[{"id": f"/model_menu:{type_from}/convert", "group": "conversion"}],
         keybindings=kbs,
     )

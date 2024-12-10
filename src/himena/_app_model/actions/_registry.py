@@ -23,7 +23,7 @@ class ActionList(list[Action]):
     ) -> Callable[[_F], _F]:
         def inner(fn: _F) -> _F:
             if need_function_callback:
-                callback = make_function_callback(fn, id)
+                callback = make_function_callback(fn, id, title=title)
             else:
                 callback = fn
             if not recording:

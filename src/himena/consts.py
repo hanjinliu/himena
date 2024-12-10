@@ -73,7 +73,7 @@ class StandardType(SimpleNamespace):
     MPL_FIGURE = "matplotlib-figure"  # matplotlib figure object
 
     ### 3D ###
-    SURFACE = "surface"  # vertices, faces and values for 3D surface plot
+    MESH = "mesh"  # vertices, faces and values for 3D mesh
 
     ### Other types ###
     GROUPBY = "groupby"  # DataFrame GroupBy object

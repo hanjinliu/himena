@@ -8,7 +8,6 @@ import numpy as np
 from typing import Iterable, Iterator
 
 from himena.standards import roi
-from himena.consts import MonospaceFontFamily
 
 
 class QRoi(QtW.QGraphicsItem):
@@ -26,7 +25,7 @@ class QRoi(QtW.QGraphicsItem):
     def translate(self, dx: float, dy: float):
         raise NotImplementedError
 
-    def makeThumbnail(self, size: int) -> QtGui.QPixmap:
+    def makeThumbnail(self, pixmap: QtGui.QPixmap) -> QtGui.QPixmap:
         raise NotImplementedError
 
     def withPen(self, pen: QtGui.QPen):
@@ -37,40 +36,16 @@ class QRoi(QtW.QGraphicsItem):
         self.setLabel(label or "")
         return self
 
-    def paint_label(self, painter: QtGui.QPainter, label: str, pos: QtCore.QPointF):
-        _LABEL_TEXT_PEN = QtGui.QPen(QtGui.QColor(255, 255, 255), 1)
-        _LABEL_TEXT_FONT = QtGui.QFont(MonospaceFontFamily, 10)
-        _LABEL_FONT_METRICS = QtGui.QFontMetrics(_LABEL_TEXT_FONT)
-        _LABEL_FONT_HEIGHT = _LABEL_FONT_METRICS.height()
-        _LABEL_BG_BRUSH = QtGui.QBrush(QtGui.QColor(0, 0, 0, 200))
-        painter.setBrush(_LABEL_BG_BRUSH)
-        width = _LABEL_FONT_METRICS.width(label)
-        off = 2
-        painter.drawRect(
-            pos.x() - off,
-            pos.y() - off,
-            width + 2 * off,
-            _LABEL_FONT_HEIGHT + 2 * off,
-        )
-        painter.setPen(_LABEL_TEXT_PEN)
-        painter.setFont(_LABEL_TEXT_FONT)
-        painter.drawText(pos, label)
-
-    def _thumbnail_transform(self, size: int) -> QtGui.QTransform:
+    def _thumbnail_transform(self, width: int, height: int) -> QtGui.QTransform:
         rect = self.boundingRect()
         transform = QtGui.QTransform()
         rect_size = max(rect.width(), rect.height())
         if rect_size == 0:
             rect_size = 1
-        transform.translate(size / 2, size / 2)
-        transform.scale((size - 2) / rect_size, (size - 2) / rect_size)
+        transform.translate(width / 2, height / 2)
+        transform.scale((width - 2) / rect_size, (height - 2) / rect_size)
         transform.translate(-rect.center().x(), -rect.center().y())
         return transform
-
-    def _pen_thumbnail(self) -> QtGui.QPen:
-        pen = QtGui.QPen(self.pen())
-        pen.setWidth(1)
-        return pen
 
     def _roi_type(self) -> str:
         return self.__class__.__name__
@@ -99,13 +74,11 @@ class QLineRoi(QtW.QGraphicsLineItem, QRoi):
         super().setLine(*args)
         self.changed.emit(self.line())
 
-    def makeThumbnail(self, size: int) -> QtGui.QPixmap:
-        pixmap = QtGui.QPixmap(size, size)
-        pixmap.fill(QtCore.Qt.GlobalColor.black)
+    def makeThumbnail(self, pixmap: QtGui.QPixmap) -> QtGui.QPixmap:
         painter = QtGui.QPainter(pixmap)
         painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
-        painter.setPen(self._pen_thumbnail())
-        painter.setTransform(self._thumbnail_transform(size))
+        painter.setPen(self.pen())
+        painter.setTransform(self._thumbnail_transform(pixmap.width(), pixmap.height()))
         painter.drawLine(self.line())
         painter.end()
         return pixmap
@@ -139,13 +112,11 @@ class QRectangleRoi(QtW.QGraphicsRectItem, QRectRoiBase):
         new_rect.translate(dx, dy)
         self.setRect(new_rect)
 
-    def makeThumbnail(self, size: int) -> QtGui.QPixmap:
-        pixmap = QtGui.QPixmap(size, size)
-        pixmap.fill(QtCore.Qt.GlobalColor.black)
+    def makeThumbnail(self, pixmap: QtGui.QPixmap) -> QtGui.QPixmap:
         painter = QtGui.QPainter(pixmap)
         painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
-        painter.setPen(self._pen_thumbnail())
-        painter.setTransform(self._thumbnail_transform(size))
+        painter.setPen(self.pen())
+        painter.setTransform(self._thumbnail_transform(pixmap.width(), pixmap.height()))
         painter.drawRect(self.rect())
         painter.end()
         return pixmap
@@ -177,13 +148,11 @@ class QEllipseRoi(QtW.QGraphicsEllipseItem, QRectRoiBase):
         new_rect.translate(dx, dy)
         self.setRect(new_rect)
 
-    def makeThumbnail(self, size: int) -> QtGui.QPixmap:
-        pixmap = QtGui.QPixmap(size, size)
-        pixmap.fill(QtCore.Qt.GlobalColor.black)
+    def makeThumbnail(self, pixmap: QtGui.QPixmap) -> QtGui.QPixmap:
         painter = QtGui.QPainter(pixmap)
         painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
-        painter.setPen(self._pen_thumbnail())
-        painter.setTransform(self._thumbnail_transform(size))
+        painter.setPen(self.pen())
+        painter.setTransform(self._thumbnail_transform(pixmap.width(), pixmap.height()))
         painter.drawEllipse(self.rect())
         painter.end()
         return pixmap
@@ -317,6 +286,19 @@ class QRotatedRectangleRoi(QRoi):
         ymax = max(p.y() for p in points)
         return QtCore.QRectF(xmin, ymin, xmax - xmin, ymax - ymin)
 
+    def contains(self, point: QtCore.QPointF) -> bool:
+        polygon = QtGui.QPolygonF(self._corner_points())
+        return polygon.containsPoint(point, QtCore.Qt.FillRule.WindingFill)
+
+    def makeThumbnail(self, pixmap: QtGui.QPixmap) -> QtGui.QPixmap:
+        painter = QtGui.QPainter(pixmap)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        painter.setPen(self.pen())
+        painter.setTransform(self._thumbnail_transform(pixmap.width(), pixmap.height()))
+        painter.drawPolygon(*self._corner_points())
+        painter.end()
+        return pixmap
+
     def _roi_type(self) -> str:
         return "rotated rectangle"
 
@@ -367,13 +349,11 @@ class QSegmentedLineRoi(QtW.QGraphicsPathItem, QRoi):
         path.setElementPositionAt(ith, pos.x(), pos.y())
         self.setPath(path)
 
-    def makeThumbnail(self, size: int) -> QtGui.QPixmap:
-        pixmap = QtGui.QPixmap(size, size)
-        pixmap.fill(QtCore.Qt.GlobalColor.black)
+    def makeThumbnail(self, pixmap: QtGui.QPixmap) -> QtGui.QPixmap:
         painter = QtGui.QPainter(pixmap)
         painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
-        painter.setPen(self._pen_thumbnail())
-        painter.setTransform(self._thumbnail_transform(size))
+        painter.setPen(self.pen())
+        painter.setTransform(self._thumbnail_transform(pixmap.width(), pixmap.height()))
         painter.drawPath(self.path())
         painter.end()
         return pixmap
@@ -403,14 +383,13 @@ class QPointRoiBase(QRoi):
         self._pen.setCosmetic(True)
         self._pen.setJoinStyle(QtCore.Qt.PenJoinStyle.MiterJoin)
         self._brush = QtGui.QBrush(QtGui.QColor(225, 225, 0))
-        self._size = 8
-        symbol_square = QtGui.QPainterPath()
-        symbol_square.moveTo(-self._size, 0)
-        symbol_square.lineTo(self._size, 0)
-        symbol_square.moveTo(0, -self._size)
-        symbol_square.lineTo(0, self._size)
-        symbol_square.addRect(-self._size / 2, -self._size / 2, self._size, self._size)
-        self._symbol = symbol_square
+        self._size = 4.5
+        symbol = QtGui.QPainterPath()
+        symbol.moveTo(-self._size, 0)
+        symbol.lineTo(self._size, 0)
+        symbol.moveTo(0, -self._size)
+        symbol.lineTo(0, self._size)
+        self._symbol = symbol
         self._bounding_rect_cache: QtCore.QRectF | None = None
 
     def pen(self) -> QtGui.QPen:
@@ -426,6 +405,10 @@ class QPointRoiBase(QRoi):
         self._brush = brush
 
     def _iter_points(self) -> Iterator[QtCore.QPointF]:
+        raise NotImplementedError
+
+    def _repr_points(self) -> Iterable[tuple[float, float]]:
+        """Return a list of (x, y) coordinates for drawing thumbnails."""
         raise NotImplementedError
 
     def paint(
@@ -445,15 +428,15 @@ class QPointRoiBase(QRoi):
             painter.drawPath(self._symbol)
         self.scene().update()
 
-    def makeThumbnail(self, size: int) -> QtGui.QPixmap:
-        pixmap = QtGui.QPixmap(size, size)
-        pixmap.fill(QtCore.Qt.GlobalColor.black)
+    def makeThumbnail(self, pixmap: QtGui.QPixmap) -> QtGui.QPixmap:
         painter = QtGui.QPainter(pixmap)
         painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
-        painter.setPen(self._pen_thumbnail())
-        painter.setTransform(self._thumbnail_transform(size))
-        painter.drawPath(self._symbol)
-        painter.end()
+        painter.setPen(self.pen())
+        for rx, ry in self._repr_points():
+            painter.resetTransform()
+            painter.translate(QtCore.QPointF(pixmap.width() * rx, pixmap.height() * ry))
+            painter.scale(0.3, 0.3)
+            painter.drawPath(self._symbol)
         return pixmap
 
 
@@ -492,6 +475,9 @@ class QPointRoi(QPointRoiBase):
 
     def _roi_type(self) -> str:
         return "point"
+
+    def _repr_points(self):
+        return [(0.5, 0.5)]
 
 
 class QPointsRoi(QPointRoiBase):
@@ -553,3 +539,6 @@ class QPointsRoi(QPointRoiBase):
 
     def _roi_type(self) -> str:
         return "points"
+
+    def _repr_points(self):
+        return [(0.2, 0.2), (0.5, 0.8), (0.8, 0.6)]

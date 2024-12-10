@@ -365,6 +365,8 @@ class QImageGraphicsView(QBaseGraphicsView):
             self._selection_handles.connect_path(item)
         elif isinstance(item, QPointsRoi):
             self._selection_handles.connect_points(item)
+        elif isinstance(item, QPointRoi):
+            self._selection_handles.connect_point(item)
         elif isinstance(item, QRotatedRectangleRoi):
             self._selection_handles.connect_rotated_rect(item)
         if isinstance(item, QRoi):
