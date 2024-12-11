@@ -49,10 +49,10 @@ def _name_of(f: Callable) -> str:
     ],
     keybindings=[StandardKeyBinding.Open],
 )
-def open_file_from_dialog(ui: MainWindow) -> list[Path]:
+def open_file_from_dialog(ui: MainWindow):
     """Open file(s). Multiple files will be opened as separate sub-windows."""
     if result := ui.exec_file_dialog(mode="rm"):
-        return result
+        return ui.read_files(result)
     raise Cancelled
 
 
@@ -117,6 +117,18 @@ def open_file_using_from_dialog(ui: MainWindow) -> Parametric:
 
 
 @ACTIONS.append_from_fn(
+    id="open-file-group",
+    title="Open File Group ...",
+    menus=[{"id": MenuId.FILE, "group": READ_GROUP}],
+)
+def open_file_group_from_dialog(ui: MainWindow):
+    """Open file group as a single sub-window."""
+    if result := ui.exec_file_dialog(mode="rm"):
+        return ui.read_file(result)
+    raise Cancelled
+
+
+@ACTIONS.append_from_fn(
     id="open-folder",
     title="Open Folder ...",
     icon="material-symbols:folder-open",
@@ -132,10 +144,7 @@ def open_folder_from_dialog(ui: MainWindow) -> Path:
 @ACTIONS.append_from_fn(
     id="watch-file-using",
     title="Watch File ...",
-    menus=[
-        {"id": MenuId.FILE, "group": READ_GROUP},
-        {"id": MenuId.STARTUP, "group": READ_GROUP},
-    ],
+    menus=[{"id": MenuId.FILE, "group": READ_GROUP}],
     need_function_callback=True,
 )
 def watch_file_using_from_dialog(ui: MainWindow) -> Parametric:

@@ -9,6 +9,7 @@ from himena.builtins.qt.widgets.excel import QExcelFileEdit
 from himena.builtins.qt.widgets.ipynb import QIpynbEdit
 from himena.builtins.qt.widgets.draw import QDrawCanvas
 from himena.builtins.qt.widgets.svg import QSvgPreview
+from himena.builtins.qt.widgets.model_stack import QModelStack
 from himena.builtins.qt.widgets.reader_not_found import QReaderNotFound
 from himena.consts import StandardType
 
@@ -26,7 +27,7 @@ def register_default_widget_types() -> None:
     register_widget_class(StandardType.DATAFRAME, QDataFrameView, priority=50)
     register_widget_class(StandardType.EXCEL, QExcelFileEdit, priority=50)
     register_widget_class(StandardType.IPYNB, QIpynbEdit, priority=50)
-
+    register_widget_class(StandardType.MODELS, QModelStack, priority=50)
     register_widget_class(StandardType.READER_NOT_FOUND, QReaderNotFound, priority=0)
 
     register_previewer_class(StandardType.SVG, QSvgPreview)

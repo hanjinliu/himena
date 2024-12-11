@@ -138,13 +138,6 @@ def init_application(app: Application) -> Application:
         ins.read_file(path, plugin=None)
         return None
 
-    @app.injection_store.mark_processor
-    def _process_file_paths(paths: list[Path]) -> None:
-        if paths:
-            ins = current_instance(app.name)
-            ins.read_files(paths)
-        return None
-
     @app.injection_store.mark_provider
     def _get_clipboard_data() -> ClipboardDataModel:
         _LOGGER.debug("providing for %r", ClipboardDataModel.__name__)

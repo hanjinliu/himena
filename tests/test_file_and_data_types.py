@@ -9,6 +9,8 @@ def test_reading_files(ui: MainWindow, sample_dir: Path):
     assert win.model_type() == StandardType.TEXT
     win = tab0.read_file(sample_dir / "json.json")
     assert win.model_type() == StandardType.JSON
+    win = tab0.read_file(sample_dir / "svg.svg")
+    assert win.model_type() == StandardType.SVG
     win = tab0.read_file(sample_dir / "table.csv")
     assert win.model_type() == StandardType.TABLE
     assert isinstance(method := win.to_model().method, LocalReaderMethod)
@@ -22,3 +24,13 @@ def test_reading_files(ui: MainWindow, sample_dir: Path):
     assert win.model_type() == StandardType.EXCEL
     win = tab0.read_file(sample_dir / "array.npy")
     assert win.model_type() == StandardType.ARRAY
+
+def test_reading_file_group(ui: MainWindow, sample_dir: Path):
+    tab0 = ui.add_tab()
+    win = tab0.read_file(
+        [
+            sample_dir / "text.txt",
+            sample_dir / "json.json",
+            sample_dir / "table.csv",
+        ]
+    )

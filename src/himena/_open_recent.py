@@ -74,7 +74,7 @@ class RecentFileManager:
         ]
         self._disposer()
         self._disposer = self._app.register_actions(actions)
-        _LOGGER.debug("Recent files updated: %r", [p.name for p, _ in file_args])
+        _LOGGER.debug("Recent files updated: %r", [p for p, _ in file_args[:3]])
         self._app.menus.menus_changed.emit({self._menu_id})
         return None
 

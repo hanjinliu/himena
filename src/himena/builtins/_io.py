@@ -15,6 +15,10 @@ if TYPE_CHECKING:
     from openpyxl.worksheet.worksheet import Worksheet
     from himena.standards import plotting as hplt
 
+###################
+##### Readers #########
+################################
+
 
 def default_text_reader(file_path: Path) -> WidgetDataModel:
     """Read text file."""
@@ -38,6 +42,8 @@ def default_text_reader(file_path: Path) -> WidgetDataModel:
                 break
         detector.close()
     encoding = detector.result["encoding"]
+    if encoding == "ascii":
+        encoding = "utf-8"  # ascii is a subset of utf-8
     value = file_path.read_text(encoding=encoding)
     return WidgetDataModel(
         value=value,
@@ -186,6 +192,28 @@ class DataFrameReader:
         return WidgetDataModel(value=df, type=StandardType.DATAFRAME)
 
 
+def default_file_list_reader(file_path: Path | list[Path]) -> WidgetDataModel:
+    """Read list of files."""
+    from himena._providers import ReaderProviderStore
+
+    store = ReaderProviderStore.instance()
+    value: list[WidgetDataModel] = []
+    if isinstance(file_path, Path):
+        _iterator = file_path.glob("*")
+    else:
+        _iterator = iter(file_path)
+    for path in _iterator:
+        model = store.run(path)._with_source(path)
+        model.title = path.name
+        value.append(model)
+    return WidgetDataModel(value=value, type=StandardType.MODELS)
+
+
+###################
+##### Writers #########
+###############################
+
+
 def default_text_writer(model: WidgetDataModel[str], path: Path) -> None:
     """Write text file."""
     if isinstance(meta := model.metadata, TextMeta):
@@ -277,6 +305,32 @@ def default_dataframe_writer(
     from himena._data_wrappers import wrap_dataframe
 
     return wrap_dataframe(model.value).write(path)
+
+
+def default_models_writer(
+    model: WidgetDataModel[list[WidgetDataModel]],
+    path: Path,
+) -> None:
+    """Write list of files."""
+    from himena._providers import WriterProviderStore
+
+    store = WriterProviderStore.instance()
+    if not path.exists():
+        path.mkdir(parents=True)
+    for each in model.value:
+        if not each.title:
+            raise ValueError("Title is missing for one of the models.")
+        if any(char in each.title for char in r'\/:*?"<>|'):
+            raise ValueError(f"Invalid characters in file name: {each.title}")
+        if Path(each.title).suffix == "":
+            if each.extension_default:
+                file_name = each.title + each.extension_default
+            else:
+                file_name = each.title
+        else:
+            file_name = each.title
+        store.run(path / file_name)
+    return None
 
 
 def default_pickle_writer(

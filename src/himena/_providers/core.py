@@ -16,6 +16,8 @@ from himena.types import WidgetDataModel
 if TYPE_CHECKING:
     from typing import Self
 
+    PathOrPaths = str | Path | list[str | Path]
+
 _LOGGER = getLogger(__name__)
 _S = TypeVar("_S", ReaderProviderTuple, WriterProviderTuple)
 _T = TypeVar("_T", ReaderTuple, WriterTuple)
@@ -176,7 +178,7 @@ def _warn_failed_provider(provider, e: Exception):
     return _LOGGER.error(f"Error in reader provider {provider!r}: {e}")
 
 
-def read_and_update_source(reader: ReaderTuple, source: Path) -> WidgetDataModel:
+def read_and_update_source(reader: ReaderTuple, source: PathOrPaths) -> WidgetDataModel:
     """Update the `method` attribute if it is not set."""
     model = reader.read(source)
     if model.method is None:

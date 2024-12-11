@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextlib import suppress
+from pathlib import Path
 from typing import TYPE_CHECKING, Callable, Iterator, cast
 from logging import getLogger
 
@@ -642,7 +643,12 @@ class QSubWindowTitleBar(QtW.QFrame):
                     _meth := self._subwindow._my_wrapper()._widget_data_model_method,
                     LocalReaderMethod,
                 ):
-                    mime_data.setUrls([QtCore.QUrl(_meth.path.as_uri())])
+                    if isinstance(_meth.path, Path):
+                        mime_data.setUrls([QtCore.QUrl(_meth.path.as_uri())])
+                    elif isinstance(_meth.path, list):
+                        mime_data.setUrls(
+                            [QtCore.QUrl(fp.as_uri()) for fp in _meth.path]
+                        )
                 drag.setMimeData(mime_data)
                 drag.setPixmap(_subwin._pixmap_resized(QtCore.QSize(150, 150)))
                 self._subwindow.hide()

@@ -165,6 +165,7 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         """Type of the widget data model."""
         if not self.is_exportable:
             return None
+        # TODO: model_type can be set before calling `update_model`.
         _type = getattr(self.widget, "model_type", _do_nothing)()
         if _type is None:
             _type = self.to_model().type
@@ -435,7 +436,7 @@ class SubWindow(WidgetWrapper[_W]):
         self._close_all_children(main)
         self._alive = False
 
-    def _determine_read_from(self) -> tuple[Path, str | None] | None:
+    def _determine_read_from(self) -> tuple[Path | list[Path], str | None] | None:
         method = self._widget_data_model_method
         if isinstance(method, LocalReaderMethod):
             return method.path, method.plugin
@@ -448,7 +449,8 @@ class SubWindow(WidgetWrapper[_W]):
         """Update the sub-window based on the returned model."""
         if isinstance(method := model.method, LocalReaderMethod):
             # file is directly read from the local path
-            self.update_default_save_path(method.path, plugin=method.plugin)
+            if isinstance(save_path := method.path, Path):
+                self.update_default_save_path(save_path, plugin=method.plugin)
         elif isinstance(model.method, ConverterMethod):
             # model is created by some converter function
             if not isinstance(model.save_behavior_override, NoNeedToSave):
@@ -464,7 +466,10 @@ class SubWindow(WidgetWrapper[_W]):
 
     def _process_merge_model(self, source: SubWindow[_W]) -> bool:
         if hasattr(self.widget, "merge_model"):
-            self.widget.merge_model(source.to_model())
+            model = source.to_model()
+            # to remember how the model was mapped to a widget class
+            model.force_open_with = get_widget_class_id(source.widget)
+            self.widget.merge_model(model)
             ui = self._main_window()._himena_main_window
             source._close_me(ui)
             ui._backend_main_window._move_focus_to(source.widget)

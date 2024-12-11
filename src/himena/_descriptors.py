@@ -24,7 +24,7 @@ class ProgramaticMethod(MethodDescriptor):
 class LocalReaderMethod(MethodDescriptor):
     """Describes that one was read from a local source file."""
 
-    path: Path
+    path: Path | list[Path]
     plugin: str | None = Field(default=None)
 
     def get_model(self, app: "Application") -> "WidgetDataModel[Any]":

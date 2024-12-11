@@ -16,7 +16,7 @@ from himena.consts import (
 def default_reader_provider(file_path: Path | list[Path]):
     """Get default reader."""
     if isinstance(file_path, list):
-        return None
+        return _io.default_file_list_reader
     if file_path.suffix == ".csv":
         return _io.default_csv_reader
     elif file_path.suffix == ".tsv":
@@ -39,6 +39,8 @@ def default_reader_provider(file_path: Path | list[Path]):
         return _io.DataFrameReader("pandas", "read_feather", {})
     elif file_path.suffix == ".pickle":
         return _io.default_pickle_reader
+    elif file_path.suffix == "":
+        return _io.default_file_list_reader
     return None
 
 

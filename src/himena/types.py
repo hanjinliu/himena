@@ -164,18 +164,24 @@ class WidgetDataModel(GenericModel[_T]):
 
     def _with_source(
         self,
-        source: str | Path,
+        source: str | Path | list[str | Path],
         plugin: "PluginInfo | None" = None,
     ) -> "WidgetDataModel[_T]":
         """Return a new instance with the source path."""
-        path = Path(source).resolve()
         if plugin is None:
             plugin_name = None
         else:
             plugin_name = plugin.to_str()
+        if isinstance(source, list):
+            path = [Path(s).resolve() for s in source]
+        else:
+            path = Path(source).resolve()
         to_update = {"method": LocalReaderMethod(path=path, plugin=plugin_name)}
         if self.title is None:
-            to_update.update({"title": source.name})
+            if isinstance(path, list):
+                to_update.update({"title": "File group"})
+            else:
+                to_update.update({"title": path.name})
         return self.model_copy(update=to_update)
 
     def with_open_plugin(
@@ -280,7 +286,7 @@ def is_subtype(string: str, supertype: str) -> bool:
     return string_parts[: len(supertype_parts)] == supertype_parts
 
 
-ReaderFunction = Callable[[Path], WidgetDataModel]
+ReaderFunction = Callable[["Path | list[Path]"], WidgetDataModel]
 WriterFunction = Callable[[WidgetDataModel, Path], None]
 ReaderProvider = Callable[["Path | list[Path]"], ReaderFunction]
 WriterProvider = Callable[[WidgetDataModel], WriterFunction]

@@ -345,7 +345,7 @@ class MainWindow(Generic[_W]):
         return tabarea.read_file(file_path, plugin=plugin)
 
     def read_files(self, file_paths: PathOrPaths):
-        """Read multiple files and open as new sub-windows in a same tab."""
+        """Read multiple files one by one and open as new sub-windows in a same tab."""
         _, tabarea = self._current_or_new_tab()
         return tabarea.read_files(file_paths)
 

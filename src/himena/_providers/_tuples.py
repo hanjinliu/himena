@@ -46,8 +46,11 @@ class ReaderTuple(NamedTuple):
     priority: int
     plugin: PluginInfo | None = None
 
-    def read(self, path: str | Path) -> WidgetDataModel:
-        out = self.reader(Path(path))
+    def read(self, path: str | Path | list[str | Path]) -> WidgetDataModel:
+        if isinstance(path, list):
+            out = self.reader([Path(p) for p in path])
+        else:
+            out = self.reader(Path(path))
         if not isinstance(out, WidgetDataModel):
             raise TypeError(
                 f"Reader function {self.reader!r} did not return a WidgetDataModel."

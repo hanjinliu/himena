@@ -19,6 +19,7 @@ class QSvgPreview(QtW.QWidget):
         self._svg_renderer.setAspectRatioMode(QtCore.Qt.AspectRatioMode.KeepAspectRatio)
         self._svg_content: str = ""
         self._is_valid = True
+        self._model_type = StandardType.SVG
 
     @protocol_override
     def update_model(self, model: WidgetDataModel):
@@ -28,14 +29,19 @@ class QSvgPreview(QtW.QWidget):
         else:
             self._svg_renderer.load(self._svg_content.encode())
         self._is_valid = _is_valid
+        self._model_type = model.type
         self.update()
 
     @protocol_override
     def to_model(self) -> WidgetDataModel:
         return WidgetDataModel(
             value=self._svg_content,
-            type=StandardType.SVG,
+            type=self.model_type(),
         )
+
+    @protocol_override
+    def model_type(self) -> StandardType:
+        return self._model_type
 
     @protocol_override
     def size_hint(self) -> QtCore.QSize:

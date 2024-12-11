@@ -75,6 +75,9 @@ class StandardType(SimpleNamespace):
     ### 3D ###
     MESH = "mesh"  # vertices, faces and values for 3D mesh
 
+    ### Nested models ###
+    MODELS = "models"  # list or dict of models
+
     ### Other types ###
     GROUPBY = "groupby"  # DataFrame GroupBy object
     IMAGE_ROIS = "image-rois"  # image regions of interest
