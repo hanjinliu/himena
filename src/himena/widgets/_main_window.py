@@ -292,6 +292,7 @@ class MainWindow(Generic[_W]):
         title: str | None = None,
         show_parameter_labels: bool = True,
         auto_close: bool = True,
+        result_as: Literal["window", "below"] = "window",
     ) -> ParametricWindow[_W]:
         """
         Add a function as a parametric sub-window.
@@ -313,7 +314,7 @@ class MainWindow(Generic[_W]):
         """
         _, tabarea = self._current_or_new_tab()
         return tabarea.add_function(
-            func, title=title, preview=preview,
+            func, title=title, preview=preview, result_as=result_as,
             show_parameter_labels=show_parameter_labels, auto_close=auto_close,
         )  # fmt: skip
 
@@ -326,16 +327,13 @@ class MainWindow(Generic[_W]):
         preview: bool = False,
         auto_close: bool = True,
         auto_size: bool = True,
+        result_as: Literal["window", "below"] = "window",
     ) -> ParametricWindow[_W]:
         _, area = self._current_or_new_tab()
         return area.add_parametric_widget(
-            widget,
-            callback,
-            title=title,
-            preview=preview,
-            auto_close=auto_close,
-            auto_size=auto_size,
-        )
+            widget, callback, title=title, preview=preview, auto_close=auto_close,
+            auto_size=auto_size, result_as=result_as,
+        )  # fmt: skip
 
     def read_file(
         self,

@@ -1,6 +1,15 @@
 from __future__ import annotations
 
-from typing import Annotated, Callable, TypeVar, get_origin, get_args, Any, overload
+from typing import (
+    Annotated,
+    Callable,
+    Literal,
+    TypeVar,
+    get_origin,
+    get_args,
+    Any,
+    overload,
+)
 import inspect
 from himena.types import GuiConfiguration
 
@@ -38,6 +47,8 @@ def configure_gui(
     preview: bool = False,
     auto_close: bool = True,
     show_parameter_labels: bool = True,
+    gui_options: dict[str, Any] | None = None,
+    result_as: Literal["window", "below"] = "window",
     **kwargs,
 ) -> _F: ...
 @overload
@@ -47,6 +58,8 @@ def configure_gui(
     preview: bool = False,
     auto_close: bool = True,
     show_parameter_labels: bool = True,
+    gui_options: dict[str, Any] | None = None,
+    result_as: Literal["window", "below"] = "window",
     **kwargs,
 ) -> Callable[[_F], _F]: ...
 
@@ -58,16 +71,37 @@ def configure_gui(
     preview: bool = False,
     auto_close: bool = True,
     show_parameter_labels: bool = True,
+    gui_options: dict[str, Any] | None = None,
+    result_as: Literal["window", "below"] = "window",
     **kwargs,
 ):
-    """Configure the GUI options for each parameter of a function.
+    """Configure the parametric GUI.
 
-    The usage is the same as `magicgui`'s `@magicgui` decorator.
+    This decorator sets the configuration options for the parametric GUI window.
 
     >>> @configure_gui(a={"label": "A", "widget_type": "FloatSlider"})
     ... def my_func(a: float):
     ...     pass
+
+    Parameters
+    ----------
+    title : str, optional
+        The title of the parametric GUI window. If not provided, this title will be
+        determined by the action title where this function is returned.
+    preview : bool, default False
+        If true, a preview toggle switch will be added to the GUI window. When the
+        switch is on, the function will be called and the result will be displayed. Note
+        that `configure_gui` does not consider whether the preview is a heavy operation.
+    auto_close : bool, default True
+        If true, the parametric GUI window will be closed automatically after the
+        function is executed.
+    show_parameter_labels : bool, default True
+        If true, the parameter names will be shown in the GUI window.
+    gui_options : dict, optional
+        Additional GUI options to be passed to the `magicgui` decorator. Keys can also
+        be passed as variable keyword arguments **kwargs.
     """
+    kwargs = dict(**kwargs, **(gui_options or {}))
 
     def _inner(f):
         sig = inspect.signature(f)
@@ -84,6 +118,7 @@ def configure_gui(
                 param = inspect.Parameter(name=k, kind=inspect.Parameter.KEYWORD_ONLY)
             else:
                 param = sig.parameters[k]
+            # unwrap Annotated types
             if not _is_annotated(param.annotation):
                 annot = _prioritize_choices(param.annotation, v)
                 param = param.replace(annotation=Annotated[annot, v])
@@ -93,6 +128,7 @@ def configure_gui(
                 typ = _prioritize_choices(typ, meta)
                 param = param.replace(annotation=Annotated[typ, meta])
             new_params[k] = param
+        # update the signature with the normalize one
         sig = sig.replace(parameters=list(new_params.values()))
         f.__signature__ = sig
         f.__annotations__ = {k: v.annotation for k, v in sig.parameters.items()}
@@ -101,6 +137,7 @@ def configure_gui(
             preview=preview,
             auto_close=auto_close,
             show_parameter_labels=show_parameter_labels,
+            result_as=result_as,
         )
         return f
 

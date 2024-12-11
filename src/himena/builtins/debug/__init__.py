@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Annotated
+import numpy as np
 from himena.consts import StandardType
 from himena.plugins import register_function, configure_gui
 from himena.types import Parametric, WidgetDataModel
@@ -101,6 +102,26 @@ def plot_test() -> Parametric:
     def run(a: int, b: int = 4) -> WidgetDataModel:
         fig = hplt.figure()
         fig.axes.plot([0, 1, 2], [2, a, b], color="red")
+        fig.axes.title = "Test plot"
+        return WidgetDataModel(value=fig, type=StandardType.PLOT)
+
+    return run
+
+
+@register_function(
+    menus=TOOLS_DEBUG,
+    title="Test plot with parametric",
+    command_id="debug:test-plot-parametric",
+)
+def plot_test_parametric() -> Parametric:
+    import himena.standards.plotting as hplt
+
+    @configure_gui(preview=True, result_as="below")
+    def run(freq: float = 1.0, phase: float = 0.0) -> WidgetDataModel:
+        fig = hplt.figure()
+        x = np.linspace(0, 2 * np.pi, 100)
+        y = np.sin(freq * x + phase)
+        fig.axes.plot(x, y, color="red")
         fig.axes.title = "Test plot"
         return WidgetDataModel(value=fig, type=StandardType.PLOT)
 

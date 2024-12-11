@@ -79,9 +79,10 @@ class QToggleSwitch(QtW.QWidget):
         self._handle_color = color
 
     def sizeHint(self) -> QtCore.QSize:
-        return QtCore.QSize(
-            2 * (self._height + self._margin), self._height + 2 * self._margin
-        )
+        return QtCore.QSize(2 * (self._height + self._margin), self.minimumHeight())
+
+    def minimumHeight(self) -> int:
+        return self._height + 2 * self._margin
 
     def paintEvent(self, e):
         p = QtGui.QPainter(self)
@@ -197,6 +198,17 @@ class QLabeledToggleSwitch(QtW.QWidget):
 
     def toggle(self):
         self.setChecked(not self.isChecked())
+
+    def minimumHeight(self) -> int:
+        return self._switch.minimumHeight()
+
+    def sizeHint(self) -> QtCore.QSize:
+        switch_hint = self._switch.sizeHint()
+        text_hint = self._text.sizeHint()
+        return QtCore.QSize(
+            switch_hint.width() + text_hint.width(),
+            max(switch_hint.height(), text_hint.height()),
+        )
 
 
 class ToggleSwitch(ButtonWidget):

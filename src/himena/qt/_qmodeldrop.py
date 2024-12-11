@@ -36,6 +36,9 @@ class QModelDrop(QtW.QGroupBox):
         self._allowed_types = types  # the model type
         self._target_id: int | None = None
 
+    def sizeHint(self) -> QtCore.QSize:
+        return QtCore.QSize(150, 50)
+
     def dragEnterEvent(self, event: QtGui.QDragEnterEvent):
         if isinstance(src := event.source(), QSubWindow):
             widget = src._widget
@@ -116,7 +119,7 @@ class QModelDrop(QtW.QGroupBox):
         return any(is_subtype(model_type, t) for t in self._allowed_types)
 
 
-THUMBNAIL_SIZE = QtCore.QSize(50, 50)
+THUMBNAIL_SIZE = QtCore.QSize(36, 36)
 
 
 class _QImageLabel(QtW.QLabel):

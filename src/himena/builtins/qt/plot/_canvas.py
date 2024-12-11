@@ -125,6 +125,10 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
     def mergeable_model_types(self) -> list[str]:
         return [StandardType.PLOT]
 
+    @protocol_override
+    def size_hint(self) -> tuple[int, int]:
+        return 300, 240
+
 
 class FigureCanvasQTAgg(backend_qtagg.FigureCanvasQTAgg):
     def mouseDoubleClickEvent(self, event):

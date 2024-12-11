@@ -285,15 +285,29 @@ WriterFunction = Callable[[WidgetDataModel, Path], None]
 ReaderProvider = Callable[["Path | list[Path]"], ReaderFunction]
 WriterProvider = Callable[[WidgetDataModel], WriterFunction]
 
+_V = TypeVar("_V", int, float)
 
-@dataclass
-class Rect(Generic[_T]):
-    """Rectangle."""
 
-    left: _T
-    top: _T
-    width: _T
-    height: _T
+@dataclass(frozen=True)
+class Size(Generic[_V]):
+    """Size use for any place."""
+
+    width: _V
+    height: _V
+
+    def __iter__(self):
+        """Iterate over the field to make this class tuple-like."""
+        return iter((self.width, self.height))
+
+
+@dataclass(frozen=True)
+class Rect(Generic[_V]):
+    """Rectangle use for any place."""
+
+    left: _V
+    top: _V
+    width: _V
+    height: _V
 
     @property
     def right(self):
@@ -304,7 +318,11 @@ class Rect(Generic[_T]):
         return self.top + self.height
 
     def __iter__(self):
+        """Iterate over the field to make this class tuple-like."""
         return iter((self.left, self.top, self.width, self.height))
+
+    def size(self) -> Size[_V]:
+        return Size(self.width, self.height)
 
     def adjust_to_int(
         self,
@@ -332,26 +350,29 @@ class Rect(Generic[_T]):
         return Rect(left, top, right - left, bottom - top)
 
 
-class WindowRect(Rect):
+@dataclass(frozen=True)
+class WindowRect(Rect[int]):
+    """Rectangle of a window."""
+
     @classmethod
-    def from_numbers(self, left, top, width, height) -> "WindowRect":
+    def from_tuple(self, left, top, width, height) -> "WindowRect":
         return WindowRect(int(left), int(top), int(width), int(height))
 
-    def align_left(self, area_size: "tuple[int, int]") -> "WindowRect":
+    def align_left(self, area_size: Size[int]) -> "WindowRect":
         return WindowRect(0, self.top, self.width, self.height)
 
-    def align_right(self, area_size: "tuple[int, int]") -> "WindowRect":
+    def align_right(self, area_size: Size[int]) -> "WindowRect":
         w0, _ = area_size
         return WindowRect(w0 - self.width, self.top, self.width, self.height)
 
-    def align_top(self, area_size: "tuple[int, int]") -> "WindowRect":
+    def align_top(self, area_size: Size[int]) -> "WindowRect":
         return WindowRect(self.left, 0, self.width, self.height)
 
-    def align_bottom(self, area_size: "tuple[int, int]") -> "WindowRect":
+    def align_bottom(self, area_size: Size[int]) -> "WindowRect":
         _, h0 = area_size
         return WindowRect(self.left, h0 - self.height, self.width, self.height)
 
-    def align_center(self, area_size: "tuple[int, int]") -> "WindowRect":
+    def align_center(self, area_size: Size[int]) -> "WindowRect":
         w0, h0 = area_size
         return WindowRect(
             (w0 - self.width) / 2,
@@ -378,6 +399,7 @@ class GuiConfiguration(BaseModel):
     preview: bool = False
     auto_close: bool = True
     show_parameter_labels: bool = True
+    result_as: Literal["window", "below"] = "window"
 
 
 class ModelTrack(BaseModel):

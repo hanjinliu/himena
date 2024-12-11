@@ -37,7 +37,7 @@ class TopLeftConstAnchor(WindowAnchor):
         sub_window_size: tuple[int, int],
     ) -> WindowRect | None:
         w, h = sub_window_size
-        return WindowRect.from_numbers(self._left, self._top, w, h)
+        return WindowRect.from_tuple(self._left, self._top, w, h)
 
     def update_for_window_rect(
         self,
@@ -59,7 +59,7 @@ class TopRightConstAnchor(WindowAnchor):
     ) -> WindowRect | None:
         main_w, _ = main_window_size
         w, h = sub_window_size
-        return WindowRect.from_numbers(main_w - self._right - w, self._top, w, h)
+        return WindowRect.from_tuple(main_w - self._right - w, self._top, w, h)
 
     def update_for_window_rect(
         self,
@@ -82,7 +82,7 @@ class BottomLeftConstAnchor(WindowAnchor):
     ) -> WindowRect | None:
         _, main_h = main_window_size
         w, h = sub_window_size
-        return WindowRect.from_numbers(self._left, main_h - self._bottom - h, w, h)
+        return WindowRect.from_tuple(self._left, main_h - self._bottom - h, w, h)
 
     def update_for_window_rect(
         self,
@@ -105,7 +105,7 @@ class BottomRightConstAnchor(WindowAnchor):
     ) -> WindowRect | None:
         main_w, main_h = main_window_size
         w, h = sub_window_size
-        return WindowRect.from_numbers(
+        return WindowRect.from_tuple(
             main_w - self._right - w, main_h - self._bottom - h, w, h
         )
 

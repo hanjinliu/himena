@@ -395,7 +395,7 @@ class QSubWindow(QtW.QMdiSubWindow):
                 main_qsize = self._qt_mdiarea().size()
                 self._window_anchor = self._window_anchor.update_for_window_rect(
                     (main_qsize.width(), main_qsize.height()),
-                    WindowRect.from_numbers(g.left(), g.top(), g.width(), g.height()),
+                    WindowRect.from_tuple(g.left(), g.top(), g.width(), g.height()),
                 )
                 _checker.call_window_resized_callback(
                     self._widget, (g.width(), g.height())
@@ -697,7 +697,7 @@ class QSubWindowTitleBar(QtW.QFrame):
             main_qsize = _subwin._qt_mdiarea().size()
             _subwin._window_anchor = _subwin._window_anchor.update_for_window_rect(
                 (main_qsize.width(), main_qsize.height()),
-                WindowRect.from_numbers(g.left(), g.top(), g.width(), g.height()),
+                WindowRect.from_tuple(g.left(), g.top(), g.width(), g.height()),
             )
         return super().mouseMoveEvent(event)
 

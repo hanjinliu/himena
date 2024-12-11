@@ -157,5 +157,5 @@ class PreviewDataInFunction:
             title=self._display_name,
             tooltip=tooltip,
             callback=self,
-            menus=[{"id": self.menu_id(), "group": "preview-in"}],
+            menus=[{"id": self.menu_id(), "group": "open-in"}],
         )

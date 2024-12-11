@@ -632,6 +632,21 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             setattr(container, PWPN.IS_PREVIEW_ENABLED, checkbox.get_value)
         return container
 
+    def _add_widget_to_parametric_window(
+        self,
+        wrapper: widgets.ParametricWindow[QParametricWidget],
+        widget: QtW.QWidget,
+    ):
+        wrapper.widget.add_widget_below(widget)
+        if wrapper.is_preview_enabled() and not wrapper._auto_close:
+            wrapper.widget._call_btn.hide()
+
+    def _remove_widget_from_parametric_window(
+        self,
+        wrapper: widgets.ParametricWindow[QParametricWidget],
+    ):
+        wrapper.widget.remove_widget_below()
+
     def _move_focus_to(self, win: QtW.QWidget) -> None:
         win.setFocus()
         return None

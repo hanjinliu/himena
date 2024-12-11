@@ -4,7 +4,7 @@ from abc import abstractmethod
 from logging import getLogger
 import inspect
 from pathlib import Path
-from typing import Callable, Generic, TYPE_CHECKING, Iterator, TypeVar
+from typing import Callable, Generic, TYPE_CHECKING, Iterator, Literal, TypeVar
 from collections.abc import Sequence
 import weakref
 
@@ -215,6 +215,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         title: str | None = None,
         show_parameter_labels: bool = True,
         auto_close: bool = True,
+        result_as: Literal["window", "below"] = "window",
     ) -> ParametricWindow[_W]:
         """
         Add a function as a parametric sub-window.
@@ -253,12 +254,9 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
             preview=preview,
         )
         param_widget = self.add_parametric_widget(
-            fn_widget,
-            func,
-            title=title,
-            preview=preview,
-            auto_close=auto_close,
-        )
+            fn_widget, func, title=title, preview=preview,
+            auto_close=auto_close, result_as=result_as,
+        )  # fmt: skip
         return param_widget
 
     def add_parametric_widget(
@@ -270,6 +268,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         preview: bool = False,
         auto_close: bool = True,
         auto_size: bool = True,
+        result_as: Literal["window", "below"] = "window",
     ) -> ParametricWindow[_W]:
         """Add a custom parametric widget and its callback as a subwindow.
 
@@ -311,6 +310,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         widget0 = main._process_parametric_widget(widget)
         param_widget = ParametricWindow(widget0, callback, main_window=main)
         param_widget._auto_close = auto_close
+        param_widget._result_as = result_as
         main._connect_parametric_widget_events(param_widget, widget0)
         self._process_new_widget(param_widget, title, auto_size)
         if preview:
@@ -333,6 +333,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         title: str | None = None,
         auto_size: bool = True,
     ) -> None:
+        """Add, resize, and set the focus to the new widget."""
         main = self._main_window()
         if title is None:
             title = f"Untitled-{len(self)}"
@@ -456,7 +457,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
                 x = j * width / ncols
                 y = i * height / nrows
                 sub = self[idx]
-                rect = WindowRect.from_numbers(x, y, w, h)
+                rect = WindowRect.from_tuple(x, y, w, h)
                 main._set_window_rect(sub.widget, rect, inst)
         return None
 

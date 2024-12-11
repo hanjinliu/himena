@@ -287,6 +287,19 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     ) -> _W:
         """Convert a function signature to a widget that can run it."""
 
+    def _add_widget_to_parametric_window(
+        self,
+        wrapper: ParametricWindow[_W],
+        widget: _W,
+    ) -> None:
+        """Add a widget to the parametric window."""
+
+    def _remove_widget_from_parametric_window(
+        self,
+        wrapper: ParametricWindow[_W],
+    ) -> None:
+        """Remove a widget from the parametric window."""
+
     def _move_focus_to(self, widget: _W) -> None:
         """Move the focus to the widget."""
 

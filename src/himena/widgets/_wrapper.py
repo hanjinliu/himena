@@ -6,7 +6,7 @@ from contextlib import suppress
 import inspect
 import logging
 from pathlib import Path
-from typing import Any, Callable, Generic, TYPE_CHECKING, TypeVar
+from typing import Any, Callable, Generic, TYPE_CHECKING, Literal, TypeVar
 from uuid import uuid4
 import weakref
 
@@ -20,6 +20,7 @@ from himena.types import (
     ModelTrack,
     Parametric,
     ParametricWidgetProtocol,
+    Size,
     WindowState,
     WidgetDataModel,
     WindowRect,
@@ -69,6 +70,12 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         self._save_behavior: SaveBehavior = SaveToNewPath()
         self._widget_data_model_method: MethodDescriptor = ProgramaticMethod()
         self._is_modified_fallback_value = False
+
+    @property
+    def is_alive(self) -> bool:
+        """Whether the widget is present in a main window."""
+        # by default, always return True
+        return True
 
     @property
     def widget(self) -> _W:
@@ -125,6 +132,19 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
             return self.widget.is_modified()
         return self._is_modified_fallback_value
 
+    @property
+    def is_editable(self) -> bool:
+        """Whether the widget is editable."""
+        is_editable_func = getattr(self.widget, "is_editable", None)
+        return callable(is_editable_func) and is_editable_func()
+
+    @is_editable.setter
+    def is_editable(self, value: bool) -> None:
+        set_editable_func = getattr(self.widget, "set_editable", None)
+        if not callable(set_editable_func):
+            raise AttributeError("Widget does not have `set_editable` method.")
+        set_editable_func(value)
+
     def _set_modified(self, value: bool) -> None:
         """Set the modified state of the widget."""
         if hasattr(self.widget, "set_modified"):
@@ -136,6 +156,37 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
                 return None
             self._is_modified_fallback_value = value
         return None
+
+    def size_hint(self) -> tuple[int, int] | None:
+        """Size hint of the sub-window."""
+        return getattr(self.widget, "size_hint", _do_nothing)()
+
+    def model_type(self) -> str | None:
+        """Type of the widget data model."""
+        if not self.is_exportable:
+            return None
+        _type = getattr(self.widget, "model_type", _do_nothing)()
+        if _type is None:
+            _type = self.to_model().type
+        return _type
+
+    def update_model(self, model: WidgetDataModel) -> None:
+        """Import the widget data."""
+        if not self.is_importable:
+            raise ValueError("Widget does not have `update_model` method.")
+        self.widget.update_model(model)
+
+    def _is_mergeable_with(self, source: WidgetWrapper[_W]) -> bool:
+        widget = self.widget
+        if not (hasattr(widget, "merge_model") and source.is_exportable):
+            return False
+        if hasattr(widget, "mergeable_model_types"):
+            types = widget.mergeable_model_types()
+            if source.model_type() in types:
+                return True
+        elif hasattr(widget, "merge_model"):
+            return True
+        return False
 
 
 class SubWindow(WidgetWrapper[_W]):
@@ -197,35 +248,18 @@ class SubWindow(WidgetWrapper[_W]):
         self._set_rect(value, inst)
 
     @property
-    def is_editable(self) -> bool:
-        """Whether the widget is editable."""
-        is_editable_func = getattr(self.widget, "is_editable", None)
-        return callable(is_editable_func) and is_editable_func()
+    def size(self) -> Size[int]:
+        """Size of the sub-window."""
+        return self.rect.size()
 
-    @is_editable.setter
-    def is_editable(self, value: bool) -> None:
-        set_editable_func = getattr(self.widget, "set_editable", None)
-        if not callable(set_editable_func):
-            raise AttributeError("Widget does not have `set_editable` method.")
-        set_editable_func(value)
+    @size.setter
+    def size(self, value: tuple[int, int]) -> None:
+        self.rect = (self.rect.left, self.rect.top, value[0], value[1])
 
     @property
     def is_alive(self) -> bool:
         """Whether the sub-window is present in a main window."""
         return self._alive
-
-    def size_hint(self) -> tuple[int, int] | None:
-        """Size hint of the sub-window."""
-        return getattr(self.widget, "size_hint", _do_nothing)()
-
-    def model_type(self) -> str | None:
-        """Type of the widget data model."""
-        if not self.is_exportable:
-            return None
-        _type = getattr(self.widget, "model_type", _do_nothing)()
-        if _type is None:
-            _type = self.to_model().type
-        return _type
 
     def to_model(self) -> WidgetDataModel:
         """Export the widget data."""
@@ -243,12 +277,6 @@ class SubWindow(WidgetWrapper[_W]):
         if model.method is None:
             model.method = self._widget_data_model_method
         return model
-
-    def update_model(self, model: WidgetDataModel) -> None:
-        """Import the widget data."""
-        if not self.is_importable:
-            raise ValueError("Widget does not have `update_model` method.")
-        self.widget.update_model(model)
 
     def write_model(self, path: str | Path, plugin: str | None = None) -> None:
         """Write the widget data to a file."""
@@ -283,7 +311,7 @@ class SubWindow(WidgetWrapper[_W]):
         if inst is None:
             inst = self._main_window()._himena_main_window._instructions
         main = self._main_window()
-        rect = WindowRect.from_numbers(*value)
+        rect = WindowRect.from_tuple(*value)
         anc = main._window_anchor(self.widget).update_for_window_rect(
             main._area_size(), rect
         )
@@ -396,6 +424,7 @@ class SubWindow(WidgetWrapper[_W]):
         return False
 
     def _close_all_children(self, main: MainWindow) -> None:
+        """Close all the sub-windows that are children of this window."""
         for child in self._child_windows:
             child._close_all_children(main)
             if child.is_alive:
@@ -433,18 +462,6 @@ class SubWindow(WidgetWrapper[_W]):
                 self.is_editable = False
         return self
 
-    def _is_mergeable_with(self, source: SubWindow[_W]) -> bool:
-        widget = self.widget
-        if not (hasattr(widget, "merge_model") and source.is_exportable):
-            return False
-        if hasattr(widget, "mergeable_model_types"):
-            types = widget.mergeable_model_types()
-            if source.model_type() in types:
-                return True
-        elif hasattr(widget, "merge_model"):
-            return True
-        return False
-
     def _process_merge_model(self, source: SubWindow[_W]) -> bool:
         if hasattr(self.widget, "merge_model"):
             self.widget.merge_model(source.to_model())
@@ -480,8 +497,9 @@ class ParametricWindow(SubWindow[_W]):
         super().__init__(widget, main_window, identifier)
         self._callback = callback
         self.btn_clicked.connect(self._widget_callback)
-        self._preview_window_ref = _do_nothing
+        self._preview_window_ref: Callable[[], WidgetWrapper[_W] | None] = _do_nothing
         self._auto_close = True
+        self._result_as: Literal["window", "below"] = "window"
 
         # check if callback has "is_previewing" argument
         sig = inspect.signature(callback)
@@ -508,14 +526,21 @@ class ParametricWindow(SubWindow[_W]):
         return None
 
     def _widget_callback(self):
+        """Callback when the call button is clicked."""
         self._callback_with_params(self.get_params())
 
     def _widget_preview_callback(self, widget: ParametricWindow):
+        main = self._main_window()
         if not widget.is_preview_enabled():
             if prev := self._get_preview_window():
                 self._preview_window_ref = _do_nothing
                 self._child_windows.discard(prev)
-                prev._close_me(self._main_window()._himena_main_window)
+                if self._result_as == "window":
+                    prev._close_me(main._himena_main_window)
+                else:
+                    main._remove_widget_from_parametric_window(self)
+                    if hint := self.size_hint():
+                        self.rect = (self.rect.left, self.rect.top, hint[0], hint[1])
             return None
         try:
             kwargs = widget.get_params()
@@ -535,12 +560,19 @@ class ParametricWindow(SubWindow[_W]):
         else:
             # create a new preview window
             result_widget = widget._model_to_new_window(return_value)
-            title = f"{return_value.title} (preview)"
-            prev = self.add_child(result_widget, title=title)
-            with suppress(AttributeError):
-                prev.is_editable = False
+            if self._result_as == "window":
+                title = f"{return_value.title} (preview)"
+                prev = self.add_child(result_widget, title=title)
+                with suppress(AttributeError):
+                    prev.is_editable = False
+            else:
+                main._add_widget_to_parametric_window(self, result_widget)
+                # update the size because new window is added
+                if hint := self.size_hint():
+                    self.rect = (self.rect.left, self.rect.top, hint[0], hint[1])
+                prev = WidgetWrapper(result_widget, main)  # just for wrapping
             self._preview_window_ref = weakref.ref(prev)
-            self._main_window()._move_focus_to(self.widget)
+            main._move_focus_to(self.widget)
         return None
 
     def _callback_with_params(self, kwargs: dict[str, Any]):
@@ -549,12 +581,19 @@ class ParametricWindow(SubWindow[_W]):
         return_value = self._callback(**kwargs)
         tracker = self._get_model_track()
         _LOGGER.info("Got tracker: %r", tracker)
+        ui = self._main_window()._himena_main_window
         if isinstance(return_value, WidgetDataModel):
             if prev := self._get_preview_window():
                 # no need to create a new window, just use the preview window
                 self._preview_window_ref = _do_nothing
-                self._child_windows.discard(prev)
-                result_widget = prev
+                if self._result_as != "window":
+                    widget = prev.widget  # avoid garbage collection
+                    self._main_window()._remove_widget_from_parametric_window(self)
+                    result_widget = ui.add_widget(widget)
+                    result_widget._update_from_returned_model(return_value)
+                else:
+                    self._child_windows.discard(prev)
+                    result_widget = prev
                 result_widget.title = return_value.title  # title needs update
 
                 # if callback has "is_previewing" argument, the returned value may
@@ -564,7 +603,6 @@ class ParametricWindow(SubWindow[_W]):
                 with suppress(AttributeError):
                     result_widget.is_editable = True
                 if self._auto_close:
-                    ui = self._main_window()._himena_main_window
                     self._close_me(ui)
             else:
                 result_widget = self._process_model_output(return_value)
@@ -627,10 +665,15 @@ class ParametricWindow(SubWindow[_W]):
         i_tab, i_win = self._find_me(ui)
         if self._auto_close:
             del ui.tabs[i_tab][i_win]
-        result_widget = ui.tabs[i_tab].add_widget(
-            widget, title=model.title, auto_size=False
-        )
-        self._coerce_rect(result_widget)
+        if self._result_as == "window":
+            result_widget = ui.tabs[i_tab].add_widget(
+                widget, title=model.title, auto_size=False
+            )
+            self._coerce_rect(result_widget)
+        elif self._result_as == "below":
+            self._main_window()._add_widget_to_parametric_window(self, widget)
+        else:
+            raise RuntimeError(f"Unknown result_as: {self._result_as}")
         return result_widget._update_from_returned_model(model)
 
     def _process_parametric_output(
@@ -657,7 +700,7 @@ class ParametricWindow(SubWindow[_W]):
         result_widget.rect = new_rect
         return None
 
-    def _model_to_new_window(self, model: WidgetDataModel) -> SubWindow[_W]:
+    def _model_to_new_window(self, model: WidgetDataModel) -> _W:
         ui = self._main_window()._himena_main_window
         cls = ui._pick_widget_class(model)
         # construct the internal widget
