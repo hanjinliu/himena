@@ -5,7 +5,6 @@ from ._dim_sliders import QDimsSlider
 from ._roi_buttons import QRoiButtons
 from ._histogram import QHistogramView
 from ._control import QImageViewControl
-from ._splitter import QImageViewSplitterHandle
 
 __all__ = [
     "QImageGraphicsView",
@@ -16,5 +15,4 @@ __all__ = [
     "QRoiButtons",
     "QHistogramView",
     "QImageViewControl",
-    "QImageViewSplitterHandle",
 ]

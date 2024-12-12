@@ -96,9 +96,7 @@ def _open_file_using_reader(
         {"id": MenuId.FILE, "group": READ_GROUP},
         {"id": MenuId.STARTUP, "group": READ_GROUP},
     ],
-    keybindings=[
-        KeyBindingRule(primary=KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.KeyO))
-    ],
+    keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyO)],
     need_function_callback=True,
 )
 def open_file_using_from_dialog(ui: MainWindow) -> Parametric:
@@ -132,7 +130,13 @@ def open_file_group_from_dialog(ui: MainWindow):
     id="open-folder",
     title="Open Folder ...",
     icon="material-symbols:folder-open",
-    menus=[{"id": MenuId.FILE, "group": READ_GROUP}],
+    menus=[
+        {"id": MenuId.FILE, "group": READ_GROUP},
+        {"id": MenuId.STARTUP, "group": READ_GROUP},
+    ],
+    keybindings=[
+        KeyBindingRule(primary=KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.KeyO))
+    ],
 )
 def open_folder_from_dialog(ui: MainWindow) -> Path:
     """Open a folder as a sub-window."""

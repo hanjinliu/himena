@@ -4,7 +4,12 @@ from himena._descriptors import NoNeedToSave
 from himena.plugins import register_function, configure_gui
 from himena.types import Parametric, WidgetDataModel, is_subtype
 from himena.consts import StandardType
-from himena.standards.model_meta import ArrayMeta, ImageMeta, ImageAxis, roi as _roi
+from himena.standards.model_meta import (
+    ArrayMeta,
+    ImageMeta,
+    ImageAxis,
+    roi as _roi,
+)
 from himena.widgets._wrapper import SubWindow
 
 if TYPE_CHECKING:
@@ -82,6 +87,65 @@ def crop_array_nd(win: SubWindow) -> Parametric:
         return model.with_value(arr_cropped, metadata=meta_out)
 
     return run_crop_image
+
+
+@register_function(
+    title="Binary operation ...",
+    menus=["tools/array"],
+    command_id="builtins:binary-operation",
+)
+def binary_operation() -> Parametric:
+    """Calculate +, -, *, /, etc. of two arrays.
+
+    Whether the operation succeeds or not depends on the internal array object. This
+    function simply applies the operation to the two arrays and returns the result.
+    """
+    import operator as _op
+
+    choices = [
+        ("Add (+)", _op.add), ("Subtract (-)", _op.sub), ("Multiply (*)", _op.mul),
+        ("Divide (/)", _op.truediv), ("Floor Divide (//)", _op.floordiv),
+        ("Modulo (%)", _op.mod), ("Power (**)", _op.pow), ("Bitwise AND (&)", _op.and_),
+        ("Bitwise OR (|)", _op.or_), ("Bitwise XOR (^)", _op.xor),
+    ]  # fmt: skip
+
+    @configure_gui(
+        x={"types": [StandardType.ARRAY]},
+        operation={"choices": choices},
+        y={"types": [StandardType.ARRAY]},
+    )
+    def run_calc(
+        x: WidgetDataModel,
+        operation,
+        y: WidgetDataModel,
+    ) -> WidgetDataModel:
+        arr_out = operation(x.value, y.value)
+        op_name = operation.__name__.strip("_")
+        return x.with_value(arr_out, title=f"{op_name} {x.title} and {y.title}")
+
+    return run_calc
+
+
+@register_function(
+    title="Data type ...",
+    menus=["tools/array"],
+    types=StandardType.ARRAY,
+    command_id="builtins:array-astype",
+)
+def array_astype(model: WidgetDataModel) -> Parametric:
+    """Convert the data type of the array using `astype` method."""
+    from himena.qt._magicgui import NumericDTypeEdit
+
+    @configure_gui(dtype={"widget_type": NumericDTypeEdit})
+    def run_astype(dtype) -> WidgetDataModel:
+        return model.with_value(model.value.astype(dtype))
+
+    return run_astype
+
+
+#############
+### Image #######
+#########################
 
 
 @register_function(
@@ -191,57 +255,66 @@ def duplicate_rois(model: WidgetDataModel) -> WidgetDataModel:
 
 
 @register_function(
-    title="Binary operation ...",
-    menus=["tools/array"],
-    command_id="builtins:binary-operation",
+    title="Set colormap",
+    types=StandardType.IMAGE,
+    menus=["tools/image/channels", "/model_menu/channels"],
+    command_id="builtins:set-colormaps",
 )
-def binary_operation() -> Parametric:
-    """Calculate +, -, *, /, etc. of two arrays.
+def set_colormaps(win: SubWindow) -> Parametric:
+    from himena.qt._magicgui import ColormapEdit
 
-    Whether the operation succeeds or not depends on the internal array object. This
-    function simply applies the operation to the two arrays and returns the result.
-    """
-    import operator as _op
+    model = win.to_model()
+    meta = _cast_meta(model, ImageMeta).model_copy()
+    channel_names = _get_channel_names(meta, allow_single=True)
+    current_channels = [ch.colormap for ch in meta.channels]
+    options = {
+        f"ch_{i}": {
+            "label": channel_names[i],
+            "widget_type": ColormapEdit,
+            "category": "sequential",
+            "value": current_channels[i],
+        }
+        for i in range(len(channel_names))
+    }
 
-    choices = [
-        ("Add (+)", _op.add), ("Subtract (-)", _op.sub), ("Multiply (*)", _op.mul),
-        ("Divide (/)", _op.truediv), ("Floor Divide (//)", _op.floordiv),
-        ("Modulo (%)", _op.mod), ("Power (**)", _op.pow), ("Bitwise AND (&)", _op.and_),
-        ("Bitwise OR (|)", _op.or_), ("Bitwise XOR (^)", _op.xor),
-    ]  # fmt: skip
+    @configure_gui(gui_options=options, show_parameter_labels=len(channel_names) > 1)
+    def set_cmaps(**kwargs):
+        meta.channels = [
+            ch.with_colormap(cmap) for ch, cmap in zip(meta.channels, kwargs.values())
+        ]
+        win.update_model(model.model_copy(update={"metadata": meta}))
+        return None
 
-    @configure_gui(
-        x={"types": [StandardType.ARRAY]},
-        operation={"choices": choices},
-        y={"types": [StandardType.ARRAY]},
-    )
-    def run_calc(
-        x: WidgetDataModel,
-        operation,
-        y: WidgetDataModel,
-    ) -> WidgetDataModel:
-        arr_out = operation(x.value, y.value)
-        op_name = operation.__name__.strip("_")
-        return x.with_value(arr_out, title=f"{op_name} {x.title} and {y.title}")
-
-    return run_calc
+    return set_cmaps
 
 
 @register_function(
-    title="Data type ...",
-    menus=["tools/array"],
-    types=StandardType.ARRAY,
-    command_id="builtins:array-astype",
+    title="Split channels",
+    types=StandardType.IMAGE,
+    menus=["tools/image/channels", "/model_menu/channels"],
+    command_id="builtins:split-channels",
 )
-def array_astype(model: WidgetDataModel) -> Parametric:
-    """Convert the data type of the array using `astype` method."""
-    from himena.qt._magicgui import NumericDTypeEdit
-
-    @configure_gui(dtype={"widget_type": NumericDTypeEdit})
-    def run_astype(dtype) -> WidgetDataModel:
-        return model.with_value(model.value.astype(dtype))
-
-    return run_astype
+def split_channels(model: WidgetDataModel) -> list[WidgetDataModel]:
+    """Split the channels of the image."""
+    meta = _cast_meta(model, ImageMeta)
+    arr = wrap_array(model.value)
+    if meta.channel_axis is not None:
+        c_axis = meta.channel_axis
+        channel_labels = _get_channel_names(meta)
+    elif meta.is_rgb:
+        c_axis = arr.ndim - 1
+        channel_labels = ["R", "G", "B"]
+    else:
+        raise ValueError("Image does not have a channel axis and is not RGB.")
+    slice_chn = (slice(None),) * c_axis
+    models: list[WidgetDataModel] = []
+    for idx in range(arr.shape[c_axis]):
+        arr_i = arr[slice_chn + (idx,)]
+        meta_i = meta.get_one_axis(c_axis, idx)
+        meta_i.is_rgb = False
+        title = f"[{channel_labels[idx]}] {model.title}"
+        models.append(model.with_value(arr_i, metadata=meta_i, title=title))
+    return models
 
 
 def _get_current_array_2d(model: WidgetDataModel) -> "np.ndarray":
@@ -255,6 +328,15 @@ def _get_current_array_2d(model: WidgetDataModel) -> "np.ndarray":
         raise ValueError("The `current_indices` attribute is not set.")
     arr = wrap_array(model.value)
     return arr.get_slice(tuple(indices))
+
+
+def _get_channel_names(meta: ImageMeta, allow_single: bool = False) -> list[str]:
+    idx = meta.channel_axis
+    if idx is None:
+        if allow_single:
+            return ["Ch-0"]
+        raise ValueError("Image does not have a channel axis.")
+    return [ch.name for ch in meta.channels]
 
 
 _C = TypeVar("_C", bound=type)

@@ -1,3 +1,4 @@
+from pathlib import Path
 import numpy as np
 from himena._data_wrappers._dataframe import wrap_dataframe
 from himena.plugins import register_function
@@ -16,6 +17,8 @@ def open_as_text_anyway(ui: MainWindow, win: SubWindow) -> WidgetDataModel[str]:
     model = win.to_model()
     if model.type != StandardType.READER_NOT_FOUND:
         raise ValueError(f"Invalid model type: {model.type}")
+    if not isinstance(model.source, Path):
+        raise ValueError("Model has multiple source paths. Cannot open as a text data.")
     out = model.with_value(model.source.read_text(), type=StandardType.TEXT)
     win._close_me(ui)
     return out

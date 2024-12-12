@@ -199,7 +199,7 @@ class WidgetDataModel(GenericModel[_T]):
         return self.model_copy(update=update)
 
     @property
-    def source(self) -> Path | None:
+    def source(self) -> Path | list[Path] | None:
         """The direct source path of the data."""
         if isinstance(self.method, LocalReaderMethod):
             return self.method.path
@@ -241,8 +241,13 @@ class WidgetDataModel(GenericModel[_T]):
 
     def __repr__(self):
         value_repr = f"<{type(self.value).__name__}>"
-        if source := self.source:
+        if isinstance(source := self.source, Path):
             source_repr = source.as_posix()
+        elif isinstance(source, list):
+            if len(source) > 0:
+                source_repr = f"[{source[0].as_posix()}, ...]"
+            else:
+                source_repr = "[]"
         else:
             source_repr = None
         return (

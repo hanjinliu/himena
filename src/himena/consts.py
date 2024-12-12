@@ -77,6 +77,7 @@ class StandardType(SimpleNamespace):
 
     ### Nested models ###
     MODELS = "models"  # list or dict of models
+    LAZY = "lazy"  # lazy loading of models
 
     ### Other types ###
     GROUPBY = "groupby"  # DataFrame GroupBy object

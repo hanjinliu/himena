@@ -84,6 +84,10 @@ class ImageChannel(BaseModel):
         """Return a default channel (also used for mono-channel images)."""
         return cls(name=None, colormap="gray", contrast_limits=None)
 
+    def with_colormap(self, colormap: Any) -> "ImageChannel":
+        """Set the colormap of the channel."""
+        return self.model_copy(update={"colormap": colormap})
+
 
 class ImageMeta(ArrayMeta):
     """Preset for describing an image file metadata."""
@@ -106,6 +110,25 @@ class ImageMeta(ArrayMeta):
 
     def without_rois(self) -> "ImageMeta":
         return self.model_copy(update={"rois": roi.RoiListModel(), "current_roi": None})
+
+    def get_one_axis(self, index: int, value: int) -> "ImageMeta":
+        """Drop an axis by index."""
+        if index < 0:
+            index += len(self.axes)
+        if index < 0 or index >= len(self.axes):
+            raise IndexError(f"Invalid axis index: {index}.")
+        axes = self.axes.copy()
+        del axes[index]
+        update = {"axes": axes}
+        caxis = self.channel_axis
+        if (caxis := self.channel_axis) == index:
+            update["channels"] = [self.channels[value]]
+            update["channel_axis"] = None
+            update["is_rgb"] = False
+        elif caxis is not None:
+            update["channel_axis"] = caxis - 1 if caxis > index else caxis
+        # TODO: Drop rois for now, but eventually consider them
+        return self.model_copy(update=update)
 
     @field_validator("axes", mode="before")
     def _strings_to_axes(cls, v, values: "ValidationInfo"):

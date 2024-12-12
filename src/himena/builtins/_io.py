@@ -20,20 +20,9 @@ if TYPE_CHECKING:
 ################################
 
 
-def default_text_reader(file_path: Path) -> WidgetDataModel:
-    """Read text file."""
+def _infer_encoding(file_path: Path) -> str:
     import chardet
 
-    if file_path.suffix in (".html", ".htm"):
-        typ = StandardType.HTML
-    elif file_path.suffix == ".json":
-        typ = StandardType.JSON
-    elif file_path.suffix == ".svg":
-        typ = StandardType.SVG
-    elif file_path.suffix == ".ipynb":
-        typ = StandardType.IPYNB
-    else:
-        typ = StandardType.TEXT
     with file_path.open("rb") as f:
         detector = chardet.UniversalDetector()
         for line in f:
@@ -44,6 +33,22 @@ def default_text_reader(file_path: Path) -> WidgetDataModel:
     encoding = detector.result["encoding"]
     if encoding == "ascii":
         encoding = "utf-8"  # ascii is a subset of utf-8
+    return encoding
+
+
+def default_text_reader(file_path: Path) -> WidgetDataModel:
+    """Read text file."""
+    if file_path.suffix in (".html", ".htm"):
+        typ = StandardType.HTML
+    elif file_path.suffix == ".json":
+        typ = StandardType.JSON
+    elif file_path.suffix == ".svg":
+        typ = StandardType.SVG
+    elif file_path.suffix == ".ipynb":
+        typ = StandardType.IPYNB
+    else:
+        typ = StandardType.TEXT
+    encoding = _infer_encoding(file_path)
     value = file_path.read_text(encoding=encoding)
     return WidgetDataModel(
         value=value,
@@ -70,15 +75,17 @@ def default_image_reader(file_path: Path) -> WidgetDataModel:
 
 
 def _read_txt_as_numpy(file_path: Path, delimiter: str):
+    encoding = _infer_encoding(file_path)
     try:
         arr = np.loadtxt(
             file_path,
             dtype=np.dtypes.StringDType(),
             delimiter=delimiter,
+            encoding=encoding,
         )
     except ValueError:
         # If the file has different number of columns in each row, np.loadtxt fails.
-        with file_path.open("r") as f:
+        with file_path.open("r", encoding=encoding) as f:
             reader = csv.reader(f, delimiter=delimiter)
             ncols = 0
             rows = []
@@ -194,17 +201,14 @@ class DataFrameReader:
 
 def default_file_list_reader(file_path: Path | list[Path]) -> WidgetDataModel:
     """Read list of files."""
-    from himena._providers import ReaderProviderStore
 
-    store = ReaderProviderStore.instance()
     value: list[WidgetDataModel] = []
     if isinstance(file_path, Path):
         _iterator = file_path.glob("*")
     else:
         _iterator = iter(file_path)
     for path in _iterator:
-        model = store.run(path)._with_source(path)
-        model.title = path.name
+        model = WidgetDataModel(value=path, type=StandardType.LAZY, title=path.name)
         value.append(model)
     return WidgetDataModel(value=value, type=StandardType.MODELS)
 

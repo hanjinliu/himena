@@ -1,13 +1,21 @@
 from __future__ import annotations
 
+from pathlib import Path
+import logging
 from typing import TYPE_CHECKING, Mapping, Sequence
+import warnings
 from qtpy import QtWidgets as QtW, QtCore
 from himena.plugins._checker import protocol_override
 from himena.types import WidgetDataModel
 from himena.consts import StandardType
+from himena.builtins.qt.widgets._splitter import QSplitterHandle
 
 if TYPE_CHECKING:
     from himena.widgets import MainWindow
+
+_LOGGER = logging.getLogger(__name__)
+_WIDGET_ROLE = QtCore.Qt.ItemDataRole.UserRole
+_PATH_ROLE = QtCore.Qt.ItemDataRole.UserRole + 1
 
 
 class QModelStack(QtW.QSplitter):
@@ -25,18 +33,22 @@ class QModelStack(QtW.QSplitter):
         self._save_btn = QtW.QPushButton("Save")
         self._save_btn.setToolTip("Save the current model to a file.")
         self._save_btn.clicked.connect(self._save_current)
-        self._pop_btn = QtW.QPushButton("Pop")
-        self._pop_btn.setToolTip(
-            "Pop the current model from this stack and re-open in the main window."
+        self._get_btn = QtW.QPushButton("Get")
+        self._get_btn.setToolTip(
+            "Get the current item from this list and re-open in the main window, just "
+            "like the get-item method of a list."
         )
-        self._pop_btn.clicked.connect(self._pop_current)
+        self._get_btn.clicked.connect(self._get_current)
         self._delete_btn = QtW.QPushButton("Del")
-        self._delete_btn.setToolTip("Delete the current model from this stack.")
+        self._delete_btn.setToolTip(
+            "Delete the current item from this list. This action does not delete the "
+            "original file."
+        )
         self._delete_btn.clicked.connect(self._delete_current)
         btn_layout = QtW.QHBoxLayout()
         btn_layout.setContentsMargins(0, 0, 0, 0)
         btn_layout.addWidget(self._save_btn)
-        btn_layout.addWidget(self._pop_btn)
+        btn_layout.addWidget(self._get_btn)
         btn_layout.addWidget(self._delete_btn)
 
         self._model_list = QtW.QListWidget()
@@ -54,10 +66,15 @@ class QModelStack(QtW.QSplitter):
 
         self.addWidget(left)
         self.addWidget(self._widget_stack)
-        self._model_list.itemClicked.connect(self._update_current_index)
+        self._model_list.currentItemChanged.connect(self._current_changed)
+        self._last_index: int | None = None
         self.setSizes([160, 320])
 
         self._control_widget = QtW.QStackedWidget()
+        self._is_editable = True
+
+    def createHandle(self):
+        return QSplitterHandle(self, "left")
 
     @protocol_override
     def update_model(self, model: WidgetDataModel):
@@ -95,11 +112,31 @@ class QModelStack(QtW.QSplitter):
         # add new widgets one by one
         self._model_list.clear()
         for name, model in name_model_list:
-            widget = self._model_to_widget(model)
-            self._add_widget(name, widget)
+            if model.type == StandardType.LAZY:
+                item = self._make_lazy_item(name, model)
+            else:
+                item = self._make_eager_item(name, model)
+            self._model_list.addItem(item)
 
-        if len(name_model_list) > 0:
-            self._model_list.setCurrentRow(0)
+    def _make_lazy_item(self, name: str, model: WidgetDataModel):
+        """Make a list item that will convert a file into a widget when needed."""
+        item = QtW.QListWidgetItem(name)
+        item.setFlags(item.flags() | QtCore.Qt.ItemFlag.ItemIsEditable)
+        if isinstance(path := model.value, Path):
+            item.setData(_PATH_ROLE, path)
+            item.setData(_WIDGET_ROLE, None)
+        else:
+            warnings.warn("Lazy model should have a Path object as its value.")
+        return item
+
+    def _make_eager_item(self, name: str, model: WidgetDataModel):
+        """Make a list item that will immediately converted intoa widget."""
+        item = QtW.QListWidgetItem(name)
+        item.setFlags(item.flags() | QtCore.Qt.ItemFlag.ItemIsEditable)
+        item.setData(_PATH_ROLE, None)
+        widget = self._model_to_widget(model)
+        self._add_widget(item, widget)
+        return item
 
     def _model_to_widget(self, model: WidgetDataModel) -> QtW.QWidget:
         widget_class = self._ui._pick_widget_class(model)
@@ -110,21 +147,25 @@ class QModelStack(QtW.QSplitter):
         widget.update_model(model)
         return widget
 
-    def _add_widget(self, name: str, widget: QtW.QWidget):
-        self._model_list.addItem(name)
+    def _add_widget(self, item: QtW.QListWidgetItem, widget: QtW.QWidget):
         self._widget_stack.addWidget(widget)
         if hasattr(widget, "control_widget"):
             self._control_widget.addWidget(widget.control_widget())
         else:
             self._control_widget.addWidget(QtW.QWidget())  # empty
+        item.setData(_WIDGET_ROLE, widget)
 
     @protocol_override
     def to_model(self) -> WidgetDataModel:
         models: list[WidgetDataModel] = []
-        for ith in range(self._widget_stack.count()):
-            widget = self._widget_stack.widget(ith)
-            name = self._model_list.item(ith).text()
-            model = widget.to_model()
+        for ith in range(self._model_list.count()):
+            item = self._model_list.item(ith)
+            path = item.data(_PATH_ROLE)
+            if path is None:  # not a lazy item
+                model = item.data(_WIDGET_ROLE).to_model()
+            else:
+                model = self._exec_lazy_loading(path)
+            name = item.text()
             model.title = name
             models.append(model)
         return WidgetDataModel(value=models, type=StandardType.MODELS)
@@ -142,14 +183,77 @@ class QModelStack(QtW.QSplitter):
         return self._control_widget
 
     @protocol_override
+    def is_editable(self):
+        return self._is_editable
+
+    @protocol_override
+    def set_editable(self, editable: bool):
+        self._is_editable = editable
+        self._model_list.setEditTriggers(
+            QtW.QAbstractItemView.EditTrigger.DoubleClicked
+            | QtW.QAbstractItemView.EditTrigger.EditKeyPressed
+            if editable
+            else QtW.QAbstractItemView.EditTrigger.NoEditTriggers
+        )
+        self._delete_btn.setEnabled(editable)
+
+    @protocol_override
     def merge_model(self, model: WidgetDataModel):
-        widget = self._model_to_widget(model)
-        self._add_widget(model.title, widget)
+        item = self._make_eager_item(model.title, model)
+        self._model_list.addItem(item)
 
     def _update_current_index(self):
         row = self._model_list.currentRow()
-        self._widget_stack.setCurrentIndex(row)
-        self._control_widget.setCurrentIndex(row)
+        item = self._model_list.item(row)
+        widget = item.data(_WIDGET_ROLE)
+        if widget is None:
+            path = item.data(_PATH_ROLE)
+            if path is None:
+                widget = QtW.QLabel("Not Available")
+            else:
+                model = self._exec_lazy_loading(path)
+                widget = self._model_to_widget(model)
+            self._add_widget(item, widget)
+        idx = self._widget_stack.indexOf(widget)
+        self._widget_stack.setCurrentIndex(idx)
+        self._control_widget.setCurrentIndex(idx)
+        self._control_widget.currentWidget().setVisible(True)
+        self._control_widget.setVisible(True)
+
+    def _current_changed(self):
+        if self._last_index is not None:
+            item = self._model_list.item(self._last_index)
+            if (
+                (path := item.data(_PATH_ROLE))
+                and (widget := item.data(_WIDGET_ROLE))
+                and not _is_modified(widget)
+            ):
+                item.setData(_WIDGET_ROLE, None)
+                item.setData(_PATH_ROLE, path)
+                assert isinstance(widget, QtW.QWidget)
+                stack_idx = self._widget_stack.indexOf(widget)
+                self._widget_stack.removeWidget(widget)
+                widget.deleteLater()
+                ctrl_widget = self._control_widget.widget(stack_idx)
+                if ctrl_widget:
+                    self._control_widget.removeWidget(ctrl_widget)
+                    ctrl_widget.deleteLater()
+
+        self._update_current_index()
+        self._last_index = self._model_list.currentRow()
+
+    def _exec_lazy_loading(self, path: Path | list[Path]) -> WidgetDataModel:
+        """Run the pending lazy loading."""
+        from himena._providers import ReaderProviderStore
+
+        _LOGGER.info("Lazy loading: %s", path)
+        store = ReaderProviderStore.instance()
+        model = store.run(path)._with_source(path)
+        if isinstance(path, Path):
+            model.title = path.name
+        else:
+            model.title = "File Group"
+        return model
 
     def _save_current(self):
         if widget := self._widget_stack.currentWidget():
@@ -163,18 +267,17 @@ class QModelStack(QtW.QSplitter):
             )
         return False
 
-    def _pop_current(self):
+    def _get_current(self):
         if widget := self._widget_stack.currentWidget():
             model = widget.to_model()
             assert isinstance(model, WidgetDataModel)
             model.title = self._model_list.currentItem().text()
             self._ui.add_data_model(model)
-            self._delete_widget(self._model_list.currentRow())
 
     def _delete_current(self):
         ith = self._model_list.currentRow()
         widget = self._widget_stack.widget(ith)
-        if hasattr(widget, "is_modified") and widget.is_modified():
+        if _is_modified(widget):
             request = self._ui.exec_choose_one_dialog(
                 title="Closing window",
                 message="The model has been modified. Do you want to save it?",
@@ -192,3 +295,7 @@ class QModelStack(QtW.QSplitter):
         self._model_list.takeItem(row)
         control = self._control_widget.widget(row)
         self._control_widget.removeWidget(control)
+
+
+def _is_modified(widget: QtW.QWidget):
+    return hasattr(widget, "is_modified") and widget.is_modified()

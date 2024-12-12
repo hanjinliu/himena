@@ -25,8 +25,8 @@ from himena.builtins.qt.widgets._image_components import (
     QRoiButtons,
     QImageViewControl,
     QRoiCollection,
-    QImageViewSplitterHandle,
 )
+from himena.builtins.qt.widgets._splitter import QSplitterHandle
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -41,7 +41,6 @@ class QImageView(QtW.QSplitter):
 
     def __init__(self):
         super().__init__(QtCore.Qt.Orientation.Horizontal)
-        self.setHandleWidth(8)
 
         widget_left = QtW.QWidget()
         self.addWidget(widget_left)
@@ -88,7 +87,7 @@ class QImageView(QtW.QSplitter):
         self._img_view.add_image_layer()
 
     def createHandle(self):
-        return QImageViewSplitterHandle(QtCore.Qt.Orientation.Horizontal, self)
+        return QSplitterHandle(self)
 
     @protocol_override
     def update_model(self, model: WidgetDataModel):
@@ -154,7 +153,7 @@ class QImageView(QtW.QSplitter):
             self._dims_slider.setValue(sl_0)
 
         # update channel info
-        if meta0.channel_axis is None:
+        if meta0.channel_axis is None or meta0.is_rgb:
             nchannels = 1
         else:
             nchannels = arr.shape[meta0.channel_axis]
@@ -189,7 +188,9 @@ class QImageView(QtW.QSplitter):
             self._channels = [
                 ChannelInfo.from_channel(i, c) for i, c in enumerate(channels)
             ]
-            if len(self._channels) == 1:
+            if len(self._channels) == 1 and channels[0].colormap is None:
+                # ChannelInfo.from_channel returns a single green colormap but it should
+                # be gray for single channel images.
                 self._channels[0].colormap = Colormap("gray")
 
         self._set_image_slices(img_slices)

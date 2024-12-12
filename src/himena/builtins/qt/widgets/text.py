@@ -1,5 +1,6 @@
 from __future__ import annotations
 from contextlib import contextmanager
+from pathlib import Path
 from typing import Iterator, TYPE_CHECKING
 
 from qtpy import QtWidgets as QtW
@@ -170,7 +171,7 @@ class QTextEdit(QtW.QWidget):
                 cursor.setPosition(sel[1], QtGui.QTextCursor.MoveMode.KeepAnchor)
                 self._main_text_edit.setTextCursor(cursor)
         if lang is None:
-            if src := model.source:
+            if isinstance(src := model.source, Path):
                 # set default language
                 lang = find_language_from_path(src.name)
         # if language could be inferred, set it
