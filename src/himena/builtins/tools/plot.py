@@ -5,7 +5,7 @@ from cmap import Color, Colormap
 import numpy as np
 
 from himena.plugins import register_function, configure_gui
-from himena.types import Parametric, WidgetDataModel
+from himena.types import Parametric, WidgetDataModel, is_subtype
 from himena.consts import StandardType
 from himena.widgets import SubWindow
 from himena.standards.model_meta import ExcelMeta, TableMeta
@@ -116,13 +116,13 @@ def bar_plot(win: SubWindow) -> Parametric:
         else:
             bottoms = itertools.repeat(None)
         xarr, yarrs = _get_xy_data(win, x, y, fig.axes)
-        for name_yarr, _bottom, _face, _edge in zip(
+        for name_yarr, name_bottom, _face, _edge in zip(
             yarrs, bottoms, _iter_face(face), _iter_edge(edge, prefix="edge_")
         ):
             name, yarr = name_yarr
             fig.axes.bar(
-                xarr, yarr, bottom=_bottom, bar_width=bar_width, name=name, **_face,
-                **_edge
+                xarr, yarr, bottom=name_bottom[1], bar_width=bar_width, name=name,
+                **_face, **_edge
             )  # fmt: skip
         return WidgetDataModel(value=fig, type=StandardType.PLOT, title="Plot")
 
@@ -198,10 +198,12 @@ def band_plot(win: SubWindow) -> Parametric:
         fig = hplt.figure()
         xarr, ydata1 = _get_xy_data(win, x, y1, fig.axes)
         _, ydata2 = _get_xy_data(win, x, y2, fig.axes)
+        _face = next(_iter_face(face), {})
+        _edge = next(_iter_edge(edge, prefix="edge_"), {})
         if len(ydata1) == 1 and len(ydata2) == 1:
             name, yar1 = ydata1[0]
             _, yar2 = ydata2[0]
-            fig.axes.band(xarr, yar1, yar2, name=name, **face, **edge)
+            fig.axes.band(xarr, yar1, yar2, name=name, **_face, **_edge)
         else:
             raise ValueError("Only one pair of y values is allowed.")
         fig.axes.y.label = name
@@ -259,9 +261,9 @@ def _get_xy_data(
     if y is None:
         raise ValueError("The y value must be given.")
     model = win.to_model()
-    if model.type == StandardType.TABLE:
+    if is_subtype(model.type, StandardType.TABLE):
         xlabel, xarr, ys = _table_to_xy_data(model.value, x, y)
-    elif model.type == StandardType.DATAFRAME:
+    elif is_subtype(model.type, StandardType.DATAFRAME):
         df = wrap_dataframe(model.value)
         column_names = df.column_names()[y[1].start, y[1].stop]
         rows = slice(y[0].start, y[0].stop)
@@ -275,13 +277,13 @@ def _get_xy_data(
                 raise ValueError("x must not be more than one column.")
             xarr = df.column_to_array(column_names_x[0])
             xlabel = column_names_x[0]
-    elif model.type == StandardType.EXCEL:
+    elif is_subtype(model.type, StandardType.EXCEL):
         if not isinstance(meta := model.metadata, ExcelMeta):
             raise ValueError("Must be a ExcelMeta")
         table = model.value[meta.current_sheet]
         xlabel, xarr, ys = _table_to_xy_data(table, x, y)
     else:
-        raise RuntimeError("Unreachable")
+        raise RuntimeError(f"Unreachable: {model.type}")
     if xlabel:
         axes.x.label = xlabel
     return xarr, ys

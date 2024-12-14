@@ -796,7 +796,7 @@ class DockWidget(WidgetWrapper[_W]):
 
 
 def _widget_repr(widget: _W) -> str:
-    wid = get_widget_class_id(widget)
+    wid = get_widget_class_id(type(widget))
     return f"<{wid}>"
 
 

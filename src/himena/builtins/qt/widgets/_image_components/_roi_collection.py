@@ -46,6 +46,9 @@ class QSimpleRoiCollection(QtW.QWidget):
             self._list_view, 100, alignment=QtCore.Qt.AlignmentFlag.AlignTop
         )
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({len(self)} ROIs)"
+
     def layout(self) -> QtW.QVBoxLayout:
         return super().layout()
 

@@ -1,9 +1,10 @@
 from pathlib import Path
+import html
 import numpy as np
 from himena._data_wrappers._dataframe import wrap_dataframe
 from himena.plugins import register_function
 from himena.types import Parametric, WidgetDataModel, is_subtype
-from himena.consts import StandardType
+from himena.consts import StandardType, MonospaceFontFamily
 from himena.widgets import SubWindow, MainWindow
 
 
@@ -102,6 +103,31 @@ def show_statistics(model: WidgetDataModel) -> WidgetDataModel:
         value=out,
         type=StandardType.HTML,
         title=f"Statistics of {model.title}",
+        editable=False,
+    )
+
+
+@register_function(
+    menus=["tools"],
+    command_id="builtins:show-metadata",
+)
+def show_metadata(model: WidgetDataModel) -> WidgetDataModel:
+    """Show the metadata of the underlying data."""
+    meta = model.metadata
+    if meta is None:
+        raise ValueError("Model does not have metadata.")
+    if hasattr(meta, "_repr_html_"):
+        out = meta._repr_html_()
+    else:
+        meta_repr = html.escape(repr(meta))
+        out = (
+            f"<span style='font-family: monaco,{MonospaceFontFamily},"
+            f"monospace;'>{meta_repr}</span>"
+        )
+    return WidgetDataModel(
+        value=out,
+        type=StandardType.HTML,
+        title=f"Metadata of {model.title}",
         editable=False,
     )
 

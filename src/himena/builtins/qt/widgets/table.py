@@ -199,7 +199,7 @@ class QSpreadsheet(QTableBase):
     """Table widget for editing a 2D string array."""
 
     __himena_widget_id__ = "builtins:QSpreadsheet"
-    __himena_widget_name__ = "Built-in Spreadsheet Editor"
+    __himena_display_name__ = "Built-in Spreadsheet Editor"
     HeaderFormat = HeaderFormat
 
     def __init__(self):
@@ -208,6 +208,7 @@ class QSpreadsheet(QTableBase):
         self._control = None
         self._model_type = StandardType.TABLE
         self._undo_stack = UndoRedoStack[TableAction](size=25)
+        self._modified_override: bool | None = None
 
     def setHeaderFormat(self, value: HeaderFormat) -> None:
         if model := self.model():
@@ -239,6 +240,7 @@ class QSpreadsheet(QTableBase):
                 self._selection_model.append((slice(r0, r1), slice(c0, c1)))
 
         self._undo_stack.clear()
+        self._modified_override = None
         self.update()
 
         # update control widget
@@ -273,7 +275,13 @@ class QSpreadsheet(QTableBase):
 
     @protocol_override
     def is_modified(self) -> bool:
+        if self._modified_override is not None:
+            return self._modified_override
         return self._undo_stack.undoable()
+
+    @protocol_override
+    def set_modified(self, value: bool) -> None:
+        self._modified_override = value
 
     @protocol_override
     def set_editable(self, value: bool) -> None:
@@ -399,13 +407,13 @@ class QSpreadsheet(QTableBase):
         )
         # undo info
         arr = self.model()._arr
-        row0, col0 = idx.row(), idx.column()
+        row0, col0 = idx.row, idx.column
         lr, lc = arr_paste.shape
         sl = (slice(row0, row0 + lr), slice(col0, col0 + lc))
         _ud_old_shape = self.data_shape()
         _ud_old_data = arr[sl].copy()
 
-        self._paste_array((idx.row(), idx.column()), arr_paste)
+        self._paste_array((idx.row, idx.column), arr_paste)
 
         # undo info
         _ud_new_shape = self.data_shape()

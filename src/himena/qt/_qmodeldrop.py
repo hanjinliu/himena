@@ -236,6 +236,7 @@ class QModelListItem(QtW.QWidget):
         self._close_btn.setFixedSize(20, 20)
         self._close_btn.clicked.connect(lambda: self.close_requested.emit(self))
         layout = QtW.QHBoxLayout(self)
+        layout.setContentsMargins(1, 1, 1, 1)
         layout.addWidget(self._thumbnail)
         layout.addWidget(self._label)
         layout.addWidget(self._close_btn)

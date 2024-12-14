@@ -75,6 +75,8 @@ class Scatter(BasePlotModel):
 
 
 class Line(BasePlotModel):
+    """Plot model for line plot."""
+
     x: Any = Field(..., description="X-axis values.")
     y: Any = Field(..., description="Y-axis values.")
     edge: Edge = Field(default_factory=Edge, description="Properties of the line.")
@@ -82,6 +84,8 @@ class Line(BasePlotModel):
 
 
 class Bar(BasePlotModel):
+    """Plot model for bar plot."""
+
     x: Any = Field(..., description="X-axis values.")
     y: Any = Field(..., description="Y-axis values.")
     bottom: float | Any = Field(0, description="Bottom values of the bars.")
@@ -94,6 +98,8 @@ class Bar(BasePlotModel):
 
 
 class ErrorBar(BasePlotModel):
+    """Plot model for error bar plot."""
+
     x: Any = Field(..., description="X-axis values.")
     y: Any = Field(..., description="Y-axis values.")
     x_error: Any | None = Field(None, description="X-axis error values.")
@@ -105,6 +111,8 @@ class ErrorBar(BasePlotModel):
 
 
 class Band(BasePlotModel):
+    """Plot model for band plot."""
+
     x: Any = Field(..., description="X-axis values.")
     y0: Any = Field(..., description="Y-axis values of the lower bound.")
     y1: Any = Field(..., description="Y-axis values of the upper bound.")
@@ -112,7 +120,7 @@ class Band(BasePlotModel):
         "vertical", description="Orientation of the band fill."
     )
     face: Face = Field(default_factory=Face, description="Properties of the band fill.")
-    edge: Edge = Field(default_factory=Edge, description="Properties of the band fill.")
+    edge: Edge = Field(default_factory=Edge, description="Properties of the band edge.")
 
 
 class Histogram(BasePlotModel):

@@ -50,7 +50,8 @@ def _(model: hplt.Scatter, ax: plt.Axes):
     ax.scatter(
         model.x, model.y, s=model.size ** 2, c=Color(model.face.color).hex,
         marker=model.symbol, linewidths=model.edge.width, hatch=model.face.hatch,
-        edgecolors=model.edge.color, linestyle=model.edge.style, label=model.name,
+        edgecolors=model.edge.color, linestyle=model.edge.style or "-",
+        label=model.name,
     )  # fmt: skip
 
 
@@ -85,6 +86,15 @@ def _(model: hplt.ErrorBar, ax: plt.Axes):
     ax.errorbar(
         model.x, model.y, xerr=model.x_error, yerr=model.y_error,
         capsize=model.capsize, color=model.edge.color, linewidth=model.edge.width,
+        linestyle=model.edge.style, label=model.name,
+    )  # fmt: skip
+
+
+@register_plot_model(hplt.Band)
+def _(model: hplt.Band, ax: plt.Axes):
+    ax.fill_between(
+        model.x, model.y0, model.y1, color=model.face.color, hatch=model.face.hatch,
+        edgecolor=model.edge.color, linewidth=model.edge.width,
         linestyle=model.edge.style, label=model.name,
     )  # fmt: skip
 
@@ -126,7 +136,7 @@ def convert_plot_layout(lo: hplt.BaseLayoutModel, fig: plt.Figure):
             axes = fig.axes[0]
         axes.clear()
         _convert_axes(lo.axes, axes)
-    elif isinstance(lo, hplt.Layout1D):
+    elif isinstance(lo, hplt.layout.Layout1D):
         _shape = (1, len(lo.axes)) if isinstance(lo, hplt.Row) else (len(lo.axes), 1)
         if len(fig.axes) != len(lo.axes):
             fig.clear()

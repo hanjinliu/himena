@@ -146,14 +146,14 @@ class Axes(BaseModel):
     def band(
         self,
         x: Sequence[float],
+        y0: Sequence[float],
         y1: Sequence[float],
-        y2: Sequence[float],
         *,
         orient: Literal["vertical", "horizontal"] = "vertical",
         **kwargs,
     ) -> _m.Band:
         """Add a band plot model to the axes."""
-        model = _m.Band(x=x, y1=y1, y2=y2, orient=orient, **_m.parse_face_edge(kwargs))
+        model = _m.Band(x=x, y0=y0, y1=y1, orient=orient, **_m.parse_face_edge(kwargs))
         self.models.append(model)
         return model
 
