@@ -357,11 +357,12 @@ class Rect(Generic[_V]):
             bottom = int(math.ceil(bottom))
         return Rect(left, top, right - left, bottom - top)
 
-    def limit_to(self, limits: tuple[_T, _T]) -> "Rect[_T]":
+    def limit_to(self, xmax: _T, ymax: _T) -> "Rect[_T]":
+        """Limit the size of the Rect to the given maximum size."""
         left = max(self.left, 0)
         top = max(self.top, 0)
-        right = min(self.right, limits[0])
-        bottom = min(self.bottom, limits[1])
+        right = min(self.right, xmax)
+        bottom = min(self.bottom, ymax)
         return Rect(left, top, right - left, bottom - top)
 
 

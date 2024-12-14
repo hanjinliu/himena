@@ -199,7 +199,6 @@ class QImageGraphicsView(QBaseGraphicsView):
         self._selection_handles = RoiSelectionHandles(self)
         self._initialized = False
         self._image_widgets: list[QImageGraphicsWidget] = []
-        self._border_widget: QImageBorderWidget | None = None
 
         super().__init__()
         self.switch_mode(Mode.PAN_ZOOM)
@@ -211,10 +210,7 @@ class QImageGraphicsView(QBaseGraphicsView):
             self.addItem(QImageGraphicsWidget(additive=additive))
         )
         self._qroi_labels.set_bounding_rect(self._image_widgets[0].boundingRect())
-
-    def add_border_layer(self, shape: tuple[int, int]):
-        self._border_widget = self.addItem(QImageBorderWidget(shape))
-        self._qroi_labels.set_bounding_rect(self._border_widget.boundingRect())
+        self.scene().setSceneRect(self._image_widgets[0].boundingRect())
 
     def set_n_images(self, num: int):
         if num < 1:
@@ -305,9 +301,7 @@ class QImageGraphicsView(QBaseGraphicsView):
         if self._initialized:
             return
         if len(self._image_widgets) == 0:
-            if self._border_widget is None:
-                return
-            rect = self._border_widget.boundingRect()
+            return
         else:
             rect = self._image_widgets[0].boundingRect()
         if (size := max(rect.width(), rect.height())) <= 0:
@@ -557,7 +551,11 @@ class QImageGraphicsView(QBaseGraphicsView):
     def set_current_roi(self, item: QtW.QGraphicsItem):
         self._current_roi_item = item
         self._is_current_roi_item_not_registered = True
+        # To avoid the automatic translation of the scene visible region during drawing
+        # ROIs, reset the scene rect after adding the item
+        rect = self.scene().sceneRect()
         self.scene().addItem(item)
+        self.scene().setSceneRect(rect)
         _LOGGER.info(f"Set current ROI item to {item}")
 
     def add_current_roi(self):

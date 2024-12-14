@@ -1,8 +1,8 @@
 from typing import TYPE_CHECKING, Any
 import numpy as np
-from himena._data_wrappers._array import wrap_array
+from himena._data_wrappers._array import wrap_array, ArrayWrapper
 from himena.plugins import register_function, configure_gui
-from himena.types import Parametric, WidgetDataModel
+from himena.types import Parametric, Rect, WidgetDataModel
 from himena.consts import StandardType
 from himena.standards.model_meta import (
     ArrayAxis,
@@ -27,17 +27,8 @@ def crop_image(model: WidgetDataModel) -> WidgetDataModel:
     roi, meta = _get_current_roi_and_meta(model)
     arr = wrap_array(model.value)
     if isinstance(roi, _roi.ImageRoi2D):
-        bbox = roi.bbox().adjust_to_int()
-        if meta.is_rgb:
-            bbox = bbox.limit_to(arr.shape[-3:-1])
-        else:
-            bbox = bbox.limit_to(arr.shape[-2:])
-        ysl = slice(bbox.top, bbox.top + bbox.height + 1)
-        xsl = slice(bbox.left, bbox.left + bbox.width + 1)
-        if meta.is_rgb:
-            arr_cropped = arr[..., ysl, xsl, :]
-        else:
-            arr_cropped = arr[..., ysl, xsl]
+        sl, bbox = _2d_roi_to_slices(roi, arr, meta)
+        arr_cropped = arr[(...,) + sl]
     else:
         raise NotImplementedError
     meta_out = meta.without_rois()
@@ -79,14 +70,8 @@ def crop_image_nd(win: SubWindow) -> Parametric:
         roi, meta = _get_current_roi_and_meta(model)
         sl_nd = tuple(slice(x0, x1) for x0, x1 in kwargs.values())
         if isinstance(roi, _roi.ImageRoi2D):
-            bbox = roi.bbox().adjust_to_int()
-            if meta.is_rgb:
-                bbox = bbox.limit_to(arr.shape[-3:-1])
-            else:
-                bbox = bbox.limit_to(arr.shape[-2:])
-            ysl = slice(bbox.top, bbox.top + bbox.height + 1)
-            xsl = slice(bbox.left, bbox.left + bbox.width + 1)
-            sl = sl_nd + (ysl, xsl)
+            sl, _ = _2d_roi_to_slices(roi, arr, meta)
+            sl = sl_nd + sl
             arr_cropped = arr[sl]
         else:
             raise NotImplementedError
@@ -95,6 +80,25 @@ def crop_image_nd(win: SubWindow) -> Parametric:
         return model.with_value(arr_cropped, metadata=meta_out)
 
     return run_crop_image
+
+
+def _2d_roi_to_slices(
+    roi: _roi.ImageRoi2D, arr: ArrayWrapper, meta: ImageMeta
+) -> tuple[tuple, Rect[int]]:
+    bbox = roi.bbox().adjust_to_int()
+    if meta.is_rgb:
+        bbox = bbox.limit_to(arr.shape[-2], arr.shape[-3])
+    else:
+        bbox = bbox.limit_to(arr.shape[-1], arr.shape[-2])
+    if bbox.width <= 0 or bbox.height <= 0:
+        raise ValueError("Crop range out of bounds.")
+    ysl = slice(bbox.top, bbox.top + bbox.height + 1)
+    xsl = slice(bbox.left, bbox.left + bbox.width + 1)
+    if meta.is_rgb:
+        sl = (ysl, xsl, slice(None))
+    else:
+        sl = (ysl, xsl)
+    return sl, bbox
 
 
 @register_function(
