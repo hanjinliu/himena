@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Any, TYPE_CHECKING
 
 from magicgui.types import Undefined
-from magicgui.widgets import LineEdit, ComboBox, TupleEdit
+from magicgui.widgets import LineEdit, ComboBox
 from magicgui.widgets.bases import ValuedContainerWidget, ValueWidget
 from cmap import Color, Colormap
 from himena.qt._magicgui._color import ColorEdit, ColormapEdit
@@ -156,11 +156,38 @@ class EdgePropertyEdit(ValuedContainerWidget["EdgePropertyDict"]):
         self._edge_style.enabled = enabled
 
 
+class LimitEdit(ValuedContainerWidget[tuple[float, float]]):
+    def __init__(self, value=Undefined, **kwargs):
+        self._min_widget = FloatEdit(value=0.0, label="min")
+        self._max_widget = FloatEdit(value=1.0, label="max")
+        super().__init__(
+            value,
+            widgets=[self._min_widget, self._max_widget],
+            layout="horizontal",
+            **kwargs,
+        )
+        self._min_widget.changed.connect(self._emit_value_changed)
+        self._max_widget.changed.connect(self._emit_value_changed)
+        self.margins = (0, 0, 0, 0)
+
+    def get_value(self) -> tuple[float, float]:
+        return self._min_widget.value, self._max_widget.value
+
+    def set_value(self, value: tuple[float, float]):
+        with self.changed.blocked():
+            self._min_widget.value = value[0]
+            self._max_widget.value = value[1]
+        self._emit_value_changed()
+
+    def _emit_value_changed(self) -> None:
+        self.changed.emit(self.get_value())
+
+
 class AxisPropertyEdit(ValuedContainerWidget["AxisPropertyDict"]):
     def __init__(self, value=Undefined, **kwargs):
         if value is None:
             value = Undefined
-        self._lim_widget = TupleEdit(value=(0.0, 1.0), label="lim")
+        self._lim_widget = LimitEdit(label="lim")
         self._scale_widget = ComboBox(choices=["linear", "log"], label="scale")
         self._label_widget = LineEdit(value="", label="label")
         self._grid_widget = ToggleSwitch(value=False, text="grid")
@@ -212,9 +239,13 @@ class DictEdit(ValuedContainerWidget[dict]):
         self._widget_dict: dict[str, ValueWidget] = {}
         for k, opt in options.items():
             _opt = opt.copy()
-            if (label := _opt.get("label", None)) is None:
+            if (label := _opt.pop("label", None)) is None:
                 label = k
-            self._widget_dict[k] = type_map.create_widget(options=_opt, label=label)
+            value = _opt.pop("value", Undefined)
+            annotation = _opt.pop("annotation", None)
+            self._widget_dict[k] = type_map.create_widget(
+                value, annotation=annotation, options=_opt, label=label
+            )
         super().__init__(value, widgets=self._widget_dict.values(), **kwargs)
         for widget in self._widget_dict.values():
             widget.changed.connect(self._emit_value_changed)

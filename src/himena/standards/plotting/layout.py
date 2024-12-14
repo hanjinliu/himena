@@ -4,7 +4,7 @@ import numpy as np
 from pydantic_compat import BaseModel, Field
 from pydantic import field_serializer, field_validator
 from himena.standards.plotting import models as _m
-from himena.consts import PYDANTIC_CONFIG_STRICT
+from himena.consts import PYDANTIC_CONFIG_STRICT, StandardType
 
 if TYPE_CHECKING:
     from typing import Self
@@ -36,6 +36,14 @@ class BaseLayoutModel(BaseModel):
         if model_type == "grid":
             return Grid.model_validate(dict_)
         raise ValueError(f"Unknown layout model type: {model_type!r}")
+
+    def show(self) -> None:
+        """Show the layout in the current himena window."""
+        from himena.widgets import current_instance
+
+        ui = current_instance()
+        ui.add_data(self, type=StandardType.PLOT, title="Plot")
+        return None
 
 
 class StyledText(BaseModel):
@@ -188,10 +196,84 @@ class SingleAxes(BaseLayoutModel):
     axes: Axes = Field(default_factory=Axes, description="Child axes.")
 
     def merge_with(self, other: "SingleAxes") -> "SingleAxes":
+        """Merge with another SingleAxes layout."""
         new_axes = self.axes.model_copy(
             update={"models": self.axes.models + other.axes.models}
         )
         return SingleAxes(axes=new_axes)
+
+    ### Because there's only one axes, we can directly call the axes methods.
+    def scatter(
+        self,
+        x: Sequence[float],
+        y: Sequence[float],
+        *,
+        symbol: str = "o",
+        size: float | None = None,
+        **kwargs,
+    ) -> _m.Scatter:
+        """Add a scatter plot model to the axes."""
+        return self.axes.scatter(x=x, y=y, symbol=symbol, size=size, **kwargs)
+
+    def plot(self, x: Sequence[float], y: Sequence[float], **kwargs) -> _m.Line:
+        """Add a line plot model to the axes."""
+        return self.axes.plot(x=x, y=y, **kwargs)
+
+    def bar(
+        self,
+        x: Sequence[float],
+        y: Sequence[float],
+        *,
+        bottom: "float | Sequence[float] | NDArray[np.number] | None" = None,
+        bar_width: float | None = None,
+        orient: Literal["vertical", "horizontal"] = "vertical",
+        **kwargs,
+    ) -> _m.Bar:
+        """Add a bar plot model to the axes."""
+        return self.axes.bar(
+            x=x, y=y, bottom=bottom, bar_width=bar_width, orient=orient, **kwargs
+        )
+
+    def errorbar(
+        self,
+        x: Sequence[float],
+        y: Sequence[float],
+        *,
+        x_error: "float | Sequence[float] | NDArray[np.number] | None" = None,
+        y_error: "float | Sequence[float] | NDArray[np.number] | None" = None,
+        capsize: float | None = None,
+        **kwargs,
+    ) -> _m.ErrorBar:
+        """Add an error bar plot model to the axes."""
+        return self.axes.errorbar(
+            x=x, y=y, x_error=x_error, y_error=y_error, capsize=capsize, **kwargs
+        )
+
+    def band(
+        self,
+        x: Sequence[float],
+        y0: Sequence[float],
+        y1: Sequence[float],
+        *,
+        orient: Literal["vertical", "horizontal"] = "vertical",
+        **kwargs,
+    ) -> _m.Band:
+        """Add a band plot model to the axes."""
+        return self.axes.band(x=x, y0=y0, y1=y1, orient=orient, **kwargs)
+
+    def hist(
+        self,
+        data: "Sequence[float] | NDArray[np.number]",
+        *,
+        bins: int = 10,
+        range: tuple[float, float] | None = None,
+        orient: Literal["vertical", "horizontal"] = "vertical",
+        **kwargs,
+    ) -> _m.Histogram:
+        """Add a histogram plot model to the axes."""
+        return self.axes.hist(
+            data=data, bins=bins, range=range, orient=orient, **kwargs
+        )
 
 
 class Layout1D(BaseLayoutModel):

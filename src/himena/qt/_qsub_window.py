@@ -256,9 +256,9 @@ class QSubWindow(QtW.QMdiSubWindow):
 
         self._central_widget.layout().addWidget(self._title_bar)
         spacer = QtW.QWidget()
-        spacer.setLayout(QtW.QVBoxLayout())
-        spacer.layout().setContentsMargins(4, 4, 4, 4)
-        spacer.layout().addWidget(widget)
+        layout = QtW.QVBoxLayout(spacer)
+        layout.setContentsMargins(4, 4, 4, 4)
+        layout.addWidget(widget)
         self._central_widget.layout().addWidget(spacer)
         self._last_geometry = self.geometry()
         self._anim_geometry = QtCore.QPropertyAnimation(self, b"geometry")

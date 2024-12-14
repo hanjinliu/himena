@@ -537,7 +537,10 @@ class ParametricWindow(SubWindow[_W]):
         """Callback when the call button is clicked."""
         main = self._main_window()
         main._set_parametric_widget_busy(self, True)
-        self._callback_with_params(self.get_params())
+        try:
+            self._callback_with_params(self.get_params())
+        finally:
+            main._set_parametric_widget_busy(self, False)
 
     def _call(self, **kwargs):
         """Call the callback asynchronously."""
@@ -564,15 +567,11 @@ class ParametricWindow(SubWindow[_W]):
                     if hint := self.size_hint():
                         self.rect = (self.rect.left, self.rect.top, hint[0], hint[1])
             return None
-        try:
-            kwargs = widget.get_params()
-            if self._has_is_previewing:
-                kwargs[self._IS_PREVIEWING] = True
-            # TODO: check async
-            return_value = self._callback(**kwargs)
-        except Exception as e:
-            _LOGGER.warning(f"Error in preview callback: {e}")
-            return None
+        kwargs = widget.get_params()
+        if self._has_is_previewing:
+            kwargs[self._IS_PREVIEWING] = True
+        # TODO: check async
+        return_value = self._callback(**kwargs)
         if not isinstance(return_value, WidgetDataModel):
             raise NotImplementedError(
                 "Preview is only supported for WidgetDataModel but the return value "

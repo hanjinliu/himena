@@ -101,8 +101,10 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
 
     @protocol_override
     def to_model(self) -> WidgetDataModel:
+        value = self._plot_models.model_copy()
+        # TODO: update the model with the current canvas state as much as possible
         return WidgetDataModel(
-            value=self._plot_models,
+            value=value,
             type=self.model_type(),
             extension_default=".plot.json",
             title="Plot",
@@ -133,6 +135,15 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
     @protocol_override
     def size_hint(self) -> tuple[int, int]:
         return 300, 240
+
+    @protocol_override
+    def window_resized_callback(self, size: tuple[int, int]):
+        if size[0] > 40 and size[1] > 40:
+            self._canvas.figure.tight_layout()
+
+    @protocol_override
+    def window_added_callback(self):
+        self._canvas.figure.tight_layout()
 
 
 class FigureCanvasQTAgg(backend_qtagg.FigureCanvasQTAgg):

@@ -62,6 +62,7 @@ class _ColormapEdit(QBaseValueWidget):
             **kwargs,
         )
         self._qwidget.addColormaps(get_colormaps(cat))
+        self._qwidget.setMinimumHeight(22)
 
     def _pre_set_hook(self, value: Any) -> Any:
         return Colormap(value)

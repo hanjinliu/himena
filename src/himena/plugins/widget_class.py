@@ -2,7 +2,9 @@ from typing import Callable, overload, TypeVar, TYPE_CHECKING
 from app_model.types import Action
 from himena._descriptors import NoNeedToSave
 from himena._utils import get_display_name, get_widget_class_id
-from himena.plugins.actions import AppActionRegistry
+from himena._app_model import AppContext as ctx
+from himena.plugins.actions import AppActionRegistry, _type_to_expression
+
 from himena.types import WidgetDataModel
 
 if TYPE_CHECKING:
@@ -112,6 +114,11 @@ class OpenDataInFunction:
         self._plugin_id = get_widget_class_id(widget_class)
         self._action_id = "open-in:" + self._plugin_id
         self._type = type_
+        self._enablement = (
+            _type_to_expression(self._type)
+            # disable action that open the same data in the same widget
+            & (ctx.active_window_widget_id != self._plugin_id)
+        )
 
     def __call__(self, model: WidgetDataModel) -> WidgetDataModel:
         return model.with_open_plugin(
@@ -128,6 +135,7 @@ class OpenDataInFunction:
             title=self._display_name,
             tooltip=tooltip,
             callback=self,
+            enablement=self._enablement,
             menus=[{"id": self.menu_id(), "group": "open-in"}],
         )
 

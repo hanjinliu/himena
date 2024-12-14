@@ -16,13 +16,22 @@ class QParametricWidget(QtW.QWidget):
 
     def __init__(self, central: QtW.QWidget | Widget) -> None:
         super().__init__()
+        self._scroll_area = QtW.QScrollArea()
+        self._scroll_area.setWidgetResizable(True)
+        self._scroll_area.setSizePolicy(
+            QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Expanding
+        )
+        self._scroll_area.setHorizontalScrollBarPolicy(
+            QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
         self._call_btn = QtW.QPushButton("Run", self)
         self._central_widget = central
         layout_h = QtW.QHBoxLayout(self)
-        layout_h.setContentsMargins(3, 3, 3, 3)
-        layout_v = QtW.QVBoxLayout()
-        layout_h.addLayout(layout_v)
-        layout_v.setContentsMargins(0, 0, 0, 0)
+        layout_h.setContentsMargins(0, 0, 0, 0)
+        layout_h.addWidget(self._scroll_area)
+        area_widget = QtW.QWidget()
+        self._scroll_area.setWidget(area_widget)
+        layout_v = QtW.QVBoxLayout(area_widget)
         layout_v.setSpacing(2)
         if isinstance(central, Widget):
             if not isinstance(central.native, QtW.QWidget):
@@ -70,7 +79,7 @@ class QParametricWidget(QtW.QWidget):
     def size_hint(self) -> tuple[int, int] | None:
         mysize = self._base_size_hint()
         if self._result_widget is None:
-            return mysize.width(), mysize.height()
+            return mysize.width(), min(mysize.height(), 400)
         if hasattr(self._result_widget, "size_hint") and (
             size := self._result_widget.size_hint()
         ):
@@ -80,7 +89,7 @@ class QParametricWidget(QtW.QWidget):
             w0, h0 = hint.width(), hint.height()
         mysize.setHeight(mysize.height() + h0)
         mysize.setWidth(max(mysize.width(), w0))
-        return mysize.width(), mysize.height()
+        return mysize.width(), min(mysize.height(), 400)
 
     @protocol_override
     def control_widget(self) -> QtW.QWidget:
@@ -93,8 +102,8 @@ class QParametricWidget(QtW.QWidget):
 
     def _base_size_hint(self) -> QtCore.QSize:
         mysize = QtCore.QSize(self._central_widget_size_hint)
-        mysize.setWidth(mysize.width() + 6)  # content margins
-        mysize.setHeight(mysize.height() + 6)  # content margins
+        mysize.setWidth(mysize.width() + 10)  # content margins
+        mysize.setHeight(mysize.height() + 36)  # content margins and scroll area
         if self._call_btn.isVisible():
             mysize.setHeight(mysize.height() + 24)  # button height
         return mysize

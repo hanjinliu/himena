@@ -84,7 +84,7 @@ class QIntEdit(QBaseRangedStringWidget):
     _qwidget: QIntLineEdit
 
     def __init__(self, **kwargs) -> None:
-        super().__init__(QIntLineEdit, "text", "setText", "textChanged", **kwargs)
+        super().__init__(QIntLineEdit, "text", "setText", "valueChanged", **kwargs)
 
     def _post_get_hook(self, value):
         if value == "":
@@ -130,7 +130,7 @@ class QFloatEdit(QBaseRangedStringWidget):
     _qwidget: QDoubleLineEdit
 
     def __init__(self, **kwargs) -> None:
-        super().__init__(QDoubleLineEdit, "text", "setText", "textChanged", **kwargs)
+        super().__init__(QDoubleLineEdit, "text", "setText", "valueChanged", **kwargs)
 
     def _post_get_hook(self, value):
         if value == "":

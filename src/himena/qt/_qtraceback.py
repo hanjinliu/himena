@@ -9,7 +9,7 @@ import numpy as np
 from qtpy import QtWidgets as QtW, QtGui, QtCore
 from psygnal import EmitLoopError
 
-from himena.consts import MonospaceFontFamily, StandardType
+from himena.consts import MonospaceFontFamily
 
 if TYPE_CHECKING:
     from types import TracebackType
@@ -88,15 +88,6 @@ class QtErrorMessageBox(QtW.QWidget):
         if focus:
             focus.setFocus()
 
-    def _open_file_button_clicked(self):
-        filename = self._exc.__traceback__.tb_frame.f_code.co_filename
-        if main := self._main_window():
-            ui = main._himena_main_window
-            ui.read_file(filename)
-            ui.add_data(
-                self._get_traceback(), type=StandardType.HTML, title="Traceback"
-            )
-
     def _enter_debugger_button_clicked(self):
         import pdb
 
@@ -127,15 +118,12 @@ class QtErrorMessageBox(QtW.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         traceback_button = QtW.QPushButton("Trackback", self)
-        open_file_button = QtW.QPushButton("Open file", self)
         enter_debugger_button = QtW.QPushButton("Debug", self)
 
         traceback_button.clicked.connect(self._traceback_button_clicked)
-        open_file_button.clicked.connect(self._open_file_button_clicked)
         enter_debugger_button.clicked.connect(self._enter_debugger_button_clicked)
 
         layout.addWidget(traceback_button)
-        layout.addWidget(open_file_button)
         layout.addWidget(enter_debugger_button)
         self.layout().addWidget(footer)
         return self

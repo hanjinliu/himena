@@ -2,7 +2,7 @@ from __future__ import annotations
 import operator
 from decimal import Decimal
 
-from qtpy import QtWidgets as QtW, QtGui
+from qtpy import QtWidgets as QtW, QtGui, QtCore
 from qtpy.QtCore import Qt
 
 
@@ -72,10 +72,22 @@ class QCommaSeparatedDoubleValidator(QCommaSeparatedValidator):
 
 class QValuedLineEdit(QtW.QLineEdit):
     _validator_class: type[QIntOrNoneValidator | QDoubleOrNoneValidator]
+    valueChanged = QtCore.Signal(str)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setValidator(self._validator_class(self))
+        self.textChanged.connect(self._on_text_changed)
+
+    def _on_text_changed(self, text: str):
+        validate_result = self.validator().validate(text, 0)
+        if validate_result[0] == QtGui.QValidator.State.Acceptable:
+            self.valueChanged.emit(validate_result[1])
+
+    def sizeHint(self) -> QtCore.QSize:
+        hint = super().sizeHint()
+        hint.setWidth(100)  # numerical values do not need to be too wide
+        return hint
 
     def stepUp(self, large: bool = False):
         raise NotImplementedError
@@ -87,8 +99,10 @@ class QValuedLineEdit(QtW.QLineEdit):
         if a0 is not None:
             if a0.angleDelta().y() > 0:
                 self.stepUp()
+                a0.accept()
             elif a0.angleDelta().y() < 0:
                 self.stepDown()
+                a0.accept()
         return super().wheelEvent(a0)
 
     def keyPressEvent(self, a0: QtGui.QKeyEvent | None) -> None:

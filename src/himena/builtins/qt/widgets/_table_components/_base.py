@@ -109,7 +109,7 @@ class QTableBase(QtW.QTableView):
         model = self.model()
         return model.rowCount(), model.columnCount()
 
-    def selectAll(self):
+    def select_all(self):
         """Override selectAll slot to update custom selections."""
         nr, nc = self.data_shape()
         if nr * nc > 0:
@@ -273,6 +273,9 @@ class QTableBase(QtW.QTableView):
                 dr, dc = 0, -99999999
             elif _key == Qt.Key.Key_Right:
                 dr, dc = 0, 99999999
+            elif _key == Qt.Key.Key_A:
+                self.select_all()
+                return None
             else:
                 return super().keyPressEvent(e)
             self._selection_model.move_limited(dr, dc, nr, nc)
