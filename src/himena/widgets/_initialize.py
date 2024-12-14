@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from pathlib import Path
+from concurrent.futures import Future
 from typing import TypeVar, TYPE_CHECKING
 from logging import getLogger
 import weakref
 from magicgui.widgets import FunctionGui
-from app_model import Application
 from himena.consts import ParametricWidgetProtocolNames as PWPN
 from himena.types import (
     Parametric,
@@ -18,6 +17,7 @@ from himena.widgets._wrapper import SubWindow
 from himena._utils import get_gui_config
 
 if TYPE_CHECKING:
+    from himena._app_model import HimenaApplication
     from himena.widgets._main_window import MainWindow
 
 _W = TypeVar("_W")  # backend widget type
@@ -68,10 +68,10 @@ def _app_destroyed(app_name) -> None:
     _APP_INSTANCES.pop(app_name, None)
 
 
-_APP_INITIALIZED = weakref.WeakSet[Application]()
+_APP_INITIALIZED = weakref.WeakSet["HimenaApplication"]()
 
 
-def init_application(app: Application) -> Application:
+def init_application(app: HimenaApplication) -> HimenaApplication:
     from himena._app_model.actions import ACTIONS, SUBMENUS
     from himena.widgets._main_window import MainWindow
 
@@ -125,18 +125,10 @@ def init_application(app: Application) -> Application:
         return None
 
     @app.injection_store.mark_processor
-    def _process_file_inputs(file_data: list[WidgetDataModel]) -> None:
-        _LOGGER.debug("processing %r", file_data)
-        for each in file_data:
+    def _process_data_models(models: list[WidgetDataModel]) -> None:
+        _LOGGER.debug("processing %r", models)
+        for each in models:
             _process_data_model(each)
-
-    @app.injection_store.mark_processor
-    def _process_file_path(path: Path) -> None:
-        if path is None:
-            return None
-        ins = current_instance(app.name)
-        ins.read_file(path, plugin=None)
-        return None
 
     @app.injection_store.mark_provider
     def _get_clipboard_data() -> ClipboardDataModel:
@@ -189,6 +181,16 @@ def init_application(app: Application) -> Application:
                 auto_close=getattr(widget, PWPN.GET_AUTO_CLOSE, lambda: True)(),
                 auto_size=getattr(widget, PWPN.GET_AUTO_SIZE, lambda: True)(),
             )
+        return None
+
+    @app.injection_store.mark_processor
+    def _process_future(future: Future) -> None:
+        ui = current_instance(app.name)
+        cb = ui._backend_main_window._process_future_done_callback(
+            app._future_done_callback
+        )
+        future.add_done_callback(cb)
+        app._futures.add(future)
         return None
 
     _APP_INITIALIZED.add(app)

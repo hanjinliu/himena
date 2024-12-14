@@ -410,7 +410,8 @@ class GuiConfiguration(BaseModel):
     preview: bool = False
     auto_close: bool = True
     show_parameter_labels: bool = True
-    result_as: Literal["window", "below"] = "window"
+    run_async: bool = False
+    result_as: Literal["window", "below", "right"] = "window"
 
 
 class ModelTrack(BaseModel):

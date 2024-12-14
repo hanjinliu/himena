@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from concurrent.futures import Future
 from contextlib import suppress
 import inspect
 import logging
@@ -398,11 +399,11 @@ class SubWindow(WidgetWrapper[_W]):
             request = main.exec_choose_one_dialog(
                 title="Closing window",
                 message=message,
-                choices=["Yes", "No", "Cancel"],
+                choices=["Save", "Don't save", "Cancel"],
             )
             if request is None or request == "Cancel":
                 return None
-            elif request == "Yes" and not self._save_from_dialog(main):
+            elif request == "Save" and not self._save_from_dialog(main):
                 return None
 
         i_tab, i_win = self._find_me(main)
@@ -504,7 +505,9 @@ class ParametricWindow(SubWindow[_W]):
         self.btn_clicked.connect(self._widget_callback)
         self._preview_window_ref: Callable[[], WidgetWrapper[_W] | None] = _do_nothing
         self._auto_close = True
-        self._result_as: Literal["window", "below"] = "window"
+        self._run_asynchronously = False
+        self._last_future: Future | None = None
+        self._result_as: Literal["window", "below", "right"] = "window"
 
         # check if callback has "is_previewing" argument
         sig = inspect.signature(callback)
@@ -532,7 +535,21 @@ class ParametricWindow(SubWindow[_W]):
 
     def _widget_callback(self):
         """Callback when the call button is clicked."""
+        main = self._main_window()
+        main._set_parametric_widget_busy(self, True)
         self._callback_with_params(self.get_params())
+
+    def _call(self, **kwargs):
+        """Call the callback asynchronously."""
+        ui = self._main_window()._himena_main_window
+        if self._run_asynchronously:
+            if self._last_future is not None:
+                self._last_future.cancel()
+                self._last_future = None
+            self._last_future = future = ui._executor.submit(self._callback, **kwargs)
+            return future
+        else:
+            return self._callback(**kwargs)
 
     def _widget_preview_callback(self, widget: ParametricWindow):
         main = self._main_window()
@@ -551,6 +568,7 @@ class ParametricWindow(SubWindow[_W]):
             kwargs = widget.get_params()
             if self._has_is_previewing:
                 kwargs[self._IS_PREVIEWING] = True
+            # TODO: check async
             return_value = self._callback(**kwargs)
         except Exception as e:
             _LOGGER.warning(f"Error in preview callback: {e}")
@@ -571,7 +589,9 @@ class ParametricWindow(SubWindow[_W]):
                 with suppress(AttributeError):
                     prev.is_editable = False
             else:
-                main._add_widget_to_parametric_window(self, result_widget)
+                main._add_widget_to_parametric_window(
+                    self, result_widget, self._result_as
+                )
                 # update the size because new window is added
                 if hint := self.size_hint():
                     self.rect = (self.rect.left, self.rect.top, hint[0], hint[1])
@@ -580,10 +600,7 @@ class ParametricWindow(SubWindow[_W]):
             main._move_focus_to(self.widget)
         return None
 
-    def _callback_with_params(self, kwargs: dict[str, Any]):
-        if self._has_is_previewing:
-            kwargs = {**kwargs, self._IS_PREVIEWING: False}
-        return_value = self._callback(**kwargs)
+    def _process_return_value(self, return_value: Any, kwargs: dict[str, Any]):
         tracker = self._get_model_track()
         _LOGGER.info("Got tracker: %r", tracker)
         ui = self._main_window()._himena_main_window
@@ -642,6 +659,31 @@ class ParametricWindow(SubWindow[_W]):
             self._process_other_output(return_value, annot.get("return", None))
         return None
 
+    def _callback_with_params(self, kwargs: dict[str, Any]):
+        if self._has_is_previewing:
+            kwargs = {**kwargs, self._IS_PREVIEWING: False}
+        main = self._main_window()
+        try:
+            return_value = self._call(**kwargs)
+        except Exception:
+            main._set_parametric_widget_busy(self, False)
+            raise
+        if isinstance(return_value, Future):
+            main._add_job_progress(return_value, desc=self.title, total=0)
+            return_value.add_done_callback(
+                main._process_future_done_callback(
+                    self._process_return_value,
+                    kwargs=kwargs,
+                )
+            )
+            return_value.add_done_callback(
+                lambda _: main._set_parametric_widget_busy(self, False)
+            )
+            return None
+        else:
+            main._set_parametric_widget_busy(self, False)
+            return self._process_return_value(return_value, kwargs)
+
     def _get_model_track(self) -> ModelTrack:
         default = ModelTrack()
         model_track = getattr(
@@ -670,15 +712,10 @@ class ParametricWindow(SubWindow[_W]):
         i_tab, i_win = self._find_me(ui)
         if self._auto_close:
             del ui.tabs[i_tab][i_win]
-        if self._result_as == "window":
-            result_widget = ui.tabs[i_tab].add_widget(
-                widget, title=model.title, auto_size=False
-            )
-            self._coerce_rect(result_widget)
-        elif self._result_as == "below":
-            self._main_window()._add_widget_to_parametric_window(self, widget)
-        else:
-            raise RuntimeError(f"Unknown result_as: {self._result_as}")
+        result_widget = ui.tabs[i_tab].add_widget(
+            widget, title=model.title, auto_size=False
+        )
+        self._coerce_rect(result_widget)
         return result_widget._update_from_returned_model(model)
 
     def _process_parametric_output(

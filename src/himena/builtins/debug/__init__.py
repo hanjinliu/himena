@@ -110,10 +110,10 @@ def plot_test() -> Parametric:
 
 @register_function(
     menus=TOOLS_DEBUG,
-    title="Test plot with parametric",
-    command_id="debug:test-plot-parametric",
+    title="Test plot with parametric (below)",
+    command_id="debug:test-plot-parametric-below",
 )
-def plot_test_parametric() -> Parametric:
+def plot_test_parametric_below() -> Parametric:
     import himena.standards.plotting as hplt
 
     @configure_gui(preview=True, result_as="below")
@@ -124,5 +124,42 @@ def plot_test_parametric() -> Parametric:
         fig.axes.plot(x, y, color="red")
         fig.axes.title = "Test plot"
         return WidgetDataModel(value=fig, type=StandardType.PLOT)
+
+    return run
+
+
+@register_function(
+    menus=TOOLS_DEBUG,
+    title="Test plot with parametric (right)",
+    command_id="debug:test-plot-parametric-right",
+)
+def plot_test_parametric_right() -> Parametric:
+    import himena.standards.plotting as hplt
+
+    @configure_gui(preview=True, result_as="right")
+    def run(freq: float = 1.0, phase: float = 0.0) -> WidgetDataModel:
+        fig = hplt.figure()
+        x = np.linspace(0, 2 * np.pi, 100)
+        y = np.sin(freq * x + phase)
+        fig.axes.plot(x, y, color="red")
+        fig.axes.title = "Test plot"
+        return WidgetDataModel(value=fig, type=StandardType.PLOT)
+
+    return run
+
+
+@register_function(
+    menus=TOOLS_DEBUG,
+    title="Test async checkpoints",
+    command_id="debug:test-async-checkpoints",
+)
+def test_async_checkpoints() -> Parametric:
+    import time
+
+    @configure_gui(run_async=True)
+    def run():
+        for i in range(10):
+            time.sleep(0.3)
+        return
 
     return run

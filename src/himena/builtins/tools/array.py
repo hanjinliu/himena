@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING, Any, TypeVar
+import numpy as np
 from himena._data_wrappers._array import wrap_array
 from himena._descriptors import NoNeedToSave
 from himena.plugins import register_function, configure_gui
@@ -7,8 +8,6 @@ from himena.consts import StandardType
 from himena.standards.model_meta import (
     ArrayMeta,
     ImageMeta,
-    ImageAxis,
-    roi as _roi,
 )
 from himena.widgets._wrapper import SubWindow
 
@@ -46,6 +45,8 @@ def duplicate_this_slice(model: WidgetDataModel) -> WidgetDataModel:
 def crop_array(model: WidgetDataModel) -> WidgetDataModel:
     """Crop the array."""
     if is_subtype(model.type, StandardType.IMAGE):  # interpret as an image
+        from .image import crop_image
+
         return crop_image(model)
     sel, meta = _get_current_selection_and_meta(model)
     arr_cropped = wrap_array(model.value)[sel]
@@ -64,6 +65,8 @@ def crop_array_nd(win: SubWindow) -> Parametric:
 
     model = win.to_model()
     if is_subtype(model.type, StandardType.IMAGE):  # interpret as an image
+        from .image import crop_image_nd
+
         return crop_image_nd(model)
 
     conf_kwargs = {}
@@ -143,180 +146,6 @@ def array_astype(model: WidgetDataModel) -> Parametric:
     return run_astype
 
 
-#############
-### Image #######
-#########################
-
-
-@register_function(
-    types=StandardType.IMAGE,
-    menus=["tools/image"],
-    command_id="builtins:crop-image",
-    keybindings=["Ctrl+Shift+X"],
-)
-def crop_image(model: WidgetDataModel) -> WidgetDataModel:
-    """Crop the image."""
-    roi, meta = _get_current_roi_and_meta(model)
-    arr = wrap_array(model.value)
-    if isinstance(roi, _roi.ImageRoi2D):
-        bbox = roi.bbox().adjust_to_int()
-        if meta.is_rgb:
-            bbox = bbox.limit_to(arr.shape[-3:-1])
-        else:
-            bbox = bbox.limit_to(arr.shape[-2:])
-        ysl = slice(bbox.top, bbox.top + bbox.height + 1)
-        xsl = slice(bbox.left, bbox.left + bbox.width + 1)
-        if meta.is_rgb:
-            arr_cropped = arr[..., ysl, xsl, :]
-        else:
-            arr_cropped = arr[..., ysl, xsl]
-    else:
-        raise NotImplementedError
-    meta_out = meta.without_rois()
-    meta_out.current_roi = roi.shifted(-bbox.left, -bbox.top)
-    return model.with_value(arr_cropped, metadata=meta_out)
-
-
-@register_function(
-    title="Crop Image (nD)",
-    types=StandardType.IMAGE,
-    menus=["tools/image"],
-    command_id="builtins:crop-image-nd",
-)
-def crop_image_nd(win: SubWindow) -> Parametric:
-    """Crop the image in nD."""
-    from himena.qt._magicgui import SliderRangeGetter
-
-    model = win.to_model()
-    ndim = wrap_array(model.value).ndim
-    meta = _cast_meta(model, ImageMeta)
-    if (axes := meta.axes) is None:
-        axes = [ImageAxis(name=f"axis-{i}") for i in range(ndim)]
-    index_yx_rgb = 2 + int(meta.is_rgb)
-    if ndim < index_yx_rgb + 1:
-        raise ValueError("Image only has 2D data.")
-
-    conf_kwargs = {}
-    for i, axis in enumerate(axes[:-index_yx_rgb]):
-        conf_kwargs[axis.name] = {
-            "widget_type": SliderRangeGetter,
-            "getter": _make_getter(win, i),
-            "label": axis.name,
-        }
-
-    @configure_gui(**conf_kwargs)
-    def run_crop_image(**kwargs: tuple[int | None, int | None]):
-        model = win.to_model()  # NOTE: need to re-fetch the model
-        arr = wrap_array(model.value)
-        roi, meta = _get_current_roi_and_meta(model)
-        sl_nd = tuple(slice(x0, x1) for x0, x1 in kwargs.values())
-        if isinstance(roi, _roi.ImageRoi2D):
-            bbox = roi.bbox().adjust_to_int()
-            if meta.is_rgb:
-                bbox = bbox.limit_to(arr.shape[-3:-1])
-            else:
-                bbox = bbox.limit_to(arr.shape[-2:])
-            ysl = slice(bbox.top, bbox.top + bbox.height + 1)
-            xsl = slice(bbox.left, bbox.left + bbox.width + 1)
-            sl = sl_nd + (ysl, xsl)
-            arr_cropped = arr[sl]
-        else:
-            raise NotImplementedError
-        meta_out = meta.without_rois()
-        meta_out.current_indices = None  # shape changed, need to reset
-        return model.with_value(arr_cropped, metadata=meta_out)
-
-    return run_crop_image
-
-
-@register_function(
-    title="Duplicate ROIs",
-    types=StandardType.IMAGE,
-    menus=["tools/image"],
-    command_id="builtins:duplicate-rois",
-)
-def duplicate_rois(model: WidgetDataModel) -> WidgetDataModel:
-    """Duplicate the ROIs."""
-    meta = _cast_meta(model, ImageMeta)
-    rois = meta.rois
-    if isinstance(rois, _roi.RoiListModel):
-        rois = rois.model_copy()
-    elif callable(rois):
-        rois = rois()
-        if not isinstance(rois, _roi.RoiListModel):
-            raise ValueError(f"Expected a RoiListModel, got {type(rois)}")
-    else:
-        raise ValueError("Expected a RoiListModel or a factory function.")
-    return WidgetDataModel(
-        value=rois,
-        type=StandardType.IMAGE_ROIS,
-        title=f"ROIs of {model.title}",
-    )
-
-
-@register_function(
-    title="Set colormap",
-    types=StandardType.IMAGE,
-    menus=["tools/image/channels", "/model_menu/channels"],
-    command_id="builtins:set-colormaps",
-)
-def set_colormaps(win: SubWindow) -> Parametric:
-    from himena.qt._magicgui import ColormapEdit
-
-    model = win.to_model()
-    meta = _cast_meta(model, ImageMeta).model_copy()
-    channel_names = _get_channel_names(meta, allow_single=True)
-    current_channels = [ch.colormap for ch in meta.channels]
-    options = {
-        f"ch_{i}": {
-            "label": channel_names[i],
-            "widget_type": ColormapEdit,
-            "category": "sequential",
-            "value": current_channels[i],
-        }
-        for i in range(len(channel_names))
-    }
-
-    @configure_gui(gui_options=options, show_parameter_labels=len(channel_names) > 1)
-    def set_cmaps(**kwargs):
-        meta.channels = [
-            ch.with_colormap(cmap) for ch, cmap in zip(meta.channels, kwargs.values())
-        ]
-        win.update_model(model.model_copy(update={"metadata": meta}))
-        return None
-
-    return set_cmaps
-
-
-@register_function(
-    title="Split channels",
-    types=StandardType.IMAGE,
-    menus=["tools/image/channels", "/model_menu/channels"],
-    command_id="builtins:split-channels",
-)
-def split_channels(model: WidgetDataModel) -> list[WidgetDataModel]:
-    """Split the channels of the image."""
-    meta = _cast_meta(model, ImageMeta)
-    arr = wrap_array(model.value)
-    if meta.channel_axis is not None:
-        c_axis = meta.channel_axis
-        channel_labels = _get_channel_names(meta)
-    elif meta.is_rgb:
-        c_axis = arr.ndim - 1
-        channel_labels = ["R", "G", "B"]
-    else:
-        raise ValueError("Image does not have a channel axis and is not RGB.")
-    slice_chn = (slice(None),) * c_axis
-    models: list[WidgetDataModel] = []
-    for idx in range(arr.shape[c_axis]):
-        arr_i = arr[slice_chn + (idx,)]
-        meta_i = meta.get_one_axis(c_axis, idx)
-        meta_i.is_rgb = False
-        title = f"[{channel_labels[idx]}] {model.title}"
-        models.append(model.with_value(arr_i, metadata=meta_i, title=title))
-    return models
-
-
 def _get_current_array_2d(model: WidgetDataModel) -> "np.ndarray":
     from himena._data_wrappers import wrap_array
 
@@ -330,15 +159,6 @@ def _get_current_array_2d(model: WidgetDataModel) -> "np.ndarray":
     return arr.get_slice(tuple(indices))
 
 
-def _get_channel_names(meta: ImageMeta, allow_single: bool = False) -> list[str]:
-    idx = meta.channel_axis
-    if idx is None:
-        if allow_single:
-            return ["Ch-0"]
-        raise ValueError("Image does not have a channel axis.")
-    return [ch.name for ch in meta.channels]
-
-
 _C = TypeVar("_C", bound=type)
 
 
@@ -349,15 +169,6 @@ def _cast_meta(model: WidgetDataModel, cls: type[_C]) -> _C:
             f"metadata of type {type(meta).__name__}."
         )
     return meta
-
-
-def _get_current_roi_and_meta(
-    model: WidgetDataModel,
-) -> tuple[_roi.ImageRoi2D, ImageMeta]:
-    meta = _cast_meta(model, ImageMeta)
-    if not (roi := meta.current_roi):
-        raise ValueError("ROI selection is required for this operation.")
-    return roi, meta
 
 
 def _get_current_selection_and_meta(

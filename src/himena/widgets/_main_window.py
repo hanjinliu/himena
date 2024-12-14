@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from concurrent.futures import Future
+from concurrent.futures import Future, ThreadPoolExecutor
 from logging import getLogger
 from pathlib import Path
 from typing import (
@@ -92,6 +92,7 @@ class MainWindow(Generic[_W]):
         self._recent_manager.update_menu()
         self._recent_session_manager = RecentSessionManager.default(app)
         self._recent_session_manager.update_menu()
+        self._executor = ThreadPoolExecutor(max_workers=5)
         self.theme = theme
 
     @property
@@ -292,7 +293,8 @@ class MainWindow(Generic[_W]):
         title: str | None = None,
         show_parameter_labels: bool = True,
         auto_close: bool = True,
-        result_as: Literal["window", "below"] = "window",
+        run_async: bool = False,
+        result_as: Literal["window", "below", "right"] = "window",
     ) -> ParametricWindow[_W]:
         """
         Add a function as a parametric sub-window.
@@ -316,6 +318,7 @@ class MainWindow(Generic[_W]):
         return tabarea.add_function(
             func, title=title, preview=preview, result_as=result_as,
             show_parameter_labels=show_parameter_labels, auto_close=auto_close,
+            run_async=run_async,
         )  # fmt: skip
 
     def add_parametric_widget(
@@ -327,12 +330,13 @@ class MainWindow(Generic[_W]):
         preview: bool = False,
         auto_close: bool = True,
         auto_size: bool = True,
-        result_as: Literal["window", "below"] = "window",
+        run_async: bool = False,
+        result_as: Literal["window", "below", "right"] = "window",
     ) -> ParametricWindow[_W]:
         _, area = self._current_or_new_tab()
         return area.add_parametric_widget(
             widget, callback, title=title, preview=preview, auto_close=auto_close,
-            auto_size=auto_size, result_as=result_as,
+            auto_size=auto_size, result_as=result_as, run_async=run_async,
         )  # fmt: skip
 
     def read_file(
@@ -348,6 +352,11 @@ class MainWindow(Generic[_W]):
         """Read multiple files one by one and open as new sub-windows in a same tab."""
         _, tabarea = self._current_or_new_tab()
         return tabarea.read_files(file_paths)
+
+    def read_files_async(self, file_paths: PathOrPaths, plugin: str | None = None):
+        """Read multiple files asynchronously and open as new sub-windows."""
+        _, tabarea = self._current_or_new_tab()
+        return tabarea.read_files_async(file_paths, plugin=plugin)
 
     def read_session(self, path: str | Path) -> None:
         """Read a session file and open the session."""
@@ -375,7 +384,17 @@ class MainWindow(Generic[_W]):
         return None
 
     def set_status_tip(self, text: str, duration: float = 10.0) -> None:
-        """Set the status tip of the main window."""
+        """Set the status tip of the main window.
+
+        This method can be safely called from any thread.
+
+        Parameters
+        ----------
+        text : str
+            Text to show in the status bar.
+        duration : float, default 10.0
+            Duration (seconds) to show the status tip.
+        """
         self._backend_main_window._set_status_tip(text, duration)
         return None
 

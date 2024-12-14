@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from itertools import cycle
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Any, Callable
+import warnings
 from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
 import numpy as np
@@ -130,7 +131,7 @@ class QImageView(QtW.QSplitter):
 
         self._is_rgb = meta0.is_rgb
         if meta0.current_indices is not None:
-            sl_0 = meta0.current_indices[:ndim_rem]
+            sl_0 = tuple(force_int(_i) for _i in meta0.current_indices[:ndim_rem])
         elif is_initialized and is_same_dimensionality:
             sl_0 = self._dims_slider.value()
         else:
@@ -173,25 +174,7 @@ class QImageView(QtW.QSplitter):
         img_slices = self._get_image_slices(sl_0, nchannels)
 
         if self._channels is None:  # not initialized yet
-            # before calling ChannelInfo.from_channel, contrast_limits must be set
-            if len(meta0.channels) != nchannels:
-                ch0 = meta0.channels[0]
-                ch0.contrast_limits = self._clim_for_ith_channel(img_slices, 0)
-                channels = [
-                    ch0.model_copy(update={"colormap": None}) for _ in range(nchannels)
-                ]
-            else:
-                channels = meta0.channels
-                for i, ch in enumerate(channels):
-                    if ch.contrast_limits is None:
-                        ch.contrast_limits = self._clim_for_ith_channel(img_slices, i)
-            self._channels = [
-                ChannelInfo.from_channel(i, c) for i, c in enumerate(channels)
-            ]
-            if len(self._channels) == 1 and channels[0].colormap is None:
-                # ChannelInfo.from_channel returns a single green colormap but it should
-                # be gray for single channel images.
-                self._channels[0].colormap = Colormap("gray")
+            self._init_channels(meta0, img_slices, nchannels)
 
         self._set_image_slices(img_slices)
         if meta0.current_roi:
@@ -211,6 +194,32 @@ class QImageView(QtW.QSplitter):
                 sl = tuple(sl)
             ar0 = self._arr.get_slice(sl)
         return ar0.min(), ar0.max()
+
+    def _init_channels(
+        self,
+        meta: model_meta.ImageMeta,
+        img_slices: list[NDArray[np.number] | None],
+        nchannels: int,
+    ):
+        # before calling ChannelInfo.from_channel, contrast_limits must be set
+        if len(meta.channels) != nchannels:
+            ch0 = meta.channels[0]
+            ch0.contrast_limits = self._clim_for_ith_channel(img_slices, 0)
+            channels = [
+                ch0.model_copy(update={"colormap": None}) for _ in range(nchannels)
+            ]
+        else:
+            channels = meta.channels
+            for i, ch in enumerate(channels):
+                if ch.contrast_limits is None:
+                    ch.contrast_limits = self._clim_for_ith_channel(img_slices, i)
+        self._channels = [
+            ChannelInfo.from_channel(i, c) for i, c in enumerate(channels)
+        ]
+        if len(self._channels) == 1 and channels[0].colormap is None:
+            # ChannelInfo.from_channel returns a single green colormap but it should
+            # be gray for single channel images.
+            self._channels[0].colormap = Colormap("gray")
 
     @protocol_override
     def to_model(self) -> WidgetDataModel:
@@ -235,7 +244,7 @@ class QImageView(QtW.QSplitter):
             current_roi = None
         axes = self._dims_slider._to_image_axes()
         if self._is_rgb:
-            axes.append(model_meta.ImageAxis(name="RGB"))
+            axes.append(model_meta.ArrayAxis(name="RGB"))
         return WidgetDataModel(
             value=self._arr.arr,
             type=self.model_type(),
@@ -330,7 +339,7 @@ class QImageView(QtW.QSplitter):
         return self._arr.get_slice(tuple(value))
 
     def _slider_changed(self, value: tuple[int, ...]):
-        # `image_slice` given only when it is available (for performance)
+        # TODO: async slicing
         if self._arr is None:
             return
         img_slices = self._get_image_slices(value, len(self._channels))
@@ -666,3 +675,12 @@ def pick_atleast_one_slice(
         if img is not None:
             return img
     return None
+
+
+def force_int(idx: Any) -> int:
+    if isinstance(idx, int):
+        return idx
+    if hasattr(idx, "__index__"):
+        return idx.__index__()
+    warnings.warn(f"Cannot convert {idx} to int, using 0 instead.")
+    return 0

@@ -608,3 +608,8 @@ QDrawCanvas {
 QTableBase {
     qproperty-selectionColor: #[highlight];
 }
+
+QCircularProgressBar {
+    qproperty-color: #[highlight];
+    qproperty-grooveColor: #[background_dim];
+}

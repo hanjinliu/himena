@@ -1,8 +1,11 @@
 from __future__ import annotations
-from typing import Callable
+from typing import Callable, TYPE_CHECKING
 
 from app_model import Action, Application
 from himena._app_model._command_registry import CommandsRegistry
+
+if TYPE_CHECKING:
+    from concurrent.futures import Future
 
 
 def get_model_app(name: str) -> Application:
@@ -21,6 +24,7 @@ class HimenaApplication(Application):
             raise_synchronous_exceptions=True,
         )
         self._registered_actions: dict[str, Action] = {}
+        self._futures: set[Future] = set()
 
     def register_actions(self, actions: list[Action]) -> Callable[[], None]:
         actions = list(actions)
@@ -33,3 +37,12 @@ class HimenaApplication(Application):
     def commands(self) -> CommandsRegistry:
         """The command registry for this application."""
         return super().commands
+
+    def _future_done_callback(self, f: Future) -> None:
+        self._futures.discard(f)
+        if f.cancelled():
+            pass
+        elif e := f.exception():
+            raise e
+        else:
+            self.injection_store.process(f.result())

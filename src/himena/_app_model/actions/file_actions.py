@@ -53,6 +53,9 @@ def open_file_from_dialog(ui: MainWindow):
     """Open file(s). Multiple files will be opened as separate sub-windows."""
     if result := ui.exec_file_dialog(mode="rm"):
         return ui.read_files(result)
+        # TODO: eventually, we should return a Future object, but app_model does not
+        # support it yet.
+        # return ui.read_files_async(result)
     raise Cancelled
 
 
@@ -122,7 +125,7 @@ def open_file_using_from_dialog(ui: MainWindow) -> Parametric:
 def open_file_group_from_dialog(ui: MainWindow):
     """Open file group as a single sub-window."""
     if result := ui.exec_file_dialog(mode="rm"):
-        return ui.read_file(result)
+        return ui.read_files(result)
     raise Cancelled
 
 
@@ -141,7 +144,7 @@ def open_file_group_from_dialog(ui: MainWindow):
 def open_folder_from_dialog(ui: MainWindow) -> Path:
     """Open a folder as a sub-window."""
     if path := ui.exec_file_dialog(mode="d"):
-        return path
+        return ui.read_file(path)
     raise Cancelled
 
 

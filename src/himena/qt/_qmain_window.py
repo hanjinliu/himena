@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import Future
 import inspect
 from timeit import default_timer as timer
 import logging
@@ -8,12 +9,13 @@ from pathlib import Path
 import warnings
 import numpy as np
 
-import app_model
 from qtpy import QtWidgets as QtW, QtGui, QtCore
 from app_model.backends.qt import QModelMainWindow, QModelMenu
+from superqt.utils import ensure_main_thread
 from himena.consts import MenuId
 from himena.consts import ParametricWidgetProtocolNames as PWPN
-from himena._app_model import _formatter
+from himena._app_model import _formatter, HimenaApplication
+from himena.qt._qnotification import QJobStack, QNotificationWidget
 from himena.qt._qtab_widget import QTabWidget
 from himena.qt._qstatusbar import QStatusBar
 from himena.qt._qsub_window import QSubWindow, QSubWindowArea
@@ -50,8 +52,10 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     """The Qt mainwindow implementation for himena."""
 
     _himena_main_window: MainWindow
+    _app: HimenaApplication
+    status_tip_requested = QtCore.Signal(str, float)
 
-    def __init__(self, app: app_model.Application):
+    def __init__(self, app: HimenaApplication):
         # app must be initialized
         _event_loop_handler = get_event_loop_handler("qt", app.name)
         self._qt_app = cast(QtW.QApplication, _event_loop_handler.get_app())
@@ -126,6 +130,11 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         # connect notifications
         self._event_loop_handler.errored.connect(self._on_error)
         self._event_loop_handler.warned.connect(self._on_warning)
+        self.status_tip_requested.connect(self._on_status_tip_requested)
+
+        # job stack
+        self._job_stack = QJobStack(self._tab_widget)
+        self._job_stack.setAnchor("bottom_left")
 
     def _update_widget_theme(self, style: Theme):
         self.setStyleSheet(style.format_text(get_stylesheet_path().read_text()))
@@ -137,7 +146,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def _on_error(self, exc: Exception) -> None:
         from himena.qt._qtraceback import QtErrorMessageBox
-        from himena.qt._qnotification import QNotificationWidget
 
         mbox = QtErrorMessageBox.from_exc(exc, parent=self)
         notification = QNotificationWidget(self._tab_widget)
@@ -146,7 +154,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def _on_warning(self, warning: warnings.WarningMessage) -> None:
         from himena.qt._qtraceback import QtErrorMessageBox
-        from himena.qt._qnotification import QNotificationWidget
 
         mbox = QtErrorMessageBox.from_warning(warning, parent=self)
         notification = QNotificationWidget(self._tab_widget)
@@ -294,9 +301,12 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _check_modified_files(self) -> bool:
         ui = self._himena_main_window
         if any(win.is_modified for win in ui.iter_windows()):
-            return ui.exec_confirmation_dialog(
-                "There are unsaved changes. Exit anyway?"
+            res = ui.exec_choose_one_dialog(
+                title="Closing",
+                message="There are unsaved changes. Exit anyway?",
+                choices=["Exit", "Cancel"],
             )
+            return res == "Exit"
         return True
 
     def _update_context(self) -> None:
@@ -636,8 +646,14 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self,
         wrapper: widgets.ParametricWindow[QParametricWidget],
         widget: QtW.QWidget,
+        result_as: Literal["below", "right"],
     ):
-        wrapper.widget.add_widget_below(widget)
+        if result_as == "below":
+            wrapper.widget.add_widget_below(widget)
+        elif result_as == "right":
+            wrapper.widget.add_widget_right(widget)
+        else:
+            raise ValueError(f"Invalid result_as value {result_as!r}.")
         if wrapper.is_preview_enabled() and not wrapper._auto_close:
             wrapper.widget._call_btn.hide()
 
@@ -645,14 +661,17 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self,
         wrapper: widgets.ParametricWindow[QParametricWidget],
     ):
-        wrapper.widget.remove_widget_below()
+        wrapper.widget.remove_result_widget()
 
     def _move_focus_to(self, win: QtW.QWidget) -> None:
         win.setFocus()
         return None
 
     def _set_status_tip(self, tip: str, duration: float) -> None:
-        self._status_bar.showMessage(tip, int(duration * 1000))
+        self.status_tip_requested.emit(tip, duration)
+
+    def _on_status_tip_requested(self, tip: str, duration: float) -> None:
+        return self._status_bar.showMessage(tip, int(duration * 1000))
 
     def _get_menu_action_by_id(self, name: str) -> QtW.QAction:
         # Find the help menu
@@ -679,8 +698,34 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
                 menu.rebuild()
         return None
 
+    def _process_future_done_callback(
+        self,
+        cb: Callable[[Future], None],
+        **kwargs,
+    ) -> Callable[[Future], None]:
+        def _func(future: Future):
+            if future.cancelled():
+                return
+            elif e := future.exception():
+                raise e
+            cb(future, **kwargs)
 
-def _is_root_menu_id(app: app_model.Application, menu_id: str) -> bool:
+        return ensure_main_thread(_func)
+
+    def _set_parametric_widget_busy(
+        self,
+        wrapper: widgets.ParametricWindow[QParametricWidget],
+        busy: bool,
+    ):
+        """Set the parametric widget busy status."""
+        wrapper.widget.set_busy(busy)
+
+    def _add_job_progress(self, future: Future, desc: str, total: int = 0) -> None:
+        self._job_stack.add_future(future, desc, total)
+        return None
+
+
+def _is_root_menu_id(app: HimenaApplication, menu_id: str) -> bool:
     if menu_id in (MenuId.TOOLBAR, app.menus.COMMAND_PALETTE_ID):
         return False
     return "/" not in menu_id.replace("//", "")

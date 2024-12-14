@@ -73,7 +73,7 @@ DATASET_NAMES_URL = f"{DATASET_SOURCE}/dataset_names.txt"
     menus=MenuId.FILE_SAMPLES,
     command_id="builtins:fetch-seaborn-sample-data",
 )
-def seaborn_sample_data() -> Parametric:
+def seaborn_sample_data(ui: MainWindow) -> Parametric:
     """New table from a seaborn test data."""
     from urllib.request import urlopen
 
@@ -89,8 +89,10 @@ def seaborn_sample_data() -> Parametric:
         name={"choices": choices},
         title="Choose a dataset ...",
         show_parameter_labels=False,
+        run_async=True,
     )
     def fetch_data(name: str = "iris") -> WidgetDataModel:
+        ui.set_status_tip(f"Fetching {name} ...")
         # read without using pandas
         with urlopen(f"{DATASET_SOURCE}/{name}.csv") as resp:
             data = resp.read().decode()

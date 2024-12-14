@@ -40,9 +40,19 @@ class ExcelMeta(TableMeta):
     current_sheet: str | None = Field(None, description="Current sheet name.")
 
 
+class ArrayAxis(BaseModel):
+    """An axis in an array."""
+
+    name: str = Field(..., description="Name of the axis.")
+    scale: float | None = Field(None, description="Pixel scale of the axis.")
+    origin: float = Field(0.0, description="Offset of the axis.")
+    unit: str | None = Field(None, description="Unit of the axis spacing.")
+
+
 class ArrayMeta(BaseModel):
     """Preset for describing an array metadata."""
 
+    axes: list[ArrayAxis] | None = Field(None, description="Axes of the image.")
     current_indices: tuple[Any, ...] | None = Field(
         None, description="Current slice indices to render the array in GUI."
     )
@@ -58,15 +68,6 @@ class ArrayMeta(BaseModel):
 
     def without_selections(self) -> "ArrayMeta":
         return self.model_copy(update={"selections": []})
-
-
-class ImageAxis(BaseModel):
-    """An axis in an image file."""
-
-    name: str = Field(..., description="Name of the axis.")
-    scale: float | None = Field(None, description="Pixel scale of the axis.")
-    origin: float = Field(0.0, description="Offset of the axis.")
-    unit: str | None = Field(None, description="Unit of the axis.")
 
 
 class ImageChannel(BaseModel):
@@ -92,7 +93,6 @@ class ImageChannel(BaseModel):
 class ImageMeta(ArrayMeta):
     """Preset for describing an image file metadata."""
 
-    axes: list[ImageAxis] | None = Field(None, description="Axes of the image.")
     channels: list[ImageChannel] = Field(
         default_factory=lambda: [ImageChannel.default()],
         description="Channels of the image. At least one channel is required.",
@@ -134,12 +134,12 @@ class ImageMeta(ArrayMeta):
     def _strings_to_axes(cls, v, values: "ValidationInfo"):
         if v is None:
             return None
-        out: list[ImageAxis] = []
+        out: list[ArrayAxis] = []
         for axis in v:
             if isinstance(axis, str):
-                axis = ImageAxis(name=axis)
+                axis = ArrayAxis(name=axis)
             elif isinstance(axis, dict):
-                axis = ImageAxis(**axis)
+                axis = ArrayAxis(**axis)
             out.append(axis)
         return out
 

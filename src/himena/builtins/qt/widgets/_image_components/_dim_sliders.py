@@ -15,9 +15,9 @@ class QDimsSlider(QtW.QWidget):
         layout = QtW.QVBoxLayout(self)
         layout.setContentsMargins(2, 2, 2, 2)
         layout.setSpacing(2)
-        self._xy_axes: list[model_meta.ImageAxis] = [
-            model_meta.ImageAxis(name="y"),
-            model_meta.ImageAxis(name="x"),
+        self._xy_axes: list[model_meta.ArrayAxis] = [
+            model_meta.ArrayAxis(name="y"),
+            model_meta.ArrayAxis(name="x"),
         ]
 
     def count(self) -> int:
@@ -27,7 +27,7 @@ class QDimsSlider(QtW.QWidget):
     def set_dimensions(
         self,
         shape: tuple[int, ...],
-        axes: list[model_meta.ImageAxis],
+        axes: list[model_meta.ArrayAxis],
         is_rgb: bool = False,
     ):
         ndim = len(shape)
@@ -61,7 +61,7 @@ class QDimsSlider(QtW.QWidget):
         else:
             self._xy_axes = axes[-2:]
 
-    def _to_image_axes(self) -> list[model_meta.ImageAxis]:
+    def _to_image_axes(self) -> list[model_meta.ArrayAxis]:
         axes = [slider.to_axis() for slider in self._sliders]
         axes.extend(self._xy_axes)
         return axes
@@ -120,14 +120,14 @@ class _QAxisSlider(QtW.QWidget):
         self._unit = ""
         self._origin = 0.0
 
-    def update_from_axis(self, axis: model_meta.ImageAxis):
+    def update_from_axis(self, axis: model_meta.ArrayAxis):
         self._name_label.setText(axis.name)
         self._scale = axis.scale
         self._unit = axis.unit
         self._origin = axis.origin
 
-    def to_axis(self) -> model_meta.ImageAxis:
-        return model_meta.ImageAxis(
+    def to_axis(self) -> model_meta.ArrayAxis:
+        return model_meta.ArrayAxis(
             name=self.text(), scale=self._scale, unit=self._unit, origin=self._origin
         )
 

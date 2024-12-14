@@ -2,7 +2,7 @@ from pathlib import Path
 import numpy as np
 from himena._data_wrappers._dataframe import wrap_dataframe
 from himena.plugins import register_function
-from himena.types import WidgetDataModel, is_subtype
+from himena.types import Parametric, WidgetDataModel, is_subtype
 from himena.consts import StandardType
 from himena.widgets import SubWindow, MainWindow
 
@@ -22,6 +22,21 @@ def open_as_text_anyway(ui: MainWindow, win: SubWindow) -> WidgetDataModel[str]:
     out = model.with_value(model.source.read_text(), type=StandardType.TEXT)
     win._close_me(ui)
     return out
+
+
+@register_function(
+    menus=["tools"],
+    command_id="builtins:merge-models",
+)
+def merge_models() -> Parametric:
+    def run_merge_models(models: list[WidgetDataModel]) -> WidgetDataModel:
+        return WidgetDataModel(
+            value=models,
+            type=StandardType.MODELS,
+            title="Merged models",
+        )
+
+    return run_merge_models
 
 
 @register_function(

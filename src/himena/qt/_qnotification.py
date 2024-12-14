@@ -1,8 +1,11 @@
 from __future__ import annotations
+from concurrent.futures import Future
 from typing import TYPE_CHECKING
 from enum import Enum
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt
+
+from himena.qt._qprogress import QCircularProgressBar, QLabeledCircularProgressBar
 
 if TYPE_CHECKING:
     from himena.qt._qtab_widget import QTabWidget
@@ -229,3 +232,50 @@ class QNotificationWidget(_QOverlayBase):
         if not self.rect().contains(self.mapFromGlobal(QtGui.QCursor.pos())):
             self._close_btn.hide()
         return super().leaveEvent(a0)
+
+
+class QJobStack(_QOverlayBase):
+    job_finished = QtCore.Signal(QtW.QListWidgetItem)
+
+    def __init__(self, parent: QTabWidget):
+        super().__init__(parent)
+        self._list_widget = QtW.QListWidget()
+        self.addWidget(self._list_widget)
+        self.setAnchor(Anchor.bottom_left)
+        self.job_finished.connect(self._on_job_finished)
+
+    def add_future(self, future: Future, desc: str, total: int = 0):
+        pbar = QCircularProgressBar()
+        pbar.setButtonState("square")
+        pbar.setValue(-1)
+
+        @pbar.abortRequested.connect
+        def _aborting():
+            pass  # TODO: not working yet
+
+        item = QtW.QListWidgetItem()
+        labeled_pbar = QLabeledCircularProgressBar(desc, pbar)
+
+        future.add_done_callback(lambda _: self.job_finished.emit(item))
+        self._add_item_for_future(item, labeled_pbar)
+
+    def _add_item_for_future(self, item: QtW.QListWidgetItem, widget: QtW.QWidget):
+        lw = self._list_widget
+        lw.addItem(item)
+        lw.setIndexWidget(lw.model().index(lw.count() - 1, 0), widget)
+        self.adjustHeight()
+        self.show()
+
+    def _on_job_finished(self, item: QtW.QListWidgetItem):
+        lw = self._list_widget
+        lw.takeItem(lw.row(item))
+        if lw.count() == 0:
+            self.hide()
+        else:
+            self.adjustHeight()
+
+    def adjustHeight(self):
+        height = min(20 * min(2, self._list_widget.count()) + 6, 200)
+        self._list_widget.setFixedHeight(height)
+        self.setFixedHeight(height + 4)
+        self.alignToParent()

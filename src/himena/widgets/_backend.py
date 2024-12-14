@@ -16,6 +16,7 @@ from himena.types import (
 )
 
 if TYPE_CHECKING:
+    from concurrent.futures import Future
     from himena.style import Theme
     from himena.widgets._main_window import MainWindow
     from himena.widgets._wrapper import SubWindow, ParametricWindow
@@ -291,6 +292,7 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
         self,
         wrapper: ParametricWindow[_W],
         widget: _W,
+        result_as: Literal["below", "right"],
     ) -> None:
         """Add a widget to the parametric window."""
 
@@ -308,3 +310,17 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
 
     def _rebuild_for_runtime(self, new_menus: list[str]) -> None:
         """Register the actions at runtime."""
+
+    def _process_future_done_callback(
+        self,
+        cb: Callable[[Future], None],
+        **kwargs,
+    ) -> Callable[[Future], None]:
+        """Wrap the callback of the future done event so that it can be run in the main
+        thread."""
+
+    def _set_parametric_widget_busy(self, wrapper: ParametricWindow[_W], busy: bool):
+        """Set the parametric widget busy status (disable call button etc)."""
+
+    def _add_job_progress(self, future: Future, desc: str, total: int = 0) -> None:
+        """Add a job to the job stack."""

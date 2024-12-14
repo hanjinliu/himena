@@ -1,12 +1,14 @@
 from __future__ import annotations
-from typing import Any
+from typing import Any, TypeVar
 
 from magicgui.widgets.bases import ValueWidget
 from magicgui.types import Undefined
 from magicgui.application import use_app
 from magicgui.backends._qtpy.widgets import QBaseValueWidget
-from himena.qt._qmodeldrop import QModelDrop
+from himena.qt._qmodeldrop import QModelDrop, QModelDropList
 from himena.types import WidgetDataModel
+
+_W = TypeVar("_W")
 
 
 class QMagicguiModelDrop(QBaseValueWidget):
@@ -23,8 +25,22 @@ class QMagicguiModelDrop(QBaseValueWidget):
         )
 
 
-class ModelDrop(ValueWidget[WidgetDataModel]):
-    def __init__(self, value=Undefined, **kwargs):
+class QMagicguiModelDropList(QBaseValueWidget):
+    _qwidget: QModelDropList
+
+    def __init__(self, **kwargs: Any) -> None:
+        types = kwargs.get("types", None)
+        super().__init__(
+            lambda parent: QModelDropList(types=types, parent=parent),
+            "value",
+            "set_value",
+            "modelsChanged",
+            **kwargs,
+        )
+
+
+class _ModelDropValueWidget(ValueWidget[_W]):
+    def __init__(self, widget_type, value=Undefined, **kwargs):
         app = use_app()
         assert app.native
 
@@ -37,16 +53,26 @@ class ModelDrop(ValueWidget[WidgetDataModel]):
         ValueWidget.__init__(
             self,
             value=value,
-            widget_type=QMagicguiModelDrop,
+            widget_type=widget_type,
             backend_kwargs={"types": types},
             **kwargs,
         )
+
+
+class ModelDrop(_ModelDropValueWidget[WidgetDataModel]):
+    def __init__(self, value=Undefined, **kwargs):
+        super().__init__(QMagicguiModelDrop, value=value, **kwargs)
 
     def get_value(self) -> WidgetDataModel:
         out = super().get_value()
         if out is None and not self._nullable:
             raise ValueError(f"No model is specified to {self.label!r}.")
         return out
+
+
+class ModelListDrop(_ModelDropValueWidget[list[WidgetDataModel]]):
+    def __init__(self, value=Undefined, **kwargs):
+        super().__init__(QMagicguiModelDropList, value=value, **kwargs)
 
 
 def _assert_str(t):

@@ -28,6 +28,7 @@ from himena.widgets._wrapper import (
 
 if TYPE_CHECKING:
     from himena.widgets import BackendMainWindow
+    from concurrent.futures import Future
 
     PathOrPaths = str | Path | list[str | Path]
 
@@ -215,7 +216,8 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         title: str | None = None,
         show_parameter_labels: bool = True,
         auto_close: bool = True,
-        result_as: Literal["window", "below"] = "window",
+        run_async: bool = False,
+        result_as: Literal["window", "below", "right"] = "window",
     ) -> ParametricWindow[_W]:
         """
         Add a function as a parametric sub-window.
@@ -254,7 +256,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
             preview=preview,
         )
         param_widget = self.add_parametric_widget(
-            fn_widget, func, title=title, preview=preview,
+            fn_widget, func, title=title, preview=preview, run_async=run_async,
             auto_close=auto_close, result_as=result_as,
         )  # fmt: skip
         return param_widget
@@ -268,7 +270,8 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         preview: bool = False,
         auto_close: bool = True,
         auto_size: bool = True,
-        result_as: Literal["window", "below"] = "window",
+        run_async: bool = False,
+        result_as: Literal["window", "below", "right"] = "window",
     ) -> ParametricWindow[_W]:
         """Add a custom parametric widget and its callback as a subwindow.
 
@@ -311,6 +314,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         param_widget = ParametricWindow(widget0, callback, main_window=main)
         param_widget._auto_close = auto_close
         param_widget._result_as = result_as
+        param_widget._run_asynchronously = run_async
         main._connect_parametric_widget_events(param_widget, widget0)
         self._process_new_widget(param_widget, title, auto_size)
         if preview:
@@ -378,6 +382,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         except TypeError:
             widget = cls()
         widget.update_model(model)  # type: ignore
+        ui.set_status_tip(f"Data model {model.title!r} added.", duration=1)
         sub_win = self.add_widget(widget, title=model.title)
         return sub_win._update_from_returned_model(model)
 
@@ -395,6 +400,17 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         plugin: str | None = None,
     ) -> list[SubWindow[_W]]:
         """Read multiple files and open as new sub-windows in this tab."""
+        models = self._paths_to_models(file_paths, plugin=plugin)
+        out = [self.add_data_model(model) for model in models]
+        ui = self._main_window()._himena_main_window
+        if len(out) == 1:
+            ui.set_status_tip(f"File opened: {out[0].title}", duration=5)
+        elif len(out) > 1:
+            _titles = ", ".join(w.title for w in out)
+            ui.set_status_tip(f"File opened: {_titles}", duration=5)
+        return out
+
+    def _paths_to_models(self, file_paths: PathOrPaths, plugin: str | None = None):
         reader_path_sets: list[tuple[_providers.ReaderTuple, PathOrPaths]] = []
         ins = _providers.ReaderProviderStore.instance()
         for file_path in file_paths:
@@ -414,13 +430,20 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
                 for reader, fp in reader_path_sets
             ]
         )
-        out = [self.add_data_model(model) for model in models]
-        if len(out) == 1:
-            ui.set_status_tip(f"File opened: {out[0].title}", duration=5)
-        elif len(out) > 1:
-            _titles = ", ".join(w.title for w in out)
-            ui.set_status_tip(f"File opened: {_titles}", duration=5)
-        return out
+        return models
+
+    def read_files_async(
+        self,
+        file_paths: PathOrPaths,
+        plugin: str | None = None,
+    ) -> Future:
+        ui = self._main_window()._himena_main_window
+        future = ui._executor.submit(self._paths_to_models, file_paths, plugin=plugin)
+        if len(file_paths) == 1:
+            ui.set_status_tip(f"Opening: {file_paths[0].as_posix()}", duration=5)
+        elif len(file_paths) > 1:
+            ui.set_status_tip(f"Opening {len(file_paths)} files", duration=5)
+        return future
 
     def save_session(self, file_path: str | Path) -> None:
         """Save the current session to a file."""

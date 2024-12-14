@@ -18,17 +18,20 @@ class QParametricWidget(QtW.QWidget):
         super().__init__()
         self._call_btn = QtW.QPushButton("Run", self)
         self._central_widget = central
-        layout = QtW.QVBoxLayout(self)
-        layout.setContentsMargins(3, 3, 3, 3)
-        layout.setSpacing(2)
+        layout_h = QtW.QHBoxLayout(self)
+        layout_h.setContentsMargins(3, 3, 3, 3)
+        layout_v = QtW.QVBoxLayout()
+        layout_h.addLayout(layout_v)
+        layout_v.setContentsMargins(0, 0, 0, 0)
+        layout_v.setSpacing(2)
         if isinstance(central, Widget):
             if not isinstance(central.native, QtW.QWidget):
                 raise ValueError(f"Expected a QWidget, got {central}")
             self._central_qwidget = central.native
         else:
             self._central_qwidget = central
-        layout.addWidget(self._central_qwidget)
-        layout.addWidget(self._call_btn)
+        layout_v.addWidget(self._central_qwidget)
+        layout_v.addWidget(self._call_btn)
         if connector := getattr(central, PWPN.CONNECT_CHANGED_SIGNAL, None):
             connector(self._on_param_changed)
         if hasattr(central, "__himena_model_track__"):
@@ -46,6 +49,10 @@ class QParametricWidget(QtW.QWidget):
             self._central_widget_size_hint.setHeight(
                 max(self._central_widget_size_hint.height(), min_height)
             )
+        self._layout_v = layout_v
+        self._layout_h = layout_h
+        self._result_widget_layout: QtW.QLayout | None = None
+        self.setMinimumWidth(100)
 
     def get_params(self) -> dict[str, Any]:
         return getattr(self._central_widget, PWPN.GET_PARAMS)()
@@ -111,16 +118,32 @@ class QParametricWidget(QtW.QWidget):
         return False
 
     def add_widget_below(self, widget: QtW.QWidget) -> None:
-        layout = self.layout()
-        layout.addWidget(widget)
+        self._layout_v.addWidget(widget)
         self._result_widget = widget
+        self._result_widget_layout = self._layout_v
         if hasattr(widget, "control_widget"):
             self._control.layout().addWidget(widget.control_widget())
 
-    def remove_widget_below(self) -> None:
-        layout = self.layout()
+    def add_widget_right(self, widget: QtW.QWidget) -> None:
+        self._layout_h.addWidget(widget)
+        self._result_widget = widget
+        self._result_widget_layout = self._layout_h
+        if hasattr(widget, "control_widget"):
+            self._control.layout().addWidget(widget.control_widget())
+
+    def remove_result_widget(self) -> None:
         if self._result_widget is not None:
-            layout.removeWidget(self._result_widget)
+            if self._result_widget_layout is not None:
+                self._result_widget_layout.removeWidget(self._result_widget)
             self._result_widget = None
+            self._result_widget_layout = None
         if self._control.layout().count() > 0:
             self._control.layout().itemAt(0).widget().setParent(None)
+
+    def set_busy(self, busy: bool):
+        if busy:
+            self._call_btn.setText("Running ...")
+            self._call_btn.setEnabled(False)
+        else:
+            self._call_btn.setText("Run")
+            self._call_btn.setEnabled(True)
