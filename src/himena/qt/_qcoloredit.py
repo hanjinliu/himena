@@ -92,6 +92,7 @@ class QColorEdit(QtW.QWidget):
         self._color_swatch.colorChanged.connect(self._on_swatch_changed)
         self._line_edit.colorChanged.connect(self._on_line_edit_edited)
         self.setSizePolicy(QtW.QSizePolicy.Policy.Fixed, QtW.QSizePolicy.Policy.Fixed)
+        self.setMinimumHeight(20)
 
     def color(self) -> QtGui.QColor:
         """Return the current color."""

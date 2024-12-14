@@ -413,6 +413,8 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
     def _paths_to_models(self, file_paths: PathOrPaths, plugin: str | None = None):
         reader_path_sets: list[tuple[_providers.ReaderTuple, PathOrPaths]] = []
         ins = _providers.ReaderProviderStore.instance()
+        if isinstance(file_paths, (str, Path)):
+            file_paths = [file_paths]
         for file_path in file_paths:
             if isinstance(file_path, (str, Path)):
                 file_path = Path(file_path)

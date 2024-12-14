@@ -42,7 +42,7 @@ def register_plot_model(
 def _convert_plot_model(model: hplt.BasePlotModel, ax: plt.Axes):
     if model.__class__ in _CONVERSION_RULES:
         return _CONVERSION_RULES[model.__class__](model, ax)
-    raise ValueError(f"Unsupported plot model: {model}")
+    raise ValueError(f"Unsupported plot model: {model!r}")
 
 
 @register_plot_model(hplt.Scatter)
@@ -127,6 +127,21 @@ def _convert_axes(ax: hplt.Axes, ax_mpl: plt.Axes):
         _convert_plot_model(model, ax_mpl)
 
 
+def _update_axis_props(axes: hplt.Axes, axes_mpl: plt.Axes):
+    axes = axes.model_copy()
+    if axes.title is None:
+        axes.title = axes_mpl.get_title()
+    if axes.x.lim is None:
+        axes.x.lim = axes_mpl.get_xlim()
+    if axes.x.label is None:
+        axes.x.label = axes_mpl.get_xlabel()
+    if axes.y.lim is None:
+        axes.y.lim = axes_mpl.get_ylim()
+    if axes.y.label is None:
+        axes.y.label = axes_mpl.get_ylabel()
+    return axes
+
+
 def convert_plot_layout(lo: hplt.BaseLayoutModel, fig: plt.Figure):
     if isinstance(lo, hplt.SingleAxes):
         if len(fig.axes) != 1:
@@ -136,6 +151,7 @@ def convert_plot_layout(lo: hplt.BaseLayoutModel, fig: plt.Figure):
             axes = fig.axes[0]
         axes.clear()
         _convert_axes(lo.axes, axes)
+        lo.axes = _update_axis_props(lo.axes, axes)
     elif isinstance(lo, hplt.layout.Layout1D):
         _shape = (1, len(lo.axes)) if isinstance(lo, hplt.Row) else (len(lo.axes), 1)
         if len(fig.axes) != len(lo.axes):
@@ -145,10 +161,12 @@ def convert_plot_layout(lo: hplt.BaseLayoutModel, fig: plt.Figure):
             axes = fig.axes
         for ax, ax_mpl in zip(lo.axes, axes):
             _convert_axes(ax, ax_mpl)
+        lo.axes = [_update_axis_props(ax, ax_mpl) for ax, ax_mpl in zip(lo.axes, axes)]
     elif isinstance(lo, hplt.Grid):
         raise NotImplementedError("Grid layout is not supported yet")
     else:
         raise ValueError(f"Unsupported layout model: {lo}")
+    return lo
 
 
 def _parse_styled_text(text: hplt.StyledText | str) -> tuple[str, dict]:

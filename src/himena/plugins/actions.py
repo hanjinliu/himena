@@ -114,7 +114,6 @@ class AppActionRegistry:
                 submenu = "/".join(place_components[: i + 1])
                 if submenu in existing_menu_ids:
                     continue
-                _LOGGER.info("Adding submenu: %s", submenu)
                 title = self.submenu_title(submenu)
                 item = SubmenuItem(title=title, submenu=submenu)
                 to_add.append((menu_id, item))

@@ -1,6 +1,11 @@
 from himena.qt._magicgui._register import register_magicgui_types, get_type_map
 from himena.qt._magicgui._color import ColorEdit, ColormapEdit
-from himena.qt._magicgui._face_edge import FacePropertyEdit, EdgePropertyEdit
+from himena.qt._magicgui._plot_elements import (
+    FacePropertyEdit,
+    EdgePropertyEdit,
+    AxisPropertyEdit,
+    DictEdit,
+)
 from himena.qt._magicgui._toggle_switch import ToggleSwitch
 from himena.qt._magicgui._basic_widgets import IntEdit, FloatEdit
 from himena.qt._magicgui._selection import SelectionEdit
@@ -16,8 +21,10 @@ __all__ = [
     "ToggleSwitch",
     "FacePropertyEdit",
     "EdgePropertyEdit",
+    "AxisPropertyEdit",
     "IntEdit",
     "FloatEdit",
+    "DictEdit",
     "ModelDrop",
     "NumericDTypeEdit",
     "SelectionEdit",

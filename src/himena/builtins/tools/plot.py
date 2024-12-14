@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Iterator
+from typing import TYPE_CHECKING, Callable, Iterator
 import itertools
 
 from cmap import Color, Colormap
@@ -10,12 +10,18 @@ from himena.consts import StandardType
 from himena.widgets import SubWindow
 from himena.standards.model_meta import ExcelMeta, TableMeta
 from himena.standards import plotting as hplt
-from himena.qt._magicgui import SelectionEdit, FacePropertyEdit, EdgePropertyEdit
+from himena.qt._magicgui import (
+    SelectionEdit,
+    FacePropertyEdit,
+    EdgePropertyEdit,
+    AxisPropertyEdit,
+    DictEdit,
+)
 from himena.exceptions import DeadSubwindowError
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
-    from himena.qt._magicgui._face_edge import FacePropertyDict, EdgePropertyDict
+    from himena.qt._magicgui._plot_elements import FacePropertyDict, EdgePropertyDict
 
 _TABLE_LIKE = [StandardType.TABLE, StandardType.DATAFRAME, StandardType.EXCEL]
 _MENU = ["tools/plot", "/model_menu/plot"]
@@ -29,9 +35,11 @@ _EDGE_ONLY_VALUE = {"color": "tab10", "width": 2.0}
     command_id="builtins:scatter-plot",
 )
 def scatter_plot(win: SubWindow) -> Parametric:
+    x0, y0 = _auto_select(win, 2)
+
     @configure_gui(
-        x={"widget_type": SelectionEdit, "getter": lambda: _range_getter(win)},
-        y={"widget_type": SelectionEdit, "getter": lambda: _range_getter(win)},
+        x={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": x0},
+        y={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": y0},
         face={"widget_type": FacePropertyEdit},
         edge={"widget_type": EdgePropertyEdit},
     )
@@ -66,9 +74,11 @@ def scatter_plot(win: SubWindow) -> Parametric:
     command_id="builtins:line-plot",
 )
 def line_plot(win: SubWindow) -> Parametric:
+    x0, y0 = _auto_select(win, 2)
+
     @configure_gui(
-        x={"widget_type": SelectionEdit, "getter": lambda: _range_getter(win)},
-        y={"widget_type": SelectionEdit, "getter": lambda: _range_getter(win)},
+        x={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": x0},
+        y={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": y0},
         edge={"widget_type": EdgePropertyEdit, "value": _EDGE_ONLY_VALUE},
     )
     def configure_plot(
@@ -95,10 +105,12 @@ def line_plot(win: SubWindow) -> Parametric:
     command_id="builtins:bar-plot",
 )
 def bar_plot(win: SubWindow) -> Parametric:
+    x0, y0 = _auto_select(win, 2)
+
     @configure_gui(
-        x={"widget_type": SelectionEdit, "getter": lambda: _range_getter(win)},
-        y={"widget_type": SelectionEdit, "getter": lambda: _range_getter(win)},
-        bottom={"widget_type": SelectionEdit, "getter": lambda: _range_getter(win)},
+        x={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": x0},
+        y={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": y0},
+        bottom={"widget_type": SelectionEdit, "getter": _range_getter(win)},
         face={"widget_type": FacePropertyEdit},
         edge={"widget_type": EdgePropertyEdit},
     )
@@ -121,8 +133,8 @@ def bar_plot(win: SubWindow) -> Parametric:
         ):
             name, yarr = name_yarr
             fig.axes.bar(
-                xarr, yarr, bottom=name_bottom[1], bar_width=bar_width, name=name,
-                **_face, **_edge
+                xarr, yarr, bottom=_ignore_label(name_bottom), bar_width=bar_width,
+                name=name, **_face, **_edge
             )  # fmt: skip
         return WidgetDataModel(value=fig, type=StandardType.PLOT, title="Plot")
 
@@ -136,11 +148,13 @@ def bar_plot(win: SubWindow) -> Parametric:
     command_id="builtins:errorbar-plot",
 )
 def errorbar_plot(win: SubWindow) -> Parametric:
+    x0, y0 = _auto_select(win, 2)
+
     @configure_gui(
-        x={"widget_type": SelectionEdit, "getter": lambda: _range_getter(win)},
-        y={"widget_type": SelectionEdit, "getter": lambda: _range_getter(win)},
-        xerr={"widget_type": SelectionEdit, "getter": lambda: _range_getter(win)},
-        yerr={"widget_type": SelectionEdit, "getter": lambda: _range_getter(win)},
+        x={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": x0},
+        y={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": y0},
+        xerr={"widget_type": SelectionEdit, "getter": _range_getter(win)},
+        yerr={"widget_type": SelectionEdit, "getter": _range_getter(win)},
         edge={"widget_type": EdgePropertyEdit, "value": _EDGE_ONLY_VALUE},
     )
     def configure_plot(
@@ -166,8 +180,8 @@ def errorbar_plot(win: SubWindow) -> Parametric:
         ):
             name, yarr = name_yarr
             fig.axes.errorbar(
-                xarr, yarr, x_error=_xerr, y_error=_yerr, capsize=capsize, name=name,
-                **_edge,
+                xarr, yarr, x_error=_ignore_label(_xerr), y_error=_ignore_label(_yerr),
+                capsize=capsize, name=name, **_edge,
             )  # fmt: skip
         return WidgetDataModel(value=fig, type=StandardType.PLOT, title="Plot")
 
@@ -181,23 +195,25 @@ def errorbar_plot(win: SubWindow) -> Parametric:
     command_id="builtins:band-plot",
 )
 def band_plot(win: SubWindow) -> Parametric:
+    x0, y10, y20 = _auto_select(win, 3)
+
     @configure_gui(
-        x={"widget_type": SelectionEdit, "getter": lambda: _range_getter(win)},
-        y1={"widget_type": SelectionEdit, "getter": lambda: _range_getter(win)},
-        y2={"widget_type": SelectionEdit, "getter": lambda: _range_getter(win)},
+        x={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": x0},
+        y0={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": y10},
+        y1={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": y20},
         face={"widget_type": FacePropertyEdit},
         edge={"widget_type": EdgePropertyEdit},
     )
     def configure_plot(
         x: tuple[slice, slice] | None,
+        y0: tuple[slice, slice],
         y1: tuple[slice, slice],
-        y2: tuple[slice, slice],
         face: dict = {},
         edge: dict = {},
     ) -> WidgetDataModel:
         fig = hplt.figure()
-        xarr, ydata1 = _get_xy_data(win, x, y1, fig.axes)
-        _, ydata2 = _get_xy_data(win, x, y2, fig.axes)
+        xarr, ydata1 = _get_xy_data(win, x, y0, fig.axes)
+        _, ydata2 = _get_xy_data(win, x, y1, fig.axes)
         _face = next(_iter_face(face), {})
         _edge = next(_iter_edge(edge, prefix="edge_"), {})
         if len(ydata1) == 1 and len(ydata2) == 1:
@@ -219,35 +235,76 @@ def band_plot(win: SubWindow) -> Parametric:
     command_id="builtins:edit-plot",
 )
 def edit_plot(win: SubWindow) -> Parametric:
+    """Edit the appearance of the plot."""
     model = win.to_model()
     if not isinstance(lo := model.value, hplt.BaseLayoutModel):
         raise ValueError("Invalid layout model")
-    if isinstance(lo, hplt.SingleAxes):
-        pass
-    # TODO
+    if not isinstance(lo, hplt.SingleAxes):
+        raise NotImplementedError("Only SingleAxes is supported for now.")
+    plot_models = lo.axes.models
+    gui_options = {
+        "title": {"widget_type": "LineEdit", "value": lo.axes.title or ""},
+        "x": {"widget_type": AxisPropertyEdit, "value": lo.axes.x.model_dump()},
+        "y": {"widget_type": AxisPropertyEdit, "value": lo.axes.y.model_dump()},
+    }
+    for i, m in enumerate(plot_models):
+        opt = {
+            "label": f"#{i}",
+            "widget_type": DictEdit,
+            "options": m.plot_option_dict(),
+            "value": m.model_dump(),
+        }
+        gui_options[f"element_{i}"] = opt
+
+    @configure_gui(gui_options=gui_options)
+    def run_edit_plot(
+        title: str,
+        x: dict,
+        y: dict,
+        **kwargs: dict,
+    ):
+        lo.axes.title = title
+        lo.axes.x = hplt.Axis.model_validate(x)
+        lo.axes.y = hplt.Axis.model_validate(y)
+        new_models = []
+        for plot_model, value in zip(plot_models, kwargs.values()):
+            dumped = plot_model.model_dump()
+            dumped.update(value)
+            new_models.append(plot_model.model_validate(dumped))
+        lo.axes.models = new_models
+        win.update_model(model)
+        return None
+
+    return run_edit_plot
 
 
-def _range_getter(win: SubWindow):
+def _range_getter(
+    win: SubWindow,
+) -> Callable[[], tuple[tuple[slice, slice], tuple[slice, slice]]]:
     """The getter function for SelectionEdit"""
-    if not win.is_alive:
-        raise DeadSubwindowError("Subwindow is already removed.")
-    model = win.to_model()
-    types = [StandardType.TABLE, StandardType.DATAFRAME, StandardType.EXCEL]
-    if model.type not in types:
-        raise ValueError(f"Cannot plot model of type {model.type!r}")
-    if not isinstance(meta := model.metadata, TableMeta):
-        raise ValueError("Excel must have TableMeta as the additional data.")
 
-    if len(meta.selections) == 0:
-        raise ValueError(f"No selection found in window {win.title!r}")
-    elif len(meta.selections) > 1:
-        raise ValueError(f"More than one selection found in window {win.title!r}")
-    sel = meta.selections[0]
-    # TODO: thoroughly check the type.
-    rindices, cindices = sel
-    rsl = slice(*rindices)
-    csl = slice(*cindices)
-    return rsl, csl
+    def _getter():
+        if not win.is_alive:
+            raise DeadSubwindowError("Subwindow is already removed.")
+        model = win.to_model()
+        types = [StandardType.TABLE, StandardType.DATAFRAME, StandardType.EXCEL]
+        if model.type not in types:
+            raise ValueError(f"Cannot plot model of type {model.type!r}")
+        if not isinstance(meta := model.metadata, TableMeta):
+            raise ValueError("Excel must have TableMeta as the additional data.")
+
+        if len(meta.selections) == 0:
+            raise ValueError(f"No selection found in window {win.title!r}")
+        elif len(meta.selections) > 1:
+            raise ValueError(f"More than one selection found in window {win.title!r}")
+        sel = meta.selections[0]
+        # TODO: thoroughly check the type.
+        rindices, cindices = sel
+        rsl = slice(*rindices)
+        csl = slice(*cindices)
+        return rsl, csl
+
+    return _getter
 
 
 def _get_xy_data(
@@ -283,10 +340,42 @@ def _get_xy_data(
         table = model.value[meta.current_sheet]
         xlabel, xarr, ys = _table_to_xy_data(table, x, y)
     else:
-        raise RuntimeError(f"Unreachable: {model.type}")
+        raise ValueError(f"Table-like data expected, but got model type {model.type!r}")
     if xlabel:
         axes.x.label = xlabel
     return xarr, ys
+
+
+def _auto_select(win: SubWindow, num: int) -> "list[None | tuple[slice, slice]]":
+    from himena._data_wrappers import wrap_dataframe
+
+    if (model_type := win.model_type()) is None:
+        return [None] * num
+    if is_subtype(model_type, StandardType.TABLE):
+        val = win.to_model().value
+        if not isinstance(val, np.ndarray):
+            return [None] * num
+        shape = val.shape
+    elif is_subtype(model_type, StandardType.DATAFRAME):
+        df = wrap_dataframe(win.to_model().value)
+        shape = df.shape
+    elif is_subtype(model_type, StandardType.EXCEL):
+        model = win.to_model()
+        if not isinstance(meta := model.metadata, ExcelMeta):
+            return [None] * num
+        table = model.value[meta.current_sheet]
+        shape = table.shape
+    else:
+        return [None] * num
+    ncols = shape[1]
+    if ncols == 0:
+        return [None] * num
+    elif ncols < num:
+        out = [None] * num
+        for i in range(ncols):
+            out[i + num - ncols] = (slice(0, shape[0]), slice(i, i + 1))
+    else:
+        return [(slice(0, shape[0]), slice(i, i + 1)) for i in range(num)]
 
 
 def _table_to_xy_data(
@@ -391,3 +480,13 @@ def _iter_edge(edge: "EdgePropertyDict | dict", prefix: str = "") -> Iterator[di
             f"{prefix}width": width,
             f"{prefix}style": style,
         }
+
+
+def _ignore_label(
+    named_array: tuple[str | None, np.ndarray] | None,
+) -> np.ndarray | None:
+    if named_array is not None:
+        _, val = named_array
+    else:
+        val = None
+    return val

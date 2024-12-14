@@ -13,6 +13,9 @@ from himena.builtins.qt.plot._conversion import convert_plot_layout
 
 
 class QMatplotlibCanvasBase(QtW.QWidget):
+    __himena_widget_id__ = "builtins:QMatplotlibCanvasBase"
+    __himena_display_name__ = "Matplotlib Canvas"
+
     def __init__(self):
         super().__init__()
         layout = QtW.QVBoxLayout(self)
@@ -78,6 +81,9 @@ class QMatplotlibCanvas(QMatplotlibCanvasBase):
 
 
 class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
+    __himena_widget_id__ = "builtins:QModelMatplotlibCanvas"
+    __himena_display_name__ = "Built-in Plot Canvas"
+
     @protocol_override
     def update_model(self, model: WidgetDataModel):
         was_none = self._canvas is None
@@ -86,9 +92,8 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
             self.layout().addWidget(self._canvas)
             self._toolbar = self._prep_toolbar()
         if isinstance(model.value, hplt.BaseLayoutModel):
-            convert_plot_layout(model.value, self.figure)
+            self._plot_models = convert_plot_layout(model.value, self.figure)
             self._canvas.draw()
-            self._plot_models = model.value
         else:
             raise ValueError(f"Unsupported model: {model.value}")
         if was_none:

@@ -2,8 +2,8 @@ from __future__ import annotations
 from typing import Any, TYPE_CHECKING
 
 from magicgui.types import Undefined
-from magicgui.widgets import LineEdit, ComboBox
-from magicgui.widgets.bases import ValuedContainerWidget
+from magicgui.widgets import LineEdit, ComboBox, TupleEdit
+from magicgui.widgets.bases import ValuedContainerWidget, ValueWidget
 from cmap import Color, Colormap
 from himena.qt._magicgui._color import ColorEdit, ColormapEdit
 from himena.qt._magicgui._basic_widgets import FloatEdit
@@ -21,6 +21,13 @@ if TYPE_CHECKING:
         color: NotRequired[Color | Colormap]
         width: NotRequired[float]
         style: NotRequired[str]
+
+    class AxisPropertyDict(TypedDict):
+        lim: NotRequired[tuple[float, float]]
+        scale: NotRequired[str]
+        label: NotRequired[str]
+        ticks: NotRequired[Any]
+        grid: NotRequired[bool]
 
 
 class ColorOrColorCycleEdit(ValuedContainerWidget):
@@ -147,3 +154,82 @@ class EdgePropertyEdit(ValuedContainerWidget["EdgePropertyDict"]):
         enabled = value["width"] > 0.0
         self._edge_color.enabled = enabled
         self._edge_style.enabled = enabled
+
+
+class AxisPropertyEdit(ValuedContainerWidget["AxisPropertyDict"]):
+    def __init__(self, value=Undefined, **kwargs):
+        if value is None:
+            value = Undefined
+        self._lim_widget = TupleEdit(value=(0.0, 1.0), label="lim")
+        self._scale_widget = ComboBox(choices=["linear", "log"], label="scale")
+        self._label_widget = LineEdit(value="", label="label")
+        self._grid_widget = ToggleSwitch(value=False, text="grid")
+        super().__init__(
+            value,
+            widgets=[
+                self._lim_widget,
+                self._scale_widget,
+                self._label_widget,
+                self._grid_widget,
+            ],
+            **kwargs,
+        )
+        self._lim_widget.changed.connect(self._emit_value_changed)
+        self._scale_widget.changed.connect(self._emit_value_changed)
+        self._label_widget.changed.connect(self._emit_value_changed)
+        self._grid_widget.changed.connect(self._emit_value_changed)
+
+    def get_value(self) -> AxisPropertyDict:
+        return {
+            "lim": self._lim_widget.value,
+            "scale": self._scale_widget.value,
+            "label": self._label_widget.value,
+            "grid": self._grid_widget.value,
+        }
+
+    def set_value(self, value: AxisPropertyDict):
+        value = value or {}
+        with self.changed.blocked():
+            if (lim := value.get("lim", None)) is not None:
+                self._lim_widget.value = tuple(lim)
+            if "scale" in value:
+                self._scale_widget.value = value["scale"]
+            if (label := value.get("label", None)) is not None:
+                self._label_widget.value = label
+            if "grid" in value:
+                self._grid_widget.value = value["grid"]
+        self._emit_value_changed()
+
+    def _emit_value_changed(self) -> None:
+        self.changed.emit(self.get_value())
+
+
+class DictEdit(ValuedContainerWidget[dict]):
+    def __init__(self, options: dict[str, dict], value=Undefined, **kwargs):
+        from himena.qt._magicgui import get_type_map
+
+        type_map = get_type_map()
+        self._widget_dict: dict[str, ValueWidget] = {}
+        for k, opt in options.items():
+            _opt = opt.copy()
+            if (label := _opt.get("label", None)) is None:
+                label = k
+            self._widget_dict[k] = type_map.create_widget(options=_opt, label=label)
+        super().__init__(value, widgets=self._widget_dict.values(), **kwargs)
+        for widget in self._widget_dict.values():
+            widget.changed.connect(self._emit_value_changed)
+
+    def get_value(self) -> dict:
+        return {k: v.value for k, v in self._widget_dict.items()}
+
+    def set_value(self, value: dict):
+        if value is None or value is Undefined:
+            value = {}
+        with self.changed.blocked():
+            for k, v in value.items():
+                if k in self._widget_dict:
+                    self._widget_dict[k].value = v
+        self.changed.emit(self.get_value())
+
+    def _emit_value_changed(self) -> None:
+        self.changed.emit(self.get_value())

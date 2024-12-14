@@ -4,6 +4,7 @@ import numpy as np
 from pydantic_compat import BaseModel, Field
 from pydantic import field_serializer, field_validator
 from himena.standards.plotting import models as _m
+from himena.consts import PYDANTIC_CONFIG_STRICT
 
 if TYPE_CHECKING:
     from typing import Self
@@ -11,6 +12,8 @@ if TYPE_CHECKING:
 
 
 class BaseLayoutModel(BaseModel):
+    model_config = PYDANTIC_CONFIG_STRICT
+
     hpad: float | None = Field(None, description="Horizontal padding.")
     vpad: float | None = Field(None, description="Vertical padding.")
     hspace: float | None = Field(None, description="Horizontal space.")
@@ -36,6 +39,8 @@ class BaseLayoutModel(BaseModel):
 
 
 class StyledText(BaseModel):
+    model_config = PYDANTIC_CONFIG_STRICT
+
     text: str = Field(..., description="Text content.")
     size: float | None = Field(None, description="Font size.")
     color: Any | None = Field(None, description="Font color.")
@@ -47,6 +52,8 @@ class StyledText(BaseModel):
 
 
 class Axis(BaseModel):
+    model_config = PYDANTIC_CONFIG_STRICT
+
     lim: tuple[float, float] | None = Field(None, description="Axis limits.")
     scale: Literal["linear", "log"] = Field("linear", description="Axis scale.")
     label: str | StyledText | None = Field(None, description="Axis label.")
@@ -69,7 +76,7 @@ class Axes(BaseModel):
         return [model.model_dump_typed() for model in models]
 
     @field_validator("models", mode="before")
-    def _validate_models(cls, models: list) -> list[_m.BasePlotModel]:
+    def _validate_models(cls, models: list):
         out = []
         for model in models:
             if isinstance(model, dict):
@@ -108,12 +115,14 @@ class Axes(BaseModel):
         x: Sequence[float],
         y: Sequence[float],
         *,
-        bottom: "float | Sequence[float] | NDArray[np.number]" = 0,
+        bottom: "float | Sequence[float] | NDArray[np.number] | None" = None,
         bar_width: float | None = None,
         orient: Literal["vertical", "horizontal"] = "vertical",
         **kwargs,
     ) -> _m.Bar:
         """Add a bar plot model to the axes."""
+        if bottom is None:
+            bottom = 0
         model = _m.Bar(
             x=x, y=y, bottom=bottom, bar_width=bar_width, orient=orient,
             **_m.parse_face_edge(kwargs),

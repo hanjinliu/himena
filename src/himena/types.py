@@ -20,7 +20,7 @@ from himena._descriptors import (
     SaveBehavior,
 )
 from himena._enum import StrEnum
-from himena.consts import StandardType
+from himena.consts import StandardType, PYDANTIC_CONFIG_STRICT
 
 if TYPE_CHECKING:
     from himena._providers import PluginInfo
@@ -103,6 +103,8 @@ class WidgetDataModel(GenericModel[_T]):
     force_open_with : str, optional
         Force open with a specific plugin if given.
     """
+
+    model_config = PYDANTIC_CONFIG_STRICT
 
     value: _T = Field(..., description="Internal value.")
     type: str = Field(..., description="Type of the internal data.")
@@ -259,6 +261,8 @@ class WidgetDataModel(GenericModel[_T]):
 class ClipboardDataModel(BaseModel):
     """Data model for a clipboard data."""
 
+    model_config = PYDANTIC_CONFIG_STRICT
+
     text: str | None = Field(
         default=None,
         description="Text in the clipboard if exists.",
@@ -406,6 +410,8 @@ class WindowRect(Rect[int]):
 class GuiConfiguration(BaseModel):
     """Configuration for parametric widget (interpreted by the injection processor)"""
 
+    model_config = PYDANTIC_CONFIG_STRICT
+
     title: str | None = None
     preview: bool = False
     auto_close: bool = True
@@ -416,6 +422,8 @@ class GuiConfiguration(BaseModel):
 
 class ModelTrack(BaseModel):
     """Model to track how model is created."""
+
+    model_config = PYDANTIC_CONFIG_STRICT
 
     sources: list[MethodDescriptor] = Field(default_factory=list)
     command_id: str | None = None
@@ -465,6 +473,8 @@ class ParametricWidgetProtocol:
 
 class BackendInstructions(BaseModel):
     """Instructions for the backend that are only relevant to user interface."""
+
+    model_config = PYDANTIC_CONFIG_STRICT
 
     animate: bool = Field(
         default=True,

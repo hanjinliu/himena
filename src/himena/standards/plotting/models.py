@@ -3,8 +3,11 @@ from typing import Any, Literal
 
 from pydantic_compat import BaseModel, Field
 
+from himena.consts import PYDANTIC_CONFIG_STRICT
+
 
 class BasePlotModel(BaseModel):
+    model_config = PYDANTIC_CONFIG_STRICT
     name: str | None = Field(None, description="Name of the plot.")
 
     @staticmethod
@@ -25,6 +28,10 @@ class BasePlotModel(BaseModel):
 
     def model_dump_typed(self) -> dict[str, Any]:
         return {"type": type(self).__name__.lower(), **self.model_dump()}
+
+    def plot_option_dict(self) -> dict[str, Any]:
+        """Return the GUI option dict for this plot for editing."""
+        return {"name": {"widget_type": "LineEdit", "value": self.name}}
 
 
 class Face(BaseModel):
@@ -73,6 +80,17 @@ class Scatter(BasePlotModel):
         default_factory=Edge, description="Properties of the marker edges."
     )
 
+    def plot_option_dict(self) -> dict[str, Any]:
+        from himena.qt._magicgui import EdgePropertyEdit, FacePropertyEdit
+
+        return {
+            "name": {"widget_type": "LineEdit", "value": self.name},
+            "symbol": {"widget_type": "LineEdit", "value": self.symbol},
+            "size": {"annotation": int, "value": self.size},
+            "face": {"widget_type": FacePropertyEdit, "value": self.face.model_dump()},
+            "edge": {"widget_type": EdgePropertyEdit, "value": self.edge.model_dump()},
+        }
+
 
 class Line(BasePlotModel):
     """Plot model for line plot."""
@@ -81,6 +99,14 @@ class Line(BasePlotModel):
     y: Any = Field(..., description="Y-axis values.")
     edge: Edge = Field(default_factory=Edge, description="Properties of the line.")
     marker: Scatter | None = Field(None, description="Marker of the line.")
+
+    def plot_option_dict(self) -> dict[str, Any]:
+        from himena.qt._magicgui import EdgePropertyEdit
+
+        return {
+            "name": {"widget_type": "LineEdit", "value": self.name},
+            "edge": {"widget_type": EdgePropertyEdit, "value": self.edge.model_dump()},
+        }
 
 
 class Bar(BasePlotModel):

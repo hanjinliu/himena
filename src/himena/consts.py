@@ -1,7 +1,7 @@
 import sys
 from enum import Enum
 import string
-from types import SimpleNamespace
+from types import SimpleNamespace, MappingProxyType
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -136,3 +136,11 @@ class ParametricWidgetProtocolNames:
 
 
 NO_RECORDING_FIELD = "__himena_no_recording__"
+
+PYDANTIC_CONFIG_STRICT = MappingProxyType(
+    {
+        "revalidate_instances": "always",
+        "strict": True,
+        "validate_assignment": True,
+    }
+)

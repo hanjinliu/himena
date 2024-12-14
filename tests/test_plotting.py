@@ -102,7 +102,7 @@ def test_bar_plot_via_command(ui: MainWindow):
     )
     ui.current_window  = win
     ui.exec_action(
-        "builtins:scatter-plot",
+        "builtins:bar-plot",
         with_params={
             "x": (slice(0, 99), slice(0, 1)),
             "y": (slice(0, 99), slice(1, 2)),
@@ -113,7 +113,7 @@ def test_bar_plot_via_command(ui: MainWindow):
     )
     ui.current_window  = win
     ui.exec_action(
-        "builtins:scatter-plot",
+        "builtins:bar-plot",
         with_params={
             "x": (slice(0, 99), slice(0, 1)),
             "y": (slice(0, 99), slice(1, 3)),
@@ -122,8 +122,9 @@ def test_bar_plot_via_command(ui: MainWindow):
             "edge": {"color": Color("black"), "width": 2, "style": None},
         }
     )
+    ui.current_window  = win
     ui.exec_action(
-        "builtins:scatter-plot",
+        "builtins:bar-plot",
         with_params={
             "x": (slice(0, 99), slice(0, 1)),
             "y": (slice(0, 99), slice(2, 3)),
@@ -160,6 +161,7 @@ def test_errorbar_plot_via_command(ui: MainWindow):
             "x": (slice(0, 99), slice(0, 1)),
             "y": (slice(0, 99), slice(1, 2)),
             "xerr": (slice(0, 99), slice(2, 3)),
+            "yerr": None,
             "capsize": 0,
             "edge": {"color": Color("blue"), "width": 1, "style": "-"},
         }
