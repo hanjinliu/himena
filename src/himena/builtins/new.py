@@ -47,7 +47,7 @@ def new_excel(ui: MainWindow) -> WidgetDataModel:
         value={"Sheet-1": None},
         type=StandardType.EXCEL,
         extension_default=".xlsx",
-        title=f"Excel-{nwin}",
+        title=f"Book-{nwin}",
     )
 
 

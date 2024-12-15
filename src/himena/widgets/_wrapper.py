@@ -12,6 +12,7 @@ from uuid import uuid4
 import weakref
 
 from psygnal import Signal
+from magicgui import widgets as mgw
 from himena import anchor as _anchor
 from himena import _providers
 from himena._utils import get_gui_config, get_widget_class_id
@@ -64,13 +65,13 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
     ):
         super().__init__(main_window)
         self._widget = weakref.ref(widget)
-        widget._himena_widget = self
         if identifier is None:
             identifier = uuid4().int
         self._identifier = identifier
         self._save_behavior: SaveBehavior = SaveToNewPath()
         self._widget_data_model_method: MethodDescriptor = ProgramaticMethod()
         self._is_modified_fallback_value = False
+        self._frontend_widget()._himena_widget = self
 
     @property
     def is_alive(self) -> bool:
@@ -166,8 +167,12 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         """Type of the widget data model."""
         if not self.is_exportable:
             return None
-        # TODO: model_type can be set before calling `update_model`.
-        _type = getattr(self.widget, "model_type", _do_nothing)()
+        interf = self.widget
+        _type = None
+        if hasattr(interf, "model_type"):
+            _type = interf.model_type()
+        elif hasattr(interf, "__himena_model_type__"):
+            _type = interf.__himena_model_type__
         if _type is None:
             _type = self.to_model().type
         return _type
@@ -189,6 +194,25 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         elif hasattr(widget, "merge_model"):
             return True
         return False
+
+    def _split_interface_and_frontend(self) -> tuple[object, _W]:
+        """Split the interface that defines methods and the frontend widget.
+
+        This function is used to separate the interface object that implements the
+        himena protocols and the actual widget that will be added to the main window.
+        """
+        obj = self.widget
+        if hasattr(obj, "native_widget"):
+            front = obj.native_widget()
+        elif isinstance(obj, mgw.Widget):
+            front = obj.native
+        else:
+            front = obj
+        return obj, front
+
+    def _frontend_widget(self) -> _W:
+        """Get the frontend widget."""
+        return self._split_interface_and_frontend()[1]
 
 
 class SubWindow(WidgetWrapper[_W]):
@@ -221,16 +245,16 @@ class SubWindow(WidgetWrapper[_W]):
     @property
     def title(self) -> str:
         """Title of the sub-window."""
-        return self._main_window()._window_title(self.widget)
+        return self._main_window()._window_title(self._frontend_widget())
 
     @title.setter
     def title(self, value: str) -> None:
-        self._main_window()._set_window_title(self.widget, value)
+        self._main_window()._set_window_title(self._frontend_widget(), value)
 
     @property
     def state(self) -> WindowState:
         """State (e.g. maximized, minimized) of the sub-window."""
-        return self._main_window()._window_state(self.widget)
+        return self._main_window()._window_state(self._frontend_widget())
 
     @state.setter
     def state(self, value: WindowState | str) -> None:
@@ -241,7 +265,7 @@ class SubWindow(WidgetWrapper[_W]):
     @property
     def rect(self) -> WindowRect:
         """Position and size of the sub-window."""
-        return self._main_window()._window_rect(self.widget)
+        return self._main_window()._window_rect(self._frontend_widget())
 
     @rect.setter
     def rect(self, value: tuple[int, int, int, int]) -> None:
@@ -299,7 +323,7 @@ class SubWindow(WidgetWrapper[_W]):
     def _set_state(self, value: WindowState, inst: BackendInstructions | None = None):
         if inst is None:
             inst = self._main_window()._himena_main_window._instructions
-        self._main_window()._set_window_state(self.widget, value, inst)
+        self._main_window()._set_window_state(self._frontend_widget(), value, inst)
 
     def _set_rect(
         self,
@@ -314,16 +338,15 @@ class SubWindow(WidgetWrapper[_W]):
             inst = self._main_window()._himena_main_window._instructions
         main = self._main_window()
         rect = WindowRect.from_tuple(*value)
-        anc = main._window_anchor(self.widget).update_for_window_rect(
-            main._area_size(), rect
-        )
-        main._set_window_rect(self.widget, rect, inst)
-        main._set_window_anchor(self.widget, anc)
+        front = self._frontend_widget()
+        anc = main._window_anchor(front).update_for_window_rect(main._area_size(), rect)
+        main._set_window_rect(front, rect, inst)
+        main._set_window_anchor(front, anc)
 
     @property
     def anchor(self) -> _anchor.WindowAnchor:
         """Anchor of the sub-window."""
-        return self._main_window()._window_anchor(self.widget)
+        return self._main_window()._window_anchor(self._frontend_widget())
 
     @anchor.setter
     def anchor(self, anchor: _anchor.WindowAnchor | None):
@@ -333,7 +356,7 @@ class SubWindow(WidgetWrapper[_W]):
             anchor = self._anchor_from_str(anchor)
         elif not isinstance(anchor, _anchor.WindowAnchor):
             raise TypeError(f"Expected WindowAnchor, got {type(anchor)}")
-        self._main_window()._set_window_anchor(self.widget, anchor)
+        self._main_window()._set_window_anchor(self._frontend_widget(), anchor)
 
     def update(
         self,
@@ -473,7 +496,7 @@ class SubWindow(WidgetWrapper[_W]):
             self.widget.merge_model(model)
             ui = self._main_window()._himena_main_window
             source._close_me(ui)
-            ui._backend_main_window._move_focus_to(source.widget)
+            ui._backend_main_window._move_focus_to(source._frontend_widget())
             return True
         return False
 
@@ -554,9 +577,9 @@ class ParametricWindow(SubWindow[_W]):
         else:
             return self._callback(**kwargs)
 
-    def _widget_preview_callback(self, widget: ParametricWindow):
+    def _widget_preview_callback(self):
         main = self._main_window()
-        if not widget.is_preview_enabled():
+        if not self.is_preview_enabled():
             if prev := self._get_preview_window():
                 self._preview_window_ref = _do_nothing
                 self._child_windows.discard(prev)
@@ -567,11 +590,13 @@ class ParametricWindow(SubWindow[_W]):
                     if hint := self.size_hint():
                         self.rect = (self.rect.left, self.rect.top, hint[0], hint[1])
             return None
-        kwargs = widget.get_params()
+        kwargs = self.get_params()
         if self._has_is_previewing:
             kwargs[self._IS_PREVIEWING] = True
         # TODO: check async
         return_value = self._callback(**kwargs)
+        if return_value is None:
+            return None
         if not isinstance(return_value, WidgetDataModel):
             raise NotImplementedError(
                 "Preview is only supported for WidgetDataModel but the return value "
@@ -581,7 +606,7 @@ class ParametricWindow(SubWindow[_W]):
             prev.update_model(return_value)
         else:
             # create a new preview window
-            result_widget = widget._model_to_new_window(return_value)
+            result_widget = self._model_to_new_window(return_value)
             if self._result_as == "window":
                 title = f"{return_value.title} (preview)"
                 prev = self.add_child(result_widget, title=title)
@@ -596,7 +621,7 @@ class ParametricWindow(SubWindow[_W]):
                     self.rect = (self.rect.left, self.rect.top, hint[0], hint[1])
                 prev = WidgetWrapper(result_widget, main)  # just for wrapping
             self._preview_window_ref = weakref.ref(prev)
-            main._move_focus_to(self.widget)
+            main._move_focus_to(self._frontend_widget())
         return None
 
     def _process_return_value(self, return_value: Any, kwargs: dict[str, Any]):
@@ -655,7 +680,16 @@ class ParametricWindow(SubWindow[_W]):
                 _LOGGER.info("Inherited method: %r", new_method)
         else:
             annot = getattr(self._callback, "__annotations__", {})
-            self._process_other_output(return_value, annot.get("return", None))
+            if isinstance(return_value, Future):
+                injection_type_hint = Future
+                # This is hacky. The injection store will process the result but the
+                # return type cannot be inherited from the callback. Here, we just set
+                # the type hint to Future and let it processed in the
+                # "_future_done_callback" method of himena application.
+                return_value._ino_type_hint = annot.get("return", None)
+            else:
+                injection_type_hint = annot.get("return", None)
+            self._process_other_output(return_value, injection_type_hint)
         return None
 
     def _callback_with_params(self, kwargs: dict[str, Any]):
@@ -770,11 +804,13 @@ class DockWidget(WidgetWrapper[_W]):
     @property
     def visible(self) -> bool:
         """Visibility of the dock widget."""
-        return self._main_window()._dock_widget_visible(self.widget)
+        return self._main_window()._dock_widget_visible(self._frontend_widget())
 
     @visible.setter
     def visible(self, visible: bool) -> bool:
-        return self._main_window()._set_dock_widget_visible(self.widget, visible)
+        return self._main_window()._set_dock_widget_visible(
+            self._frontend_widget(), visible
+        )
 
     def show(self) -> None:
         """Show the dock widget."""
@@ -787,11 +823,13 @@ class DockWidget(WidgetWrapper[_W]):
     @property
     def title(self) -> str:
         """Title of the dock widget."""
-        return self._main_window()._dock_widget_title(self.widget)
+        return self._main_window()._dock_widget_title(self._frontend_widget())
 
     @title.setter
     def title(self, title: str) -> None:
-        return self._main_window()._set_dock_widget_title(self.widget, str(title))
+        return self._main_window()._set_dock_widget_title(
+            self._frontend_widget(), str(title)
+        )
 
 
 def _widget_repr(widget: _W) -> str:

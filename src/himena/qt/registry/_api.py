@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import Callable, TypeVar, overload
-from qtpy import QtWidgets as QtW
 
 from himena.types import is_subtype, WidgetClassTuple
 from himena.qt.registry._widgets import QFallbackWidget
@@ -51,11 +50,6 @@ def register_widget_class(type_, widget_class=None, app=None, priority=100):
         raise TypeError(f"Type must be a string, got {type_!r}")
 
     def _inner(wdt_class):
-        if not (isinstance(wdt_class, type) and issubclass(wdt_class, QtW.QWidget)):
-            raise TypeError(
-                "Widget class must be a subclass of `QtW.QWidget`, "
-                f"got {wdt_class!r}"
-            )
         if not hasattr(wdt_class, "update_model"):
             raise TypeError(
                 f"Widget class {wdt_class!r} does not have a `update_model` method."

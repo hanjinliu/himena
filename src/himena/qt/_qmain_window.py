@@ -236,7 +236,9 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     ) -> QSubWindow:
         if not isinstance(widget, QtW.QWidget):
             raise TypeError(
-                f"`widget` must be a QtW.QWidget instance, got {type(widget)}."
+                f"Expected a QWidget, got {type(widget)}. If you are adding a wrapper "
+                "of a widget, the wrapper should implement `native_widget()` method "
+                "that returns QWidget."
             )
         tab = self._tab_widget.widget_area(i_tab)
         _LOGGER.info("Adding widget of title %r to tab %r", title, i_tab)

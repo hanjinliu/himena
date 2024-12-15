@@ -23,12 +23,14 @@ _ALLOWED_METHODS = frozenset(
         "window_resized_callback",
         "window_added_callback",
         "get_user_context",
+        "default_title",
+        "native_widget",
     ]
 )
 
 
 def protocol_override(f: _T) -> _T:
-    """Check if the method is allowed as a himena-aware protocol."""
+    """Check if the method is allowed as a himena protocol."""
     if f.__name__ not in _ALLOWED_METHODS:
         raise ValueError(f"Method {f} is not a allowed protocol.")
     return f

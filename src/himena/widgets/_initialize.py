@@ -8,6 +8,8 @@ from magicgui.widgets import FunctionGui
 from himena.consts import ParametricWidgetProtocolNames as PWPN
 from himena.types import (
     Parametric,
+    WidgetType,
+    WidgetConstructor,
     WidgetDataModel,
     ClipboardDataModel,
     ParametricWidgetProtocol,
@@ -152,6 +154,20 @@ def init_application(app: HimenaApplication) -> HimenaApplication:
         _LOGGER.debug("processing %r", fn)
         ins = current_instance(app.name)
         ins.add_function(fn, **get_gui_config(fn))
+        return None
+
+    @app.injection_store.mark_processor
+    def _process_widget_type(widget: WidgetType) -> None:
+        _LOGGER.debug("processing %r", widget)
+        ins = current_instance(app.name)
+        ins.add_widget(widget)
+        return None
+
+    @app.injection_store.mark_processor
+    def _process_widget_constructor(con: WidgetConstructor) -> None:
+        _LOGGER.debug("processing %r", con)
+        ins = current_instance(app.name)
+        ins.add_widget(con())
         return None
 
     @app.injection_store.mark_processor

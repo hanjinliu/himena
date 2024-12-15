@@ -127,7 +127,8 @@ def _convert_axes(ax: hplt.Axes, ax_mpl: plt.Axes):
         _convert_plot_model(model, ax_mpl)
 
 
-def _update_axis_props(axes: hplt.Axes, axes_mpl: plt.Axes):
+def _fill_axis_props(axes: hplt.Axes, axes_mpl: plt.Axes):
+    """Fill Nones in model axis from the matplotlib axis."""
     axes = axes.model_copy()
     if axes.title is None:
         axes.title = axes_mpl.get_title()
@@ -142,6 +143,16 @@ def _update_axis_props(axes: hplt.Axes, axes_mpl: plt.Axes):
     return axes
 
 
+def update_axis_props(axes: hplt.Axes, axes_mpl: plt.Axes):
+    """Update model axis from the matplotlib axis."""
+    axes.title = axes_mpl.get_title()
+    axes.x.lim = axes_mpl.get_xlim()
+    axes.x.label = axes_mpl.get_xlabel()
+    axes.y.lim = axes_mpl.get_ylim()
+    axes.y.label = axes_mpl.get_ylabel()
+    return axes
+
+
 def convert_plot_layout(lo: hplt.BaseLayoutModel, fig: plt.Figure):
     if isinstance(lo, hplt.SingleAxes):
         if len(fig.axes) != 1:
@@ -151,7 +162,7 @@ def convert_plot_layout(lo: hplt.BaseLayoutModel, fig: plt.Figure):
             axes = fig.axes[0]
         axes.clear()
         _convert_axes(lo.axes, axes)
-        lo.axes = _update_axis_props(lo.axes, axes)
+        lo.axes = _fill_axis_props(lo.axes, axes)
     elif isinstance(lo, hplt.layout.Layout1D):
         _shape = (1, len(lo.axes)) if isinstance(lo, hplt.Row) else (len(lo.axes), 1)
         if len(fig.axes) != len(lo.axes):
@@ -161,7 +172,7 @@ def convert_plot_layout(lo: hplt.BaseLayoutModel, fig: plt.Figure):
             axes = fig.axes
         for ax, ax_mpl in zip(lo.axes, axes):
             _convert_axes(ax, ax_mpl)
-        lo.axes = [_update_axis_props(ax, ax_mpl) for ax, ax_mpl in zip(lo.axes, axes)]
+        lo.axes = [_fill_axis_props(ax, ax_mpl) for ax, ax_mpl in zip(lo.axes, axes)]
     elif isinstance(lo, hplt.Grid):
         raise NotImplementedError("Grid layout is not supported yet")
     else:

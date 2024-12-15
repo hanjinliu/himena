@@ -93,9 +93,9 @@ class QImageView(QtW.QSplitter):
     @protocol_override
     def update_model(self, model: WidgetDataModel):
         arr = wrap_array(model.value)
-        # TODO: if model.value is self._arr.arr, do not execute heavy operations
         is_initialized = self._arr is not None
         is_same_dimensionality = self._arr is not None and arr.ndim == self._arr.ndim
+        is_same_array = is_initialized and (self._arr.arr is model.value)
         ndim_rem = arr.ndim - 2
         if arr.shape[-1] in (3, 4) and arr.ndim > 2:
             ndim_rem -= 1
@@ -130,6 +130,10 @@ class QImageView(QtW.QSplitter):
                 meta0.current_roi = meta.current_roi
 
         self._is_rgb = meta0.is_rgb
+        if is_initialized:
+            sl_old = self._dims_slider.value()
+        else:
+            sl_old = None
         if meta0.current_indices is not None:
             sl_0 = tuple(force_int(_i) for _i in meta0.current_indices[:ndim_rem])
         elif is_initialized and is_same_dimensionality:
@@ -147,9 +151,11 @@ class QImageView(QtW.QSplitter):
         sl_0 = tuple(
             min(max(0, s), size - 1) for s, size in zip(sl_0, arr.shape[:ndim_rem])
         )
+        is_sl_same = sl_0 == sl_old
 
         # update sliders
-        self._dims_slider.set_dimensions(arr.shape, meta0.axes, is_rgb=self._is_rgb)
+        if not is_same_array:
+            self._dims_slider.set_dimensions(arr.shape, meta0.axes, is_rgb=self._is_rgb)
         with qsignal_blocker(self._dims_slider):
             self._dims_slider.setValue(sl_0)
 
@@ -171,13 +177,15 @@ class QImageView(QtW.QSplitter):
                 nchannels=nchannels,
                 dtype=arr.dtype,
             )
-        img_slices = self._get_image_slices(sl_0, nchannels)
+        if not (is_same_array and is_sl_same):
+            img_slices = self._get_image_slices(sl_0, nchannels)
 
-        if self._channels is None:  # not initialized yet
-            self._init_channels(meta0, img_slices, nchannels)
+            if self._channels is None:  # not initialized yet
+                self._init_channels(meta0, img_slices, nchannels)
 
-        self._set_image_slices(img_slices)
+            self._set_image_slices(img_slices)
         if meta0.current_roi:
+            self._img_view.remove_current_item()
             self._img_view.set_current_roi(
                 from_standard_roi(meta0.current_roi, self._img_view._roi_pen)
             )

@@ -6,15 +6,17 @@ from qtpy import QtWidgets as QtW, QtCore
 from himena.consts import StandardType, ParametricWidgetProtocolNames as PWPN
 from himena.types import WidgetDataModel
 from himena.plugins import protocol_override
-from magicgui.widgets import Widget, Container
+from magicgui import widgets as mgw
 
 
 class QParametricWidget(QtW.QWidget):
     """QWidget that contain a magicgui Container and a button to run functions."""
 
+    __himena_display_name__ = "Parametric Widget"
+
     param_changed = QtCore.Signal()
 
-    def __init__(self, central: QtW.QWidget | Widget) -> None:
+    def __init__(self, central: QtW.QWidget | mgw.Widget) -> None:
         super().__init__()
         self._scroll_area = QtW.QScrollArea()
         self._scroll_area.setWidgetResizable(True)
@@ -32,8 +34,9 @@ class QParametricWidget(QtW.QWidget):
         area_widget = QtW.QWidget()
         self._scroll_area.setWidget(area_widget)
         layout_v = QtW.QVBoxLayout(area_widget)
+        layout_v.setContentsMargins(4, 4, 4, 4)
         layout_v.setSpacing(2)
-        if isinstance(central, Widget):
+        if isinstance(central, mgw.Widget):
             if not isinstance(central.native, QtW.QWidget):
                 raise ValueError(f"Expected a QWidget, got {central}")
             self._central_qwidget = central.native
@@ -51,7 +54,7 @@ class QParametricWidget(QtW.QWidget):
         control_layout = QtW.QHBoxLayout(self._control)
         control_layout.setContentsMargins(0, 0, 0, 0)
         self._central_widget_size_hint = self._central_qwidget.sizeHint()
-        if isinstance(central, Container):
+        if isinstance(central, mgw.Container):
             min_height = sum(max(each.min_height, 28) for each in central) + 2 * (
                 len(central) - 1
             )
@@ -102,7 +105,7 @@ class QParametricWidget(QtW.QWidget):
 
     def _base_size_hint(self) -> QtCore.QSize:
         mysize = QtCore.QSize(self._central_widget_size_hint)
-        mysize.setWidth(mysize.width() + 10)  # content margins
+        mysize.setWidth(max(mysize.width() + 10, 80))  # content margins
         mysize.setHeight(mysize.height() + 36)  # content margins and scroll area
         if self._call_btn.isVisible():
             mysize.setHeight(mysize.height() + 24)  # button height
@@ -110,7 +113,7 @@ class QParametricWidget(QtW.QWidget):
 
     def setFocus(self) -> None:
         if (
-            isinstance(self._central_widget, Container)
+            isinstance(self._central_widget, mgw.Container)
             and len(self._central_widget) > 0
         ):
             # focus the first input

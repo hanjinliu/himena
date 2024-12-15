@@ -138,6 +138,9 @@ def configure_gui(
         sig = sig.replace(parameters=list(new_params.values()))
         f.__signature__ = sig
         f.__annotations__ = {k: v.annotation for k, v in sig.parameters.items()}
+        if sig.return_annotation is not inspect.Parameter.empty:
+            f.__annotations__["return"] = sig.return_annotation
+
         f.__himena_gui_config__ = GuiConfiguration(
             title=title,
             preview=preview,

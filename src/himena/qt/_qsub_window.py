@@ -490,7 +490,7 @@ class QSubWindowTitleBar(QtW.QFrame):
             tooltip="Menu for this window",
             callback=self._show_window_menu,
         )
-        if callable(getattr(self._subwindow._widget, "model_type", None)):
+        if self._get_model_type() is not None:
             self._model_menu_btn = QTitleBarToolButton(
                 icon=_icon_model_menu(),
                 tooltip="Menu specific to the model",
@@ -558,6 +558,17 @@ class QSubWindowTitleBar(QtW.QFrame):
         self.setAcceptDrops(True)
         self._set_bar_size(18)
 
+    def _get_model_type(self) -> str | None:
+        interf = self._subwindow._my_wrapper().widget
+        if hasattr(interf, "model_type"):
+            try:
+                return interf.model_type()
+            except Exception:
+                return None
+        elif hasattr(interf, "__himena_model_type__"):
+            return interf.__himena_model_type__
+        return None
+
     def _set_bar_size(self, height: int):
         self.setFixedHeight(height)
         self._index_label.setFixedHeight(height)
@@ -611,9 +622,8 @@ class QSubWindowTitleBar(QtW.QFrame):
     def _make_tooltip(self):
         qwin = self._subwindow
         attrs: list[str] = [f"<b>Title</b>: {self._title_label.text()}"]
-        if hasattr(qwin._widget, "model_type"):
-            with suppress(Exception):
-                attrs.append(f"<b>Type</b>: {qwin._widget.model_type()}")
+        if _model_type := self._get_model_type():
+            attrs.append(f"<b>Type</b>: {_model_type}")
         attrs.append(f"<b>Widget</b>: {get_display_name(qwin._widget.__class__)}")
         sub = qwin._my_wrapper()
         attrs.append(f"<b>Save behavior</b>: {sub.save_behavior!r}")
@@ -751,7 +761,9 @@ class QSubWindowTitleBar(QtW.QFrame):
             self._subwindow.move(0, self._subwindow.pos().y())
 
     def _show_model_menu(self):
-        model_type = self._subwindow._widget.model_type()
+        model_type = self._get_model_type()
+        if model_type is None:
+            return None
         ui = get_main_window(self)
         model_subtypes = model_type.split(".")
         supertype_menus: list[QtW.QMenu] = []

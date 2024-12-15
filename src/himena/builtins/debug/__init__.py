@@ -3,7 +3,7 @@ from typing import Annotated
 import numpy as np
 from himena.consts import StandardType
 from himena.plugins import register_function, configure_gui
-from himena.types import Parametric, WidgetDataModel
+from himena.types import Parametric, WidgetDataModel, WidgetConstructor
 
 TOOLS_DEBUG = "tools/debug"
 
@@ -161,5 +161,31 @@ def test_async_checkpoints() -> Parametric:
         for i in range(10):
             time.sleep(0.3)
         return
+
+    return run
+
+
+@register_function(
+    menus=TOOLS_DEBUG,
+    title="Test async widget creation",
+    command_id="debug:test-async-widget-creation",
+)
+def test_async_widget_creation() -> Parametric:
+    import time
+    from magicgui.widgets import Container, LineEdit
+
+    def make_widget(texts: list[str]):
+        con = Container()
+        for text in texts:
+            con.append(LineEdit(value=text))
+        return con.native
+
+    @configure_gui(run_async=True)
+    def run() -> WidgetConstructor:
+        texts = []
+        for i in range(10):
+            time.sleep(0.3)
+            texts.append(f"Text {i}")
+        return lambda: make_widget(texts)
 
     return run

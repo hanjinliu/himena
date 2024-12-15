@@ -6,6 +6,7 @@ from typing import (
     Callable,
     Literal,
     NamedTuple,
+    NewType,
     TypeAlias,
     TypeVar,
     Generic,
@@ -439,25 +440,20 @@ class ModelTrack(BaseModel):
         return ProgramaticMethod()
 
 
-class Parametric:
-    """Callback for a parametric function.
+Parametric = NewType("Parametric", Any)
+"""Callback for a parametric function.
 
-    This type can be interpreted by the injection store processor. For example, in the
-    following code, `my_plugin_function` will be converted into a parametric widget
-    with inputs `a` and `b`..
+This type can be interpreted by the injection store processor. For example, in the
+following code, `my_plugin_function` will be converted into a parametric widget
+with inputs `a` and `b`..
 
-    >>> from himena.plugin import register_function
-    >>> @register_function(...)
-    >>> def my_plugin_function(...) -> Parametric:
-    ...     def callback_func(a: int, b: str) -> WidgetDataModel:
-    ...         ...
-    ...     return my_plugin_function
-    """
-
-    def __new__(cls, *args, **kwargs) -> None:
-        if cls is Parametric:
-            raise TypeError("Parametric cannot be instantiated.")
-        return super().__new__(cls)
+>>> from himena.plugin import register_function
+>>> @register_function(...)
+>>> def my_plugin_function(...) -> Parametric:
+...     def callback_func(a: int, b: str) -> WidgetDataModel:
+...         ...
+...     return my_plugin_function
+"""
 
 
 class ParametricWidgetProtocol:
@@ -511,3 +507,7 @@ class WidgetClassTuple(NamedTuple):
     widget_class: "type"
     priority: int = 100
     widget_id: str | None = None
+
+
+WidgetType = NewType("WidgetType", object)
+WidgetConstructor = NewType("WidgetConstructor", object)

@@ -79,7 +79,8 @@ def register_widget_class(type_, widget_class=None, priority=100):
         himena.qt.register_widget_class(type_, wcls, priority=priority)
         fn = OpenDataInFunction(type_, wcls)
         AppActionRegistry.instance().add_action(fn.to_action())
-        return type_
+        wcls.__himena_model_type__ = type_
+        return wcls
 
     return inner if widget_class is None else inner(widget_class)
 

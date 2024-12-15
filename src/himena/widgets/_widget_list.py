@@ -86,8 +86,8 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
     def __getitem__(self, index_or_name: int | str) -> SubWindow[_W]:
         index = self._norm_index_or_name(index_or_name)
         widgets = self._main_window()._get_widget_list(self._i_tab)
-        backend_widget = widgets[index][1]
-        return backend_widget._himena_widget
+        front = widgets[index][1]
+        return front._himena_widget
 
     def __delitem__(self, index_or_name: int | str) -> None:
         index = self._norm_index_or_name(index_or_name)
@@ -106,7 +106,12 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
 
     def _norm_index_or_name(self, index_or_name: int | str) -> int:
         if isinstance(index_or_name, str):
-            index = self.collect_titles().index(index_or_name)
+            for i, w in enumerate(self._main_window()._get_widget_list(self._i_tab)):
+                if w[0] == index_or_name:
+                    index = i
+                    break
+            else:
+                raise ValueError(f"Name {index_or_name!r} not found.")
         else:
             if index_or_name < 0:
                 index = len(self) + index_or_name
@@ -125,10 +130,10 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
 
     def append(self, sub_window: SubWindow[_W], title: str) -> None:
         main = self._main_window()
-        inner_widget = sub_window.widget
-        out = main.add_widget(inner_widget, self._i_tab, title)
-        if hasattr(inner_widget, "control_widget"):
-            main._set_control_widget(inner_widget, inner_widget.control_widget())
+        interf, front = sub_window._split_interface_and_frontend()
+        out = main.add_widget(front, self._i_tab, title)
+        if hasattr(interf, "control_widget"):
+            main._set_control_widget(front, interf.control_widget())
 
         main._connect_window_events(sub_window, out)
         sub_window.title = title
@@ -137,12 +142,12 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         main._set_current_tab_index(self._i_tab)
         if main._himena_main_window._new_widget_behavior is NewWidgetBehavior.TAB:
             main._set_window_state(
-                inner_widget,
+                front,
                 WindowState.FULL,
                 main._himena_main_window._instructions.updated(animate=False),
             )
 
-        main._move_focus_to(inner_widget)
+        main._move_focus_to(front)
         sub_window._alive = True
         return None
 
@@ -175,10 +180,6 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         """Title of the tab area."""
         return self._main_window()._tab_title(self._i_tab)
 
-    def collect_titles(self) -> list[str]:
-        """List of names of the sub-windows."""
-        return [w[0] for w in self._main_window()._get_widget_list(self._i_tab)]
-
     def add_widget(
         self,
         widget: _W,
@@ -205,7 +206,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         main = self._main_window()
         sub_window = SubWindow(widget=widget, main_window=main)
         self._process_new_widget(sub_window, title, auto_size)
-        main._move_focus_to(widget)
+        main._move_focus_to(sub_window._split_interface_and_frontend()[1])
         return sub_window
 
     def add_function(
@@ -339,12 +340,12 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
     ) -> None:
         """Add, resize, and set the focus to the new widget."""
         main = self._main_window()
+        interf, front = sub_window._split_interface_and_frontend()
         if title is None:
-            title = f"Untitled-{len(self)}"
-        inner_widget = sub_window.widget
-        out = main.add_widget(inner_widget, self._i_tab, title)
-        if hasattr(inner_widget, "control_widget"):
-            main._set_control_widget(inner_widget, inner_widget.control_widget())
+            title = getattr(interf, "default_title", _make_title)(len(self))
+        out = main.add_widget(front, self._i_tab, title)
+        if hasattr(interf, "control_widget"):
+            main._set_control_widget(front, interf.control_widget())
 
         main._connect_window_events(sub_window, out)
         sub_window.title = title
@@ -354,7 +355,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         nwindows = len(self)
         if main._himena_main_window._new_widget_behavior is NewWidgetBehavior.TAB:
             main._set_window_state(
-                inner_widget,
+                front,
                 WindowState.FULL,
                 main._himena_main_window._instructions.updated(animate=False),
             )
@@ -590,3 +591,7 @@ class DockWidgetList(
                 continue
             return _dock
         return None
+
+
+def _make_title(i: int) -> str:
+    return f"Untitled-{i}"

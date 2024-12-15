@@ -9,7 +9,7 @@ from himena.plugins import protocol_override
 from himena.types import WidgetDataModel
 from himena.consts import StandardType
 from himena.standards import plotting as hplt
-from himena.builtins.qt.plot._conversion import convert_plot_layout
+from himena.builtins.qt.plot._conversion import convert_plot_layout, update_axis_props
 
 
 class QMatplotlibCanvasBase(QtW.QWidget):
@@ -34,19 +34,16 @@ class QMatplotlibCanvasBase(QtW.QWidget):
 
     @protocol_override
     def size_hint(self) -> tuple[int, int]:
-        return 400, 300
+        return 300, 240
 
     @protocol_override
     def window_resized_callback(self, size: tuple[int, int]):
         if size[0] > 40 and size[1] > 40:
             self._canvas.figure.tight_layout()
 
-    def _prep_toolbar(self):
-        toolbar = backend_qtagg.NavigationToolbar2QT(self._canvas, self)
+    def _prep_toolbar(self, toolbar_class=backend_qtagg.NavigationToolbar2QT):
+        toolbar = toolbar_class(self._canvas, self)
         spacer = QtW.QWidget()
-        spacer.setSizePolicy(
-            QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Preferred
-        )
         toolbar.insertWidget(toolbar.actions()[0], spacer)
         return toolbar
 
@@ -66,6 +63,7 @@ class QMatplotlibCanvas(QMatplotlibCanvasBase):
             raise ValueError(f"Unsupported model: {model.value}")
         if was_none:
             self._toolbar.pan()
+            self._canvas.figure.tight_layout()
 
     @protocol_override
     def to_model(self) -> WidgetDataModel:
@@ -90,7 +88,7 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
         if was_none:
             self._canvas = FigureCanvasQTAgg()
             self.layout().addWidget(self._canvas)
-            self._toolbar = self._prep_toolbar()
+            self._toolbar = self._prep_toolbar(QNavigationToolBar)
         if isinstance(model.value, hplt.BaseLayoutModel):
             self._plot_models = convert_plot_layout(model.value, self.figure)
             self._canvas.draw()
@@ -103,6 +101,17 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
     def to_model(self) -> WidgetDataModel:
         value = self._plot_models.model_copy()
         # TODO: update the model with the current canvas state as much as possible
+        if isinstance(value, hplt.SingleAxes):
+            model_axes_ref = [value.axes]
+        elif isinstance(value, hplt.layout.Layout1D):
+            model_axes_ref = value.axes
+        elif isinstance(value, hplt.layout.Grid):
+            model_axes_ref = sum(value.axes, [])
+        else:
+            model_axes_ref = []  # Not implemented
+        mpl_axes_ref = self.figure.axes
+        for model_axes, mpl_axes in zip(model_axes_ref, mpl_axes_ref):
+            update_axis_props(model_axes, mpl_axes)
         return WidgetDataModel(
             value=value,
             type=self.model_type(),
@@ -141,9 +150,25 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
         if size[0] > 40 and size[1] > 40:
             self._canvas.figure.tight_layout()
 
-    @protocol_override
-    def window_added_callback(self):
-        self._canvas.figure.tight_layout()
+
+# remove some of the tool buttons
+class QNavigationToolBar(backend_qtagg.NavigationToolbar2QT):
+    toolitems = (
+        ("Home", "Reset original view", "home", "home"),
+        ("Back", "Back to previous view", "back", "back"),
+        ("Forward", "Forward to next view", "forward", "forward"),
+        (None, None, None, None),
+        (
+            "Pan",
+            "Left button pans, Right button zooms\n"
+            "x/y fixes axis, CTRL fixes aspect",
+            "move",
+            "pan",
+        ),
+        ("Zoom", "Zoom to rectangle\nx/y fixes axis", "zoom_to_rect", "zoom"),
+        (None, None, None, None),
+        ("Save", "Save the figure", "filesave", "save_figure"),
+    )
 
 
 class FigureCanvasQTAgg(backend_qtagg.FigureCanvasQTAgg):

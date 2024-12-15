@@ -1,7 +1,7 @@
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, SupportsIndex
 import numpy as np
 from himena._data_wrappers._array import wrap_array, ArrayWrapper
-from himena.plugins import register_function, configure_gui
+from himena.plugins import register_function, configure_gui, configure_submenu
 from himena.types import Parametric, Rect, WidgetDataModel
 from himena.consts import StandardType
 from himena.standards.model_meta import (
@@ -14,6 +14,9 @@ from himena.builtins.tools.array import _cast_meta, _make_getter
 
 if TYPE_CHECKING:
     import numpy as np
+
+configure_submenu("tools/image/roi", "ROI")
+configure_submenu("/model_menu/roi", "ROI")
 
 
 @register_function(
@@ -189,6 +192,112 @@ def split_channels(model: WidgetDataModel) -> list[WidgetDataModel]:
     return models
 
 
+@register_function(
+    title="Specify rectangle ...",
+    types=StandardType.IMAGE,
+    menus=["tools/image/roi", "/model_menu/roi"],
+    command_id="builtins:roi-specify-rectangle",
+)
+def roi_specify_rectangle(win: SubWindow) -> Parametric:
+    """Specify the coordinates of a rectangle ROI."""
+
+    model = win.to_model()
+    meta = _cast_meta(model, ImageMeta)
+    if isinstance(roi := meta.current_roi, _roi.RectangleRoi):
+        x0, y0, w0, h0 = roi.x, roi.y, roi.width, roi.height
+    else:
+        x0 = y0 = 0
+        w0 = h0 = 10
+
+    @configure_gui(
+        preview=True,
+        x={"value": x0},
+        y={"value": y0},
+        width={"value": w0},
+        height={"value": h0},
+    )
+    def run_roi_specify_coordinates(x: float, y: float, width: float, height: float):
+        model = win.to_model()
+        meta = _cast_meta(model, ImageMeta)
+        indices = _slider_indices(meta)
+        meta.current_roi = _roi.RectangleRoi(
+            indices=indices, x=x, y=y, width=width, height=height
+        )
+        win.update_model(model.model_copy(update={"metadata": meta}))
+
+    return run_roi_specify_coordinates
+
+
+@register_function(
+    title="Specify ellipse ...",
+    types=StandardType.IMAGE,
+    menus=["tools/image/roi", "/model_menu/roi"],
+    command_id="builtins:roi-specify-ellipse",
+)
+def roi_specify_ellipse(win: SubWindow) -> Parametric:
+    """Specify the coordinates of an ellipse ROI."""
+
+    model = win.to_model()
+    meta = _cast_meta(model, ImageMeta)
+    if isinstance(roi := meta.current_roi, _roi.EllipseRoi):
+        x0, y0, w0, h0 = roi.x, roi.y, roi.width, roi.height
+    else:
+        x0 = y0 = 0
+        w0 = h0 = 10
+
+    @configure_gui(
+        preview=True,
+        x={"value": x0},
+        y={"value": y0},
+        width={"value": w0},
+        height={"value": h0},
+    )
+    def run_roi_specify_coordinates(x: float, y: float, width: float, height: float):
+        model = win.to_model()
+        meta = _cast_meta(model, ImageMeta)
+        indices = _slider_indices(meta)
+        meta.current_roi = _roi.EllipseRoi(
+            indices=indices, x=x, y=y, width=width, height=height
+        )
+        win.update_model(model.model_copy(update={"metadata": meta}))
+
+    return run_roi_specify_coordinates
+
+
+@register_function(
+    title="Specify line ...",
+    types=StandardType.IMAGE,
+    menus=["tools/image/roi", "/model_menu/roi"],
+    command_id="builtins:roi-specify-line",
+)
+def roi_specify_line(win: SubWindow) -> Parametric:
+    """Specify the coordinates of a line ROI."""
+
+    model = win.to_model()
+    meta = _cast_meta(model, ImageMeta)
+    if isinstance(roi := meta.current_roi, _roi.LineRoi):
+        x1, y1, x2, y2 = roi.x1, roi.y1, roi.x2, roi.y2
+    else:
+        x1 = y1 = 0
+        x2 = y2 = 10
+
+    @configure_gui(
+        preview=True,
+        x1={"value": x1},
+        y1={"value": y1},
+        x2={"value": x2},
+        y2={"value": y2},
+    )
+    def run_roi_specify_coordinates(x1: float, y1: float, x2: float, y2: float):
+        model = win.to_model()
+        meta = _cast_meta(model, ImageMeta)
+        indices = _slider_indices(meta)
+        meta.current_roi = _roi.LineRoi(indices=indices, x1=x1, y1=y1, x2=x2, y2=y2)
+        win.update_model(model.model_copy(update={"metadata": meta}))
+
+    return run_roi_specify_coordinates
+
+
 def _get_consensus_axes(arrs: list[Any]) -> list[str]:
     axes_consensus: list[str] | None = None
     for arr in arrs:
@@ -327,3 +436,11 @@ def _find_index_to_insert_axis(axis: str, axes: list[str]) -> int:
     axes_ref = [axis] + axes[:-yx_axes_start_index]
     axes_sorted = sorted(axes_ref, key=lambda x: _order_map.get(x.lower(), -1))
     return axes_sorted.index(axis)
+
+
+def _slider_indices(meta: ImageMeta) -> tuple[int, ...]:
+    if meta.current_indices:
+        indices = tuple(i for i in meta.current_indices if isinstance(i, SupportsIndex))
+    else:
+        indices = ()
+    return indices

@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Callable, TYPE_CHECKING
 
 from app_model import Action, Application
+import in_n_out
 from himena._app_model._command_registry import CommandsRegistry
 
 if TYPE_CHECKING:
@@ -21,6 +22,7 @@ class HimenaApplication(Application):
         super().__init__(
             name,
             commands_reg_class=CommandsRegistry,
+            injection_store_class=HimenaInjectionStore,
             raise_synchronous_exceptions=True,
         )
         self._registered_actions: dict[str, Action] = {}
@@ -45,4 +47,22 @@ class HimenaApplication(Application):
         elif e := f.exception():
             raise e
         else:
-            self.injection_store.process(f.result())
+            result = f.result()
+            type_hint = getattr(f, "_ino_type_hint", None)
+            self.injection_store.process(result, type_hint=type_hint)
+
+
+class HimenaInjectionStore(in_n_out.Store):
+    def process(
+        self,
+        result,
+        *,
+        type_hint: object | None = None,
+        first_processor_only: bool = False,
+        raise_exception: bool = True,  # update default
+        _funcname: str = "",
+    ) -> None:
+        super().process(
+            result, type_hint=type_hint, first_processor_only=first_processor_only,
+            raise_exception=raise_exception, _funcname=_funcname
+        )  # fmt: skip

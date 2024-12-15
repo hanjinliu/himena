@@ -83,7 +83,7 @@ def duplicate_window(win: SubWindow) -> WidgetDataModel:
     model = win.to_model()
     update = {
         "save_behavior_override": NoNeedToSave(),
-        "force_open_with": _utils.get_widget_class_id(win.widget),
+        "force_open_with": _utils.get_widget_class_id(type(win.widget)),
     }
     if model.title is not None:
         update["title"] = _utils.add_title_suffix(model.title)
