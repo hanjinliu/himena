@@ -146,9 +146,25 @@ def set_colormaps(win: SubWindow) -> Parametric:
         f"ch_{i}": {
             "label": channel_names[i],
             "widget_type": ColormapEdit,
-            "category": "sequential",
+            "defaults": [
+                "gray",
+                "green",
+                "magenta",
+                "cyan",
+                "yellow",
+                "red",
+                "blue",
+                "plasma",
+                "viridis",
+                "inferno",
+                "imagej:fire",
+                "imagej:HiLo",
+                "imagej:ice",
+                "matlab:jet",
+                "matlab:hot",
+            ],
             "value": current_channels[i],
-        }
+        }  # fmt: skip
         for i in range(len(channel_names))
     }
 

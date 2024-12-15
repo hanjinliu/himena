@@ -34,7 +34,23 @@ class ColorOrColorCycleEdit(ValuedContainerWidget):
     def __init__(self, value=Undefined, **kwargs):
         self._use_color_cycle = ToggleSwitch(value=False, text="use color cycle")
         self._color = ColorEdit(value="black")
-        self._color_cycle = ColormapEdit(value="tab10", visible=False)
+        self._color_cycle = ColormapEdit(
+            value="tab10",
+            defaults=[
+                "tab10",
+                "tab10_colorblind",
+                "tab20",
+                "colorbrewer:Accent",
+                "colorbrewer:Dark2",
+                "colorbrewer:Paired",
+                "colorbrewer:Pastel1",
+                "colorbrewer:Pastel2",
+                "colorbrewer:Set1",
+                "colorbrewer:Set2",
+                "colorbrewer:Set3",
+            ],
+            visible=False,
+        )
         super().__init__(
             value,
             widgets=[self._use_color_cycle, self._color, self._color_cycle],
@@ -49,11 +65,14 @@ class ColorOrColorCycleEdit(ValuedContainerWidget):
         self._color.visible = not v
 
     def get_value(self) -> Any:
-        return (
+        value = (
             self._color_cycle.value
             if self._use_color_cycle.value
             else self._color.value.hex
         )
+        if value is None and not self._nullable:
+            raise ValueError("Value cannot be None")
+        return value
 
     def set_value(self, value: Any):
         try:

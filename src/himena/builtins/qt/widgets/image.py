@@ -84,7 +84,8 @@ class QImageView(QtW.QSplitter):
         self._is_rgb = False  # whether the image is RGB
         self._channel_axis: int | None = None
         self._channels: list[ChannelInfo] | None = None
-        self._model_type = StandardType.IMAGE
+        self._model_type: str = StandardType.IMAGE
+        self._pixel_unit: str = "a.u."
         self._img_view.add_image_layer()
 
     def createHandle(self):
@@ -94,63 +95,29 @@ class QImageView(QtW.QSplitter):
     def update_model(self, model: WidgetDataModel):
         arr = wrap_array(model.value)
         is_initialized = self._arr is not None
-        is_same_dimensionality = self._arr is not None and arr.ndim == self._arr.ndim
+        is_same_dimensionality = is_initialized and arr.ndim == self._arr.ndim
         is_same_array = is_initialized and (self._arr.arr is model.value)
         ndim_rem = arr.ndim - 2
-        if arr.shape[-1] in (3, 4) and arr.ndim > 2:
-            ndim_rem -= 1
-            _is_rgb = True
-        else:
-            _is_rgb = False
 
         # override widget state if metadata is available
         meta0 = model_meta.ImageMeta(
             axes=arr.axis_names(),
-            interpolation="linear" if _is_rgb else "nearest",
-            is_rgb=_is_rgb,
+            interpolation="nearest",
+            is_rgb=False,
+            unit="a.u.",
         )
         self._arr = arr
         if isinstance(meta := model.metadata, model_meta.ImageMeta):
-            # TODO: consider other attributes
-            if meta.rois:
-                meta0.rois = meta.rois
-            if meta.interpolation:
-                meta0.interpolation = meta.interpolation
-            if meta.axes:
-                meta0.axes = meta.axes
+            _update_meta(meta0, meta)
             if meta.is_rgb:
-                meta0.is_rgb = meta.is_rgb
-            if meta.channel_axis is not None:
-                meta0.channel_axis = meta.channel_axis
-            if meta.current_indices:
-                meta0.current_indices = meta.current_indices
-            if meta.channels:
-                meta0.channels = meta.channels
-            if meta.current_roi:
-                meta0.current_roi = meta.current_roi
+                ndim_rem -= 1
 
         self._is_rgb = meta0.is_rgb
         if is_initialized:
             sl_old = self._dims_slider.value()
         else:
             sl_old = None
-        if meta0.current_indices is not None:
-            sl_0 = tuple(force_int(_i) for _i in meta0.current_indices[:ndim_rem])
-        elif is_initialized and is_same_dimensionality:
-            sl_0 = self._dims_slider.value()
-        else:
-            if meta0.axes:
-                axis_names = [axis.name for axis in meta0.axes][:ndim_rem]
-                sl_0 = tuple(
-                    size // 2 if aname.lower() == "z" else 0
-                    for aname, size in zip(axis_names, arr.shape)
-                )
-            else:
-                sl_0 = (0,) * ndim_rem
-        # the indices should be in the valid range
-        sl_0 = tuple(
-            min(max(0, s), size - 1) for s, size in zip(sl_0, arr.shape[:ndim_rem])
-        )
+        sl_0 = self._calc_current_indices(arr, meta0, is_same_dimensionality)
         is_sl_same = sl_0 == sl_old
 
         # update sliders
@@ -166,7 +133,7 @@ class QImageView(QtW.QSplitter):
             nchannels = arr.shape[meta0.channel_axis]
 
         self._img_view.set_n_images(nchannels)
-        if _is_rgb:
+        if meta0.is_rgb:
             self._channel_axis = None  # override channel axis for RGB images
         else:
             self._channel_axis = meta0.channel_axis
@@ -177,13 +144,13 @@ class QImageView(QtW.QSplitter):
                 nchannels=nchannels,
                 dtype=arr.dtype,
             )
-        if not (is_same_array and is_sl_same):
+        if is_same_array and is_sl_same and self._current_image_slices is not None:
+            img_slices = self._current_image_slices
+        else:
             img_slices = self._get_image_slices(sl_0, nchannels)
-
-            if self._channels is None:  # not initialized yet
-                self._init_channels(meta0, img_slices, nchannels)
-
-            self._set_image_slices(img_slices)
+        # if self._channels is None:  # not initialized yet
+        self._init_channels(meta0, img_slices, nchannels)
+        self._set_image_slices(img_slices)
         if meta0.current_roi:
             self._img_view.remove_current_item()
             self._img_view.set_current_roi(
@@ -191,6 +158,7 @@ class QImageView(QtW.QSplitter):
             )
         self._control._interp_check_box.setChecked(meta0.interpolation == "linear")
         self._model_type = model.type
+        self._pixel_unit = meta0.unit or ""
         return None
 
     def _clim_for_ith_channel(self, img_slices, ith: int):
@@ -229,6 +197,31 @@ class QImageView(QtW.QSplitter):
             # be gray for single channel images.
             self._channels[0].colormap = Colormap("gray")
 
+    def _calc_current_indices(
+        self,
+        arr_new: ArrayWrapper,
+        meta0: model_meta.ImageMeta,
+        is_same_dimensionality: bool,
+    ):
+        ndim_rem = arr_new.ndim - 3 if meta0.is_rgb else arr_new.ndim - 2
+        if meta0.current_indices is not None:
+            sl_0 = tuple(force_int(_i) for _i in meta0.current_indices[:ndim_rem])
+        elif is_same_dimensionality:
+            sl_0 = self._dims_slider.value()
+        else:
+            if meta0.axes:
+                axis_names = [axis.name for axis in meta0.axes][:ndim_rem]
+                sl_0 = tuple(
+                    size // 2 if aname.lower() == "z" else 0
+                    for aname, size in zip(axis_names, arr_new.shape)
+                )
+            else:
+                sl_0 = (0,) * ndim_rem
+        # the indices should be in the valid range
+        return tuple(
+            min(max(0, s), size - 1) for s, size in zip(sl_0, arr_new.shape[:ndim_rem])
+        )
+
     @protocol_override
     def to_model(self) -> WidgetDataModel:
         assert self._arr is not None
@@ -256,7 +249,7 @@ class QImageView(QtW.QSplitter):
         return WidgetDataModel(
             value=self._arr.arr,
             type=self.model_type(),
-            extension_default=".png",
+            extension_default=".png",  # TODO: update default extension in update_model
             metadata=model_meta.ImageMeta(
                 current_indices=current_slices,
                 axes=axes,
@@ -266,6 +259,7 @@ class QImageView(QtW.QSplitter):
                 rois=self._roi_col.to_standard_roi_list,
                 is_rgb=self._is_rgb,
                 interpolation=interp,
+                unit=self._pixel_unit,
             ),
         )
 
@@ -282,7 +276,7 @@ class QImageView(QtW.QSplitter):
         return False
 
     @protocol_override
-    def control_widget(self) -> QtW.QWidget:
+    def control_widget(self) -> QImageViewControl:
         return self._control
 
     @protocol_override
@@ -472,6 +466,8 @@ class QImageView(QtW.QSplitter):
             else:
                 fmt = self._control._histogram._line_low._value_fmt
                 _int = format(intensity, fmt)
+            if self._pixel_unit:
+                _int += f" [{self._pixel_unit}]"
             self._control._hover_info.setText(f"x={x:.1f}, y={y:.1f}, value={_int}")
         else:
             self._control._hover_info.setText("")
@@ -531,15 +527,15 @@ class ChannelInfo(BaseModel):
         if arr.dtype.kind == "c":
             arr = complex_transform(arr)
         if arr.dtype.kind == "b":
-            false_color = (np.array(self.colormap(0.0)) * 255).astype(np.uint8)
-            true_color = (np.array(self.colormap(1.0)) * 255).astype(np.uint8)
+            false_color = np.array(self.colormap(0.0).rgba8, dtype=np.uint8)
+            true_color = np.array(self.colormap(1.0).rgba8, dtype=np.uint8)
             arr_normed = np.where(arr[..., np.newaxis], true_color, false_color)
         elif cmax > cmin:
             arr_normed = (self.colormap((arr - cmin) / (cmax - cmin)) * 255).astype(
                 np.uint8
             )
         else:
-            color = (np.array(self.colormap(0.5)) * 255).astype(np.uint8)
+            color = np.array(self.colormap(0.5).rgba8, dtype=np.uint8)
             arr_normed = np.empty(arr.shape + (4,), dtype=np.uint8)
             arr_normed[:] = color[np.newaxis, np.newaxis]
         out = np.ascontiguousarray(arr_normed)
@@ -692,3 +688,26 @@ def force_int(idx: Any) -> int:
         return idx.__index__()
     warnings.warn(f"Cannot convert {idx} to int, using 0 instead.")
     return 0
+
+
+def _update_meta(meta0: model_meta.ImageMeta, meta: model_meta.ImageMeta):
+    if meta.rois:
+        meta0.rois = meta.rois
+    if meta.axes:
+        meta0.axes = meta.axes
+    if meta.is_rgb:
+        meta0.is_rgb = meta.is_rgb
+        meta0.interpolation = "linear"
+    if meta.channel_axis is not None:
+        meta0.channel_axis = meta.channel_axis
+    if meta.current_indices:
+        meta0.current_indices = meta.current_indices
+    if meta.channels:
+        meta0.channels = meta.channels
+    if meta.current_roi:
+        meta0.current_roi = meta.current_roi
+    if meta.unit is not None:
+        meta0.unit = meta.unit
+    if meta.interpolation:
+        meta0.interpolation = meta.interpolation
+    return None

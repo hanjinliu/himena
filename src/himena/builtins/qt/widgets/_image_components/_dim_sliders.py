@@ -122,7 +122,7 @@ class _QAxisSlider(QtW.QWidget):
 
     def update_from_axis(self, axis: model_meta.ArrayAxis):
         self._name_label.setText(axis.name)
-        self._scale = axis.scale
+        self._scale = axis.scale if axis.scale is not None else 1.0
         self._unit = axis.unit
         self._origin = axis.origin
 

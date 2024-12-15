@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any
+from typing import Any, cast
 
 from magicgui.widgets.bases import ValueWidget
 from magicgui.types import Undefined
@@ -53,7 +53,9 @@ class _ColormapEdit(QBaseValueWidget):
     _qwidget: QColormapComboBox
 
     def __init__(self, **kwargs: Any) -> None:
-        cat = kwargs.get("category", "qualitative")
+        cat = kwargs.pop("category", None)
+        defaults = kwargs.pop("defaults", None)
+
         super().__init__(
             QColormapComboBox,
             "currentColormap",
@@ -61,8 +63,13 @@ class _ColormapEdit(QBaseValueWidget):
             "currentColormapChanged",
             **kwargs,
         )
-        self._qwidget.addColormaps(get_colormaps(cat))
-        self._qwidget.setMinimumHeight(22)
+        qwidget = cast(QColormapComboBox, self._qwidget)
+        if defaults:
+            qwidget.addColormaps(defaults)
+        if cat:
+            qwidget.addColormaps(get_colormaps(cat))
+        qwidget.setMinimumHeight(22)
+        qwidget.setUserAdditionsAllowed(True)
 
     def _pre_set_hook(self, value: Any) -> Any:
         return Colormap(value)
@@ -78,6 +85,8 @@ class ColormapEdit(ValueWidget[Colormap]):
 
         if category := kwargs.pop("category", None):
             backend_kwargs = {"category": category}
+        elif defaults := kwargs.pop("defaults", None):
+            backend_kwargs = {"defaults": defaults}
         else:
             backend_kwargs = {}
         ValueWidget.__init__(
