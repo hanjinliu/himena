@@ -59,10 +59,7 @@ class QImageGraphicsWidget(QtW.QGraphicsWidget):
         self._img: np.ndarray = np.zeros((0, 0))
         self._qimage = QtGui.QImage()
         self._smoothing = False
-        if additive:
-            self._comp_mode = QtGui.QPainter.CompositionMode.CompositionMode_Plus
-        else:
-            self._comp_mode = QtGui.QPainter.CompositionMode.CompositionMode_SourceOver
+        self.set_additive(additive)
 
     def set_image(self, img: np.ndarray):
         """Set a (colored) image to display."""
@@ -70,6 +67,12 @@ class QImageGraphicsWidget(QtW.QGraphicsWidget):
         self._img = img
         self._qimage = qimg
         self.update()
+
+    def set_additive(self, additive: bool):
+        if additive:
+            self._comp_mode = QtGui.QPainter.CompositionMode.CompositionMode_Plus
+        else:
+            self._comp_mode = QtGui.QPainter.CompositionMode.CompositionMode_SourceOver
 
     def setSmoothingEnabled(self, enabled):
         self._smoothing = enabled
@@ -99,31 +102,6 @@ class QImageGraphicsWidget(QtW.QGraphicsWidget):
     def boundingRect(self):
         height, width = self._img.shape[:2]
         return QtCore.QRectF(0, 0, width, height)
-
-
-class QImageBorderWidget(QtW.QGraphicsWidget):
-    """Just paint a border around a image."""
-
-    def __init__(self, shape: tuple[int, int]):
-        super().__init__()
-        self._shape = QtCore.QRectF(0, 0, *shape)
-
-    def boundingRect(self):
-        return self._shape
-
-    def paint(self, painter, option, widget=None):
-        bounding_rect = self.boundingRect()
-        is_light_bg = (
-            self.scene().views()[0].backgroundBrush().color().lightness() > 128
-        )
-        if is_light_bg:
-            pen = QtGui.QPen(QtGui.QColor(19, 19, 19), 1)
-        else:
-            pen = QtGui.QPen(QtGui.QColor(236, 236, 236), 1)
-        pen.setCosmetic(True)
-        painter.setPen(pen)
-        painter.setBrush(QtGui.QBrush(QtGui.QColor(0, 0, 0)))
-        painter.drawRect(bounding_rect)
 
 
 class QRoiLabels(QtW.QGraphicsItem):
@@ -244,6 +222,15 @@ class QImageGraphicsView(QBaseGraphicsView):
             widget.set_image(img)
             widget.setVisible(True)
         self._qroi_labels.set_bounding_rect(self._image_widgets[0].boundingRect())
+
+    def set_image_blending(self, opaque: list[bool]):
+        is_first = True
+        for img, is_opaque in zip(self._image_widgets, opaque):
+            if is_opaque and is_first:
+                is_first = False
+                img.set_additive(False)
+            else:
+                img.set_additive(True)
 
     def clear_rois(self):
         scene = self.scene()

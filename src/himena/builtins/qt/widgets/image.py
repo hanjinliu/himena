@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from itertools import cycle
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any, Callable, NamedTuple
 import warnings
 from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
@@ -80,7 +79,8 @@ class QImageView(QtW.QSplitter):
         self._control = QImageViewControl(self)
         self._arr: ArrayWrapper | None = None  # the internal array data for display
         self._is_modified = False  # whether the widget is modified
-        self._current_image_slices = None  # cached numpy arrays for display
+        # cached ImageTuples for display
+        self._current_image_slices: list[ImageTuple] | None = None
         self._is_rgb = False  # whether the image is RGB
         self._channel_axis: int | None = None
         self._channels: list[ChannelInfo] | None = None
@@ -144,12 +144,15 @@ class QImageView(QtW.QSplitter):
                 nchannels=nchannels,
                 dtype=arr.dtype,
             )
+
+        self._init_channels(meta0, nchannels)
+
         if is_same_array and is_sl_same and self._current_image_slices is not None:
             img_slices = self._current_image_slices
         else:
             img_slices = self._get_image_slices(sl_0, nchannels)
         # if self._channels is None:  # not initialized yet
-        self._init_channels(meta0, img_slices, nchannels)
+        self._update_channels(meta0, img_slices, nchannels)
         self._set_image_slices(img_slices)
         if meta0.current_roi:
             self._img_view.remove_current_item()
@@ -161,20 +164,30 @@ class QImageView(QtW.QSplitter):
         self._pixel_unit = meta0.unit or ""
         return None
 
-    def _clim_for_ith_channel(self, img_slices, ith: int):
-        if (ar0 := img_slices[ith]) is None:
-            sl = self._dims_slider.value()
-            if self._channel_axis is not None:
-                sl = list(sl)
-                sl[self._channel_axis] = ith
-                sl = tuple(sl)
-            ar0 = self._arr.get_slice(sl)
+    def _clim_for_ith_channel(self, img_slices: list[ImageTuple], ith: int):
+        ar0, _ = img_slices[ith]
         return ar0.min(), ar0.max()
 
-    def _init_channels(
+    def _init_channels(self, meta: model_meta.ImageMeta, nchannels: int):
+        if len(meta.channels) != nchannels:
+            ch0 = meta.channels[0]
+            channels = [
+                ch0.model_copy(update={"colormap": None, "contrast_limits": (0, 1)})
+                for _ in range(nchannels)
+            ]
+        else:
+            channels = [
+                ch.model_copy(update={"contrast_limits": (0, 1)})
+                for ch in meta.channels
+            ]
+        self._channels = [
+            ChannelInfo.from_channel(i, c) for i, c in enumerate(channels)
+        ]
+
+    def _update_channels(
         self,
         meta: model_meta.ImageMeta,
-        img_slices: list[NDArray[np.number] | None],
+        img_slices: list[ImageTuple],
         nchannels: int,
     ):
         # before calling ChannelInfo.from_channel, contrast_limits must be set
@@ -196,6 +209,9 @@ class QImageView(QtW.QSplitter):
             # ChannelInfo.from_channel returns a single green colormap but it should
             # be gray for single channel images.
             self._channels[0].colormap = Colormap("gray")
+        if self._composite_state() == "Comp.":
+            labels = [ch.name for ch in self._channels]
+            self._control._channel_visibilities.set_channel_labels(labels)
 
     def _calc_current_indices(
         self,
@@ -316,28 +332,32 @@ class QImageView(QtW.QSplitter):
         self,
         value: tuple[int, ...],
         nchannels: int,
-    ) -> list[NDArray[np.number] | None]:
+    ) -> list[ImageTuple]:
         """Get numpy arrays for each channel (None mean hide the channel)."""
         if self._channel_axis is None:
-            return [self._get_image_slice_for_channel(value)]
+            return [ImageTuple(self._get_image_slice_for_channel(value))]
 
-        if nchannels == 1 or self._composite_state() != "Comp.":
-            img_slices = [None] * nchannels
-            idx = value[self._channel_axis]
-            img_slices[idx] = self._get_image_slice_for_channel(value)
-        else:
-            img_slices = []
-            for i in range(nchannels):
-                sl = list(value)
-                sl[self._channel_axis] = i
-                img_slices.append(self._get_image_slice_for_channel(sl))
+        img_slices = []
+        check_states = self._control._channel_visibility()
+        for i in range(nchannels):
+            vis = i >= len(check_states) or check_states[i]
+            sl = list(value)
+            sl[self._channel_axis] = i
+            img_slices.append(ImageTuple(self._get_image_slice_for_channel(sl), vis))
         return img_slices
+
+    def _update_image_visibility(self, visible: list[bool]):
+        slices = self._current_image_slices
+        if slices is None:
+            return
+        for i, vis in enumerate(visible):
+            slices[i] = ImageTuple(slices[i].arr, vis)
+        self._set_image_slices(slices)
 
     def _get_image_slice_for_channel(
         self, value: tuple[int, ...]
     ) -> NDArray[np.number]:
         """Get numpy array for current channel."""
-        # return None if the array is not visible
         return self._arr.get_slice(tuple(value))
 
     def _slider_changed(self, value: tuple[int, ...]):
@@ -371,12 +391,13 @@ class QImageView(QtW.QSplitter):
                 is_rgb=self._is_rgb,
                 color=color_for_colormap(channel.colormap),
             )
-        self._current_image_slices[idx] = img
+        if self._current_image_slices is not None:
+            visible = self._current_image_slices[idx].visible
+        else:
+            visible = True
+        self._current_image_slices[idx] = ImageTuple(img, visible)
 
-    def _set_image_slices(
-        self,
-        imgs: list[NDArray[np.number] | None],
-    ):
+    def _set_image_slices(self, imgs: list[ImageTuple]):
         """Set image slices using the channel information.
 
         This method is only used for updating the entire image slices. Channels must be
@@ -387,7 +408,11 @@ class QImageView(QtW.QSplitter):
         if self._channels is None:
             return
         with qsignal_blocker(self._control._histogram):
-            for i, (img, ch) in enumerate(zip(imgs, self._channels)):
+            for i, (imtup, ch) in enumerate(zip(imgs, self._channels)):
+                if imtup.visible:
+                    img = imtup.arr
+                else:
+                    img = None
                 self._img_view.set_array(
                     i,
                     ch.transform_image(
@@ -401,13 +426,14 @@ class QImageView(QtW.QSplitter):
             ch_cur = self.current_channel()
             idx = ch_cur.channel_index or 0
             self._control._histogram.set_hist_for_array(
-                imgs[idx],
+                imgs[idx].arr,
                 ch_cur.clim,
                 ch_cur.minmax,
                 is_rgb=self._is_rgb,
                 color=color_for_colormap(ch_cur.colormap),
             )
             self._update_rois()
+            self._img_view.set_image_blending([im.visible for im in imgs])
 
     def _update_rois(self):
         rois = self._roi_col.get_rois_on_slice(self._dims_slider.value())
@@ -457,9 +483,12 @@ class QImageView(QtW.QSplitter):
         iy, ix = int(y), int(x)
         idx = self.current_channel().channel_index or 0
         cur_img = self._current_image_slices[idx]
-        ny, nx, *_ = cur_img.shape
+        ny, nx, *_ = cur_img.arr.shape
         if 0 <= iy < ny and 0 <= ix < nx:
-            intensity = cur_img[int(y), int(x)]
+            if not cur_img.visible:
+                self._control._hover_info.setText(f"x={x:.1f}, y={y:.1f} (invisible)")
+                return
+            intensity = cur_img.arr[int(y), int(x)]
             # NOTE: intensity could be an RGBA numpy array.
             if isinstance(intensity, np.ndarray) or self._arr.dtype.kind == "b":
                 _int = str(intensity)
@@ -481,7 +510,7 @@ class QImageView(QtW.QSplitter):
 
 
 class ChannelInfo(BaseModel):
-    name: str | None = Field(None)
+    name: str = Field(...)
     clim: tuple[float, float] = Field((0.0, 1.0))
     minmax: tuple[float, float] = Field((0.0, 1.0))
     colormap: Colormap = Field(default_factory=lambda: Colormap("gray"))
@@ -595,7 +624,7 @@ class ChannelInfo(BaseModel):
         else:
             colormap = Colormap(channel.colormap)
         return cls(
-            name=channel.name,
+            name=channel.name or f"Ch {idx}",
             channel_index=idx,
             colormap=colormap,
             clim=channel.contrast_limits,
@@ -653,32 +682,19 @@ def guess_clim(
     return clim_min, clim_max
 
 
+class ImageTuple(NamedTuple):
+    """A layer of image and its visibility."""
+
+    arr: NDArray[np.number]
+    visible: bool = True
+
+
 _DEFAULT_COLORMAPS = ["green", "magenta", "cyan", "yellow", "red", "blue"]
-
-
-def prep_channel_infos(num: int) -> list[ChannelInfo]:
-    if num == 1:
-        names = ["gray"]
-    else:
-        names = list(cycle(_DEFAULT_COLORMAPS))
-    return [
-        ChannelInfo(colormap=Colormap(f"cmap:{name}"), channel_index=idx)
-        for idx, name in enumerate(names)
-    ]
 
 
 def color_for_colormap(cmap: Colormap) -> QtGui.QColor:
     """Get the representative color for the colormap."""
     return QtGui.QColor.fromRgbF(*cmap(0.5))
-
-
-def pick_atleast_one_slice(
-    img_slices: list[NDArray[np.number] | None],
-) -> NDArray[np.number] | None:
-    for img in img_slices:
-        if img is not None:
-            return img
-    return None
 
 
 def force_int(idx: Any) -> int:

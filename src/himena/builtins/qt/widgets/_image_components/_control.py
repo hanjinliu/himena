@@ -1,31 +1,42 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from enum import Enum, auto
 import numpy as np
 from qtpy import QtWidgets as QtW
-from qtpy import QtCore
+from qtpy import QtCore, QtGui
 
 from himena.qt._magicgui._toggle_switch import QLabeledToggleSwitch
 from himena.builtins.qt.widgets._image_components import QHistogramView
 from himena.qt._utils import qsignal_blocker
+from himena._enum import StrEnum
 
 if TYPE_CHECKING:
     from himena.builtins.qt.widgets.image import QImageView
 
 
-class ImageType(Enum):
-    SINGLE = auto()
-    RGB = auto()
-    MULTI = auto()
+class ImageType(StrEnum):
+    SINGLE = "Single"
+    RGB = "RGB"
+    MULTI = "Multi"
 
 
-class ComplexMode(Enum):
-    REAL = auto()
-    IMAG = auto()
-    ABS = auto()
-    LOG_ABS = auto()
-    PHASE = auto()
+class ComplexMode(StrEnum):
+    REAL = "Real"
+    IMAG = "Imag"
+    ABS = "Abs"
+    LOG_ABS = "Log Abs"
+    PHASE = "Phase"
+
+
+class ChannelMode(StrEnum):
+    COMP = "Comp."
+    MONO = "Mono"
+    GRAY = "Gray"
+
+
+class RGBMode(StrEnum):
+    COLOR = "Color"
+    GRAY = "Gray"
 
 
 class QImageViewControl(QtW.QWidget):
@@ -42,12 +53,20 @@ class QImageViewControl(QtW.QWidget):
         )
 
         self._complex_mode_combo = QtW.QComboBox()
-        self._complex_mode_combo.addItems(["Real", "Imag", "Abs", "Log Abs", "Phase"])
+        self._complex_mode_combo.addItems(
+            [ComplexMode.REAL, ComplexMode.IMAG, ComplexMode.ABS, ComplexMode.LOG_ABS,
+             ComplexMode.PHASE]
+        )  # fmt: skip
         self._complex_mode_combo.setCurrentIndex(2)
         self._complex_mode_combo.setToolTip("Method to display complex data")
         self._complex_mode_old = "Abs"
         self._complex_mode_combo.currentTextChanged.connect(
             self._on_complex_mode_change
+        )
+
+        self._channel_visibilities = QChannelToggleSwitches()
+        self._channel_visibilities.stateChanged.connect(
+            self._on_channel_visibility_change
         )
 
         self._channel_mode_combo = QtW.QComboBox()
@@ -77,6 +96,7 @@ class QImageViewControl(QtW.QWidget):
         layout.addWidget(spacer)
         layout.addWidget(self._hover_info)
         layout.addWidget(self._complex_mode_combo)
+        layout.addWidget(self._channel_visibilities)
         layout.addWidget(self._channel_mode_combo)
         layout.addWidget(self._auto_contrast_btn)
         layout.addWidget(self._histogram)
@@ -100,11 +120,13 @@ class QImageViewControl(QtW.QWidget):
         if kind != self._image_type:
             if kind is ImageType.RGB:
                 self._channel_mode_combo.clear()
-                self._channel_mode_combo.addItems(["Color", "Gray"])
+                self._channel_mode_combo.addItems([RGBMode.COLOR, RGBMode.GRAY])
                 self._channel_mode_combo.show()
             elif kind is ImageType.MULTI:
                 self._channel_mode_combo.clear()
-                self._channel_mode_combo.addItems(["Comp.", "Mono", "Gray"])
+                self._channel_mode_combo.addItems(
+                    [ChannelMode.COMP, ChannelMode.MONO, ChannelMode.GRAY]
+                )
                 self._channel_mode_combo.show()
             else:
                 self._channel_mode_combo.clear()
@@ -121,15 +143,15 @@ class QImageViewControl(QtW.QWidget):
 
     def complex_transform(self, arr: np.ndarray) -> np.ndarray:
         """Transform complex array according to the current complex mode."""
-        if self._complex_mode_combo.currentText() == "Real":
+        if self._complex_mode_combo.currentText() == ComplexMode.REAL:
             return arr.real
-        if self._complex_mode_combo.currentText() == "Imag":
+        if self._complex_mode_combo.currentText() == ComplexMode.IMAG:
             return arr.imag
-        if self._complex_mode_combo.currentText() == "Abs":
+        if self._complex_mode_combo.currentText() == ComplexMode.ABS:
             return np.abs(arr)
-        if self._complex_mode_combo.currentText() == "Log Abs":
+        if self._complex_mode_combo.currentText() == ComplexMode.LOG_ABS:
             return np.log(np.abs(arr) + 1e-6)
-        if self._complex_mode_combo.currentText() == "Phase":
+        if self._complex_mode_combo.currentText() == ComplexMode.PHASE:
             return np.angle(arr)
         return arr
 
@@ -141,19 +163,42 @@ class QImageViewControl(QtW.QWidget):
         ch = view.current_channel()
         ch.clim = clim
         idx = ch.channel_index or 0
+        imtup = view._current_image_slices[idx]
         with qsignal_blocker(self._histogram):
-            view._img_view.set_array(
-                idx,
-                ch.transform_image(
-                    view._current_image_slices[idx],
+            if imtup.visible:
+                arr = ch.transform_image(
+                    view._current_image_slices[idx].arr,
                     complex_transform=self.complex_transform,
                     is_rgb=view._is_rgb,
-                    is_gray=view._composite_state() == "Gray",
-                ),
-            )
+                    is_gray=self._channel_mode_combo.currentText() == "Gray",
+                )
+            else:
+                arr = None
+            view._img_view.set_array(idx, arr)
 
     def _on_channel_mode_change(self, mode: str):
-        self._image_view._reset_image()
+        self._channel_visibilities.setVisible(mode == ChannelMode.COMP)
+        self._on_channel_visibility_change()
+
+    def _channel_visibility(self) -> list[bool]:
+        caxis = self._image_view._channel_axis
+        if caxis is None:
+            return [True]  # No channels, always visible
+        is_composite = self._channel_mode_combo.currentText() == ChannelMode.COMP
+        if is_composite:
+            visibilities = self._channel_visibilities._check_states()
+        else:
+            visibilities = [False] * len(self._channel_visibilities._toggle_switches)
+            sl = self._image_view._dims_slider.value()
+            ith_channel = sl[caxis]
+            if len(visibilities) <= ith_channel:
+                return [True] * len(sl)  # before initialization
+            visibilities[ith_channel] = True
+        return visibilities
+
+    def _on_channel_visibility_change(self):
+        visibilities = self._channel_visibility()
+        self._image_view._update_image_visibility(visibilities)
 
     def _on_complex_mode_change(self):
         cur = self._complex_mode_combo.currentText()
@@ -175,3 +220,43 @@ class QImageViewControl(QtW.QWidget):
         ch.minmax = min(ch.minmax[0], min_), max(ch.minmax[1], max_)
         self._histogram.set_clim((min_, max_))
         view._set_image_slice(img_slice, ch)
+
+
+class QChannelToggleSwitches(QtW.QScrollArea):
+    stateChanged = QtCore.Signal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFixedWidth(150)
+        self.setWidgetResizable(True)
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        central = QtW.QWidget()
+        layout = QtW.QGridLayout(central)
+        layout.setContentsMargins(2, 2, 2, 2)
+        self._layout = layout
+        self._toggle_switches: list[QLabeledToggleSwitch] = []
+        self.setWidget(central)
+        self._label_font = QtGui.QFont("Arial", 8)
+
+    def set_channel_labels(self, labels: list[str]):
+        for ith in range(len(self._toggle_switches), len(labels)):
+            sw = QLabeledToggleSwitch()
+            sw.setSize(9)
+            sw.setChecked(True)
+            sw.setFont(self._label_font)
+            sw.toggled.connect(self._emit_state_changed)
+            row, col = divmod(ith, 2)
+            self._layout.addWidget(sw, row, col)
+            self._toggle_switches.append(sw)
+        while len(self._toggle_switches) > len(labels):
+            sw = self._toggle_switches.pop()
+            sw.setParent(None)
+        for i, label in enumerate(labels):
+            sw = self._toggle_switches[i]
+            sw.setText(label)
+
+    def _emit_state_changed(self):
+        self.stateChanged.emit()
+
+    def _check_states(self) -> list[bool]:
+        return [sw.isChecked() for sw in self._toggle_switches]

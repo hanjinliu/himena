@@ -108,13 +108,13 @@ QScrollBar {
 }
 
 QScrollBar:horizontal {
-    min-height: 10px;
+    min-height: 6px;
     max-height: 10px;
     margin: 0px 8px;
 }
 
 QScrollBar:vertical {
-    min-width: 10px;
+    min-width: 6px;
     max-width: 10px;
     margin: 8px 0px;
 }

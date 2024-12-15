@@ -31,19 +31,21 @@ class QToggleSwitch(QtW.QWidget):
         self.setSizePolicy(
             QtW.QSizePolicy.Policy.Minimum, QtW.QSizePolicy.Policy.Expanding
         )
-        self._height = 12
         self._on_color = QtGui.QColor("#4D79C7")
         self._off_color = QtGui.QColor("#909090")
         self._handle_color = QtGui.QColor("#d5d5d5")
-        self.offset = self._height / 2
-        self._checked = False
         self._margin = 2
+        self._checked = False
+        self.setSize(12)
+        self.toggled.connect(self._set_checked)
         self._anim = QtCore.QPropertyAnimation(self, b"offset", self)
 
+    def setSize(self, size: int):
+        self._height = size
+        self.offset = size
         self.setFixedSize(
             (self._height + self._margin) * 2, self._height + self._margin * 2
         )
-        self.toggled.connect(self._set_checked)
 
     @Property(QtGui.QColor)
     def onColor(self):
@@ -170,6 +172,9 @@ class QLabeledToggleSwitch(QtW.QWidget):
     def toggled(self):
         # NOTE: This method is mandatory for the magicgui backend to work.
         return self._switch.toggled
+
+    def setSize(self, size: int):
+        self._switch.setSize(size)
 
     def isChecked(self) -> bool:
         return self._switch.isChecked()
