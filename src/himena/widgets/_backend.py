@@ -28,7 +28,7 @@ _T = TypeVar("_T")
 
 
 class BackendMainWindow(Generic[_W]):  # pragma: no cover
-    _himena_main_window: MainWindow
+    _himena_main_window: MainWindow[_W]
 
     def __init_subclass__(cls) -> None:
         for name in dir(BackendMainWindow):

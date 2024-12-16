@@ -747,6 +747,16 @@ class MainWindow(Generic[_W]):
         ]
         return max(subtype_match, key=lambda x: x[0])[1]
 
+    def _pick_widget(self, model: WidgetDataModel) -> _W:
+        """Pick the most suitable widget for the given model."""
+        factory = self._pick_widget_class(model)
+        try:
+            widget = factory(self)
+        except TypeError:
+            widget = factory()
+        widget.update_model(model)
+        return widget
+
     def _on_command_execution(self, id: str, result: Future):
         if exc := result.exception():
             _LOGGER.exception("Command %r failed: %r", id, exc)

@@ -147,13 +147,7 @@ class QModelStack(QtW.QSplitter):
         return item
 
     def _model_to_widget(self, model: WidgetDataModel) -> QtW.QWidget:
-        widget_class = self._ui._pick_widget_class(model)
-        try:
-            widget = widget_class(self._ui)
-        except TypeError:
-            widget = widget_class()
-        widget.update_model(model)
-        return widget
+        return self._ui._pick_widget(model)
 
     def _add_widget(self, item: QtW.QListWidgetItem, widget: QtW.QWidget):
         self._widget_stack.addWidget(widget)

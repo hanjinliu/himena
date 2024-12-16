@@ -375,14 +375,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
     def add_data_model(self, model: WidgetDataModel) -> SubWindow[_W]:
         """Add a widget data model as a widget."""
         ui = self._main_window()._himena_main_window
-        cls = ui._pick_widget_class(model)
-        _LOGGER.debug("Picked widget class: %s", cls)
-        # construct the internal widget
-        try:
-            widget = cls(ui)
-        except TypeError:
-            widget = cls()
-        widget.update_model(model)  # type: ignore
+        widget = ui._pick_widget(model)
         ui.set_status_tip(f"Data model {model.title!r} added.", duration=1)
         sub_win = self.add_widget(widget, title=model.title)
         return sub_win._update_from_returned_model(model)

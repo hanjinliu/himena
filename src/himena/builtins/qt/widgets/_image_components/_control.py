@@ -75,7 +75,7 @@ class QImageViewControl(QtW.QWidget):
             self._on_channel_mode_change
         )
         self._channel_mode_combo.setToolTip("Method to display multi-channel data")
-        self._image_type = ImageType.SINGLE
+        self._image_type = ImageType.MULTI
 
         self._auto_contrast_btn = QtW.QPushButton("Auto")
         self._auto_contrast_btn.clicked.connect(self._auto_contrast)
@@ -122,16 +122,19 @@ class QImageViewControl(QtW.QWidget):
                 self._channel_mode_combo.clear()
                 self._channel_mode_combo.addItems([RGBMode.COLOR, RGBMode.GRAY])
                 self._channel_mode_combo.show()
+                self._channel_visibilities.hide()
             elif kind is ImageType.MULTI:
                 self._channel_mode_combo.clear()
                 self._channel_mode_combo.addItems(
                     [ChannelMode.COMP, ChannelMode.MONO, ChannelMode.GRAY]
                 )
                 self._channel_mode_combo.show()
+                self._channel_visibilities.show()
             else:
                 self._channel_mode_combo.clear()
                 self._channel_mode_combo.addItems([""])
                 self._channel_mode_combo.hide()
+                self._channel_visibilities.hide()
             self._image_type = kind
             self._channel_mode_combo.setCurrentIndex(0)
         self._complex_mode_combo.setVisible(dtype.kind == "c")
@@ -165,12 +168,13 @@ class QImageViewControl(QtW.QWidget):
         idx = ch.channel_index or 0
         imtup = view._current_image_slices[idx]
         with qsignal_blocker(self._histogram):
+            _grays = (RGBMode.GRAY, ChannelMode.GRAY)
             if imtup.visible:
                 arr = ch.transform_image(
                     view._current_image_slices[idx].arr,
                     complex_transform=self.complex_transform,
                     is_rgb=view._is_rgb,
-                    is_gray=self._channel_mode_combo.currentText() == "Gray",
+                    is_gray=self._channel_mode_combo.currentText() in _grays,
                 )
             else:
                 arr = None

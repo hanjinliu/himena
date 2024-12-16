@@ -13,6 +13,8 @@ from himena.builtins.qt.widgets.model_stack import QModelStack
 from himena.builtins.qt.widgets.reader_not_found import QReaderNotFound
 from himena.consts import StandardType
 
+THIS = "himena.builtins.qt.widgets"
+
 
 def register_default_widget_types() -> None:
     """Register default widget types."""

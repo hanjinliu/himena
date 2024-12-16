@@ -151,7 +151,6 @@ class QImageView(QtW.QSplitter):
             img_slices = self._current_image_slices
         else:
             img_slices = self._get_image_slices(sl_0, nchannels)
-        # if self._channels is None:  # not initialized yet
         self._update_channels(meta0, img_slices, nchannels)
         self._set_image_slices(img_slices)
         if meta0.current_roi:

@@ -5,6 +5,6 @@ Note that they are not meant to test the GUI, but the logic of `update_model` an
 `to_model` methods of the widgets.
 """
 
-from himena.testing import image
+from himena.testing import image, table
 
-__all__ = ["image"]
+__all__ = ["image", "table"]

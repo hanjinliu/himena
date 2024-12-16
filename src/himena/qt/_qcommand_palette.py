@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import logging
 from collections.abc import Iterator, Mapping
 from typing import TYPE_CHECKING, Any, Iterable, cast, Callable
 
@@ -11,6 +12,26 @@ from qtpy.QtCore import Qt, Signal
 
 if TYPE_CHECKING:
     from himena.qt.main_window import QMainWindow
+    from app_model.types import MenuOrSubmenu
+
+_LOGGER = logging.getLogger(__name__)
+
+
+def _collect_command(
+    app: Application,
+    menu_items: list[MenuOrSubmenu],
+    exclude: Iterable[str],
+) -> list[Action]:
+    commands = []
+    for item in menu_items:
+        if isinstance(item, MenuItem):
+            if item.command.id not in exclude:
+                commands.append(item.command)
+        else:
+            commands.extend(
+                _collect_command(app, app.menus.get_menu(item.submenu), exclude)
+            )
+    return commands
 
 
 class QCommandPalette(QtW.QWidget):
@@ -48,19 +69,22 @@ class QCommandPalette(QtW.QWidget):
         self.hide()
         self._menu_id = menu_id or app.menus.COMMAND_PALETTE_ID
         self._exclude = set(exclude)
+        self._command_initialized = False
 
-        try:
-            menu_items = app.menus.get_menu(self._menu_id)
-            self.extend_command(
-                item.command
-                for item in menu_items
-                if isinstance(item, MenuItem) and item.command.id not in self._exclude
-            )
-        except KeyError:
-            pass
         app.menus.menus_changed.connect(self._on_app_menus_changed)
         self._model_app = app
         self._need_update = False  # needs update before showing the palette
+
+    def _initialize_commands(self) -> None:
+        app = self._model_app
+        try:
+            menu_items = app.menus.get_menu(self._menu_id)
+            commands = _collect_command(app, menu_items, self._exclude)
+            self.extend_command(commands)
+        except KeyError:
+            pass
+        _LOGGER.info("Command palette initialized.")
+        self._command_initialized = True
 
     def sizeHint(self) -> QtCore.QSize:
         return QtCore.QSize(600, 400)
@@ -120,6 +144,8 @@ class QCommandPalette(QtW.QWidget):
         return
 
     def show(self) -> None:
+        if not self._command_initialized:
+            self._initialize_commands()
         if self._need_update:
             self._update_contents()
             self._need_update = False

@@ -75,6 +75,9 @@ docs = [
   "himena[all]"
 ]
 
+[tool.hatch]
+include = ["src/himena", "src/himena_builtins"]
+
 [tool.hatch.version]
 path = "src/himena/__init__.py"
 

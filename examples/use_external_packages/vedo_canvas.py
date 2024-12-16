@@ -53,7 +53,7 @@ class QVedoCanvas(QtW.QWidget):
 register_widget_class(StandardType.MESH, QVedoCanvas)
 
 @register_function(
-    menus="file/samples/vedo",
+    menus="file/new/vedo",
     title="load man.vtk",
 )
 def load_man() -> WidgetDataModel:

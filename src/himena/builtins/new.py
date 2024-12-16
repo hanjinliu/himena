@@ -60,51 +60,12 @@ def new_draw_canvas(ui: MainWindow) -> WidgetDataModel:
         type=StandardType.IMAGE,
         extension_default=".png",
         title=f"Canvas-{nwin}",
-        force_open_with="builtins:QDrawCanvas",
+        force_open_with="himena.builtins.qt.widgets.draw.QDrawCanvas",
     )
 
 
-DATASET_SOURCE = "https://raw.githubusercontent.com/mwaskom/seaborn-data/master"
-DATASET_NAMES_URL = f"{DATASET_SOURCE}/dataset_names.txt"
-
-
 @register_function(
-    title="Seaborn sample data ...",
-    menus=MenuId.FILE_SAMPLES,
-    command_id="builtins:fetch-seaborn-sample-data",
-)
-def seaborn_sample_data(ui: MainWindow) -> Parametric:
-    """New table from a seaborn test data."""
-    from urllib.request import urlopen
-
-    # get dataset names
-    with urlopen(DATASET_NAMES_URL) as resp:
-        txt = resp.read()
-
-    assert isinstance(txt, bytes)
-    dataset_names = [name.strip() for name in txt.decode().split("\n")]
-    choices = [name for name in dataset_names if name]
-
-    @configure_gui(
-        name={"choices": choices},
-        title="Choose a dataset ...",
-        show_parameter_labels=False,
-        run_async=True,
-    )
-    def fetch_data(name: str = "iris") -> WidgetDataModel:
-        ui.set_status_tip(f"Fetching {name} ...")
-        # read without using pandas
-        with urlopen(f"{DATASET_SOURCE}/{name}.csv") as resp:
-            data = resp.read().decode()
-
-        csv_data = list(csv.reader(StringIO(data)))
-        return WidgetDataModel(value=csv_data, type=StandardType.TABLE, title=name)
-
-    return fetch_data
-
-
-@register_function(
-    title="Constant array ...",
+    title="New constant array ...",
     menus=MenuId.FILE_NEW,
     command_id="builtins:constant-array",
 )
@@ -141,3 +102,38 @@ def constant_array(ui: MainWindow) -> Parametric:
         return WidgetDataModel(value=arr, type=type, title=f"Untitled-{nwin}")
 
     return generate_constant_array
+
+
+### Seaborn sample data ###
+
+_DATASET_SOURCE = "https://raw.githubusercontent.com/mwaskom/seaborn-data/master"
+_SEABORN_SAMPLE_NAMES = [
+    "anagrams", "anscombe", "attention", "brain_networks", "car_crashes", "diamonds",
+    "dots", "dowjones", "exercise", "flights", "fmri", "geyser", "glue", "healthexp",
+    "iris", "mpg", "penguins", "planets", "seaice", "taxis", "tips", "titanic",
+]  # fmt: skip
+
+
+def _make_provider(name: str):
+    @configure_gui(run_async=True)
+    def fetch_sample_data() -> WidgetDataModel:
+        from urllib.request import urlopen
+
+        # read without using pandas
+        with urlopen(f"{_DATASET_SOURCE}/{name}.csv") as resp:
+            data = resp.read().decode()
+
+        csv_data = list(csv.reader(StringIO(data)))
+        return WidgetDataModel(value=csv_data, type=StandardType.TABLE, title=name)
+
+    fetch_sample_data.__name__ = name
+    return fetch_sample_data
+
+
+for seaborn_sample_name in _SEABORN_SAMPLE_NAMES:
+    register_function(
+        _make_provider(seaborn_sample_name),
+        title=seaborn_sample_name,
+        menus="file/new/seaborn",
+        command_id=f"builtins:seaborn-sample-{seaborn_sample_name}",
+    )

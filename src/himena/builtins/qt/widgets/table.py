@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from enum import Enum, auto
 from io import StringIO
-from typing import TYPE_CHECKING, Any, Iterable, Literal
+from typing import TYPE_CHECKING, Any, Iterable, Literal, Mapping
 from dataclasses import dataclass
 import numpy as np
 
@@ -219,10 +219,14 @@ class QSpreadsheet(QTableBase):
 
     @protocol_override
     def update_model(self, model: WidgetDataModel) -> None:
-        if model.value is None:
+        value = model.value
+        if value is None:
             table = np.empty((0, 0), dtype=np.dtypes.StringDType())
         else:
-            table = np.asarray(model.value, dtype=np.dtypes.StringDType())
+            if isinstance(value, Mapping):
+                table = _dict_to_array(value)
+            else:
+                table = _array_like_to_array(value)
             if table.ndim < 2:
                 table = table.reshape(-1, 1)
         if self.model() is None:
@@ -236,6 +240,9 @@ class QSpreadsheet(QTableBase):
             if (pos := meta.current_position) is not None:
                 index = self.model().index(*pos)
                 self.setCurrentIndex(index)
+                self._selection_model.current_index = pos
+            if meta.selections:  # if has selections, they need updating
+                self._selection_model.clear()
             for (r0, r1), (c0, c1) in meta.selections:
                 self._selection_model.append((slice(r0, r1), slice(c0, c1)))
 
@@ -629,3 +636,21 @@ def char_arange(start: int, stop: int | None = None):
         return np.array(LONGEST[start:stop], dtype="<U4")
     LONGEST = np.append(LONGEST, np.fromiter(_iter_char(nmax, stop), dtype="<U4"))
     return LONGEST[start:].copy()
+
+
+def _dict_to_array(value: dict[str, str]) -> np.ndarray:
+    keys = list(value.keys())
+    values = list(value.values())
+    max_column_length = max(len(k) for k in values)
+    arr = np.zeros((max_column_length + 1, len(keys)), dtype=np.dtypes.StringDType())
+    arr[0, :] = keys
+    for i, column in enumerate(values):
+        arr[1:, i] = column
+    return arr
+
+
+def _array_like_to_array(value) -> np.ndarray:
+    table = np.asarray(value, dtype=np.dtypes.StringDType())
+    if table.ndim < 2:
+        table = table.reshape(-1, 1)
+    return table

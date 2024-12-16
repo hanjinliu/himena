@@ -1,12 +1,14 @@
 from io import StringIO
+from typing import TYPE_CHECKING
 import numpy as np
-
 from himena.plugins import register_function, configure_gui
 from himena.types import Parametric, WidgetDataModel
 from himena.standards.model_meta import TableMeta
 from himena.consts import StandardType
 from himena.widgets import SubWindow
-from himena.builtins.qt.widgets import QSpreadsheet
+
+if TYPE_CHECKING:
+    from himena.builtins.qt.widgets.table import QSpreadsheet
 
 
 @register_function(
@@ -70,7 +72,7 @@ def change_separator(model: WidgetDataModel["np.ndarray"]) -> Parametric:
     menus=["tools/table"],
     command_id="builtins:insert-incrementing-numbers",
 )
-def insert_incrementing_numbers(win: SubWindow[QSpreadsheet]) -> Parametric:
+def insert_incrementing_numbers(win: SubWindow["QSpreadsheet"]) -> Parametric:
     """Insert incrementing numbers (0, 1, 2, ...) in-place to the selected range."""
     widget = win.widget
 

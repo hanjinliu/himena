@@ -4,15 +4,14 @@ from cmap import Colormap
 import numpy as np
 from numpy.testing import assert_allclose
 import pytest
-from himena.consts import StandardType
-from himena.types import WidgetDataModel
-from himena.widgets import SubWindow
+from himena import WidgetDataModel, StandardType
+from himena.widgets import MainWindow
 from himena.standards.model_meta import ImageChannel, ImageMeta, ArrayAxis
 from himena.standards import roi as _roi
 
 
-def test_setting_colormap(win: SubWindow):
-    win.update_model(_zyx_image_model())
+def test_setting_colormap(ui: MainWindow):
+    win = ui.add_data_model(_zyx_image_model())
     model = win.to_model()
     meta = _cast_meta(model.metadata)
     assert len(meta.channels) == 1
@@ -29,8 +28,8 @@ def test_setting_colormap(win: SubWindow):
         )
 
 
-def test_setting_unit(win: SubWindow):
-    win.update_model(_zyx_image_model())
+def test_setting_unit(ui: MainWindow):
+    win = ui.add_data_model(_zyx_image_model())
     model = win.to_model()
     meta = _cast_meta(model.metadata)
     if meta.unit != "a.u.":
@@ -43,8 +42,8 @@ def test_setting_unit(win: SubWindow):
         raise AssertionError(f"Expected 'mV', got {meta.unit}")
 
 
-def test_setting_pixel_scale(win: SubWindow):
-    win.update_model(_zyx_image_model())
+def test_setting_pixel_scale(ui: MainWindow):
+    win = ui.add_data_model(_zyx_image_model())
     model = win.to_model()
     meta = _cast_meta(model.metadata)
     assert len(meta.axes) == 3
@@ -67,8 +66,8 @@ def test_setting_pixel_scale(win: SubWindow):
         )
 
 
-def test_setting_axis_names(win: SubWindow):
-    win.update_model(_zyx_image_model())
+def test_setting_axis_names(ui: MainWindow):
+    win = ui.add_data_model(_zyx_image_model())
     model = win.to_model()
     meta = _cast_meta(model.metadata)
     assert len(meta.axes) == 3
@@ -89,8 +88,8 @@ def test_setting_axis_names(win: SubWindow):
         )
 
 
-def test_setting_current_indices(win: SubWindow):
-    win.update_model(_zyx_image_model())
+def test_setting_current_indices(ui: MainWindow):
+    win = ui.add_data_model(_zyx_image_model())
     model = win.to_model()
     meta = _cast_meta(model.metadata)
     if meta.current_indices != (0, slice(None), slice(None)):
@@ -107,8 +106,8 @@ def test_setting_current_indices(win: SubWindow):
         )
 
 
-def test_current_roi(win: SubWindow):
-    win.update_model(_zyx_image_model())
+def test_current_roi(ui: MainWindow):
+    win = ui.add_data_model(_zyx_image_model())
     model = win.to_model()
     meta = _cast_meta(model.metadata)
     assert meta.current_roi is None
@@ -126,9 +125,9 @@ def test_current_roi(win: SubWindow):
     assert_allclose([croi.x, croi.y, croi.width, croi.height], [2.9, 0, 2, 2.5])
 
 
-def test_change_dimensionality(win: SubWindow):
+def test_change_dimensionality(ui: MainWindow):
     """Check changing the dimensionality of the image works."""
-    win.update_model(immodel(np.arange(15).reshape(3, 5)))
+    win = ui.add_data_model(immodel(np.arange(15).reshape(3, 5)))
     assert win.to_model().value.shape == (3, 5)
     assert not win.to_model().metadata.is_rgb
     win.update_model(immodel(np.arange(24).reshape(4, 6)))
@@ -139,10 +138,12 @@ def test_change_dimensionality(win: SubWindow):
     assert not win.to_model().metadata.is_rgb
 
 
-def test_rgb_images(win: SubWindow):
+def test_rgb_images(ui: MainWindow):
     """Check that RGB images are handled correctly."""
     meta = ImageMeta(is_rgb=True)
-    win.update_model(immodel(np.full((5, 5, 3), 200, dtype=np.uint8), metadata=meta))
+    win = ui.add_data_model(
+        immodel(np.full((5, 5, 3), 200, dtype=np.uint8), metadata=meta),
+    )
     assert win.to_model().value.shape == (5, 5, 3)
     assert win.to_model().metadata.is_rgb
     win.update_model(immodel(np.full((4, 6, 3), 200, dtype=np.uint8), metadata=meta))

@@ -50,10 +50,6 @@ def register_widget_class(type_, widget_class=None, app=None, priority=100):
         raise TypeError(f"Type must be a string, got {type_!r}")
 
     def _inner(wdt_class):
-        if not hasattr(wdt_class, "update_model"):
-            raise TypeError(
-                f"Widget class {wdt_class!r} does not have a `update_model` method."
-            )
         if app not in _APP_TYPE_TO_QWIDGET:
             _APP_TYPE_TO_QWIDGET[app] = []
         _APP_TYPE_TO_QWIDGET[app].append(WidgetClassTuple(type_, wdt_class, priority))

@@ -1,31 +1,33 @@
 import numpy as np
-from himena import testing, StandardType
+from himena import testing
 from himena.widgets import MainWindow
 
 def test_image_view_change_dimensionality(ui: MainWindow):
-    win = ui.add_data(np.zeros((2, 2)), type=StandardType.IMAGE)
-    testing.image.test_change_dimensionality(win)
+    testing.image.test_change_dimensionality(ui)
 
 def test_image_view_setting_colormap(ui: MainWindow):
-    win = ui.add_data(np.zeros((2, 2)), type=StandardType.IMAGE)
-    testing.image.test_setting_colormap(win)
+    testing.image.test_setting_colormap(ui)
 
 def test_image_view_setting_unit(ui: MainWindow):
-    win = ui.add_data(np.zeros((2, 2)), type=StandardType.IMAGE)
-    testing.image.test_setting_unit(win)
+    testing.image.test_setting_unit(ui)
 
 def test_image_view_setting_axis_names(ui: MainWindow):
-    win = ui.add_data(np.zeros((2, 2)), type=StandardType.IMAGE)
-    testing.image.test_setting_axis_names(win)
+    testing.image.test_setting_axis_names(ui)
 
 def test_image_view_setting_pixel_scale(ui: MainWindow):
-    win = ui.add_data(np.zeros((2, 2)), type=StandardType.IMAGE)
-    testing.image.test_setting_pixel_scale(win)
+    testing.image.test_setting_pixel_scale(ui)
 
 def test_image_view_setting_current_indices(ui: MainWindow):
-    win = ui.add_data(np.zeros((2, 2)), type=StandardType.IMAGE)
-    testing.image.test_setting_current_indices(win)
+    testing.image.test_setting_current_indices(ui)
 
 def test_image_view_current_roi(ui: MainWindow):
-    win = ui.add_data(np.zeros((2, 2)), type=StandardType.IMAGE)
-    testing.image.test_current_roi(win)
+    testing.image.test_current_roi(ui)
+
+def test_table_view_accepts_table_like(ui: MainWindow):
+    testing.table.test_accepts_table_like(ui)
+
+def test_table_view_current_position(ui: MainWindow):
+    testing.table.test_current_position(ui)
+
+def test_table_view_selections(ui: MainWindow):
+    testing.table.test_selections(ui)

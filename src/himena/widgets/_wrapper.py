@@ -777,13 +777,7 @@ class ParametricWindow(SubWindow[_W]):
 
     def _model_to_new_window(self, model: WidgetDataModel) -> _W:
         ui = self._main_window()._himena_main_window
-        cls = ui._pick_widget_class(model)
-        # construct the internal widget
-        try:
-            widget = cls(ui)
-        except TypeError:
-            widget = cls()
-        widget.update_model(model)  # type: ignore
+        widget = ui._pick_widget(model)
         return widget
 
     def _process_other_output(self, return_value: Any, type_hint: Any | None = None):

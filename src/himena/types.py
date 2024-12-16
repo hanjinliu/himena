@@ -504,7 +504,7 @@ class WidgetClassTuple(NamedTuple):
     """Class for storing registered widget class."""
 
     type: str
-    widget_class: "type"
+    widget_class: "type | Callable"  # factory function
     priority: int = 100
     widget_id: str | None = None
 
