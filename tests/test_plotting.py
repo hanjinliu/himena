@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 
 from himena.widgets import MainWindow
 import himena.standards.plotting as hplt
-from himena.builtins.qt.plot import BACKEND_HIMENA
-from himena.builtins.qt.plot._canvas import QMatplotlibCanvas
+from himena_builtins.qt.plot import BACKEND_HIMENA
+from himena_builtins.qt.plot._canvas import QMatplotlibCanvas
 
 def test_direct_plot(ui: MainWindow):
     assert os.environ["MPLBACKEND"] == BACKEND_HIMENA

@@ -1,7 +1,7 @@
 from himena import MainWindow, anchor
 from himena.qt import MainWindowQt
 from himena.qt._qmain_window import QMainWindow
-from himena.builtins.qt import widgets as _qtw
+from himena_builtins.qt import widgets as _qtw
 from qtpy.QtCore import Qt
 from pathlib import Path
 from pytestqt.qtbot import QtBot

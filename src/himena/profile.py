@@ -39,16 +39,17 @@ def profile_dir() -> Path:
 
 def _default_plugins() -> list[str]:
     """Factory function for the default plugin list."""
-    out = []
-    _builtins_dir = Path(__file__).parent.joinpath("builtins")
-    for path in _builtins_dir.joinpath("qt").glob("*"):
-        if path.name == "__pycache__":
-            continue
-        out.append(f"himena.builtins.qt.{path.name}")
-    out.append("himena.builtins.tools")
-    for path in _builtins_dir.glob("*.py"):
-        out.append(f"himena.builtins.{path.stem}")
-    return out
+    return [
+        "himena_builtins.qt.console",
+        "himena_builtins.qt.filetree",
+        "himena_builtins.qt.history",
+        "himena_builtins.qt.output",
+        "himena_builtins.qt.plot",
+        "himena_builtins.qt.widgets",
+        "himena_builtins.tools",
+        "himena_builtins.io",
+        "himena_builtins.new",
+    ]
 
 
 class AppProfile(BaseModel):

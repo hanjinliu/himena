@@ -75,9 +75,6 @@ docs = [
   "himena[all]"
 ]
 
-[tool.hatch]
-include = ["src/himena", "src/himena_builtins"]
-
 [tool.hatch.version]
 path = "src/himena/__init__.py"
 
@@ -89,7 +86,7 @@ extra-dependencies = [
 check = "mypy --install-types --non-interactive {args:src/himena tests}"
 
 [tool.coverage.run]
-source_pkgs = ["himena"]
+source = ["himena", "himena_builtins"]
 branch = true
 parallel = true
 omit = [
@@ -161,13 +158,13 @@ matrix.backend.features = [
 exclude = ["**/tests/*.py"]
 
 [project.entry-points."himena.plugin"]
-"Builtin IO" = "himena.builtins.io"
-"Builtin New Actions" = "himena.builtins.new"
-"Debug" = "himena.builtins.debug"
-"Builtin Tools" = "himena.builtins.tools"
-"QtConsole" = "himena.builtins.qt.console"
-"File Explorer" = "himena.builtins.qt.filetree"
-"Command History" = "himena.builtins.qt.history"
-"Plotting" = "himena.builtins.qt.plot"
-"Output" = "himena.builtins.qt.output"
-"Widgets" = "himena.builtins.qt.widgets"
+"Builtin IO" = "himena_builtins.io"
+"Builtin New Actions" = "himena_builtins.new"
+"Debug" = "himena_builtins.debug"
+"Builtin Tools" = "himena_builtins.tools"
+"QtConsole" = "himena_builtins.qt.console"
+"File Explorer" = "himena_builtins.qt.filetree"
+"Command History" = "himena_builtins.qt.history"
+"Plotting" = "himena_builtins.qt.plot"
+"Output" = "himena_builtins.qt.output"
+"Widgets" = "himena_builtins.qt.widgets"

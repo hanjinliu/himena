@@ -12,7 +12,7 @@ from himena.plugins import (
     register_writer_provider,
     register_widget_class,
 )
-from himena.builtins.qt.widgets import QImageView
+from himena_builtins.qt.widgets import QImageView
 
 TIFF_TYPE = "tiff"
 

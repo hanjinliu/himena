@@ -1,5 +1,5 @@
 from himena.widgets import MainWindow
-from himena.builtins.qt.history._widget import QCommandHistory
+from himena_builtins.qt.history._widget import QCommandHistory
 
 def test_command_added(ui: MainWindow):
     history_widget = QCommandHistory(ui)

@@ -7,7 +7,7 @@ from himena import MainWindow, anchor
 from himena._descriptors import ConverterMethod, LocalReaderMethod, NoNeedToSave, ProgramaticMethod, SaveToNewPath, SaveToPath
 from himena.types import ClipboardDataModel, WidgetDataModel, WindowRect
 from himena.qt import register_widget_class, MainWindowQt
-from himena.builtins.qt import widgets as _qtw
+from himena_builtins.qt import widgets as _qtw
 import himena._providers
 
 def test_new_window(ui: MainWindow):
