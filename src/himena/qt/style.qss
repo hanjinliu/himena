@@ -99,6 +99,14 @@ QComboBox {
     padding: 1px;
 }
 
+QSearchableComboBox {
+    border: 1px solid #[foreground_dim];
+    border-radius: 4px;
+    background-color: #[background];
+    color: #[foreground];
+    padding: 1px;
+}
+
 /* QScrollBar */
 
 QScrollBar {
@@ -469,6 +477,11 @@ QTableView {
     background-color: #[background];
     color: #[foreground];
     gridline-color: #[foreground_dim];
+}
+
+QTableView
+QTableCornerButton::section {  /* the top left corner button */
+    background-color: #[highlight_dim];
 }
 
 QTableView:focus {

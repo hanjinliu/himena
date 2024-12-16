@@ -7,9 +7,13 @@ from . import _roi_items
 from himena.qt._utils import qsignal_blocker
 
 
-def _tool_btn(icon_name: str, tooltip: str) -> QtW.QToolButton:
+def _tool_btn(
+    icon_name: str,
+    tooltip: str,
+    color: QtGui.QColor = QtGui.QColor(0, 0, 0),
+) -> QtW.QToolButton:
     btn = QtW.QToolButton()
-    btn.setIcon(QIconifyIcon(icon_name))
+    btn.setIcon(_tool_btn_icon(icon_name, color=color.name()))
     btn.setCheckable(True)
     btn.setToolTip(tooltip)
     btn.setFixedSize(22, 22)
@@ -22,17 +26,45 @@ def _roi_tool_btn(
     color: QtGui.QColor = QtGui.QColor(0, 0, 0),
 ) -> QtW.QToolButton:
     btn = QtW.QToolButton()
+    icon = _roi_tool_btn_icon(roi, color)
+    btn.setIcon(icon)
+    btn.setCheckable(True)
+    btn.setToolTip(tooltip)
+    btn.setFixedSize(22, 22)
+    return btn
+
+
+def _roi_tool_btn_icon(roi: _roi_items.QRoi, color: QtGui.QColor):
     pixmap = QtGui.QPixmap(20, 20)
     pixmap.fill(QtCore.Qt.GlobalColor.transparent)
     pen = QtGui.QPen(color, 2)
     pen.setCosmetic(True)
     pen.setJoinStyle(QtCore.Qt.PenJoinStyle.MiterJoin)
     icon = QtGui.QIcon(roi.withPen(pen).makeThumbnail(pixmap))
-    btn.setIcon(icon)
-    btn.setCheckable(True)
-    btn.setToolTip(tooltip)
-    btn.setFixedSize(22, 22)
-    return btn
+    return icon
+
+
+def _tool_btn_icon(icon_name: str, color: str) -> QtGui.QIcon:
+    return QIconifyIcon(icon_name, color=color)
+
+
+ICON_ZOOM = "mdi:magnify-expand"
+ICON_SELECT = "mdi:cursor-default"
+
+_THUMBNAIL_ROIS: dict[Mode, _roi_items.QRoi] = {
+    Mode.ROI_RECTANGLE: _roi_items.QRectangleRoi(0, 0, 10, 8),
+    Mode.ROI_ROTATED_RECTANGLE: _roi_items.QRotatedRectangleRoi(
+        QtCore.QPointF(0, -2), QtCore.QPointF(4, 2), 3.6
+    ),
+    Mode.ROI_ELLIPSE: _roi_items.QEllipseRoi(0, 0, 10, 8),
+    Mode.ROI_LINE: _roi_items.QLineRoi(0, 0, 10, 8),
+    Mode.ROI_SEGMENTED_LINE: _roi_items.QSegmentedLineRoi([0, 4, 8, 12], [10, 4, 6, 0]),
+    Mode.ROI_POLYGON: _roi_items.QPolygonRoi(
+        [0, -5, -3, 3, 5, 0], [-2, -5, 3, 3, -5, -2]
+    ),
+    Mode.ROI_POINT: _roi_items.QPointRoi(0, 0),
+    Mode.ROI_POINTS: _roi_items.QPointsRoi([], []),
+}
 
 
 class QRoiButtons(QtW.QWidget):
@@ -47,45 +79,43 @@ class QRoiButtons(QtW.QWidget):
             QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignTop
         )
         self._btn_panzoom = _tool_btn(
-            icon_name="mdi:magnify-expand",
+            icon_name=ICON_ZOOM,
             tooltip="Pan/zoom mode (Z, Space)",
         )
         self._btn_select = _tool_btn(
-            icon_name="mdi:cursor-default",
+            icon_name=ICON_SELECT,
             tooltip="Select mode (S)",
         )
         self._btn_rect = _roi_tool_btn(
-            _roi_items.QRectangleRoi(0, 0, 10, 8),
+            _THUMBNAIL_ROIS[Mode.ROI_RECTANGLE],
             tooltip="Add rectangles (R)",
         )
         self._btn_rot_rect = _roi_tool_btn(
-            _roi_items.QRotatedRectangleRoi(
-                QtCore.QPointF(0, -2), QtCore.QPointF(4, 2), 3.6
-            ),
+            _THUMBNAIL_ROIS[Mode.ROI_ROTATED_RECTANGLE],
             tooltip="Add rotated rectangles (R x 2)",
         )
         self._btn_ellipse = _roi_tool_btn(
-            _roi_items.QEllipseRoi(0, 0, 10, 8),
+            _THUMBNAIL_ROIS[Mode.ROI_ELLIPSE],
             tooltip="Add ellipses (E)",
         )
         self._btn_line = _roi_tool_btn(
-            _roi_items.QLineRoi(0, 0, 10, 8),
+            _THUMBNAIL_ROIS[Mode.ROI_LINE],
             tooltip="Add lines (L)",
         )
         self._btn_segmented_line = _roi_tool_btn(
-            _roi_items.QSegmentedLineRoi([0, 4, 8, 12], [10, 4, 6, 0]),
+            _THUMBNAIL_ROIS[Mode.ROI_SEGMENTED_LINE],
             tooltip="Add segmented lines (L x 2)",
         )
         self._btn_polygon = _roi_tool_btn(
-            _roi_items.QPolygonRoi([0, -5, -3, 3, 5, 0], [-2, -5, 3, 3, -5, -2]),
+            _THUMBNAIL_ROIS[Mode.ROI_POLYGON],
             tooltip="Add polygons (G)",
         )
         self._btn_point = _roi_tool_btn(
-            _roi_items.QPointRoi(0, 0),
+            _THUMBNAIL_ROIS[Mode.ROI_POINT],
             tooltip="Add points (P)",
         )
         self._btn_points = _roi_tool_btn(
-            _roi_items.QPointsRoi([], []),
+            _THUMBNAIL_ROIS[Mode.ROI_POINTS],
             tooltip="Add multiple points (P x 2)",
         )
         self._button_group = QtW.QButtonGroup()
@@ -137,3 +167,10 @@ class QRoiButtons(QtW.QWidget):
     def btn_released(self, btn: QtW.QToolButton):
         mode = self._btn_map_inv[btn]
         self.mode_changed.emit(mode)
+
+    def _update_colors(self, color: QtGui.QColor):
+        for mode, btn in self._btn_map.items():
+            if roi := _THUMBNAIL_ROIS.get(mode):
+                btn.setIcon(_roi_tool_btn_icon(roi, color))
+        self._btn_panzoom.setIcon(_tool_btn_icon(ICON_ZOOM, color=color.name()))
+        self._btn_select.setIcon(_tool_btn_icon(ICON_SELECT, color=color.name()))

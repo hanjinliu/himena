@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 from concurrent.futures import Future
 import inspect
 from timeit import default_timer as timer
@@ -10,7 +9,8 @@ import warnings
 import numpy as np
 
 from qtpy import QtWidgets as QtW, QtGui, QtCore
-from app_model.backends.qt import QModelMainWindow, QModelMenu
+from app_model.backends.qt import QModelMainWindow, QModelMenu, QMenuItemAction
+from superqt import QIconifyIcon
 from superqt.utils import ensure_main_thread
 from himena.consts import MenuId
 from himena.consts import ParametricWidgetProtocolNames as PWPN
@@ -138,11 +138,16 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def _update_widget_theme(self, style: Theme):
         self.setStyleSheet(style.format_text(get_stylesheet_path().read_text()))
-        # TODO: update toolbar icon color
-        # if style.is_light_background():
-        #     icon_theme = "light"
-        # else:
-        #     icon_theme = "dark"
+        if style.is_light_background():
+            icon_color = "#000000"
+        else:
+            icon_color = "#ffffff"
+        for action in self._toolbar.actions():
+            if isinstance(action, QMenuItemAction):
+                btn = self._toolbar.widgetForAction(action)
+                icon = self._app._registered_actions[action._command_id].icon
+                if icon is not None:
+                    btn.setIcon(QIconifyIcon(icon.light, color=icon_color))
 
     def _on_error(self, exc: Exception) -> None:
         from himena.qt._qtraceback import QtErrorMessageBox

@@ -31,6 +31,7 @@ from himena_builtins.qt.widgets._splitter import QSplitterHandle
 if TYPE_CHECKING:
     from numpy.typing import NDArray
     from himena_builtins.qt.widgets._image_components._graphics_view import Mode
+    from himena.style import Theme
 
 
 class QImageView(QtW.QSplitter):
@@ -309,6 +310,14 @@ class QImageView(QtW.QSplitter):
         elif model.type == StandardType.IMAGE_LABELS:
             raise NotImplementedError("Merging with labels is not implemented yet.")
         return None
+
+    @protocol_override
+    def theme_changed_callback(self, theme: Theme):
+        if theme.name.startswith("light"):
+            color = QtGui.QColor(0, 0, 0)
+        else:
+            color = QtGui.QColor(255, 255, 255)
+        self._roi_buttons._update_colors(color)
 
     def setFocus(self):
         return self._img_view.setFocus()
