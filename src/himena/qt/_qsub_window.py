@@ -766,6 +766,10 @@ class QSubWindowTitleBar(QtW.QFrame):
         if event.button() == Qt.MouseButton.LeftButton:
             self._drag_position = None
             self._fix_position()
+        elif event.button() == Qt.MouseButton.RightButton:
+            # context menu
+            context_menu = self._prep_window_menu()
+            context_menu.exec(event.globalPos())
         return super().mouseReleaseEvent(event)
 
     def mouseDoubleClickEvent(self, event: QtGui.QMouseEvent):
@@ -827,7 +831,7 @@ class QSubWindowTitleBar(QtW.QFrame):
 
         return self._exec_menu_at_button(context_menu, self._model_menu_btn)
 
-    def _show_window_menu(self):
+    def _prep_window_menu(self) -> QtW.QMenu:
         main = get_main_window(self)
         app = main._model_app
 
@@ -835,6 +839,10 @@ class QSubWindowTitleBar(QtW.QFrame):
         ctx = main._ctx_keys
         ctx._update(main)
         context_menu.update_from_context(ctx.dict())
+        return context_menu
+
+    def _show_window_menu(self):
+        context_menu = self._prep_window_menu()
         return self._exec_menu_at_button(context_menu, self._window_menu_btn)
 
     def _exec_menu_at_button(self, menu: QtW.QMenu, btn: QtW.QToolButton):

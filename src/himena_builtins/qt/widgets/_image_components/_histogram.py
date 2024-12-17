@@ -207,9 +207,17 @@ class QClimLineItem(QtW.QGraphicsLineItem):
 
     def _show_value_label(self):
         txt = format(self.value(), self._value_fmt)
-        if self._value_label.scene() is None:
-            self.scene().addItem(self._value_label)
         self._value_label.setText(txt)
+        background_color = self.scene().views()[0].backgroundBrush().color()
+        brightness = (
+            0.299 * background_color.red()
+            + 0.587 * background_color.green()
+            + 0.114 * background_color.blue()
+        )
+        if brightness > 127:
+            self._value_label.setBrush(QtGui.QBrush(QtCore.Qt.GlobalColor.black))
+        else:
+            self._value_label.setBrush(QtGui.QBrush(QtCore.Qt.GlobalColor.white))
         text_width = self._value_label.boundingRect().width()
         pos = QtCore.QPointF(self.value(), 0)
         if pos.x() + text_width / self._x_scale() > self._range[1]:
@@ -217,6 +225,11 @@ class QClimLineItem(QtW.QGraphicsLineItem):
         else:
             pos.setX(pos.x() + 4 / self._x_scale())
         self._value_label.setPos(self.mapToScene(pos))
+        if self._value_label.scene() is None:
+            # prevent scene movement during adding the label
+            rect = self.scene().sceneRect()
+            self.scene().addItem(self._value_label)
+            self.scene().setSceneRect(rect)
         self._value_label.show()
 
     def _drag_event(self, event: QtW.QGraphicsSceneMouseEvent):

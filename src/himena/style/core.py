@@ -43,7 +43,8 @@ class Theme:
 
     def is_light_background(self) -> bool:
         color = Color(self.background)
-        return sum(color.rgba[:3]) / 3 > 0.5
+        r, g, b, a = color
+        return 0.299 * r + 0.587 * g + 0.114 * b > 0.5
 
 
 def _mix_colors(x: Color, y: Color, ratio: float) -> Color:

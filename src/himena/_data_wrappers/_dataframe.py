@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+import csv
 import importlib
 import importlib.metadata
 import importlib.resources
 import io
 from pathlib import Path
 import sys
-from typing import TYPE_CHECKING, Any, NamedTuple
+from typing import TYPE_CHECKING, Any, Mapping, NamedTuple
 import numpy as np
 from himena.consts import ExcelFileTypes
 from himena._utils import lru_cache
@@ -23,7 +24,7 @@ if TYPE_CHECKING:
 @lru_cache(maxsize=1)
 def list_installed_dataframe_packages() -> list[str]:
     """Return a list of installed dataframe package names."""
-    installed: list[str] = []
+    installed: list[str] = ["dict"]
     for entry in importlib.metadata.distributions():
         if entry.name in {"pandas", "polars", "pyarrow"}:
             installed.append(entry.name)
@@ -31,6 +32,14 @@ def list_installed_dataframe_packages() -> list[str]:
 
 
 def read_csv(mod: str, file) -> Any:
+    if mod == "dict":
+        csv_reader = csv.reader(file)
+        header = next(csv_reader)
+        data = {k: [] for k in header}
+        for row in csv_reader:
+            for k, v in zip(header, row):
+                data[k].append(v)
+        return {k: np.array(v) for k, v in data.items()}
     if mod == "pandas":
         return importlib.import_module(mod).read_csv(file, header=0)
     elif mod == "polars":
@@ -146,6 +155,57 @@ class DataFrameWrapper(ABC):
     @abstractmethod
     def write(self, file: str | Path):
         """Write the dataframe to a file."""
+
+
+class DictWrapper(DataFrameWrapper):
+    def __init__(self, df: Mapping[str, np.ndarray]):
+        self._df = df
+        self._columns = list(df.keys())
+
+    def __getitem__(self, key: tuple[int, int]) -> Any:
+        r, c = key
+        col_name = self._columns[c]
+        return self._df[col_name][r]
+
+    def get_subset(self, r0, r1, c0, c1) -> DictWrapper:
+        keys = self._columns[c0:c1]
+        return DictWrapper({k: self._df[k][r0:r1] for k in keys})
+
+    def num_rows(self) -> int:
+        return len(next(iter(self._df.values()), []))
+
+    def num_columns(self) -> int:
+        return len(self._columns)
+
+    def column_names(self) -> list[str]:
+        return self._columns
+
+    def get_dtype(self, index: int) -> DtypeTuple:
+        col_name = self._columns[index]
+        dtype = self._df[col_name].dtype
+        return DtypeTuple(str(dtype), dtype.kind)
+
+    def to_csv_string(self, separator: str) -> str:
+        lines: list[str] = []
+        for i in range(self.num_rows()):
+            lines.append(
+                separator.join(str(self._df[k][i]) for k in self.column_names())
+            )
+        return "\n".join(lines)
+
+    def to_list(self) -> list[list[Any]]:
+        return [
+            [self._df[k][i] for k in self.column_names()]
+            for i in range(self.num_rows())
+        ]
+
+    def column_to_array(self, name: str) -> np.ndarray:
+        return np.asarray(self._df[name])
+
+    def write(self, file: str | Path):
+        path = Path(file)
+        with open(path, "w") as f:
+            f.write(self.to_csv_string(","))
 
 
 class PandasWrapper(DataFrameWrapper):
@@ -378,6 +438,8 @@ class DtypeTuple(NamedTuple):
 
 
 def wrap_dataframe(df) -> DataFrameWrapper:
+    if isinstance(df, Mapping):
+        return DictWrapper({k: np.asarray(v) for k, v in df.items()})
     if is_pandas_dataframe(df):
         return PandasWrapper(df)
     if is_polars_dataframe(df):
@@ -386,4 +448,6 @@ def wrap_dataframe(df) -> DataFrameWrapper:
         return PyarrowWrapper(df)
     if is_narwhals_dataframe(df):
         return wrap_dataframe(df.to_native())
+    if isinstance(df, DataFrameWrapper):
+        return df
     raise TypeError(f"Unsupported dataframe type: {type(df)}")

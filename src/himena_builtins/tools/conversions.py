@@ -1,3 +1,5 @@
+"""Type conversion rules."""
+
 from typing import Literal
 from io import StringIO
 import re
@@ -113,12 +115,13 @@ def dataframe_to_text(model: WidgetDataModel) -> Parametric:
     """Convert a table data into a DataFrame."""
     from himena._data_wrappers import wrap_dataframe
 
-    table_input = wrap_dataframe(model.value).to_list()
-
     def convert_table_to_text(
         format: Literal["CSV", "TSV", "Markdown", "Latex", "rST", "HTML"] = "CSV",
         end_of_text: Literal["", "\\n"] = "\\n",
     ) -> WidgetDataModel[str]:
+        df = wrap_dataframe(model.value)
+        table_input = df.to_list()
+        table_input.insert(0, df.column_names())
         end_of_text = "\n" if end_of_text == "\\n" else ""
         value, ext_default, language = _table_to_text(table_input, format, end_of_text)
         return WidgetDataModel(
