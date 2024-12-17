@@ -62,7 +62,11 @@ def scatter_plot(win: SubWindow) -> Parametric:
             )
         if len(yarrs) == 1:
             fig.axes.y.label = name
-        return WidgetDataModel(value=fig, type=StandardType.PLOT, title="Plot")
+        return WidgetDataModel(
+            value=fig,
+            type=StandardType.PLOT,
+            title=f"Plot of {win.title}",
+        )
 
     return configure_plot
 
@@ -93,7 +97,11 @@ def line_plot(win: SubWindow) -> Parametric:
             fig.axes.plot(xarr, yarr, name=name, **_edge)
         if len(yarrs) == 1:
             fig.axes.y.label = name
-        return WidgetDataModel(value=fig, type=StandardType.PLOT, title="Plot")
+        return WidgetDataModel(
+            value=fig,
+            type=StandardType.PLOT,
+            title=f"Plot of {win.title}",
+        )
 
     return configure_plot
 
@@ -136,7 +144,11 @@ def bar_plot(win: SubWindow) -> Parametric:
                 xarr, yarr, bottom=_ignore_label(name_bottom), bar_width=bar_width,
                 name=name, **_face, **_edge
             )  # fmt: skip
-        return WidgetDataModel(value=fig, type=StandardType.PLOT, title="Plot")
+        return WidgetDataModel(
+            value=fig,
+            type=StandardType.PLOT,
+            title=f"Plot of {win.title}",
+        )
 
     return configure_plot
 
@@ -183,7 +195,11 @@ def errorbar_plot(win: SubWindow) -> Parametric:
                 xarr, yarr, x_error=_ignore_label(_xerr), y_error=_ignore_label(_yerr),
                 capsize=capsize, name=name, **_edge,
             )  # fmt: skip
-        return WidgetDataModel(value=fig, type=StandardType.PLOT, title="Plot")
+        return WidgetDataModel(
+            value=fig,
+            type=StandardType.PLOT,
+            title=f"Plot of {win.title}",
+        )
 
     return configure_plot
 
@@ -223,7 +239,48 @@ def band_plot(win: SubWindow) -> Parametric:
         else:
             raise ValueError("Only one pair of y values is allowed.")
         fig.axes.y.label = name
-        return WidgetDataModel(value=fig, type=StandardType.PLOT, title="Plot")
+        return WidgetDataModel(
+            value=fig,
+            type=StandardType.PLOT,
+            title=f"Plot of {win.title}",
+        )
+
+    return configure_plot
+
+
+@register_function(
+    title="Histogram ...",
+    types=_TABLE_LIKE,
+    menus=_MENU,
+    command_id="builtins:histogram",
+)
+def histogram(win: SubWindow) -> Parametric:
+    x0 = _auto_select(win, 1)[0]
+
+    @configure_gui(
+        x={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": x0},
+        face={"widget_type": FacePropertyEdit},
+        edge={"widget_type": EdgePropertyEdit},
+    )
+    def configure_plot(
+        x: tuple[slice, slice] | None,
+        bins: int = 10,
+        face: dict = {},
+        edge: dict = {},
+    ) -> WidgetDataModel:
+        fig = hplt.figure()
+        _, yarrs = _get_xy_data(win, None, x, fig.axes)
+        for name_yarr, _face, _edge in zip(
+            yarrs, _iter_face(face), _iter_edge(edge, prefix="edge_")
+        ):
+            name, yarr = name_yarr
+            fig.axes.hist(yarr, bins=bins, name=name, **_face, **_edge)
+        fig.axes.x.label = name
+        return WidgetDataModel(
+            value=fig,
+            type=StandardType.PLOT,
+            title=f"Plot of {win.title}",
+        )
 
     return configure_plot
 

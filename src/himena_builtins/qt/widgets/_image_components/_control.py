@@ -18,6 +18,7 @@ class ImageType(StrEnum):
     SINGLE = "Single"
     RGB = "RGB"
     MULTI = "Multi"
+    OTHERS = "Others"
 
 
 class ComplexMode(StrEnum):
@@ -75,7 +76,7 @@ class QImageViewControl(QtW.QWidget):
             self._on_channel_mode_change
         )
         self._channel_mode_combo.setToolTip("Method to display multi-channel data")
-        self._image_type = ImageType.MULTI
+        self._image_type = ImageType.OTHERS
 
         self._auto_contrast_btn = QtW.QPushButton("Auto")
         self._auto_contrast_btn.clicked.connect(self._auto_contrast)

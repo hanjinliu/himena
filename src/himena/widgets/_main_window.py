@@ -108,8 +108,6 @@ class MainWindow(Generic[_W]):
         self._theme = theme
         self._backend_main_window._update_widget_theme(theme)
 
-        # update icon colors
-
         # if child implements "theme_changed_callback", call it
         for win in self.iter_windows():
             _checker.call_theme_changed_callback(win.widget, theme)
@@ -247,6 +245,7 @@ class MainWindow(Generic[_W]):
             widget, title=title, area=area, allowed_areas=allowed_areas
         )
         self._dock_widget_list._add_dock_widget(dock)
+        _checker.call_theme_changed_callback(widget, self.theme)
         return dock
 
     def add_data(

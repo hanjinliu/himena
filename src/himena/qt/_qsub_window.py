@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from enum import Enum, auto
 from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable, Iterator, cast
@@ -54,13 +55,13 @@ class QSubWindowArea(QtW.QMdiArea):
 
     def relabel_widgets(self):
         for i, sub_window in enumerate(self.subWindowList()):
-            text = f'<span style="color:gray;">{i}</span>'
-            sub_window._title_bar._index_label.setText(text)
+            sub_window._title_bar._index_label.setText(str(i))
 
     def add_widget(
         self,
         widget: QtW.QWidget,
         title: str | None = None,
+        icon_color: str = "black",
     ) -> QSubWindow:
         if title is None:
             title = widget.objectName() or "Window"
@@ -186,41 +187,40 @@ class QSubWindowArea(QtW.QMdiArea):
         def currentSubWindow(self) -> QSubWindow | None: ...
 
 
-def _get_icon(name: str, rotate=None):
+def _get_icon(name: str, rotate=None, color=None):
     try:
-        return QIconifyIcon(name, rotate=rotate)
+        return QIconifyIcon(name, rotate=rotate, color=color)
     except OSError:
         return QtGui.QIcon()
 
 
-@lru_cache(maxsize=1)
-def _icon_window_menu() -> QtGui.QIcon:
-    return _get_icon("material-symbols:menu")
+class TitleIconId(Enum):
+    WINDOW_MENU = auto()
+    MODEL_MENU = auto()
+    MIN = auto()
+    MAX = auto()
+    CLOSE = auto()
+    NORMAL = auto()
 
 
-@lru_cache(maxsize=1)
-def _icon_model_menu() -> QtGui.QIcon:
-    return _get_icon("octicon:ai-model-16")
-
-
-@lru_cache(maxsize=1)
-def _icon_min() -> QtGui.QIcon:
-    return _get_icon("material-symbols:minimize-rounded")
-
-
-@lru_cache(maxsize=1)
-def _icon_max() -> QtGui.QIcon:
-    return _get_icon("material-symbols:crop-5-4-outline")
-
-
-@lru_cache(maxsize=1)
-def _icon_close() -> QtGui.QIcon:
-    return _get_icon("material-symbols:close-rounded")
-
-
-@lru_cache(maxsize=1)
-def _icon_normal() -> QtGui.QIcon:
-    return _get_icon("material-symbols:filter-none-outline-rounded", rotate=180)
+@lru_cache(maxsize=20)
+def _icon_for_id(icon_id: TitleIconId, color: str) -> QtGui.QIcon:
+    if icon_id is TitleIconId.WINDOW_MENU:
+        return _get_icon("material-symbols:menu", color=color)
+    elif icon_id is TitleIconId.MODEL_MENU:
+        return _get_icon("octicon:ai-model-16", color=color)
+    elif icon_id is TitleIconId.MIN:
+        return _get_icon("material-symbols:minimize-rounded", color=color)
+    elif icon_id is TitleIconId.MAX:
+        return _get_icon("material-symbols:crop-5-4-outline", color=color)
+    elif icon_id is TitleIconId.CLOSE:
+        return _get_icon("material-symbols:close-rounded", color=color)
+    elif icon_id is TitleIconId.NORMAL:
+        return _get_icon(
+            "material-symbols:filter-none-outline-rounded", rotate=180, color=color
+        )
+    else:
+        raise ValueError(f"Invalid icon id: {icon_id}")
 
 
 class QCentralWidget(QtW.QWidget):
@@ -237,7 +237,7 @@ class QSubWindow(QtW.QMdiSubWindow):
     rename_requested = QtCore.Signal(str)
     close_requested = QtCore.Signal()
 
-    def __init__(self, widget: QtW.QWidget, title: str):
+    def __init__(self, widget: QtW.QWidget, title: str, icon_color: str = "black"):
         super().__init__()
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
@@ -248,6 +248,7 @@ class QSubWindow(QtW.QMdiSubWindow):
         self._window_anchor: _anchor.WindowAnchor = _anchor.NoAnchor
         self._current_button: int = Qt.MouseButton.NoButton
         self._widget = widget
+        self._current_icon_color = icon_color
 
         self._central_widget = QCentralWidget(self)
         self.setWidget(self._central_widget)
@@ -288,6 +289,10 @@ class QSubWindow(QtW.QMdiSubWindow):
     def state(self) -> WindowState:
         return self._window_state
 
+    def _set_icon_color(self, color: str):
+        self._title_bar._set_icon_color(color)
+        self._current_icon_color = color
+
     def _update_window_state(self, state: WindowState, animate: bool = True):
         state = WindowState(state)
         if self._window_state == state:
@@ -314,11 +319,15 @@ class QSubWindow(QtW.QMdiSubWindow):
             if self._window_state is WindowState.NORMAL:
                 self._store_current_geometry()
             _setter(self.parentWidget().geometry())
-            self._title_bar._toggle_size_btn.setIcon(_icon_normal())
+            self._title_bar._toggle_size_btn.setIcon(
+                _icon_for_id(TitleIconId.NORMAL, self._current_icon_color)
+            )
             self._widget.setVisible(True)
         elif state == WindowState.NORMAL:
             _setter(self._last_geometry)
-            self._title_bar._toggle_size_btn.setIcon(_icon_max())
+            self._title_bar._toggle_size_btn.setIcon(
+                _icon_for_id(TitleIconId.MAX, self._current_icon_color)
+            )
             self._widget.setVisible(True)
             self._title_bar._fix_position()
         elif state == WindowState.FULL:
@@ -343,7 +352,9 @@ class QSubWindow(QtW.QMdiSubWindow):
 
     def _set_minimized(self, geometry: QtCore.QRect, number: int = 0):
         self.move(2, geometry.height() - (self._title_bar.height() + 8) * (number + 1))
-        self._title_bar._toggle_size_btn.setIcon(_icon_normal())
+        self._title_bar._toggle_size_btn.setIcon(
+            _icon_for_id(TitleIconId.NORMAL, self._current_icon_color)
+        )
         self._widget.setVisible(False)
 
     def is_current(self) -> bool:
@@ -450,25 +461,39 @@ class QSubWindow(QtW.QMdiSubWindow):
 
 
 class QTitleBarToolButton(QtW.QToolButton):
+    """Tool button for the title bar of the sub-window."""
+
     def __init__(
         self,
-        icon: QtGui.QIcon,
+        icon_id: TitleIconId,
+        color: str,
         tooltip: str,
         callback: Callable[[], None],
     ):
         super().__init__()
-        self.setIcon(icon)
+        self._icon_id = icon_id
+        self._current_icon_color = color
         self.setToolTip(tooltip)
         self.clicked.connect(callback)
+        self._update_icon_color(color)
 
     def _set_size(self, size: int):
         self.setFixedSize(size, size)
         self.setIconSize(QtCore.QSize(size - 1, size - 1))
 
+    def _update_icon_color(self, color: str):
+        self._current_icon_color = color
+        self.setIcon(_icon_for_id(self._icon_id, color))
+
 
 class QDummyToolButton(QtW.QWidget):
+    """Invisible widget just for API compatibility."""
+
     def _set_size(self, size: int):
         self.setFixedSize(size, size)
+
+    def _update_icon_color(self, color: str):
+        pass
 
 
 class QSubWindowTitleBar(QtW.QFrame):
@@ -486,13 +511,15 @@ class QSubWindowTitleBar(QtW.QFrame):
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
 
         self._window_menu_btn = QTitleBarToolButton(
-            icon=_icon_window_menu(),
+            icon_id=TitleIconId.WINDOW_MENU,
+            color="black",
             tooltip="Menu for this window",
             callback=self._show_window_menu,
         )
         if self._get_model_type() is not None:
             self._model_menu_btn = QTitleBarToolButton(
-                icon=_icon_model_menu(),
+                icon_id=TitleIconId.MODEL_MENU,
+                color="black",
                 tooltip="Menu specific to the model",
                 callback=self._show_model_menu,
             )
@@ -501,8 +528,9 @@ class QSubWindowTitleBar(QtW.QFrame):
             self._model_menu_btn.setVisible(False)
 
         self._index_label = QtW.QLabel()
+        self._index_label.setObjectName("indexLabel")
         self._index_label.setAlignment(
-            Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignBottom
+            Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignVCenter
         )
         _index_font = self._index_label.font()
         _index_font.setPointSize(8)
@@ -528,17 +556,20 @@ class QSubWindowTitleBar(QtW.QFrame):
             self._subwindow.rename_requested.emit(new_name)
 
         self._minimize_btn = QTitleBarToolButton(
-            icon=_icon_min(),
+            icon_id=TitleIconId.MIN,
+            color="black",
             tooltip="Minimize this window",
             callback=self._minimize,
         )
         self._toggle_size_btn = QTitleBarToolButton(
-            icon=_icon_max(),
+            icon_id=TitleIconId.MAX,
+            color="black",
             tooltip="Toggle the size of this window",
             callback=self._toggle_size,
         )
         self._close_btn = QTitleBarToolButton(
-            icon=_icon_close(),
+            icon_id=TitleIconId.CLOSE,
+            color="black",
             tooltip="Close this window",
             callback=self._close,
         )
@@ -578,6 +609,16 @@ class QSubWindowTitleBar(QtW.QFrame):
         self._minimize_btn._set_size(height - 1)
         self._toggle_size_btn._set_size(height - 1)
         self._close_btn._set_size(height - 1)
+
+    def _set_icon_color(self, color):
+        for toolbtn in (
+            self._window_menu_btn,
+            self._model_menu_btn,
+            self._minimize_btn,
+            self._toggle_size_btn,
+            self._close_btn,
+        ):
+            toolbtn._update_icon_color(color)
 
     def _start_renaming(self):
         self._line_edit.show()
@@ -687,7 +728,9 @@ class QSubWindowTitleBar(QtW.QFrame):
         ):
             if _subwin._window_state == WindowState.MAX:
                 # change to normal without moving
-                self._toggle_size_btn.setIcon(_icon_max())
+                self._toggle_size_btn.setIcon(
+                    _icon_for_id(TitleIconId.MAX, self._subwindow._current_icon_color)
+                )
                 _subwin._widget.setVisible(True)
                 _subwin._window_state = WindowState.NORMAL
                 # restore the last size

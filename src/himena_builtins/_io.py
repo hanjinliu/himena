@@ -36,6 +36,18 @@ def _infer_encoding(file_path: Path) -> str:
     return encoding
 
 
+def _infer_separator(file_path: Path, encoding: str | None = None) -> str:
+    _seps = ["\t", ";", ","]
+    with file_path.open("r", encoding=encoding) as f:
+        first_line = f.readline()
+
+    _count_table = {sep: first_line.count(sep) for sep in _seps}
+    _max_sep: str = max(_count_table, key=_count_table.get)
+    if _count_table[_max_sep] == 0:
+        return ","
+    return _max_sep
+
+
 def default_text_reader(file_path: Path) -> WidgetDataModel:
     """Read text file."""
     if file_path.suffix in (".html", ".htm"):
@@ -74,19 +86,20 @@ def default_image_reader(file_path: Path) -> WidgetDataModel:
     )
 
 
-def _read_txt_as_numpy(file_path: Path, delimiter: str):
+def _read_txt_as_numpy(file_path: Path, delimiter: str | None = None):
     encoding = _infer_encoding(file_path)
+    sep = delimiter or _infer_separator(file_path, encoding)
     try:
         arr = np.loadtxt(
             file_path,
             dtype=np.dtypes.StringDType(),
-            delimiter=delimiter,
+            delimiter=sep,
             encoding=encoding,
         )
     except ValueError:
         # If the file has different number of columns in each row, np.loadtxt fails.
         with file_path.open("r", encoding=encoding) as f:
-            reader = csv.reader(f, delimiter=delimiter)
+            reader = csv.reader(f, delimiter=sep)
             ncols = 0
             rows = []
             for row in reader:
@@ -100,13 +113,13 @@ def _read_txt_as_numpy(file_path: Path, delimiter: str):
         value=arr,
         type=StandardType.TABLE,
         extension_default=file_path.suffix,
-        metadata=TableMeta(separator=delimiter),
+        metadata=TableMeta(separator=sep),
     )
 
 
 def default_csv_reader(file_path: Path) -> WidgetDataModel:
     """Read CSV file."""
-    return _read_txt_as_numpy(file_path, ",")
+    return _read_txt_as_numpy(file_path)
 
 
 def default_tsv_reader(file_path: Path) -> WidgetDataModel:

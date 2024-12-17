@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from enum import Enum, auto
+import math
 from typing import Iterable
 import numpy as np
 from qtpy import QtWidgets as QtW, QtCore, QtGui
@@ -22,7 +23,7 @@ from ._roi_items import (
 )
 from ._handles import QHandleRect, RoiSelectionHandles
 from himena.qt._utils import ndarray_to_qimage
-
+from himena.widgets import set_status_tip
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -177,7 +178,8 @@ class QImageGraphicsView(QBaseGraphicsView):
         self._selection_handles = RoiSelectionHandles(self)
         self._initialized = False
         self._image_widgets: list[QImageGraphicsWidget] = []
-
+        self._ratio_before_collapse: float = 1.0
+        self._ratio_current: float = 1.0
         super().__init__()
         self.switch_mode(Mode.PAN_ZOOM)
         self._qroi_labels = self.addItem(QRoiLabels(self))
@@ -276,10 +278,14 @@ class QImageGraphicsView(QBaseGraphicsView):
         # Dynamically resize the image to keep the current zoom factor
         old_size = event.oldSize()
         new_size = event.size()
-        ratio = np.sqrt(
-            new_size.width() / old_size.width() * new_size.height() / old_size.height()
-        )
+        if (w_new := new_size.width()) == 0 or (h_new := new_size.height()) == 0:
+            self._ratio_before_collapse = self._ratio_current
+        if (w_old := old_size.width()) == 0 or (h_old := old_size.height()) == 0:
+            ratio = self._ratio_before_collapse
+        else:
+            ratio = math.sqrt(w_new / w_old * h_new / h_old)
         self.scale_and_update_handles(ratio)
+        self._inform_scale()
         if not self._initialized:
             self.initialize()
         return super().resizeEvent(event)
@@ -298,6 +304,9 @@ class QImageGraphicsView(QBaseGraphicsView):
         self.centerOn(rect.center())
         self._initialized = True
 
+    def _inform_scale(self):
+        set_status_tip(f"Zoom factor: {self.transform().m11():.3%}", duration=0.7)
+
     def wheelEvent(self, event):
         # Zoom in/out using the mouse wheel
         factor = 1.1
@@ -307,13 +316,16 @@ class QImageGraphicsView(QBaseGraphicsView):
         else:
             zoom_factor = 1 / factor
         self.scale_and_update_handles(zoom_factor)
+        self._inform_scale()
         return super().wheelEvent(event)
 
     def scale_and_update_handles(self, factor: float):
         """Scale the view and update the selection handle sizes."""
-        self.scale(factor, factor)
+        if factor > 0:
+            self.scale(factor, factor)
         tr = self.transform()
         self._selection_handles.update_handle_size(tr.m11())
+        self._ratio_current = factor
 
     def auto_range(self):
         return self.fitInView(self.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)

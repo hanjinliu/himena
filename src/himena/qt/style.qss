@@ -319,6 +319,10 @@ QLabel {
     background-color: none;
 }
 
+QLabel#indexLabel {
+    color: gray;
+}
+
 QLineEdit {
     background-color: #[background_dim];
     color: #[foreground];

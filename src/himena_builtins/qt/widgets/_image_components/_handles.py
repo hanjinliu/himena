@@ -120,6 +120,8 @@ class RoiSelectionHandles:
         return handle
 
     def update_handle_size(self, scale: float):
+        if scale == 0:
+            return
         self._handle_size = 4 / scale
         for handle in self._handles:
             handle.setSize(self._handle_size)

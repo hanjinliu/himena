@@ -148,6 +148,10 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
                 icon = self._app._registered_actions[action._command_id].icon
                 if icon is not None:
                     btn.setIcon(QIconifyIcon(icon.light, color=icon_color))
+        for i in range(self._tab_widget.count()):
+            area = self._tab_widget.widget_area(i)
+            for sub in area.subWindowList():
+                sub._title_bar._set_icon_color(icon_color)
 
     def _on_error(self, exc: Exception) -> None:
         from himena.qt._qtraceback import QtErrorMessageBox
@@ -248,6 +252,11 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         tab = self._tab_widget.widget_area(i_tab)
         _LOGGER.info("Adding widget of title %r to tab %r", title, i_tab)
         subwindow = tab.add_widget(widget, title)
+        if self._himena_main_window.theme.is_light_background():
+            icon_color = "#000000"
+        else:
+            icon_color = "#ffffff"
+        subwindow._set_icon_color(icon_color)
         return subwindow
 
     def _connect_window_events(self, sub: SubWindow, qsub: QSubWindow):

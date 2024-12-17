@@ -207,6 +207,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         sub_window = SubWindow(widget=widget, main_window=main)
         self._process_new_widget(sub_window, title, auto_size)
         main._move_focus_to(sub_window._split_interface_and_frontend()[1])
+        _checker.call_theme_changed_callback(widget, main._himena_main_window.theme)
         return sub_window
 
     def add_function(

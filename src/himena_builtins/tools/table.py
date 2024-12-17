@@ -39,20 +39,17 @@ def crop_selection(model: WidgetDataModel["np.ndarray"]) -> WidgetDataModel:
     menus=["tools/table"],
     command_id="builtins:table-change-separator",
 )
-def change_separator(model: WidgetDataModel["np.ndarray"]) -> Parametric:
+def change_separator(win: SubWindow) -> Parametric:
     """Change the separator of the table data."""
+    model = win.to_model()
     arr_str = model.value
-    if not isinstance(meta := model.metadata, TableMeta):
-        raise ValueError("Table must have a TableMeta as the metadata")
+    meta = _cast_meta(model.metadata)
     sep = meta.separator
     if sep is None:
         raise ValueError("Current separator of the table is unknown.")
 
-    @configure_gui(
-        title="Change separator",
-        preview=True,
-    )
-    def change_separator(separator: str = ",") -> WidgetDataModel:
+    def change_separator(separator: str = ",") -> None:
+        model = win.to_model()
         buf = StringIO()
         np.savetxt(buf, arr_str, fmt="%s", delimiter=sep)
         buf.seek(0)
@@ -61,7 +58,9 @@ def change_separator(model: WidgetDataModel["np.ndarray"]) -> Parametric:
             delimiter=separator.encode().decode("unicode_escape"),
             dtype=np.dtypes.StringDType(),
         )
-        return model.with_value(arr_new)
+        meta = _cast_meta(model.metadata)
+        meta.separator = separator
+        return win.update_model(model.with_value(arr_new, metadata=meta))
 
     return change_separator
 
@@ -91,7 +90,7 @@ def insert_incrementing_numbers(win: SubWindow["QSpreadsheet"]) -> Parametric:
             raise ValueError("Select a single row or column.")
         nr, nc = widget.model()._arr.shape
         if nr < rsl.stop or nc < csl.stop:
-            widget.model()._expand_array(rsl.stop, csl.stop)
+            widget.array_expand(rsl.stop, csl.stop)
         target = widget.model()._arr
         if rsl.stop - rsl.start == 1:
             target[rsl, csl] = np.array(values, dtype=target.dtype).reshape(1, -1)
@@ -100,3 +99,9 @@ def insert_incrementing_numbers(win: SubWindow["QSpreadsheet"]) -> Parametric:
         return
 
     return run_insert
+
+
+def _cast_meta(meta) -> TableMeta:
+    if not isinstance(meta, TableMeta):
+        raise ValueError("Table must have a TableMeta as the metadata")
+    return meta

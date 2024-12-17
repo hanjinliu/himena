@@ -317,8 +317,26 @@ class QRichTextEdit(QtW.QWidget):
         return self._control
 
 
+class QRichTextPushButton(QtW.QPushButton):
+    def __init__(self, text: str):
+        super().__init__()
+        self._label = QtW.QLabel(text, self)
+        layout = QtW.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._label)
+        self._label.setAttribute(QtCore.Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self._label.setAttribute(QtCore.Qt.WidgetAttribute.WA_TranslucentBackground)
+        self._label.setSizePolicy(
+            QtW.QSizePolicy.Policy.Expanding,
+            QtW.QSizePolicy.Policy.Expanding,
+        )
+        self._label.setAlignment(
+            QtCore.Qt.AlignmentFlag.AlignCenter | QtCore.Qt.AlignmentFlag.AlignVCenter
+        )
+
+
 def _make_btn(text: str, tooltip: str, callback) -> QtW.QPushButton:
-    btn = QtW.QPushButton(text)
+    btn = QRichTextPushButton(text)
     btn.setFixedWidth(20)
     btn.setToolTip(tooltip)
     btn.clicked.connect(callback)
@@ -358,22 +376,22 @@ class QRichTextEditControl(QtW.QWidget):
             callback=self._on_background_color_changed,
         )
         self._toggle_bold_button = _make_btn(
-            "B",
+            "<b>B</b>",
             tooltip="Toggle Bold",
             callback=self._on_toggle_bold,
         )
         self._toggle_it_button = _make_btn(
-            "I",
+            "<i>I</i>",
             tooltip="Toggle Italic",
             callback=self._on_toggle_italic,
         )
         self._toggle_underline_button = _make_btn(
-            "U",
+            "<u>U</u>",
             tooltip="Toggle Underline",
             callback=self._on_toggle_underline,
         )
         self._toggle_strike_button = _make_btn(
-            "S", tooltip="Toggle Strike", callback=self._on_toggle_strike
+            "<s>S</s>", tooltip="Toggle Strike", callback=self._on_toggle_strike
         )
         spacer = QtW.QWidget()
         spacer.setSizePolicy(

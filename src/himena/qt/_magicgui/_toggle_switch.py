@@ -42,7 +42,7 @@ class QToggleSwitch(QtW.QWidget):
 
     def setSize(self, size: int):
         self._height = size
-        self.offset = size
+        self.offset = size // 2
         self.setFixedSize(
             (self._height + self._margin) * 2, self._height + self._margin * 2
         )
