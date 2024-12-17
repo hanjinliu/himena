@@ -11,7 +11,7 @@ from himena.qt._utils import qsignal_blocker
 from himena._enum import StrEnum
 
 if TYPE_CHECKING:
-    from himena_builtins.qt.widgets.image import QImageView
+    from himena_builtins.qt.widgets.image import QImageView, ChannelInfo
 
 
 class ImageType(StrEnum):
@@ -243,7 +243,8 @@ class QChannelToggleSwitches(QtW.QScrollArea):
         self.setWidget(central)
         self._label_font = QtGui.QFont("Arial", 8)
 
-    def set_channel_labels(self, labels: list[str]):
+    def set_channels(self, channels: list[ChannelInfo]):
+        labels = [ch.name for ch in channels]
         for ith in range(len(self._toggle_switches), len(labels)):
             sw = QLabeledToggleSwitch()
             sw.setSize(9)
@@ -259,6 +260,9 @@ class QChannelToggleSwitches(QtW.QScrollArea):
         for i, label in enumerate(labels):
             sw = self._toggle_switches[i]
             sw.setText(label)
+            sw._switch._on_color_override = QtGui.QColor.fromRgbF(
+                *channels[i].colormap(0.5)
+            )
 
     def _emit_state_changed(self):
         self.stateChanged.emit()

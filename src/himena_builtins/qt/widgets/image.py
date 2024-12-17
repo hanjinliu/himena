@@ -210,8 +210,7 @@ class QImageView(QtW.QSplitter):
             # be gray for single channel images.
             self._channels[0].colormap = Colormap("gray")
         if self._composite_state() == "Comp.":
-            labels = [ch.name for ch in self._channels]
-            self._control._channel_visibilities.set_channel_labels(labels)
+            self._control._channel_visibilities.set_channels(self._channels)
 
     def _calc_current_indices(
         self,

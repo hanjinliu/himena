@@ -32,6 +32,7 @@ class QToggleSwitch(QtW.QWidget):
             QtW.QSizePolicy.Policy.Minimum, QtW.QSizePolicy.Policy.Expanding
         )
         self._on_color = QtGui.QColor("#4D79C7")
+        self._on_color_override = None
         self._off_color = QtGui.QColor("#909090")
         self._handle_color = QtGui.QColor("#d5d5d5")
         self._margin = 2
@@ -52,16 +53,18 @@ class QToggleSwitch(QtW.QWidget):
         return self._on_color
 
     @onColor.setter
-    def onColor(self, brsh: QtGui.QBrush):
+    def onColor(self, brsh: QtGui.QColor | QtGui.QBrush):
         self._on_color = brsh
+        self.update()
 
     @Property(QtGui.QColor)
     def offColor(self):
         return self._off_color
 
     @offColor.setter
-    def offColor(self, brsh: QtGui.QBrush):
+    def offColor(self, brsh: QtGui.QColor | QtGui.QBrush):
         self._off_color = brsh
+        self.update()
 
     @Property(float)
     def offset(self):
@@ -97,7 +100,8 @@ class QToggleSwitch(QtW.QWidget):
             self.height() - 2 * self._margin,
         )
         if self.isEnabled():
-            p.setBrush(self._on_color if self._checked else self._off_color)
+            on_color = self._on_color_override or self._on_color
+            p.setBrush(on_color if self._checked else self._off_color)
             p.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing, True)
             p.setOpacity(0.8)
         else:

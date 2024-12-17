@@ -178,8 +178,6 @@ class QImageGraphicsView(QBaseGraphicsView):
         self._selection_handles = RoiSelectionHandles(self)
         self._initialized = False
         self._image_widgets: list[QImageGraphicsWidget] = []
-        self._ratio_before_collapse: float = 1.0
-        self._ratio_current: float = 1.0
         super().__init__()
         self.switch_mode(Mode.PAN_ZOOM)
         self._qroi_labels = self.addItem(QRoiLabels(self))
@@ -278,12 +276,13 @@ class QImageGraphicsView(QBaseGraphicsView):
         # Dynamically resize the image to keep the current zoom factor
         old_size = event.oldSize()
         new_size = event.size()
-        if (w_new := new_size.width()) == 0 or (h_new := new_size.height()) == 0:
-            self._ratio_before_collapse = self._ratio_current
+        if (w_new := new_size.width()) < 10 or (h_new := new_size.height()) < 10:
+            return super().resizeEvent(event)
         if (w_old := old_size.width()) == 0 or (h_old := old_size.height()) == 0:
-            ratio = self._ratio_before_collapse
+            ratio = 1.0
         else:
             ratio = math.sqrt(w_new / w_old * h_new / h_old)
+
         self.scale_and_update_handles(ratio)
         self._inform_scale()
         if not self._initialized:
@@ -325,7 +324,6 @@ class QImageGraphicsView(QBaseGraphicsView):
             self.scale(factor, factor)
         tr = self.transform()
         self._selection_handles.update_handle_size(tr.m11())
-        self._ratio_current = factor
 
     def auto_range(self):
         return self.fitInView(self.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
@@ -443,6 +441,7 @@ class QImageGraphicsView(QBaseGraphicsView):
     def mouseMoveEvent(self, event: QtGui.QMouseEvent):
         # Move the image using the mouse
         pos = self.mapToScene(event.pos())
+        _shift_down = event.modifiers() & Qt.KeyboardModifier.ShiftModifier
         if event.buttons() == Qt.MouseButton.NoButton:
             self.hovered.emit(pos)
             if (
@@ -471,14 +470,24 @@ class QImageGraphicsView(QBaseGraphicsView):
                 self._mouse_move_pan_zoom(event)
             elif self.mode() is Mode.ROI_LINE:
                 if isinstance(item := self._current_roi_item, QLineRoi):
+                    if _shift_down:
+                        pos = _find_nice_position(pos0, pos)
                     item.setLine(pos0.x(), pos0.y(), pos.x(), pos.y())
             elif self.mode() in (Mode.ROI_RECTANGLE, Mode.ROI_ELLIPSE):
                 if isinstance(self._current_roi_item, (QRectangleRoi, QEllipseRoi)):
-                    x0, x1 = sorted([pos.x(), pos0.x()])
-                    y0, y1 = sorted([pos.y(), pos0.y()])
-                    self._current_roi_item.setRect(x0, y0, x1 - x0, y1 - y0)
+                    x0, x1 = pos.x(), pos0.x()
+                    y0, y1 = pos.y(), pos0.y()
+                    width = abs(x1 - x0)
+                    height = abs(y1 - y0)
+                    if _shift_down:
+                        width = height = min(width, height)
+                    self._current_roi_item.setRect(
+                        min(x0, x1), min(y0, y1), width, height
+                    )
             elif self.mode() is Mode.ROI_ROTATED_RECTANGLE:
                 if isinstance(self._current_roi_item, QRotatedRectangleRoi):
+                    if _shift_down:
+                        pos = _find_nice_position(pos0, pos)
                     self._current_roi_item.setRight(pos)
             elif self.mode() is Mode.SELECT:
                 if item := self._current_roi_item:
@@ -641,3 +650,40 @@ class QImageGraphicsView(QBaseGraphicsView):
         if event.key() == Qt.Key.Key_Space:
             self.set_mode(self._last_mode_before_key_hold)
         return None
+
+
+def _find_nice_position(pos0: QtCore.QPointF, pos1: QtCore.QPointF) -> QtCore.QPointF:
+    """Find the "nice" position when Shift is pressed."""
+    x0, y0 = pos0.x(), pos0.y()
+    x1, y1 = pos1.x(), pos1.y()
+    ang = math.atan2(y1 - y0, x1 - x0)
+    pi = math.pi
+    if -pi / 8 < ang <= pi / 8:  # right direction
+        y1 = y0
+    elif 3 * pi / 8 < ang <= 5 * pi / 8:  # down direction
+        x1 = x0
+    elif -5 * pi / 8 < ang <= -3 * pi / 8:  # up direction
+        x1 = x0
+    elif ang <= -7 * pi / 8 or 7 * pi / 8 < ang:  # left direction
+        y1 = y0
+    elif pi / 8 < ang <= 3 * pi / 8:  # down-right direction
+        if abs(x1 - x0) > abs(y1 - y0):
+            x1 = x0 + abs(y1 - y0)
+        else:
+            y1 = y0 + abs(x1 - x0)
+    elif -3 * pi / 8 < ang <= -pi / 8:  # up-left direction
+        if abs(x1 - x0) > abs(y1 - y0):
+            x1 = x0 + abs(y1 - y0)
+        else:
+            y1 = y0 - abs(x1 - x0)
+    elif 5 * pi / 8 < ang <= 7 * pi / 8:  # down-left direction
+        if abs(x1 - x0) > abs(y1 - y0):
+            x1 = x0 - abs(y1 - y0)
+        else:
+            y1 = y0 + abs(x1 - x0)
+    elif -7 * pi / 8 < ang <= -5 * pi / 8:  # up-right direction
+        if abs(x1 - x0) > abs(y1 - y0):
+            x1 = x0 - abs(y1 - y0)
+        else:
+            y1 = y0 - abs(x1 - x0)
+    return QtCore.QPointF(x1, y1)
