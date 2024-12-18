@@ -87,6 +87,7 @@ class QImageView(QtW.QSplitter):
         self._channels: list[ChannelInfo] | None = None
         self._model_type: str = StandardType.IMAGE
         self._pixel_unit: str = "a.u."
+        self._extension_default: str = ".png"
         self._img_view.add_image_layer()
 
     def createHandle(self):
@@ -162,6 +163,8 @@ class QImageView(QtW.QSplitter):
         self._control._interp_check_box.setChecked(meta0.interpolation == "linear")
         self._model_type = model.type
         self._pixel_unit = meta0.unit or ""
+        if ext_default := model.extension_default:
+            self._extension_default = ext_default
         return None
 
     def _clim_for_ith_channel(self, img_slices: list[ImageTuple], ith: int):
@@ -264,7 +267,7 @@ class QImageView(QtW.QSplitter):
         return WidgetDataModel(
             value=self._arr.arr,
             type=self.model_type(),
-            extension_default=".png",  # TODO: update default extension in update_model
+            extension_default=self._extension_default,
             metadata=model_meta.ImageMeta(
                 current_indices=current_slices,
                 axes=axes,

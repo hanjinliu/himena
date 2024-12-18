@@ -87,7 +87,7 @@ def crop_image_nd(win: SubWindow) -> Parametric:
 
 def _2d_roi_to_slices(
     roi: _roi.ImageRoi2D, arr: ArrayWrapper, meta: ImageMeta
-) -> tuple[tuple, Rect[int]]:
+) -> tuple[tuple[slice, ...], Rect[int]]:
     bbox = roi.bbox().adjust_to_int()
     if meta.is_rgb:
         bbox = bbox.limit_to(arr.shape[-2], arr.shape[-3])
@@ -95,8 +95,8 @@ def _2d_roi_to_slices(
         bbox = bbox.limit_to(arr.shape[-1], arr.shape[-2])
     if bbox.width <= 0 or bbox.height <= 0:
         raise ValueError("Crop range out of bounds.")
-    ysl = slice(bbox.top, bbox.top + bbox.height + 1)
-    xsl = slice(bbox.left, bbox.left + bbox.width + 1)
+    ysl = slice(bbox.top, bbox.top + bbox.height)
+    xsl = slice(bbox.left, bbox.left + bbox.width)
     if meta.is_rgb:
         sl = (ysl, xsl, slice(None))
     else:
@@ -111,7 +111,7 @@ def _2d_roi_to_slices(
     command_id="builtins:duplicate-rois",
 )
 def duplicate_rois(model: WidgetDataModel) -> WidgetDataModel:
-    """Duplicate the ROIs."""
+    """Duplicate the ROIs as a new window with the ROI data."""
     meta = _cast_meta(model, ImageMeta)
     rois = meta.rois
     if isinstance(rois, _roi.RoiListModel):
@@ -162,7 +162,7 @@ def set_colormaps(win: SubWindow) -> Parametric:
                 "imagej:ice",
                 "matlab:jet",
                 "matlab:hot",
-            ],
+            ],  # fmt: skip
             "value": current_channels[i],
         }  # fmt: skip
         for i in range(len(channel_names))

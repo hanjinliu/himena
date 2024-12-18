@@ -5,21 +5,23 @@ from himena.types import WidgetDataModel
 from himena.consts import StandardType
 
 
-# @register_function(
-#     types=StandardType.DATAFRAME,
-#     menus=["tools/dataframe"],
-#     command_id="builtins:series-as-array",
-# )
-# def header_to_row(model: WidgetDataModel) -> WidgetDataModel:
-#     df = wrap_dataframe(model.value)
-#     df.column_names()
-
-#     return WidgetDataModel(
-#         value=row,
-#         title=f"{model.title} (Row {r0})",
-#         type=StandardType.ARRAY_1D,
-#         extension_default=".npy",
-#     )
+@register_function(
+    types=StandardType.DATAFRAME,
+    menus=["tools/dataframe"],
+    command_id="builtins:header-to-row",
+)
+def header_to_row(model: WidgetDataModel) -> WidgetDataModel:
+    """Convert the header as the first row."""
+    df = wrap_dataframe(model.value)
+    if isinstance(meta := model.metadata, TableMeta):
+        sep = meta.separator or ","
+    else:
+        sep = ","
+    csv_string = df.to_csv_string(sep)
+    new_columns = [f"column_{i}" for i in range(df.num_columns())]
+    input_string = f"{sep.join(new_columns)}\n{csv_string}"
+    new_value = df.from_csv_string(input_string, sep)
+    return model.with_value(new_value)
 
 
 @register_function(

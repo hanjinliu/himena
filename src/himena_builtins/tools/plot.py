@@ -379,7 +379,7 @@ def _get_xy_data(
         xlabel, xarr, ys = _table_to_xy_data(model.value, x, y)
     elif is_subtype(model.type, StandardType.DATAFRAME):
         df = wrap_dataframe(model.value)
-        column_names = df.column_names()[y[1].start, y[1].stop]
+        column_names = df.column_names()[y[1].start : y[1].stop]
         rows = slice(y[0].start, y[0].stop)
         ys = [(cname, df.column_to_array(cname)[rows]) for cname in column_names]
         if x is None:

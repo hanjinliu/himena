@@ -51,4 +51,4 @@ _DEFAULT_FORMATTERS: dict[int, Callable[[Any], str]] = {
 
 
 def format_table_value(value: Any, fmt: str) -> str:
-    return _DEFAULT_FORMATTERS.get(fmt, str)(value)
+    return _DEFAULT_FORMATTERS.get(fmt, repr)(value)

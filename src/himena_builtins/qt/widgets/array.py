@@ -22,6 +22,10 @@ from himena_builtins.qt.widgets._table_components import (
 _LOGGER = logging.getLogger(__name__)
 
 
+def _is_structured(arr: np.ndarray) -> bool:
+    return isinstance(arr.dtype, (np.void, np.dtypes.VoidDType))
+
+
 class QArrayModel(QtCore.QAbstractTableModel):
     """Table model for data frame."""
 
@@ -29,12 +33,38 @@ class QArrayModel(QtCore.QAbstractTableModel):
         super().__init__(parent)
         self._arr_slice = arr  # 2D
         self._slice: tuple[int, ...] = ()
-        if arr.ndim != 2:
-            raise ValueError("Only 2D array is supported.")
-        if arr.dtype.names is not None:
-            raise ValueError("Structured array is not supported.")
-        self._dtype = np.dtype(arr.dtype)
-        self._nrows, self._ncols = arr.shape
+        if arr.dtype.names is None:
+            if arr.ndim != 2:
+                raise ValueError("Only 2D array is supported.")
+            self._dtype = np.dtype(arr.dtype)
+            self._nrows, self._ncols = arr.shape
+            self._get_dtype = self._get_dtype_nonstructured
+            self._get_item = self._get_item_nonstructured
+        else:
+            if arr.ndim != 1 or not _is_structured(arr):
+                raise ValueError(
+                    f"Only 1D structured array is supported (got {arr.ndim}D array "
+                    f"with dtype {arr.dtype!r})."
+                )
+            self._dtype = arr.dtype
+            self._nrows, self._ncols = arr.shape[0], len(arr.dtype.names)
+            self._get_dtype = self._get_dtype_structured
+            self._get_item = self._get_item_structured
+
+    def _is_structured(self) -> bool:
+        return isinstance(self._dtype, np.void)
+
+    def _get_dtype_nonstructured(self, r: int, c: int) -> np.dtype:
+        return self._dtype
+
+    def _get_dtype_structured(self, r: int, c: int) -> np.dtype:
+        return self._dtype.fields[self._dtype.names[c]][0]
+
+    def _get_item_nonstructured(self, r: int, c: int) -> Any:
+        return self._arr_slice[r, c]
+
+    def _get_item_structured(self, r: int, c: int) -> Any:
+        return self._arr_slice[r][self._dtype.names[c]]
 
     def rowCount(self, parent=None):
         return self._nrows
@@ -54,13 +84,13 @@ class QArrayModel(QtCore.QAbstractTableModel):
         if role == Qt.ItemDataRole.ToolTipRole:
             r, c = index.row(), index.column()
             array_indices = ", ".join(str(i) for i in self._slice + (r, c))
-            return f"A[{array_indices}] = {self._arr_slice[r, c]}"
+            return f"A[{array_indices}] = {self._get_item(r, c)}"
         if role != Qt.ItemDataRole.DisplayRole:
             return QtCore.QVariant()
         r, c = index.row(), index.column()
         if r < self.rowCount() and c < self.columnCount():
-            value = self._arr_slice[r, c]
-            text = format_table_value(value, self._dtype.kind)
+            value = self._get_item(r, c)
+            text = format_table_value(value, self._get_dtype(r, c).kind)
             return text
         return QtCore.QVariant()
 
@@ -71,7 +101,20 @@ class QArrayModel(QtCore.QAbstractTableModel):
         role: int = Qt.ItemDataRole.DisplayRole,
     ):
         if role == Qt.ItemDataRole.DisplayRole:
+            if (
+                _is_structured(self._arr_slice)
+                and orientation == Qt.Orientation.Horizontal
+            ):
+                return self._dtype.names[section]
             return str(section)
+        elif role == Qt.ItemDataRole.ToolTipRole:
+            if (
+                _is_structured(self._arr_slice)
+                and orientation == Qt.Orientation.Horizontal
+            ):
+                name = self._dtype.names[section]
+                return f"{name} (dtype: {self._dtype.fields[name][0]})"
+            return None
 
 
 class QArraySliceView(QTableBase):
@@ -240,7 +283,11 @@ class QArrayView(QtW.QWidget):
         self._arr = arr
         self.update_spinbox_for_shape(arr.shape)
         if arr.ndim < 2:
-            self._table.setModel(QArrayModel(arr.get_slice(()).reshape(-1, 1)))
+            arr_slice = arr.get_slice(())
+            if _is_structured(arr_slice):
+                self._table.setModel(QArrayModel(arr_slice))
+            else:
+                self._table.setModel(QArrayModel(arr_slice.reshape(-1, 1)))
         else:
             sl = self._get_slice()
             self._table.setModel(QArrayModel(arr.get_slice(sl)))
@@ -298,5 +345,8 @@ class QArrayViewControl(QtW.QWidget):
 
     def update_for_array(self, arr: ArrayWrapper):
         _type_desc = arr.model_type()
-        self._label.setText(f"{_type_desc} {arr.shape!r} {arr.dtype}")
+        if not _is_structured(arr):
+            self._label.setText(f"{_type_desc} {arr.shape!r} {arr.dtype}")
+        else:
+            self._label.setText(f"{_type_desc} {arr.shape!r} (structured)")
         return None

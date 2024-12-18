@@ -14,7 +14,7 @@ from himena.consts import ExcelFileTypes
 from himena._utils import lru_cache
 
 if TYPE_CHECKING:
-    from typing import TypeGuard
+    from typing import TypeGuard, Self
     import pandas as pd
     import polars as pl
     import pyarrow as pa
@@ -104,41 +104,57 @@ class DataFrameWrapper(ABC):
     def unwrap(self):
         return self._df
 
+    def __repr__(self) -> str:
+        return f"{self.type_name()} {self.shape} of data:\n{self._df!r}"
+
     @abstractmethod
     def __getitem__(self, key: tuple[int, int]) -> Any:
-        raise NotImplementedError
+        """Return the value at the given row and column indices"""
 
     @abstractmethod
     def get_subset(self, r0, r1, c0, c1) -> DataFrameWrapper:
-        raise NotImplementedError
+        """Return a subset of the dataframe by slicing at df[r0:r1, c0, c1]."""
 
     @abstractmethod
     def num_rows(self) -> int:
-        raise NotImplementedError
+        """Return the number of rows in the dataframe."""
 
     @abstractmethod
     def num_columns(self) -> int:
-        raise NotImplementedError
+        """Return the number of columns in the dataframe."""
 
     @abstractmethod
     def column_names(self) -> list[str]:
-        raise NotImplementedError
+        """Return the names of the columns in the dataframe."""
 
     @abstractmethod
     def get_dtype(self, index: int) -> DtypeTuple:
-        raise NotImplementedError
+        """Return the dtype of the column at the given index."""
+
+    @classmethod
+    @abstractmethod
+    def from_csv_string(self, str_or_buf: str | io.StringIO, separator: str) -> Self:
+        """Create a dataframe from a CSV string."""
 
     @abstractmethod
     def to_csv_string(self, separator: str) -> str:
-        raise NotImplementedError
+        """Convert the dataframe to a CSV string."""
 
     @abstractmethod
     def to_list(self) -> list[list[Any]]:
-        raise NotImplementedError
+        """Convert dataframe to a 2D list"""
 
     @abstractmethod
     def column_to_array(self, name: str) -> np.ndarray:
         """Return a column of the dataframe as an 1D numpy array."""
+
+    @classmethod
+    @abstractmethod
+    def from_dict(cls, data: dict[str, np.ndarray]) -> DataFrameWrapper:
+        """Create a dataframe from a dictionary of column names and arrays."""
+
+    def to_dict(self) -> dict[str, np.ndarray]:
+        return {k: self.column_to_array(k) for k in self.column_names()}
 
     def type_name(self) -> str:
         mod = type(self._df).__module__.split(".")[0]
@@ -185,6 +201,20 @@ class DictWrapper(DataFrameWrapper):
         dtype = self._df[col_name].dtype
         return DtypeTuple(str(dtype), dtype.kind)
 
+    @classmethod
+    def from_csv_string(self, str_or_buf: str | io.StringIO, separator: str):
+        if isinstance(str_or_buf, str):
+            buf = io.StringIO(str_or_buf)
+        else:
+            buf = str_or_buf
+        csv_reader = csv.reader(buf, delimiter=separator)
+        header = next(csv_reader)
+        data = {k: [] for k in header}
+        for row in csv_reader:
+            for k, v in zip(header, row):
+                data[k].append(v)
+        return {k: np.array(v) for k, v in data.items()}
+
     def to_csv_string(self, separator: str) -> str:
         lines: list[str] = []
         for i in range(self.num_rows()):
@@ -201,6 +231,10 @@ class DictWrapper(DataFrameWrapper):
 
     def column_to_array(self, name: str) -> np.ndarray:
         return np.asarray(self._df[name])
+
+    @classmethod
+    def from_dict(cls, data: dict) -> DataFrameWrapper:
+        return DictWrapper({k: np.asarray(v) for k, v in data.items()})
 
     def write(self, file: str | Path):
         path = Path(file)
@@ -233,14 +267,30 @@ class PandasWrapper(DataFrameWrapper):
             return DtypeTuple(pd_dtype.name, pd_dtype.kind)
         return DtypeTuple(str(pd_dtype), getattr(pd_dtype, "kind", "O"))
 
+    @classmethod
+    def from_csv_string(
+        cls, str_or_buf: str | io.StringIO, separator: str
+    ) -> DataFrameWrapper:
+        import pandas as pd
+
+        if isinstance(str_or_buf, str):
+            str_or_buf = io.StringIO(str_or_buf)
+        return PandasWrapper(pd.read_csv(str_or_buf, sep=separator))
+
     def to_csv_string(self, separator: str) -> str:
-        return self._df.to_csv(sep=separator)
+        return self._df.to_csv(sep=separator, index=False)
 
     def to_list(self) -> list[list[Any]]:
         return self._df.values.tolist()
 
     def column_to_array(self, name: str) -> np.ndarray:
         return self._df[name].to_numpy()
+
+    @classmethod
+    def from_dict(cls, data: dict) -> DataFrameWrapper:
+        import pandas as pd
+
+        return PandasWrapper(pd.DataFrame(data))
 
     def write(self, file: str | Path):
         path = Path(file)
@@ -316,6 +366,16 @@ class PolarsWrapper(DataFrameWrapper):
             return DtypeTuple("Boolean", "b")
         return DtypeTuple(str(pl_dtype), "O")
 
+    @classmethod
+    def from_csv_string(
+        cls, str_or_buf: str | io.StringIO, separator: str
+    ) -> PolarsWrapper:
+        import polars as pl
+
+        if isinstance(str_or_buf, str):
+            str_or_buf = io.StringIO(str_or_buf)
+        return PolarsWrapper(pl.read_csv(str_or_buf, sep=separator))
+
     def to_csv_string(self, separator: str) -> str:
         return self._df.write_csv(separator=separator)
 
@@ -324,6 +384,12 @@ class PolarsWrapper(DataFrameWrapper):
 
     def column_to_array(self, name: str) -> np.ndarray:
         return self._df[name].to_numpy()
+
+    @classmethod
+    def from_dict(cls, data: dict) -> DataFrameWrapper:
+        import polars as pl
+
+        return PolarsWrapper(pl.DataFrame(data))
 
     def write(self, file: str | Path):
         path = Path(file)
@@ -394,6 +460,18 @@ class PyarrowWrapper(DataFrameWrapper):
             return DtypeTuple("bool", "b")
         return DtypeTuple(str(pa_type), "O")
 
+    @classmethod
+    def from_csv_string(cls, str_or_buf: str, separator: str) -> PyarrowWrapper:
+        import pyarrow as pa
+
+        if isinstance(str_or_buf, str):
+            buf = io.BytesIO(str_or_buf.encode())
+        else:
+            buf = io.BytesIO(str_or_buf.getvalue().encode())
+        return PyarrowWrapper(
+            pa.csv.read_csv(buf, read_options=pa.csv.ReadOptions(delimiter=separator))
+        )
+
     def to_csv_string(self, separator: str) -> str:
         lines: list[str] = []
         for a in self._df.to_pylist():
@@ -406,6 +484,12 @@ class PyarrowWrapper(DataFrameWrapper):
 
     def column_to_array(self, name: str) -> np.ndarray:
         return self._df[name].as_numpy()
+
+    @classmethod
+    def from_dict(cls, data: dict) -> DataFrameWrapper:
+        import pyarrow as pa
+
+        return PyarrowWrapper(pa.Table.from_pydict(data))
 
     def write(self, file: str | Path):
         import pyarrow.csv
@@ -439,7 +523,7 @@ class DtypeTuple(NamedTuple):
 
 def wrap_dataframe(df) -> DataFrameWrapper:
     if isinstance(df, Mapping):
-        return DictWrapper({k: np.asarray(v) for k, v in df.items()})
+        return DictWrapper.from_dict(df)
     if is_pandas_dataframe(df):
         return PandasWrapper(df)
     if is_polars_dataframe(df):

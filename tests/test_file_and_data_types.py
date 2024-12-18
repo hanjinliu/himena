@@ -24,6 +24,8 @@ def test_reading_files(ui: MainWindow, sample_dir: Path):
     assert win.model_type() == StandardType.EXCEL
     win = tab0.read_file(sample_dir / "array.npy")
     assert win.model_type() == StandardType.ARRAY
+    win = tab0.read_file(sample_dir / "array_structured.npy")
+    assert win.model_type() == StandardType.ARRAY
 
 def test_reading_file_group(ui: MainWindow, sample_dir: Path):
     tab0 = ui.add_tab()

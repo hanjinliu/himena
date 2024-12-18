@@ -9,7 +9,7 @@ from himena.standards.model_meta import (
     ArrayMeta,
     ImageMeta,
 )
-from himena.widgets._wrapper import SubWindow
+from himena.widgets import set_status_tip, SubWindow
 
 if TYPE_CHECKING:
     import numpy as np
@@ -146,6 +146,59 @@ def array_astype(model: WidgetDataModel) -> Parametric:
     return run_astype
 
 
+@register_function(
+    title="Set scale ...",
+    types=StandardType.ARRAY,
+    menus=["tools/array"],
+    command_id="builtins:set-array-scale",
+)
+def set_scale(win: SubWindow) -> Parametric:
+    model = win.to_model()
+    meta = _cast_meta(model, ArrayMeta)
+    if (axes := meta.axes) is None:
+        raise ValueError("The axes attribute must be set to use this function.")
+    gui_options = {}
+    for axis in axes:
+        if axis.scale is None:
+            value = ""
+        elif axis.unit is None:
+            value = f"{axis.scale:.3f}"
+        else:
+            value = f"{axis.scale:.3f} {axis.unit}"
+        gui_options[axis.name] = {
+            "widget_type": "LineEdit",
+            "value": value,
+            "tooltip": "e.g. '0.1', '0.3 um', '500msec'",
+        }
+
+    @configure_gui(gui_options=gui_options)
+    def run_set_scale(**kwargs: str):
+        model = win.to_model()
+        meta = _cast_meta(model, ArrayMeta)
+        updated_info = []
+        for k, v in kwargs.items():
+            if v.strip() == "":  # empty string
+                scale, unit = None, None
+            else:
+                scale, unit = _parse_float_and_unit(v)
+            for axis in meta.axes:
+                if axis.name == k:
+                    axis.scale = scale
+                    axis.unit = unit
+                    break
+            if scale is not None:
+                if unit is None:
+                    updated_info.append(f"{k}: {scale:.3g}")
+                else:
+                    updated_info.append(f"{k}: {scale:.3g} [{unit}]")
+        win.update_model(model.model_copy(update={"metadata": meta}))
+        updated_info_str = ", ".join(updated_info)
+        set_status_tip(f"Scale updated ... {updated_info_str}")
+        return
+
+    return run_set_scale
+
+
 def _get_current_array_2d(model: WidgetDataModel) -> "np.ndarray":
     from himena._data_wrappers import wrap_array
 
@@ -191,3 +244,24 @@ def _make_getter(win: SubWindow, ith: int):
         return meta.current_indices[ith]
 
     return _getter
+
+
+def _parse_float_and_unit(s: str) -> tuple[float, str | None]:
+    if " " in s:
+        scale, unit = s.split(" ", 1)
+        return float(scale), unit
+    unit_start = -1
+    for i, char in enumerate(s):
+        if i == 0:
+            continue
+        if char == " ":
+            unit_start = i + 1
+            break
+        try:
+            float(s[:i])
+        except ValueError:
+            unit_start = i
+            break
+    if unit_start == -1:
+        return float(s), None
+    return float(s[: unit_start - 1]), s[unit_start - 1 :]
