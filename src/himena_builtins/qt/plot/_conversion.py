@@ -1,130 +1,74 @@
 from __future__ import annotations
 
-from typing import Callable, overload, TypeVar, TYPE_CHECKING
-from cmap import Color
+from typing import TYPE_CHECKING
 from himena.standards import plotting as hplt
+from himena_builtins.qt.plot._register import convert_plot_model
 
 if TYPE_CHECKING:
     from matplotlib import pyplot as plt
-
-_CONVERSION_RULES: dict[
-    type[hplt.BasePlotModel], Callable[[hplt.BasePlotModel, plt.Axes], None]
-] = {}
-
-_F = TypeVar("_F", bound=Callable)
+    from mpl_toolkits import mplot3d as plt3d
 
 
-@overload
-def register_plot_model(
-    model_class: type[hplt.BasePlotModel],
-    rule: _F,
-) -> _F: ...
-@overload
-def register_plot_model(
-    model_class: type[hplt.BasePlotModel],
-    rule: None,
-) -> Callable[[_F], _F]: ...
+def _refer_x_axis(ax: hplt.Axis, ax_mpl: plt.Axes):
+    if ax.label is not None:
+        ax_mpl.set_xlabel(ax.label)
+    if ax.ticks is not None:
+        ax_mpl.set_xticks(ax.ticks)
+    if ax.lim is not None:
+        ax_mpl.set_xlim(ax.lim)
+    if ax.scale == "log":
+        ax_mpl.set_xscale("log")
 
 
-def register_plot_model(
-    model_class: type[hplt.BasePlotModel],
-    rule: Callable[[hplt.BasePlotModel, plt.Axes], None] | None = None,
-):
-    """Register a matplotlib-specific conversion rule for a plot model."""
-
-    def inner(f):
-        _CONVERSION_RULES[model_class] = f
-        return f
-
-    return inner if rule is None else inner(rule)
+def _refer_y_axis(ax: hplt.Axis, ax_mpl: plt.Axes):
+    if ax.label is not None:
+        ax_mpl.set_ylabel(ax.label)
+    if ax.ticks is not None:
+        ax_mpl.set_yticks(ax.ticks)
+    if ax.lim is not None:
+        ax_mpl.set_ylim(ax.lim)
+    if ax.scale == "log":
+        ax_mpl.set_yscale("log")
 
 
-def _convert_plot_model(model: hplt.BasePlotModel, ax: plt.Axes):
-    if model.__class__ in _CONVERSION_RULES:
-        return _CONVERSION_RULES[model.__class__](model, ax)
-    raise ValueError(f"Unsupported plot model: {model!r}")
+def _refer_z_axis(ax: hplt.Axis, ax_mpl: plt3d.Axes3D):
+    if ax.label is not None:
+        ax_mpl.set_zlabel(ax.label)
+    if ax.ticks is not None:
+        ax_mpl.set_zticks(ax.ticks)
+    if ax.lim is not None:
+        ax_mpl.set_zlim(ax.lim)
+    if ax.scale == "log":
+        ax_mpl.set_zscale("log")
 
 
-@register_plot_model(hplt.Scatter)
-def _(model: hplt.Scatter, ax: plt.Axes):
-    ax.scatter(
-        model.x, model.y, s=model.size ** 2, c=Color(model.face.color).hex,
-        marker=model.symbol, linewidths=model.edge.width, hatch=model.face.hatch,
-        edgecolors=model.edge.color, linestyle=model.edge.style or "-",
-        label=model.name,
-    )  # fmt: skip
-
-
-@register_plot_model(hplt.Line)
-def _(model: hplt.Line, ax: plt.Axes):
-    ax.plot(
-        model.x, model.y, color=model.edge.color, linewidth=model.edge.width,
-        linestyle=model.edge.style, label=model.name,
-    )  # fmt: skip
-
-
-@register_plot_model(hplt.Bar)
-def _(model: hplt.Bar, ax: plt.Axes):
-    ax.bar(
-        model.x, model.y, color=model.face.color, hatch=model.face.hatch,
-        bottom=model.bottom, width=model.bar_width, edgecolor=model.edge.color,
-        label=model.name, linewidth=model.edge.width, linestyle=model.edge.style,
-    )  # fmt: skip
-
-
-@register_plot_model(hplt.Histogram)
-def _(model: hplt.Histogram, ax: plt.Axes):
-    ax.hist(
-        model.data, bins=model.bins, range=model.range, color=model.face.color,
-        hatch=model.face.hatch, orientation=model.orient, edgecolor=model.edge.color,
-        linewidth=model.edge.width, linestyle=model.edge.style, label=model.name,
-    )  # fmt: skip
-
-
-@register_plot_model(hplt.ErrorBar)
-def _(model: hplt.ErrorBar, ax: plt.Axes):
-    ax.errorbar(
-        model.x, model.y, xerr=model.x_error, yerr=model.y_error,
-        capsize=model.capsize, color=model.edge.color, linewidth=model.edge.width,
-        linestyle=model.edge.style, label=model.name,
-    )  # fmt: skip
-
-
-@register_plot_model(hplt.Band)
-def _(model: hplt.Band, ax: plt.Axes):
-    ax.fill_between(
-        model.x, model.y0, model.y1, color=model.face.color, hatch=model.face.hatch,
-        edgecolor=model.edge.color, linewidth=model.edge.width,
-        linestyle=model.edge.style, label=model.name,
-    )  # fmt: skip
+def _refer_title(ax: hplt.Axes, ax_mpl: plt.Axes):
+    title, style = _parse_styled_text(ax.title)
+    ax_mpl.set_title(title, **style)
 
 
 def _convert_axes(ax: hplt.Axes, ax_mpl: plt.Axes):
     if ax.title is not None:
-        title, style = _parse_styled_text(ax.title)
-        ax_mpl.set_title(title, **style)
+        _refer_title(ax, ax_mpl)
     if ax.x is not None:
-        if ax.x.label is not None:
-            xlabel, style = _parse_styled_text(ax.x.label)
-            ax_mpl.set_xlabel(xlabel, **style)
-        if ax.x.ticks is not None:
-            ax_mpl.set_xticks(ax.x.ticks)
-        if ax.x.lim is not None:
-            ax_mpl.set_xlim(ax.x.lim)
-        if ax.x.scale == "log":
-            ax_mpl.set_xscale("log")
+        _refer_x_axis(ax.x, ax_mpl)
     if ax.y is not None:
-        if ax.y.label is not None:
-            ylabel, style = _parse_styled_text(ax.y.label)
-            ax_mpl.set_ylabel(ylabel, **style)
-        if ax.y.ticks is not None:
-            ax_mpl.set_yticks(ax.y.ticks)
-        if ax.y.lim is not None:
-            ax_mpl.set_ylim(ax.y.lim)
-        if ax.y.scale == "log":
-            ax_mpl.set_yscale("log")
+        _refer_y_axis(ax.y, ax_mpl)
     for model in ax.models:
-        _convert_plot_model(model, ax_mpl)
+        convert_plot_model(model, ax_mpl)
+
+
+def _convert_axes_3d(ax: hplt.Axes3D, ax_mpl: plt3d.Axes3D):
+    if ax.title is not None:
+        _refer_title(ax, ax_mpl)
+    if ax.x is not None:
+        _refer_x_axis(ax.x, ax_mpl)
+    if ax.y is not None:
+        _refer_y_axis(ax.y, ax_mpl)
+    if ax.z is not None:
+        _refer_z_axis(ax.z, ax_mpl)
+    for model in ax.models:
+        convert_plot_model(model, ax_mpl)
 
 
 def _fill_axis_props(axes: hplt.Axes, axes_mpl: plt.Axes):
@@ -160,7 +104,7 @@ def convert_plot_layout(lo: hplt.BaseLayoutModel, fig: plt.Figure):
             axes = fig.add_subplot(111)
         else:
             axes = fig.axes[0]
-        axes.clear()
+            axes.clear()
         _convert_axes(lo.axes, axes)
         lo.axes = _fill_axis_props(lo.axes, axes)
     elif isinstance(lo, hplt.layout.Layout1D):
@@ -175,6 +119,15 @@ def convert_plot_layout(lo: hplt.BaseLayoutModel, fig: plt.Figure):
         lo.axes = [_fill_axis_props(ax, ax_mpl) for ax, ax_mpl in zip(lo.axes, axes)]
     elif isinstance(lo, hplt.Grid):
         raise NotImplementedError("Grid layout is not supported yet")
+    elif isinstance(lo, hplt.SingleAxes3D):
+        if len(fig.axes) != 1:
+            fig.clear()
+            axes = fig.add_subplot(111, projection="3d")
+        else:
+            axes = fig.axes[0]
+            axes.clear()
+        _convert_axes_3d(lo.axes, axes)
+        lo.axes = _fill_axis_props(lo.axes, axes)
     else:
         raise ValueError(f"Unsupported layout model: {lo}")
     return lo

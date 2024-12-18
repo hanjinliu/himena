@@ -1,9 +1,14 @@
-from typing import Any, Literal, Sequence, TYPE_CHECKING, SupportsIndex
+from typing import Literal, Sequence, TYPE_CHECKING, SupportsIndex
 
 import numpy as np
 from pydantic_compat import BaseModel, Field
-from pydantic import field_serializer, field_validator
 from himena.standards.plotting import models as _m
+from himena.standards.plotting.components import (
+    Axis,
+    AxesBase,
+    parse_edge,
+    parse_face_edge,
+)
 from himena.consts import PYDANTIC_CONFIG_STRICT, StandardType
 
 if TYPE_CHECKING:
@@ -46,55 +51,11 @@ class BaseLayoutModel(BaseModel):
         return None
 
 
-class StyledText(BaseModel):
-    model_config = PYDANTIC_CONFIG_STRICT
+class Axes(AxesBase):
+    """Layout model for 2D axes."""
 
-    text: str = Field(..., description="Text content.")
-    size: float | None = Field(None, description="Font size.")
-    color: Any | None = Field(None, description="Font color.")
-    family: str | None = Field(None, description="Font family.")
-    bold: bool = Field(False, description="Bold style or not.")
-    italic: bool = Field(False, description="Italic style or not.")
-    underline: bool = Field(False, description="Underline style or not.")
-    alignment: str | None = Field(None, description="Text alignment.")
-
-
-class Axis(BaseModel):
-    model_config = PYDANTIC_CONFIG_STRICT
-
-    lim: tuple[float, float] | None = Field(None, description="Axis limits.")
-    scale: Literal["linear", "log"] = Field("linear", description="Axis scale.")
-    label: str | StyledText | None = Field(None, description="Axis label.")
-    ticks: Any | None = Field(None, description="Axis ticks.")
-    grid: bool = Field(False, description="Show grid or not.")
-
-
-class Axes(BaseModel):
-    """Layout model for axes."""
-
-    models: list[_m.BasePlotModel] = Field(
-        default_factory=list, description="Child plot models."
-    )
-    title: str | StyledText | None = Field(None, description="Title of the axes.")
     x: Axis = Field(default_factory=Axis, description="X-axis settings.")
     y: Axis = Field(default_factory=Axis, description="Y-axis settings.")
-
-    @field_serializer("models")
-    def _serialize_models(self, models: list[_m.BasePlotModel]) -> list[dict]:
-        return [model.model_dump_typed() for model in models]
-
-    @field_validator("models", mode="before")
-    def _validate_models(cls, models: list):
-        out = []
-        for model in models:
-            if isinstance(model, dict):
-                model = model.copy()
-                model_type = model.pop("type")
-                model = _m.BasePlotModel.construct(model_type, model)
-            elif not isinstance(model, _m.BasePlotModel):
-                raise ValueError(f"Must be a dict or BasePlotModel but got: {model!r}")
-            out.append(model)
-        return out
 
     def scatter(
         self,
@@ -107,14 +68,14 @@ class Axes(BaseModel):
     ) -> _m.Scatter:
         """Add a scatter plot model to the axes."""
         model = _m.Scatter(
-            x=x, y=y, symbol=symbol, size=size, **_m.parse_face_edge(kwargs)
+            x=x, y=y, symbol=symbol, size=size, **parse_face_edge(kwargs)
         )
         self.models.append(model)
         return model
 
     def plot(self, x: Sequence[float], y: Sequence[float], **kwargs) -> _m.Line:
         """Add a line plot model to the axes."""
-        model = _m.Line(x=x, y=y, **_m.parse_edge(kwargs))
+        model = _m.Line(x=x, y=y, **parse_edge(kwargs))
         self.models.append(model)
         return model
 
@@ -133,7 +94,7 @@ class Axes(BaseModel):
             bottom = 0
         model = _m.Bar(
             x=x, y=y, bottom=bottom, bar_width=bar_width, orient=orient,
-            **_m.parse_face_edge(kwargs),
+            **parse_face_edge(kwargs),
         )  # fmt: skip
         self.models.append(model)
         return model
@@ -155,7 +116,7 @@ class Axes(BaseModel):
             x_error=x_error,
             y_error=y_error,
             capsize=capsize,
-            **_m.parse_edge(kwargs),
+            **parse_edge(kwargs),
         )
         self.models.append(model)
         return model
@@ -170,7 +131,7 @@ class Axes(BaseModel):
         **kwargs,
     ) -> _m.Band:
         """Add a band plot model to the axes."""
-        model = _m.Band(x=x, y0=y0, y1=y1, orient=orient, **_m.parse_face_edge(kwargs))
+        model = _m.Band(x=x, y0=y0, y1=y1, orient=orient, **parse_face_edge(kwargs))
         self.models.append(model)
         return model
 
@@ -186,7 +147,7 @@ class Axes(BaseModel):
         """Add a histogram plot model to the axes."""
         model = _m.Histogram(
             data=data, bins=bins, range=range, orient=orient,
-            **_m.parse_face_edge(kwargs),
+            **parse_face_edge(kwargs),
         )  # fmt: skip
         self.models.append(model)
         return model

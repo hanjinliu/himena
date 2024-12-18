@@ -41,7 +41,11 @@ ALLOWED_LETTERS = string.ascii_letters + string.digits + "_- "
 
 
 class StandardType(SimpleNamespace):
-    """Conventions for standard model types."""
+    """Conventions for standard model types.
+
+    Developers should use these types as much as possible to ensure compatibility with
+    other plugins.
+    """
 
     ### Basic types ###
     TEXT = "text"  # any text
@@ -64,12 +68,14 @@ class StandardType(SimpleNamespace):
     IMAGE_BINARY = "array.image.binary"
     # image label data (e.g., segmentation)
     IMAGE_LABELS = "array.image.labels"
+    # float image between 0 and 1 for masking structures
+    IMAGE_MASK = "array.image.mask"
 
     # (N, D) numerical array, such as D-dimensional point cloud
     COORDINATES = "array.coordinates"
 
     ### plotting ###
-    PLOT = "plot"  # objects that plot standard
+    PLOT = "plot"  # objects that satisfy the plotting standard
     MPL_FIGURE = "matplotlib-figure"  # matplotlib figure object
 
     ### 3D ###

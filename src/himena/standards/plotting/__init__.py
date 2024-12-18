@@ -8,11 +8,8 @@ from himena.standards.plotting.layout import (
     Column,
     Grid,
     Axes,
-    Axis,
-    StyledText,
 )
 from himena.standards.plotting.models import (
-    BasePlotModel,
     Line,
     Scatter,
     Bar,
@@ -20,12 +17,27 @@ from himena.standards.plotting.models import (
     ErrorBar,
     Histogram,
 )
-from himena.standards.plotting._api import figure, row, column, grid
+
+# 3D
+
+from himena.standards.plotting.layout3d import (
+    Axes3D,
+    SingleAxes3D,
+)
+from himena.standards.plotting.models3d import (
+    Scatter3D,
+    Line3D,
+    Mesh3D,
+)
+
+from himena.standards.plotting.components import StyledText, Axis, BasePlotModel
+from himena.standards.plotting._api import figure, row, column, grid, figure_3d
 
 __all__ = [
     "models",
     "layout",
     "figure",
+    "figure_3d",
     "row",
     "column",
     "grid",
@@ -44,4 +56,9 @@ __all__ = [
     "ErrorBar",
     "Histogram",
     "StyledText",
+    "Axes3D",
+    "SingleAxes3D",
+    "Scatter3D",
+    "Line3D",
+    "Mesh3D",
 ]

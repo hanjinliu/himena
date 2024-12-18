@@ -187,12 +187,10 @@ def errorbar_plot(win: SubWindow) -> Parametric:
         else:
             yerrs = itertools.repeat(None)
         xarr, yarrs = _get_xy_data(win, x, y, fig.axes)
-        for name_yarr, _xerr, _yerr, _edge in zip(
-            yarrs, xerrs, yerrs, _iter_edge(edge)
-        ):
+        for name_yarr, _xer, _yer, _edge in zip(yarrs, xerrs, yerrs, _iter_edge(edge)):
             name, yarr = name_yarr
             fig.axes.errorbar(
-                xarr, yarr, x_error=_ignore_label(_xerr), y_error=_ignore_label(_yerr),
+                xarr, yarr, x_error=_ignore_label(_xer), y_error=_ignore_label(_yer),
                 capsize=capsize, name=name, **_edge,
             )  # fmt: skip
         return WidgetDataModel(
@@ -333,6 +331,99 @@ def edit_plot(win: SubWindow) -> Parametric:
         return None
 
     return run_edit_plot
+
+
+@register_function(
+    title="Scatter plot 3D ...",
+    types=_TABLE_LIKE,
+    menus=_MENU,
+    command_id="builtins:scatter-plot-3d",
+)
+def scatter_plot_3d(win: SubWindow) -> Parametric:
+    x0, y0, z0 = _auto_select(win, 3)
+
+    @configure_gui(
+        x={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": x0},
+        y={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": y0},
+        z={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": z0},
+        face={"widget_type": FacePropertyEdit},
+        edge={"widget_type": EdgePropertyEdit},
+    )
+    def configure_plot(
+        x: tuple[slice, slice],
+        y: tuple[slice, slice],
+        z: tuple[slice, slice],
+        symbol: str = "o",
+        size: float = 6.0,
+        face: dict = {},
+        edge: dict = {},
+    ) -> WidgetDataModel:
+        fig = hplt.figure_3d()
+        xarr, yarrs = _get_xy_data(win, x, y, fig.axes)
+        _, zarrs = _get_xy_data(win, x, z, fig.axes)
+
+        if len(yarrs) == 1 and len(zarrs) == 1:
+            name_y, yarr = yarrs[0]
+            name_z, zarr = zarrs[0]
+            _face = next(_iter_face(face), {})
+            _edge = next(_iter_edge(edge, prefix="edge_"), {})
+            fig.axes.scatter(
+                xarr, yarr, zarr, symbol=symbol, size=size, name=name_z, **_face,
+                **_edge
+            )  # fmt: skip
+        else:
+            raise ValueError("Only one pair of y values is allowed.")
+        fig.axes.y.label = name_y
+        fig.axes.z.label = name_z
+        return WidgetDataModel(
+            value=fig,
+            type=StandardType.PLOT,
+            title=f"Plot of {win.title}",
+        )
+
+    return configure_plot
+
+
+@register_function(
+    title="Line plot 3D ...",
+    types=_TABLE_LIKE,
+    menus=_MENU,
+    command_id="builtins:line-plot-3d",
+)
+def line_plot_3d(win: SubWindow) -> Parametric:
+    x0, y0, z0 = _auto_select(win, 3)
+
+    @configure_gui(
+        x={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": x0},
+        y={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": y0},
+        z={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": z0},
+        edge={"widget_type": EdgePropertyEdit, "value": _EDGE_ONLY_VALUE},
+    )
+    def configure_plot(
+        x: tuple[slice, slice],
+        y: tuple[slice, slice],
+        z: tuple[slice, slice],
+        edge: dict = {},
+    ) -> WidgetDataModel:
+        fig = hplt.figure_3d()
+        xarr, yarrs = _get_xy_data(win, x, y, fig.axes)
+        _, zarrs = _get_xy_data(win, x, z, fig.axes)
+        if len(yarrs) == 1 and len(zarrs) == 1:
+            name_y, yarr = yarrs[0]
+            name_z, zarr = zarrs[0]
+            _edge = next(_iter_edge(edge), {})
+            fig.axes.plot(xarr, yarr, zarr, name=name_z, **_edge)
+        else:
+            raise ValueError("Only one pair of y values is allowed.")
+        fig.axes.y.label = name_y
+        fig.axes.z.label = name_z
+        return WidgetDataModel(
+            value=fig,
+            type=StandardType.PLOT,
+            title=f"Plot of {win.title}",
+        )
+
+    return configure_plot
 
 
 def _range_getter(

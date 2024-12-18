@@ -1,75 +1,8 @@
 from __future__ import annotations
 from typing import Any, Literal
 
-from pydantic_compat import BaseModel, Field, field_validator
-
-from himena.consts import PYDANTIC_CONFIG_STRICT
-
-
-class BasePlotModel(BaseModel):
-    model_config = PYDANTIC_CONFIG_STRICT
-    name: str = Field(default="", description="Name of the plot.")
-
-    @staticmethod
-    def construct(type: str, dict_: dict[str, Any]) -> BasePlotModel:
-        if type == "scatter":
-            return Scatter(**dict_)
-        if type == "line":
-            return Line(**dict_)
-        if type == "bar":
-            return Bar(**dict_)
-        if type == "errorbar":
-            return ErrorBar(**dict_)
-        if type == "band":
-            return Band(**dict_)
-        if type == "histogram":
-            return Histogram(**dict_)
-        raise ValueError(f"Unknown plot type: {type!r}")
-
-    @field_validator("name", mode="before")
-    def _validate_name(cls, name: str) -> str:
-        if name is None:
-            return ""
-        return name
-
-    def model_dump_typed(self) -> dict[str, Any]:
-        return {"type": type(self).__name__.lower(), **self.model_dump()}
-
-    def plot_option_dict(self) -> dict[str, Any]:
-        """Return the GUI option dict for this plot for editing."""
-        return {"name": {"widget_type": "LineEdit", "value": self.name}}
-
-
-class Face(BaseModel):
-    color: Any | None = Field(None, description="Color of the face.")
-    hatch: Any | None = Field(None, description="Hatch pattern of the face.")
-
-
-class Edge(BaseModel):
-    color: Any | None = Field(None, description="Color of the edge.")
-    width: float | None = Field(None, description="Width of the edge.")
-    style: Any | None = Field(None, description="Style of the edge.")
-
-
-def parse_edge(kwargs: dict[str, Any]) -> dict:
-    color = kwargs.pop("color", kwargs.pop("edge_color", None))
-    width = kwargs.pop("width", kwargs.pop("edge_width", None))
-    style = kwargs.pop("style", kwargs.pop("edge_style", None))
-    name = kwargs.pop("name", None)
-    if kwargs:
-        raise ValueError(f"Extra keyword arguments: {list(kwargs.keys())!r}")
-    edge = Edge(color=color, width=width, style=style)
-    return {"edge": edge, "name": name}
-
-
-def parse_face_edge(kwargs: dict[str, Any]) -> dict:
-    color = kwargs.pop("color", kwargs.pop("face_color", None))
-    hatch = kwargs.pop("hatch", kwargs.pop("face_hatch", None))
-    kwargs = parse_edge(kwargs)
-    if kwargs.get("color") is None:
-        kwargs["color"] = color
-    face = Face(color=color, hatch=hatch)
-    return {"face": face, **kwargs}
+from pydantic_compat import Field
+from himena.standards.plotting.components import BasePlotModel, Face, Edge
 
 
 class Scatter(BasePlotModel):

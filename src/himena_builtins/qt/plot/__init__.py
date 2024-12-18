@@ -4,9 +4,7 @@ import os
 from himena.plugins import register_widget_class
 from himena.consts import StandardType
 from himena._utils import lru_cache
-from himena_builtins.qt.plot._conversion import register_plot_model
 
-__all__ = ["register_plot_model"]
 
 BACKEND_HIMENA = "module://himena_builtins.qt.plot._canvas"
 

@@ -1,4 +1,4 @@
-from himena.standards.plotting import layout
+from himena.standards.plotting import layout, layout3d
 
 
 def figure() -> layout.SingleAxes:
@@ -12,6 +12,20 @@ def figure() -> layout.SingleAxes:
     >>> fig.show()  # show as a sub-window in the current widget
     """
     lo = layout.SingleAxes()
+    return lo
+
+
+def figure_3d() -> layout3d.SingleAxes3D:
+    """Make a single 3D axes layout model.
+
+    Examples
+    --------
+    >>> from himena.standards import plotting as hplt
+    >>> fig = hplt.figure_3d()
+    >>> fig.plot([0, 1, 2], [4, 2, 3], [6, 8, 7], color="red")
+    >>> fig.show()  # show as a sub-window in the current widget
+    """
+    lo = layout3d.SingleAxes3D()
     return lo
 
 
