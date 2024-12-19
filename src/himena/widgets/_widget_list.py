@@ -370,6 +370,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
                 else:
                     _, _, width, height = sub_window.rect
                 sub_window.rect = WindowRect(left, top, width, height)
+            _checker.call_window_added_callback(sub_window.widget)
         sub_window._alive = True
         return None
 

@@ -119,6 +119,8 @@ class Band(BasePlotModel):
 
 
 class Histogram(BasePlotModel):
+    """Plot model for a histogram."""
+
     data: Any = Field(..., description="Data values.")
     bins: int = Field(10, description="Number of bins.")
     range: tuple[float, float] | None = Field(
@@ -126,6 +128,9 @@ class Histogram(BasePlotModel):
     )
     orient: Literal["vertical", "horizontal"] = Field(
         "vertical", description="Orientation of the histogram."
+    )
+    stat: Literal["count", "density", "probability"] = Field(
+        "count", description="Statistic of the histogram."
     )
     face: Face = Field(
         default_factory=Face, description="Properties of the histogram face."
@@ -135,13 +140,25 @@ class Histogram(BasePlotModel):
     )
 
     def plot_option_dict(self) -> dict[str, Any]:
-        from himena.qt._magicgui import EdgePropertyEdit, FacePropertyEdit
+        from himena.qt._magicgui import (
+            EdgePropertyEdit,
+            FacePropertyEdit,
+            FloatListEdit,
+        )
 
         return {
             "name": {"widget_type": "LineEdit", "value": self.name},
             "bins": {"annotation": int, "value": self.bins},
-            "range": {"annotation": tuple[float, float], "value": self.range},
+            "range": {
+                "widget_type": FloatListEdit,
+                "value": self.range,
+                "nullable": True,
+            },
             "orient": {"choices": ["vertical", "horizontal"], "value": self.orient},
+            "stat": {
+                "choices": ["count", "density", "probability"],
+                "value": self.stat,
+            },
             "face": {"widget_type": FacePropertyEdit, "value": self.face.model_dump()},
             "edge": {"widget_type": EdgePropertyEdit, "value": self.edge.model_dump()},
         }

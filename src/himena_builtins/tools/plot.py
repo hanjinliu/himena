@@ -254,9 +254,12 @@ def band_plot(win: SubWindow) -> Parametric:
 )
 def histogram(win: SubWindow) -> Parametric:
     x0 = _auto_select(win, 1)[0]
+    assert x0 is not None  # when num == 1, it must be a tuple.
+    ndata = x0[0].stop - x0[0].start
 
     @configure_gui(
         x={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": x0},
+        bins={"min": 1, "value": max(int(np.sqrt(ndata)), 2)},
         face={"widget_type": FacePropertyEdit},
         edge={"widget_type": EdgePropertyEdit},
     )
@@ -477,7 +480,7 @@ def _get_xy_data(
             xarr = np.arange(ys[0][1].size)
             xlabel = None
         else:
-            column_names_x = df.column_names()[x[1].start, x[1].stop]
+            column_names_x = df.column_names()[x[1].start : x[1].stop]
             if len(column_names_x) != 1:
                 raise ValueError("x must not be more than one column.")
             xarr = df.column_to_array(column_names_x[0])
@@ -497,31 +500,42 @@ def _get_xy_data(
 def _auto_select(win: SubWindow, num: int) -> "list[None | tuple[slice, slice]]":
     from himena._data_wrappers import wrap_dataframe
 
+    selections: list[tuple[tuple[int, int], tuple[int, int]]] = []
     if (model_type := win.model_type()) is None:
-        return [None] * num
+        raise ValueError(f"No model type is specified for the window {win.title!r}")
     if is_subtype(model_type, StandardType.TABLE):
         val = win.to_model().value
         if not isinstance(val, np.ndarray):
-            return [None] * num
+            raise ValueError(f"Table must be a numpy array, got {type(val)}")
         shape = val.shape
+        if isinstance(meta := win.to_model().metadata, TableMeta):
+            selections = meta.selections
     elif is_subtype(model_type, StandardType.DATAFRAME):
         df = wrap_dataframe(win.to_model().value)
         shape = df.shape
+        if isinstance(meta := win.to_model().metadata, TableMeta):
+            selections = meta.selections
     elif is_subtype(model_type, StandardType.EXCEL):
         model = win.to_model()
         if not isinstance(meta := model.metadata, ExcelMeta):
-            return [None] * num
+            raise ValueError(f"Expected an ExcelMeta, got {type(meta)}")
         table = model.value[meta.current_sheet]
+        if not isinstance(table, np.ndarray):
+            raise ValueError(f"Table must be a numpy array, got {type(table)}")
         shape = table.shape
+        selections = meta.selections
     else:
-        return [None] * num
+        raise ValueError(f"Table-like data expected, but got model type {model_type!r}")
     ncols = shape[1]
+    if num == len(selections):
+        return [(slice(*rsl), slice(*csl)) for rsl, csl in selections]
     if ncols == 0:
-        return [None] * num
+        raise ValueError("The table must have at least one column.")
     elif ncols < num:
         out = [None] * num
         for i in range(ncols):
             out[i + num - ncols] = (slice(0, shape[0]), slice(i, i + 1))
+        return out
     else:
         return [(slice(0, shape[0]), slice(i, i + 1)) for i in range(num)]
 

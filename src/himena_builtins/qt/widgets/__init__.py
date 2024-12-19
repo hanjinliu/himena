@@ -2,7 +2,7 @@ from himena.plugins import register_widget_class, register_previewer_class
 from himena_builtins.qt.widgets.array import QArrayView
 from himena_builtins.qt.widgets.text import QTextEdit, QRichTextEdit
 from himena_builtins.qt.widgets.table import QSpreadsheet
-from himena_builtins.qt.widgets.dataframe import QDataFrameView
+from himena_builtins.qt.widgets.dataframe import QDataFrameView, QDataFramePlotView
 from himena_builtins.qt.widgets.image import QImageView
 from himena_builtins.qt.widgets.image_rois import QImageRoiView
 from himena_builtins.qt.widgets.excel import QExcelFileEdit
@@ -17,6 +17,10 @@ from himena.consts import StandardType
 def register_default_widget_types() -> None:
     """Register default widget types."""
 
+    from himena_builtins.qt.widgets import _commands
+
+    del _commands
+
     register_widget_class(StandardType.ARRAY, QArrayView, priority=50)
     register_widget_class(StandardType.TEXT, QTextEdit, priority=50)
     register_widget_class(StandardType.HTML, QRichTextEdit, priority=50)
@@ -25,6 +29,7 @@ def register_default_widget_types() -> None:
     register_widget_class(StandardType.IMAGE_ROIS, QImageRoiView, priority=50)
     register_widget_class(StandardType.IMAGE, QDrawCanvas, priority=0)
     register_widget_class(StandardType.DATAFRAME, QDataFrameView, priority=50)
+    register_widget_class(StandardType.DATAFRAME_PLOT, QDataFramePlotView, priority=50)
     register_widget_class(StandardType.EXCEL, QExcelFileEdit, priority=50)
     register_widget_class(StandardType.IPYNB, QIpynbEdit, priority=50)
     register_widget_class(StandardType.MODELS, QModelStack, priority=50)

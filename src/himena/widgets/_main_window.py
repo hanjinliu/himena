@@ -248,9 +248,9 @@ class MainWindow(Generic[_W]):
         _checker.call_theme_changed_callback(widget, self.theme)
         return dock
 
-    def add_data(
+    def add_object(
         self,
-        data: Any,
+        obj: Any,
         *,
         type: str | None = None,
         title: str | None = None,
@@ -260,12 +260,12 @@ class MainWindow(Generic[_W]):
 
         Parameters
         ----------
-        data : Any
-            Any object.
+        obj : Any
+            Any object. Whether it can be represented as a widget is dependent on the
+            plugins that are installed.
         type : str, optional
-            Any str that describes the type of the data. If not given, the Python type
-            of the data will be used. This type must be registered with a proper backend
-            widget class.
+            Any str that describes the type of the object. This type must be registered
+            with a proper widget class.
         title : str, optional
             Title of the sub-window.
 
@@ -275,7 +275,7 @@ class MainWindow(Generic[_W]):
             The sub-window handler.
         """
         wd = WidgetDataModel(
-            value=data, type=type, title=title, method=ProgramaticMethod()
+            value=obj, type=type, title=title, method=ProgramaticMethod()
         )
         return self.add_data_model(wd)
 

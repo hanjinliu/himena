@@ -4,7 +4,7 @@ import pytest
 from himena import WidgetDataModel, MainWindow
 
 def test_parametric_simple(ui: MainWindow, tmpdir):
-    ui.add_data("xyz", type="text")
+    ui.add_object("xyz", type="text")
 
     def func(a: int, b: float = 1.0, c: bool = False) -> WidgetDataModel[int]:
         return int(a + b) + int(c)
@@ -32,7 +32,7 @@ def test_parametric_with_model_types(ui: MainWindow):
         a: tuple[int, int],
     ) -> WidgetDataModel[str]:
         return model.value * a[0] * a[1]
-    ui.add_data("xyz", type="text")
+    ui.add_object("xyz", type="text")
     win = ui.add_function(func)
 
 def test_custom_parametric_widget(ui: MainWindow):

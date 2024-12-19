@@ -97,7 +97,7 @@ def invert(model: WidgetDataModel) -> WidgetDataModel:
 def main():
     ui = new_window()
     im = iio.imread("imageio:astronaut.png")
-    ui.add_data(im, type=StandardType.IMAGE, title="Astronaut")
+    ui.add_object(im, type=StandardType.IMAGE, title="Astronaut")
     ui.show(run=True)
 
 if __name__ == "__main__":

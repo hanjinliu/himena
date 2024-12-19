@@ -9,7 +9,7 @@ def test_subwindow_interactions(ui: MainWindow, qtbot: QtBot):
     qmain: QMainWindow = ui._backend_main_window
     qtbot.addWidget(qmain)
 
-    win = ui.add_data("xxx", type="text")
+    win = ui.add_object("xxx", type="text")
     qwin = win.widget.parentWidget().parentWidget().parentWidget()
     assert type(qwin) is QSubWindow
     qtitlebar: QSubWindowTitleBar = qwin._title_bar
@@ -30,7 +30,7 @@ def test_subwindow_interactions(ui: MainWindow, qtbot: QtBot):
         pos=qtitlebar._close_btn.rect().center(),
     )
 
-    win = ui.add_data("xxx", type="text")
+    win = ui.add_object("xxx", type="text")
     qwin = win.widget.parentWidget().parentWidget().parentWidget()
     assert type(qwin) is QSubWindow
     qtitlebar: QSubWindowTitleBar = qwin._title_bar
@@ -42,7 +42,7 @@ def test_subwindow_interactions(ui: MainWindow, qtbot: QtBot):
 
 def test_subwindow_drag(ui: MainWindow, qtbot: QtBot):
     ui.show()
-    win = ui.add_data("xxx", type="text")
+    win = ui.add_object("xxx", type="text")
     qwin = win.widget.parentWidget().parentWidget().parentWidget()
     assert type(qwin) is QSubWindow
     qtbot.addWidget(qwin)

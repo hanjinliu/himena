@@ -54,7 +54,7 @@ def subtract_images() -> Parametric:
 def main():
     ui = new_window()
     im = np.random.default_rng(123).normal(size=(100, 100))
-    ui.add_data(im, type=StandardType.IMAGE, title="Noise")
+    ui.add_object(im, type=StandardType.IMAGE, title="Noise")
     ui.show(run=True)
 
 if __name__ == "__main__":

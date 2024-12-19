@@ -69,7 +69,7 @@ def my_writer_provider(model: WidgetDataModel[pd.DataFrame], path: Path):
 def main():
     ui = new_window()
     df = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
-    ui.add_data(df, type=PANDAS_TABLE_TYPE, title="test table")
+    ui.add_object(df, type=PANDAS_TABLE_TYPE, title="test table")
     ui.show(run=True)
 
 if __name__ == "__main__":

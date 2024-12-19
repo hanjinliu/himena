@@ -48,6 +48,10 @@ class ArrayAxis(BaseModel):
     origin: float = Field(0.0, description="Offset of the axis.")
     unit: str | None = Field(None, description="Unit of the axis spacing.")
 
+    @field_validator("name", mode="before")
+    def _name_to_str(cls, v):
+        return str(v)
+
 
 class ArrayMeta(BaseModel):
     """Preset for describing an array metadata."""

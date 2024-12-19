@@ -7,7 +7,12 @@ from himena.qt._magicgui._plot_elements import (
     DictEdit,
 )
 from himena.qt._magicgui._toggle_switch import ToggleSwitch
-from himena.qt._magicgui._basic_widgets import IntEdit, FloatEdit
+from himena.qt._magicgui._basic_widgets import (
+    IntEdit,
+    FloatEdit,
+    IntListEdit,
+    FloatListEdit,
+)
 from himena.qt._magicgui._selection import SelectionEdit
 from himena.qt._magicgui._modeldrop import ModelDrop
 from himena.qt._magicgui._dtypeedit import NumericDTypeEdit
@@ -24,6 +29,8 @@ __all__ = [
     "AxisPropertyEdit",
     "IntEdit",
     "FloatEdit",
+    "IntListEdit",
+    "FloatListEdit",
     "DictEdit",
     "ModelDrop",
     "NumericDTypeEdit",

@@ -3,17 +3,20 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any, NamedTuple
 
+import numpy as np
 from qtpy import QtGui, QtCore, QtWidgets as QtW
 from qtpy.QtCore import Qt
 
 from himena.consts import StandardType
 from himena.types import WidgetDataModel
 from himena.standards.model_meta import DataFrameMeta, TableMeta
+from himena.standards import plotting as hplt
 from himena_builtins.qt.widgets._table_components import (
     QTableBase,
     QSelectionRangeEdit,
     format_table_value,
 )
+from himena_builtins.qt.widgets._splitter import QSplitterHandle
 from himena.plugins import protocol_override
 from himena._data_wrappers import wrap_dataframe, DataFrameWrapper
 
@@ -193,3 +196,99 @@ class DtypeTuple(NamedTuple):
 
     name: str
     kind: str
+
+
+class QDataFramePlotView(QtW.QSplitter):
+    """A widget for viewing dataframe on the left and plot on the right."""
+
+    __himena_widget_id__ = "builtins:QDataFramePlotView"
+    __himena_display_name__ = "Built-in DataFrame Plot View"
+
+    def __init__(self):
+        from himena_builtins.qt.plot._canvas import QModelMatplotlibCanvas
+
+        super().__init__(QtCore.Qt.Orientation.Horizontal)
+        self._table_widget = QDataFrameView()
+        self._table_widget.setSizePolicy(
+            QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Expanding
+        )
+        self._plot_widget = QModelMatplotlibCanvas()
+        self._plot_widget.update_model(
+            WidgetDataModel(value=hplt.figure(), type=StandardType.PLOT)
+        )
+        right = QtW.QWidget()
+        right.setSizePolicy(
+            QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Expanding
+        )
+        layout_right = QtW.QVBoxLayout(right)
+        layout_right.setContentsMargins(0, 0, 0, 0)
+        layout_right.setSpacing(1)
+        layout_right.addWidget(self._plot_widget._toolbar)
+        layout_right.addWidget(self._plot_widget)
+        self._model_type = StandardType.DATAFRAME_PLOT
+
+        self.addWidget(self._table_widget)
+        self.addWidget(right)
+        self.setStretchFactor(0, 1)
+        self.setStretchFactor(1, 2)
+
+    def createHandle(self):
+        return QSplitterHandle(self, side="left")
+
+    @protocol_override
+    def update_model(self, model: WidgetDataModel):
+        df = wrap_dataframe(model.value)
+        col_names = df.column_names()
+        if len(col_names) == 0:
+            raise ValueError("No columns in the dataframe.")
+        elif len(col_names) == 1:
+            xlabel = "index"
+            ylabel = col_names[0]
+            x = np.arange(df.num_rows())
+            y = df.column_to_array(ylabel)
+        else:
+            xlabel = col_names[0]
+            ylabel = col_names[1]
+            x = df.column_to_array(xlabel)
+            y = df.column_to_array(ylabel)
+        fig = hplt.figure()
+        fig.axes.x.label = xlabel
+        fig.axes.y.label = ylabel
+        fig.plot(x, y)
+        self._table_widget.update_model(model)
+        self._plot_widget.update_model(
+            WidgetDataModel(value=fig, type=StandardType.PLOT)
+        )
+        self._model_type = model.type
+        return None
+
+    @protocol_override
+    def to_model(self) -> WidgetDataModel:
+        return self._table_widget.to_model()
+
+    @protocol_override
+    def model_type(self) -> str:
+        return self._model_type
+
+    @protocol_override
+    def is_modified(self) -> bool:
+        return self._table_widget.is_modified()
+
+    @protocol_override
+    def control_widget(self):
+        return self._table_widget.control_widget()
+
+    @protocol_override
+    def size_hint(self):
+        return 480, 300
+
+    @protocol_override
+    def window_added_callback(self):
+        # adjuct size
+        self.setSizes([160, self.width() - 160])
+        return None
+
+    @protocol_override
+    def theme_changed_callback(self, theme):
+        # self._table_widget.theme_changed_callback(theme)
+        self._plot_widget.theme_changed_callback(theme)

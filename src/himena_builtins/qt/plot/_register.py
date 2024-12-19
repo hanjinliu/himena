@@ -79,10 +79,22 @@ def _(model: hplt.Bar, ax: plt.Axes):
 
 @register_plot_model(hplt.Histogram)
 def _(model: hplt.Histogram, ax: plt.Axes):
+    if model.stat == "count":
+        data = model.data
+        density = False
+    elif model.stat == "density":
+        data = model.data
+        density = True
+    elif model.stat == "probability":
+        data = model.data / len(model.data)
+        density = False
+    else:
+        raise ValueError(f"Unsupported histogram stat: {model.stat}")
     ax.hist(
-        model.data, bins=model.bins, range=model.range, color=model.face.color,
+        data, bins=model.bins, range=model.range, color=model.face.color,
         hatch=model.face.hatch, orientation=model.orient, edgecolor=model.edge.color,
         linewidth=model.edge.width, linestyle=model.edge.style, label=model.name,
+        density=density,
     )  # fmt: skip
 
 

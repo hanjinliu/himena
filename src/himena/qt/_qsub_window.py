@@ -61,7 +61,6 @@ class QSubWindowArea(QtW.QMdiArea):
         self,
         widget: QtW.QWidget,
         title: str | None = None,
-        icon_color: str = "black",
     ) -> QSubWindow:
         if title is None:
             title = widget.objectName() or "Window"
@@ -69,12 +68,11 @@ class QSubWindowArea(QtW.QMdiArea):
             raise TypeError(
                 f"`widget` must be a QtW.QWidget instance, got {type(widget)}."
             )
-        size = widget.sizeHint().expandedTo(QtCore.QSize(160, 120))
+        size = widget.sizeHint().expandedTo(QtCore.QSize(160, 120)) + QtCore.QSize(8, 8)
         sub_window = QSubWindow(widget, title)
         self.addSubWindow(sub_window)
-        sub_window.resize(size + QtCore.QSize(8, 8))
+        sub_window.resize(size)
         self.relabel_widgets()
-        _checker.call_window_added_callback(widget)
         return sub_window
 
     def mousePressEvent(self, event: QtGui.QMouseEvent):

@@ -53,7 +53,7 @@ def to_basic_widget(model: WidgetDataModel) -> WidgetDataModel:
 
 def main():
     ui = new_window()
-    ui.add_data("<i>Text</i>", type="text.html", title="test window")
+    ui.add_object("<i>Text</i>", type="text.html", title="test window")
     ui.show(run=True)
 
 if __name__ == "__main__":

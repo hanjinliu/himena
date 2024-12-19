@@ -372,8 +372,8 @@ class WindowRect(Rect[int]):
     """Rectangle of a window."""
 
     @classmethod
-    def from_tuple(self, left, top, width, height) -> "WindowRect":
-        return WindowRect(int(left), int(top), int(width), int(height))
+    def from_tuple(cls, left, top, width, height) -> "WindowRect":
+        return cls(int(left), int(top), int(width), int(height))
 
     def align_left(self, area_size: Size[int]) -> "WindowRect":
         return WindowRect(0, self.top, self.width, self.height)

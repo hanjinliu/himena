@@ -43,5 +43,5 @@ def increment(model: WidgetDataModel) -> WidgetDataModel:
 
 if __name__ == "__main__":
     ui = new_window()
-    ui.add_data((42, "hello"), type=INT_STR, title="test window")
+    ui.add_object((42, "hello"), type=INT_STR, title="test window")
     ui.show(run=True)

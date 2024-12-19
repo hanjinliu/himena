@@ -61,5 +61,5 @@ class FastplotlibImageView(fpl.Figure):
 
 if __name__ == "__main__":
     ui = new_window()
-    ui.add_data(np.random.rand(100, 100), type=StandardType.IMAGE)
+    ui.add_object(np.random.rand(100, 100), type=StandardType.IMAGE)
     ui.show(run=True)

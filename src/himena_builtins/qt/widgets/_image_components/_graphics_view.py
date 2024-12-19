@@ -8,7 +8,6 @@ import numpy as np
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt
 
-
 from ._base import QBaseGraphicsView, QBaseGraphicsScene
 from ._roi_items import (
     QPointRoi,
@@ -22,6 +21,7 @@ from ._roi_items import (
     QSegmentedLineRoi,
 )
 from ._handles import QHandleRect, RoiSelectionHandles
+from ._scale_bar import QScaleBarItem
 from himena.qt._utils import ndarray_to_qimage
 from himena.widgets import set_status_tip
 
@@ -148,7 +148,7 @@ class QRoiLabels(QtW.QGraphicsItem):
         return self._bounding_rect
 
     def set_bounding_rect(self, rect: QtCore.QRectF):
-        self._bounding_rect = rect
+        self._bounding_rect = QtCore.QRectF(rect)
         self.update()
 
 
@@ -158,6 +158,7 @@ class QImageGraphicsView(QBaseGraphicsView):
     roi_visibility_changed = QtCore.Signal(bool)
     mode_changed = QtCore.Signal(Mode)
     hovered = QtCore.Signal(QtCore.QPointF)
+    geometry_changed = QtCore.Signal(QtCore.QRectF)
 
     Mode = Mode
 
@@ -182,13 +183,18 @@ class QImageGraphicsView(QBaseGraphicsView):
         self.switch_mode(Mode.PAN_ZOOM)
         self._qroi_labels = self.addItem(QRoiLabels(self))
         self._qroi_labels.setZValue(10000)
+        self._scale_bar_widget = self.addItem(QScaleBarItem(self))
+        self._scale_bar_widget.setZValue(10000)
+        self._scale_bar_widget.setVisible(False)
+        self.geometry_changed.connect(self._scale_bar_widget.update_rect)
+        self._yx_axis_scales = (1.0, 1.0)
 
     def add_image_layer(self, additive: bool = False):
         self._image_widgets.append(
             self.addItem(QImageGraphicsWidget(additive=additive))
         )
-        self._qroi_labels.set_bounding_rect(self._image_widgets[0].boundingRect())
-        self.scene().setSceneRect(self._image_widgets[0].boundingRect())
+        brect = self._image_widgets[0].boundingRect()
+        self.scene().setSceneRect(brect)
 
     def set_n_images(self, num: int):
         if num < 1:
@@ -222,6 +228,7 @@ class QImageGraphicsView(QBaseGraphicsView):
             widget.set_image(img)
             widget.setVisible(True)
         self._qroi_labels.set_bounding_rect(self._image_widgets[0].boundingRect())
+        self._scale_bar_widget.set_bounding_rect(self._image_widgets[0].boundingRect())
 
     def set_image_blending(self, opaque: list[bool]):
         is_first = True
@@ -294,8 +301,8 @@ class QImageGraphicsView(QBaseGraphicsView):
             return
         if len(self._image_widgets) == 0:
             return
-        else:
-            rect = self._image_widgets[0].boundingRect()
+        first = self._image_widgets[0]
+        rect = first.boundingRect()
         if (size := max(rect.width(), rect.height())) <= 0:
             return
         factor = 1 / size
@@ -314,9 +321,11 @@ class QImageGraphicsView(QBaseGraphicsView):
             zoom_factor = factor
         else:
             zoom_factor = 1 / factor
+        super().wheelEvent(event)
+        # NOTE: for some reason, following lines must be called after super().wheelEvent
         self.scale_and_update_handles(zoom_factor)
         self._inform_scale()
-        return super().wheelEvent(event)
+        return None
 
     def scale_and_update_handles(self, factor: float):
         """Scale the view and update the selection handle sizes."""
@@ -324,6 +333,7 @@ class QImageGraphicsView(QBaseGraphicsView):
             self.scale(factor, factor)
         tr = self.transform()
         self._selection_handles.update_handle_size(tr.m11())
+        self.geometry_changed.emit(self.sceneRect())
 
     def auto_range(self):
         return self.fitInView(self.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
@@ -385,6 +395,8 @@ class QImageGraphicsView(QBaseGraphicsView):
             return super().mousePressEvent(event)
         self._pos_drag_start = event.pos()
         self._pos_drag_prev = self._pos_drag_start
+        if event.button() == Qt.MouseButton.RightButton:
+            return super().mousePressEvent(event)
         if self._mode in ROI_MODES:
             grabbing = self.scene().grabSource()
             if grabbing is not None and grabbing is not self:
@@ -503,7 +515,10 @@ class QImageGraphicsView(QBaseGraphicsView):
         return super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
-        if self._pos_drag_start == event.pos():  # mouse click
+        if (
+            self._pos_drag_start == event.pos()
+            and event.button() == Qt.MouseButton.LeftButton
+        ):  # left click
             p0 = self.mapToScene(self._pos_drag_start)
             if (
                 self._mode in MULTIPOINT_ROI_MODES
@@ -537,6 +552,18 @@ class QImageGraphicsView(QBaseGraphicsView):
             elif self._mode is Mode.ROI_POINT:
                 self.set_current_roi(QPointRoi(p0.x(), p0.y()).withPen(self._roi_pen))
                 self._selection_handles.connect_point(self._current_roi_item)
+            elif self.mode() in (
+                Mode.ROI_LINE,
+                Mode.ROI_RECTANGLE,
+                Mode.ROI_ELLIPSE,
+                Mode.ROI_ROTATED_RECTANGLE,
+            ):
+                self.remove_current_item()
+        elif (
+            self._pos_drag_start == event.pos()
+            and event.button() == Qt.MouseButton.RightButton
+        ):  # right click
+            return super().mouseReleaseEvent(event)
         if self._mode is Mode.PAN_ZOOM:
             self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
         self.scene().setGrabSource(None)
@@ -555,6 +582,7 @@ class QImageGraphicsView(QBaseGraphicsView):
     def move_items_by(self, dx: float, dy: float):
         self.verticalScrollBar().setValue(self.verticalScrollBar().value() - dy)
         self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() - dx)
+        self.geometry_changed.emit(self.sceneRect())
 
     def set_current_roi(self, item: QtW.QGraphicsItem):
         self._current_roi_item = item
@@ -650,6 +678,9 @@ class QImageGraphicsView(QBaseGraphicsView):
         if event.key() == Qt.Key.Key_Space:
             self.set_mode(self._last_mode_before_key_hold)
         return None
+
+    def _toggle_scale_bar(self):
+        self._scale_bar_widget.setVisible(not self._scale_bar_widget.isVisible())
 
 
 def _find_nice_position(pos0: QtCore.QPointF, pos1: QtCore.QPointF) -> QtCore.QPointF:

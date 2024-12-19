@@ -3,11 +3,12 @@ from __future__ import annotations
 
 from matplotlib.figure import Figure
 from matplotlib.backends import backend_qtagg
-from qtpy import QtWidgets as QtW
+from qtpy import QtWidgets as QtW, QtGui, QtCore
 
 from himena.plugins import protocol_override
 from himena.types import WidgetDataModel
 from himena.consts import StandardType
+from himena.style import Theme
 from himena.standards import plotting as hplt
 from himena_builtins.qt.plot._conversion import convert_plot_layout, update_axis_props
 
@@ -42,10 +43,38 @@ class QMatplotlibCanvasBase(QtW.QWidget):
             self._canvas.figure.tight_layout()
 
     def _prep_toolbar(self, toolbar_class=backend_qtagg.NavigationToolbar2QT):
+        if self._toolbar is not None:
+            return self._toolbar
         toolbar = toolbar_class(self._canvas, self)
         spacer = QtW.QWidget()
         toolbar.insertWidget(toolbar.actions()[0], spacer)
         return toolbar
+
+    @protocol_override
+    def theme_changed_callback(self, theme: Theme):
+        if self._toolbar is None:
+            return
+
+        icon_color = (
+            QtGui.QColor(0, 0, 0)
+            if theme.is_light_background()
+            else QtGui.QColor(255, 255, 255)
+        )
+        for toolbtn in self._toolbar.findChildren(QtW.QToolButton):
+            assert isinstance(toolbtn, QtW.QToolButton)
+            icon = toolbtn.icon()
+            pixmap = icon.pixmap(100, 100)
+            mask = pixmap.createMaskFromColor(
+                QtGui.QColor("black"),
+                QtCore.Qt.MaskMode.MaskOutColor,
+            )
+            pixmap.fill(icon_color)
+            pixmap.setMask(mask)
+            icon_new = QtGui.QIcon(pixmap)
+            toolbtn.setIcon(icon_new)
+            # Setting icon to the action as well; otherwise checking/unchecking will
+            # revert the icon to the original color
+            toolbtn.actions()[0].setIcon(icon_new)
 
 
 class QMatplotlibCanvas(QMatplotlibCanvasBase):
@@ -94,7 +123,7 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
             self._canvas.draw()
         else:
             raise ValueError(f"Unsupported model: {model.value}")
-        if was_none:
+        if was_none and not isinstance(self._plot_models, hplt.SingleAxes3D):
             self._toolbar.pan()
 
     @protocol_override
@@ -107,6 +136,8 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
             model_axes_ref = value.axes
         elif isinstance(value, hplt.layout.Grid):
             model_axes_ref = sum(value.axes, [])
+        elif isinstance(value, hplt.SingleAxes3D):
+            model_axes_ref = [value.axes]
         else:
             model_axes_ref = []  # Not implemented
         mpl_axes_ref = self.figure.axes
@@ -149,6 +180,10 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
     def window_resized_callback(self, size: tuple[int, int]):
         if size[0] > 40 and size[1] > 40:
             self._canvas.figure.tight_layout()
+
+    @protocol_override
+    def window_added_callback(self):
+        self._canvas.figure.tight_layout()
 
 
 # remove some of the tool buttons
@@ -193,7 +228,7 @@ def show(close=True, block=None):
 
     try:
         for figure_manager in Gcf.get_all_fig_managers():
-            ui.add_data(
+            ui.add_object(
                 figure_manager.canvas.figure,
                 type=StandardType.MPL_FIGURE,
                 title="Plot",

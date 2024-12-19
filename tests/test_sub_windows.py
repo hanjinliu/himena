@@ -52,7 +52,7 @@ def test_io_commands(ui: MainWindow, tmpdir, sample_dir: Path):
     assert isinstance(ui.current_window._widget_data_model_method, LocalReaderMethod)
     assert ui.current_window._widget_data_model_method.path == response_open()[0]
 
-    ui.add_data("Hello", type="text")
+    ui.add_object("Hello", type="text")
     assert isinstance(ui.current_window.save_behavior, SaveToNewPath)
     assert isinstance(ui.current_window._widget_data_model_method, ProgramaticMethod)
     ui._instructions = ui._instructions.updated(file_dialog_response=response_save)
@@ -301,20 +301,20 @@ def test_clipboard(ui: MainWindow, sample_dir: Path, qtbot: QtBot):
     assert ui.clipboard.text == sample_path.read_text()
 
 def test_tile_window(ui: MainWindow):
-    ui.add_data("A", type="text")
-    ui.add_data("B", type="text")
+    ui.add_object("A", type="text")
+    ui.add_object("B", type="text")
     ui.tabs[0].tile_windows()
-    ui.add_data("C", type="text")
+    ui.add_object("C", type="text")
     ui.tabs[0].tile_windows()
-    ui.add_data("D", type="text")
+    ui.add_object("D", type="text")
     ui.tabs[0].tile_windows()
-    ui.add_data("E", type="text")
+    ui.add_object("E", type="text")
     ui.tabs[0].tile_windows()
-    ui.add_data("F", type="text")
+    ui.add_object("F", type="text")
     ui.tabs[0].tile_windows()
-    ui.add_data("G", type="text")
+    ui.add_object("G", type="text")
     ui.tabs[0].tile_windows()
-    ui.add_data("H", type="text")
+    ui.add_object("H", type="text")
     ui.tabs[0].tile_windows()
 
 def test_move_window(ui: MainWindow):
@@ -327,7 +327,7 @@ def test_move_window(ui: MainWindow):
     assert tab1[0]._identifier == win._identifier
 
 def test_child_window(ui: MainWindow):
-    win = ui.add_data("A", type="text")
+    win = ui.add_object("A", type="text")
     text_edit = QtW.QTextEdit()
     child = win.add_child(text_edit, title="Child")
     assert len(ui.tabs.current()) == 2
@@ -376,7 +376,7 @@ class MyObj:
 def test_dont_use_pickle(ui: MainWindow, tmpdir):
     tmpdir = Path(tmpdir)
     data = MyObj(124)
-    ui.add_data(data, type="myobj")
+    ui.add_object(data, type="myobj")
     response = lambda: tmpdir / "test.txt"
     ui._instructions = ui._instructions.updated(file_dialog_response=response)
     with pytest.raises(ValueError):

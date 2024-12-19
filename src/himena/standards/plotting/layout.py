@@ -47,7 +47,7 @@ class BaseLayoutModel(BaseModel):
         from himena.widgets import current_instance
 
         ui = current_instance()
-        ui.add_data(self, type=StandardType.PLOT, title="Plot")
+        ui.add_object(self, type=StandardType.PLOT, title="Plot")
         return None
 
 
@@ -142,11 +142,12 @@ class Axes(AxesBase):
         bins: int = 10,
         range: tuple[float, float] | None = None,
         orient: Literal["vertical", "horizontal"] = "vertical",
+        stat: Literal["count", "density", "probability"] = "count",
         **kwargs,
     ) -> _m.Histogram:
         """Add a histogram plot model to the axes."""
         model = _m.Histogram(
-            data=data, bins=bins, range=range, orient=orient,
+            data=data, bins=bins, range=range, orient=orient, stat=stat,
             **parse_face_edge(kwargs),
         )  # fmt: skip
         self.models.append(model)

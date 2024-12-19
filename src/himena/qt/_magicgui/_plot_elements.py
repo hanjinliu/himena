@@ -160,7 +160,7 @@ class EdgePropertyEdit(ValuedContainerWidget["EdgePropertyDict"]):
         value = value or {}
         with self.changed.blocked():
             self._edge_color.value = value.get("color", "black")
-            self._edge_width.value = round(value.get("width", 0.0), 2)
+            self._edge_width.value = round(value.get("width", 1.0), 2)
             self._edge_style.value = value.get("style", "-")
         self._emit_value_changed()
 

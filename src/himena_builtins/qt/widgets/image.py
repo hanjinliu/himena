@@ -28,6 +28,7 @@ from himena_builtins.qt.widgets._image_components import (
 )
 from himena_builtins.qt.widgets._splitter import QSplitterHandle
 
+
 if TYPE_CHECKING:
     from numpy.typing import NDArray
     from himena_builtins.qt.widgets._image_components._graphics_view import Mode
@@ -127,6 +128,13 @@ class QImageView(QtW.QSplitter):
             self._dims_slider.set_dimensions(arr.shape, meta0.axes, is_rgb=self._is_rgb)
         with qsignal_blocker(self._dims_slider):
             self._dims_slider.setValue(sl_0)
+
+        # update scale bar
+        if (axes := meta0.axes) is not None:
+            xaxis = axes[-2] if self._is_rgb else axes[-1]
+            self._img_view._scale_bar_widget.update_scale_bar(
+                scale=xaxis.scale, unit=xaxis.unit
+            )
 
         # update channel info
         if meta0.channel_axis is None or meta0.is_rgb:

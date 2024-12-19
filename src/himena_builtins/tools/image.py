@@ -40,7 +40,7 @@ def crop_image(model: WidgetDataModel) -> WidgetDataModel:
 
 
 @register_function(
-    title="Crop Image (nD)",
+    title="Crop Image (nD) ...",
     types=StandardType.IMAGE,
     menus=["tools/image"],
     command_id="builtins:crop-image-nd",
@@ -130,7 +130,7 @@ def duplicate_rois(model: WidgetDataModel) -> WidgetDataModel:
 
 
 @register_function(
-    title="Set colormap",
+    title="Set colormap ...",
     types=StandardType.IMAGE,
     menus=["tools/image/channels", "/model_menu/channels"],
     command_id="builtins:set-colormaps",
@@ -142,29 +142,18 @@ def set_colormaps(win: SubWindow) -> Parametric:
     meta = _cast_meta(model, ImageMeta).model_copy()
     channel_names = _get_channel_names(meta, allow_single=True)
     current_channels = [ch.colormap for ch in meta.channels]
+    colormap_defaults = [
+        "gray", "green", "magenta", "cyan", "yellow", "red", "blue", "plasma",
+        "viridis", "inferno", "imagej:fire", "imagej:HiLo", "imagej:ice", "matlab:jet",
+        "matlab:hot",
+    ],  # fmt: skip
     options = {
         f"ch_{i}": {
             "label": channel_names[i],
             "widget_type": ColormapEdit,
-            "defaults": [
-                "gray",
-                "green",
-                "magenta",
-                "cyan",
-                "yellow",
-                "red",
-                "blue",
-                "plasma",
-                "viridis",
-                "inferno",
-                "imagej:fire",
-                "imagej:HiLo",
-                "imagej:ice",
-                "matlab:jet",
-                "matlab:hot",
-            ],  # fmt: skip
+            "defaults": colormap_defaults,
             "value": current_channels[i],
-        }  # fmt: skip
+        }
         for i in range(len(channel_names))
     }
 

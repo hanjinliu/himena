@@ -37,7 +37,7 @@ def test_plot_model():
     fig.axes.y.label = "Y-axis"
 
 def test_scatter_plot_via_command(ui: MainWindow):
-    win = ui.add_data(
+    win = ui.add_object(
         [["x", "y", "z"],
          [0, 4, 6],
          [1, 6, 10],
@@ -66,7 +66,7 @@ def test_scatter_plot_via_command(ui: MainWindow):
     )
 
 def test_line_plot_via_command(ui: MainWindow):
-    win = ui.add_data(
+    win = ui.add_object(
         [["x", "y", "z"],
          [0, 4, 6],
          [1, 6, 10],
@@ -93,7 +93,7 @@ def test_line_plot_via_command(ui: MainWindow):
     )
 
 def test_bar_plot_via_command(ui: MainWindow):
-    win = ui.add_data(
+    win = ui.add_object(
         [["x", "y", "z"],
          [0, 4, 6],
          [1, 6, 10],
@@ -135,7 +135,7 @@ def test_bar_plot_via_command(ui: MainWindow):
     )
 
 def test_errorbar_plot_via_command(ui: MainWindow):
-    win = ui.add_data(
+    win = ui.add_object(
         [["x", "y", "yerr"],
          [0, 4, 0.5],
          [1, 6, 0.3],
@@ -180,7 +180,7 @@ def test_errorbar_plot_via_command(ui: MainWindow):
     )
 
 def test_band_plot_via_command(ui: MainWindow):
-    win = ui.add_data(
+    win = ui.add_object(
         [["x", "y0", "y1"],
          [0, 4, 6],
          [1, 6, 10],

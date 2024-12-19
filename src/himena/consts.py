@@ -74,6 +74,9 @@ class StandardType(SimpleNamespace):
     # (N, D) numerical array, such as D-dimensional point cloud
     COORDINATES = "array.coordinates"
 
+    # DataFrame that is supposed to be plotted immediately (such as image line scan)
+    DATAFRAME_PLOT = "dataframe.plot"
+
     ### plotting ###
     PLOT = "plot"  # objects that satisfy the plotting standard
     MPL_FIGURE = "matplotlib-figure"  # matplotlib figure object
