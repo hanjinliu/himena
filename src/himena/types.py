@@ -230,6 +230,8 @@ class WidgetDataModel(GenericModel[_T]):
 
     @field_validator("extension_default", mode="after")
     def _validate_extension_default(cls, v: str, values):
+        if v is None:
+            return None
         if not v.startswith("."):
             return f".{v}"
         return v
@@ -511,3 +513,10 @@ class WidgetClassTuple(NamedTuple):
 
 WidgetType = NewType("WidgetType", object)
 WidgetConstructor = NewType("WidgetConstructor", object)
+
+
+class MergeResult(BaseModel):
+    """Model that can be returned by `merge_model` protocol."""
+
+    delete_input: bool = True
+    outputs: WidgetDataModel | list[WidgetDataModel] | None = Field(None)

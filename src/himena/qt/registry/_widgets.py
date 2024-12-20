@@ -3,7 +3,7 @@ from __future__ import annotations
 from qtpy import QtWidgets as QtW, QtGui
 from himena.types import WidgetDataModel
 from himena.consts import MonospaceFontFamily
-from himena.plugins import protocol_override
+from himena.plugins import validate_protocol
 
 
 class QFallbackWidget(QtW.QPlainTextEdit):
@@ -15,7 +15,7 @@ class QFallbackWidget(QtW.QPlainTextEdit):
         self.setFont(QtGui.QFont(MonospaceFontFamily))
         self._model: WidgetDataModel | None = None
 
-    @protocol_override
+    @validate_protocol
     def update_model(self, model: WidgetDataModel):
         self.setPlainText(
             f"No widget registered for:\n\ntype: {model.type!r}\nvalue:\n{model.value!r}"
@@ -23,12 +23,12 @@ class QFallbackWidget(QtW.QPlainTextEdit):
         self._model = model
         return
 
-    @protocol_override
+    @validate_protocol
     def to_model(self) -> WidgetDataModel:
         if self._model is None:
             raise ValueError("Model is not set")
         return self._model
 
-    @protocol_override
+    @validate_protocol
     def model_type(self) -> str:
         return self._model.type

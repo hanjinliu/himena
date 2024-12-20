@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Iterable, Iterator, Literal
 from qtpy import QtWidgets as QtW
 from qtpy import QtCore, QtGui
 from qtpy.QtCore import Qt
-from himena.plugins._checker import protocol_override
+from himena.plugins._checker import validate_protocol
 from himena.standards.model_meta import TableMeta
 from himena.qt._qfinderwidget import QTableFinderWidget
 from ._selection_model import SelectionModel, Index
@@ -122,11 +122,11 @@ class QTableBase(QtW.QTableView):
         self._update_all()
         return None
 
-    @protocol_override
+    @validate_protocol
     def size_hint(self) -> tuple[int, int]:
         return 400, 300
 
-    @protocol_override
+    @validate_protocol
     def is_editable(self) -> bool:
         return self.editTriggers() != QtW.QAbstractItemView.EditTrigger.NoEditTriggers
 

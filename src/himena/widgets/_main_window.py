@@ -250,7 +250,7 @@ class MainWindow(Generic[_W]):
 
     def add_object(
         self,
-        obj: Any,
+        value: Any,
         *,
         type: str | None = None,
         title: str | None = None,
@@ -260,7 +260,7 @@ class MainWindow(Generic[_W]):
 
         Parameters
         ----------
-        obj : Any
+        value : Any
             Any object. Whether it can be represented as a widget is dependent on the
             plugins that are installed.
         type : str, optional
@@ -275,7 +275,7 @@ class MainWindow(Generic[_W]):
             The sub-window handler.
         """
         wd = WidgetDataModel(
-            value=obj, type=type, title=title, method=ProgramaticMethod()
+            value=value, type=type, title=title, method=ProgramaticMethod()
         )
         return self.add_data_model(wd)
 

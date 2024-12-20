@@ -29,7 +29,7 @@ _ALLOWED_METHODS = frozenset(
 )
 
 
-def protocol_override(f: _T) -> _T:
+def validate_protocol(f: _T) -> _T:
     """Check if the method is allowed as a himena protocol."""
     if f.__name__ not in _ALLOWED_METHODS:
         raise ValueError(f"Method {f} is not a allowed protocol.")

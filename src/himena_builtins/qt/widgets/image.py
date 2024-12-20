@@ -14,8 +14,8 @@ from himena_builtins.qt.widgets._image_components._roi_collection import (
 from himena.consts import StandardType
 from himena.standards import roi, model_meta
 from himena.qt._utils import qsignal_blocker
-from himena.types import WidgetDataModel
-from himena.plugins import protocol_override
+from himena.types import MergeResult, WidgetDataModel
+from himena.plugins import validate_protocol
 from himena.widgets import set_status_tip
 from himena._data_wrappers import ArrayWrapper, wrap_array
 from himena_builtins.qt.widgets._image_components import (
@@ -94,7 +94,7 @@ class QImageView(QtW.QSplitter):
     def createHandle(self):
         return QSplitterHandle(self)
 
-    @protocol_override
+    @validate_protocol
     def update_model(self, model: WidgetDataModel):
         arr = wrap_array(model.value)
         is_initialized = self._arr is not None
@@ -248,7 +248,7 @@ class QImageView(QtW.QSplitter):
             min(max(0, s), size - 1) for s, size in zip(sl_0, arr_new.shape[:ndim_rem])
         )
 
-    @protocol_override
+    @validate_protocol
     def to_model(self) -> WidgetDataModel:
         assert self._arr is not None
 
@@ -289,27 +289,27 @@ class QImageView(QtW.QSplitter):
             ),
         )
 
-    @protocol_override
+    @validate_protocol
     def model_type(self) -> str:
         return self._model_type
 
-    @protocol_override
+    @validate_protocol
     def size_hint(self) -> tuple[int, int]:
         return 400, 400
 
-    @protocol_override
+    @validate_protocol
     def is_editable(self) -> bool:
         return False
 
-    @protocol_override
+    @validate_protocol
     def control_widget(self) -> QImageViewControl:
         return self._control
 
-    @protocol_override
+    @validate_protocol
     def mergeable_model_types(self) -> list[str]:
         return [StandardType.IMAGE_ROIS, StandardType.IMAGE_LABELS]
 
-    @protocol_override
+    @validate_protocol
     def merge_model(self, model: WidgetDataModel):
         if model.type == StandardType.IMAGE_ROIS:
             if isinstance(roi_list := model.value, roi.RoiListModel):
@@ -317,11 +317,12 @@ class QImageView(QtW.QSplitter):
                 self._img_view.clear_rois()
                 self._update_rois()
             self._is_modified = True
+            return MergeResult(delete_input=False)
         elif model.type == StandardType.IMAGE_LABELS:
             raise NotImplementedError("Merging with labels is not implemented yet.")
         return None
 
-    @protocol_override
+    @validate_protocol
     def theme_changed_callback(self, theme: Theme):
         if theme.name.startswith("light"):
             color = QtGui.QColor(0, 0, 0)

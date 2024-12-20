@@ -19,6 +19,7 @@ from himena._utils import get_gui_config, get_widget_class_id
 from himena.consts import ParametricWidgetProtocolNames as PWPN
 from himena.types import (
     BackendInstructions,
+    MergeResult,
     ModelTrack,
     Parametric,
     ParametricWidgetProtocol,
@@ -493,9 +494,14 @@ class SubWindow(WidgetWrapper[_W]):
             model = source.to_model()
             # to remember how the model was mapped to a widget class
             model.force_open_with = get_widget_class_id(source.widget)
-            self.widget.merge_model(model)
+            merge_result = self.widget.merge_model(model)
+            if merge_result is None:
+                merge_result = MergeResult()
             ui = self._main_window()._himena_main_window
-            source._close_me(ui)
+            if merge_result.delete_input:
+                source._close_me(ui)
+            if outputs := merge_result.outputs:
+                ui.model_app.injection_store.process(outputs)
             ui._backend_main_window._move_focus_to(source._frontend_widget())
             return True
         return False

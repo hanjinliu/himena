@@ -3,7 +3,7 @@ from __future__ import annotations
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 
 from himena.consts import StandardType
-from himena.plugins._checker import protocol_override
+from himena.plugins._checker import validate_protocol
 from himena.types import WidgetDataModel
 
 
@@ -21,7 +21,7 @@ class QSvgPreview(QtW.QWidget):
         self._is_valid = True
         self._model_type = StandardType.SVG
 
-    @protocol_override
+    @validate_protocol
     def update_model(self, model: WidgetDataModel):
         content = str(model.value)
         if _is_valid := self._svg_renderer.load(content.encode()):
@@ -32,18 +32,18 @@ class QSvgPreview(QtW.QWidget):
         self._model_type = model.type
         self.update()
 
-    @protocol_override
+    @validate_protocol
     def to_model(self) -> WidgetDataModel:
         return WidgetDataModel(
             value=self._svg_content,
             type=self.model_type(),
         )
 
-    @protocol_override
+    @validate_protocol
     def model_type(self) -> StandardType:
         return self._model_type
 
-    @protocol_override
+    @validate_protocol
     def size_hint(self) -> QtCore.QSize:
         return QtCore.QSize(280, 280)
 

@@ -11,7 +11,7 @@ from himena._data_wrappers import ArrayWrapper, wrap_array
 from himena.consts import StandardType, MonospaceFontFamily
 from himena.standards.model_meta import ArrayMeta
 from himena.types import WidgetDataModel
-from himena.plugins import protocol_override
+from himena.plugins import validate_protocol
 from himena_builtins.qt.widgets._table_components import (
     QTableBase,
     QSelectionRangeEdit,
@@ -277,7 +277,7 @@ class QArrayView(QtW.QWidget):
         spinbox.valueChanged.connect(self._spinbox_changed)
         self._spinboxes.append(spinbox)
 
-    @protocol_override
+    @validate_protocol
     def update_model(self, model: WidgetDataModel):
         arr = wrap_array(model.value)
         self._arr = arr
@@ -300,7 +300,7 @@ class QArrayView(QtW.QWidget):
         self.update()
         return None
 
-    @protocol_override
+    @validate_protocol
     def to_model(self) -> WidgetDataModel[list[list[Any]]]:
         selections = []
         for (r0, r1), (c0, c1) in self._table._get_selections():
@@ -316,15 +316,15 @@ class QArrayView(QtW.QWidget):
             ),
         )
 
-    @protocol_override
+    @validate_protocol
     def model_type(self) -> str:
         return self._model_type
 
-    @protocol_override
+    @validate_protocol
     def is_modified(self) -> bool:
         return False
 
-    @protocol_override
+    @validate_protocol
     def control_widget(self):
         return self._control
 

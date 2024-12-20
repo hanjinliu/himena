@@ -5,7 +5,7 @@ from PyQt5.QtGui import QKeyEvent
 from qtpy import QtWidgets as QtW, QtCore
 from himena.consts import StandardType, ParametricWidgetProtocolNames as PWPN
 from himena.types import WidgetDataModel
-from himena.plugins import protocol_override
+from himena.plugins import validate_protocol
 from magicgui import widgets as mgw
 
 
@@ -74,16 +74,16 @@ class QParametricWidget(QtW.QWidget):
     def get_params(self) -> dict[str, Any]:
         return getattr(self._central_widget, PWPN.GET_PARAMS)()
 
-    @protocol_override
+    @validate_protocol
     def to_model(self) -> WidgetDataModel[dict[str, Any]]:
         params = self.get_params()
         return WidgetDataModel(value=params, type=StandardType.DICT)
 
-    @protocol_override
+    @validate_protocol
     def model_type(self: QtW.QWidget) -> str:
         return StandardType.DICT
 
-    @protocol_override
+    @validate_protocol
     def size_hint(self) -> tuple[int, int] | None:
         mysize = self._base_size_hint()
         if self._result_widget is None:
@@ -99,7 +99,7 @@ class QParametricWidget(QtW.QWidget):
         mysize.setWidth(max(mysize.width(), w0))
         return mysize.width(), min(mysize.height(), 400)
 
-    @protocol_override
+    @validate_protocol
     def control_widget(self) -> QtW.QWidget:
         return self._control
 

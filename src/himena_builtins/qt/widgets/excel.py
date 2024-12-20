@@ -11,7 +11,7 @@ from himena_builtins.qt.widgets.table import QSpreadsheet
 from himena_builtins.qt.widgets._table_components import QSelectionRangeEdit
 from himena.types import WidgetDataModel
 from himena.consts import StandardType
-from himena.plugins import protocol_override
+from himena.plugins import validate_protocol
 
 if TYPE_CHECKING:
     import numpy as np
@@ -93,7 +93,7 @@ class QExcelFileEdit(QtW.QTabWidget):
         self._control.update_for_table(table)
         return None
 
-    @protocol_override
+    @validate_protocol
     def update_model(self, model: WidgetDataModel):
         if not isinstance(value := model.value, Mapping):
             raise ValueError(f"Expected a dict, got {type(value)}")
@@ -109,7 +109,7 @@ class QExcelFileEdit(QtW.QTabWidget):
         self._model_type = model.type
         return None
 
-    @protocol_override
+    @validate_protocol
     def to_model(self) -> WidgetDataModel[dict[str, np.ndarray]]:
         index = self.currentIndex()
         table_meta = self.widget(index)._prep_table_meta()
@@ -127,42 +127,42 @@ class QExcelFileEdit(QtW.QTabWidget):
             ),
         )
 
-    @protocol_override
+    @validate_protocol
     def control_widget(self) -> QExcelTableStackControl:
         return self._control
 
-    @protocol_override
+    @validate_protocol
     def model_type(self):
         return self._model_type
 
-    @protocol_override
+    @validate_protocol
     def is_modified(self) -> bool:
         return any(self.widget(i).is_modified() for i in range(self.count()))
 
-    @protocol_override
+    @validate_protocol
     def set_modified(self, value: bool) -> None:
         for i in range(self.count()):
             self.widget(i).set_modified(value)
 
-    @protocol_override
+    @validate_protocol
     def size_hint(self) -> tuple[int, int]:
         return 400, 300
 
-    @protocol_override
+    @validate_protocol
     def is_editable(self) -> bool:
         return self._edit_trigger == _EDIT_ENABLED
 
-    @protocol_override
+    @validate_protocol
     def set_editable(self, value: bool) -> None:
         self._edit_trigger = _EDIT_ENABLED if value else _EDIT_DISABLED
         for i in range(self.count()):
             self.widget(i).set_editable(value)
 
-    @protocol_override
+    @validate_protocol
     def mergeable_model_types(self) -> list[str]:
         return [StandardType.EXCEL, StandardType.TABLE]
 
-    @protocol_override
+    @validate_protocol
     def merge_model(self, model: WidgetDataModel) -> None:
         if model.type == StandardType.EXCEL:
             assert isinstance(model.value, dict)

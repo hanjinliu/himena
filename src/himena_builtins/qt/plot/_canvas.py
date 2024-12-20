@@ -5,7 +5,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends import backend_qtagg
 from qtpy import QtWidgets as QtW, QtGui, QtCore
 
-from himena.plugins import protocol_override
+from himena.plugins import validate_protocol
 from himena.types import WidgetDataModel
 from himena.consts import StandardType
 from himena.style import Theme
@@ -29,15 +29,15 @@ class QMatplotlibCanvasBase(QtW.QWidget):
     def figure(self) -> Figure:
         return self._canvas.figure
 
-    @protocol_override
+    @validate_protocol
     def control_widget(self) -> QtW.QWidget:
         return self._toolbar
 
-    @protocol_override
+    @validate_protocol
     def size_hint(self) -> tuple[int, int]:
         return 300, 240
 
-    @protocol_override
+    @validate_protocol
     def window_resized_callback(self, size: tuple[int, int]):
         if size[0] > 40 and size[1] > 40:
             self._canvas.figure.tight_layout()
@@ -50,7 +50,7 @@ class QMatplotlibCanvasBase(QtW.QWidget):
         toolbar.insertWidget(toolbar.actions()[0], spacer)
         return toolbar
 
-    @protocol_override
+    @validate_protocol
     def theme_changed_callback(self, theme: Theme):
         if self._toolbar is None:
             return
@@ -78,7 +78,7 @@ class QMatplotlibCanvasBase(QtW.QWidget):
 
 
 class QMatplotlibCanvas(QMatplotlibCanvasBase):
-    @protocol_override
+    @validate_protocol
     def update_model(self, model: WidgetDataModel):
         was_none = self._canvas is None
         if was_none:
@@ -94,7 +94,7 @@ class QMatplotlibCanvas(QMatplotlibCanvasBase):
             self._toolbar.pan()
             self._canvas.figure.tight_layout()
 
-    @protocol_override
+    @validate_protocol
     def to_model(self) -> WidgetDataModel:
         return WidgetDataModel(
             value=self.figure,
@@ -102,7 +102,7 @@ class QMatplotlibCanvas(QMatplotlibCanvasBase):
             title="Plot",
         )
 
-    @protocol_override
+    @validate_protocol
     def model_type(self) -> str:
         return StandardType.MPL_FIGURE
 
@@ -111,7 +111,7 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
     __himena_widget_id__ = "builtins:QModelMatplotlibCanvas"
     __himena_display_name__ = "Built-in Plot Canvas"
 
-    @protocol_override
+    @validate_protocol
     def update_model(self, model: WidgetDataModel):
         was_none = self._canvas is None
         if was_none:
@@ -126,7 +126,7 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
         if was_none and not isinstance(self._plot_models, hplt.SingleAxes3D):
             self._toolbar.pan()
 
-    @protocol_override
+    @validate_protocol
     def to_model(self) -> WidgetDataModel:
         value = self._plot_models.model_copy()
         # TODO: update the model with the current canvas state as much as possible
@@ -150,11 +150,11 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
             title="Plot",
         )
 
-    @protocol_override
+    @validate_protocol
     def model_type(self) -> str:
         return StandardType.PLOT
 
-    @protocol_override
+    @validate_protocol
     def merge_model(self, model: WidgetDataModel):
         if not (
             isinstance(model.value, hplt.BaseLayoutModel)
@@ -168,20 +168,20 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
         convert_plot_layout(self._plot_models, self.figure)
         self._canvas.draw()
 
-    @protocol_override
+    @validate_protocol
     def mergeable_model_types(self) -> list[str]:
         return [StandardType.PLOT]
 
-    @protocol_override
+    @validate_protocol
     def size_hint(self) -> tuple[int, int]:
         return 300, 240
 
-    @protocol_override
+    @validate_protocol
     def window_resized_callback(self, size: tuple[int, int]):
         if size[0] > 40 and size[1] > 40:
             self._canvas.figure.tight_layout()
 
-    @protocol_override
+    @validate_protocol
     def window_added_callback(self):
         self._canvas.figure.tight_layout()
 

@@ -17,7 +17,7 @@ from himena_builtins.qt.widgets._table_components import (
     format_table_value,
 )
 from himena_builtins.qt.widgets._splitter import QSplitterHandle
-from himena.plugins import protocol_override
+from himena.plugins import validate_protocol
 from himena._data_wrappers import wrap_dataframe, DataFrameWrapper
 
 
@@ -99,7 +99,7 @@ class QDataFrameView(QTableBase):
         self._control: QDataFrameViewControl | None = None
         self._model_type = StandardType.DATAFRAME
 
-    @protocol_override
+    @validate_protocol
     def update_model(self, model: WidgetDataModel):
         self.setModel(QDataFrameModel(wrap_dataframe(model.value)))
 
@@ -119,7 +119,7 @@ class QDataFrameView(QTableBase):
         self.update()
         return None
 
-    @protocol_override
+    @validate_protocol
     def to_model(self) -> WidgetDataModel[list[list[Any]]]:
         return WidgetDataModel(
             value=self.model().df.unwrap(),
@@ -128,15 +128,15 @@ class QDataFrameView(QTableBase):
             metadata=self._prep_table_meta(cls=DataFrameMeta),
         )
 
-    @protocol_override
+    @validate_protocol
     def model_type(self) -> str:
         return self._model_type
 
-    @protocol_override
+    @validate_protocol
     def is_modified(self) -> bool:
         return False
 
-    @protocol_override
+    @validate_protocol
     def control_widget(self):
         return self._control
 
@@ -235,7 +235,7 @@ class QDataFramePlotView(QtW.QSplitter):
     def createHandle(self):
         return QSplitterHandle(self, side="left")
 
-    @protocol_override
+    @validate_protocol
     def update_model(self, model: WidgetDataModel):
         df = wrap_dataframe(model.value)
         col_names = df.column_names()
@@ -262,33 +262,33 @@ class QDataFramePlotView(QtW.QSplitter):
         self._model_type = model.type
         return None
 
-    @protocol_override
+    @validate_protocol
     def to_model(self) -> WidgetDataModel:
         return self._table_widget.to_model()
 
-    @protocol_override
+    @validate_protocol
     def model_type(self) -> str:
         return self._model_type
 
-    @protocol_override
+    @validate_protocol
     def is_modified(self) -> bool:
         return self._table_widget.is_modified()
 
-    @protocol_override
+    @validate_protocol
     def control_widget(self):
         return self._table_widget.control_widget()
 
-    @protocol_override
+    @validate_protocol
     def size_hint(self):
         return 480, 300
 
-    @protocol_override
+    @validate_protocol
     def window_added_callback(self):
         # adjuct size
         self.setSizes([160, self.width() - 160])
         return None
 
-    @protocol_override
+    @validate_protocol
     def theme_changed_callback(self, theme):
         # self._table_widget.theme_changed_callback(theme)
         self._plot_widget.theme_changed_callback(theme)

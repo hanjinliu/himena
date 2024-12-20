@@ -13,7 +13,7 @@ from qtpy.QtCore import Qt
 from himena.consts import StandardType
 from himena.types import WidgetDataModel
 from himena.standards.model_meta import TableMeta
-from himena.plugins import protocol_override
+from himena.plugins import validate_protocol
 from himena_builtins.qt.widgets._table_components import QTableBase, QSelectionRangeEdit
 from himena._utils import UndoRedoStack
 
@@ -217,7 +217,7 @@ class QSpreadsheet(QTableBase):
     def data_shape(self) -> tuple[int, int]:
         return self.model()._arr.shape
 
-    @protocol_override
+    @validate_protocol
     def update_model(self, model: WidgetDataModel) -> None:
         value = model.value
         if value is None:
@@ -264,7 +264,7 @@ class QSpreadsheet(QTableBase):
         self._model_type = model.type
         return None
 
-    @protocol_override
+    @validate_protocol
     def to_model(self) -> WidgetDataModel[np.ndarray]:
         meta = self._prep_table_meta()
         if sep := self._control._separator:
@@ -276,21 +276,21 @@ class QSpreadsheet(QTableBase):
             metadata=meta,
         )
 
-    @protocol_override
+    @validate_protocol
     def model_type(self):
         return self._model_type
 
-    @protocol_override
+    @validate_protocol
     def is_modified(self) -> bool:
         if self._modified_override is not None:
             return self._modified_override
         return self._undo_stack.undoable()
 
-    @protocol_override
+    @validate_protocol
     def set_modified(self, value: bool) -> None:
         self._modified_override = value
 
-    @protocol_override
+    @validate_protocol
     def set_editable(self, value: bool) -> None:
         if value:
             trig = _EDITABLE
@@ -298,7 +298,7 @@ class QSpreadsheet(QTableBase):
             trig = _NOT_EDITABLE
         self.setEditTriggers(trig)
 
-    @protocol_override
+    @validate_protocol
     def control_widget(self) -> QTableControl:
         return self._control
 

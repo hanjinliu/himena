@@ -5,7 +5,7 @@ import logging
 from typing import TYPE_CHECKING, Mapping, Sequence
 import warnings
 from qtpy import QtWidgets as QtW, QtCore
-from himena.plugins._checker import protocol_override
+from himena.plugins._checker import validate_protocol
 from himena.types import WidgetDataModel
 from himena.consts import StandardType
 from himena._descriptors import LocalReaderMethod
@@ -78,7 +78,7 @@ class QModelStack(QtW.QSplitter):
     def createHandle(self):
         return QSplitterHandle(self, "left")
 
-    @protocol_override
+    @validate_protocol
     def update_model(self, model: WidgetDataModel):
         value = model.value
         name_model_list: list[tuple[str, WidgetDataModel]] = []
@@ -155,7 +155,7 @@ class QModelStack(QtW.QSplitter):
             self._control_widget.addWidget(QtW.QWidget())  # empty
         item.setData(_WIDGET_ROLE, widget)
 
-    @protocol_override
+    @validate_protocol
     def to_model(self) -> WidgetDataModel:
         models: list[WidgetDataModel] = []
         for ith in range(self._model_list.count()):
@@ -170,23 +170,23 @@ class QModelStack(QtW.QSplitter):
             models.append(model)
         return WidgetDataModel(value=models, type=StandardType.MODELS)
 
-    @protocol_override
+    @validate_protocol
     def model_type(self) -> StandardType:
         return StandardType.MODELS
 
-    @protocol_override
+    @validate_protocol
     def size_hint(self) -> tuple[int, int]:
         return 480, 380
 
-    @protocol_override
+    @validate_protocol
     def control_widget(self):
         return self._control_widget
 
-    @protocol_override
+    @validate_protocol
     def is_editable(self):
         return self._is_editable
 
-    @protocol_override
+    @validate_protocol
     def set_editable(self, editable: bool):
         self._is_editable = editable
         self._model_list.setEditTriggers(
@@ -197,7 +197,7 @@ class QModelStack(QtW.QSplitter):
         )
         self._delete_btn.setEnabled(editable)
 
-    @protocol_override
+    @validate_protocol
     def merge_model(self, model: WidgetDataModel):
         item = self._make_eager_item(model.title, model)
         self._model_list.addItem(item)

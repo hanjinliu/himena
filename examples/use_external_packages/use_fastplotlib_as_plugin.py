@@ -1,7 +1,7 @@
 import numpy as np
 import fastplotlib as fpl
 from cmap import Colormap
-from himena.plugins import register_widget_class, protocol_override
+from himena.plugins import register_widget_class, validate_protocol
 from himena import WidgetDataModel, StandardType, new_window
 from himena.standards.model_meta import ImageMeta
 
@@ -12,7 +12,7 @@ class FastplotlibImageView(fpl.Figure):
         self._image_graphic: fpl.ImageGraphic | None = None
         self._native_widget = self.show()
 
-    @protocol_override
+    @validate_protocol
     def update_model(self, model: WidgetDataModel):
         if self._image_graphic is not None:
             self._image_graphic.data = model.value
@@ -30,7 +30,7 @@ class FastplotlibImageView(fpl.Figure):
             if meta.contrast_limits is not None:
                 self._image_graphic.vmin, self._image_graphic.vmax = meta.contrast_limits
 
-    @protocol_override
+    @validate_protocol
     def to_model(self) -> WidgetDataModel:
         # To make the widget interchangable with other plugins, it's better to prepare
         # a metadata properly.  There are more fields that can be set but here we just
@@ -46,15 +46,15 @@ class FastplotlibImageView(fpl.Figure):
             metadata=meta,
         )
 
-    @protocol_override
+    @validate_protocol
     def native_widget(self):
         return self._native_widget
 
-    @protocol_override
+    @validate_protocol
     def size_hint(self) -> tuple[int, int]:
         return 320, 320
 
-    @protocol_override
+    @validate_protocol
     def window_added_callback(self):
         # this function will be called when the widget is added to a window
         self[0, 0].auto_scale()

@@ -1,6 +1,6 @@
 from magicgui.widgets import Container, LineEdit, SpinBox
 from himena import new_window, WidgetDataModel
-from himena.plugins import register_widget_class, protocol_override, register_function
+from himena.plugins import register_widget_class, validate_protocol, register_function
 
 # Himena natively supports magicgui widgets as a interface of the widgets.
 # The himena protocols, such as update_model and to_model, can be implemented on the
@@ -16,17 +16,17 @@ class IntStrView(Container):
         self._str = LineEdit()
         super().__init__(widgets=[self._int, self._str])
 
-    @protocol_override
+    @validate_protocol
     def update_model(self, model: WidgetDataModel):
         v0, v1 = model.value
         self._int.value = v0
         self._str.value = v1
 
-    @protocol_override
+    @validate_protocol
     def to_model(self) -> WidgetDataModel:
         return WidgetDataModel(value=(self._int.value, self._str.value), type=INT_STR)
 
-    @protocol_override
+    @validate_protocol
     def model_type(self) -> str:
         return INT_STR
 

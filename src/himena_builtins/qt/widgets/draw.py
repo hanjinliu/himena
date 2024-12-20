@@ -9,7 +9,7 @@ import numpy as np
 from himena.consts import StandardType
 from himena.standards.model_meta import ArrayMeta
 from himena.types import WidgetDataModel
-from himena.plugins import protocol_override
+from himena.plugins import validate_protocol
 from himena.qt._utils import ndarray_to_qimage, qimage_to_ndarray
 from himena.qt._qcoloredit import QColorEdit
 from himena._utils import UndoRedoStack
@@ -299,7 +299,7 @@ class QDrawCanvas(QtW.QScrollArea):
         pixmap = QtGui.QPixmap.fromImage(ndarray_to_qimage(after))
         self._set_pixmap(pixmap)
 
-    @protocol_override
+    @validate_protocol
     def update_model(self, model: WidgetDataModel):
         if model.value is None:
             return
@@ -308,7 +308,7 @@ class QDrawCanvas(QtW.QScrollArea):
         self._set_pixmap(pixmap)
         self._control._size_label.setText(f"{img.shape[1]} px x {img.shape[0]} px")
 
-    @protocol_override
+    @validate_protocol
     def to_model(self) -> WidgetDataModel:
         img = qimage_to_ndarray(self._canvas_label.pixmap().toImage())
         return WidgetDataModel(
@@ -317,31 +317,31 @@ class QDrawCanvas(QtW.QScrollArea):
             metadata=ArrayMeta(current_indices=(0,)),
         )
 
-    @protocol_override
+    @validate_protocol
     def model_type(self) -> str:
         return StandardType.IMAGE
 
-    @protocol_override
+    @validate_protocol
     def control_widget(self) -> QtW.QWidget:
         return self._control
 
-    @protocol_override
+    @validate_protocol
     def is_modified(self) -> bool:
         return self._is_modified
 
-    @protocol_override
+    @validate_protocol
     def set_modified(self, modified: bool) -> None:
         self._is_modified = modified
 
-    @protocol_override
+    @validate_protocol
     def is_editable(self) -> bool:
         return self._is_editable
 
-    @protocol_override
+    @validate_protocol
     def set_editable(self, editable: bool) -> None:
         self._is_editable = editable
 
-    @protocol_override
+    @validate_protocol
     def size_hint(self) -> tuple[int, int]:
         return (
             min(400, self._canvas_label.width() + 28),

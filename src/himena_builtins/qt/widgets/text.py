@@ -10,7 +10,7 @@ from superqt import QSearchableComboBox
 from himena.consts import StandardType, MonospaceFontFamily
 from himena.types import WidgetDataModel
 from himena.standards.model_meta import TextMeta
-from himena.plugins import protocol_override
+from himena.plugins import validate_protocol
 
 from himena._utils import OrderedSet, lru_cache
 from himena.qt._qcoloredit import QColorSwatch
@@ -142,7 +142,7 @@ class QTextEdit(QtW.QWidget):
         layout.addWidget(self._main_text_edit)
         self._model_type = StandardType.TEXT
 
-    @protocol_override
+    @validate_protocol
     def control_widget(self) -> QTextControl:
         return self._control
 
@@ -153,7 +153,7 @@ class QTextEdit(QtW.QWidget):
         line_num = self._main_text_edit.textCursor().blockNumber() + 1
         self._control._line_num.setText(str(line_num))
 
-    @protocol_override
+    @validate_protocol
     def update_model(self, model: WidgetDataModel):
         if not isinstance(value := model.value, str):
             value = str(value)
@@ -184,7 +184,7 @@ class QTextEdit(QtW.QWidget):
         self._model_type = model.type
         return None
 
-    @protocol_override
+    @validate_protocol
     def to_model(self) -> WidgetDataModel[str]:
         cursor = self._main_text_edit.textCursor()
         font = self._main_text_edit.font()
@@ -201,31 +201,31 @@ class QTextEdit(QtW.QWidget):
             ),
         )
 
-    @protocol_override
+    @validate_protocol
     def model_type(self):
         return self._model_type
 
-    @protocol_override
+    @validate_protocol
     def size_hint(self) -> tuple[int, int]:
         return 400, 300
 
-    @protocol_override
+    @validate_protocol
     def is_modified(self) -> bool:
         return self._main_text_edit.is_modified()
 
-    @protocol_override
+    @validate_protocol
     def set_modified(self, value: bool) -> None:
         self._main_text_edit.document().setModified(value)
 
-    @protocol_override
+    @validate_protocol
     def is_editable(self) -> bool:
         return not self._main_text_edit.isReadOnly()
 
-    @protocol_override
+    @validate_protocol
     def set_editable(self, value: bool) -> None:
         self._main_text_edit.setReadOnly(not value)
 
-    @protocol_override
+    @validate_protocol
     def theme_changed_callback(self, theme: Theme):
         text_edit = self._main_text_edit
         if theme.is_light_background():
@@ -267,12 +267,12 @@ class QRichTextEdit(QtW.QWidget):
     def setFocus(self):
         self._main_text_edit.setFocus()
 
-    @protocol_override
+    @validate_protocol
     def update_model(self, model: WidgetDataModel[str]):
         self.initPlainText(model.value)
         return None
 
-    @protocol_override
+    @validate_protocol
     def to_model(self) -> WidgetDataModel[str]:
         cursor = self._main_text_edit.textCursor()
         font = self._main_text_edit.font()
@@ -288,31 +288,31 @@ class QRichTextEdit(QtW.QWidget):
             ),
         )
 
-    @protocol_override
+    @validate_protocol
     def model_type(self):
         return StandardType.HTML
 
-    @protocol_override
+    @validate_protocol
     def size_hint(self) -> tuple[int, int]:
         return 400, 300
 
-    @protocol_override
+    @validate_protocol
     def is_modified(self) -> bool:
         return False
 
-    @protocol_override
+    @validate_protocol
     def set_modified(self, value: bool) -> None:
         self._main_text_edit.document().setModified(value)
 
-    @protocol_override
+    @validate_protocol
     def is_editable(self) -> bool:
         return False
 
-    @protocol_override
+    @validate_protocol
     def set_editable(self, value: bool) -> None:
         self._main_text_edit.setReadOnly(not value)
 
-    @protocol_override
+    @validate_protocol
     def control_widget(self) -> QRichTextEditControl:
         return self._control
 

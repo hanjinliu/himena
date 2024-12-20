@@ -6,7 +6,7 @@ from qtpy import QtGui, QtCore
 
 from himena.consts import StandardType, MonospaceFontFamily
 from himena.types import WidgetDataModel
-from himena.plugins import protocol_override
+from himena.plugins import validate_protocol
 
 from himena_builtins.qt.widgets._text_base import QMainTextEdit
 
@@ -31,7 +31,7 @@ class QIpynbEdit(QtW.QScrollArea):
         self._ipynb_orig = IpynbFile()
         self._model_type = StandardType.IPYNB
 
-    @protocol_override
+    @validate_protocol
     def update_model(self, model: WidgetDataModel):
         if not isinstance(value := model.value, str):
             value = str(value)
@@ -42,7 +42,7 @@ class QIpynbEdit(QtW.QScrollArea):
         self._model_type = model.type
         return None
 
-    @protocol_override
+    @validate_protocol
     def to_model(self) -> WidgetDataModel:
         ipynb = self._ipynb_orig.model_copy()
         for idx, widget in enumerate(self._cell_widgets):
@@ -53,17 +53,17 @@ class QIpynbEdit(QtW.QScrollArea):
             value=js_string,
         )
 
-    @protocol_override
+    @validate_protocol
     def model_type(self) -> str:
         return self._model_type
 
-    @protocol_override
+    @validate_protocol
     def is_modified(self) -> bool:
         return any(
             widget._text_edit.isWindowModified() for widget in self._cell_widgets
         )
 
-    @protocol_override
+    @validate_protocol
     def size_hint(self) -> tuple[int, int]:
         return 400, 360
 
