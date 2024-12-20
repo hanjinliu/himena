@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from qtpy import QtWidgets as QtW, QtCore
+from qtpy import QtWidgets as QtW
 from himena.plugins import protocol_override
 from himena.standards import roi
 from himena.consts import StandardType
@@ -25,7 +25,6 @@ class QImageRoiView(QtW.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         self._roi_collection = QSimpleRoiCollection()
         layout.addWidget(self._roi_collection)
-        self._control = QImageRoiControl()
         self._is_modified = False
         self._model_type = StandardType.IMAGE_ROIS
 
@@ -45,6 +44,7 @@ class QImageRoiView(QtW.QWidget):
         return WidgetDataModel(
             value=self._roi_collection.to_standard_roi_list(),
             type=self.model_type(),
+            extension_default=".roi.json",
         )
 
     @protocol_override
@@ -62,18 +62,3 @@ class QImageRoiView(QtW.QWidget):
     @protocol_override
     def size_hint(self) -> tuple[int, int]:
         return 180, 300
-
-    @protocol_override
-    def control_widget(self) -> QtW.QWidget:
-        return self._control
-
-
-class QImageRoiControl(QtW.QWidget):
-    def __init__(self):
-        super().__init__()
-        layout = QtW.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        self._hover_info = QtW.QLabel()
-        self._hover_info.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        layout.addWidget(QtW.QWidget())  # spacer
-        layout.addWidget(self._hover_info)

@@ -118,6 +118,32 @@ class Band(BasePlotModel):
         }
 
 
+class Span(BasePlotModel):
+    """Plot model for span plot."""
+
+    start: float = Field(..., description="Starting value of the lower bound.")
+    end: float = Field(..., description="Ending value of the upper bound.")
+    orient: Literal["vertical", "horizontal"] = Field(
+        "vertical",
+        description="Orientation of the span. 'vertical' means the span"
+        "is vertically unlimited.",
+    )
+    face: Face = Field(default_factory=Face, description="Properties of the span fill.")
+    edge: Edge = Field(default_factory=Edge, description="Properties of the span edge.")
+
+    def plot_option_dict(self) -> dict[str, Any]:
+        from himena.qt._magicgui import EdgePropertyEdit, FacePropertyEdit
+
+        return {
+            "name": {"widget_type": "LineEdit", "value": self.name},
+            "x0": {"annotation": float, "value": self.start},
+            "x1": {"annotation": float, "value": self.end},
+            "orient": {"choices": ["vertical", "horizontal"], "value": self.orient},
+            "face": {"widget_type": FacePropertyEdit, "value": self.face.model_dump()},
+            "edge": {"widget_type": EdgePropertyEdit, "value": self.edge.model_dump()},
+        }
+
+
 class Histogram(BasePlotModel):
     """Plot model for a histogram."""
 

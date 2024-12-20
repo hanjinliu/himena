@@ -23,8 +23,13 @@ def default_reader_provider(file_path: Path | list[Path]):
         return _io.default_tsv_reader
     elif file_path.suffix in {".png", ".jpg", ".jpeg"}:
         return _io.default_image_reader
-    elif file_path.suffixes == [".plot", ".json"]:
-        return _io.default_plot_reader
+    elif file_path.suffix == ".json":
+        if file_path.suffixes == [".plot", ".json"]:
+            return _io.default_plot_reader
+        elif file_path.suffixes == [".roi", ".json"]:
+            return _io.default_roi_reader
+        else:
+            return _io.default_text_reader
     elif file_path.suffix in BasicTextFileTypes:
         return _io.default_text_reader
     elif file_path.name in ConventionalTextFileNames:
@@ -95,7 +100,7 @@ def polars_reader_provider(file_path: Path) -> WidgetDataModel:
 
 
 @register_writer_provider(priority=50)
-def default_writer_provider(model: WidgetDataModel):
+def default_writer_provider(model: WidgetDataModel, path: Path):
     """Get default writer."""
     if model.type is None:
         return None
@@ -113,6 +118,8 @@ def default_writer_provider(model: WidgetDataModel):
         return _io.default_array_writer
     elif model.is_subtype_of(StandardType.PLOT):
         return _io.default_plot_writer
+    elif model.is_subtype_of(StandardType.IMAGE_ROIS):
+        return _io.default_roi_writer
     elif model.is_subtype_of(StandardType.DATAFRAME):
         return _io.default_dataframe_writer
     else:
@@ -120,5 +127,5 @@ def default_writer_provider(model: WidgetDataModel):
 
 
 @register_writer_provider(priority=-50)
-def write_as_pickle_anyway_provider(model: WidgetDataModel):
+def write_as_pickle_anyway_provider(model: WidgetDataModel, path: Path):
     return _io.default_pickle_writer

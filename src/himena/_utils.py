@@ -1,4 +1,5 @@
 from __future__ import annotations
+from pathlib import Path
 from typing import (
     Callable,
     Any,
@@ -16,6 +17,7 @@ import inspect
 from functools import wraps
 import warnings
 
+from himena.consts import StandardType
 from himena.types import (
     ParametricWidgetProtocol,
     WidgetDataModel,
@@ -290,6 +292,26 @@ def add_title_suffix(title: str) -> str:
     else:
         stem = stem + " [1]"
     return stem + ext
+
+
+def unwrap_lazy_model(model: WidgetDataModel) -> WidgetDataModel:
+    """Unwrap the lazy object if possible."""
+    from himena._providers import ReaderProviderStore
+    from himena._descriptors import LocalReaderMethod
+
+    if model.type != StandardType.LAZY:
+        raise ValueError(f"Expected a lazy object, got {model.type}")
+    if isinstance(model.value, LocalReaderMethod):
+        reader_method = model.value
+    elif isinstance(model.value, (str, Path)):
+        reader_method = LocalReaderMethod(path=model.value)
+    else:
+        raise TypeError(f"Invalid lazy object: {model.value}")
+
+    store = ReaderProviderStore.instance()
+    path = reader_method.path
+    model = store.run(path, plugin=reader_method.plugin)._with_source(path)
+    return model
 
 
 class UndoRedoStack(Generic[_T]):

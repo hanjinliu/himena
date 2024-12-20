@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 from himena.types import WidgetDataModel
 from himena.standards.model_meta import ImageMeta, TableMeta, TextMeta
+from himena.standards.roi import RoiListModel
 from himena.consts import StandardType
 
 if TYPE_CHECKING:
@@ -142,6 +143,16 @@ def default_plot_reader(file_path: Path) -> WidgetDataModel:
         value=plot_layout,
         type=StandardType.PLOT,
         extension_default=".plot.json",
+    )
+
+
+def default_roi_reader(file_path: Path) -> WidgetDataModel:
+    """Read image ROIs from a json file."""
+    with file_path.open("r") as f:
+        js = json.load(f)
+    return WidgetDataModel(
+        value=RoiListModel.construct(js),
+        type=StandardType.IMAGE_ROIS,
     )
 
 
@@ -350,15 +361,19 @@ def default_models_writer(
     return None
 
 
-def default_pickle_writer(
-    model: WidgetDataModel[Any],
-    path: Path,
-) -> None:
+def default_pickle_writer(model: WidgetDataModel[Any], path: Path) -> None:
     """Write pickle file."""
     import pickle
 
     with path.open("wb") as f:
         pickle.dump(model.value, f)
+    return None
+
+
+def default_roi_writer(model: WidgetDataModel[RoiListModel], path: Path) -> None:
+    """Write image ROIs to a json file."""
+    with path.open("w") as f:
+        json.dump(model.value.model_dump_typed(), f, default=_json_default)
     return None
 
 

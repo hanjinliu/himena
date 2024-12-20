@@ -47,7 +47,7 @@ def convert_plot_model(model: hplt.BasePlotModel, ax: plt.Axes):
 
 
 @register_plot_model(hplt.Scatter)
-def _(model: hplt.Scatter, ax: plt.Axes):
+def _add_scatter(model: hplt.Scatter, ax: plt.Axes):
     if model.size is not None:
         s = model.size**2
     else:
@@ -61,7 +61,7 @@ def _(model: hplt.Scatter, ax: plt.Axes):
 
 
 @register_plot_model(hplt.Line)
-def _(model: hplt.Line, ax: plt.Axes):
+def _add_line(model: hplt.Line, ax: plt.Axes):
     ax.plot(
         model.x, model.y, color=model.edge.color, linewidth=model.edge.width,
         linestyle=model.edge.style, label=model.name,
@@ -69,7 +69,7 @@ def _(model: hplt.Line, ax: plt.Axes):
 
 
 @register_plot_model(hplt.Bar)
-def _(model: hplt.Bar, ax: plt.Axes):
+def _add_bar(model: hplt.Bar, ax: plt.Axes):
     ax.bar(
         model.x, model.y, color=model.face.color, hatch=model.face.hatch,
         bottom=model.bottom, width=model.bar_width, edgecolor=model.edge.color,
@@ -78,7 +78,7 @@ def _(model: hplt.Bar, ax: plt.Axes):
 
 
 @register_plot_model(hplt.Histogram)
-def _(model: hplt.Histogram, ax: plt.Axes):
+def _add_hist(model: hplt.Histogram, ax: plt.Axes):
     if model.stat == "count":
         data = model.data
         density = False
@@ -99,7 +99,7 @@ def _(model: hplt.Histogram, ax: plt.Axes):
 
 
 @register_plot_model(hplt.ErrorBar)
-def _(model: hplt.ErrorBar, ax: plt.Axes):
+def _add_errorbar(model: hplt.ErrorBar, ax: plt.Axes):
     ax.errorbar(
         model.x, model.y, xerr=model.x_error, yerr=model.y_error,
         capsize=model.capsize, color=model.edge.color, linewidth=model.edge.width,
@@ -108,16 +108,38 @@ def _(model: hplt.ErrorBar, ax: plt.Axes):
 
 
 @register_plot_model(hplt.Band)
-def _(model: hplt.Band, ax: plt.Axes):
-    ax.fill_between(
+def _add_band(model: hplt.Band, ax: plt.Axes):
+    if model.orient == "vertical":
+        func = ax.fill_between
+    else:
+        func = ax.fill_betweenx
+    func(
         model.x, model.y0, model.y1, color=model.face.color, hatch=model.face.hatch,
         edgecolor=model.edge.color, linewidth=model.edge.width,
         linestyle=model.edge.style, label=model.name,
     )  # fmt: skip
 
 
+@register_plot_model(hplt.Span)
+def _add_span(model: hplt.Span, ax: plt.Axes):
+    if model.orient == "vertical":
+        func = ax.axvspan
+    else:
+        func = ax.axhspan
+    func(
+        model.start,
+        model.end,
+        color=model.face.color,
+        hatch=model.face.hatch,
+        edgecolor=model.edge.color,
+        linewidth=model.edge.width,
+        linestyle=model.edge.style,
+        label=model.name,
+    )
+
+
 @register_plot_model(hplt.Scatter3D)
-def _(model: hplt.Scatter3D, ax: plt3d.Axes3D):
+def _add_scatter_3d(model: hplt.Scatter3D, ax: plt3d.Axes3D):
     if model.size is not None:
         s = model.size**2
     else:
@@ -131,7 +153,7 @@ def _(model: hplt.Scatter3D, ax: plt3d.Axes3D):
 
 
 @register_plot_model(hplt.Line3D)
-def _(model: hplt.Line3D, ax: plt3d.Axes3D):
+def _add_line_3d(model: hplt.Line3D, ax: plt3d.Axes3D):
     ax.plot(
         model.x, model.y, model.z, color=model.edge.color, linewidth=model.edge.width,
         linestyle=model.edge.style, label=model.name,
@@ -139,7 +161,7 @@ def _(model: hplt.Line3D, ax: plt3d.Axes3D):
 
 
 @register_plot_model(hplt.Mesh3D)
-def _(model: hplt.Mesh3D, ax: plt3d.Axes3D):
+def _add_mesh_3d(model: hplt.Mesh3D, ax: plt3d.Axes3D):
     ax.plot_trisurf(
         model.vertices[:, 0], model.vertices[:, 1], model.vertices[:, 2],
         triangles=model.face_indices, color=model.face.color, edgecolor=model.edge.color,

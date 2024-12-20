@@ -5,9 +5,12 @@ import math
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from psygnal import Signal
 import numpy as np
-from typing import Iterable, Iterator
+from typing import Iterable, Iterator, TYPE_CHECKING
 
 from himena.standards import roi
+
+if TYPE_CHECKING:
+    from typing import Self
 
 
 class QRoi(QtW.QGraphicsItem):
@@ -35,6 +38,9 @@ class QRoi(QtW.QGraphicsItem):
     def withLabel(self, label: str | None):
         self.setLabel(label or "")
         return self
+
+    def copy(self) -> Self:
+        raise NotImplementedError("Subclasses must implement this method.")
 
     def _thumbnail_transform(self, width: int, height: int) -> QtGui.QTransform:
         rect = self.boundingRect()
@@ -83,6 +89,9 @@ class QLineRoi(QtW.QGraphicsLineItem, QRoi):
         painter.end()
         return pixmap
 
+    def copy(self) -> QLineRoi:
+        return QLineRoi(self.line()).withPen(self.pen())
+
     def _roi_type(self) -> str:
         return "line"
 
@@ -121,6 +130,9 @@ class QRectangleRoi(QtW.QGraphicsRectItem, QRectRoiBase):
         painter.end()
         return pixmap
 
+    def copy(self) -> QRectangleRoi:
+        return QRectangleRoi(self.rect()).withPen(self.pen())
+
     def _roi_type(self) -> str:
         return "rectangle"
 
@@ -157,6 +169,9 @@ class QEllipseRoi(QtW.QGraphicsEllipseItem, QRectRoiBase):
         painter.end()
         return pixmap
 
+    def copy(self) -> QEllipseRoi:
+        return QEllipseRoi(self.rect()).withPen(self.pen())
+
     def _roi_type(self) -> str:
         return "ellipse"
 
@@ -164,36 +179,36 @@ class QEllipseRoi(QtW.QGraphicsEllipseItem, QRectRoiBase):
 class QRotatedRectangleRoi(QRoi):
     changed = Signal(object)
 
-    def __init__(self, left: QtCore.QPointF, right: QtCore.QPointF, height: float = 50):
+    def __init__(self, start: QtCore.QPointF, end: QtCore.QPointF, width: float = 50):
         super().__init__()
-        dr = right - left
-        width = math.sqrt(dr.x() ** 2 + dr.y() ** 2)
-        center = (left + right) / 2
+        dr = end - start
+        length = math.sqrt(dr.x() ** 2 + dr.y() ** 2)
+        center = (start + end) / 2
         rad = math.atan2(dr.y(), dr.x())
         self._center = center
         self._angle = math.degrees(rad)
+        self._length = length
         self._width = width
-        self._height = height
         self._pen = QtGui.QPen()
-        self.setLeft(left)
-        self.setRight(right)
+        self.set_start(start)
+        self.set_end(end)
 
     def vector_x(self) -> QtCore.QPointF:
         rad = math.radians(self.angle())
-        return QtCore.QPointF(math.cos(rad), math.sin(rad)) * self._width
+        return QtCore.QPointF(math.cos(rad), math.sin(rad)) * self._length
 
     def vector_y(self) -> QtCore.QPointF:
         rad = math.radians(self.angle())
-        return QtCore.QPointF(-math.sin(rad), math.cos(rad)) * self._height
+        return QtCore.QPointF(-math.sin(rad), math.cos(rad)) * self._width
 
     def angle(self) -> float:
         return self._angle
 
-    def left(self) -> QtCore.QPointF:
+    def start(self) -> QtCore.QPointF:
         """Return the left anchor point."""
         return self._center - self.vector_x() / 2
 
-    def right(self) -> QtCore.QPointF:
+    def end(self) -> QtCore.QPointF:
         """Return the right anchor point."""
         return self._center + self.vector_x() / 2
 
@@ -208,32 +223,31 @@ class QRotatedRectangleRoi(QRoi):
     def center(self) -> QtCore.QPointF:
         return self._center
 
-    def setLeft(self, left: QtCore.QPointF):
-        right = self.right()
+    def set_start(self, left: QtCore.QPointF):
+        right = self.end()
         vecx = right - left
         with self._update_and_emit():
             self._angle = math.degrees(math.atan2(vecx.y(), vecx.x()))
-            self._width = math.sqrt(vecx.x() ** 2 + vecx.y() ** 2)
+            self._length = math.sqrt(vecx.x() ** 2 + vecx.y() ** 2)
             self._center = (left + right) / 2
 
-    def setRight(self, right: QtCore.QPointF):
-        left = self.left()
+    def set_end(self, right: QtCore.QPointF):
+        left = self.start()
         vecx = right - left
         with self._update_and_emit():
             self._angle = math.degrees(math.atan2(vecx.y(), vecx.x()))
-            self._width = math.sqrt(vecx.x() ** 2 + vecx.y() ** 2)
+            self._length = math.sqrt(vecx.x() ** 2 + vecx.y() ** 2)
             self._center = (left + right) / 2
 
-    def setHeight(self, height: float):
+    def set_width(self, width: float):
         with self._update_and_emit():
-            self._height = height
+            self._width = width
 
     def toRoi(self, indices) -> roi.RotatedRectangleRoi:
         return roi.RotatedRectangleRoi(
-            x=self._center.x(),
-            y=self._center.y(),
+            start=(self.start().x(), self.start().y()),
+            end=(self.end().x(), self.end().y()),
             width=self._width,
-            height=self._height,
             angle=self._angle,
             indices=indices,
             name=self.label(),
@@ -249,6 +263,11 @@ class QRotatedRectangleRoi(QRoi):
     def translate(self, dx: float, dy: float):
         self._center += QtCore.QPointF(dx, dy)
         self._update_and_emit()
+
+    def copy(self) -> QRotatedRectangleRoi:
+        return QRotatedRectangleRoi(self.start(), self.end(), self._width).withPen(
+            self.pen()
+        )
 
     def _update_and_emit(self):
         self.update()
@@ -357,6 +376,15 @@ class QSegmentedLineRoi(QtW.QGraphicsPathItem, QRoi):
         painter.drawPath(self.path())
         painter.end()
         return pixmap
+
+    def copy(self) -> QSegmentedLineRoi:
+        path = self.path()
+        xs, ys = [], []
+        for i in range(path.elementCount()):
+            element = path.elementAt(i)
+            xs.append(element.x)
+            ys.append(element.y)
+        return QSegmentedLineRoi(xs, ys).withPen(self.pen())
 
     def _roi_type(self) -> str:
         return "segmented line"
@@ -473,6 +501,9 @@ class QPointRoi(QPointRoiBase):
             self._size * 2,
         )
 
+    def copy(self) -> QPointRoi:
+        return QPointRoi(self._point.x(), self._point.y()).withPen(self.pen())
+
     def _roi_type(self) -> str:
         return "point"
 
@@ -536,6 +567,11 @@ class QPointsRoi(QPointRoiBase):
 
     def _iter_points(self) -> Iterator[QtCore.QPointF]:
         yield from self._points
+
+    def copy(self) -> QPointsRoi:
+        return QPointsRoi(
+            [pt.x() for pt in self._points], [pt.y() for pt in self._points]
+        ).withPen(self.pen())
 
     def _roi_type(self) -> str:
         return "points"

@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 from typing import TYPE_CHECKING, Any, Iterator
 import numpy as np
+from pydantic import field_serializer
 from pydantic_compat import BaseModel, Field, field_validator
 from himena.types import Rect
 
@@ -17,7 +18,10 @@ class ImageRoi(BaseModel):
     name: str | None = Field(None, description="Name of the ROI.")
 
     def model_dump_typed(self) -> dict:
-        return {"type": type(self).__name__.lower(), **self.model_dump()}
+        typ = type(self).__name__.lower()
+        if typ.endswith("roi"):
+            typ = typ[:-3]
+        return {"type": typ, **self.model_dump()}
 
     @classmethod
     def construct(cls, typ: str, dict_: dict) -> ImageRoi:
@@ -29,6 +33,8 @@ class ImageRoi(BaseModel):
             return EllipseRoi.model_validate(dict_)
         if typ == "rotatedellipse":
             return RotatedEllipseRoi.model_validate(dict_)
+        if typ == "point":
+            return PointRoi.model_validate(dict_)
         if typ == "points":
             return PointsRoi.model_validate(dict_)
         if typ == "segmentedline":
@@ -94,19 +100,23 @@ class RotatedRectangleRoi(RotatedRoi2D):
     the rectangle.
     """
 
-    x: float = Field(..., description="X-coordinate of the center.")
-    y: float = Field(..., description="Y-coordinate of the center.")
+    start: tuple[float, float] = Field(..., description="X-coordinate of the center.")
+    end: tuple[float, float] = Field(..., description="Y-coordinate of the center.")
     width: float = Field(..., description="Width of the rectangle.")
-    height: float = Field(..., description="Height of the rectangle.")
 
     def shifted(self, dx: float, dy: float) -> RotatedRectangleRoi:
-        return self.model_copy(update={"x": self.x + dx, "y": self.y + dy})
+        start = (self.start[0] + dx, self.start[1] + dy)
+        end = (self.end[0] + dx, self.end[1] + dy)
+        return self.model_copy(update={"start": start, "end": end})
 
     def bbox(self) -> Rect[float]:
-        center = np.array([self.y, self.x])
+        start_x, start_y = self.start
+        end_x, end_y = self.end
+        length = math.hypot(end_x - start_x, end_y - start_y)
         rad = math.radians(self.angle)
-        vx = np.array([math.cos(rad), math.sin(rad)]) * self.width
-        vy = np.array([-math.sin(rad), math.cos(rad)]) * self.height
+        vx = np.array([math.cos(rad), math.sin(rad)]) * length
+        vy = np.array([-math.sin(rad), math.cos(rad)]) * self.width
+        center = np.array([start_x + end_x, start_y + end_y]) / 2
         p00 = center - vx / 2 - vy / 2
         p01 = center - vx / 2 + vy / 2
         p10 = center + vx / 2 - vy / 2
@@ -254,6 +264,10 @@ class RoiListModel(BaseModel):
 
     def model_dump_typed(self) -> dict:
         return {"type": type(self).__name__.lower(), **self.model_dump()}
+
+    @field_serializer("rois")
+    def _serialize_rois(self, v: list[ImageRoi]) -> list[dict]:
+        return [roi.model_dump_typed() for roi in v]
 
     @classmethod
     def construct(cls, dict_: dict) -> RoiListModel:

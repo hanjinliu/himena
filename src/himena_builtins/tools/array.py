@@ -139,7 +139,9 @@ def array_astype(model: WidgetDataModel) -> Parametric:
     """Convert the data type of the array using `astype` method."""
     from himena.qt._magicgui import NumericDTypeEdit
 
-    @configure_gui(dtype={"widget_type": NumericDTypeEdit})
+    _dtype = np.dtype(wrap_array(model.value).dtype)
+
+    @configure_gui(dtype={"widget_type": NumericDTypeEdit, "value": _dtype})
     def run_astype(dtype) -> WidgetDataModel:
         return model.with_value(model.value.astype(dtype))
 

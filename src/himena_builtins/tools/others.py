@@ -1,11 +1,14 @@
 from pathlib import Path
 import html
+from typing import Mapping
+import warnings
 import numpy as np
 from himena._data_wrappers._dataframe import wrap_dataframe
-from himena.plugins import register_function
+from himena.plugins import register_function, configure_gui
 from himena.types import Parametric, WidgetDataModel, is_subtype
 from himena.consts import StandardType, MonospaceFontFamily
 from himena.widgets import SubWindow, MainWindow
+from himena._utils import unwrap_lazy_model
 
 
 @register_function(
@@ -38,6 +41,63 @@ def merge_models() -> Parametric:
         )
 
     return run_merge_models
+
+
+@register_function(
+    menus=["tools/models"],
+    types=[StandardType.MODELS],
+    command_id="builtins:filter-model-list",
+)
+def filter_model_list(model: WidgetDataModel) -> Parametric:
+    """Filter the list of models."""
+
+    @configure_gui
+    def run_filter(
+        model_type: str = "",
+        title_contains: str = "",
+        unwrap_lazy_objects: bool = True,
+    ) -> WidgetDataModel:
+        """Filter the list of models.
+
+        Parameters
+        ----------
+        model_type : str
+            If specified, only models of this type will be included.
+        title_contains : str
+            If specified, only models with titles containing this string will be
+            included.
+        unwrap_lazy_objects : bool
+            If True, lazy-type models will be unwrapped before filtering. If you added
+            a element from a local file, it is usually a lazy object.
+        """
+        if isinstance(val := model.value, Mapping):
+            models = val.values()
+        else:
+            models = val
+        models_out = []
+        for m in models:
+            if not isinstance(m, WidgetDataModel):
+                warnings.warn(
+                    f"Expected a sequence of WidgetDataModel but got {type(m)} as an "
+                    "element. Skipping.",
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
+                continue
+            if unwrap_lazy_objects and m.type == StandardType.LAZY:
+                m = unwrap_lazy_model(m)
+            if model_type and not is_subtype(m.type, model_type):
+                continue
+            if title_contains and title_contains not in m.title:
+                continue
+            models_out.append(m)
+        return WidgetDataModel(
+            value=models_out,
+            type=StandardType.MODELS,
+            title=f"{model.title} filtered",
+        )
+
+    return run_filter
 
 
 @register_function(

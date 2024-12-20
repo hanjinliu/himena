@@ -14,6 +14,7 @@ from himena.standards.plotting.models import (
     Scatter,
     Bar,
     Band,
+    Span,
     ErrorBar,
     Histogram,
 )
@@ -53,6 +54,7 @@ __all__ = [
     "Scatter",
     "Bar",
     "Band",
+    "Span",
     "ErrorBar",
     "Histogram",
     "StyledText",

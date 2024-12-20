@@ -9,7 +9,7 @@ from .image import QImageView
 from ._image_components._scale_bar import ScaleBarAnchor, ScaleBarType
 
 
-### Commands specific to this widget ###
+### Commands specific to built-in widgets ###
 @register_function(
     title="Scale bar ...",
     types=StandardType.IMAGE,
@@ -23,6 +23,7 @@ def setup_image_scale_bar(win: SubWindow[QImageView]) -> Parametric:
         anchor={"value": scale_bar._anchor},
         type={"value": scale_bar._scale_bar_type},
         color={"widget_type": ColorEdit, "value": scale_bar._color.name()},
+        preview=True,
     )
     def setup(
         visible: bool = True,

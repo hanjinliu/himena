@@ -105,6 +105,7 @@ class WriterProviderStore(ProviderStore[WriterProviderTuple]):
     def get(
         self,
         model: WidgetDataModel,
+        path: Path,
         empty_ok: bool = False,
         min_priority: int = 0,
     ) -> list[WriterTuple]:
@@ -113,7 +114,7 @@ class WriterProviderStore(ProviderStore[WriterProviderTuple]):
             if info.priority < min_priority:
                 continue
             try:
-                out = info.provider(model)
+                out = info.provider(model, path)
             except Exception as e:
                 _warn_failed_provider(info.provider, e)
             else:
@@ -133,6 +134,7 @@ class WriterProviderStore(ProviderStore[WriterProviderTuple]):
     def pick(
         self,
         model: WidgetDataModel,
+        path: Path,
         plugin: str | None = None,
         min_priority: int = 0,
     ) -> WriterTuple:
@@ -140,7 +142,7 @@ class WriterProviderStore(ProviderStore[WriterProviderTuple]):
         if plugin is not None:
             # if plugin is given, force to use it
             min_priority = -float("inf")
-        return _pick_from_list(self.get(model, min_priority=min_priority), plugin)
+        return _pick_from_list(self.get(model, path, min_priority=min_priority), plugin)
 
     def run(
         self,
@@ -150,7 +152,7 @@ class WriterProviderStore(ProviderStore[WriterProviderTuple]):
         plugin: str | None = None,
         min_priority: int = -float("inf"),
     ) -> None:
-        writer = self.pick(model, plugin=plugin, min_priority=min_priority)
+        writer = self.pick(model, path, plugin=plugin, min_priority=min_priority)
         return writer.write(model, path)
 
 

@@ -19,6 +19,10 @@ def from_standard_roi(r: roi.ImageRoi, pen: QtGui.QPen) -> _roi_items.QRoi:
         out = _roi_items.QSegmentedLineRoi(r.xs, r.ys)
     elif isinstance(r, roi.PolygonRoi):
         out = _roi_items.QPolygonRoi(r.xs, r.ys)
+    elif isinstance(r, roi.RotatedRectangleRoi):
+        out = _roi_items.QRotatedRectangleRoi(
+            QtCore.QPointF(*r.start), QtCore.QPointF(*r.end), r.width
+        )
     elif isinstance(r, roi.PointRoi):
         out = _roi_items.QPointRoi(r.x, r.y)
     elif isinstance(r, roi.PointsRoi):

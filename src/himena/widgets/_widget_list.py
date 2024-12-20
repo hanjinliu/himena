@@ -129,6 +129,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         )
 
     def append(self, sub_window: SubWindow[_W], title: str) -> None:
+        """Append a sub-window to the tab area."""
         main = self._main_window()
         interf, front = sub_window._split_interface_and_frontend()
         out = main.add_widget(front, self._i_tab, title)

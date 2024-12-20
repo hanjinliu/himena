@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW, QtGui, QtCore
 from himena._enum import StrEnum
@@ -24,19 +25,26 @@ class QScaleBarItem(QtW.QGraphicsItem):
         self._bar_rect = QtCore.QRectF(0, 0, 0, 0)
         self._bounding_rect = QtCore.QRectF(0, 0, 0, 0)
         self._text_visible = True
-        self._auto_adjust_size = False  # TODO: implement this
+        self._auto_adjust_size = True  # TODO: implement this
+        self._current_adjust_factor = 1.0
         self._anchor = ScaleBarAnchor.BOTTOM_RIGHT
         self._scale_bar_type = ScaleBarType.SHADOWED
 
     def update_rect(self, qrect: QtCore.QRectF):
         vw, vh = self._view.width(), self._view.height()
         scale = self._view.transform().m11()
-        self._font.setPointSizeF(self._point_size / scale)
-
-        box_width = self._bar_size_px.x()  # do not divide by `scale`
+        self._font.setPointSizeF(self._point_size)
         text_height = self._point_size / scale * 1.5 if self._text_visible else 0.0
         box_height = self._bar_size_px.y() / scale
         off = self._anchor_offset_px / scale
+
+        if self._auto_adjust_size:
+            _adjust_factor = _find_nice_factor(scale, self._scale)
+            box_width = _adjust_factor / self._scale
+            self._current_adjust_factor = _adjust_factor
+        else:
+            box_width = self._bar_size_px.x()  # do not divide by `scale`
+
         if self._anchor is ScaleBarAnchor.TOP_LEFT:
             box_top_left = self._view.mapToScene(0, 0) + off
         elif self._anchor is ScaleBarAnchor.TOP_RIGHT:
@@ -63,24 +71,30 @@ class QScaleBarItem(QtW.QGraphicsItem):
         )
         self.update()
 
-    def bar_rect(self) -> QtCore.QRectF:
-        return self._bar_rect
-
     def scale_bar_text(self) -> str:
+        """Text to display on the scale bar."""
+        if self._auto_adjust_size:
+            val = self._current_adjust_factor
+            return f"{val} {self._unit}"
         return f"{int(round(self._bar_size_px.x() * self._scale))} {self._unit}"
 
-    def text_rect(self) -> QtCore.QRectF:
+    def bar_and_text_rect(self) -> tuple[QtCore.QRectF, QtCore.QRectF]:
         scale = self._view.transform().m11()
         text = self.scale_bar_text()
         metrics = QtGui.QFontMetricsF(self._font)
-        width = metrics.width(text)
-        height = metrics.height()
-        return QtCore.QRectF(
+        width = (metrics.width(text) + 4) / scale
+        height = metrics.height() / scale
+        text_rect = QtCore.QRectF(
             self._bar_rect.center().x() - width / 2,
             self._bar_rect.bottom() + 1 / scale,
             width,
             height,
         )
+        bar_rect = QtCore.QRectF(self._bar_rect)
+        if width > bar_rect.width():
+            dw = (width - bar_rect.width()) / 2
+            bar_rect.adjust(-dw, 0, dw, 0)
+        return bar_rect, text_rect
 
     def paint(self, painter, option, widget=None):
         painter.setFont(self._font)
@@ -129,16 +143,15 @@ class QScaleBarItem(QtW.QGraphicsItem):
 
     def draw_simple_scale_bar(self, painter: QtGui.QPainter, text: str):
         painter.setPen(QtGui.QPen(self._color, 0))
-        bar_rect = self.bar_rect()
+        bar_rect, text_rect = self.bar_and_text_rect()
         painter.setBrush(self._color)
         painter.drawRect(bar_rect)
         if self._text_visible:
-            painter.drawText(self.text_rect(), text)
+            self._draw_text_original_scale(painter, text_rect, text)
 
     def draw_shadowed_scale_bar(self, painter: QtGui.QPainter, text: str):
-        bar_rect = self.bar_rect()
+        bar_rect, text_rect = self.bar_and_text_rect()
         shadow_rect = bar_rect.translated(0, bar_rect.height())
-        text_rect = self.text_rect()
         color_shadow = (
             QtGui.QColor(0, 0, 0)
             if self._color.lightness() > 128
@@ -147,19 +160,18 @@ class QScaleBarItem(QtW.QGraphicsItem):
         painter.setPen(QtGui.QPen(color_shadow, 0))
         painter.setBrush(color_shadow)
         painter.drawRect(shadow_rect)
-        _1 = 1 / self._view.transform().m11()
+        _2 = 2 / self._view.transform().m11()
         if self._text_visible:
-            painter.drawText(text_rect.translated(0, 2 * _1), text)
+            self._draw_text_original_scale(painter, text_rect.translated(0, _2), text)
         self.draw_simple_scale_bar(painter, text)
         painter.setPen(QtGui.QPen(self._color, 0))
         painter.setBrush(self._color)
         painter.drawRect(bar_rect)
         if self._text_visible:
-            painter.drawText(text_rect, text)
+            self._draw_text_original_scale(painter, text_rect, text)
 
     def draw_backgrounded_scale_bar(self, painter: QtGui.QPainter, text: str):
-        bar_rect = self.bar_rect()
-        text_rect = self.text_rect()
+        bar_rect, text_rect = self.bar_and_text_rect()
         color_bg = (
             QtGui.QColor(0, 0, 0)
             if self._color.lightness() > 128
@@ -173,8 +185,22 @@ class QScaleBarItem(QtW.QGraphicsItem):
         painter.setPen(QtGui.QPen(self._color, 0))
         painter.setBrush(self._color)
         if self._text_visible:
-            painter.drawText(text_rect, text)
+            self._draw_text_original_scale(painter, text_rect, text)
         self.draw_simple_scale_bar(painter, text)
+
+    def _draw_text_original_scale(
+        self,
+        painter: QtGui.QPainter,
+        rect: QtCore.QRectF,
+        text: str,
+    ):
+        tr = painter.transform()
+        painter.resetTransform()
+        top_left = self._view.mapFromScene(rect.topLeft())
+        bottom_right = self._view.mapFromScene(rect.bottomRight())
+        rect = QtCore.QRectF(top_left, bottom_right)
+        painter.drawText(rect, text)
+        painter.setTransform(tr)
 
 
 class ScaleBarType(StrEnum):
@@ -188,3 +214,30 @@ class ScaleBarAnchor(StrEnum):
     TOP_RIGHT = "top_right"
     BOTTOM_LEFT = "bottom_left"
     BOTTOM_RIGHT = "bottom_right"
+
+
+def _find_nice_factor(zoom_factor: float, image_scale: float) -> float:
+    """Find a nice width for the scale bar."""
+    # physical_width should be 1, 2, 5 x 10^N
+    _n_pixel_for_1_unit = 1 / image_scale
+    _min_logical_size = 40
+    _max_logical_size = 100
+    _screen_size = _n_pixel_for_1_unit * zoom_factor
+    # find the smallest 1, 2, 5 x 10^N that is larger than _logical_size
+    _n = -math.floor(math.log10(_screen_size)) + 2
+    # now, _logical_size * 10^_n is in the range [10, 100)
+    _multiplied = _screen_size * 10**_n
+    _factor_int = 1
+    if _multiplied < _min_logical_size:
+        _factor_int = 2
+    elif _multiplied < _min_logical_size / 2:
+        _factor_int = 5
+    elif _multiplied >= _max_logical_size * 2:
+        _factor_int = 2
+        _n -= 1
+    elif _multiplied >= _max_logical_size:
+        _factor_int = 5
+        _n -= 1
+    else:
+        _factor_int = 1
+    return _factor_int * 10**_n

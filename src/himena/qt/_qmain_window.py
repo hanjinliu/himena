@@ -139,15 +139,17 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _update_widget_theme(self, style: Theme):
         self.setStyleSheet(style.format_text(get_stylesheet_path().read_text()))
         if style.is_light_background():
-            icon_color = "#000000"
+            icon_color = "#333333"
         else:
-            icon_color = "#ffffff"
+            icon_color = "#CCCCCC"
         for action in self._toolbar.actions():
             if isinstance(action, QMenuItemAction):
                 btn = self._toolbar.widgetForAction(action)
                 icon = self._app._registered_actions[action._command_id].icon
                 if icon is not None:
-                    btn.setIcon(QIconifyIcon(icon.light, color=icon_color))
+                    qicon = QIconifyIcon(icon.light, color=icon_color)
+                    btn.setIcon(qicon)
+                    btn.actions()[0].setIcon(qicon)
         for i in range(self._tab_widget.count()):
             area = self._tab_widget.widget_area(i)
             for sub in area.subWindowList():
@@ -253,9 +255,9 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         _LOGGER.info("Adding widget of title %r to tab %r", title, i_tab)
         subwindow = tab.add_widget(widget, title)
         if self._himena_main_window.theme.is_light_background():
-            icon_color = "#000000"
+            icon_color = "#333333"
         else:
-            icon_color = "#ffffff"
+            icon_color = "#CCCCCC"
         subwindow._set_icon_color(icon_color)
         return subwindow
 

@@ -321,8 +321,8 @@ class RoiSelectionHandles:
 
     def connect_rotated_rect(self, rect: QRotatedRectangleRoi):
         self.clear_handles()
-        h_l = self.make_handle_at(rect.left())
-        h_r = self.make_handle_at(rect.right())
+        h_l = self.make_handle_at(rect.start())
+        h_r = self.make_handle_at(rect.end())
         h_t = self.make_handle_at(rect.top(), self._another_color)
         h_b = self.make_handle_at(rect.bottom(), self._another_color)
 
@@ -331,24 +331,24 @@ class RoiSelectionHandles:
         def _t_b_moved(ev: QtW.QGraphicsSceneMouseEvent):
             ex = rect.vector_x()
             ex = ex / math.sqrt(ex.x() ** 2 + ex.y() ** 2)  # unit vector
-            pos_rel = ev.pos() - rect.left()
+            pos_rel = ev.pos() - rect.start()
             pos_proj = ex * QtCore.QPointF.dotProduct(pos_rel, ex)
             dist_vec = pos_rel - pos_proj
             dist = math.sqrt(dist_vec.x() ** 2 + dist_vec.y() ** 2)
-            rect.setHeight(dist * 2)
+            rect.set_width(dist * 2)
 
         @h_l.moved_by_mouse.connect
         def _l_moved(ev: QtW.QGraphicsSceneMouseEvent):
-            rect.setLeft(ev.pos())
+            rect.set_start(ev.pos())
 
         @h_r.moved_by_mouse.connect
         def _r_moved(ev: QtW.QGraphicsSceneMouseEvent):
-            rect.setRight(ev.pos())
+            rect.set_end(ev.pos())
 
         @rect.changed.connect
         def _rect_changed():
-            h_l.setCenter(rect.left())
-            h_r.setCenter(rect.right())
+            h_l.setCenter(rect.start())
+            h_r.setCenter(rect.end())
             h_t.setCenter(rect.top())
             h_b.setCenter(rect.bottom())
 

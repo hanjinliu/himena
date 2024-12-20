@@ -9,6 +9,7 @@ from himena.plugins._checker import protocol_override
 from himena.types import WidgetDataModel
 from himena.consts import StandardType
 from himena._descriptors import LocalReaderMethod
+from himena._utils import unwrap_lazy_model
 from himena_builtins.qt.widgets._splitter import QSplitterHandle
 
 if TYPE_CHECKING:
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
 
 _LOGGER = logging.getLogger(__name__)
 _WIDGET_ROLE = QtCore.Qt.ItemDataRole.UserRole
-_READER_ROLE = QtCore.Qt.ItemDataRole.UserRole + 1
+_MODEL_ROLE = QtCore.Qt.ItemDataRole.UserRole + 1
 
 
 class QModelStack(QtW.QSplitter):
@@ -123,11 +124,8 @@ class QModelStack(QtW.QSplitter):
         """Make a list item that will convert a file into a widget when needed."""
         item = QtW.QListWidgetItem(name)
         item.setFlags(item.flags() | QtCore.Qt.ItemFlag.ItemIsEditable)
-        if isinstance(path := model.value, Path):
-            item.setData(_READER_ROLE, LocalReaderMethod(path=path))
-            item.setData(_WIDGET_ROLE, None)
-        elif isinstance(method := model.value, LocalReaderMethod):
-            item.setData(_READER_ROLE, method)
+        if isinstance(model.value, (str, Path, LocalReaderMethod)):
+            item.setData(_MODEL_ROLE, model)
             item.setData(_WIDGET_ROLE, None)
         else:
             warnings.warn(
@@ -141,7 +139,7 @@ class QModelStack(QtW.QSplitter):
         """Make a list item that will immediately converted intoa widget."""
         item = QtW.QListWidgetItem(name)
         item.setFlags(item.flags() | QtCore.Qt.ItemFlag.ItemIsEditable)
-        item.setData(_READER_ROLE, None)
+        item.setData(_MODEL_ROLE, None)
         widget = self._model_to_widget(model)
         self._add_widget(item, widget)
         return item
@@ -162,11 +160,11 @@ class QModelStack(QtW.QSplitter):
         models: list[WidgetDataModel] = []
         for ith in range(self._model_list.count()):
             item = self._model_list.item(ith)
-            reader_method = item.data(_READER_ROLE)
-            if reader_method is None:  # not a lazy item
+            model = item.data(_MODEL_ROLE)
+            if model is None:  # not a lazy item
                 model = item.data(_WIDGET_ROLE).to_model()
             else:
-                model = self._exec_lazy_loading(reader_method)
+                model = self._exec_lazy_loading(model)
             name = item.text()
             model.title = name
             models.append(model)
@@ -209,11 +207,11 @@ class QModelStack(QtW.QSplitter):
         item = self._model_list.item(row)
         widget = item.data(_WIDGET_ROLE)
         if widget is None:
-            reader_method = item.data(_READER_ROLE)
-            if reader_method is None:
+            model = item.data(_MODEL_ROLE)
+            if model is None:
                 widget = QtW.QLabel("Not Available")
             else:
-                model = self._exec_lazy_loading(reader_method)
+                model = self._exec_lazy_loading(model)
                 widget = self._model_to_widget(model)
             self._add_widget(item, widget)
         idx = self._widget_stack.indexOf(widget)
@@ -226,12 +224,12 @@ class QModelStack(QtW.QSplitter):
         if self._last_index is not None:
             item = self._model_list.item(self._last_index)
             if (
-                (reader_method := item.data(_READER_ROLE))
+                (model := item.data(_MODEL_ROLE))
                 and (widget := item.data(_WIDGET_ROLE))
                 and not _is_modified(widget)
             ):
                 item.setData(_WIDGET_ROLE, None)
-                item.setData(_READER_ROLE, reader_method)
+                item.setData(_MODEL_ROLE, model)
                 assert isinstance(widget, QtW.QWidget)
                 stack_idx = self._widget_stack.indexOf(widget)
                 self._widget_stack.removeWidget(widget)
@@ -244,16 +242,16 @@ class QModelStack(QtW.QSplitter):
         self._update_current_index()
         self._last_index = self._model_list.currentRow()
 
-    def _exec_lazy_loading(self, reader_method: LocalReaderMethod) -> WidgetDataModel:
+    def _exec_lazy_loading(self, model: WidgetDataModel) -> WidgetDataModel:
         """Run the pending lazy loading."""
-        from himena._providers import ReaderProviderStore
-
-        _LOGGER.info("Lazy loading of: %s", reader_method)
-        store = ReaderProviderStore.instance()
-        path = reader_method.path
-        model = store.run(path, plugin=reader_method.plugin)._with_source(path)
-        if isinstance(path, Path):
-            model.title = path.name
+        _LOGGER.info("Lazy loading of: %r", model)
+        val = model.value
+        model = unwrap_lazy_model(model)
+        # determine the title
+        if isinstance(val, LocalReaderMethod):
+            val = val.path
+        if isinstance(val, (str, Path)):
+            model.title = Path(val).name
         else:
             model.title = "File Group"
         return model

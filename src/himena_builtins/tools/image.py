@@ -21,12 +21,12 @@ configure_submenu("/model_menu/roi", "ROI")
 
 @register_function(
     types=StandardType.IMAGE,
-    menus=["tools/image"],
+    menus=["tools/image/roi", "/model_menu/roi"],
     command_id="builtins:crop-image",
     keybindings=["Ctrl+Shift+X"],
 )
 def crop_image(model: WidgetDataModel) -> WidgetDataModel:
-    """Crop the image."""
+    """Crop the image around the current ROI."""
     roi, meta = _get_current_roi_and_meta(model)
     arr = wrap_array(model.value)
     if isinstance(roi, _roi.ImageRoi2D):
@@ -40,9 +40,37 @@ def crop_image(model: WidgetDataModel) -> WidgetDataModel:
 
 
 @register_function(
+    types=StandardType.IMAGE,
+    menus=["tools/image/roi", "/model_menu/roi"],
+    command_id="builtins:crop-image-multi",
+)
+def crop_image_multi(model: WidgetDataModel) -> WidgetDataModel:
+    """Crop the image around the registered ROIs and return as a model stack."""
+    meta = _cast_meta(model, ImageMeta)
+    arr = wrap_array(model.value)
+    rois = _resolve_roi_list_model(meta, copy=False)
+    meta_out = meta.without_rois()
+    cropped_models: list[WidgetDataModel] = []
+    for i, roi in enumerate(rois):
+        if not isinstance(roi, _roi.ImageRoi2D):
+            continue
+        sl, _ = _2d_roi_to_slices(roi, arr, meta)
+        arr_cropped = arr[(...,) + sl]
+        model_0 = model.with_value(
+            arr_cropped, metadata=meta_out, title=f"ROI-{i} of {model.title}"
+        )
+        cropped_models.append(model_0)
+    return WidgetDataModel(
+        value=cropped_models,
+        type=StandardType.MODELS,
+        title=f"Cropped images from {model.title}",
+    )
+
+
+@register_function(
     title="Crop Image (nD) ...",
     types=StandardType.IMAGE,
-    menus=["tools/image"],
+    menus=["tools/image/roi", "/model_menu/roi"],
     command_id="builtins:crop-image-nd",
 )
 def crop_image_nd(win: SubWindow) -> Parametric:
@@ -107,21 +135,13 @@ def _2d_roi_to_slices(
 @register_function(
     title="Duplicate ROIs",
     types=StandardType.IMAGE,
-    menus=["tools/image"],
+    menus=["tools/image/roi, /model_menu/roi"],
     command_id="builtins:duplicate-rois",
 )
 def duplicate_rois(model: WidgetDataModel) -> WidgetDataModel:
     """Duplicate the ROIs as a new window with the ROI data."""
     meta = _cast_meta(model, ImageMeta)
-    rois = meta.rois
-    if isinstance(rois, _roi.RoiListModel):
-        rois = rois.model_copy()
-    elif callable(rois):
-        rois = rois()
-        if not isinstance(rois, _roi.RoiListModel):
-            raise ValueError(f"Expected a RoiListModel, got {type(rois)}")
-    else:
-        raise ValueError("Expected a RoiListModel or a factory function.")
+    rois = _resolve_roi_list_model(meta)
     return WidgetDataModel(
         value=rois,
         type=StandardType.IMAGE_ROIS,
@@ -449,3 +469,17 @@ def _slider_indices(meta: ImageMeta) -> tuple[int, ...]:
     else:
         indices = ()
     return indices
+
+
+def _resolve_roi_list_model(meta: ImageMeta, copy: bool = True) -> _roi.RoiListModel:
+    rois = meta.rois
+    if isinstance(rois, _roi.RoiListModel):
+        if copy:
+            rois = rois.model_copy()
+    elif callable(rois):
+        rois = rois()
+        if not isinstance(rois, _roi.RoiListModel):
+            raise ValueError(f"Expected a RoiListModel, got {type(rois)}")
+    else:
+        raise ValueError("Expected a RoiListModel or a factory function.")
+    return rois

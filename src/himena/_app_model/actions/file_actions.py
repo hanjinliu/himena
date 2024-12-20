@@ -125,7 +125,7 @@ def open_file_using_from_dialog(ui: MainWindow) -> Parametric:
 def open_file_group_from_dialog(ui: MainWindow):
     """Open file group as a single sub-window."""
     if result := ui.exec_file_dialog(mode="rm"):
-        return ui.read_files(result)
+        return ui.read_file(result)
     raise Cancelled
 
 
@@ -216,7 +216,9 @@ def save_as_using_from_dialog(ui: MainWindow, sub_win: SubWindow):
     """Save the current sub-window using selected plugin."""
     model = sub_win.to_model()
     ins = _providers.WriterProviderStore().instance()
-    writers = ins.get(model, min_priority=-float("inf"))
+    model.title = sub_win.title
+    save_path = sub_win._save_behavior._determine_save_path(model) or "~"
+    writers = ins.get(model, Path(save_path), min_priority=-float("inf"))
 
     # prepare reader plugin choices
     choices_writer = [(f"{_name_of(w.writer)}\n({w.plugin.name})", w) for w in writers]

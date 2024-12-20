@@ -135,6 +135,19 @@ class Axes(AxesBase):
         self.models.append(model)
         return model
 
+    def span(
+        self,
+        start: float,
+        end: float,
+        *,
+        orient: Literal["vertical", "horizontal"] = "horizontal",
+        **kwargs,
+    ) -> _m.Span:
+        """Add a span plot model to the axes."""
+        model = _m.Span(start=start, end=end, orient=orient, **parse_face_edge(kwargs))
+        self.models.append(model)
+        return model
+
     def hist(
         self,
         data: "Sequence[float] | NDArray[np.number]",

@@ -187,7 +187,7 @@ class QImageGraphicsView(QBaseGraphicsView):
         self._scale_bar_widget.setZValue(10000)
         self._scale_bar_widget.setVisible(False)
         self.geometry_changed.connect(self._scale_bar_widget.update_rect)
-        self._yx_axis_scales = (1.0, 1.0)
+        self._internal_clipboard: QRoi | None = None
 
     def add_image_layer(self, additive: bool = False):
         self._image_widgets.append(
@@ -295,6 +295,10 @@ class QImageGraphicsView(QBaseGraphicsView):
         if not self._initialized:
             self.initialize()
         return super().resizeEvent(event)
+
+    def showEvent(self, event):
+        self.initialize()
+        return super().showEvent(event)
 
     def initialize(self):
         if self._initialized:
@@ -500,7 +504,7 @@ class QImageGraphicsView(QBaseGraphicsView):
                 if isinstance(self._current_roi_item, QRotatedRectangleRoi):
                     if _shift_down:
                         pos = _find_nice_position(pos0, pos)
-                    self._current_roi_item.setRight(pos)
+                    self._current_roi_item.set_end(pos)
             elif self.mode() is Mode.SELECT:
                 if item := self._current_roi_item:
                     delta = pos - self.mapToScene(self._pos_drag_prev)
@@ -668,6 +672,19 @@ class QImageGraphicsView(QBaseGraphicsView):
                 ny, nx = self._image_widgets[0]._img.shape[:2]
                 self.set_current_roi(QRectangleRoi(0, 0, nx, ny).withPen(self._roi_pen))
                 self._selection_handles.connect_rect(self._current_roi_item)
+            elif _key == Qt.Key.Key_X:
+                if self._current_roi_item is not None:
+                    self._internal_clipboard = self._current_roi_item.copy()
+                    self.remove_current_item(remove_from_list=True)
+            elif _key == Qt.Key.Key_C:
+                if self._current_roi_item is not None:
+                    self._internal_clipboard = self._current_roi_item.copy()
+            elif _key == Qt.Key.Key_V and self._internal_clipboard:
+                self._paste_roi()
+            elif _key == Qt.Key.Key_D:  # duplicate ROI
+                if self._current_roi_item is not None:
+                    self._internal_clipboard = self._current_roi_item.copy()
+                    self._paste_roi()
         self._is_key_hold = True
         return None
 
@@ -679,8 +696,19 @@ class QImageGraphicsView(QBaseGraphicsView):
             self.set_mode(self._last_mode_before_key_hold)
         return None
 
-    def _toggle_scale_bar(self):
-        self._scale_bar_widget.setVisible(not self._scale_bar_widget.isVisible())
+    def _paste_roi(self):
+        item = self._internal_clipboard
+        if self._current_roi_item and self._is_current_roi_item_not_registered:
+            self.add_current_roi()
+        else:
+            self.remove_current_item()
+        sx, sy = self.transform().m11(), self.transform().m22()
+        item.translate(4 / sx, 4 / sy)
+        item_copy = item.copy()
+        self.set_current_roi(item_copy)
+        self._selection_handles.connect_rect(item_copy)
+        self._internal_clipboard = item_copy  # needed for Ctrl+V x2
+        self._is_current_roi_item_not_registered = True
 
 
 def _find_nice_position(pos0: QtCore.QPointF, pos1: QtCore.QPointF) -> QtCore.QPointF:
