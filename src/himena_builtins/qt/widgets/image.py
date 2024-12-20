@@ -340,7 +340,14 @@ class QImageView(QtW.QSplitter):
         return self._control._channel_mode_combo.currentText()
 
     def _roi_item_clicked(self, indices: tuple[int, ...], qroi: QRoi):
-        self._dims_slider.setValue(indices)
+        if (ninds := len(indices)) < (ndim_rem := self._dims_slider.count()):
+            # this happens when the ROI is flattened
+            if ninds > 0:
+                higher_dims = ndim_rem - ninds
+                indices_filled = self._dims_slider.value()[:higher_dims] + indices
+                self._dims_slider.setValue(indices_filled)
+        else:
+            self._dims_slider.setValue(indices)
         self._img_view.select_item(qroi)
 
     def _roi_visibility_changed(self, show_rois: bool):
@@ -472,7 +479,7 @@ class QImageView(QtW.QSplitter):
 
     def _on_roi_added(self, qroi: QRoi):
         if qroi.label() == "":
-            qroi.setLabel(str(len(self._roi_col)))
+            qroi.set_label(str(len(self._roi_col)))
         indices = self._dims_slider.value()
         self._roi_col.add(indices, qroi)
         set_status_tip(f"Added a {qroi._roi_type()} ROI")

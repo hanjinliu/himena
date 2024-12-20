@@ -519,10 +519,9 @@ class QImageGraphicsView(QBaseGraphicsView):
         return super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
-        if (
-            self._pos_drag_start == event.pos()
-            and event.button() == Qt.MouseButton.LeftButton
-        ):  # left click
+        _is_left = event.button() == Qt.MouseButton.LeftButton
+        _is_right = event.button() == Qt.MouseButton.RightButton
+        if self._pos_drag_start == event.pos() and _is_left:  # left click
             p0 = self.mapToScene(self._pos_drag_start)
             if (
                 self._mode in MULTIPOINT_ROI_MODES
@@ -563,11 +562,20 @@ class QImageGraphicsView(QBaseGraphicsView):
                 Mode.ROI_ROTATED_RECTANGLE,
             ):
                 self.remove_current_item()
-        elif (
-            self._pos_drag_start == event.pos()
-            and event.button() == Qt.MouseButton.RightButton
-        ):  # right click
+        elif self._pos_drag_start == event.pos() and _is_right:  # right click
             return super().mouseReleaseEvent(event)
+        elif _is_left:
+            if self.mode() in (
+                Mode.ROI_LINE,
+                Mode.ROI_RECTANGLE,
+                Mode.ROI_ELLIPSE,
+                Mode.ROI_ROTATED_RECTANGLE,
+            ):
+                xscale = yscale = self._scale_bar_widget._scale
+                unit = self._scale_bar_widget._unit
+                set_status_tip(
+                    self._current_roi_item.short_description(xscale, yscale, unit)
+                )
         if self._mode is Mode.PAN_ZOOM:
             self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
         self.scene().setGrabSource(None)

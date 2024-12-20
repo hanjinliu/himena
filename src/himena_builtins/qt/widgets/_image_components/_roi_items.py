@@ -19,7 +19,7 @@ class QRoi(QtW.QGraphicsItem):
     def label(self) -> str:
         return getattr(self, "_roi_label", "")
 
-    def setLabel(self, label: str):
+    def set_label(self, label: str):
         self._roi_label = label
 
     def toRoi(self, indices: Iterable[int | None]) -> roi.ImageRoi:
@@ -36,7 +36,7 @@ class QRoi(QtW.QGraphicsItem):
         return self
 
     def withLabel(self, label: str | None):
-        self.setLabel(label or "")
+        self.set_label(label or "")
         return self
 
     def copy(self) -> Self:
@@ -56,20 +56,28 @@ class QRoi(QtW.QGraphicsItem):
     def _roi_type(self) -> str:
         return self.__class__.__name__
 
+    def short_description(self, xscale: float, yscale: float, unit: str) -> str:
+        """Description that will be shown in the status bar when the ROI is drawn."""
+        return ""
+
 
 class QLineRoi(QtW.QGraphicsLineItem, QRoi):
     changed = Signal(QtCore.QLineF)
 
     def toRoi(self, indices) -> roi.LineRoi:
-        line = self.line()
+        x1, y1, x2, y2 = self._coordinates()
         return roi.LineRoi(
-            x1=line.x1(),
-            y1=line.y1(),
-            x2=line.x2(),
-            y2=line.y2(),
+            x1=x1,
+            y1=y1,
+            x2=x2,
+            y2=y2,
             indices=indices,
             name=self.label(),
         )
+
+    def _coordinates(self) -> tuple[float, float, float, float]:
+        line = self.line()
+        return line.x1(), line.y1(), line.x2(), line.y2()
 
     def translate(self, dx: float, dy: float):
         new_line = self.line()
@@ -94,6 +102,16 @@ class QLineRoi(QtW.QGraphicsLineItem, QRoi):
 
     def _roi_type(self) -> str:
         return "line"
+
+    def short_description(self, xscale: float, yscale: float, unit: str) -> str:
+        x1, y1, x2, y2 = self._coordinates()
+        start = f"{x1:.1f}, {y1:.1f}"
+        end = f"{x2:.1f}, {y2:.1f}"
+        length_px = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+        length = math.sqrt(((x2 - x1) * xscale) ** 2 + ((y2 - y1) * yscale) ** 2)
+        if not unit:
+            return f"start={start}, end={end}, length={length_px:.1f}"
+        return f"start={start}, end={end}, length={length_px:.1f} ({length:.1f} {unit})"
 
 
 class QRectRoiBase(QRoi):
@@ -136,6 +154,17 @@ class QRectangleRoi(QtW.QGraphicsRectItem, QRectRoiBase):
     def _roi_type(self) -> str:
         return "rectangle"
 
+    def short_description(self, xscale: float, yscale: float, unit: str) -> str:
+        rect = self.rect()
+        x, y, w, h = rect.x(), rect.y(), rect.width(), rect.height()
+        width_px = w
+        height_px = h
+        width = w * xscale
+        height = h * yscale
+        if not unit:
+            return f"left={x:.1f}, top={y:.1f}, width={width_px:.1f}, height={height_px:.1f}"
+        return f"left={x:.1f}, top={y:.1f}, width={width_px:.1f} ({width:.1f} {unit}), height={height_px:.1f} ({height:.1f} {unit})"
+
 
 class QEllipseRoi(QtW.QGraphicsEllipseItem, QRectRoiBase):
     changed = Signal(QtCore.QRectF)
@@ -174,6 +203,21 @@ class QEllipseRoi(QtW.QGraphicsEllipseItem, QRectRoiBase):
 
     def _roi_type(self) -> str:
         return "ellipse"
+
+    def short_description(self, xscale: float, yscale: float, unit: str) -> str:
+        rect = self.rect()
+        x, y, w, h = rect.x(), rect.y(), rect.width(), rect.height()
+        cx = x + w / 2
+        cy = y + h / 2
+        width = w * xscale
+        height = h * yscale
+        if h > w:
+            eccentricity = math.sqrt(1 - (width / height) ** 2)
+        else:
+            eccentricity = math.sqrt(1 - (height / width) ** 2)
+        if not unit:
+            return f"center=[{cx:.1f}, {cy:.1f}], width={w:.1f}, height={h:.1f}, eccentricity={eccentricity:.2f}"
+        return f"center=[{cx:.1f}, {cy:.1f}], width={w:.1f} ({width:.1f} {unit}), height={h:.1f} ({height:.1f} {unit}), eccentricity={eccentricity:.2f}"
 
 
 class QRotatedRectangleRoi(QRoi):
@@ -320,6 +364,15 @@ class QRotatedRectangleRoi(QRoi):
 
     def _roi_type(self) -> str:
         return "rotated rectangle"
+
+    def short_description(self, xscale: float, yscale: float, unit: str) -> str:
+        start = self.start()
+        end = self.end()
+        length_px = self._length
+        length = length_px * xscale
+        if not unit:
+            return f"start=[{start.x():.1f}, {start.y():.1f}], end=[{end.x():.1f}, {end.y():.1f}], length={length_px:.1f}"
+        return f"start=[{start.x():.1f}, {start.y():.1f}], end=[{end.x():.1f}, {end.y():.1f}], length={length_px:.1f} ({length:.1f} {unit})"
 
 
 class QSegmentedLineRoi(QtW.QGraphicsPathItem, QRoi):

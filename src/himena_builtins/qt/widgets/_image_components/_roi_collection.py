@@ -73,10 +73,13 @@ class QSimpleRoiCollection(QtW.QWidget):
             QtCore.QModelIndex(), len(self._rois), len(self._rois)
         )
         self._rois.append((indices, roi))
+        self._cache_roi(indices, roi)
+        self._list_view.model().endInsertRows()
+
+    def _cache_roi(self, indices: Indices, roi: _roi_items.QRoi):
         if indices not in self._slice_cache:
             self._slice_cache[indices] = []
         self._slice_cache[indices].append(roi)
-        self._list_view.model().endInsertRows()
 
     def extend(self, other: QRoiCollection):
         for indices, r in other._rois:
@@ -101,7 +104,7 @@ class QSimpleRoiCollection(QtW.QWidget):
     def get_rois_on_slice(self, indices: tuple[int, ...]) -> list[_roi_items.QRoi]:
         """Return a list of ROIs on the given slice."""
         indices_to_collect = []
-        for i in range(len(indices)):
+        for i in range(len(indices) + 1):  # append until get `()`
             indices_to_collect.append(indices[i:])
         out = []
         for idx in indices_to_collect:
@@ -115,6 +118,15 @@ class QSimpleRoiCollection(QtW.QWidget):
         roi = rois.pop(index)
         self._rois.remove((indices, roi))
         self._list_view.model().endRemoveRows()
+        return roi
+
+    def flatten_roi(self, index: int) -> _roi_items.QRoi:
+        indices, roi = self._rois[index]
+        if len(indices) == 0:
+            return roi
+        self._rois[index] = ((), roi)
+        self._slice_cache[indices].remove(roi)
+        self._cache_roi((), roi)
         return roi
 
 
@@ -213,8 +225,30 @@ class QRoiListView(QtW.QListView):
         super().__init__(parent)
         self.setModel(QRoiListModel(parent))
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setEditTriggers(QtW.QAbstractItemView.EditTrigger.EditKeyPressed)
+        self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self._show_context_menu)
 
-    def keyPressEvent(self, a0):
+    def _show_context_menu(self, point):
+        index_under_cursor = self.indexAt(point)
+        if not index_under_cursor.isValid():
+            return
+        menu = QtW.QMenu(self)
+        action_rename = menu.addAction("Rename", lambda: self.edit(index_under_cursor))
+        action_rename.setToolTip("Rename the selected ROI")
+        action_flatten = menu.addAction(
+            "Flatten", lambda: self.parent().flatten_roi(index_under_cursor.row())
+        )
+        action_flatten.setToolTip("Flatten the selected ROI into 2D")
+
+        menu.exec(self.mapToGlobal(point))
+
+    def keyPressEvent(self, a0: QtGui.QKeyEvent):
+        if a0.key() == QtCore.Qt.Key.Key_F2:
+            self.edit(self.currentIndex())
+            return
+        elif a0.key() in (QtCore.Qt.Key.Key_Up, QtCore.Qt.Key.Key_Down):
+            return super().keyPressEvent(a0)
         self.key_pressed.emit(a0)
         return super().keyPressEvent(a0)
 
@@ -224,6 +258,16 @@ class QRoiListView(QtW.QListView):
 
     def sizeHint(self):
         return QtCore.QSize(180, 900)  # set to a very large value to make it expanded
+
+    def parent(self) -> QRoiCollection:
+        return super().parent()
+
+
+_FLAGS = (
+    QtCore.Qt.ItemFlag.ItemIsEnabled
+    | QtCore.Qt.ItemFlag.ItemIsSelectable
+    | QtCore.Qt.ItemFlag.ItemIsEditable
+)
 
 
 class QRoiListModel(QtCore.QAbstractListModel):
@@ -269,4 +313,9 @@ class QRoiListModel(QtCore.QAbstractListModel):
         return None
 
     def flags(self, index):
-        return QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsSelectable
+        return _FLAGS
+
+    def setData(self, index, value, role):
+        if role == QtCore.Qt.ItemDataRole.EditRole:
+            self._col._rois[index.row()][1].set_label(value)
+            return True
