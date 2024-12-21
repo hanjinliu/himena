@@ -64,7 +64,7 @@ def register_widget_class(type_, widget_class=None, priority=100):
     - `theme_changed_callback(self, theme: Theme)`:
     - `window_activated_callback(self)`:
     - `window_closed_callback(self)`:
-    - `window_resized_callback(self, size: tuple[int, int])`:
+    - `window_resized_callback(self, size_old, size_new)`:
     """
 
     def inner(wcls):

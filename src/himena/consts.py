@@ -59,6 +59,7 @@ class StandardType(SimpleNamespace):
     # text subtypes
     HTML = "text.html"  # HTML text
     SVG = "text.svg"  # SVG text
+    MARKDOWN = "text.markdown"  # markdown text
     JSON = "text.json"  # JSON text
     IPYNB = "text.json.ipynb"  # Jupyter notebook
 

@@ -38,8 +38,8 @@ class QMatplotlibCanvasBase(QtW.QWidget):
         return 300, 240
 
     @validate_protocol
-    def window_resized_callback(self, size: tuple[int, int]):
-        if size[0] > 40 and size[1] > 40:
+    def window_resized_callback(self, size_old, size_new: tuple[int, int]):
+        if size_new[0] > 40 and size_new[1] > 40:
             self._canvas.figure.tight_layout()
 
     def _prep_toolbar(self, toolbar_class=backend_qtagg.NavigationToolbar2QT):
@@ -177,8 +177,8 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
         return 300, 240
 
     @validate_protocol
-    def window_resized_callback(self, size: tuple[int, int]):
-        if size[0] > 40 and size[1] > 40:
+    def window_resized_callback(self, size_old, size_new: tuple[int, int]):
+        if size_new[0] > 40 and size_new[1] > 40:
             self._canvas.figure.tight_layout()
 
     @validate_protocol

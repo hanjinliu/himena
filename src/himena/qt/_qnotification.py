@@ -76,7 +76,6 @@ class _QOverlayBase(QtW.QDialog):
         if not self.isVisible():
             return
         qtable = self.parentWidget()
-        # if not qtable or qtable.isEmpty():
         if not qtable:
             return
         if self._anchor == Anchor.bottom_left:
@@ -93,7 +92,7 @@ class _QOverlayBase(QtW.QDialog):
     def viewRect(self) -> QtCore.QRect:
         """Return the parent table rect."""
         parent = self.parentWidget()
-        if widget := parent.widget(0):
+        if widget := parent.widget_area(0):
             return widget.rect()
         return QtCore.QRect()
 
@@ -103,7 +102,7 @@ class _QOverlayBase(QtW.QDialog):
         pos.setY(pos.y() + offset[1])
         self.move(pos)
 
-    def alignTopRight(self, offset=(21, 3)):
+    def alignTopRight(self, offset=(3, 3)):
         pos = self.viewRect().topRight()
         pos.setX(pos.x() - self.rect().width() - offset[0])
         pos.setY(pos.y() + offset[1])
@@ -115,7 +114,7 @@ class _QOverlayBase(QtW.QDialog):
         pos.setY(pos.y() - self.rect().height() - offset[1])
         self.move(pos)
 
-    def alignBottomRight(self, offset=(21, 3)):
+    def alignBottomRight(self, offset=(3, 3)):
         pos = self.viewRect().bottomRight()
         pos.setX(pos.x() - self.rect().width() - offset[0])
         pos.setY(pos.y() - self.rect().height() - offset[1])
@@ -279,3 +278,46 @@ class QJobStack(_QOverlayBase):
         self._list_widget.setFixedHeight(height)
         self.setFixedHeight(height + 4)
         self.alignToParent()
+
+
+class QWhatsThisWidget(_QOverlayBase):
+    def __init__(self, parent: QTabWidget):
+        super().__init__(parent)
+        self._close_btn = QtW.QPushButton("✕")
+        self._close_btn.setFixedSize(15, 15)
+        self._close_btn.setParent(
+            self, self._close_btn.windowFlags() | Qt.WindowType.FramelessWindowHint
+        )
+        self._close_btn.clicked.connect(self._hide)
+        self.setAnchor(Anchor.top_right)
+
+    def _hide(self):
+        self._close_btn.hide()
+        self.hide()
+        return None
+
+    def set_text(self, text: str, style: str = "plain"):
+        text_widget = QtW.QTextEdit()
+        text_widget.setFont(QtGui.QFont("Arial", 10))
+        if style == "plain":
+            text_widget.setText(text)
+        elif style == "markdown":
+            text_widget.setMarkdown(text)
+        elif style == "html":
+            text_widget.setHtml(text)
+        else:
+            raise ValueError(f"Unknown style: {style}")
+        self.addWidget(text_widget)
+
+    def enterEvent(self, a0: QtCore.QEvent) -> None:
+        self._close_btn.show()
+        pos_loc = self.rect().topRight() - QtCore.QPoint(
+            self._close_btn.width() + 5, -5
+        )
+        self._close_btn.move(self.mapToGlobal(pos_loc))
+        return super().enterEvent(a0)
+
+    def leaveEvent(self, a0: QtCore.QEvent) -> None:
+        if not self.rect().contains(self.mapFromGlobal(QtGui.QCursor.pos())):
+            self._close_btn.hide()
+        return super().leaveEvent(a0)

@@ -14,7 +14,7 @@ from himena_builtins.qt.widgets._image_components._roi_collection import (
 from himena.consts import StandardType
 from himena.standards import roi, model_meta
 from himena.qt._utils import qsignal_blocker
-from himena.types import MergeResult, WidgetDataModel
+from himena.types import MergeResult, Size, WidgetDataModel
 from himena.plugins import validate_protocol
 from himena.widgets import set_status_tip
 from himena._data_wrappers import ArrayWrapper, wrap_array
@@ -36,7 +36,32 @@ if TYPE_CHECKING:
 
 
 class QImageView(QtW.QSplitter):
-    """The default nD image viewer widget for himena."""
+    """The default nD image viewer widget for himena.
+
+    # Basic Usage
+
+    The image canvas can be interactively panned by dragging with the left mouse button,
+    and zoomed by scrolling the mouse wheel.
+
+    # Keyboard Shortcuts
+
+    - `L`: Switch between Line ROI and Segmented Line ROI.
+    - `R`: Switch between Rectangle ROI and Rotated Rectangle ROI.
+    - `E`: Switch to Ellipse ROI.
+    - `G`: Switch to Polygon ROI.
+    - `P`: Switch between Point ROI and Multi-Point ROI.
+    - `Z`: Switch to Pan/Zoom Mode.
+    - `Space`: Hold this key to temporarily switch to Pan/Zoom Mode.
+    - `S`: Switch to Select Mode.
+    - `T`: Add current ROI to the ROI list.
+    - `V`: Toggle visibility of all the added ROIs.
+    - `Delete` / `Backspace`: Remove the current ROI.
+    - `Ctrl+A`: Select the entire image with a rectangle ROI.
+    - `Ctrl+X`: Cut the selected ROI.
+    - `Ctrl+C`: Copy the selected ROI.
+    - `Ctrl+V`: Paste the copied ROI.
+    - `Ctrl+D`: Duplicate the selected ROI.
+    """
 
     __himena_widget_id__ = "builtins:QImageView"
     __himena_display_name__ = "Built-in Image Viewer"
@@ -89,7 +114,6 @@ class QImageView(QtW.QSplitter):
         self._model_type: str = StandardType.IMAGE
         self._pixel_unit: str = "a.u."
         self._extension_default: str = ".png"
-        self._img_view.add_image_layer()
 
     def createHandle(self):
         return QSplitterHandle(self)
@@ -329,6 +353,14 @@ class QImageView(QtW.QSplitter):
         else:
             color = QtGui.QColor(255, 255, 255)
         self._roi_buttons._update_colors(color)
+
+    @validate_protocol
+    def window_resized_callback(self, old: Size, new: Size):
+        self._img_view.resize_event(old, new)
+
+    @validate_protocol
+    def window_added_callback(self):
+        self._img_view.auto_range()
 
     def setFocus(self):
         return self._img_view.setFocus()

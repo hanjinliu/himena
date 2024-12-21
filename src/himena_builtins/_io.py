@@ -57,6 +57,8 @@ def default_text_reader(file_path: Path) -> WidgetDataModel:
         typ = StandardType.JSON
     elif file_path.suffix == ".svg":
         typ = StandardType.SVG
+    elif file_path.suffix == ".md":
+        typ = StandardType.MARKDOWN
     elif file_path.suffix == ".ipynb":
         typ = StandardType.IPYNB
     else:

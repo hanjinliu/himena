@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     types=StandardType.ARRAY,
     menus=["tools/array"],
     command_id="builtins:array-duplicate-slice",
+    keybindings=["Ctrl+Shift+D"],
 )
 def duplicate_this_slice(model: WidgetDataModel) -> WidgetDataModel:
     """Duplicate the slice of the array."""

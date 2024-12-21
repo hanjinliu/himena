@@ -225,6 +225,10 @@ class QTabWidget(QtW.QTabWidget):
             return None
         return self.currentWidget()
 
+    def resizeEvent(self, a0):
+        self.resized.emit()
+        return super().resizeEvent(a0)
+
 
 class QStartupWidget(QtW.QWidget):
     """The widget for the startup tab."""

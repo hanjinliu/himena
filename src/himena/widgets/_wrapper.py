@@ -338,8 +338,8 @@ class SubWindow(WidgetWrapper[_W]):
         if inst is None:
             inst = self._main_window()._himena_main_window._instructions
         main = self._main_window()
-        rect = WindowRect.from_tuple(*value)
         front = self._frontend_widget()
+        rect = WindowRect.from_tuple(*value)
         anc = main._window_anchor(front).update_for_window_rect(main._area_size(), rect)
         main._set_window_rect(front, rect, inst)
         main._set_window_anchor(front, anc)

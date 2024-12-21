@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TypeVar
 
+from himena.types import Size
+
 _T = TypeVar("_T")
 
 _ALLOWED_METHODS = frozenset(
@@ -48,8 +50,8 @@ def call_theme_changed_callback(win, theme):
     return _call_callback(win, "theme_changed_callback", theme)
 
 
-def call_window_resized_callback(win, size: tuple[int, int]):
-    return _call_callback(win, "window_resized_callback", size)
+def call_window_resized_callback(win, size_old: Size, size_new: Size):
+    return _call_callback(win, "window_resized_callback", size_old, size_new)
 
 
 def call_window_added_callback(win):

@@ -5,7 +5,7 @@ import logging
 from typing import TYPE_CHECKING, Mapping, Sequence
 import warnings
 from qtpy import QtWidgets as QtW, QtCore
-from himena.plugins._checker import validate_protocol
+from himena.plugins import validate_protocol, _checker
 from himena.types import WidgetDataModel
 from himena.consts import StandardType
 from himena._descriptors import LocalReaderMethod
@@ -14,6 +14,7 @@ from himena_builtins.qt.widgets._splitter import QSplitterHandle
 
 if TYPE_CHECKING:
     from himena.widgets import MainWindow
+    from himena.style import Theme
 
 _LOGGER = logging.getLogger(__name__)
 _WIDGET_ROLE = QtCore.Qt.ItemDataRole.UserRole
@@ -202,6 +203,17 @@ class QModelStack(QtW.QSplitter):
         item = self._make_eager_item(model.title, model)
         self._model_list.addItem(item)
 
+    # TODO: Implement the following methods
+    # @validate_protocol
+    # def window_resized_callback(self, size_old: Size, size_new: Size):
+    #     widget = self._widget_stack.currentWidget()
+    #     _checker.call_window_resized_callback(widget, ...)
+
+    @validate_protocol
+    def theme_changed_callback(self, theme: Theme):
+        if widget := self._widget_stack.currentWidget():
+            _checker.call_theme_changed_callback(widget, theme)
+
     def _update_current_index(self):
         row = self._model_list.currentRow()
         item = self._model_list.item(row)
@@ -269,6 +281,7 @@ class QModelStack(QtW.QSplitter):
         return False
 
     def _get_current(self):
+        """Clone the current model and add it to the main window."""
         if widget := self._widget_stack.currentWidget():
             model = widget.to_model()
             assert isinstance(model, WidgetDataModel)

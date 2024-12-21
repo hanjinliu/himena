@@ -15,7 +15,7 @@ from superqt.utils import ensure_main_thread
 from himena.consts import MenuId
 from himena.consts import ParametricWidgetProtocolNames as PWPN
 from himena._app_model import _formatter, HimenaApplication
-from himena.qt._qnotification import QJobStack, QNotificationWidget
+from himena.qt._qnotification import QJobStack, QNotificationWidget, QWhatsThisWidget
 from himena.qt._qtab_widget import QTabWidget
 from himena.qt._qstatusbar import QStatusBar
 from himena.qt._qsub_window import QSubWindow, QSubWindowArea
@@ -741,6 +741,15 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _add_job_progress(self, future: Future, desc: str, total: int = 0) -> None:
         self._job_stack.add_future(future, desc, total)
         return None
+
+    def _add_whats_this(
+        self,
+        text: str,
+        style: Literal["plain", "markdown", "html"] = "plain",
+    ) -> None:
+        whatsthis = QWhatsThisWidget(self._tab_widget)
+        whatsthis.set_text(text, style)
+        whatsthis.show()
 
 
 def _is_root_menu_id(app: HimenaApplication, menu_id: str) -> bool:

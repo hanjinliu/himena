@@ -8,6 +8,8 @@ import numpy as np
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt
 
+from himena.types import Size
+
 from ._base import QBaseGraphicsView, QBaseGraphicsScene
 from ._roi_items import (
     QPointRoi,
@@ -227,8 +229,11 @@ class QImageGraphicsView(QBaseGraphicsView):
         else:
             widget.set_image(img)
             widget.setVisible(True)
-        self._qroi_labels.set_bounding_rect(self._image_widgets[0].boundingRect())
-        self._scale_bar_widget.set_bounding_rect(self._image_widgets[0].boundingRect())
+        for widget in self._image_widgets:
+            if widget.isVisible():
+                self._qroi_labels.set_bounding_rect(widget.boundingRect())
+                self._scale_bar_widget.set_bounding_rect(widget.boundingRect())
+                break
 
     def set_image_blending(self, opaque: list[bool]):
         is_first = True
@@ -279,13 +284,10 @@ class QImageGraphicsView(QBaseGraphicsView):
     def scene(self) -> QBaseGraphicsScene:
         return super().scene()
 
-    def resizeEvent(self, event: QtGui.QResizeEvent):
-        # Dynamically resize the image to keep the current zoom factor
-        old_size = event.oldSize()
-        new_size = event.size()
-        if (w_new := new_size.width()) < 10 or (h_new := new_size.height()) < 10:
-            return super().resizeEvent(event)
-        if (w_old := old_size.width()) == 0 or (h_old := old_size.height()) == 0:
+    def resize_event(self, old_size: Size, new_size: Size):
+        if (w_new := new_size.width) < 10 or (h_new := new_size.height) < 10:
+            return
+        if (w_old := old_size.width) == 0 or (h_old := old_size.height) == 0:
             ratio = 1.0
         else:
             ratio = math.sqrt(w_new / w_old * h_new / h_old)
@@ -294,7 +296,6 @@ class QImageGraphicsView(QBaseGraphicsView):
         self._inform_scale()
         if not self._initialized:
             self.initialize()
-        return super().resizeEvent(event)
 
     def showEvent(self, event):
         self.initialize()
@@ -340,7 +341,9 @@ class QImageGraphicsView(QBaseGraphicsView):
         self.geometry_changed.emit(self.sceneRect())
 
     def auto_range(self):
-        return self.fitInView(self.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
+        scene_rect = self.sceneRect()
+        self.fitInView(scene_rect, Qt.AspectRatioMode.KeepAspectRatio)
+        return None
 
     def remove_current_item(self, remove_from_list: bool = False):
         if self._current_roi_item is not None:
@@ -628,19 +631,15 @@ class QImageGraphicsView(QBaseGraphicsView):
             elif _key == Qt.Key.Key_Up:
                 if item := self._current_roi_item:
                     item.translate(0, -1)
-                    self._selection_handles.translate(0, -1)
             elif _key == Qt.Key.Key_Down:
                 if item := self._current_roi_item:
                     item.translate(0, 1)
-                    self._selection_handles.translate(0, 1)
             elif _key == Qt.Key.Key_Left:
                 if item := self._current_roi_item:
                     item.translate(-1, 0)
-                    self._selection_handles.translate(-1, 0)
             elif _key == Qt.Key.Key_Right:
                 if item := self._current_roi_item:
                     item.translate(1, 0)
-                    self._selection_handles.translate(1, 0)
             elif _key == Qt.Key.Key_R:
                 if self.mode() is Mode.ROI_RECTANGLE:
                     self.switch_mode(Mode.ROI_ROTATED_RECTANGLE)

@@ -1,5 +1,6 @@
 import logging
 import warnings
+from textwrap import dedent
 from app_model.types import (
     KeyCode,
     KeyMod,
@@ -68,6 +69,23 @@ def open_last_closed_window(ui: MainWindow) -> WidgetDataModel:
         return model
     warnings.warn("No window to reopen", UserWarning, stacklevel=2)
     raise Cancelled
+
+
+@ACTIONS.append_from_fn(
+    id="show-whats-this",
+    title="What is this widget?",
+    menus=[{"id": MenuId.WINDOW, "group": EXIT_GROUP}],
+    enablement=_ctx.num_sub_windows > 0,
+)
+def show_whats_this(ui: MainWindow) -> None:
+    """Show the description of the current widget."""
+    if window := ui.current_window:
+        if doc := getattr(window.widget, "__doc__", ""):
+            lines = doc.splitlines()
+            first_line = lines[0]
+            others = "\n".join(lines[1:])
+            doc_dedent = dedent(first_line) + "\n" + dedent(others)
+            ui._backend_main_window._add_whats_this(doc_dedent, style="markdown")
 
 
 @ACTIONS.append_from_fn(

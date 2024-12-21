@@ -16,7 +16,7 @@ from himena import anchor as _anchor
 from himena._descriptors import LocalReaderMethod
 from himena._utils import lru_cache, get_display_name
 from himena.consts import MenuId
-from himena.types import WindowState, WindowRect
+from himena.types import WindowState, WindowRect, Size
 from himena.plugins import _checker
 from himena.qt._utils import get_main_window, build_qmodel_menu
 from himena.qt._qwindow_resize import ResizeState
@@ -399,6 +399,7 @@ class QSubWindow(QtW.QMdiSubWindow):
                 self._title_bar.minimumSize()
             )
             max_size = self._widget.maximumSize()
+            size_old = Size(self.size().width(), self.size().height())
             if self._resize_state.resize_widget(self, event_pos, min_size, max_size):
                 # update window anchor
                 g = self.geometry()
@@ -408,7 +409,7 @@ class QSubWindow(QtW.QMdiSubWindow):
                     WindowRect.from_tuple(g.left(), g.top(), g.width(), g.height()),
                 )
                 _checker.call_window_resized_callback(
-                    self._widget, (g.width(), g.height())
+                    self._my_wrapper().widget, size_old, Size(g.width(), g.height())
                 )
         return None
 
