@@ -1,4 +1,4 @@
-from typing import Any, TYPE_CHECKING, Callable
+from typing import Any, TYPE_CHECKING, Callable, Literal
 from pydantic_compat import BaseModel, Field, field_validator
 from himena.standards import roi
 
@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 
 
 class TextMeta(BaseModel):
-    """Preset for describing a text file metadata."""
+    """Preset for describing the metadata for a "text" type."""
 
     language: str | None = Field(None, description="Language of the text file.")
     spaces: int = Field(4, description="Number of spaces for indentation.")
@@ -18,7 +18,7 @@ class TextMeta(BaseModel):
 
 
 class TableMeta(BaseModel):
-    """Preset for describing a table file metadata."""
+    """Preset for describing the metadata for a "table" type."""
 
     current_position: list[int] | None = Field(
         None, description="Current position of (row, columns)."
@@ -31,13 +31,25 @@ class TableMeta(BaseModel):
 
 
 class DataFrameMeta(TableMeta):
-    """Preset for describing a dataframe file metadata."""
+    """Preset for describing the metadata for a "dataframe" type."""
 
 
 class ExcelMeta(TableMeta):
-    """Preset for describing an Excel file metadata."""
+    """Preset for describing the metadata for a "excel" type."""
 
     current_sheet: str | None = Field(None, description="Current sheet name.")
+
+
+class DataFramePlotMeta(DataFrameMeta):
+    """Preset for describing the metadata for a "dataframe.plot" type."""
+
+    plot_type: Literal["line", "scatter"] = Field(
+        "line", description="Type of the plot."
+    )
+    plot_color_cycle: Any | None = Field(None, description="Color cycle of the plot.")
+    plot_background_color: Any | None = Field(
+        "#FFFFFF", description="Background color of the plot."
+    )
 
 
 class ArrayAxis(BaseModel):
@@ -71,6 +83,7 @@ class ArrayMeta(BaseModel):
     )
 
     def without_selections(self) -> "ArrayMeta":
+        """Make a copy of the metadata without selections."""
         return self.model_copy(update={"selections": []})
 
 
@@ -182,3 +195,14 @@ class ImageMeta(ArrayMeta):
         """Set the colormap of all channels."""
         for channel in self.channels:
             channel.colormap = value
+
+    @property
+    def current_indices_channel_composite(self) -> tuple[int | slice, ...]:
+        """Return the current indices with the channel axis set to slice(None)."""
+        if self.current_indices is None:
+            raise ValueError("Tried to obtain current indices but it is not set.")
+        indices = list(self.current_indices)
+        if self.channel_axis is not None:
+            indices[self.channel_axis] = slice(None)
+        indices = tuple(indices)
+        return indices

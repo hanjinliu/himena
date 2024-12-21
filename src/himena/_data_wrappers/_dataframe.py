@@ -234,7 +234,27 @@ class DictWrapper(DataFrameWrapper):
 
     @classmethod
     def from_dict(cls, data: dict) -> DataFrameWrapper:
-        return DictWrapper({k: np.asarray(v) for k, v in data.items()})
+        content: dict[str, np.ndarray] = {}
+        length = -1
+        for k, v in data.items():
+            v_arr = np.asarray(v)
+            if v_arr.ndim == 1:
+                if length < 0:
+                    length = len(v_arr)
+                elif length != v_arr.size:
+                    raise ValueError(
+                        "All arrays must have the same length. Consensus length is "
+                        f"{length} but got {v_arr.size} for {k!r}."
+                    )
+            elif v_arr.ndim > 1:
+                raise ValueError("Only 1D arrays are supported.")
+            content[k] = v_arr
+        if length < 0:  # all arrays are scalar. Interpret as a single-row data frame.
+            length = 1
+        for k, v in content.items():
+            if v.ndim == 0:
+                content[k] = np.full(length, v)
+        return DictWrapper(content)
 
     def write(self, file: str | Path):
         path = Path(file)

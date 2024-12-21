@@ -570,12 +570,10 @@ class QImageGraphicsView(QBaseGraphicsView):
                 Mode.ROI_RECTANGLE,
                 Mode.ROI_ELLIPSE,
                 Mode.ROI_ROTATED_RECTANGLE,
-            ):
+            ) and (cur_item := self._current_roi_item):
                 xscale = yscale = self._scale_bar_widget._scale
                 unit = self._scale_bar_widget._unit
-                set_status_tip(
-                    self._current_roi_item.short_description(xscale, yscale, unit)
-                )
+                set_status_tip(cur_item.short_description(xscale, yscale, unit))
         if self._mode is Mode.PAN_ZOOM:
             self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
         self.scene().setGrabSource(None)

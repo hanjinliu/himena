@@ -23,6 +23,7 @@ class BaseLayoutModel(BaseModel):
     vpad: float | None = Field(None, description="Vertical padding.")
     hspace: float | None = Field(None, description="Horizontal space.")
     vspace: float | None = Field(None, description="Vertical space.")
+    background_color: str = Field("#FFFFFF", description="Background color.")
 
     def merge_with(self, other: "BaseLayoutModel") -> "BaseLayoutModel":
         raise NotImplementedError
@@ -56,6 +57,7 @@ class Axes(AxesBase):
 
     x: Axis = Field(default_factory=Axis, description="X-axis settings.")
     y: Axis = Field(default_factory=Axis, description="Y-axis settings.")
+    axis_color: str = Field("#000000", description="Axis color.")
 
     def scatter(
         self,

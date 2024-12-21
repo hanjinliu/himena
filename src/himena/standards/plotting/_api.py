@@ -1,7 +1,8 @@
+from typing import Any
 from himena.standards.plotting import layout, layout3d
 
 
-def figure() -> layout.SingleAxes:
+def figure(background_color: Any = "white") -> layout.SingleAxes:
     """Make a single axes layout model.
 
     Examples
@@ -11,11 +12,11 @@ def figure() -> layout.SingleAxes:
     >>> fig.plot([0, 1, 2], [4, 2, 3], color="red")
     >>> fig.show()  # show as a sub-window in the current widget
     """
-    lo = layout.SingleAxes()
+    lo = layout.SingleAxes(background_color=background_color)
     return lo
 
 
-def figure_3d() -> layout3d.SingleAxes3D:
+def figure_3d(background_color: Any = "white") -> layout3d.SingleAxes3D:
     """Make a single 3D axes layout model.
 
     Examples
@@ -25,11 +26,11 @@ def figure_3d() -> layout3d.SingleAxes3D:
     >>> fig.plot([0, 1, 2], [4, 2, 3], [6, 8, 7], color="red")
     >>> fig.show()  # show as a sub-window in the current widget
     """
-    lo = layout3d.SingleAxes3D()
+    lo = layout3d.SingleAxes3D(background_color=background_color)
     return lo
 
 
-def row(num: int = 1) -> layout.Row:
+def row(num: int = 1, *, background_color: Any = "white") -> layout.Row:
     """Make a row layout model.
 
     Examples
@@ -40,10 +41,11 @@ def row(num: int = 1) -> layout.Row:
     >>> fig.show()  # show as a sub-window in the current widget
     """
     lo = layout.Row.fill(num)
+    lo.background_color = "white"
     return lo
 
 
-def column(num: int = 1) -> layout.Column:
+def column(num: int = 1, *, background_color: Any = "white") -> layout.Column:
     """Make a column layout model.
 
     Parameters
@@ -59,10 +61,13 @@ def column(num: int = 1) -> layout.Column:
     >>> col.show()  # show as a sub-window in the current widget
     """
     lo = layout.Column.fill(num)
+    lo.background_color = "white"
     return lo
 
 
-def grid(rows: int = 1, cols: int = 1) -> layout.Grid:
+def grid(
+    rows: int = 1, cols: int = 1, *, background_color: Any = "white"
+) -> layout.Grid:
     """Make a grid layout model.
 
     Parameters
@@ -80,4 +85,5 @@ def grid(rows: int = 1, cols: int = 1) -> layout.Grid:
     >>> grd.show()  # show as a sub-window in the current widget
     """
     lo = layout.Grid.fill(rows, cols)
+    lo.background_color = "white"
     return lo

@@ -1,4 +1,5 @@
 from typing import Any, Literal
+from cmap import Color
 from pydantic_compat import BaseModel, Field, field_validator
 from pydantic import field_serializer
 from himena.consts import PYDANTIC_CONFIG_STRICT
@@ -78,17 +79,35 @@ class AxesBase(BaseModel):
         return out
 
 
-class Face(BaseModel):
+class HasColor(BaseModel):
+    color: Any | None = Field(None, description="Color property.")
+
+    @property
+    def alpha(self) -> float | None:
+        """Return the alpha value of the edge color."""
+        if self.color is None:
+            return None
+        return Color(self.color).alpha
+
+    @alpha.setter
+    def alpha(self, value: float | None):
+        """Set the alpha value of the edge color."""
+        if self.color is None:
+            return
+        color = Color(list(Color(self.color).rgba[:3]) + [value])
+        self.color = color
+        return
+
+
+class Face(HasColor):
     """Model for face properties."""
 
-    color: Any | None = Field(None, description="Color of the face.")
     hatch: Any | None = Field(None, description="Hatch pattern of the face.")
 
 
-class Edge(BaseModel):
+class Edge(HasColor):
     """Model for edge properties."""
 
-    color: Any | None = Field(None, description="Color of the edge.")
     width: float | None = Field(None, description="Width of the edge.")
     style: Any | None = Field(None, description="Style of the edge.")
 

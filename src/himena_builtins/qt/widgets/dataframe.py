@@ -3,13 +3,14 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any, NamedTuple
 
+from cmap import Color, Colormap
 import numpy as np
 from qtpy import QtGui, QtCore, QtWidgets as QtW
 from qtpy.QtCore import Qt
 
 from himena.consts import StandardType
 from himena.types import WidgetDataModel
-from himena.standards.model_meta import DataFrameMeta, TableMeta
+from himena.standards.model_meta import DataFrameMeta, TableMeta, DataFramePlotMeta
 from himena.standards import plotting as hplt
 from himena_builtins.qt.widgets._table_components import (
     QTableBase,
@@ -19,6 +20,9 @@ from himena_builtins.qt.widgets._table_components import (
 from himena_builtins.qt.widgets._splitter import QSplitterHandle
 from himena.plugins import validate_protocol
 from himena._data_wrappers import wrap_dataframe, DataFrameWrapper
+
+if TYPE_CHECKING:
+    from himena_builtins.qt.widgets._table_components._selection_model import Index
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -232,6 +236,11 @@ class QDataFramePlotView(QtW.QSplitter):
         self.setStretchFactor(0, 1)
         self.setStretchFactor(1, 2)
 
+        self._table_widget.selection_model.moved.connect(
+            self._update_plot_for_selections
+        )
+        self._y_column_names: list[str] = []
+
     def createHandle(self):
         return QSplitterHandle(self, side="left")
 
@@ -239,26 +248,48 @@ class QDataFramePlotView(QtW.QSplitter):
     def update_model(self, model: WidgetDataModel):
         df = wrap_dataframe(model.value)
         col_names = df.column_names()
+        if isinstance(meta := model.metadata, DataFramePlotMeta):
+            plot_type = meta.plot_type
+            plot_background_color = meta.plot_background_color
+            plot_color_cycle_name = meta.plot_color_cycle
+        else:
+            plot_type = "line"
+            plot_background_color = "#FFFFFF"
+            plot_color_cycle_name = None
+        if plot_color_cycle_name is None:
+            if np.mean(Color(plot_background_color).rgba) > 0.5:
+                plot_color_cycle = Colormap("tab10")
+            else:
+                plot_color_cycle = Colormap("colorbrewer:Dark2")
+        else:
+            plot_color_cycle = Colormap(plot_color_cycle_name)
+
         if len(col_names) == 0:
             raise ValueError("No columns in the dataframe.")
         elif len(col_names) == 1:
-            xlabel = "index"
-            ylabel = col_names[0]
             x = np.arange(df.num_rows())
-            y = df.column_to_array(ylabel)
+            self._y_column_names = col_names
         else:
-            xlabel = col_names[0]
-            ylabel = col_names[1]
-            x = df.column_to_array(xlabel)
+            x = df.column_to_array(col_names[0])
+            self._y_column_names = col_names[1:]
+        fig = hplt.figure(background_color=plot_background_color)
+        colors = plot_color_cycle.color_stops.colors
+        if colors[0].rgba8[3] == 0:
+            colors = colors[1:]
+        for i, ylabel in enumerate(self._y_column_names):
             y = df.column_to_array(ylabel)
-        fig = hplt.figure()
-        fig.axes.x.label = xlabel
-        fig.axes.y.label = ylabel
-        fig.plot(x, y)
+            color = colors[i % len(colors)]
+            if plot_type == "line":
+                fig.plot(x, y, color=color, name=ylabel)
+            elif plot_type == "scatter":
+                fig.scatter(x, y, color=color, name=ylabel)
+            else:
+                raise ValueError(f"Unsupported plot type: {plot_type!r}")
         self._table_widget.update_model(model)
-        self._plot_widget.update_model(
-            WidgetDataModel(value=fig, type=StandardType.PLOT)
-        )
+
+        # update plot
+        model_plot = WidgetDataModel(value=fig, type=StandardType.PLOT)
+        self._plot_widget.update_model(model_plot)
         self._model_type = model.type
         return None
 
@@ -292,3 +323,28 @@ class QDataFramePlotView(QtW.QSplitter):
     def theme_changed_callback(self, theme):
         # self._table_widget.theme_changed_callback(theme)
         self._plot_widget.theme_changed_callback(theme)
+
+    def _update_plot_for_selections(self, old: Index, new: Index):
+        axes_layout = self._plot_widget._plot_models
+        if not isinstance(axes_layout, hplt.SingleAxes):
+            return
+        inds = set()
+        for sl in self._table_widget.selection_model.iter_col_selections():
+            inds.update(range(sl.start, sl.stop))
+        inds.discard(0)  # x axis
+        if len(inds) == 0:
+            inds = set(range(1, len(self._y_column_names) + 1))
+
+        selected_names = [self._y_column_names[i - 1] for i in inds]
+
+        for model in axes_layout.axes.models:
+            selected = model.name in selected_names
+            if isinstance(model, hplt.Line):
+                model.edge.alpha = 1.0 if selected else 0.4
+            elif isinstance(model, hplt.Scatter):
+                model.face.alpha = 1.0 if selected else 0.4
+                model.edge.alpha = 1.0 if selected else 0.4
+        self._plot_widget.update_model(
+            WidgetDataModel(value=axes_layout, type=StandardType.PLOT)
+        )
+        return None

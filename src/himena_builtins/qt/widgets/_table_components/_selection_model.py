@@ -37,8 +37,11 @@ class SelectionModel:
         self._ranges: list[Range] = []
         self._is_blocked = False
         self._selected_indices: set[int] = set()
+
+        # indices of self._ranges that are row/column selections
         self._row_selection_indices: set[int] = set()
         self._col_selection_indices: set[int] = set()
+
         self._ctrl_on = False
         self._shift_on = False
         self._selection_start: Index | None = None

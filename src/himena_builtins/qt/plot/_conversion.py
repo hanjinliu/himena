@@ -48,6 +48,10 @@ def _refer_title(ax: hplt.Axes, ax_mpl: plt.Axes):
 
 
 def _convert_axes(ax: hplt.Axes, ax_mpl: plt.Axes):
+    ax_mpl.spines["top"].set_visible(False)
+    ax_mpl.spines["right"].set_visible(False)
+    ax_mpl.spines["left"].set_edgecolor(ax.axis_color)
+    ax_mpl.spines["bottom"].set_edgecolor(ax.axis_color)
     if ax.title is not None:
         _refer_title(ax, ax_mpl)
     if ax.x is not None:
@@ -98,15 +102,17 @@ def update_axis_props(axes: hplt.Axes, axes_mpl: plt.Axes):
 
 
 def convert_plot_layout(lo: hplt.BaseLayoutModel, fig: plt.Figure):
+    fig.patch.set_facecolor(lo.background_color)
     if isinstance(lo, hplt.SingleAxes):
         if len(fig.axes) != 1:
             fig.clear()
-            axes = fig.add_subplot(111)
+            ax_mpl = fig.add_subplot(111)
         else:
-            axes = fig.axes[0]
-            axes.clear()
-        _convert_axes(lo.axes, axes)
-        lo.axes = _fill_axis_props(lo.axes, axes)
+            ax_mpl = fig.axes[0]
+            ax_mpl.clear()
+        _convert_axes(lo.axes, ax_mpl)
+        ax_mpl.patch.set_color(lo.background_color)
+        lo.axes = _fill_axis_props(lo.axes, ax_mpl)
     elif isinstance(lo, hplt.layout.Layout1D):
         _shape = (1, len(lo.axes)) if isinstance(lo, hplt.Row) else (len(lo.axes), 1)
         if len(fig.axes) != len(lo.axes):
@@ -116,17 +122,19 @@ def convert_plot_layout(lo: hplt.BaseLayoutModel, fig: plt.Figure):
             axes = fig.axes
         for ax, ax_mpl in zip(lo.axes, axes):
             _convert_axes(ax, ax_mpl)
+            ax_mpl.patch.set_color(lo.background_color)
         lo.axes = [_fill_axis_props(ax, ax_mpl) for ax, ax_mpl in zip(lo.axes, axes)]
     elif isinstance(lo, hplt.Grid):
         raise NotImplementedError("Grid layout is not supported yet")
     elif isinstance(lo, hplt.SingleAxes3D):
         if len(fig.axes) != 1:
             fig.clear()
-            axes = fig.add_subplot(111, projection="3d")
+            ax_mpl = fig.add_subplot(111, projection="3d")
         else:
-            axes = fig.axes[0]
-            axes.clear()
-        _convert_axes_3d(lo.axes, axes)
+            ax_mpl = fig.axes[0]
+            ax_mpl.clear()
+        _convert_axes_3d(lo.axes, ax_mpl)
+        ax_mpl.patch.set_color(lo.background_color)
         lo.axes = _fill_axis_props(lo.axes, axes)
     else:
         raise ValueError(f"Unsupported layout model: {lo}")
