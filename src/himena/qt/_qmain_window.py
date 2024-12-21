@@ -750,6 +750,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         whatsthis = QWhatsThisWidget(self._tab_widget)
         whatsthis.set_text(text, style)
         whatsthis.show()
+        return None
 
 
 def _is_root_menu_id(app: HimenaApplication, menu_id: str) -> bool:

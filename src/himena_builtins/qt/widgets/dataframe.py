@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from typing import TYPE_CHECKING, Any, NamedTuple
+import weakref
 
 from cmap import Color, Colormap
 import numpy as np
@@ -19,6 +20,7 @@ from himena_builtins.qt.widgets._table_components import (
 )
 from himena_builtins.qt.widgets._splitter import QSplitterHandle
 from himena.plugins import validate_protocol
+from himena.qt import drag_model
 from himena._data_wrappers import wrap_dataframe, DataFrameWrapper
 
 if TYPE_CHECKING:
@@ -92,6 +94,48 @@ class QDataFrameModel(QtCore.QAbstractTableModel):
         return f"{name} (dtype: {dtype.name})"
 
 
+def _is_drag_mouse_event(e: QtGui.QMouseEvent):
+    return (
+        e.modifiers() & QtCore.Qt.KeyboardModifier.ControlModifier
+        and e.buttons() & QtCore.Qt.MouseButton.LeftButton
+    ) or e.buttons() & QtCore.Qt.MouseButton.MiddleButton
+
+
+class QDraggableHeader(QtW.QHeaderView):
+    def __init__(self, parent: QDataFrameView):
+        super().__init__(QtCore.Qt.Orientation.Horizontal, parent)
+        self._table_view_ref = weakref.ref(parent)
+        self._is_dragging = False
+
+    def mousePressEvent(self, e):
+        return super().mousePressEvent(e)
+
+    def mouseMoveEvent(self, e):
+        if self._is_dragging:
+            return super().mouseMoveEvent(e)
+        self._is_dragging = True
+        if _is_drag_mouse_event(e):
+            if view := self._table_view_ref():
+                df = view.model().df
+                nrows = df.num_rows()
+                dict_out = {}
+                for sel in view.selection_model.iter_col_selections():
+                    dict_out.update(
+                        df.get_subset(0, nrows, sel.start, sel.stop).to_dict()
+                    )
+                df = df.from_dict(dict_out)
+                model = WidgetDataModel(
+                    value=df.unwrap(),
+                    type=view.model_type(),
+                )
+                drag_model(model, text=f"{len(dict_out)} columns", source=view)
+        return super().mouseMoveEvent(e)
+
+    def mouseReleaseEvent(self, e):
+        self._is_dragging = False
+        return super().mouseReleaseEvent(e)
+
+
 class QDataFrameView(QTableBase):
     """A table widget for viewing dataframe."""
 
@@ -100,6 +144,7 @@ class QDataFrameView(QTableBase):
 
     def __init__(self):
         super().__init__()
+        self.setHorizontalHeader(QDraggableHeader(self))
         self._control: QDataFrameViewControl | None = None
         self._model_type = StandardType.DATAFRAME
 

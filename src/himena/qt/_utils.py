@@ -7,10 +7,11 @@ from typing import TYPE_CHECKING
 import numpy as np
 from app_model.backends.qt import QModelMenu
 import qtpy
-from qtpy import QtWidgets as QtW
+from qtpy import QtWidgets as QtW, QtCore
 from qtpy import QtGui
 from himena._utils import lru_cache
-
+from himena import _drag
+from himena.types import DragDataModel, WidgetDataModel
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -117,3 +118,24 @@ def build_qmodel_menu(menu_id: str, app: str, parent: QtW.QWidget) -> QModelMenu
 @lru_cache(maxsize=8)
 def _build_qmodel_menu(menu_id: str, app: str) -> QModelMenu:
     return QModelMenu(menu_id=menu_id, app=app)
+
+
+def drag_model(
+    model: WidgetDataModel | DragDataModel,
+    *,
+    text: str | None = None,
+    source: QtW.QWidget | None = None,
+):
+    drag = QtGui.QDrag(source)
+    _drag.drag(model)
+    mime = QtCore.QMimeData()
+    mime.setText(repr(model))
+    if text is None:
+        text = "model"
+    qlabel = QtW.QLabel(text)
+    pixmap = QtGui.QPixmap(qlabel.size())
+    qlabel.render(pixmap)
+    drag.setPixmap(pixmap)
+    drag.setMimeData(mime)
+    drag.destroyed.connect(_drag.clear)
+    drag.exec()

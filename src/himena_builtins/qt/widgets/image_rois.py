@@ -27,6 +27,7 @@ class QImageRoiView(QtW.QWidget):
         layout.addWidget(self._roi_collection)
         self._is_modified = False
         self._model_type = StandardType.IMAGE_ROIS
+        self._roi_collection.drag_requested.connect(self._run_drag_model)
 
     @validate_protocol
     def update_model(self, model: WidgetDataModel):
@@ -62,3 +63,6 @@ class QImageRoiView(QtW.QWidget):
     @validate_protocol
     def size_hint(self) -> tuple[int, int]:
         return 180, 300
+
+    def _run_drag_model(self, indices: list[int]):
+        self._roi_collection._run_drag_model(indices, source=self)

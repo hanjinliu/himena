@@ -139,6 +139,7 @@ class WidgetDataModel(GenericModel[_T]):
         description="Override the default save behavior.",
     )
     editable: bool = Field(True, description="Whether the widget is editable.")
+    window_rect_override: Callable[["Size"], "WindowRect"] | None = Field(None)
 
     def with_value(
         self,
@@ -282,6 +283,30 @@ class ClipboardDataModel(BaseModel):
         default_factory=list,
         description="List of file paths in the clipboard if exists.",
     )
+
+
+class DragDataModel(BaseModel):
+    model_config = PYDANTIC_CONFIG_STRICT
+    getter: Callable[[], WidgetDataModel] | WidgetDataModel = Field(
+        ..., description="Getter function to get the data model."
+    )
+    type: str | None = Field(None, description="Type of the internal data.")
+
+    def inferred_type(self) -> str:
+        if self.type is not None:
+            return self.type
+        if callable(self.getter):
+            model = self.getter()
+        else:
+            model = self.getter
+        return model.type
+
+    def data_model(self) -> WidgetDataModel:
+        if isinstance(self.getter, WidgetDataModel):
+            model = self.getter
+        else:
+            model = self.getter()
+        return model
 
 
 def is_subtype(string: str, supertype: str) -> bool:
@@ -518,5 +543,5 @@ WidgetConstructor = NewType("WidgetConstructor", object)
 class MergeResult(BaseModel):
     """Model that can be returned by `merge_model` protocol."""
 
-    delete_input: bool = True
+    delete_input: bool = False
     outputs: WidgetDataModel | list[WidgetDataModel] | None = Field(None)

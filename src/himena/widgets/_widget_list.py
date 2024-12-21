@@ -377,10 +377,17 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
 
     def add_data_model(self, model: WidgetDataModel) -> SubWindow[_W]:
         """Add a widget data model as a widget."""
+        if not isinstance(model, WidgetDataModel):
+            raise TypeError(
+                f"input model must be an instance of WidgetDataModel, got {model!r}"
+            )
         ui = self._main_window()._himena_main_window
         widget = ui._pick_widget(model)
         ui.set_status_tip(f"Data model {model.title!r} added.", duration=1)
         sub_win = self.add_widget(widget, title=model.title)
+        if rect_factory := model.window_rect_override:
+            rect = WindowRect.from_tuple(*rect_factory(sub_win.size))
+            sub_win.rect = rect
         return sub_win._update_from_returned_model(model)
 
     def read_file(

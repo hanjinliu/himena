@@ -78,7 +78,7 @@ def open_last_closed_window(ui: MainWindow) -> WidgetDataModel:
     enablement=_ctx.num_sub_windows > 0,
 )
 def show_whats_this(ui: MainWindow) -> None:
-    """Show the description of the current widget."""
+    """Show the docstring of the current widget."""
     if window := ui.current_window:
         if doc := getattr(window.widget, "__doc__", ""):
             lines = doc.splitlines()

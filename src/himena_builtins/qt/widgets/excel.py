@@ -1,15 +1,17 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Mapping
+import weakref
 
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 
 from himena_builtins.qt.widgets._table_components._selection_model import Index
 from himena.standards.model_meta import ExcelMeta
 from himena.qt._qrename import QTabRenameLineEdit
+from himena.qt import drag_model
 from himena_builtins.qt.widgets.table import QSpreadsheet
 from himena_builtins.qt.widgets._table_components import QSelectionRangeEdit
-from himena.types import WidgetDataModel
+from himena.types import DragDataModel, WidgetDataModel
 from himena.consts import StandardType
 from himena.plugins import validate_protocol
 
@@ -26,20 +28,40 @@ _EDIT_ENABLED = (
 class QRightClickableTabBar(QtW.QTabBar):
     right_clicked = QtCore.Signal(int)
 
-    def __init__(self, parent: QtW.QWidget | None = None) -> None:
+    def __init__(self, parent: QExcelFileEdit) -> None:
         super().__init__(parent)
         self._last_right_clicked = None
+        self._is_dragging = False
+        self._excel_ref = weakref.ref(parent)
 
     def mousePressEvent(self, a0: QtGui.QMouseEvent | None) -> None:
         if a0 is not None and a0.button() == QtCore.Qt.MouseButton.RightButton:
             self._last_right_clicked = self.tabAt(a0.pos())
         return super().mousePressEvent(a0)
 
+    def mouseMoveEvent(self, a0):
+        if self._is_dragging:
+            return super().mouseMoveEvent(a0)
+        self._is_dragging = True
+        if (
+            a0.modifiers() & QtCore.Qt.KeyboardModifier.ControlModifier
+            and a0.buttons() & QtCore.Qt.MouseButton.LeftButton
+        ) or QtCore.Qt.MouseButton.MiddleButton:
+            if (qexcel := self._excel_ref()) and (widget := qexcel.currentWidget()):
+                drag_model(
+                    DragDataModel(getter=widget.to_model, type=StandardType.TABLE),
+                    text=qexcel.tabText(qexcel.currentIndex()),
+                    source=qexcel,
+                )
+
+        return super().mouseMoveEvent(a0)
+
     def mouseReleaseEvent(self, a0: QtGui.QMouseEvent | None) -> None:
         if a0 is not None and a0.button() == QtCore.Qt.MouseButton.RightButton:
             if self.tabAt(a0.pos()) == self._last_right_clicked:
                 self.right_clicked.emit(self._last_right_clicked)
         self._last_right_clicked = None
+        self._is_dragging = False
         return super().mouseReleaseEvent(a0)
 
 
@@ -51,7 +73,7 @@ class QExcelFileEdit(QtW.QTabWidget):
 
     def __init__(self):
         super().__init__()
-        self.setTabBar(QRightClickableTabBar())
+        self.setTabBar(QRightClickableTabBar(self))
         self._edit_trigger = _EDIT_ENABLED
         self._control = QExcelTableStackControl()
         self.currentChanged.connect(self._on_tab_changed)
@@ -184,6 +206,7 @@ class QExcelFileEdit(QtW.QTabWidget):
     if TYPE_CHECKING:
 
         def widget(self, index: int) -> QSpreadsheet: ...
+        def currentWidget(self) -> QSpreadsheet: ...
         def tabBar(self) -> QRightClickableTabBar: ...
 
 

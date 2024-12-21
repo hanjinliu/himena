@@ -443,6 +443,7 @@ class QImageGraphicsView(QBaseGraphicsView):
                 self._selection_handles.connect_rotated_rect(self._current_roi_item)
             elif self.mode() is Mode.ROI_POINT:
                 pass
+            self._selection_handles.update_handle_size(self.transform().m11())
 
         elif self.mode() is Mode.SELECT:
             self.select_item_at(self.mapToScene(event.pos()))

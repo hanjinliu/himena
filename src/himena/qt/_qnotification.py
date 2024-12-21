@@ -290,6 +290,7 @@ class QWhatsThisWidget(_QOverlayBase):
         )
         self._close_btn.clicked.connect(self._hide)
         self.setAnchor(Anchor.top_right)
+        self.setFixedSize(480, 360)
 
     def _hide(self):
         self._close_btn.hide()

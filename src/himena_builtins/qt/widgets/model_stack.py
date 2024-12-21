@@ -4,13 +4,15 @@ from pathlib import Path
 import logging
 from typing import TYPE_CHECKING, Mapping, Sequence
 import warnings
-from qtpy import QtWidgets as QtW, QtCore
+import weakref
+from qtpy import QtWidgets as QtW, QtCore, QtGui
 from himena.plugins import validate_protocol, _checker
-from himena.types import WidgetDataModel
+from himena.types import DragDataModel, WidgetDataModel
 from himena.consts import StandardType
 from himena._descriptors import LocalReaderMethod
 from himena._utils import unwrap_lazy_model
 from himena_builtins.qt.widgets._splitter import QSplitterHandle
+from himena.qt import drag_model
 
 if TYPE_CHECKING:
     from himena.widgets import MainWindow
@@ -54,15 +56,8 @@ class QModelStack(QtW.QSplitter):
         btn_layout.addWidget(self._get_btn)
         btn_layout.addWidget(self._delete_btn)
 
-        self._model_list = QtW.QListWidget()
-        self._model_list.setSelectionMode(
-            QtW.QAbstractItemView.SelectionMode.SingleSelection
-        )
+        self._model_list = QModelListWidget(self)
         left.setFixedWidth(160)
-        self._model_list.setEditTriggers(
-            QtW.QAbstractItemView.EditTrigger.DoubleClicked
-            | QtW.QAbstractItemView.EditTrigger.EditKeyPressed
-        )
         self._widget_stack = QtW.QStackedWidget()
         layout.addWidget(self._model_list)
         layout.addLayout(btn_layout)
@@ -161,11 +156,9 @@ class QModelStack(QtW.QSplitter):
         models: list[WidgetDataModel] = []
         for ith in range(self._model_list.count()):
             item = self._model_list.item(ith)
-            model = item.data(_MODEL_ROLE)
-            if model is None:  # not a lazy item
-                model = item.data(_WIDGET_ROLE).to_model()
-            else:
-                model = self._exec_lazy_loading(model)
+            model = self._model_list.model_at_index(ith)
+            if model is None:
+                continue  # this should not happen
             name = item.text()
             model.title = name
             models.append(model)
@@ -200,7 +193,10 @@ class QModelStack(QtW.QSplitter):
 
     @validate_protocol
     def merge_model(self, model: WidgetDataModel):
-        item = self._make_eager_item(model.title, model)
+        if model.type == StandardType.LAZY:
+            item = self._make_lazy_item(model.title, model)
+        else:
+            item = self._make_eager_item(model.title, model)
         self._model_list.addItem(item)
 
     # TODO: Implement the following methods
@@ -223,7 +219,7 @@ class QModelStack(QtW.QSplitter):
             if model is None:
                 widget = QtW.QLabel("Not Available")
             else:
-                model = self._exec_lazy_loading(model)
+                model = _exec_lazy_loading(model)
                 widget = self._model_to_widget(model)
             self._add_widget(item, widget)
         idx = self._widget_stack.indexOf(widget)
@@ -253,20 +249,6 @@ class QModelStack(QtW.QSplitter):
 
         self._update_current_index()
         self._last_index = self._model_list.currentRow()
-
-    def _exec_lazy_loading(self, model: WidgetDataModel) -> WidgetDataModel:
-        """Run the pending lazy loading."""
-        _LOGGER.info("Lazy loading of: %r", model)
-        val = model.value
-        model = unwrap_lazy_model(model)
-        # determine the title
-        if isinstance(val, LocalReaderMethod):
-            val = val.path
-        if isinstance(val, (str, Path)):
-            model.title = Path(val).name
-        else:
-            model.title = "File Group"
-        return model
 
     def _save_current(self):
         if widget := self._widget_stack.currentWidget():
@@ -313,3 +295,100 @@ class QModelStack(QtW.QSplitter):
 
 def _is_modified(widget: QtW.QWidget):
     return hasattr(widget, "is_modified") and widget.is_modified()
+
+
+def _is_drag_mouse_event(e: QtGui.QMouseEvent):
+    return (
+        e.modifiers() & QtCore.Qt.KeyboardModifier.ControlModifier
+        and e.buttons() & QtCore.Qt.MouseButton.LeftButton
+    ) or e.buttons() & QtCore.Qt.MouseButton.MiddleButton
+
+
+class QModelListWidget(QtW.QListWidget):
+    def __init__(self, parent: QModelStack):
+        super().__init__(parent)
+        self.setSelectionMode(QtW.QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.setEditTriggers(
+            QtW.QAbstractItemView.EditTrigger.DoubleClicked
+            | QtW.QAbstractItemView.EditTrigger.EditKeyPressed
+        )
+        self._is_dragging = False
+        self._model_stack_ref = weakref.ref(parent)
+
+    def mousePressEvent(self, e):
+        if _is_drag_mouse_event(e):
+            return None
+        return super().mousePressEvent(e)
+
+    def mouseMoveEvent(self, e):
+        if self._is_dragging:
+            return super().mouseMoveEvent(e)
+        self._is_dragging = True
+        if _is_drag_mouse_event(e):
+            items = self.selectedItems()
+            if len(items) == 0:
+                return None
+            if len(items) == 1:
+
+                def _getter():
+                    return self.model_for_item(items[0])
+
+                if item_model := items[0].data(_MODEL_ROLE):
+                    model_type = item_model.type
+                else:
+                    model_type = None
+            else:
+
+                def _getter():
+                    return WidgetDataModel(
+                        value=[self.model_for_item(item) for item in items],
+                        type=StandardType.MODELS,
+                        title="Models",
+                    )
+
+                model_type = StandardType.MODELS
+            model = DragDataModel(getter=_getter, type=model_type)
+            drag_model(
+                model, text=f"{len(items)} items", source=self._model_stack_ref()
+            )
+        else:
+            super().mouseMoveEvent(e)
+        return None
+
+    def mouseReleaseEvent(self, e):
+        self._is_dragging = False
+        if _is_drag_mouse_event(e):
+            return super().mousePressEvent(e)
+        return super().mouseReleaseEvent(e)
+
+    def getter_for_item(self, item: QtW.QListWidgetItem):
+        return lambda: self.model_for_item(item)
+
+    def model_for_item(self, item: QtW.QListWidgetItem):
+        model = item.data(_MODEL_ROLE)
+        if model is None:  # not a lazy item
+            model = item.data(_WIDGET_ROLE).to_model()
+        else:
+            model = _exec_lazy_loading(model)
+        return model
+
+    def model_at_index(self, row: int) -> WidgetDataModel | None:
+        item = self.item(row)
+        if item is None:
+            return None
+        return self.model_for_item(item)
+
+
+def _exec_lazy_loading(model: WidgetDataModel) -> WidgetDataModel:
+    """Run the pending lazy loading."""
+    _LOGGER.info("Lazy loading of: %r", model)
+    val = model.value
+    model = unwrap_lazy_model(model)
+    # determine the title
+    if isinstance(val, LocalReaderMethod):
+        val = val.path
+    if isinstance(val, (str, Path)):
+        model.title = Path(val).name
+    else:
+        model.title = "File Group"
+    return model

@@ -12,6 +12,8 @@ from himena.qt._qsub_window import QSubWindowArea, QSubWindow
 from himena.qt._qrename import QTabRenameLineEdit
 from himena.qt._utils import get_main_window, build_qmodel_menu
 from himena.consts import ActionGroup, MenuId
+from himena import _drag
+from himena.types import WindowRect
 
 
 class QCloseTabToolButton(QtW.QToolButton):
@@ -47,6 +49,10 @@ class QTabBar(QtW.QTabBar):
         if isinstance(sub := e.source(), QSubWindow):
             target_index = self.tabAt(e.pos())
             self._process_drop_event(sub, target_index)
+        elif model := _drag.drop():
+            model = model.data_model()
+            main = get_main_window(self)
+            main.tabs[target_index].add_data_model(model)
         return super().dropEvent(e)
 
     def _process_drop_event(self, sub: QSubWindow, target_index: int) -> None:
@@ -196,10 +202,26 @@ class QTabWidget(QtW.QTabWidget):
     def dropEvent(self, event: QtGui.QDropEvent) -> None:
         mime_data = event.mimeData()
         glob_pos = QtGui.QCursor.pos()
+        if area := self.current_widget_area():
+            drop_pos = area.mapFromGlobal(glob_pos)
+        else:
+            drop_pos = event.pos()
+
         if QtW.QApplication.widgetAt(glob_pos) is self:
             # dropped on the tabbar outside the existing tabs
             if isinstance(src := event.source(), QSubWindow):
                 self._tabbar._process_drop_event(src, -1)
+        elif model := _drag.drop():
+            if (
+                isinstance(src := event.source(), QSubWindow)
+                and src in self.current_widget_area().subWindowList()
+            ):
+                # subwindow dropped in the same tab
+                pass
+            else:
+                model = model.data_model()
+                model.window_rect_override = lambda s: _center_title_bar_on(s, drop_pos)
+                get_main_window(self).add_data_model(model)
         elif mime_data.hasUrls():
             if isinstance(win := event.source(), QSubWindow):
                 # subwindow dragged and dropped without changing tabs
@@ -317,3 +339,10 @@ class QStartupWidget(QtW.QWidget):
                 layout.addWidget(btn)
                 added.append(btn)
         return added
+
+
+def _center_title_bar_on(size: tuple[int, int], pos: QtCore.QPoint) -> WindowRect:
+    width, height = size
+    x = pos.x() - width // 2
+    y = pos.y() - 6
+    return WindowRect(x, y, width, height)

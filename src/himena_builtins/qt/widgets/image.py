@@ -41,7 +41,17 @@ class QImageView(QtW.QSplitter):
     # Basic Usage
 
     The image canvas can be interactively panned by dragging with the left mouse button,
-    and zoomed by scrolling the mouse wheel.
+    and zoomed by scrolling the mouse wheel. Zooming is reset by double-click. This
+    widget also supports adding ROIs (Regions of Interest) to the image.
+
+    - For multi-dimensional images, dimension sliders will be added to the bottom of the
+      image canvas.
+    - For multi-channel images, channel composition mode can be selected in the control
+      widget. Toggle switches for each channel are available next to it.
+    - The histogram of the current channel is displayed in the control widget. The
+      contrast limits can be adjusted by dragging the handles on the histogram.
+    - A ROI manager is in the right collapsible panel. Press the ROI buttons to switch
+      between ROI modes.
 
     # Keyboard Shortcuts
 
@@ -61,6 +71,14 @@ class QImageView(QtW.QSplitter):
     - `Ctrl+C`: Copy the selected ROI.
     - `Ctrl+V`: Paste the copied ROI.
     - `Ctrl+D`: Duplicate the selected ROI.
+
+    # Drag and Drop
+
+    - This widget accepts dropping models with `StandardType.IMAGE_ROIS` ("image-rois").
+      Dropped ROIs will be added to the ROI list.
+    - Selected ROIs can be dragged out from the ROI manager. The type of the dragged
+      model is `StandardType.IMAGE_ROIS` ("image-rois"). `Ctrl + left_button` or
+      `middle button` are assigned to the drag event.
     """
 
     __himena_widget_id__ = "builtins:QImageView"
@@ -88,6 +106,7 @@ class QImageView(QtW.QSplitter):
         self._roi_col.key_released.connect(self._img_view.keyReleaseEvent)
         self._roi_col.roi_item_clicked.connect(self._roi_item_clicked)
         self._roi_col._add_btn.clicked.connect(self._img_view.add_current_roi)
+        self._roi_col.drag_requested.connect(self._run_drag_model)
         self._roi_col._remove_btn.clicked.connect(
             lambda: self._img_view.remove_current_item(remove_from_list=True)
         )
@@ -565,6 +584,9 @@ class QImageView(QtW.QSplitter):
 
     def keyReleaseEvent(self, a0: QtGui.QKeyEvent | None) -> None:
         return self._img_view.keyReleaseEvent(a0)
+
+    def _run_drag_model(self, indices: list[int]):
+        self._roi_col._run_drag_model(indices, source=self)
 
 
 class ChannelInfo(BaseModel):

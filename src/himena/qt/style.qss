@@ -630,3 +630,7 @@ QCircularProgressBar {
     qproperty-color: #[highlight];
     qproperty-grooveColor: #[background_dim];
 }
+
+QModelDrop {
+    border-radius: 8px;
+}

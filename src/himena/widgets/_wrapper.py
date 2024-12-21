@@ -19,6 +19,7 @@ from himena._utils import get_gui_config, get_widget_class_id
 from himena.consts import ParametricWidgetProtocolNames as PWPN
 from himena.types import (
     BackendInstructions,
+    DragDataModel,
     MergeResult,
     ModelTrack,
     Parametric,
@@ -184,15 +185,36 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
             raise ValueError("Widget does not have `update_model` method.")
         self.widget.update_model(model)
 
-    def _is_mergeable_with(self, source: WidgetWrapper[_W]) -> bool:
+    def _is_mergeable_with(self, incoming: DragDataModel) -> bool:
         widget = self.widget
-        if not (hasattr(widget, "merge_model") and source.is_exportable):
-            return False
         if hasattr(widget, "mergeable_model_types"):
             types = widget.mergeable_model_types()
-            if source.model_type() in types:
+            if incoming.type in types:
                 return True
         elif hasattr(widget, "merge_model"):
+            return True
+        return False
+
+    def _process_merge_model(
+        self,
+        incoming: DragDataModel,
+        source: SubWindow[_W] | None = None,
+    ) -> bool:
+        if hasattr(self.widget, "merge_model"):
+            # to remember how the model was mapped to a widget class
+            model = incoming.data_model()
+            if source is not None:
+                model.force_open_with = get_widget_class_id(source.widget)
+            merge_result = self.widget.merge_model(model)
+            if merge_result is None:
+                merge_result = MergeResult()
+            ui = self._main_window()._himena_main_window
+            if outputs := merge_result.outputs:
+                ui.model_app.injection_store.process(outputs)
+            if source is not None:
+                if merge_result.delete_input:
+                    source._close_me(ui)
+                ui._backend_main_window._move_focus_to(source._frontend_widget())
             return True
         return False
 
@@ -488,23 +510,6 @@ class SubWindow(WidgetWrapper[_W]):
             with suppress(AttributeError):
                 self.is_editable = False
         return self
-
-    def _process_merge_model(self, source: SubWindow[_W]) -> bool:
-        if hasattr(self.widget, "merge_model"):
-            model = source.to_model()
-            # to remember how the model was mapped to a widget class
-            model.force_open_with = get_widget_class_id(source.widget)
-            merge_result = self.widget.merge_model(model)
-            if merge_result is None:
-                merge_result = MergeResult()
-            ui = self._main_window()._himena_main_window
-            if merge_result.delete_input:
-                source._close_me(ui)
-            if outputs := merge_result.outputs:
-                ui.model_app.injection_store.process(outputs)
-            ui._backend_main_window._move_focus_to(source._frontend_widget())
-            return True
-        return False
 
     def _switch_to_file_watch_mode(self):
         # TODO: don't use Qt in the future

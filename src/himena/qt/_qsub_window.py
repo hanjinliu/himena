@@ -16,11 +16,12 @@ from himena import anchor as _anchor
 from himena._descriptors import LocalReaderMethod
 from himena._utils import lru_cache, get_display_name
 from himena.consts import MenuId
-from himena.types import WindowState, WindowRect, Size
+from himena.types import DragDataModel, WindowState, WindowRect, Size
 from himena.plugins import _checker
 from himena.qt._utils import get_main_window, build_qmodel_menu
 from himena.qt._qwindow_resize import ResizeState
 from himena.qt._qrename import QRenameLineEdit
+from himena import _drag
 
 if TYPE_CHECKING:
     from himena.qt._qmain_window import QMainWindow
@@ -442,20 +443,35 @@ class QSubWindow(QtW.QMdiSubWindow):
         raise RuntimeError("Could not find the sub-window in the main window.")
 
     def dragEnterEvent(self, a0: QtGui.QDragEnterEvent | None) -> None:
-        if a0 is not None and isinstance(src := a0.source(), QSubWindow):
-            if self._my_wrapper()._is_mergeable_with(src._my_wrapper()):
+        if a0 is None:
+            return None
+        if model := _drag.get_dragging_model():
+            if self._my_wrapper()._is_mergeable_with(model):
                 a0.accept()
                 return None
         a0.ignore()
         return None
 
     def dropEvent(self, a0: QtGui.QDropEvent | None) -> None:
-        if a0 is not None and isinstance(src := a0.source(), QSubWindow):
+        if a0 is None:
+            return None
+        if model := _drag.drop():
             # merge data
-            if self._my_wrapper()._process_merge_model(src._my_wrapper()):
+            self_wrapper = self._my_wrapper()
+            if isinstance(src := a0.source(), QSubWindow):
+                source = src._my_wrapper()
+            else:
+                source = None
+            if self_wrapper.widget is src:  # same widget
+                a0.ignore()
+                _LOGGER.info("dropping to the same widget, ignore it")
+                return None
+
+            if self_wrapper._process_merge_model(model, source):
                 a0.accept()
                 return None
         a0.ignore()
+        a0.setDropAction(Qt.DropAction.IgnoreAction)
         return None
 
 
@@ -688,9 +704,11 @@ class QSubWindowTitleBar(QtW.QFrame):
                 # start dragging subwindow
                 self._is_ctrl_drag = True
                 drag = QtGui.QDrag(_subwin)
+                drag.destroyed.connect(_drag.clear)
                 mime_data = QtCore.QMimeData()
+                _wrapper = self._subwindow._my_wrapper()
                 if isinstance(
-                    _meth := self._subwindow._my_wrapper()._widget_data_model_method,
+                    _meth := _wrapper._widget_data_model_method,
                     LocalReaderMethod,
                 ):
                     if isinstance(_meth.path, Path):
@@ -700,6 +718,12 @@ class QSubWindowTitleBar(QtW.QFrame):
                             [QtCore.QUrl(fp.as_uri()) for fp in _meth.path]
                         )
                 drag.setMimeData(mime_data)
+                if _wrapper.is_exportable:
+                    model = DragDataModel(
+                        getter=_wrapper.to_model,
+                        type=_wrapper.model_type(),
+                    )
+                    _drag.drag(model)
                 drag.setPixmap(_subwin._pixmap_resized(QtCore.QSize(150, 150)))
                 self._subwindow.hide()
                 try:
