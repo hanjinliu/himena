@@ -144,7 +144,7 @@ class QSimpleRoiCollection(QtW.QWidget):
 
         model = DragDataModel(getter=_data_model_getter, type=StandardType.IMAGE_ROIS)
         _s = "" if len(rois) == 1 else "s"
-        return drag_model(model, text=f"{len(rois)} ROI{_s}", source=source)
+        return drag_model(model, desc=f"{len(rois)} ROI{_s}", source=source)
 
 
 class QRoiCollection(QSimpleRoiCollection):

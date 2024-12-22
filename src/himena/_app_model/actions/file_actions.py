@@ -9,8 +9,10 @@ from app_model.types import (
     KeyChord,
     StandardKeyBinding,
 )
+from himena._data_wrappers import wrap_array
 from himena._descriptors import LocalReaderMethod, SaveToNewPath, SaveToPath
 from himena.consts import StandardType, MenuId
+from himena.standards.model_meta import ImageMeta
 from himena.widgets import MainWindow, SubWindow
 from himena import _providers
 from himena.types import (
@@ -269,7 +271,7 @@ def open_new(ui: MainWindow) -> WidgetDataModel:
 @ACTIONS.append_from_fn(
     id="paste-as-window",
     title="Paste as window",
-    menus=[{"id": MenuId.FILE, "group": READ_GROUP}],
+    menus=[MenuId.FILE_NEW],
     keybindings=[StandardKeyBinding.Paste],
     enablement=~_ctx.is_subwindow_focused,
 )
@@ -278,7 +280,14 @@ def paste_from_clipboard(ui: MainWindow) -> WidgetDataModel:
     if data := ui._backend_main_window._clipboard_data():
         title = "Clipboard"
         if (image := data.image) is not None:
-            return WidgetDataModel(value=image, type=StandardType.IMAGE, title=title)
+            shape = wrap_array(image).shape
+            if len(shape) == 3 and shape[-1] in (3, 4):
+                meta = ImageMeta(axes=["y", "x", "c"], is_rgb=True)
+            else:
+                meta = None
+            return WidgetDataModel(
+                value=image, type=StandardType.IMAGE, title=title, metadata=meta
+            )
         elif files := data.files:
             ui.read_files(files)
             return None

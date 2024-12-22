@@ -294,6 +294,7 @@ class QSubWindow(QtW.QMdiSubWindow):
 
     def _update_window_state(self, state: WindowState, animate: bool = True):
         state = WindowState(state)
+        g_last = Size(self._last_geometry.width(), self._last_geometry.height())
         if self._window_state == state:
             return None
         if self._subwindow_area().viewMode() != QtW.QMdiArea.ViewMode.SubWindowView:
@@ -303,7 +304,8 @@ class QSubWindow(QtW.QMdiSubWindow):
             _setter = self._set_geometry_animated
         else:
             _setter = self.setGeometry
-
+        g_parent = self.parentWidget().geometry()
+        g_size = Size(g_parent.width(), g_parent.height())
         if state == WindowState.MIN:
             if self._window_state is WindowState.NORMAL:
                 self._store_current_geometry()
@@ -313,26 +315,49 @@ class QSubWindow(QtW.QMdiSubWindow):
                 for sub_window in self._subwindow_area().subWindowList()
                 if sub_window._window_state is WindowState.MIN
             )
-            self._set_minimized(self.parentWidget().geometry(), n_minimized)
+            self._set_minimized(g_parent, n_minimized)
         elif state == WindowState.MAX:
-            if self._window_state is WindowState.NORMAL:
+            if self._window_state is WindowState.MIN:
+                size_old = g_last
+            elif self._window_state is WindowState.NORMAL:
+                size_old = Size(self.size().width(), self.size().height())
                 self._store_current_geometry()
-            _setter(self.parentWidget().geometry())
+            else:
+                size_old = g_size
+            _setter(g_parent)
             self._title_bar._toggle_size_btn.setIcon(
                 _icon_for_id(TitleIconId.NORMAL, self._current_icon_color)
             )
             self._widget.setVisible(True)
+            _checker.call_window_resized_callback(
+                self._my_wrapper().widget, size_old, g_size
+            )
         elif state == WindowState.NORMAL:
+            if self._window_state is WindowState.MIN:
+                size_old = g_last
+            else:
+                size_old = g_size
             _setter(self._last_geometry)
             self._title_bar._toggle_size_btn.setIcon(
                 _icon_for_id(TitleIconId.MAX, self._current_icon_color)
             )
             self._widget.setVisible(True)
             self._title_bar._fix_position()
+            _checker.call_window_resized_callback(
+                self._my_wrapper().widget, size_old, g_last
+            )
         elif state == WindowState.FULL:
-            if self._window_state is WindowState.NORMAL:
+            if self._window_state is WindowState.MIN:
+                size_old = g_last
+            elif self._window_state is WindowState.NORMAL:
+                size_old = Size(self.size().width(), self.size().height())
                 self._store_current_geometry()
-            _setter(self.parentWidget().geometry())
+            else:
+                size_old = g_size
+            _setter(g_parent)
+            _checker.call_window_resized_callback(
+                self._my_wrapper().widget, size_old, g_last
+            )
         else:
             raise RuntimeError(f"Invalid window state value: {state}")
 
@@ -803,13 +828,21 @@ class QSubWindowTitleBar(QtW.QFrame):
 
     def wheelEvent(self, event: QtGui.QWheelEvent):
         if event.modifiers() == Qt.KeyboardModifier.NoModifier:
-            i_tab, i_win = self._subwindow._find_me()
-            main = get_main_window(self)
+            subwin = self._subwindow
+            i_tab, i_win = subwin._find_me()
+            main = get_main_window(subwin)
             sub = main.tabs[i_tab][i_win]
+            size_old = sub.size
             if event.angleDelta().y() > 0:
-                sub._set_rect(sub.rect.resize_relative(1.1, 1.1))
+                rect_new = sub.rect.resize_relative(1.1, 1.1)
             else:
-                sub._set_rect(sub.rect.resize_relative(1 / 1.1, 1 / 1.1))
+                rect_new = sub.rect.resize_relative(1 / 1.1, 1 / 1.1)
+            inst = main._instructions.updated(animate=False)
+            sub._set_rect(rect_new, inst)
+            size_new = rect_new.size()
+            _checker.call_window_resized_callback(
+                subwin._my_wrapper().widget, size_old, size_new
+            )
         return super().wheelEvent(event)
 
     def dragEnterEvent(self, a0: QtGui.QDragEnterEvent | None) -> None:
@@ -888,6 +921,6 @@ def pixmap_resized(
     if outline is not None:
         painter = QtGui.QPainter(pixmap)
         painter.setPen(QtGui.QPen(outline, 2))
-        painter.drawRect(pixmap.rect())
+        painter.drawRect(pixmap.rect().adjusted(0, 0, -1, -1))
         painter.end()
     return pixmap

@@ -24,7 +24,7 @@ from ._roi_items import (
 )
 from ._handles import QHandleRect, RoiSelectionHandles
 from ._scale_bar import QScaleBarItem
-from himena.qt._utils import ndarray_to_qimage
+from himena.qt import ndarray_to_qimage
 from himena.widgets import set_status_tip
 
 _LOGGER = logging.getLogger(__name__)

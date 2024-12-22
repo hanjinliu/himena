@@ -51,7 +51,7 @@ def default_reader_provider(file_path: Path | list[Path]):
 
 @register_reader_provider(priority=-100)
 def read_as_text_anyway_provider(file_path: Path):
-    return _io.default_text_reader
+    return _io.default_plain_text_reader
 
 
 @register_reader_provider(priority=0)

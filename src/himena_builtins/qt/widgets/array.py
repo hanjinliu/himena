@@ -118,8 +118,6 @@ class QArrayModel(QtCore.QAbstractTableModel):
 
 
 class QArraySliceView(QTableBase):
-    """A table widget for viewing 2-D array."""
-
     def __init__(self):
         super().__init__()
         self.horizontalHeader().setFixedHeight(18)
@@ -148,8 +146,6 @@ class QArraySliceView(QTableBase):
             header.resizeSection(i, width)
 
     def set_array(self, arr: np.ndarray, slice_):
-        if arr.ndim != 2:
-            raise ValueError("Only 2D array is supported.")
         self.model()._arr_slice = arr
         self.model()._slice = slice_
         self.update()
@@ -172,12 +168,22 @@ class QArraySliceView(QTableBase):
         if len(sels) > 1:
             _LOGGER.warning("Multiple selections.")
             return
+        sel = sels[0]
+        arr_slice = self.model()._arr_slice
         buf = StringIO()
+        if _is_structured(arr_slice):
+            fields = [
+                arr_slice.dtype.names[i] for i in range(sel[1].start, sel[1].stop)
+            ]
+            arr_to_copy = arr_slice[sel[0]][fields]
+        else:
+            arr_to_copy = arr_slice[sel]
+        fmt = dtype_to_fmt(self.model()._dtype)
         np.savetxt(
             buf,
-            self.model()._arr_slice[sels[0]],
-            delimiter=",",
-            fmt=dtype_to_fmt(self.model()._dtype),
+            arr_to_copy,
+            delimiter="\t",
+            fmt=fmt,
         )
         clipboard = QtGui.QGuiApplication.clipboard()
         clipboard.setText(buf.getvalue())
@@ -212,7 +218,21 @@ def dtype_to_fmt(dtype: np.dtype) -> str:
 
 
 class QArrayView(QtW.QWidget):
-    """A widget for viewing n-D array."""
+    """A widget for viewing 2-D arrays.
+
+    ## Basic Usage
+
+    The 2D array sliced for the last dimensions (such as A[2, 1, :, :]) are shown in the
+    table. "2D array" can be any numpy-like arrays, including xarray.DataArray,
+    dask.array.Array, cupy.ndarray, etc. If the array is more than 2D, spinboxes are
+    shown in the bottom of the widget to select the slice. Numpy structured arrays are
+    also supported.
+
+    ## Copying Data
+
+    Selected range can be copied `Ctrl+C`. The copied data is in tab-separated format so
+    that it can be pasted to spreadsheet softwares.
+    """
 
     __himena_widget_id__ = "builtins:QArrayView"
     __himena_display_name__ = "Bulit-in Array Viewer"
@@ -235,14 +255,14 @@ class QArrayView(QtW.QWidget):
         self._control: QArrayViewControl | None = None
         self._model_type = StandardType.ARRAY
 
-    def update_spinbox_for_shape(self, shape: tuple[int, ...]):
+    def update_spinbox_for_shape(self, shape: tuple[int, ...], dims_shown: int = 2):
         nspin = len(self._spinboxes)
-        if nspin < len(shape) - 2:
-            for _i in range(nspin, len(shape) - 2):
+        if nspin < len(shape) - dims_shown:
+            for _i in range(nspin, len(shape) - dims_shown):
                 self._make_spinbox(shape[_i])
 
         for i, sb in enumerate(self._spinboxes):
-            if i < len(shape) - 2:
+            if i < len(shape) - dims_shown:
                 sb.setVisible(True)
                 _max = shape[i] - 1
                 if sb.value() > _max:
@@ -253,7 +273,7 @@ class QArrayView(QtW.QWidget):
                 sb.deleteLater()
                 self._spinboxes.remove(sb)
 
-        self._spinbox_group.setVisible(len(shape) > 2)
+        self._spinbox_group.setVisible(len(shape) > dims_shown)
 
     def _spinbox_changed(self):
         arr = self._arr
@@ -261,14 +281,19 @@ class QArrayView(QtW.QWidget):
             return
         sl = self._get_slice()
         arr = self._arr.get_slice(sl)
-        if arr.ndim < 2:
+        if arr.ndim < 2 and not _is_structured(self._arr.arr):
             arr = arr.reshape(-1, 1)
         self._table.set_array(arr, sl)
 
     def _get_slice(self) -> tuple[int | slice, ...]:
         if self._arr.ndim < 2:
             return (slice(None),)
-        return tuple(sb.value() for sb in self._spinboxes) + (slice(None), slice(None))
+        arr_structured = _is_structured(self._arr.arr)
+        if arr_structured:
+            last_sl = (slice(None),)
+        else:
+            last_sl = (slice(None), slice(None))
+        return tuple(sb.value() for sb in self._spinboxes) + last_sl
 
     def _make_spinbox(self, max_value: int):
         spinbox = QtW.QSpinBox()
@@ -281,7 +306,8 @@ class QArrayView(QtW.QWidget):
     def update_model(self, model: WidgetDataModel):
         arr = wrap_array(model.value)
         self._arr = arr
-        self.update_spinbox_for_shape(arr.shape)
+        arr_structured = _is_structured(arr.arr)
+        self.update_spinbox_for_shape(arr.shape, dims_shown=1 if arr_structured else 2)
         if arr.ndim < 2:
             arr_slice = arr.get_slice(())
             if _is_structured(arr_slice):

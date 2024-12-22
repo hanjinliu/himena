@@ -109,6 +109,9 @@ class QTableBase(QtW.QTableView):
         model = self.model()
         return model.rowCount(), model.columnCount()
 
+    def selectAll(self):
+        return self.select_all()
+
     def select_all(self):
         """Override selectAll slot to update custom selections."""
         nr, nc = self.data_shape()

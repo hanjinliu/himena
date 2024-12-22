@@ -38,7 +38,7 @@ if TYPE_CHECKING:
 class QImageView(QtW.QSplitter):
     """The default nD image viewer widget for himena.
 
-    # Basic Usage
+    ## Basic Usage
 
     The image canvas can be interactively panned by dragging with the left mouse button,
     and zoomed by scrolling the mouse wheel. Zooming is reset by double-click. This
@@ -53,7 +53,7 @@ class QImageView(QtW.QSplitter):
     - A ROI manager is in the right collapsible panel. Press the ROI buttons to switch
       between ROI modes.
 
-    # Keyboard Shortcuts
+    ## Keyboard Shortcuts
 
     - `L`: Switch between Line ROI and Segmented Line ROI.
     - `R`: Switch between Rectangle ROI and Rotated Rectangle ROI.
@@ -72,7 +72,7 @@ class QImageView(QtW.QSplitter):
     - `Ctrl+V`: Paste the copied ROI.
     - `Ctrl+D`: Duplicate the selected ROI.
 
-    # Drag and Drop
+    ## Drag and Drop
 
     - This widget accepts dropping models with `StandardType.IMAGE_ROIS` ("image-rois").
       Dropped ROIs will be added to the ROI list.

@@ -167,6 +167,12 @@ class QModelDropList(QtW.QListWidget):
             if len(subwindows) == 1:
                 event.accept()
                 return
+        elif model := _drag.get_dragging_model():
+            if self._is_type_maches(model.type):
+                _LOGGER.debug("Accepting drop event")
+                event.accept()
+                event.setDropAction(Qt.DropAction.MoveAction)
+                return
         event.ignore()
         event.setDropAction(Qt.DropAction.IgnoreAction)
 
@@ -257,6 +263,7 @@ class QModelListItem(QtW.QWidget):
         self._thumbnail = _QImageLabel()
         self._target_id: int | None = None
         self._data_model = None
+        self._label = QtW.QLabel()
         self._label.setAlignment(
             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
         )
@@ -276,11 +283,11 @@ class QModelListItem(QtW.QWidget):
             src._pixmap_resized(THUMBNAIL_SIZE, QtGui.QColor("#f0f0f0"))
         )
         self._target_id = src_wrapper._identifier
-        self._label = QtW.QLabel(src.windowTitle())
+        self._label.setText(src.windowTitle())
 
     def set_model(self, model: WidgetDataModel):
         self._thumbnail.unset_pixmap()
-        self._label = QtW.QLabel(f"Model of <b>{model.type}</b>")
+        self._label.setText(f"Model of <b>{model.type}</b>")
         self._data_model = model
 
     def widget_for_id(self) -> QSubWindow | None:

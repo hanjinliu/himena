@@ -30,9 +30,12 @@ def open_as_text_anyway(ui: MainWindow, win: SubWindow) -> WidgetDataModel[str]:
 
 @register_function(
     menus=["tools"],
+    title="Merge models ...",
     command_id="builtins:merge-models",
 )
 def merge_models() -> Parametric:
+    """Merge models as an model list."""
+
     def run_merge_models(models: list[WidgetDataModel]) -> WidgetDataModel:
         return WidgetDataModel(
             value=models,

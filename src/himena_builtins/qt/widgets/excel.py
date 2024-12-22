@@ -11,7 +11,7 @@ from himena.qt._qrename import QTabRenameLineEdit
 from himena.qt import drag_model
 from himena_builtins.qt.widgets.table import QSpreadsheet
 from himena_builtins.qt.widgets._table_components import QSelectionRangeEdit
-from himena.types import DragDataModel, WidgetDataModel
+from himena.types import DragDataModel, MergeResult, WidgetDataModel
 from himena.consts import StandardType
 from himena.plugins import validate_protocol
 
@@ -28,7 +28,7 @@ _EDIT_ENABLED = (
 class QRightClickableTabBar(QtW.QTabBar):
     right_clicked = QtCore.Signal(int)
 
-    def __init__(self, parent: QExcelFileEdit) -> None:
+    def __init__(self, parent: QExcelEdit) -> None:
         super().__init__(parent)
         self._last_right_clicked = None
         self._is_dragging = False
@@ -48,9 +48,16 @@ class QRightClickableTabBar(QtW.QTabBar):
             and a0.buttons() & QtCore.Qt.MouseButton.LeftButton
         ) or QtCore.Qt.MouseButton.MiddleButton:
             if (qexcel := self._excel_ref()) and (widget := qexcel.currentWidget()):
+                tab_text = qexcel.tabText(qexcel.currentIndex())
+
+                def _getter():
+                    model = widget.to_model()
+                    model.title = tab_text
+                    return model
+
                 drag_model(
-                    DragDataModel(getter=widget.to_model, type=StandardType.TABLE),
-                    text=qexcel.tabText(qexcel.currentIndex()),
+                    DragDataModel(getter=_getter, type=StandardType.TABLE),
+                    desc=tab_text,
                     source=qexcel,
                 )
 
@@ -65,10 +72,23 @@ class QRightClickableTabBar(QtW.QTabBar):
         return super().mouseReleaseEvent(a0)
 
 
-class QExcelFileEdit(QtW.QTabWidget):
-    """Built-in Excel File Editor"""
+class QExcelEdit(QtW.QTabWidget):
+    """Built-in Excel File Editor.
 
-    __himena_widget_id__ = "builtins:QExcelFileEdit"
+    ## Basic Usage
+
+    This widget is used to view and edit Excel books (stack of spreadsheets). It works
+    almost like a tabbed list of built-in spreadsheet for simple table types. Note that
+    this widget is not designed for full replacement of Excel software. Rich text,
+    formulas, and other advanced features are not supported.
+
+    ## Drag and Drop
+
+    Dragging a tab will provide a model of type `StandardType.TABLE` ("table").
+    `Ctrl + left_button` or `middle button` are assigned to the drag event.
+    """
+
+    __himena_widget_id__ = "builtins:QExcelEdit"
     __himena_display_name__ = "Built-in Excel File Editor"
 
     def __init__(self):
@@ -185,8 +205,8 @@ class QExcelFileEdit(QtW.QTabWidget):
         return [StandardType.EXCEL, StandardType.TABLE]
 
     @validate_protocol
-    def merge_model(self, model: WidgetDataModel) -> None:
-        if model.type == StandardType.EXCEL:
+    def merge_model(self, model: WidgetDataModel) -> MergeResult:
+        if model.type == StandardType.EXCEL:  # merge all the sheets
             assert isinstance(model.value, dict)
             for key, value in model.value.items():
                 table = QSpreadsheet()
@@ -195,13 +215,14 @@ class QExcelFileEdit(QtW.QTabWidget):
                     WidgetDataModel(value=value, type=StandardType.TABLE)
                 )
                 self.addTab(table, key)
-        elif model.type == StandardType.TABLE:
+        elif model.type == StandardType.TABLE:  # merge as a new sheet
             table = QSpreadsheet()
             table.setHeaderFormat(QSpreadsheet.HeaderFormat.Alphabetic)
             table.update_model(model)
             self.addTab(table, model.title)
         else:
             raise ValueError(f"Cannot merge {model.type} with {StandardType.EXCEL}")
+        return MergeResult(delete_input=True)
 
     if TYPE_CHECKING:
 

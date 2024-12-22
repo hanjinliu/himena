@@ -135,7 +135,7 @@ def _2d_roi_to_slices(
 @register_function(
     title="Duplicate ROIs",
     types=StandardType.IMAGE,
-    menus=["tools/image/roi, /model_menu/roi"],
+    menus=["tools/image/roi", "/model_menu/roi"],
     command_id="builtins:duplicate-rois",
 )
 def duplicate_rois(model: WidgetDataModel) -> WidgetDataModel:

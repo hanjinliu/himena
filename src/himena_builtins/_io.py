@@ -74,6 +74,18 @@ def default_text_reader(file_path: Path) -> WidgetDataModel:
     )
 
 
+def default_plain_text_reader(file_path: Path) -> WidgetDataModel:
+    encoding = _infer_encoding(file_path)
+    value = file_path.read_text(encoding=encoding)
+    return WidgetDataModel(
+        value=value,
+        type=StandardType.TEXT,
+        source=file_path,
+        extension_default=file_path.suffix,
+        metadata=TextMeta(encoding=encoding),
+    )
+
+
 def default_image_reader(file_path: Path) -> WidgetDataModel:
     """Read image file."""
     from PIL import Image

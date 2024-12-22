@@ -114,21 +114,23 @@ class QDraggableHeader(QtW.QHeaderView):
         if self._is_dragging:
             return super().mouseMoveEvent(e)
         self._is_dragging = True
-        if _is_drag_mouse_event(e):
-            if view := self._table_view_ref():
-                df = view.model().df
-                nrows = df.num_rows()
-                dict_out = {}
-                for sel in view.selection_model.iter_col_selections():
-                    dict_out.update(
-                        df.get_subset(0, nrows, sel.start, sel.stop).to_dict()
-                    )
-                df = df.from_dict(dict_out)
-                model = WidgetDataModel(
-                    value=df.unwrap(),
-                    type=view.model_type(),
-                )
-                drag_model(model, text=f"{len(dict_out)} columns", source=view)
+        if _is_drag_mouse_event(e) and (view := self._table_view_ref()):
+            df = view.model().df
+            nrows = df.num_rows()
+            dict_out = {}
+            for sel in view.selection_model.iter_col_selections():
+                dict_out.update(df.get_subset(0, nrows, sel.start, sel.stop).to_dict())
+            df = df.from_dict(dict_out)
+            model = WidgetDataModel(
+                value=df.unwrap(),
+                type=view.model_type(),
+            )
+            drag_model(
+                model,
+                desc=f"{len(dict_out)} columns",
+                source=view,
+                text=lambda: df.to_csv_string("\t"),
+            )
         return super().mouseMoveEvent(e)
 
     def mouseReleaseEvent(self, e):
@@ -137,7 +139,21 @@ class QDraggableHeader(QtW.QHeaderView):
 
 
 class QDataFrameView(QTableBase):
-    """A table widget for viewing dataframe."""
+    """A table widget for viewing DataFrame.
+
+    ## Basic Usage
+
+    - This widget is a read-only table widget for viewing a dataframe. Supported data
+      types includes `dict[str, numpy.ndarray]`, `pandas.DataFrame`, `polars.DataFrame`,
+      `pyarrow.Table` and `narwhals.DataFrame`.
+    - `Ctrl+F` to search a string in the table.
+
+    ## Drag and Drop
+
+    Selected columns can be dragged out as a model of type `StandardType.DATAFRAME`
+    ("dataframe"). `Ctrl + left_button` or `middle button` are assigned to the drag
+    event.
+    """
 
     __himena_widget_id__ = "builtins:QDataFrameView"
     __himena_display_name__ = "Built-in DataFrame Viewer"

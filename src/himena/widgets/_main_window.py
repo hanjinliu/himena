@@ -14,6 +14,7 @@ from typing import (
     overload,
     TYPE_CHECKING,
 )
+import warnings
 from app_model.expressions import create_context
 from psygnal import SignalGroup, Signal
 
@@ -723,37 +724,59 @@ class MainWindow(Generic[_W]):
         self.events.window_activated.emit(win)
         return None
 
-    def _pick_widget_class(self, model: WidgetDataModel) -> type[_W]:
+    def _iter_widget_class(self, model: WidgetDataModel) -> Iterator[type[_W]]:
         """Pick the most suitable widget class for the given model."""
         if model.force_open_with:
-            return import_object(model.force_open_with)
+            yield import_object(model.force_open_with)
+            return
         widget_classes, fallback_class = self._backend_main_window._list_widget_class(
             model.type
         )
         if not widget_classes:
-            return fallback_class
+            yield fallback_class
+            return
         complete_match = [
             (tup.priority, tup.widget_class)
             for tup in widget_classes
             if tup.type == model.type and tup.priority >= 0
         ]
         if complete_match:
-            return max(complete_match, key=lambda x: x[0])[1]
+            classes_sorted = sorted(complete_match, key=lambda x: x[0])
+            yield from (cls for _, cls in classes_sorted)
         subtype_match = [
             ((tup.type.count("."), tup.priority), tup.widget_class)
             for tup in widget_classes
             if tup.priority >= 0
         ]
-        return max(subtype_match, key=lambda x: x[0])[1]
+        classes_sorted = sorted(subtype_match, key=lambda x: x[0])
+        yield from (cls for _, cls in classes_sorted)
 
     def _pick_widget(self, model: WidgetDataModel) -> _W:
         """Pick the most suitable widget for the given model."""
-        factory = self._pick_widget_class(model)
-        try:
-            widget = factory(self)
-        except TypeError:
-            widget = factory()
-        widget.update_model(model)
+        exceptions: list[tuple[Any, Exception]] = []
+        for factory in self._iter_widget_class(model):
+            try:
+                try:
+                    widget = factory(self)
+                except TypeError:
+                    widget = factory()
+                widget.update_model(model)
+            except Exception as e:
+                exceptions.append((factory, e))
+            else:
+                break
+        else:
+            raise ValueError(
+                f"Failed to create a widget for {model}. Errors:\n"
+                f"{_format_exceptions(exceptions)}"
+            )
+        if exceptions:
+            warnings.warn(
+                "Exceptions occurred while creating a widget:\n"
+                f"{_format_exceptions(exceptions)}",
+                RuntimeWarning,
+                stacklevel=2,
+            )
         return widget
 
     def _on_command_execution(self, id: str, result: Future):
@@ -764,3 +787,14 @@ class MainWindow(Generic[_W]):
             if getattr(action.callback, NO_RECORDING_FIELD, False):
                 return None
             self._history_command.add(id)
+
+
+def _format_exceptions(exceptions: list[tuple[Any, Exception]]) -> str:
+    strs: list[str] = []
+    for factory, e in exceptions:
+        if hasattr(factory, "__himena_widget_id__"):
+            fname = factory.__himena_widget_id__
+        else:
+            fname = repr(factory)
+        strs.append(f"- {type(e).__name__} in {fname}\n  {e}")
+    return "\n".join(strs)

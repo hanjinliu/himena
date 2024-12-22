@@ -10,7 +10,10 @@ from himena.qt._utils import get_main_window
 
 
 class QReaderNotFound(QtW.QWidget):
-    """Widget for showing file path and the summary of the content."""
+    """No reader function is defined for the file.
+
+    The content of the file is not read yet. This widget only contains the file path.
+    """
 
     __himena_widget_id__ = "builtins:QReaderNotFound"
 

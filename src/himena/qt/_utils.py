@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 import numpy as np
 from app_model.backends.qt import QModelMenu
@@ -39,11 +39,12 @@ class ArrayQImage:
 
     @property
     def shape(self) -> tuple[int, ...]:
-        return self.to_numpy().shape
+        h, w, c = self.qimage.height(), self.qimage.width(), 4
+        return h, w, c
 
     @property
     def dtype(self) -> np.dtype:
-        return np.uint8
+        return np.dtype(np.uint8)
 
 
 def get_stylesheet_path() -> Path:
@@ -123,16 +124,22 @@ def _build_qmodel_menu(menu_id: str, app: str) -> QModelMenu:
 def drag_model(
     model: WidgetDataModel | DragDataModel,
     *,
-    text: str | None = None,
+    desc: str | None = None,
     source: QtW.QWidget | None = None,
+    text: str | Callable[[], str] | None = None,
 ):
+    """Create a QDrag object for the given model"""
     drag = QtGui.QDrag(source)
     _drag.drag(model)
     mime = QtCore.QMimeData()
-    mime.setText(repr(model))
     if text is None:
-        text = "model"
-    qlabel = QtW.QLabel(text)
+        text = repr(model)
+    elif callable(text):
+        text = text()
+    mime.setText(text)
+    if desc is None:
+        desc = "model"
+    qlabel = QtW.QLabel(desc)
     pixmap = QtGui.QPixmap(qlabel.size())
     qlabel.render(pixmap)
     drag.setPixmap(pixmap)

@@ -5,7 +5,7 @@ from himena_builtins.qt.widgets.table import QSpreadsheet
 from himena_builtins.qt.widgets.dataframe import QDataFrameView, QDataFramePlotView
 from himena_builtins.qt.widgets.image import QImageView
 from himena_builtins.qt.widgets.image_rois import QImageRoiView
-from himena_builtins.qt.widgets.excel import QExcelFileEdit
+from himena_builtins.qt.widgets.excel import QExcelEdit
 from himena_builtins.qt.widgets.ipynb import QIpynbEdit
 from himena_builtins.qt.widgets.draw import QDrawCanvas
 from himena_builtins.qt.widgets.text_previews import QSvgPreview, QMarkdowPreview
@@ -30,7 +30,7 @@ def register_default_widget_types() -> None:
     register_widget_class(StandardType.IMAGE, QDrawCanvas, priority=0)
     register_widget_class(StandardType.DATAFRAME, QDataFrameView, priority=50)
     register_widget_class(StandardType.DATAFRAME_PLOT, QDataFramePlotView, priority=50)
-    register_widget_class(StandardType.EXCEL, QExcelFileEdit, priority=50)
+    register_widget_class(StandardType.EXCEL, QExcelEdit, priority=50)
     register_widget_class(StandardType.IPYNB, QIpynbEdit, priority=50)
     register_widget_class(StandardType.MODELS, QModelStack, priority=50)
     register_widget_class(StandardType.READER_NOT_FOUND, QReaderNotFound, priority=0)

@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 import logging
-from typing import TYPE_CHECKING, Mapping, Sequence
+from typing import TYPE_CHECKING, Any, Mapping, Sequence
 import warnings
 import weakref
+from magicgui import widgets as mgw
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from himena.plugins import validate_protocol, _checker
 from himena.types import DragDataModel, WidgetDataModel
@@ -140,16 +141,21 @@ class QModelStack(QtW.QSplitter):
         self._add_widget(item, widget)
         return item
 
-    def _model_to_widget(self, model: WidgetDataModel) -> QtW.QWidget:
+    def _model_to_widget(self, model: WidgetDataModel) -> Any:
+        # this may return the interface, not the QWidget!
         return self._ui._pick_widget(model)
 
-    def _add_widget(self, item: QtW.QListWidgetItem, widget: QtW.QWidget):
-        self._widget_stack.addWidget(widget)
-        if hasattr(widget, "control_widget"):
-            self._control_widget.addWidget(widget.control_widget())
+    def _add_widget(self, item: QtW.QListWidgetItem, widget: Any):
+        interf, native_widget = _split_widget_and_interface(widget)
+        self._widget_stack.addWidget(native_widget)
+
+        if hasattr(interf, "control_widget"):
+            self._control_widget.addWidget(interf.control_widget())
         else:
             self._control_widget.addWidget(QtW.QWidget())  # empty
-        item.setData(_WIDGET_ROLE, widget)
+        item.setData(_WIDGET_ROLE, interf)
+        _checker.call_window_added_callback(interf)
+        _checker.call_theme_changed_callback(interf, self._ui.theme)
 
     @validate_protocol
     def to_model(self) -> WidgetDataModel:
@@ -222,7 +228,8 @@ class QModelStack(QtW.QSplitter):
                 model = _exec_lazy_loading(model)
                 widget = self._model_to_widget(model)
             self._add_widget(item, widget)
-        idx = self._widget_stack.indexOf(widget)
+        _, native_widget = _split_widget_and_interface(widget)
+        idx = self._widget_stack.indexOf(native_widget)
         self._widget_stack.setCurrentIndex(idx)
         self._control_widget.setCurrentIndex(idx)
         self._control_widget.currentWidget().setVisible(True)
@@ -238,10 +245,11 @@ class QModelStack(QtW.QSplitter):
             ):
                 item.setData(_WIDGET_ROLE, None)
                 item.setData(_MODEL_ROLE, model)
-                assert isinstance(widget, QtW.QWidget)
-                stack_idx = self._widget_stack.indexOf(widget)
-                self._widget_stack.removeWidget(widget)
-                widget.deleteLater()
+                _, native_widget = _split_widget_and_interface(widget)
+                assert isinstance(native_widget, QtW.QWidget)
+                stack_idx = self._widget_stack.indexOf(native_widget)
+                self._widget_stack.removeWidget(native_widget)
+                native_widget.deleteLater()
                 ctrl_widget = self._control_widget.widget(stack_idx)
                 if ctrl_widget:
                     self._control_widget.removeWidget(ctrl_widget)
@@ -349,7 +357,7 @@ class QModelListWidget(QtW.QListWidget):
                 model_type = StandardType.MODELS
             model = DragDataModel(getter=_getter, type=model_type)
             drag_model(
-                model, text=f"{len(items)} items", source=self._model_stack_ref()
+                model, desc=f"{len(items)} items", source=self._model_stack_ref()
             )
         else:
             super().mouseMoveEvent(e)
@@ -392,3 +400,17 @@ def _exec_lazy_loading(model: WidgetDataModel) -> WidgetDataModel:
     else:
         model.title = "File Group"
     return model
+
+
+def _split_widget_and_interface(widget) -> tuple[Any, QtW.QWidget]:
+    if hasattr(widget, "native_widget"):
+        interf = widget
+        native_widget = interf.native_widget()
+    elif isinstance(widget, mgw.Widget):
+        interf = widget
+        native_widget = interf.native
+    elif isinstance(widget, QtW.QWidget):
+        interf = native_widget = widget
+    else:
+        raise TypeError(f"Expected a widget or an interface, got {type(widget)}")
+    return interf, native_widget

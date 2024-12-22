@@ -10,6 +10,7 @@ from qtpy import QtWidgets as QtW, QtGui, QtCore
 from psygnal import EmitLoopError
 
 from himena.consts import MonospaceFontFamily
+from himena._utils import ansi2html
 
 if TYPE_CHECKING:
     from types import TracebackType
@@ -190,26 +191,6 @@ def get_tb_formatter() -> Callable[[ExcInfo, bool, str], str]:
     return format_exc_info
 
 
-ANSI_STYLES = {
-    1: {"font_weight": "bold"},
-    2: {"font_weight": "lighter"},
-    3: {"font_weight": "italic"},
-    4: {"text_decoration": "underline"},
-    5: {"text_decoration": "blink"},
-    6: {"text_decoration": "blink"},
-    8: {"visibility": "hidden"},
-    9: {"text_decoration": "line-through"},
-    30: {"color": "black"},
-    31: {"color": "red"},
-    32: {"color": "green"},
-    33: {"color": "yellow"},
-    34: {"color": "blue"},
-    35: {"color": "magenta"},
-    36: {"color": "cyan"},
-    37: {"color": "white"},
-}
-
-
 def format_exc_info_ipython(info: ExcInfo, as_html: bool, color="Neutral") -> str:
     import IPython.core.ultratb
 
@@ -224,12 +205,12 @@ def format_exc_info_ipython(info: ExcInfo, as_html: bool, color="Neutral") -> st
                 .replace(">", "&gt;")
                 .replace("\n", "<br>")
             )
-            html = "".join(ansi2html(ansi_string))
-            html = (
+            _html = "".join(ansi2html(ansi_string))
+            _html = (
                 f"<span style='font-family: monaco,{MonospaceFontFamily},"
-                "monospace;'>" + html + "</span>"
+                "monospace;'>" + _html + "</span>"
             )
-            tb_text = html
+            tb_text = _html
         else:
             tb_text = vbtb.text(*info)
     return tb_text
@@ -310,71 +291,3 @@ def format_exc_info_py311(info: ExcInfo, as_html: bool, color=None) -> str:
         if as_html:
             tb_text = "<pre>" + tb_text + "</pre>"
     return tb_text
-
-
-def ansi2html(
-    ansi_string: str, styles: dict[int, dict[str, str]] = ANSI_STYLES
-) -> Generator[str, None, None]:
-    """Convert ansi string to colored HTML
-
-    Parameters
-    ----------
-    ansi_string : str
-        text with ANSI color codes.
-    styles : dict, optional
-        A mapping from ANSI codes to a dict of css kwargs:values,
-        by default ANSI_STYLES
-
-    Yields
-    ------
-    str
-        HTML strings that can be joined to form the final html
-    """
-    previous_end = 0
-    in_span = False
-    ansi_codes = []
-    ansi_finder = re.compile("\033\\[([\\d;]*)([a-zA-Z])")
-    for match in ansi_finder.finditer(ansi_string):
-        yield ansi_string[previous_end : match.start()]
-        previous_end = match.end()
-        params, command = match.groups()
-
-        if command not in "mM":
-            continue
-
-        try:
-            params = [int(p) for p in params.split(";")]
-        except ValueError:
-            params = [0]
-
-        for i, v in enumerate(params):
-            if v == 0:
-                params = params[i + 1 :]
-                if in_span:
-                    in_span = False
-                    yield "</span>"
-                ansi_codes = []
-                if not params:
-                    continue
-
-        ansi_codes.extend(params)
-        if in_span:
-            yield "</span>"
-            in_span = False
-
-        if not ansi_codes:
-            continue
-
-        style = [
-            "; ".join([f"{k}: {v}" for k, v in styles[k].items()]).strip()
-            for k in ansi_codes
-            if k in styles
-        ]
-        yield '<span style="{}">'.format("; ".join(style))
-
-        in_span = True
-
-    yield ansi_string[previous_end:]
-    if in_span:
-        yield "</span>"
-        in_span = False

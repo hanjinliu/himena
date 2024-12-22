@@ -20,18 +20,19 @@ def _tool_btn(
     return btn
 
 
-def _roi_tool_btn(
-    roi: _roi_items.QRoi,
-    tooltip: str,
-    color: QtGui.QColor = QtGui.QColor(0, 0, 0),
-) -> QtW.QToolButton:
-    btn = QtW.QToolButton()
-    icon = _roi_tool_btn_icon(roi, color)
-    btn.setIcon(icon)
-    btn.setCheckable(True)
-    btn.setToolTip(tooltip)
-    btn.setFixedSize(22, 22)
-    return btn
+class QRoiToolButton(QtW.QToolButton):
+    def __init__(
+        self,
+        roi: _roi_items.QRoi,
+        tooltip: str,
+        color: QtGui.QColor = QtGui.QColor(0, 0, 0),
+    ):
+        super().__init__()
+        self._roi = roi
+        self.setIcon(_roi_tool_btn_icon(roi, color=color))
+        self.setCheckable(True)
+        self.setToolTip(tooltip)
+        self.setFixedSize(22, 22)
 
 
 def _roi_tool_btn_icon(roi: _roi_items.QRoi, color: QtGui.QColor):
@@ -86,35 +87,35 @@ class QRoiButtons(QtW.QWidget):
             icon_name=ICON_SELECT,
             tooltip="Select mode (S)",
         )
-        self._btn_rect = _roi_tool_btn(
+        self._btn_rect = QRoiToolButton(
             _THUMBNAIL_ROIS[Mode.ROI_RECTANGLE],
             tooltip="Add rectangles (R)",
         )
-        self._btn_rot_rect = _roi_tool_btn(
+        self._btn_rot_rect = QRoiToolButton(
             _THUMBNAIL_ROIS[Mode.ROI_ROTATED_RECTANGLE],
             tooltip="Add rotated rectangles (R x 2)",
         )
-        self._btn_ellipse = _roi_tool_btn(
+        self._btn_ellipse = QRoiToolButton(
             _THUMBNAIL_ROIS[Mode.ROI_ELLIPSE],
             tooltip="Add ellipses (E)",
         )
-        self._btn_line = _roi_tool_btn(
+        self._btn_line = QRoiToolButton(
             _THUMBNAIL_ROIS[Mode.ROI_LINE],
             tooltip="Add lines (L)",
         )
-        self._btn_segmented_line = _roi_tool_btn(
+        self._btn_segmented_line = QRoiToolButton(
             _THUMBNAIL_ROIS[Mode.ROI_SEGMENTED_LINE],
             tooltip="Add segmented lines (L x 2)",
         )
-        self._btn_polygon = _roi_tool_btn(
+        self._btn_polygon = QRoiToolButton(
             _THUMBNAIL_ROIS[Mode.ROI_POLYGON],
             tooltip="Add polygons (G)",
         )
-        self._btn_point = _roi_tool_btn(
+        self._btn_point = QRoiToolButton(
             _THUMBNAIL_ROIS[Mode.ROI_POINT],
             tooltip="Add points (P)",
         )
-        self._btn_points = _roi_tool_btn(
+        self._btn_points = QRoiToolButton(
             _THUMBNAIL_ROIS[Mode.ROI_POINTS],
             tooltip="Add multiple points (P x 2)",
         )
