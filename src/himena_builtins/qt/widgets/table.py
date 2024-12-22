@@ -196,7 +196,35 @@ _NOT_EDITABLE = QtW.QAbstractItemView.EditTrigger.NoEditTriggers
 
 
 class QSpreadsheet(QTableBase):
-    """Table widget for editing a 2D string array."""
+    """Table widget for editing a 2D string array.
+
+    ## Basic Usage
+
+    Moving cells,
+
+    ## Keyboard Shortcuts
+
+    - `↑`, `↓`, `←`, `→`: Move the current cell.
+    - `PgUp`, `PgDn`, `Home`, `End`: Move the current cell by 10.
+    - `Ctrl+↑`, `Ctrl+↓`, `Ctrl+←`, `Ctrl+→`: Move the current cell to the edge.
+    - `Shift` with the above keys: Extend the selection.
+    - `Ctrl+X`: Cut the selected cells.
+    - `Ctrl+C`: Copy the selected cells to the clipboard.
+    - `Ctrl+V`: Paste the clipboard content to the selected cells.
+    - `Ctrl+Z`: Undo the last action.
+    - `Ctrl+Y`: Redo the last undone action.
+    - `Ctrl+A`: Select all cells.
+    - `F2`: Start editing the current cell.
+    - `Ctrl+F`: Find a string in the table.
+
+    ## Mouse Interaction
+
+    - Click on a cell to select it.
+    - Drag to select multiple cells.
+    - Double click on a cell to edit it.
+    - Right click for a context menu.
+    - Right drag to scroll the table.
+    """
 
     __himena_widget_id__ = "builtins:QSpreadsheet"
     __himena_display_name__ = "Built-in Spreadsheet Editor"
@@ -340,10 +368,12 @@ class QSpreadsheet(QTableBase):
             mode="constant",
             constant_values="",
         )
+        self._control.update_for_table(self)
 
     def array_shrink(self, nr: int, nc: int):
         """Shrink the array to the given shape."""
         self.model()._arr = self.model()._arr[:nr, :nc]
+        self._control.update_for_table(self)
 
     def array_insert(
         self,

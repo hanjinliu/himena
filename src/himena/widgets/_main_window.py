@@ -741,15 +741,13 @@ class MainWindow(Generic[_W]):
             if tup.type == model.type and tup.priority >= 0
         ]
         if complete_match:
-            classes_sorted = sorted(complete_match, key=lambda x: x[0])
-            yield from (cls for _, cls in classes_sorted)
+            yield from _iter_sorted(complete_match)
         subtype_match = [
             ((tup.type.count("."), tup.priority), tup.widget_class)
             for tup in widget_classes
             if tup.priority >= 0
         ]
-        classes_sorted = sorted(subtype_match, key=lambda x: x[0])
-        yield from (cls for _, cls in classes_sorted)
+        yield from _iter_sorted(subtype_match)
 
     def _pick_widget(self, model: WidgetDataModel) -> _W:
         """Pick the most suitable widget for the given model."""
@@ -798,3 +796,8 @@ def _format_exceptions(exceptions: list[tuple[Any, Exception]]) -> str:
             fname = repr(factory)
         strs.append(f"- {type(e).__name__} in {fname}\n  {e}")
     return "\n".join(strs)
+
+
+def _iter_sorted(matched: list[tuple[tuple[int, int], type]]) -> Iterator[type]:
+    _s = sorted(matched, key=lambda x: x[0], reverse=True)
+    yield from (cls for _, cls in _s)

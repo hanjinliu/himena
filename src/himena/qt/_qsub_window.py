@@ -6,6 +6,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Callable, Iterator, cast
 from logging import getLogger
 
+from app_model.types import MenuItem
+from app_model.backends.qt import QCommandRuleAction
 from qtpy import QtWidgets as QtW
 from qtpy import QtCore, QtGui
 from qtpy.QtCore import Qt
@@ -872,6 +874,28 @@ class QSubWindowTitleBar(QtW.QFrame):
         supertype_menus: list[QtW.QMenu] = []
         _id = f"/model_menu:{model_type}"
         context_menu = build_qmodel_menu(_id, app=ui.model_app.name, parent=self)
+        open_in_actions: list[QCommandRuleAction] = []
+        _ctx = ui._ctx_keys.dict()
+        for i in range(1, len(model_subtypes) + 1):
+            _typ = ".".join(model_subtypes[:i])
+            _id_open_in = f"/open-in/{_typ}"
+            for menu_group in ui.model_app.menus.iter_menu_groups(_id_open_in):
+                for menu_or_submenu in menu_group:
+                    if isinstance(menu_or_submenu, MenuItem):
+                        action = QCommandRuleAction(
+                            menu_or_submenu.command, ui.model_app.name, self
+                        )
+                        is_enabled = menu_or_submenu.command.enablement.eval(_ctx)
+                        action.setEnabled(is_enabled)
+                        open_in_actions.append(action)
+        if open_in_actions:
+            open_in_menu = QtW.QMenu()
+            open_in_menu.setParent(context_menu, open_in_menu.windowFlags())
+            open_in_menu.setTitle("Open in ...")
+            context_menu.insertMenu(context_menu.actions()[0], open_in_menu)
+            for action in open_in_actions:
+                open_in_menu.addAction(action)
+
         # also add supertype actions
         for num in range(1, len(model_subtypes)):
             _typ = ".".join(model_subtypes[:num])

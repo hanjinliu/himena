@@ -35,8 +35,7 @@ def register_widget_class(
 
 
 def register_widget_class(type_, widget_class=None, priority=100):
-    """
-    Register a frontend widget class for the given model type.
+    """Register a frontend widget class for the given model type.
 
     The `__init__` method of the registered class must not take any argument. The class
     must implement `update_model` method to update the widget state from a
@@ -116,6 +115,7 @@ class OpenDataInFunction:
         self._action_id = "open-in:" + self._plugin_id
         self._type = type_
         self._enablement = (
+            # disable action if the model data type is different
             _type_to_expression(self._type)
             # disable action that open the same data in the same widget
             & (ctx.active_window_widget_id != self._plugin_id)
@@ -126,18 +126,14 @@ class OpenDataInFunction:
             self._plugin_id, save_behavior_override=NoNeedToSave()
         )
 
-    def menu_id(self) -> str:
-        return f"/model_menu:{self._type}/open-in"
-
     def to_action(self) -> Action:
-        tooltip = f"Open this data in {self._display_name}"
         return Action(
             id=self._action_id,
             title=self._display_name,
-            tooltip=tooltip,
+            tooltip=f"Open this data in {self._display_name}",
             callback=self,
             enablement=self._enablement,
-            menus=[{"id": self.menu_id(), "group": "open-in"}],
+            menus=[{"id": f"/open-in/{self._type}", "group": "open-in"}],
         )
 
 

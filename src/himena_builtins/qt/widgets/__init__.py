@@ -21,17 +21,26 @@ def register_default_widget_types() -> None:
 
     del _commands
 
-    register_widget_class(StandardType.ARRAY, QArrayView, priority=50)
+    # text
     register_widget_class(StandardType.TEXT, QTextEdit, priority=50)
     register_widget_class(StandardType.HTML, QRichTextEdit, priority=50)
+    register_widget_class(StandardType.IPYNB, QIpynbEdit, priority=50)
+
+    # table
     register_widget_class(StandardType.TABLE, QSpreadsheet, priority=50)
+
+    # array
+    register_widget_class(StandardType.ARRAY, QArrayView, priority=50)
     register_widget_class(StandardType.IMAGE, QImageView, priority=50)
-    register_widget_class(StandardType.IMAGE_ROIS, QImageRoiView, priority=50)
     register_widget_class(StandardType.IMAGE, QDrawCanvas, priority=0)
+
+    # dataframe
     register_widget_class(StandardType.DATAFRAME, QDataFrameView, priority=50)
     register_widget_class(StandardType.DATAFRAME_PLOT, QDataFramePlotView, priority=50)
+
+    # others
+    register_widget_class(StandardType.IMAGE_ROIS, QImageRoiView, priority=50)
     register_widget_class(StandardType.EXCEL, QExcelEdit, priority=50)
-    register_widget_class(StandardType.IPYNB, QIpynbEdit, priority=50)
     register_widget_class(StandardType.MODELS, QModelStack, priority=50)
     register_widget_class(StandardType.READER_NOT_FOUND, QReaderNotFound, priority=0)
 

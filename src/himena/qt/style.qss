@@ -623,7 +623,7 @@ QDrawCanvas {
 }
 
 QTableBase {
-    qproperty-selectionColor: #[highlight];
+    qproperty-selectionColor: #[base_color];
 }
 
 QCircularProgressBar {
