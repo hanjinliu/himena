@@ -99,7 +99,7 @@ class QImageView(QtW.QSplitter):
         self._img_view.mode_changed.connect(self._roi_buttons.set_mode)
         self._img_view.roi_visibility_changed.connect(self._roi_visibility_changed)
         self._dims_slider = QDimsSlider()
-        self._roi_col = QRoiCollection()
+        self._roi_col = QRoiCollection(self)
         self._roi_col.show_rois_changed.connect(self._img_view.set_show_rois)
         self._roi_col.show_labels_changed.connect(self._img_view.set_show_labels)
         self._roi_col.key_pressed.connect(self._img_view.keyPressEvent)
@@ -133,6 +133,7 @@ class QImageView(QtW.QSplitter):
         self._model_type: str = StandardType.IMAGE
         self._pixel_unit: str = "a.u."
         self._extension_default: str = ".png"
+        self._original_title: str | None = None
 
     def createHandle(self):
         return QSplitterHandle(self)
@@ -140,6 +141,7 @@ class QImageView(QtW.QSplitter):
     @validate_protocol
     def update_model(self, model: WidgetDataModel):
         arr = wrap_array(model.value)
+        self._original_title = model.title
         is_initialized = self._arr is not None
         is_same_dimensionality = is_initialized and arr.ndim == self._arr.ndim
         is_same_array = is_initialized and (self._arr.arr is model.value)

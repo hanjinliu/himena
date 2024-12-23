@@ -1,14 +1,20 @@
 from __future__ import annotations
+import weakref
 
 from qtpy import QtWidgets as QtW, QtCore, QtGui
-from typing import Iterator
+from typing import Iterator, TYPE_CHECKING
 
 from himena.qt._magicgui._toggle_switch import QLabeledToggleSwitch
 from himena.standards import roi
-from himena_builtins.qt.widgets._image_components import _roi_items
 from himena.consts import StandardType
+from himena.standards.model_meta import ImageRoisMeta
 from himena.types import WidgetDataModel, DragDataModel
 from himena.qt import drag_model
+from himena_builtins.qt.widgets._image_components import _roi_items
+from himena_builtins.qt.widgets._dragarea import QDraggableArea
+
+if TYPE_CHECKING:
+    from himena_builtins.qt.widgets.image import QImageView
 
 
 def from_standard_roi(r: roi.ImageRoi, pen: QtGui.QPen) -> _roi_items.QRoi:
@@ -97,6 +103,18 @@ class QSimpleRoiCollection(QtW.QWidget):
         self._slice_cache.clear()
         self._list_view.model().endResetModel()
 
+    def set_selections(self, selections: list[int]):
+        sel_model = self._list_view.selectionModel()
+        sel_model.clear()
+        model = self._list_view.model()
+        for i in selections:
+            sel_model.select(
+                model.index(i, 0), QtCore.QItemSelectionModel.SelectionFlag.Select
+            )
+
+    def selections(self) -> list[int]:
+        return [idx.row() for idx in self._list_view.selectionModel().selectedIndexes()]
+
     def __getitem__(self, key: int) -> _roi_items.QRoi:
         return self._rois[key][1]
 
@@ -135,17 +153,6 @@ class QSimpleRoiCollection(QtW.QWidget):
         self._cache_roi((), roi)
         return roi
 
-    def _run_drag_model(self, indices: list[int], source: QtW.QWidget | None = None):
-        rois = [self._rois[i] for i in indices]
-
-        def _data_model_getter():
-            roilist = roi.RoiListModel(rois=[r.toRoi(indices) for indices, r in rois])
-            return WidgetDataModel(value=roilist, type=StandardType.IMAGE_ROIS)
-
-        model = DragDataModel(getter=_data_model_getter, type=StandardType.IMAGE_ROIS)
-        _s = "" if len(rois) == 1 else "s"
-        return drag_model(model, desc=f"{len(rois)} ROI{_s}", source=source)
-
 
 class QRoiCollection(QSimpleRoiCollection):
     """Object to store and manage multiple ROIs in nD images."""
@@ -156,8 +163,9 @@ class QRoiCollection(QSimpleRoiCollection):
     key_pressed = QtCore.Signal(QtGui.QKeyEvent)
     key_released = QtCore.Signal(QtGui.QKeyEvent)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QImageView):
         super().__init__(parent)
+        self._image_view_ref = weakref.ref(parent)
         self._list_view.clicked.connect(self._on_item_clicked)
         self._list_view.key_pressed.connect(self.key_pressed)
         self._list_view.key_released.connect(self.key_released)
@@ -165,6 +173,9 @@ class QRoiCollection(QSimpleRoiCollection):
         self.layout().addWidget(
             self._list_view, 100, alignment=QtCore.Qt.AlignmentFlag.AlignTop
         )
+        self._dragarea = QDraggableArea()
+        self._dragarea.setToolTip("Drag the image ROIs")
+        self._dragarea.setFixedSize(14, 14)
         self._add_btn = QtW.QPushButton("+")
         self._add_btn.setToolTip("Register current ROI to the list")
         self._add_btn.setFixedSize(14, 14)
@@ -180,6 +191,9 @@ class QRoiCollection(QSimpleRoiCollection):
         _btn_layout = QtW.QHBoxLayout()
         _btn_layout.setContentsMargins(0, 0, 0, 0)
         _btn_layout.setSpacing(1)
+        _btn_layout.addWidget(
+            self._dragarea, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
+        )
         _btn_layout.addWidget(QtW.QWidget(), 100)
         _btn_layout.addWidget(
             self._add_btn, alignment=QtCore.Qt.AlignmentFlag.AlignRight
@@ -188,6 +202,7 @@ class QRoiCollection(QSimpleRoiCollection):
             self._remove_btn, alignment=QtCore.Qt.AlignmentFlag.AlignRight
         )
         self.layout().addLayout(_btn_layout)
+        self._dragarea.dragged.connect(self._on_dragged)
         self._roi_visible_btn = QLabeledToggleSwitch()
         self._roi_visible_btn.setText("Show ROIs")
         self._roi_visible_btn.setChecked(False)
@@ -232,12 +247,28 @@ class QRoiCollection(QSimpleRoiCollection):
             indices, roi = self._rois[r]
             self.roi_item_clicked.emit(indices, roi)
 
+    def _on_dragged(self):
+        img_view = self._image_view_ref()
+        if img_view._original_title is not None:
+            title = f"ROIs or {img_view._original_title}"
+        else:
+            title = "ROIs"
 
-def _is_drag_mouse_event(e: QtGui.QMouseEvent):
-    return (
-        e.modifiers() & QtCore.Qt.KeyboardModifier.ControlModifier
-        and e.buttons() & QtCore.Qt.MouseButton.LeftButton
-    ) or e.buttons() & QtCore.Qt.MouseButton.MiddleButton
+        def _data_model_getter():
+            axes = img_view._dims_slider._to_image_axes()
+            roilist = roi.RoiListModel(
+                rois=[r.toRoi(indices) for indices, r in self._rois]
+            )
+            return WidgetDataModel(
+                value=roilist,
+                type=StandardType.IMAGE_ROIS,
+                title=title,
+                metadata=ImageRoisMeta(axes=axes, selections=self.selections()),
+            )
+
+        model = DragDataModel(getter=_data_model_getter, type=StandardType.IMAGE_ROIS)
+        _s = "" if len(self._rois) == 1 else "s"
+        return drag_model(model, desc=f"{len(self._rois)} ROI{_s}", source=img_view)
 
 
 class QRoiListView(QtW.QListView):
@@ -254,7 +285,7 @@ class QRoiListView(QtW.QListView):
         self.setEditTriggers(QtW.QAbstractItemView.EditTrigger.EditKeyPressed)
         self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self._show_context_menu)
-        self._is_dragging = False
+        self.setDragEnabled(True)
 
     def _show_context_menu(self, point):
         index_under_cursor = self.indexAt(point)
@@ -282,35 +313,6 @@ class QRoiListView(QtW.QListView):
     def keyReleaseEvent(self, a0):
         self.key_released.emit(a0)
         return super().keyReleaseEvent(a0)
-
-    def mousePressEvent(self, e: QtGui.QMouseEvent):
-        return None
-
-    def mouseMoveEvent(self, e):
-        if self._is_dragging:
-            return super().mouseMoveEvent(e)
-        self._is_dragging = True
-        if _is_drag_mouse_event(e):
-            index = self.indexAt(e.pos())
-            if not self.selectionModel().isSelected(index):
-                self.selectionModel().select(
-                    index, QtCore.QItemSelectionModel.SelectionFlag.Select
-                )
-            indices = [ind.row() for ind in self.selectedIndexes()]
-            self.drag_requested.emit(indices)
-        return super().mouseMoveEvent(e)
-
-    def mouseReleaseEvent(self, e: QtGui.QMouseEvent):
-        if not self._is_dragging:
-            index = self.indexAt(e.pos())
-            if not (e.modifiers() & QtCore.Qt.KeyboardModifier.ControlModifier):
-                self.clearSelection()
-            if index.isValid():
-                self.selectionModel().select(
-                    index, QtCore.QItemSelectionModel.SelectionFlag.Toggle
-                )
-        self._is_dragging = False
-        return super().mouseReleaseEvent(e)
 
     def sizeHint(self):
         return QtCore.QSize(180, 900)  # set to a very large value to make it expanded

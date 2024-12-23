@@ -70,19 +70,3 @@ def change_encoding(model: WidgetDataModel[str]) -> Parametric:
         return out
 
     return change_encoding_data
-
-
-@register_function(
-    types=[StandardType.HTML, StandardType.SVG, StandardType.IPYNB],
-    menus=["tools/text"],
-    command_id="builtins:show-in-text-editor",
-    title="Show in text editor",
-)
-def show_in_text_editor(model: WidgetDataModel[str]) -> WidgetDataModel:
-    """Show special text data directly in text editor."""
-    language = model.type.rsplit(".", 1)[-1].lower()
-    return model.with_value(
-        value=model.value,
-        type=StandardType.TEXT,
-        metadata=TextMeta(language=language),
-    )

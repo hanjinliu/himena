@@ -17,6 +17,7 @@ from himena_builtins.qt.widgets._table_components import (
     QTableBase,
     QSelectionRangeEdit,
     format_table_value,
+    QHorizontalHeaderView,
 )
 from himena_builtins.qt.widgets._splitter import QSplitterHandle
 from himena.plugins import validate_protocol
@@ -101,9 +102,9 @@ def _is_drag_mouse_event(e: QtGui.QMouseEvent):
     ) or e.buttons() & QtCore.Qt.MouseButton.MiddleButton
 
 
-class QDraggableHeader(QtW.QHeaderView):
+class QDraggableHorizontalHeader(QHorizontalHeaderView):
     def __init__(self, parent: QDataFrameView):
-        super().__init__(QtCore.Qt.Orientation.Horizontal, parent)
+        super().__init__(parent)
         self._table_view_ref = weakref.ref(parent)
         self._is_dragging = False
 
@@ -160,7 +161,9 @@ class QDataFrameView(QTableBase):
 
     def __init__(self):
         super().__init__()
-        self.setHorizontalHeader(QDraggableHeader(self))
+        self.setHorizontalHeader(QDraggableHorizontalHeader(self))
+        self.horizontalHeader().setFixedHeight(18)
+        self.horizontalHeader().setDefaultSectionSize(75)
         self._control: QDataFrameViewControl | None = None
         self._model_type = StandardType.DATAFRAME
 

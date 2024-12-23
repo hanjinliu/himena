@@ -224,14 +224,14 @@ def _find_nice_factor(zoom_factor: float, image_scale: float) -> float:
     _max_logical_size = 100
     _screen_size = _n_pixel_for_1_unit * zoom_factor
     # find the smallest 1, 2, 5 x 10^N that is larger than _logical_size
-    _n = -math.floor(math.log10(_screen_size)) + 2
+    _n = -math.floor(math.log10(_screen_size)) + 1
     # now, _logical_size * 10^_n is in the range [10, 100)
     _multiplied = _screen_size * 10**_n
     _factor_int = 1
-    if _multiplied < _min_logical_size:
-        _factor_int = 2
-    elif _multiplied < _min_logical_size / 2:
+    if _multiplied < _min_logical_size / 2:
         _factor_int = 5
+    elif _multiplied < _min_logical_size:
+        _factor_int = 2
     elif _multiplied >= _max_logical_size * 2:
         _factor_int = 2
         _n -= 1

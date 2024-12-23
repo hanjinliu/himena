@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW
 from himena.plugins import validate_protocol
 from himena.standards import roi
+from himena.standards.model_meta import ImageRoisMeta, ArrayAxis
 from himena.consts import StandardType
 from himena.types import WidgetDataModel
 from ._image_components import QSimpleRoiCollection
@@ -27,6 +28,7 @@ class QImageRoiView(QtW.QWidget):
         layout.addWidget(self._roi_collection)
         self._is_modified = False
         self._model_type = StandardType.IMAGE_ROIS
+        self._axes: list[ArrayAxis] | None = None
         self._roi_collection.drag_requested.connect(self._run_drag_model)
 
     @validate_protocol
@@ -39,6 +41,11 @@ class QImageRoiView(QtW.QWidget):
         self._roi_collection.clear()
         self._roi_collection.update_from_standard_roi_list(value)
         self._model_type = model.type
+        if isinstance(meta := model.metadata, ImageRoisMeta):
+            if meta.axes:
+                self._axes = meta.axes
+            if meta.selections:
+                self._roi_collection.set_selections(meta.selections)
 
     @validate_protocol
     def to_model(self) -> WidgetDataModel:
@@ -46,6 +53,10 @@ class QImageRoiView(QtW.QWidget):
             value=self._roi_collection.to_standard_roi_list(),
             type=self.model_type(),
             extension_default=".roi.json",
+            metadata=ImageRoisMeta(
+                axes=self._axes,
+                selections=self._roi_collection.selections(),
+            ),
         )
 
     @validate_protocol

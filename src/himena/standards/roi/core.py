@@ -27,6 +27,8 @@ class ImageRoi(BaseModel):
     def construct(cls, typ: str, dict_: dict) -> ImageRoi:
         if typ == "rectangle":
             return RectangleRoi.model_validate(dict_)
+        if typ == "line":
+            return LineRoi.model_validate(dict_)
         if typ == "rotatedrectangle":
             return RotatedRectangleRoi.model_validate(dict_)
         if typ == "ellipse":
@@ -41,8 +43,6 @@ class ImageRoi(BaseModel):
             return SegmentedLineRoi.model_validate(dict_)
         if typ == "polygon":
             return PolygonRoi.model_validate(dict_)
-        if typ == "line":
-            return LineRoi.model_validate(dict_)
         raise ValueError(f"Unknown ROI type: {typ!r}")
 
 

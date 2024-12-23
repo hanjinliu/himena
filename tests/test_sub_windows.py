@@ -349,13 +349,6 @@ def test_save_behavior(ui: MainWindow, tmpdir):
     # special case for duplicate-window
     assert isinstance(win2.save_behavior, NoNeedToSave)
 
-    ui.current_window = win
-    ui.exec_action("builtins:show-in-text-editor")
-    win3 = ui.current_window
-    assert win3.is_modified
-    assert isinstance(win3._widget_data_model_method, ConverterMethod)
-    assert isinstance(win3.save_behavior, SaveToNewPath)
-
     response_save = lambda: Path(tmpdir) / "text_out.txt"
     ui._instructions = ui._instructions.updated(file_dialog_response=response_save)
     ui.exec_action("save-as")

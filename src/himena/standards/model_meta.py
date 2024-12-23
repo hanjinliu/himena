@@ -68,7 +68,7 @@ class ArrayAxis(BaseModel):
 class ArrayMeta(BaseModel):
     """Preset for describing an array metadata."""
 
-    axes: list[ArrayAxis] | None = Field(None, description="Axes of the image.")
+    axes: list[ArrayAxis] | None = Field(None, description="Axes of the array.")
     current_indices: tuple[Any, ...] | None = Field(
         None, description="Current slice indices to render the array in GUI."
     )
@@ -206,3 +206,10 @@ class ImageMeta(ArrayMeta):
             indices[self.channel_axis] = slice(None)
         indices = tuple(indices)
         return indices
+
+
+class ImageRoisMeta(BaseModel):
+    """Preset for describing an image-rois metadata."""
+
+    axes: list[ArrayAxis] | None = Field(None, description="Axes of the ROIs.")
+    selections: list[int] = Field(default_factory=list)

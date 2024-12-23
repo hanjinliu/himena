@@ -6,7 +6,9 @@ from himena.types import Parametric, Rect, WidgetDataModel
 from himena.consts import StandardType
 from himena.standards.model_meta import (
     ArrayAxis,
+    ArrayMeta,
     ImageMeta,
+    ImageRoisMeta,
     roi as _roi,
 )
 from himena.widgets._wrapper import SubWindow
@@ -22,7 +24,7 @@ configure_submenu("/model_menu/roi", "ROI")
 @register_function(
     types=StandardType.IMAGE,
     menus=["tools/image/roi", "/model_menu/roi"],
-    command_id="builtins:crop-image",
+    command_id="builtins-image-crop:crop-image",
     keybindings=["Ctrl+Shift+X"],
 )
 def crop_image(model: WidgetDataModel) -> WidgetDataModel:
@@ -42,7 +44,7 @@ def crop_image(model: WidgetDataModel) -> WidgetDataModel:
 @register_function(
     types=StandardType.IMAGE,
     menus=["tools/image/roi", "/model_menu/roi"],
-    command_id="builtins:crop-image-multi",
+    command_id="builtins-image-crop:crop-image-multi",
 )
 def crop_image_multi(model: WidgetDataModel) -> WidgetDataModel:
     """Crop the image around the registered ROIs and return as a model stack."""
@@ -71,7 +73,7 @@ def crop_image_multi(model: WidgetDataModel) -> WidgetDataModel:
     title="Crop Image (nD) ...",
     types=StandardType.IMAGE,
     menus=["tools/image/roi", "/model_menu/roi"],
-    command_id="builtins:crop-image-nd",
+    command_id="builtins-image-crop:crop-image-nd",
 )
 def crop_image_nd(win: SubWindow) -> Parametric:
     """Crop the image in nD."""
@@ -140,12 +142,129 @@ def _2d_roi_to_slices(
 )
 def duplicate_rois(model: WidgetDataModel) -> WidgetDataModel:
     """Duplicate the ROIs as a new window with the ROI data."""
-    meta = _cast_meta(model, ImageMeta)
-    rois = _resolve_roi_list_model(meta)
+    if isinstance(meta := model.metadata, ArrayMeta):
+        axes = meta.axes
+    else:
+        axes = None
     return WidgetDataModel(
-        value=rois,
+        value=_get_rois_from_model(model),
         type=StandardType.IMAGE_ROIS,
         title=f"ROIs of {model.title}",
+        metadata=ImageRoisMeta(axes=axes),
+    )
+
+
+@register_function(
+    title="Filter ROIs",
+    types=StandardType.IMAGE_ROIS,
+    menus=["/model_menu"],
+    command_id="builtins:filter-rois",
+)
+@register_function(
+    title="Filter ROIs",
+    types=StandardType.IMAGE,
+    menus=["tools/image/roi", "/model_menu/roi"],
+    command_id="builtins:filter-image-rois",
+)
+def filter_rois(model: WidgetDataModel) -> Parametric:
+    rois = _get_rois_from_model(model)
+    _choices = [
+        ("Rectangle", _roi.RectangleRoi),
+        ("Rotated Rectangle", _roi.RotatedRectangleRoi),
+        ("Line", _roi.LineRoi), ("SegmentedLine", _roi.SegmentedLineRoi),
+        ("Point", _roi.PointRoi), ("Points", _roi.PointsRoi),
+        ("Ellipse", _roi.EllipseRoi), ("Rotated Ellipse", _roi.RotatedEllipseRoi),
+        ("Polygon", _roi.PolygonRoi,)
+    ]  # fmt: skip
+
+    @configure_gui(types={"choices": _choices, "widget_type": "Select"})
+    def run_filter_rois(types: list[_roi.ImageRoi]):
+        types_allowed = set(types)
+        value = _roi.RoiListModel(
+            rois=list(r for r in rois if type(r) in types_allowed)
+        )
+        if isinstance(meta := model.metadata, (ImageRoisMeta, ImageMeta)):
+            axes = meta.axes
+        else:
+            axes = None
+        return WidgetDataModel(
+            value=value,
+            type=StandardType.IMAGE_ROIS,
+            title=f"{model.title} filtered",
+            metadata=ImageRoisMeta(axes=axes),
+        )
+
+    return run_filter_rois
+
+
+@register_function(
+    title="Select ROIs",
+    types=StandardType.IMAGE_ROIS,
+    menus=["/model_menu"],
+    command_id="builtins:select-rois",
+)
+def select_rois(model: WidgetDataModel) -> WidgetDataModel:
+    rois = _get_rois_from_model(model)
+    if not isinstance(meta := model.metadata, ImageRoisMeta):
+        raise ValueError(f"Expected an ImageRoisMeta metadata, got {type(meta)}")
+    axes = meta.axes
+    sels = meta.selections
+    if len(sels) == 0:
+        raise ValueError("No ROIs selected.")
+    value = _roi.RoiListModel(rois=list(rois[i] for i in sels))
+    return WidgetDataModel(
+        value=value,
+        type=StandardType.IMAGE_ROIS,
+        title=f"Subset of {model.title}",
+        metadata=ImageRoisMeta(axes=axes),
+    )
+
+
+@register_function(
+    title="Point ROIs to DataFrame",
+    types=StandardType.IMAGE_ROIS,
+    menus=["/model_menu"],
+    command_id="builtins:point-rois-to-dataframe",
+)
+@register_function(
+    title="Point ROIs to DataFrame",
+    types=StandardType.IMAGE,
+    menus=["tools/image/roi", "/model_menu/roi"],
+    command_id="builtins:image-point-rois-to-dataframe",
+)
+def point_rois_to_dataframe(model: WidgetDataModel) -> WidgetDataModel:
+    rois = _get_rois_from_model(model)
+    if len(rois.rois) == 0:
+        raise ValueError("No ROIs to convert")
+
+    roi0 = rois[0]
+    if not isinstance(roi0, (_roi.PointRoi, _roi.PointsRoi)):
+        raise TypeError(f"Expected a PointRoi or PointsRoi, got {type(roi0)}")
+    ndim = len(roi0.indices) + 2
+    arrs: list[np.ndarray] = []
+    for roi in rois:
+        if isinstance(roi, _roi.PointRoi):
+            arr = np.array([roi.indices + (roi.y, roi.x)], dtype=np.float32)
+        elif isinstance(roi, _roi.PointsRoi):
+            npoints = len(roi.xs)
+            arr = np.empty((npoints, ndim))
+            arr[:, :-2] = roi.indices
+            arr[:, -2] = roi.ys
+            arr[:, -1] = roi.xs
+        else:
+            raise TypeError(f"Expected a PointRoi or PointsRoi, got {type(roi)}")
+        arrs.append(arr)
+    arr_all = np.concatenate(arrs, axis=0)
+    axes = None
+    if isinstance(meta := model.metadata, (ArrayMeta, ImageRoisMeta)):
+        axes = meta.axes
+    if axes is None:
+        axes = [ArrayAxis(name=f"axis-{i}") for i in range(ndim)]
+    out = {axis.name: arr_all[:, i] for i, axis in enumerate(axes)}
+    return WidgetDataModel(
+        value=out,
+        type=StandardType.DATAFRAME,
+        title=f"Points of {model.title}",
     )
 
 
@@ -221,7 +340,7 @@ def split_channels(model: WidgetDataModel) -> list[WidgetDataModel]:
     title="Specify rectangle ...",
     types=StandardType.IMAGE,
     menus=["tools/image/roi", "/model_menu/roi"],
-    command_id="builtins:roi-specify-rectangle",
+    command_id="builtins-image-specify:roi-specify-rectangle",
 )
 def roi_specify_rectangle(win: SubWindow) -> Parametric:
     """Specify the coordinates of a rectangle ROI."""
@@ -257,7 +376,7 @@ def roi_specify_rectangle(win: SubWindow) -> Parametric:
     title="Specify ellipse ...",
     types=StandardType.IMAGE,
     menus=["tools/image/roi", "/model_menu/roi"],
-    command_id="builtins:roi-specify-ellipse",
+    command_id="builtins-image-specify:roi-specify-ellipse",
 )
 def roi_specify_ellipse(win: SubWindow) -> Parametric:
     """Specify the coordinates of an ellipse ROI."""
@@ -293,7 +412,7 @@ def roi_specify_ellipse(win: SubWindow) -> Parametric:
     title="Specify line ...",
     types=StandardType.IMAGE,
     menus=["tools/image/roi", "/model_menu/roi"],
-    command_id="builtins:roi-specify-line",
+    command_id="builtins-image-specify:roi-specify-line",
 )
 def roi_specify_line(win: SubWindow) -> Parametric:
     """Specify the coordinates of a line ROI."""
@@ -482,4 +601,18 @@ def _resolve_roi_list_model(meta: ImageMeta, copy: bool = True) -> _roi.RoiListM
             raise ValueError(f"Expected a RoiListModel, got {type(rois)}")
     else:
         raise ValueError("Expected a RoiListModel or a factory function.")
+    return rois
+
+
+def _get_rois_from_model(model: WidgetDataModel) -> _roi.RoiListModel:
+    if model.type == StandardType.IMAGE:
+        meta = _cast_meta(model, ImageMeta)
+        rois = _resolve_roi_list_model(meta)
+    elif model.type == StandardType.IMAGE_ROIS:
+        rois = model.value
+    else:
+        raise ValueError(
+            "Command 'builtins:duplicate-rois' can only be executed on an 'image' or "
+            "'image-rois' model."
+        )
     return rois

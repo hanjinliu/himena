@@ -9,7 +9,6 @@ from app_model.backends.qt import QModelMenu
 import qtpy
 from qtpy import QtWidgets as QtW, QtCore
 from qtpy import QtGui
-from himena._utils import lru_cache
 from himena import _drag
 from himena.types import DragDataModel, WidgetDataModel
 
@@ -111,14 +110,9 @@ def get_main_window(widget: QtW.QWidget) -> MainWindowQt:
 
 
 def build_qmodel_menu(menu_id: str, app: str, parent: QtW.QWidget) -> QModelMenu:
-    menu = _build_qmodel_menu(menu_id, app)
+    menu = QModelMenu(menu_id=menu_id, app=app)
     menu.setParent(parent, menu.windowFlags())
     return menu
-
-
-@lru_cache(maxsize=8)
-def _build_qmodel_menu(menu_id: str, app: str) -> QModelMenu:
-    return QModelMenu(menu_id=menu_id, app=app)
 
 
 def drag_model(

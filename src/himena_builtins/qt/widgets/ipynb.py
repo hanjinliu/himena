@@ -3,7 +3,6 @@ import weakref
 
 from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
-from superqt import QIconifyIcon
 
 from himena.consts import StandardType, MonospaceFontFamily
 from himena.qt import drag_model, ndarray_to_qimage
@@ -15,6 +14,7 @@ from himena.types import WidgetDataModel
 from himena.plugins import validate_protocol
 
 from himena_builtins.qt.widgets._text_base import QMainTextEdit
+from himena_builtins.qt.widgets._dragarea import QDraggableArea
 
 
 class QIpynbEdit(QtW.QScrollArea):
@@ -138,38 +138,6 @@ class QIpynbEdit(QtW.QScrollArea):
             if widget._text_edit.hasFocus() or widget.hasFocus():
                 return idx
         return -1
-
-
-class QDraggableArea(QtW.QWidget):
-    dragged = QtCore.Signal()
-
-    def __init__(self):
-        super().__init__()
-        icon = QIconifyIcon("qlementine-icons:drag-16", color="#777777")
-        self._icon = icon
-        self._pixmap = icon.pixmap(100, 100)
-
-        self.setCursor(QtCore.Qt.CursorShape.SizeAllCursor)
-        self._pressed = False
-        self.setToolTip("Drag area")
-
-    def paintEvent(self, a0):
-        painter = QtGui.QPainter(self)
-        painter.setRenderHint(QtGui.QPainter.RenderHint.SmoothPixmapTransform)
-        target_rect = self.rect()
-        painter.drawPixmap(target_rect, self._pixmap)
-
-    def mousePressEvent(self, a0):
-        if a0.button() == QtCore.Qt.MouseButton.LeftButton:
-            self._pressed = True
-
-    def mouseMoveEvent(self, a0):
-        if self._pressed:
-            self._pressed = False
-            self.dragged.emit()
-
-    def mouseReleaseEvent(self, a0):
-        self._pressed = False
 
 
 class QIpynbCellEdit(QtW.QGroupBox):
