@@ -4,11 +4,12 @@ from typing import Mapping
 import warnings
 import numpy as np
 from himena._data_wrappers._dataframe import wrap_dataframe
-from himena.plugins import register_function, configure_gui
+from himena._descriptors import NoNeedToSave
+from himena.plugins import register_function, configure_gui, widget_classes
 from himena.types import Parametric, WidgetDataModel, is_subtype
 from himena.consts import StandardType, MonospaceFontFamily
 from himena.widgets import SubWindow, MainWindow
-from himena._utils import unwrap_lazy_model
+from himena._utils import get_display_name, get_widget_class_id, unwrap_lazy_model
 
 
 @register_function(
@@ -193,6 +194,35 @@ def show_metadata(model: WidgetDataModel) -> WidgetDataModel:
         title=f"Metadata of {model.title}",
         editable=False,
     )
+
+
+@register_function(
+    title="Specify widget ...",
+    menus=["tools"],
+    command_id="builtins:specify-widget",
+)
+def specify_widget(model: WidgetDataModel) -> Parametric:
+    """Manually specify the type of the data.
+
+    This function will force the data to be open with the specified widget. Whether the
+    widget supports the value will not be checked.
+    """
+    classes = sorted(widget_classes().items(), key=lambda x: x[0])
+    choices = [
+        (f"{get_display_name(c, sep=' ')})", c)
+        for t, c in classes
+        if t != StandardType.READER_NOT_FOUND
+    ]
+
+    @configure_gui(widget_class={"choices": choices}, show_parameter_labels=False)
+    def run_specify(widget_class: type) -> WidgetDataModel:
+        return model.with_open_plugin(
+            open_with=get_widget_class_id(widget_class),
+            method=model.method,
+            save_behavior_override=NoNeedToSave(),
+        )
+
+    return run_specify
 
 
 def _statistics_table(value) -> str:

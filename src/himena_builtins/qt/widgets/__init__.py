@@ -11,6 +11,7 @@ from himena_builtins.qt.widgets.draw import QDrawCanvas
 from himena_builtins.qt.widgets.text_previews import QSvgPreview, QMarkdowPreview
 from himena_builtins.qt.widgets.model_stack import QModelStack
 from himena_builtins.qt.widgets.reader_not_found import QReaderNotFound
+from himena_builtins.qt.widgets.function import QFunctionEdit
 from himena.consts import StandardType
 
 
@@ -43,6 +44,7 @@ def register_default_widget_types() -> None:
     register_widget_class(StandardType.EXCEL, QExcelEdit, priority=50)
     register_widget_class(StandardType.MODELS, QModelStack, priority=50)
     register_widget_class(StandardType.READER_NOT_FOUND, QReaderNotFound, priority=0)
+    register_widget_class(StandardType.FUNCTION, QFunctionEdit, priority=50)
 
     register_previewer_class(StandardType.SVG, QSvgPreview)
     register_previewer_class(StandardType.MARKDOWN, QMarkdowPreview)

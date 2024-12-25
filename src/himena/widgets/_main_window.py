@@ -733,6 +733,11 @@ class MainWindow(Generic[_W]):
             model.type
         )
         if not widget_classes:
+            warnings.warn(
+                f"No widget class is registered for model type {model.type!r}.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
             yield fallback_class
             return
         complete_match = [
@@ -767,7 +772,7 @@ class MainWindow(Generic[_W]):
             raise ValueError(
                 f"Failed to create a widget for {model}. Errors:\n"
                 f"{_format_exceptions(exceptions)}"
-            )
+            ) from exceptions[-1][1]
         if exceptions:
             warnings.warn(
                 "Exceptions occurred while creating a widget:\n"

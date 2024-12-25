@@ -117,15 +117,17 @@ def get_widget_class_id(cls: type) -> str:
     return name
 
 
-def get_display_name(cls: type) -> str:
+def get_display_name(cls: type, sep: str = "\n", class_id: bool = True) -> str:
     if title := getattr(cls, "__himena_display_name__", None):
         if not isinstance(title, str):
             raise TypeError(f"Display name must be a string, got {type(title)}")
     else:
         title = cls.__name__
     name = get_widget_class_id(cls)
-
-    return f"{title}\n({name})"
+    if class_id:
+        return f"{title}{sep}({name})"
+    else:
+        return title
 
 
 _T = TypeVar("_T", bound=Hashable)

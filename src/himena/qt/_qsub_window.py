@@ -876,6 +876,7 @@ class QSubWindowTitleBar(QtW.QFrame):
         context_menu = build_qmodel_menu(_id, app=ui.model_app.name, parent=self)
         open_in_actions: list[QCommandRuleAction] = []
         _ctx = ui._ctx_keys.dict()
+        _n_enabled = 0
         for i in range(1, len(model_subtypes) + 1):
             _typ = ".".join(model_subtypes[:i])
             _id_open_in = f"/open-in/{_typ}"
@@ -886,13 +887,18 @@ class QSubWindowTitleBar(QtW.QFrame):
                             menu_or_submenu.command, ui.model_app.name, self
                         )
                         is_enabled = menu_or_submenu.command.enablement.eval(_ctx)
+                        _n_enabled += int(is_enabled)
                         action.setEnabled(is_enabled)
                         open_in_actions.append(action)
-        if open_in_actions:
+        if open_in_actions and _n_enabled > 0:
             open_in_menu = QtW.QMenu()
             open_in_menu.setParent(context_menu, open_in_menu.windowFlags())
             open_in_menu.setTitle("Open in ...")
-            context_menu.insertMenu(context_menu.actions()[0], open_in_menu)
+            actions = context_menu.actions()
+            if len(actions) == 0:
+                context_menu.addMenu(open_in_menu)
+            else:
+                context_menu.insertMenu(actions[0], open_in_menu)
             for action in open_in_actions:
                 open_in_menu.addAction(action)
 

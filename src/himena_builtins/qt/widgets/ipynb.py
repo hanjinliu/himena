@@ -33,7 +33,7 @@ class QIpynbEdit(QtW.QScrollArea):
     """
 
     __himena_widget_id__ = "builtins:QIpynbEdit"
-    __himena_widget_name__ = "Built-in Jupyter Notebook Editor"
+    __himena_display_name__ = "Built-in Jupyter Notebook Editor"
 
     def __init__(self):
         super().__init__()

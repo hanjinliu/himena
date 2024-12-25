@@ -17,9 +17,7 @@ class QFallbackWidget(QtW.QPlainTextEdit):
 
     @validate_protocol
     def update_model(self, model: WidgetDataModel):
-        self.setPlainText(
-            f"No widget registered for:\n\ntype: {model.type!r}\nvalue:\n{model.value!r}"
-        )
+        self.setPlainText(f"type: {model.type!r}\nvalue:\n{model.value!r}")
         self._model = model
         return
 

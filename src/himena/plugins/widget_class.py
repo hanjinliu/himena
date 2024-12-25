@@ -1,3 +1,4 @@
+from types import MappingProxyType
 from typing import Callable, overload, TypeVar, TYPE_CHECKING
 from app_model.types import Action
 from himena._descriptors import NoNeedToSave
@@ -82,6 +83,17 @@ def register_widget_class(type_, widget_class=None, priority=100):
         return wcls
 
     return inner if widget_class is None else inner(widget_class)
+
+
+def widget_classes() -> MappingProxyType[str, type]:
+    """Get the mapping of widget ID to widget class."""
+    from himena.qt.registry._api import _APP_TYPE_TO_QWIDGET
+
+    out = {}
+    for widget_list in _APP_TYPE_TO_QWIDGET.values():
+        for item in widget_list:
+            out[item.type] = item.widget_class
+    return MappingProxyType(out)
 
 
 def register_previewer_class(type_: str, widget_class: type):

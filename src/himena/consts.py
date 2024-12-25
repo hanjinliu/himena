@@ -92,6 +92,7 @@ class StandardType(SimpleNamespace):
     ### Other types ###
     GROUPBY = "groupby"  # DataFrame GroupBy object
     IMAGE_ROIS = "image-rois"  # image regions of interest
+    FUNCTION = "function"  # callable object
 
     # fallback when no reader is found for the file (which means that the file could be
     # opened as a text file)

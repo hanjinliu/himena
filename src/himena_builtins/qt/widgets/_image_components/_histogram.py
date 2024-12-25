@@ -12,6 +12,8 @@ if TYPE_CHECKING:
 
 
 class QHistogramView(QBaseGraphicsView):
+    """Graphics view for displaying histograms and setting contrast limits."""
+
     clim_changed = QtCore.Signal(tuple)
 
     def __init__(self):
@@ -107,6 +109,8 @@ class QHistogramView(QBaseGraphicsView):
         self.fitInView(
             self.viewRect(x1 - x0), QtCore.Qt.AspectRatioMode.IgnoreAspectRatio
         )
+        self._line_low.setValue(self._line_low.value())
+        self._line_high.setValue(self._line_high.value())
 
     def mouseDoubleClickEvent(self, event: QtGui.QMouseEvent):
         x0, x1 = self._minmax
@@ -159,16 +163,21 @@ class QHistogramView(QBaseGraphicsView):
         return super().mouseReleaseEvent(event)
 
 
-class QClimLineItem(QtW.QGraphicsLineItem):
+class QClimLineItem(QtW.QGraphicsRectItem):
+    """The line item for one of the contrast limits."""
+
+    # NOTE: To properly set the bounding rect, we need to inherit from QGraphicsRectItem
+    # with updated boundingRect method.
     valueChanged = Signal(float)
     _Y_LOW = -1
     _Y_HIGH = 2
 
     def __init__(self, x: float):
-        super().__init__(x, self._Y_LOW, x, self._Y_HIGH)
-        pen = QtGui.QPen(QtGui.QColor(255, 0, 0, 150), 4)
+        super().__init__()
+        self._color = QtGui.QColor(255, 0, 0, 150)
+        pen = QtGui.QPen(self._color, 4)
         pen.setCosmetic(True)
-        self.setPen(pen)
+        self._qpen = pen
         self.setZValue(1000)
         self.setFlag(QtW.QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
         self._is_dragging = False
@@ -181,6 +190,7 @@ class QClimLineItem(QtW.QGraphicsLineItem):
             QtW.QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations
         )
         self._value_label.setFont(QtGui.QFont("Arial", 8))
+        self.setAcceptHoverEvents(True)
 
     def mousePressEvent(self, event: QtW.QGraphicsSceneMouseEvent):
         if event.button() == QtCore.Qt.MouseButton.LeftButton:
@@ -197,18 +207,31 @@ class QClimLineItem(QtW.QGraphicsLineItem):
         if event.buttons() & QtCore.Qt.MouseButton.LeftButton:
             if self._is_dragging:
                 self._drag_event(event)
-        self._show_value_label()
 
     def mouseReleaseEvent(self, event: QtW.QGraphicsSceneMouseEvent):
         self._is_dragging = False
-        self._value_label.hide()
         self.scene().setGrabSource(None)
+        self.setValue(event.pos().x())
         return super().mouseReleaseEvent(event)
+
+    def hoverEnterEvent(self, event):
+        self._qpen.setWidthF(6)
+        self._show_value_label()
+        self.update()
+        return super().hoverEnterEvent(event)
+
+    def hoverLeaveEvent(self, event):
+        self._qpen.setWidthF(4)
+        self._value_label.hide()
+        self.update()
+        return super().hoverLeaveEvent(event)
 
     def _show_value_label(self):
         txt = format(self.value(), self._value_fmt)
         self._value_label.setText(txt)
-        background_color = self.scene().views()[0].backgroundBrush().color()
+        vp = self.scene().views()[0].viewport()
+        background_color = vp.palette().color(vp.backgroundRole())
+
         brightness = (
             0.299 * background_color.red()
             + 0.587 * background_color.green()
@@ -233,11 +256,21 @@ class QClimLineItem(QtW.QGraphicsLineItem):
         self._value_label.show()
 
     def _drag_event(self, event: QtW.QGraphicsSceneMouseEvent):
-        self.setValue(event.scenePos().x())
         self._show_value_label()
+        self.setValue(event.pos().x())
+        if scene := self.scene():
+            scene.update()
 
     def setValueFormat(self, fmt: str):
         self._value_fmt = fmt
+
+    def paint(self, painter, option, widget):
+        # super().paint(painter, option, widget)
+        painter.setPen(self._qpen)
+        start = QtCore.QPointF(self._value, self._Y_LOW)
+        end = QtCore.QPointF(self._value, self._Y_HIGH)
+        line = QtCore.QLineF(start, end)
+        painter.drawLine(line)
 
     def value(self) -> float:
         """The x value of the line (the contrast limit)."""
@@ -245,9 +278,16 @@ class QClimLineItem(QtW.QGraphicsLineItem):
 
     def setValue(self, x: float):
         """Set the x value of the line (the contrast limit)."""
-        self._value = min(max(x, self._range[0]), self._range[1])
-        super().setLine(self._value, self._Y_LOW, self._value, self._Y_HIGH)
-        self.valueChanged.emit(self._value)
+        old_bbox = self.boundingRect()
+        old_value = self._value
+        new_value = min(max(x, self._range[0]), self._range[1])
+        self._value = new_value
+        new_bbox = self.boundingRect()
+        self.setRect(new_bbox)
+        if new_value != old_value:
+            self.valueChanged.emit(self._value)
+        if scene := self.scene():
+            scene.update(self.mapRectToScene(old_bbox.united(new_bbox)))
 
     def setRange(self, low: float, high: float):
         """Set the min/max range of the line x value."""
@@ -265,9 +305,9 @@ class QClimLineItem(QtW.QGraphicsLineItem):
         return self.scene().views()[0]
 
     def boundingRect(self):
-        width = 10 / self._x_scale()
+        w = 10.0 / self._x_scale()
         x = self.value()
-        return QtCore.QRectF(x - width / 2, 0, width, 1)
+        return QtCore.QRectF(x - w / 2, self._Y_LOW, w, self._Y_HIGH - self._Y_LOW)
 
 
 class QHistogramItem(QtW.QGraphicsPathItem):
@@ -295,7 +335,7 @@ class QHistogramItem(QtW.QGraphicsPathItem):
             _nbin = 256
         # draw histogram
         if arr.dtype.kind == "b":
-            edges = np.array([0, 1])
+            edges = np.array([0, 0.5, 1])
             frac_true = np.sum(arr) / arr.size
             hist = np.array([1 - frac_true, frac_true])
         elif _max > _min:

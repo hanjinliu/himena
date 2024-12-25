@@ -104,6 +104,17 @@ def constant_array(ui: MainWindow) -> Parametric:
     return generate_constant_array
 
 
+@register_function(
+    title="Define a function ...",
+    menus=MenuId.FILE_NEW,
+    command_id="builtins:define-function",
+)
+def define_function() -> WidgetDataModel:
+    """Define a Python function."""
+    code = "def main():\n    pass"
+    return WidgetDataModel(value=code, type=StandardType.FUNCTION, title="Function")
+
+
 ### Seaborn sample data ###
 
 _DATASET_SOURCE = "https://raw.githubusercontent.com/mwaskom/seaborn-data/master"

@@ -230,10 +230,9 @@ class QTextEdit(QtW.QWidget):
         text_edit = self._main_text_edit
         if theme.is_light_background():
             text_edit._code_theme = "default"
-            text_edit.syntax_highlight(text_edit._language)
         else:
             text_edit._code_theme = "native"
-            text_edit.syntax_highlight(text_edit._language)
+        text_edit.syntax_highlight(text_edit._language)
 
     def keyPressEvent(self, a0: QtGui.QKeyEvent | None) -> None:
         if (

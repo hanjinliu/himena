@@ -638,8 +638,8 @@ class ChannelInfo(BaseModel):
         if arr.dtype.kind == "c":
             arr = complex_transform(arr)
         if arr.dtype.kind == "b":
-            false_color = np.array(self.colormap(0.0).rgba8, dtype=np.uint8)
-            true_color = np.array(self.colormap(1.0).rgba8, dtype=np.uint8)
+            false_color = (np.array(self.colormap(0.0).rgba) * 255).astype(np.uint8)
+            true_color = (np.array(self.colormap(1.0).rgba) * 255).astype(np.uint8)
             arr_normed = np.where(arr[..., np.newaxis], true_color, false_color)
         elif cmax > cmin:
             arr_normed = (self.colormap((arr - cmin) / (cmax - cmin)) * 255).astype(
