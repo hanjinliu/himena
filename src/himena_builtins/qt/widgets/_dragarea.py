@@ -7,8 +7,8 @@ class QDraggableArea(QtW.QWidget):
 
     dragged = QtCore.Signal()
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
         icon = QIconifyIcon("qlementine-icons:drag-16", color="#777777")
         self._icon = icon
         self._pixmap = icon.pixmap(100, 100)

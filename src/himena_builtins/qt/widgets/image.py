@@ -13,8 +13,8 @@ from himena_builtins.qt.widgets._image_components._roi_collection import (
 )
 from himena.consts import StandardType
 from himena.standards import roi, model_meta
-from himena.qt._utils import qsignal_blocker
-from himena.types import MergeResult, Size, WidgetDataModel
+from himena.qt._utils import drag_model, qsignal_blocker
+from himena.types import DragDataModel, MergeResult, Size, WidgetDataModel
 from himena.plugins import validate_protocol
 from himena.widgets import set_status_tip
 from himena._data_wrappers import ArrayWrapper, wrap_array
@@ -76,9 +76,9 @@ class QImageView(QtW.QSplitter):
 
     - This widget accepts dropping models with `StandardType.IMAGE_ROIS` ("image-rois").
       Dropped ROIs will be added to the ROI list.
-    - Selected ROIs can be dragged out from the ROI manager. The type of the dragged
-      model is `StandardType.IMAGE_ROIS` ("image-rois"). `Ctrl + left_button` or
-      `middle button` are assigned to the drag event.
+    - ROIs can be dragged out from the ROI manager. The type of the dragged model is
+      `StandardType.IMAGE_ROIS` ("image-rois"). Use the drag indicator in the corner of
+      the ROI list.
     """
 
     __himena_widget_id__ = "builtins:QImageView"
@@ -541,6 +541,7 @@ class QImageView(QtW.QSplitter):
         indices = self._dims_slider.value()
         qroi = self._roi_col.pop_roi(indices, idx)
         set_status_tip(f"Removed a {qroi._roi_type()} ROI")
+        self._roi_col.set_selections([])
 
     def _on_roi_mode_changed(self, mode: Mode):
         self._img_view.switch_mode(mode)
@@ -588,7 +589,23 @@ class QImageView(QtW.QSplitter):
         return self._img_view.keyReleaseEvent(a0)
 
     def _run_drag_model(self, indices: list[int]):
-        self._roi_col._run_drag_model(indices, source=self)
+        def make_model():
+            rlist = self._roi_col.to_standard_roi_list(indices)
+            axes = self._dims_slider._to_image_axes()
+            return WidgetDataModel(
+                value=rlist,
+                type=StandardType.IMAGE_ROIS,
+                title="ROIs",
+                metadata=model_meta.ImageRoisMeta(axes=axes),
+            )
+
+        nrois = len(indices)
+        _s = "" if nrois == 1 else "s"
+        drag_model(
+            model=DragDataModel(getter=make_model, type=StandardType.IMAGE_ROIS),
+            desc=f"{nrois} ROI{_s}",
+            source=self,
+        )
 
 
 class ChannelInfo(BaseModel):

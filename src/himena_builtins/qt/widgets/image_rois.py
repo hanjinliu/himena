@@ -3,10 +3,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW
 from himena.plugins import validate_protocol
+from himena.qt._utils import drag_model
 from himena.standards import roi
 from himena.standards.model_meta import ImageRoisMeta, ArrayAxis
 from himena.consts import StandardType
-from himena.types import WidgetDataModel
+from himena.types import DragDataModel, WidgetDataModel
 from ._image_components import QSimpleRoiCollection
 
 if TYPE_CHECKING:
@@ -76,4 +77,20 @@ class QImageRoiView(QtW.QWidget):
         return 180, 300
 
     def _run_drag_model(self, indices: list[int]):
-        self._roi_collection._run_drag_model(indices, source=self)
+        def make_model():
+            rlist = self._roi_collection.to_standard_roi_list(indices)
+            axes = self._axes
+            return WidgetDataModel(
+                value=rlist,
+                type=StandardType.IMAGE_ROIS,
+                title="ROIs",
+                metadata=ImageRoisMeta(axes=axes),
+            )
+
+        nrois = len(indices)
+        _s = "" if nrois == 1 else "s"
+        drag_model(
+            model=DragDataModel(getter=make_model, type=StandardType.IMAGE_ROIS),
+            desc=f"{nrois} ROI{_s}",
+            source=self,
+        )

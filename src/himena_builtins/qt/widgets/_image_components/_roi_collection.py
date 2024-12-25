@@ -74,10 +74,15 @@ class QSimpleRoiCollection(QtW.QWidget):
                 self.add(r.indices, from_standard_roi(r, self._pen))
         return self
 
-    def to_standard_roi_list(self) -> roi.RoiListModel:
-        return roi.RoiListModel(
-            rois=[roi.toRoi(indices) for indices, roi in self._rois],
-        )
+    def to_standard_roi_list(
+        self,
+        selections: list[int] | None = None,
+    ) -> roi.RoiListModel:
+        if selections is None:
+            all_rois = self._rois
+        else:
+            all_rois = [self._rois[i] for i in selections]
+        return roi.RoiListModel(rois=[roi.toRoi(indices) for indices, roi in all_rois])
 
     def add(self, indices: Indices, roi: _roi_items.QRoi):
         """Add a ROI on the given slice."""
@@ -111,6 +116,12 @@ class QSimpleRoiCollection(QtW.QWidget):
             sel_model.select(
                 model.index(i, 0), QtCore.QItemSelectionModel.SelectionFlag.Select
             )
+
+    def current_row(self) -> int | None:
+        index = self._list_view.currentIndex()
+        if index.isValid():
+            return index.row()
+        return None
 
     def selections(self) -> list[int]:
         return [idx.row() for idx in self._list_view.selectionModel().selectedIndexes()]
@@ -286,6 +297,15 @@ class QRoiListView(QtW.QListView):
         self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self._show_context_menu)
         self.setDragEnabled(True)
+        self.setMouseTracking(True)
+        self._hover_drag_indicator = QDraggableArea(self)
+        self._hover_drag_indicator.setWindowFlags(
+            QtCore.Qt.WindowType.FramelessWindowHint
+        )
+        self._hover_drag_indicator.setFixedSize(14, 14)
+        self._hover_drag_indicator.hide()
+        self._hover_drag_indicator.dragged.connect(self._on_drag)
+        self._indicator_index: int = -1
 
     def _show_context_menu(self, point):
         index_under_cursor = self.indexAt(point)
@@ -314,11 +334,42 @@ class QRoiListView(QtW.QListView):
         self.key_released.emit(a0)
         return super().keyReleaseEvent(a0)
 
+    def mouseMoveEvent(self, e):
+        if e.buttons() == QtCore.Qt.MouseButton.NoButton:
+            # hover
+            index = self.indexAt(e.pos())
+            if index.isValid():
+                self.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+                index_rect = self.rectForIndex(index)
+                top_right = index_rect.topRight()
+                top_right.setX(top_right.x() - 14)
+                self._hover_drag_indicator.move(top_right)
+                self._hover_drag_indicator.show()
+                self._indicator_index = index.row()
+            else:
+                self.setCursor(QtCore.Qt.CursorShape.ArrowCursor)
+                self._hover_drag_indicator.hide()
+        return super().mouseMoveEvent(e)
+
+    def leaveEvent(self, a0):
+        self._hover_drag_indicator.hide()
+        return super().leaveEvent(a0)
+
     def sizeHint(self):
         return QtCore.QSize(180, 900)  # set to a very large value to make it expanded
 
     def parent(self) -> QRoiCollection:
         return super().parent()
+
+    def _on_drag(self) -> None:
+        sels = self.parent().selections()
+        if self._indicator_index not in sels:
+            sels.append(self._indicator_index)
+            index = self.model().index(self._indicator_index, 0)
+            self.selectionModel().select(
+                index, QtCore.QItemSelectionModel.SelectionFlag.Select
+            )
+        self.drag_requested.emit(sels)
 
 
 _FLAGS = (

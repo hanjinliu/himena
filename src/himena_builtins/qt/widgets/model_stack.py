@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Mapping, Sequence
 import warnings
 import weakref
 from magicgui import widgets as mgw
-from qtpy import QtWidgets as QtW, QtCore, QtGui
+from qtpy import QtWidgets as QtW, QtCore
 from himena.plugins import validate_protocol, _checker
 from himena.types import DragDataModel, WidgetDataModel
 from himena.consts import StandardType
@@ -14,6 +14,7 @@ from himena._descriptors import LocalReaderMethod
 from himena._utils import unwrap_lazy_model
 from himena_builtins.qt.widgets._splitter import QSplitterHandle
 from himena.qt import drag_model
+from himena_builtins.qt.widgets._dragarea import QDraggableArea
 
 if TYPE_CHECKING:
     from himena.widgets import MainWindow
@@ -39,12 +40,6 @@ class QModelStack(QtW.QSplitter):
         self._save_btn = QtW.QPushButton("Save")
         self._save_btn.setToolTip("Save the current model to a file.")
         self._save_btn.clicked.connect(self._save_current)
-        self._get_btn = QtW.QPushButton("Get")
-        self._get_btn.setToolTip(
-            "Get the current item from this list and re-open in the main window, just "
-            "like the get-item method of a list."
-        )
-        self._get_btn.clicked.connect(self._get_current)
         self._delete_btn = QtW.QPushButton("Del")
         self._delete_btn.setToolTip(
             "Delete the current item from this list. This action does not delete the "
@@ -54,7 +49,6 @@ class QModelStack(QtW.QSplitter):
         btn_layout = QtW.QHBoxLayout()
         btn_layout.setContentsMargins(0, 0, 0, 0)
         btn_layout.addWidget(self._save_btn)
-        btn_layout.addWidget(self._get_btn)
         btn_layout.addWidget(self._delete_btn)
 
         self._model_list = QModelListWidget(self)
@@ -270,14 +264,6 @@ class QModelStack(QtW.QSplitter):
             )
         return False
 
-    def _get_current(self):
-        """Clone the current model and add it to the main window."""
-        if widget := self._widget_stack.currentWidget():
-            model = widget.to_model()
-            assert isinstance(model, WidgetDataModel)
-            model.title = self._model_list.currentItem().text()
-            self._ui.add_data_model(model)
-
     def _delete_current(self):
         ith = self._model_list.currentRow()
         widget = self._widget_stack.widget(ith)
@@ -305,13 +291,6 @@ def _is_modified(widget: QtW.QWidget):
     return hasattr(widget, "is_modified") and widget.is_modified()
 
 
-def _is_drag_mouse_event(e: QtGui.QMouseEvent):
-    return (
-        e.modifiers() & QtCore.Qt.KeyboardModifier.ControlModifier
-        and e.buttons() & QtCore.Qt.MouseButton.LeftButton
-    ) or e.buttons() & QtCore.Qt.MouseButton.MiddleButton
-
-
 class QModelListWidget(QtW.QListWidget):
     def __init__(self, parent: QModelStack):
         super().__init__(parent)
@@ -322,52 +301,15 @@ class QModelListWidget(QtW.QListWidget):
         )
         self._is_dragging = False
         self._model_stack_ref = weakref.ref(parent)
-
-    def mousePressEvent(self, e):
-        if _is_drag_mouse_event(e):
-            return None
-        return super().mousePressEvent(e)
-
-    def mouseMoveEvent(self, e):
-        if self._is_dragging:
-            return super().mouseMoveEvent(e)
-        self._is_dragging = True
-        if _is_drag_mouse_event(e):
-            items = self.selectedItems()
-            if len(items) == 0:
-                return None
-            if len(items) == 1:
-
-                def _getter():
-                    return self.model_for_item(items[0])
-
-                if item_model := items[0].data(_MODEL_ROLE):
-                    model_type = item_model.type
-                else:
-                    model_type = None
-            else:
-
-                def _getter():
-                    return WidgetDataModel(
-                        value=[self.model_for_item(item) for item in items],
-                        type=StandardType.MODELS,
-                        title="Models",
-                    )
-
-                model_type = StandardType.MODELS
-            model = DragDataModel(getter=_getter, type=model_type)
-            drag_model(
-                model, desc=f"{len(items)} items", source=self._model_stack_ref()
-            )
-        else:
-            super().mouseMoveEvent(e)
-        return None
-
-    def mouseReleaseEvent(self, e):
-        self._is_dragging = False
-        if _is_drag_mouse_event(e):
-            return super().mousePressEvent(e)
-        return super().mouseReleaseEvent(e)
+        self._hover_drag_indicator = QDraggableArea(self)
+        self._hover_drag_indicator.setWindowFlags(
+            QtCore.Qt.WindowType.FramelessWindowHint
+        )
+        self._hover_drag_indicator.setFixedSize(14, 14)
+        self._hover_drag_indicator.hide()
+        self._hover_drag_indicator.dragged.connect(self._on_drag)
+        self._indicator_index: int = -1
+        self.setMouseTracking(True)
 
     def getter_for_item(self, item: QtW.QListWidgetItem):
         return lambda: self.model_for_item(item)
@@ -378,6 +320,7 @@ class QModelListWidget(QtW.QListWidget):
             model = item.data(_WIDGET_ROLE).to_model()
         else:
             model = _exec_lazy_loading(model)
+        model.title = item.text()
         return model
 
     def model_at_index(self, row: int) -> WidgetDataModel | None:
@@ -385,6 +328,57 @@ class QModelListWidget(QtW.QListWidget):
         if item is None:
             return None
         return self.model_for_item(item)
+
+    def mouseMoveEvent(self, e):
+        if e.buttons() == QtCore.Qt.MouseButton.NoButton:
+            # hover
+            index = self.indexAt(e.pos())
+            if index.isValid():
+                self.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+                index_rect = self.rectForIndex(index)
+                top_right = index_rect.topRight()
+                top_right.setX(top_right.x() - 14)
+                top_right.setY(top_right.y() + int(index_rect.height() / 2) - 7)
+                self._hover_drag_indicator.move(top_right)
+                self._hover_drag_indicator.show()
+                self._indicator_index = index.row()
+            else:
+                self.setCursor(QtCore.Qt.CursorShape.ArrowCursor)
+                self._hover_drag_indicator.hide()
+        return super().mouseMoveEvent(e)
+
+    def leaveEvent(self, a0):
+        self._hover_drag_indicator.hide()
+        return super().leaveEvent(a0)
+
+    def _on_drag(self) -> list[int]:
+        items = self.selectedItems()
+        if item_under_cursor := self.item(self._indicator_index):
+            item_under_cursor.setSelected(True)
+        if len(items) == 0:
+            return None
+        if len(items) == 1:
+
+            def _getter():
+                return self.model_for_item(items[0])
+
+            if item_model := items[0].data(_MODEL_ROLE):
+                model_type = item_model.type
+            else:
+                model_type = None
+        else:
+
+            def _getter():
+                return WidgetDataModel(
+                    value=[self.model_for_item(item) for item in items],
+                    type=StandardType.MODELS,
+                    title="Models",
+                )
+
+            model_type = StandardType.MODELS
+        model = DragDataModel(getter=_getter, type=model_type)
+        _s = "s" if len(items) > 1 else ""
+        drag_model(model, desc=f"{len(items)} item{_s}", source=self._model_stack_ref())
 
 
 def _exec_lazy_loading(model: WidgetDataModel) -> WidgetDataModel:

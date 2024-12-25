@@ -676,6 +676,7 @@ class QImageGraphicsView(QBaseGraphicsView):
         elif _mods == Qt.KeyboardModifier.ControlModifier:
             if _key == Qt.Key.Key_A:
                 ny, nx = self._image_widgets[0]._img.shape[:2]
+                self.remove_current_item()
                 self.set_current_roi(QRectangleRoi(0, 0, nx, ny).withPen(self._roi_pen))
                 self._selection_handles.connect_rect(self._current_roi_item)
             elif _key == Qt.Key.Key_X:
@@ -683,8 +684,7 @@ class QImageGraphicsView(QBaseGraphicsView):
                     self._internal_clipboard = self._current_roi_item.copy()
                     self.remove_current_item(remove_from_list=True)
             elif _key == Qt.Key.Key_C:
-                if self._current_roi_item is not None:
-                    self._internal_clipboard = self._current_roi_item.copy()
+                self._copy_current_roi()
             elif _key == Qt.Key.Key_V and self._internal_clipboard:
                 self._paste_roi()
             elif _key == Qt.Key.Key_D:  # duplicate ROI
@@ -702,18 +702,22 @@ class QImageGraphicsView(QBaseGraphicsView):
             self.set_mode(self._last_mode_before_key_hold)
         return None
 
+    def _copy_current_roi(self):
+        if self._current_roi_item is not None:
+            if self._is_current_roi_item_not_registered:
+                self.add_current_roi()
+            self._internal_clipboard = self._current_roi_item.copy()
+
     def _paste_roi(self):
         item = self._internal_clipboard
-        if self._current_roi_item and self._is_current_roi_item_not_registered:
-            self.add_current_roi()
-        else:
-            self.remove_current_item()
+        if item is None:
+            return
         sx, sy = self.transform().m11(), self.transform().m22()
         item.translate(4 / sx, 4 / sy)
-        item_copy = item.copy()
-        self.set_current_roi(item_copy)
-        self._selection_handles.connect_rect(item_copy)
-        self._internal_clipboard = item_copy  # needed for Ctrl+V x2
+        self.set_current_roi(item)
+        self.add_current_roi()
+        self._selection_handles.connect_rect(item)
+        self._internal_clipboard = item.copy()  # needed for Ctrl+V x2
         self._is_current_roi_item_not_registered = True
 
 

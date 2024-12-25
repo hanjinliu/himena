@@ -189,6 +189,8 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         widget = self.widget
         if hasattr(widget, "mergeable_model_types"):
             types = widget.mergeable_model_types()
+            if incoming.type is None:
+                return True  # not specified. Just allow it.
             if incoming.type in types:
                 return True
         elif hasattr(widget, "merge_model"):
