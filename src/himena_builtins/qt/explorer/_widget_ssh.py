@@ -15,7 +15,7 @@ from himena.qt._magicgui._toggle_switch import QLabeledToggleSwitch
 from himena_builtins.qt.widgets._shared import labeled
 
 
-class QSSHRemoteWorkspaceWidget(QtW.QWidget):
+class QSSHRemoteExplorerWidget(QtW.QWidget):
     def __init__(self, ui: MainWindow) -> None:
         super().__init__()
         self.setAcceptDrops(True)
@@ -76,7 +76,7 @@ class QSSHRemoteWorkspaceWidget(QtW.QWidget):
         self._file_list_widget.itemActivated.connect(self._on_item_double_clicked)
         self._file_list_widget.setFont(font)
         self._file_list_widget.setHeaderLabels(
-            ["Name", "Permission", "Link", "Owner", "Group", "Size", "Datetime"]
+            ["Name", "Datetime", "Size", "Group", "Owner", "Link", "Permission"]
         )
         self._file_list_widget.header().setDefaultAlignment(
             QtCore.Qt.AlignmentFlag.AlignCenter
@@ -136,7 +136,7 @@ class QSSHRemoteWorkspaceWidget(QtW.QWidget):
         for row in rows[1:]:  # the first line is total size
             *others, month, day, time, name = row.split(maxsplit=8)
             datetime = f"{month} {day} {time}"
-            item = QtW.QTreeWidgetItem([name] + others + [datetime])
+            item = QtW.QTreeWidgetItem([name, datetime] + others[::-1])
             item.setToolTip(0, name)
             items.append(item)
 
@@ -221,6 +221,16 @@ class QSSHRemoteWorkspaceWidget(QtW.QWidget):
                     args = ["scp", src_pathobj.as_posix(), dst]
                 print(" ".join(args))
                 subprocess.run(args)
+
+    def update_config(
+        self,
+        default_host: str = "",
+        default_user: str = "",
+        default_use_wsl: bool = False,
+    ) -> None:
+        self._ip_address_edit.setText(default_host)
+        self._user_name_edit.setText(default_user)
+        self._is_wsl_switch.setChecked(default_use_wsl)
 
 
 def _make_ls_args(host: str, path: str, options: str = "-AF") -> list[str]:

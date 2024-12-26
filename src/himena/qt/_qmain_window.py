@@ -151,9 +151,9 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
                     btn.setIcon(qicon)
                     btn.actions()[0].setIcon(qicon)
         for i in range(self._tab_widget.count()):
-            area = self._tab_widget.widget_area(i)
-            for sub in area.subWindowList():
-                sub._title_bar._set_icon_color(icon_color)
+            if area := self._tab_widget.widget_area(i):
+                for sub in area.subWindowList():
+                    sub._title_bar._set_icon_color(icon_color)
 
     def _on_error(self, exc: Exception) -> None:
         from himena.qt._qtraceback import QtErrorMessageBox

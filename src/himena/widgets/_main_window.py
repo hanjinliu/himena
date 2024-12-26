@@ -242,8 +242,9 @@ class MainWindow(Generic[_W]):
             The dock widget handler.
         """
         dock = DockWidget(widget, self._backend_main_window, identifier=_identifier)
+        dock_native = dock._split_interface_and_frontend()[1]
         self._backend_main_window.add_dock_widget(
-            widget, title=title, area=area, allowed_areas=allowed_areas
+            dock_native, title=title, area=area, allowed_areas=allowed_areas
         )
         self._dock_widget_list._add_dock_widget(dock)
         _checker.call_theme_changed_callback(widget, self.theme)

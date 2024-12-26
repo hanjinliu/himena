@@ -7,6 +7,7 @@ from qtpy import QtWidgets as QtW, QtGui
 from qtpy.QtCore import Qt, Signal
 from himena.qt._qfinderwidget import QFinderWidget
 from himena.consts import MonospaceFontFamily
+from himena.plugins import validate_protocol
 
 
 class QLogger(QtW.QPlainTextEdit):
@@ -148,15 +149,21 @@ class OutputInterface(logging.Handler):
         for handler in self._default_handlers:
             default.addHandler(handler)
 
-    @property
-    def widget(self) -> QtOutputWidget:
-        """Return the QLogger widget."""
+    @validate_protocol
+    def native_widget(self) -> QtW.QWidget:
         return self._widget
 
+    def update_config(
+        self,
+        format: str = "",
+        date_format: str = "",
+    ):
+        self.setFormatter(logging.Formatter(fmt=format, datefmt=date_format))
 
-def get_widget(id: str = "default") -> QtOutputWidget:
+
+def get_widget(id: str = "default") -> OutputInterface:
     interf = OutputInterface()
     interf.connect_stdout()
     interf.connect_logger()
     OutputInterface._instances[id] = interf
-    return interf.widget
+    return interf

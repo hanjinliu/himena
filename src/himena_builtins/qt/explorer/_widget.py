@@ -46,7 +46,7 @@ class QRootPathEdit(QtW.QWidget):
         self.rootChanged.emit(path)
 
 
-class QWorkspaceWidget(QtW.QWidget):
+class QExplorerWidget(QtW.QWidget):
     fileDoubleClicked = QtCore.Signal(Path)
 
     def __init__(self) -> None:

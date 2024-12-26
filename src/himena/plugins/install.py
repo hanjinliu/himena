@@ -12,6 +12,7 @@ def install_plugins(app: Application, plugins: list[str]):
     """Install plugins to the application."""
     from importlib import import_module
     from himena.plugins import AppActionRegistry
+    from himena.profile import load_app_profile
 
     reg = AppActionRegistry.instance()
     for name in plugins:
@@ -37,3 +38,9 @@ def install_plugins(app: Application, plugins: list[str]):
         _LOGGER.info(f"Plugin {name} installed in {_msec:.3f} msec.")
     reg.install_to(app)
     reg._installed_plugins.extend(plugins)
+    prof = load_app_profile(app.name)
+
+    for k, v in reg._plugin_default_configs.items():
+        prof.plugin_configs.setdefault(k, v)
+
+    prof.save()

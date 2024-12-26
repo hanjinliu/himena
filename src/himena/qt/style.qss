@@ -248,7 +248,7 @@ QPlainTextEdit, QTextEdit {
     padding: 2px;
     border-radius: 2px;
     border: 1px solid #[highlight_strong];
-    selection-background-color: #[highlight_dim];
+    selection-background-color: #[highlight_strong];
 }
 .inverted {
     background-color: #[highlight_dim];
@@ -330,7 +330,7 @@ QLineEdit {
     padding: 1px;
     border-radius: 1px;
     selection-color: #[foreground];
-    selection-background-color: #[highlight_dim];
+    selection-background-color: #[highlight_strong];
 }
 
 QLineEdit:hover {

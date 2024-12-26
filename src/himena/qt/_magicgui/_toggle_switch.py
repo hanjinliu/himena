@@ -170,7 +170,9 @@ class QLabeledToggleSwitch(QtW.QWidget):
         self._text.clicked.connect(self._switch.toggle)
         layout.addWidget(self._switch)
         layout.addWidget(self._text)
-        self.setLayout(layout)
+        self.setSizePolicy(
+            QtW.QSizePolicy.Policy.Minimum, QtW.QSizePolicy.Policy.Expanding
+        )
 
     @property
     def toggled(self):

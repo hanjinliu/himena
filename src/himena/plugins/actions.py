@@ -3,8 +3,10 @@ from __future__ import annotations
 from functools import reduce, wraps
 import operator
 import logging
+from copy import deepcopy
 from uuid import uuid4
 from typing import (
+    Any,
     Callable,
     Iterator,
     Mapping,
@@ -25,6 +27,7 @@ from himena.consts import MenuId, NO_RECORDING_FIELD
 from himena import _utils
 
 if TYPE_CHECKING:
+    from typing import Self
     from himena.widgets import MainWindow, DockWidget
 
     KeyBindingsType = str | KeyBindingRule | Sequence[str] | Sequence[KeyBindingRule]
@@ -40,6 +43,7 @@ class AppActionRegistry:
         self._actions: dict[str, Action] = {}
         self._submenu_titles: dict[str, str] = {}
         self._installed_plugins: list[str] = []
+        self._plugin_default_configs: dict[str, dict[str, Any]] = {}
 
     @classmethod
     def instance(cls) -> AppActionRegistry:
@@ -352,6 +356,7 @@ def register_dock_widget(
     allowed_areas: Sequence[DockArea | DockAreaString] | None = None,
     keybindings: KeyBindingsType | None = None,
     singleton: bool = False,
+    plugin_configs: dict[str, Any] | None = None,
     command_id: str | None = None,
 ) -> _F: ...
 
@@ -366,6 +371,7 @@ def register_dock_widget(
     allowed_areas: Sequence[DockArea | DockAreaString] | None = None,
     keybindings: KeyBindingsType | None = None,
     singleton: bool = False,
+    plugin_configs: dict[str, Any] | None = None,
     command_id: str | None = None,
 ) -> Callable[[_F], _F]: ...
 
@@ -379,6 +385,7 @@ def register_dock_widget(
     allowed_areas: Sequence[DockArea | DockAreaString] | None = None,
     keybindings=None,
     singleton: bool = False,
+    plugin_configs: dict[str, Any] | None = None,
     command_id: str | None = None,
 ):
     """
@@ -404,6 +411,7 @@ def register_dock_widget(
     kbs = _normalize_keybindings(keybindings)
 
     def _inner(wf: Callable):
+        _command_id = _command_id_from_func(wf, command_id)
         _callback = DockWidgetCallback(
             wf,
             title=title,
@@ -411,13 +419,14 @@ def register_dock_widget(
             allowed_areas=allowed_areas,
             singleton=singleton,
             uuid=uuid4().int,
+            command_id=_command_id,
         )
         if singleton:
             toggle_rule = ToggleRule(get_current=_callback.widget_visible)
         else:
             toggle_rule = None
         action = Action(
-            id=_command_id_from_func(wf, command_id),
+            id=_command_id,
             title=_callback._title,
             tooltip=_tooltip_from_func(wf),
             callback=_callback,
@@ -425,13 +434,48 @@ def register_dock_widget(
             keybindings=kbs,
             toggled=toggle_rule,
         )
-        AppActionRegistry.instance().add_action(action)
+        reg = AppActionRegistry.instance()
+        reg.add_action(action)
+        if plugin_configs:
+            configs = deepcopy(plugin_configs)
+            configs[".title"] = _callback._title
+            reg._plugin_default_configs[_command_id] = configs
         return wf
 
     return _inner if widget_factory is None else _inner(widget_factory)
 
 
-class DockWidgetCallback:
+class WidgetCallbackBase:
+    _instance_map = weakref.WeakValueDictionary[str, "Self"]()
+
+    def __init__(
+        self,
+        func: Callable,
+        title: str | None,
+        singleton: bool,
+        uuid: int | None,
+        command_id: str,
+    ):
+        self._func = func
+        self._title = _normalize_title(title, func)
+        self._singleton = singleton
+        self._uuid = uuid
+        self._command_id = command_id
+        # if singleton, retain the weak reference to the dock widget
+        self._widget_ref: Callable[[], None | DockWidget] = lambda: None
+        self._all_widgets: weakref.WeakSet[DockWidget] = weakref.WeakSet()
+        wraps(func)(self)
+        self.__annotations__ = {"ui": "MainWindow"}
+        setattr(self, NO_RECORDING_FIELD, True)
+        self.__class__._instance_map[command_id] = self
+
+    @classmethod
+    def instance_for_command_id(cls, command_id: str) -> Self | None:
+        """Get the callback instance for the given command ID."""
+        return WidgetCallbackBase._instance_map.get(command_id)
+
+
+class DockWidgetCallback(WidgetCallbackBase):
     """Callback for registering dock widgets."""
 
     def __init__(
@@ -442,17 +486,13 @@ class DockWidgetCallback:
         allowed_areas: Sequence[DockArea | DockAreaString] | None,
         singleton: bool,
         uuid: int | None,
+        command_id: str,
     ):
-        self._func = func
-        self._title = _normalize_title(title, func)
+        super().__init__(
+            func, title=title, singleton=singleton, uuid=uuid, command_id=command_id
+        )
         self._area = area
         self._allowed_areas = allowed_areas
-        self._singleton = singleton
-        self._uuid = uuid
-        self._widget_ref: Callable[[], None | DockWidget] = lambda: None
-        wraps(func)(self)
-        self.__annotations__ = {"ui": "MainWindow"}
-        setattr(self, NO_RECORDING_FIELD, True)  # showing dock widget is not recorded
 
     def __call__(self, ui: MainWindow) -> None:
         if self._singleton:
@@ -470,10 +510,26 @@ class DockWidgetCallback:
             allowed_areas=self._allowed_areas,
             _identifier=self._uuid,
         )
+        self._all_widgets.add(dock)
         self._widget_ref = weakref.ref(dock)
+        plugin_configs = ui.app_profile.plugin_configs.get(self._command_id)
+        if plugin_configs:
+            if not hasattr(widget, "update_config"):
+                raise ValueError(
+                    "The widget must have 'update_config' method if plugin config "
+                    "fields are given.",
+                )
+            params = {}
+            for k, v in plugin_configs.items():
+                if k.startswith("."):
+                    continue
+                params[k] = v["value"]
+            _LOGGER.info("Updating plugin configs: %r", params)
+            widget.update_config(**params)
         return None
 
     def widget_visible(self) -> bool:
+        """Used for the toggle rule of the Action."""
         if widget := self._widget_ref():
             return widget.visible
         return False

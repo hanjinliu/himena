@@ -75,8 +75,8 @@ class _QOverlayBase(QtW.QDialog):
         """Position widget at the bottom right edge of the parent."""
         if not self.isVisible():
             return
-        qtable = self.parentWidget()
-        if not qtable:
+        qtabwidget = self.parentWidget()
+        if not qtabwidget:
             return
         if self._anchor == Anchor.bottom_left:
             self.alignBottomLeft()
@@ -94,7 +94,9 @@ class _QOverlayBase(QtW.QDialog):
         parent = self.parentWidget()
         if widget := parent.widget_area(0):
             return widget.rect()
-        return QtCore.QRect()
+        elif widget := parent.widget(0):
+            return widget.rect()
+        return self.rect()
 
     def alignTopLeft(self, offset=(3, 3)):
         pos = self.viewRect().topLeft()

@@ -3,7 +3,7 @@ from himena.plugins import register_dock_widget
 
 @register_dock_widget(
     title="Command History",
-    menus=["tools"],
+    menus=["tools/dock"],
     area="right",
     keybindings=["Ctrl+Shift+H"],
     singleton=True,

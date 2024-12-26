@@ -41,7 +41,7 @@ def _default_plugins() -> list[str]:
     """Factory function for the default plugin list."""
     return [
         "himena_builtins.qt.console",
-        "himena_builtins.qt.filetree",
+        "himena_builtins.qt.explorer",
         "himena_builtins.qt.history",
         "himena_builtins.qt.output",
         "himena_builtins.qt.plot",
@@ -66,6 +66,7 @@ class AppProfile(BaseModel):
         default_factory=list,
         description="Startup commands that will be executed when the app starts.",
     )
+    plugin_configs: dict[str, dict[str, Any]] = Field(default_factory=dict)
 
     @classmethod
     def from_json(cls, path) -> "AppProfile":
@@ -97,6 +98,10 @@ class AppProfile(BaseModel):
     def with_plugins(self, plugins: list[str]) -> "AppProfile":
         """Return a new profile with new plugins."""
         return self.model_copy(update={"plugins": plugins})
+
+    def with_plugin_configs(self, configs: dict[str, dict[str, Any]]) -> "AppProfile":
+        """Return a new profile with new plugin configs."""
+        return self.model_copy(update={"plugin_configs": configs})
 
     @field_validator("name")
     def _validate_name(cls, value):

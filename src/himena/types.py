@@ -244,12 +244,6 @@ class WidgetDataModel(GenericModel[_T]):
         """Check if the type is a subtype of the given type."""
         return is_subtype(self.type, supertype)
 
-    @field_validator("type", mode="before")
-    def _validate_type(cls, v, values):
-        if v is None:
-            return type(values["value"])
-        return v
-
     @field_validator("extension_default", mode="after")
     def _validate_extension_default(cls, v: str, values):
         if v is None:

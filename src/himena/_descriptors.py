@@ -207,7 +207,7 @@ class SaveToPath(SaveBehavior):
             res = main.exec_choose_one_dialog(
                 title="Overwrite?",
                 message=f"{self.path}\nalready exists, overwrite?",
-                choices=["Yes", "Select another path", "Cancel"],
+                choices=["Overwrite", "Select another path", "Cancel"],
             )
             if res == "Cancel":
                 return None

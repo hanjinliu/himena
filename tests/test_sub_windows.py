@@ -36,7 +36,7 @@ def test_builtin_commands(ui: MainWindow):
     assert len(ui.tabs) == 1
     assert len(ui.tabs[0]) == 0
     ui.exec_action("builtins:console")
-    ui.exec_action("builtins:filetree")
+    ui.exec_action("builtins:explorer")
     ui.exec_action("builtins:output")
     ui.exec_action("builtins:new-text")
     assert len(ui.tabs[0]) == 1

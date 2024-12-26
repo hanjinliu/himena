@@ -5,7 +5,7 @@ from himena.plugins import register_dock_widget
 
 @register_dock_widget(
     title="Console",
-    menus=["tools"],
+    menus=["tools/dock"],
     area="bottom",
     keybindings=["Ctrl+Shift+C"],
     singleton=True,

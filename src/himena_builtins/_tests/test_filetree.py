@@ -1,12 +1,12 @@
 from pathlib import Path
 from unittest.mock import MagicMock
-from himena_builtins.qt.filetree._widget import QWorkspaceWidget
+from himena_builtins.qt.explorer._widget import QExplorerWidget
 from pytestqt.qtbot import QtBot
 
 
 def test_workspace_widget(qtbot: QtBot):
     mock = MagicMock()
-    widget = QWorkspaceWidget()
+    widget = QExplorerWidget()
     qtbot.add_widget(widget)
     widget.fileDoubleClicked.connect(mock)
     widget._root._set_root_path(Path(__file__).parent)

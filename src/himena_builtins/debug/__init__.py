@@ -1,9 +1,9 @@
-from pathlib import Path
 from typing import Annotated
 import numpy as np
 from himena.consts import StandardType
 from himena.plugins import register_function, configure_gui
 from himena.types import Parametric, WidgetDataModel, WidgetConstructor
+from himena.widgets import MainWindow
 
 TOOLS_DEBUG = "tools/debug"
 
@@ -62,7 +62,7 @@ def function_with_model_drop() -> Parametric:
     title="Open User Preferences",
     command_id="debug:open-user-preferences",
 )
-def open_user_preferences() -> list[Path]:
+def open_user_preferences(ui: MainWindow):
     from himena.profile import data_dir, profile_dir
 
     output = []
@@ -70,7 +70,8 @@ def open_user_preferences() -> list[Path]:
         output.append(path)
     output.append(data_dir() / "recent.json")
     output.append(data_dir() / "recent_sessions.json")
-    return output
+    ui.read_files(output)
+    return None
 
 
 @register_function(

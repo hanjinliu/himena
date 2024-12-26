@@ -22,6 +22,8 @@ def new_window(
     from himena.widgets._initialize import init_application
 
     plugins = list(plugins or [])
+
+    # NOTE: the name of AppProfile and the app_model.Application must be the same.
     if isinstance(profile, str):
         app_prof = load_app_profile(profile)
     elif isinstance(profile, AppProfile):

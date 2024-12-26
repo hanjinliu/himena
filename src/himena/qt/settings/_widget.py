@@ -8,6 +8,7 @@ from qtpy.QtCore import Qt
 from himena.qt.settings._theme import QThemePanel
 from himena.qt.settings._plugins import QPluginListEditor
 from himena.qt.settings._startup_commands import QStartupCommandsPanel
+from himena.qt.settings._configs import QPluginConfigs
 
 if TYPE_CHECKING:
     from himena.widgets import MainWindow
@@ -38,6 +39,7 @@ class QSettingsDialog(QtW.QDialog):
         self._list.setCurrentRow(0)
 
     def addPanel(self, name: str, title: str, panel: QtW.QWidget) -> None:
+        """Add a panel to the settings dialog, with the corresponding list item."""
         self._list.addItem(name)
         widget = QtW.QWidget(self._stack)
         layout = QtW.QVBoxLayout(widget)
@@ -49,7 +51,7 @@ class QSettingsDialog(QtW.QDialog):
 
     def keyPressEvent(self, a0: QtGui.QKeyEvent) -> None:
         if (
-            a0.key() == Qt.Key.Key_W
+            a0.key() in (Qt.Key.Key_W, Qt.Key.Key_Q)
             and a0.modifiers() & Qt.KeyboardModifier.ControlModifier
         ):
             self.close()
@@ -59,6 +61,9 @@ class QSettingsDialog(QtW.QDialog):
         self.addPanel("Apperance", "Color Theme", QThemePanel(self._ui))
         self.addPanel("Plugins", "Plugins", QPluginListEditor(self._ui))
         self.addPanel("Startup", "Startup Commands", QStartupCommandsPanel(self._ui))
+        self.addPanel(
+            "Configurations", "Plugin Configurations", QPluginConfigs(self._ui)
+        )
 
 
 class QTitleLabel(QtW.QLabel):
