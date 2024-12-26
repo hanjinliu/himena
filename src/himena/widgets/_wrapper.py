@@ -115,8 +115,9 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         overwrite: bool = True,
     ) -> None:
         """Update the method descriptor of the widget."""
-        if self._widget_data_model_method is None or overwrite:
+        if isinstance(self._widget_data_model_method, ProgramaticMethod) or overwrite:
             self._widget_data_model_method = method or ProgramaticMethod()
+            _LOGGER.info("Method of %r updated to %r", self, method)
         return None
 
     @property

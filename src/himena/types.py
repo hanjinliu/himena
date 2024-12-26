@@ -202,6 +202,27 @@ class WidgetDataModel(GenericModel[_T]):
             update["save_behavior_override"] = save_behavior_override
         return self.model_copy(update=update)
 
+    def write_to_directory(
+        self,
+        directory: str | Path,
+        *,
+        plugin: str | None = None,
+    ) -> Path:
+        from himena import _providers
+
+        ins = _providers.WriterProviderStore.instance()
+        title = self.title or "Untitled"
+        path = Path(directory) / title
+        if path.suffix == "":
+            if ext := self.extension_default:
+                path = path.with_suffix(ext)
+            elif exts := self.extensions:
+                path = path.with_suffix(exts[0])
+            else:
+                raise ValueError("Could not determine the file extension.")
+        ins.run(self, path, min_priority=0, plugin=plugin)
+        return path
+
     @property
     def source(self) -> Path | list[Path] | None:
         """The direct source path of the data."""

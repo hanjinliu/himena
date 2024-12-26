@@ -35,6 +35,9 @@ class QReaderNotFound(QtW.QWidget):
     @validate_protocol
     def update_model(self, model: WidgetDataModel[Path]):
         self._file_path = model.value
+        if not self._file_path.exists():
+            self._label.setText(f"File not found: {self._file_path}")
+            return
         _byte = self._file_path.stat().st_size
         if _byte < 1024:
             _size = f"{_byte} B"

@@ -68,7 +68,7 @@ def crop_array_nd(win: SubWindow) -> Parametric:
     if is_subtype(model.type, StandardType.IMAGE):  # interpret as an image
         from .image import crop_image_nd
 
-        return crop_image_nd(model)
+        return crop_image_nd(win)
 
     conf_kwargs = {}
     for i in range(wrap_array(model.value).ndim - 2):

@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Any
 from pathlib import Path
 from pydantic_compat import BaseModel, Field
-
+import tempfile
 
 if TYPE_CHECKING:
     from app_model import Application
@@ -21,11 +21,14 @@ class ProgramaticMethod(MethodDescriptor):
     """Describes that one was created programmatically."""
 
 
-class LocalReaderMethod(MethodDescriptor):
+class ReaderMethod(MethodDescriptor):
+    plugin: str | None = Field(default=None)
+
+
+class LocalReaderMethod(ReaderMethod):
     """Describes that one was read from a local source file."""
 
     path: Path | list[Path]
-    plugin: str | None = Field(default=None)
 
     def get_model(self, app: "Application") -> "WidgetDataModel[Any]":
         """Get model by importing the reader plugin and actually read the file(s)."""
@@ -46,6 +49,42 @@ class LocalReaderMethod(MethodDescriptor):
                 source=self.path,
                 plugin=PluginInfo.from_str(self.plugin),
             )
+        return model
+
+
+class SCPReaderMethod(ReaderMethod):
+    """Describes that one was read from a remote source file via scp command."""
+
+    ip_address: str
+    username: str
+    path: Path
+    wsl: bool = Field(default=False)
+
+    def get_model(self, app: "Application | None" = None) -> "WidgetDataModel":
+        import subprocess
+        from himena._providers import ReaderProviderStore
+
+        store = ReaderProviderStore.instance()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            self_path = self.path.as_posix()
+            src = f"{self.username}@{self.ip_address}:{self_path}"
+            if self.wsl:
+                dst_pathobj = Path(tmpdir).joinpath(self.path.name)
+                drive = dst_pathobj.drive
+                wsl_root = Path("mnt") / drive.lower().rstrip(":")
+                dst_pathobj_wsl = (
+                    wsl_root / dst_pathobj.relative_to(drive).as_posix()[1:]
+                )
+                dst_wsl = "/" + dst_pathobj_wsl.as_posix()
+                dst = dst_pathobj.as_posix()
+                args = ["wsl", "-e", "scp", src, dst_wsl]
+            else:
+                dst = Path(tmpdir).joinpath(self.path.name).as_posix()
+                args = ["scp", src, dst]
+            subprocess.run(args)
+            model = store.run(Path(dst))
+            model.title = self.path.name
         return model
 
 

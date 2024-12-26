@@ -15,6 +15,7 @@ from himena.plugins import validate_protocol
 from himena._utils import OrderedSet, lru_cache
 from himena.qt._qcoloredit import QColorSwatch
 from himena_builtins.qt.widgets._text_base import QMainTextEdit
+from himena_builtins.qt.widgets._shared import labeled
 
 if TYPE_CHECKING:
     from himena.style import Theme
@@ -56,15 +57,6 @@ def find_language_from_path(path: str) -> str | None:
         return None
 
 
-def _labeled(text: str, widget: QtW.QWidget) -> QtW.QWidget:
-    new = QtW.QWidget()
-    layout = QtW.QHBoxLayout(new)
-    layout.setContentsMargins(0, 0, 0, 0)
-    layout.addWidget(QtW.QLabel(text))
-    layout.addWidget(widget)
-    return new
-
-
 class QTextControl(QtW.QWidget):
     languageChanged = QtCore.Signal(str)
     tabChanged = QtCore.Signal(int)
@@ -96,10 +88,10 @@ class QTextControl(QtW.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         layout.addWidget(QtW.QWidget())  # spacer
-        layout.addWidget(_labeled("Ln:", self._line_num))
+        layout.addWidget(labeled("Ln:", self._line_num))
         layout.addWidget(self._encoding)
-        layout.addWidget(_labeled("Spaces:", self._tab_spaces_combobox))
-        layout.addWidget(_labeled("Language:", self._language_combobox))
+        layout.addWidget(labeled("Spaces:", self._tab_spaces_combobox))
+        layout.addWidget(labeled("Language:", self._language_combobox))
 
         # make font smaller
         font = QtGui.QFont()

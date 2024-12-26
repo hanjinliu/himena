@@ -15,6 +15,7 @@ from himena.consts import StandardType
 if TYPE_CHECKING:
     from openpyxl.worksheet.worksheet import Worksheet
     from himena.standards import plotting as hplt
+    from himena._providers import ReaderProviderStore
 
 ###################
 ##### Readers #########
@@ -239,16 +240,26 @@ class DataFrameReader:
 
 def default_file_list_reader(file_path: Path | list[Path]) -> WidgetDataModel:
     """Read list of files."""
+    from himena._providers import ReaderProviderStore
 
     value: list[WidgetDataModel] = []
     if isinstance(file_path, Path):
         _iterator = file_path.glob("*")
     else:
         _iterator = iter(file_path)
+    store = ReaderProviderStore.instance()
     for path in _iterator:
-        model = WidgetDataModel(value=path, type=StandardType.LAZY, title=path.name)
+        model = WidgetDataModel(
+            value=_make_lazy_reader(store, path),
+            type=StandardType.LAZY,
+            title=path.name,
+        )
         value.append(model)
     return WidgetDataModel(value=value, type=StandardType.MODELS)
+
+
+def _make_lazy_reader(store: ReaderProviderStore, path: Path):
+    return lambda: store.run(path)._with_source(path)
 
 
 ###################
