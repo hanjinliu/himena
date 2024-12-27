@@ -103,6 +103,33 @@ class AppProfile(BaseModel):
         """Return a new profile with new plugin configs."""
         return self.model_copy(update={"plugin_configs": configs})
 
+    def update_plugin_config(self, plugin_id: str, **kwargs) -> None:
+        from himena.plugins.actions import AppActionRegistry, WidgetCallbackBase
+
+        reg = AppActionRegistry.instance()
+        configs = self.plugin_configs.copy()
+        if plugin_id in configs:
+            # Profile already has the plugin config
+            config = configs[plugin_id].copy()
+        else:
+            # Profile does not have the plugin config. The config is only temporarily
+            # registered in the registry.
+            config = reg._plugin_default_configs[plugin_id].copy()
+        for k, v in kwargs.items():
+            config[k]["value"] = v
+        configs[plugin_id] = config
+        self.with_plugin_configs(configs).save()
+
+        # update existing dock widgets with the new config
+        params = {}
+        for key, opt in config.items():
+            if key.startswith("."):
+                continue
+            params[key] = opt["value"]
+        if cb := WidgetCallbackBase.instance_for_command_id(plugin_id):
+            for dock in cb._all_widgets:
+                dock.widget.update_config(**params)
+
     @field_validator("name")
     def _validate_name(cls, value):
         # check if value is a valid file name

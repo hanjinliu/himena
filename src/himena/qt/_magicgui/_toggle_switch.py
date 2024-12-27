@@ -170,9 +170,7 @@ class QLabeledToggleSwitch(QtW.QWidget):
         self._text.clicked.connect(self._switch.toggle)
         layout.addWidget(self._switch)
         layout.addWidget(self._text)
-        self.setSizePolicy(
-            QtW.QSizePolicy.Policy.Minimum, QtW.QSizePolicy.Policy.Expanding
-        )
+        self.setMaximumHeight(self._switch.height())
 
     @property
     def toggled(self):
@@ -181,6 +179,7 @@ class QLabeledToggleSwitch(QtW.QWidget):
 
     def setSize(self, size: int):
         self._switch.setSize(size)
+        self.setMaximumHeight(self._switch.height())
 
     def isChecked(self) -> bool:
         return self._switch.isChecked()

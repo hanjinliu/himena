@@ -66,11 +66,7 @@ class StandardType(SimpleNamespace):
     # image data
     IMAGE = "array.image"
     # binary image data that will be used as a mask
-    IMAGE_BINARY = "array.image.binary"
-    # image label data (e.g., segmentation)
     IMAGE_LABELS = "array.image.labels"
-    # float image between 0 and 1 for masking structures
-    IMAGE_MASK = "array.image.mask"
 
     # (N, D) numerical array, such as D-dimensional point cloud
     COORDINATES = "array.coordinates"

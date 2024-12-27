@@ -121,6 +121,23 @@ class MainWindow(Generic[_W]):
         """Get the current application profile object."""
         return load_app_profile(self._model_app.name)
 
+    def submit_async_task(
+        self,
+        func: Callable,
+        *args,
+        progress_description: str | None = None,
+        **kwargs,
+    ) -> Future:
+        """Submit a task to the thread pool."""
+        future = self._executor.submit(func, *args, **kwargs)
+        if progress_description is None:
+            progress_description = f"Running {func!r}"
+        self._backend_main_window._add_job_progress(
+            future, desc=progress_description, total=0
+        )
+        self.model_app.injection_store.process(future)
+        return future
+
     @property
     def tabs(self) -> TabList[_W]:
         """Tab list object."""
@@ -397,6 +414,10 @@ class MainWindow(Generic[_W]):
             Duration (seconds) to show the status tip.
         """
         self._backend_main_window._set_status_tip(text, duration)
+        return None
+
+    def show_notification(self, text: str, duration: float = 5.0) -> None:
+        self._backend_main_window._show_notification(text, duration)
         return None
 
     @overload

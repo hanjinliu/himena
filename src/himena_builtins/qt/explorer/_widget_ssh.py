@@ -5,17 +5,20 @@ import subprocess
 import tempfile
 from pathlib import Path
 from qtpy import QtWidgets as QtW, QtCore, QtGui
+from superqt.utils import thread_worker
 
 from himena._descriptors import SCPReaderMethod
 from himena import _drag
 from himena.consts import MonospaceFontFamily
-from himena.types import WidgetDataModel
-from himena.widgets import MainWindow
+from himena.types import DragDataModel, WidgetDataModel
+from himena.widgets import MainWindow, set_status_tip, notify
 from himena.qt._magicgui._toggle_switch import QLabeledToggleSwitch
 from himena_builtins.qt.widgets._shared import labeled
 
 
 class QSSHRemoteExplorerWidget(QtW.QWidget):
+    on_ls = QtCore.Signal(object)
+
     def __init__(self, ui: MainWindow) -> None:
         super().__init__()
         self.setAcceptDrops(True)
@@ -31,9 +34,9 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         self._is_wsl_switch.setChecked(False)
         self._is_wsl_switch.setVisible(sys.platform == "win32")
         self._is_wsl_switch.setToolTip(
-            "Use WSL (Windows Subsystem for Linux) to access remote files. If checked, "
-            "all the subprocess commands such as `scp` and `ls` will be prefixed with "
-            "`wsl -e`."
+            "Use WSL (Windows Subsystem for Linux) to access remote files. If \n "
+            "checked, all the subprocess commands such as `scp` and `ls` will be \n"
+            "prefixed with `wsl -e`."
         )
 
         self._show_hidden_files_switch = QLabeledToggleSwitch()
@@ -43,6 +46,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
 
         self._pwd_widget = QtW.QLineEdit()
         self._pwd_widget.setReadOnly(True)
+        self._pwd_widget.setFont(font)
         self._edit_pwd_btn = QtW.QPushButton("Edit")
         self._edit_pwd_btn.clicked.connect(self._on_edit_pwd_clicked)
 
@@ -111,8 +115,13 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         self._pwd = path
         self._pwd_widget.setText(self._pwd.as_posix())
         self._file_list_widget.clear()
-        # self._file_list_widget.addItems(self._run_ls_command(path))
-        self._file_list_widget.addTopLevelItems(self._run_ls_command(path))
+        worker = self._run_ls_command(path)
+        worker.returned.connect(self._on_ls_done)
+        worker.start()
+        set_status_tip("Obtaining the file content ...")
+
+    def _on_ls_done(self, items: list[QtW.QTreeWidgetItem]):
+        self._file_list_widget.addTopLevelItems(items)
         for i in range(1, self._file_list_widget.columnCount()):
             self._file_list_widget.resizeColumnToContents(i)
 
@@ -121,6 +130,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         ip_address = self._ip_address_edit.text()
         return f"{username}@{ip_address}"
 
+    @thread_worker
     def _run_ls_command(self, path: Path) -> list[QtW.QTreeWidgetItem]:
         opt = "-lhAF" if self._show_hidden_files_switch.isChecked() else "-lhF"
         args = _make_ls_args(self._host_name(), path.as_posix(), options=opt)
@@ -188,7 +198,6 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
             self._edit_pwd_btn.setText("Edit")
 
     def dragEnterEvent(self, a0):
-        print(_drag.get_dragging_model())
         if _drag.get_dragging_model() is not None:
             a0.accept()
         else:
@@ -203,24 +212,8 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
 
     def dropEvent(self, a0):
         if model := _drag.drop():
-            data_model = model.data_model()
-            with tempfile.TemporaryDirectory() as tmpdir:
-                tmpdir = Path(tmpdir)
-                src_pathobj = data_model.write_to_directory(tmpdir)
-                dst_remote = self._pwd / src_pathobj.name
-                dst = f"{self._host_name()}:{dst_remote.as_posix()}"
-                if self._is_wsl_switch.isChecked():
-                    drive = src_pathobj.drive
-                    wsl_root = Path("mnt") / drive.lower().rstrip(":")
-                    src_pathobj_wsl = (
-                        wsl_root / src_pathobj.relative_to(drive).as_posix()[1:]
-                    )
-                    src_wsl = "/" + src_pathobj_wsl.as_posix()
-                    args = ["wsl", "-e", "scp", src_wsl, dst]
-                else:
-                    args = ["scp", src_pathobj.as_posix(), dst]
-                print(" ".join(args))
-                subprocess.run(args)
+            self._ui.submit_async_task(self._send_model, model)
+            set_status_tip("Start sending file ...")
 
     def update_config(
         self,
@@ -231,6 +224,26 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         self._ip_address_edit.setText(default_host)
         self._user_name_edit.setText(default_user)
         self._is_wsl_switch.setChecked(default_use_wsl)
+
+    def _send_model(self, model: DragDataModel):
+        data_model = model.data_model()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir = Path(tmpdir)
+            src_pathobj = data_model.write_to_directory(tmpdir)
+            dst_remote = self._pwd / src_pathobj.name
+            dst = f"{self._host_name()}:{dst_remote.as_posix()}"
+            if self._is_wsl_switch.isChecked():
+                drive = src_pathobj.drive
+                wsl_root = Path("mnt") / drive.lower().rstrip(":")
+                src_pathobj_wsl = (
+                    wsl_root / src_pathobj.relative_to(drive).as_posix()[1:]
+                )
+                src_wsl = "/" + src_pathobj_wsl.as_posix()
+                args = ["wsl", "-e", "scp", src_wsl, dst]
+            else:
+                args = ["scp", src_pathobj.as_posix(), dst]
+            subprocess.run(args)
+            notify(f"Sent to {dst_remote.as_posix()}", duration=2.8)
 
 
 def _make_ls_args(host: str, path: str, options: str = "-AF") -> list[str]:

@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW, QtCore
 
 from magicgui import widgets as mgw
-from himena.plugins.actions import AppActionRegistry, WidgetCallbackBase
+from psygnal import throttled
 from himena.qt._magicgui import get_type_map
 
 
@@ -48,28 +48,6 @@ class QPluginConfigs(QtW.QScrollArea):
             container.changed.connect(self._update_config)
             layout.addWidget(container.native)
 
+    @throttled(timeout=100)
     def _update_config(self, container: mgw.Container):
-        reg = AppActionRegistry.instance()
-        plugin_id = container.name
-        configs = self._ui.app_profile.plugin_configs.copy()
-        if plugin_id in configs:
-            # Profile already has the plugin config
-            config = configs[plugin_id].copy()
-        else:
-            # Profile does not have the plugin config. The config is only temporarily
-            # registered in the registry.
-            config = reg._plugin_default_configs[plugin_id].copy()
-        for k, v in container.asdict().items():
-            config[k]["value"] = v
-        configs[plugin_id] = config
-        self._ui.app_profile.with_plugin_configs(configs).save()
-
-        # update existing dock widgets with the new config
-        params = {}
-        for key, opt in config.items():
-            if key.startswith("."):
-                continue
-            params[key] = opt["value"]
-        if cb := WidgetCallbackBase.instance_for_command_id(plugin_id):
-            for dock in cb._all_widgets:
-                dock.widget.update_config(**params)
+        self._ui.app_profile.update_plugin_config(container.name, **container.asdict())

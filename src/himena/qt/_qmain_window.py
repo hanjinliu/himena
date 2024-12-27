@@ -54,6 +54,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     _himena_main_window: MainWindow
     _app: HimenaApplication
     status_tip_requested = QtCore.Signal(str, float)
+    notification_requested = QtCore.Signal(str, float)
 
     def __init__(self, app: HimenaApplication):
         # app must be initialized
@@ -131,6 +132,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self._event_loop_handler.errored.connect(self._on_error)
         self._event_loop_handler.warned.connect(self._on_warning)
         self.status_tip_requested.connect(self._on_status_tip_requested)
+        self.notification_requested.connect(self._on_show_notification_requested)
 
         # job stack
         self._job_stack = QJobStack(self._tab_widget)
@@ -688,8 +690,21 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _set_status_tip(self, tip: str, duration: float) -> None:
         self.status_tip_requested.emit(tip, duration)
 
+    def _show_notification(self, text: str, duration: float) -> None:
+        self.notification_requested.emit(text, duration)
+
     def _on_status_tip_requested(self, tip: str, duration: float) -> None:
         return self._status_bar.showMessage(tip, int(duration * 1000))
+
+    def _on_show_notification_requested(self, text: str, duration: float) -> None:
+        text_edit = QtW.QPlainTextEdit(text)
+        text_edit.setWordWrapMode(QtGui.QTextOption.WrapMode.WordWrap)
+        notification = QNotificationWidget(
+            self._tab_widget, duration=int(duration * 1000)
+        )
+        notification.addWidget(text_edit)
+        notification.setFixedWidth(280)
+        return notification.show_and_hide_later()
 
     def _get_menu_action_by_id(self, name: str) -> QtW.QAction:
         # Find the help menu

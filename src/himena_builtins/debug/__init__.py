@@ -1,9 +1,10 @@
+import time
 from typing import Annotated
 import numpy as np
 from himena.consts import StandardType
 from himena.plugins import register_function, configure_gui
 from himena.types import Parametric, WidgetDataModel, WidgetConstructor
-from himena.widgets import MainWindow
+from himena.widgets import MainWindow, notify, set_status_tip
 
 TOOLS_DEBUG = "tools/debug"
 
@@ -172,7 +173,6 @@ def test_async_checkpoints() -> Parametric:
     command_id="debug:test-async-widget-creation",
 )
 def test_async_widget_creation() -> Parametric:
-    import time
     from magicgui.widgets import Container, LineEdit
 
     def make_widget(texts: list[str]):
@@ -188,5 +188,27 @@ def test_async_widget_creation() -> Parametric:
             time.sleep(0.3)
             texts.append(f"Text {i}")
         return lambda: make_widget(texts)
+
+    return run
+
+
+@register_function(
+    menus=TOOLS_DEBUG,
+    title="Test notification",
+    command_id="debug:test-notification",
+)
+def test_notification() -> Parametric:
+    @configure_gui(run_async=True)
+    def run(notification: bool = True, status_tip: bool = True):
+        time.sleep(1)
+        if status_tip:
+            notify("1. This is test notification", duration=4.2)
+        if notification:
+            set_status_tip("1. This is test status tip", duration=4.2)
+        time.sleep(1)
+        if status_tip:
+            notify("2. This is test notification", duration=4.2)
+        if notification:
+            set_status_tip("2. This is test status tip", duration=4.2)
 
     return run

@@ -66,7 +66,7 @@ class TopRightConstAnchor(WindowAnchor):
         main_window_size: tuple[int, int],
         window_rect: WindowRect,
     ) -> Self:
-        w0 = main_window_size[1]
+        w0 = main_window_size[0]
         return TopRightConstAnchor(w0 - window_rect.right, window_rect.top)
 
 

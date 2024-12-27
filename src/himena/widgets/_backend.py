@@ -305,8 +305,11 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     def _move_focus_to(self, widget: _W) -> None:
         """Move the focus to the widget."""
 
-    def _set_status_tip(self, tip: str, duration: int) -> None:
-        """Set the status tip of the main window for a duration (s)."""
+    def _set_status_tip(self, tip: str, duration: float) -> None:
+        """Set the status tip of the main window for a duration (sec)."""
+
+    def _show_notification(self, text: str, duration: float) -> None:
+        """Show notification for a duration (sec)."""
 
     def _rebuild_for_runtime(self, new_menus: list[str]) -> None:
         """Register the actions at runtime."""
