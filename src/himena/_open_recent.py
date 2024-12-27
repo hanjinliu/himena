@@ -145,7 +145,11 @@ class RecentFileManager:
             all_info = all_info[-self._n_history :]
         with open(_path, "w") as f:
             json.dump(all_info, f, indent=2)
-        self.update_menu()
+
+        from superqt.utils import ensure_main_thread
+
+        ensure_main_thread(self.update_menu)()
+        # self.update_menu()  # TODO: call in main thread!
         return None
 
     def action_for_file(

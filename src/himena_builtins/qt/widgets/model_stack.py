@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 import logging
 from typing import TYPE_CHECKING, Any, Mapping, Sequence
-import warnings
 import weakref
 from magicgui import widgets as mgw
 from qtpy import QtWidgets as QtW, QtCore
@@ -115,15 +114,8 @@ class QModelStack(QtW.QSplitter):
         """Make a list item that will convert a file into a widget when needed."""
         item = QtW.QListWidgetItem(name)
         item.setFlags(item.flags() | QtCore.Qt.ItemFlag.ItemIsEditable)
-        if isinstance(model.value, (str, Path, LocalReaderMethod)):
-            item.setData(_MODEL_ROLE, model)
-            item.setData(_WIDGET_ROLE, None)
-        else:
-            warnings.warn(
-                "Lazy model should have Path or LocalReaderMethod as its value.",
-                UserWarning,
-                stacklevel=2,
-            )
+        item.setData(_MODEL_ROLE, model)
+        item.setData(_WIDGET_ROLE, None)
         return item
 
     def _make_eager_item(self, name: str, model: WidgetDataModel):

@@ -13,7 +13,7 @@ from himena.qt._qrename import QTabRenameLineEdit
 from himena.qt._utils import get_main_window, build_qmodel_menu
 from himena.consts import ActionGroup, MenuId
 from himena import _drag
-from himena.types import WindowRect
+from himena.types import WidgetDataModel, WindowRect
 
 
 class QCloseTabToolButton(QtW.QToolButton):
@@ -229,10 +229,16 @@ class QTabWidget(QtW.QTabWidget):
                     event.ignore()
                 return super().dropEvent(event)
             urls = mime_data.urls()
-            for url in urls:
-                if url.isLocalFile():
-                    path = url.toLocalFile()
-                    get_main_window(self).read_file(path)
+            # for url in urls:
+            #     if url.isLocalFile():
+            #         path = url.toLocalFile()
+            #         get_main_window(self).read_file(path)
+            paths = [url.toLocalFile() for url in urls if url.isLocalFile()]
+            ui = get_main_window(self)
+            future = ui.read_files_async(paths)
+            future._ino_type_hint = list[WidgetDataModel]
+            ui._backend_main_window._add_job_progress(future, "Reading files")
+            ui.model_app.injection_store.process(future)
         return super().dropEvent(event)
 
     def widget_area(self, index: int) -> QSubWindowArea | None:

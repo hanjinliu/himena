@@ -204,10 +204,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
             a0.ignore()
 
     def dragMoveEvent(self, a0):
-        if _drag.get_dragging_model() is not None:
-            a0.accept()
-        else:
-            a0.ignore()
+        a0.acceptProposedAction()
         return super().dragMoveEvent(a0)
 
     def dropEvent(self, a0):

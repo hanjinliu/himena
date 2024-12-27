@@ -16,9 +16,7 @@ def make_file_explorer_widget(ui):
     """Open a file explorer widget as a dock widget."""
     from himena_builtins.qt.explorer._widget import QExplorerWidget
 
-    explorer = QExplorerWidget()
-    explorer.fileDoubleClicked.connect(ui.read_file)
-    return explorer
+    return QExplorerWidget(ui)
 
 
 @register_dock_widget(

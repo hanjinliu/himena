@@ -1,6 +1,10 @@
 from __future__ import annotations
 from pathlib import Path
+import warnings
 from qtpy import QtWidgets as QtW, QtCore, QtGui
+
+from himena import _drag
+from himena.widgets import MainWindow
 
 
 class QFileSystemModel(QtW.QFileSystemModel):
@@ -49,23 +53,26 @@ class QRootPathEdit(QtW.QWidget):
 class QExplorerWidget(QtW.QWidget):
     fileDoubleClicked = QtCore.Signal(Path)
 
-    def __init__(self) -> None:
+    def __init__(self, ui: MainWindow) -> None:
         super().__init__()
+        self._ui = ui
         self._root = QRootPathEdit()
-        self._workspace_tree = QWorkspaceFileTree()
+        self._workspace_tree = QFileTree(ui)
         layout = QtW.QVBoxLayout(self)
         layout.addWidget(self._root)
         layout.addWidget(self._workspace_tree)
         self._root._path_edit.setText("/" + Path.cwd().name)
         self._root.rootChanged.connect(self._workspace_tree.setRootPath)
         self._workspace_tree.fileDoubleClicked.connect(self.fileDoubleClicked.emit)
+        self.fileDoubleClicked.connect(ui.read_file)
 
 
-class QWorkspaceFileTree(QtW.QTreeView):
+class QFileTree(QtW.QTreeView):
     fileDoubleClicked = QtCore.Signal(Path)
 
-    def __init__(self) -> None:
+    def __init__(self, ui: MainWindow) -> None:
         super().__init__()
+        self._ui = ui
         self._model = QFileSystemModel()
         self.setHeaderHidden(True)
         self.setTextElideMode(QtCore.Qt.TextElideMode.ElideNone)
@@ -73,6 +80,7 @@ class QWorkspaceFileTree(QtW.QTreeView):
         self.setRootIndex(self._model.index(self._model.rootPath()))
         self.setSelectionMode(QtW.QAbstractItemView.SelectionMode.ExtendedSelection)
         self.doubleClicked.connect(self._double_clicked)
+        self.setAcceptDrops(True)
 
     def setRootPath(self, path: Path):
         path = Path(path)
@@ -90,16 +98,102 @@ class QWorkspaceFileTree(QtW.QTreeView):
     # drag-and-drop
     def mouseMoveEvent(self, e: QtGui.QMouseEvent):
         if e.buttons() == QtCore.Qt.MouseButton.LeftButton:
-            self._startDrag(e.pos())
+            self._start_drag(e.pos())
+            return None
         return super().mouseMoveEvent(e)
 
-    def _startDrag(self, pos: QtCore.QPoint):
+    def _start_drag(self, pos: QtCore.QPoint):
         mime = QtCore.QMimeData()
         selected_indices = self.selectedIndexes()
         urls = [self._model.filePath(idx) for idx in selected_indices]
         mime.setUrls([QtCore.QUrl.fromLocalFile(url) for url in urls])
         drag = QtGui.QDrag(self)
         drag.setMimeData(mime)
+        if (nfiles := len(selected_indices)) == 1:
+            pixmap = self._model.fileIcon(selected_indices[0]).pixmap(10, 10)
+        else:
+            qlabel = QtW.QLabel(f"{nfiles} files")
+            pixmap = QtGui.QPixmap(qlabel.size())
+            qlabel.render(pixmap)
+        drag.setPixmap(pixmap)
         cursor = QtGui.QCursor(QtCore.Qt.CursorShape.OpenHandCursor)
         drag.setDragCursor(cursor.pixmap(), QtCore.Qt.DropAction.MoveAction)
         drag.exec(QtCore.Qt.DropAction.MoveAction)
+
+    def dragEnterEvent(self, a0: QtGui.QDragEnterEvent):
+        mime = a0.mimeData()
+        if mime and mime.hasUrls():
+            a0.accept()
+        elif _drag.get_dragging_model() is not None:
+            a0.accept()
+        else:
+            a0.ignore()
+        return None
+
+    def dragMoveEvent(self, a0: QtGui.QDragMoveEvent):
+        mime = a0.mimeData()
+        if mime and mime.hasUrls():
+            a0.accept()
+        elif _drag.get_dragging_model() is not None:
+            a0.accept()
+        else:
+            a0.ignore()
+            return
+        index = self._get_directory_index(self.indexAt(a0.pos()))
+        self.selectionModel().setCurrentIndex(
+            index, QtCore.QItemSelectionModel.SelectionFlag.ClearAndSelect
+        )
+        a0.acceptProposedAction()
+        return None
+
+    def dropEvent(self, a0: QtGui.QDropEvent):
+        index = self._get_directory_index(self.indexAt(a0.pos()))
+        if dirpath := self.model().filePath(index):
+            dirpath = Path(dirpath)
+        else:
+            warnings.warn(f"Invalid destination: {dirpath}", stacklevel=2)
+            return
+        if drag_model := _drag.drop():
+            data_model = drag_model.data_model()
+            data_model.write_to_directory(dirpath)
+        elif mime := a0.mimeData():
+            dst_exists: list[Path] = []
+            src_dst_set: list[tuple[Path, Path]] = []
+            for url in mime.urls():
+                src = Path(url.toLocalFile())
+                if not src.exists():
+                    warnings.warn(f"Path {src} does not exist.", stacklevel=2)
+                    continue
+                dst = dirpath / src.name
+                if dst.exists():
+                    dst_exists.append(dst)
+                src_dst_set.append((src, dst))
+            if dst_exists:
+                conflicts = "\n - ".join(p.name for p in dst_exists)
+                answer = self._ui.exec_choose_one_dialog(
+                    "Replace existing files?",
+                    f"Name conflict in the destinations:\n{conflicts}",
+                    ["Replace", "Skip", "Cancel"],
+                )
+                if answer == "Cancel":
+                    return
+                elif answer == "Replace":
+                    pass
+                else:
+                    src_dst_set = [
+                        (src, dst) for src, dst in src_dst_set if dst not in dst_exists
+                    ]
+            for src, dst in src_dst_set:
+                src.rename(dst)
+
+    def dragLeaveEvent(self, e):
+        return super().dragLeaveEvent(e)
+
+    def _get_directory_index(self, index: QtCore.QModelIndex):
+        if not index.isValid():
+            return self.rootIndex()
+        _is_directory = self.model().hasChildren(index)
+        if _is_directory:
+            return index
+        else:
+            return self.model().parent(index)

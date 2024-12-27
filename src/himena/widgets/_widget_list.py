@@ -417,13 +417,8 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
     def _paths_to_models(self, file_paths: PathOrPaths, plugin: str | None = None):
         reader_path_sets: list[tuple[_providers.ReaderTuple, PathOrPaths]] = []
         ins = _providers.ReaderProviderStore.instance()
-        if isinstance(file_paths, (str, Path)):
-            file_paths = [file_paths]
+        file_paths = _norm_paths(file_paths)
         for file_path in file_paths:
-            if isinstance(file_path, (str, Path)):
-                file_path = Path(file_path)
-            else:
-                file_path = [Path(p) for p in file_path]
             reader_path_sets.append((ins.pick(file_path, plugin=plugin), file_path))
         models = [
             _providers.read_and_update_source(reader, file_path)
@@ -444,10 +439,11 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         plugin: str | None = None,
     ) -> Future:
         ui = self._main_window()._himena_main_window
+        file_paths = _norm_paths(file_paths)
         future = ui._executor.submit(self._paths_to_models, file_paths, plugin=plugin)
         if len(file_paths) == 1:
             ui.set_status_tip(f"Opening: {file_paths[0].as_posix()}", duration=5)
-        elif len(file_paths) > 1:
+        else:
             ui.set_status_tip(f"Opening {len(file_paths)} files", duration=5)
         return future
 
@@ -598,3 +594,16 @@ class DockWidgetList(
 
 def _make_title(i: int) -> str:
     return f"Untitled-{i}"
+
+
+def _norm_paths(file_paths: PathOrPaths) -> list[Path | list[Path]]:
+    if isinstance(file_paths, (str, Path)):
+        file_paths = [file_paths]
+    out = []
+    for file_path in file_paths:
+        if isinstance(file_path, (str, Path)):
+            file_path = Path(file_path)
+        else:
+            file_path = [Path(p) for p in file_path]
+        out.append(file_path)
+    return out
