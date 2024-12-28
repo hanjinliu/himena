@@ -51,13 +51,13 @@ class MyViewer(QtW.QSplitter):
     def control_widget(self):
         return self._control
 
-    def window_activated_callback(self):
+    def widget_activated_callback(self):
         # reorder the current viewer
         with suppress(ValueError):
             inst = _QtMainWindow._instances
             inst.append(inst.pop(inst.index(self.viewer.window._qt_window)))
 
-    def window_closed_callback(self):
+    def widget_closed_callback(self):
         with suppress(ValueError):
             _QtMainWindow._instances.remove(self.viewer.window._qt_window)
 

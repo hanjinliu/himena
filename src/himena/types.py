@@ -555,8 +555,16 @@ WidgetType = NewType("WidgetType", object)
 WidgetConstructor = NewType("WidgetConstructor", object)
 
 
-class MergeResult(BaseModel):
-    """Model that can be returned by `merge_model` protocol."""
+class DropResult(BaseModel):
+    """Model that can be returned by `dropped_callback` protocol.
+
+    Parameters
+    ----------
+    delete_input : bool
+        Whether to delete the input data if drop succeeded.
+    outputs : WidgetDataModel | list[WidgetDataModel] | None
+        If given, the output data will be added to the GUI.
+    """
 
     delete_input: bool = False
     outputs: WidgetDataModel | list[WidgetDataModel] | None = Field(None)

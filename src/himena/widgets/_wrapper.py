@@ -20,7 +20,7 @@ from himena.consts import ParametricWidgetProtocolNames as PWPN
 from himena.types import (
     BackendInstructions,
     DragDataModel,
-    MergeResult,
+    DropResult,
     ModelTrack,
     Parametric,
     ParametricWidgetProtocol,
@@ -188,29 +188,29 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
 
     def _is_mergeable_with(self, incoming: DragDataModel) -> bool:
         widget = self.widget
-        if hasattr(widget, "mergeable_model_types"):
-            types = widget.mergeable_model_types()
+        if hasattr(widget, "allowed_drop_types"):
+            types = widget.allowed_drop_types()
             if incoming.type is None:
                 return True  # not specified. Just allow it.
             if incoming.type in types:
                 return True
-        elif hasattr(widget, "merge_model"):
+        elif hasattr(widget, "dropped_callback"):
             return True
         return False
 
-    def _process_merge_model(
+    def _process_drop_event(
         self,
         incoming: DragDataModel,
         source: SubWindow[_W] | None = None,
     ) -> bool:
-        if hasattr(self.widget, "merge_model"):
+        if hasattr(self.widget, "dropped_callback"):
             # to remember how the model was mapped to a widget class
             model = incoming.data_model()
             if source is not None:
                 model.force_open_with = get_widget_class_id(source.widget)
-            merge_result = self.widget.merge_model(model)
+            merge_result = self.widget.dropped_callback(model)
             if merge_result is None:
-                merge_result = MergeResult()
+                merge_result = DropResult()
             ui = self._main_window()._himena_main_window
             if outputs := merge_result.outputs:
                 ui.model_app.injection_store.process(outputs)

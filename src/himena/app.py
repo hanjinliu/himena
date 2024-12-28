@@ -59,8 +59,10 @@ class QtEventLoopHandler(EventLoopHandler["QApplication"]):
     def create_application(self) -> QApplication:
         from qtpy.QtCore import Qt
         from qtpy.QtWidgets import QApplication
+        from qtpy import QT6
 
-        QApplication.setAttribute(Qt.ApplicationAttribute.AA_EnableHighDpiScaling)
+        if not QT6:
+            QApplication.setAttribute(Qt.ApplicationAttribute.AA_EnableHighDpiScaling)
         return QApplication([])
 
     def run_app(self):

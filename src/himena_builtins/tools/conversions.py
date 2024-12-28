@@ -115,7 +115,7 @@ def dataframe_to_text(model: WidgetDataModel) -> Parametric:
     """Convert a table data into a DataFrame."""
     from himena._data_wrappers import wrap_dataframe
 
-    def convert_table_to_text(
+    def convert_dataframe_to_text(
         format: Literal["CSV", "TSV", "Markdown", "Latex", "rST", "HTML"] = "CSV",
         end_of_text: Literal["", "\\n"] = "\\n",
     ) -> WidgetDataModel[str]:
@@ -132,7 +132,7 @@ def dataframe_to_text(model: WidgetDataModel) -> Parametric:
             metadata=TextMeta(language=language),
         )
 
-    return convert_table_to_text
+    return convert_dataframe_to_text
 
 
 @register_conversion_rule(
@@ -143,7 +143,9 @@ def dataframe_to_text(model: WidgetDataModel) -> Parametric:
 def table_to_text(model: WidgetDataModel) -> Parametric:
     """Convert a table data into a text data."""
 
-    @configure_gui(preview=True)
+    @configure_gui(
+        preview=True, end_of_text={"choices": [("none", ""), ("newline", "\n")]}
+    )
     def convert_table_to_text(
         format: Literal["CSV", "TSV", "Markdown", "Latex", "rST", "HTML"] = "CSV",
         end_of_text: Literal["", "\n"] = "\n",

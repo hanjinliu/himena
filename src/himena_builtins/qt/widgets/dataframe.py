@@ -378,7 +378,7 @@ class QDataFramePlotView(QtW.QSplitter):
         return 480, 300
 
     @validate_protocol
-    def window_added_callback(self):
+    def widget_added_callback(self):
         # adjuct size
         self.setSizes([160, self.width() - 160])
         return None

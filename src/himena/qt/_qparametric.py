@@ -1,8 +1,7 @@
 from __future__ import annotations
 from typing import Any
 
-from PyQt5.QtGui import QKeyEvent
-from qtpy import QtWidgets as QtW, QtCore
+from qtpy import QtWidgets as QtW, QtCore, QtGui
 from himena.consts import StandardType, ParametricWidgetProtocolNames as PWPN
 from himena.types import WidgetDataModel
 from himena.plugins import validate_protocol
@@ -103,7 +102,7 @@ class QParametricWidget(QtW.QWidget):
     def control_widget(self) -> QtW.QWidget:
         return self._control
 
-    def keyPressEvent(self, a0: QKeyEvent | None) -> None:
+    def keyPressEvent(self, a0: QtGui.QKeyEvent | None) -> None:
         if a0 and a0.key() == QtCore.Qt.Key.Key_Return:
             self._call_btn.click()
         return super().keyPressEvent(a0)

@@ -11,6 +11,7 @@ from qtpy import QtWidgets as QtW, QtGui
 from qtconsole.rich_jupyter_widget import RichJupyterWidget
 from himena._utils import lru_cache
 from himena.qt._utils import get_stylesheet_path
+from himena.plugins import validate_protocol
 
 if TYPE_CHECKING:
     from himena.style import Theme
@@ -42,14 +43,16 @@ if sys.platform.startswith("win"):
 class QtConsole(RichJupyterWidget):
     codeExecuted = Signal(str)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, ui: MainWindow):
+        super().__init__()
         self.setMinimumSize(100, 0)
         self.resize(100, 40)
         self._parent_connected = False
+        self._main_window_symbol = "ui"
+        self._ui = ui
         self.codeExecuted.connect(self.setFocus)
 
-    def connect_parent(self, window: MainWindow):
+    def connect_parent(self):
         from IPython import get_ipython
         from IPython.terminal.interactiveshell import TerminalInteractiveShell
         from ipykernel.connect import get_connection_file
@@ -118,7 +121,7 @@ class QtConsole(RichJupyterWidget):
             from IPython.paths import get_ipython_dir
 
             _exit = _get_exit_auto_call()
-            _exit.set_main_window(window)
+            _exit.set_main_window(self._ui)
             self.shell.push({"exit": _exit})  # update the "exit"
 
             # run IPython startup files
@@ -133,7 +136,7 @@ class QtConsole(RichJupyterWidget):
 
                 self.shell.push(_globals)
 
-            ns = {"ui": window}
+            ns = {self._main_window_symbol: self._ui}
             self.shell.push(ns)
 
     def setFocus(self):
@@ -147,6 +150,12 @@ class QtConsole(RichJupyterWidget):
         self.setFocus()
         return None
 
+    @validate_protocol
+    def widget_added_callback(self):
+        self.connect_parent()
+        QtW.QApplication.processEvents()
+
+    @validate_protocol
     def theme_changed_callback(self, theme: Theme):
         """Update the console theme."""
         # need to set stylesheet via style_sheet property
@@ -159,6 +168,17 @@ class QtConsole(RichJupyterWidget):
             self.syntax_style = "native"
         bracket_color = QtGui.QColor(theme.highlight_dim)
         self._bracket_matcher.format.setBackground(bracket_color)
+
+    def update_config(
+        self,
+        main_window_symbol: str = "ui",
+    ):
+        old_symbol = self._main_window_symbol
+        self._main_window_symbol = main_window_symbol
+        if self._parent_connected:
+            if (ui := self.shell.user_ns.get(old_symbol)) is self._ui:
+                self.shell.drop_by_id({old_symbol: ui})
+            self.shell.push({self._main_window_symbol: self._ui})
 
 
 @lru_cache(maxsize=1)

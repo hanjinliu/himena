@@ -17,13 +17,13 @@ _ALLOWED_METHODS = frozenset(
         "size_hint",
         "is_editable",
         "set_editable",
-        "merge_model",
-        "mergeable_model_types",
+        "dropped_callback",
+        "allowed_drop_types",
         "theme_changed_callback",
-        "window_activated_callback",
-        "window_closed_callback",
-        "window_resized_callback",
-        "window_added_callback",
+        "widget_activated_callback",
+        "widget_closed_callback",
+        "widget_resized_callback",
+        "widget_added_callback",
         "get_user_context",
         "default_title",
         "native_widget",
@@ -38,24 +38,24 @@ def validate_protocol(f: _T) -> _T:
     return f
 
 
-def call_window_closed_callback(win):
-    return _call_callback(win, "window_closed_callback")
+def call_widget_closed_callback(win):
+    return _call_callback(win, "widget_closed_callback")
 
 
-def call_window_activated_callback(win):
-    return _call_callback(win, "window_activated_callback")
+def call_widget_activated_callback(win):
+    return _call_callback(win, "widget_activated_callback")
 
 
 def call_theme_changed_callback(win, theme):
     return _call_callback(win, "theme_changed_callback", theme)
 
 
-def call_window_resized_callback(win, size_old: Size, size_new: Size):
-    return _call_callback(win, "window_resized_callback", size_old, size_new)
+def call_widget_resized_callback(win, size_old: Size, size_new: Size):
+    return _call_callback(win, "widget_resized_callback", size_old, size_new)
 
 
-def call_window_added_callback(win):
-    return _call_callback(win, "window_added_callback")
+def call_widget_added_callback(win):
+    return _call_callback(win, "widget_added_callback")
 
 
 def _call_callback(win, callback_name: str, *args):
@@ -63,4 +63,4 @@ def _call_callback(win, callback_name: str, *args):
         if callable(cb):
             cb(*args)
             return
-        raise TypeError("`window_activated_callback` must be a callable")
+        raise TypeError(f"`{callback_name}` must be a callable")

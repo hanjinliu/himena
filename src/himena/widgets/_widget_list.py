@@ -92,7 +92,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
     def __delitem__(self, index_or_name: int | str) -> None:
         index = self._norm_index_or_name(index_or_name)
         widget = self._pop_no_emit(index)
-        _checker.call_window_closed_callback(widget.widget)
+        _checker.call_widget_closed_callback(widget.widget)
         widget.closed.emit()
 
     def _pop_no_emit(self, index: int):
@@ -371,7 +371,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
                 else:
                     _, _, width, height = sub_window.rect
                 sub_window.rect = WindowRect(left, top, width, height)
-        _checker.call_window_added_callback(sub_window.widget)
+        _checker.call_widget_added_callback(sub_window.widget)
         sub_window._alive = True
         return None
 

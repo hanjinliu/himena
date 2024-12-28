@@ -38,7 +38,7 @@ class QMatplotlibCanvasBase(QtW.QWidget):
         return 300, 240
 
     @validate_protocol
-    def window_resized_callback(self, size_old, size_new: tuple[int, int]):
+    def widget_resized_callback(self, size_old, size_new: tuple[int, int]):
         if size_new[0] > 40 and size_new[1] > 40:
             self._canvas.figure.tight_layout()
 
@@ -155,7 +155,7 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
         return StandardType.PLOT
 
     @validate_protocol
-    def merge_model(self, model: WidgetDataModel):
+    def dropped_callback(self, model: WidgetDataModel):
         if not (
             isinstance(model.value, hplt.BaseLayoutModel)
             and isinstance(self._plot_models, hplt.BaseLayoutModel)
@@ -169,7 +169,7 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
         self._canvas.draw()
 
     @validate_protocol
-    def mergeable_model_types(self) -> list[str]:
+    def allowed_drop_types(self) -> list[str]:
         return [StandardType.PLOT]
 
     @validate_protocol
@@ -177,12 +177,12 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
         return 300, 240
 
     @validate_protocol
-    def window_resized_callback(self, size_old, size_new: tuple[int, int]):
+    def widget_resized_callback(self, size_old, size_new: tuple[int, int]):
         if size_new[0] > 40 and size_new[1] > 40:
             self._canvas.figure.tight_layout()
 
     @validate_protocol
-    def window_added_callback(self):
+    def widget_added_callback(self):
         self._canvas.figure.tight_layout()
 
 

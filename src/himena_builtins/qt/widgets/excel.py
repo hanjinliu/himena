@@ -11,7 +11,7 @@ from himena.qt._qrename import QTabRenameLineEdit
 from himena.qt import drag_model
 from himena_builtins.qt.widgets.table import QSpreadsheet
 from himena_builtins.qt.widgets._table_components import QSelectionRangeEdit
-from himena.types import DragDataModel, MergeResult, WidgetDataModel
+from himena.types import DragDataModel, DropResult, WidgetDataModel
 from himena.consts import StandardType
 from himena.plugins import validate_protocol
 
@@ -201,11 +201,11 @@ class QExcelEdit(QtW.QTabWidget):
             self.widget(i).set_editable(value)
 
     @validate_protocol
-    def mergeable_model_types(self) -> list[str]:
+    def allowed_drop_types(self) -> list[str]:
         return [StandardType.EXCEL, StandardType.TABLE]
 
     @validate_protocol
-    def merge_model(self, model: WidgetDataModel) -> MergeResult:
+    def dropped_callback(self, model: WidgetDataModel) -> DropResult:
         if model.type == StandardType.EXCEL:  # merge all the sheets
             assert isinstance(model.value, dict)
             for key, value in model.value.items():
@@ -222,7 +222,7 @@ class QExcelEdit(QtW.QTabWidget):
             self.addTab(table, model.title)
         else:
             raise ValueError(f"Cannot merge {model.type} with {StandardType.EXCEL}")
-        return MergeResult(delete_input=True)
+        return DropResult(delete_input=True)
 
     if TYPE_CHECKING:
 

@@ -140,7 +140,7 @@ class QModelStack(QtW.QSplitter):
         else:
             self._control_widget.addWidget(QtW.QWidget())  # empty
         item.setData(_WIDGET_ROLE, interf)
-        _checker.call_window_added_callback(interf)
+        _checker.call_widget_added_callback(interf)
         _checker.call_theme_changed_callback(interf, self._ui.theme)
 
     @validate_protocol
@@ -184,7 +184,7 @@ class QModelStack(QtW.QSplitter):
         self._delete_btn.setEnabled(editable)
 
     @validate_protocol
-    def merge_model(self, model: WidgetDataModel):
+    def dropped_callback(self, model: WidgetDataModel):
         if model.type == StandardType.LAZY:
             item = self._make_lazy_item(model.title, model)
         else:
@@ -193,9 +193,9 @@ class QModelStack(QtW.QSplitter):
 
     # TODO: Implement the following methods
     # @validate_protocol
-    # def window_resized_callback(self, size_old: Size, size_new: Size):
+    # def widget_resized_callback(self, size_old: Size, size_new: Size):
     #     widget = self._widget_stack.currentWidget()
-    #     _checker.call_window_resized_callback(widget, ...)
+    #     _checker.call_widget_resized_callback(widget, ...)
 
     @validate_protocol
     def theme_changed_callback(self, theme: Theme):

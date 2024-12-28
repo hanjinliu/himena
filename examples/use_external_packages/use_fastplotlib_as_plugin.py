@@ -55,7 +55,7 @@ class FastplotlibImageView(fpl.Figure):
         return 320, 320
 
     @validate_protocol
-    def window_added_callback(self):
+    def widget_added_callback(self):
         # this function will be called when the widget is added to a window
         self[0, 0].auto_scale()
 

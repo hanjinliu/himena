@@ -600,7 +600,6 @@ def register_conversion_rule(
 def register_conversion_rule(
     type_from: str,
     type_to: str,
-    /,
     *,
     keybindings: KeyBindingsType | None = None,
     command_id: str | None = None,
@@ -608,6 +607,7 @@ def register_conversion_rule(
 
 
 def register_conversion_rule(*args, **kwargs):
+    """Register a function as a conversion rule."""
     if len(args) == 0:
         no_func = True
     else:
@@ -640,5 +640,6 @@ def make_conversion_rule(
         tooltip=_tooltip_from_func(func),
         callback=_utils.make_function_callback(func, command_id=_id, title=title),
         menus=[{"id": f"/model_menu:{type_from}/convert", "group": "conversion"}],
+        enablement=ctx.active_window_model_type == type_from,
         keybindings=kbs,
     )

@@ -14,7 +14,7 @@ from himena_builtins.qt.widgets._image_components._roi_collection import (
 from himena.consts import StandardType
 from himena.standards import roi, model_meta
 from himena.qt._utils import drag_model, qsignal_blocker
-from himena.types import DragDataModel, MergeResult, Size, WidgetDataModel
+from himena.types import DragDataModel, DropResult, Size, WidgetDataModel
 from himena.plugins import validate_protocol
 from himena.widgets import set_status_tip
 from himena._data_wrappers import ArrayWrapper, wrap_array
@@ -351,18 +351,18 @@ class QImageView(QtW.QSplitter):
         return self._control
 
     @validate_protocol
-    def mergeable_model_types(self) -> list[str]:
+    def allowed_drop_types(self) -> list[str]:
         return [StandardType.IMAGE_ROIS, StandardType.IMAGE_LABELS]
 
     @validate_protocol
-    def merge_model(self, model: WidgetDataModel):
+    def dropped_callback(self, model: WidgetDataModel):
         if model.type == StandardType.IMAGE_ROIS:
             if isinstance(roi_list := model.value, roi.RoiListModel):
                 self._roi_col.update_from_standard_roi_list(roi_list)
                 self._img_view.clear_rois()
                 self._update_rois()
             self._is_modified = True
-            return MergeResult(delete_input=False)
+            return DropResult(delete_input=False)
         elif model.type == StandardType.IMAGE_LABELS:
             raise NotImplementedError("Merging with labels is not implemented yet.")
         return None
@@ -376,11 +376,11 @@ class QImageView(QtW.QSplitter):
         self._roi_buttons._update_colors(color)
 
     @validate_protocol
-    def window_resized_callback(self, old: Size, new: Size):
+    def widget_resized_callback(self, old: Size, new: Size):
         self._img_view.resize_event(old, new)
 
     @validate_protocol
-    def window_added_callback(self):
+    def widget_added_callback(self):
         self._img_view.auto_range()
 
     def setFocus(self):

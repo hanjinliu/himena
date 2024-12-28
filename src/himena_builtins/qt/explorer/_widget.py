@@ -20,6 +20,10 @@ class QFileSystemModel(QtW.QFileSystemModel):
             return QtCore.QSize(18, 16)
         return super().data(index, role)
 
+    def flags(self, index: QtCore.QModelIndex) -> QtCore.Qt.ItemFlags:
+        # NOTE: renaming of item triggers renaming of the file by default.
+        return super().flags(index) | QtCore.Qt.ItemFlag.ItemIsEditable
+
 
 class QRootPathEdit(QtW.QWidget):
     rootChanged = QtCore.Signal(Path)
@@ -75,6 +79,7 @@ class QFileTree(QtW.QTreeView):
         self._ui = ui
         self._model = QFileSystemModel()
         self.setHeaderHidden(True)
+        self.setEditTriggers(QtW.QAbstractItemView.EditTrigger.EditKeyPressed)
         self.setTextElideMode(QtCore.Qt.TextElideMode.ElideNone)
         self.setModel(self._model)
         self.setRootIndex(self._model.index(self._model.rootPath()))
@@ -165,9 +170,10 @@ class QFileTree(QtW.QTreeView):
                     warnings.warn(f"Path {src} does not exist.", stacklevel=2)
                     continue
                 dst = dirpath / src.name
-                if dst.exists():
-                    dst_exists.append(dst)
-                src_dst_set.append((src, dst))
+                if src != dst:
+                    if dst.exists():
+                        dst_exists.append(dst)
+                    src_dst_set.append((src, dst))
             if dst_exists:
                 conflicts = "\n - ".join(p.name for p in dst_exists)
                 answer = self._ui.exec_choose_one_dialog(

@@ -58,13 +58,13 @@ def register_widget_class(type_, widget_class=None, priority=100):
     - `size_hint(self) -> tuple[int, int]`:
     - `is_editable(self) -> bool`:
     - `set_editable(self, editable: bool)`:
-    - `merge_model(self, other: WidgetDataModel)`:
-    - `mergeable_model_types(self) -> list[str]`:
+    - `dropped_callback(self, other: WidgetDataModel)`:
+    - `allowed_drop_types(self) -> list[str]`:
     - `display_name(cls) -> str`:
     - `theme_changed_callback(self, theme: Theme)`:
-    - `window_activated_callback(self)`:
-    - `window_closed_callback(self)`:
-    - `window_resized_callback(self, size_old, size_new)`:
+    - `widget_activated_callback(self)`:
+    - `widget_closed_callback(self)`:
+    - `widget_resized_callback(self, size_old, size_new)`:
     """
 
     def inner(wcls):

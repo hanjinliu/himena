@@ -24,8 +24,9 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         self.setAcceptDrops(True)
         font = QtGui.QFont(MonospaceFontFamily)
         self._ui = ui
-        self._ip_address_edit = QtW.QLineEdit()
-        self._ip_address_edit.setFont(font)
+        self._host_edit = QtW.QLineEdit()
+        self._host_edit.setFont(font)
+        self._host_edit.setMaximumWidth(140)
         self._user_name_edit = QtW.QLineEdit()
         self._user_name_edit.setFont(font)
         self._is_wsl_switch = QLabeledToggleSwitch()
@@ -40,7 +41,8 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         )
 
         self._show_hidden_files_switch = QLabeledToggleSwitch()
-        self._show_hidden_files_switch.setText("Show Hidden Files")
+        self._show_hidden_files_switch.setText("Hidden Files")
+        self._show_hidden_files_switch.setToolTip("Also show hidden files")
         self._show_hidden_files_switch.setFixedHeight(24)
         self._show_hidden_files_switch.setChecked(False)
 
@@ -50,9 +52,9 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         self._edit_pwd_btn = QtW.QPushButton("Edit")
         self._edit_pwd_btn.clicked.connect(self._on_edit_pwd_clicked)
 
-        self._last_dir_btn = QtW.QPushButton("<")
+        self._last_dir_btn = QtW.QPushButton("←")
         self._last_dir_btn.setFixedWidth(20)
-        self._last_dir_btn.setToolTip("Go to last directory")
+        self._last_dir_btn.setToolTip("Back to last directory")
 
         self._up_one_btn = QtW.QPushButton("↑")
         self._up_one_btn.setFixedWidth(20)
@@ -61,22 +63,13 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         self._refresh_btn.setFixedWidth(60)
         self._refresh_btn.setToolTip("Refresh current directory")
 
-        self._set_btn = QtW.QPushButton("Set")
-        self._set_btn.setFixedWidth(40)
-        self._set_btn.setToolTip("Set host/user and refresh")
-        self._buttons = QtW.QWidget()
-        _button_layout = QtW.QHBoxLayout(self._buttons)
-        _button_layout.setContentsMargins(0, 0, 0, 0)
-        _button_layout.addWidget(
-            self._last_dir_btn, 0, QtCore.Qt.AlignmentFlag.AlignLeft
-        )
-        _button_layout.addWidget(self._up_one_btn, 0, QtCore.Qt.AlignmentFlag.AlignLeft)
-        _button_layout.addWidget(QtW.QWidget())
-        _button_layout.addWidget(
-            self._refresh_btn, 0, QtCore.Qt.AlignmentFlag.AlignRight
-        )
-        _button_layout.addWidget(self._set_btn, 0, QtCore.Qt.AlignmentFlag.AlignRight)
+        self._conn_btn = QtW.QPushButton("Connect")
+        self._conn_btn.setFixedWidth(60)
+        self._conn_btn.setToolTip("Connect to the remote host with the given user name")
+
         self._file_list_widget = QtW.QTreeWidget()
+        self._file_list_widget.setIndentation(0)
+        self._file_list_widget.setColumnWidth(0, 180)
         self._file_list_widget.itemActivated.connect(self._on_item_double_clicked)
         self._file_list_widget.setFont(font)
         self._file_list_widget.setHeaderLabels(
@@ -89,16 +82,35 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
 
         self._pwd = Path("~")
         self._last_dir = Path("~")
+
         layout = QtW.QVBoxLayout(self)
-        layout.addWidget(labeled("IP Address:", self._ip_address_edit))
-        layout.addWidget(labeled("User Name:", self._user_name_edit))
-        layout.addWidget(self._is_wsl_switch)
-        layout.addWidget(self._show_hidden_files_switch)
+
+        hlayout0 = QtW.QHBoxLayout()
+        hlayout0.setContentsMargins(0, 0, 0, 0)
+        layout.addLayout(hlayout0)
+        hlayout0.addWidget(labeled("Host:", self._host_edit, label_width=30), 3)
+        hlayout0.addWidget(labeled("User:", self._user_name_edit, label_width=30), 2)
+
+        hlayout1 = QtW.QHBoxLayout()
+        hlayout1.setContentsMargins(0, 0, 0, 0)
+        layout.addLayout(hlayout1)
+        hlayout1.addWidget(self._is_wsl_switch)
+        hlayout1.addWidget(self._conn_btn)
+
+        layout.addWidget(QSeparator())
         layout.addWidget(labeled("Path:", self._pwd_widget, self._edit_pwd_btn))
-        layout.addWidget(self._buttons)
+
+        hlayout2 = QtW.QHBoxLayout()
+        hlayout2.setContentsMargins(0, 0, 0, 0)
+        hlayout2.addWidget(self._last_dir_btn, 0, QtCore.Qt.AlignmentFlag.AlignLeft)
+        hlayout2.addWidget(self._up_one_btn, 0, QtCore.Qt.AlignmentFlag.AlignLeft)
+        hlayout2.addWidget(QtW.QWidget())
+        hlayout2.addWidget(self._show_hidden_files_switch)
+        hlayout2.addWidget(self._refresh_btn, 0, QtCore.Qt.AlignmentFlag.AlignRight)
+        layout.addLayout(hlayout2)
         layout.addWidget(self._file_list_widget)
 
-        self._set_btn.clicked.connect(lambda: self._set_current_path(Path("~")))
+        self._conn_btn.clicked.connect(lambda: self._set_current_path(Path("~")))
         self._refresh_btn.clicked.connect(lambda: self._set_current_path(self._pwd))
         self._last_dir_btn.clicked.connect(
             lambda: self._set_current_path(self._last_dir)
@@ -111,24 +123,37 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         )
 
     def _set_current_path(self, path: Path):
+        # TODO: set busy
         self._last_dir = self._pwd
         self._pwd = path
         self._pwd_widget.setText(self._pwd.as_posix())
         self._file_list_widget.clear()
         worker = self._run_ls_command(path)
         worker.returned.connect(self._on_ls_done)
+        worker.started.connect(lambda: self._set_busy(True))
+        worker.finished.connect(lambda: self._set_busy(False))
         worker.start()
-        set_status_tip("Obtaining the file content ...")
+        set_status_tip("Obtaining the file content ...", duration=3.0)
 
     def _on_ls_done(self, items: list[QtW.QTreeWidgetItem]):
         self._file_list_widget.addTopLevelItems(items)
         for i in range(1, self._file_list_widget.columnCount()):
             self._file_list_widget.resizeColumnToContents(i)
+        set_status_tip(f"Currently under {self._pwd.name}", duration=1.0)
+
+    def _set_busy(self, busy: bool):
+        self._conn_btn.setEnabled(not busy)
+        self._refresh_btn.setEnabled(not busy)
+        self._last_dir_btn.setEnabled(not busy)
+        self._up_one_btn.setEnabled(not busy)
+        self._show_hidden_files_switch.setEnabled(not busy)
+        self._file_list_widget.setEnabled(not busy)
+        self._pwd_widget.setEnabled(not busy)
 
     def _host_name(self) -> str:
         username = self._user_name_edit.text()
-        ip_address = self._ip_address_edit.text()
-        return f"{username}@{ip_address}"
+        host = self._host_edit.text()
+        return f"{username}@{host}"
 
     @thread_worker
     def _run_ls_command(self, path: Path) -> list[QtW.QTreeWidgetItem]:
@@ -140,12 +165,14 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         if result.returncode != 0:
             raise ValueError(f"Failed to list directory: {result.stderr.decode()}")
         rows = result.stdout.decode().splitlines()
-        # format of ls -l is:
+        # format of `ls -l` is:
         # <permission> <link> <owner> <group> <size> <month> <day> <time> <name>
         items: list[QtW.QTreeWidgetItem] = []
         for row in rows[1:]:  # the first line is total size
             *others, month, day, time, name = row.split(maxsplit=8)
             datetime = f"{month} {day} {time}"
+            if name.endswith("*"):
+                name = name[:-1]  # executable
             item = QtW.QTreeWidgetItem([name, datetime] + others[::-1])
             item.setToolTip(0, name)
             items.append(item)
@@ -175,18 +202,28 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
             if link_type == "directory":
                 self._set_current_path(self._pwd / real_path)
             else:
-                self._ui.add_data_model(self._read_remote_path(self._pwd / real_path))
+                self._read_and_add_model(self._pwd / real_path)
         else:
-            self._ui.add_data_model(self._read_remote_path(self._pwd / item.text(0)))
+            self._read_and_add_model(self._pwd / item.text(0))
 
-    def _read_remote_path(self, path: Path) -> WidgetDataModel:
+    @thread_worker
+    def _read_remote_path_worker(self, path: Path) -> WidgetDataModel:
         method = SCPReaderMethod(
-            ip_address=self._ip_address_edit.text(),
+            ip_address=self._host_edit.text(),
             username=self._user_name_edit.text(),
             path=path,
             wsl=self._is_wsl_switch.isChecked(),
         )
         return method.get_model(self._ui.model_app)
+
+    def _read_and_add_model(self, path: Path):
+        """Read the remote file in another thread and add the model in the main."""
+        worker = self._read_remote_path_worker(path)
+        worker.returned.connect(self._ui.add_data_model)
+        worker.started.connect(lambda: self._set_busy(True))
+        worker.finished.connect(lambda: self._set_busy(False))
+        worker.start()
+        set_status_tip(f"Reading file: {path}", duration=2.0)
 
     def _on_edit_pwd_clicked(self):
         if self._edit_pwd_btn.text() == "Edit":
@@ -218,9 +255,11 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         default_user: str = "",
         default_use_wsl: bool = False,
     ) -> None:
-        self._ip_address_edit.setText(default_host)
+        self._host_edit.setText(default_host)
         self._user_name_edit.setText(default_user)
         self._is_wsl_switch.setChecked(default_use_wsl)
+        if default_host and default_user and self._pwd == Path("~"):
+            self._set_current_path(Path("~"))
 
     def _send_model(self, model: DragDataModel):
         data_model = model.data_model()
@@ -253,4 +292,15 @@ def _make_get_type_args(host: str, path: str) -> list[str]:
 
 def _item_type(item: QtW.QTreeWidgetItem) -> str:
     """First character of the permission string."""
-    return item.text(1)[0]
+    return item.text(6)[0]
+
+
+class QSeparator(QtW.QFrame):
+    def __init__(self):
+        super().__init__()
+        self.setFrameShape(QtW.QFrame.Shape.HLine)
+        self.setFrameShadow(QtW.QFrame.Shadow.Sunken)
+        self.setFixedHeight(2)
+        self.setSizePolicy(
+            QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Fixed
+        )

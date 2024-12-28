@@ -5,11 +5,11 @@ from qtpy import QtWidgets as QtW
 from sklearn.mixture import GaussianMixture
 from himena.plugins import validate_protocol
 from himena import StandardType, new_window
-from himena.types import MergeResult, WidgetDataModel
+from himena.types import DropResult, WidgetDataModel
 import matplotlib.pyplot as plt
 
-# This example demonstrates how to combine scikit-learn with the `merge_model` protocol.
-# `merge_model` is the protocol method for defining the callback when a window is
+# This example demonstrates how to combine scikit-learn with the `dropped_callback` protocol.
+# `dropped_callback` is the protocol method for defining the callback when a window is
 # dropped on the widget.
 
 class GmmWidget(QtW.QWidget):
@@ -32,11 +32,11 @@ class GmmWidget(QtW.QWidget):
         self._params.setPlainText(str(model.value))
 
     @validate_protocol
-    def mergeable_model_types(self) -> list[StandardType]:
+    def allowed_drop_types(self) -> list[str]:
         return [StandardType.TABLE]
 
     @validate_protocol
-    def merge_model(self, model: WidgetDataModel) -> MergeResult:
+    def dropped_callback(self, model: WidgetDataModel) -> DropResult:
         input_array = np.asarray(model.value, dtype=np.float64)
         if self._drop_mode.currentText() == "Fit":
             if self._gmm is None:
@@ -44,7 +44,7 @@ class GmmWidget(QtW.QWidget):
             self._gmm.fit(input_array)
             self._update_text()
             self._n_comps.setEnabled(False)
-            return MergeResult(delete_input=False, outputs=None)
+            return DropResult(delete_input=False, outputs=None)
         elif self._drop_mode.currentText() == "Predict":
             if self._gmm is None:
                 raise ValueError("Model is not created yet.")
@@ -54,7 +54,7 @@ class GmmWidget(QtW.QWidget):
                 type=StandardType.TABLE,
                 title=f"[Predict] {model.title}"
             )
-            return MergeResult(delete_input=False, outputs=output_model)
+            return DropResult(delete_input=False, outputs=output_model)
         elif self._drop_mode.currentText() == "Plot":
             if self._gmm is None:
                 raise ValueError("Model is not created yet.")
@@ -65,7 +65,7 @@ class GmmWidget(QtW.QWidget):
                 type=StandardType.MPL_FIGURE,
                 title=f"[Plot] {model.title}"
             )
-            return MergeResult(delete_input=False, outputs=output_model)
+            return DropResult(delete_input=False, outputs=output_model)
 
     def _update_text(self):
         self._params.clear()

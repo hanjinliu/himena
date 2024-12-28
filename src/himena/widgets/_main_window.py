@@ -264,6 +264,7 @@ class MainWindow(Generic[_W]):
             dock_native, title=title, area=area, allowed_areas=allowed_areas
         )
         self._dock_widget_list._add_dock_widget(dock)
+        _checker.call_widget_added_callback(widget)
         _checker.call_theme_changed_callback(widget, self.theme)
         return dock
 
@@ -742,7 +743,7 @@ class MainWindow(Generic[_W]):
             return back._update_control_widget(None)
         win = tab[i_win]
         back._update_control_widget(win.widget)
-        _checker.call_window_activated_callback(win.widget)
+        _checker.call_widget_activated_callback(win.widget)
         self.events.window_activated.emit(win)
         return None
 

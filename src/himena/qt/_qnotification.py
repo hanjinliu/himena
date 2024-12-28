@@ -257,6 +257,8 @@ class QJobStack(_QOverlayBase):
         item = QtW.QListWidgetItem()
         labeled_pbar = QLabeledCircularProgressBar(desc, pbar)
 
+        if future.done():
+            return None
         future.add_done_callback(lambda _: self.job_finished.emit(item))
         self._add_item_for_future(item, labeled_pbar)
 

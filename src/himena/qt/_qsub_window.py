@@ -26,6 +26,7 @@ from himena.qt._qrename import QRenameLineEdit
 from himena import _drag
 
 if TYPE_CHECKING:
+    from PyQt6 import QtWidgets as QtW
     from himena.qt._qmain_window import QMainWindow
     from himena.qt.main_window import MainWindowQt
     from himena.widgets import SubWindow
@@ -331,7 +332,7 @@ class QSubWindow(QtW.QMdiSubWindow):
                 _icon_for_id(TitleIconId.NORMAL, self._current_icon_color)
             )
             self._widget.setVisible(True)
-            _checker.call_window_resized_callback(
+            _checker.call_widget_resized_callback(
                 self._my_wrapper().widget, size_old, g_size
             )
         elif state == WindowState.NORMAL:
@@ -345,7 +346,7 @@ class QSubWindow(QtW.QMdiSubWindow):
             )
             self._widget.setVisible(True)
             self._title_bar._fix_position()
-            _checker.call_window_resized_callback(
+            _checker.call_widget_resized_callback(
                 self._my_wrapper().widget, size_old, g_last
             )
         elif state == WindowState.FULL:
@@ -357,7 +358,7 @@ class QSubWindow(QtW.QMdiSubWindow):
             else:
                 size_old = g_size
             _setter(g_parent)
-            _checker.call_window_resized_callback(
+            _checker.call_widget_resized_callback(
                 self._my_wrapper().widget, size_old, g_last
             )
         else:
@@ -436,7 +437,7 @@ class QSubWindow(QtW.QMdiSubWindow):
                     (main_qsize.width(), main_qsize.height()),
                     WindowRect.from_tuple(g.left(), g.top(), g.width(), g.height()),
                 )
-                _checker.call_window_resized_callback(
+                _checker.call_widget_resized_callback(
                     self._my_wrapper().widget, size_old, Size(g.width(), g.height())
                 )
         return None
@@ -483,7 +484,7 @@ class QSubWindow(QtW.QMdiSubWindow):
         if a0 is None:
             return None
         if model := _drag.drop():
-            # merge data
+            # user defined drop event
             self_wrapper = self._my_wrapper()
             if isinstance(src := a0.source(), QSubWindow):
                 source = src._my_wrapper()
@@ -494,7 +495,7 @@ class QSubWindow(QtW.QMdiSubWindow):
                 _LOGGER.info("dropping to the same widget, ignore it")
                 return None
 
-            if self_wrapper._process_merge_model(model, source):
+            if self_wrapper._process_drop_event(model, source):
                 a0.accept()
                 return None
         a0.ignore()
@@ -842,7 +843,7 @@ class QSubWindowTitleBar(QtW.QFrame):
             inst = main._instructions.updated(animate=False)
             sub._set_rect(rect_new, inst)
             size_new = rect_new.size()
-            _checker.call_window_resized_callback(
+            _checker.call_widget_resized_callback(
                 subwin._my_wrapper().widget, size_old, size_new
             )
         return super().wheelEvent(event)
