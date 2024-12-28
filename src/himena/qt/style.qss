@@ -269,7 +269,7 @@ QPlainTextEdit > QWidget {
     background-color: #[background];
 }
 
-QListView {
+QAbstractItemView {
     background-color: #[background];
     color: #[foreground];
     border: 1px solid #[highlight_strong];
@@ -277,16 +277,15 @@ QListView {
     selection-background-color: #[highlight_dim];
 }
 
-QListView:item:hover {
+QAbstractItemView:item:hover {
     background-color: #[highlight_dim];
     color: #[foreground];
 }
 
-QListView:item:selected {
+QAbstractItemView:item:selected {
     background-color: #[highlight_dim];
     color: #[foreground];
 }
-
 
 /* ----------------- QMenuBar ------------------ */
 
@@ -294,8 +293,21 @@ QMenuBar {
     border-bottom: 1px solid #[foreground_dim];
 }
 
+QMenuBar::item {
+    margin: 1px;
+    border-radius: 4px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    padding-left: 7px;
+    padding-right: 7px;
+}
+
 QMenuBar::item:selected {
    background-color: #[highlight_dim];
+}
+
+QMenu {
+    border: 1px solid gray;
 }
 
 QMenu::item:hover {
@@ -354,7 +366,14 @@ QGroupBox::title {
 }
 
 QCheckBox {
-    background-color: none;
+    color: #[foreground_dim];
+    border: 1px solid #[foreground_dim];
+}
+
+QCheckBox::indicator {
+    color: #[foreground_dim];
+    background: none;
+    border: 1px solid #[foreground_dim];
 }
 
 QRadioButton {

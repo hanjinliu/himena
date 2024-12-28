@@ -120,7 +120,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             parent=self,
             exclude=["new"],
             formatter=_formatter.formatter_general,
-            placeholder="Create a new window ...",
+            placeholder="New ...",
         )
         self._goto_widget = QGotoWidget(self)
 

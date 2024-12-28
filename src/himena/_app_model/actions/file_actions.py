@@ -272,8 +272,6 @@ def open_new(ui: MainWindow) -> WidgetDataModel:
     id="paste-as-window",
     title="Paste as window",
     menus=[MenuId.FILE_NEW],
-    keybindings=[StandardKeyBinding.Paste],
-    enablement=~_ctx.is_subwindow_focused,
 )
 def paste_from_clipboard(ui: MainWindow) -> WidgetDataModel:
     """Paste the clipboard data as a sub-window."""

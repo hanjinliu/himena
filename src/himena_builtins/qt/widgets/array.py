@@ -188,6 +188,11 @@ class QArraySliceView(QTableBase):
         clipboard = QtGui.QGuiApplication.clipboard()
         clipboard.setText(buf.getvalue())
 
+    def _make_context_menu(self):
+        menu = QtW.QMenu(self)
+        menu.addAction("Copy", self.copy_data)
+        return menu
+
     if TYPE_CHECKING:
 
         def model(self) -> QArrayModel: ...

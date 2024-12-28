@@ -4,7 +4,7 @@ import logging
 
 
 def test_stdout(qtbot: QtBot):
-    widget = get_widget()
+    widget = get_widget()._widget
     qtbot.addWidget(widget)
     assert widget._stdout.toPlainText() == ""
     print("Hello")
@@ -12,7 +12,7 @@ def test_stdout(qtbot: QtBot):
 
 
 def test_logger(qtbot: QtBot):
-    widget = get_widget()
+    widget = get_widget()._widget
     qtbot.addWidget(widget)
     assert widget._logger.toPlainText() == ""
     logger = logging.getLogger("test")

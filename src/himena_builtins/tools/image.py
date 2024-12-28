@@ -38,7 +38,7 @@ def crop_image(model: WidgetDataModel) -> WidgetDataModel:
         raise NotImplementedError
     meta_out = meta.without_rois()
     meta_out.current_roi = roi.shifted(-bbox.left, -bbox.top)
-    return model.with_value(arr_cropped, metadata=meta_out)
+    return model.with_value(arr_cropped, metadata=meta_out).with_title_numbering()
 
 
 @register_function(
@@ -66,7 +66,7 @@ def crop_image_multi(model: WidgetDataModel) -> WidgetDataModel:
         value=cropped_models,
         type=StandardType.MODELS,
         title=f"Cropped images from {model.title}",
-    )
+    ).with_title_numbering()
 
 
 @register_function(

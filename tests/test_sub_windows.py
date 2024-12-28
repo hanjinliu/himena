@@ -36,11 +36,11 @@ def test_builtin_commands(ui: MainWindow):
     assert len(ui.tabs) == 1
     assert len(ui.tabs[0]) == 0
     ui.exec_action("builtins:console")
-    ui.exec_action("builtins:explorer")
+    ui.exec_action("builtins:file-explorer")
     ui.exec_action("builtins:output")
     ui.exec_action("builtins:new-text")
     assert len(ui.tabs[0]) == 1
-    ui.exec_action("builtins:fetch-seaborn-sample-data")
+    ui.exec_action("builtins-seaborn-sample:iris")
     ui.exec_action("quit")
 
 def test_io_commands(ui: MainWindow, tmpdir, sample_dir: Path):
@@ -352,6 +352,7 @@ def test_save_behavior(ui: MainWindow, tmpdir):
     response_save = lambda: Path(tmpdir) / "text_out.txt"
     ui._instructions = ui._instructions.updated(file_dialog_response=response_save)
     ui.exec_action("save-as")
+    win3 = ui.current_window
     assert not win3.is_modified
     assert isinstance(win3._widget_data_model_method, ConverterMethod)
     assert isinstance(win3.save_behavior, SaveToPath)

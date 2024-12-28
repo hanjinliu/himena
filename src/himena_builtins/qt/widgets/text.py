@@ -218,6 +218,10 @@ class QTextEdit(QtW.QWidget):
         self._main_text_edit.setReadOnly(not value)
 
     @validate_protocol
+    def widget_added_callback(self):
+        self._main_text_edit.setFont(self._main_text_edit._default_font)
+
+    @validate_protocol
     def theme_changed_callback(self, theme: Theme):
         text_edit = self._main_text_edit
         if theme.is_light_background():

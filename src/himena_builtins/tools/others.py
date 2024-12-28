@@ -1,5 +1,6 @@
 from pathlib import Path
 import html
+import re
 from typing import Mapping
 import warnings
 import numpy as np
@@ -9,6 +10,7 @@ from himena.plugins import register_function, configure_gui, widget_classes
 from himena.types import Parametric, WidgetDataModel, is_subtype
 from himena.consts import StandardType, MonospaceFontFamily
 from himena.widgets import SubWindow, MainWindow
+from himena import AppContext as ctx
 from himena._utils import get_display_name, get_widget_class_id, unwrap_lazy_model
 
 
@@ -33,11 +35,29 @@ def open_as_text_anyway(ui: MainWindow, win: SubWindow) -> WidgetDataModel[str]:
     menus=["tools"],
     title="Merge models ...",
     command_id="builtins:merge-models",
+    enablement=(ctx.num_tabs > 0) & (ctx.num_sub_windows > 0),
 )
-def merge_models() -> Parametric:
+def merge_models(ui: MainWindow) -> Parametric:
     """Merge models as an model list."""
 
-    def run_merge_models(models: list[WidgetDataModel]) -> WidgetDataModel:
+    def run_merge_models(
+        models: list[WidgetDataModel],
+        pattern: str = "",
+    ) -> WidgetDataModel:
+        """Merge models as an model list."""
+        if models and pattern:
+            raise ValueError("Cannot specify both models and patterns.")
+        if not models and not pattern:
+            raise ValueError("Must specify either models or patterns.")
+        if pattern:
+            pat = re.compile(pattern)
+            models: list[WidgetDataModel] = []
+            for win in ui.tabs.current():
+                model = win.to_model()
+                if pat.match(model.title):
+                    models.append(model)
+            if not models:
+                raise ValueError("No models matched the pattern.")
         return WidgetDataModel(
             value=models,
             type=StandardType.MODELS,

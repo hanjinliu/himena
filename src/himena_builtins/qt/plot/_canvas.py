@@ -3,10 +3,10 @@ from __future__ import annotations
 
 from matplotlib.figure import Figure
 from matplotlib.backends import backend_qtagg
-from qtpy import QtWidgets as QtW, QtGui, QtCore
+from qtpy import QtWidgets as QtW, QtGui
 
 from himena.plugins import validate_protocol
-from himena.types import WidgetDataModel
+from himena.types import Size, WidgetDataModel
 from himena.consts import StandardType
 from himena.style import Theme
 from himena.standards import plotting as hplt
@@ -50,6 +50,7 @@ class QMatplotlibCanvasBase(QtW.QWidget):
         toolbar.insertWidget(toolbar.actions()[0], spacer)
         return toolbar
 
+    # FIXME: cannot correctly determine the icon color in Qt6
     @validate_protocol
     def theme_changed_callback(self, theme: Theme):
         if self._toolbar is None:
@@ -64,12 +65,7 @@ class QMatplotlibCanvasBase(QtW.QWidget):
             assert isinstance(toolbtn, QtW.QToolButton)
             icon = toolbtn.icon()
             pixmap = icon.pixmap(100, 100)
-            mask = pixmap.createMaskFromColor(
-                QtGui.QColor("black"),
-                QtCore.Qt.MaskMode.MaskOutColor,
-            )
             pixmap.fill(icon_color)
-            pixmap.setMask(mask)
             icon_new = QtGui.QIcon(pixmap)
             toolbtn.setIcon(icon_new)
             # Setting icon to the action as well; otherwise checking/unchecking will
@@ -177,8 +173,8 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
         return 300, 240
 
     @validate_protocol
-    def widget_resized_callback(self, size_old, size_new: tuple[int, int]):
-        if size_new[0] > 40 and size_new[1] > 40:
+    def widget_resized_callback(self, size_old: Size, size_new: Size):
+        if size_new.width > 40 and size_new.width > 40:
             self._canvas.figure.tight_layout()
 
     @validate_protocol

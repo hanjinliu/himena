@@ -146,6 +146,9 @@ features = ["testing"]
 [tool.hatch.envs.test.scripts]
 run = "pytest -v --cov --cov-report=xml"
 
+[project.entry-points.pytest11]
+himena = "himena_builtins._pytest_fixtures"
+
 [[tool.hatch.envs.test.matrix]]
 backend = ["pyqt5", "pyqt6"]
 

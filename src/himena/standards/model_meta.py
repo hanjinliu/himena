@@ -124,6 +124,7 @@ class ImageMeta(ArrayMeta):
     )
     labels: Any | None = Field(None, description="Labels of the image.")
     interpolation: str | None = Field(None, description="Interpolation method.")
+    more_metadata: Any | None = Field(None, description="More metadata if exists.")
 
     def without_rois(self) -> "ImageMeta":
         return self.model_copy(update={"rois": roi.RoiListModel(), "current_roi": None})

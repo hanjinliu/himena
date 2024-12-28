@@ -232,6 +232,11 @@ class QDataFrameView(QTableBase):
         clipboard = QtGui.QGuiApplication.clipboard()
         clipboard.setText(csv_text)
 
+    def _make_context_menu(self):
+        menu = QtW.QMenu(self)
+        menu.addAction("Copy", self.copy_data)
+        return menu
+
     if TYPE_CHECKING:
 
         def model(self) -> QDataFrameModel: ...

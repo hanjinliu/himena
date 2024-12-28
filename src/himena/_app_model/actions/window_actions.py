@@ -8,7 +8,7 @@ from app_model.types import (
     StandardKeyBinding,
 )
 from himena._descriptors import SaveToPath, NoNeedToSave
-from himena.consts import MenuId
+from himena.consts import MenuId, StandardType
 from himena.widgets import MainWindow, SubWindow
 from himena.types import (
     ClipboardDataModel,
@@ -104,7 +104,7 @@ def duplicate_window(win: SubWindow) -> WidgetDataModel:
         "force_open_with": _utils.get_widget_class_id(type(win.widget)),
     }
     if model.title is not None:
-        update["title"] = _utils.add_title_suffix(model.title)
+        model = model.with_title_numbering()
     return model.model_copy(update=update)
 
 
@@ -156,12 +156,16 @@ def copy_path_to_clipboard(ui: MainWindow) -> ClipboardDataModel:
     enablement=(_ctx.num_sub_windows > 0) & _ctx.is_active_window_exportable,
     keybindings=[{"primary": KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.KeyC)}],
 )
-def copy_data_to_clipboard(ui: MainWindow) -> ClipboardDataModel:
+def copy_data_to_clipboard(model: WidgetDataModel) -> ClipboardDataModel:
     """Copy the data of the current window to the clipboard."""
-    if window := ui.current_window:
-        return window.to_model().to_clipboard_data_model()
-    warnings.warn("No window is focused.", UserWarning, stacklevel=2)
-    raise Cancelled
+
+    if model.is_subtype_of(StandardType.TEXT):
+        return ClipboardDataModel(text=model.value)
+    elif model.is_subtype_of(StandardType.HTML):
+        return ClipboardDataModel(html=model.value)
+    elif model.is_subtype_of(StandardType.IMAGE):
+        return ClipboardDataModel(image=model.value)
+    raise ValueError(f"Cannot convert {model.type} to a clipboard data.")
 
 
 @ACTIONS.append_from_fn(
@@ -171,10 +175,9 @@ def copy_data_to_clipboard(ui: MainWindow) -> ClipboardDataModel:
     keybindings=[{"primary": KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.DownArrow)}],
     enablement=_ctx.num_sub_windows > 0,
 )
-def minimize_current_window(ui: MainWindow) -> None:
+def minimize_current_window(win: SubWindow) -> None:
     """Minimize the window"""
-    if window := ui.current_window:
-        window.state = WindowState.MIN
+    win.state = WindowState.MIN
 
 
 @ACTIONS.append_from_fn(
@@ -184,9 +187,8 @@ def minimize_current_window(ui: MainWindow) -> None:
     enablement=_ctx.num_sub_windows > 0,
     keybindings=[{"primary": KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.UpArrow)}],
 )
-def maximize_current_window(ui: MainWindow) -> None:
-    if window := ui.current_window:
-        window.state = WindowState.MAX
+def maximize_current_window(win: SubWindow) -> None:
+    win.state = WindowState.MAX
 
 
 @ACTIONS.append_from_fn(
@@ -196,12 +198,11 @@ def maximize_current_window(ui: MainWindow) -> None:
     keybindings=[{"primary": KeyCode.F11}],
     enablement=_ctx.num_sub_windows > 0,
 )
-def toggle_full_screen(ui: MainWindow) -> None:
-    if window := ui.current_window:
-        if window.state is WindowState.MAX:
-            window.state = WindowState.NORMAL
-        else:
-            window.state = WindowState.MAX
+def toggle_full_screen(win: SubWindow) -> None:
+    if win.state is WindowState.MAX:
+        win.state = WindowState.NORMAL
+    else:
+        win.state = WindowState.MAX
 
 
 @ACTIONS.append_from_fn(
@@ -210,10 +211,9 @@ def toggle_full_screen(ui: MainWindow) -> None:
     menus=[MenuId.WINDOW_ANCHOR],
     enablement=_ctx.num_sub_windows > 0,
 )
-def unset_anchor(ui: MainWindow) -> None:
+def unset_anchor(win: SubWindow) -> None:
     """Unset the anchor of the window if exists."""
-    if window := ui.current_window:
-        window.anchor = None
+    win.anchor = None
 
 
 @ACTIONS.append_from_fn(
@@ -222,10 +222,9 @@ def unset_anchor(ui: MainWindow) -> None:
     menus=[MenuId.WINDOW_ANCHOR],
     enablement=_ctx.num_sub_windows > 0,
 )
-def anchor_at_top_left(ui: MainWindow) -> None:
+def anchor_at_top_left(win: SubWindow) -> None:
     """Anchor the window at the top-left corner of the current window position."""
-    if window := ui.current_window:
-        window.anchor = "top-left"
+    win.anchor = "top-left"
 
 
 @ACTIONS.append_from_fn(
@@ -234,10 +233,9 @@ def anchor_at_top_left(ui: MainWindow) -> None:
     menus=[MenuId.WINDOW_ANCHOR],
     enablement=_ctx.num_sub_windows > 0,
 )
-def anchor_at_top_right(ui: MainWindow) -> None:
+def anchor_at_top_right(win: SubWindow) -> None:
     """Anchor the window at the top-right corner of the current window position."""
-    if window := ui.current_window:
-        window.anchor = "top-right"
+    win.anchor = "top-right"
 
 
 @ACTIONS.append_from_fn(
@@ -246,10 +244,9 @@ def anchor_at_top_right(ui: MainWindow) -> None:
     menus=[MenuId.WINDOW_ANCHOR],
     enablement=_ctx.num_sub_windows > 0,
 )
-def anchor_at_bottom_left(ui: MainWindow) -> None:
+def anchor_at_bottom_left(win: SubWindow) -> None:
     """Anchor the window at the bottom-left corner of the current window position."""
-    if window := ui.current_window:
-        window.anchor = "bottom-left"
+    win.anchor = "bottom-left"
 
 
 @ACTIONS.append_from_fn(
@@ -258,10 +255,9 @@ def anchor_at_bottom_left(ui: MainWindow) -> None:
     menus=[MenuId.WINDOW_ANCHOR],
     enablement=_ctx.num_sub_windows > 0,
 )
-def anchor_at_bottom_right(ui: MainWindow) -> None:
+def anchor_at_bottom_right(win: SubWindow) -> None:
     """Anchor the window at the bottom-right corner of the current window position."""
-    if window := ui.current_window:
-        window.anchor = "bottom-right"
+    win.anchor = "bottom-right"
 
 
 @ACTIONS.append_from_fn(
@@ -271,10 +267,9 @@ def anchor_at_bottom_right(ui: MainWindow) -> None:
     menus=[{"id": MenuId.WINDOW_RESIZE, "group": ZOOM_GROUP}],
     keybindings=[StandardKeyBinding.ZoomIn],
 )
-def window_expand(ui: MainWindow) -> None:
+def window_expand(win: SubWindow) -> None:
     """Expand (increase the size of) the current window."""
-    if window := ui.current_window:
-        window._set_rect(window.rect.resize_relative(1.2, 1.2))
+    win._set_rect(win.rect.resize_relative(1.2, 1.2))
 
 
 @ACTIONS.append_from_fn(
@@ -284,10 +279,9 @@ def window_expand(ui: MainWindow) -> None:
     menus=[{"id": MenuId.WINDOW_RESIZE, "group": ZOOM_GROUP}],
     keybindings=[StandardKeyBinding.ZoomOut],
 )
-def window_shrink(ui: MainWindow) -> None:
+def window_shrink(win: SubWindow) -> None:
     """Shrink (reduce the size of) the current window."""
-    if window := ui.current_window:
-        window._set_rect(window.rect.resize_relative(1 / 1.2, 1 / 1.2))
+    win._set_rect(win.rect.resize_relative(1 / 1.2, 1 / 1.2))
 
 
 @ACTIONS.append_from_fn(

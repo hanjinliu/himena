@@ -11,6 +11,7 @@ import pandas as pd
 import polars as pl
 from himena import WidgetDataModel
 from himena.consts import StandardType
+from himena.standards.model_meta import ImageMeta
 from pytestqt.qtbot import QtBot
 
 _Ctrl = Qt.KeyboardModifier.ControlModifier
@@ -94,7 +95,9 @@ def test_image_view(qtbot: QtBot):
 
     # RGB
     model = WidgetDataModel(
-        value=np.zeros((100, 100, 3), dtype=np.uint16), type=StandardType.IMAGE
+        value=np.zeros((100, 100, 3), dtype=np.uint8),
+        type=StandardType.IMAGE,
+        metadata=ImageMeta(is_rgb=True),
     )
     image_view = QImageView()
     image_view.update_model(model)

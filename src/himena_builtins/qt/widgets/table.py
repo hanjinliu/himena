@@ -422,6 +422,17 @@ class QSpreadsheet(QTableBase):
             action.apply(self)
             self.update()
 
+    def _make_context_menu(self):
+        menu = QtW.QMenu(self)
+        menu.addAction("Cut", self._cut_and_copy_to_clipboard)
+        menu.addAction("Copy", self._copy_to_clipboard)
+        menu.addAction("Paste", self._paste_from_clipboard)
+        return menu
+
+    def _cut_and_copy_to_clipboard(self):
+        self._copy_to_clipboard()
+        self._delete_selection()
+
     def _copy_to_clipboard(self):
         sels = self._selection_model.ranges
         if len(sels) != 1:
@@ -536,8 +547,7 @@ class QSpreadsheet(QTableBase):
         elif e.modifiers() & _Ctrl and e.key() == QtCore.Qt.Key.Key_V:
             return self._paste_from_clipboard()
         elif e.modifiers() & _Ctrl and e.key() == QtCore.Qt.Key.Key_X:
-            self._copy_to_clipboard()
-            return self._delete_selection()
+            return self._cut_and_copy_to_clipboard()
         elif e.key() in (QtCore.Qt.Key.Key_Delete, QtCore.Qt.Key.Key_Backspace):
             return self._delete_selection()
         elif e.modifiers() & _Ctrl and e.key() == QtCore.Qt.Key.Key_F:

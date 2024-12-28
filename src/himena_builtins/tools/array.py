@@ -51,7 +51,9 @@ def crop_array(model: WidgetDataModel) -> WidgetDataModel:
         return crop_image(model)
     sel, meta = _get_current_selection_and_meta(model)
     arr_cropped = wrap_array(model.value)[sel]
-    return model.with_value(arr_cropped, metadata=meta.without_selections())
+    return model.with_value(
+        arr_cropped, metadata=meta.without_selections()
+    ).with_title_numbering()
 
 
 @register_function(
@@ -88,7 +90,7 @@ def crop_array_nd(win: SubWindow) -> Parametric:
         arr_cropped = arr[sl]
         meta_out = meta.without_selections()
         meta_out.current_indices = None  # shape changed, need to reset
-        return model.with_value(arr_cropped, metadata=meta_out)
+        return model.with_value(arr_cropped, metadata=meta_out).with_title_numbering()
 
     return run_crop_image
 
@@ -131,7 +133,31 @@ def binary_operation() -> Parametric:
 
 
 @register_function(
-    title="Data type ...",
+    title="Simple calculation ...",
+    menus=["tools/array"],
+    command_id="builtins:simple-calculation",
+)
+def simple_calculation(model: WidgetDataModel) -> Parametric:
+    @configure_gui(show_parameter_labels=False)
+    def run_calc(expr: str):
+        """Python expression to run calculations on the input array.
+
+        Parameters
+        ----------
+        expr : str
+            Python expression to run calculations on the input array. Use symbol `x` for
+            the input array.
+        """
+        from app_model.expressions import safe_eval
+
+        out = safe_eval(expr, {"x": model.value})
+        return model.with_value(out).with_title_numbering()
+
+    return run_calc
+
+
+@register_function(
+    title="Convert data type (astype) ...",
     menus=["tools/array"],
     types=StandardType.ARRAY,
     command_id="builtins:array-astype",

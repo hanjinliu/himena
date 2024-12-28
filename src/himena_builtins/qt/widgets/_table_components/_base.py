@@ -10,6 +10,9 @@ from himena.qt._qfinderwidget import QTableFinderWidget
 from ._selection_model import SelectionModel, Index
 from ._header import QVerticalHeaderView, QHorizontalHeaderView
 
+if TYPE_CHECKING:
+    from PyQt6 import QtWidgets as QtW
+
 
 class QItemDelegate(QtW.QStyledItemDelegate):
     def __init__(self, parent: QtCore.QObject | None = None) -> None:
@@ -354,6 +357,15 @@ class QTableBase(QtW.QTableView):
 
     def mouseReleaseEvent(self, e: QtGui.QMouseEvent) -> None:
         """Delete last position."""
+        if self._mouse_track.last_button == "right":
+            index = self.indexAt(e.pos())
+            if not self.selection_model.contains((index.row(), index.column())):
+                self._selection_model.jump_to(index.row(), index.column())
+            if self._mouse_track.last_rightclick_pos == e.pos():
+                # right click
+                menu = self._make_context_menu()
+                if menu is not None:
+                    menu.exec_(self.viewport().mapToGlobal(e.pos()))
         self._mouse_track.last_rightclick_pos = None
         self._mouse_track.last_button = None
         self._selection_model.set_shift(
@@ -361,6 +373,9 @@ class QTableBase(QtW.QTableView):
         )
         self._mouse_track.was_right_dragging = False
         return super().mouseReleaseEvent(e)
+
+    def _make_context_menu(self) -> QtW.QMenu | None:
+        return None
 
     def paintEvent(self, event: QtGui.QPaintEvent):
         """Paint table and the selection."""

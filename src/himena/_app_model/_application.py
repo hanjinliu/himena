@@ -4,6 +4,7 @@ from typing import Callable, TYPE_CHECKING
 from app_model import Action, Application
 import in_n_out
 from himena._app_model._command_registry import CommandsRegistry
+from himena.types import WidgetDataModel
 
 if TYPE_CHECKING:
     from concurrent.futures import Future
@@ -49,6 +50,12 @@ class HimenaApplication(Application):
         else:
             result = f.result()
             type_hint = getattr(f, "_ino_type_hint", None)
+            if (
+                isinstance(result, WidgetDataModel)
+                and (method := getattr(f, "_himena_descriptor", None))
+                and result.method is None
+            ):
+                result.method = method
             self.injection_store.process(result, type_hint=type_hint)
 
 

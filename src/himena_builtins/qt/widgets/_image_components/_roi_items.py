@@ -110,8 +110,8 @@ class QLineRoi(QtW.QGraphicsLineItem, QRoi):
         length_px = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
         length = math.sqrt(((x2 - x1) * xscale) ** 2 + ((y2 - y1) * yscale) ** 2)
         if not unit:
-            return f"start={start}, end={end}, length={length_px:.1f}"
-        return f"start={start}, end={end}, length={length_px:.1f} ({length:.1f} {unit})"
+            return f"start=({start}), end=({end}), length={length_px:.1f}"
+        return f"start=({start}), end=({end}), length={length_px:.1f} ({length:.1f} {unit})"
 
 
 class QRectRoiBase(QRoi):

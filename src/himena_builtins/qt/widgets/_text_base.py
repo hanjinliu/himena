@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Iterator
 
 from qtpy import QtWidgets as QtW
-from qtpy import QtGui, QtCore
+from qtpy import QtGui, QtCore, QT6
 
 from himena.consts import MonospaceFontFamily
 from himena.qt._qfinderwidget import QFinderWidget
@@ -17,7 +17,11 @@ class QMainTextEdit(QtW.QPlainTextEdit):
     def __init__(self, parent: QtW.QWidget | None = None):
         super().__init__(parent)
         self.setWordWrapMode(QtGui.QTextOption.WrapMode.NoWrap)
-        font = QtGui.QFont(MonospaceFontFamily)
+        font = QtGui.QFont(MonospaceFontFamily, 10)
+        if QT6:
+            font.setFixedPitch(True)
+            font.setWeight(QtGui.QFont.Weight.DemiBold)
+            font.setStretch(QtGui.QFont.Stretch.SemiCondensed)
         self._default_font = font
         self.setFont(font)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)

@@ -701,6 +701,7 @@ class ParametricWindow(SubWindow[_W]):
                 # the type hint to Future and let it processed in the
                 # "_future_done_callback" method of himena application.
                 return_value._ino_type_hint = annot.get("return", None)
+                return_value._himena_descriptor = tracker.to_method(kwargs)
             else:
                 injection_type_hint = annot.get("return", None)
             self._process_other_output(return_value, injection_type_hint)

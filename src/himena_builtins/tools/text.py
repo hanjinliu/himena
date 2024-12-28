@@ -4,7 +4,6 @@ from himena.plugins import register_function
 from himena.types import Parametric, WidgetDataModel
 from himena.standards.model_meta import TextMeta
 from himena.consts import StandardType
-from himena import _utils
 
 
 @register_function(
@@ -46,10 +45,9 @@ def change_separator(model: WidgetDataModel[str]) -> Parametric:
         return WidgetDataModel(
             value=new_text,
             type=model.type,
-            title=_utils.add_title_suffix(model.title),
             extensions=model.extensions,
             metadata=model.metadata,
-        )
+        ).with_title_numbering()
 
     return change_separator_data
 

@@ -18,7 +18,11 @@ def plot_sin_curve(a: float = 1.0, b: float = 1.0, phi: float = 0.0) -> WidgetDa
 
 if __name__ == "__main__":
     ui = new_window()
-    ui.add_function(plot_sin_curve, preview=True, title="Plot in new window")
+    ui.add_function(
+        plot_sin_curve,
+        preview=True,
+        title="Plot in new window",
+    )
     ui.add_function(
         plot_sin_curve,
         preview=True,

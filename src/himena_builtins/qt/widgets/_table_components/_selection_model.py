@@ -118,6 +118,14 @@ class SelectionModel:
             self._col_selection_indices.add(len(self._ranges) - 1)
         return None
 
+    def contains(self, index: tuple[int, int]) -> bool:
+        """Whether the index is in the selection."""
+        r0, c0 = index
+        for r, c in self._ranges:
+            if r.start <= r0 < r.stop and c.start <= c0 < c.stop:
+                return True
+        return False
+
     def set_ranges(self, ranges: list[Range]) -> None:
         if self._is_blocked:
             return None

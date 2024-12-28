@@ -92,9 +92,8 @@ class QSubWindowArea(QtW.QMdiArea):
         self._mouse_move_event(event)
         return None
 
-    @qthrottled(timeout=10)
     def _mouse_move_event(self, event: QtGui.QMouseEvent):
-        if event.button() == Qt.MouseButton.LeftButton:
+        if event.buttons() & Qt.MouseButton.LeftButton:
             if self._last_drag_pos is None:
                 return None
             if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
@@ -140,10 +139,11 @@ class QSubWindowArea(QtW.QMdiArea):
                         ) is not self._last_active_window:
                             self.subWindowActivated.emit(win)
                             self._last_active_window = win
+                            _LOGGER.debug("QSubWindowArea.eventFilter: Window focused.")
                 else:
                     self.area_focused.emit()
                     self._last_active_window = None
-                    _LOGGER.debug("TabArea focused.")
+                    _LOGGER.debug("QSubWindowArea.eventFilter: TabArea focused.")
         return super().eventFilter(obj, a0)
 
     def hideEvent(self, a0: QtGui.QHideEvent | None) -> None:

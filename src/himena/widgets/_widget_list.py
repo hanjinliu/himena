@@ -445,6 +445,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
             ui.set_status_tip(f"Opening: {file_paths[0].as_posix()}", duration=5)
         else:
             ui.set_status_tip(f"Opening {len(file_paths)} files", duration=5)
+        future._ino_type_hint = list[WidgetDataModel]
         return future
 
     def save_session(self, file_path: str | Path) -> None:

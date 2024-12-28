@@ -28,7 +28,7 @@ class QSettingsDialog(QtW.QDialog):
         self._list.setFont(QtGui.QFont("Arial", 13))
         self._stack = QtW.QStackedWidget(self)
 
-        self._list.itemClicked.connect(
+        self._list.currentRowChanged.connect(
             lambda: self._stack.setCurrentIndex(self._list.currentRow())
         )
 

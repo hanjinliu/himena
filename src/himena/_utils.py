@@ -278,26 +278,6 @@ def import_object(full_name: str) -> Any:
     return obj
 
 
-def add_title_suffix(title: str) -> str:
-    """Add [n] suffix to the title."""
-    if "." in title:
-        stem, ext = title.rsplit(".", 1)
-        ext = f".{ext}"
-    else:
-        stem = title
-        ext = ""
-    if (
-        (last_part := stem.rsplit(" ", 1)[-1]).startswith("[")
-        and last_part.endswith("]")
-        and last_part[1:-1].isdigit()
-    ):
-        nth = int(last_part[1:-1])
-        stem = stem.rsplit(" ", 1)[0] + f" [{nth + 1}]"
-    else:
-        stem = stem + " [1]"
-    return stem + ext
-
-
 def unwrap_lazy_model(model: WidgetDataModel) -> WidgetDataModel:
     """Unwrap the lazy object if possible."""
 

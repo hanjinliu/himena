@@ -21,7 +21,7 @@ from himena._descriptors import (
     SaveBehavior,
 )
 from himena._enum import StrEnum
-from himena.consts import StandardType, PYDANTIC_CONFIG_STRICT
+from himena.consts import PYDANTIC_CONFIG_STRICT
 
 if TYPE_CHECKING:
     from himena._providers import PluginInfo
@@ -230,19 +230,36 @@ class WidgetDataModel(GenericModel[_T]):
             return self.method.path
         return None
 
-    def to_clipboard_data_model(self) -> "ClipboardDataModel":
-        """Convert to a clipboard data model."""
-        if is_subtype(self.type, StandardType.TEXT):
-            return ClipboardDataModel(text=self.value)
-        elif is_subtype(self.type, StandardType.HTML):
-            return ClipboardDataModel(html=self.value)
-        elif is_subtype(self.type, StandardType.IMAGE):
-            return ClipboardDataModel(image=self.value)
-        raise ValueError(f"Cannot convert {self.type} to a clipboard data.")
-
     def is_subtype_of(self, supertype: str) -> bool:
         """Check if the type is a subtype of the given type."""
         return is_subtype(self.type, supertype)
+
+    def with_title_numbering(self, copy: bool = False) -> "WidgetDataModel[_T]":
+        """Add [n] suffix to the title."""
+        title = self.title
+        if title is None:
+            title = "Untitled"
+        if "." in title:
+            stem, ext = title.rsplit(".", 1)
+            ext = f".{ext}"
+        else:
+            stem = title
+            ext = ""
+        if (
+            (last_part := stem.rsplit(" ", 1)[-1]).startswith("[")
+            and last_part.endswith("]")
+            and last_part[1:-1].isdigit()
+        ):
+            nth = int(last_part[1:-1])
+            stem = stem.rsplit(" ", 1)[0] + f" [{nth + 1}]"
+        else:
+            stem = stem + " [1]"
+        new_title = stem + ext
+        if copy:
+            return self.model_copy(update={"title": new_title})
+        else:
+            self.title = new_title
+            return self
 
     @field_validator("extension_default", mode="after")
     def _validate_extension_default(cls, v: str, values):
@@ -356,6 +373,13 @@ class Size(Generic[_V]):
     def __iter__(self):
         """Iterate over the field to make this class tuple-like."""
         return iter((self.width, self.height))
+
+    def __getitem__(self, index: int):
+        if index == 0:
+            return self.width
+        elif index == 1:
+            return self.height
+        raise IndexError(f"Index {index!r} out of range.")
 
 
 @dataclass(frozen=True)
@@ -552,7 +576,22 @@ class WidgetClassTuple(NamedTuple):
 
 
 WidgetType = NewType("WidgetType", object)
+"""This type is used for the return annotation.
+
+>>> from himena.plugin import register_function
+>>> @register_function(...)
+>>> def my_plugin_function() -> WidgetType:
+...     return MyWidget()
+"""
+
 WidgetConstructor = NewType("WidgetConstructor", object)
+"""This type is used for the return annotation.
+
+>>> from himena.plugin import register_function
+>>> @register_function(...)
+>>> def my_plugin_function() -> WidgetConstructor:
+...     return MyWidget
+"""
 
 
 class DropResult(BaseModel):

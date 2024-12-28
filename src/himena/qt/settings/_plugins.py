@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Iterator, NamedTuple, TYPE_CHECKING
 
 from qtpy import QtWidgets as QtW, QtGui, QtCore
@@ -20,12 +21,26 @@ class QPluginListEditor(QtW.QWidget):
         self._ui = ui
         self._app = ui.model_app
         layout = QtW.QVBoxLayout(self)
-        self._instruction = QInstruction(
+        _instruction1 = QInstruction(
             f"Select plugins to be included in <b><code>himena {self._app.name}</code>"
             "</b>.<br>Click <b>Apply</b> to save changes.",
         )
         self._plugins_editor = QAvaliablePluginsTree(self)
         self._plugins_editor.stateChanged.connect(self._enabled_apply_button)
+
+        _instruction2 = QInstruction("List of '.py' files as unpackaged plugins.")
+        self._additional_plugin_list = QtW.QPlainTextEdit()
+        self._additional_plugin_list.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
+        self._additional_plugin_list.setWordWrapMode(QtGui.QTextOption.WrapMode.NoWrap)
+        self._additional_plugin_list.setFont(QtGui.QFont(MonospaceFontFamily))
+        self._additional_plugin_list.setFixedHeight(120)
+        self._additional_plugin_list.setPlaceholderText("e.g. path/to/file.py")
+        for plugin_name in ui.app_profile.plugins:
+            if plugin_name.endswith(".py") and Path(plugin_name).exists():
+                self._additional_plugin_list.appendPlainText(plugin_name + "\n")
+
         self._apply_button = QtW.QPushButton("Apply", self)
         self._button_group = QtW.QWidget(self)
         button_layout = QtW.QHBoxLayout(self._button_group)
@@ -33,15 +48,22 @@ class QPluginListEditor(QtW.QWidget):
         button_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
         button_layout.addWidget(self._apply_button)
 
-        layout.addWidget(self._instruction)
+        layout.addWidget(_instruction1)
         layout.addWidget(self._plugins_editor)
+        layout.addWidget(_instruction2)
+        layout.addWidget(self._additional_plugin_list)
         layout.addWidget(self._button_group)
 
         self._apply_button.clicked.connect(self._apply_changes)
         self._apply_button.setEnabled(False)
+        self._additional_plugin_list.textChanged.connect(self._enabled_apply_button)
 
     def _apply_changes(self):
         plugins = self._plugins_editor.get_plugin_list()
+        for line in self._additional_plugin_list.toPlainText().splitlines():
+            line = line.strip()
+            if line:
+                plugins.append(line)
         new_prof = self._ui.app_profile.with_plugins(plugins)
         AppActionRegistry.instance().install_to(self._app)
         new_prof.save()
