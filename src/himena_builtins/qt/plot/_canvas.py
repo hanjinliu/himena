@@ -65,7 +65,9 @@ class QMatplotlibCanvasBase(QtW.QWidget):
             assert isinstance(toolbtn, QtW.QToolButton)
             icon = toolbtn.icon()
             pixmap = icon.pixmap(100, 100)
+            mask = pixmap.mask()
             pixmap.fill(icon_color)
+            pixmap.setMask(mask)
             icon_new = QtGui.QIcon(pixmap)
             toolbtn.setIcon(icon_new)
             # Setting icon to the action as well; otherwise checking/unchecking will

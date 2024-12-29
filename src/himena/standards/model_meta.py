@@ -124,6 +124,12 @@ class ImageMeta(ArrayMeta):
     )
     labels: Any | None = Field(None, description="Labels of the image.")
     interpolation: str | None = Field(None, description="Interpolation method.")
+    skip_image_rerendering: bool = Field(
+        False,
+        description="Skip image rerendering when the model is passed to the "
+        "`update_model` method. This field is only used when a function does not touch "
+        "the image data itself.",
+    )
     more_metadata: Any | None = Field(None, description="More metadata if exists.")
 
     def without_rois(self) -> "ImageMeta":

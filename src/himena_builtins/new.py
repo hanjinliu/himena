@@ -146,5 +146,5 @@ for seaborn_sample_name in _SEABORN_SAMPLE_NAMES:
         _make_provider(seaborn_sample_name),
         title=seaborn_sample_name,
         menus="file/new/seaborn",
-        command_id=f"builtins-seaborn-sample:{seaborn_sample_name}",
+        command_id=f"builtins:seaborn-sample:{seaborn_sample_name}",
     )

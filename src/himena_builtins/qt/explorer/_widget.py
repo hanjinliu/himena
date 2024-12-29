@@ -102,7 +102,7 @@ class QFileTree(QtW.QTreeView):
 
     # drag-and-drop
     def mouseMoveEvent(self, e: QtGui.QMouseEvent):
-        if e.buttons() == QtCore.Qt.MouseButton.LeftButton:
+        if e.buttons() & QtCore.Qt.MouseButton.LeftButton:
             self._start_drag(e.pos())
             return None
         return super().mouseMoveEvent(e)

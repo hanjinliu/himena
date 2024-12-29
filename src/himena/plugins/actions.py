@@ -244,7 +244,7 @@ def make_action_for_function(
 
     _id = _command_id_from_func(f, command_id)
     if isinstance(command_id, str) and ":" in command_id:
-        group = command_id.split(":")[0]
+        group = command_id.rsplit(":", maxsplit=1)[0]
         menus_normed = _norm_menus_with_group(menus, group)
     else:
         menus_normed = menus
@@ -571,10 +571,6 @@ def _command_id_from_func(func: Callable, command_id: str) -> str:
     if command_id is None:
         _id = getattr(func, "__qualname__", str(func))
     else:
-        if command_id.count(":") != 1:
-            raise ValueError(
-                "command_id must be in the format of 'module:function_name'.",
-            )
         _id = command_id
     return _id
 

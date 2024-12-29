@@ -3,6 +3,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable
+import warnings
 
 import numpy as np
 from app_model.backends.qt import QModelMenu
@@ -120,17 +121,24 @@ def drag_model(
     *,
     desc: str | None = None,
     source: QtW.QWidget | None = None,
-    text: str | Callable[[], str] | None = None,
+    text_data: str | Callable[[], str] | None = None,
 ):
     """Create a QDrag object for the given model"""
     drag = QtGui.QDrag(source)
     _drag.drag(model)
     mime = QtCore.QMimeData()
-    if text is None:
-        text = repr(model)
-    elif callable(text):
-        text = text()
-    mime.setText(text)
+    if text_data is None:
+        text_data = repr(model)
+    elif callable(text_data):
+        text_data = text_data()
+    if not isinstance(text_data, str):
+        warnings.warn(
+            f"`text_data` must be a string, got {text_data!r}. Ignored the input.",
+            UserWarning,
+            stacklevel=2,
+        )
+        text_data = ""
+    mime.setText(text_data)
     if desc is None:
         desc = "model"
     qlabel = QtW.QLabel(desc)

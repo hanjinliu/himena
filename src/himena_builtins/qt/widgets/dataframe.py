@@ -20,6 +20,7 @@ from himena_builtins.qt.widgets._table_components import (
     QHorizontalHeaderView,
 )
 from himena_builtins.qt.widgets._splitter import QSplitterHandle
+from himena_builtins.qt.widgets._dragarea import QDraggableArea
 from himena.plugins import validate_protocol
 from himena.qt import drag_model
 from himena._data_wrappers import wrap_dataframe, DataFrameWrapper
@@ -95,48 +96,68 @@ class QDataFrameModel(QtCore.QAbstractTableModel):
         return f"{name} (dtype: {dtype.name})"
 
 
-def _is_drag_mouse_event(e: QtGui.QMouseEvent):
-    return (
-        e.modifiers() & QtCore.Qt.KeyboardModifier.ControlModifier
-        and e.buttons() & QtCore.Qt.MouseButton.LeftButton
-    ) or e.buttons() & QtCore.Qt.MouseButton.MiddleButton
-
-
 class QDraggableHorizontalHeader(QHorizontalHeaderView):
     def __init__(self, parent: QDataFrameView):
         super().__init__(parent)
         self._table_view_ref = weakref.ref(parent)
-        self._is_dragging = False
+        self.setMouseTracking(True)
+        self._hover_drag_indicator = QDraggableArea(self)
+        self._hover_drag_indicator.setWindowFlags(
+            QtCore.Qt.WindowType.FramelessWindowHint
+        )
+        self._hover_drag_indicator.setFixedSize(14, 14)
+        self._hover_drag_indicator.hide()
+        self._hover_drag_indicator.dragged.connect(self._drag_event)
 
-    def mousePressEvent(self, e):
-        return super().mousePressEvent(e)
-
-    def mouseMoveEvent(self, e):
-        if self._is_dragging:
+    def mouseMoveEvent(self, e: QtGui.QMouseEvent):
+        view = self._table_view_ref()
+        if view is None:
             return super().mouseMoveEvent(e)
-        self._is_dragging = True
-        if _is_drag_mouse_event(e) and (view := self._table_view_ref()):
-            df = view.model().df
-            nrows = df.num_rows()
-            dict_out = {}
+        if e.button() == QtCore.Qt.MouseButton.NoButton:
+            # hover
+            index = self.logicalIndexAt(e.pos())
+            hovered_column_selected = False
             for sel in view.selection_model.iter_col_selections():
-                dict_out.update(df.get_subset(0, nrows, sel.start, sel.stop).to_dict())
-            df = df.from_dict(dict_out)
-            model = WidgetDataModel(
-                value=df.unwrap(),
-                type=view.model_type(),
-            )
-            drag_model(
-                model,
-                desc=f"{len(dict_out)} columns",
-                source=view,
-                text=lambda: df.to_csv_string("\t"),
-            )
+                if sel.start <= index < sel.stop:
+                    hovered_column_selected = True
+                    break
+            if hovered_column_selected and index >= 0:
+                index_rect = self.visualRectAtIndex(index)
+                top_right = index_rect.topRight()
+                top_right.setX(top_right.x() - 14)
+                dy = (index_rect.height() - self._hover_drag_indicator.height()) / 2
+                top_right.setY(top_right.y() + int(dy))
+                self._hover_drag_indicator.move(top_right)
+                self._hover_drag_indicator.show()
+            else:
+                self._hover_drag_indicator.hide()
         return super().mouseMoveEvent(e)
 
-    def mouseReleaseEvent(self, e):
-        self._is_dragging = False
-        return super().mouseReleaseEvent(e)
+    def leaveEvent(self, a0):
+        self._hover_drag_indicator.hide()
+        return super().leaveEvent(a0)
+
+    def _drag_event(self):
+        view = self._table_view_ref()
+        if view is None:
+            return
+        df = view.model().df
+        nrows = df.num_rows()
+        dict_out = {}
+        for sel in view.selection_model.iter_col_selections():
+            dict_out.update(df.get_subset(0, nrows, sel.start, sel.stop).to_dict())
+        df = df.from_dict(dict_out)
+        model = WidgetDataModel(
+            value=df.unwrap(),
+            type=view.model_type(),
+        )
+        drag_model(
+            model,
+            desc=f"{len(dict_out)} columns",
+            source=view,
+            text_data=lambda: df.to_csv_string("\t"),
+        )
+        return None
 
 
 class QDataFrameView(QTableBase):

@@ -476,6 +476,10 @@ QTabBar::tab:bottom:selected {
 
 /* ----------------- QTableView / QHeaderView ----------------- */
 
+QHeaderView {
+    border: none;
+}
+
 QHeaderView:section {
     border: 1px solid #[foreground_dim];
     background-color: #[highlight];

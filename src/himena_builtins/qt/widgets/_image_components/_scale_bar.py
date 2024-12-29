@@ -198,7 +198,7 @@ class QScaleBarItem(QtW.QGraphicsItem):
         painter.resetTransform()
         top_left = self._view.mapFromScene(rect.topLeft())
         bottom_right = self._view.mapFromScene(rect.bottomRight())
-        rect = QtCore.QRectF(top_left, bottom_right)
+        rect = QtCore.QRectF(QtCore.QPointF(top_left), QtCore.QPointF(bottom_right))
         painter.drawText(rect, text)
         painter.setTransform(tr)
 

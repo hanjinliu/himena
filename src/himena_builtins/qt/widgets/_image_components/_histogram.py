@@ -256,8 +256,8 @@ class QClimLineItem(QtW.QGraphicsRectItem):
         self._value_label.show()
 
     def _drag_event(self, event: QtW.QGraphicsSceneMouseEvent):
-        self._show_value_label()
         self.setValue(event.pos().x())
+        self._show_value_label()
         if scene := self.scene():
             scene.update()
 
@@ -265,7 +265,6 @@ class QClimLineItem(QtW.QGraphicsRectItem):
         self._value_fmt = fmt
 
     def paint(self, painter, option, widget):
-        # super().paint(painter, option, widget)
         painter.setPen(self._qpen)
         start = QtCore.QPointF(self._value, self._Y_LOW)
         end = QtCore.QPointF(self._value, self._Y_HIGH)

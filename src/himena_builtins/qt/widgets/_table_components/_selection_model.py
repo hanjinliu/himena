@@ -93,6 +93,12 @@ class SelectionModel:
         for i in self._col_selection_indices:
             yield self._ranges[i][1]
 
+    def num_row_selections(self) -> int:
+        return len(self._row_selection_indices)
+
+    def num_col_selections(self) -> int:
+        return len(self._col_selection_indices)
+
     def append(self, range: Range, row: bool = False, column: bool = False) -> None:
         """Append a new range."""
         if self._is_blocked:

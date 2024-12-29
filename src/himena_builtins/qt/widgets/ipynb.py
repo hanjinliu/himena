@@ -232,7 +232,7 @@ class QIpynbCellEdit(QtW.QGroupBox):
         ipynb_edit = self._ipynb_edit_ref()
         if ipynb_edit is not None:
             ipynb_edit._dragging_index = ipynb_edit._cell_widgets.index(self)
-        drag_model(model, desc="Cell", source=ipynb_edit, text=model.value)
+        drag_model(model, desc="Cell", source=ipynb_edit, text_data=model.value)
 
     def dragEnterEvent(self, a0):
         ipynb_edit = self._ipynb_edit_ref()

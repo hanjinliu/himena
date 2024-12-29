@@ -2,6 +2,10 @@ from typing import Annotated
 from pathlib import Path
 import pytest
 from himena import WidgetDataModel, MainWindow
+from himena.consts import StandardType
+from himena.qt._magicgui._toggle_switch import ToggleSwitch
+from himena.qt._qparametric import QParametricWidget
+from himena.widgets import SubWindow
 
 def test_parametric_simple(ui: MainWindow, tmpdir):
     ui.add_object("xyz", type="text")
@@ -34,6 +38,19 @@ def test_parametric_with_model_types(ui: MainWindow):
         return model.value * a[0] * a[1]
     ui.add_object("xyz", type="text")
     win = ui.add_function(func)
+
+def test_parametric_preview(ui: MainWindow):
+    def func(a: str = "a", is_previewing: bool = False) -> WidgetDataModel[int]:
+        out = "preview" if is_previewing else a
+        return WidgetDataModel(value=out, type=StandardType.TEXT)
+    win = ui.add_function(func, preview=True)
+    assert not win.is_preview_enabled()
+    assert isinstance(qwidget := win.widget, QParametricWidget)
+    assert isinstance(toggle_switch := qwidget._central_widget[-1], ToggleSwitch)
+    toggle_switch.value = True
+    assert win.is_preview_enabled()
+    assert isinstance(prev_win := win._preview_window_ref(), SubWindow)
+    rect_prev = prev_win.rect
 
 def test_custom_parametric_widget(ui: MainWindow):
     from qtpy import QtWidgets as QtW

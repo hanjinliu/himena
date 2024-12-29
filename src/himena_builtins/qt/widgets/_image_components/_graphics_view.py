@@ -161,6 +161,7 @@ class QImageGraphicsView(QBaseGraphicsView):
     mode_changed = QtCore.Signal(Mode)
     hovered = QtCore.Signal(QtCore.QPointF)
     geometry_changed = QtCore.Signal(QtCore.QRectF)
+    array_updated = QtCore.Signal(int, np.ndarray)
 
     Mode = Mode
 
@@ -190,6 +191,7 @@ class QImageGraphicsView(QBaseGraphicsView):
         self._scale_bar_widget.setVisible(False)
         self.geometry_changed.connect(self._scale_bar_widget.update_rect)
         self._internal_clipboard: QRoi | None = None
+        self.array_updated.connect(self._on_array_updated)
 
     def add_image_layer(self, additive: bool = False):
         self._image_widgets.append(
@@ -223,6 +225,9 @@ class QImageGraphicsView(QBaseGraphicsView):
     def set_array(self, idx: int, img: np.ndarray | None):
         """Set an image to display."""
         # NOTE: image must be ready for conversion to QImage (uint8, mono or RGB)
+        self.array_updated.emit(idx, img)
+
+    def _on_array_updated(self, idx: int, img: np.ndarray | None):
         widget = self._image_widgets[idx]
         if img is None:
             widget.setVisible(False)
@@ -318,7 +323,7 @@ class QImageGraphicsView(QBaseGraphicsView):
     def _inform_scale(self):
         set_status_tip(f"Zoom factor: {self.transform().m11():.3%}", duration=0.7)
 
-    def wheelEvent(self, event):
+    def wheelEvent(self, event: QtGui.QWheelEvent):
         # Zoom in/out using the mouse wheel
         factor = 1.1
 
@@ -326,7 +331,7 @@ class QImageGraphicsView(QBaseGraphicsView):
             zoom_factor = factor
         else:
             zoom_factor = 1 / factor
-        super().wheelEvent(event)
+        # super().wheelEvent(event)  # not needed?
         # NOTE: for some reason, following lines must be called after super().wheelEvent
         self.scale_and_update_handles(zoom_factor)
         self._inform_scale()
@@ -593,7 +598,8 @@ class QImageGraphicsView(QBaseGraphicsView):
         self._selection_handles.finish_drawing_polygon()
         return super().mouseDoubleClickEvent(event)
 
-    def move_items_by(self, dx: float, dy: float):
+    def move_items_by(self, dx: int, dy: int):
+        """Translate items."""
         self.verticalScrollBar().setValue(self.verticalScrollBar().value() - dy)
         self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() - dx)
         self.geometry_changed.emit(self.sceneRect())

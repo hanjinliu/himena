@@ -59,4 +59,4 @@ def ui(qtbot: QtBot, request: pytest.FixtureRequest):
 
 @pytest.fixture
 def sample_dir() -> Path:
-    return Path(__file__).parent / "samples"
+    return Path(__file__).parent.parent.parent / "tests" / "samples"

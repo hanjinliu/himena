@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Iterator
 
 from qtpy import QtWidgets as QtW
-from qtpy import QtGui, QtCore, QT6
+from qtpy import QtGui, QtCore
 
 from himena.consts import MonospaceFontFamily
 from himena.qt._qfinderwidget import QFinderWidget
@@ -18,16 +18,12 @@ class QMainTextEdit(QtW.QPlainTextEdit):
         super().__init__(parent)
         self.setWordWrapMode(QtGui.QTextOption.WrapMode.NoWrap)
         font = QtGui.QFont(MonospaceFontFamily, 10)
-        if QT6:
-            font.setFixedPitch(True)
-            font.setWeight(QtGui.QFont.Weight.DemiBold)
-            font.setStretch(QtGui.QFont.Stretch.SemiCondensed)
         self._default_font = font
         self.setFont(font)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self._tab_size = 4
         self._highlight = None
-        self._language: str = "Plain Text"
+        self._language = "Plain Text"
         self._code_theme = "default"
         self._finder_widget = None
 
@@ -44,7 +40,10 @@ class QMainTextEdit(QtW.QPlainTextEdit):
         from superqt.utils import CodeSyntaxHighlight
 
         highlight = CodeSyntaxHighlight(self.document(), lang, theme=self._code_theme)
-        highlight.formatter.format = superqt_format_path.__get__(highlight.formatter)
+        highlight.formatter._style = {
+            name: get_text_char_format(style)
+            for name, style in highlight.formatter.style
+        }
         self._highlight = highlight
         return None
 
@@ -348,14 +347,6 @@ def _get_indents(text: str, tab_spaces: int = 4) -> str:
     return "".join(chars)
 
 
-def superqt_format_path(self, tokensource, outfile):
-    """Patch for superqt<=0.6.1 formatter."""
-    self.data = []
-
-    for token, value in tokensource:
-        self.data.extend([self._style.get(token, QtGui.QTextCharFormat())] * len(value))
-
-
 def change_point_size(cur_font: QtGui.QFont, step: int) -> QtGui.QFont:
     current_size = cur_font.pointSize()
     nmax = len(_POINT_SIZES)
@@ -368,3 +359,24 @@ def change_point_size(cur_font: QtGui.QFont, step: int) -> QtGui.QFont:
     new_size = _POINT_SIZES[next_idx]
     cur_font.setPointSize(new_size)
     return cur_font
+
+
+# this is the patch of superqt to prevent overwriting the font family
+def get_text_char_format(
+    style: dict[str, QtGui.QTextCharFormat],
+) -> QtGui.QTextCharFormat:
+    text_char_format = QtGui.QTextCharFormat()
+    if style.get("color"):
+        text_char_format.setForeground(QtGui.QColor(f"#{style['color']}"))
+
+    if style.get("bgcolor"):
+        text_char_format.setBackground(QtGui.QColor(style["bgcolor"]))
+
+    if style.get("bold"):
+        text_char_format.setFontWeight(QtGui.QFont.Weight.Bold)
+    if style.get("italic"):
+        text_char_format.setFontItalic(True)
+    if style.get("underline"):
+        text_char_format.setFontUnderline(True)
+
+    return text_char_format

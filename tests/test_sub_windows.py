@@ -40,7 +40,7 @@ def test_builtin_commands(ui: MainWindow):
     ui.exec_action("builtins:output")
     ui.exec_action("builtins:new-text")
     assert len(ui.tabs[0]) == 1
-    ui.exec_action("builtins-seaborn-sample:iris")
+    ui.exec_action("builtins:seaborn-sample:iris")
     ui.exec_action("quit")
 
 def test_io_commands(ui: MainWindow, tmpdir, sample_dir: Path):

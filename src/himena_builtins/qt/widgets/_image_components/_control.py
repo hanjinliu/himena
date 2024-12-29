@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 from qtpy import QtWidgets as QtW
 from qtpy import QtCore, QtGui
+from superqt.utils import qthrottled
 
 from himena.qt._magicgui._toggle_switch import QLabeledToggleSwitch
 from himena_builtins.qt.widgets._image_components import QHistogramView
@@ -162,6 +163,7 @@ class QImageViewControl(QtW.QWidget):
     def _interpolation_changed(self, checked: bool):
         self._image_view._img_view.setSmoothing(checked)
 
+    @qthrottled(timeout=100)
     def _clim_changed(self, clim: tuple[float, float]):
         view = self._image_view
         ch = view.current_channel()

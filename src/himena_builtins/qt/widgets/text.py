@@ -306,6 +306,7 @@ class QRichTextEdit(QtW.QWidget):
     @validate_protocol
     def set_editable(self, value: bool) -> None:
         self._main_text_edit.setReadOnly(not value)
+        self._control.setEnabled(value)
 
     @validate_protocol
     def control_widget(self) -> QRichTextEditControl:

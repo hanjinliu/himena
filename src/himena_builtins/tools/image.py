@@ -24,7 +24,7 @@ configure_submenu("/model_menu/roi", "ROI")
 @register_function(
     types=StandardType.IMAGE,
     menus=["tools/image/roi", "/model_menu/roi"],
-    command_id="builtins-image-crop:crop-image",
+    command_id="builtins:image-crop:crop-image",
     keybindings=["Ctrl+Shift+X"],
 )
 def crop_image(model: WidgetDataModel) -> WidgetDataModel:
@@ -44,7 +44,7 @@ def crop_image(model: WidgetDataModel) -> WidgetDataModel:
 @register_function(
     types=StandardType.IMAGE,
     menus=["tools/image/roi", "/model_menu/roi"],
-    command_id="builtins-image-crop:crop-image-multi",
+    command_id="builtins:image-crop:crop-image-multi",
 )
 def crop_image_multi(model: WidgetDataModel) -> WidgetDataModel:
     """Crop the image around the registered ROIs and return as a model stack."""
@@ -73,7 +73,7 @@ def crop_image_multi(model: WidgetDataModel) -> WidgetDataModel:
     title="Crop Image (nD) ...",
     types=StandardType.IMAGE,
     menus=["tools/image/roi", "/model_menu/roi"],
-    command_id="builtins-image-crop:crop-image-nd",
+    command_id="builtins:image-crop:crop-image-nd",
 )
 def crop_image_nd(win: SubWindow) -> Parametric:
     """Crop the image in nD."""
@@ -119,10 +119,8 @@ def _2d_roi_to_slices(
     roi: _roi.ImageRoi2D, arr: ArrayWrapper, meta: ImageMeta
 ) -> tuple[tuple[slice, ...], Rect[int]]:
     bbox = roi.bbox().adjust_to_int()
-    if meta.is_rgb:
-        bbox = bbox.limit_to(arr.shape[-2], arr.shape[-3])
-    else:
-        bbox = bbox.limit_to(arr.shape[-1], arr.shape[-2])
+    xmax, ymax = _slice_shape(arr, meta)
+    bbox = bbox.limit_to(xmax, ymax)
     if bbox.width <= 0 or bbox.height <= 0:
         raise ValueError("Crop range out of bounds.")
     ysl = slice(bbox.top, bbox.top + bbox.height)
@@ -285,7 +283,7 @@ def set_colormaps(win: SubWindow) -> Parametric:
         "gray", "green", "magenta", "cyan", "yellow", "red", "blue", "plasma",
         "viridis", "inferno", "imagej:fire", "imagej:HiLo", "imagej:ice", "matlab:jet",
         "matlab:hot",
-    ],  # fmt: skip
+    ]  # fmt: skip
     options = {
         f"ch_{i}": {
             "label": channel_names[i],
@@ -314,7 +312,7 @@ def set_colormaps(win: SubWindow) -> Parametric:
     command_id="builtins:split-channels",
 )
 def split_channels(model: WidgetDataModel) -> list[WidgetDataModel]:
-    """Split the channels of the image."""
+    """Split the image by the channel axis into separate images."""
     meta = _cast_meta(model, ImageMeta)
     arr = wrap_array(model.value)
     if meta.channel_axis is not None:
@@ -340,7 +338,7 @@ def split_channels(model: WidgetDataModel) -> list[WidgetDataModel]:
     title="Specify rectangle ...",
     types=StandardType.IMAGE,
     menus=["tools/image/roi", "/model_menu/roi"],
-    command_id="builtins-image-specify:roi-specify-rectangle",
+    command_id="builtins:image-specify:roi-specify-rectangle",
 )
 def roi_specify_rectangle(win: SubWindow) -> Parametric:
     """Specify the coordinates of a rectangle ROI."""
@@ -350,8 +348,9 @@ def roi_specify_rectangle(win: SubWindow) -> Parametric:
     if isinstance(roi := meta.current_roi, _roi.RectangleRoi):
         x0, y0, w0, h0 = roi.x, roi.y, roi.width, roi.height
     else:
-        x0 = y0 = 0
-        w0 = h0 = 10
+        nx, ny = _slice_shape(wrap_array(model.value), meta)
+        x0, y0 = nx / 4, ny / 4
+        w0, h0 = nx / 2, ny / 2
 
     @configure_gui(
         preview=True,
@@ -367,6 +366,7 @@ def roi_specify_rectangle(win: SubWindow) -> Parametric:
         meta.current_roi = _roi.RectangleRoi(
             indices=indices, x=x, y=y, width=width, height=height
         )
+        meta.skip_image_rerendering = True
         win.update_model(model.model_copy(update={"metadata": meta}))
 
     return run_roi_specify_coordinates
@@ -376,7 +376,7 @@ def roi_specify_rectangle(win: SubWindow) -> Parametric:
     title="Specify ellipse ...",
     types=StandardType.IMAGE,
     menus=["tools/image/roi", "/model_menu/roi"],
-    command_id="builtins-image-specify:roi-specify-ellipse",
+    command_id="builtins:image-specify:roi-specify-ellipse",
 )
 def roi_specify_ellipse(win: SubWindow) -> Parametric:
     """Specify the coordinates of an ellipse ROI."""
@@ -386,8 +386,9 @@ def roi_specify_ellipse(win: SubWindow) -> Parametric:
     if isinstance(roi := meta.current_roi, _roi.EllipseRoi):
         x0, y0, w0, h0 = roi.x, roi.y, roi.width, roi.height
     else:
-        x0 = y0 = 0
-        w0 = h0 = 10
+        nx, ny = _slice_shape(wrap_array(model.value), meta)
+        x0, y0 = nx / 4, ny / 4
+        w0, h0 = nx / 2, ny / 2
 
     @configure_gui(
         preview=True,
@@ -403,6 +404,7 @@ def roi_specify_ellipse(win: SubWindow) -> Parametric:
         meta.current_roi = _roi.EllipseRoi(
             indices=indices, x=x, y=y, width=width, height=height
         )
+        meta.skip_image_rerendering = True
         win.update_model(model.model_copy(update={"metadata": meta}))
 
     return run_roi_specify_coordinates
@@ -412,7 +414,7 @@ def roi_specify_ellipse(win: SubWindow) -> Parametric:
     title="Specify line ...",
     types=StandardType.IMAGE,
     menus=["tools/image/roi", "/model_menu/roi"],
-    command_id="builtins-image-specify:roi-specify-line",
+    command_id="builtins:image-specify:roi-specify-line",
 )
 def roi_specify_line(win: SubWindow) -> Parametric:
     """Specify the coordinates of a line ROI."""
@@ -422,8 +424,9 @@ def roi_specify_line(win: SubWindow) -> Parametric:
     if isinstance(roi := meta.current_roi, _roi.LineRoi):
         x1, y1, x2, y2 = roi.x1, roi.y1, roi.x2, roi.y2
     else:
-        x1 = y1 = 0
-        x2 = y2 = 10
+        nx, ny = _slice_shape(wrap_array(model.value), meta)
+        x1, y1 = nx / 4, ny / 4
+        x2, y2 = nx / 4 * 3, ny / 4 * 3
 
     @configure_gui(
         preview=True,
@@ -437,6 +440,7 @@ def roi_specify_line(win: SubWindow) -> Parametric:
         meta = _cast_meta(model, ImageMeta)
         indices = _slider_indices(meta)
         meta.current_roi = _roi.LineRoi(indices=indices, x1=x1, y1=y1, x2=x2, y2=y2)
+        meta.skip_image_rerendering = True
         win.update_model(model.model_copy(update={"metadata": meta}))
 
     return run_roi_specify_coordinates
@@ -616,3 +620,9 @@ def _get_rois_from_model(model: WidgetDataModel) -> _roi.RoiListModel:
             "'image-rois' model."
         )
     return rois
+
+
+def _slice_shape(arr: ArrayWrapper, meta: ImageMeta) -> tuple[int, int]:
+    if meta.is_rgb:
+        return arr.shape[-2], arr.shape[-3]
+    return arr.shape[-1], arr.shape[-2]

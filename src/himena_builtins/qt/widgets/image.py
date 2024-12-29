@@ -207,7 +207,8 @@ class QImageView(QtW.QSplitter):
         else:
             img_slices = self._get_image_slices(sl_0, nchannels)
         self._update_channels(meta0, img_slices, nchannels)
-        self._set_image_slices(img_slices)
+        if not meta0.skip_image_rerendering:
+            self._set_image_slices(img_slices)
         if meta0.current_roi:
             self._img_view.remove_current_item()
             self._img_view.set_current_roi(
@@ -825,4 +826,5 @@ def _update_meta(meta0: model_meta.ImageMeta, meta: model_meta.ImageMeta):
         meta0.unit = meta.unit
     if meta.interpolation:
         meta0.interpolation = meta.interpolation
+    meta0.skip_image_rerendering = meta.skip_image_rerendering
     return None

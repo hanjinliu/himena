@@ -5,6 +5,7 @@ from superqt import QIconifyIcon
 class QDraggableArea(QtW.QWidget):
     """A draggable area implemented with dragged event."""
 
+    pressed = QtCore.Signal()
     dragged = QtCore.Signal()
 
     def __init__(self, parent=None):
@@ -27,6 +28,7 @@ class QDraggableArea(QtW.QWidget):
     def mousePressEvent(self, a0):
         if a0.button() == QtCore.Qt.MouseButton.LeftButton:
             self._pressed = True
+            self.pressed.emit()
 
     def mouseMoveEvent(self, a0):
         if self._pressed:

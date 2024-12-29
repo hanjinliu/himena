@@ -47,10 +47,8 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         self._show_hidden_files_switch.setChecked(False)
 
         self._pwd_widget = QtW.QLineEdit()
-        self._pwd_widget.setReadOnly(True)
         self._pwd_widget.setFont(font)
-        self._edit_pwd_btn = QtW.QPushButton("Edit")
-        self._edit_pwd_btn.clicked.connect(self._on_edit_pwd_clicked)
+        self._pwd_widget.editingFinished.connect(self._on_pwd_edited)
 
         self._last_dir_btn = QtW.QPushButton("←")
         self._last_dir_btn.setFixedWidth(20)
@@ -98,7 +96,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         hlayout1.addWidget(self._conn_btn)
 
         layout.addWidget(QSeparator())
-        layout.addWidget(labeled("Path:", self._pwd_widget, self._edit_pwd_btn))
+        layout.addWidget(labeled("Path:", self._pwd_widget))
 
         hlayout2 = QtW.QHBoxLayout()
         hlayout2.setContentsMargins(0, 0, 0, 0)
@@ -123,10 +121,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         )
 
     def _set_current_path(self, path: Path):
-        # TODO: set busy
-        self._last_dir = self._pwd
-        self._pwd = path
-        self._pwd_widget.setText(self._pwd.as_posix())
+        self._pwd_widget.setText(path.as_posix())
         self._file_list_widget.clear()
         worker = self._run_ls_command(path)
         worker.returned.connect(self._on_ls_done)
@@ -180,10 +175,10 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         # sort directories first
         items = sorted(
             items,
-            key=lambda x: (x.text(0).endswith("/"), x.text(0)),
-            reverse=True,
+            key=lambda x: (not x.text(0).endswith("/"), x.text(0)),
         )
-
+        self._last_dir = self._pwd
+        self._pwd = path
         return items
 
     def _on_item_double_clicked(self, item: QtW.QTreeWidgetItem):
@@ -225,14 +220,13 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         worker.start()
         set_status_tip(f"Reading file: {path}", duration=2.0)
 
-    def _on_edit_pwd_clicked(self):
-        if self._edit_pwd_btn.text() == "Edit":
-            self._pwd_widget.setReadOnly(False)
-            self._edit_pwd_btn.setText("OK")
-        else:
-            self._set_current_path(Path(self._pwd_widget.text()))
-            self._pwd_widget.setReadOnly(True)
-            self._edit_pwd_btn.setText("Edit")
+    def _on_pwd_edited(self):
+        pwd_text = self._pwd_widget.text()
+        if "*" in pwd_text or "?" in pwd_text:
+            self._pwd_widget.setSelection(0, len(pwd_text))
+            raise ValueError("Wildcards are not supported.")
+        if self._pwd != Path(pwd_text):
+            self._set_current_path(Path(pwd_text))
 
     def dragEnterEvent(self, a0):
         if _drag.get_dragging_model() is not None:

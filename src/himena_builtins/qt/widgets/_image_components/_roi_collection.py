@@ -335,7 +335,7 @@ class QRoiListView(QtW.QListView):
         return super().keyReleaseEvent(a0)
 
     def mouseMoveEvent(self, e):
-        if e.buttons() == QtCore.Qt.MouseButton.NoButton:
+        if e.button() == QtCore.Qt.MouseButton.NoButton:
             # hover
             index = self.indexAt(e.pos())
             if index.isValid():
