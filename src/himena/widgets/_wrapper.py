@@ -186,17 +186,9 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
             raise ValueError("Widget does not have `update_model` method.")
         self.widget.update_model(model)
 
-    def _is_mergeable_with(self, incoming: DragDataModel) -> bool:
+    def _is_drop_accepted(self, incoming: DragDataModel) -> bool:
         widget = self.widget
-        if hasattr(widget, "allowed_drop_types"):
-            types = widget.allowed_drop_types()
-            if incoming.type is None:
-                return True  # not specified. Just allow it.
-            if incoming.type in types:
-                return True
-        elif hasattr(widget, "dropped_callback"):
-            return True
-        return False
+        return incoming.widget_accepts_me(widget)
 
     def _process_drop_event(
         self,
@@ -208,14 +200,14 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
             model = incoming.data_model()
             if source is not None:
                 model.force_open_with = get_widget_class_id(source.widget)
-            merge_result = self.widget.dropped_callback(model)
-            if merge_result is None:
-                merge_result = DropResult()
+            drop_result = self.widget.dropped_callback(model)
+            if drop_result is None:
+                drop_result = DropResult()
             ui = self._main_window()._himena_main_window
-            if outputs := merge_result.outputs:
+            if outputs := drop_result.outputs:
                 ui.model_app.injection_store.process(outputs)
             if source is not None:
-                if merge_result.delete_input:
+                if drop_result.delete_input:
                     source._close_me(ui)
                 ui._backend_main_window._move_focus_to(source._frontend_widget())
             return True

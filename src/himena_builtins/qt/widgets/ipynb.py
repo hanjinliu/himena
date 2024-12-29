@@ -27,9 +27,9 @@ class QIpynbEdit(QtW.QScrollArea):
 
     ## Drag and Drop
 
-    Each cell can be dragged out. The model has type `StandardType.TEXT` ("text"). If
-    the data is dropped in the same widget, the cell will be moved, otherwise the cell
-    content will be copied.
+    Each cell can be dragged out using the drag indicator. The dragged data has type
+    `StandardType.TEXT` ("text"). If the data is dropped in the same widget, the cell
+    will be moved, otherwise the cell content will be copied.
     """
 
     __himena_widget_id__ = "builtins:QIpynbEdit"

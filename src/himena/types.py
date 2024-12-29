@@ -340,6 +340,18 @@ class DragDataModel(BaseModel):
             model = self.getter()
         return model
 
+    def widget_accepts_me(self, widget: Any) -> bool:
+        """Return true if the widget accepts this data model to be dropped."""
+        if hasattr(widget, "allowed_drop_types"):
+            types = widget.allowed_drop_types()
+            if self.type is None:
+                return True  # not specified. Just allow it.
+            if self.type in types:
+                return True
+        elif hasattr(widget, "dropped_callback"):
+            return True
+        return False
+
 
 def is_subtype(string: str, supertype: str) -> bool:
     """Check if the type is a subtype of the given type.

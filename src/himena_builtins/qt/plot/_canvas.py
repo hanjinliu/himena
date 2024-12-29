@@ -97,7 +97,6 @@ class QMatplotlibCanvas(QMatplotlibCanvasBase):
         return WidgetDataModel(
             value=self.figure,
             type=self.model_type(),
-            title="Plot",
         )
 
     @validate_protocol
@@ -145,7 +144,6 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
             value=value,
             type=self.model_type(),
             extension_default=".plot.json",
-            title="Plot",
         )
 
     @validate_protocol

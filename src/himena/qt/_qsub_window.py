@@ -474,7 +474,7 @@ class QSubWindow(QtW.QMdiSubWindow):
         if a0 is None:
             return None
         if model := _drag.get_dragging_model():
-            if self._my_wrapper()._is_mergeable_with(model):
+            if self._my_wrapper()._is_drop_accepted(model):
                 a0.accept()
                 return None
         a0.ignore()

@@ -7,12 +7,13 @@ import weakref
 from magicgui import widgets as mgw
 from qtpy import QtWidgets as QtW, QtCore
 from himena.plugins import validate_protocol, _checker
-from himena.types import DragDataModel, WidgetDataModel
+from himena.types import DragDataModel, DropResult, WidgetDataModel
 from himena.consts import StandardType
 from himena._descriptors import LocalReaderMethod
 from himena._utils import unwrap_lazy_model
 from himena_builtins.qt.widgets._splitter import QSplitterHandle
 from himena.qt import drag_model
+from himena import _drag
 from himena_builtins.qt.widgets._dragarea import QDraggableArea
 
 if TYPE_CHECKING:
@@ -25,7 +26,27 @@ _MODEL_ROLE = QtCore.Qt.ItemDataRole.UserRole + 1
 
 
 class QModelStack(QtW.QSplitter):
-    """A widget that contains a list of models."""
+    """A widget that contains a list of models.
+
+    ## Basic Usage
+
+    - This widget represents a list of models of any types. Widget registered for each
+      model will be created and displayed on the right side of this widget.
+    - The control widget will be updated according to the selected model.
+    - Another model stack can be nested.
+
+    ## Drag and Drop
+
+    - Selected items can be dragged out using the drag indicator.
+      - If only one item is selected, the internal model will be dragged.
+      - If multiple items are selected, a list of model will be dragged, as a model of
+        type `StandardType.MODELS` ("models").
+    -
+
+    ## Notes
+
+    -
+    """
 
     __himena_widget_id__ = "builtins:QModelStack"
     __himena_display_name__ = "Built-in Model Stack"
@@ -52,7 +73,7 @@ class QModelStack(QtW.QSplitter):
 
         self._model_list = QModelListWidget(self)
         left.setFixedWidth(160)
-        self._widget_stack = QtW.QStackedWidget()
+        self._widget_stack = QStackedModelWidget(self)
         layout.addWidget(self._model_list)
         layout.addLayout(btn_layout)
 
@@ -133,7 +154,7 @@ class QModelStack(QtW.QSplitter):
 
     def _add_widget(self, item: QtW.QListWidgetItem, widget: Any):
         interf, native_widget = _split_widget_and_interface(widget)
-        self._widget_stack.addWidget(native_widget)
+        self._widget_stack.add_widget(interf, native_widget)
 
         if hasattr(interf, "control_widget"):
             self._control_widget.addWidget(interf.control_widget())
@@ -199,7 +220,7 @@ class QModelStack(QtW.QSplitter):
 
     @validate_protocol
     def theme_changed_callback(self, theme: Theme):
-        if widget := self._widget_stack.currentWidget():
+        if widget := self._widget_stack.current_interface():
             _checker.call_theme_changed_callback(widget, theme)
 
     def _update_current_index(self):
@@ -245,7 +266,7 @@ class QModelStack(QtW.QSplitter):
         self._last_index = self._model_list.currentRow()
 
     def _save_current(self):
-        if widget := self._widget_stack.currentWidget():
+        if widget := self._widget_stack.current_interface():
             model = widget.to_model()
             assert isinstance(model, WidgetDataModel)
             return self._ui.exec_file_dialog(
@@ -302,6 +323,7 @@ class QModelListWidget(QtW.QListWidget):
         self._hover_drag_indicator.dragged.connect(self._on_drag)
         self._indicator_index: int = -1
         self.setMouseTracking(True)
+        self.setAcceptDrops(True)
 
     def getter_for_item(self, item: QtW.QListWidgetItem):
         return lambda: self.model_for_item(item)
@@ -343,6 +365,26 @@ class QModelListWidget(QtW.QListWidget):
         self._hover_drag_indicator.hide()
         return super().leaveEvent(a0)
 
+    # Drag events. If a model is dropped to the list widget, add the model to the list.
+    # If selected items are dragged, create a list of models and drag it.
+    def dragEnterEvent(self, e):
+        if _drag.get_dragging_model():
+            e.accept()
+        else:
+            e.ignore()
+
+    def dragMoveEvent(self, e):
+        e.acceptProposedAction()
+
+    def dropEvent(self, e):
+        if (drag_model := _drag.drop()) and (stack := self._model_stack_ref()):
+            model = drag_model.data_model()
+            if model.type == StandardType.LAZY:
+                item = stack._make_lazy_item(model.title, model)
+            else:
+                item = stack._make_eager_item(model.title, model)
+            stack._model_list.addItem(item)
+
     def _on_drag(self) -> list[int]:
         items = self.selectedItems()
         if item_under_cursor := self.item(self._indicator_index):
@@ -371,6 +413,52 @@ class QModelListWidget(QtW.QListWidget):
         model = DragDataModel(getter=_getter, type=model_type)
         _s = "s" if len(items) > 1 else ""
         drag_model(model, desc=f"{len(items)} item{_s}", source=self._model_stack_ref())
+
+
+class QStackedModelWidget(QtW.QStackedWidget):
+    def __init__(self, parent: QModelStack):
+        super().__init__(parent)
+        self._model_stack_ref = weakref.ref(parent)
+        self._widget_to_interface_map = weakref.WeakKeyDictionary[QtW.QWidget, Any]()
+        self.setAcceptDrops(True)
+
+    def add_widget(self, interface: Any, widget: QtW.QWidget):
+        self.addWidget(widget)
+        self._widget_to_interface_map[widget] = interface
+
+    def current_interface(self) -> Any | None:
+        return self._widget_to_interface_map.get(self.currentWidget())
+
+    # Drag events. If a model is dropped to the stacked widget, look for the widget
+    # interface and check if it implements the drop event. If so, call the drop event.
+    def dragEnterEvent(self, e):
+        if (
+            (model := _drag.get_dragging_model())
+            and (interf := self.current_interface())
+            and (model.widget_accepts_me(interf))
+        ):
+            e.accept()
+        else:
+            e.ignore()
+
+    def dragMoveEvent(self, e):
+        e.acceptProposedAction()
+
+    def dropEvent(self, e):
+        if (
+            (drag_model := _drag.drop())
+            and (widget := self.current_interface())
+            and hasattr(widget, "dropped_callback")
+        ):
+            model = drag_model.data_model()
+            drop_result = widget.dropped_callback(model)
+            if drop_result is None:
+                drop_result = DropResult()
+            if outputs := drop_result.outputs:
+                from himena.widgets import current_instance
+
+                ui = current_instance()
+                ui.model_app.injection_store.process(outputs)
 
 
 def _exec_lazy_loading(model: WidgetDataModel) -> WidgetDataModel:

@@ -44,6 +44,8 @@ class BasePlotModel(BaseModel):
 
 
 class Axis(BaseModel):
+    """Model that represents a plot axis."""
+
     model_config = PYDANTIC_CONFIG_STRICT
 
     lim: tuple[float, float] | None = Field(None, description="Axis limits.")
@@ -51,6 +53,15 @@ class Axis(BaseModel):
     label: str | StyledText | None = Field(None, description="Axis label.")
     ticks: Any | None = Field(None, description="Axis ticks.")
     grid: bool = Field(False, description="Show grid or not.")
+
+    @field_validator("lim", mode="before")
+    def _validate_lim(cls, lim) -> tuple[float, float] | None:
+        if lim is None:
+            return None
+        _lim = tuple(lim)
+        if len(_lim) != 2:
+            raise ValueError(f"Must be a tuple of 2 floats but got: {lim!r}")
+        return _lim
 
 
 class AxesBase(BaseModel):
