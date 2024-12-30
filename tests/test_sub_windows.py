@@ -4,7 +4,7 @@ from pytestqt.qtbot import QtBot
 from tempfile import TemporaryDirectory
 from qtpy import QtWidgets as QtW
 from himena import MainWindow, anchor
-from himena._descriptors import ConverterMethod, LocalReaderMethod, NoNeedToSave, ProgramaticMethod, SaveToNewPath, SaveToPath
+from himena._descriptors import CommandMethod, LocalReaderMethod, NoNeedToSave, ProgramaticMethod, SaveToNewPath, SaveToPath
 from himena.types import ClipboardDataModel, WidgetDataModel, WindowRect
 from himena.qt import register_widget_class, MainWindowQt
 from himena_builtins.qt import widgets as _qtw
@@ -342,12 +342,12 @@ def test_save_behavior(ui: MainWindow, tmpdir):
     ui.exec_action("builtins:new-text")
     win = ui.current_window
     assert win is not None
-    assert not win.is_modified
+    assert not win._need_ask_save_before_close()
 
     ui.exec_action("duplicate-window")
     win2 = ui.current_window
-    assert not win2.is_modified
-    assert isinstance(win2._widget_data_model_method, ConverterMethod)
+    assert not win2._need_ask_save_before_close()
+    assert isinstance(win2._widget_data_model_method, CommandMethod)
     # special case for duplicate-window
     assert isinstance(win2.save_behavior, NoNeedToSave)
 
@@ -355,8 +355,8 @@ def test_save_behavior(ui: MainWindow, tmpdir):
     ui._instructions = ui._instructions.updated(file_dialog_response=response_save)
     ui.exec_action("save-as")
     win3 = ui.current_window
-    assert not win3.is_modified
-    assert isinstance(win3._widget_data_model_method, ConverterMethod)
+    assert not win3._need_ask_save_before_close()
+    assert isinstance(win3._widget_data_model_method, CommandMethod)
     assert isinstance(win3.save_behavior, SaveToPath)
 
     ui.current_window = win3

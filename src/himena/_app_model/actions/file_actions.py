@@ -310,7 +310,7 @@ def paste_from_clipboard(ui: MainWindow) -> WidgetDataModel:
     keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyL)],
 )
 def load_session_from_dialog(ui: MainWindow) -> None:
-    """Load a session from a file."""
+    """Load a application session from a file."""
     if path := ui.exec_file_dialog(
         mode="r",
         allowed_extensions=[".session.yaml"],
@@ -333,7 +333,7 @@ def save_session_from_dialog(ui: MainWindow) -> None:
     for win in ui.iter_windows():
         if win._determine_read_from() is None:
             need_save.append(win)
-        elif win.is_modified:
+        elif win._need_ask_save_before_close():
             if isinstance(win.save_behavior, SaveToPath):
                 need_overwrite.append(win)
             else:

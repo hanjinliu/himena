@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from concurrent.futures import Future, ThreadPoolExecutor
+from contextlib import nullcontext
 from logging import getLogger
 from pathlib import Path
 from typing import (
@@ -504,9 +505,21 @@ class MainWindow(Generic[_W]):
 
         return _inner(func) if func else _inner
 
-    def exec_action(self, id: str, with_params: dict[str, Any] | None = None) -> None:
+    def exec_action(
+        self,
+        id: str,
+        *,
+        with_context: dict[type, Any] | None = None,
+        with_params: dict[str, Any] | None = None,
+    ) -> None:
         """Execute an action by its ID."""
-        self._model_app.commands.execute_command(id).result()
+        if with_context is not None:
+            providers = [(val, typ) for typ, val in with_context.items()]
+            _ctx = self.model_app.injection_store.register(providers)
+        else:
+            _ctx = nullcontext()
+        with _ctx:
+            self.model_app.commands.execute_command(id).result()
         if with_params is not None:
             if tab := self.tabs.current():
                 param_widget = tab[-1]

@@ -209,7 +209,9 @@ def table_to_array(model: WidgetDataModel["np.ndarray"]) -> WidgetDataModel:
     if not ok:
         arr, ok = _try_astype(arr_str, float)
     if not ok:
-        arr = _try_astype(arr_str, complex)
+        arr, ok = _try_astype(arr_str, complex)
+    if not ok:
+        pass
 
     return WidgetDataModel(
         value=arr,

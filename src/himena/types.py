@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import (
     Any,
     Callable,
+    ClassVar,
     Literal,
     NamedTuple,
     NewType,
@@ -15,9 +16,11 @@ from typing import (
 from pydantic_compat import BaseModel, Field, field_validator
 from himena._descriptors import (
     MethodDescriptor,
+    CommandParameterType,
     LocalReaderMethod,
-    ConverterMethod,
+    CommandMethod,
     ProgramaticMethod,
+    parse_parameter,
     SaveBehavior,
 )
 from himena._enum import StrEnum
@@ -140,6 +143,7 @@ class WidgetDataModel(GenericModel[_T]):
     )
     editable: bool = Field(True, description="Whether the widget is editable.")
     window_rect_override: Callable[["Size"], "WindowRect"] | None = Field(None)
+    window_uuid: int | None = Field(None)
 
     def with_value(
         self,
@@ -492,12 +496,15 @@ class GuiConfiguration(BaseModel):
 
     model_config = PYDANTIC_CONFIG_STRICT
 
+    _ATTR_NAME: ClassVar[str] = "__himena_gui_config__"
+
     title: str | None = None
     preview: bool = False
     auto_close: bool = True
     show_parameter_labels: bool = True
     run_async: bool = False
     result_as: Literal["window", "below", "right"] = "window"
+    run_immediately_with: dict[str, Any] | None = Field(None)
 
 
 class ModelTrack(BaseModel):
@@ -505,15 +512,16 @@ class ModelTrack(BaseModel):
 
     model_config = PYDANTIC_CONFIG_STRICT
 
-    sources: list[MethodDescriptor] = Field(default_factory=list)
+    contexts: list[CommandParameterType] = Field(default_factory=list)
     command_id: str | None = None
 
     def to_method(self, parameters: dict[str, Any]) -> MethodDescriptor:
         if self.command_id is not None:
-            return ConverterMethod(
-                originals=self.sources,
+            params = [parse_parameter(k, v) for k, v in parameters.items()]
+            return CommandMethod(
                 command_id=self.command_id,
-                parameters=parameters,
+                contexts=self.contexts,
+                parameters=params,
             )
         return ProgramaticMethod()
 

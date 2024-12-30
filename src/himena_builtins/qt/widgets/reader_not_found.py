@@ -60,13 +60,5 @@ class QReaderNotFound(QtW.QWidget):
     def model_type(self) -> str:
         return StandardType.READER_NOT_FOUND
 
-    @validate_protocol
-    def is_modified(self) -> bool:
-        return False
-
-    @validate_protocol
-    def set_modified(self, modified: bool) -> None:
-        pass
-
     def _open_as_text(self):
         get_main_window(self).exec_action("builtins:open-as-text-anyway")

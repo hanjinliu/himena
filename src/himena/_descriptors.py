@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal, Union, cast
 from pathlib import Path
 from pydantic_compat import BaseModel, Field
 import tempfile
@@ -66,7 +66,7 @@ class LocalReaderMethod(ReaderMethod):
         return model
 
     def _render_history(self) -> list[str]:
-        return [f"Local file: {self.path}"]
+        return [f"[Local file] {self.path}"]
 
 
 class SCPReaderMethod(ReaderMethod):
@@ -108,28 +108,93 @@ class SCPReaderMethod(ReaderMethod):
 
     def _render_history(self) -> list[str]:
         src = self._file_path_repr()
-        return [f"Remote file: {src}"]
+        return [f"[Remote file] {src}"]
 
 
-class ConverterMethod(MethodDescriptor):
-    """Describes that one was converted from another widget data model."""
+class CommandParameterBase(BaseModel):
+    """A class that describes a parameter of a command."""
 
-    originals: list[MethodDescriptor]
+    name: str
+    value: Any
+
+
+class UserParameter(CommandParameterBase):
+    """A class that describes a parameter that was set by a user."""
+
+    type: Literal["user"] = "user"
+
+
+class ModelParameter(CommandParameterBase):
+    """A class that describes a parameter that was set by a model."""
+
+    type: Literal["model"] = "model"
+    value: MethodDescriptor
+
+
+class ListOfModelParameter(BaseModel):
+    """A class that describes a list of model parameters."""
+
+    type: Literal["list"] = "list"
+    value: list[MethodDescriptor]
+
+
+def parse_parameter(name: str, value: Any) -> CommandParameterBase:
+    from himena.types import WidgetDataModel
+    from himena.widgets import SubWindow
+
+    if isinstance(value, WidgetDataModel):
+        if value.method is None:
+            param = ModelParameter(name=name, value=ProgramaticMethod())
+        else:
+            param = ModelParameter(name=name, value=value.method)
+    elif isinstance(value, SubWindow):
+        # TODO: test if it's ok to use value._widget_data_model_method
+        meth = value.to_model().method
+        if meth is None:
+            param = ModelParameter(name=name, value=ProgramaticMethod())
+        else:
+            param = ModelParameter(name=name, value=meth)
+    elif isinstance(value, list) and all(
+        isinstance(each, (WidgetDataModel, SubWindow)) for each in value
+    ):
+        value_ = cast(list[WidgetDataModel], value)
+        param = ListOfModelParameter(
+            name=name, value=[each.method or ProgramaticMethod() for each in value_]
+        )
+    else:
+        param = UserParameter(name=name, value=value)
+    return param
+
+
+CommandParameterType = Union[UserParameter, ModelParameter, ListOfModelParameter]
+
+
+class CommandMethod(MethodDescriptor):
+    """Describes that one was created by a command."""
+
     command_id: str
-    parameters: dict[str, Any] = Field(default_factory=dict)
+    contexts: list[CommandParameterType] = Field(default_factory=list)
+    parameters: list[CommandParameterType] = Field(default_factory=list)
 
     def _render_history(self) -> list[str]:
-        lines = ["[Result]", f"  │ <- {self.command_id}"]
-        if self.parameters:
-            for param_name, param_value in self.parameters.items():
-                lines.append(f"  │    {param_name}={param_value!r}")
+        lines = [f"[Command] {self.command_id}"]
+        ctx_and_params = self.contexts + self.parameters
         branch = "  ├─"
         intermediate = "  │ "
         end = "  └─"
         spaces = "    "
-        prefixes = [branch] * (len(self.originals) - 1) + [end]
-        for orig, prefix in zip(self.originals, prefixes):
-            cur_lines = orig._render_history()
+        prefixes = [branch] * (len(ctx_and_params) - 1) + [end]
+        for param, prefix in zip(ctx_and_params, prefixes):
+            if isinstance(param, UserParameter):
+                cur_lines = [f"[Parameter] {param.name}={param.value!r}"]
+            elif isinstance(param, ModelParameter):
+                cur_lines = param.value._render_history()
+            elif isinstance(param, ListOfModelParameter):
+                cur_lines = ["List of models:"]
+                for model in param.value:
+                    cur_lines.extend(model._render_history())
+            else:
+                raise ValueError(f"Unknown parameter type: {param}")
             num_cur_lines = len(cur_lines)
             if prefix == branch:
                 cur_prefixes = [branch] + [intermediate] * (num_cur_lines - 1)
@@ -167,10 +232,10 @@ def dict_to_method(data: dict) -> MethodDescriptor:
         )
     if data["type"] == "user-edit":
         return UserEditMethod(original=dict_to_method(data["original"]))
-    if data["type"] == "converter":
-        return ConverterMethod(
-            originals=[dict_to_method(d) for d in data["originals"]],
+    if data["type"] == "command":
+        return CommandMethod(
             command_id=data["command_id"],
+            contexts=data["contexts"],
             parameters=data["parameters"],
         )
     raise ValueError(f"Unknown method type: {data['type']}")
@@ -194,12 +259,12 @@ def method_to_dict(method: MethodDescriptor) -> dict:
             "path": str(method.path),
             "wsl": method.wsl,
         }
-    elif isinstance(method, ConverterMethod):
+    elif isinstance(method, CommandMethod):
         return {
-            "type": "converter",
-            "originals": [method_to_dict(m) for m in method.originals],
+            "type": "command",
             "command_id": method.command_id,
-            "parameters": method.parameters,
+            "contexts": [m.model_dump() for m in method.contexts],
+            "parameters": [m.model_dump() for m in method.parameters],
         }
     elif isinstance(method, UserEditMethod):
         return {

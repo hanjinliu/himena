@@ -1,7 +1,12 @@
 from typing import TYPE_CHECKING, Any, SupportsIndex
 import numpy as np
 from himena._data_wrappers._array import wrap_array, ArrayWrapper
-from himena.plugins import register_function, configure_gui, configure_submenu
+from himena.plugins import (
+    register_function,
+    configure_gui,
+    configure_submenu,
+    run_immediately,
+)
 from himena.types import Parametric, Rect, WidgetDataModel
 from himena.consts import StandardType
 from himena.standards.model_meta import (
@@ -27,18 +32,22 @@ configure_submenu("/model_menu/roi", "ROI")
     command_id="builtins:image-crop:crop-image",
     keybindings=["Ctrl+Shift+X"],
 )
-def crop_image(model: WidgetDataModel) -> WidgetDataModel:
+def crop_image(model: WidgetDataModel) -> Parametric:
     """Crop the image around the current ROI."""
     roi, meta = _get_current_roi_and_meta(model)
     arr = wrap_array(model.value)
-    if isinstance(roi, _roi.ImageRoi2D):
+    if not isinstance(roi, _roi.ImageRoi2D):
+        raise NotImplementedError
+
+    @run_immediately(roi=roi)
+    def run_crop_image(roi: _roi.ImageRoi2D):
         sl, bbox = _2d_roi_to_slices(roi, arr, meta)
         arr_cropped = arr[(...,) + sl]
-    else:
-        raise NotImplementedError
-    meta_out = meta.without_rois()
-    meta_out.current_roi = roi.shifted(-bbox.left, -bbox.top)
-    return model.with_value(arr_cropped, metadata=meta_out).with_title_numbering()
+        meta_out = meta.without_rois()
+        meta_out.current_roi = roi.shifted(-bbox.left, -bbox.top)
+        return model.with_value(arr_cropped, metadata=meta_out).with_title_numbering()
+
+    return run_crop_image
 
 
 @register_function(

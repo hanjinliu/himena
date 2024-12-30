@@ -223,6 +223,7 @@ def show_metadata(model: WidgetDataModel) -> WidgetDataModel:
         type=StandardType.HTML,
         title=f"Metadata of {model.title}",
         editable=False,
+        save_behavior_override=NoNeedToSave(),
     )
 
 
@@ -253,21 +254,6 @@ def specify_widget(model: WidgetDataModel) -> Parametric:
         )
 
     return run_specify
-
-
-@register_function(
-    title="Show workflow map",
-    menus=["tools"],
-    command_id="builtins:show-workflow-map",
-)
-def show_workflow_map(win: SubWindow) -> WidgetDataModel:
-    meth = win._widget_data_model_method
-    return WidgetDataModel(
-        value=meth.render_history(),
-        type="text",
-        title=f"Workflow map of {win.title}",
-        editable=False,
-    )
 
 
 def _statistics_table(value) -> str:

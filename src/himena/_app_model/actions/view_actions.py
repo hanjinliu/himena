@@ -42,7 +42,7 @@ def close_current_tab(ui: MainWindow) -> None:
     idx = ui._backend_main_window._current_tab_index()
     if idx is None:
         return
-    win_modified = [win for win in ui.tabs[idx] if win.is_modified]
+    win_modified = [win for win in ui.tabs[idx] if win._need_ask_save_before_close()]
     if len(win_modified) > 0:
         _modified_msg = "\n".join([f"- {win.title}" for win in win_modified])
         if not ui.exec_confirmation_dialog(
@@ -186,7 +186,7 @@ def collect_windows(ui: MainWindow) -> Parametric:
 def close_all_windows_in_tab(ui: MainWindow) -> None:
     """Close all sub-windows in the current tab."""
     if area := ui.tabs.current():
-        win_modified = [win for win in area if win.is_modified]
+        win_modified = [win for win in area if win._need_ask_save_before_close()]
         if len(win_modified) > 0 and ui._instructions.confirm:
             _modified_msg = "\n".join([f"- {win.title}" for win in win_modified])
             if not ui.exec_confirmation_dialog(

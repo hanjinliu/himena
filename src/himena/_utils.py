@@ -27,7 +27,7 @@ from himena.types import (
     ModelTrack,
     GuiConfiguration,
 )
-from himena._descriptors import ProgramaticMethod, ConverterMethod
+from himena._descriptors import CommandMethod, ModelParameter, parse_parameter
 
 if TYPE_CHECKING:
     _F = TypeVar("_F", bound=Callable)
@@ -206,55 +206,40 @@ def make_function_callback(
     else:
         return f
 
-    if len(keys_model) + len(keys_subwindow) == 0 and f_annot.get("return") not in {
-        Parametric,
-        ParametricWidgetProtocol,
-    }:
-        return f
-
     @wraps(f)
     def _new_f(*args, **kwargs):
         bound = sig.bind(*args, **kwargs)
         out = f(*args, **kwargs)
-        originals = []
-        for key in keys_model + keys_subwindow:
-            input_ = bound.arguments[key]
-            if isinstance(input_, WidgetDataModel):
-                input_method = input_.method
-            elif isinstance(input_, SubWindow):
-                input_method = input_.to_model().method
-            else:
-                input_method = None
-            if input_method is None:
-                method = ProgramaticMethod()
-            else:
-                method = input_method
-            originals.append(method)
+        contexts = []
+        for key, input_ in bound.arguments.items():
+            input_param = parse_parameter(key, input_)
+            if isinstance(input_param, ModelParameter):
+                contexts.append(input_param)
         if isinstance(out, WidgetDataModel):
-            if len(originals) > 0:
-                out.method = ConverterMethod(originals=originals, command_id=command_id)
+            out.method = CommandMethod(parameters=contexts, command_id=command_id)
         elif f_annot.get("return") in (Parametric, ParametricWidgetProtocol):
             out.__himena_model_track__ = ModelTrack(
-                sources=originals, command_id=command_id
+                contexts=contexts, command_id=command_id
             )
             if title is not None:
-                cfg = getattr(out, _HIMENA_GUI_CONFIG, GuiConfiguration())
+                if not isinstance(
+                    cfg := getattr(out, GuiConfiguration._ATTR_NAME, None),
+                    GuiConfiguration,
+                ):
+                    cfg = GuiConfiguration()
                 cfg.title = title
-                setattr(out, _HIMENA_GUI_CONFIG, cfg)
+                setattr(out, GuiConfiguration._ATTR_NAME, cfg)
         return out
 
     return _new_f
 
 
-_HIMENA_GUI_CONFIG = "__himena_gui_config__"
-
-
 def get_gui_config(fn) -> dict[str, Any]:
     if isinstance(
-        config := getattr(fn, _HIMENA_GUI_CONFIG, None),
+        config := getattr(fn, GuiConfiguration._ATTR_NAME, None),
         GuiConfiguration,
     ):
-        out = config.model_dump()
+        out = {k: getattr(config, k) for k in config.model_fields}
     else:
         out = {}
     if out.get("title") is None:

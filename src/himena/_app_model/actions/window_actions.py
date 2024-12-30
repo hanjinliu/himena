@@ -32,6 +32,41 @@ _CtrlShift = KeyMod.CtrlCmd | KeyMod.Shift
 
 
 @ACTIONS.append_from_fn(
+    id="show-whats-this",
+    title="What is this widget?",
+    menus=[{"id": MenuId.WINDOW, "group": EXIT_GROUP}],
+    enablement=_ctx.num_sub_windows > 0,
+)
+def show_whats_this(ui: MainWindow) -> None:
+    """Show the docstring of the current widget."""
+    if window := ui.current_window:
+        if doc := getattr(window.widget, "__doc__", ""):
+            lines = doc.splitlines()
+            first_line = lines[0]
+            others = "\n".join(lines[1:])
+            doc_dedent = dedent(first_line) + "\n" + dedent(others)
+            ui._backend_main_window._add_whats_this(doc_dedent, style="markdown")
+
+
+@ACTIONS.append_from_fn(
+    id="show-workflow-map",
+    title="Show workflow map",
+    menus=[{"id": MenuId.WINDOW, "group": EXIT_GROUP}],
+    enablement=_ctx.num_sub_windows > 0,
+)
+def show_workflow_map(win: SubWindow) -> WidgetDataModel:
+    """Show the workflow map of the current window."""
+    meth = win._widget_data_model_method
+    return WidgetDataModel(
+        value=meth.render_history(),
+        type="text",
+        title=f"Workflow map of {win.title}",
+        editable=False,
+        save_behavior_override=NoNeedToSave(),
+    )
+
+
+@ACTIONS.append_from_fn(
     id="close-window",
     title="Close window",
     icon="material-symbols:tab-close-outline",
@@ -69,23 +104,6 @@ def open_last_closed_window(ui: MainWindow) -> WidgetDataModel:
         return model
     warnings.warn("No window to reopen", UserWarning, stacklevel=2)
     raise Cancelled
-
-
-@ACTIONS.append_from_fn(
-    id="show-whats-this",
-    title="What is this widget?",
-    menus=[{"id": MenuId.WINDOW, "group": EXIT_GROUP}],
-    enablement=_ctx.num_sub_windows > 0,
-)
-def show_whats_this(ui: MainWindow) -> None:
-    """Show the docstring of the current widget."""
-    if window := ui.current_window:
-        if doc := getattr(window.widget, "__doc__", ""):
-            lines = doc.splitlines()
-            first_line = lines[0]
-            others = "\n".join(lines[1:])
-            doc_dedent = dedent(first_line) + "\n" + dedent(others)
-            ui._backend_main_window._add_whats_this(doc_dedent, style="markdown")
 
 
 @ACTIONS.append_from_fn(

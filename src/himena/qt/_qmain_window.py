@@ -295,11 +295,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         return None
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
-        if (
-            event.spontaneous()
-            and self._confirm_close
-            and not self._check_modified_files()
-        ):
+        if event.spontaneous() and self._confirm_close and not self._ok_to_exit():
             event.ignore()
             return
         return super().closeEvent(event)
@@ -319,9 +315,9 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
         return res
 
-    def _check_modified_files(self) -> bool:
+    def _ok_to_exit(self) -> bool:
         ui = self._himena_main_window
-        if any(win.is_modified for win in ui.iter_windows()):
+        if any(win._need_ask_save_before_close() for win in ui.iter_windows()):
             res = ui.exec_choose_one_dialog(
                 title="Closing",
                 message="There are unsaved changes. Exit anyway?",
@@ -475,7 +471,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             raise NotImplementedError
 
     def _exit_main_window(self, confirm: bool = False) -> None:
-        if confirm and not self._check_modified_files():
+        if confirm and not self._ok_to_exit():
             return None
         return self.close()
 

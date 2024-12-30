@@ -30,7 +30,7 @@ from himena.types import (
     WindowRect,
 )
 from himena._descriptors import (
-    ConverterMethod,
+    CommandMethod,
     LocalReaderMethod,
     NoNeedToSave,
     SaveBehavior,
@@ -73,7 +73,7 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         self._identifier = identifier
         self._save_behavior: SaveBehavior = SaveToNewPath()
         self._widget_data_model_method: MethodDescriptor = ProgramaticMethod()
-        self._is_modified_fallback_value = False
+        self._ask_save_before_close = False
         self._frontend_widget()._himena_widget = self
 
     @property
@@ -107,7 +107,7 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         self._save_behavior = SaveToPath(
             path=Path(path), ask_overwrite=ask_overwrite, plugin=plugin
         )
-        self._set_modified(False)
+        self._set_ask_save_before_close(False)
         return None
 
     def _update_widget_data_model_method(
@@ -136,7 +136,7 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         """Whether the content of the widget has been modified."""
         if hasattr(self.widget, "is_modified"):
             return self.widget.is_modified()
-        return self._is_modified_fallback_value
+        return False
 
     @property
     def is_editable(self) -> bool:
@@ -151,17 +151,20 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
             raise AttributeError("Widget does not have `set_editable` method.")
         set_editable_func(value)
 
-    def _set_modified(self, value: bool) -> None:
+    def _set_ask_save_before_close(self, value: bool) -> None:
         """Set the modified state of the widget."""
-        if hasattr(self.widget, "set_modified"):
-            self.widget.set_modified(value)
-        else:
-            if value and not self.is_exportable:
-                # If the backend widget cannot be converted to a model, there's no need
-                # to inform the user "save changes?".
-                return None
-            self._is_modified_fallback_value = value
+        if value and not self.is_exportable:
+            # If the backend widget cannot be converted to a model, there's no need
+            # to inform the user "save changes?".
+            return None
+        if hasattr(self.widget, "set_modified") and not value:
+            self.widget.set_modified(False)
+        self._ask_save_before_close = value
         return None
+
+    def _need_ask_save_before_close(self) -> bool:
+        """Whether the widget needs to ask the user to save before closing."""
+        return self._ask_save_before_close or self.is_modified
 
     def size_hint(self) -> tuple[int, int] | None:
         """Size hint of the sub-window."""
@@ -300,6 +303,7 @@ class SubWindow(WidgetWrapper[_W]):
     @size.setter
     def size(self, value: tuple[int, int]) -> None:
         self.rect = (self.rect.left, self.rect.top, value[0], value[1])
+        return None
 
     @property
     def is_alive(self) -> bool:
@@ -323,6 +327,7 @@ class SubWindow(WidgetWrapper[_W]):
             model.method = self._widget_data_model_method
         if self.is_modified and not isinstance(model.method, UserEditMethod):
             model.method = UserEditMethod(original=model.method)
+        model.window_uuid = self._identifier
         return model
 
     def write_model(self, path: str | Path, plugin: str | None = None) -> None:
@@ -435,7 +440,7 @@ class SubWindow(WidgetWrapper[_W]):
         raise RuntimeError(f"SubWindow {self.title} not found in main window.")
 
     def _close_me(self, main: MainWindow, confirm: bool = False) -> None:
-        if self.is_modified and confirm:
+        if self._ask_save_before_close and confirm:
             if isinstance(self.save_behavior, SaveToNewPath):
                 message = f"{self.title!r} is not saved yet. Save before closing?"
             else:
@@ -496,10 +501,10 @@ class SubWindow(WidgetWrapper[_W]):
             # file is directly read from the local path
             if isinstance(save_path := method.path, Path):
                 self.update_default_save_path(save_path, plugin=method.plugin)
-        elif isinstance(model.method, ConverterMethod):
+        elif isinstance(model.method, CommandMethod):
             # model is created by some converter function
             if not isinstance(model.save_behavior_override, NoNeedToSave):
-                self._set_modified(True)
+                self._set_ask_save_before_close(True)
         if (method := model.method) is not None:
             self._update_widget_data_model_method(method)
         if save_behavior_override := model.save_behavior_override:
@@ -672,9 +677,9 @@ class ParametricWindow(SubWindow[_W]):
             else:
                 new_method = return_value.method
             result_widget._update_widget_data_model_method(new_method, overwrite=False)
-            if isinstance(new_method, ConverterMethod):
+            if isinstance(new_method, CommandMethod):
                 if not isinstance(return_value.save_behavior_override, NoNeedToSave):
-                    result_widget._set_modified(True)
+                    result_widget._set_ask_save_before_close(True)
         elif self._return_annotation in (Parametric, ParametricWidgetProtocol):
             is_func = self._return_annotation == Parametric
             result_widget = self._process_parametric_output(

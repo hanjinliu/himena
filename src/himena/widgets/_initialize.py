@@ -93,7 +93,7 @@ def init_application(app: HimenaApplication) -> HimenaApplication:
         "WidgetDataModel": WidgetDataModel,
     }
 
-    ### providers and processors
+    ### providers ###
     @app.injection_store.mark_provider
     def _current_instance() -> MainWindow:
         _LOGGER.debug("providing for %r", MainWindow.__name__)
@@ -117,6 +117,12 @@ def init_application(app: HimenaApplication) -> HimenaApplication:
         _LOGGER.debug("providing for %r", WidgetDataModel.__name__)
         return current_instance(app.name)._provide_file_output()[0]
 
+    @app.injection_store.mark_provider
+    def _get_clipboard_data() -> ClipboardDataModel:
+        _LOGGER.debug("providing for %r", ClipboardDataModel.__name__)
+        return current_instance(app.name).clipboard
+
+    ### processors ###
     @app.injection_store.mark_processor
     def _process_data_model(model: WidgetDataModel) -> None:
         if not isinstance(model, WidgetDataModel):
@@ -131,11 +137,6 @@ def init_application(app: HimenaApplication) -> HimenaApplication:
         _LOGGER.debug("processing %r", models)
         for each in models:
             _process_data_model(each)
-
-    @app.injection_store.mark_provider
-    def _get_clipboard_data() -> ClipboardDataModel:
-        _LOGGER.debug("providing for %r", ClipboardDataModel.__name__)
-        return current_instance(app.name).clipboard
 
     @app.injection_store.mark_processor
     def _process_clipboard_data(clip_data: ClipboardDataModel) -> None:
@@ -153,7 +154,11 @@ def init_application(app: HimenaApplication) -> HimenaApplication:
             return None
         _LOGGER.debug("processing %r", fn)
         ins = current_instance(app.name)
-        ins.add_function(fn, **get_gui_config(fn))
+        gui_config = get_gui_config(fn)
+        run_immediately_kwargs = gui_config.pop("run_immediately_with", None)
+        win = ins.add_function(fn, **gui_config)
+        if run_immediately_kwargs is not None:
+            win._callback_with_params(run_immediately_kwargs)
         return None
 
     @app.injection_store.mark_processor

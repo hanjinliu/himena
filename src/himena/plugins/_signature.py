@@ -141,7 +141,7 @@ def configure_gui(
         if sig.return_annotation is not inspect.Parameter.empty:
             f.__annotations__["return"] = sig.return_annotation
 
-        f.__himena_gui_config__ = GuiConfiguration(
+        cfg = GuiConfiguration(
             title=title,
             preview=preview,
             auto_close=auto_close,
@@ -149,9 +149,33 @@ def configure_gui(
             run_async=run_async,
             result_as=result_as,
         )
+        setattr(f, GuiConfiguration._ATTR_NAME, cfg)
         return f
 
     return _inner if f is None else _inner(f)
+
+
+@overload
+def run_immediately(_func: _F, **kwargs) -> _F: ...
+@overload
+def run_immediately(**kwargs) -> Callable[[_F], _F]: ...
+
+
+def run_immediately(_func=None, **kwargs):
+    """Run the function immediately without creating a parametric window."""
+
+    def inner(f):
+        sig = inspect.signature(f)
+        sig.bind(**kwargs)  # check if the kwargs are valid
+        f.__annotations__ = {k: {"bind": v} for k, v in kwargs.items()}
+        setattr(
+            f,
+            GuiConfiguration._ATTR_NAME,
+            GuiConfiguration(run_immediately_with=kwargs),
+        )
+        return f
+
+    return inner if _func is None else inner(_func)
 
 
 def _prioritize_choices(annotation, options: dict[str, Any]):
