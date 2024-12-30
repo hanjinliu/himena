@@ -16,12 +16,26 @@ class MethodDescriptor(BaseModel):
     def get_model(self, app: "Application") -> "WidgetDataModel[Any]":
         raise NotImplementedError
 
+    def _render_history(self) -> list[str]:
+        """Return the history in a tree format."""
+        return NotImplementedError
+
+    def render_history(self) -> str:
+        """Return the history in a string format."""
+        lines = self._render_history()
+        return "\n".join(lines)
+
 
 class ProgramaticMethod(MethodDescriptor):
     """Describes that one was created programmatically."""
 
+    def _render_history(self) -> list[str]:
+        return ["Created programatically"]
+
 
 class ReaderMethod(MethodDescriptor):
+    """Describes that one was read from a file."""
+
     plugin: str | None = Field(default=None)
 
 
@@ -51,24 +65,29 @@ class LocalReaderMethod(ReaderMethod):
             )
         return model
 
+    def _render_history(self) -> list[str]:
+        return [f"Local file: {self.path}"]
+
 
 class SCPReaderMethod(ReaderMethod):
     """Describes that one was read from a remote source file via scp command."""
 
-    ip_address: str
+    host: str
     username: str
     path: Path
     wsl: bool = Field(default=False)
+
+    def _file_path_repr(self) -> str:
+        return f"{self.username}@{self.host}:{self.path.as_posix()}"
 
     def get_model(self, app: "Application | None" = None) -> "WidgetDataModel":
         import subprocess
         from himena._providers import ReaderProviderStore
 
         store = ReaderProviderStore.instance()
+        src = self._file_path_repr()
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            self_path = self.path.as_posix()
-            src = f"{self.username}@{self.ip_address}:{self_path}"
             if self.wsl:
                 dst_pathobj = Path(tmpdir).joinpath(self.path.name)
                 drive = dst_pathobj.drive
@@ -87,6 +106,10 @@ class SCPReaderMethod(ReaderMethod):
             model.title = self.path.name
         return model
 
+    def _render_history(self) -> list[str]:
+        src = self._file_path_repr()
+        return [f"Remote file: {src}"]
+
 
 class ConverterMethod(MethodDescriptor):
     """Describes that one was converted from another widget data model."""
@@ -95,6 +118,39 @@ class ConverterMethod(MethodDescriptor):
     command_id: str
     parameters: dict[str, Any] = Field(default_factory=dict)
 
+    def _render_history(self) -> list[str]:
+        lines = ["[Result]", f"  │ <- {self.command_id}"]
+        if self.parameters:
+            for param_name, param_value in self.parameters.items():
+                lines.append(f"  │    {param_name}={param_value!r}")
+        branch = "  ├─"
+        intermediate = "  │ "
+        end = "  └─"
+        spaces = "    "
+        prefixes = [branch] * (len(self.originals) - 1) + [end]
+        for orig, prefix in zip(self.originals, prefixes):
+            cur_lines = orig._render_history()
+            num_cur_lines = len(cur_lines)
+            if prefix == branch:
+                cur_prefixes = [branch] + [intermediate] * (num_cur_lines - 1)
+            else:
+                cur_prefixes = [end] + [spaces] * (num_cur_lines - 1)
+            hist = [
+                f"{cur_prefix} {cur_line}"
+                for cur_prefix, cur_line in zip(cur_prefixes, cur_lines)
+            ]
+            lines.extend(hist)
+        return lines
+
+
+class UserEditMethod(MethodDescriptor):
+    """Describes that one was modified from another model."""
+
+    original: MethodDescriptor
+
+    def _render_history(self):
+        return ["[Edit by User]", "  │"] + self.original._render_history()
+
 
 def dict_to_method(data: dict) -> MethodDescriptor:
     """Convert a dictionary to a method descriptor."""
@@ -102,6 +158,15 @@ def dict_to_method(data: dict) -> MethodDescriptor:
         return ProgramaticMethod()
     if data["type"] == "local_reader":
         return LocalReaderMethod(path=Path(data["path"]), plugin=data["plugin"])
+    if data["type"] == "scp_reader":
+        return SCPReaderMethod(
+            host=data["host"],
+            username=data["username"],
+            path=Path(data["path"]),
+            wsl=data["wsl"],
+        )
+    if data["type"] == "user-edit":
+        return UserEditMethod(original=dict_to_method(data["original"]))
     if data["type"] == "converter":
         return ConverterMethod(
             originals=[dict_to_method(d) for d in data["originals"]],
@@ -121,12 +186,25 @@ def method_to_dict(method: MethodDescriptor) -> dict:
             "path": str(method.path),
             "plugin": method.plugin,
         }
+    elif isinstance(method, SCPReaderMethod):
+        return {
+            "type": "scp_reader",
+            "host": method.host,
+            "username": method.username,
+            "path": str(method.path),
+            "wsl": method.wsl,
+        }
     elif isinstance(method, ConverterMethod):
         return {
             "type": "converter",
             "originals": [method_to_dict(m) for m in method.originals],
             "command_id": method.command_id,
             "parameters": method.parameters,
+        }
+    elif isinstance(method, UserEditMethod):
+        return {
+            "type": "user-edit",
+            "original": method_to_dict(method.original),
         }
     else:
         raise ValueError(f"Unknown method type: {method}")

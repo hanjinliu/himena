@@ -38,6 +38,7 @@ from himena._descriptors import (
     SaveToPath,
     MethodDescriptor,
     ProgramaticMethod,
+    UserEditMethod,
 )
 
 if TYPE_CHECKING:
@@ -320,6 +321,8 @@ class SubWindow(WidgetWrapper[_W]):
             model.title = self.title
         if model.method is None:
             model.method = self._widget_data_model_method
+        if self.is_modified and not isinstance(model.method, UserEditMethod):
+            model.method = UserEditMethod(original=model.method)
         return model
 
     def write_model(self, path: str | Path, plugin: str | None = None) -> None:

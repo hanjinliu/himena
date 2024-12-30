@@ -98,7 +98,11 @@ def default_image_reader(file_path: Path) -> WidgetDataModel:
         value=arr,
         type=StandardType.IMAGE,
         extension_default=file_path.suffix,
-        metadata=ImageMeta(is_rgb=is_rgb, interpolation="linear"),
+        metadata=ImageMeta(
+            axes=["y", "x"],
+            is_rgb=is_rgb,
+            interpolation="linear",
+        ),
     )
 
 

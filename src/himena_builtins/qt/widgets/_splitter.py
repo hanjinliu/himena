@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Literal
 
 from qtpy import QtWidgets as QtW, QtCore, QtGui
+from himena.consts import MonospaceFontFamily
 
 
 class QSplitterHandle(QtW.QSplitterHandle):
@@ -11,6 +12,8 @@ class QSplitterHandle(QtW.QSplitterHandle):
         self._sizes = [320, 80]
         self.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
         self._pos_press = QtCore.QPoint()
+        font = QtGui.QFont(MonospaceFontFamily, 10)
+        self.setFont(font)
         # (symbol when closed, symbol when open)
         if side == "left":
             self._symbols = (">", "<")

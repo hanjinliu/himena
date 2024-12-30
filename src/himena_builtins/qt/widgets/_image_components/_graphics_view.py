@@ -161,7 +161,7 @@ class QImageGraphicsView(QBaseGraphicsView):
     mode_changed = QtCore.Signal(Mode)
     hovered = QtCore.Signal(QtCore.QPointF)
     geometry_changed = QtCore.Signal(QtCore.QRectF)
-    array_updated = QtCore.Signal(int, np.ndarray)
+    array_updated = QtCore.Signal(int, object)
 
     Mode = Mode
 

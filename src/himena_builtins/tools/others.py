@@ -239,7 +239,7 @@ def specify_widget(model: WidgetDataModel) -> Parametric:
     """
     classes = sorted(widget_classes().items(), key=lambda x: x[0])
     choices = [
-        (f"{get_display_name(c, sep=' ')})", c)
+        (f"{get_display_name(c, sep=' ')}", c)
         for t, c in classes
         if t != StandardType.READER_NOT_FOUND
     ]
@@ -253,6 +253,21 @@ def specify_widget(model: WidgetDataModel) -> Parametric:
         )
 
     return run_specify
+
+
+@register_function(
+    title="Show workflow map",
+    menus=["tools"],
+    command_id="builtins:show-workflow-map",
+)
+def show_workflow_map(win: SubWindow) -> WidgetDataModel:
+    meth = win._widget_data_model_method
+    return WidgetDataModel(
+        value=meth.render_history(),
+        type="text",
+        title=f"Workflow map of {win.title}",
+        editable=False,
+    )
 
 
 def _statistics_table(value) -> str:

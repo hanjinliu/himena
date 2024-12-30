@@ -204,7 +204,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
     @thread_worker
     def _read_remote_path_worker(self, path: Path) -> WidgetDataModel:
         method = SCPReaderMethod(
-            ip_address=self._host_edit.text(),
+            host=self._host_edit.text(),
             username=self._user_name_edit.text(),
             path=path,
             wsl=self._is_wsl_switch.isChecked(),
