@@ -427,7 +427,9 @@ class QStackedModelWidget(QtW.QStackedWidget):
         self._widget_to_interface_map[widget] = interface
 
     def current_interface(self) -> Any | None:
-        return self._widget_to_interface_map.get(self.currentWidget())
+        if widget := self.currentWidget():
+            return self._widget_to_interface_map.get(widget)
+        return None
 
     # Drag events. If a model is dropped to the stacked widget, look for the widget
     # interface and check if it implements the drop event. If so, call the drop event.

@@ -9,7 +9,7 @@ from himena._descriptors import NoNeedToSave
 from himena.plugins import register_function, configure_gui, widget_classes
 from himena.types import Parametric, WidgetDataModel, is_subtype
 from himena.consts import StandardType, MonospaceFontFamily
-from himena.widgets import SubWindow, MainWindow
+from himena.widgets import SubWindow, MainWindow, ParametricWindow
 from himena import AppContext as ctx
 from himena._utils import get_display_name, get_widget_class_id, unwrap_lazy_model
 
@@ -33,18 +33,26 @@ def open_as_text_anyway(ui: MainWindow, win: SubWindow) -> WidgetDataModel[str]:
 
 @register_function(
     menus=["tools"],
-    title="Merge models ...",
-    command_id="builtins:merge-models",
+    title="Stack models ...",
+    command_id="builtins:stack-models",
     enablement=(ctx.num_tabs > 0) & (ctx.num_sub_windows > 0),
 )
-def merge_models(ui: MainWindow) -> Parametric:
-    """Merge models as an model list."""
+def stack_models(ui: MainWindow) -> Parametric:
+    """Stack windows into a single window that contains a list of the models."""
 
-    def run_merge_models(
+    def run_stack_models(
         models: list[WidgetDataModel],
         pattern: str = "",
     ) -> WidgetDataModel:
-        """Merge models as an model list."""
+        """Stack windows into a single window that contains a list of the models.
+
+        Parameters
+        ----------
+        models : list of WidgetDataModel
+            Models to stack.
+        pattern : str
+            A regular expression pattern to match the title of the models.
+        """
         if models and pattern:
             raise ValueError("Cannot specify both models and patterns.")
         if not models and not pattern:
@@ -53,6 +61,8 @@ def merge_models(ui: MainWindow) -> Parametric:
             pat = re.compile(pattern)
             models: list[WidgetDataModel] = []
             for win in ui.tabs.current():
+                if isinstance(win, ParametricWindow):
+                    continue
                 model = win.to_model()
                 if pat.match(model.title):
                     models.append(model)
@@ -61,10 +71,10 @@ def merge_models(ui: MainWindow) -> Parametric:
         return WidgetDataModel(
             value=models,
             type=StandardType.MODELS,
-            title="Merged models",
+            title="Merged",
         )
 
-    return run_merge_models
+    return run_stack_models
 
 
 @register_function(

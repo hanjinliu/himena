@@ -102,6 +102,22 @@ def default_image_reader(file_path: Path) -> WidgetDataModel:
     )
 
 
+def default_zip_reader(file_path: Path) -> WidgetDataModel:
+    """Read zip file as a model stack."""
+    import zipfile
+    import tempfile
+    from himena._providers import ReaderProviderStore
+
+    store = ReaderProviderStore.instance()
+    models = []
+    with tempfile.TemporaryDirectory() as tmpdir, zipfile.ZipFile(file_path, "r") as z:
+        tmpdir = Path(tmpdir)
+        z.extractall(tmpdir)
+        for each in tmpdir.glob("*"):
+            models.append(store.run(each))
+    return WidgetDataModel(value=models, type=StandardType.MODELS)
+
+
 def _read_txt_as_numpy(file_path: Path, delimiter: str | None = None):
     encoding = _infer_encoding(file_path)
     sep = delimiter or _infer_separator(file_path, encoding)
@@ -368,21 +384,29 @@ def default_models_writer(
     from himena._providers import WriterProviderStore
 
     store = WriterProviderStore.instance()
-    if not path.exists():
-        path.mkdir(parents=True)
-    for each in model.value:
-        if not each.title:
-            raise ValueError("Title is missing for one of the models.")
-        if any(char in each.title for char in r'\/:*?"<>|'):
-            raise ValueError(f"Invalid characters in file name: {each.title}")
-        if Path(each.title).suffix == "":
-            if each.extension_default:
-                file_name = each.title + each.extension_default
-            else:
-                file_name = each.title
+    if path.suffix == "":
+        if not path.exists():
+            path.mkdir(parents=True)
         else:
-            file_name = each.title
-        store.run(path / file_name)
+            raise FileExistsError(f"Directory already exists: {path}")
+        for each in model.value:
+            file_name = _model_to_file_name(each)
+            store.run(each, path / file_name)
+    elif path.suffix == ".zip":
+        import zipfile
+        import tempfile
+
+        with (
+            tempfile.TemporaryDirectory() as tmpdir,
+            zipfile.ZipFile(path, "w") as z,
+        ):
+            tmpdir = Path(tmpdir)
+            for each in model.value:
+                file_name = _model_to_file_name(each)
+                store.run(each, tmpdir / file_name)
+                z.write(tmpdir / file_name, arcname=file_name)
+    else:
+        raise ValueError(f"Unsupported file type: {path.suffix}")
     return None
 
 
@@ -412,3 +436,18 @@ def _json_default(obj):
     elif isinstance(obj, cmap.Colormap):
         return obj.name
     raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable.")
+
+
+def _model_to_file_name(m: WidgetDataModel):
+    if not m.title:
+        raise ValueError("Title is missing for one of the models.")
+    if any(char in m.title for char in r'\/:*?"<>|'):
+        raise ValueError(f"Invalid characters in file name: {m.title}")
+    if Path(m.title).suffix == "":
+        if m.extension_default:
+            file_name = m.title + m.extension_default
+        else:
+            file_name = m.title
+    else:
+        file_name = m.title
+    return file_name

@@ -36,7 +36,7 @@ def test_plot_model():
     fig.axes.x.label = "X-axis"
     fig.axes.y.label = "Y-axis"
 
-def test_scatter_plot_via_command(ui: MainWindow):
+def test_scatter_plot_via_command(ui: MainWindow, tmpdir):
     win = ui.add_object(
         [["x", "y", "z"],
          [0, 4, 6],
@@ -64,8 +64,11 @@ def test_scatter_plot_via_command(ui: MainWindow):
             "edge": {"color": Color("black"), "width": 2, "style": None},
         }
     )
+    path = Path(tmpdir) / "test.plot.json"
+    ui.current_window.write_model(path)
+    ui.read_file(path)
 
-def test_line_plot_via_command(ui: MainWindow):
+def test_line_plot_via_command(ui: MainWindow, tmpdir):
     win = ui.add_object(
         [["x", "y", "z"],
          [0, 4, 6],
@@ -91,8 +94,11 @@ def test_line_plot_via_command(ui: MainWindow):
             "edge": {"color": Color("black"), "width": 2, "style": None},
         }
     )
+    path = Path(tmpdir) / "test.plot.json"
+    ui.current_window.write_model(path)
+    ui.read_file(path)
 
-def test_bar_plot_via_command(ui: MainWindow):
+def test_bar_plot_via_command(ui: MainWindow, tmpdir):
     win = ui.add_object(
         [["x", "y", "z"],
          [0, 4, 6],
@@ -133,8 +139,11 @@ def test_bar_plot_via_command(ui: MainWindow):
             "edge": {"color": Color("blue"), "width": 2.5, "style": "--"},
         }
     )
+    path = Path(tmpdir) / "test.plot.json"
+    ui.current_window.write_model(path)
+    ui.read_file(path)
 
-def test_errorbar_plot_via_command(ui: MainWindow):
+def test_errorbar_plot_via_command(ui: MainWindow, tmpdir):
     win = ui.add_object(
         [["x", "y", "yerr"],
          [0, 4, 0.5],
@@ -178,8 +187,11 @@ def test_errorbar_plot_via_command(ui: MainWindow):
             "edge": {"color": Color("blue"), "width": 1, "style": "-"},
         }
     )
+    path = Path(tmpdir) / "test.plot.json"
+    ui.current_window.write_model(path)
+    ui.read_file(path)
 
-def test_band_plot_via_command(ui: MainWindow):
+def test_band_plot_via_command(ui: MainWindow, tmpdir):
     win = ui.add_object(
         [["x", "y0", "y1"],
          [0, 4, 6],
@@ -198,3 +210,6 @@ def test_band_plot_via_command(ui: MainWindow):
             "edge": {"color": Color("blue"), "width": 2.5, "style": "--"},
         }
     )
+    path = Path(tmpdir) / "test.plot.json"
+    ui.current_window.write_model(path)
+    ui.read_file(path)

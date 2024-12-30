@@ -76,7 +76,9 @@ class AxesBase(BaseModel):
     def _serialize_models(self, models: list[BasePlotModel]) -> list[dict]:
         return [model.model_dump_typed() for model in models]
 
-    @field_validator("models", mode="before")
+    # NOTE: The `mode` argument must be "plain" to avoid models falling back to
+    # BasePlotModel instances.
+    @field_validator("models", mode="plain")
     def _validate_models(cls, models: list):
         out = []
         for model in models:

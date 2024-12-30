@@ -228,8 +228,10 @@ def test_custom_dock_widget(ui: MainWindow):
 
 def test_fallback_widget(ui: MainWindow):
     from himena.qt.registry._widgets import QFallbackWidget
-    model = WidgetDataModel(value=object(), type="unsupported")
-    win = ui.add_data_model(model)
+
+    model = WidgetDataModel(value=object(), type="XYZ")
+    with pytest.warns(RuntimeWarning):  # no widget class is registered for "XYZ"
+        win = ui.add_data_model(model)
     assert isinstance(win.widget, QFallbackWidget)
 
 def test_register_widget(ui: MainWindow):
@@ -370,7 +372,8 @@ class MyObj:
 def test_dont_use_pickle(ui: MainWindow, tmpdir):
     tmpdir = Path(tmpdir)
     data = MyObj(124)
-    ui.add_object(data, type="myobj")
+    with pytest.warns(RuntimeWarning):  # no widget class is registered for "myobj"
+        ui.add_object(data, type="myobj")
     response = lambda: tmpdir / "test.txt"
     ui._instructions = ui._instructions.updated(file_dialog_response=response)
     with pytest.raises(ValueError):
@@ -380,7 +383,8 @@ def test_dont_use_pickle(ui: MainWindow, tmpdir):
     ui.exec_action("save")
     assert response().exists()
     ui._instructions = ui._instructions.updated(file_dialog_response=response)
-    ui.exec_action("open-file")
+    with pytest.warns(RuntimeWarning):  # no widget class is registered for "any"
+        ui.exec_action("open-file")
     model = ui.current_window.to_model()
     assert isinstance(model.value, MyObj)
     assert model.value.value == 124

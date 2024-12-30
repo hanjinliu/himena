@@ -46,6 +46,8 @@ def default_reader_provider(file_path: Path | list[Path]):
         return _io.default_pickle_reader
     elif file_path.suffix == "":
         return _io.default_file_list_reader
+    elif file_path.suffix == ".zip":
+        return _io.default_zip_reader
     return None
 
 
@@ -122,6 +124,8 @@ def default_writer_provider(model: WidgetDataModel, path: Path):
         return _io.default_roi_writer
     elif model.is_subtype_of(StandardType.DATAFRAME):
         return _io.default_dataframe_writer
+    elif model.is_subtype_of(StandardType.MODELS):
+        return _io.default_models_writer
     else:
         return None
 
