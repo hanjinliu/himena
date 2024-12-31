@@ -520,7 +520,11 @@ class ModelTrack:
 
     def to_method(self, parameters: dict[str, Any]) -> WorkflowNode:
         if self.command_id is not None:
-            params = [parse_parameter(k, v) for k, v in parameters.items()]
+            params = [
+                parse_parameter(k, v)
+                for k, v in parameters.items()
+                if k != "is_previewing"
+            ]
             return CommandExecution(
                 command_id=self.command_id,
                 contexts=self.contexts,

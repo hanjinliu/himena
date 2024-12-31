@@ -25,13 +25,28 @@ def register_mpl_widget():
     os.environ["MPLBACKEND"] = BACKEND_HIMENA
     if not _is_matplotlib_available():
         return
-    from himena_builtins.qt.plot._canvas import (
-        QMatplotlibCanvas,
-        QModelMatplotlibCanvas,
-    )
 
-    register_widget_class(StandardType.PLOT, QModelMatplotlibCanvas, priority=0)
-    register_widget_class(StandardType.MPL_FIGURE, QMatplotlibCanvas, priority=0)
+    register_widget_class(StandardType.PLOT, model_matplotlib_canvas, priority=0)
+    register_widget_class(StandardType.MPL_FIGURE, matplotlib_canvas, priority=0)
 
+
+def model_matplotlib_canvas():
+    from himena_builtins.qt.plot._canvas import QModelMatplotlibCanvas
+
+    return QModelMatplotlibCanvas()
+
+
+model_matplotlib_canvas.__himena_widget_id__ = "builtins:QModelMatplotlibCanvas"
+model_matplotlib_canvas.__himena_display_name__ = "Built-in Plot Canvas"
+
+
+def matplotlib_canvas():
+    from himena_builtins.qt.plot._canvas import QMatplotlibCanvas
+
+    return QMatplotlibCanvas()
+
+
+matplotlib_canvas.__himena_widget_id__ = "builtins:QMatplotlibCanvas"
+matplotlib_canvas.__himena_display_name__ = "Matplotlib Canvas"
 
 register_mpl_widget()

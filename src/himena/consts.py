@@ -86,6 +86,7 @@ class StandardType(SimpleNamespace):
     LAZY = "lazy"  # lazy loading of models
 
     ### Other types ###
+    WORKFLOW = "workflow"  # himena workflow object
     GROUPBY = "groupby"  # DataFrame GroupBy object
     IMAGE_ROIS = "image-rois"  # image regions of interest
     FUNCTION = "function"  # callable object

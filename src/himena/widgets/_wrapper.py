@@ -711,15 +711,24 @@ class ParametricWindow(SubWindow[_W]):
             self._process_other_output(return_value, injection_type_hint)
         return None
 
-    def _callback_with_params(self, kwargs: dict[str, Any]):
+    def _callback_with_params(
+        self,
+        kwargs: dict[str, Any],
+        force_sync: bool = False,
+    ) -> Any:
         if self._has_is_previewing:
             kwargs = {**kwargs, self._IS_PREVIEWING: False}
         main = self._main_window()
+        old_run_async = self._run_asynchronously
         try:
+            if force_sync:
+                self._run_asynchronously = False
             return_value = self._call(**kwargs)
         except Exception:
             main._set_parametric_widget_busy(self, False)
             raise
+        finally:
+            self._run_asynchronously = old_run_async
         if isinstance(return_value, Future):
             main._add_job_progress(return_value, desc=self.title, total=0)
             return_value.add_done_callback(
@@ -731,10 +740,11 @@ class ParametricWindow(SubWindow[_W]):
             return_value.add_done_callback(
                 lambda _: main._set_parametric_widget_busy(self, False)
             )
-            return None
+            return return_value
         else:
             main._set_parametric_widget_busy(self, False)
-            return self._process_return_value(return_value, kwargs)
+            self._process_return_value(return_value, kwargs)
+            return return_value
 
     def _get_model_track(self) -> ModelTrack:
         model_track = getattr(

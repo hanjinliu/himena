@@ -209,7 +209,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
             path=path,
             wsl=self._is_wsl_switch.isChecked(),
         )
-        return method.get_model(self._ui.model_app)
+        return method.get_model(self._ui)
 
     def _read_and_add_model(self, path: Path):
         """Read the remote file in another thread and add the model in the main."""

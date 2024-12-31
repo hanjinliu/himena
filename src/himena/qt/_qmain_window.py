@@ -740,7 +740,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
                 raise e
             cb(future, **kwargs)
 
-        return ensure_main_thread(_func)
+        return ensure_main_thread(_func, await_return=True)
 
     def _set_parametric_widget_busy(
         self,

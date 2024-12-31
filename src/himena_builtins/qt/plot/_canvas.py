@@ -14,9 +14,6 @@ from himena_builtins.qt.plot._conversion import convert_plot_layout, update_axis
 
 
 class QMatplotlibCanvasBase(QtW.QWidget):
-    __himena_widget_id__ = "builtins:QMatplotlibCanvasBase"
-    __himena_display_name__ = "Matplotlib Canvas"
-
     def __init__(self):
         super().__init__()
         layout = QtW.QVBoxLayout(self)
@@ -76,6 +73,9 @@ class QMatplotlibCanvasBase(QtW.QWidget):
 
 
 class QMatplotlibCanvas(QMatplotlibCanvasBase):
+    __himena_widget_id__ = "builtins:QMatplotlibCanvasBase"
+    __himena_display_name__ = "Matplotlib Canvas"
+
     @validate_protocol
     def update_model(self, model: WidgetDataModel):
         was_none = self._canvas is None

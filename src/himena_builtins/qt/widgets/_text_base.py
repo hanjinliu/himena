@@ -40,10 +40,6 @@ class QMainTextEdit(QtW.QPlainTextEdit):
         from superqt.utils import CodeSyntaxHighlight
 
         highlight = CodeSyntaxHighlight(self.document(), lang, theme=self._code_theme)
-        highlight.formatter._style = {
-            name: get_text_char_format(style)
-            for name, style in highlight.formatter.style
-        }
         self._highlight = highlight
         return None
 
@@ -359,24 +355,3 @@ def change_point_size(cur_font: QtGui.QFont, step: int) -> QtGui.QFont:
     new_size = _POINT_SIZES[next_idx]
     cur_font.setPointSize(new_size)
     return cur_font
-
-
-# this is the patch of superqt to prevent overwriting the font family
-def get_text_char_format(
-    style: dict[str, QtGui.QTextCharFormat],
-) -> QtGui.QTextCharFormat:
-    text_char_format = QtGui.QTextCharFormat()
-    if style.get("color"):
-        text_char_format.setForeground(QtGui.QColor(f"#{style['color']}"))
-
-    if style.get("bgcolor"):
-        text_char_format.setBackground(QtGui.QColor(style["bgcolor"]))
-
-    if style.get("bold"):
-        text_char_format.setFontWeight(QtGui.QFont.Weight.Bold)
-    if style.get("italic"):
-        text_char_format.setFontItalic(True)
-    if style.get("underline"):
-        text_char_format.setFontUnderline(True)
-
-    return text_char_format

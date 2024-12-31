@@ -383,7 +383,7 @@ def save_session_from_dialog(ui: MainWindow) -> None:
         start_path=f"himena-{datetime_str}.session.yaml",
         group="session",
     ):
-        ui.save_session(path)
+        return ui.save_session(path)
     raise Cancelled
 
 
@@ -404,7 +404,7 @@ def save_tab_session_from_dialog(ui: MainWindow) -> None:
         group="session",
     ):
         if tab := ui.tabs.current():
-            tab.save_session(path)
+            return tab.save_session(path)
     raise Cancelled
 
 

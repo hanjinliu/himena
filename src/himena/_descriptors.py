@@ -4,8 +4,6 @@ from pydantic_compat import BaseModel, Field
 import tempfile
 
 if TYPE_CHECKING:
-    from app_model import Application
-
     from himena.widgets import MainWindow
     from himena.types import WidgetDataModel
 
@@ -13,7 +11,7 @@ if TYPE_CHECKING:
 class WorkflowNode(BaseModel):
     """A class that describes how a widget data model was created."""
 
-    def get_model(self, app: "Application") -> "WidgetDataModel[Any]":
+    def get_model(self, ui: "MainWindow") -> "WidgetDataModel[Any]":
         raise NotImplementedError
 
     def _render_history(self) -> list[str]:
@@ -24,6 +22,12 @@ class WorkflowNode(BaseModel):
         """Return the history in a string format."""
         lines = self._render_history()
         return "\n".join(lines)
+
+    def _repr_pretty_(self, p, cycle):
+        if cycle:
+            p.text("WorkflowNode(...)")
+        else:
+            p.text(self.render_history())
 
 
 class ProgramaticMethod(WorkflowNode):
@@ -44,7 +48,7 @@ class LocalReaderMethod(ReaderMethod):
 
     path: Path | list[Path]
 
-    def get_model(self, app: "Application") -> "WidgetDataModel[Any]":
+    def get_model(self, ui: "MainWindow") -> "WidgetDataModel[Any]":
         """Get model by importing the reader plugin and actually read the file(s)."""
         from himena._utils import import_object
         from himena._providers import PluginInfo
@@ -80,7 +84,7 @@ class SCPReaderMethod(ReaderMethod):
     def _file_path_repr(self) -> str:
         return f"{self.username}@{self.host}:{self.path.as_posix()}"
 
-    def get_model(self, app: "Application | None" = None) -> "WidgetDataModel":
+    def get_model(self, ui: "MainWindow") -> "WidgetDataModel":
         import subprocess
         from himena._providers import ReaderProviderStore
 
@@ -131,7 +135,14 @@ class ModelParameter(CommandParameterBase):
     value: WorkflowNode
 
 
-class ListOfModelParameter(BaseModel):
+class WindowParameter(CommandParameterBase):
+    """A class that describes a parameter that was set by a window."""
+
+    type: Literal["window"] = "window"
+    value: WorkflowNode
+
+
+class ListOfModelParameter(CommandParameterBase):
     """A class that describes a list of model parameters."""
 
     type: Literal["list"] = "list"
@@ -150,9 +161,9 @@ def parse_parameter(name: str, value: Any) -> CommandParameterBase:
     elif isinstance(value, SubWindow):
         meth = value.to_model().workflow
         if meth is None:
-            param = ModelParameter(name=name, value=ProgramaticMethod())
+            param = WindowParameter(name=name, value=ProgramaticMethod())
         else:
-            param = ModelParameter(name=name, value=meth)
+            param = WindowParameter(name=name, value=meth)
     elif isinstance(value, list) and all(
         isinstance(each, (WidgetDataModel, SubWindow)) for each in value
     ):
@@ -165,7 +176,9 @@ def parse_parameter(name: str, value: Any) -> CommandParameterBase:
     return param
 
 
-CommandParameterType = Union[UserParameter, ModelParameter, ListOfModelParameter]
+CommandParameterType = Union[
+    UserParameter, ModelParameter, WindowParameter, ListOfModelParameter
+]
 
 _BRANCH = "  ├─"
 _VLINE = "  │ "
@@ -182,9 +195,9 @@ class CommandExecution(WorkflowNode):
 
     def _render_history(self) -> list[str]:
         lines = [f"[Command] {self.command_id}"]
-        ctx_and_params = self.contexts + self.parameters
-        prefixes = [_BRANCH] * (len(ctx_and_params) - 1) + [_BRANCH_END]
-        for param, prefix in zip(ctx_and_params, prefixes):
+        params_and_ctx = self.parameters + self.contexts
+        prefixes = [_BRANCH] * (len(params_and_ctx) - 1) + [_BRANCH_END]
+        for param, prefix in zip(params_and_ctx, prefixes):
             if isinstance(param, UserParameter):
                 cur_lines = [f"[Parameter] {param.name}={param.value!r}"]
             elif isinstance(param, ModelParameter):
@@ -207,6 +220,41 @@ class CommandExecution(WorkflowNode):
             lines.extend(hist)
         return lines
 
+    def get_model(self, ui: "MainWindow") -> "WidgetDataModel":
+        from himena.types import WidgetDataModel
+
+        model_context = None
+        window_context = None
+        for context in self.contexts:
+            if isinstance(context, ModelParameter):
+                model_context = context.value.get_model(ui)
+            elif isinstance(context, WindowParameter):
+                model_context = context.value.get_model(ui)
+            else:
+                raise ValueError(f"Context parameter must be a model: {context}")
+            if not isinstance(context.value, CommandExecution):
+                window_context = ui.add_data_model(model_context)
+
+        action_params = {}
+        for param in self.parameters:
+            if isinstance(param, UserParameter):
+                action_params[param.name] = param.value
+            elif isinstance(param, ModelParameter):
+                action_params[param.name] = param.value.get_model(ui)
+            elif isinstance(param, ListOfModelParameter):
+                action_params[param.name] = [each.get_model(ui) for each in param.value]
+            else:
+                raise ValueError(f"Unknown parameter type: {param}")
+        result = ui.exec_action(
+            self.command_id,
+            window_context=window_context,
+            model_context=model_context,
+            with_params=action_params,
+        )
+        if not isinstance(result, WidgetDataModel):
+            raise ValueError(f"Expected to return a WidgetDataModel but got {result}")
+        return result
+
 
 class UserModification(WorkflowNode):
     """Describes that one was modified from another model."""
@@ -219,6 +267,10 @@ class UserModification(WorkflowNode):
         return ["[Modified by User]"] + [
             f"{prefix} {line}" for prefix, line in zip(prefixes, lines)
         ]
+
+    def get_model(self, ui: "MainWindow") -> "WidgetDataModel":
+        # just skip modification...
+        return self.original.get_model(ui)
 
 
 def dict_to_workflow(data: dict) -> WorkflowNode:

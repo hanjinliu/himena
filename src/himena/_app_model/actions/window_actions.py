@@ -54,15 +54,14 @@ def show_whats_this(ui: MainWindow) -> None:
     menus=[{"id": MenuId.WINDOW, "group": EXIT_GROUP}],
     enablement=_ctx.num_sub_windows > 0,
 )
-def show_workflow_map(win: SubWindow) -> WidgetDataModel:
+def show_workflow_map(model: WidgetDataModel) -> WidgetDataModel:
     """Show the workflow map of the current window."""
-    meth = win.to_model().workflow
-    assert meth is not None  # `to_model` overwrites the attribute
+    workflow = model.workflow
+    assert workflow is not None  # `to_model` overwrites the attribute
     return WidgetDataModel(
-        value=meth.render_history(),
-        type="text",
-        title=f"Workflow map of {win.title}",
-        editable=False,
+        value=workflow,
+        type=StandardType.WORKFLOW,
+        title=f"Workflow of {model.title}",
         save_behavior_override=NoNeedToSave(),
     )
 
@@ -143,6 +142,7 @@ def rename_window(ui: MainWindow) -> None:
         return None
     if (i_win := ui._backend_main_window._current_sub_window_index()) is not None:
         ui._backend_main_window._rename_window_at(i_tab, i_win)
+    return None
 
 
 @ACTIONS.append_from_fn(
