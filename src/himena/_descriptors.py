@@ -221,7 +221,7 @@ class UserModification(WorkflowNode):
         ]
 
 
-def dict_to_method(data: dict) -> WorkflowNode:
+def dict_to_workflow(data: dict) -> WorkflowNode:
     """Convert a dictionary to a method descriptor."""
     if data["type"] == "programatic":
         return ProgramaticMethod()
@@ -235,7 +235,7 @@ def dict_to_method(data: dict) -> WorkflowNode:
             wsl=data["wsl"],
         )
     if data["type"] == "user-edit":
-        return UserModification(original=dict_to_method(data["original"]))
+        return UserModification(original=dict_to_workflow(data["original"]))
     if data["type"] == "command":
         return CommandExecution(
             command_id=data["command_id"],
@@ -245,7 +245,7 @@ def dict_to_method(data: dict) -> WorkflowNode:
     raise ValueError(f"Unknown method type: {data['type']}")
 
 
-def method_to_dict(method: WorkflowNode) -> dict:
+def workflow_to_dict(method: WorkflowNode) -> dict:
     """Convert a method descriptor to a dictionary."""
     if isinstance(method, ProgramaticMethod):
         return {"type": "programatic"}
@@ -273,7 +273,7 @@ def method_to_dict(method: WorkflowNode) -> dict:
     elif isinstance(method, UserModification):
         return {
             "type": "user-edit",
-            "original": method_to_dict(method.original),
+            "original": workflow_to_dict(method.original),
         }
     else:
         raise ValueError(f"Unknown method type: {method}")
