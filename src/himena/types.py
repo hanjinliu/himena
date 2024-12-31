@@ -491,7 +491,7 @@ class WindowRect(Rect[int]):
         )
 
 
-@dataclass(eq=False, match_args=False)
+@dataclass
 class GuiConfiguration:
     """Configuration for parametric widget (interpreted by the injection processor)"""
 
@@ -510,7 +510,7 @@ class GuiConfiguration:
         return asdict(self)
 
 
-@dataclass(frozen=True, eq=False, match_args=False)
+@dataclass(frozen=True)
 class ModelTrack:
     """Model to track how model is created."""
 

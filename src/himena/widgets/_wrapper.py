@@ -119,6 +119,12 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         if isinstance(self._widget_data_model_workflow, ProgramaticMethod) or overwrite:
             self._widget_data_model_workflow = workflow or ProgramaticMethod()
             _LOGGER.info("Workflow of %r updated to %r", self, workflow)
+        else:
+            _LOGGER.info(
+                "Workflow of %r was not updated because old workflow is %r",
+                self,
+                self._widget_data_model_workflow,
+            )
         return None
 
     @property
