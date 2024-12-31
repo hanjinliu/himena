@@ -165,7 +165,7 @@ class WidgetDataModel(GenericModel[_T]):
         if save_behavior_override is not _void:
             update["save_behavior_override"] = save_behavior_override
         update.update(
-            method=None,
+            workflow=None,
             force_open_with=None,
         )  # these parameters must be reset
         return self.model_copy(update=update)

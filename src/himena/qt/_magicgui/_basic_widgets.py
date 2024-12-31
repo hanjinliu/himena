@@ -28,14 +28,11 @@ class QBaseRangedStringWidget(QBaseStringWidget):
 
     def _mgui_get_max(self) -> float:
         """Set the maximum possible value."""
-        val = self._qwidget.maximum()
-        return self._post_get_hook(val)
+        return self._qwidget.maximum()
 
     def _mgui_set_max(self, value: float):
         """Set the maximum possible value."""
-        self._update_precision(maximum=value)
-        val = self._pre_set_hook(value)
-        self._qwidget.setMaximum(val)
+        self._qwidget.setMaximum(value)
 
 
 _T = TypeVar("_T")
