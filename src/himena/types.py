@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, field
 import math
 from pathlib import Path
 from typing import (
@@ -15,10 +15,10 @@ from typing import (
 )
 from pydantic_compat import BaseModel, Field, field_validator
 from himena._descriptors import (
-    MethodDescriptor,
+    WorkflowNode,
     CommandParameterType,
     LocalReaderMethod,
-    CommandMethod,
+    CommandExecution,
     ProgramaticMethod,
     parse_parameter,
     SaveBehavior,
@@ -102,8 +102,8 @@ class WidgetDataModel(GenericModel[_T]):
     metadata : Any, optional
         Metadata that may be used for storing additional information of the internal
         data or describing the state of the widget.
-    method : MethodDescriptor, optional
-        Method descriptor.
+    workflow : WorkflowNode, optional
+        History of how this data is created.
     force_open_with : str, optional
         Force open with a specific plugin if given.
     """
@@ -129,7 +129,7 @@ class WidgetDataModel(GenericModel[_T]):
         description="Metadata that may be used for storing additional information of "
         "the internal data or describing the state of the widget.",
     )  # fmt: skip
-    method: MethodDescriptor | None = Field(
+    workflow: WorkflowNode | None = Field(
         default=None,
         description="Method descriptor.",
     )
@@ -184,7 +184,7 @@ class WidgetDataModel(GenericModel[_T]):
             path = [Path(s).resolve() for s in source]
         else:
             path = Path(source).resolve()
-        to_update = {"method": LocalReaderMethod(path=path, plugin=plugin_name)}
+        to_update = {"workflow": LocalReaderMethod(path=path, plugin=plugin_name)}
         if self.title is None:
             if isinstance(path, list):
                 to_update.update({"title": "File group"})
@@ -196,12 +196,12 @@ class WidgetDataModel(GenericModel[_T]):
         self,
         open_with: str,
         *,
-        method: MethodDescriptor | _Void | None = _void,
+        workflow: WorkflowNode | _Void | None = _void,
         save_behavior_override: SaveBehavior | _Void | None = _void,
     ) -> "WidgetDataModel[_T]":
         update = {"force_open_with": open_with}
-        if method is not _void:
-            update["method"] = method
+        if workflow is not _void:
+            update["workflow"] = workflow
         if save_behavior_override is not _void:
             update["save_behavior_override"] = save_behavior_override
         return self.model_copy(update=update)
@@ -230,8 +230,8 @@ class WidgetDataModel(GenericModel[_T]):
     @property
     def source(self) -> Path | list[Path] | None:
         """The direct source path of the data."""
-        if isinstance(self.method, LocalReaderMethod):
-            return self.method.path
+        if isinstance(self.workflow, LocalReaderMethod):
+            return self.workflow.path
         return None
 
     def is_subtype_of(self, supertype: str) -> bool:
@@ -491,10 +491,9 @@ class WindowRect(Rect[int]):
         )
 
 
-class GuiConfiguration(BaseModel):
+@dataclass(eq=False, match_args=False)
+class GuiConfiguration:
     """Configuration for parametric widget (interpreted by the injection processor)"""
-
-    model_config = PYDANTIC_CONFIG_STRICT
 
     _ATTR_NAME: ClassVar[str] = "__himena_gui_config__"
 
@@ -504,21 +503,26 @@ class GuiConfiguration(BaseModel):
     show_parameter_labels: bool = True
     run_async: bool = False
     result_as: Literal["window", "below", "right"] = "window"
-    run_immediately_with: dict[str, Any] | None = Field(None)
+    run_immediately_with: dict[str, Any] | None = None
+
+    def asdict(self) -> dict[str, Any]:
+        """Return the configuration as a dictionary."""
+        return asdict(self)
 
 
-class ModelTrack(BaseModel):
+@dataclass(frozen=True, eq=False, match_args=False)
+class ModelTrack:
     """Model to track how model is created."""
 
-    model_config = PYDANTIC_CONFIG_STRICT
+    _ATTR_NAME: ClassVar[str] = "__himena_model_track__"
 
-    contexts: list[CommandParameterType] = Field(default_factory=list)
+    contexts: list[CommandParameterType] = field(default_factory=list)
     command_id: str | None = None
 
-    def to_method(self, parameters: dict[str, Any]) -> MethodDescriptor:
+    def to_method(self, parameters: dict[str, Any]) -> WorkflowNode:
         if self.command_id is not None:
             params = [parse_parameter(k, v) for k, v in parameters.items()]
-            return CommandMethod(
+            return CommandExecution(
                 command_id=self.command_id,
                 contexts=self.contexts,
                 parameters=params,

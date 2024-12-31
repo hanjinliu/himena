@@ -27,7 +27,7 @@ from himena.types import (
     ModelTrack,
     GuiConfiguration,
 )
-from himena._descriptors import CommandMethod, ModelParameter, parse_parameter
+from himena._descriptors import CommandExecution, ModelParameter, parse_parameter
 
 if TYPE_CHECKING:
     _F = TypeVar("_F", bound=Callable)
@@ -216,11 +216,10 @@ def make_function_callback(
             if isinstance(input_param, ModelParameter):
                 contexts.append(input_param)
         if isinstance(out, WidgetDataModel):
-            out.method = CommandMethod(parameters=contexts, command_id=command_id)
+            out.workflow = CommandExecution(contexts=contexts, command_id=command_id)
         elif f_annot.get("return") in (Parametric, ParametricWidgetProtocol):
-            out.__himena_model_track__ = ModelTrack(
-                contexts=contexts, command_id=command_id
-            )
+            tracker = ModelTrack(contexts=contexts, command_id=command_id)
+            setattr(out, ModelTrack._ATTR_NAME, tracker)
             if title is not None:
                 if not isinstance(
                     cfg := getattr(out, GuiConfiguration._ATTR_NAME, None),
@@ -239,7 +238,7 @@ def get_gui_config(fn) -> dict[str, Any]:
         config := getattr(fn, GuiConfiguration._ATTR_NAME, None),
         GuiConfiguration,
     ):
-        out = {k: getattr(config, k) for k in config.model_fields}
+        out = config.asdict()
     else:
         out = {}
     if out.get("title") is None:

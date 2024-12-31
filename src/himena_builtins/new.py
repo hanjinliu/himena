@@ -3,6 +3,7 @@
 import csv
 from io import StringIO
 
+from himena._descriptors import NoNeedToSave
 from himena.plugins import register_function, configure_gui
 from himena.types import WidgetDataModel, Parametric
 from himena.widgets import MainWindow
@@ -24,6 +25,7 @@ def new_text(ui: MainWindow) -> WidgetDataModel:
         type=StandardType.TEXT,
         extension_default=".txt",
         title=f"Untitled-{nwin}",
+        save_behavior_override=NoNeedToSave(),
     )
 
 
@@ -36,18 +38,20 @@ def new_table(ui: MainWindow) -> WidgetDataModel:
         type=StandardType.TABLE,
         extension_default=".csv",
         title=f"Table-{nwin}",
+        save_behavior_override=NoNeedToSave(),
     )
 
 
 @register_function(menus=MenuId.FILE_NEW, command_id="builtins:new-excel")
 def new_excel(ui: MainWindow) -> WidgetDataModel:
-    """New table."""
+    """New Excel book."""
     nwin = _get_n_windows(ui)
     return WidgetDataModel(
         value={"Sheet-1": None},
         type=StandardType.EXCEL,
         extension_default=".xlsx",
         title=f"Book-{nwin}",
+        save_behavior_override=NoNeedToSave(),
     )
 
 
@@ -61,6 +65,7 @@ def new_draw_canvas(ui: MainWindow) -> WidgetDataModel:
         extension_default=".png",
         title=f"Canvas-{nwin}",
         force_open_with="himena_builtins.qt.widgets.draw.QDrawCanvas",
+        save_behavior_override=NoNeedToSave(),
     )
 
 
@@ -99,7 +104,12 @@ def constant_array(ui: MainWindow) -> Parametric:
         else:
             type = StandardType.ARRAY
         nwin = _get_n_windows(ui)
-        return WidgetDataModel(value=arr, type=type, title=f"Untitled-{nwin}")
+        return WidgetDataModel(
+            value=arr,
+            type=type,
+            title=f"Untitled-{nwin}",
+            save_behavior_override=NoNeedToSave(),
+        )
 
     return generate_constant_array
 
@@ -135,7 +145,12 @@ def _make_provider(name: str):
             data = resp.read().decode()
 
         csv_data = list(csv.reader(StringIO(data)))
-        return WidgetDataModel(value=csv_data, type=StandardType.TABLE, title=name)
+        return WidgetDataModel(
+            value=csv_data,
+            type=StandardType.TABLE,
+            title=name,
+            save_behavior_override=NoNeedToSave(),
+        )
 
     fetch_sample_data.__name__ = name
     return fetch_sample_data

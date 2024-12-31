@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Any, TypeVar
 import numpy as np
 from himena._data_wrappers._array import wrap_array
 from himena._descriptors import NoNeedToSave
-from himena.plugins import register_function, configure_gui
+from himena.plugins import register_function, configure_gui, run_immediately
 from himena.types import Parametric, WidgetDataModel, is_subtype
 from himena.consts import StandardType
 from himena.standards.model_meta import (
@@ -21,21 +21,35 @@ if TYPE_CHECKING:
     command_id="builtins:array-duplicate-slice",
     keybindings=["Ctrl+Shift+D"],
 )
-def duplicate_this_slice(model: WidgetDataModel) -> WidgetDataModel:
+def duplicate_this_slice(model: WidgetDataModel) -> Parametric:
     """Duplicate the slice of the array."""
-    arr_sliced = _get_current_array_2d(model)
-    if isinstance(meta := model.metadata, ArrayMeta):
-        update = {"current_indices": ()}
-        if isinstance(meta, ImageMeta):
-            update["axes"] = meta.axes[-2:] if meta.axes is not None else None
-            update["channel_axis"] = None
-            update["channels"] = None
-        meta_sliced = meta.model_copy(update=update)
-    else:
-        meta_sliced = ArrayMeta(current_indices=())
-    return model.with_value(
-        arr_sliced, metadata=meta_sliced, save_behavior_override=NoNeedToSave()
-    )
+    from himena._data_wrappers import wrap_array
+
+    if not isinstance(meta := model.metadata, ArrayMeta):
+        raise TypeError(
+            "Widget does not have ArrayMeta thus cannot determine the slice indices."
+        )
+    if (indices := meta.current_indices) is None:
+        raise ValueError("The `current_indices` attribute is not set.")
+
+    @run_immediately(indices=indices)
+    def run_duplicate_this_slice(indices) -> WidgetDataModel:
+        arr = wrap_array(model.value)
+        arr_sliced = arr.get_slice(tuple(indices))
+        if isinstance(meta := model.metadata, ArrayMeta):
+            update = {"current_indices": ()}
+            if isinstance(meta, ImageMeta):
+                update["axes"] = meta.axes[-2:] if meta.axes is not None else None
+                update["channel_axis"] = None
+                update["channels"] = None
+            meta_sliced = meta.model_copy(update=update)
+        else:
+            meta_sliced = ArrayMeta(current_indices=())
+        return model.with_value(
+            arr_sliced, metadata=meta_sliced, save_behavior_override=NoNeedToSave()
+        )
+
+    return run_duplicate_this_slice
 
 
 @register_function(
@@ -76,7 +90,7 @@ def crop_array_nd(win: SubWindow) -> Parametric:
     for i in range(wrap_array(model.value).ndim - 2):
         conf_kwargs[f"axis_{i}"] = {
             "widget_type": SliderRangeGetter,
-            "getter": _make_getter(win, i),
+            "getter": _make_index_getter(win, i),
             "label": f"axis-{i}",
         }
 
@@ -228,19 +242,6 @@ def set_scale(win: SubWindow) -> Parametric:
     return run_set_scale
 
 
-def _get_current_array_2d(model: WidgetDataModel) -> "np.ndarray":
-    from himena._data_wrappers import wrap_array
-
-    if not isinstance(meta := model.metadata, ArrayMeta):
-        raise TypeError(
-            "Widget does not have ArrayMeta thus cannot determine the slice indices."
-        )
-    if (indices := meta.current_indices) is None:
-        raise ValueError("The `current_indices` attribute is not set.")
-    arr = wrap_array(model.value)
-    return arr.get_slice(tuple(indices))
-
-
 _C = TypeVar("_C", bound=type)
 
 
@@ -266,7 +267,7 @@ def _get_current_selection_and_meta(
     return sel, meta
 
 
-def _make_getter(win: SubWindow, ith: int):
+def _make_index_getter(win: SubWindow, ith: int):
     def _getter():
         model = win.to_model()
         meta = _cast_meta(model, ArrayMeta)

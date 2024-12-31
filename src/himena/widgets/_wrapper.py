@@ -1,4 +1,4 @@
-"""Widget wrappers."""
+"""Widget wrappers, including sub-window and dock widget."""
 
 from __future__ import annotations
 
@@ -30,15 +30,15 @@ from himena.types import (
     WindowRect,
 )
 from himena._descriptors import (
-    CommandMethod,
+    CommandExecution,
     LocalReaderMethod,
     NoNeedToSave,
     SaveBehavior,
     SaveToNewPath,
     SaveToPath,
-    MethodDescriptor,
+    WorkflowNode,
     ProgramaticMethod,
-    UserEditMethod,
+    UserModification,
 )
 
 if TYPE_CHECKING:
@@ -72,7 +72,7 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
             identifier = uuid4().int
         self._identifier = identifier
         self._save_behavior: SaveBehavior = SaveToNewPath()
-        self._widget_data_model_method: MethodDescriptor = ProgramaticMethod()
+        self._widget_data_model_workflow: WorkflowNode = ProgramaticMethod()
         self._ask_save_before_close = False
         self._frontend_widget()._himena_widget = self
 
@@ -110,37 +110,37 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         self._set_ask_save_before_close(False)
         return None
 
-    def _update_widget_data_model_method(
+    def _update_model_workflow(
         self,
-        method: MethodDescriptor | None,
+        workflow: WorkflowNode | None,
         overwrite: bool = True,
     ) -> None:
         """Update the method descriptor of the widget."""
-        if isinstance(self._widget_data_model_method, ProgramaticMethod) or overwrite:
-            self._widget_data_model_method = method or ProgramaticMethod()
-            _LOGGER.info("Method of %r updated to %r", self, method)
+        if isinstance(self._widget_data_model_workflow, ProgramaticMethod) or overwrite:
+            self._widget_data_model_workflow = workflow or ProgramaticMethod()
+            _LOGGER.info("Workflow of %r updated to %r", self, workflow)
         return None
 
     @property
-    def is_importable(self) -> bool:
-        """Whether the widget accept importing values."""
+    def supports_update_model(self) -> bool:
+        """Whether the widget interface supports being updated by a WidgetDataModel."""
         return hasattr(self.widget, "update_model")
 
     @property
-    def is_exportable(self) -> bool:
-        """Whether the widget can export its data."""
+    def supports_to_model(self) -> bool:
+        """Whether the widget interface supports being converted to a WidgetDataModel."""
         return hasattr(self.widget, "to_model")
 
     @property
     def is_modified(self) -> bool:
-        """Whether the content of the widget has been modified."""
+        """Whether the content of the widget has been modified by user."""
         if hasattr(self.widget, "is_modified"):
             return self.widget.is_modified()
         return False
 
     @property
     def is_editable(self) -> bool:
-        """Whether the widget is editable."""
+        """Whether the widget is in an editable state."""
         is_editable_func = getattr(self.widget, "is_editable", None)
         return callable(is_editable_func) and is_editable_func()
 
@@ -153,7 +153,7 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
 
     def _set_ask_save_before_close(self, value: bool) -> None:
         """Set the modified state of the widget."""
-        if value and not self.is_exportable:
+        if value and not self.supports_to_model:
             # If the backend widget cannot be converted to a model, there's no need
             # to inform the user "save changes?".
             return None
@@ -172,7 +172,7 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
 
     def model_type(self) -> str | None:
         """Type of the widget data model."""
-        if not self.is_exportable:
+        if not self.supports_to_model:
             return None
         interf = self.widget
         _type = None
@@ -186,7 +186,7 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
 
     def update_model(self, model: WidgetDataModel) -> None:
         """Import the widget data."""
-        if not self.is_importable:
+        if not self.supports_update_model:
             raise ValueError("Widget does not have `update_model` method.")
         self.widget.update_model(model)
 
@@ -312,7 +312,7 @@ class SubWindow(WidgetWrapper[_W]):
 
     def to_model(self) -> WidgetDataModel:
         """Export the widget data."""
-        if not self.is_exportable:
+        if not self.supports_to_model:
             raise ValueError("Widget does not have `to_model` method.")
         model = self.widget.to_model()  # type: ignore
         if not isinstance(model, WidgetDataModel):
@@ -323,10 +323,10 @@ class SubWindow(WidgetWrapper[_W]):
 
         if model.title is None:
             model.title = self.title
-        if model.method is None:
-            model.method = self._widget_data_model_method
-        if self.is_modified and not isinstance(model.method, UserEditMethod):
-            model.method = UserEditMethod(original=model.method)
+        if model.workflow is None:
+            model.workflow = self._widget_data_model_workflow
+        if self.is_modified and not isinstance(model.workflow, UserModification):
+            model.workflow = UserModification(original=model.workflow)
         model.window_uuid = self._identifier
         return model
 
@@ -487,9 +487,9 @@ class SubWindow(WidgetWrapper[_W]):
         self._alive = False
 
     def _determine_read_from(self) -> tuple[Path | list[Path], str | None] | None:
-        method = self._widget_data_model_method
-        if isinstance(method, LocalReaderMethod):
-            return method.path, method.plugin
+        workflow = self._widget_data_model_workflow
+        if isinstance(workflow, LocalReaderMethod):
+            return workflow.path, workflow.plugin
         elif isinstance(save_bh := self.save_behavior, SaveToPath):
             return save_bh.path, None
         else:
@@ -497,16 +497,16 @@ class SubWindow(WidgetWrapper[_W]):
 
     def _update_from_returned_model(self, model: WidgetDataModel) -> SubWindow[_W]:
         """Update the sub-window based on the returned model."""
-        if isinstance(method := model.method, LocalReaderMethod):
+        if isinstance(workflow := model.workflow, LocalReaderMethod):
             # file is directly read from the local path
-            if isinstance(save_path := method.path, Path):
-                self.update_default_save_path(save_path, plugin=method.plugin)
-        elif isinstance(model.method, CommandMethod):
+            if isinstance(save_path := workflow.path, Path):
+                self.update_default_save_path(save_path, plugin=workflow.plugin)
+        elif isinstance(model.workflow, CommandExecution):
             # model is created by some converter function
             if not isinstance(model.save_behavior_override, NoNeedToSave):
                 self._set_ask_save_before_close(True)
-        if (method := model.method) is not None:
-            self._update_widget_data_model_method(method)
+        if (workflow := model.workflow) is not None:
+            self._update_model_workflow(workflow)
         if save_behavior_override := model.save_behavior_override:
             self._save_behavior = save_behavior_override
         if not model.editable:
@@ -668,16 +668,17 @@ class ParametricWindow(SubWindow[_W]):
                 result_widget = self._process_model_output(return_value)
             _LOGGER.info("Got subwindow: %r", result_widget)
             if tracker.command_id is not None:
-                new_method = tracker.to_method(kwargs)
+                new_workflow = tracker.to_method(kwargs)
                 _LOGGER.info(
                     "Inherited method %r, where the original method was %r",
-                    new_method,
-                    return_value.method,
+                    new_workflow,
+                    return_value.workflow,
                 )
             else:
-                new_method = return_value.method
-            result_widget._update_widget_data_model_method(new_method, overwrite=False)
-            if isinstance(new_method, CommandMethod):
+                new_workflow = return_value.workflow
+            # NOTE: overwrite=False is needed to avoid overwriting ReaderMethod
+            result_widget._update_model_workflow(new_workflow, overwrite=False)
+            if isinstance(new_workflow, CommandExecution):
                 if not isinstance(return_value.save_behavior_override, NoNeedToSave):
                     result_widget._set_ask_save_before_close(True)
         elif self._return_annotation in (Parametric, ParametricWidgetProtocol):
@@ -687,11 +688,9 @@ class ParametricWindow(SubWindow[_W]):
             )
             _LOGGER.info("Got parametric widget: %r", result_widget)
             if tracker.command_id is not None:
-                new_method = tracker.to_method(kwargs)
-                result_widget._update_widget_data_model_method(
-                    new_method, overwrite=False
-                )
-                _LOGGER.info("Inherited method: %r", new_method)
+                new_workflow = tracker.to_method(kwargs)
+                result_widget._update_model_workflow(new_workflow, overwrite=False)
+                _LOGGER.info("Inherited method: %r", new_workflow)
         else:
             annot = getattr(self._callback, "__annotations__", {})
             if isinstance(return_value, Future):
@@ -733,14 +732,13 @@ class ParametricWindow(SubWindow[_W]):
             return self._process_return_value(return_value, kwargs)
 
     def _get_model_track(self) -> ModelTrack:
-        default = ModelTrack()
         model_track = getattr(
             self._callback,
-            "__himena_model_track__",
-            getattr(self.widget, "__himena_model_track__", None),
+            ModelTrack._ATTR_NAME,
+            getattr(self.widget, ModelTrack._ATTR_NAME, None),
         )
         if not isinstance(model_track, ModelTrack):
-            model_track = default
+            model_track = ModelTrack()
         return model_track
 
     def is_preview_enabled(self) -> bool:

@@ -736,7 +736,7 @@ class QSubWindowTitleBar(QtW.QFrame):
                 mime_data = QtCore.QMimeData()
                 _wrapper = self._subwindow._my_wrapper()
                 if isinstance(
-                    _meth := _wrapper._widget_data_model_method,
+                    _meth := _wrapper._widget_data_model_workflow,
                     LocalReaderMethod,
                 ):
                     if isinstance(_meth.path, Path):
@@ -746,7 +746,7 @@ class QSubWindowTitleBar(QtW.QFrame):
                             [QtCore.QUrl(fp.as_uri()) for fp in _meth.path]
                         )
                 drag.setMimeData(mime_data)
-                if _wrapper.is_exportable:
+                if _wrapper.supports_to_model:
                     model = DragDataModel(
                         getter=_wrapper.to_model,
                         type=_wrapper.model_type(),

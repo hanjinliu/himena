@@ -3,7 +3,7 @@ from typing import Any
 
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from himena.consts import StandardType, ParametricWidgetProtocolNames as PWPN
-from himena.types import WidgetDataModel
+from himena.types import ModelTrack, WidgetDataModel
 from himena.plugins import validate_protocol
 from magicgui import widgets as mgw
 
@@ -45,8 +45,8 @@ class QParametricWidget(QtW.QWidget):
         layout_v.addWidget(self._call_btn)
         if connector := getattr(central, PWPN.CONNECT_CHANGED_SIGNAL, None):
             connector(self._on_param_changed)
-        if hasattr(central, "__himena_model_track__"):
-            self.__himena_model_track__ = central.__himena_model_track__
+        if tracker := getattr(central, ModelTrack._ATTR_NAME, None) is not None:
+            setattr(self, ModelTrack._ATTR_NAME, tracker)
         self._result_widget: QtW.QWidget | None = None
 
         self._control = QtW.QWidget()

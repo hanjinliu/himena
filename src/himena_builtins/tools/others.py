@@ -32,7 +32,7 @@ def open_as_text_anyway(ui: MainWindow, win: SubWindow) -> WidgetDataModel[str]:
 
 
 @register_function(
-    menus=["tools"],
+    menus=["tools/models"],
     title="Stack models ...",
     command_id="builtins:stack-models",
     enablement=(ctx.num_tabs > 0) & (ctx.num_sub_windows > 0),
@@ -249,7 +249,7 @@ def specify_widget(model: WidgetDataModel) -> Parametric:
     def run_specify(widget_class: type) -> WidgetDataModel:
         return model.with_open_plugin(
             open_with=get_widget_class_id(widget_class),
-            method=model.method,
+            workflow=model.workflow,
             save_behavior_override=NoNeedToSave(),
         )
 

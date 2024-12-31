@@ -61,6 +61,7 @@ class AppActionRegistry:
 
     @property
     def installed_plugins(self) -> list[str]:
+        """List of modules or python paths that are installed as plugins."""
         return self._installed_plugins
 
     def iter_actions(self, app: Application) -> Iterator[Action]:
@@ -103,7 +104,6 @@ class AppActionRegistry:
             if action.menus is not None:
                 ids = [a.id for a in action.menus]
                 added_menu_ids.update(ids)
-        app.register_actions(actions)
 
         # add submenus if not exists
         to_add: list[tuple[str, SubmenuItem]] = []
@@ -122,6 +122,7 @@ class AppActionRegistry:
                 item = SubmenuItem(title=title, submenu=submenu)
                 to_add.append((menu_id, item))
 
+        app.register_actions(actions)
         app.menus.append_menu_items(to_add)
         return new_menu_ids
 

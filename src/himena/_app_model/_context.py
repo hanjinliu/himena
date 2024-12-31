@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 def _is_active_window_savable(ui: "MainWindow") -> bool:
     if win := ui.current_window:
-        return win.is_exportable
+        return win.supports_to_model
     return False
 
 
@@ -34,7 +34,7 @@ def _num_tabs(ui: "MainWindow") -> int:
 
 
 def _get_model_types(ui: "MainWindow") -> str | None:
-    if (win := ui.current_window) and win.is_exportable:
+    if (win := ui.current_window) and win.supports_to_model:
         out = win.model_type()
         if out is None:
             out = win.to_model().type

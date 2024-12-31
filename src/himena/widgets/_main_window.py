@@ -296,7 +296,7 @@ class MainWindow(Generic[_W]):
             The sub-window handler.
         """
         wd = WidgetDataModel(
-            value=value, type=type, title=title, method=ProgramaticMethod()
+            value=value, type=type, title=title, workflow=ProgramaticMethod()
         )
         return self.add_data_model(wd)
 

@@ -90,7 +90,7 @@ def _open_file_using_reader(
         plugin = None
     if ui:
         ui._recent_manager.append_recent_files([(file_path, plugin)])
-    model.method = LocalReaderMethod(path=file_path, plugin=plugin)
+    model.workflow = LocalReaderMethod(path=file_path, plugin=plugin)
     return model
 
 

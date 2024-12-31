@@ -13,7 +13,7 @@ def test_reading_files(ui: MainWindow, sample_dir: Path):
     assert win.model_type() == StandardType.SVG
     win = tab0.read_file(sample_dir / "table.csv")
     assert win.model_type() == StandardType.TABLE
-    assert isinstance(method := win.to_model().method, LocalReaderMethod)
+    assert isinstance(method := win.to_model().workflow, LocalReaderMethod)
     assert method.plugin == "himena_builtins.io.default_reader_provider"
     # win = tab0.read_file(sample_dir / "table.csv", plugin="builtin:")
     win = tab0.read_file(sample_dir / "image.png")

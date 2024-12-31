@@ -56,7 +56,8 @@ def show_whats_this(ui: MainWindow) -> None:
 )
 def show_workflow_map(win: SubWindow) -> WidgetDataModel:
     """Show the workflow map of the current window."""
-    meth = win._widget_data_model_method
+    meth = win.to_model().workflow
+    assert meth is not None  # `to_model` overwrites the attribute
     return WidgetDataModel(
         value=meth.render_history(),
         type="text",

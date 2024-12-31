@@ -59,7 +59,7 @@ class WindowDescription(BaseModel):
             raise ValueError("Cannot determine where to read the model from.")
         return WindowDescription(
             title=window.title,
-            method=method_to_dict(window._widget_data_model_method),
+            method=method_to_dict(window._widget_data_model_workflow),
             rect=WindowRectModel.from_tuple(window.rect),
             state=window.state,
             anchor=anchor.anchor_to_dict(window.anchor),
@@ -100,7 +100,7 @@ class TabSession(BaseModel):
                     "Could not load a window %r: %s", window_session.title, e
                 )
                 continue
-            model.method = dict_to_method(window_session.method)
+            model.workflow = dict_to_method(window_session.method)
             window = area.add_data_model(model)
             window.title = window_session.title
             window.rect = window_session.rect.to_tuple()

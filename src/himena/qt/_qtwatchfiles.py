@@ -18,7 +18,7 @@ class QWatchFileObject(QtCore.QObject):
         super().__init__()
         if not isinstance(sb := win.save_behavior, SaveToPath):
             raise ValueError("no file to watch")
-        if not win.is_importable:
+        if not win.supports_update_model:
             raise ValueError(f"Window {win.title!r} does not implement `update_model`.")
         self._subwindow = win
         self._old_save_behavior = sb
@@ -53,11 +53,11 @@ class QWatchWindowObject(QtCore.QObject):
         interval_sec: float = 1.0,
     ):
         super().__init__()
-        if not window_watch.is_exportable:
+        if not window_watch.supports_to_model:
             raise ValueError(
                 f"Window {window_watch.title!r} does not implement `to_model`."
             )
-        if not window_update.is_importable:
+        if not window_update.supports_update_model:
             raise ValueError(
                 f"Window {window_update.title!r} does not implement `update_model`."
             )

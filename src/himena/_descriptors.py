@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from himena.types import WidgetDataModel
 
 
-class MethodDescriptor(BaseModel):
+class WorkflowNode(BaseModel):
     """A class that describes how a widget data model was created."""
 
     def get_model(self, app: "Application") -> "WidgetDataModel[Any]":
@@ -26,14 +26,14 @@ class MethodDescriptor(BaseModel):
         return "\n".join(lines)
 
 
-class ProgramaticMethod(MethodDescriptor):
+class ProgramaticMethod(WorkflowNode):
     """Describes that one was created programmatically."""
 
     def _render_history(self) -> list[str]:
         return ["Created programatically"]
 
 
-class ReaderMethod(MethodDescriptor):
+class ReaderMethod(WorkflowNode):
     """Describes that one was read from a file."""
 
     plugin: str | None = Field(default=None)
@@ -58,7 +58,7 @@ class LocalReaderMethod(ReaderMethod):
         model = reader(self.path)
         if not isinstance(model, WidgetDataModel):
             raise ValueError(f"Expected to return a WidgetDataModel but got {model}")
-        if model.method is None:
+        if model.workflow is None:
             model = model._with_source(
                 source=self.path,
                 plugin=PluginInfo.from_str(self.plugin),
@@ -128,14 +128,14 @@ class ModelParameter(CommandParameterBase):
     """A class that describes a parameter that was set by a model."""
 
     type: Literal["model"] = "model"
-    value: MethodDescriptor
+    value: WorkflowNode
 
 
 class ListOfModelParameter(BaseModel):
     """A class that describes a list of model parameters."""
 
     type: Literal["list"] = "list"
-    value: list[MethodDescriptor]
+    value: list[WorkflowNode]
 
 
 def parse_parameter(name: str, value: Any) -> CommandParameterBase:
@@ -143,13 +143,12 @@ def parse_parameter(name: str, value: Any) -> CommandParameterBase:
     from himena.widgets import SubWindow
 
     if isinstance(value, WidgetDataModel):
-        if value.method is None:
+        if value.workflow is None:
             param = ModelParameter(name=name, value=ProgramaticMethod())
         else:
-            param = ModelParameter(name=name, value=value.method)
+            param = ModelParameter(name=name, value=value.workflow)
     elif isinstance(value, SubWindow):
-        # TODO: test if it's ok to use value._widget_data_model_method
-        meth = value.to_model().method
+        meth = value.to_model().workflow
         if meth is None:
             param = ModelParameter(name=name, value=ProgramaticMethod())
         else:
@@ -159,7 +158,7 @@ def parse_parameter(name: str, value: Any) -> CommandParameterBase:
     ):
         value_ = cast(list[WidgetDataModel], value)
         param = ListOfModelParameter(
-            name=name, value=[each.method or ProgramaticMethod() for each in value_]
+            name=name, value=[each.workflow or ProgramaticMethod() for each in value_]
         )
     else:
         param = UserParameter(name=name, value=value)
@@ -168,8 +167,13 @@ def parse_parameter(name: str, value: Any) -> CommandParameterBase:
 
 CommandParameterType = Union[UserParameter, ModelParameter, ListOfModelParameter]
 
+_BRANCH = "  ├─"
+_VLINE = "  │ "
+_BRANCH_END = "  └─"
+_SPACES = "    "
 
-class CommandMethod(MethodDescriptor):
+
+class CommandExecution(WorkflowNode):
     """Describes that one was created by a command."""
 
     command_id: str
@@ -179,11 +183,7 @@ class CommandMethod(MethodDescriptor):
     def _render_history(self) -> list[str]:
         lines = [f"[Command] {self.command_id}"]
         ctx_and_params = self.contexts + self.parameters
-        branch = "  ├─"
-        intermediate = "  │ "
-        end = "  └─"
-        spaces = "    "
-        prefixes = [branch] * (len(ctx_and_params) - 1) + [end]
+        prefixes = [_BRANCH] * (len(ctx_and_params) - 1) + [_BRANCH_END]
         for param, prefix in zip(ctx_and_params, prefixes):
             if isinstance(param, UserParameter):
                 cur_lines = [f"[Parameter] {param.name}={param.value!r}"]
@@ -196,10 +196,10 @@ class CommandMethod(MethodDescriptor):
             else:
                 raise ValueError(f"Unknown parameter type: {param}")
             num_cur_lines = len(cur_lines)
-            if prefix == branch:
-                cur_prefixes = [branch] + [intermediate] * (num_cur_lines - 1)
+            if prefix == _BRANCH:
+                cur_prefixes = [_BRANCH] + [_VLINE] * (num_cur_lines - 1)
             else:
-                cur_prefixes = [end] + [spaces] * (num_cur_lines - 1)
+                cur_prefixes = [_BRANCH_END] + [_SPACES] * (num_cur_lines - 1)
             hist = [
                 f"{cur_prefix} {cur_line}"
                 for cur_prefix, cur_line in zip(cur_prefixes, cur_lines)
@@ -208,16 +208,20 @@ class CommandMethod(MethodDescriptor):
         return lines
 
 
-class UserEditMethod(MethodDescriptor):
+class UserModification(WorkflowNode):
     """Describes that one was modified from another model."""
 
-    original: MethodDescriptor
+    original: WorkflowNode
 
-    def _render_history(self):
-        return ["[Edit by User]", "  │"] + self.original._render_history()
+    def _render_history(self) -> list[str]:
+        lines = self.original._render_history()
+        prefixes = [_BRANCH_END] + [_SPACES] * (len(lines) - 1)
+        return ["[Modified by User]"] + [
+            f"{prefix} {line}" for prefix, line in zip(prefixes, lines)
+        ]
 
 
-def dict_to_method(data: dict) -> MethodDescriptor:
+def dict_to_method(data: dict) -> WorkflowNode:
     """Convert a dictionary to a method descriptor."""
     if data["type"] == "programatic":
         return ProgramaticMethod()
@@ -231,9 +235,9 @@ def dict_to_method(data: dict) -> MethodDescriptor:
             wsl=data["wsl"],
         )
     if data["type"] == "user-edit":
-        return UserEditMethod(original=dict_to_method(data["original"]))
+        return UserModification(original=dict_to_method(data["original"]))
     if data["type"] == "command":
-        return CommandMethod(
+        return CommandExecution(
             command_id=data["command_id"],
             contexts=data["contexts"],
             parameters=data["parameters"],
@@ -241,7 +245,7 @@ def dict_to_method(data: dict) -> MethodDescriptor:
     raise ValueError(f"Unknown method type: {data['type']}")
 
 
-def method_to_dict(method: MethodDescriptor) -> dict:
+def method_to_dict(method: WorkflowNode) -> dict:
     """Convert a method descriptor to a dictionary."""
     if isinstance(method, ProgramaticMethod):
         return {"type": "programatic"}
@@ -259,14 +263,14 @@ def method_to_dict(method: MethodDescriptor) -> dict:
             "path": str(method.path),
             "wsl": method.wsl,
         }
-    elif isinstance(method, CommandMethod):
+    elif isinstance(method, CommandExecution):
         return {
             "type": "command",
             "command_id": method.command_id,
             "contexts": [m.model_dump() for m in method.contexts],
             "parameters": [m.model_dump() for m in method.parameters],
         }
-    elif isinstance(method, UserEditMethod):
+    elif isinstance(method, UserModification):
         return {
             "type": "user-edit",
             "original": method_to_dict(method.original),
@@ -309,7 +313,12 @@ class SaveBehavior(BaseModel):
 
 
 class NoNeedToSave(SaveBehavior):
-    """Describes that the widget does not need to be saved."""
+    """Describes that the widget does not need to be saved.
+
+    This save behavior is usually used for commands that create a new data. Users will
+    not be asked to save the data when they close the window, but will be asked if the
+    data is modified.
+    """
 
 
 class CannotSave(SaveBehavior):
@@ -318,7 +327,7 @@ class CannotSave(SaveBehavior):
     reason: str
 
     def get_save_path(self, main, model):
-        raise ValueError("Cannot save this widget.")
+        raise ValueError(f"Cannot save this widget: {self.reason}")
 
 
 class SaveToNewPath(SaveBehavior):

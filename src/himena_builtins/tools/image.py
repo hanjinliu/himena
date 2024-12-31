@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, SupportsIndex
+from typing import TYPE_CHECKING, Any, Literal, SupportsIndex
 import numpy as np
 from himena._data_wrappers._array import wrap_array, ArrayWrapper
 from himena.plugins import (
@@ -17,7 +17,7 @@ from himena.standards.model_meta import (
     roi as _roi,
 )
 from himena.widgets._wrapper import SubWindow
-from himena_builtins.tools.array import _cast_meta, _make_getter
+from himena_builtins.tools.array import _cast_meta, _make_index_getter
 
 if TYPE_CHECKING:
     import numpy as np
@@ -38,13 +38,19 @@ def crop_image(model: WidgetDataModel) -> Parametric:
     arr = wrap_array(model.value)
     if not isinstance(roi, _roi.ImageRoi2D):
         raise NotImplementedError
+    bbox = _2d_roi_to_bbox(roi, arr, meta)
+    x = bbox.left, bbox.left + bbox.width
+    y = bbox.top, bbox.top + bbox.height
 
-    @run_immediately(roi=roi)
-    def run_crop_image(roi: _roi.ImageRoi2D):
-        sl, bbox = _2d_roi_to_slices(roi, arr, meta)
+    @run_immediately(y=y, x=x)
+    def run_crop_image(y: tuple[int, int], x: tuple[int, int]):
+        xsl, ysl = slice(*x), slice(*y)
+        if meta.is_rgb:
+            sl = (ysl, xsl, slice(None))
+        else:
+            sl = (ysl, xsl)
         arr_cropped = arr[(...,) + sl]
         meta_out = meta.without_rois()
-        meta_out.current_roi = roi.shifted(-bbox.left, -bbox.top)
         return model.with_value(arr_cropped, metadata=meta_out).with_title_numbering()
 
     return run_crop_image
@@ -55,27 +61,36 @@ def crop_image(model: WidgetDataModel) -> Parametric:
     menus=["tools/image/roi", "/model_menu/roi"],
     command_id="builtins:image-crop:crop-image-multi",
 )
-def crop_image_multi(model: WidgetDataModel) -> WidgetDataModel:
+def crop_image_multi(model: WidgetDataModel) -> Parametric:
     """Crop the image around the registered ROIs and return as a model stack."""
     meta = _cast_meta(model, ImageMeta)
     arr = wrap_array(model.value)
     rois = _resolve_roi_list_model(meta, copy=False)
     meta_out = meta.without_rois()
-    cropped_models: list[WidgetDataModel] = []
+    bbox_list: list[Rect[int]] = []
     for i, roi in enumerate(rois):
         if not isinstance(roi, _roi.ImageRoi2D):
             continue
-        sl, _ = _2d_roi_to_slices(roi, arr, meta)
-        arr_cropped = arr[(...,) + sl]
-        model_0 = model.with_value(
-            arr_cropped, metadata=meta_out, title=f"ROI-{i} of {model.title}"
-        )
-        cropped_models.append(model_0)
-    return WidgetDataModel(
-        value=cropped_models,
-        type=StandardType.MODELS,
-        title=f"Cropped images from {model.title}",
-    ).with_title_numbering()
+        bbox = _2d_roi_to_bbox(roi, arr, meta)
+        bbox_list.append(bbox)
+
+    @run_immediately(bbox_list=bbox_list)
+    def run_crop_image_multi(bbox_list: list[Rect[int]]):
+        cropped_models: list[WidgetDataModel] = []
+        for bbox in bbox_list:
+            sl = _bbox_to_slice(bbox, meta)
+            arr_cropped = arr[(...,) + sl]
+            model_0 = model.with_value(
+                arr_cropped, metadata=meta_out, title=f"ROI-{i} of {model.title}"
+            )
+            cropped_models.append(model_0)
+        return WidgetDataModel(
+            value=cropped_models,
+            type=StandardType.MODELS,
+            title=f"Cropped images from {model.title}",
+        ).with_title_numbering()
+
+    return run_crop_image_multi
 
 
 @register_function(
@@ -85,38 +100,34 @@ def crop_image_multi(model: WidgetDataModel) -> WidgetDataModel:
     command_id="builtins:image-crop:crop-image-nd",
 )
 def crop_image_nd(win: SubWindow) -> Parametric:
-    """Crop the image in nD."""
+    """Crop the image in nD, by drawing a 2D ROI and reading slider values."""
     from himena.qt._magicgui import SliderRangeGetter
 
     model = win.to_model()
     ndim = wrap_array(model.value).ndim
     meta = _cast_meta(model, ImageMeta)
-    if (axes := meta.axes) is None:
-        axes = [ArrayAxis(name=f"axis-{i}") for i in range(ndim)]
+    axes_kwarg_names = [f"axis_{i}" for i in range(ndim)]
     index_yx_rgb = 2 + int(meta.is_rgb)
     if ndim < index_yx_rgb + 1:
         raise ValueError("Image only has 2D data.")
 
     conf_kwargs = {}
-    for i, axis in enumerate(axes[:-index_yx_rgb]):
-        conf_kwargs[axis.name] = {
+    for i, axis_name in enumerate(axes_kwarg_names[:-index_yx_rgb]):
+        conf_kwargs[axis_name] = {
             "widget_type": SliderRangeGetter,
-            "getter": _make_getter(win, i),
-            "label": axis.name,
+            "getter": _make_index_getter(win, i),
+            "label": axis_name,
         }
+    axis_y, axis_x = axes_kwarg_names[-index_yx_rgb : -index_yx_rgb + 2]
+    conf_kwargs[axis_y] = {"bind": _make_roi_limits_getter(win, "y")}
+    conf_kwargs[axis_x] = {"bind": _make_roi_limits_getter(win, "x")}
 
     @configure_gui(**conf_kwargs)
     def run_crop_image(**kwargs: tuple[int | None, int | None]):
         model = win.to_model()  # NOTE: need to re-fetch the model
         arr = wrap_array(model.value)
-        roi, meta = _get_current_roi_and_meta(model)
         sl_nd = tuple(slice(x0, x1) for x0, x1 in kwargs.values())
-        if isinstance(roi, _roi.ImageRoi2D):
-            sl, _ = _2d_roi_to_slices(roi, arr, meta)
-            sl = sl_nd + sl
-            arr_cropped = arr[sl]
-        else:
-            raise NotImplementedError
+        arr_cropped = arr[sl_nd]
         meta_out = meta.without_rois()
         meta_out.current_indices = None  # shape changed, need to reset
         return model.with_value(arr_cropped, metadata=meta_out)
@@ -124,21 +135,41 @@ def crop_image_nd(win: SubWindow) -> Parametric:
     return run_crop_image
 
 
-def _2d_roi_to_slices(
+def _2d_roi_to_bbox(
     roi: _roi.ImageRoi2D, arr: ArrayWrapper, meta: ImageMeta
-) -> tuple[tuple[slice, ...], Rect[int]]:
+) -> Rect[int]:
     bbox = roi.bbox().adjust_to_int()
     xmax, ymax = _slice_shape(arr, meta)
     bbox = bbox.limit_to(xmax, ymax)
     if bbox.width <= 0 or bbox.height <= 0:
         raise ValueError("Crop range out of bounds.")
+    return bbox
+
+
+def _bbox_to_slice(bbox: Rect[int], meta: ImageMeta) -> tuple[slice, ...]:
     ysl = slice(bbox.top, bbox.top + bbox.height)
     xsl = slice(bbox.left, bbox.left + bbox.width)
     if meta.is_rgb:
         sl = (ysl, xsl, slice(None))
     else:
         sl = (ysl, xsl)
-    return sl, bbox
+    return sl
+
+
+def _make_roi_limits_getter(win: SubWindow, dim: Literal["x", "y"]):
+    def _getter():
+        model = win.to_model()
+        meta = _cast_meta(model, ImageMeta)
+        roi = meta.current_roi
+        arr = wrap_array(model.value)
+        if not isinstance(roi, _roi.ImageRoi2D):
+            raise NotImplementedError
+        bbox = _2d_roi_to_bbox(roi, arr, meta)
+        if dim == "x":
+            return bbox.left, bbox.left + bbox.width
+        return bbox.top, bbox.top + bbox.height
+
+    return _getter
 
 
 @register_function(
@@ -210,21 +241,27 @@ def filter_rois(model: WidgetDataModel) -> Parametric:
     menus=["/model_menu"],
     command_id="builtins:select-rois",
 )
-def select_rois(model: WidgetDataModel) -> WidgetDataModel:
+def select_rois(model: WidgetDataModel) -> Parametric:
+    """Make a new ROI list with the selected ROIs."""
     rois = _get_rois_from_model(model)
     if not isinstance(meta := model.metadata, ImageRoisMeta):
         raise ValueError(f"Expected an ImageRoisMeta metadata, got {type(meta)}")
     axes = meta.axes
     sels = meta.selections
-    if len(sels) == 0:
-        raise ValueError("No ROIs selected.")
-    value = _roi.RoiListModel(rois=list(rois[i] for i in sels))
-    return WidgetDataModel(
-        value=value,
-        type=StandardType.IMAGE_ROIS,
-        title=f"Subset of {model.title}",
-        metadata=ImageRoisMeta(axes=axes),
-    )
+
+    @run_immediately(selections=sels)
+    def run_select(selections: list[int]) -> WidgetDataModel:
+        if len(selections) == 0:
+            raise ValueError("No ROIs selected.")
+        value = _roi.RoiListModel(rois=list(rois[i] for i in selections))
+        return WidgetDataModel(
+            value=value,
+            type=StandardType.IMAGE_ROIS,
+            title=f"Subset of {model.title}",
+            metadata=ImageRoisMeta(axes=axes),
+        )
+
+    return run_select
 
 
 @register_function(

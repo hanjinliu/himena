@@ -25,7 +25,7 @@ class ArrayQImage:
         self.qimage = qimage
 
     def __repr__(self) -> str:
-        array_repr = repr(self.to_numpy())[5:]  # remove "array"
+        array_repr = f"<shape={self.shape}, dtype={self.dtype}>"
         return f"{self.__class__.__name__}{array_repr}"
 
     def __array__(self, dtype=None) -> NDArray[np.uint8]:

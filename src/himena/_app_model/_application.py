@@ -53,9 +53,9 @@ class HimenaApplication(Application):
             if (
                 isinstance(result, WidgetDataModel)
                 and (method := getattr(f, "_himena_descriptor", None))
-                and result.method is None
+                and result.workflow is None
             ):
-                result.method = method
+                result.workflow = method
             self.injection_store.process(result, type_hint=type_hint)
 
 
