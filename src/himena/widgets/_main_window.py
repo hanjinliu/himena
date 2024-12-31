@@ -509,12 +509,17 @@ class MainWindow(Generic[_W]):
         self,
         id: str,
         *,
-        with_context: dict[type, Any] | None = None,
+        model_context: WidgetDataModel | None = None,
+        window_context: SubWindow | None = None,
         with_params: dict[str, Any] | None = None,
     ) -> None:
         """Execute an action by its ID."""
-        if with_context is not None:
-            providers = [(val, typ) for typ, val in with_context.items()]
+        providers = []
+        if model_context is not None:
+            providers.append((model_context, WidgetDataModel))
+        if window_context is not None:
+            providers.append((window_context, SubWindow))
+        if providers:
             _ctx = self.model_app.injection_store.register(providers)
         else:
             _ctx = nullcontext()
@@ -531,16 +536,6 @@ class MainWindow(Generic[_W]):
             else:  # pragma: no cover
                 raise RuntimeError("Unreachable code.")
         return None
-
-    def exec_confirmation_dialog(self, msg: str) -> bool:
-        """Execute a confirmation dialog (True if Yes is selected)."""
-        if not self._instructions.confirm:
-            return True
-        return self._backend_main_window._request_choice_dialog(
-            title="Confirmation",
-            message=msg,
-            choices=[("Yes", True), ("No", False)],
-        )
 
     @overload
     def exec_choose_one_dialog(

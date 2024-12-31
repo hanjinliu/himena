@@ -143,7 +143,6 @@ class WidgetDataModel(GenericModel[_T]):
     )
     editable: bool = Field(True, description="Whether the widget is editable.")
     window_rect_override: Callable[["Size"], "WindowRect"] | None = Field(None)
-    window_uuid: int | None = Field(None)
 
     def with_value(
         self,

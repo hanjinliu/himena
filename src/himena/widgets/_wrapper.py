@@ -333,7 +333,6 @@ class SubWindow(WidgetWrapper[_W]):
             model.workflow = self._widget_data_model_workflow
         if self.is_modified and not isinstance(model.workflow, UserModification):
             model.workflow = UserModification(original=model.workflow)
-        model.window_uuid = self._identifier
         return model
 
     def write_model(self, path: str | Path, plugin: str | None = None) -> None:

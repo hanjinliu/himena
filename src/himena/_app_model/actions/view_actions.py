@@ -6,6 +6,7 @@ from app_model.types import (
 )
 from himena._utils import OrderedSet
 from himena.consts import MenuId
+from himena.exceptions import Cancelled
 from himena.plugins._signature import configure_gui
 from himena.widgets import MainWindow
 from himena.types import (
@@ -43,13 +44,16 @@ def close_current_tab(ui: MainWindow) -> None:
     if idx is None:
         return
     win_modified = [win for win in ui.tabs[idx] if win._need_ask_save_before_close()]
-    if len(win_modified) > 0:
+    if len(win_modified) > 0 and ui._instructions.confirm:
         _modified_msg = "\n".join([f"- {win.title}" for win in win_modified])
-        if not ui.exec_confirmation_dialog(
-            f"Some windows in this tab are not saved yet:\n{_modified_msg}\n"
-            "Close the tab without saving?"
-        ):
-            return None
+        ans = ui.exec_choose_one_dialog(
+            "Close the tab?",
+            f"Some windows in this tab are not saved yet:\n{_modified_msg}\nClose the "
+            "tab without saving?",
+            ["Yes, close all", "No"],
+        )
+        if ans == "No":
+            raise Cancelled
     ui.tabs.pop(idx)
 
 
@@ -189,9 +193,13 @@ def close_all_windows_in_tab(ui: MainWindow) -> None:
         win_modified = [win for win in area if win._need_ask_save_before_close()]
         if len(win_modified) > 0 and ui._instructions.confirm:
             _modified_msg = "\n".join([f"- {win.title}" for win in win_modified])
-            if not ui.exec_confirmation_dialog(
-                f"Some windows are modified:\n{_modified_msg}\nClose without saving?"
-            ):
-                return None
+            ans = ui.exec_choose_one_dialog(
+                "Close the tab?",
+                f"Some windows in this tab are not saved yet:\n{_modified_msg}\nClose "
+                "the tab without saving?",
+                ["Yes, close all", "No"],
+            )
+            if ans == "No":
+                raise Cancelled
         area.clear()
     return None
