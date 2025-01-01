@@ -8,8 +8,23 @@ if TYPE_CHECKING:
     from himena.types import WidgetDataModel
 
 
+class WorkflowGraph:
+    def __init__(self):
+        # Running workflow is simply execute the nodes in order.
+        self.nodes: list[WorkflowNode] = []
+        self.edges: list[tuple[int, int]] = []  # start -> end
+
+    def _add_node(self, node: "WorkflowNode", parents: list["WorkflowNode"]):
+        self.nodes.append(node)
+        this_index = len(self.nodes) - 1
+        for parent in parents:
+            self.edges.append((self.nodes.index(parent), this_index))
+
+
 class WorkflowNode(BaseModel):
     """A class that describes how a widget data model was created."""
+
+    type: str
 
     def get_model(self, ui: "MainWindow") -> "WidgetDataModel[Any]":
         raise NotImplementedError
@@ -25,13 +40,31 @@ class WorkflowNode(BaseModel):
 
     def _repr_pretty_(self, p, cycle):
         if cycle:
-            p.text("WorkflowNode(...)")
+            p.text(f"{type(self).__name__}(...)")
         else:
             p.text(self.render_history())
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "WorkflowNode":
+        """Create a WorkflowNode from a dictionary."""
+        if data["type"] == "programatic":
+            return ProgramaticMethod.model_validate(data)
+        elif data["type"] == "local-reader":
+            return LocalReaderMethod.model_validate(data)
+        elif data["type"] == "scp-reader":
+            return SCPReaderMethod.model_validate(data)
+        elif data["type"] == "command":
+            return CommandExecution.model_validate(data)
+        elif data["type"] == "user-modification":
+            return UserModification.model_validate(data)
+        else:
+            raise ValueError(f"Unknown type: {data['type']}")
 
 
 class ProgramaticMethod(WorkflowNode):
     """Describes that one was created programmatically."""
+
+    type: Literal["programatic"] = "programatic"
 
     def _render_history(self) -> list[str]:
         return ["Created programatically"]
@@ -46,6 +79,7 @@ class ReaderMethod(WorkflowNode):
 class LocalReaderMethod(ReaderMethod):
     """Describes that one was read from a local source file."""
 
+    type: Literal["local-reader"] = "local-reader"
     path: Path | list[Path]
 
     def get_model(self, ui: "MainWindow") -> "WidgetDataModel[Any]":
@@ -70,12 +104,17 @@ class LocalReaderMethod(ReaderMethod):
         return model
 
     def _render_history(self) -> list[str]:
-        return [f"[Local file] {self.path}"]
+        if isinstance(self.path, list):
+            vals = ["[Local files]"] + [f"{_BRANCH}{path}" for path in self.path]
+        else:
+            vals = ["[Local file]", f"{_BRANCH}{self.path}"]
+        return vals + [f"{_BRANCH_END}[Plugin] {self.plugin}"]
 
 
 class SCPReaderMethod(ReaderMethod):
     """Describes that one was read from a remote source file via scp command."""
 
+    type: Literal["scp-reader"] = "scp-reader"
     host: str
     username: str
     path: Path
@@ -112,12 +151,17 @@ class SCPReaderMethod(ReaderMethod):
 
     def _render_history(self) -> list[str]:
         src = self._file_path_repr()
-        return [f"[Remote file] {src}"]
+        return [
+            "[Remote file]",
+            f"{_BRANCH}{src}",
+            f"{_BRANCH_END}[Plugin] {self.plugin}",
+        ]
 
 
 class CommandParameterBase(BaseModel):
     """A class that describes a parameter of a command."""
 
+    type: str
     name: str
     value: Any
 
@@ -132,21 +176,21 @@ class ModelParameter(CommandParameterBase):
     """A class that describes a parameter that was set by a model."""
 
     type: Literal["model"] = "model"
-    value: WorkflowNode
+    value: "WorkflowNodeType"
 
 
 class WindowParameter(CommandParameterBase):
     """A class that describes a parameter that was set by a window."""
 
     type: Literal["window"] = "window"
-    value: WorkflowNode
+    value: "WorkflowNodeType"
 
 
 class ListOfModelParameter(CommandParameterBase):
     """A class that describes a list of model parameters."""
 
     type: Literal["list"] = "list"
-    value: list[WorkflowNode]
+    value: list["WorkflowNodeType"]
 
 
 def parse_parameter(name: str, value: Any) -> CommandParameterBase:
@@ -189,6 +233,7 @@ _SPACES = "    "
 class CommandExecution(WorkflowNode):
     """Describes that one was created by a command."""
 
+    type: Literal["command"] = "command"
     command_id: str
     contexts: list[CommandParameterType] = Field(default_factory=list)
     parameters: list[CommandParameterType] = Field(default_factory=list)
@@ -259,6 +304,7 @@ class CommandExecution(WorkflowNode):
 class UserModification(WorkflowNode):
     """Describes that one was modified from another model."""
 
+    type: Literal["user-modification"] = "user-modification"
     original: WorkflowNode
 
     def _render_history(self) -> list[str]:
@@ -273,62 +319,9 @@ class UserModification(WorkflowNode):
         return self.original.get_model(ui)
 
 
-def dict_to_workflow(data: dict) -> WorkflowNode:
-    """Convert a dictionary to a method descriptor."""
-    if data["type"] == "programatic":
-        return ProgramaticMethod()
-    if data["type"] == "local_reader":
-        return LocalReaderMethod(path=Path(data["path"]), plugin=data["plugin"])
-    if data["type"] == "scp_reader":
-        return SCPReaderMethod(
-            host=data["host"],
-            username=data["username"],
-            path=Path(data["path"]),
-            wsl=data["wsl"],
-        )
-    if data["type"] == "user-edit":
-        return UserModification(original=dict_to_workflow(data["original"]))
-    if data["type"] == "command":
-        return CommandExecution(
-            command_id=data["command_id"],
-            contexts=data["contexts"],
-            parameters=data["parameters"],
-        )
-    raise ValueError(f"Unknown method type: {data['type']}")
-
-
-def workflow_to_dict(method: WorkflowNode) -> dict:
-    """Convert a method descriptor to a dictionary."""
-    if isinstance(method, ProgramaticMethod):
-        return {"type": "programatic"}
-    elif isinstance(method, LocalReaderMethod):
-        return {
-            "type": "local_reader",
-            "path": str(method.path),
-            "plugin": method.plugin,
-        }
-    elif isinstance(method, SCPReaderMethod):
-        return {
-            "type": "scp_reader",
-            "host": method.host,
-            "username": method.username,
-            "path": str(method.path),
-            "wsl": method.wsl,
-        }
-    elif isinstance(method, CommandExecution):
-        return {
-            "type": "command",
-            "command_id": method.command_id,
-            "contexts": [m.model_dump() for m in method.contexts],
-            "parameters": [m.model_dump() for m in method.parameters],
-        }
-    elif isinstance(method, UserModification):
-        return {
-            "type": "user-edit",
-            "original": workflow_to_dict(method.original),
-        }
-    else:
-        raise ValueError(f"Unknown method type: {method}")
+WorkflowNodeType = Union[
+    ProgramaticMethod, LocalReaderMethod, SCPReaderMethod, CommandExecution
+]
 
 
 class SaveBehavior(BaseModel):

@@ -502,7 +502,7 @@ class GuiConfiguration:
     show_parameter_labels: bool = True
     run_async: bool = False
     result_as: Literal["window", "below", "right"] = "window"
-    run_immediately_with: dict[str, Any] | None = None
+    run_immediately_with: Callable[[], dict[str, Any]] | None = None
 
     def asdict(self) -> dict[str, Any]:
         """Return the configuration as a dictionary."""

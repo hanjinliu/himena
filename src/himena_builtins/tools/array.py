@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Any, TypeVar
 import numpy as np
 from himena._data_wrappers._array import wrap_array
 from himena._descriptors import NoNeedToSave
-from himena.plugins import register_function, configure_gui, run_immediately
+from himena.plugins import register_function, configure_gui
 from himena.types import Parametric, WidgetDataModel, is_subtype
 from himena.consts import StandardType
 from himena.standards.model_meta import (
@@ -29,10 +29,13 @@ def duplicate_this_slice(model: WidgetDataModel) -> Parametric:
         raise TypeError(
             "Widget does not have ArrayMeta thus cannot determine the slice indices."
         )
-    if (indices := meta.current_indices) is None:
-        raise ValueError("The `current_indices` attribute is not set.")
 
-    @run_immediately(indices=indices)
+    def get_indices():
+        if (indices := meta.current_indices) is None:
+            raise ValueError("The `current_indices` attribute is not set.")
+        return {"indices": indices}
+
+    @configure_gui(run_immediately_with=get_indices)
     def run_duplicate_this_slice(indices) -> WidgetDataModel:
         arr = wrap_array(model.value)
         arr_sliced = arr.get_slice(tuple(indices))

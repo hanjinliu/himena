@@ -154,11 +154,11 @@ def init_application(app: HimenaApplication) -> HimenaApplication:
             return None
         _LOGGER.debug("processing %r", fn)
         ins = current_instance(app.name)
-        gui_config = get_gui_config(fn)
-        run_immediately_kwargs = gui_config.pop("run_immediately_with", None)
+        gui_config, run_immediately_with = get_gui_config(fn)
         win = ins.add_function(fn, **gui_config)
-        if run_immediately_kwargs is not None:
-            win._callback_with_params(run_immediately_kwargs)
+        if run_immediately_with is not None and ins._gui_execution:
+            kwargs = run_immediately_with()
+            win._callback_with_params(kwargs)
         return None
 
     @app.injection_store.mark_processor

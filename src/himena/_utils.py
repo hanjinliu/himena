@@ -233,7 +233,7 @@ def make_function_callback(
     return _new_f
 
 
-def get_gui_config(fn) -> dict[str, Any]:
+def get_gui_config(fn) -> tuple[dict[str, Any], Callable[[], dict[str, Any]] | None]:
     if isinstance(
         config := getattr(fn, GuiConfiguration._ATTR_NAME, None),
         GuiConfiguration,
@@ -246,7 +246,8 @@ def get_gui_config(fn) -> dict[str, Any]:
             out["title"] = fn.__name__
         else:
             out["title"] = str(fn)
-    return out
+    run_immediately_with = out.pop("run_immediately_with", None)
+    return out, run_immediately_with
 
 
 def import_object(full_name: str) -> Any:

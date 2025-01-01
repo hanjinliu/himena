@@ -5,7 +5,6 @@ from himena.plugins import (
     register_function,
     configure_gui,
     configure_submenu,
-    run_immediately,
 )
 from himena.types import Parametric, Rect, WidgetDataModel
 from himena.consts import StandardType
@@ -34,17 +33,21 @@ configure_submenu("/model_menu/roi", "ROI")
 )
 def crop_image(model: WidgetDataModel) -> Parametric:
     """Crop the image around the current ROI."""
-    roi, meta = _get_current_roi_and_meta(model)
     arr = wrap_array(model.value)
-    if not isinstance(roi, _roi.ImageRoi2D):
-        raise NotImplementedError
-    bbox = _2d_roi_to_bbox(roi, arr, meta)
-    x = bbox.left, bbox.left + bbox.width
-    y = bbox.top, bbox.top + bbox.height
 
-    @run_immediately(y=y, x=x)
+    def _get_xy():
+        roi, meta = _get_current_roi_and_meta(model)
+        if not isinstance(roi, _roi.ImageRoi2D):
+            raise NotImplementedError
+        bbox = _2d_roi_to_bbox(roi, arr, meta)
+        x = bbox.left, bbox.left + bbox.width
+        y = bbox.top, bbox.top + bbox.height
+        return {"y": y, "x": x}
+
+    @configure_gui(run_immediately_with=_get_xy)
     def run_crop_image(y: tuple[int, int], x: tuple[int, int]):
         xsl, ysl = slice(*x), slice(*y)
+        meta = _cast_meta(model, ImageMeta)
         if meta.is_rgb:
             sl = (ysl, xsl, slice(None))
         else:
@@ -65,19 +68,22 @@ def crop_image_multi(model: WidgetDataModel) -> Parametric:
     """Crop the image around the registered ROIs and return as a model stack."""
     meta = _cast_meta(model, ImageMeta)
     arr = wrap_array(model.value)
-    rois = _resolve_roi_list_model(meta, copy=False)
-    meta_out = meta.without_rois()
-    bbox_list: list[Rect[int]] = []
-    for i, roi in enumerate(rois):
-        if not isinstance(roi, _roi.ImageRoi2D):
-            continue
-        bbox = _2d_roi_to_bbox(roi, arr, meta)
-        bbox_list.append(bbox)
 
-    @run_immediately(bbox_list=bbox_list)
+    def _get_bbox_list():
+        rois = _resolve_roi_list_model(meta, copy=False)
+        bbox_list: list[Rect[int]] = []
+        for i, roi in enumerate(rois):
+            if not isinstance(roi, _roi.ImageRoi2D):
+                continue
+            bbox = _2d_roi_to_bbox(roi, arr, meta)
+            bbox_list.append(bbox)
+        return {"bbox_list": bbox_list}
+
+    @configure_gui(run_immediately_with=_get_bbox_list)
     def run_crop_image_multi(bbox_list: list[Rect[int]]):
+        meta_out = meta.without_rois()
         cropped_models: list[WidgetDataModel] = []
-        for bbox in bbox_list:
+        for i, bbox in enumerate(bbox_list):
             sl = _bbox_to_slice(bbox, meta)
             arr_cropped = arr[(...,) + sl]
             model_0 = model.with_value(
@@ -247,9 +253,11 @@ def select_rois(model: WidgetDataModel) -> Parametric:
     if not isinstance(meta := model.metadata, ImageRoisMeta):
         raise ValueError(f"Expected an ImageRoisMeta metadata, got {type(meta)}")
     axes = meta.axes
-    sels = meta.selections
 
-    @run_immediately(selections=sels)
+    def _get_selections():
+        return {"selections": meta.selections}
+
+    @configure_gui(run_immediately_with=_get_selections)
     def run_select(selections: list[int]) -> WidgetDataModel:
         if len(selections) == 0:
             raise ValueError("No ROIs selected.")

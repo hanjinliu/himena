@@ -11,6 +11,7 @@ from himena.types import WidgetDataModel
 from himena.standards.model_meta import ImageMeta, TableMeta, TextMeta
 from himena.standards.roi import RoiListModel
 from himena.consts import StandardType
+from himena._descriptors import WorkflowNode
 
 if TYPE_CHECKING:
     from openpyxl.worksheet.worksheet import Worksheet
@@ -278,6 +279,14 @@ def default_file_list_reader(file_path: Path | list[Path]) -> WidgetDataModel:
     return WidgetDataModel(value=value, type=StandardType.MODELS)
 
 
+def default_workflow_reader(path: Path) -> WidgetDataModel:
+    """Read workflow node."""
+    with path.open("r") as f:
+        js = json.load(f)
+    value = WorkflowNode.from_dict(js)
+    return WidgetDataModel(value=value, type=StandardType.WORKFLOW)
+
+
 def _make_lazy_reader(store: ReaderProviderStore, path: Path):
     return lambda: store.run(path)._with_source(path)
 
@@ -427,6 +436,12 @@ def default_roi_writer(model: WidgetDataModel[RoiListModel], path: Path) -> None
     """Write image ROIs to a json file."""
     with path.open("w") as f:
         json.dump(model.value.model_dump_typed(), f, default=_json_default)
+    return None
+
+
+def default_workflow_writer(model: WidgetDataModel[WorkflowNode], path: Path) -> None:
+    """Write workflow node."""
+    path.write_text(model.value.model_dump_json())
     return None
 
 

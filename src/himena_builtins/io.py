@@ -28,6 +28,8 @@ def default_reader_provider(file_path: Path | list[Path]):
             return _io.default_plot_reader
         elif file_path.suffixes == [".roi", ".json"]:
             return _io.default_roi_reader
+        elif file_path.suffixes == [".workflow", ".json"]:
+            return _io.default_workflow_reader
         else:
             return _io.default_text_reader
     elif file_path.suffix in BasicTextFileTypes:
@@ -126,6 +128,8 @@ def default_writer_provider(model: WidgetDataModel, path: Path):
         return _io.default_dataframe_writer
     elif model.is_subtype_of(StandardType.MODELS):
         return _io.default_models_writer
+    elif model.is_subtype_of(StandardType.WORKFLOW):
+        return _io.default_workflow_writer
     else:
         return None
 

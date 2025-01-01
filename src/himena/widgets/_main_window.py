@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from concurrent.futures import Future, ThreadPoolExecutor
+from contextlib import contextmanager
 from logging import getLogger
 from pathlib import Path
 from typing import (
@@ -74,6 +75,7 @@ class MainWindow(Generic[_W]):
         self._backend_main_window = backend
         self._tab_list = TabList(backend)
         self._new_widget_behavior = NewWidgetBehavior.WINDOW
+        self._gui_execution = True
         self._model_app = app
         self._instructions = BackendInstructions()
         self._history_tab = HistoryContainer[int](max_size=20)
@@ -534,7 +536,10 @@ class MainWindow(Generic[_W]):
         if window_context is not None:
             providers.append((window_context, SubWindow))
         # execute the command under the given context
-        with self.model_app.injection_store.register(providers=providers):
+        with (
+            self.model_app.injection_store.register(providers=providers),
+            self._execute_in_gui_context(is_gui=with_params is None),
+        ):
             result = self.model_app.commands.execute_command(id).result()
         if with_params is not None:
             if tab := self.tabs.current():
@@ -766,6 +771,15 @@ class MainWindow(Generic[_W]):
         _checker.call_widget_activated_callback(win.widget)
         self.events.window_activated.emit(win)
         return None
+
+    @contextmanager
+    def _execute_in_gui_context(self, is_gui: bool = False):
+        was_gui = self._gui_execution
+        self._gui_execution = is_gui
+        try:
+            yield None
+        finally:
+            self._gui_execution = was_gui
 
     def _iter_widget_class(self, model: WidgetDataModel) -> Iterator[type[_W]]:
         """Pick the most suitable widget class for the given model."""
