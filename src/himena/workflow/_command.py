@@ -1,8 +1,9 @@
-from typing import Literal, Any, cast, Union
+from typing import Iterator, Literal, Any, cast, Union, TYPE_CHECKING
 from pydantic_compat import BaseModel, Field
-from himena.workflow._base import Workflow, WorkflowList
-from himena.workflow._reader import ProgramaticMethod
-from himena.types import WidgetDataModel
+from himena.workflow._base import WorkflowStep, Workflow
+
+if TYPE_CHECKING:
+    from himena.types import WidgetDataModel
 
 
 class CommandParameterBase(BaseModel):
@@ -12,11 +13,19 @@ class CommandParameterBase(BaseModel):
     name: str
     value: Any
 
+    def __repr_args__(self):
+        for arg in super().__repr_args__():
+            if arg[0] == "type":
+                continue
+            yield arg
+
 
 class UserParameter(CommandParameterBase):
     """A class that describes a parameter that was set by a user."""
 
     type: Literal["user"] = "user"
+    value: Any
+    """Any python object for this parameter"""
 
 
 class ModelParameter(CommandParameterBase):
@@ -24,6 +33,7 @@ class ModelParameter(CommandParameterBase):
 
     type: Literal["model"] = "model"
     value: int
+    """workflow ID"""
 
 
 class WindowParameter(CommandParameterBase):
@@ -31,6 +41,7 @@ class WindowParameter(CommandParameterBase):
 
     type: Literal["window"] = "window"
     value: int
+    """workflow ID"""
 
 
 class ListOfModelParameter(CommandParameterBase):
@@ -38,33 +49,33 @@ class ListOfModelParameter(CommandParameterBase):
 
     type: Literal["list"] = "list"
     value: list[int]
+    """workflow IDs"""
 
 
-def parse_parameter(name: str, value: Any) -> CommandParameterBase:
+def parse_parameter(name: str, value: Any) -> tuple[CommandParameterBase, Workflow]:
+    """Normalize a k=v argument to a CommandParameterBase instance."""
     from himena.types import WidgetDataModel
     from himena.widgets import SubWindow
 
     if isinstance(value, WidgetDataModel):
-        if value.workflow is None:
-            param = ModelParameter(name=name, value=ProgramaticMethod())
-        else:
-            param = ModelParameter(name=name, value=value.workflow)
+        param = ModelParameter(name=name, value=value.workflow.last_id())
+        wf = value.workflow
     elif isinstance(value, SubWindow):
-        meth = value.to_model().workflow
-        if meth is None:
-            param = WindowParameter(name=name, value=ProgramaticMethod())
-        else:
-            param = WindowParameter(name=name, value=meth)
+        model = value.to_model()
+        wf = model.workflow
+        param = WindowParameter(name=name, value=wf.last_id())
     elif isinstance(value, list) and all(
         isinstance(each, (WidgetDataModel, SubWindow)) for each in value
     ):
         value_ = cast(list[WidgetDataModel], value)
         param = ListOfModelParameter(
-            name=name, value=[each.workflow or ProgramaticMethod() for each in value_]
+            name=name, value=[each.workflow.last_id() for each in value_]
         )
+        wf = Workflow.concat([each.workflow for each in value_])
     else:
         param = UserParameter(name=name, value=value)
-    return param
+        wf = Workflow()
+    return param, wf
 
 
 CommandParameterType = Union[
@@ -72,7 +83,7 @@ CommandParameterType = Union[
 ]
 
 
-class CommandExecution(Workflow):
+class CommandExecution(WorkflowStep):
     """Describes that one was created by a command."""
 
     type: Literal["command"] = "command"
@@ -80,52 +91,65 @@ class CommandExecution(Workflow):
     contexts: list[CommandParameterType] = Field(default_factory=list)
     parameters: list[CommandParameterType] = Field(default_factory=list)
 
-    def get_model(self, wlist: WorkflowList) -> "WidgetDataModel":
+    def iter_parents(self) -> Iterator[int]:
+        for ctx in self.contexts:
+            if isinstance(ctx, ModelParameter):
+                yield ctx.value
+            elif isinstance(ctx, WindowParameter):
+                yield ctx.value
+        for param in self.parameters:
+            if isinstance(param, ModelParameter):
+                yield param.value
+            elif isinstance(param, ListOfModelParameter):
+                yield from param.value
+
+    def _get_model_impl(self, wf: Workflow) -> "WidgetDataModel":
         from himena.types import WidgetDataModel
         from himena.widgets import current_instance
 
         model_context = None
         window_context = None
         ui = current_instance()
-        for context in self.contexts:
-            if isinstance(context, ModelParameter):
-                model_context = wlist[context.value].get_model(wlist)
-            elif isinstance(context, WindowParameter):
-                model_context = wlist[context.value].get_model(wlist)
+        for _ctx in self.contexts:
+            if isinstance(_ctx, ModelParameter):
+                model_context = wf.model_for_id(_ctx.value)
+            elif isinstance(_ctx, WindowParameter):
+                model_context = wf.model_for_id(_ctx.value)
             else:
-                raise ValueError(f"Context parameter must be a model: {context}")
-            if not isinstance(context.value, CommandExecution):
-                window_context = ui.add_data_model(model_context)
+                raise ValueError(f"Context parameter must be a model: {_ctx}")
 
-        action_params = {}
-        for param in self.parameters:
-            if isinstance(param, UserParameter):
-                action_params[param.name] = param.value
-            elif isinstance(param, ModelParameter):
-                action_params[param.name] = wlist[param.value].get_model(wlist)
-            elif isinstance(param, ListOfModelParameter):
-                action_params[param.name] = [
-                    wlist[each].get_model(wlist) for each in param.value
+        params = {}
+        for _p in self.parameters:
+            if isinstance(_p, UserParameter):
+                params[_p.name] = _p.value
+            elif isinstance(_p, ModelParameter):
+                params[_p.name] = wf.filter(_p.value).model_for_id(_p.value)
+            elif isinstance(_p, ListOfModelParameter):
+                params[_p.name] = [
+                    wf.filter(each).model_for_id(each) for each in _p.value
                 ]
             else:
-                raise ValueError(f"Unknown parameter type: {param}")
+                raise ValueError(f"Unknown parameter type: {_p}")
         result = ui.exec_action(
             self.command_id,
             window_context=window_context,
             model_context=model_context,
-            with_params=action_params,
+            with_params=params,
         )
         if not isinstance(result, WidgetDataModel):
             raise ValueError(f"Expected to return a WidgetDataModel but got {result}")
         return result
 
 
-class UserModification(Workflow):
+class UserModification(WorkflowStep):
     """Describes that one was modified from another model."""
 
     type: Literal["user-modification"] = "user-modification"
     original: int
 
-    def get_model(self, wlist: "WorkflowList") -> "WidgetDataModel":
+    def _get_model_impl(self, wlist: "Workflow") -> "WidgetDataModel":
         # just skip modification...
-        return wlist[self.original].get_model(wlist)
+        return wlist.model_for_id(self.original)
+
+    def iter_parents(self) -> Iterator[int]:
+        yield self.original

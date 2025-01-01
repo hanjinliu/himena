@@ -4,10 +4,11 @@ from typing import Any, TypeVar, TYPE_CHECKING
 from pydantic_compat import BaseModel, Field
 import yaml
 
-from himena._descriptors import SaveToPath, WorkflowNode
+from himena._descriptors import SaveToPath
 from himena.types import WindowState, WindowRect
 from himena import anchor, _providers
 from himena.widgets._widget_list import TabArea
+from himena.workflow import Workflow
 
 if TYPE_CHECKING:
     from himena.widgets import SubWindow, MainWindow
@@ -59,7 +60,7 @@ class WindowDescription(BaseModel):
             raise ValueError("Cannot determine where to read the model from.")
         return WindowDescription(
             title=window.title,
-            workflow=window._widget_data_model_workflow.model_dump(mode="json"),
+            workflow=window._widget_workflow.model_dump(mode="json"),
             rect=WindowRectModel.from_tuple(window.rect),
             state=window.state,
             anchor=anchor.anchor_to_dict(window.anchor),
@@ -100,7 +101,7 @@ class TabSession(BaseModel):
                     "Could not load a window %r: %s", window_session.title, e
                 )
                 continue
-            model.workflow = WorkflowNode.from_dict(window_session.workflow)
+            model.workflow = Workflow.model_validate(window_session.workflow)
             window = area.add_data_model(model)
             window.title = window_session.title
             window.rect = window_session.rect.to_tuple()

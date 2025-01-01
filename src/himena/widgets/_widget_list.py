@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from logging import getLogger
 import inspect
 from pathlib import Path
 from typing import Callable, Generic, TYPE_CHECKING, Iterator, Literal, TypeVar
@@ -34,7 +33,6 @@ if TYPE_CHECKING:
 
 _W = TypeVar("_W")  # backend widget type
 _T = TypeVar("_T")  # type of the default value
-_LOGGER = getLogger(__name__)
 
 
 class SemiMutableSequence(Sequence[_T]):
@@ -445,7 +443,8 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
             ui.set_status_tip(f"Opening: {file_paths[0].as_posix()}", duration=5)
         else:
             ui.set_status_tip(f"Opening {len(file_paths)} files", duration=5)
-        future._ino_type_hint = list[WidgetDataModel]
+        # future._ino_type_hint = list[WidgetDataModel]  # TODO
+
         return future
 
     def save_session(self, file_path: str | Path) -> None:

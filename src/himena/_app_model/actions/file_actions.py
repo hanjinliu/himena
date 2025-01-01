@@ -10,11 +10,11 @@ from app_model.types import (
     StandardKeyBinding,
 )
 from himena._data_wrappers import wrap_array
-from himena._descriptors import LocalReaderMethod, SaveToNewPath, SaveToPath
+from himena._descriptors import SaveToNewPath, SaveToPath
 from himena.consts import StandardType, MenuId
 from himena.standards.model_meta import ImageMeta
 from himena.widgets import MainWindow, SubWindow
-from himena import _providers
+from himena import _providers, workflow as _wf
 from himena.types import (
     ClipboardDataModel,
     Parametric,
@@ -90,7 +90,9 @@ def _open_file_using_reader(
         plugin = None
     if ui:
         ui._recent_manager.append_recent_files([(file_path, plugin)])
-    model.workflow = LocalReaderMethod(path=file_path, plugin=plugin)
+    model.workflow = _wf.Workflow(
+        nodes=[_wf.LocalReaderMethod(path=file_path, plugin=plugin)]
+    )
     return model
 
 

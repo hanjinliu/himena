@@ -183,6 +183,6 @@ def _warn_failed_provider(provider, e: Exception):
 def read_and_update_source(reader: ReaderTuple, source: PathOrPaths) -> WidgetDataModel:
     """Update the `method` attribute if it is not set."""
     model = reader.read(source)
-    if model.workflow is None:
+    if len(model.workflow) == 0:
         model = model._with_source(source=source, plugin=reader.plugin)
     return model

@@ -27,7 +27,13 @@ from himena.types import (
     ModelTrack,
     GuiConfiguration,
 )
-from himena._descriptors import CommandExecution, ModelParameter, parse_parameter
+from himena.workflow import (
+    CommandExecution,
+    ModelParameter,
+    parse_parameter,
+    WindowParameter,
+)
+from himena.workflow._base import Workflow
 
 if TYPE_CHECKING:
     _F = TypeVar("_F", bound=Callable)
@@ -211,33 +217,34 @@ def make_function_callback(
         bound = sig.bind(*args, **kwargs)
         out = f(*args, **kwargs)
         contexts = []
+        workflows = []
+
         for key, input_ in bound.arguments.items():
-            input_param = parse_parameter(key, input_)
-            if isinstance(input_param, ModelParameter):
+            input_param, wf = parse_parameter(key, input_)
+            if isinstance(input_param, (ModelParameter, WindowParameter)):
                 contexts.append(input_param)
+                workflows.append(wf)
+        workflow = Workflow.concat(workflows)
         if isinstance(out, WidgetDataModel):
-            out.workflow = CommandExecution(contexts=contexts, command_id=command_id)
+            out.workflow = out.workflow.with_step(
+                CommandExecution(contexts=contexts, command_id=command_id)
+            )
         elif f_annot.get("return") in (Parametric, ParametricWidgetProtocol):
-            tracker = ModelTrack(contexts=contexts, command_id=command_id)
-            setattr(out, ModelTrack._ATTR_NAME, tracker)
+            tracker = ModelTrack(
+                contexts=contexts, command_id=command_id, workflow=workflow
+            )
+            tracker.set(out)
             if title is not None:
-                if not isinstance(
-                    cfg := getattr(out, GuiConfiguration._ATTR_NAME, None),
-                    GuiConfiguration,
-                ):
-                    cfg = GuiConfiguration()
+                cfg = GuiConfiguration.get(out) or GuiConfiguration()
                 cfg.title = title
-                setattr(out, GuiConfiguration._ATTR_NAME, cfg)
+                cfg.set(out)
         return out
 
     return _new_f
 
 
 def get_gui_config(fn) -> tuple[dict[str, Any], Callable[[], dict[str, Any]] | None]:
-    if isinstance(
-        config := getattr(fn, GuiConfiguration._ATTR_NAME, None),
-        GuiConfiguration,
-    ):
+    if isinstance(config := GuiConfiguration.get(fn), GuiConfiguration):
         out = config.asdict()
     else:
         out = {}

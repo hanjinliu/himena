@@ -7,7 +7,7 @@ from pathlib import Path
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from superqt.utils import thread_worker
 
-from himena._descriptors import SCPReaderMethod
+from himena.workflow import SCPReaderMethod
 from himena import _drag
 from himena.consts import MonospaceFontFamily
 from himena.types import DragDataModel, WidgetDataModel
@@ -209,7 +209,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
             path=path,
             wsl=self._is_wsl_switch.isChecked(),
         )
-        return method.get_model(self._ui)
+        return method.run()
 
     def _read_and_add_model(self, path: Path):
         """Read the remote file in another thread and add the model in the main."""

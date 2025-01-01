@@ -1,6 +1,6 @@
 from pathlib import Path
 from himena import MainWindow
-from himena.types import LocalReaderMethod
+from himena.workflow import LocalReaderMethod
 from himena.consts import StandardType
 
 def test_reading_files(ui: MainWindow, sample_dir: Path):
@@ -13,7 +13,7 @@ def test_reading_files(ui: MainWindow, sample_dir: Path):
     assert win.model_type() == StandardType.SVG
     win = tab0.read_file(sample_dir / "table.csv")
     assert win.model_type() == StandardType.TABLE
-    assert isinstance(method := win.to_model().workflow, LocalReaderMethod)
+    assert isinstance(method := win.to_model().workflow[-1], LocalReaderMethod)
     assert method.plugin == "himena_builtins.io.default_reader_provider"
     # win = tab0.read_file(sample_dir / "table.csv", plugin="builtin:")
     win = tab0.read_file(sample_dir / "image.png")

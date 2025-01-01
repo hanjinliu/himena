@@ -1,18 +1,27 @@
 import tempfile
-from typing import Literal, Any
+from typing import Iterator, Literal, Any, TYPE_CHECKING
 from pathlib import Path
 from pydantic_compat import Field
-from himena.workflow._base import Workflow, WorkflowList
-from himena.types import WidgetDataModel
+from himena.workflow._base import WorkflowStep, Workflow
+
+if TYPE_CHECKING:
+    from himena.types import WidgetDataModel
 
 
-class ProgramaticMethod(Workflow):
+class NoParentWorkflow(WorkflowStep):
+    """Describes that one has no parent."""
+
+    def iter_parents(self) -> Iterator[int]:
+        yield from ()
+
+
+class ProgramaticMethod(NoParentWorkflow):
     """Describes that one was created programmatically."""
 
     type: Literal["programatic"] = "programatic"
 
 
-class ReaderMethod(Workflow):
+class ReaderMethod(NoParentWorkflow):
     """Describes that one was read from a file."""
 
     plugin: str | None = Field(default=None)
@@ -24,7 +33,7 @@ class LocalReaderMethod(ReaderMethod):
     type: Literal["local-reader"] = "local-reader"
     path: Path | list[Path]
 
-    def get_model(self, wlist: "WorkflowList") -> "WidgetDataModel[Any]":
+    def _get_model_impl(self, wf: "Workflow") -> "WidgetDataModel[Any]":
         """Get model by importing the reader plugin and actually read the file(s)."""
         from himena._utils import import_object
         from himena._providers import PluginInfo
@@ -38,11 +47,12 @@ class LocalReaderMethod(ReaderMethod):
         model = reader(self.path)
         if not isinstance(model, WidgetDataModel):
             raise ValueError(f"Expected to return a WidgetDataModel but got {model}")
-        if model.workflow is None:
+        if len(model.workflow) == 0:
             model = model._with_source(
                 source=self.path,
                 plugin=PluginInfo.from_str(self.plugin),
             )
+        self._current_store().process(model, type_hint=WidgetDataModel)
         return model
 
 
@@ -58,7 +68,12 @@ class SCPReaderMethod(ReaderMethod):
     def _file_path_repr(self) -> str:
         return f"{self.username}@{self.host}:{self.path.as_posix()}"
 
-    def get_model(self, wlist: "WorkflowList") -> "WidgetDataModel":
+    def _get_model_impl(self, wf: "Workflow") -> "WidgetDataModel":
+        model = self.run()
+        self._current_store().process(model, type_hint=WidgetDataModel)
+        return model
+
+    def run(self):
         import subprocess
         from himena._providers import ReaderProviderStore
 
@@ -80,6 +95,7 @@ class SCPReaderMethod(ReaderMethod):
                 dst = Path(tmpdir).joinpath(self.path.name).as_posix()
                 args = ["scp", src, dst]
             subprocess.run(args)
-            model = store.run(Path(dst))
+            model = store.run(Path(dst), plugin=self.plugin)
             model.title = self.path.name
+        model.workflow = Workflow(nodes=[self])
         return model

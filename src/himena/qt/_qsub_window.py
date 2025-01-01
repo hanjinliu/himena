@@ -15,7 +15,7 @@ from superqt import QIconifyIcon
 from superqt.utils import qthrottled
 
 from himena import anchor as _anchor
-from himena._descriptors import LocalReaderMethod
+from himena.workflow import LocalReaderMethod
 from himena._utils import lru_cache, get_display_name
 from himena.consts import MenuId
 from himena.types import DragDataModel, WindowState, WindowRect, Size
@@ -736,7 +736,7 @@ class QSubWindowTitleBar(QtW.QFrame):
                 mime_data = QtCore.QMimeData()
                 _wrapper = self._subwindow._my_wrapper()
                 if isinstance(
-                    _meth := _wrapper._widget_data_model_workflow,
+                    _meth := _wrapper._widget_workflow.last(),
                     LocalReaderMethod,
                 ):
                     if isinstance(_meth.path, Path):

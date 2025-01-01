@@ -169,7 +169,7 @@ def configure_gui(
             result_as=result_as,
             run_immediately_with=_getter,
         )
-        setattr(f, GuiConfiguration._ATTR_NAME, cfg)
+        cfg.set(f)
         return f
 
     return _inner if f is None else _inner(f)

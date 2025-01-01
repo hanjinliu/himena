@@ -4,7 +4,8 @@ from pytestqt.qtbot import QtBot
 from tempfile import TemporaryDirectory
 from qtpy import QtWidgets as QtW
 from himena import MainWindow, anchor
-from himena._descriptors import CommandExecution, LocalReaderMethod, NoNeedToSave, ProgramaticMethod, SaveToNewPath, SaveToPath
+from himena._descriptors import NoNeedToSave, SaveToNewPath, SaveToPath
+from himena.workflow import CommandExecution, LocalReaderMethod, ProgramaticMethod
 from himena.types import ClipboardDataModel, WidgetDataModel, WindowRect
 from himena.qt import register_widget_class, MainWindowQt
 from himena_builtins.qt import widgets as _qtw
@@ -49,17 +50,18 @@ def test_io_commands(ui: MainWindow, tmpdir, sample_dir: Path):
     ui._instructions = ui._instructions.updated(file_dialog_response=response_open)
     ui.exec_action("open-file")
     assert isinstance(ui.current_window.save_behavior, SaveToPath)
-    assert isinstance(ui.current_window._widget_data_model_workflow, LocalReaderMethod)
-    assert ui.current_window._widget_data_model_workflow.path == response_open()[0]
+    last = ui.current_window._widget_workflow.last()
+    assert isinstance(last, LocalReaderMethod)
+    assert last.path == response_open()[0]
 
     ui.add_object("Hello", type="text")
     assert isinstance(ui.current_window.save_behavior, SaveToNewPath)
-    assert isinstance(ui.current_window._widget_data_model_workflow, ProgramaticMethod)
+    assert isinstance(ui.current_window._widget_workflow.last(), ProgramaticMethod)
     ui._instructions = ui._instructions.updated(file_dialog_response=response_save)
     ui.exec_action("save")
     assert isinstance(ui.current_window.save_behavior, SaveToPath)
     assert ui.current_window.save_behavior.path == response_save()
-    assert isinstance(ui.current_window._widget_data_model_workflow, ProgramaticMethod)
+    assert isinstance(ui.current_window._widget_workflow.last(), ProgramaticMethod)
     ui.exec_action("save-as")
 
     # session
@@ -76,10 +78,11 @@ def test_io_commands(ui: MainWindow, tmpdir, sample_dir: Path):
     param = store.get(response_open(), min_priority=-500)[2]
     ui.exec_action("open-file-using", with_params={"reader": param})
     assert isinstance(ui.current_window.save_behavior, SaveToPath)
-    assert isinstance(ui.current_window._widget_data_model_workflow, LocalReaderMethod)
-    assert ui.current_window._widget_data_model_workflow.path == response_open()
+    last = ui.current_window._widget_workflow.last()
+    assert isinstance(last, LocalReaderMethod)
+    assert last.path == response_open()
     assert param.plugin is not None
-    assert ui.current_window._widget_data_model_workflow.plugin == param.plugin.to_str()
+    assert last.plugin == param.plugin.to_str()
 
 def test_window_commands(ui: MainWindowQt, sample_dir: Path):
     ui.exec_action("show-command-palette")
@@ -347,7 +350,7 @@ def test_save_behavior(ui: MainWindow, tmpdir):
     ui.exec_action("duplicate-window")
     win2 = ui.current_window
     assert not win2._need_ask_save_before_close()
-    assert isinstance(win2._widget_data_model_workflow, CommandExecution)
+    assert isinstance(win2._widget_workflow, CommandExecution)
     # special case for duplicate-window
     assert isinstance(win2.save_behavior, NoNeedToSave)
 
@@ -356,7 +359,7 @@ def test_save_behavior(ui: MainWindow, tmpdir):
     ui.exec_action("save-as")
     win3 = ui.current_window
     assert not win3._need_ask_save_before_close()
-    assert isinstance(win3._widget_data_model_workflow, CommandExecution)
+    assert isinstance(win3._widget_workflow, CommandExecution)
     assert isinstance(win3.save_behavior, SaveToPath)
 
     ui.current_window = win3

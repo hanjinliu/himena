@@ -20,7 +20,6 @@ from app_model.expressions import create_context
 from psygnal import SignalGroup, Signal
 
 from himena._app_model import AppContext, HimenaApplication
-from himena._descriptors import ProgramaticMethod
 from himena._open_recent import RecentFileManager, RecentSessionManager
 from himena._utils import import_object
 from himena.consts import NO_RECORDING_FIELD
@@ -41,6 +40,7 @@ from himena.widgets._hist import HistoryContainer, FileDialogHistoryDict
 from himena.widgets._initialize import remove_instance
 from himena.widgets._widget_list import TabList, TabArea, DockWidgetList
 from himena.widgets._wrapper import ParametricWindow, SubWindow, DockWidget
+from himena.workflow import ProgramaticMethod, Workflow
 
 if TYPE_CHECKING:
     from app_model.types import KeyBindingRule
@@ -297,7 +297,10 @@ class MainWindow(Generic[_W]):
             The sub-window handler.
         """
         wd = WidgetDataModel(
-            value=value, type=type, title=title, workflow=ProgramaticMethod()
+            value=value,
+            type=type,
+            title=title,
+            workflow=Workflow(nodes=[ProgramaticMethod()]),
         )
         return self.add_data_model(wd)
 

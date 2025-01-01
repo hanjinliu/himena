@@ -249,7 +249,6 @@ def specify_widget(model: WidgetDataModel) -> Parametric:
     def run_specify(widget_class: type) -> WidgetDataModel:
         return model.with_open_plugin(
             open_with=get_widget_class_id(widget_class),
-            workflow=model.workflow,
             save_behavior_override=NoNeedToSave(),
         )
 

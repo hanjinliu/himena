@@ -28,16 +28,18 @@ from himena.types import (
     WindowState,
     WidgetDataModel,
     WindowRect,
+    FutureInfo,
 )
 from himena._descriptors import (
-    CommandExecution,
-    LocalReaderMethod,
     NoNeedToSave,
     SaveBehavior,
     SaveToNewPath,
     SaveToPath,
-    WorkflowNode,
-    ProgramaticMethod,
+)
+from himena.workflow import (
+    CommandExecution,
+    LocalReaderMethod,
+    Workflow,
     UserModification,
 )
 
@@ -72,7 +74,7 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
             identifier = uuid4().int
         self._identifier = identifier
         self._save_behavior: SaveBehavior = SaveToNewPath()
-        self._widget_data_model_workflow: WorkflowNode = ProgramaticMethod()
+        self._widget_workflow = Workflow()
         self._ask_save_before_close = False
         self._frontend_widget()._himena_widget = self
 
@@ -112,18 +114,18 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
 
     def _update_model_workflow(
         self,
-        workflow: WorkflowNode | None,
+        workflow: Workflow | None,
         overwrite: bool = True,
     ) -> None:
         """Update the method descriptor of the widget."""
-        if isinstance(self._widget_data_model_workflow, ProgramaticMethod) or overwrite:
-            self._widget_data_model_workflow = workflow or ProgramaticMethod()
+        if len(self._widget_workflow) == 0 or overwrite:
+            self._widget_workflow = workflow or Workflow()
             _LOGGER.info("Workflow of %r updated to %r", self, workflow)
         else:
             _LOGGER.info(
                 "Workflow of %r was not updated because old workflow is %r",
                 self,
-                self._widget_data_model_workflow,
+                self._widget_workflow,
             )
         return None
 
@@ -329,10 +331,12 @@ class SubWindow(WidgetWrapper[_W]):
 
         if model.title is None:
             model.title = self.title
-        if model.workflow is None:
-            model.workflow = self._widget_data_model_workflow
-        if self.is_modified and not isinstance(model.workflow, UserModification):
-            model.workflow = UserModification(original=model.workflow)
+        if len(model.workflow) == 0:
+            model.workflow = self._widget_workflow
+        if self.is_modified and not isinstance(model.workflow[-1], UserModification):
+            model.workflow = model.workflow.with_step(
+                UserModification(original=model.workflow[-1].id)
+            )
         return model
 
     def write_model(self, path: str | Path, plugin: str | None = None) -> None:
@@ -492,7 +496,7 @@ class SubWindow(WidgetWrapper[_W]):
         self._alive = False
 
     def _determine_read_from(self) -> tuple[Path | list[Path], str | None] | None:
-        workflow = self._widget_data_model_workflow
+        workflow = self._widget_workflow.last()
         if isinstance(workflow, LocalReaderMethod):
             return workflow.path, workflow.plugin
         elif isinstance(save_bh := self.save_behavior, SaveToPath):
@@ -502,16 +506,16 @@ class SubWindow(WidgetWrapper[_W]):
 
     def _update_from_returned_model(self, model: WidgetDataModel) -> SubWindow[_W]:
         """Update the sub-window based on the returned model."""
-        if isinstance(workflow := model.workflow, LocalReaderMethod):
+        if isinstance(wf := model.workflow.last(), LocalReaderMethod):
             # file is directly read from the local path
-            if isinstance(save_path := workflow.path, Path):
-                self.update_default_save_path(save_path, plugin=workflow.plugin)
-        elif isinstance(model.workflow, CommandExecution):
-            # model is created by some converter function
+            if isinstance(save_path := wf.path, Path):
+                self.update_default_save_path(save_path, plugin=wf.plugin)
+        elif isinstance(wf := model.workflow.last(), CommandExecution):
+            # model is created by some command
             if not isinstance(model.save_behavior_override, NoNeedToSave):
                 self._set_ask_save_before_close(True)
-        if (workflow := model.workflow) is not None:
-            self._update_model_workflow(workflow)
+        if len(wlist := model.workflow) > 0:
+            self._update_model_workflow(wlist)
         if save_behavior_override := model.save_behavior_override:
             self._save_behavior = save_behavior_override
         if not model.editable:
@@ -672,30 +676,19 @@ class ParametricWindow(SubWindow[_W]):
             else:
                 result_widget = self._process_model_output(return_value)
             _LOGGER.info("Got subwindow: %r", result_widget)
-            if tracker.command_id is not None:
-                new_workflow = tracker.to_method(kwargs)
-                _LOGGER.info(
-                    "Inherited method %r, where the original method was %r",
-                    new_workflow,
-                    return_value.workflow,
-                )
-            else:
-                new_workflow = return_value.workflow
+            new_workflow = tracker.to_workflow(kwargs)
+            _LOGGER.info(
+                "Inherited method %r, where the original method was %r",
+                new_workflow,
+                return_value.workflow,
+            )
             # NOTE: overwrite=False is needed to avoid overwriting ReaderMethod
             result_widget._update_model_workflow(new_workflow, overwrite=False)
             if isinstance(new_workflow, CommandExecution):
                 if not isinstance(return_value.save_behavior_override, NoNeedToSave):
                     result_widget._set_ask_save_before_close(True)
         elif self._return_annotation in (Parametric, ParametricWidgetProtocol):
-            is_func = self._return_annotation == Parametric
-            result_widget = self._process_parametric_output(
-                return_value, is_func=is_func
-            )
-            _LOGGER.info("Got parametric widget: %r", result_widget)
-            if tracker.command_id is not None:
-                new_workflow = tracker.to_method(kwargs)
-                result_widget._update_model_workflow(new_workflow, overwrite=False)
-                _LOGGER.info("Inherited method: %r", new_workflow)
+            raise NotImplementedError
         else:
             annot = getattr(self._callback, "__annotations__", {})
             if isinstance(return_value, Future):
@@ -704,8 +697,11 @@ class ParametricWindow(SubWindow[_W]):
                 # return type cannot be inherited from the callback. Here, we just set
                 # the type hint to Future and let it processed in the
                 # "_future_done_callback" method of himena application.
-                return_value._ino_type_hint = annot.get("return", None)
-                return_value._himena_descriptor = tracker.to_method(kwargs)
+                FutureInfo(
+                    type_hint=annot.get("return", None),
+                    track=tracker,
+                    kwargs=kwargs,
+                ).set(return_value)
             else:
                 injection_type_hint = annot.get("return", None)
             self._process_other_output(return_value, injection_type_hint)
@@ -747,13 +743,9 @@ class ParametricWindow(SubWindow[_W]):
             return return_value
 
     def _get_model_track(self) -> ModelTrack:
-        model_track = getattr(
-            self._callback,
-            ModelTrack._ATTR_NAME,
-            getattr(self.widget, ModelTrack._ATTR_NAME, None),
-        )
+        model_track = ModelTrack.get(self._callback)
         if not isinstance(model_track, ModelTrack):
-            model_track = ModelTrack()
+            raise ValueError("ModelTrack not found.")  # TODO: should this be allowed?
         return model_track
 
     def is_preview_enabled(self) -> bool:

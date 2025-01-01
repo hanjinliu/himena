@@ -14,19 +14,18 @@ from typing import (
     TYPE_CHECKING,
 )
 from pydantic_compat import BaseModel, Field, field_validator
-from himena._descriptors import (
-    WorkflowNode,
-    CommandParameterType,
+from himena._descriptors import SaveBehavior
+from himena.workflow import (
+    Workflow,
     LocalReaderMethod,
     CommandExecution,
-    ProgramaticMethod,
     parse_parameter,
-    SaveBehavior,
 )
 from himena._enum import StrEnum
 from himena.consts import PYDANTIC_CONFIG_STRICT
 
 if TYPE_CHECKING:
+    from typing import Self
     from himena._providers import PluginInfo
 
 
@@ -102,7 +101,7 @@ class WidgetDataModel(GenericModel[_T]):
     metadata : Any, optional
         Metadata that may be used for storing additional information of the internal
         data or describing the state of the widget.
-    workflow : WorkflowNode, optional
+    workflow : WorkflowList, optional
         History of how this data is created.
     force_open_with : str, optional
         Force open with a specific plugin if given.
@@ -129,10 +128,7 @@ class WidgetDataModel(GenericModel[_T]):
         description="Metadata that may be used for storing additional information of "
         "the internal data or describing the state of the widget.",
     )  # fmt: skip
-    workflow: WorkflowNode | None = Field(
-        default=None,
-        description="Method descriptor.",
-    )
+    workflow: Workflow = Field(default_factory=Workflow)
     force_open_with: str | None = Field(
         default=None,
         description="Force open with a specific plugin if given.",
@@ -164,7 +160,7 @@ class WidgetDataModel(GenericModel[_T]):
         if save_behavior_override is not _void:
             update["save_behavior_override"] = save_behavior_override
         update.update(
-            workflow=None,
+            workflow=Workflow(),
             force_open_with=None,
         )  # these parameters must be reset
         return self.model_copy(update=update)
@@ -183,7 +179,11 @@ class WidgetDataModel(GenericModel[_T]):
             path = [Path(s).resolve() for s in source]
         else:
             path = Path(source).resolve()
-        to_update = {"workflow": LocalReaderMethod(path=path, plugin=plugin_name)}
+        to_update = {
+            "workflow": Workflow(
+                nodes=[LocalReaderMethod(path=path, plugin=plugin_name)]
+            )
+        }
         if self.title is None:
             if isinstance(path, list):
                 to_update.update({"title": "File group"})
@@ -195,7 +195,7 @@ class WidgetDataModel(GenericModel[_T]):
         self,
         open_with: str,
         *,
-        workflow: WorkflowNode | _Void | None = _void,
+        workflow: Workflow | _Void | None = _void,
         save_behavior_override: SaveBehavior | _Void | None = _void,
     ) -> "WidgetDataModel[_T]":
         update = {"force_open_with": open_with}
@@ -229,8 +229,10 @@ class WidgetDataModel(GenericModel[_T]):
     @property
     def source(self) -> Path | list[Path] | None:
         """The direct source path of the data."""
-        if isinstance(self.workflow, LocalReaderMethod):
-            return self.workflow.path
+        if len(self.workflow) == 1 and isinstance(
+            wf := self.workflow[0], LocalReaderMethod
+        ):
+            return wf.path
         return None
 
     def is_subtype_of(self, supertype: str) -> bool:
@@ -490,8 +492,19 @@ class WindowRect(Rect[int]):
         )
 
 
+class _HasDynamicAttribute:
+    _ATTR_NAME: str
+
+    @classmethod
+    def get(cls, obj) -> "Self | None":
+        return getattr(obj, cls._ATTR_NAME, None)
+
+    def set(self, obj) -> None:
+        setattr(obj, self._ATTR_NAME, self)
+
+
 @dataclass
-class GuiConfiguration:
+class GuiConfiguration(_HasDynamicAttribute):
     """Configuration for parametric widget (interpreted by the injection processor)"""
 
     _ATTR_NAME: ClassVar[str] = "__himena_gui_config__"
@@ -510,27 +523,41 @@ class GuiConfiguration:
 
 
 @dataclass(frozen=True)
-class ModelTrack:
+class ModelTrack(_HasDynamicAttribute):
     """Model to track how model is created."""
 
     _ATTR_NAME: ClassVar[str] = "__himena_model_track__"
 
-    contexts: list[CommandParameterType] = field(default_factory=list)
-    command_id: str | None = None
+    command_id: str
+    contexts: list = field(default_factory=list)
+    workflow: Workflow = field(default_factory=Workflow)
 
-    def to_method(self, parameters: dict[str, Any]) -> WorkflowNode:
-        if self.command_id is not None:
-            params = [
-                parse_parameter(k, v)
-                for k, v in parameters.items()
-                if k != "is_previewing"
-            ]
-            return CommandExecution(
+    def to_workflow(self, parameters: dict[str, Any]) -> Workflow:
+        params = []
+        more_workflows: list[Workflow] = []
+        for k, v in parameters.items():
+            if k == "is_previewing":
+                continue
+            param, wf = parse_parameter(k, v)
+            params.append(param)
+            more_workflows.append(wf)
+        workflow = Workflow.concat([self.workflow] + more_workflows)
+        return workflow.with_step(
+            CommandExecution(
                 command_id=self.command_id,
                 contexts=self.contexts,
                 parameters=params,
             )
-        return ProgramaticMethod()
+        )
+
+
+@dataclass(frozen=True)
+class FutureInfo(_HasDynamicAttribute):
+    _ATTR_NAME: ClassVar[str] = "__himena_future_info__"
+
+    type_hint: Any
+    track: ModelTrack
+    kwargs: dict[str, Any]
 
 
 Parametric = NewType("Parametric", Any)

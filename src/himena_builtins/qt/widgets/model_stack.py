@@ -9,7 +9,6 @@ from qtpy import QtWidgets as QtW, QtCore
 from himena.plugins import validate_protocol, _checker
 from himena.types import DragDataModel, DropResult, WidgetDataModel
 from himena.consts import StandardType
-from himena._descriptors import LocalReaderMethod
 from himena._utils import unwrap_lazy_model
 from himena_builtins.qt.widgets._splitter import QSplitterHandle
 from himena.qt import drag_model
@@ -466,13 +465,11 @@ class QStackedModelWidget(QtW.QStackedWidget):
 def _exec_lazy_loading(model: WidgetDataModel) -> WidgetDataModel:
     """Run the pending lazy loading."""
     _LOGGER.info("Lazy loading of: %r", model)
-    val = model.value
+    path = model.source
     model = unwrap_lazy_model(model)
     # determine the title
-    if isinstance(val, LocalReaderMethod):
-        val = val.path
-    if isinstance(val, (str, Path)):
-        model.title = Path(val).name
+    if isinstance(path, Path):
+        model.title = path.name
     else:
         model.title = "File Group"
     return model

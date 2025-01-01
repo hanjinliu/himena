@@ -49,15 +49,14 @@ def show_whats_this(ui: MainWindow) -> None:
 
 
 @ACTIONS.append_from_fn(
-    id="show-workflow-map",
-    title="Show workflow map",
+    id="show-workflow-graph",
+    title="Show workflow graph",
     menus=[{"id": MenuId.WINDOW, "group": EXIT_GROUP}],
     enablement=_ctx.num_sub_windows > 0,
 )
-def show_workflow_map(model: WidgetDataModel) -> WidgetDataModel:
-    """Show the workflow map of the current window."""
+def show_workflow_graph(model: WidgetDataModel) -> WidgetDataModel:
+    """Show the workflow graph of the current window."""
     workflow = model.workflow
-    assert workflow is not None  # `to_model` overwrites the attribute
     return WidgetDataModel(
         value=workflow,
         type=StandardType.WORKFLOW,

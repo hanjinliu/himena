@@ -17,7 +17,6 @@ from himena.qt._magicgui import (
     AxisPropertyEdit,
     DictEdit,
 )
-from himena.exceptions import DeadSubwindowError
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -34,12 +33,12 @@ _EDGE_ONLY_VALUE = {"color": "tab10", "width": 2.0}
     menus=_MENU,
     command_id="builtins:scatter-plot",
 )
-def scatter_plot(win: SubWindow) -> Parametric:
-    x0, y0 = _auto_select(win, 2)
+def scatter_plot(model: WidgetDataModel) -> Parametric:
+    x0, y0 = _auto_select(model, 2)
 
     @configure_gui(
-        x={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": x0},
-        y={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": y0},
+        x={"widget_type": SelectionEdit, "getter": _range_getter(model), "value": x0},
+        y={"widget_type": SelectionEdit, "getter": _range_getter(model), "value": y0},
         face={"widget_type": FacePropertyEdit},
         edge={"widget_type": EdgePropertyEdit},
     )
@@ -52,7 +51,7 @@ def scatter_plot(win: SubWindow) -> Parametric:
         edge: dict = {},
     ) -> WidgetDataModel:
         fig = hplt.figure()
-        xarr, yarrs = _get_xy_data(win, x, y, fig.axes)
+        xarr, yarrs = _get_xy_data(model, x, y, fig.axes)
         for name_yarr, _face, _edge in zip(
             yarrs, _iter_face(face), _iter_edge(edge, prefix="edge_")
         ):
@@ -65,7 +64,7 @@ def scatter_plot(win: SubWindow) -> Parametric:
         return WidgetDataModel(
             value=fig,
             type=StandardType.PLOT,
-            title=f"Plot of {win.title}",
+            title=f"Plot of {model.title}",
         )
 
     return configure_plot
@@ -77,12 +76,12 @@ def scatter_plot(win: SubWindow) -> Parametric:
     menus=_MENU,
     command_id="builtins:line-plot",
 )
-def line_plot(win: SubWindow) -> Parametric:
-    x0, y0 = _auto_select(win, 2)
+def line_plot(model: WidgetDataModel) -> Parametric:
+    x0, y0 = _auto_select(model, 2)
 
     @configure_gui(
-        x={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": x0},
-        y={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": y0},
+        x={"widget_type": SelectionEdit, "getter": _range_getter(model), "value": x0},
+        y={"widget_type": SelectionEdit, "getter": _range_getter(model), "value": y0},
         edge={"widget_type": EdgePropertyEdit, "value": _EDGE_ONLY_VALUE},
     )
     def configure_plot(
@@ -91,7 +90,7 @@ def line_plot(win: SubWindow) -> Parametric:
         edge: dict = {},
     ) -> WidgetDataModel:
         fig = hplt.figure()
-        xarr, yarrs = _get_xy_data(win, x, y, fig.axes)
+        xarr, yarrs = _get_xy_data(model, x, y, fig.axes)
         for name_yarr, _edge in zip(yarrs, _iter_edge(edge)):
             name, yarr = name_yarr
             fig.axes.plot(xarr, yarr, name=name, **_edge)
@@ -100,7 +99,7 @@ def line_plot(win: SubWindow) -> Parametric:
         return WidgetDataModel(
             value=fig,
             type=StandardType.PLOT,
-            title=f"Plot of {win.title}",
+            title=f"Plot of {model.title}",
         )
 
     return configure_plot
@@ -112,13 +111,13 @@ def line_plot(win: SubWindow) -> Parametric:
     menus=_MENU,
     command_id="builtins:bar-plot",
 )
-def bar_plot(win: SubWindow) -> Parametric:
-    x0, y0 = _auto_select(win, 2)
+def bar_plot(model: WidgetDataModel) -> Parametric:
+    x0, y0 = _auto_select(model, 2)
 
     @configure_gui(
-        x={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": x0},
-        y={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": y0},
-        bottom={"widget_type": SelectionEdit, "getter": _range_getter(win)},
+        x={"widget_type": SelectionEdit, "getter": _range_getter(model), "value": x0},
+        y={"widget_type": SelectionEdit, "getter": _range_getter(model), "value": y0},
+        bottom={"widget_type": SelectionEdit, "getter": _range_getter(model)},
         face={"widget_type": FacePropertyEdit},
         edge={"widget_type": EdgePropertyEdit},
     )
@@ -132,10 +131,10 @@ def bar_plot(win: SubWindow) -> Parametric:
     ) -> WidgetDataModel:
         fig = hplt.figure()
         if bottom is not None:
-            _, bottoms = _get_xy_data(win, x, bottom, fig.axes)
+            _, bottoms = _get_xy_data(model, x, bottom, fig.axes)
         else:
             bottoms = itertools.repeat(None)
-        xarr, yarrs = _get_xy_data(win, x, y, fig.axes)
+        xarr, yarrs = _get_xy_data(model, x, y, fig.axes)
         for name_yarr, name_bottom, _face, _edge in zip(
             yarrs, bottoms, _iter_face(face), _iter_edge(edge, prefix="edge_")
         ):
@@ -147,7 +146,7 @@ def bar_plot(win: SubWindow) -> Parametric:
         return WidgetDataModel(
             value=fig,
             type=StandardType.PLOT,
-            title=f"Plot of {win.title}",
+            title=f"Plot of {model.title}",
         )
 
     return configure_plot
@@ -159,14 +158,14 @@ def bar_plot(win: SubWindow) -> Parametric:
     menus=_MENU,
     command_id="builtins:errorbar-plot",
 )
-def errorbar_plot(win: SubWindow) -> Parametric:
-    x0, y0 = _auto_select(win, 2)
+def errorbar_plot(model: WidgetDataModel) -> Parametric:
+    x0, y0 = _auto_select(model, 2)
 
     @configure_gui(
-        x={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": x0},
-        y={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": y0},
-        xerr={"widget_type": SelectionEdit, "getter": _range_getter(win)},
-        yerr={"widget_type": SelectionEdit, "getter": _range_getter(win)},
+        x={"widget_type": SelectionEdit, "getter": _range_getter(model), "value": x0},
+        y={"widget_type": SelectionEdit, "getter": _range_getter(model), "value": y0},
+        xerr={"widget_type": SelectionEdit, "getter": _range_getter(model)},
+        yerr={"widget_type": SelectionEdit, "getter": _range_getter(model)},
         edge={"widget_type": EdgePropertyEdit, "value": _EDGE_ONLY_VALUE},
     )
     def configure_plot(
@@ -179,14 +178,14 @@ def errorbar_plot(win: SubWindow) -> Parametric:
     ) -> WidgetDataModel:
         fig = hplt.figure()
         if xerr is not None:
-            _, xerrs = _get_xy_data(win, x, xerr, fig.axes)
+            _, xerrs = _get_xy_data(model, x, xerr, fig.axes)
         else:
             xerrs = itertools.repeat(None)
         if yerr is not None:
-            _, yerrs = _get_xy_data(win, x, yerr, fig.axes)
+            _, yerrs = _get_xy_data(model, x, yerr, fig.axes)
         else:
             yerrs = itertools.repeat(None)
-        xarr, yarrs = _get_xy_data(win, x, y, fig.axes)
+        xarr, yarrs = _get_xy_data(model, x, y, fig.axes)
         for name_yarr, _xer, _yer, _edge in zip(yarrs, xerrs, yerrs, _iter_edge(edge)):
             name, yarr = name_yarr
             fig.axes.errorbar(
@@ -196,7 +195,7 @@ def errorbar_plot(win: SubWindow) -> Parametric:
         return WidgetDataModel(
             value=fig,
             type=StandardType.PLOT,
-            title=f"Plot of {win.title}",
+            title=f"Plot of {model.title}",
         )
 
     return configure_plot
@@ -208,13 +207,13 @@ def errorbar_plot(win: SubWindow) -> Parametric:
     menus=_MENU,
     command_id="builtins:band-plot",
 )
-def band_plot(win: SubWindow) -> Parametric:
-    x0, y10, y20 = _auto_select(win, 3)
+def band_plot(model: WidgetDataModel) -> Parametric:
+    x0, y10, y20 = _auto_select(model, 3)
 
     @configure_gui(
-        x={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": x0},
-        y0={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": y10},
-        y1={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": y20},
+        x={"widget_type": SelectionEdit, "getter": _range_getter(model), "value": x0},
+        y0={"widget_type": SelectionEdit, "getter": _range_getter(model), "value": y10},
+        y1={"widget_type": SelectionEdit, "getter": _range_getter(model), "value": y20},
         face={"widget_type": FacePropertyEdit},
         edge={"widget_type": EdgePropertyEdit},
     )
@@ -226,8 +225,8 @@ def band_plot(win: SubWindow) -> Parametric:
         edge: dict = {},
     ) -> WidgetDataModel:
         fig = hplt.figure()
-        xarr, ydata1 = _get_xy_data(win, x, y0, fig.axes)
-        _, ydata2 = _get_xy_data(win, x, y1, fig.axes)
+        xarr, ydata1 = _get_xy_data(model, x, y0, fig.axes)
+        _, ydata2 = _get_xy_data(model, x, y1, fig.axes)
         _face = next(_iter_face(face), {})
         _edge = next(_iter_edge(edge, prefix="edge_"), {})
         if len(ydata1) == 1 and len(ydata2) == 1:
@@ -240,7 +239,7 @@ def band_plot(win: SubWindow) -> Parametric:
         return WidgetDataModel(
             value=fig,
             type=StandardType.PLOT,
-            title=f"Plot of {win.title}",
+            title=f"Plot of {model.title}",
         )
 
     return configure_plot
@@ -252,13 +251,13 @@ def band_plot(win: SubWindow) -> Parametric:
     menus=_MENU,
     command_id="builtins:histogram",
 )
-def histogram(win: SubWindow) -> Parametric:
-    x0 = _auto_select(win, 1)[0]
+def histogram(model: WidgetDataModel) -> Parametric:
+    x0 = _auto_select(model, 1)[0]
     assert x0 is not None  # when num == 1, it must be a tuple.
     ndata = x0[0].stop - x0[0].start
 
     @configure_gui(
-        x={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": x0},
+        x={"widget_type": SelectionEdit, "getter": _range_getter(model), "value": x0},
         bins={"min": 1, "value": max(int(np.sqrt(ndata)), 2)},
         face={"widget_type": FacePropertyEdit},
         edge={"widget_type": EdgePropertyEdit},
@@ -270,7 +269,7 @@ def histogram(win: SubWindow) -> Parametric:
         edge: dict = {},
     ) -> WidgetDataModel:
         fig = hplt.figure()
-        _, yarrs = _get_xy_data(win, None, x, fig.axes)
+        _, yarrs = _get_xy_data(model, None, x, fig.axes)
         for name_yarr, _face, _edge in zip(
             yarrs, _iter_face(face), _iter_edge(edge, prefix="edge_")
         ):
@@ -280,7 +279,7 @@ def histogram(win: SubWindow) -> Parametric:
         return WidgetDataModel(
             value=fig,
             type=StandardType.PLOT,
-            title=f"Plot of {win.title}",
+            title=f"Plot of {model.title}",
         )
 
     return configure_plot
@@ -342,13 +341,13 @@ def edit_plot(win: SubWindow) -> Parametric:
     menus=_MENU,
     command_id="builtins:scatter-plot-3d",
 )
-def scatter_plot_3d(win: SubWindow) -> Parametric:
-    x0, y0, z0 = _auto_select(win, 3)
+def scatter_plot_3d(model: WidgetDataModel) -> Parametric:
+    x0, y0, z0 = _auto_select(model, 3)
 
     @configure_gui(
-        x={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": x0},
-        y={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": y0},
-        z={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": z0},
+        x={"widget_type": SelectionEdit, "getter": _range_getter(model), "value": x0},
+        y={"widget_type": SelectionEdit, "getter": _range_getter(model), "value": y0},
+        z={"widget_type": SelectionEdit, "getter": _range_getter(model), "value": z0},
         face={"widget_type": FacePropertyEdit},
         edge={"widget_type": EdgePropertyEdit},
     )
@@ -362,8 +361,8 @@ def scatter_plot_3d(win: SubWindow) -> Parametric:
         edge: dict = {},
     ) -> WidgetDataModel:
         fig = hplt.figure_3d()
-        xarr, yarrs = _get_xy_data(win, x, y, fig.axes)
-        _, zarrs = _get_xy_data(win, x, z, fig.axes)
+        xarr, yarrs = _get_xy_data(model, x, y, fig.axes)
+        _, zarrs = _get_xy_data(model, x, z, fig.axes)
 
         if len(yarrs) == 1 and len(zarrs) == 1:
             name_y, yarr = yarrs[0]
@@ -381,7 +380,7 @@ def scatter_plot_3d(win: SubWindow) -> Parametric:
         return WidgetDataModel(
             value=fig,
             type=StandardType.PLOT,
-            title=f"Plot of {win.title}",
+            title=f"Plot of {model.title}",
         )
 
     return configure_plot
@@ -393,13 +392,13 @@ def scatter_plot_3d(win: SubWindow) -> Parametric:
     menus=_MENU,
     command_id="builtins:line-plot-3d",
 )
-def line_plot_3d(win: SubWindow) -> Parametric:
-    x0, y0, z0 = _auto_select(win, 3)
+def line_plot_3d(model: WidgetDataModel) -> Parametric:
+    x0, y0, z0 = _auto_select(model, 3)
 
     @configure_gui(
-        x={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": x0},
-        y={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": y0},
-        z={"widget_type": SelectionEdit, "getter": _range_getter(win), "value": z0},
+        x={"widget_type": SelectionEdit, "getter": _range_getter(model), "value": x0},
+        y={"widget_type": SelectionEdit, "getter": _range_getter(model), "value": y0},
+        z={"widget_type": SelectionEdit, "getter": _range_getter(model), "value": z0},
         edge={"widget_type": EdgePropertyEdit, "value": _EDGE_ONLY_VALUE},
     )
     def configure_plot(
@@ -409,8 +408,8 @@ def line_plot_3d(win: SubWindow) -> Parametric:
         edge: dict = {},
     ) -> WidgetDataModel:
         fig = hplt.figure_3d()
-        xarr, yarrs = _get_xy_data(win, x, y, fig.axes)
-        _, zarrs = _get_xy_data(win, x, z, fig.axes)
+        xarr, yarrs = _get_xy_data(model, x, y, fig.axes)
+        _, zarrs = _get_xy_data(model, x, z, fig.axes)
         if len(yarrs) == 1 and len(zarrs) == 1:
             name_y, yarr = yarrs[0]
             name_z, zarr = zarrs[0]
@@ -423,21 +422,18 @@ def line_plot_3d(win: SubWindow) -> Parametric:
         return WidgetDataModel(
             value=fig,
             type=StandardType.PLOT,
-            title=f"Plot of {win.title}",
+            title=f"Plot of {model.title}",
         )
 
     return configure_plot
 
 
 def _range_getter(
-    win: SubWindow,
+    model: WidgetDataModel,
 ) -> Callable[[], tuple[tuple[slice, slice], tuple[slice, slice]]]:
     """The getter function for SelectionEdit"""
 
     def _getter():
-        if not win.is_alive:
-            raise DeadSubwindowError("Subwindow is already removed.")
-        model = win.to_model()
         types = [StandardType.TABLE, StandardType.DATAFRAME, StandardType.EXCEL]
         if model.type not in types:
             raise ValueError(f"Cannot plot model of type {model.type!r}")
@@ -445,9 +441,9 @@ def _range_getter(
             raise ValueError("Excel must have TableMeta as the additional data.")
 
         if len(meta.selections) == 0:
-            raise ValueError(f"No selection found in window {win.title!r}")
+            raise ValueError(f"No selection found in window {model.title!r}")
         elif len(meta.selections) > 1:
-            raise ValueError(f"More than one selection found in window {win.title!r}")
+            raise ValueError(f"More than one selection found in window {model.title!r}")
         sel = meta.selections[0]
         # TODO: thoroughly check the type.
         rindices, cindices = sel
@@ -459,7 +455,7 @@ def _range_getter(
 
 
 def _get_xy_data(
-    win: SubWindow,
+    model: WidgetDataModel,
     x: tuple[slice, slice] | None,
     y: tuple[slice, slice] | None,
     axes: hplt.Axes,
@@ -468,7 +464,6 @@ def _get_xy_data(
 
     if y is None:
         raise ValueError("The y value must be given.")
-    model = win.to_model()
     if is_subtype(model.type, StandardType.TABLE):
         xlabel, xarr, ys = _table_to_xy_data(model.value, x, y)
     elif is_subtype(model.type, StandardType.DATAFRAME):
@@ -497,26 +492,26 @@ def _get_xy_data(
     return xarr, ys
 
 
-def _auto_select(win: SubWindow, num: int) -> "list[None | tuple[slice, slice]]":
+def _auto_select(
+    model: WidgetDataModel, num: int
+) -> "list[None | tuple[slice, slice]]":
     from himena._data_wrappers import wrap_dataframe
 
     selections: list[tuple[tuple[int, int], tuple[int, int]]] = []
-    if (model_type := win.model_type()) is None:
-        raise ValueError(f"No model type is specified for the window {win.title!r}")
+    model_type = model.type
     if is_subtype(model_type, StandardType.TABLE):
-        val = win.to_model().value
+        val = model.value
         if not isinstance(val, np.ndarray):
             raise ValueError(f"Table must be a numpy array, got {type(val)}")
         shape = val.shape
-        if isinstance(meta := win.to_model().metadata, TableMeta):
+        if isinstance(meta := model.metadata, TableMeta):
             selections = meta.selections
     elif is_subtype(model_type, StandardType.DATAFRAME):
-        df = wrap_dataframe(win.to_model().value)
+        df = wrap_dataframe(model.value)
         shape = df.shape
-        if isinstance(meta := win.to_model().metadata, TableMeta):
+        if isinstance(meta := model.metadata, TableMeta):
             selections = meta.selections
     elif is_subtype(model_type, StandardType.EXCEL):
-        model = win.to_model()
         if not isinstance(meta := model.metadata, ExcelMeta):
             raise ValueError(f"Expected an ExcelMeta, got {type(meta)}")
         table = model.value[meta.current_sheet]

@@ -649,6 +649,10 @@ QTableBase {
     qproperty-selectionColor: #[base_color];
 }
 
+QWorkflowTree {
+    qproperty-selectionColor: #[base_color];
+}
+
 QCircularProgressBar {
     qproperty-color: #[highlight];
     qproperty-grooveColor: #[background_dim];
