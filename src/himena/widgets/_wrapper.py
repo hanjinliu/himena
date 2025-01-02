@@ -648,7 +648,7 @@ class ParametricWindow(SubWindow[_W]):
         return None
 
     def _process_return_value(self, return_value: Any, kwargs: dict[str, Any]):
-        tracker = self._get_model_track()
+        tracker = ModelTrack.get(self._callback)
         _LOGGER.info("Got tracker: %r", tracker)
         ui = self._main_window()._himena_main_window
         if isinstance(return_value, WidgetDataModel):
@@ -675,18 +675,23 @@ class ParametricWindow(SubWindow[_W]):
                     self._close_me(ui)
             else:
                 result_widget = self._process_model_output(return_value)
+                if result_widget is None:
+                    return None
             _LOGGER.info("Got subwindow: %r", result_widget)
-            new_workflow = tracker.to_workflow(kwargs)
-            _LOGGER.info(
-                "Inherited method %r, where the original method was %r",
-                new_workflow,
-                return_value.workflow,
-            )
-            # NOTE: overwrite=False is needed to avoid overwriting ReaderMethod
-            result_widget._update_model_workflow(new_workflow, overwrite=False)
-            if isinstance(new_workflow, CommandExecution):
-                if not isinstance(return_value.save_behavior_override, NoNeedToSave):
-                    result_widget._set_ask_save_before_close(True)
+            if tracker is not None:
+                new_workflow = tracker.to_workflow(kwargs)
+                _LOGGER.info(
+                    "Inherited method %r, where the original method was %r",
+                    new_workflow,
+                    return_value.workflow,
+                )
+                # NOTE: overwrite=False is needed to avoid overwriting ReaderMethod
+                result_widget._update_model_workflow(new_workflow, overwrite=False)
+                if isinstance(new_workflow, CommandExecution):
+                    if not isinstance(
+                        return_value.save_behavior_override, NoNeedToSave
+                    ):
+                        result_widget._set_ask_save_before_close(True)
         elif self._return_annotation in (Parametric, ParametricWidgetProtocol):
             raise NotImplementedError
         else:
@@ -742,12 +747,6 @@ class ParametricWindow(SubWindow[_W]):
             self._process_return_value(return_value, kwargs)
             return return_value
 
-    def _get_model_track(self) -> ModelTrack:
-        model_track = ModelTrack.get(self._callback)
-        if not isinstance(model_track, ModelTrack):
-            raise ValueError("ModelTrack not found.")  # TODO: should this be allowed?
-        return model_track
-
     def is_preview_enabled(self) -> bool:
         """Whether the widget supports preview."""
         isfunc = getattr(self.widget, PWPN.IS_PREVIEW_ENABLED, None)
@@ -759,17 +758,19 @@ class ParametricWindow(SubWindow[_W]):
     def _emit_param_changed(self) -> None:
         return self.params_changed.emit(self)
 
-    def _process_model_output(self, model: WidgetDataModel) -> SubWindow[_W]:
+    def _process_model_output(self, model: WidgetDataModel) -> SubWindow[_W] | None:
         ui = self._main_window()._himena_main_window
         widget = self._model_to_new_window(model)
         i_tab, i_win = self._find_me(ui)
         if self._auto_close:
             del ui.tabs[i_tab][i_win]
-        result_widget = ui.tabs[i_tab].add_widget(
-            widget, title=model.title, auto_size=False
-        )
-        self._coerce_rect(result_widget)
-        return result_widget._update_from_returned_model(model)
+        if ui._instructions.process_model_output:
+            result_widget = ui.tabs[i_tab].add_widget(
+                widget, title=model.title, auto_size=False
+            )
+            self._coerce_rect(result_widget)
+            return result_widget._update_from_returned_model(model)
+        return None
 
     def _process_parametric_output(
         self,

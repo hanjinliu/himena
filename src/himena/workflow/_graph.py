@@ -35,7 +35,7 @@ class Workflow(BaseModel):
     """
 
     steps: list[WorkflowStepType] = Field(default_factory=list)
-    _model_cache: dict[int, "WidgetDataModel"] = PrivateAttr(default_factory=dict)
+    _model_cache: dict[uuid.UUID, "WidgetDataModel"] = PrivateAttr(default_factory=dict)
     _cahce_enabled: bool = PrivateAttr(default=False)
 
     def id_to_index_map(self) -> dict[uuid.UUID, int]:
@@ -97,19 +97,30 @@ class Workflow(BaseModel):
         # The added step is always a unique node.
         return Workflow(steps=self.steps + [step])
 
-    def get_model(self) -> "WidgetDataModel":
+    def compute(self, process_output: bool = True) -> "WidgetDataModel":
+        """Compute the last node in the workflow."""
         with self._cache_context():
-            return self[-1].get_model_with_traceback(self)
+            if process_output:
+                out = self[-1].get_model_with_traceback(self)
+            else:
+                out = self[-1].get_model(self)
+        return out
 
     @contextmanager
     def _cache_context(self):
+        """Cache the intermediate results in this context.
+
+        For example, if the workflow is `A -> B0`, `A -> B1`, `B0, B1 -> C`, then
+        the result of `A` will be cached and reused when computing `B0` and `B1`.
+        """
         was_enabled = self._cahce_enabled
         self._cahce_enabled = True
         try:
             yield
         finally:
             self._cahce_enabled = was_enabled
-            self._model_cache.clear()
+            if not was_enabled:
+                self._model_cache.clear()
 
     @classmethod
     def concat(cls, workflows: Iterable["Workflow"]) -> "Workflow":
@@ -123,3 +134,26 @@ class Workflow(BaseModel):
                 id_found.add(node.id)
                 nodes.append(node)
         return Workflow(steps=nodes)
+
+
+def compute(workflows: list[Workflow]) -> list["WidgetDataModel | Exception"]:
+    """Compute all the workflow with the shared cache."""
+    if len(workflows) == 0:
+        return []
+    _global_cache = {}
+    results: list["WidgetDataModel"] = []
+    all_workflows = Workflow.concat(workflows)
+    # share the cache
+    for workflow in workflows:
+        workflow._model_cache = _global_cache
+    with all_workflows._cache_context():
+        for workflow in workflows:
+            try:
+                result = workflow.compute(process_output=False)
+            except Exception as e:
+                result = e
+            results.append(result)
+    _global_cache.clear()
+    for workflow in workflows:
+        workflow._model_cache = {}
+    return results

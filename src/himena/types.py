@@ -610,6 +610,8 @@ class BackendInstructions(BaseModel):
         "be called to get the response.",
         frozen=True,
     )
+    gui_execution: bool = Field(default=True)
+    process_model_output: bool = Field(default=True)
 
     def updated(self, **kwargs) -> "BackendInstructions":
         return self.model_copy(update=kwargs)

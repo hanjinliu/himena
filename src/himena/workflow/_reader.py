@@ -40,25 +40,23 @@ class LocalReaderMethod(ReaderMethod):
     path: Path | list[Path]
 
     def _get_model_impl(self, wf: "Workflow") -> "WidgetDataModel[Any]":
+        return self.run()
+
+    def run(self) -> "WidgetDataModel[Any]":
         """Get model by importing the reader plugin and actually read the file(s)."""
-        from himena._utils import import_object
         from himena._providers import PluginInfo
         from himena.types import WidgetDataModel
+        from himena._providers import ReaderProviderStore
 
-        if self.plugin is None:
-            raise ValueError("No plugin found.")
-
-        reader_provider = import_object(self.plugin)
-        reader = reader_provider(self.path)
-        model = reader(self.path)
+        store = ReaderProviderStore.instance()
+        model = store.run(self.path, plugin=self.plugin)
         if not isinstance(model, WidgetDataModel):
             raise ValueError(f"Expected to return a WidgetDataModel but got {model}")
         if len(model.workflow) == 0:
             model = model._with_source(
                 source=self.path,
-                plugin=PluginInfo.from_str(self.plugin),
+                plugin=PluginInfo.from_str(self.plugin) if self.plugin else None,
             )
-        self._current_store().process(model, type_hint=WidgetDataModel)
         return model
 
 
@@ -76,7 +74,6 @@ class SCPReaderMethod(ReaderMethod):
 
     def _get_model_impl(self, wf: "Workflow") -> "WidgetDataModel":
         model = self.run()
-        self._current_store().process(model, type_hint=WidgetDataModel)
         return model
 
     def run(self):

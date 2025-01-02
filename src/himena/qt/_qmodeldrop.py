@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from logging import getLogger
 from typing import TYPE_CHECKING
+import uuid
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt
 from himena.types import WidgetDataModel, is_subtype
@@ -39,7 +40,7 @@ class QModelDrop(QtW.QGroupBox):
         layout.addWidget(self._drop_area)
         layout.setContentsMargins(0, 0, 0, 0)
         self._allowed_types = types  # the model type
-        self._target_id: int | None = None
+        self._target_id: uuid.UUID | None = None
         self._data_model: WidgetDataModel | None = None
 
     def sizeHint(self) -> QtCore.QSize:
@@ -106,7 +107,7 @@ class QModelDrop(QtW.QGroupBox):
         )
         self._data_model = None
 
-    def widget_for_id(self) -> QSubWindow | None:
+    def widget_for_id(self) -> SubWindow | None:
         return get_main_window(self).window_for_id(self._target_id)
 
     def value(self) -> WidgetDataModel | None:
@@ -290,7 +291,7 @@ class QModelListItem(QtW.QWidget):
         self._label.setText(f"Model of <b>{model.type}</b>")
         self._data_model = model
 
-    def widget_for_id(self) -> QSubWindow | None:
+    def widget_for_id(self) -> SubWindow | None:
         return get_main_window(self).window_for_id(self._target_id)
 
     def to_model(self) -> WidgetDataModel | None:

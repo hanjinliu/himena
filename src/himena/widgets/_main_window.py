@@ -17,6 +17,7 @@ from typing import (
     TYPE_CHECKING,
 )
 import warnings
+import weakref
 from app_model.expressions import create_context
 from psygnal import SignalGroup, Signal
 
@@ -35,7 +36,6 @@ from himena.types import (
     DockAreaString,
     BackendInstructions,
 )
-from himena.session import from_yaml
 from himena.widgets._backend import BackendMainWindow
 from himena.widgets._hist import HistoryContainer, FileDialogHistoryDict
 from himena.widgets._initialize import remove_instance
@@ -76,7 +76,6 @@ class MainWindow(Generic[_W]):
         self._backend_main_window = backend
         self._tab_list = TabList(backend)
         self._new_widget_behavior = NewWidgetBehavior.WINDOW
-        self._gui_execution = True
         self._model_app = app
         self._instructions = BackendInstructions()
         self._history_tab = HistoryContainer[int](max_size=20)
@@ -90,6 +89,7 @@ class MainWindow(Generic[_W]):
             self._window_activated,
         )
         self._ctx_keys = AppContext(create_context(self, max_depth=0))
+        self._id_to_widget_map = weakref.WeakValueDictionary[uuid.UUID, SubWindow]()
         self._tab_list.changed.connect(backend._update_context)
         self._dock_widget_list = DockWidgetList(backend)
         self._recent_manager = RecentFileManager.default(app)
@@ -187,12 +187,9 @@ class MainWindow(Generic[_W]):
         self._backend_main_window._set_current_tab_index(n_tab)
         return self.tabs[n_tab]
 
-    def window_for_id(self, identifier: int) -> SubWindow[_W] | None:
+    def window_for_id(self, identifier: uuid.UUID) -> SubWindow[_W] | None:
         """Retrieve a sub-window by its identifier."""
-        for win in self.iter_windows():
-            if win._identifier == identifier:
-                return win
-        return None
+        return self._id_to_widget_map.get(identifier)
 
     def _current_or_new_tab(self) -> tuple[int, TabArea[_W]]:
         if self._new_widget_behavior is NewWidgetBehavior.WINDOW:
@@ -384,7 +381,9 @@ class MainWindow(Generic[_W]):
         return tabarea.read_files_async(file_paths, plugin=plugin)
 
     def read_session(self, path: str | Path) -> None:
-        """Read a session file and open the session."""
+        """Read a session file and update the main window based on the content."""
+        from himena.session import from_yaml
+
         fp = Path(path)
         from_yaml(fp).update_gui(self)
         # always plugin=None for reading a session file as a session
@@ -392,12 +391,12 @@ class MainWindow(Generic[_W]):
         self.set_status_tip(f"Session loaded: {fp}", duration=5)
         return None
 
-    def save_session(self, path: str | Path) -> None:
+    def save_session(self, path: str | Path, *, allow_calculate: bool = False) -> None:
         """Save the current session to a file."""
         from himena.session import AppSession
 
         path = Path(path)
-        AppSession.from_gui(self).dump_yaml(path)
+        AppSession.from_gui(self, allow_calculate=allow_calculate).dump_yaml(path)
         self.set_status_tip(f"Session saved to {path}")
         self._recent_session_manager.append_recent_files([(path, None)])
         return None
@@ -517,6 +516,7 @@ class MainWindow(Generic[_W]):
         model_context: WidgetDataModel | None = None,
         window_context: SubWindow | None = None,
         with_params: dict[str, Any] | None = None,
+        process_model_output: bool = True,
     ) -> Any:
         """Execute an action by its ID.
 
@@ -536,26 +536,32 @@ class MainWindow(Generic[_W]):
         """
         providers: list[tuple[Any, type]] = []
         if model_context is not None:
-            providers.append((model_context, WidgetDataModel))
+            providers.append((model_context, WidgetDataModel, 1000))
         if window_context is not None:
-            providers.append((window_context, SubWindow))
+            providers.append((window_context, SubWindow, 1000))
         # execute the command under the given context
         with (
             self.model_app.injection_store.register(providers=providers),
-            self._execute_in_gui_context(is_gui=with_params is None),
+            self._execute_in_context(
+                is_gui=with_params is None, process_model_output=process_model_output
+            ),
         ):
             result = self.model_app.commands.execute_command(id).result()
-        if with_params is not None:
-            if tab := self.tabs.current():
-                param_widget = tab[-1]
-            else:  # pragma: no cover
-                raise RuntimeError("Unreachable code.")
-            if not isinstance(param_widget, ParametricWindow):
-                raise ValueError(f"Parametric widget expected but got {param_widget}.")
-            # run the callback with the given parameters synchronously
-            result = param_widget._callback_with_params(with_params, force_sync=True)
-            if isinstance(result, Future):
-                result = result.result()
+            if with_params is not None:
+                if tab := self.tabs.current():
+                    param_widget = tab[-1]
+                else:  # pragma: no cover
+                    raise RuntimeError("Unreachable code.")
+                if not isinstance(param_widget, ParametricWindow):
+                    raise ValueError(
+                        f"Parametric widget expected but got {param_widget}."
+                    )
+                # run the callback with the given parameters synchronously
+                result = param_widget._callback_with_params(
+                    with_params, force_sync=True
+                )
+                if isinstance(result, Future):
+                    result = result.result()
         return result
 
     @overload
@@ -777,13 +783,18 @@ class MainWindow(Generic[_W]):
         return None
 
     @contextmanager
-    def _execute_in_gui_context(self, is_gui: bool = False):
-        was_gui = self._gui_execution
-        self._gui_execution = is_gui
+    def _execute_in_context(
+        self, is_gui: bool = False, process_model_output: bool = True
+    ):
+        # TODO: need Lock for this context manager
+        old_inst = self._instructions.model_copy()
+        self._instructions = self._instructions.updated(
+            gui_execution=is_gui, process_model_output=process_model_output
+        )
         try:
             yield None
         finally:
-            self._gui_execution = was_gui
+            self._instructions = old_inst
 
     def _iter_widget_class(self, model: WidgetDataModel) -> Iterator[type[_W]]:
         """Pick the most suitable widget class for the given model."""

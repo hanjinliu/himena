@@ -201,7 +201,7 @@ class QWorkflowControl(QtW.QWidget):
     def _run_workflow(self):
         if self._view._tree_widget._workflow is None:
             return
-        self._view._tree_widget._workflow.get_model()
+        self._view._tree_widget._workflow.compute()
 
 
 _STEP_ROLE = QtCore.Qt.ItemDataRole.UserRole

@@ -98,7 +98,7 @@ class CommandExecution(WorkflowStep):
     contexts: list[CommandParameterType] = Field(default_factory=list)
     parameters: list[CommandParameterType] = Field(default_factory=list)
 
-    def iter_parents(self) -> Iterator[int]:
+    def iter_parents(self) -> Iterator[uuid.UUID]:
         for ctx in self.contexts:
             if isinstance(ctx, ModelParameter):
                 yield ctx.value
@@ -142,6 +142,7 @@ class CommandExecution(WorkflowStep):
             window_context=window_context,
             model_context=model_context,
             with_params=params,
+            process_model_output=False,
         )
         if not isinstance(result, WidgetDataModel):
             raise ValueError(f"Expected to return a WidgetDataModel but got {result}")

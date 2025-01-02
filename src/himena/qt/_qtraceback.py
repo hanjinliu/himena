@@ -191,15 +191,28 @@ def get_tb_formatter() -> Callable[[ExcInfo, bool, str], str]:
     return format_exc_info
 
 
+def _filter_traceback(tb: TracebackType) -> TracebackType:
+    tb_orig = tb
+    while tb:
+        if tb.tb_next and tb.tb_next.tb_frame.f_locals.get("__tracebackhide__", False):
+            tb.tb_next = None
+            break
+        tb = tb.tb_next
+    return tb_orig
+
+
 def format_exc_info_ipython(info: ExcInfo, as_html: bool, color="Neutral") -> str:
     import IPython.core.ultratb
+
+    typ, exc, tb = info
+    tb = _filter_traceback(tb)
 
     # avoid verbose printing of the array data
     with np.printoptions(precision=5, threshold=10, edgeitems=2):
         vbtb = IPython.core.ultratb.VerboseTB(color_scheme=color)
         if as_html:
             ansi_string = (
-                vbtb.text(*info)
+                vbtb.text(typ, exc, tb)
                 .replace(" ", "&nbsp;")
                 .replace("<", "&lt;")
                 .replace(">", "&gt;")

@@ -339,7 +339,13 @@ def save_session_from_dialog(ui: MainWindow) -> None:
                 need_overwrite.append(win)
             else:
                 need_save.append(win)
+    # NOTE: need_save and need_overwrite are disjoint.
+    allow_calc = False
     if need_save:
+        _CS = "Save one by one"
+        _CJ = "Just skip"
+        _CR = "Recalculate when loaded"
+        _CC = "Cancel"
         _list = "".join([f"<li>{win.title}</li>" for win in need_save])
         res = ui.exec_choose_one_dialog(
             title="Not saved windows",
@@ -347,18 +353,24 @@ def save_session_from_dialog(ui: MainWindow) -> None:
                 f"Following windows are not saved yet.<ul>{_list}</ul>"
                 "Do you want to save them?"
             ),
-            choices=["Save one by one", "Just skip them", "Cancel"],
+            choices=[_CS, _CJ, _CR, _CC],
+            how="radiobuttons",
         )
-        if res == "Save one by one":
+        if res == _CS:
             for win in need_save:
                 ui.current_window = win
                 if not win._save_from_dialog(ui, behavior=SaveToNewPath()):
                     raise Cancelled
-        elif res == "Just skip them":
+        elif res == _CJ:
             pass
+        elif res == _CR:
+            allow_calc = True
         else:
             raise Cancelled
     if need_overwrite:
+        _CO = "Overwrite all"
+        _CK = "Keep original"
+        _CC = "Cancel"
         _list = "".join([f"<li>{win.title}</li>" for win in need_overwrite])
         res = ui.exec_choose_one_dialog(
             title="Modified windows",
@@ -366,13 +378,13 @@ def save_session_from_dialog(ui: MainWindow) -> None:
                 f"Following window are modified.<ul>{_list}</ul>"
                 "Do you want to overwrite them?"
             ),
-            choices=["Overwrite all", "Keep original", "Cancel"],
+            choices=[_CO, _CK, _CC],
         )
-        if res == "Overwrite all":
+        if res == _CO:
             for win in need_overwrite:
                 assert isinstance(win.save_behavior, SaveToPath)
                 win.write_model(win.save_behavior.path, win.save_behavior.plugin)
-        elif res == "Keep original":
+        elif res == _CK:
             pass
         else:
             raise Cancelled
@@ -384,7 +396,7 @@ def save_session_from_dialog(ui: MainWindow) -> None:
         start_path=f"himena-{datetime_str}.session.yaml",
         group="session",
     ):
-        return ui.save_session(path)
+        return ui.save_session(path, allow_calculate=allow_calc)
     raise Cancelled
 
 

@@ -149,6 +149,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
 
         main._move_focus_to(front)
         sub_window._alive = True
+        main._himena_main_window._id_to_widget_map[sub_window._identifier] = sub_window
         return None
 
     def current(self, default: _T = None) -> SubWindow[_W] | _T:
@@ -345,6 +346,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         if title is None:
             title = getattr(interf, "default_title", _make_title)(len(self))
         out = main.add_widget(front, self._i_tab, title)
+        main._himena_main_window._id_to_widget_map[sub_window._identifier] = sub_window
         if hasattr(interf, "control_widget"):
             main._set_control_widget(front, interf.control_widget())
 
@@ -586,6 +588,7 @@ class DockWidgetList(
         return None
 
     def widget_for_id(self, id: uuid.UUID) -> DockWidget[_W] | None:
+        """Pick the dock widget by its ID."""
         for _dock in self:
             if id != _dock._identifier:
                 continue

@@ -127,9 +127,10 @@ def init_application(app: HimenaApplication) -> HimenaApplication:
     def _process_data_model(model: WidgetDataModel) -> None:
         if not isinstance(model, WidgetDataModel):
             raise TypeError(f"Expected WidgetDataModel, got {type(model)}")
-        _LOGGER.debug("processing %r", model)
         ins = current_instance(app.name)
-        ins.add_data_model(model)
+        if ins._instructions.process_model_output:
+            _LOGGER.debug("processing %r", model)
+            ins.add_data_model(model)
         return None
 
     @app.injection_store.mark_processor
@@ -156,7 +157,7 @@ def init_application(app: HimenaApplication) -> HimenaApplication:
         ins = current_instance(app.name)
         gui_config, run_immediately_with = get_gui_config(fn)
         win = ins.add_function(fn, **gui_config)
-        if run_immediately_with is not None and ins._gui_execution:
+        if run_immediately_with is not None and ins._instructions.gui_execution:
             kwargs = run_immediately_with()
             win._callback_with_params(kwargs)
         return None

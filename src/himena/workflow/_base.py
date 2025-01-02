@@ -30,13 +30,20 @@ class WorkflowStep(BaseModel):
         raise NotImplementedError("This method must be implemented in a subclass.")
 
     def get_model(self, wf: "Workflow") -> "WidgetDataModel":
+        if out := wf._model_cache.get(self.id):
+            return out
         model = self._get_model_impl(wf)
         model.workflow = wf
         return model
 
+    def get_and_process_model(self, wf: "Workflow") -> "WidgetDataModel":
+        model = self.get_model(wf)
+        self._current_store().process(model, type_hint=WidgetDataModel)
+        return model
+
     def get_model_with_traceback(self, wf: "Workflow") -> "WidgetDataModel":
         try:
-            self._get_model_impl(wf)
+            return self._get_model_impl(wf)
         except Exception as e:
             raise ValueError(f"Failed to get model for {self!r}") from e
 

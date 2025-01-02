@@ -350,7 +350,7 @@ def test_save_behavior(ui: MainWindow, tmpdir):
     ui.exec_action("duplicate-window")
     win2 = ui.current_window
     assert not win2._need_ask_save_before_close()
-    assert isinstance(win2._widget_workflow, CommandExecution)
+    assert isinstance(win2._widget_workflow.last(), CommandExecution)
     # special case for duplicate-window
     assert isinstance(win2.save_behavior, NoNeedToSave)
 
@@ -359,7 +359,7 @@ def test_save_behavior(ui: MainWindow, tmpdir):
     ui.exec_action("save-as")
     win3 = ui.current_window
     assert not win3._need_ask_save_before_close()
-    assert isinstance(win3._widget_workflow, CommandExecution)
+    assert isinstance(win3._widget_workflow.last(), CommandExecution)
     assert isinstance(win3.save_behavior, SaveToPath)
 
     ui.current_window = win3

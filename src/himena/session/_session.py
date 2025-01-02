@@ -7,13 +7,12 @@ from pydantic_compat import BaseModel, Field
 import yaml
 
 from himena._descriptors import SaveToPath
-from himena.types import WindowState, WindowRect
-from himena import anchor, _providers
-from himena.widgets._widget_list import TabArea
-from himena.workflow import Workflow
+from himena.types import WindowState, WindowRect, WidgetDataModel
+from himena import anchor
+from himena.workflow import Workflow, compute, WorkflowStepType, LocalReaderMethod
 
 if TYPE_CHECKING:
-    from himena.widgets import SubWindow, MainWindow
+    from himena.widgets import SubWindow, TabArea, MainWindow
 
 _W = TypeVar("_W")  # backend widget type
 _LOGGER = getLogger(__name__)
@@ -22,10 +21,10 @@ _LOGGER = getLogger(__name__)
 class WindowRectModel(BaseModel):
     """A model version of a window rectangle."""
 
-    left: int = Field(...)
-    top: int = Field(...)
-    width: int = Field(...)
-    height: int = Field(...)
+    left: int
+    top: int
+    width: int
+    height: int
 
     @classmethod
     def from_tuple(cls, rect: WindowRect) -> "WindowRectModel":
@@ -36,30 +35,33 @@ class WindowRectModel(BaseModel):
         return WindowRect(self.left, self.top, self.width, self.height)
 
 
-class ReadFromModel(BaseModel):
-    """A model that describes how to read a model."""
-
-    path: Path | list[Path] = Field(...)
-    plugin: str | None = Field(default=None)
-
-
 class WindowDescription(BaseModel):
     """A model that describes a window state."""
 
     title: str
-    workflow: Workflow
     rect: WindowRectModel
     state: WindowState = Field(default=WindowState.NORMAL)
     anchor: dict[str, Any] = Field(default_factory=lambda: {"type": "no-anchor"})
-    id: uuid.UUID = Field(...)
-    read_from: ReadFromModel = Field(...)
+    id: uuid.UUID
+    short_workflow: WorkflowStepType | None
+    workflow: Workflow
 
     @classmethod
-    def from_gui(cls, window: "SubWindow") -> "WindowDescription":
+    def from_gui(
+        cls,
+        window: "SubWindow",
+        *,
+        allow_calculate: bool = False,
+    ) -> "WindowDescription":
         """Construct a WindowDescription from a SubWindow instance."""
         read_from = window._determine_read_from()
         if read_from is None:
-            raise ValueError("Cannot determine where to read the model from.")
+            if allow_calculate:
+                short_workflow = None
+            else:
+                raise ValueError("Cannot determine where to read the model from.")
+        else:
+            short_workflow = LocalReaderMethod(path=read_from[0], plugin=read_from[1])
         return WindowDescription(
             title=window.title,
             workflow=window.to_model().workflow,
@@ -67,8 +69,20 @@ class WindowDescription(BaseModel):
             state=window.state,
             anchor=anchor.anchor_to_dict(window.anchor),
             id=window._identifier,
-            read_from=ReadFromModel(path=read_from[0], plugin=read_from[1]),
+            short_workflow=short_workflow,
         )
+
+    def process_model(self, area: "TabArea[_W]", model: "WidgetDataModel"):
+        model.workflow = self.workflow
+        window = area.add_data_model(model)
+        window.title = self.title
+        window.rect = self.rect.to_tuple()
+        window.state = self.state
+        window.anchor = anchor.dict_to_anchor(self.anchor)
+        if isinstance(meth := self.short_workflow, LocalReaderMethod):
+            window._save_behavior = SaveToPath(path=meth.path, plugin=meth.plugin)
+        window._identifier = self.id
+        return model
 
 
 class TabSession(BaseModel):
@@ -77,47 +91,48 @@ class TabSession(BaseModel):
     name: str = Field(default="")
     windows: list[WindowDescription] = Field(default_factory=list)
     current_index: int | None = Field(default=None)
+    # `layout = Field(default_factory=LayoutModel)` in the future
 
     @classmethod
-    def from_gui(cls, tab: TabArea) -> "TabSession":
+    def from_gui(
+        cls,
+        tab: "TabArea[_W]",
+        *,
+        allow_calculate: bool = False,
+    ) -> "TabSession":
         return TabSession(
             name=tab.name,
             current_index=tab.current_index,
-            windows=[WindowDescription.from_gui(window) for window in tab],
+            windows=[
+                WindowDescription.from_gui(window, allow_calculate=allow_calculate)
+                for window in tab
+            ],
         )
 
-    def update_gui(self, main: "MainWindow[_W]") -> None:
+    def update_gui(self, main: "MainWindow[_W]", skip_calculate: bool = True) -> None:
         """Update the GUI state based on the session."""
         area = main.add_tab(self.name)
         cur_index = self.current_index
-        store = _providers.ReaderProviderStore().instance()
-        for window_session in self.windows:
-            try:
-                model = store.run(
-                    path=window_session.read_from.path,
-                    plugin=window_session.read_from.plugin,
-                )
-            except Exception as e:
-                cur_index -= 1
-                _LOGGER.warning(
-                    "Could not load a window %r: %s", window_session.title, e
-                )
-                continue
-            model.workflow = window_session.workflow
-            window = area.add_data_model(model)
-            window.title = window_session.title
-            window.rect = window_session.rect.to_tuple()
-            window.state = window_session.state
-            window.anchor = anchor.dict_to_anchor(window_session.anchor)
-            window._save_behavior = SaveToPath(
-                path=window_session.read_from.path,
-                plugin=window_session.read_from.plugin,
-            )
+        with main.model_app.injection_store.register_processor(
+            lambda _: None, type_hint=WidgetDataModel, weight=1000
+        ):
+            for window_session in self.windows:
+                if (swf := window_session.short_workflow) is None and skip_calculate:
+                    continue
+                try:
+                    model = swf.get_and_process_model(window_session.workflow)
+                    window_session.process_model(area, model)
+                except Exception as e:
+                    cur_index -= 1
+                    _LOGGER.warning(
+                        "Could not load a window %r: %s", window_session.title, e
+                    )
         if 0 <= cur_index < len(area):
             area.current_index = cur_index
         return None
 
     def dump_yaml(self, path: str | Path) -> None:
+        """Dump the session to a YAML file."""
         js = self.model_dump(mode="json")
         js = {"session": "tab", **js}
         with open(path, "w") as f:
@@ -141,21 +156,65 @@ class AppSession(BaseModel):
     current_index: int = Field(default=0)
 
     @classmethod
-    def from_gui(cls, main: "MainWindow[_W]") -> "AppSession":
+    def from_gui(
+        cls,
+        main: "MainWindow[_W]",
+        *,
+        allow_calculate: bool = False,
+    ) -> "AppSession":
         return AppSession(
-            tabs=[TabSession.from_gui(tab) for tab in main.tabs],
+            tabs=[
+                TabSession.from_gui(tab, allow_calculate=allow_calculate)
+                for tab in main.tabs
+            ],
             current_index=main.tabs.current_index,
         )
 
     def update_gui(self, main: "MainWindow[_W]") -> None:
         """Update the GUI state based on the session."""
         cur_index = self.current_index
+        _tab_sessions: list[TabSession] = []
+        _win_sessions: list[WindowDescription] = []
+        _target_areas: list[TabArea] = []
+        pending_workflows: list[Workflow] = []
         for tab_session in self.tabs:
-            tab_session.update_gui(main)
+            _tab_sessions.append(tab_session)
+            _new_tab = main.add_tab(tab_session.name)
+            for window_session in tab_session.windows:
+                _win_sessions.append(window_session)
+                if window_session.short_workflow is None:
+                    wf = window_session.workflow
+                else:
+                    wf = Workflow(steps=[window_session.short_workflow])
+                pending_workflows.append(wf)
+                _target_areas.append(_new_tab)
+        models = compute(pending_workflows)
+        _failed_sessions: list[tuple[WindowDescription, Exception]] = []
+        for _win_sess, _tab_area, model_or_exc in zip(
+            _win_sessions, _target_areas, models
+        ):
+            if isinstance(model_or_exc, Exception):
+                _failed_sessions.append((_win_sess, model_or_exc))
+                continue
+            _win_sess.process_model(_tab_area, model_or_exc)
+
+        # Update current active window for each tab
+        for tab_session, area in zip(_tab_sessions, _target_areas):
+            cur_tab_index = tab_session.current_index
+            if cur_tab_index is not None and 0 <= cur_tab_index < len(area):
+                area.current_index = cur_tab_index
         main.tabs.current_index = self.current_index + cur_index
+        if len(_failed_sessions) > 0:
+            msg = "Could not load the following windows:\n"
+            list_of_failed = "\n".join(
+                f"- {win.title} ({type(exc).__name__}:{exc})"
+                for win, exc in _failed_sessions
+            )
+            raise ValueError(msg + list_of_failed) from _failed_sessions[-1][1]
         return None
 
     def dump_yaml(self, path: str | Path) -> None:
+        """Dump the session to a YAML file."""
         js = self.model_dump(mode="json")
         js = {"session": "main", **js}
         with open(path, "w") as f:

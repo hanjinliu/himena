@@ -1,5 +1,5 @@
 from ._base import WorkflowStep
-from ._graph import Workflow
+from ._graph import Workflow, compute, WorkflowStepType
 from ._command import (
     CommandExecution,
     ListOfModelParameter,
@@ -19,6 +19,8 @@ from ._reader import (
 __all__ = [
     "WorkflowStep",
     "Workflow",
+    "compute",
+    "WorkflowStepType",
     "ProgrammaticMethod",
     "ReaderMethod",
     "LocalReaderMethod",
