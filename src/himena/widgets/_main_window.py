@@ -40,7 +40,7 @@ from himena.widgets._hist import HistoryContainer, FileDialogHistoryDict
 from himena.widgets._initialize import remove_instance
 from himena.widgets._widget_list import TabList, TabArea, DockWidgetList
 from himena.widgets._wrapper import ParametricWindow, SubWindow, DockWidget
-from himena.workflow import ProgrammaticMethod, Workflow
+from himena.workflow import ProgrammaticMethod
 
 if TYPE_CHECKING:
     from app_model.types import KeyBindingRule
@@ -300,7 +300,7 @@ class MainWindow(Generic[_W]):
             value=value,
             type=type,
             title=title,
-            workflow=Workflow(nodes=[ProgrammaticMethod()]),
+            workflow=ProgrammaticMethod().construct_workflow(),
         )
         return self.add_data_model(wd)
 

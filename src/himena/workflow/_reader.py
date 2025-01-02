@@ -2,10 +2,11 @@ import tempfile
 from typing import Iterator, Literal, Any, TYPE_CHECKING
 from pathlib import Path
 from pydantic_compat import Field
-from himena.workflow._base import WorkflowStep, Workflow
+from himena.workflow._base import WorkflowStep
 
 if TYPE_CHECKING:
     from himena.types import WidgetDataModel
+    from himena.workflow import Workflow
 
 
 class NoParentWorkflow(WorkflowStep):
@@ -13,6 +14,11 @@ class NoParentWorkflow(WorkflowStep):
 
     def iter_parents(self) -> Iterator[int]:
         yield from ()
+
+    def construct_workflow(self) -> "Workflow":
+        from himena.workflow import Workflow
+
+        return Workflow(steps=[self])
 
 
 class ProgrammaticMethod(NoParentWorkflow):
@@ -97,5 +103,5 @@ class SCPReaderMethod(ReaderMethod):
             subprocess.run(args)
             model = store.run(Path(dst), plugin=self.plugin)
             model.title = self.path.name
-        model.workflow = Workflow(nodes=[self])
+        model.workflow = self.construct_workflow()
         return model

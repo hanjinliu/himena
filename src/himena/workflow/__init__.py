@@ -1,4 +1,5 @@
-from ._base import Workflow, WorkflowStep
+from ._base import WorkflowStep
+from ._graph import Workflow
 from ._command import (
     CommandExecution,
     ListOfModelParameter,

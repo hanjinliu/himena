@@ -90,9 +90,8 @@ def _open_file_using_reader(
         plugin = None
     if ui:
         ui._recent_manager.append_recent_files([(file_path, plugin)])
-    model.workflow = _wf.Workflow(
-        nodes=[_wf.LocalReaderMethod(path=file_path, plugin=plugin)]
-    )
+    wf = _wf.LocalReaderMethod(path=file_path, plugin=plugin).construct_workflow()
+    model.workflow = wf
     return model
 
 

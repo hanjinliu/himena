@@ -1,9 +1,11 @@
 from typing import Iterator, Literal, Any, cast, Union, TYPE_CHECKING
+import uuid
 from pydantic_compat import BaseModel, Field
-from himena.workflow._base import WorkflowStep, Workflow
+from himena.workflow._base import WorkflowStep
 
 if TYPE_CHECKING:
     from himena.types import WidgetDataModel
+    from himena.workflow import Workflow
 
 
 class CommandParameterBase(BaseModel):
@@ -32,7 +34,7 @@ class ModelParameter(CommandParameterBase):
     """A class that describes a parameter that was set by a model."""
 
     type: Literal["model"] = "model"
-    value: int
+    value: uuid.UUID
     """workflow ID"""
     model_type: str
 
@@ -41,7 +43,7 @@ class WindowParameter(CommandParameterBase):
     """A class that describes a parameter that was set by a window."""
 
     type: Literal["window"] = "window"
-    value: int
+    value: uuid.UUID
     """workflow ID"""
     model_type: str
 
@@ -50,14 +52,15 @@ class ListOfModelParameter(CommandParameterBase):
     """A class that describes a list of model parameters."""
 
     type: Literal["list"] = "list"
-    value: list[int]
+    value: list[uuid.UUID]
     """workflow IDs"""
 
 
-def parse_parameter(name: str, value: Any) -> tuple[CommandParameterBase, Workflow]:
+def parse_parameter(name: str, value: Any) -> "tuple[CommandParameterBase, Workflow]":
     """Normalize a k=v argument to a CommandParameterBase instance."""
     from himena.types import WidgetDataModel
     from himena.widgets import SubWindow
+    from himena.workflow import Workflow
 
     if isinstance(value, WidgetDataModel):
         param = ModelParameter(
@@ -107,7 +110,7 @@ class CommandExecution(WorkflowStep):
             elif isinstance(param, ListOfModelParameter):
                 yield from param.value
 
-    def _get_model_impl(self, wf: Workflow) -> "WidgetDataModel":
+    def _get_model_impl(self, wf: "Workflow") -> "WidgetDataModel":
         from himena.types import WidgetDataModel
         from himena.widgets import current_instance
 
@@ -149,11 +152,11 @@ class UserModification(WorkflowStep):
     """Describes that one was modified from another model."""
 
     type: Literal["user-modification"] = "user-modification"
-    original: int
+    original: uuid.UUID
 
-    def _get_model_impl(self, wlist: "Workflow") -> "WidgetDataModel":
+    def _get_model_impl(self, sf: "Workflow") -> "WidgetDataModel":
         # just skip modification...
-        return wlist.model_for_id(self.original)
+        return sf.model_for_id(self.original)
 
-    def iter_parents(self) -> Iterator[int]:
+    def iter_parents(self) -> Iterator[uuid.UUID]:
         yield self.original

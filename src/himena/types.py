@@ -179,11 +179,8 @@ class WidgetDataModel(GenericModel[_T]):
             path = [Path(s).resolve() for s in source]
         else:
             path = Path(source).resolve()
-        to_update = {
-            "workflow": Workflow(
-                nodes=[LocalReaderMethod(path=path, plugin=plugin_name)]
-            )
-        }
+        wf = LocalReaderMethod(path=path, plugin=plugin_name).construct_workflow()
+        to_update = {"workflow": wf}
         if self.title is None:
             if isinstance(path, list):
                 to_update.update({"title": "File group"})
@@ -229,10 +226,8 @@ class WidgetDataModel(GenericModel[_T]):
     @property
     def source(self) -> Path | list[Path] | None:
         """The direct source path of the data."""
-        if len(self.workflow) == 1 and isinstance(
-            wf := self.workflow[0], LocalReaderMethod
-        ):
-            return wf.path
+        if isinstance(step := self.workflow.last(), LocalReaderMethod):
+            return step.path
         return None
 
     def is_subtype_of(self, supertype: str) -> bool:

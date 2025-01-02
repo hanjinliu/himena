@@ -1,3 +1,4 @@
+import importlib
 from pathlib import Path
 from logging import getLogger
 from typing import Any, TypeVar, TYPE_CHECKING
@@ -45,7 +46,7 @@ class WindowDescription(BaseModel):
     """A model that describes a window state."""
 
     title: str
-    workflow: dict[str, Any]
+    workflow: Workflow
     rect: WindowRectModel
     state: WindowState = Field(default=WindowState.NORMAL)
     anchor: dict[str, Any] = Field(default_factory=lambda: {"type": "no-anchor"})
@@ -60,7 +61,7 @@ class WindowDescription(BaseModel):
             raise ValueError("Cannot determine where to read the model from.")
         return WindowDescription(
             title=window.title,
-            workflow=window._widget_workflow.model_dump(mode="json"),
+            workflow=window.to_model().workflow,
             rect=WindowRectModel.from_tuple(window.rect),
             state=window.state,
             anchor=anchor.anchor_to_dict(window.anchor),
@@ -101,7 +102,7 @@ class TabSession(BaseModel):
                     "Could not load a window %r: %s", window_session.title, e
                 )
                 continue
-            model.workflow = Workflow.model_validate(window_session.workflow)
+            model.workflow = window_session.workflow
             window = area.add_data_model(model)
             window.title = window_session.title
             window.rect = window_session.rect.to_tuple()
@@ -123,9 +124,18 @@ class TabSession(BaseModel):
         return None
 
 
+def _get_version(mod, maybe_file: bool = False) -> str | None:
+    if maybe_file and Path(mod).suffix:
+        return None
+    if isinstance(mod, str):
+        mod = importlib.import_module(mod)
+    return getattr(mod, "__version__", None)
+
+
 class AppSession(BaseModel):
     """A session of the entire application."""
 
+    version: str | None = Field(default_factory=lambda: _get_version("himena"))
     tabs: list[TabSession] = Field(default_factory=list)
     current_index: int = Field(default=0)
 

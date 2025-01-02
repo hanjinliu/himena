@@ -33,7 +33,7 @@ from himena.workflow import (
     parse_parameter,
     WindowParameter,
 )
-from himena.workflow._base import Workflow
+from himena.workflow import Workflow
 
 if TYPE_CHECKING:
     _F = TypeVar("_F", bound=Callable)

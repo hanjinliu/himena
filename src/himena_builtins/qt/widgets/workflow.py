@@ -265,11 +265,11 @@ def _(step: _wf.CommandExecution) -> QtW.QTreeWidgetItem:
     for ctx in step.contexts:
         if isinstance(ctx, _wf.ModelParameter):
             child = QtW.QTreeWidgetItem(
-                [f"(context) <data model, type={param.model_type!r}>"]
+                [f"(context) <data model, type={ctx.model_type!r}>"]
             )
-        if isinstance(ctx, _wf.WindowParameter):
+        elif isinstance(ctx, _wf.WindowParameter):
             child = QtW.QTreeWidgetItem(
-                [f"(context) <window, type={param.model_type!r}>"]
+                [f"(context) <window, type={ctx.model_type!r}>"]
             )
         else:
             raise ValueError(f"Unknown context type {type(ctx)}")

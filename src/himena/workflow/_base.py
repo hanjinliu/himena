@@ -1,14 +1,13 @@
-from contextlib import contextmanager
-from typing import Iterable, Iterator, TYPE_CHECKING
+from typing import Iterator, TYPE_CHECKING
 from datetime import datetime as _datetime
 import uuid
 
-from pydantic import PrivateAttr
 from pydantic_compat import BaseModel, Field
 
 
 if TYPE_CHECKING:
     from himena.types import WidgetDataModel
+    from himena.workflow import Workflow
     import in_n_out as ino
 
 
@@ -21,10 +20,10 @@ class WorkflowStep(BaseModel):
     datetime: _datetime = Field(default_factory=_datetime.now)
     """The timestamp of the creation of this instance."""
 
-    id: int = Field(default_factory=lambda: uuid.uuid1().int)
+    id: uuid.UUID = Field(default_factory=lambda: uuid.uuid4())
     """The unique identifier of the workflow step across runtime."""
 
-    def iter_parents(self) -> Iterator[int]:
+    def iter_parents(self) -> Iterator[uuid.UUID]:
         raise NotImplementedError("This method must be implemented in a subclass.")
 
     def _get_model_impl(self, wf: "Workflow") -> "WidgetDataModel":
@@ -54,103 +53,3 @@ class WorkflowStep(BaseModel):
         from himena.widgets import current_instance
 
         return current_instance().model_app.injection_store
-
-
-class Workflow(BaseModel):
-    """Container of WorkflowStep instances.
-
-    The data structure of a workflow is a directed acyclic graph. Each node is a
-    WorkflowStep instance, and the edges are defined inside each CommandExecution
-    instance. Each node is tagged with a unique ID named `id`, which is used as a
-    mathematical identifier for the node.
-    """
-
-    nodes: list[WorkflowStep] = Field(default_factory=list)
-    _model_cache: dict[int, "WidgetDataModel"] = PrivateAttr(default_factory=dict)
-    _cahce_enabled: bool = PrivateAttr(default=False)
-
-    def id_to_index_map(self) -> dict[int, int]:
-        return {node.id: i for i, node in enumerate(self.nodes)}
-
-    def filter(self, step: int) -> "Workflow":
-        """Return another list that only contains the ancestors of the given ID."""
-        id_to_index_map = self.id_to_index_map()
-        index = id_to_index_map[step]
-        indices = {index}
-        all_descendant = [self.nodes[index]]
-        while all_descendant:
-            current = all_descendant.pop()
-            for id_ in current.iter_parents():
-                idx = id_to_index_map[id_]
-                if idx in indices:
-                    continue
-                indices.add(idx)
-                all_descendant.append(self.nodes[idx])
-        indices = sorted(indices)
-        out = Workflow(nodes=[self.nodes[i] for i in indices])
-        out._cahce_enabled = self._cahce_enabled
-        out._model_cache = self._model_cache  # NOTE: do not update, share the reference
-        return out
-
-    def __getitem__(self, index: int) -> WorkflowStep:
-        return self.nodes[index]
-
-    def last(self) -> WorkflowStep | None:
-        if len(self.nodes) == 0:
-            return None
-        return self.nodes[-1]
-
-    def last_id(self) -> int:
-        if step := self.last():
-            return step.id
-        raise ValueError("Workflow is empty.")
-
-    def model_for_id(self, id: int) -> "WidgetDataModel":
-        if model := self._model_cache.get(id):
-            return model
-        for workflow in self.nodes:
-            if workflow.id == id:
-                model = workflow.get_model(self)
-                if self._cahce_enabled:
-                    self._model_cache[id] = model
-                return model
-        raise ValueError(f"Workflow with id {id} not found.")
-
-    def __iter__(self):
-        return iter(self.nodes)
-
-    def __len__(self) -> int:
-        return len(self.nodes)
-
-    def with_step(self, step: WorkflowStep) -> "Workflow":
-        if not isinstance(step, WorkflowStep):
-            raise ValueError("Expected a Workflow instance.")
-        # The added step is always a unique node.
-        return Workflow(nodes=self.nodes + [step])
-
-    def get_model(self) -> "WidgetDataModel":
-        with self._cache_context():
-            return self[-1].get_model_with_traceback(self)
-
-    @contextmanager
-    def _cache_context(self):
-        was_enabled = self._cahce_enabled
-        self._cahce_enabled = True
-        try:
-            yield
-        finally:
-            self._cahce_enabled = was_enabled
-            self._model_cache.clear()
-
-    @classmethod
-    def concat(cls, workflows: Iterable["Workflow"]) -> "Workflow":
-        """Concatenate multiple workflows and drop duplicate nodes based on the ID."""
-        nodes: list[WorkflowStep] = []
-        id_found: set[int] = set()
-        for workflow in workflows:
-            for node in workflow:
-                if node.id in id_found:
-                    continue
-                id_found.add(node.id)
-                nodes.append(node)
-        return Workflow(nodes=nodes)
