@@ -5,6 +5,7 @@ import inspect
 from pathlib import Path
 from typing import Callable, Generic, TYPE_CHECKING, Iterator, Literal, TypeVar
 from collections.abc import Sequence
+import uuid
 import weakref
 
 from psygnal import Signal
@@ -584,7 +585,7 @@ class DockWidgetList(
         self._dock_widget_set[dock] = dock.widget
         return None
 
-    def widget_for_id(self, id: str) -> DockWidget[_W] | None:
+    def widget_for_id(self, id: uuid.UUID) -> DockWidget[_W] | None:
         for _dock in self:
             if id != _dock._identifier:
                 continue

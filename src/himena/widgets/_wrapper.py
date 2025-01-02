@@ -8,7 +8,7 @@ import inspect
 import logging
 from pathlib import Path
 from typing import Any, Callable, Generic, TYPE_CHECKING, Literal, TypeVar
-from uuid import uuid4
+import uuid
 import weakref
 
 from psygnal import Signal
@@ -66,12 +66,12 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         self,
         widget: _W,
         main_window: BackendMainWindow[_W],
-        identifier: int | None = None,
+        identifier: uuid.UUID | None = None,
     ):
         super().__init__(main_window)
         self._widget = weakref.ref(widget)
         if identifier is None:
-            identifier = uuid4().int
+            identifier = uuid.uuid4()
         self._identifier = identifier
         self._save_behavior: SaveBehavior = SaveToNewPath()
         self._widget_workflow = Workflow()
@@ -254,7 +254,7 @@ class SubWindow(WidgetWrapper[_W]):
         self,
         widget: _W,
         main_window: BackendMainWindow[_W],
-        identifier: int | None = None,
+        identifier: uuid.UUID | None = None,
     ):
         super().__init__(widget, main_window=main_window, identifier=identifier)
         self._child_windows: weakref.WeakSet[SubWindow[_W]] = weakref.WeakSet()
@@ -544,7 +544,7 @@ class ParametricWindow(SubWindow[_W]):
         widget: _W,
         callback: Callable,
         main_window: BackendMainWindow[_W],
-        identifier: int | None = None,
+        identifier: uuid.UUID | None = None,
     ):
         super().__init__(widget, main_window, identifier)
         self._callback = callback

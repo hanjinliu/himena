@@ -2,6 +2,7 @@ import importlib
 from pathlib import Path
 from logging import getLogger
 from typing import Any, TypeVar, TYPE_CHECKING
+import uuid
 from pydantic_compat import BaseModel, Field
 import yaml
 
@@ -50,7 +51,7 @@ class WindowDescription(BaseModel):
     rect: WindowRectModel
     state: WindowState = Field(default=WindowState.NORMAL)
     anchor: dict[str, Any] = Field(default_factory=lambda: {"type": "no-anchor"})
-    identifier: int = Field(default=0)
+    id: uuid.UUID = Field(...)
     read_from: ReadFromModel = Field(...)
 
     @classmethod
@@ -65,7 +66,7 @@ class WindowDescription(BaseModel):
             rect=WindowRectModel.from_tuple(window.rect),
             state=window.state,
             anchor=anchor.anchor_to_dict(window.anchor),
-            identifier=window._identifier,
+            id=window._identifier,
             read_from=ReadFromModel(path=read_from[0], plugin=read_from[1]),
         )
 

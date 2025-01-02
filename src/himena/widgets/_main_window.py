@@ -4,6 +4,7 @@ from concurrent.futures import Future, ThreadPoolExecutor
 from contextlib import contextmanager
 from logging import getLogger
 from pathlib import Path
+import uuid
 from typing import (
     Any,
     Callable,
@@ -238,7 +239,7 @@ class MainWindow(Generic[_W]):
         title: str | None = None,
         area: DockAreaString | DockArea | None = DockArea.RIGHT,
         allowed_areas: list[DockAreaString | DockArea] | None = None,
-        _identifier: int | None = None,
+        _identifier: uuid.UUID | None = None,
     ) -> DockWidget[_W]:
         """
         Add a custom widget as a dock widget of the main window.

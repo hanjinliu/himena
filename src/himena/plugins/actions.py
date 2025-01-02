@@ -4,7 +4,7 @@ from functools import reduce, wraps
 import operator
 import logging
 from copy import deepcopy
-from uuid import uuid4
+import uuid
 from typing import (
     Any,
     Callable,
@@ -419,7 +419,7 @@ def register_dock_widget(
             area=area,
             allowed_areas=allowed_areas,
             singleton=singleton,
-            uuid=uuid4().int,
+            uuid=uuid.uuid4(),
             command_id=_command_id,
         )
         if singleton:
@@ -454,7 +454,7 @@ class WidgetCallbackBase:
         func: Callable,
         title: str | None,
         singleton: bool,
-        uuid: int | None,
+        uuid: uuid.UUID | None,
         command_id: str,
     ):
         self._func = func
@@ -486,7 +486,7 @@ class DockWidgetCallback(WidgetCallbackBase):
         area: DockArea | DockAreaString,
         allowed_areas: Sequence[DockArea | DockAreaString] | None,
         singleton: bool,
-        uuid: int | None,
+        uuid: uuid.UUID | None,
         command_id: str,
     ):
         super().__init__(
