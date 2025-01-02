@@ -34,6 +34,7 @@ class ModelParameter(CommandParameterBase):
     type: Literal["model"] = "model"
     value: int
     """workflow ID"""
+    model_type: str
 
 
 class WindowParameter(CommandParameterBase):
@@ -42,6 +43,7 @@ class WindowParameter(CommandParameterBase):
     type: Literal["window"] = "window"
     value: int
     """workflow ID"""
+    model_type: str
 
 
 class ListOfModelParameter(CommandParameterBase):
@@ -58,12 +60,14 @@ def parse_parameter(name: str, value: Any) -> tuple[CommandParameterBase, Workfl
     from himena.widgets import SubWindow
 
     if isinstance(value, WidgetDataModel):
-        param = ModelParameter(name=name, value=value.workflow.last_id())
+        param = ModelParameter(
+            name=name, value=value.workflow.last_id(), model_type=value.type
+        )
         wf = value.workflow
     elif isinstance(value, SubWindow):
         model = value.to_model()
         wf = model.workflow
-        param = WindowParameter(name=name, value=wf.last_id())
+        param = WindowParameter(name=name, value=wf.last_id(), model_type=model.type)
     elif isinstance(value, list) and all(
         isinstance(each, (WidgetDataModel, SubWindow)) for each in value
     ):

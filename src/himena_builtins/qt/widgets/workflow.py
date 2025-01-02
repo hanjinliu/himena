@@ -33,6 +33,7 @@ class QWorkflowView(QtW.QWidget):
         self._tree_widget.set_workflow(wf)
         for each in wf:
             item = _step_to_item(each)
+            _add_common_child(item, each)
             self._tree_widget.addTopLevelItem(item)
 
     @validate_protocol
@@ -247,26 +248,45 @@ def _(step: _wf.CommandExecution) -> QtW.QTreeWidgetItem:
     item.setToolTip(0, step.command_id)
     for param in step.parameters:
         if isinstance(param, _wf.UserParameter):
-            child = QtW.QTreeWidgetItem([f"{param.name} = {param.value!r}"])
-        elif isinstance(param, (_wf.ModelParameter, _wf.WindowParameter)):
-            child = QtW.QTreeWidgetItem([f"{param.name} <- Model input"])
+            child = QtW.QTreeWidgetItem([f"(parameter) {param.name} = {param.value!r}"])
+        elif isinstance(param, _wf.ModelParameter):
+            child = QtW.QTreeWidgetItem(
+                [f"(parameter) {param.name} = <data model, type={param.model_type!r}>"]
+            )
+        elif isinstance(param, _wf.WindowParameter):
+            child = QtW.QTreeWidgetItem(
+                [f"(parameter) {param.name} = <window, type={param.model_type!r}>"]
+            )
         elif isinstance(param, _wf.ListOfModelParameter):
-            child = QtW.QTreeWidgetItem([f"{param.name} <- List of model inputs"])
+            child = QtW.QTreeWidgetItem([f"(parameter) {param.name} = <models>"])
         else:
             raise ValueError(f"Unknown parameter type {type(param)}")
         item.addChild(child)
     for ctx in step.contexts:
-        if isinstance(ctx, (_wf.ModelParameter, _wf.WindowParameter)):
-            child = QtW.QTreeWidgetItem(["Context <- model input"])
-            item.addChild(child)
+        if isinstance(ctx, _wf.ModelParameter):
+            child = QtW.QTreeWidgetItem(
+                [f"(context) <data model, type={param.model_type!r}>"]
+            )
+        if isinstance(ctx, _wf.WindowParameter):
+            child = QtW.QTreeWidgetItem(
+                [f"(context) <window, type={param.model_type!r}>"]
+            )
         else:
             raise ValueError(f"Unknown context type {type(ctx)}")
+        item.addChild(child)
     item.setData(0, _STEP_ROLE, step)
     return item
 
 
 @_step_to_item.register
-def _(step: _wf.ProgramaticMethod) -> QtW.QTreeWidgetItem:
-    item = QtW.QTreeWidgetItem(["[Programatic Method]"])
+def _(step: _wf.ProgrammaticMethod) -> QtW.QTreeWidgetItem:
+    item = QtW.QTreeWidgetItem(["[Programmatic Method]"])
     item.setData(0, _STEP_ROLE, step)
+    return item
+
+
+def _add_common_child(item: QtW.QTreeWidgetItem, step: _wf.WorkflowStep):
+    item.addChild(
+        QtW.QTreeWidgetItem([f"(datetime) {step.datetime:%Y-%m-%d %H:%M:%S}"])
+    )
     return item

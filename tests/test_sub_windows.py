@@ -5,7 +5,7 @@ from tempfile import TemporaryDirectory
 from qtpy import QtWidgets as QtW
 from himena import MainWindow, anchor
 from himena._descriptors import NoNeedToSave, SaveToNewPath, SaveToPath
-from himena.workflow import CommandExecution, LocalReaderMethod, ProgramaticMethod
+from himena.workflow import CommandExecution, LocalReaderMethod, ProgrammaticMethod
 from himena.types import ClipboardDataModel, WidgetDataModel, WindowRect
 from himena.qt import register_widget_class, MainWindowQt
 from himena_builtins.qt import widgets as _qtw
@@ -56,12 +56,12 @@ def test_io_commands(ui: MainWindow, tmpdir, sample_dir: Path):
 
     ui.add_object("Hello", type="text")
     assert isinstance(ui.current_window.save_behavior, SaveToNewPath)
-    assert isinstance(ui.current_window._widget_workflow.last(), ProgramaticMethod)
+    assert isinstance(ui.current_window._widget_workflow.last(), ProgrammaticMethod)
     ui._instructions = ui._instructions.updated(file_dialog_response=response_save)
     ui.exec_action("save")
     assert isinstance(ui.current_window.save_behavior, SaveToPath)
     assert ui.current_window.save_behavior.path == response_save()
-    assert isinstance(ui.current_window._widget_workflow.last(), ProgramaticMethod)
+    assert isinstance(ui.current_window._widget_workflow.last(), ProgrammaticMethod)
     ui.exec_action("save-as")
 
     # session

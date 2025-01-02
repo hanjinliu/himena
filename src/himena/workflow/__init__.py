@@ -8,12 +8,17 @@ from ._command import (
     WindowParameter,
     parse_parameter,
 )
-from ._reader import LocalReaderMethod, ProgramaticMethod, ReaderMethod, SCPReaderMethod
+from ._reader import (
+    LocalReaderMethod,
+    ProgrammaticMethod,
+    ReaderMethod,
+    SCPReaderMethod,
+)
 
 __all__ = [
     "WorkflowStep",
     "Workflow",
-    "ProgramaticMethod",
+    "ProgrammaticMethod",
     "ReaderMethod",
     "LocalReaderMethod",
     "SCPReaderMethod",

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import Any, Callable, Literal, TypeVar
 import numpy as np
 from himena._data_wrappers._array import wrap_array
 from himena._descriptors import NoNeedToSave
@@ -10,9 +10,6 @@ from himena.standards.model_meta import (
     ImageMeta,
 )
 from himena.widgets import set_status_tip, SubWindow
-
-if TYPE_CHECKING:
-    import numpy as np
 
 
 @register_function(
@@ -136,14 +133,39 @@ def binary_operation() -> Parametric:
         x={"types": [StandardType.ARRAY]},
         operation={"choices": choices},
         y={"types": [StandardType.ARRAY]},
+        clip_overflows={
+            "tooltip": (
+                "If checked, underflow will be clipped to 0, and "
+                "overflow will be \n"
+                "clipped to the maximum value of the data type. Only applicable to \n"
+                "integer data types with +, -, *, ** operations."
+            )
+        },
     )
     def run_calc(
         x: WidgetDataModel,
-        operation,
+        operation: Callable,
         y: WidgetDataModel,
+        clip_overflows: bool = True,
+        result_dtype: Literal["as is", "input", "float32", "float64"] = "as is",
     ) -> WidgetDataModel:
-        arr_out = operation(x.value, y.value)
         op_name = operation.__name__.strip("_")
+        if result_dtype == "float32":
+            xval = x.value.astype(np.float32, copy=False)
+            yval = y.value.astype(np.float32, copy=False)
+        elif result_dtype == "float64":
+            xval = x.value.astype(np.float64, copy=False)
+            yval = y.value.astype(np.float64, copy=False)
+        else:
+            xval, yval = x.value, y.value
+        arr_out = operation(xval, yval)
+        if clip_overflows:
+            if operation in (_op.add, _op.mul, _op.pow):
+                _replace_overflows(xval, yval, arr_out)
+            elif operation is _op.sub:
+                _replace_underflows(xval, yval, arr_out)
+        if result_dtype == "input":
+            arr_out = arr_out.astype(xval.dtype, copy=False)
         return x.with_value(arr_out, title=f"{op_name} {x.title} and {y.title}")
 
     return run_calc
@@ -298,3 +320,17 @@ def _parse_float_and_unit(s: str) -> tuple[float, str | None]:
     if unit_start == -1:
         return float(s), None
     return float(s[: unit_start - 1]), s[unit_start - 1 :]
+
+
+def _replace_overflows(a, b, result):
+    if result.dtype.kind not in "iu":
+        return
+    overflow_region = (result < a) | (result < b)
+    result[overflow_region] = np.iinfo(result.dtype).max
+
+
+def _replace_underflows(a, b, result):
+    if result.dtype.kind not in "iu":
+        return
+    underflow_region = (result > a) | (result > b)
+    result[underflow_region] = np.iinfo(result.dtype).min

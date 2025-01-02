@@ -15,10 +15,10 @@ class NoParentWorkflow(WorkflowStep):
         yield from ()
 
 
-class ProgramaticMethod(NoParentWorkflow):
+class ProgrammaticMethod(NoParentWorkflow):
     """Describes that one was created programmatically."""
 
-    type: Literal["programatic"] = "programatic"
+    type: Literal["programmatic"] = "programmatic"
 
 
 class ReaderMethod(NoParentWorkflow):

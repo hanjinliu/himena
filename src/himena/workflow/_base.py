@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from typing import Iterable, Iterator, TYPE_CHECKING
 from datetime import datetime as _datetime
-from itertools import count
+import uuid
 
 from pydantic import PrivateAttr
 from pydantic_compat import BaseModel, Field
@@ -10,8 +10,6 @@ from pydantic_compat import BaseModel, Field
 if TYPE_CHECKING:
     from himena.types import WidgetDataModel
     import in_n_out as ino
-
-_COUNT_UP = count().__next__
 
 
 class WorkflowStep(BaseModel):
@@ -23,8 +21,8 @@ class WorkflowStep(BaseModel):
     datetime: _datetime = Field(default_factory=_datetime.now)
     """The timestamp of the creation of this instance."""
 
-    id: int = Field(default_factory=_COUNT_UP)
-    """The unique identifier of the workflow step during the runtime."""
+    id: int = Field(default_factory=lambda: uuid.uuid1().int)
+    """The unique identifier of the workflow step across runtime."""
 
     def iter_parents(self) -> Iterator[int]:
         raise NotImplementedError("This method must be implemented in a subclass.")
@@ -75,7 +73,7 @@ class Workflow(BaseModel):
         return {node.id: i for i, node in enumerate(self.nodes)}
 
     def filter(self, step: int) -> "Workflow":
-        """Return another list that only contains the descendants of the given ID."""
+        """Return another list that only contains the ancestors of the given ID."""
         id_to_index_map = self.id_to_index_map()
         index = id_to_index_map[step]
         indices = {index}
@@ -124,13 +122,11 @@ class Workflow(BaseModel):
     def __len__(self) -> int:
         return len(self.nodes)
 
-    def __add__(self, other: "Workflow") -> "Workflow":
-        return Workflow(nodes=self.nodes + other.nodes)
-
-    def with_step(self, workflow: WorkflowStep) -> "Workflow":
-        if not isinstance(workflow, WorkflowStep):
+    def with_step(self, step: WorkflowStep) -> "Workflow":
+        if not isinstance(step, WorkflowStep):
             raise ValueError("Expected a Workflow instance.")
-        return Workflow(nodes=self.nodes + [workflow])
+        # The added step is always a unique node.
+        return Workflow(nodes=self.nodes + [step])
 
     def get_model(self) -> "WidgetDataModel":
         with self._cache_context():
@@ -147,5 +143,14 @@ class Workflow(BaseModel):
             self._model_cache.clear()
 
     @classmethod
-    def concat(cls, workflows: Iterable[WorkflowStep]) -> "Workflow":
-        return Workflow(nodes=sum(workflows, start=cls()))
+    def concat(cls, workflows: Iterable["Workflow"]) -> "Workflow":
+        """Concatenate multiple workflows and drop duplicate nodes based on the ID."""
+        nodes: list[WorkflowStep] = []
+        id_found: set[int] = set()
+        for workflow in workflows:
+            for node in workflow:
+                if node.id in id_found:
+                    continue
+                id_found.add(node.id)
+                nodes.append(node)
+        return Workflow(nodes=nodes)
