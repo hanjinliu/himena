@@ -26,6 +26,10 @@ _TABLE_LIKE = [StandardType.TABLE, StandardType.DATAFRAME, StandardType.EXCEL]
 _MENU = ["tools/plot", "/model_menu/plot"]
 _EDGE_ONLY_VALUE = {"color": "tab10", "width": 2.0}
 
+# Single 2D selection in the form of ((row start, row stop), (col start, col stop))
+# We should avoid using slice because it is not serializable.
+SelectionType = tuple[tuple[int, int], tuple[int, int]]
+
 
 @register_function(
     title="Scatter plot ...",
@@ -43,8 +47,8 @@ def scatter_plot(model: WidgetDataModel) -> Parametric:
         edge={"widget_type": EdgePropertyEdit},
     )
     def configure_plot(
-        x: tuple[slice, slice] | None,
-        y: tuple[slice, slice],
+        x: SelectionType | None,
+        y: SelectionType,
         symbol: str = "o",
         size: float = 6.0,
         face: dict = {},
@@ -85,8 +89,8 @@ def line_plot(model: WidgetDataModel) -> Parametric:
         edge={"widget_type": EdgePropertyEdit, "value": _EDGE_ONLY_VALUE},
     )
     def configure_plot(
-        x: tuple[slice, slice] | None,
-        y: tuple[slice, slice],
+        x: SelectionType | None,
+        y: SelectionType,
         edge: dict = {},
     ) -> WidgetDataModel:
         fig = hplt.figure()
@@ -122,9 +126,9 @@ def bar_plot(model: WidgetDataModel) -> Parametric:
         edge={"widget_type": EdgePropertyEdit},
     )
     def configure_plot(
-        x: tuple[slice, slice] | None,
-        y: tuple[slice, slice],
-        bottom: tuple[slice, slice] | None = None,
+        x: SelectionType | None,
+        y: SelectionType,
+        bottom: SelectionType | None = None,
         bar_width: float = 0.8,
         face: dict = {},
         edge: dict = {},
@@ -169,10 +173,10 @@ def errorbar_plot(model: WidgetDataModel) -> Parametric:
         edge={"widget_type": EdgePropertyEdit, "value": _EDGE_ONLY_VALUE},
     )
     def configure_plot(
-        x: tuple[slice, slice] | None,
-        y: tuple[slice, slice],
-        xerr: tuple[slice, slice] | None,
-        yerr: tuple[slice, slice] | None,
+        x: SelectionType | None,
+        y: SelectionType,
+        xerr: SelectionType | None,
+        yerr: SelectionType | None,
         capsize: float = 0.0,
         edge: dict = {},
     ) -> WidgetDataModel:
@@ -218,9 +222,9 @@ def band_plot(model: WidgetDataModel) -> Parametric:
         edge={"widget_type": EdgePropertyEdit},
     )
     def configure_plot(
-        x: tuple[slice, slice] | None,
-        y0: tuple[slice, slice],
-        y1: tuple[slice, slice],
+        x: SelectionType | None,
+        y0: SelectionType,
+        y1: SelectionType,
         face: dict = {},
         edge: dict = {},
     ) -> WidgetDataModel:
@@ -263,7 +267,7 @@ def histogram(model: WidgetDataModel) -> Parametric:
         edge={"widget_type": EdgePropertyEdit},
     )
     def configure_plot(
-        x: tuple[slice, slice] | None,
+        x: SelectionType | None,
         bins: int = 10,
         face: dict = {},
         edge: dict = {},
@@ -352,9 +356,9 @@ def scatter_plot_3d(model: WidgetDataModel) -> Parametric:
         edge={"widget_type": EdgePropertyEdit},
     )
     def configure_plot(
-        x: tuple[slice, slice],
-        y: tuple[slice, slice],
-        z: tuple[slice, slice],
+        x: SelectionType,
+        y: SelectionType,
+        z: SelectionType,
         symbol: str = "o",
         size: float = 6.0,
         face: dict = {},
@@ -402,9 +406,9 @@ def line_plot_3d(model: WidgetDataModel) -> Parametric:
         edge={"widget_type": EdgePropertyEdit, "value": _EDGE_ONLY_VALUE},
     )
     def configure_plot(
-        x: tuple[slice, slice],
-        y: tuple[slice, slice],
-        z: tuple[slice, slice],
+        x: SelectionType,
+        y: SelectionType,
+        z: SelectionType,
         edge: dict = {},
     ) -> WidgetDataModel:
         fig = hplt.figure_3d()
@@ -430,7 +434,7 @@ def line_plot_3d(model: WidgetDataModel) -> Parametric:
 
 def _range_getter(
     model: WidgetDataModel,
-) -> Callable[[], tuple[tuple[slice, slice], tuple[slice, slice]]]:
+) -> Callable[[], tuple[SelectionType, SelectionType]]:
     """The getter function for SelectionEdit"""
 
     def _getter():
@@ -445,19 +449,25 @@ def _range_getter(
         elif len(meta.selections) > 1:
             raise ValueError(f"More than one selection found in window {model.title!r}")
         sel = meta.selections[0]
-        # TODO: thoroughly check the type.
         rindices, cindices = sel
-        rsl = slice(*rindices)
-        csl = slice(*cindices)
-        return rsl, csl
+        _assert_tuple_of_ints(rindices)
+        _assert_tuple_of_ints(cindices)
+        return rindices, cindices
 
     return _getter
 
 
+def _assert_tuple_of_ints(value: tuple[int, int]) -> None:
+    if not isinstance(value, tuple) or len(value) != 2:
+        raise ValueError("Must be a tuple of two integers.")
+    if not all(isinstance(v, int) for v in value):
+        raise ValueError("Must be a tuple of two integers.")
+
+
 def _get_xy_data(
     model: WidgetDataModel,
-    x: tuple[slice, slice] | None,
-    y: tuple[slice, slice] | None,
+    x: SelectionType | None,
+    y: SelectionType | None,
     axes: hplt.Axes,
 ) -> "tuple[np.ndarray, list[tuple[str | None, np.ndarray]]]":
     from himena._data_wrappers import wrap_dataframe
@@ -468,14 +478,14 @@ def _get_xy_data(
         xlabel, xarr, ys = _table_to_xy_data(model.value, x, y)
     elif is_subtype(model.type, StandardType.DATAFRAME):
         df = wrap_dataframe(model.value)
-        column_names = df.column_names()[y[1].start : y[1].stop]
-        rows = slice(y[0].start, y[0].stop)
+        column_names = df.column_names()[y[1][0] : y[1][1]]
+        rows = slice(y[0][0], y[0][1])
         ys = [(cname, df.column_to_array(cname)[rows]) for cname in column_names]
         if x is None:
             xarr = np.arange(ys[0][1].size)
             xlabel = None
         else:
-            column_names_x = df.column_names()[x[1].start : x[1].stop]
+            column_names_x = df.column_names()[x[1][0] : x[1][1]]
             if len(column_names_x) != 1:
                 raise ValueError("x must not be more than one column.")
             xarr = df.column_to_array(column_names_x[0])
@@ -494,7 +504,7 @@ def _get_xy_data(
 
 def _auto_select(
     model: WidgetDataModel, num: int
-) -> "list[None | tuple[slice, slice]]":
+) -> "list[None | tuple[SelectionType, SelectionType]]":
     from himena._data_wrappers import wrap_dataframe
 
     selections: list[tuple[tuple[int, int], tuple[int, int]]] = []
@@ -523,29 +533,31 @@ def _auto_select(
         raise ValueError(f"Table-like data expected, but got model type {model_type!r}")
     ncols = shape[1]
     if num == len(selections):
-        return [(slice(*rsl), slice(*csl)) for rsl, csl in selections]
+        return selections
     if ncols == 0:
         raise ValueError("The table must have at least one column.")
     elif ncols < num:
         out = [None] * num
         for i in range(ncols):
-            out[i + num - ncols] = (slice(0, shape[0]), slice(i, i + 1))
+            out[i + num - ncols] = ((0, shape[0]), (i, i + 1))
         return out
     else:
-        return [(slice(0, shape[0]), slice(i, i + 1)) for i in range(num)]
+        return [((0, shape[0]), (i, i + 1)) for i in range(num)]
 
 
 def _table_to_xy_data(
     value: "np.ndarray",
-    x: tuple[slice, slice] | None,
-    y: tuple[slice, slice],
+    x: SelectionType | None,
+    y: SelectionType,
 ) -> "tuple[str | None, np.ndarray, list[tuple[str | None, np.ndarray]]]":
-    parser = TableValueParser.from_array(value[y])
+    ysl = slice(y[0][0], y[0][1]), slice(y[1][0], y[1][1])
+    parser = TableValueParser.from_array(value[ysl])
     if x is None:
         xarr = np.arange(parser.n_samples, dtype=np.float64)
         xlabel = None
     else:
-        xlabel, xarr = parser.norm_x_value(value[x])
+        xsl = slice(x[0][0], x[0][1]), slice(x[1][0], x[1][1])
+        xlabel, xarr = parser.norm_x_value(value[xsl])
     return xlabel, xarr, parser._label_and_values
 
 

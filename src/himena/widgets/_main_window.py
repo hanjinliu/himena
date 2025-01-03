@@ -380,7 +380,7 @@ class MainWindow(Generic[_W]):
         _, tabarea = self._current_or_new_tab()
         return tabarea.read_files_async(file_paths, plugin=plugin)
 
-    def read_session(self, path: str | Path) -> None:
+    def load_session(self, path: str | Path) -> None:
         """Read a session file and update the main window based on the content."""
         from himena.session import from_yaml
 

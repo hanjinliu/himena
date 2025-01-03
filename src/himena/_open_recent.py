@@ -39,7 +39,7 @@ class OpenSessionFunction:
         self._file = file
 
     def __call__(self, ui: MainWindow):
-        ui.read_session(self._file)
+        ui.load_session(self._file)
 
     def to_str(self) -> str:
         return f"Load session {self._file.as_posix()}"

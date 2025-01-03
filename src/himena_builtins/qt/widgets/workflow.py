@@ -14,6 +14,13 @@ from himena.types import WidgetDataModel
 
 
 class QWorkflowView(QtW.QWidget):
+    """A widget that displays a workflow of another widget.
+
+    A workflow is a directed acyclic graph of operations. Each operation is represented
+    by a item in this widget. The item can be expanded to show the details. The parents
+    of the selected item are highlighted with dashed lines.
+    """
+
     def __init__(self):
         super().__init__()
         layout = QtW.QVBoxLayout(self)
@@ -23,7 +30,6 @@ class QWorkflowView(QtW.QWidget):
         self._tree_widget.setHeaderHidden(True)
         layout.addWidget(self._tree_widget)
         self._tree_widget.setFont(QtGui.QFont(MonospaceFontFamily))
-        self._control = QWorkflowControl(self)
 
     @validate_protocol
     def update_model(self, model: WidgetDataModel):
@@ -46,10 +52,6 @@ class QWorkflowView(QtW.QWidget):
     @validate_protocol
     def model_type(self) -> str:
         return StandardType.WORKFLOW
-
-    @validate_protocol
-    def control_widget(self) -> QtW.QWidget:
-        return self._control
 
     @validate_protocol
     def size_hint(self) -> tuple[int, int]:
@@ -127,7 +129,10 @@ class QWorkflowTree(QtW.QTreeWidget):
         pen.setStyle(QtCore.Qt.PenStyle.DashLine)
         painter.setPen(pen)
         for step in self._workflow[idx.row].iter_parents():
-            index = self._id_to_index_map[step]
+            try:
+                index = self._id_to_index_map[step]
+            except KeyError:  # This should not happen but just in case
+                continue
             rect = self._rect_for_row(index)
             painter.drawRect(rect)
 
@@ -172,6 +177,8 @@ class QWorkflowTree(QtW.QTreeWidget):
         return super().mouseMoveEvent(e)
 
     def _start_drag(self, pos: QtCore.QPoint):
+        if not self.indexAt(pos).isValid():
+            return
         row = self._selection_model.current_index.row
         if 0 <= row < len(self._workflow):
             wf_filt = self._workflow.filter(self._workflow[row].id)
@@ -185,23 +192,6 @@ class QWorkflowTree(QtW.QTreeWidget):
                 source=self.parent(),
                 text_data=str(wf_filt),
             )
-
-
-class QWorkflowControl(QtW.QWidget):
-    def __init__(self, view: QWorkflowView):
-        super().__init__()
-        self._view = view
-        layout = QtW.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        self._run_button = QtW.QPushButton("Run")
-        layout.addWidget(QtW.QWidget(), stretch=10)
-        layout.addWidget(self._run_button)
-        self._run_button.clicked.connect(self._run_workflow)
-
-    def _run_workflow(self):
-        if self._view._tree_widget._workflow is None:
-            return
-        self._view._tree_widget._workflow.compute()
 
 
 _STEP_ROLE = QtCore.Qt.ItemDataRole.UserRole

@@ -53,15 +53,17 @@ def show_whats_this(ui: MainWindow) -> None:
     title="Show workflow graph",
     menus=[{"id": MenuId.WINDOW, "group": EXIT_GROUP}],
     enablement=_ctx.num_sub_windows > 0,
+    need_function_callback=True,
 )
 def show_workflow_graph(model: WidgetDataModel) -> WidgetDataModel:
     """Show the workflow graph of the current window."""
     workflow = model.workflow
     return WidgetDataModel(
-        value=workflow,
+        value=workflow.deep_copy(),
         type=StandardType.WORKFLOW,
         title=f"Workflow of {model.title}",
         save_behavior_override=NoNeedToSave(),
+        workflow=workflow,
     )
 
 

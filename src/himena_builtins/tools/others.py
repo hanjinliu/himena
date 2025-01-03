@@ -1,8 +1,9 @@
 from pathlib import Path
 import html
 import re
-from typing import Mapping
+from typing import Literal, Mapping
 import warnings
+from datetime import datetime
 import numpy as np
 from himena._data_wrappers._dataframe import wrap_dataframe
 from himena._descriptors import NoNeedToSave
@@ -10,6 +11,7 @@ from himena.plugins import register_function, configure_gui, widget_classes
 from himena.types import Parametric, WidgetDataModel, is_subtype
 from himena.consts import StandardType, MonospaceFontFamily
 from himena.widgets import SubWindow, MainWindow, ParametricWindow
+from himena.workflow import Workflow
 from himena import AppContext as ctx
 from himena._utils import get_display_name, get_widget_class_id, unwrap_lazy_model
 
@@ -80,18 +82,51 @@ def stack_models(ui: MainWindow) -> Parametric:
 @register_function(
     menus=["tools/models"],
     types=[StandardType.MODELS],
+    command_id="builtins:sort-model-list",
+)
+def sort_model_list(model: WidgetDataModel) -> Parametric:
+    """Sort the model list."""
+
+    def run_sort(
+        descending: bool = False,
+        sort_by: Literal["title", "type", "time"] = "title",
+    ) -> WidgetDataModel:
+        if sort_by == "title":
+
+            def _sort_func(m: WidgetDataModel) -> str:
+                return m.title
+        elif sort_by == "type":
+
+            def _sort_func(m: WidgetDataModel) -> str:
+                return m.type
+        elif sort_by == "time":
+
+            def _sort_func(m: WidgetDataModel) -> datetime:
+                if last := m.workflow.last():
+                    return last.datetime
+                return datetime(9999, 12, 31)
+        else:
+            raise ValueError(f"Invalid `sort_by` argument: {sort_by}")
+        models = sorted(model.value, key=_sort_func, reverse=descending)
+        return model.with_value(models, title=f"{model.title} sorted")
+
+    return run_sort
+
+
+@register_function(
+    menus=["tools/models"],
+    types=[StandardType.MODELS],
     command_id="builtins:filter-model-list",
 )
 def filter_model_list(model: WidgetDataModel) -> Parametric:
-    """Filter the list of models."""
+    """Filter the model list."""
 
-    @configure_gui
     def run_filter(
         model_type: str = "",
         title_contains: str = "",
         unwrap_lazy_objects: bool = True,
     ) -> WidgetDataModel:
-        """Filter the list of models.
+        """Filter the model list.
 
         Parameters
         ----------
@@ -125,13 +160,25 @@ def filter_model_list(model: WidgetDataModel) -> Parametric:
             if title_contains and title_contains not in m.title:
                 continue
             models_out.append(m)
-        return WidgetDataModel(
-            value=models_out,
-            type=StandardType.MODELS,
-            title=f"{model.title} filtered",
-        )
+        return model.with_value(models_out, title=f"{model.title} filtered")
 
     return run_filter
+
+
+@register_function(
+    types=[StandardType.WORKFLOW],
+    menus=[],
+    command_id="builtins:exec-workflow",
+)
+def exec_workflow(model: WidgetDataModel) -> None:
+    """Execute the workflow."""
+    if not isinstance(workflow := model.value, Workflow):
+        raise TypeError(f"Expected a Workflow object but got {type(workflow)}")
+    # NOTE: this function should not return the model and let the application process
+    # it. The workflow of the output model should not be updated. Using workflow to
+    # compute a new model is a special case in himena.
+    workflow.compute(process_output=True)
+    return None
 
 
 @register_function(

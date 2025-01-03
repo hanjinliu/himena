@@ -8,13 +8,15 @@ from magicgui.widgets.bases import ValuedContainerWidget
 
 SLICE_PATTERN = re.compile(r"^\s*\d*\s*:\s*\d*\s*,\s*\d*\s*:\s*\d*\s*$")
 
+SelectionType = tuple[tuple[int, int], tuple[int, int]]
 
-class SelectionEdit(ValuedContainerWidget[tuple[slice, slice]]):
+
+class SelectionEdit(ValuedContainerWidget[SelectionType]):
     def __init__(
         self,
         value=Undefined,
         bind=Undefined,
-        getter: Callable[[], tuple[slice, slice]] | None = None,
+        getter: Callable[[], SelectionType] | None = None,
         **kwargs,
     ):
         self._label_0 = Label(value="A[")
@@ -38,7 +40,7 @@ class SelectionEdit(ValuedContainerWidget[tuple[slice, slice]]):
     def _get_selection(self):
         self.set_value(self._selection_getter())
 
-    def get_value(self) -> tuple[slice, slice] | None:
+    def get_value(self) -> SelectionType | None:
         text = self._line_edit.value.strip()
         if text == "":
             return None
@@ -48,19 +50,21 @@ class SelectionEdit(ValuedContainerWidget[tuple[slice, slice]]):
         r0, r1 = rsl_str.split(":")
         c0, c1 = csl_str.split(":")
         return (
-            slice(_str_to_index(r0), _str_to_index(r1)),
-            slice(_str_to_index(c0), _str_to_index(c1)),
+            (_str_to_index(r0), _str_to_index(r1)),
+            (_str_to_index(c0), _str_to_index(c1)),
         )
 
-    def set_value(self, value: tuple[slice, slice] | None):
+    def set_value(self, value: SelectionType | None):
         if value is None:
             self._line_edit.value = ""
         else:
             rsl, csl = value
-            r0 = _index_to_str(rsl.start)
-            r1 = _index_to_str(rsl.stop)
-            c0 = _index_to_str(csl.start)
-            c1 = _index_to_str(csl.stop)
+            r0, r1 = _parse_selection(rsl)
+            c0, c1 = _parse_selection(csl)
+            r0 = _index_to_str(r0)
+            r1 = _index_to_str(r1)
+            c0 = _index_to_str(c0)
+            c1 = _index_to_str(c1)
             self._line_edit.value = f"{r0}:{r1}, {c0}:{c1}"
 
 
@@ -73,3 +77,11 @@ def _str_to_index(s: str) -> int | None:
     if s0 == "":
         return None
     return int(s0)
+
+
+def _parse_selection(sl: slice | tuple[int, int]) -> tuple[int, int]:
+    if isinstance(sl, slice):
+        if sl.step not in (None, 1):
+            raise ValueError(f"Slice must be single step, got {sl}")
+        return sl.start, sl.stop
+    return sl

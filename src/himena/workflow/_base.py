@@ -37,15 +37,11 @@ class WorkflowStep(BaseModel):
         return model
 
     def get_and_process_model(self, wf: "Workflow") -> "WidgetDataModel":
+        from himena.types import WidgetDataModel
+
         model = self.get_model(wf)
         self._current_store().process(model, type_hint=WidgetDataModel)
         return model
-
-    def get_model_with_traceback(self, wf: "Workflow") -> "WidgetDataModel":
-        try:
-            return self._get_model_impl(wf)
-        except Exception as e:
-            raise ValueError(f"Failed to get model for {self!r}") from e
 
     def __repr_args__(self):  # simplify the repr output
         for arg in super().__repr_args__():

@@ -74,6 +74,9 @@ class Workflow(BaseModel):
             return step.id
         raise ValueError("Workflow is empty.")
 
+    def deep_copy(self) -> "Workflow":
+        return Workflow(steps=[step.copy() for step in self.steps])
+
     def model_for_id(self, id: uuid.UUID) -> "WidgetDataModel":
         if model := self._model_cache.get(id):
             return model
@@ -101,7 +104,7 @@ class Workflow(BaseModel):
         """Compute the last node in the workflow."""
         with self._cache_context():
             if process_output:
-                out = self[-1].get_model_with_traceback(self)
+                out = self[-1].get_and_process_model(self)
             else:
                 out = self[-1].get_model(self)
         return out

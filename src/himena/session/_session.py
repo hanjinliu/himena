@@ -1,6 +1,6 @@
+from contextlib import suppress
 import importlib
 from pathlib import Path
-from logging import getLogger
 from typing import Any, TypeVar, TYPE_CHECKING
 import uuid
 from pydantic_compat import BaseModel, Field
@@ -9,13 +9,13 @@ import yaml
 from himena._descriptors import SaveToPath
 from himena.types import WindowState, WindowRect, WidgetDataModel
 from himena import anchor
+from himena.profile import AppProfile, load_app_profile
 from himena.workflow import Workflow, compute, WorkflowStepType, LocalReaderMethod
 
 if TYPE_CHECKING:
     from himena.widgets import SubWindow, TabArea, MainWindow
 
-_W = TypeVar("_W")  # backend widget type
-_LOGGER = getLogger(__name__)
+_W = TypeVar("_W")  # widget interface
 
 
 class WindowRectModel(BaseModel):
@@ -42,6 +42,7 @@ class WindowDescription(BaseModel):
     rect: WindowRectModel
     state: WindowState = Field(default=WindowState.NORMAL)
     anchor: dict[str, Any] = Field(default_factory=lambda: {"type": "no-anchor"})
+    is_editable: bool = Field(default=True)
     id: uuid.UUID
     short_workflow: WorkflowStepType | None
     workflow: Workflow
@@ -68,6 +69,7 @@ class WindowDescription(BaseModel):
             rect=WindowRectModel.from_tuple(window.rect),
             state=window.state,
             anchor=anchor.anchor_to_dict(window.anchor),
+            is_editable=window.is_editable,
             id=window._identifier,
             short_workflow=short_workflow,
         )
@@ -79,10 +81,20 @@ class WindowDescription(BaseModel):
         window.rect = self.rect.to_tuple()
         window.state = self.state
         window.anchor = anchor.dict_to_anchor(self.anchor)
+        with suppress(AttributeError):
+            window.is_editable = self.is_editable
         if isinstance(meth := self.short_workflow, LocalReaderMethod):
             window._save_behavior = SaveToPath(path=meth.path, plugin=meth.plugin)
         window._identifier = self.id
         return model
+
+    def prep_workflow(self) -> Workflow:
+        """Prepare the most efficient workflow to get the window."""
+        if self.short_workflow is None:
+            wf = self.workflow
+        else:
+            wf = Workflow(steps=[self.short_workflow])
+        return wf
 
 
 class TabSession(BaseModel):
@@ -109,26 +121,28 @@ class TabSession(BaseModel):
             ],
         )
 
-    def update_gui(self, main: "MainWindow[_W]", skip_calculate: bool = True) -> None:
+    def update_gui(self, main: "MainWindow[_W]") -> None:
         """Update the GUI state based on the session."""
+        _win_sessions: list[WindowDescription] = []
+        _pending_workflows: list[Workflow] = []
         area = main.add_tab(self.name)
         cur_index = self.current_index
-        with main.model_app.injection_store.register_processor(
-            lambda _: None, type_hint=WidgetDataModel, weight=1000
-        ):
-            for window_session in self.windows:
-                if (swf := window_session.short_workflow) is None and skip_calculate:
-                    continue
-                try:
-                    model = swf.get_and_process_model(window_session.workflow)
-                    window_session.process_model(area, model)
-                except Exception as e:
-                    cur_index -= 1
-                    _LOGGER.warning(
-                        "Could not load a window %r: %s", window_session.title, e
-                    )
+        for window_session in self.windows:
+            _win_sessions.append(window_session)
+            wf = window_session.prep_workflow()
+            _pending_workflows.append(wf)
+
+        models = compute(_pending_workflows)
+        _failed_sessions: list[tuple[WindowDescription, Exception]] = []
+        for _win_sess, model_or_exc in zip(_win_sessions, models):
+            if isinstance(model_or_exc, Exception):
+                _failed_sessions.append((_win_sess, model_or_exc))
+                continue
+            _win_sess.process_model(self, model_or_exc)
+
         if 0 <= cur_index < len(area):
             area.current_index = cur_index
+        _raise_failed(_failed_sessions)
         return None
 
     def dump_yaml(self, path: str | Path) -> None:
@@ -152,6 +166,7 @@ class AppSession(BaseModel):
     """A session of the entire application."""
 
     version: str | None = Field(default_factory=lambda: _get_version("himena"))
+    profile: AppProfile = Field(default_factory=load_app_profile)
     tabs: list[TabSession] = Field(default_factory=list)
     current_index: int = Field(default=0)
 
@@ -176,19 +191,16 @@ class AppSession(BaseModel):
         _tab_sessions: list[TabSession] = []
         _win_sessions: list[WindowDescription] = []
         _target_areas: list[TabArea] = []
-        pending_workflows: list[Workflow] = []
+        _pending_workflows: list[Workflow] = []
         for tab_session in self.tabs:
             _tab_sessions.append(tab_session)
             _new_tab = main.add_tab(tab_session.name)
             for window_session in tab_session.windows:
                 _win_sessions.append(window_session)
-                if window_session.short_workflow is None:
-                    wf = window_session.workflow
-                else:
-                    wf = Workflow(steps=[window_session.short_workflow])
-                pending_workflows.append(wf)
+                wf = window_session.prep_workflow()
+                _pending_workflows.append(wf)
                 _target_areas.append(_new_tab)
-        models = compute(pending_workflows)
+        models = compute(_pending_workflows)
         _failed_sessions: list[tuple[WindowDescription, Exception]] = []
         for _win_sess, _tab_area, model_or_exc in zip(
             _win_sessions, _target_areas, models
@@ -204,13 +216,7 @@ class AppSession(BaseModel):
             if cur_tab_index is not None and 0 <= cur_tab_index < len(area):
                 area.current_index = cur_tab_index
         main.tabs.current_index = self.current_index + cur_index
-        if len(_failed_sessions) > 0:
-            msg = "Could not load the following windows:\n"
-            list_of_failed = "\n".join(
-                f"- {win.title} ({type(exc).__name__}:{exc})"
-                for win, exc in _failed_sessions
-            )
-            raise ValueError(msg + list_of_failed) from _failed_sessions[-1][1]
+        _raise_failed(_failed_sessions)
         return None
 
     def dump_yaml(self, path: str | Path) -> None:
@@ -234,3 +240,12 @@ def from_yaml(path: str | Path) -> AppSession | TabSession:
         return TabSession.model_validate(yml)
     else:
         raise ValueError("Invalid session file.")
+
+
+def _raise_failed(failed: list[tuple[WindowDescription, Exception]]) -> None:
+    if len(failed) > 0:
+        msg = "Could not load the following windows:\n"
+        list_of_failed = "\n".join(
+            f"- {win.title} ({type(exc).__name__}:{exc})" for win, exc in failed
+        )
+        raise ValueError(msg + list_of_failed) from failed[-1][1]

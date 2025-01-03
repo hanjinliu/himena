@@ -317,7 +317,7 @@ def load_session_from_dialog(ui: MainWindow) -> None:
         allowed_extensions=[".session.yaml"],
         group="session",
     ):
-        ui.read_session(path)
+        ui.load_session(path)
     raise Cancelled
 
 

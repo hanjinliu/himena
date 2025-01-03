@@ -24,7 +24,7 @@ def test_type_map_and_session(tmpdir, ui: MainWindow, sample_dir):
     ui.save_session(session_path)
     ui.clear()
     assert len(ui.tabs) == 0
-    ui.read_session(session_path)
+    ui.load_session(session_path)
     assert len(ui.tabs) == 2
     assert len(ui.tabs[0]) == 2
     assert ui.tabs[0][0].title == "text.txt"
@@ -37,6 +37,24 @@ def test_type_map_and_session(tmpdir, ui: MainWindow, sample_dir):
     assert ui.tabs[1][0].rect == WindowRect(30, 40, 160, 130)
     assert ui.tabs[1][1].title == "My HTML"
     assert ui.tabs[1][1].rect == WindowRect(80, 40, 160, 130)
+
+def test_session_with_calculation(tmpdir, ui: MainWindow, sample_dir):
+    tab0 = ui.add_tab()
+    tab0.read_file(sample_dir / "image.png").update(rect=(30, 40, 160, 130), title="Im")
+    ui.exec_action("builtins:image-crop:crop-image", with_params={"y": (1, 3), "x": (1, 3)})
+    assert len(tab0) == 2
+    shape_cropped = tab0[1].to_model().value.shape
+    tab0[1].update(rect=(70, 20, 160, 130))
+    session_path = Path(tmpdir) / "test.session.json"
+    ui.save_session(session_path, allow_calculate=True)
+    ui.clear()
+    ui.load_session(session_path)
+    assert len(tab0) == 2
+    assert tab0[0].title == "Im"
+    assert tab0[0].rect == WindowRect(30, 40, 160, 130)
+    assert tab0[1].rect == WindowRect(70, 20, 160, 130)
+    assert tab0[1].to_model().value.shape == shape_cropped
+
 
 def test_command_palette_events(ui: MainWindowQt, qtbot: QtBot):
     ui.show()
