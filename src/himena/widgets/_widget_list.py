@@ -170,11 +170,11 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
     @property
     def current_index(self) -> int | None:
         """Get the index of the current sub-window."""
-        return self._main_window()._current_sub_window_index()
+        return self._main_window()._current_sub_window_index(self._i_tab)
 
     @current_index.setter
     def current_index(self, index: int) -> None:
-        self._main_window()._set_current_sub_window_index(index)
+        self._main_window()._set_current_sub_window_index(self._i_tab, index)
 
     @property
     def title(self) -> str:
@@ -363,7 +363,8 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
                 main._himena_main_window._instructions.updated(animate=False),
             )
         else:
-            main._set_current_sub_window_index(len(self) - 1)
+            i_tab = main._current_tab_index()
+            main._set_current_sub_window_index(i_tab, len(self) - 1)
             if auto_size:
                 left = 4 + 24 * (nwindows % 5)
                 top = 4 + 24 * (nwindows % 5)
@@ -386,10 +387,11 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         widget = ui._pick_widget(model)
         ui.set_status_tip(f"Data model {model.title!r} added.", duration=1)
         sub_win = self.add_widget(widget, title=model.title)
+        sub_win._update_from_returned_model(model)
         if rect_factory := model.window_rect_override:
             rect = WindowRect.from_tuple(*rect_factory(sub_win.size))
             sub_win.rect = rect
-        return sub_win._update_from_returned_model(model)
+        return sub_win
 
     def read_file(
         self,

@@ -18,6 +18,7 @@ from typing import (
 import inspect
 from functools import wraps
 import warnings
+from cmap import Colormap, Color
 
 from himena.consts import StandardType
 from himena.types import (
@@ -418,3 +419,18 @@ def ansi2html(
     if in_span:
         yield "</span>"
         in_span = False
+
+
+def to_color_or_colormap(value) -> Color | Colormap:
+    if isinstance(value, (Color, Colormap)):
+        return value
+    if isinstance(value, str) and value.startswith("#"):
+        value = Color(value)
+    elif isinstance(value, dict):
+        value = Colormap(value)
+    else:
+        try:
+            value = Colormap(value)
+        except Exception:
+            value = Color(value)
+    return value

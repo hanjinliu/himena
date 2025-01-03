@@ -344,8 +344,8 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _set_current_tab_index(self, i_tab: int) -> None:
         return self._tab_widget.setCurrentIndex(i_tab)
 
-    def _current_sub_window_index(self) -> int | None:
-        area = self._tab_widget.current_widget_area()
+    def _current_sub_window_index(self, i_tab: int) -> int | None:
+        area = self._tab_widget.widget_area(i_tab)
         if area is None:
             return None
         sub = area.currentSubWindow()
@@ -353,9 +353,9 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             return None
         return area.subWindowList().index(sub)
 
-    def _set_current_sub_window_index(self, i_window: int) -> None:
+    def _set_current_sub_window_index(self, i_tab: int, i_window: int) -> None:
         assert i_window is None or i_window >= 0
-        area = self._tab_widget.current_widget_area()
+        area = self._tab_widget.widget_area(i_tab)
         subwindows = area.subWindowList()
         for i in range(len(subwindows)):
             subwindows[i].set_is_current(i == i_window)

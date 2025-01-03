@@ -699,7 +699,7 @@ class MainWindow(Generic[_W]):
         idx_tab = self._backend_main_window._current_tab_index()
         if idx_tab is None:
             return None
-        idx_win = self._backend_main_window._current_sub_window_index()
+        idx_win = self._backend_main_window._current_sub_window_index(idx_tab)
         if idx_win is None:
             return None
         return self.tabs[idx_tab][idx_win]
@@ -707,16 +707,19 @@ class MainWindow(Generic[_W]):
     @current_window.setter
     def current_window(self, win: SubWindow[_W] | None) -> None:
         """Set the current sub-window."""
+        _main = self._backend_main_window
         if win is None:
-            self._backend_main_window._set_current_tab_index(None)
-            self._backend_main_window._set_current_sub_window_index(None)
-            return None
-        for i_tab, tab in self.tabs.enumerate():
-            for i_win, sub in tab.enumerate():
-                if sub is win:
-                    self._backend_main_window._set_current_tab_index(i_tab)
-                    self._backend_main_window._set_current_sub_window_index(i_win)
-                    return None
+            _main._set_current_tab_index(None)
+            i_tab = _main._current_tab_index()
+            if i_tab is not None:
+                _main._set_current_sub_window_index(i_tab, None)
+        else:
+            for i_tab, tab in self.tabs.enumerate():
+                for i_win, sub in tab.enumerate():
+                    if sub is win:
+                        _main._set_current_tab_index(i_tab)
+                        _main._set_current_sub_window_index(i_tab, i_win)
+                        return None
         return None
 
     @property
@@ -773,7 +776,7 @@ class MainWindow(Generic[_W]):
         tab = self.tabs[i_tab]
         if len(tab) == 0:
             return back._update_control_widget(None)
-        i_win = back._current_sub_window_index()
+        i_win = back._current_sub_window_index(i_tab)
         if i_win is None or len(tab) <= i_win:
             return back._update_control_widget(None)
         win = tab[i_win]

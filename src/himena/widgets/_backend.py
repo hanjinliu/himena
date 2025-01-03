@@ -47,14 +47,14 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     def _set_current_tab_index(self, i_tab: int) -> None:
         """Update the current tab index."""
 
-    def _current_sub_window_index(self) -> int | None:
-        """Get the current sub window index in the current tab.
+    def _current_sub_window_index(self, i_tab: int) -> int | None:
+        """Get the current sub window index in the given tab.
 
         If there is no sub window, or the tab area itself is selected, return None.
         """
 
-    def _set_current_sub_window_index(self, i_window: int | None) -> None:
-        """Update the current sub window index in the current tab.
+    def _set_current_sub_window_index(self, i_tab: int, i_window: int | None) -> None:
+        """Update the current sub window index in the given tab.
 
         if `i_window` is None, the tab area itself will be selected (all the windows
         will be deselected). `i_window` is asserted to be non-negative.

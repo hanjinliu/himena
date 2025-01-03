@@ -4,6 +4,7 @@ import itertools
 from cmap import Color, Colormap
 import numpy as np
 
+from himena._utils import to_color_or_colormap
 from himena.plugins import register_function, configure_gui
 from himena.types import Parametric, WidgetDataModel, is_subtype
 from himena.consts import StandardType
@@ -625,7 +626,7 @@ class TableValueParser:
 
 
 def _iter_face(face: "FacePropertyDict | dict", prefix: str = "") -> Iterator[dict]:
-    color = face.get("color", None)
+    color = to_color_or_colormap(face.get("color", "gray"))
     hatch = face.get("hatch", None)
     if isinstance(color, Colormap):
         cycler = itertools.cycle(color.color_stops.colors)
@@ -636,7 +637,7 @@ def _iter_face(face: "FacePropertyDict | dict", prefix: str = "") -> Iterator[di
 
 
 def _iter_edge(edge: "EdgePropertyDict | dict", prefix: str = "") -> Iterator[dict]:
-    color = edge.get("color", None)
+    color = to_color_or_colormap(edge.get("color", "gray"))
     width = edge.get("width", None)
     style = edge.get("style", None)
     if isinstance(color, Colormap):

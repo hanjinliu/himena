@@ -141,7 +141,7 @@ def rename_window(ui: MainWindow) -> None:
     i_tab = ui.tabs.current_index
     if i_tab is None:
         return None
-    if (i_win := ui._backend_main_window._current_sub_window_index()) is not None:
+    if (i_win := ui._backend_main_window._current_sub_window_index(i_tab)) is not None:
         ui._backend_main_window._rename_window_at(i_tab, i_win)
     return None
 

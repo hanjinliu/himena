@@ -9,7 +9,7 @@ import yaml
 from himena._descriptors import SaveToPath
 from himena.types import WindowState, WindowRect, WidgetDataModel
 from himena import anchor
-from himena.profile import AppProfile, load_app_profile
+from himena.profile import AppProfile
 from himena.workflow import Workflow, compute, WorkflowStepType, LocalReaderMethod
 
 if TYPE_CHECKING:
@@ -166,7 +166,7 @@ class AppSession(BaseModel):
     """A session of the entire application."""
 
     version: str | None = Field(default_factory=lambda: _get_version("himena"))
-    profile: AppProfile = Field(default_factory=load_app_profile)
+    profile: AppProfile | None = Field(default=None)
     tabs: list[TabSession] = Field(default_factory=list)
     current_index: int = Field(default=0)
 
@@ -178,6 +178,7 @@ class AppSession(BaseModel):
         allow_calculate: bool = False,
     ) -> "AppSession":
         return AppSession(
+            profile=main.app_profile,
             tabs=[
                 TabSession.from_gui(tab, allow_calculate=allow_calculate)
                 for tab in main.tabs

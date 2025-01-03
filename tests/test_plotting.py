@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 from cmap import Color, Colormap
-from pytestqt.qtbot import QtBot
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -48,8 +47,8 @@ def test_scatter_plot_via_command(ui: MainWindow, tmpdir):
     ui.exec_action(
         "builtins:scatter-plot",
         with_params={
-            "x": (slice(0, 99), slice(0, 1)),
-            "y": (slice(0, 99), slice(1, 2)),
+            "x": ((0, 99), (0, 1)),
+            "y": ((0, 99), (1, 2)),
             "face": {"color": Color("red"), "hatch": "/"},
             "edge": {"color": Color("blue"), "width": 2.5, "style": "--"},
         }
@@ -58,8 +57,8 @@ def test_scatter_plot_via_command(ui: MainWindow, tmpdir):
     ui.exec_action(
         "builtins:scatter-plot",
         with_params={
-            "x": (slice(0, 99), slice(0, 1)),
-            "y": (slice(0, 99), slice(1, 3)),
+            "x": ((0, 99), (0, 1)),
+            "y": ((0, 99), (1, 3)),
             "face": {"color": Colormap("tab10"), "hatch": None},
             "edge": {"color": Color("black"), "width": 2, "style": None},
         }
@@ -80,8 +79,8 @@ def test_line_plot_via_command(ui: MainWindow, tmpdir):
     ui.exec_action(
         "builtins:line-plot",
         with_params={
-            "x": (slice(0, 99), slice(0, 1)),
-            "y": (slice(0, 99), slice(1, 2)),
+            "x": ((0, 99), (0, 1)),
+            "y": ((0, 99), (1, 2)),
             "edge": {"color": Color("blue"), "width": 2.5, "style": "--"},
         }
     )
@@ -89,8 +88,8 @@ def test_line_plot_via_command(ui: MainWindow, tmpdir):
     ui.exec_action(
         "builtins:line-plot",
         with_params={
-            "x": (slice(0, 99), slice(0, 1)),
-            "y": (slice(0, 99), slice(1, 3)),
+            "x": ((0, 99), (0, 1)),
+            "y": ((0, 99), (1, 3)),
             "edge": {"color": Color("black"), "width": 2, "style": None},
         }
     )
@@ -110,8 +109,8 @@ def test_bar_plot_via_command(ui: MainWindow, tmpdir):
     ui.exec_action(
         "builtins:bar-plot",
         with_params={
-            "x": (slice(0, 99), slice(0, 1)),
-            "y": (slice(0, 99), slice(1, 2)),
+            "x": ((0, 99), (0, 1)),
+            "y": ((0, 99), (1, 2)),
             "bottom": None,
             "face": {"color": Color("red"), "hatch": "/"},
             "edge": {"color": Color("blue"), "width": 2.5, "style": "--"},
@@ -121,8 +120,8 @@ def test_bar_plot_via_command(ui: MainWindow, tmpdir):
     ui.exec_action(
         "builtins:bar-plot",
         with_params={
-            "x": (slice(0, 99), slice(0, 1)),
-            "y": (slice(0, 99), slice(1, 3)),
+            "x": ((0, 99), (0, 1)),
+            "y": ((0, 99), (1, 3)),
             "bottom": None,
             "face": {"color": Colormap("tab10"), "hatch": None},
             "edge": {"color": Color("black"), "width": 2, "style": None},
@@ -132,9 +131,9 @@ def test_bar_plot_via_command(ui: MainWindow, tmpdir):
     ui.exec_action(
         "builtins:bar-plot",
         with_params={
-            "x": (slice(0, 99), slice(0, 1)),
-            "y": (slice(0, 99), slice(2, 3)),
-            "bottom": (slice(0, 99), slice(1, 2)),
+            "x": ((0, 99), (0, 1)),
+            "y": ((0, 99), (2, 3)),
+            "bottom": ((0, 99), (1, 2)),
             "face": {"color": Color("red"), "hatch": "/"},
             "edge": {"color": Color("blue"), "width": 2.5, "style": "--"},
         }
@@ -155,10 +154,10 @@ def test_errorbar_plot_via_command(ui: MainWindow, tmpdir):
     ui.exec_action(
         "builtins:errorbar-plot",
         with_params={
-            "x": (slice(0, 99), slice(0, 1)),
-            "y": (slice(0, 99), slice(1, 2)),
+            "x": ((0, 99), (0, 1)),
+            "y": ((0, 99), (1, 2)),
             "xerr": None,
-            "yerr": (slice(0, 99), slice(2, 3)),
+            "yerr": ((0, 99), (2, 3)),
             "capsize": 0.1,
             "edge": {"color": Color("blue"), "width": 1, "style": "-"},
         }
@@ -167,9 +166,9 @@ def test_errorbar_plot_via_command(ui: MainWindow, tmpdir):
     ui.exec_action(
         "builtins:errorbar-plot",
         with_params={
-            "x": (slice(0, 99), slice(0, 1)),
-            "y": (slice(0, 99), slice(1, 2)),
-            "xerr": (slice(0, 99), slice(2, 3)),
+            "x": ((0, 99), (0, 1)),
+            "y": ((0, 99), (1, 2)),
+            "xerr": ((0, 99), (2, 3)),
             "yerr": None,
             "capsize": 0,
             "edge": {"color": Color("blue"), "width": 1, "style": "-"},
@@ -179,10 +178,10 @@ def test_errorbar_plot_via_command(ui: MainWindow, tmpdir):
     ui.exec_action(
         "builtins:errorbar-plot",
         with_params={
-            "x": (slice(0, 99), slice(0, 1)),
-            "y": (slice(0, 99), slice(1, 2)),
-            "xerr": (slice(0, 99), slice(2, 3)),
-            "yerr": (slice(0, 99), slice(2, 3)),
+            "x": ((0, 99), (0, 1)),
+            "y": ((0, 99), (1, 2)),
+            "xerr": ((0, 99), (2, 3)),
+            "yerr": ((0, 99), (2, 3)),
             "capsize": 0.,
             "edge": {"color": Color("blue"), "width": 1, "style": "-"},
         }
@@ -203,9 +202,9 @@ def test_band_plot_via_command(ui: MainWindow, tmpdir):
     ui.exec_action(
         "builtins:band-plot",
         with_params={
-            "x": (slice(0, 99), slice(0, 1)),
-            "y0": (slice(0, 99), slice(1, 2)),
-            "y1": (slice(0, 99), slice(2, 3)),
+            "x": ((0, 99), (0, 1)),
+            "y0": ((0, 99), (1, 2)),
+            "y1": ((0, 99), (2, 3)),
             "face": {"color": Color("red"), "hatch": "/"},
             "edge": {"color": Color("blue"), "width": 2.5, "style": "--"},
         }

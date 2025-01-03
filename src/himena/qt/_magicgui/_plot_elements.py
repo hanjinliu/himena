@@ -4,21 +4,22 @@ from typing import Any, TYPE_CHECKING
 from magicgui.types import Undefined
 from magicgui.widgets import LineEdit, ComboBox
 from magicgui.widgets.bases import ValuedContainerWidget, ValueWidget
-from cmap import Color, Colormap
+from cmap import Colormap
 from himena.qt._magicgui._color import ColorEdit, ColormapEdit
 from himena.qt._magicgui._basic_widgets import FloatEdit
 from himena.qt._magicgui._toggle_switch import ToggleSwitch
+from himena._utils import to_color_or_colormap
 from himena.consts import MonospaceFontFamily
 
 if TYPE_CHECKING:
     from typing import TypedDict, NotRequired
 
     class FacePropertyDict(TypedDict):
-        color: NotRequired[Color | Colormap]
+        color: NotRequired[str | dict[str, Any]]
         hatch: NotRequired[str]
 
     class EdgePropertyDict(TypedDict):
-        color: NotRequired[Color | Colormap]
+        color: NotRequired[str | dict[str, Any]]
         width: NotRequired[float]
         style: NotRequired[str]
 
@@ -65,24 +66,21 @@ class ColorOrColorCycleEdit(ValuedContainerWidget):
         self._color.visible = not v
 
     def get_value(self) -> Any:
-        value = (
-            self._color_cycle.value
-            if self._use_color_cycle.value
-            else self._color.value.hex
-        )
+        if self._color_cycle.value:
+            cmap_value = self._color_cycle.value
+            if cmap_value.name == "custom colormap":
+                value = cmap_value.as_dict()
+            else:
+                value = cmap_value.name
+        else:
+            value = self._color.value.hex
         if value is None and not self._nullable:
             raise ValueError("Value cannot be None")
         return value
 
     def set_value(self, value: Any):
-        try:
-            value = Colormap(value)
-        except Exception:
-            value = Color(value)
-            is_cycle = False
-        else:
-            is_cycle = True
-
+        value = to_color_or_colormap(value)
+        is_cycle = isinstance(value, Colormap)
         self._use_color_cycle.value = is_cycle
         if is_cycle:
             self._color_cycle.value = value

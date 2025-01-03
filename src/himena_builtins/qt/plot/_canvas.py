@@ -21,6 +21,7 @@ class QMatplotlibCanvasBase(QtW.QWidget):
         self._canvas: FigureCanvasQTAgg | None = None
         self._toolbar: backend_qtagg.NavigationToolbar2QT | None = None
         self._plot_models: hplt.BaseLayoutModel | None = None
+        self._modified = False
 
     @property
     def figure(self) -> Figure:
@@ -47,7 +48,6 @@ class QMatplotlibCanvasBase(QtW.QWidget):
         toolbar.insertWidget(toolbar.actions()[0], spacer)
         return toolbar
 
-    # FIXME: cannot correctly determine the icon color in Qt6
     @validate_protocol
     def theme_changed_callback(self, theme: Theme):
         if self._toolbar is None:
@@ -73,6 +73,8 @@ class QMatplotlibCanvasBase(QtW.QWidget):
 
 
 class QMatplotlibCanvas(QMatplotlibCanvasBase):
+    """A widget that displays a Matplotlib figure itself."""
+
     __himena_widget_id__ = "builtins:QMatplotlibCanvasBase"
     __himena_display_name__ = "Matplotlib Canvas"
 
@@ -105,6 +107,18 @@ class QMatplotlibCanvas(QMatplotlibCanvasBase):
 
 
 class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
+    """A widget that displays himena standard plot models in a Matplotlib figure.
+
+    The internal data structure is follows the himena standard.
+
+    ## Basic Usage
+
+    - Mouse interactivity can be controlled in the toolbar.
+    - Double-click the canvas to adjust the layout.
+    - This widget accepts dropping another plot model. The dropped model will be merged.
+
+    """
+
     __himena_widget_id__ = "builtins:QModelMatplotlibCanvas"
     __himena_display_name__ = "Built-in Plot Canvas"
 
@@ -163,6 +177,7 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
         self._plot_models = model.value.merge_with(self._plot_models)
         convert_plot_layout(self._plot_models, self.figure)
         self._canvas.draw()
+        self._modified = True
 
     @validate_protocol
     def allowed_drop_types(self) -> list[str]:
@@ -180,6 +195,14 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
     @validate_protocol
     def widget_added_callback(self):
         self._canvas.figure.tight_layout()
+
+    @validate_protocol
+    def is_modified(self) -> bool:
+        return self._modified
+
+    @validate_protocol
+    def set_modified(self, value: bool):
+        self._modified = value
 
 
 # remove some of the tool buttons

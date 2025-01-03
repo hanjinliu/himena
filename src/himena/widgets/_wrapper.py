@@ -42,6 +42,7 @@ from himena.workflow import (
     Workflow,
     UserModification,
 )
+from himena.plugins import _checker
 
 if TYPE_CHECKING:
     from himena.widgets import BackendMainWindow, MainWindow
@@ -769,6 +770,7 @@ class ParametricWindow(SubWindow[_W]):
                 widget, title=model.title, auto_size=False
             )
             self._coerce_rect(result_widget)
+            _checker.call_widget_added_callback(widget)
             return result_widget._update_from_returned_model(model)
         return None
 
