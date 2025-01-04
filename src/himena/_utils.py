@@ -10,6 +10,7 @@ from typing import (
     Iterable,
     Iterator,
     MutableSet,
+    Sequence,
     TypeVar,
     TYPE_CHECKING,
     overload,
@@ -161,6 +162,23 @@ class OrderedSet(MutableSet[_T]):
     def update(self, other: Iterable[_T]) -> None:
         for value in other:
             self.add(value)
+
+
+class FrozenList(Sequence[_T]):
+    def __init__(self, iterable: Iterable[_T]):
+        self._list = list(iterable)
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self._list!r})"
+
+    def __getitem__(self, index: int) -> _T:
+        return self._list[index]
+
+    def __len__(self) -> int:
+        return len(self._list)
+
+    def __iter__(self) -> Iterator[_T]:
+        yield from self._list
 
 
 def _is_widget_data_model(a):

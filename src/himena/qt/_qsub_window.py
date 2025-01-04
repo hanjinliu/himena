@@ -14,7 +14,6 @@ from qtpy.QtCore import Qt
 from superqt import QIconifyIcon
 from superqt.utils import qthrottled
 
-from himena import anchor as _anchor
 from himena.workflow import LocalReaderMethod
 from himena._utils import lru_cache, get_display_name
 from himena.consts import MenuId
@@ -164,16 +163,6 @@ class QSubWindowArea(QtW.QMdiArea):
             if sub_window._window_state is WindowState.MIN:
                 sub_window._set_minimized(parent_geometry, num)
                 num += 1
-            elif sub_window._window_state in (WindowState.MAX, WindowState.FULL):
-                sub_window.setGeometry(parent_geometry)
-            else:
-                main_qsize = parent_geometry.size()
-                sub_qsize = sub_window.size()
-                if rect := sub_window._window_anchor.apply_anchor(
-                    (main_qsize.width(), main_qsize.height()),
-                    (sub_qsize.width(), sub_qsize.height()),
-                ):
-                    sub_window.setGeometry(rect.left, rect.top, rect.width, rect.height)
 
     def _pixmap_resized(
         self,
@@ -247,7 +236,6 @@ class QSubWindow(QtW.QMdiSubWindow):
 
         self._window_state = WindowState.NORMAL
         self._resize_state = ResizeState.NONE
-        self._window_anchor: _anchor.WindowAnchor = _anchor.NoAnchor
         self._current_button: int = Qt.MouseButton.NoButton
         self._widget = widget
         self._current_icon_color = icon_color
@@ -433,7 +421,8 @@ class QSubWindow(QtW.QMdiSubWindow):
                 # update window anchor
                 g = self.geometry()
                 main_qsize = self._qt_mdiarea().size()
-                self._window_anchor = self._window_anchor.update_for_window_rect(
+                subwin = self._my_wrapper()
+                subwin.anchor = subwin.anchor.update_for_window_rect(
                     (main_qsize.width(), main_qsize.height()),
                     WindowRect.from_tuple(g.left(), g.top(), g.width(), g.height()),
                 )
@@ -805,7 +794,8 @@ class QSubWindowTitleBar(QtW.QFrame):
             # update window anchor
             g = _subwin.geometry()
             main_qsize = _subwin._qt_mdiarea().size()
-            _subwin._window_anchor = _subwin._window_anchor.update_for_window_rect(
+            wrapper = _subwin._my_wrapper()
+            wrapper.anchor = wrapper.anchor.update_for_window_rect(
                 (main_qsize.width(), main_qsize.height()),
                 WindowRect.from_tuple(g.left(), g.top(), g.width(), g.height()),
             )

@@ -444,6 +444,18 @@ class Rect(Generic[_V]):
         bottom = min(self.bottom, ymax)
         return Rect(left, top, right - left, bottom - top)
 
+    def move_top_left(self, left: _V, top: _V) -> "Rect[_V]":
+        return Rect(left, top, self.width, self.height)
+
+    def move_top_right(self, right: _V, top: _V) -> "Rect[_V]":
+        return Rect(right - self.width, top, self.width, self.height)
+
+    def move_bottom_left(self, left: _V, bottom: _V) -> "Rect[_V]":
+        return Rect(left, bottom - self.height, self.width, self.height)
+
+    def move_bottom_right(self, right: _V, bottom: _V) -> "Rect[_V]":
+        return Rect(right - self.width, bottom - self.height, self.width, self.height)
+
 
 @dataclass(frozen=True)
 class WindowRect(Rect[int]):
@@ -485,6 +497,18 @@ class WindowRect(Rect[int]):
             round(self.width * wratio),
             round(self.height * hratio),
         )
+
+
+@dataclass(frozen=True)
+class Margins(Generic[_V]):
+    left: _V
+    top: _V
+    right: _V
+    bottom: _V
+
+    def __iter__(self):
+        """Iterate over the field to make this class tuple-like."""
+        return iter((self.left, self.top, self.right, self.bottom))
 
 
 class _HasDynamicAttribute:

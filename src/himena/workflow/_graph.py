@@ -77,16 +77,21 @@ class Workflow(BaseModel):
     def deep_copy(self) -> "Workflow":
         return Workflow(steps=[step.copy() for step in self.steps])
 
+    def step_for_id(self, id: uuid.UUID) -> WorkflowStep:
+        for step in self.steps:
+            if step.id == id:
+                return step
+        raise ValueError(f"Workflow with id {id} not found.")
+
     def model_for_id(self, id: uuid.UUID) -> "WidgetDataModel":
+        """Get the widget data model for the given ID."""
         if model := self._model_cache.get(id):
             return model
-        for workflow in self.steps:
-            if workflow.id == id:
-                model = workflow.get_model(self)
-                if self._cahce_enabled:
-                    self._model_cache[id] = model
-                return model
-        raise ValueError(f"Workflow with id {id} not found.")
+        step = self.step_for_id(id)
+        model = step.get_model(self)
+        if self._cahce_enabled:
+            self._model_cache[id] = model
+        return model
 
     def __iter__(self):
         return iter(self.steps)

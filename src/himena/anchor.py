@@ -12,7 +12,7 @@ class WindowAnchor:
         self,
         main_window_size: tuple[int, int],
         sub_window_size: tuple[int, int],
-    ) -> WindowRect:
+    ) -> WindowRect | None:
         return None
 
     def update_for_window_rect(
@@ -116,6 +116,15 @@ class BottomRightConstAnchor(WindowAnchor):
     ) -> Self:
         w0, h0 = main_window_size
         return BottomRightConstAnchor(w0 - window_rect.right, h0 - window_rect.bottom)
+
+
+class AllCornersAnchor(WindowAnchor):
+    def apply_anchor(
+        self,
+        main_window_size: tuple[int, int],
+        sub_window_size: tuple[int, int],
+    ) -> WindowRect:
+        return WindowRect.from_tuple(0, 0, *main_window_size)
 
 
 def anchor_to_dict(anchor: WindowAnchor) -> dict:

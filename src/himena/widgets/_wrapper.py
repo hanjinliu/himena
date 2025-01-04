@@ -43,6 +43,7 @@ from himena.workflow import (
     UserModification,
 )
 from himena.plugins import _checker
+from himena.layout import Layout
 
 if TYPE_CHECKING:
     from himena.widgets import BackendMainWindow, MainWindow
@@ -246,7 +247,7 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         return self._split_interface_and_frontend()[1]
 
 
-class SubWindow(WidgetWrapper[_W]):
+class SubWindow(WidgetWrapper[_W], Layout):
     state_changed = Signal(WindowState)
     renamed = Signal(str)
     closed = Signal()
@@ -258,6 +259,7 @@ class SubWindow(WidgetWrapper[_W]):
         identifier: uuid.UUID | None = None,
     ):
         super().__init__(widget, main_window=main_window, identifier=identifier)
+        Layout.__init__(self, main_window)
         self._child_windows: weakref.WeakSet[SubWindow[_W]] = weakref.WeakSet()
         self._alive = False
         self.closed.connect(self._close_callback)
@@ -303,16 +305,6 @@ class SubWindow(WidgetWrapper[_W]):
         main = self._main_window()._himena_main_window
         inst = main._instructions.updated(animate=False)
         self._set_rect(value, inst)
-
-    @property
-    def size(self) -> Size[int]:
-        """Size of the sub-window."""
-        return self.rect.size()
-
-    @size.setter
-    def size(self, value: tuple[int, int]) -> None:
-        self.rect = (self.rect.left, self.rect.top, value[0], value[1])
-        return None
 
     @property
     def is_alive(self) -> bool:
@@ -375,24 +367,17 @@ class SubWindow(WidgetWrapper[_W]):
         main = self._main_window()
         front = self._frontend_widget()
         rect = WindowRect.from_tuple(*value)
-        anc = main._window_anchor(front).update_for_window_rect(main._area_size(), rect)
+        anc = self.anchor.update_for_window_rect(main._area_size(), rect)
         main._set_window_rect(front, rect, inst)
-        main._set_window_anchor(front, anc)
+        self.anchor = anc
 
-    @property
-    def anchor(self) -> _anchor.WindowAnchor:
-        """Anchor of the sub-window."""
-        return self._main_window()._window_anchor(self._frontend_widget())
-
-    @anchor.setter
-    def anchor(self, anchor: _anchor.WindowAnchor | None):
-        if anchor is None:
-            anchor = _anchor.NoAnchor
-        elif isinstance(anchor, str):
-            anchor = self._anchor_from_str(anchor)
-        elif not isinstance(anchor, _anchor.WindowAnchor):
-            raise TypeError(f"Expected WindowAnchor, got {type(anchor)}")
-        self._main_window()._set_window_anchor(self._frontend_widget(), anchor)
+    def _reanchor(self, size: Size):
+        if self.state is WindowState.MIN:
+            pass
+        elif self.state in (WindowState.MAX, WindowState.FULL):
+            self.rect = WindowRect(0, 0, *size)
+        else:
+            super()._reanchor(size)
 
     def update(
         self,
@@ -425,20 +410,6 @@ class SubWindow(WidgetWrapper[_W]):
         child = main.tabs[i_tab].add_widget(widget, title=title)
         self._child_windows.add(child)
         return child
-
-    def _anchor_from_str(sub_win: SubWindow[_W], anchor: str):
-        rect = sub_win.rect
-        w0, h0 = sub_win._main_window()._area_size()
-        if anchor in ("top-left", "top left", "top_left"):
-            return _anchor.TopLeftConstAnchor(rect.left, rect.top)
-        elif anchor in ("top-right", "top right", "top_right"):
-            return _anchor.TopRightConstAnchor(w0 - rect.right, rect.top)
-        elif anchor in ("bottom-left", "bottom left", "bottom_left"):
-            return _anchor.BottomLeftConstAnchor(rect.left, h0 - rect.bottom)
-        elif anchor in ("bottom-right", "bottom right", "bottom_right"):
-            return _anchor.BottomRightConstAnchor(w0 - rect.right, h0 - rect.bottom)
-        else:
-            raise ValueError(f"Unknown anchor: {anchor}")
 
     def _find_me(self, main: MainWindow) -> tuple[int, int]:
         for i_tab, tab in main.tabs.enumerate():

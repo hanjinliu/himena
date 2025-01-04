@@ -8,6 +8,7 @@ from qtpy.QtCore import Qt
 from himena.qt._qprogress import QCircularProgressBar, QLabeledCircularProgressBar
 
 if TYPE_CHECKING:
+    from himena.qt._qmain_window import QMainWindow
     from himena.qt._qtab_widget import QTabWidget
 
 
@@ -23,17 +24,15 @@ class Anchor(Enum):
 class _QOverlayBase(QtW.QDialog):
     """Overlay widget appears at the fixed position."""
 
-    def __init__(self, parent: QTabWidget):
-        super().__init__(parent, Qt.WindowType.SubWindow)
+    def __init__(self, main: QMainWindow):
+        super().__init__(main._tab_widget, Qt.WindowType.SubWindow)
         self._widget = None
 
-        _layout = QtW.QVBoxLayout()
+        _layout = QtW.QVBoxLayout(self)
         _layout.setContentsMargins(2, 2, 2, 2)
         _layout.setSpacing(0)
 
-        self.setLayout(_layout)
-
-        parent.resized.connect(self.alignToParent)
+        main._tab_widget.resized.connect(self.alignToParent)
         self.setAnchor(Anchor.bottom_right)
         self.setVisible(False)
 
@@ -131,18 +130,18 @@ class _QOverlayBase(QtW.QDialog):
 class QNotificationWidget(_QOverlayBase):
     """The overlay widget appears at the fixed position."""
 
-    def __init__(self, parent: QTabWidget, duration: int = 500):
+    def __init__(self, main: QMainWindow, duration: int = 500):
         """
         The overlay widget appears at the fixed position.
 
         Parameters
         ----------
-        parent : QTabWidget
+        parent : QMainWindow
             Parent table stack
         duration : int, default is 500
             Animation duration in msec.
         """
-        super().__init__(parent)
+        super().__init__(main)
 
         effect = QtW.QGraphicsOpacityEffect(self)
         effect.setOpacity(0.9)
@@ -238,8 +237,8 @@ class QNotificationWidget(_QOverlayBase):
 class QJobStack(_QOverlayBase):
     job_finished = QtCore.Signal(QtW.QListWidgetItem)
 
-    def __init__(self, parent: QTabWidget):
-        super().__init__(parent)
+    def __init__(self, main: QMainWindow):
+        super().__init__(main)
         self._list_widget = QtW.QListWidget()
         self.addWidget(self._list_widget)
         self.setAnchor(Anchor.bottom_left)

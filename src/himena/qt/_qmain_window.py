@@ -3,7 +3,7 @@ from concurrent.futures import Future
 import inspect
 from timeit import default_timer as timer
 import logging
-from typing import Callable, Literal, TypeVar, TYPE_CHECKING, cast
+from typing import Callable, Hashable, Literal, TypeVar, TYPE_CHECKING, cast
 from pathlib import Path
 import warnings
 import numpy as np
@@ -24,11 +24,11 @@ from himena.qt._qcommand_palette import QCommandPalette
 from himena.qt._qcontrolstack import QControlStack
 from himena.qt._qparametric import QParametricWidget
 from himena.qt._qgoto import QGotoWidget
-from himena import anchor as _anchor
 from himena.types import (
     DockArea,
     DockAreaString,
     ClipboardDataModel,
+    Size,
     WindowState,
     WindowRect,
     BackendInstructions,
@@ -136,7 +136,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self.notification_requested.connect(self._on_show_notification_requested)
 
         # job stack
-        self._job_stack = QJobStack(self._tab_widget)
+        self._job_stack = QJobStack(self)
         self._job_stack.setAnchor("bottom_left")
 
     def _update_widget_theme(self, style: Theme):
@@ -162,7 +162,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         from himena.qt._qtraceback import QtErrorMessageBox
 
         mbox = QtErrorMessageBox.from_exc(exc, parent=self)
-        notification = QNotificationWidget(self._tab_widget)
+        notification = QNotificationWidget(self)
         notification.addWidget(mbox)
         return notification.show_and_hide_later()
 
@@ -170,7 +170,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         from himena.qt._qtraceback import QtErrorMessageBox
 
         mbox = QtErrorMessageBox.from_warning(warning, parent=self)
-        notification = QNotificationWidget(self._tab_widget)
+        notification = QNotificationWidget(self)
         notification.addWidget(mbox)
         return notification.show_and_hide_later()
 
@@ -337,12 +337,18 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def _current_tab_index(self) -> int | None:
         idx = self._tab_widget.currentIndex()
-        if idx == -1:
+        if idx < 0:
             return None
         return idx
 
     def _set_current_tab_index(self, i_tab: int) -> None:
         return self._tab_widget.setCurrentIndex(i_tab)
+
+    def _tab_hash(self, i_tab: int) -> Hashable:
+        return self._tab_widget.widget_area(i_tab)
+
+    def _num_tabs(self) -> int:
+        return self._tab_widget.count()
 
     def _current_sub_window_index(self, i_tab: int) -> int | None:
         area = self._tab_widget.widget_area(i_tab)
@@ -535,15 +541,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             _get_subwindow(widget).setGeometry(qrect)
         return None
 
-    def _window_anchor(self, widget: QtW.QWidget) -> _anchor.WindowAnchor:
-        return _get_subwindow(widget)._window_anchor
-
-    def _set_window_anchor(
-        self, widget: QtW.QWidget, anchor: _anchor.WindowAnchor
-    ) -> None:
-        _get_subwindow(widget)._window_anchor = anchor
-        return None
-
     def _area_size(self) -> tuple[int, int]:
         if widget := self._tab_widget.currentWidget():
             size = widget.size()
@@ -588,13 +585,13 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             mime.setUrls([QtCore.QUrl.fromLocalFile(str(f)) for f in files])
         return clipboard.setMimeData(mime)
 
-    def _connect_activation_signal(
-        self,
-        cb_tab: Callable[[int], int],
-        cb_win: Callable[[], SubWindow[QtW.QWidget]],
-    ):
-        self._tab_widget.currentChanged.connect(cb_tab)
-        self._tab_widget.activeWindowChanged.connect(cb_win)
+    def _connect_main_window_signals(self, main: MainWindow):
+        self._tab_widget.currentChanged.connect(main._tab_activated)
+        self._tab_widget.activeWindowChanged.connect(main._window_activated)
+        self._tab_widget.resized.connect(self._emit_resized)
+
+    def _emit_resized(self):
+        self._himena_main_window._main_window_resized(Size(*self._area_size()))
 
     def _add_model_menu(
         self,
@@ -696,9 +693,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _on_show_notification_requested(self, text: str, duration: float) -> None:
         text_edit = QtW.QPlainTextEdit(text)
         text_edit.setWordWrapMode(QtGui.QTextOption.WrapMode.WordWrap)
-        notification = QNotificationWidget(
-            self._tab_widget, duration=int(duration * 1000)
-        )
+        notification = QNotificationWidget(self, duration=int(duration * 1000))
         notification.addWidget(text_edit)
         notification.setFixedWidth(280)
         return notification.show_and_hide_later()

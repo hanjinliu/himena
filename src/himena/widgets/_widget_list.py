@@ -3,7 +3,15 @@ from __future__ import annotations
 from abc import abstractmethod
 import inspect
 from pathlib import Path
-from typing import Callable, Generic, TYPE_CHECKING, Iterator, Literal, TypeVar
+from typing import (
+    Callable,
+    Generic,
+    TYPE_CHECKING,
+    Hashable,
+    Iterator,
+    Literal,
+    TypeVar,
+)
 from collections.abc import Sequence
 import uuid
 import weakref
@@ -12,6 +20,7 @@ from psygnal import Signal
 from himena import _providers
 from himena._descriptors import SaveToPath
 from himena.consts import ParametricWidgetProtocolNames as PWPN
+from himena.layout import Layout, VBoxLayout, VStackLayout
 from himena.plugins import _checker
 from himena.types import (
     NewWidgetBehavior,
@@ -19,6 +28,7 @@ from himena.types import (
     WindowState,
     WindowRect,
 )
+from himena._utils import FrozenList
 from himena.widgets._wrapper import (
     _HasMainWindowRef,
     SubWindow,
@@ -78,13 +88,26 @@ class SemiMutableSequence(Sequence[_T]):
 class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
     """An area containing multiple sub-windows."""
 
-    def __init__(self, main_window: BackendMainWindow[_W], i_tab: int):
+    def __init__(self, main_window: BackendMainWindow[_W], hash_value: Hashable):
         super().__init__(main_window)
-        self._i_tab = i_tab
+        self._hash_value = hash_value
+        self._layouts = [VStackLayout(main_window, inverted=True)]
+
+    @property
+    def layouts(self) -> FrozenList[Layout]:
+        """List of layouts in the tab area."""
+        return FrozenList(self._layouts)
+
+    def _tab_index(self) -> int:
+        main = self._main_window()
+        for i in range(main._num_tabs()):
+            if main._tab_hash(i) == self._hash_value:
+                return i
+        raise ValueError("Tab is already removed from the main window.")
 
     def __getitem__(self, index_or_name: int | str) -> SubWindow[_W]:
         index = self._norm_index_or_name(index_or_name)
-        widgets = self._main_window()._get_widget_list(self._i_tab)
+        widgets = self._main_window()._get_widget_list(self._tab_index())
         front = widgets[index][1]
         return front._himena_widget
 
@@ -97,7 +120,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
     def _pop_no_emit(self, index: int):
         main = self._main_window()
         win = self[index]
-        main._del_widget_at(self._i_tab, index)
+        main._del_widget_at(self._tab_index(), index)
         main._remove_control_widget(win.widget)
         if isinstance(sb := win.save_behavior, SaveToPath):
             main._himena_main_window._history_closed.add((sb.path, sb.plugin))
@@ -105,7 +128,9 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
 
     def _norm_index_or_name(self, index_or_name: int | str) -> int:
         if isinstance(index_or_name, str):
-            for i, w in enumerate(self._main_window()._get_widget_list(self._i_tab)):
+            for i, w in enumerate(
+                self._main_window()._get_widget_list(self._tab_index())
+            ):
                 if w[0] == index_or_name:
                     index = i
                     break
@@ -119,19 +144,19 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         return index
 
     def __len__(self) -> int:
-        return len(self._main_window()._get_widget_list(self._i_tab))
+        return len(self._main_window()._get_widget_list(self._tab_index()))
 
     def __iter__(self) -> Iterator[SubWindow[_W]]:
         return iter(
             w[1]._himena_widget
-            for w in self._main_window()._get_widget_list(self._i_tab)
+            for w in self._main_window()._get_widget_list(self._tab_index())
         )
 
     def append(self, sub_window: SubWindow[_W], title: str) -> None:
         """Append a sub-window to the tab area."""
         main = self._main_window()
         interf, front = sub_window._split_interface_and_frontend()
-        out = main.add_widget(front, self._i_tab, title)
+        out = main.add_widget(front, self._tab_index(), title)
         if hasattr(interf, "control_widget"):
             main._set_control_widget(front, interf.control_widget())
 
@@ -139,7 +164,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         sub_window.title = title
         sub_window.state_changed.connect(main._update_context)
 
-        main._set_current_tab_index(self._i_tab)
+        main._set_current_tab_index(self._tab_index())
         if main._himena_main_window._new_widget_behavior is NewWidgetBehavior.TAB:
             main._set_window_state(
                 front,
@@ -165,21 +190,21 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
     @property
     def name(self) -> str:
         """Name of the tab area."""
-        return self._main_window()._get_tab_name_list()[self._i_tab]
+        return self._main_window()._get_tab_name_list()[self._tab_index()]
 
     @property
     def current_index(self) -> int | None:
         """Get the index of the current sub-window."""
-        return self._main_window()._current_sub_window_index(self._i_tab)
+        return self._main_window()._current_sub_window_index(self._tab_index())
 
     @current_index.setter
     def current_index(self, index: int) -> None:
-        self._main_window()._set_current_sub_window_index(self._i_tab, index)
+        self._main_window()._set_current_sub_window_index(self._tab_index(), index)
 
     @property
     def title(self) -> str:
         """Title of the tab area."""
-        return self._main_window()._tab_title(self._i_tab)
+        return self._main_window()._tab_title(self._tab_index())
 
     def add_widget(
         self,
@@ -334,6 +359,18 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         main._move_focus_to(widget0)
         return param_widget
 
+    def add_vbox_layout(
+        self,
+        *,
+        margins=(0, 0, 0, 0),
+        spacing: int = 0,
+    ) -> VBoxLayout:
+        main = self._main_window()
+        layout = VBoxLayout(main, margins=margins, spacing=spacing)
+        self._layouts.append(layout)
+        layout._reanchor(main._area_size())
+        return layout
+
     def _process_new_widget(
         self,
         sub_window: SubWindow[_W],
@@ -345,7 +382,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         interf, front = sub_window._split_interface_and_frontend()
         if title is None:
             title = getattr(interf, "default_title", _make_title)(len(self))
-        out = main.add_widget(front, self._i_tab, title)
+        out = main.add_widget(front, self._tab_index(), title)
         main._himena_main_window._id_to_widget_map[sub_window._identifier] = sub_window
         if hasattr(interf, "control_widget"):
             main._set_control_widget(front, interf.control_widget())
@@ -354,7 +391,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         sub_window.title = title
         sub_window.state_changed.connect(main._update_context)
 
-        main._set_current_tab_index(self._i_tab)
+        main._set_current_tab_index(self._tab_index())
         nwindows = len(self)
         if main._himena_main_window._new_widget_behavior is NewWidgetBehavior.TAB:
             main._set_window_state(
@@ -507,24 +544,56 @@ def _norm_nrows_ncols(nrows: int | None, ncols: int | None, n: int) -> tuple[int
 class TabList(SemiMutableSequence[TabArea[_W]], _HasMainWindowRef[_W], Generic[_W]):
     changed = Signal()
 
+    def __init__(self, main_window: BackendMainWindow[_W]):
+        super().__init__(main_window)
+        self._tab_areas: dict[Hashable, TabArea] = {}
+
     def __getitem__(self, index_or_name: int | str) -> TabArea[_W]:
         index = self._norm_index_or_name(index_or_name)
-        return TabArea(self._main_window(), index)
+        main = self._main_window()
+        out = self._tab_areas.get(main._tab_hash(index))
+        if out is None:
+            raise ValueError(f"Tab index {index} not found in the list.")
+        return out
 
     def __delitem__(self, index_or_name: int | str) -> None:
         index = self._norm_index_or_name(index_or_name)
         area = self[index]
         area.clear()
-        self._main_window()._del_tab_at(index)
+        main = self._main_window()
+        hash = main._tab_hash(index)
+        self._tab_areas.pop(hash)
+        main._del_tab_at(index)
         self.changed.emit()
         return None
+
+    def add(self, name: str) -> TabArea[_W]:
+        main = self._main_window()
+        n_tab = len(self)
+        if name is None:
+            name = f"Tab-{n_tab}"
+        main.add_tab(name)
+        self.changed.emit()
+        main._set_current_tab_index(n_tab)
+        area = TabArea(main, main._tab_hash(n_tab))
+        self._tab_areas[area._hash_value] = area
+        main._himena_main_window._tab_activated(n_tab)
+        return area
+
+    def get(self, index_or_name: int | str, /) -> TabArea[_W] | None:
+        try:
+            return self[index_or_name]
+        except ValueError:
+            return None
 
     def __len__(self) -> int:
         return len(self._main_window()._get_tab_name_list())
 
     def __iter__(self):
         main = self._main_window()
-        return iter(TabArea(main, i) for i in range(len(self)))
+        for i in range(main._num_tabs()):
+            hash = main._tab_hash(i)
+            yield self._tab_areas[hash]
 
     def _norm_index_or_name(self, index_or_name: int | str) -> int:
         if isinstance(index_or_name, str):
@@ -548,7 +617,7 @@ class TabList(SemiMutableSequence[TabArea[_W]], _HasMainWindowRef[_W], Generic[_
             return default
         try:
             return self[idx]
-        except IndexError:
+        except (IndexError, ValueError):
             return default
 
     @property

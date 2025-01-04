@@ -9,7 +9,6 @@ import yaml
 from himena._descriptors import SaveToPath
 from himena.types import WindowState, WindowRect, WidgetDataModel
 from himena import anchor
-from himena.profile import AppProfile
 from himena.workflow import Workflow, compute, WorkflowStepType, LocalReaderMethod
 
 if TYPE_CHECKING:
@@ -162,11 +161,19 @@ def _get_version(mod, maybe_file: bool = False) -> str | None:
     return getattr(mod, "__version__", None)
 
 
+class AppProfileInfo(BaseModel):
+    """A simplified app profile for saving a session."""
+
+    name: str
+    plugins: list[str] = Field(default_factory=list)
+    theme: str
+
+
 class AppSession(BaseModel):
     """A session of the entire application."""
 
     version: str | None = Field(default_factory=lambda: _get_version("himena"))
-    profile: AppProfile | None = Field(default=None)
+    profile: AppProfileInfo | None = Field(default=None)
     tabs: list[TabSession] = Field(default_factory=list)
     current_index: int = Field(default=0)
 
@@ -177,8 +184,14 @@ class AppSession(BaseModel):
         *,
         allow_calculate: bool = False,
     ) -> "AppSession":
+        app_prof = main.app_profile
+        profile = AppProfileInfo(
+            name=app_prof.name,
+            plugins=app_prof.plugins,
+            theme=app_prof.theme,
+        )
         return AppSession(
-            profile=main.app_profile,
+            profile=profile,
             tabs=[
                 TabSession.from_gui(tab, allow_calculate=allow_calculate)
                 for tab in main.tabs

@@ -249,8 +249,9 @@ class QTabWidget(QtW.QTabWidget):
         return self.currentWidget()
 
     def resizeEvent(self, a0):
+        super().resizeEvent(a0)
         self.resized.emit()
-        return super().resizeEvent(a0)
+        return None
 
 
 class QStartupWidget(QtW.QWidget):

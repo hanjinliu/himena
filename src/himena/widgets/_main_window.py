@@ -30,6 +30,7 @@ from himena.profile import AppProfile, load_app_profile
 from himena.style import Theme
 from himena.types import (
     ClipboardDataModel,
+    Size,
     WidgetDataModel,
     NewWidgetBehavior,
     DockArea,
@@ -84,10 +85,7 @@ class MainWindow(Generic[_W]):
         self._file_dialog_hist = FileDialogHistoryDict()
         set_current_instance(app.name, self)
         app.commands.executed.connect(self._on_command_execution)
-        backend._connect_activation_signal(
-            self._tab_activated,
-            self._window_activated,
-        )
+        backend._connect_main_window_signals(self)
         self._ctx_keys = AppContext(create_context(self, max_depth=0))
         self._id_to_widget_map = weakref.WeakValueDictionary[uuid.UUID, SubWindow]()
         self._tab_list.changed.connect(backend._update_context)
@@ -179,13 +177,7 @@ class MainWindow(Generic[_W]):
 
     def add_tab(self, title: str | None = None) -> TabArea[_W]:
         """Add a new tab of given name."""
-        n_tab = len(self.tabs)
-        if title is None:
-            title = f"Tab-{n_tab}"
-        self._backend_main_window.add_tab(title)
-        self.tabs.changed.emit()
-        self._backend_main_window._set_current_tab_index(n_tab)
-        return self.tabs[n_tab]
+        return self.tabs.add(title)
 
     def window_for_id(self, identifier: uuid.UUID) -> SubWindow[_W] | None:
         """Retrieve a sub-window by its identifier."""
@@ -742,7 +734,10 @@ class MainWindow(Generic[_W]):
             raise ValueError("No active window.")
 
     def _tab_activated(self, i: int):
-        self.events.tab_activated.emit(self.tabs[i])
+        tab = self.tabs.get(i)
+        if tab is not None:
+            self.events.tab_activated.emit(tab)
+            self._main_window_resized(self.area_size)  # update layout and anchor
         self._history_tab.add(i)
         return None
 
@@ -773,8 +768,8 @@ class MainWindow(Generic[_W]):
         i_tab = back._current_tab_index()
         if i_tab is None:
             return back._update_control_widget(None)
-        tab = self.tabs[i_tab]
-        if len(tab) == 0:
+        tab = self.tabs.get(i_tab)
+        if tab is None or len(tab) == 0:
             return back._update_control_widget(None)
         i_win = back._current_sub_window_index(i_tab)
         if i_win is None or len(tab) <= i_win:
@@ -784,6 +779,12 @@ class MainWindow(Generic[_W]):
         _checker.call_widget_activated_callback(win.widget)
         self.events.window_activated.emit(win)
         return None
+
+    def _main_window_resized(self, size: Size):
+        if tab := self.tabs.current():
+            for layout in tab.layouts:
+                layout.anchor = layout.anchor.update_for_window_rect(size, layout.rect)
+                layout.rect = layout.anchor.apply_anchor(size, layout.rect.size())
 
     @contextmanager
     def _execute_in_context(

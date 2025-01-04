@@ -69,6 +69,12 @@ class SCPReaderMethod(ReaderMethod):
     path: Path
     wsl: bool = Field(default=False)
 
+    @classmethod
+    def from_str(cls, s: str, /, wsl: bool = False) -> "SCPReaderMethod":
+        username, rest = s.split("@")
+        host, path = rest.split(":")
+        return cls(username=username, host=host, path=Path(path), wsl=wsl)
+
     def _file_path_repr(self) -> str:
         return f"{self.username}@{self.host}:{self.path.as_posix()}"
 

@@ -2,9 +2,16 @@ from __future__ import annotations
 
 import inspect
 from pathlib import Path
-from typing import Callable, Generic, Literal, TypeVar, TYPE_CHECKING, overload
+from typing import (
+    Callable,
+    Generic,
+    Hashable,
+    Literal,
+    TypeVar,
+    TYPE_CHECKING,
+    overload,
+)
 
-from himena.anchor import WindowAnchor
 from himena.types import (
     WindowState,
     ClipboardDataModel,
@@ -46,6 +53,12 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
 
     def _set_current_tab_index(self, i_tab: int) -> None:
         """Update the current tab index."""
+
+    def _tab_hash(self, i_tab: int) -> Hashable:
+        """Get a hashable value of the tab at the index."""
+
+    def _num_tabs(self) -> int:
+        """Get the number of tabs."""
 
     def _current_sub_window_index(self, i_tab: int) -> int | None:
         """Get the current sub window index in the given tab.
@@ -116,12 +129,6 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
 
         The BackendInstructions indicates the animation or other effects to be applied.
         """
-
-    def _window_anchor(self, widget: _W) -> WindowAnchor:
-        """Get the anchor of the window."""
-
-    def _set_window_anchor(self, widget: _W, anchor: WindowAnchor) -> None:
-        """Update the anchor of the window."""
 
     def _area_size(self) -> tuple[int, int]:
         """Get the size of the tab area."""
@@ -240,12 +247,8 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
         fallback class)
         """
 
-    def _connect_activation_signal(
-        self,
-        cb_tab: Callable[[int], int],
-        cb_win: Callable[[], SubWindow[_W]],
-    ):
-        """Connect the activation signal of the backend main window to the callbacks."""
+    def _connect_main_window_signals(self, main_window: MainWindow[_W]):
+        """Connect the signal of the backend main window to the callbacks."""
 
     def _connect_window_events(
         self,
