@@ -176,7 +176,6 @@ class QTabWidget(QtW.QTabWidget):
 
     def _on_current_changed(self, index: int) -> None:
         if widget := self.widget_area(index):
-            widget._reanchor_windows()
             has_active_subwindow = any(
                 win.is_current() for win in widget.subWindowList()
             )

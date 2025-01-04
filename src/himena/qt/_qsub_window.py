@@ -100,7 +100,6 @@ class QSubWindowArea(QtW.QMdiArea):
                 dpos = event.pos() - self._last_drag_pos
                 for sub_window in self.subWindowList():
                     sub_window.move(sub_window.pos() + dpos)
-                self._reanchor_windows()
                 self.setCursor(Qt.CursorShape.ClosedHandCursor)
         self._last_drag_pos = event.pos()
         return None
@@ -148,21 +147,6 @@ class QSubWindowArea(QtW.QMdiArea):
     def hideEvent(self, a0: QtGui.QHideEvent | None) -> None:
         self._last_drag_pos = self._last_press_pos = None
         return super().hideEvent(a0)
-
-    def resizeEvent(self, a0: QtGui.QResizeEvent) -> None:
-        self._reanchor_windows()
-        return super().resizeEvent(a0)
-
-    def _reanchor_windows(self):
-        """Reanchor all windows if needed (such as minimized windows)."""
-        if self.viewMode() != QtW.QMdiArea.ViewMode.SubWindowView:
-            return
-        parent_geometry = self.viewport().geometry()
-        num = 0
-        for sub_window in self.subWindowList():
-            if sub_window._window_state is WindowState.MIN:
-                sub_window._set_minimized(parent_geometry, num)
-                num += 1
 
     def _pixmap_resized(
         self,
@@ -349,7 +333,7 @@ class QSubWindow(QtW.QMdiSubWindow):
             _checker.call_widget_resized_callback(
                 self._my_wrapper().widget, size_old, g_last
             )
-        else:
+        else:  # pragma: no cover
             raise RuntimeError(f"Invalid window state value: {state}")
 
         self._title_bar._window_menu_btn.setVisible(state is not WindowState.MIN)
@@ -619,7 +603,8 @@ class QSubWindowTitleBar(QtW.QFrame):
 
         self.setProperty("isCurrent", False)
         self.setAcceptDrops(True)
-        self._set_bar_size(18)
+        self._bar_size = 18
+        self._set_bar_size(self._bar_size)
 
     def _get_model_type(self) -> str | None:
         interf = self._subwindow._my_wrapper().widget
@@ -632,15 +617,22 @@ class QSubWindowTitleBar(QtW.QFrame):
             return interf.__himena_model_type__
         return None
 
+    def _set_visible(self, visible: bool):
+        if visible:
+            self._set_bar_size(self._bar_size)
+        else:
+            self._set_bar_size(0)
+
     def _set_bar_size(self, height: int):
         self.setFixedHeight(height)
         self._index_label.setFixedHeight(height)
         self._title_label.setFixedHeight(height)
-        self._window_menu_btn._set_size(height - 1)
-        self._model_menu_btn._set_size(height - 1)
-        self._minimize_btn._set_size(height - 1)
-        self._toggle_size_btn._set_size(height - 1)
-        self._close_btn._set_size(height - 1)
+        if height > 1:
+            self._window_menu_btn._set_size(height - 1)
+            self._model_menu_btn._set_size(height - 1)
+            self._minimize_btn._set_size(height - 1)
+            self._toggle_size_btn._set_size(height - 1)
+            self._close_btn._set_size(height - 1)
 
     def _set_icon_color(self, color):
         for toolbtn in (

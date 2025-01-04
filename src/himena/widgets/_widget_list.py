@@ -24,6 +24,7 @@ from himena.layout import Layout, VBoxLayout, VStackLayout
 from himena.plugins import _checker
 from himena.types import (
     NewWidgetBehavior,
+    Size,
     WidgetDataModel,
     WindowState,
     WindowRect,
@@ -91,7 +92,10 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
     def __init__(self, main_window: BackendMainWindow[_W], hash_value: Hashable):
         super().__init__(main_window)
         self._hash_value = hash_value
-        self._layouts = [VStackLayout(main_window, inverted=True)]
+        # A tab area always has a layout for stacking minimized windows
+        self._minimized_window_stack_layout = VStackLayout(main_window, inverted=True)
+        self._layouts = [self._minimized_window_stack_layout]
+        self._minimized_window_stack_layout._reanchor(Size(*main_window._area_size()))
 
     @property
     def layouts(self) -> FrozenList[Layout]:
@@ -125,23 +129,6 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         if isinstance(sb := win.save_behavior, SaveToPath):
             main._himena_main_window._history_closed.add((sb.path, sb.plugin))
         return win
-
-    def _norm_index_or_name(self, index_or_name: int | str) -> int:
-        if isinstance(index_or_name, str):
-            for i, w in enumerate(
-                self._main_window()._get_widget_list(self._tab_index())
-            ):
-                if w[0] == index_or_name:
-                    index = i
-                    break
-            else:
-                raise ValueError(f"Name {index_or_name!r} not found.")
-        else:
-            if index_or_name < 0:
-                index = len(self) + index_or_name
-            else:
-                index = index_or_name
-        return index
 
     def __len__(self) -> int:
         return len(self._main_window()._get_widget_list(self._tab_index()))
@@ -527,6 +514,23 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
                 rect = WindowRect.from_tuple(x, y, w, h)
                 main._set_window_rect(sub.widget, rect, inst)
         return None
+
+    def _norm_index_or_name(self, index_or_name: int | str) -> int:
+        if isinstance(index_or_name, str):
+            for i, w in enumerate(
+                self._main_window()._get_widget_list(self._tab_index())
+            ):
+                if w[0] == index_or_name:
+                    index = i
+                    break
+            else:
+                raise ValueError(f"Name {index_or_name!r} not found.")
+        else:
+            if index_or_name < 0:
+                index = len(self) + index_or_name
+            else:
+                index = index_or_name
+        return index
 
 
 def _norm_nrows_ncols(nrows: int | None, ncols: int | None, n: int) -> tuple[int, int]:

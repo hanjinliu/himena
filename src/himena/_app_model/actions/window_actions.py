@@ -219,10 +219,10 @@ def maximize_current_window(win: SubWindow) -> None:
     enablement=_ctx.num_sub_windows > 0,
 )
 def toggle_full_screen(win: SubWindow) -> None:
-    if win.state is WindowState.MAX:
+    if win.state is WindowState.FULL:
         win.state = WindowState.NORMAL
     else:
-        win.state = WindowState.MAX
+        win.state = WindowState.FULL
 
 
 @ACTIONS.append_from_fn(

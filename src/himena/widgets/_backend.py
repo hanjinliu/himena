@@ -57,6 +57,9 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     def _tab_hash(self, i_tab: int) -> Hashable:
         """Get a hashable value of the tab at the index."""
 
+    def _tab_hash_for_window(self, widget: _W) -> Hashable:
+        """Get a hashable value of the tab containing the window."""
+
     def _num_tabs(self) -> int:
         """Get the number of tabs."""
 

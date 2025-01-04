@@ -742,6 +742,7 @@ class MainWindow(Generic[_W]):
         return None
 
     def move_window(self, sub: SubWindow[_W], target_index: int) -> None:
+        """Move the sub-window to the target tab index."""
         i_tab = i_win = None
         for _i_tab, tab in self.tabs.enumerate():
             for _i_win, win in tab.enumerate():
@@ -759,6 +760,8 @@ class MainWindow(Generic[_W]):
             self.add_tab()
         self.tabs[target_index].append(win, title)
         win.rect = old_rect
+        if layout := win._parent_layout_ref():
+            layout.remove(win)
         self.tabs.current_index = i_tab
         return None
 
@@ -784,7 +787,10 @@ class MainWindow(Generic[_W]):
         if tab := self.tabs.current():
             for layout in tab.layouts:
                 layout.anchor = layout.anchor.update_for_window_rect(size, layout.rect)
-                layout.rect = layout.anchor.apply_anchor(size, layout.rect.size())
+                layout._reanchor(size)
+            for win in tab:
+                win.anchor = win.anchor.update_for_window_rect(size, win.rect)
+                win._reanchor(size)
 
     @contextmanager
     def _execute_in_context(

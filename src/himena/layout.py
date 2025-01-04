@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 import weakref
 import numpy as np
-from typing import TYPE_CHECKING, Iterator, MutableSequence
+from typing import TYPE_CHECKING, Callable, Iterator, MutableSequence
 from himena.types import Size, WindowRect, Margins
 from himena import anchor as _anc
 
@@ -18,7 +18,8 @@ class Layout(ABC):
         if main:
             self._main_window_ref = weakref.ref(main)
         else:
-            self._main_window_ref = lambda: None
+            self._main_window_ref = _no_ref
+        self._parent_layout_ref: Callable[[], LayoutContainer | None] = _no_ref
 
     @property
     @abstractmethod
@@ -76,6 +77,10 @@ class Layout(ABC):
             raise ValueError(f"Unknown anchor: {anchor}")
 
 
+def _no_ref() -> None:
+    return None
+
+
 class LayoutContainer(Layout):
     """Layout that can contain other layouts."""
 
@@ -97,6 +102,10 @@ class LayoutContainer(Layout):
     @abstractmethod
     def _resize_children(self, rect: WindowRect):
         """Resize all children layouts based on the geometry of this layout."""
+
+    @abstractmethod
+    def remove(self, child: Layout) -> None:
+        """Remove a child layout from this layout."""
 
 
 class Layout1D(LayoutContainer, MutableSequence[Layout]):
@@ -171,6 +180,9 @@ class Layout1D(LayoutContainer, MutableSequence[Layout]):
         for _, child in self._children:
             yield child
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self._children!r})"
+
     def __getitem__(self, key) -> Layout:
         _assert_supports_index(key)
         return self._children[key]
@@ -180,6 +192,12 @@ class Layout1D(LayoutContainer, MutableSequence[Layout]):
             raise TypeError(f"Can only set a Layout object, got {type(layout)}")
         _assert_supports_index(key)
         self._children[key] = layout
+        layout._parent_layout_ref = weakref.ref(self)
+        self._resize_children(self.rect)
+
+    def remove(self, child: Layout) -> None:
+        MutableSequence.remove(self, child)
+        child._parent_layout_ref = _no_ref
         self._resize_children(self.rect)
 
 
@@ -193,6 +211,7 @@ class BoxLayout1D(Layout1D):
         if stretch <= 0:
             raise ValueError(f"stretch must be positive, got {stretch!r}")
         self._children.insert(index, child)
+        child._parent_layout_ref = weakref.ref(self)
         self._stretches.insert(index, float(stretch))
         self._resize_children(self.rect)
         return self
@@ -204,9 +223,10 @@ class BoxLayout1D(Layout1D):
         self.append(child, stretch=stretch)
         return self
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: int):
         _assert_supports_index(key)
-        del self._children[key]
+        child = self._children.pop(key)
+        child._parent_layout_ref = _no_ref
         del self._stretches[key]
         self._resize_children(self.rect)
 
@@ -293,6 +313,7 @@ class VStackLayout(Layout1D):
     def insert(self, index: int, child: Layout) -> None:
         """Insert a child layout at the specified index."""
         self._children.insert(index, child)
+        child._parent_layout_ref = weakref.ref(self)
         self._resize_children(self.rect)
         return self
 
@@ -303,8 +324,9 @@ class VStackLayout(Layout1D):
         self.append(child)
         return self
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: int):
         _assert_supports_index(key)
+        self._children[key]._parent_layout_ref = _no_ref
         del self._children[key]
         self._resize_children(self.rect)
 
@@ -315,7 +337,7 @@ class VStackLayout(Layout1D):
         heights = [ch.rect.height for ch in self._children]
         h_cumsum = np.cumsum([0] + heights, dtype=np.uint32)
         if self._inverted:
-            bottoms = rect.bottom - h_cumsum[1:] + self._margins.bottom
+            bottoms = rect.bottom - h_cumsum[:-1] + self._margins.bottom
             for i, child in enumerate(self._children):
                 child.rect = child.rect.move_bottom_left(rect.left, bottoms[i])
         else:

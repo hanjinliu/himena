@@ -46,7 +46,7 @@ from himena.plugins import _checker
 from himena.layout import Layout
 
 if TYPE_CHECKING:
-    from himena.widgets import BackendMainWindow, MainWindow
+    from himena.widgets import BackendMainWindow, MainWindow, TabArea
 
 _W = TypeVar("_W")  # backend widget type
 _LOGGER = logging.getLogger(__name__)
@@ -336,6 +336,12 @@ class SubWindow(WidgetWrapper[_W], Layout):
         """Write the widget data to a file."""
         return self._write_model(path, plugin, self.to_model())
 
+    @property
+    def tab_area(self) -> TabArea[_W]:
+        """Tab area of the sub-window."""
+        _hash = self._main_window()._tab_hash_for_window(self._frontend_widget())
+        return self._main_window()._himena_main_window.tabs._tab_areas[_hash]
+
     def _write_model(
         self, path: str | Path, plugin: str | None, model: WidgetDataModel
     ) -> None:
@@ -349,19 +355,30 @@ class SubWindow(WidgetWrapper[_W], Layout):
         return None
 
     def _set_state(self, value: WindowState, inst: BackendInstructions | None = None):
+        main = self._main_window()
+        front = self._frontend_widget()
+        if main._window_state(front) is value:  # if already in the state, do nothing
+            return None
         if inst is None:
-            inst = self._main_window()._himena_main_window._instructions
-        self._main_window()._set_window_state(self._frontend_widget(), value, inst)
+            inst = main._himena_main_window._instructions
+        main._set_window_state(front, value, inst)
+        stack = self.tab_area._minimized_window_stack_layout
+        if value is WindowState.MIN:
+            stack.add(self)
+            self.anchor = None
+        elif value in (WindowState.FULL, WindowState.MAX):
+            self.anchor = _anchor.AllCornersAnchor()
+        else:
+            self.anchor = None
+            if self._parent_layout_ref() is stack:
+                stack.remove(self)
+                stack._reanchor(Size(*main._area_size()))
 
     def _set_rect(
         self,
         value: tuple[int, int, int, int],
         inst: BackendInstructions | None = None,
     ):
-        if self.state is not WindowState.NORMAL:
-            raise ValueError(
-                "Cannot set window rect when window is not in normal state."
-            )
         if inst is None:
             inst = self._main_window()._himena_main_window._instructions
         main = self._main_window()
@@ -465,6 +482,8 @@ class SubWindow(WidgetWrapper[_W], Layout):
     def _close_callback(self):
         main = self._main_window()._himena_main_window
         self._close_all_children(main)
+        if layout := self._parent_layout_ref():
+            layout.remove(self)
         self._alive = False
 
     def _determine_read_from(self) -> tuple[Path | list[Path], str | None] | None:

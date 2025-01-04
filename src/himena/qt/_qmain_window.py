@@ -347,6 +347,11 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _tab_hash(self, i_tab: int) -> Hashable:
         return self._tab_widget.widget_area(i_tab)
 
+    def _tab_hash_for_window(self, widget: QtW.QWidget) -> Hashable:
+        mdiarea = _get_subwindow(widget).parentWidget().parentWidget()
+        assert isinstance(mdiarea, QSubWindowArea)
+        return mdiarea
+
     def _num_tabs(self) -> int:
         return self._tab_widget.count()
 
