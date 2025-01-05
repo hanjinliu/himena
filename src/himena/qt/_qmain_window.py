@@ -280,8 +280,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def showEvent(self, event: QtGui.QShowEvent) -> None:
         super().showEvent(event)
-        if widget := self._tab_widget.current_widget_area():
-            widget._reanchor_windows()
+        self._himena_main_window._main_window_resized(Size(*self._area_size()))
         return None
 
     def show(self, run: bool = False):
@@ -348,11 +347,13 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         return self._tab_widget.widget_area(i_tab)
 
     def _tab_hash_for_window(self, widget: QtW.QWidget) -> Hashable:
-        mdiarea = _get_subwindow(widget).parentWidget().parentWidget()
+        mdiarea = _get_subwindow(widget)._qt_mdiarea()
         assert isinstance(mdiarea, QSubWindowArea)
         return mdiarea
 
     def _num_tabs(self) -> int:
+        if self._tab_widget._is_startup_only():
+            return 0
         return self._tab_widget.count()
 
     def _current_sub_window_index(self, i_tab: int) -> int | None:
@@ -502,8 +503,11 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             raise ValueError("Invalid tab or window index.")
         _LOGGER.info("Deleting widget at tab %r, window %r", i_tab, i_window)
         tab = self._tab_widget.widget_area(i_tab)
-        tab.removeSubWindow(tab.subWindowList()[i_window])
+        subwindows = tab.subWindowList()
+        tab.removeSubWindow(subwindows[i_window])
         tab.relabel_widgets()
+        if len(subwindows) == 1:  # now empty
+            tab._set_area_focused()
         return None
 
     def _del_tab_at(self, i_tab: int) -> None:

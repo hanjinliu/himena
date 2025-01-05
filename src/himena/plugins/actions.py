@@ -1,39 +1,69 @@
 from __future__ import annotations
 
-from functools import reduce, wraps
+from dataclasses import is_dataclass, fields
+from functools import reduce
 import operator
 import logging
 from copy import deepcopy
-import uuid
 from typing import (
     Any,
     Callable,
     Iterator,
     Mapping,
+    NamedTuple,
     Sequence,
     TypeVar,
     overload,
     TYPE_CHECKING,
 )
-import weakref
+
+from pydantic_compat import BaseModel
 
 from app_model import Action, Application
-from app_model.types import SubmenuItem, KeyBindingRule, ToggleRule
+from app_model.types import SubmenuItem, KeyBindingRule
 from app_model.expressions import BoolOp
 
 from himena._app_model import AppContext as ctx
-from himena.types import DockArea, DockAreaString
-from himena.consts import MenuId, NO_RECORDING_FIELD
+from himena.consts import MenuId
 from himena import _utils
 
 if TYPE_CHECKING:
-    from typing import Self
-    from himena.widgets import MainWindow, DockWidget
-
     KeyBindingsType = str | KeyBindingRule | Sequence[str] | Sequence[KeyBindingRule]
+    PluginConfigType = Any
 
 _F = TypeVar("_F", bound=Callable)
 _LOGGER = logging.getLogger(__name__)
+
+
+class PluginConfigTuple(NamedTuple):
+    title: str
+    config: PluginConfigType
+    config_class: type
+
+    def as_dict(self) -> dict[str, Any]:
+        """Convert the config into a normalized dictionary."""
+        config = self.config
+        if isinstance(config, Mapping):
+            out = deepcopy(config)
+        elif is_dataclass(config):
+            out = {}
+            for _f in fields(config):
+                out[_f.name] = {"value": getattr(config, _f.name), **_f.metadata}
+                _f.__doc__
+        elif isinstance(config, BaseModel):
+            out = {}
+            for _fname, _finfo in config.model_fields.items():
+                options = {}
+                if tooltip := _finfo.description:
+                    options["tooltip"] = tooltip
+                options.update(_finfo.metadata)
+                out[_f] = {"value": getattr(config, _fname), **options}
+        else:
+            raise TypeError(
+                "Plugin config type must be dict, dataclass or pydantic.BaseModel, but "
+                f"got {config!r}"
+            )
+        return out
 
 
 class AppActionRegistry:
@@ -43,7 +73,7 @@ class AppActionRegistry:
         self._actions: dict[str, Action] = {}
         self._submenu_titles: dict[str, str] = {}
         self._installed_plugins: list[str] = []
-        self._plugin_default_configs: dict[str, dict[str, Any]] = {}
+        self._plugin_default_configs: dict[str, PluginConfigTuple] = {}
 
     @classmethod
     def instance(cls) -> AppActionRegistry:
@@ -127,14 +157,14 @@ class AppActionRegistry:
         return new_menu_ids
 
 
-def _norm_menus(menus: str | Sequence[str]) -> list[str]:
+def norm_menus(menus: str | Sequence[str]) -> list[str]:
     if isinstance(menus, str):
         return [menus]
     return list(menus)
 
 
 def _norm_menus_with_group(menus: str | Sequence[str], group: str) -> list[dict]:
-    return [{"id": menu, "group": group} for menu in _norm_menus(menus)]
+    return [{"id": menu, "group": group} for menu in norm_menus(menus)]
 
 
 def configure_submenu(submenu_id: str, title: str) -> None:
@@ -229,7 +259,7 @@ def make_action_for_function(
     command_id=None,
 ):
     types, enablement, menus = _norm_register_function_args(types, enablement, menus)
-    kbs = _normalize_keybindings(keybindings)
+    kbs = normalize_keybindings(keybindings)
     if title is None:
         _title = f.__name__.replace("_", " ").title()
     else:
@@ -243,7 +273,7 @@ def make_action_for_function(
         widget_id = _utils.get_widget_class_id(inner_widget_class)
         _enablement = _expr_and(_enablement, ctx.active_window_widget_id == widget_id)
 
-    _id = _command_id_from_func(f, command_id)
+    _id = command_id_from_func(f, command_id)
     if isinstance(command_id, str) and ":" in command_id:
         group = command_id.rsplit(":", maxsplit=1)[0]
         menus_normed = _norm_menus_with_group(menus, group)
@@ -252,7 +282,7 @@ def make_action_for_function(
     return Action(
         id=_id,
         title=_title,
-        tooltip=_tooltip_from_func(f),
+        tooltip=tooltip_from_func(f),
         callback=_utils.make_function_callback(f, command_id=_id, title=_title),
         menus=menus_normed,
         enablement=_enablement,
@@ -292,7 +322,7 @@ def _norm_register_function_args(
     model_menu_found = False
     pref = "/model_menu"
     reg = AppActionRegistry.instance()
-    for menu in _norm_menus(menus):
+    for menu in norm_menus(menus):
         # if "/model_menu/..." submenu is specified by the user, reallocate it.
         if _is_model_menu_prefix(menu):
             _, _, other = menu.split("/", maxsplit=2)
@@ -347,196 +377,7 @@ def _is_model_menu_prefix(menu_id: str) -> bool:
     return (ids[0], ids[1]) == ("", "model_menu")
 
 
-@overload
-def register_dock_widget(
-    widget_factory: _F,
-    *,
-    menus: str | Sequence[str] = "plugins",
-    title: str | None = None,
-    area: DockArea | DockAreaString = DockArea.RIGHT,
-    allowed_areas: Sequence[DockArea | DockAreaString] | None = None,
-    keybindings: KeyBindingsType | None = None,
-    singleton: bool = False,
-    plugin_configs: dict[str, Any] | None = None,
-    command_id: str | None = None,
-) -> _F: ...
-
-
-@overload
-def register_dock_widget(
-    widget_factory: None = None,
-    *,
-    menus: str | Sequence[str] = "plugins",
-    title: str | None = None,
-    area: DockArea | DockAreaString = DockArea.RIGHT,
-    allowed_areas: Sequence[DockArea | DockAreaString] | None = None,
-    keybindings: KeyBindingsType | None = None,
-    singleton: bool = False,
-    plugin_configs: dict[str, Any] | None = None,
-    command_id: str | None = None,
-) -> Callable[[_F], _F]: ...
-
-
-def register_dock_widget(
-    widget_factory=None,
-    *,
-    menus="plugins",
-    title: str | None = None,
-    area: DockArea | DockAreaString = DockArea.RIGHT,
-    allowed_areas: Sequence[DockArea | DockAreaString] | None = None,
-    keybindings=None,
-    singleton: bool = False,
-    plugin_configs: dict[str, Any] | None = None,
-    command_id: str | None = None,
-):
-    """
-    Register a widget factory as a dock widget function.
-
-    Parameters
-    ----------
-    widget_factory : callable, optional
-        Class of dock widget, or a factory function for the dock widget.
-    title : str, optional
-        Title of the dock widget.
-    area : DockArea or DockAreaString, optional
-        Initial area of the dock widget.
-    allowed_areas : sequence of DockArea or DockAreaString, optional
-        List of areas that is allowed for the dock widget.
-    keybindings : sequence of keybinding rule, optional
-        Keybindings to trigger the dock widget.
-    singleton : bool, default False
-        If true, the registered dock widget will constructed only once.
-    command_id : str, optional
-        Command ID. If not given, the function name will be used.
-    """
-    kbs = _normalize_keybindings(keybindings)
-
-    def _inner(wf: Callable):
-        _command_id = _command_id_from_func(wf, command_id)
-        _callback = DockWidgetCallback(
-            wf,
-            title=title,
-            area=area,
-            allowed_areas=allowed_areas,
-            singleton=singleton,
-            uuid=uuid.uuid4(),
-            command_id=_command_id,
-        )
-        if singleton:
-            toggle_rule = ToggleRule(get_current=_callback.widget_visible)
-        else:
-            toggle_rule = None
-        action = Action(
-            id=_command_id,
-            title=_callback._title,
-            tooltip=_tooltip_from_func(wf),
-            callback=_callback,
-            menus=_norm_menus(menus),
-            keybindings=kbs,
-            toggled=toggle_rule,
-        )
-        reg = AppActionRegistry.instance()
-        reg.add_action(action)
-        if plugin_configs:
-            configs = deepcopy(plugin_configs)
-            configs[".title"] = _callback._title
-            reg._plugin_default_configs[_command_id] = configs
-        return wf
-
-    return _inner if widget_factory is None else _inner(widget_factory)
-
-
-class WidgetCallbackBase:
-    _instance_map = weakref.WeakValueDictionary[str, "Self"]()
-
-    def __init__(
-        self,
-        func: Callable,
-        title: str | None,
-        singleton: bool,
-        uuid: uuid.UUID | None,
-        command_id: str,
-    ):
-        self._func = func
-        self._title = _normalize_title(title, func)
-        self._singleton = singleton
-        self._uuid = uuid
-        self._command_id = command_id
-        # if singleton, retain the weak reference to the dock widget
-        self._widget_ref: Callable[[], None | DockWidget] = lambda: None
-        self._all_widgets: weakref.WeakSet[DockWidget] = weakref.WeakSet()
-        wraps(func)(self)
-        self.__annotations__ = {"ui": "MainWindow"}
-        setattr(self, NO_RECORDING_FIELD, True)
-        self.__class__._instance_map[command_id] = self
-
-    @classmethod
-    def instance_for_command_id(cls, command_id: str) -> Self | None:
-        """Get the callback instance for the given command ID."""
-        return WidgetCallbackBase._instance_map.get(command_id)
-
-
-class DockWidgetCallback(WidgetCallbackBase):
-    """Callback for registering dock widgets."""
-
-    def __init__(
-        self,
-        func: Callable,
-        title: str | None,
-        area: DockArea | DockAreaString,
-        allowed_areas: Sequence[DockArea | DockAreaString] | None,
-        singleton: bool,
-        uuid: uuid.UUID | None,
-        command_id: str,
-    ):
-        super().__init__(
-            func, title=title, singleton=singleton, uuid=uuid, command_id=command_id
-        )
-        self._area = area
-        self._allowed_areas = allowed_areas
-
-    def __call__(self, ui: MainWindow) -> None:
-        if self._singleton:
-            if _dock := ui.dock_widgets.widget_for_id(self._uuid):
-                _dock.visible = not _dock.visible
-                return None
-        try:
-            widget = self._func(ui)
-        except TypeError:
-            widget = self._func()
-        dock = ui.add_dock_widget(
-            widget,
-            title=self._title,
-            area=self._area,
-            allowed_areas=self._allowed_areas,
-            _identifier=self._uuid,
-        )
-        self._all_widgets.add(dock)
-        self._widget_ref = weakref.ref(dock)
-        plugin_configs = ui.app_profile.plugin_configs.get(self._command_id)
-        if plugin_configs:
-            if not hasattr(widget, "update_config"):
-                raise ValueError(
-                    "The widget must have 'update_config' method if plugin config "
-                    "fields are given.",
-                )
-            params = {}
-            for k, v in plugin_configs.items():
-                if k.startswith("."):
-                    continue
-                params[k] = v["value"]
-            _LOGGER.info("Updating plugin configs: %r", params)
-            widget.update_config(**params)
-        return None
-
-    def widget_visible(self) -> bool:
-        """Used for the toggle rule of the Action."""
-        if widget := self._widget_ref():
-            return widget.visible
-        return False
-
-
-def _normalize_keybindings(keybindings):
+def normalize_keybindings(keybindings):
     if isinstance(keybindings, str):
         kbs = [KeyBindingRule(primary=keybindings)]
     elif isinstance(keybindings, Sequence):
@@ -557,13 +398,7 @@ def _normalize_keybindings(keybindings):
     return kbs
 
 
-def _normalize_title(title: str | None, func: Callable) -> str:
-    if title is None:
-        return func.__name__.replace("_", " ").title()
-    return title
-
-
-def _command_id_from_func(func: Callable, command_id: str) -> str:
+def command_id_from_func(func: Callable, command_id: str) -> str:
     """Make a command ID from a function.
 
     If function `my_func` is defined in a module `my_module`, the command ID will be
@@ -576,7 +411,7 @@ def _command_id_from_func(func: Callable, command_id: str) -> str:
     return _id
 
 
-def _tooltip_from_func(func: Callable) -> str | None:
+def tooltip_from_func(func: Callable) -> str | None:
     if doc := getattr(func, "__doc__", None):
         tooltip = str(doc)
     else:
@@ -628,13 +463,13 @@ def make_conversion_rule(
     keybindings: KeyBindingsType | None = None,
     command_id: str | None = None,
 ):
-    kbs = _normalize_keybindings(keybindings)
-    _id = _command_id_from_func(func, command_id)
+    kbs = normalize_keybindings(keybindings)
+    _id = command_id_from_func(func, command_id)
     title = f"Convert {type_from} to {type_to}"
     return Action(
         id=_id,
         title=title,
-        tooltip=_tooltip_from_func(func),
+        tooltip=tooltip_from_func(func),
         callback=_utils.make_function_callback(func, command_id=_id, title=title),
         menus=[{"id": f"/model_menu:{type_from}/convert", "group": "conversion"}],
         enablement=ctx.active_window_model_type == type_from,

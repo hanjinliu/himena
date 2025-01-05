@@ -1,16 +1,44 @@
 """Builtin File explorer plugin."""
 
 import sys
-from himena.plugins import register_dock_widget
+from himena.plugins import register_dock_widget_action
+from dataclasses import dataclass, field
 
 
-@register_dock_widget(
+@dataclass
+class FileExplorerConfig:
+    allow_drop_data_to_save: bool = field(
+        default=True,
+        metadata={"tooltip": "Allow dropping data opened in the main window to save."},
+    )
+    allow_drop_file_to_move: bool = field(
+        default=True, metadata={"tooltip": "Allow dropping files to move."}
+    )
+
+
+@dataclass
+class FileExplorerSSHConfig:
+    default_host: str = field(
+        default="", metadata={"tooltip": "The default host name or IP address"}
+    )
+    default_user: str = field(default="", metadata={"tooltip": "The default user name"})
+    default_use_wsl: bool = field(
+        default=False,
+        metadata={
+            "tooltip": "Use WSL to connect to the host in Windows",
+            "enabled": sys.platform == "win32",
+        },
+    )
+
+
+@register_dock_widget_action(
     title="File Explorer",
     menus=["tools/dock"],
     area="left",
     keybindings="Ctrl+Shift+E",
     command_id="builtins:file-explorer",
     singleton=True,
+    plugin_configs=FileExplorerConfig(),
 )
 def make_file_explorer_widget(ui):
     """Open a file explorer widget as a dock widget."""
@@ -19,21 +47,13 @@ def make_file_explorer_widget(ui):
     return QExplorerWidget(ui)
 
 
-@register_dock_widget(
+@register_dock_widget_action(
     title="File Explorer (SSH)",
     menus=["tools/dock"],
     area="left",
     command_id="builtins:file-explorer-ssh",
     singleton=True,
-    plugin_configs={
-        "default_host": {"value": "", "tooltip": "The default host name or IP address"},
-        "default_user": {"value": "", "tooltip": "The default user name"},
-        "default_use_wsl": {
-            "value": False,
-            "tooltip": "Use WSL to connect to the host in Windows",
-            "enabled": sys.platform == "win32",
-        },
-    },
+    plugin_configs=FileExplorerSSHConfig(),
 )
 def make_file_explorer_ssh_widget(ui):
     """Open a file explorer widget remotely as a dock widget."""

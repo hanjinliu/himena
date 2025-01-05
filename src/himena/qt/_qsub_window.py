@@ -26,7 +26,6 @@ from himena import _drag
 
 if TYPE_CHECKING:
     from PyQt6 import QtWidgets as QtW
-    from himena.qt._qmain_window import QMainWindow
     from himena.qt.main_window import MainWindowQt
     from himena.widgets import SubWindow
 
@@ -139,10 +138,13 @@ class QSubWindowArea(QtW.QMdiArea):
                             self._last_active_window = win
                             _LOGGER.debug("QSubWindowArea.eventFilter: Window focused.")
                 else:
-                    self.area_focused.emit()
-                    self._last_active_window = None
+                    self._set_area_focused()
                     _LOGGER.debug("QSubWindowArea.eventFilter: TabArea focused.")
         return super().eventFilter(obj, a0)
+
+    def _set_area_focused(self):
+        self.area_focused.emit()
+        self._last_active_window = None
 
     def hideEvent(self, a0: QtGui.QHideEvent | None) -> None:
         self._last_drag_pos = self._last_press_pos = None
@@ -239,11 +241,11 @@ class QSubWindow(QtW.QMdiSubWindow):
         self._anim_geometry = QtCore.QPropertyAnimation(self, b"geometry")
         self.setAcceptDrops(True)
 
-    def _qt_mdiarea(self) -> QMainWindow:
+    def _qt_mdiarea(self) -> QSubWindowArea:
         parent = self
         while parent is not None:
             parent = parent.parentWidget()
-            if isinstance(parent, QtW.QMdiArea):
+            if isinstance(parent, QSubWindowArea):
                 return parent
         raise ValueError("Could not find the Qt main window.")
 
@@ -252,9 +254,6 @@ class QSubWindow(QtW.QMdiSubWindow):
 
     def setWindowTitle(self, title: str):
         self._title_bar._title_label.setText(title)
-
-    def _subwindow_area(self) -> QSubWindowArea:
-        return self.parentWidget().parentWidget()
 
     def _my_wrapper(self) -> SubWindow:
         return self._widget._himena_widget
@@ -272,7 +271,7 @@ class QSubWindow(QtW.QMdiSubWindow):
         g_last = Size(self._last_geometry.width(), self._last_geometry.height())
         if self._window_state == state:
             return None
-        if self._subwindow_area().viewMode() != QtW.QMdiArea.ViewMode.SubWindowView:
+        if self._qt_mdiarea().viewMode() != QtW.QMdiArea.ViewMode.SubWindowView:
             self._window_state = state
             return None
         if animate:
@@ -287,7 +286,7 @@ class QSubWindow(QtW.QMdiSubWindow):
             self.resize(124, self._title_bar.height() + 8)
             n_minimized = sum(
                 1
-                for sub_window in self._subwindow_area().subWindowList()
+                for sub_window in self._qt_mdiarea().subWindowList()
                 if sub_window._window_state is WindowState.MIN
             )
             self._set_minimized(g_parent, n_minimized)

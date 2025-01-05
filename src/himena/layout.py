@@ -286,7 +286,37 @@ class HBoxLayout(BoxLayout1D):
         return None
 
 
-# class GridLayout
+class GridLayout(LayoutContainer):
+    def __init__(
+        self,
+        main: BackendMainWindow | None = None,
+        *,
+        margins: Margins[int] | tuple[int, int, int, int] = (0, 0, 0, 0),
+        spacing: Size[int] | tuple[int, int] = 0,
+    ):
+        super().__init__(main)
+        self._margins = Margins(*margins)
+        self._spacing = Size(*spacing)
+
+    @property
+    def margins(self) -> Margins[int]:
+        """Margins around the layout."""
+        return self._margins
+
+    @margins.setter
+    def margins(self, value: Margins[int] | tuple[int, int, int, int]):
+        self._margins = Margins(*value)
+        self._resize_children(self.rect)
+
+    @property
+    def spacing(self) -> Size:
+        """Spacing between children."""
+        return self._spacing
+
+    @spacing.setter
+    def spacing(self, value: Size[int] | tuple[int, int]):
+        self._spacing = Size(*value)
+        self._resize_children(self.rect)
 
 
 class VStackLayout(Layout1D):

@@ -1,7 +1,7 @@
-from himena.plugins import register_dock_widget
+from himena.plugins import register_dock_widget_action
 
 
-@register_dock_widget(
+@register_dock_widget_action(
     title="Command History",
     menus=["tools/dock"],
     area="right",

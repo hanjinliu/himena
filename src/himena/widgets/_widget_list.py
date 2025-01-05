@@ -20,9 +20,10 @@ from psygnal import Signal
 from himena import _providers
 from himena._descriptors import SaveToPath
 from himena.consts import ParametricWidgetProtocolNames as PWPN
-from himena.layout import Layout, VBoxLayout, VStackLayout
+from himena.layout import Layout, VBoxLayout, HBoxLayout, VStackLayout
 from himena.plugins import _checker
 from himena.types import (
+    Margins,
     NewWidgetBehavior,
     Size,
     WidgetDataModel,
@@ -349,13 +350,44 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
     def add_vbox_layout(
         self,
         *,
-        margins=(0, 0, 0, 0),
+        margins: Margins[int] | tuple[int, int, int, int] = (0, 0, 0, 0),
         spacing: int = 0,
     ) -> VBoxLayout:
+        """Add a vertical box layout to the tab area.
+
+        Parameters
+        ----------
+        margins : (int, int, int, int) or Margins, optional
+            Left, top, right and bottom margins of the layout.
+        spacing : int, optional
+            Spacing between the widgets.
+        """
         main = self._main_window()
         layout = VBoxLayout(main, margins=margins, spacing=spacing)
+        return self._add_layout(layout)
+
+    def add_hbox_layout(
+        self,
+        *,
+        margins: Margins[int] | tuple[int, int, int, int] = (0, 0, 0, 0),
+        spacing: int = 0,
+    ) -> HBoxLayout:
+        """Add a horizontal box layout to the tab area.
+
+        Parameters
+        ----------
+        margins : (int, int, int, int) or Margins, optional
+            Left, top, right and bottom margins of the layout.
+        spacing : int, optional
+            Spacing between the widgets.
+        """
+        main = self._main_window()
+        layout = HBoxLayout(main, margins=margins, spacing=spacing)
+        return self._add_layout(layout)
+
+    def _add_layout(self, layout: Layout) -> Layout:
         self._layouts.append(layout)
-        layout._reanchor(main._area_size())
+        layout._reanchor(self._main_window()._area_size())
         return layout
 
     def _process_new_widget(

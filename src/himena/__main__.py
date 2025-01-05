@@ -42,6 +42,7 @@ def _main(
     with_plugins: list[str] | None = None,
     new: str | None = None,
     remove: str | None = None,
+    clear_plugin_configs: bool = False,
 ):
     if remove:
         _assert_profile_not_none(remove)
@@ -66,6 +67,15 @@ def _main(
     if profile is not None and not _is_profile_name(profile):
         path = profile
         profile = None
+
+    if clear_plugin_configs:
+        from himena.profile import load_app_profile
+
+        prof = load_app_profile(profile)
+        if prof.plugin_configs:
+            prof.plugin_configs.clear()
+            prof.save()
+            print(f"Plugin configurations are cleared for the profile {profile!r}.")
 
     logging.basicConfig(level=log_level)
     ui = new_window(profile, plugins=with_plugins)
@@ -113,6 +123,10 @@ def main():
         "--remove", default=None,
         help="Remove the profile of the given name."
     )
+    parser.add_argument(
+        "--clear-plugin-configs", action="store_true",
+        help="Clear all the plugin configurations in the given profile."
+    )
     # fmt: on
 
     # Run the main function with the parsed arguments
@@ -124,6 +138,7 @@ def main():
         with_plugins=args.with_plugins,
         new=args.new,
         remove=args.remove,
+        clear_plugin_configs=args.clear_plugin_configs,
     )
     from himena.widgets._initialize import cleanup
 

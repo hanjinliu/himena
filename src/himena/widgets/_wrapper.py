@@ -42,7 +42,7 @@ from himena.workflow import (
     Workflow,
     UserModification,
 )
-from himena.plugins import _checker
+from himena.plugins import _checker, AppActionRegistry
 from himena.layout import Layout
 
 if TYPE_CHECKING:
@@ -802,6 +802,17 @@ class ParametricWindow(SubWindow[_W]):
 
 
 class DockWidget(WidgetWrapper[_W]):
+    def __init__(
+        self,
+        widget: _W,
+        main_window: BackendMainWindow[_W],
+        identifier: uuid.UUID | None = None,
+    ):
+        super().__init__(widget, main_window, identifier)
+        self._has_update_configs = hasattr(widget, "update_configs")
+        self._parse_config_cache: Callable[[dict], Any] | None = None
+        self._command_id: str | None = None
+
     def __repr__(self) -> str:
         return (
             f"{type(self).__name__}(title={self.title!r}, "
@@ -837,6 +848,22 @@ class DockWidget(WidgetWrapper[_W]):
         return self._main_window()._set_dock_widget_title(
             self._frontend_widget(), str(title)
         )
+
+    def _parse_config(self, cfg_dict: dict[str, Any]) -> Any:
+        if self._parse_config_cache is not None:
+            return self._parse_config_cache(**cfg_dict)
+        cfgs = AppActionRegistry.instance()._plugin_default_configs
+        cfg_type = cfgs[self._command_id].config_class
+        self._parse_config_cache = cfg_type
+        return cfg_type(**cfg_dict)
+
+    def update_configs(self, cfg: Any):
+        """Update the configuration of the dock widget."""
+        if self._has_update_configs:
+            if isinstance(cfg, dict):
+                cfg = self._parse_config(cfg)
+            self.widget.update_configs(cfg)
+        return None
 
 
 def _widget_repr(widget: _W) -> str:

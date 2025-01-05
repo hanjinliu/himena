@@ -16,6 +16,7 @@ from himena.plugins import validate_protocol
 if TYPE_CHECKING:
     from himena.style import Theme
     from himena.widgets import MainWindow
+    from himena_builtins.qt.console import ConsoleConfig
 
     class RichJupyterWidget(RichJupyterWidget, QtW.QWidget):
         """To fix typing problem"""
@@ -169,12 +170,12 @@ class QtConsole(RichJupyterWidget):
         bracket_color = QtGui.QColor(theme.highlight_dim)
         self._bracket_matcher.format.setBackground(bracket_color)
 
-    def update_config(
+    def update_configs(
         self,
-        main_window_symbol: str = "ui",
+        cfg: ConsoleConfig,
     ):
         old_symbol = self._main_window_symbol
-        self._main_window_symbol = main_window_symbol
+        self._main_window_symbol = cfg.main_window_symbol
         if self._parent_connected:
             if (ui := self.shell.user_ns.get(old_symbol)) is self._ui:
                 self.shell.drop_by_id({old_symbol: ui})

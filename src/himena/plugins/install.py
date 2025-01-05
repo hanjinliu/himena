@@ -40,7 +40,7 @@ def install_plugins(app: Application, plugins: list[str]):
     reg._installed_plugins.extend(plugins)
     prof = load_app_profile(app.name)
 
-    for k, v in reg._plugin_default_configs.items():
-        prof.plugin_configs.setdefault(k, v)
+    for k, cfg in reg._plugin_default_configs.items():
+        prof.plugin_configs.setdefault(k, cfg.as_dict())
 
     prof.save()

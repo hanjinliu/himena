@@ -7,6 +7,7 @@ from qtpy import QtWidgets as QtW, QtCore
 from magicgui import widgets as mgw
 from psygnal import throttled
 from himena.profile import AppProfile
+from himena.plugins import AppActionRegistry
 from himena.qt._magicgui import get_type_map
 
 
@@ -15,6 +16,13 @@ if TYPE_CHECKING:
 
 
 class QPluginConfigs(QtW.QScrollArea):
+    """Widget for editing plugin configs.
+
+    All the built-in and user-defined plugins are listed here. Any dict-like objects,
+    including dataclass and pydantic.BaseModel, can be used as the config and will be
+    converted into a widget by magicgui.
+    """
+
     def __init__(self, ui: MainWindow):
         super().__init__()
         self.setWidgetResizable(True)
@@ -24,13 +32,18 @@ class QPluginConfigs(QtW.QScrollArea):
         layout = QtW.QVBoxLayout(_central_widget)
         layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
         layout.setContentsMargins(0, 0, 0, 0)
-        type_map = get_type_map()
         self._plugin_id_to_containers: dict[str, mgw.Container] = {}
-        for plugin_id, plugin_config in ui.app_profile.plugin_configs.items():
+        self._layout = layout
+        self.add_config_forms()
+
+    def add_config_forms(self):
+        type_map = get_type_map()
+        reg = AppActionRegistry.instance()
+        for plugin_id, plugin_config in self._ui.app_profile.plugin_configs.items():
             try:
                 widgets: list[mgw.Widget] = []
+                plugin_title = reg._plugin_default_configs[plugin_id].title
                 plugin_config = plugin_config.copy()
-                plugin_title = plugin_config.pop(".title")
                 for param, opt in plugin_config.items():
                     if not isinstance(opt, dict):
                         raise TypeError(f"Invalid config for {plugin_id}: {param}")
@@ -48,16 +61,16 @@ class QPluginConfigs(QtW.QScrollArea):
                     widgets.append(widget)
                 container = mgw.Container(widgets=widgets, name=plugin_id)
                 self._plugin_id_to_containers[plugin_id] = container
-                container.changed.connect(self._update_config)
-                layout.addWidget(container.native)
+                container.changed.connect(self._update_configs)
+                self._layout.addWidget(container.native)
             except Exception as e:
                 warnings.warn(f"Failed to create config for {plugin_id}: {e}")
-        layout.addWidget(QtW.QWidget(), 1)  # spacer
+        self._layout.addWidget(QtW.QWidget(), 1)  # spacer
 
-    def _update_config(self, container: mgw.Container):
-        return _update_config_throttled(self._ui.app_profile, container)
+    def _update_configs(self, container: mgw.Container):
+        return _update_configs_throttled(self._ui.app_profile, container)
 
 
 @throttled(timeout=100)
-def _update_config_throttled(prof: AppProfile, container: mgw.Container):
+def _update_configs_throttled(prof: AppProfile, container: mgw.Container):
     prof.update_plugin_config(container.name, **container.asdict())

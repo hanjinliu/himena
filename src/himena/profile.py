@@ -1,12 +1,15 @@
 from contextlib import contextmanager
 import json
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, TYPE_CHECKING
 import warnings
 from platformdirs import user_data_dir
 from pydantic import field_validator
 from pydantic_compat import BaseModel, Field
 from himena.consts import ALLOWED_LETTERS
+
+if TYPE_CHECKING:
+    pass
 
 USER_DATA_DIR = Path(user_data_dir("himena"))
 
@@ -114,7 +117,7 @@ class AppProfile(BaseModel):
         else:
             # Profile does not have the plugin config. The config is only temporarily
             # registered in the registry.
-            config = reg._plugin_default_configs[plugin_id].copy()
+            config = reg._plugin_default_configs[plugin_id].as_dict()
         for k, v in kwargs.items():
             config[k]["value"] = v
         configs[plugin_id] = config
@@ -123,12 +126,11 @@ class AppProfile(BaseModel):
         # update existing dock widgets with the new config
         params = {}
         for key, opt in config.items():
-            if key.startswith("."):
-                continue
             params[key] = opt["value"]
         if cb := WidgetCallbackBase.instance_for_command_id(plugin_id):
             for dock in cb._all_widgets:
-                dock.widget.update_config(**params)
+                # the internal widget should always has the method "update_configs"
+                dock.update_configs(params)
 
     @field_validator("name")
     def _validate_name(cls, value):

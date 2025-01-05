@@ -4,6 +4,7 @@ import sys
 import subprocess
 import tempfile
 from pathlib import Path
+from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from superqt.utils import thread_worker
 
@@ -14,6 +15,9 @@ from himena.types import DragDataModel, WidgetDataModel
 from himena.widgets import MainWindow, set_status_tip, notify
 from himena.qt._magicgui._toggle_switch import QLabeledToggleSwitch
 from himena_builtins.qt.widgets._shared import labeled
+
+if TYPE_CHECKING:
+    from himena_builtins.qt.explorer import FileExplorerSSHConfig
 
 
 class QSSHRemoteExplorerWidget(QtW.QWidget):
@@ -243,16 +247,14 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
             self._ui.submit_async_task(self._send_model, model)
             set_status_tip("Start sending file ...")
 
-    def update_config(
+    def update_configs(
         self,
-        default_host: str = "",
-        default_user: str = "",
-        default_use_wsl: bool = False,
+        cfg: FileExplorerSSHConfig,
     ) -> None:
-        self._host_edit.setText(default_host)
-        self._user_name_edit.setText(default_user)
-        self._is_wsl_switch.setChecked(default_use_wsl)
-        if default_host and default_user and self._pwd == Path("~"):
+        self._host_edit.setText(cfg.default_host)
+        self._user_name_edit.setText(cfg.default_user)
+        self._is_wsl_switch.setChecked(cfg.default_use_wsl)
+        if cfg.default_host and cfg.default_user and self._pwd == Path("~"):
             self._set_current_path(Path("~"))
 
     def _send_model(self, model: DragDataModel):

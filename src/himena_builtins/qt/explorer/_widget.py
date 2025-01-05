@@ -1,10 +1,14 @@
 from __future__ import annotations
 from pathlib import Path
 import warnings
+from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 
 from himena import _drag
 from himena.widgets import MainWindow
+
+if TYPE_CHECKING:
+    from himena_builtins.qt.explorer import FileExplorerConfig
 
 
 class QFileSystemModel(QtW.QFileSystemModel):
@@ -61,20 +65,25 @@ class QExplorerWidget(QtW.QWidget):
         super().__init__()
         self._ui = ui
         self._root = QRootPathEdit()
-        self._workspace_tree = QFileTree(ui)
+        self._file_tree = QFileTree(ui)
         layout = QtW.QVBoxLayout(self)
         layout.addWidget(self._root)
-        layout.addWidget(self._workspace_tree)
+        layout.addWidget(self._file_tree)
         self._root._path_edit.setText("/" + Path.cwd().name)
-        self._root.rootChanged.connect(self._workspace_tree.setRootPath)
-        self._workspace_tree.fileDoubleClicked.connect(self.fileDoubleClicked.emit)
+        self._root.rootChanged.connect(self._file_tree.setRootPath)
+        self._file_tree.fileDoubleClicked.connect(self.fileDoubleClicked.emit)
         self.fileDoubleClicked.connect(ui.read_file)
+
+    def update_configs(self, cfg: FileExplorerConfig):
+        self._file_tree._config = cfg
 
 
 class QFileTree(QtW.QTreeView):
     fileDoubleClicked = QtCore.Signal(Path)
 
     def __init__(self, ui: MainWindow) -> None:
+        from himena_builtins.qt.explorer import FileExplorerConfig
+
         super().__init__()
         self._ui = ui
         self._model = QFileSystemModel()
@@ -86,6 +95,7 @@ class QFileTree(QtW.QTreeView):
         self.setSelectionMode(QtW.QAbstractItemView.SelectionMode.ExtendedSelection)
         self.doubleClicked.connect(self._double_clicked)
         self.setAcceptDrops(True)
+        self._config = FileExplorerConfig()
 
     def setRootPath(self, path: Path):
         path = Path(path)
@@ -159,8 +169,9 @@ class QFileTree(QtW.QTreeView):
             warnings.warn(f"Invalid destination: {dirpath}", stacklevel=2)
             return
         if drag_model := _drag.drop():
-            data_model = drag_model.data_model()
-            data_model.write_to_directory(dirpath)
+            if self._config.allow_drop_data_to_save:
+                data_model = drag_model.data_model()
+                data_model.write_to_directory(dirpath)
         elif mime := a0.mimeData():
             dst_exists: list[Path] = []
             src_dst_set: list[tuple[Path, Path]] = []
@@ -174,23 +185,26 @@ class QFileTree(QtW.QTreeView):
                     if dst.exists():
                         dst_exists.append(dst)
                     src_dst_set.append((src, dst))
-            if dst_exists:
-                conflicts = "\n - ".join(p.name for p in dst_exists)
-                answer = self._ui.exec_choose_one_dialog(
-                    "Replace existing files?",
-                    f"Name conflict in the destinations:\n{conflicts}",
-                    ["Replace", "Skip", "Cancel"],
-                )
-                if answer == "Cancel":
-                    return
-                elif answer == "Replace":
-                    pass
-                else:
-                    src_dst_set = [
-                        (src, dst) for src, dst in src_dst_set if dst not in dst_exists
-                    ]
-            for src, dst in src_dst_set:
-                src.rename(dst)
+            if src_dst_set and self._config.allow_drop_file_to_move:
+                if dst_exists:
+                    conflicts = "\n - ".join(p.name for p in dst_exists)
+                    answer = self._ui.exec_choose_one_dialog(
+                        "Replace existing files?",
+                        f"Name conflict in the destinations:\n{conflicts}",
+                        ["Replace", "Skip", "Cancel"],
+                    )
+                    if answer == "Cancel":
+                        return
+                    elif answer == "Replace":
+                        pass
+                    else:
+                        src_dst_set = [
+                            (src, dst)
+                            for src, dst in src_dst_set
+                            if dst not in dst_exists
+                        ]
+                for src, dst in src_dst_set:
+                    src.rename(dst)
 
     def dragLeaveEvent(self, e):
         return super().dragLeaveEvent(e)

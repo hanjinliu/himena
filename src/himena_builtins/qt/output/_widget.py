@@ -1,6 +1,7 @@
 from __future__ import annotations
 import sys
 from contextlib import suppress
+from typing import TYPE_CHECKING
 import textwrap
 import logging
 from qtpy import QtWidgets as QtW, QtGui
@@ -8,6 +9,9 @@ from qtpy.QtCore import Qt, Signal
 from himena.qt._qfinderwidget import QFinderWidget
 from himena.consts import MonospaceFontFamily
 from himena.plugins import validate_protocol
+
+if TYPE_CHECKING:
+    from himena_builtins.qt.output import OutputConfig
 
 
 class QLogger(QtW.QPlainTextEdit):
@@ -153,12 +157,8 @@ class OutputInterface(logging.Handler):
     def native_widget(self) -> QtW.QWidget:
         return self._widget
 
-    def update_config(
-        self,
-        format: str = "",
-        date_format: str = "",
-    ):
-        self.setFormatter(logging.Formatter(fmt=format, datefmt=date_format))
+    def update_configs(self, cfg: OutputConfig):
+        self.setFormatter(logging.Formatter(fmt=cfg.format, datefmt=cfg.date_format))
 
 
 def get_widget(id: str = "default") -> OutputInterface:
