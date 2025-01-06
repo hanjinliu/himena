@@ -588,7 +588,7 @@ class ParametricWindow(SubWindow[_W]):
             main._set_parametric_widget_busy(self, False)
 
     def _call(self, **kwargs):
-        """Call the callback asynchronously."""
+        """Call the callback (maybe) asynchronously."""
         ui = self._main_window()._himena_main_window
         if self._run_asynchronously:
             if self._last_future is not None:
@@ -600,6 +600,7 @@ class ParametricWindow(SubWindow[_W]):
             return self._callback(**kwargs)
 
     def _widget_preview_callback(self):
+        """Callback function of parameter change during preview"""
         main = self._main_window()
         if not self.is_preview_enabled():
             if prev := self._get_preview_window():
@@ -615,8 +616,21 @@ class ParametricWindow(SubWindow[_W]):
         kwargs = self.get_params()
         if self._has_is_previewing:
             kwargs[self._IS_PREVIEWING] = True
-        # TODO: check async
-        return_value = self._callback(**kwargs)
+        return_value = self._call(**kwargs)
+        if isinstance(return_value, Future):  # running asynchronously
+            done = main._process_future_done_callback(
+                self._widget_preview_callback_done
+            )
+            return_value.add_done_callback(done)
+            # TODO: set busy
+        else:
+            temp_future = Future()
+            temp_future.set_result(return_value)
+            self._widget_preview_callback_done(temp_future)
+
+    def _widget_preview_callback_done(self, future: Future):
+        return_value = future.result()
+        main = self._main_window()
         if return_value is None:
             return None
         if not isinstance(return_value, WidgetDataModel):

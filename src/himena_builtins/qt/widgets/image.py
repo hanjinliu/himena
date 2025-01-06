@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import Future, ThreadPoolExecutor
 from typing import TYPE_CHECKING, Any, Callable, NamedTuple
 import warnings
 from qtpy import QtWidgets as QtW
@@ -7,6 +8,7 @@ from qtpy import QtGui, QtCore
 import numpy as np
 from cmap import Colormap
 from pydantic_compat import BaseModel, Field, field_validator
+from superqt import ensure_main_thread
 
 from himena_builtins.qt.widgets._image_components._roi_collection import (
     from_standard_roi,
@@ -83,6 +85,7 @@ class QImageView(QtW.QSplitter):
 
     __himena_widget_id__ = "builtins:QImageView"
     __himena_display_name__ = "Built-in Image Viewer"
+    _executor = ThreadPoolExecutor(max_workers=1)
 
     def __init__(self):
         super().__init__(QtCore.Qt.Orientation.Horizontal)
@@ -134,6 +137,7 @@ class QImageView(QtW.QSplitter):
         self._pixel_unit: str = "a.u."
         self._extension_default: str = ".png"
         self._original_title: str | None = None
+        self._last_slice_future: Future | None = None
 
     def createHandle(self):
         return QSplitterHandle(self)
@@ -452,11 +456,15 @@ class QImageView(QtW.QSplitter):
         return self._arr.get_slice(tuple(value))
 
     def _slider_changed(self, value: tuple[int, ...]):
-        # TODO: async slicing
         if self._arr is None:
             return
-        img_slices = self._get_image_slices(value, len(self._channels))
-        self._set_image_slices(img_slices)
+        if self._last_slice_future:
+            self._last_slice_future.cancel()  # cancel last task
+        # set slice asynchronously
+        self._last_slice_future = self._executor.submit(
+            self._get_image_slices, value, len(self._channels)
+        )
+        self._last_slice_future.add_done_callback(self._set_image_slices_async)
 
     def _set_image_slice(self, img: NDArray[np.number], channel: ChannelInfo):
         idx = channel.channel_index or 0
@@ -487,6 +495,14 @@ class QImageView(QtW.QSplitter):
         else:
             visible = True
         self._current_image_slices[idx] = ImageTuple(img, visible)
+
+    @ensure_main_thread
+    def _set_image_slices_async(self, future: Future[list[ImageTuple]]):
+        self._last_slice_future = None
+        if future.cancelled():
+            return
+        imgs = future.result()
+        self._set_image_slices(imgs)
 
     def _set_image_slices(self, imgs: list[ImageTuple]):
         """Set image slices using the channel information.
