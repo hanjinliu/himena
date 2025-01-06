@@ -37,7 +37,7 @@ def crop_image(model: WidgetDataModel) -> Parametric:
 
     def _get_xy():
         roi, meta = _get_current_roi_and_meta(model)
-        if not isinstance(roi, _roi.ImageRoi2D):
+        if not isinstance(roi, _roi.Roi2D):
             raise NotImplementedError
         bbox = _2d_roi_to_bbox(roi, arr, meta)
         x = bbox.left, bbox.left + bbox.width
@@ -73,7 +73,7 @@ def crop_image_multi(model: WidgetDataModel) -> Parametric:
         rois = _resolve_roi_list_model(meta, copy=False)
         bbox_list: list[Rect[int]] = []
         for i, roi in enumerate(rois):
-            if not isinstance(roi, _roi.ImageRoi2D):
+            if not isinstance(roi, _roi.Roi2D):
                 continue
             bbox = _2d_roi_to_bbox(roi, arr, meta)
             bbox_list.append(bbox)
@@ -141,9 +141,7 @@ def crop_image_nd(win: SubWindow) -> Parametric:
     return run_crop_image
 
 
-def _2d_roi_to_bbox(
-    roi: _roi.ImageRoi2D, arr: ArrayWrapper, meta: ImageMeta
-) -> Rect[int]:
+def _2d_roi_to_bbox(roi: _roi.Roi2D, arr: ArrayWrapper, meta: ImageMeta) -> Rect[int]:
     bbox = roi.bbox().adjust_to_int()
     xmax, ymax = _slice_shape(arr, meta)
     bbox = bbox.limit_to(xmax, ymax)
@@ -168,7 +166,7 @@ def _make_roi_limits_getter(win: SubWindow, dim: Literal["x", "y"]):
         meta = _cast_meta(model, ImageMeta)
         roi = meta.current_roi
         arr = wrap_array(model.value)
-        if not isinstance(roi, _roi.ImageRoi2D):
+        if not isinstance(roi, _roi.Roi2D):
             raise NotImplementedError
         bbox = _2d_roi_to_bbox(roi, arr, meta)
         if dim == "x":
@@ -216,13 +214,13 @@ def filter_rois(model: WidgetDataModel) -> Parametric:
         ("Rectangle", _roi.RectangleRoi),
         ("Rotated Rectangle", _roi.RotatedRectangleRoi),
         ("Line", _roi.LineRoi), ("SegmentedLine", _roi.SegmentedLineRoi),
-        ("Point", _roi.PointRoi), ("Points", _roi.PointsRoi),
+        ("Point", _roi.PointRoi2D), ("Points", _roi.PointsRoi2D),
         ("Ellipse", _roi.EllipseRoi), ("Rotated Ellipse", _roi.RotatedEllipseRoi),
         ("Polygon", _roi.PolygonRoi,)
     ]  # fmt: skip
 
     @configure_gui(types={"choices": _choices, "widget_type": "Select"})
-    def run_filter_rois(types: list[_roi.ImageRoi]):
+    def run_filter_rois(types: list[_roi.RoiModel]):
         types_allowed = set(types)
         value = _roi.RoiListModel(
             rois=list(r for r in rois if type(r) in types_allowed)
@@ -290,14 +288,14 @@ def point_rois_to_dataframe(model: WidgetDataModel) -> WidgetDataModel:
         raise ValueError("No ROIs to convert")
 
     roi0 = rois[0]
-    if not isinstance(roi0, (_roi.PointRoi, _roi.PointsRoi)):
+    if not isinstance(roi0, (_roi.PointRoi2D, _roi.PointsRoi2D)):
         raise TypeError(f"Expected a PointRoi or PointsRoi, got {type(roi0)}")
     ndim = len(roi0.indices) + 2
     arrs: list[np.ndarray] = []
     for roi in rois:
-        if isinstance(roi, _roi.PointRoi):
+        if isinstance(roi, _roi.PointRoi2D):
             arr = np.array([roi.indices + (roi.y, roi.x)], dtype=np.float32)
-        elif isinstance(roi, _roi.PointsRoi):
+        elif isinstance(roi, _roi.PointsRoi2D):
             npoints = len(roi.xs)
             arr = np.empty((npoints, ndim))
             arr[:, :-2] = roi.indices
@@ -606,7 +604,7 @@ def stack_images() -> Parametric:
 
 def _get_current_roi_and_meta(
     model: WidgetDataModel,
-) -> tuple[_roi.ImageRoi2D, ImageMeta]:
+) -> tuple[_roi.Roi2D, ImageMeta]:
     meta = _cast_meta(model, ImageMeta)
     if not (roi := meta.current_roi):
         raise ValueError("ROI selection is required for this operation.")

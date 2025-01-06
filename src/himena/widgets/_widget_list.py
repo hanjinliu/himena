@@ -31,6 +31,7 @@ from himena.types import (
     WindowRect,
 )
 from himena._utils import FrozenList
+from himena.workflow import ProgrammaticMethod
 from himena.widgets._wrapper import (
     _HasMainWindowRef,
     SubWindow,
@@ -439,6 +440,10 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
             raise TypeError(
                 f"input model must be an instance of WidgetDataModel, got {model!r}"
             )
+        if len(model.workflow) == 0:
+            # this case may happen if this method was programatically called
+            wf = ProgrammaticMethod(output_model_type=model.type).construct_workflow()
+            model = model.model_copy(update={"workflow": wf})
         ui = self._main_window()._himena_main_window
         widget = ui._pick_widget(model)
         ui.set_status_tip(f"Data model {model.title!r} added.", duration=1)

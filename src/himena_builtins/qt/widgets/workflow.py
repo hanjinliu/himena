@@ -204,12 +204,12 @@ def _step_to_item(step: _wf.WorkflowStep) -> QtW.QTreeWidgetItem:
 
 @_step_to_item.register
 def _(step: _wf.LocalReaderMethod) -> QtW.QTreeWidgetItem:
+    item = QtW.QTreeWidgetItem([f"[Local Path] (type={step.output_model_type!r})"])
     if isinstance(step.path, list):
-        item = QtW.QTreeWidgetItem(["[Local Path]"])
         for i, path in enumerate(step.path):
             item.addChild(QtW.QTreeWidgetItem([f"({i}) {path.as_posix()}"]))
     else:
-        item = QtW.QTreeWidgetItem([f"[Local Path] {step.path.as_posix()}"])
+        item.addChild(QtW.QTreeWidgetItem([f"{step.path.as_posix()}"]))
     item.addChild(QtW.QTreeWidgetItem([f"plugin = {step.plugin!r}"]))
     item.setToolTip(0, str(step.path))
     item.setData(0, _STEP_ROLE, step)
@@ -218,7 +218,8 @@ def _(step: _wf.LocalReaderMethod) -> QtW.QTreeWidgetItem:
 
 @_step_to_item.register
 def _(step: _wf.SCPReaderMethod) -> QtW.QTreeWidgetItem:
-    item = QtW.QTreeWidgetItem([f"[Remote Path] {step._file_path_repr()}"])
+    item = QtW.QTreeWidgetItem([f"[Remote Path] (type={step.output_model_type!r})"])
+    item.addChild(QtW.QTreeWidgetItem([f"{step._file_path_repr()}"]))
     item.addChild(QtW.QTreeWidgetItem([f"plugin = {step.plugin!r}"]))
     item.setToolTip(0, str(step.path))
     item.setData(0, _STEP_ROLE, step)
@@ -270,7 +271,9 @@ def _(step: _wf.CommandExecution) -> QtW.QTreeWidgetItem:
 
 @_step_to_item.register
 def _(step: _wf.ProgrammaticMethod) -> QtW.QTreeWidgetItem:
-    item = QtW.QTreeWidgetItem(["[Programmatic Method]"])
+    item = QtW.QTreeWidgetItem(
+        [f"[Programmatic Method] (type={step.output_model_type!r})"]
+    )
     item.setData(0, _STEP_ROLE, step)
     return item
 

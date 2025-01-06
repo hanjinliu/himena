@@ -1,8 +1,10 @@
+import ast
 import csv
 from io import StringIO
+from types import FunctionType
 from himena.plugins import register_function
 from himena.types import Parametric, WidgetDataModel
-from himena.standards.model_meta import TextMeta
+from himena.standards.model_meta import TextMeta, FunctionMeta
 from himena.consts import StandardType
 
 
@@ -68,3 +70,43 @@ def change_encoding(model: WidgetDataModel[str]) -> Parametric:
         return out
 
     return change_encoding_data
+
+
+@register_function(
+    title="Compile as a function",
+    types=StandardType.TEXT,
+    menus=["tools/text"],
+    command_id="builtins:compile-as-function",
+)
+def compile_as_function(model: WidgetDataModel[str]) -> WidgetDataModel:
+    code = model.value
+    mod = ast.parse(code)
+    global_vars = {}
+    local_vars = {}
+    out = None
+    nblock = len(mod.body)
+    filename = "<QFunctionEdit>"
+    if nblock == 0:
+        raise ValueError("Code is empty.")
+    last = mod.body[-1]
+    if isinstance(last, ast.Expr):
+        if len(mod.body) > 1:
+            block_pre = ast.Module(body=mod.body[:-1], type_ignores=[])
+            exec(compile(block_pre, filename, "exec"), global_vars, local_vars)
+        out = eval(compile(last.value, filename, "eval"), global_vars, local_vars)
+    elif isinstance(last, ast.FunctionDef):
+        exec(compile(mod, filename, "exec"), global_vars, local_vars)
+        out = local_vars[last.name]
+        assert isinstance(out, FunctionType)
+        out.__globals__.update(local_vars)
+    else:
+        raise ValueError("Code must ends with an expression or a function definition.")
+
+    if not callable(out):
+        raise ValueError("Code does not define a callable object.")
+
+    return WidgetDataModel(
+        value=out,
+        type=StandardType.FUNCTION,
+        metadata=FunctionMeta(source_code=code),
+    )

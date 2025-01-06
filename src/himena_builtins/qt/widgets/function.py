@@ -1,13 +1,16 @@
 from __future__ import annotations
+from functools import partial
+import inspect
 from types import FunctionType
-from typing import Callable
+from typing import Any, Callable
 import ast
 from inspect import getsource
 
-from qtpy import QtWidgets as QtW, QtCore
+from qtpy import QtWidgets as QtW, QtCore, QtGui
 
-from himena.consts import StandardType
+from himena.consts import StandardType, MonospaceFontFamily
 from himena.plugins import validate_protocol
+from himena.standards.model_meta import FunctionMeta
 from himena.types import WidgetDataModel
 from himena.style import Theme
 from ._text_base import QMainTextEdit
@@ -28,70 +31,56 @@ class QFunctionEdit(QtW.QWidget):
         layout = QtW.QVBoxLayout(self)
         layout.setContentsMargins(2, 2, 2, 2)
         self._main_text_edit = QMainTextEdit()
-        self._edit_btn = QtW.QPushButton("OK")
-        self._edit_btn.setFixedWidth(50)
-        self._main_text_edit.syntax_highlight("python")
+        self._main_text_edit.setReadOnly(True)
         layout.addWidget(self._main_text_edit)
-        layout.addWidget(self._edit_btn, alignment=QtCore.Qt.AlignmentFlag.AlignRight)
         self._model_type = StandardType.FUNCTION
-        self._current_code = ""
-        self._edit_btn.clicked.connect(self._on_edit_btn_clicked)
+        self._func: Callable | None = None
+        self._has_source_code = False
+        self._control = QFunctionEditControl()
 
     @validate_protocol
     def update_model(self, model: WidgetDataModel):
-        if isinstance(model.value, FunctionType):
-            code_text = getattr(model.value, "__source_code__", None) or getsource(
-                model.value
-            )
-        elif isinstance(model.value, str):
-            ast.parse(model.value)  # dry run
-            code_text = model.value
-        elif callable(model.value):
-            raise NotImplementedError("Only FunctionType is supported.")
+        if not callable(func := model.value):
+            raise TypeError(f"Input value must be callable, got {type(func)}.")
+        # try to ge the source
+        code_text: str | None = None
+        if isinstance(meta := model.metadata, FunctionMeta):
+            code_text = meta.source_code
+        elif isinstance(model.value, FunctionType):
+            code_text = getsource(model.value)
+        self._func = func
+        if code_text:
+            self._main_text_edit.setPlainText(code_text)
+            self._main_text_edit.syntax_highlight("python")
+            self._has_source_code = True
         else:
-            raise ValueError(
-                f"Value must be a function or a string, got {type(model.value)}."
-            )
-        self._main_text_edit.setPlainText(code_text)
-        self._set_current_code(code_text)
-        self._set_editing(False)
+            self._main_text_edit.setPlainText(repr(func))
+            self._main_text_edit.syntax_highlight(None)
+            self._has_source_code = False
+        self._control._type_label.setText(_function_type_repr(func))
         return None
 
     @validate_protocol
     def to_model(self) -> Callable:
-        code = self._current_code
-        mod = ast.parse(code)
-        global_vars = {}
-        local_vars = {}
-        out = None
-        nblock = len(mod.body)
-        filename = "<QFunctionEdit>"
-        if nblock == 0:
-            raise ValueError("Code is empty.")
-        if nblock == 1 and isinstance(mod.body[0], ast.FunctionDef):
-            exec(compile(mod, filename, "exec"), global_vars, local_vars)
-            out = local_vars[mod.body[0].name]
-        else:
-            for idx, block in enumerate(mod.body):
-                if idx == nblock - 1:
-                    out = eval(
-                        compile(block, filename, "eval"), global_vars, local_vars
-                    )
-                else:
-                    exec(compile(block, filename, "exec"), global_vars, local_vars)
-        if not callable(out):
-            raise ValueError("Code does not define a callable object.")
-        # this is needed for the function to be editable by other QFunctionEdit
-        out.__source_code__ = code
-        return WidgetDataModel(value=out, type=self.model_type())
+        if self._has_source_code:
+            code = self._main_text_edit.toPlainText()
+        return WidgetDataModel(
+            value=self._func,
+            type=self.model_type(),
+            metadata=FunctionMeta(source_code=code),
+        )
 
     @validate_protocol
     def model_type(self) -> str:
         return self._model_type
 
     @validate_protocol
+    def control_widget(self) -> QtW.QWidget:
+        return self._control
+
+    @validate_protocol
     def size_hint(self) -> tuple[int, int]:
-        return 280, 320
+        return 280, 200
 
     @validate_protocol
     def theme_changed_callback(self, theme: Theme):
@@ -102,38 +91,132 @@ class QFunctionEdit(QtW.QWidget):
             text_edit._code_theme = "native"
         text_edit.syntax_highlight(text_edit._language)
 
-    @validate_protocol
-    def is_editable(self) -> bool:
-        return self._edit_btn.isEnabled()
-
-    @validate_protocol
-    def set_editable(self, editable: bool):
-        if not editable:
-            self._set_editing(False)
-        self._edit_btn.setEnabled(editable)
-
     def setFocus(self):
         self._main_text_edit.setFocus()
 
-    def _on_edit_btn_clicked(self):
-        if self._edit_btn.text() == "OK":
-            code = self._main_text_edit.toPlainText()
-            self._set_current_code(code)
-            self._set_editing(False)
-        else:
-            self._set_editing(True)
-            self._main_text_edit.setFocus()
 
-    def _set_editing(self, editing: bool):
-        if editing:
-            self._edit_btn.setText("OK")
-            self._main_text_edit.setReadOnly(False)
-        else:
-            self._edit_btn.setText("Edit")
-            self._main_text_edit.setReadOnly(True)
-        return
+class QFunctionEditControl(QtW.QWidget):
+    def __init__(self):
+        super().__init__()
+        layout = QtW.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self._type_label = QtW.QLabel("")
+        self._type_label.setAlignment(
+            QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter
+        )
+        layout.addWidget(QtW.QWidget(), 10)
+        layout.addWidget(self._type_label)
 
-    def _set_current_code(self, code: str):
-        ast.parse(code)  # dry run
-        self._current_code = code
-        return
+
+class QPartialFunctionEdit(QtW.QWidget):
+    def __init__(self):
+        super().__init__()
+        self._pfunc: partial | None = None
+        self._function_edit = QFunctionEdit()
+        self._parameter_edit = QtW.QWidget()
+        self._parameter_layout = QtW.QFormLayout(self._parameter_edit)
+        self._parameter_layout.setContentsMargins(0, 0, 0, 0)
+        self._parameter_widgets: list[QPythonLiteralLineEdit] = []
+        self._model_type = StandardType.FUNCTION_PARTIAL
+        layout = QtW.QVBoxLayout(self)
+        layout.setContentsMargins(2, 2, 2, 2)
+        layout.addWidget(self._function_edit)
+        layout.addWidget(self._parameter_edit)
+        self._control = QFunctionEditControl()
+
+    @validate_protocol
+    def update_model(self, model: WidgetDataModel):
+        pfunc = model.value
+        if not isinstance(pfunc, partial):
+            raise ValueError(f"Value must be a partial function, got {type(pfunc)}.")
+        self._model_type = model.type
+        self._pfunc = pfunc
+        func = pfunc.func
+        args = pfunc.args
+        keywords = pfunc.keywords
+        self._function_edit.update_model(
+            WidgetDataModel(value=func, type=StandardType.FUNCTION)
+        )
+        sig = inspect.signature(func)
+        bound = sig.bind_partial(*args, **keywords)
+        for _ in range(len(bound.arguments) - self._parameter_layout.count()):
+            edit = QPythonLiteralLineEdit()
+            self._parameter_layout.addRow(edit)
+            self._parameter_widgets.append(edit)
+        for _ in range(self._parameter_layout.count() - len(bound.arguments)):
+            self._parameter_layout.takeAt(0)
+            self._parameter_widgets.pop(0)
+        for ith, (key, value) in enumerate(bound.arguments.items()):
+            edit = self._parameter_widgets[ith]
+            edit.setLabel(key)
+            edit.setValue(value)
+        self._control._type_label.setText(
+            "functools.partial of " + _function_type_repr(func)
+        )
+        return None
+
+    @validate_protocol
+    def to_model(self):
+        return WidgetDataModel(
+            value=self._pfunc,
+            type=self.model_type(),
+        )
+
+    @validate_protocol
+    def model_type(self) -> str:
+        return self._model_type
+
+    @validate_protocol
+    def control_widget(self) -> QtW.QWidget:
+        return self._control
+
+    @validate_protocol
+    def is_editable(self) -> bool:
+        return self._parameter_edit.isEnabled()
+
+    @validate_protocol
+    def set_editable(self, editable: bool):
+        return self._parameter_edit.setEnabled(editable)
+
+    @validate_protocol
+    def size_hint(self) -> tuple[int, int]:
+        return 280, 320
+
+
+class QPythonLiteralLineEdit(QtW.QWidget):
+    def __init__(self):
+        super().__init__()
+        layout = QtW.QHBoxLayout(self)
+        layout.setContentsMargins(3, 0, 3, 0)
+        self._label = QtW.QLabel("")
+        self._label.setFixedWidth(60)
+        self._label.setAlignment(
+            QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter
+        )
+        layout.addWidget(self._label)
+        self._value_edit = QtW.QLineEdit()
+        layout.addWidget(self._value_edit)
+        self.setFont(QtGui.QFont(MonospaceFontFamily))
+
+    def value(self) -> Any | None:
+        text = self._value_edit.text().strip()
+        if text == "":
+            return None
+        return ast.literal_eval(text)
+
+    def setValue(self, value: Any | None):
+        if value is None:
+            self._value_edit.setText("")
+        else:
+            self._value_edit.setText(repr(value))
+
+    def label(self) -> str:
+        return self._label.text()
+
+    def setLabel(self, label: str):
+        self._label.setText(label)
+
+
+def _function_type_repr(f) -> str:
+    ftype = type(f)
+    return f"{ftype.__module__}.{ftype.__name__}"

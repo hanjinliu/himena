@@ -4,11 +4,10 @@ from abc import ABC, abstractmethod
 import csv
 import importlib
 import importlib.metadata
-import importlib.resources
 import io
 from pathlib import Path
 import sys
-from typing import TYPE_CHECKING, Any, Mapping, NamedTuple
+from typing import TYPE_CHECKING, Any, Mapping, NamedTuple, overload
 import numpy as np
 from himena.consts import ExcelFileTypes
 from himena._utils import lru_cache
@@ -92,7 +91,6 @@ def is_narwhals_dataframe(df) -> TypeGuard[nw.DataFrame]:
     if _see_imported_module(df, "narwhals"):
         import narwhals as nw
 
-        nw.from_native
         return isinstance(df, nw.DataFrame)
     return False
 
@@ -107,8 +105,19 @@ class DataFrameWrapper(ABC):
     def __repr__(self) -> str:
         return f"{self.type_name()} {self.shape} of data:\n{self._df!r}"
 
+    @overload
+    def __getitem__(self, key: tuple[int, int]) -> Any: ...
+    @overload
+    def __getitem__(self, key: str) -> np.ndarray: ...
+
+    def __getitem__(self, key):
+        if isinstance(key, str):
+            return self.column_to_array(key)
+        elif isinstance(key, tuple):
+            return self.get_item(key)
+
     @abstractmethod
-    def __getitem__(self, key: tuple[int, int]) -> Any:
+    def get_item(self, key: tuple[int, int]) -> Any:
         """Return the value at the given row and column indices"""
 
     @abstractmethod
@@ -172,13 +181,16 @@ class DataFrameWrapper(ABC):
     def write(self, file: str | Path):
         """Write the dataframe to a file."""
 
+    def __len__(self) -> int:
+        return self.num_rows()
+
 
 class DictWrapper(DataFrameWrapper):
     def __init__(self, df: Mapping[str, np.ndarray]):
         self._df = df
         self._columns = list(df.keys())
 
-    def __getitem__(self, key: tuple[int, int]) -> Any:
+    def get_item(self, key: tuple[int, int]) -> Any:
         r, c = key
         col_name = self._columns[c]
         return self._df[col_name][r]
@@ -266,7 +278,7 @@ class PandasWrapper(DataFrameWrapper):
     def __init__(self, df: pd.DataFrame):
         self._df = df
 
-    def __getitem__(self, key: tuple[int, int]) -> Any:
+    def get_item(self, key: tuple[int, int]) -> Any:
         return self._df.iloc[key]
 
     def get_subset(self, r0, r1, c0, c1) -> PandasWrapper:
@@ -343,7 +355,7 @@ class PolarsWrapper(DataFrameWrapper):
     def __init__(self, df: pl.DataFrame):
         self._df = df
 
-    def __getitem__(self, key: tuple[int, int]) -> Any:
+    def get_item(self, key: tuple[int, int]) -> Any:
         return self._df[key]
 
     def get_subset(self, r0, r1, c0, c1) -> PolarsWrapper:
@@ -434,7 +446,7 @@ class PyarrowWrapper(DataFrameWrapper):
     def __init__(self, df: pa.Table):
         self._df = df
 
-    def __getitem__(self, key: tuple[int, int]) -> Any:
+    def get_item(self, key: tuple[int, int]) -> Any:
         r, c = key
         col_name = self._df.column_names[c]
         return self._df[col_name][r].as_py()

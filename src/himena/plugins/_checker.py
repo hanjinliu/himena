@@ -27,6 +27,7 @@ _ALLOWED_METHODS = frozenset(
         "get_user_context",
         "default_title",
         "native_widget",
+        "update_value",
     ]
 )
 
@@ -34,7 +35,7 @@ _ALLOWED_METHODS = frozenset(
 def validate_protocol(f: _T) -> _T:
     """Check if the method is allowed as a himena protocol."""
     if f.__name__ not in _ALLOWED_METHODS:
-        raise ValueError(f"Method {f} is not a allowed protocol.")
+        raise ValueError(f"Method {f} is not an allowed protocol name.")
     return f
 
 

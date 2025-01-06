@@ -61,7 +61,11 @@ class WindowDescription(BaseModel):
             else:
                 raise ValueError("Cannot determine where to read the model from.")
         else:
-            short_workflow = LocalReaderMethod(path=read_from[0], plugin=read_from[1])
+            short_workflow = LocalReaderMethod(
+                path=read_from[0],
+                plugin=read_from[1],
+                output_model_type=window.model_type(),
+            )
         return WindowDescription(
             title=window.title,
             workflow=window.to_model().workflow,

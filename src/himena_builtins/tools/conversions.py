@@ -10,6 +10,18 @@ from himena.plugins import configure_gui, register_conversion_rule
 from himena.types import Parametric, WidgetDataModel
 from himena.consts import StandardType
 from himena.standards.model_meta import TextMeta
+from himena.standards.roi import (
+    Roi2D,
+    RectangleRoi,
+    PointRoi2D,
+    RoiListModel,
+    default_roi_label,
+)
+from himena._data_wrappers import (
+    wrap_dataframe,
+    list_installed_dataframe_packages,
+    read_csv,
+)
 
 
 @register_conversion_rule(
@@ -57,7 +69,6 @@ def text_to_array(model: WidgetDataModel[str]) -> WidgetDataModel:
 def text_to_dataframe(model: WidgetDataModel[str]) -> Parametric:
     """Convert text to an dataframe-type widget."""
     from io import StringIO
-    from himena._data_wrappers import list_installed_dataframe_packages, read_csv
 
     @configure_gui(module={"choices": list_installed_dataframe_packages()})
     def convert_text_to_dataframe(module) -> WidgetDataModel[str]:
@@ -95,8 +106,6 @@ def to_plain_text(model: WidgetDataModel[str]) -> WidgetDataModel:
 )
 def dataframe_to_table(model: WidgetDataModel) -> WidgetDataModel["np.ndarray"]:
     """Convert a table data into a DataFrame."""
-    from himena._data_wrappers import wrap_dataframe
-
     df = wrap_dataframe(model.value)
     return WidgetDataModel(
         value=[df.column_names()] + df.to_list(),
@@ -113,7 +122,6 @@ def dataframe_to_table(model: WidgetDataModel) -> WidgetDataModel["np.ndarray"]:
 )
 def dataframe_to_text(model: WidgetDataModel) -> Parametric:
     """Convert a table data into a DataFrame."""
-    from himena._data_wrappers import wrap_dataframe
 
     def convert_dataframe_to_text(
         format: Literal["CSV", "TSV", "Markdown", "Latex", "rST", "HTML"] = "CSV",
@@ -169,7 +177,6 @@ def table_to_text(model: WidgetDataModel) -> Parametric:
 )
 def table_to_dataframe(model: WidgetDataModel["np.ndarray"]) -> Parametric:
     """Convert a table data into a DataFrame."""
-    from himena._data_wrappers import list_installed_dataframe_packages, read_csv
 
     @configure_gui(module={"choices": list_installed_dataframe_packages()})
     def convert_table_to_dataframe(module) -> WidgetDataModel[str]:
@@ -219,6 +226,94 @@ def table_to_array(model: WidgetDataModel["np.ndarray"]) -> WidgetDataModel:
         title=model.title,
         extension_default=".npy",
     )
+
+
+@register_conversion_rule(
+    type_from=StandardType.DATAFRAME,
+    type_to=StandardType.IMAGE_ROIS,
+    command_id="builtins:dataframe-to-image_rois",
+)
+def dataframe_to_image_rois(model: WidgetDataModel) -> Parametric:
+    """Convert a data frame data into image ROIs."""
+
+    @configure_gui(roi_type={"choices": ["rectangle", "point"]})
+    def convert_dataframe_to_image_rois(
+        roi_type: str, indices: list[str]
+    ) -> WidgetDataModel:
+        df = wrap_dataframe(model.value)
+        if indices:
+            arr_indice = np.stack(
+                [df.column_to_array(indice_column) for indice_column in indices], axis=1
+            )
+        else:
+            arr_indice = np.empty((len(df), 0), dtype=int)
+        rois: list[Roi2D] = []
+        if roi_type == "rectangle":
+            arr_xywh = np.stack(
+                [
+                    df.column_to_array("x"),
+                    df.column_to_array("y"),
+                    df.column_to_array("width"),
+                    df.column_to_array("height"),
+                ],
+                axis=1,
+            )
+            for idx, (indice, xywh) in enumerate(zip(arr_indice, arr_xywh)):
+                x, y, w, h = xywh
+                rois.append(
+                    RectangleRoi(
+                        indices=tuple(indice),
+                        name=default_roi_label(idx),
+                        x=x,
+                        y=y,
+                        width=w,
+                        height=h,
+                    )
+                )
+        elif roi_type == "point":
+            arr_xywh = np.stack(
+                [
+                    df.column_to_array("x"),
+                    df.column_to_array("y"),
+                ],
+                axis=1,
+            )
+            for idx, (indice, xy) in enumerate(zip(arr_indice, arr_xywh)):
+                x, y = xy
+                rois.append(
+                    PointRoi2D(
+                        indices=tuple(indice), name=default_roi_label(idx), x=x, y=y
+                    )
+                )
+        else:
+            raise ValueError("Only 'rectangle' and 'point' are supported.")
+        value = RoiListModel(rois=rois)
+        return WidgetDataModel(
+            value=value,
+            title=model.title,
+            type=StandardType.IMAGE_ROIS,
+        )
+
+    return convert_dataframe_to_image_rois
+
+
+@register_conversion_rule(
+    type_from=StandardType.DATAFRAME,
+    type_to=StandardType.DATAFRAME_PLOT,
+    command_id="builtins:dataframe-to-dataframe-plot",
+)
+def dataframe_to_dataframe_plot(model: WidgetDataModel) -> WidgetDataModel:
+    df = wrap_dataframe(model.value)
+    col_non_numerical = [
+        col
+        for col, dtype in zip(df.column_names(), df.dtypes)
+        if dtype.kind not in "uifb"
+    ]
+    if col_non_numerical:
+        raise ValueError(
+            f"DataFrame contains non-numerical value in columns {col_non_numerical!r}"
+        )
+    return model.astype(StandardType.DATAFRAME_PLOT)
 
 
 def _table_to_text(

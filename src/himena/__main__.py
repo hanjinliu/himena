@@ -71,7 +71,7 @@ def _main(
     if clear_plugin_configs:
         from himena.profile import load_app_profile
 
-        prof = load_app_profile(profile)
+        prof = load_app_profile(profile or "default")
         if prof.plugin_configs:
             prof.plugin_configs.clear()
             prof.save()

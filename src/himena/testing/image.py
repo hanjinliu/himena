@@ -166,7 +166,7 @@ def _zyx_image_model(
     colormap: str = "gray",
     unit: str = "a.u.",
     current_indices=(0, slice(None), slice(None)),
-    current_roi: _roi.ImageRoi | None = None,
+    current_roi: _roi.RoiModel | None = None,
 ) -> WidgetDataModel:
     axes = [
         ArrayAxis(name=name, scale=scale, unit=pixel_unit)

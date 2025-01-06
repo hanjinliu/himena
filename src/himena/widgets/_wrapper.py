@@ -332,6 +332,14 @@ class SubWindow(WidgetWrapper[_W], Layout):
             )
         return model
 
+    def update_value(self, value: Any) -> None:
+        """Update the value of the widget."""
+        if hasattr(self.widget, "update_value"):
+            self.widget.update_value(value)
+        else:
+            model = self.to_model()
+            self.update_model(model.with_value(value))
+
     def write_model(self, path: str | Path, plugin: str | None = None) -> None:
         """Write the widget data to a file."""
         return self._write_model(path, plugin, self.to_model())
@@ -399,7 +407,7 @@ class SubWindow(WidgetWrapper[_W], Layout):
     def update(
         self,
         *,
-        rect: tuple[int, int, int, int] | None = None,
+        rect: tuple[int, int, int, int] | WindowRect | None = None,
         state: WindowState | None = None,
         title: str | None = None,
         anchor: _anchor.WindowAnchor | str | None = None,

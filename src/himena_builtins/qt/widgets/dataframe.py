@@ -97,6 +97,8 @@ class QDataFrameModel(QtCore.QAbstractTableModel):
 
 
 class QDraggableHorizontalHeader(QHorizontalHeaderView):
+    """Header view for DataFrameView that supports drag and drop."""
+
     def __init__(self, parent: QDataFrameView):
         super().__init__(parent)
         self._table_view_ref = weakref.ref(parent)
@@ -173,8 +175,7 @@ class QDataFrameView(QTableBase):
     ## Drag and Drop
 
     Selected columns can be dragged out as a model of type `StandardType.DATAFRAME`
-    ("dataframe"). `Ctrl + left_button` or `middle button` are assigned to the drag
-    event.
+    ("dataframe"). Use the drag indicator on the header to start dragging.
     """
 
     __himena_widget_id__ = "builtins:QDataFrameView"

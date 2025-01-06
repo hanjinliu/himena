@@ -39,7 +39,7 @@ class Workflow(BaseModel):
     _cahce_enabled: bool = PrivateAttr(default=False)
 
     def id_to_index_map(self) -> dict[uuid.UUID, int]:
-        return {node.id: i for i, node in enumerate(self.steps)}
+        return {step.id: i for i, step in enumerate(self.steps)}
 
     def filter(self, step: uuid.UUID) -> "Workflow":
         """Return another list that only contains the ancestors of the given ID."""

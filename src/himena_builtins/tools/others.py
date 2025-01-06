@@ -1,3 +1,5 @@
+from functools import partial
+import inspect
 from pathlib import Path
 import html
 import re
@@ -190,7 +192,7 @@ def exec_workflow(model: WidgetDataModel) -> None:
         StandardType.EXCEL,
     ],
     menus=["tools"],
-    command_id="builtins:show-statistics",
+    command_id="builtins:general:show-statistics",
 )
 def show_statistics(model: WidgetDataModel) -> WidgetDataModel:
     """Show the statistics of the data."""
@@ -245,12 +247,13 @@ def show_statistics(model: WidgetDataModel) -> WidgetDataModel:
         type=StandardType.HTML,
         title=f"Statistics of {model.title}",
         editable=False,
+        save_behavior_override=NoNeedToSave(),
     )
 
 
 @register_function(
     menus=["tools"],
-    command_id="builtins:show-metadata",
+    command_id="builtins:general:show-metadata",
 )
 def show_metadata(model: WidgetDataModel) -> WidgetDataModel:
     """Show the metadata of the underlying data."""
@@ -300,6 +303,43 @@ def specify_widget(model: WidgetDataModel) -> Parametric:
         )
 
     return run_specify
+
+
+@register_function(
+    title="Partialize function ...",
+    menus=["tools"],
+    types=[StandardType.FUNCTION],
+    command_id="builtins:partialize-function",
+)
+def partialize_function(model: WidgetDataModel) -> Parametric:
+    """Partialize the function."""
+    import ast
+
+    if not callable(func := model.value):
+        raise ValueError(f"Expected a callable object but got {type(func)}")
+
+    options = {}
+    sig = inspect.signature(func)
+    for name, param in sig.parameters.items():
+        if param.default is param.empty:
+            options[name] = {"label": name, "widget_type": "LineEdit", "value": ""}
+        else:
+            options[name] = {
+                "label": name,
+                "widget_type": "LineEdit",
+                "value": str(param.default),
+            }
+
+    @configure_gui(gui_options=options)
+    def run_partialize(**kwargs: str) -> WidgetDataModel:
+        kwargs_evaled = {k: ast.literal_eval(v) for k, v in kwargs.items() if v.strip()}
+        return WidgetDataModel(
+            value=partial(func, **kwargs_evaled),
+            type=StandardType.FUNCTION_PARTIAL,
+            title=f"[Partial] {model.title}",
+        )
+
+    return run_partialize
 
 
 def _statistics_table(value) -> str:

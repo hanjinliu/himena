@@ -22,7 +22,7 @@ class QRoi(QtW.QGraphicsItem):
     def set_label(self, label: str):
         self._roi_label = label
 
-    def toRoi(self, indices: Iterable[int | None]) -> roi.ImageRoi:
+    def toRoi(self, indices: Iterable[int | None]) -> roi.RoiModel:
         raise NotImplementedError
 
     def translate(self, dx: float, dy: float):
@@ -111,7 +111,7 @@ class QLineRoi(QtW.QGraphicsLineItem, QRoi):
         length = math.sqrt(((x2 - x1) * xscale) ** 2 + ((y2 - y1) * yscale) ** 2)
         if not unit:
             return f"start=({start}), end=({end}), length={length_px:.1f}"
-        return f"start=({start}), end=({end}), length={length_px:.1f} ({length:.1f} {unit})"
+        return f"start=({start}), end=({end}), length={length_px:.1f} px ({length:.1f} {unit})"
 
 
 class QRectRoiBase(QRoi):
@@ -538,8 +538,8 @@ class QPointRoi(QPointRoiBase):
         self._point = point
         self.changed.emit(self._point)
 
-    def toRoi(self, indices) -> roi.PointRoi:
-        return roi.PointRoi(
+    def toRoi(self, indices) -> roi.PointRoi2D:
+        return roi.PointRoi2D(
             x=self._point.x(), y=self._point.y(), indices=indices, name=self.label()
         )
 
@@ -582,13 +582,13 @@ class QPointsRoi(QPointRoiBase):
         self.changed.emit(self._points)
         self._bounding_rect_cache = None
 
-    def toRoi(self, indices) -> roi.PointsRoi:
+    def toRoi(self, indices) -> roi.PointsRoi2D:
         xs: list[float] = []
         ys: list[float] = []
         for point in self._points:
             xs.append(point.x())
             ys.append(point.y())
-        return roi.PointsRoi(
+        return roi.PointsRoi2D(
             xs=np.array(xs), ys=np.array(ys), indices=indices, name=self.label()
         )
 

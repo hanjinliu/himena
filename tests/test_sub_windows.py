@@ -52,11 +52,13 @@ def test_io_commands(ui: MainWindow, tmpdir, sample_dir: Path):
     assert isinstance(ui.current_window.save_behavior, SaveToPath)
     last = ui.current_window._widget_workflow.last()
     assert isinstance(last, LocalReaderMethod)
+    assert last.output_model_type == "text"
     assert last.path == response_open()[0]
 
     ui.add_object("Hello", type="text")
     assert isinstance(ui.current_window.save_behavior, SaveToNewPath)
-    assert isinstance(ui.current_window._widget_workflow.last(), ProgrammaticMethod)
+    assert isinstance(meth := ui.current_window._widget_workflow.last(), ProgrammaticMethod)
+    assert meth.output_model_type == "text"
     ui._instructions = ui._instructions.updated(file_dialog_response=response_save)
     ui.exec_action("save")
     assert isinstance(ui.current_window.save_behavior, SaveToPath)

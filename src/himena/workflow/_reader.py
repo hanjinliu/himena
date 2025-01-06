@@ -12,6 +12,8 @@ if TYPE_CHECKING:
 class NoParentWorkflow(WorkflowStep):
     """Describes that one has no parent."""
 
+    output_model_type: str | None = Field(default=None)
+
     def iter_parents(self) -> Iterator[int]:
         yield from ()
 
@@ -25,6 +27,9 @@ class ProgrammaticMethod(NoParentWorkflow):
     """Describes that one was created programmatically."""
 
     type: Literal["programmatic"] = "programmatic"
+
+    def _get_model_impl(self, wf):
+        raise ValueError("Data was added programmatically, thus cannot be re-executed.")
 
 
 class ReaderMethod(NoParentWorkflow):
@@ -70,10 +75,22 @@ class SCPReaderMethod(ReaderMethod):
     wsl: bool = Field(default=False)
 
     @classmethod
-    def from_str(cls, s: str, /, wsl: bool = False) -> "SCPReaderMethod":
+    def from_str(
+        cls,
+        s: str,
+        /,
+        wsl: bool = False,
+        output_model_type: str | None = None,
+    ) -> "SCPReaderMethod":
         username, rest = s.split("@")
         host, path = rest.split(":")
-        return cls(username=username, host=host, path=Path(path), wsl=wsl)
+        return cls(
+            username=username,
+            host=host,
+            path=Path(path),
+            wsl=wsl,
+            output_model_type=output_model_type,
+        )
 
     def _file_path_repr(self) -> str:
         return f"{self.username}@{self.host}:{self.path.as_posix()}"

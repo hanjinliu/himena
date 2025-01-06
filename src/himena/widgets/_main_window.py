@@ -290,7 +290,7 @@ class MainWindow(Generic[_W]):
             value=value,
             type=type,
             title=title,
-            workflow=ProgrammaticMethod().construct_workflow(),
+            workflow=ProgrammaticMethod(output_model_type=type).construct_workflow(),
         )
         return self.add_data_model(wd)
 

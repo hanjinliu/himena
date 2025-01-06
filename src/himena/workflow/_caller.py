@@ -26,10 +26,10 @@ class WorkflowCaller(BaseModel):
         *,
         plugin_override: str | None = None,
     ) -> "LocalReaderReplacer":
-        plugin = self._norm_plugin(step_id, plugin_override)
+        plugin, typ = self._norm_plugin_and_type(step_id, plugin_override)
         arg_name = self._norm_arg_name(arg_name, stem="path")
         replacer = LocalReaderReplacer(
-            step_id=step_id, arg_name=arg_name, plugin=plugin
+            step_id=step_id, arg_name=arg_name, plugin=plugin, output_model_type=typ
         )
         self.replacers.append(replacer)
         return replacer
@@ -42,23 +42,27 @@ class WorkflowCaller(BaseModel):
         plugin_override: str | None = None,
         wsl: bool = False,
     ) -> "SCPReaderReplacer":
-        plugin = self._norm_plugin(step_id, plugin_override)
+        plugin, typ = self._norm_plugin_and_type(step_id, plugin_override)
         arg_name = self._norm_arg_name(arg_name, stem="path")
         replacer = SCPReaderReplacer(
-            step_id=step_id, arg_name=arg_name, plugin=plugin, wsl=wsl
+            step_id=step_id,
+            arg_name=arg_name,
+            plugin=plugin,
+            wsl=wsl,
+            output_model_type=typ,
         )
         self.replacers.append(replacer)
         return replacer
 
-    def _norm_plugin(
+    def _norm_plugin_and_type(
         self,
         step_id: uuid.UUID,
         plugin_override: str | None,
-    ) -> str:
+    ) -> tuple[str, str | None]:
         if not isinstance(step := self.workflow.step_for_id(step_id), ReaderMethod):
             raise ValueError(f"Step {step_id} is not a reader.")
         plugin_default = step.plugin
-        return plugin_override or plugin_default
+        return plugin_override or plugin_default, step.output_model_type
 
     def _norm_arg_name(self, arg_name: str | None, stem: str) -> str:
         existing = self._existing_arg_names()
@@ -79,13 +83,15 @@ class WorkflowCaller(BaseModel):
         annot["return"] = WidgetDataModel
         return annot
 
-    def _run_replaced(self, params: dict[uuid.UUID, dict[str, Any]]):
-        steps = self.workflow.steps
-        steps_replaced: list[WorkflowStep] = []
-        replacer_map = {rp.step_id: rp for rp in self.replacers}
-        for step in steps:
-            if replacer := replacer_map.get(step.id):
-                step = replacer(**params[step.id])
+    def __call__(self, **kwargs: dict[str, Any]):
+        id_to_index_map = self.workflow.id_to_index_map()
+        steps_replaced = self.workflow.steps.copy()
+        for rp in self.replacers:
+            param = kwargs[rp.arg_name]
+            index = id_to_index_map[rp.step_id]
+            step = steps_replaced[index]
+            if replaced := rp.create_step(**param):
+                step = replaced
             steps_replaced.append(step)
         wf = Workflow(steps=steps_replaced)
         return wf.compute(process_output=False)
@@ -104,6 +110,7 @@ class StepReplacer(BaseModel):
 
 class ReaderReplacer(StepReplacer):
     plugin: str | None = Field(default=None)
+    output_model_type: str | None = Field(default=None)
 
 
 class LocalReaderReplacer(ReaderReplacer):
@@ -114,7 +121,9 @@ class LocalReaderReplacer(ReaderReplacer):
             _path = Path(path)
         else:
             _path = [Path(p) for p in path]
-        return LocalReaderMethod(path=_path, plugin=self.plugin)
+        return LocalReaderMethod(
+            path=_path, plugin=self.plugin, output_model_type=self.output_model_type
+        )
 
     def make_annotation(self):
         return Path

@@ -40,6 +40,12 @@ class ExcelMeta(TableMeta):
     current_sheet: str | None = Field(None, description="Current sheet name.")
 
 
+class FunctionMeta(BaseModel):
+    """Preset for describing the metadata for a "function" type."""
+
+    source_code: str | None = Field(None, description="Source code of the function.")
+
+
 class DataFramePlotMeta(DataFrameMeta):
     """Preset for describing the metadata for a "dataframe.plot" type."""
 
@@ -49,6 +55,9 @@ class DataFramePlotMeta(DataFrameMeta):
     plot_color_cycle: Any | None = Field(None, description="Color cycle of the plot.")
     plot_background_color: Any | None = Field(
         "#FFFFFF", description="Background color of the plot."
+    )
+    rois: roi.RoiListModel | Callable[[], roi.RoiListModel] = Field(
+        default_factory=roi.RoiListModel, description="Regions of interest."
     )
 
 
@@ -116,7 +125,7 @@ class ImageMeta(ArrayMeta):
     )
     channel_axis: int | None = Field(None, description="Channel axis of the image.")
     is_rgb: bool = Field(False, description="Whether the image is RGB.")
-    current_roi: roi.ImageRoi | None = Field(
+    current_roi: roi.RoiModel | None = Field(
         None, description="Current region of interest."
     )
     rois: roi.RoiListModel | Callable[[], roi.RoiListModel] = Field(

@@ -110,7 +110,7 @@ def open_last_closed_window(ui: MainWindow) -> WidgetDataModel:
 @ACTIONS.append_from_fn(
     id="duplicate-window",
     title="Duplicate window",
-    enablement=_ctx.is_active_window_exportable,
+    enablement=_ctx.is_active_window_supports_to_model,
     menus=[{"id": MenuId.WINDOW, "group": EDIT_GROUP}],
     keybindings=[{"primary": KeyChord(_CtrlK, _CtrlShift | KeyCode.KeyD)}],
     need_function_callback=True,
@@ -173,7 +173,7 @@ def copy_path_to_clipboard(ui: MainWindow) -> ClipboardDataModel:
     menus=[
         {"id": MenuId.WINDOW, "group": EDIT_GROUP},
     ],
-    enablement=(_ctx.num_sub_windows > 0) & _ctx.is_active_window_exportable,
+    enablement=(_ctx.num_sub_windows > 0) & _ctx.is_active_window_supports_to_model,
     keybindings=[{"primary": KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.KeyC)}],
 )
 def copy_data_to_clipboard(model: WidgetDataModel) -> ClipboardDataModel:

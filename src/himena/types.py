@@ -165,6 +165,10 @@ class WidgetDataModel(GenericModel[_T]):
         )  # these parameters must be reset
         return self.model_copy(update=update)
 
+    def astype(self, new_type: str):
+        update = {"type": new_type}
+        return self.model_copy(update=update)
+
     def _with_source(
         self,
         source: str | Path | list[str | Path],
@@ -179,7 +183,9 @@ class WidgetDataModel(GenericModel[_T]):
             path = [Path(s).resolve() for s in source]
         else:
             path = Path(source).resolve()
-        wf = LocalReaderMethod(path=path, plugin=plugin_name).construct_workflow()
+        wf = LocalReaderMethod(
+            path=path, plugin=plugin_name, output_model_type=self.type
+        ).construct_workflow()
         to_update = {"workflow": wf}
         if self.title is None:
             if isinstance(path, list):

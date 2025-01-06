@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from himena_builtins.qt.widgets.image import QImageView
 
 
-def from_standard_roi(r: roi.ImageRoi, pen: QtGui.QPen) -> _roi_items.QRoi:
+def from_standard_roi(r: roi.RoiModel, pen: QtGui.QPen) -> _roi_items.QRoi:
     if isinstance(r, roi.LineRoi):
         out = _roi_items.QLineRoi(r.x1, r.y1, r.x2, r.y2)
     elif isinstance(r, roi.RectangleRoi):
@@ -32,9 +32,9 @@ def from_standard_roi(r: roi.ImageRoi, pen: QtGui.QPen) -> _roi_items.QRoi:
         out = _roi_items.QRotatedRectangleRoi(
             QtCore.QPointF(*r.start), QtCore.QPointF(*r.end), r.width
         )
-    elif isinstance(r, roi.PointRoi):
+    elif isinstance(r, roi.PointRoi2D):
         out = _roi_items.QPointRoi(r.x, r.y)
-    elif isinstance(r, roi.PointsRoi):
+    elif isinstance(r, roi.PointsRoi2D):
         out = _roi_items.QPointsRoi(r.xs, r.ys)
     else:
         raise ValueError(f"Unsupported ROI type: {type(r)}")
@@ -70,7 +70,7 @@ class QSimpleRoiCollection(QtW.QWidget):
 
     def update_from_standard_roi_list(self, rois: roi.RoiListModel) -> QRoiCollection:
         for r in rois:
-            if isinstance(r, roi.ImageRoiND):
+            if isinstance(r, roi.RoiND):
                 self.add(r.indices, from_standard_roi(r, self._pen))
         return self
 

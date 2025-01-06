@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import cache
 import math
 from typing import TYPE_CHECKING, Any, Iterator
 import numpy as np
@@ -12,7 +13,7 @@ if TYPE_CHECKING:
     from typing import Self
 
 
-class ImageRoi(BaseModel):
+class RoiModel(BaseModel):
     """Base class for ROIs (Region of Interest) in images."""
 
     name: str | None = Field(None, description="Name of the ROI.")
@@ -24,29 +25,26 @@ class ImageRoi(BaseModel):
         return {"type": typ, **self.model_dump()}
 
     @classmethod
-    def construct(cls, typ: str, dict_: dict) -> ImageRoi:
-        if typ == "rectangle":
-            return RectangleRoi.model_validate(dict_)
-        if typ == "line":
-            return LineRoi.model_validate(dict_)
-        if typ == "rotatedrectangle":
-            return RotatedRectangleRoi.model_validate(dict_)
-        if typ == "ellipse":
-            return EllipseRoi.model_validate(dict_)
-        if typ == "rotatedellipse":
-            return RotatedEllipseRoi.model_validate(dict_)
-        if typ == "point":
-            return PointRoi.model_validate(dict_)
-        if typ == "points":
-            return PointsRoi.model_validate(dict_)
-        if typ == "segmentedline":
-            return SegmentedLineRoi.model_validate(dict_)
-        if typ == "polygon":
-            return PolygonRoi.model_validate(dict_)
-        raise ValueError(f"Unknown ROI type: {typ!r}")
+    def construct(cls, typ: str, dict_: dict) -> RoiModel:
+        """Construct an instance from a dictionary."""
+        model_type = _pick_roi_model(typ)
+        return model_type.model_validate(dict_)
 
 
-class ImageRoiND(ImageRoi):
+@cache
+def _pick_roi_model(typ: str) -> type[RoiModel]:
+    for sub in RoiModel.__subclasses__():
+        if sub.__name__.lower() == typ:
+            return sub
+    raise ValueError(f"Unknown ROI type: {typ!r}")
+
+
+def default_roi_label(nth: int) -> str:
+    """Return a default label for the n-th ROI."""
+    return f"ROI-{nth}"
+
+
+class RoiND(RoiModel):
     indices: tuple[int, ...] = Field(
         default=(), description="Indices of the ROI in the >nD dimensions."
     )
@@ -56,21 +54,67 @@ class ImageRoiND(ImageRoi):
         return self.model_copy(update={"indices": ()})
 
 
-class ImageRoi2D(ImageRoiND):
+class Roi1D(RoiND):
+    def shifted(self, dx: float, dy: float) -> Self:
+        """Return a new 1D ROI translated by the given amount."""
+        raise NotImplementedError
+
+
+class Roi2D(RoiND):
     def bbox(self) -> Rect[float]:
         """Return the bounding box of the ROI."""
         raise NotImplementedError
 
     def shifted(self, dx: float, dy: float) -> Self:
-        """Return a new ROI translated by the given amount."""
+        """Return a new 2D ROI translated by the given amount."""
         raise NotImplementedError
 
 
-class ImageRoi3D(ImageRoiND):
-    pass
+class Roi3D(RoiND):
+    def shifted(self, dx: float, dy: float, dz: float) -> Self:
+        """Return a new 3D ROI translated by the given amount."""
+        raise NotImplementedError
 
 
-class RectangleRoi(ImageRoi2D):
+class SpanRoi(Roi1D):
+    """ROI that represents a span in 1D space."""
+
+    start: float = Field(..., description="Start of the span.")
+    end: float = Field(..., description="End of the span.")
+
+    def shifted(self, dx: float, dy: float) -> SpanRoi:
+        return SpanRoi(start=self.start + dx, end=self.end + dy)
+
+    def width(self) -> float:
+        return self.end - self.start
+
+
+class PointRoi1D(Roi1D):
+    """ROI that represents a point in 1D space."""
+
+    x: float = Field(..., description="X-coordinate of the point.")
+
+    def shifted(self, dx: float, dy: float) -> PointRoi1D:
+        return PointRoi1D(x=self.x + dx)
+
+
+class PointsRoi1D(Roi1D):
+    """ROI that represents a set of points in 1D space."""
+
+    xs: Any = Field(..., description="List of x-coordinates.")
+
+    @field_validator("xs")
+    def _validate_np_array(cls, v) -> NDArray[np.number]:
+        out = np.asarray(v)
+        if out.dtype.kind not in "if":
+            raise ValueError("Must be a numerical array.")
+        return out
+
+    def shifted(self, dx: float, dy: float) -> PointsRoi1D:
+        return PointsRoi1D(xs=self.xs + dx)
+
+
+class RectangleRoi(Roi2D):
     """ROI that represents a rectangle."""
 
     x: float = Field(..., description="X-coordinate of the top-left corner.")
@@ -89,7 +133,7 @@ class RectangleRoi(ImageRoi2D):
         return Rect(self.x, self.y, self.width, self.height)
 
 
-class RotatedRoi2D(ImageRoi2D):
+class RotatedRoi2D(Roi2D):
     angle: float = Field(..., description="Counter-clockwise angle in degrees.")
 
 
@@ -128,7 +172,7 @@ class RotatedRectangleRoi(RotatedRoi2D):
         return Rect(xmin, ymin, xmax - xmin, ymax - ymin)
 
 
-class EllipseRoi(ImageRoi2D):
+class EllipseRoi(Roi2D):
     """ROI that represents an ellipse."""
 
     x: float = Field(..., description="X-coordinate of the center.")
@@ -158,20 +202,20 @@ class RotatedEllipseRoi(EllipseRoi, RotatedRoi2D):
     """ROI that represents a rotated ellipse."""
 
 
-class PointRoi(ImageRoi2D):
+class PointRoi2D(Roi2D):
     """ROI that represents a single point."""
 
     x: float = Field(..., description="X-coordinate of the point.")
     y: float = Field(..., description="Y-coordinate of the point.")
 
-    def shifted(self, dx: float, dy: float) -> PointRoi:
+    def shifted(self, dx: float, dy: float) -> PointRoi2D:
         return self.model_copy(update={"x": self.x + dx, "y": self.y + dy})
 
     def bbox(self) -> Rect[float]:
         return Rect(self.x, self.y, 0, 0)
 
 
-class PointsRoi(ImageRoi2D):
+class PointsRoi2D(Roi2D):
     """ROI that represents a set of points."""
 
     xs: Any = Field(..., description="List of x-coordinates.")
@@ -184,7 +228,7 @@ class PointsRoi(ImageRoi2D):
             raise ValueError("Must be a numerical array.")
         return out
 
-    def shifted(self, dx: float, dy: float) -> PointsRoi:
+    def shifted(self, dx: float, dy: float) -> PointsRoi2D:
         return self.model_copy(update={"xs": self.xs + dx, "ys": self.ys + dy})
 
     def bbox(self) -> Rect[float]:
@@ -193,7 +237,7 @@ class PointsRoi(ImageRoi2D):
         return Rect(xmin, ymin, xmax - xmin, ymax - ymin)
 
 
-class SegmentedLineRoi(PointsRoi):
+class SegmentedLineRoi(PointsRoi2D):
     """ROI that represents a segmented line."""
 
     def length(self) -> float:
@@ -204,13 +248,13 @@ class PolygonRoi(SegmentedLineRoi):
     """ROI that represents a closed polygon."""
 
 
-class SplineRoi(ImageRoi2D):
+class SplineRoi(Roi2D):
     """ROI that represents a spline curve."""
 
     degree: int = Field(3, description="Degree of the spline curve.", ge=1)
 
 
-class LineRoi(ImageRoi2D):
+class LineRoi(Roi2D):
     x1: float = Field(..., description="X-coordinate of the first point.")
     y1: float = Field(..., description="Y-coordinate of the first point.")
     x2: float = Field(..., description="X-coordinate of the second point.")
@@ -260,13 +304,13 @@ class LineRoi(ImageRoi2D):
 class RoiListModel(BaseModel):
     """List of ROIs, with useful methods."""
 
-    rois: list[ImageRoi] = Field(default_factory=list, description="List of ROIs.")
+    rois: list[RoiModel] = Field(default_factory=list, description="List of ROIs.")
 
     def model_dump_typed(self) -> dict:
         return {"type": type(self).__name__.lower(), **self.model_dump()}
 
     @field_serializer("rois")
-    def _serialize_rois(self, v: list[ImageRoi]) -> list[dict]:
+    def _serialize_rois(self, v: list[RoiModel]) -> list[dict]:
         return [roi.model_dump_typed() for roi in v]
 
     @classmethod
@@ -277,12 +321,15 @@ class RoiListModel(BaseModel):
             if not isinstance(roi_dict, dict):
                 raise ValueError(f"Expected a dictionary for 'rois', got: {roi_dict!r}")
             roi_type = roi_dict.pop("type")
-            roi = ImageRoi.construct(roi_type, roi_dict)
+            roi = RoiModel.construct(roi_type, roi_dict)
             out.rois.append(roi)
         return out
 
-    def __getitem__(self, key: int) -> ImageRoi:
+    def __getitem__(self, key: int) -> RoiModel:
         return self.rois[key]
 
-    def __iter__(self) -> Iterator[ImageRoi]:
+    def __iter__(self) -> Iterator[RoiModel]:
         return iter(self.rois)
+
+    def __len__(self) -> int:
+        return len(self.rois)

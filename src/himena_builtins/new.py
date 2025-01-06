@@ -5,6 +5,7 @@ from io import StringIO
 
 from himena._descriptors import NoNeedToSave
 from himena.plugins import register_function, configure_gui
+from himena.standards.model_meta import TextMeta
 from himena.types import WidgetDataModel, Parametric
 from himena.widgets import MainWindow
 from himena.consts import StandardType, MenuId
@@ -52,6 +53,24 @@ def new_excel(ui: MainWindow) -> WidgetDataModel:
         extension_default=".xlsx",
         title=f"Book-{nwin}",
         save_behavior_override=NoNeedToSave(),
+    )
+
+
+@register_function(
+    title="New Text (Python)",
+    menus=MenuId.FILE_NEW,
+    command_id="builtins:new-text-python",
+)
+def new_text_python(ui: MainWindow) -> WidgetDataModel:
+    """New text file with language set to Python."""
+    nwin = _get_n_windows(ui)
+    return WidgetDataModel(
+        value="",
+        type=StandardType.TEXT,
+        extension_default=".py",
+        title=f"Untitled-{nwin}",
+        save_behavior_override=NoNeedToSave(),
+        metadata=TextMeta(language="python"),
     )
 
 

@@ -221,6 +221,17 @@ class QImageView(QtW.QSplitter):
             self._extension_default = ext_default
         return None
 
+    @validate_protocol
+    def update_value(self, val):
+        arr = wrap_array(val)
+        if arr.shape != self._arr.shape:
+            raise ValueError(
+                "`QImageView.update_value` does not support updating the array shape. "
+                "Please use `update_model` with `WidgetDataModel` instead."
+            )
+        self._arr = arr
+        self._reset_image()
+
     def _clim_for_ith_channel(self, img_slices: list[ImageTuple], ith: int):
         ar0, _ = img_slices[ith]
         return ar0.min(), ar0.max()
@@ -533,7 +544,7 @@ class QImageView(QtW.QSplitter):
 
     def _on_roi_added(self, qroi: QRoi):
         if qroi.label() == "":
-            qroi.set_label(str(len(self._roi_col)))
+            qroi.set_label(roi.default_roi_label(len(self._roi_col)))
         indices = self._dims_slider.value()
         self._roi_col.add(indices, qroi)
         set_status_tip(f"Added a {qroi._roi_type()} ROI")

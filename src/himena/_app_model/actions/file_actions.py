@@ -90,7 +90,11 @@ def _open_file_using_reader(
         plugin = None
     if ui:
         ui._recent_manager.append_recent_files([(file_path, plugin)])
-    wf = _wf.LocalReaderMethod(path=file_path, plugin=plugin).construct_workflow()
+    wf = _wf.LocalReaderMethod(
+        path=file_path,
+        plugin=plugin,
+        output_model_type=model.type,
+    ).construct_workflow()
     model.workflow = wf
     return model
 
@@ -184,7 +188,7 @@ def watch_file_using_from_dialog(ui: MainWindow) -> Parametric:
         {"id": MenuId.TOOLBAR, "group": WRITE_GROUP},
     ],
     keybindings=[StandardKeyBinding.Save],
-    enablement=_ctx.is_active_window_exportable,
+    enablement=_ctx.is_active_window_supports_to_model,
 )
 def save_from_dialog(ui: MainWindow, sub_win: SubWindow):
     """Save (overwrite) the current sub-window as a file."""
@@ -199,7 +203,7 @@ def save_from_dialog(ui: MainWindow, sub_win: SubWindow):
     icon="material-symbols:save-as-outline",
     menus=[{"id": MenuId.FILE, "group": WRITE_GROUP}],
     keybindings=[StandardKeyBinding.SaveAs],
-    enablement=_ctx.is_active_window_exportable,
+    enablement=_ctx.is_active_window_supports_to_model,
 )
 def save_as_from_dialog(ui: MainWindow, sub_win: SubWindow):
     """Save the current sub-window as a new file."""
@@ -213,7 +217,7 @@ def save_as_from_dialog(ui: MainWindow, sub_win: SubWindow):
     title="Save As Using ...",
     menus=[{"id": MenuId.FILE, "group": WRITE_GROUP}],
     need_function_callback=True,
-    enablement=_ctx.is_active_window_exportable,
+    enablement=_ctx.is_active_window_supports_to_model,
 )
 def save_as_using_from_dialog(ui: MainWindow, sub_win: SubWindow):
     """Save the current sub-window using selected plugin."""
@@ -273,6 +277,8 @@ def open_new(ui: MainWindow) -> WidgetDataModel:
     id="paste-as-window",
     title="Paste as window",
     menus=[MenuId.FILE_NEW],
+    enablement=~_ctx.is_subwindow_focused,
+    keybindings=[StandardKeyBinding.Paste],
 )
 def paste_from_clipboard(ui: MainWindow) -> WidgetDataModel:
     """Paste the clipboard data as a sub-window."""

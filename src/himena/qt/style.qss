@@ -20,10 +20,6 @@ QWidget:!enabled {
     background-color: #[background];
     color: #[foreground_dim];
 }
-/*
-QToolBar > QToolButton {
-    background-color: #[background];
-} */
 
 QFrame:!enabled {
     background-color: #[background];
@@ -87,6 +83,15 @@ QSpinBox {
     background-color: #[background];
     color: #[foreground];
     padding: 1px;
+}
+
+/* ----- Qt6 needs these styles ----- */
+QSpinBox::down-button  {
+    subcontrol-position: bottom right;
+}
+
+QSpinBox::up-button  {
+    subcontrol-position: top right;
 }
 
 /* ----- QComboBox ----- */

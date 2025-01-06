@@ -26,6 +26,7 @@ from app_model.expressions import BoolOp
 from himena._app_model import AppContext as ctx
 from himena.consts import MenuId
 from himena import _utils
+from himena.types import WidgetDataModel
 
 if TYPE_CHECKING:
     KeyBindingsType = str | KeyBindingRule | Sequence[str] | Sequence[KeyBindingRule]
@@ -266,7 +267,7 @@ def make_action_for_function(
         _title = title
     _enablement = enablement
     if _utils.has_widget_data_model_argument(f):
-        _enablement = _expr_and(_enablement, ctx.is_active_window_exportable)
+        _enablement = _expr_and(_enablement, ctx.is_active_window_supports_to_model)
 
     if inner_widget_class := _utils.get_subwindow_type_arg(f):
         # function is annotated with SubWindow[W]. Use W for enablement.
@@ -448,6 +449,9 @@ def register_conversion_rule(*args, **kwargs):
         no_func = args[0] is None
 
     def inner(func):
+        annot = getattr(func, "__annotations__", {})
+        annot.setdefault("return", WidgetDataModel)
+        func.__annotations__ = annot
         action = make_conversion_rule(func, *args, **kwargs)
         AppActionRegistry.instance().add_action(action)
         return func

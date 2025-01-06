@@ -504,7 +504,9 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         _LOGGER.info("Deleting widget at tab %r, window %r", i_tab, i_window)
         tab = self._tab_widget.widget_area(i_tab)
         subwindows = tab.subWindowList()
-        tab.removeSubWindow(subwindows[i_window])
+        subwindow = subwindows[i_window]
+        tab.removeSubWindow(subwindow)
+        subwindow._widget._himena_widget = None
         tab.relabel_widgets()
         if len(subwindows) == 1:  # now empty
             tab._set_area_focused()

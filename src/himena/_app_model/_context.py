@@ -90,9 +90,9 @@ def _get_user_context(ui: "MainWindow") -> dict | None:
 class AppContext(ContextNamespace["MainWindow"]):
     """Context namespace for the himena main window."""
 
-    is_active_window_exportable = ContextKey(
+    is_active_window_supports_to_model = ContextKey(
         False,
-        "if the current window is savable",
+        "if the current window supports to_model method",
         _is_active_window_savable,
     )
     active_window_state = ContextKey(
