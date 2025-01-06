@@ -10,6 +10,7 @@ from cmap import Colormap
 from pydantic_compat import BaseModel, Field, field_validator
 from superqt import ensure_main_thread
 
+from himena.qt._magicgui._toggle_switch import QLabeledToggleSwitch
 from himena_builtins.qt.widgets._image_components._roi_collection import (
     from_standard_roi,
 )
@@ -97,10 +98,18 @@ class QImageView(QtW.QSplitter):
         layout.setSpacing(2)
         self._roi_buttons = QRoiButtons()
         self._roi_buttons.mode_changed.connect(self._on_roi_mode_changed)
+        self._stick_grid_switch = QLabeledToggleSwitch()
+        self._stick_grid_switch.setText("Stick to Grid")
+        self._stick_grid_switch.setChecked(True)
+        self._stick_grid_switch.setToolTip(
+            "If checked, vertices of Rectangle and Ellipse ROIs will stick to the grid of the image."
+        )
         self._img_view = QImageGraphicsView()
+        self._img_view.set_stick_to_grid(True)
         self._img_view.hovered.connect(self._on_hovered)
         self._img_view.mode_changed.connect(self._roi_buttons.set_mode)
         self._img_view.roi_visibility_changed.connect(self._roi_visibility_changed)
+        self._stick_grid_switch.toggled.connect(self._img_view.set_stick_to_grid)
         self._dims_slider = QDimsSlider()
         self._roi_col = QRoiCollection(self)
         self._roi_col.show_rois_changed.connect(self._img_view.set_show_rois)
@@ -114,6 +123,7 @@ class QImageView(QtW.QSplitter):
             lambda: self._img_view.remove_current_item(remove_from_list=True)
         )
         self._roi_col.layout().insertWidget(0, self._roi_buttons)
+        self._roi_col.layout().insertWidget(1, self._stick_grid_switch)
         layout.addWidget(self._img_view)
         layout.addWidget(self._dims_slider)
 

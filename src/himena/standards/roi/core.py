@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import cache
 import math
-from typing import TYPE_CHECKING, Any, Iterator
+from typing import TYPE_CHECKING, Any, Iterator, Union
 import numpy as np
 from pydantic import field_serializer
 from pydantic_compat import BaseModel, Field, field_validator
@@ -117,10 +117,14 @@ class PointsRoi1D(Roi1D):
 class RectangleRoi(Roi2D):
     """ROI that represents a rectangle."""
 
-    x: float = Field(..., description="X-coordinate of the top-left corner.")
-    y: float = Field(..., description="Y-coordinate of the top-left corner.")
-    width: float = Field(..., description="Width of the rectangle.")
-    height: float = Field(..., description="Height of the rectangle.")
+    x: Union[int, float] = Field(
+        ..., description="X-coordinate of the top-left corner."
+    )
+    y: Union[int, float] = Field(
+        ..., description="Y-coordinate of the top-left corner."
+    )
+    width: Union[int, float] = Field(..., description="Width of the rectangle.")
+    height: Union[int, float] = Field(..., description="Height of the rectangle.")
 
     def shifted(self, dx: float, dy: float) -> RectangleRoi:
         """Return a new rectangle shifted by the given amount."""
@@ -175,10 +179,10 @@ class RotatedRectangleRoi(RotatedRoi2D):
 class EllipseRoi(Roi2D):
     """ROI that represents an ellipse."""
 
-    x: float = Field(..., description="X-coordinate of the center.")
-    y: float = Field(..., description="Y-coordinate of the center.")
-    width: float = Field(..., description="Diameter along the x-axis.")
-    height: float = Field(..., description="Diameter along the y-axis.")
+    x: Union[int, float] = Field(..., description="X-coordinate of the center.")
+    y: Union[int, float] = Field(..., description="Y-coordinate of the center.")
+    width: Union[int, float] = Field(..., description="Diameter along the x-axis.")
+    height: Union[int, float] = Field(..., description="Diameter along the y-axis.")
 
     def shifted(self, dx: float, dy: float) -> EllipseRoi:
         return self.model_copy(update={"x": self.x + dx, "y": self.y + dy})

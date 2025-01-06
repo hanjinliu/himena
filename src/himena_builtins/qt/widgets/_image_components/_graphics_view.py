@@ -191,6 +191,7 @@ class QImageGraphicsView(QBaseGraphicsView):
         self._scale_bar_widget.setVisible(False)
         self.geometry_changed.connect(self._scale_bar_widget.update_rect)
         self._internal_clipboard: QRoi | None = None
+        self._stick_to_grid = False
         self.array_updated.connect(self._on_array_updated)
 
     def add_image_layer(self, additive: bool = False):
@@ -248,6 +249,9 @@ class QImageGraphicsView(QBaseGraphicsView):
                 img.set_additive(False)
             else:
                 img.set_additive(True)
+
+    def set_stick_to_grid(self, stick: bool):
+        self._stick_to_grid = stick
 
     def clear_rois(self):
         scene = self.scene()
@@ -399,6 +403,11 @@ class QImageGraphicsView(QBaseGraphicsView):
                     break
         self.select_item(item_clicked)
 
+    def _pos_to_tuple(self, pos: QtCore.QPointF) -> tuple[float, float]:
+        if self._stick_to_grid:
+            return int(round(pos.x())), int(round(pos.y()))
+        return pos.x(), pos.y()
+
     def mousePressEvent(self, event):
         # Store the position of the mouse when the button is pressed
         if isinstance(item_under_cursor := self.itemAt(event.pos()), QHandleRect):
@@ -434,14 +443,12 @@ class QImageGraphicsView(QBaseGraphicsView):
                 )
                 self._selection_handles.connect_line(self._current_roi_item)
             elif self.mode() is Mode.ROI_RECTANGLE:
-                self.set_current_roi(
-                    QRectangleRoi(p.x(), p.y(), 0, 0).withPen(self._roi_pen)
-                )
+                px, py = self._pos_to_tuple(p)
+                self.set_current_roi(QRectangleRoi(px, py, 0, 0).withPen(self._roi_pen))
                 self._selection_handles.connect_rect(self._current_roi_item)
             elif self.mode() is Mode.ROI_ELLIPSE:
-                self.set_current_roi(
-                    QEllipseRoi(p.x(), p.y(), 0, 0).withPen(self._roi_pen)
-                )
+                px, py = self._pos_to_tuple(p)
+                self.set_current_roi(QEllipseRoi(px, py, 0, 0).withPen(self._roi_pen))
                 self._selection_handles.connect_rect(self._current_roi_item)
             elif self.mode() is Mode.ROI_ROTATED_RECTANGLE:
                 self.set_current_roi(QRotatedRectangleRoi(p, p).withPen(self._roi_pen))
@@ -500,8 +507,8 @@ class QImageGraphicsView(QBaseGraphicsView):
                     item.setLine(pos0.x(), pos0.y(), pos.x(), pos.y())
             elif self.mode() in (Mode.ROI_RECTANGLE, Mode.ROI_ELLIPSE):
                 if isinstance(self._current_roi_item, (QRectangleRoi, QEllipseRoi)):
-                    x0, x1 = pos.x(), pos0.x()
-                    y0, y1 = pos.y(), pos0.y()
+                    x0, y0 = self._pos_to_tuple(pos)
+                    x1, y1 = self._pos_to_tuple(pos0)
                     width = abs(x1 - x0)
                     height = abs(y1 - y0)
                     if _shift_down:
@@ -516,7 +523,9 @@ class QImageGraphicsView(QBaseGraphicsView):
                     self._current_roi_item.set_end(pos)
             elif self.mode() is Mode.SELECT:
                 if item := self._current_roi_item:
-                    delta = pos - self.mapToScene(self._pos_drag_prev)
+                    x0, y0 = self._pos_to_tuple(self.mapToScene(self._pos_drag_prev))
+                    x1, y1 = self._pos_to_tuple(pos)
+                    delta = QtCore.QPointF(x1 - x0, y1 - y0)
                     item.translate(delta.x(), delta.y())
                 else:
                     # just forward to the pan-zoom mode
@@ -719,7 +728,9 @@ class QImageGraphicsView(QBaseGraphicsView):
         if item is None:
             return
         sx, sy = self.transform().m11(), self.transform().m22()
-        item.translate(4 / sx, 4 / sy)
+        delta = QtCore.QPointF(4 / sx, 4 / sy)
+        dx, dy = self._pos_to_tuple(delta)
+        item.translate(max(dx, 1), max(dy, 1))
         self.set_current_roi(item)
         self.add_current_roi()
         self._selection_handles.connect_rect(item)
