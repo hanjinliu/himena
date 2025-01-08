@@ -140,7 +140,10 @@ class QSubWindowArea(QtW.QMdiArea):
                 else:
                     self._set_area_focused()
                     _LOGGER.debug("QSubWindowArea.eventFilter: TabArea focused.")
-        return super().eventFilter(obj, a0)
+        try:
+            return super().eventFilter(obj, a0)
+        except RuntimeError:  # wrapped object deleted
+            return False
 
     def _set_area_focused(self):
         self.area_focused.emit()
