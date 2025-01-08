@@ -18,7 +18,7 @@ def patch_user_data_dir(request: pytest.FixtureRequest):
 
 
 @pytest.fixture
-def ui(qtbot: QtBot, request: pytest.FixtureRequest):
+def himena_ui(qtbot: QtBot, request: pytest.FixtureRequest):
     from himena import new_window
     from himena._app_model._application import HimenaApplication
     from himena.widgets._initialize import _APP_INSTANCES, cleanup

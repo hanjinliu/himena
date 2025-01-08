@@ -688,7 +688,9 @@ class QSubWindowTitleBar(QtW.QFrame):
         attrs: list[str] = [f"<b>Title</b>: {self._title_label.text()}"]
         if _model_type := self._get_model_type():
             attrs.append(f"<b>Type</b>: {_model_type}")
-        attrs.append(f"<b>Widget</b>: {get_display_name(qwin._widget.__class__)}")
+        attrs.append(
+            f"<b>Widget</b>: {get_display_name(qwin._widget.__class__, sep=' ')}"
+        )
         sub = qwin._my_wrapper()
         attrs.append(f"<b>Save behavior</b>: {sub.save_behavior!r}")
         tooltip = "<br>".join(attrs)

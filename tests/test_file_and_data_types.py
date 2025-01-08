@@ -3,8 +3,8 @@ from himena import MainWindow
 from himena.workflow import LocalReaderMethod
 from himena.consts import StandardType
 
-def test_reading_files(ui: MainWindow, sample_dir: Path):
-    tab0 = ui.add_tab()
+def test_reading_files(himena_ui: MainWindow, sample_dir: Path):
+    tab0 = himena_ui.add_tab()
     win = tab0.read_file(sample_dir / "text.txt")
     assert win.model_type() == StandardType.TEXT
     win = tab0.read_file(sample_dir / "json.json")
@@ -27,8 +27,8 @@ def test_reading_files(ui: MainWindow, sample_dir: Path):
     win = tab0.read_file(sample_dir / "array_structured.npy")
     assert win.model_type() == StandardType.ARRAY
 
-def test_reading_file_group(ui: MainWindow, sample_dir: Path):
-    tab0 = ui.add_tab()
+def test_reading_file_group(himena_ui: MainWindow, sample_dir: Path):
+    tab0 = himena_ui.add_tab()
     win = tab0.read_file(
         [
             sample_dir / "text.txt",

@@ -1,9 +1,9 @@
 from himena.widgets import MainWindow
 from himena_builtins.qt.history._widget import QCommandHistory
 
-def test_command_added(ui: MainWindow):
-    history_widget = QCommandHistory(ui)
+def test_command_added(himena_ui: MainWindow):
+    history_widget = QCommandHistory(himena_ui)
     assert history_widget._command_list.model().rowCount() == 0
-    ui.exec_action("new-tab")
+    himena_ui.exec_action("new-tab")
     assert history_widget._command_list.model().rowCount() == 1
-    ui.exec_action("builtins:new-text")
+    himena_ui.exec_action("builtins:new-text")

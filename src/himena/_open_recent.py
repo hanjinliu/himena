@@ -102,6 +102,8 @@ class RecentFileManager:
                 out.append(([Path(p) for p in each["path"]], each.get("plugin")))
             elif each["type"] == "file":
                 out.append((Path(each["path"]), each.get("plugin")))
+            elif each["type"] == "folder":
+                out.append((Path(each["path"]), each.get("plugin")))
         return out
 
     def append_recent_files(
@@ -146,10 +148,11 @@ class RecentFileManager:
         with open(_path, "w") as f:
             json.dump(all_info, f, indent=2)
 
+        # TODO: Don't use Qt!
         from superqt.utils import ensure_main_thread
 
         ensure_main_thread(self.update_menu)()
-        # self.update_menu()  # TODO: call in main thread!
+        # self.update_menu()
         return None
 
     def action_for_file(

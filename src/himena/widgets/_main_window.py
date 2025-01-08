@@ -734,11 +734,14 @@ class MainWindow(Generic[_W]):
             raise ValueError("No active window.")
 
     def _tab_activated(self, i: int):
+        if i < 0:
+            return None
         tab = self.tabs.get(i)
         if tab is not None:
             self.events.tab_activated.emit(tab)
             self._main_window_resized(self.area_size)  # update layout and anchor
-        self._history_tab.add(i)
+        if self._history_tab.get_from_last(1) != i:
+            self._history_tab.add(i)
         return None
 
     def move_window(self, sub: SubWindow[_W], target_index: int) -> None:

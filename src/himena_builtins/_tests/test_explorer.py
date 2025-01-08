@@ -4,9 +4,9 @@ from himena_builtins.qt.explorer._widget import QExplorerWidget
 from pytestqt.qtbot import QtBot
 
 
-def test_workspace_widget(qtbot: QtBot, ui):
+def test_workspace_widget(qtbot: QtBot, himena_ui):
     mock = MagicMock()
-    widget = QExplorerWidget(ui)
+    widget = QExplorerWidget(himena_ui)
     qtbot.add_widget(widget)
     widget.fileDoubleClicked.connect(mock)
     widget._root._set_root_path(Path(__file__).parent)

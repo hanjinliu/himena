@@ -145,6 +145,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         """Append a sub-window to the tab area."""
         main = self._main_window()
         interf, front = sub_window._split_interface_and_frontend()
+        front._himena_widget = sub_window
         out = main.add_widget(front, self._tab_index(), title)
         if hasattr(interf, "control_widget"):
             main._set_control_widget(front, interf.control_widget())

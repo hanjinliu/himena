@@ -9,10 +9,10 @@ import himena.standards.plotting as hplt
 from himena_builtins.qt.plot import BACKEND_HIMENA
 from himena_builtins.qt.plot._canvas import QMatplotlibCanvas
 
-def test_direct_plot(ui: MainWindow):
+def test_direct_plot(himena_ui: MainWindow):
     assert os.environ["MPLBACKEND"] == BACKEND_HIMENA
     plt.switch_backend(BACKEND_HIMENA)
-    tab = ui.add_tab()
+    tab = himena_ui.add_tab()
     plt.figure(figsize=(3, 3))
     assert len(tab) == 0
     plt.plot([0, 1, 2])
@@ -35,16 +35,16 @@ def test_plot_model():
     fig.axes.x.label = "X-axis"
     fig.axes.y.label = "Y-axis"
 
-def test_scatter_plot_via_command(ui: MainWindow, tmpdir):
-    win = ui.add_object(
+def test_scatter_plot_via_command(himena_ui: MainWindow, tmpdir):
+    win = himena_ui.add_object(
         [["x", "y", "z"],
          [0, 4, 6],
          [1, 6, 10],
          [2, 5, 12]],
         type="table",
     )
-    ui.current_window  = win
-    ui.exec_action(
+    himena_ui.current_window  = win
+    himena_ui.exec_action(
         "builtins:scatter-plot",
         with_params={
             "x": ((0, 99), (0, 1)),
@@ -53,8 +53,8 @@ def test_scatter_plot_via_command(ui: MainWindow, tmpdir):
             "edge": {"color": Color("blue"), "width": 2.5, "style": "--"},
         }
     )
-    ui.current_window  = win
-    ui.exec_action(
+    himena_ui.current_window  = win
+    himena_ui.exec_action(
         "builtins:scatter-plot",
         with_params={
             "x": ((0, 99), (0, 1)),
@@ -64,19 +64,19 @@ def test_scatter_plot_via_command(ui: MainWindow, tmpdir):
         }
     )
     path = Path(tmpdir) / "test.plot.json"
-    ui.current_window.write_model(path)
-    ui.read_file(path)
+    himena_ui.current_window.write_model(path)
+    himena_ui.read_file(path)
 
-def test_line_plot_via_command(ui: MainWindow, tmpdir):
-    win = ui.add_object(
+def test_line_plot_via_command(himena_ui: MainWindow, tmpdir):
+    win = himena_ui.add_object(
         [["x", "y", "z"],
          [0, 4, 6],
          [1, 6, 10],
          [2, 5, 12]],
         type="table",
     )
-    ui.current_window  = win
-    ui.exec_action(
+    himena_ui.current_window  = win
+    himena_ui.exec_action(
         "builtins:line-plot",
         with_params={
             "x": ((0, 99), (0, 1)),
@@ -84,8 +84,8 @@ def test_line_plot_via_command(ui: MainWindow, tmpdir):
             "edge": {"color": Color("blue"), "width": 2.5, "style": "--"},
         }
     )
-    ui.current_window  = win
-    ui.exec_action(
+    himena_ui.current_window  = win
+    himena_ui.exec_action(
         "builtins:line-plot",
         with_params={
             "x": ((0, 99), (0, 1)),
@@ -94,19 +94,19 @@ def test_line_plot_via_command(ui: MainWindow, tmpdir):
         }
     )
     path = Path(tmpdir) / "test.plot.json"
-    ui.current_window.write_model(path)
-    ui.read_file(path)
+    himena_ui.current_window.write_model(path)
+    himena_ui.read_file(path)
 
-def test_bar_plot_via_command(ui: MainWindow, tmpdir):
-    win = ui.add_object(
+def test_bar_plot_via_command(himena_ui: MainWindow, tmpdir):
+    win = himena_ui.add_object(
         [["x", "y", "z"],
          [0, 4, 6],
          [1, 6, 10],
          [2, 5, 12]],
         type="table",
     )
-    ui.current_window  = win
-    ui.exec_action(
+    himena_ui.current_window  = win
+    himena_ui.exec_action(
         "builtins:bar-plot",
         with_params={
             "x": ((0, 99), (0, 1)),
@@ -116,8 +116,8 @@ def test_bar_plot_via_command(ui: MainWindow, tmpdir):
             "edge": {"color": Color("blue"), "width": 2.5, "style": "--"},
         }
     )
-    ui.current_window  = win
-    ui.exec_action(
+    himena_ui.current_window  = win
+    himena_ui.exec_action(
         "builtins:bar-plot",
         with_params={
             "x": ((0, 99), (0, 1)),
@@ -127,8 +127,8 @@ def test_bar_plot_via_command(ui: MainWindow, tmpdir):
             "edge": {"color": Color("black"), "width": 2, "style": None},
         }
     )
-    ui.current_window  = win
-    ui.exec_action(
+    himena_ui.current_window  = win
+    himena_ui.exec_action(
         "builtins:bar-plot",
         with_params={
             "x": ((0, 99), (0, 1)),
@@ -139,19 +139,19 @@ def test_bar_plot_via_command(ui: MainWindow, tmpdir):
         }
     )
     path = Path(tmpdir) / "test.plot.json"
-    ui.current_window.write_model(path)
-    ui.read_file(path)
+    himena_ui.current_window.write_model(path)
+    himena_ui.read_file(path)
 
-def test_errorbar_plot_via_command(ui: MainWindow, tmpdir):
-    win = ui.add_object(
+def test_errorbar_plot_via_command(himena_ui: MainWindow, tmpdir):
+    win = himena_ui.add_object(
         [["x", "y", "yerr"],
          [0, 4, 0.5],
          [1, 6, 0.3],
          [2, 5, 0.4]],
         type="table",
     )
-    ui.current_window  = win
-    ui.exec_action(
+    himena_ui.current_window  = win
+    himena_ui.exec_action(
         "builtins:errorbar-plot",
         with_params={
             "x": ((0, 99), (0, 1)),
@@ -162,8 +162,8 @@ def test_errorbar_plot_via_command(ui: MainWindow, tmpdir):
             "edge": {"color": Color("blue"), "width": 1, "style": "-"},
         }
     )
-    ui.current_window  = win
-    ui.exec_action(
+    himena_ui.current_window  = win
+    himena_ui.exec_action(
         "builtins:errorbar-plot",
         with_params={
             "x": ((0, 99), (0, 1)),
@@ -174,8 +174,8 @@ def test_errorbar_plot_via_command(ui: MainWindow, tmpdir):
             "edge": {"color": Color("blue"), "width": 1, "style": "-"},
         }
     )
-    ui.current_window  = win
-    ui.exec_action(
+    himena_ui.current_window  = win
+    himena_ui.exec_action(
         "builtins:errorbar-plot",
         with_params={
             "x": ((0, 99), (0, 1)),
@@ -187,19 +187,19 @@ def test_errorbar_plot_via_command(ui: MainWindow, tmpdir):
         }
     )
     path = Path(tmpdir) / "test.plot.json"
-    ui.current_window.write_model(path)
-    ui.read_file(path)
+    himena_ui.current_window.write_model(path)
+    himena_ui.read_file(path)
 
-def test_band_plot_via_command(ui: MainWindow, tmpdir):
-    win = ui.add_object(
+def test_band_plot_via_command(himena_ui: MainWindow, tmpdir):
+    win = himena_ui.add_object(
         [["x", "y0", "y1"],
          [0, 4, 6],
          [1, 6, 10],
          [2, 5, 12]],
         type="table",
     )
-    ui.current_window  = win
-    ui.exec_action(
+    himena_ui.current_window  = win
+    himena_ui.exec_action(
         "builtins:band-plot",
         with_params={
             "x": ((0, 99), (0, 1)),
@@ -210,5 +210,5 @@ def test_band_plot_via_command(ui: MainWindow, tmpdir):
         }
     )
     path = Path(tmpdir) / "test.plot.json"
-    ui.current_window.write_model(path)
-    ui.read_file(path)
+    himena_ui.current_window.write_model(path)
+    himena_ui.read_file(path)

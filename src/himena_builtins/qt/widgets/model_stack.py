@@ -32,7 +32,12 @@ class QModelStack(QtW.QSplitter):
     - This widget represents a list of models of any types. Widget registered for each
       model will be created and displayed on the right side of this widget.
     - The control widget will be updated according to the selected model.
-    - Another model stack can be nested.
+    - Multiple model stacks can be nested.
+    - Items can be either **eager** type or **lazy** type. An eager type item is already
+      loaded into the memory. A lazy type item only holds how to load the data, and the
+      data loading only happens when the item is clicked. If a model stack is created by
+      reading a directory or a file group, its items are **always lazy items**.
+
 
     ## Drag and Drop
 
@@ -40,11 +45,20 @@ class QModelStack(QtW.QSplitter):
       - If only one item is selected, the internal model will be dragged.
       - If multiple items are selected, a list of model will be dragged, as a model of
         type `StandardType.MODELS` ("models").
-    -
+    - If the content is lazy items, they will be loaded into memory. The returned items
+      are **always eager items**.
 
     ## Notes
 
-    -
+    - If a directory or a group of files are opened and displayed as a model stack, it
+      looks very similar to a file explorer. However, the internal data is not the file
+      system itself. Deleting the components does NOT delete the file itself.
+    - If the content is modified and one of other items is activated, the old data will
+      not be updated if the item is a lazy item, but will be updated if it is an eager
+      item. This is a very plausible behavior. A lazy item only holds the function to
+      load the data, so that updating the returned value of the function does nothing to
+      the function itself. An eager item is already loaded into the memory, so that
+      updating the data will directly overwrite the content in the memory.
     """
 
     __himena_widget_id__ = "builtins:QModelStack"
@@ -136,6 +150,7 @@ class QModelStack(QtW.QSplitter):
         item.setFlags(item.flags() | QtCore.Qt.ItemFlag.ItemIsEditable)
         item.setData(_MODEL_ROLE, model)
         item.setData(_WIDGET_ROLE, None)
+        item.setToolTip(_make_tooltip(name, model))
         return item
 
     def _make_eager_item(self, name: str, model: WidgetDataModel):
@@ -143,6 +158,7 @@ class QModelStack(QtW.QSplitter):
         item = QtW.QListWidgetItem(name)
         item.setFlags(item.flags() | QtCore.Qt.ItemFlag.ItemIsEditable)
         item.setData(_MODEL_ROLE, None)
+        item.setToolTip(_make_tooltip(name, model))
         widget = self._model_to_widget(model)
         self._add_widget(item, widget)
         return item
@@ -487,3 +503,9 @@ def _split_widget_and_interface(widget) -> tuple[Any, QtW.QWidget]:
     else:
         raise TypeError(f"Expected a widget or an interface, got {type(widget)}")
     return interf, native_widget
+
+
+def _make_tooltip(name: str, model: WidgetDataModel) -> str:
+    attrs: list[str] = [f"<b>Title</b>: {name}"]
+    attrs.append(f"<b>Type</b>: {model.type}")
+    return "<br>".join(attrs)

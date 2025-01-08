@@ -8,47 +8,48 @@ from pytestqt.qtbot import QtBot
 
 from himena.types import WidgetDataModel, WindowRect
 
-def test_type_map_and_session(tmpdir, ui: MainWindow, sample_dir):
-    tab0 = ui.add_tab()
+def test_type_map_and_session(tmpdir, himena_ui: MainWindow, sample_dir):
+    tab0 = himena_ui.add_tab()
     tab0.read_file(sample_dir / "text.txt").update(rect=(30, 40, 120, 150))
     assert type(tab0.current().widget) is _qtw.QTextEdit
     tab0.read_file(sample_dir / "json.json").update(rect=(150, 40, 250, 150), anchor="top-left")
     assert type(tab0.current().widget) is _qtw.QTextEdit
-    tab1 = ui.add_tab()
+    tab1 = himena_ui.add_tab()
     tab1.read_file(sample_dir / "image.png").update(rect=(30, 40, 160, 130), title="My Image")
     assert type(tab1.current().widget) is _qtw.QImageView
     tab1.read_file(sample_dir / "html.html").update(rect=(80, 40, 160, 130), title="My HTML")
     # assert type(tab1.current().widget) is _qtw.QDefaultHTMLEdit ?
 
     session_path = Path(tmpdir) / "test.session.json"
-    ui.save_session(session_path)
-    ui.clear()
-    assert len(ui.tabs) == 0
-    ui.load_session(session_path)
-    assert len(ui.tabs) == 2
-    assert len(ui.tabs[0]) == 2
-    assert ui.tabs[0][0].title == "text.txt"
-    assert ui.tabs[0][0].rect == WindowRect(30, 40, 120, 150)
-    assert ui.tabs[0][1].title == "json.json"
-    assert ui.tabs[0][1].rect == WindowRect(150, 40, 250, 150)
-    assert isinstance(ui.tabs[0][1].anchor, anchor.TopLeftConstAnchor)
-    assert len(ui.tabs[1]) == 2
-    assert ui.tabs[1][0].title == "My Image"
-    assert ui.tabs[1][0].rect == WindowRect(30, 40, 160, 130)
-    assert ui.tabs[1][1].title == "My HTML"
-    assert ui.tabs[1][1].rect == WindowRect(80, 40, 160, 130)
+    himena_ui.save_session(session_path)
+    himena_ui.clear()
+    assert len(himena_ui.tabs) == 0
+    himena_ui.load_session(session_path)
+    assert len(himena_ui.tabs) == 2
+    assert len(himena_ui.tabs[0]) == 2
+    assert himena_ui.tabs[0][0].title == "text.txt"
+    assert himena_ui.tabs[0][0].rect == WindowRect(30, 40, 120, 150)
+    assert himena_ui.tabs[0][1].title == "json.json"
+    assert himena_ui.tabs[0][1].rect == WindowRect(150, 40, 250, 150)
+    assert isinstance(himena_ui.tabs[0][1].anchor, anchor.TopLeftConstAnchor)
+    assert len(himena_ui.tabs[1]) == 2
+    assert himena_ui.tabs[1][0].title == "My Image"
+    assert himena_ui.tabs[1][0].rect == WindowRect(30, 40, 160, 130)
+    assert himena_ui.tabs[1][1].title == "My HTML"
+    assert himena_ui.tabs[1][1].rect == WindowRect(80, 40, 160, 130)
 
-def test_session_with_calculation(tmpdir, ui: MainWindow, sample_dir):
-    tab0 = ui.add_tab()
+def test_session_with_calculation(tmpdir, himena_ui: MainWindow, sample_dir):
+    tab0 = himena_ui.add_tab()
     tab0.read_file(sample_dir / "image.png").update(rect=(30, 40, 160, 130), title="Im")
-    ui.exec_action("builtins:image-crop:crop-image", with_params={"y": (1, 3), "x": (1, 3)})
+    himena_ui.exec_action("builtins:image-crop:crop-image", with_params={"y": (1, 3), "x": (1, 3)})
     assert len(tab0) == 2
     shape_cropped = tab0[1].to_model().value.shape
     tab0[1].update(rect=(70, 20, 160, 130))
     session_path = Path(tmpdir) / "test.session.json"
-    ui.save_session(session_path, allow_calculate=True)
-    ui.clear()
-    ui.load_session(session_path)
+    himena_ui.save_session(session_path, allow_calculate=True)
+    himena_ui.clear()
+    himena_ui.load_session(session_path)
+    tab0 = himena_ui.tabs[0]
     assert len(tab0) == 2
     assert tab0[0].title == "Im"
     assert tab0[0].rect == WindowRect(30, 40, 160, 130)
@@ -56,10 +57,10 @@ def test_session_with_calculation(tmpdir, ui: MainWindow, sample_dir):
     assert tab0[1].to_model().value.shape == shape_cropped
 
 
-def test_command_palette_events(ui: MainWindowQt, qtbot: QtBot):
-    ui.show()
-    ui.exec_action("show-command-palette")
-    qmain: QMainWindow = ui._backend_main_window
+def test_command_palette_events(himena_ui: MainWindowQt, qtbot: QtBot):
+    himena_ui.show()
+    himena_ui.exec_action("show-command-palette")
+    qmain: QMainWindow = himena_ui._backend_main_window
     qtbot.add_widget(qmain)
     qline = qmain._command_palette_general._line
     qtbot.keyClick(qline, Qt.Key.Key_O)
@@ -69,18 +70,18 @@ def test_command_palette_events(ui: MainWindowQt, qtbot: QtBot):
     qtbot.keyClick(qline, Qt.Key.Key_PageUp)
     qtbot.keyClick(qline, Qt.Key.Key_Escape)
 
-def test_goto_widget(ui: MainWindowQt, qtbot: QtBot):
-    ui.show()
-    tab0 = ui.add_tab(title="Tab 0")
+def test_goto_widget(himena_ui: MainWindowQt, qtbot: QtBot):
+    himena_ui.show()
+    tab0 = himena_ui.add_tab(title="Tab 0")
     tab0.add_data_model(WidgetDataModel(value="a", type="text", title="A"))
     tab0.add_data_model(WidgetDataModel(value="b", type="text", title="B"))
-    tab1 = ui.add_tab(title="Tab 1")
+    tab1 = himena_ui.add_tab(title="Tab 1")
     tab1.add_data_model(WidgetDataModel(value="c", type="text", title="C"))
     tab1.add_data_model(WidgetDataModel(value="d", type="text", title="D"))
     tab1.add_data_model(WidgetDataModel(value="e", type="text", title="E"))
 
-    ui.exec_action("go-to-window")
-    qmain: QMainWindow = ui._backend_main_window
+    himena_ui.exec_action("go-to-window")
+    qmain: QMainWindow = himena_ui._backend_main_window
     qmain._goto_widget.show()
     qtbot.keyClick(qmain._goto_widget, Qt.Key.Key_Down)
     qtbot.keyClick(qmain._goto_widget, Qt.Key.Key_Up)
@@ -88,21 +89,21 @@ def test_goto_widget(ui: MainWindowQt, qtbot: QtBot):
     qtbot.keyClick(qmain._goto_widget, Qt.Key.Key_Left)
     qtbot.keyClick(qmain._goto_widget, Qt.Key.Key_Down)
     qtbot.keyClick(qmain._goto_widget, Qt.Key.Key_Return)
-    ui.exec_action("go-to-window")
+    himena_ui.exec_action("go-to-window")
     qtbot.keyClick(qmain._goto_widget, Qt.Key.Key_Escape)
 
-def test_register_function_in_runtime(ui: MainWindowQt, qtbot: QtBot):
-    qmain: QMainWindow = ui._backend_main_window
+def test_register_function_in_runtime(himena_ui: MainWindowQt, qtbot: QtBot):
+    qmain: QMainWindow = himena_ui._backend_main_window
     assert qmain._menubar.actions()[-2].menu().title() != "Plugins"
 
-    @ui.register_function(menus="plugins", title="F0", command_id="pytest:f0")
+    @himena_ui.register_function(menus="plugins", title="F0", command_id="pytest:f0")
     def f():
         pass
 
     assert qmain._menubar.actions()[-2].menu().title() == "Plugins"
     assert qmain._menubar.actions()[-2].menu().actions()[0].text() == "F0"
 
-    @ui.register_function(menus="tools", title="F1", command_id="pytest:f1")
+    @himena_ui.register_function(menus="tools", title="F1", command_id="pytest:f1")
     def f():
         pass
 
@@ -110,6 +111,6 @@ def test_register_function_in_runtime(ui: MainWindowQt, qtbot: QtBot):
     titles = [a.text() for a in qmain._get_menu_action_by_id("tools").menu().actions()]
     assert "F1" in titles
 
-    @ui.register_function(menus="plugins2/sub", title="F2", command_id="pytest:f2")
+    @himena_ui.register_function(menus="plugins2/sub", title="F2", command_id="pytest:f2")
     def f():
         pass

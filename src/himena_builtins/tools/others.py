@@ -3,7 +3,7 @@ import inspect
 from pathlib import Path
 import html
 import re
-from typing import Literal, Mapping
+from typing import Iterable, Literal, Mapping
 import warnings
 from datetime import datetime
 import numpy as np
@@ -109,7 +109,9 @@ def sort_model_list(model: WidgetDataModel) -> Parametric:
                 return datetime(9999, 12, 31)
         else:
             raise ValueError(f"Invalid `sort_by` argument: {sort_by}")
-        models = sorted(model.value, key=_sort_func, reverse=descending)
+        models = sorted(
+            _norm_model_list(model.value), key=_sort_func, reverse=descending
+        )
         return model.with_value(models, title=f"{model.title} sorted")
 
     return run_sort
@@ -141,12 +143,8 @@ def filter_model_list(model: WidgetDataModel) -> Parametric:
             If True, lazy-type models will be unwrapped before filtering. If you added
             a element from a local file, it is usually a lazy object.
         """
-        if isinstance(val := model.value, Mapping):
-            models = val.values()
-        else:
-            models = val
-        models_out = []
-        for m in models:
+        models_out: list[WidgetDataModel] = []
+        for m in _norm_model_list(model.value):
             if not isinstance(m, WidgetDataModel):
                 warnings.warn(
                     f"Expected a sequence of WidgetDataModel but got {type(m)} as an "
@@ -165,6 +163,37 @@ def filter_model_list(model: WidgetDataModel) -> Parametric:
         return model.with_value(models_out, title=f"{model.title} filtered")
 
     return run_filter
+
+
+@register_function(
+    title="Compute lazy items",
+    types=[StandardType.MODELS],
+    menus=["tools/models"],
+    command_id="builtins:compute-lazy-items",
+)
+def compute_lazy_items(model: WidgetDataModel) -> WidgetDataModel:
+    """Compute all the lazy items in the model list."""
+
+    def _unwrap_list(mlist: list[WidgetDataModel]):
+        out: list[WidgetDataModel] = []
+        for m in _norm_model_list(mlist):
+            if m.type == StandardType.LAZY:
+                out.append(unwrap_lazy_model(m))
+            elif m.is_subtype_of(StandardType.MODELS):
+                out.append(m.with_value(_unwrap_list(m.value)))
+            else:
+                out.append(m)
+        return out
+
+    model_out = _unwrap_list(model.value)
+    return model.with_value(model_out, title=f"{model.title} computed")
+
+
+def _norm_model_list(models) -> Iterable[WidgetDataModel]:
+    if isinstance(models, Mapping):
+        return models.values()
+    else:
+        return models
 
 
 @register_function(

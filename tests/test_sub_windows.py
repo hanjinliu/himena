@@ -11,192 +11,192 @@ from himena.qt import register_widget_class, MainWindowQt
 from himena_builtins.qt import widgets as _qtw
 import himena._providers
 
-def test_new_window(ui: MainWindow):
-    ui.show()
-    assert len(ui.tabs) == 0
+def test_new_window(himena_ui: MainWindow):
+    himena_ui.show()
+    assert len(himena_ui.tabs) == 0
     with TemporaryDirectory() as tmp:
         path = Path(tmp) / "test.txt"
         path.write_text("Hello, World!")
-        ui.read_file(path)
-    assert len(ui.tabs) == 1
-    assert len(ui.tabs[0]) == 1
+        himena_ui.read_file(path)
+    assert len(himena_ui.tabs) == 1
+    assert len(himena_ui.tabs[0]) == 1
     with TemporaryDirectory() as tmp:
         path = Path(tmp) / "test.txt"
         path.write_text("Hello, World! 2")
-        ui.read_file(path)
-    assert len(ui.tabs) == 1
-    assert len(ui.tabs[0]) == 2
-    ui.add_tab("New tab")
-    assert len(ui.tabs) == 2
-    assert len(ui.tabs.current()) == 0
-    assert ui.tabs.current().title == "New tab"
+        himena_ui.read_file(path)
+    assert len(himena_ui.tabs) == 1
+    assert len(himena_ui.tabs[0]) == 2
+    himena_ui.add_tab("New tab")
+    assert len(himena_ui.tabs) == 2
+    assert len(himena_ui.tabs.current()) == 0
+    assert himena_ui.tabs.current().title == "New tab"
 
-def test_builtin_commands(ui: MainWindow):
-    ui.show()
-    ui.exec_action("new-tab")
-    assert len(ui.tabs) == 1
-    assert len(ui.tabs[0]) == 0
-    ui.exec_action("builtins:console")
-    ui.exec_action("builtins:file-explorer")
-    ui.exec_action("builtins:output")
-    ui.exec_action("builtins:new-text")
-    assert len(ui.tabs[0]) == 1
-    ui.exec_action("builtins:seaborn-sample:iris")
-    ui.exec_action("quit")
+def test_builtin_commands(himena_ui: MainWindow):
+    himena_ui.show()
+    himena_ui.exec_action("new-tab")
+    assert len(himena_ui.tabs) == 1
+    assert len(himena_ui.tabs[0]) == 0
+    himena_ui.exec_action("builtins:console")
+    himena_ui.exec_action("builtins:file-explorer")
+    himena_ui.exec_action("builtins:output")
+    himena_ui.exec_action("builtins:new-text")
+    assert len(himena_ui.tabs[0]) == 1
+    himena_ui.exec_action("builtins:seaborn-sample:iris")
+    himena_ui.exec_action("quit")
 
-def test_io_commands(ui: MainWindow, tmpdir, sample_dir: Path):
+def test_io_commands(himena_ui: MainWindow, tmpdir, sample_dir: Path):
     response_open = lambda: [sample_dir / "text.txt"]
     response_save = lambda: Path(tmpdir) / "text_out.txt"
-    ui._instructions = ui._instructions.updated(file_dialog_response=response_open)
-    ui.exec_action("open-file")
-    assert isinstance(ui.current_window.save_behavior, SaveToPath)
-    last = ui.current_window._widget_workflow.last()
+    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response_open)
+    himena_ui.exec_action("open-file")
+    assert isinstance(himena_ui.current_window.save_behavior, SaveToPath)
+    last = himena_ui.current_window._widget_workflow.last()
     assert isinstance(last, LocalReaderMethod)
     assert last.output_model_type == "text"
     assert last.path == response_open()[0]
 
-    ui.add_object("Hello", type="text")
-    assert isinstance(ui.current_window.save_behavior, SaveToNewPath)
-    assert isinstance(meth := ui.current_window._widget_workflow.last(), ProgrammaticMethod)
+    himena_ui.add_object("Hello", type="text")
+    assert isinstance(himena_ui.current_window.save_behavior, SaveToNewPath)
+    assert isinstance(meth := himena_ui.current_window._widget_workflow.last(), ProgrammaticMethod)
     assert meth.output_model_type == "text"
-    ui._instructions = ui._instructions.updated(file_dialog_response=response_save)
-    ui.exec_action("save")
-    assert isinstance(ui.current_window.save_behavior, SaveToPath)
-    assert ui.current_window.save_behavior.path == response_save()
-    assert isinstance(ui.current_window._widget_workflow.last(), ProgrammaticMethod)
-    ui.exec_action("save-as")
+    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response_save)
+    himena_ui.exec_action("save")
+    assert isinstance(himena_ui.current_window.save_behavior, SaveToPath)
+    assert himena_ui.current_window.save_behavior.path == response_save()
+    assert isinstance(himena_ui.current_window._widget_workflow.last(), ProgrammaticMethod)
+    himena_ui.exec_action("save-as")
 
     # session
     response_session = lambda: Path(tmpdir) / "a.session.yaml"
-    ui._instructions = ui._instructions.updated(file_dialog_response=response_session)
-    ui.exec_action("save-session")
-    ui.exec_action("load-session")
+    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response_session)
+    himena_ui.exec_action("save-session")
+    himena_ui.exec_action("load-session")
 
-    ui.exec_action("save-tab-session")
+    himena_ui.exec_action("save-tab-session")
 
     response_open = lambda: sample_dir / "table.csv"
-    ui._instructions = ui._instructions.updated(file_dialog_response=response_open)
+    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response_open)
     store = himena._providers.ReaderProviderStore.instance()
     param = store.get(response_open(), min_priority=-500)[2]
-    ui.exec_action("open-file-using", with_params={"reader": param})
-    assert isinstance(ui.current_window.save_behavior, SaveToPath)
-    last = ui.current_window._widget_workflow.last()
+    himena_ui.exec_action("open-file-using", with_params={"reader": param})
+    assert isinstance(himena_ui.current_window.save_behavior, SaveToPath)
+    last = himena_ui.current_window._widget_workflow.last()
     assert isinstance(last, LocalReaderMethod)
     assert last.path == response_open()
     assert param.plugin is not None
     assert last.plugin == param.plugin.to_str()
 
-def test_window_commands(ui: MainWindowQt, sample_dir: Path):
-    ui.exec_action("show-command-palette")
-    ui.read_file(sample_dir / "text.txt")
-    assert len(ui.tabs) == 1
-    assert len(ui.tabs[0]) == 1
-    ui._backend_main_window.setFocus()
-    ui.exec_action("open-recent")
-    ui._backend_main_window.setFocus()
+def test_window_commands(himena_ui: MainWindowQt, sample_dir: Path):
+    himena_ui.exec_action("show-command-palette")
+    himena_ui.read_file(sample_dir / "text.txt")
+    assert len(himena_ui.tabs) == 1
+    assert len(himena_ui.tabs[0]) == 1
+    himena_ui._backend_main_window.setFocus()
+    himena_ui.exec_action("open-recent")
+    himena_ui._backend_main_window.setFocus()
 
-    ui.exec_action("duplicate-window")
-    ui.exec_action("duplicate-window")
-    assert len(ui.tabs[0]) == 3
-    ui.exec_action("rename-window")
+    himena_ui.exec_action("duplicate-window")
+    himena_ui.exec_action("duplicate-window")
+    assert len(himena_ui.tabs[0]) == 3
+    himena_ui.exec_action("rename-window")
 
     # anchor
-    ui.exec_action("anchor-window-top-left")
-    ui.exec_action("anchor-window-top-right")
-    ui.exec_action("anchor-window-bottom-left")
-    ui.exec_action("anchor-window-bottom-right")
-    ui.exec_action("unset-anchor")
+    himena_ui.exec_action("anchor-window-top-left")
+    himena_ui.exec_action("anchor-window-top-right")
+    himena_ui.exec_action("anchor-window-bottom-left")
+    himena_ui.exec_action("anchor-window-bottom-right")
+    himena_ui.exec_action("unset-anchor")
 
     # zoom
-    ui.exec_action("window-expand")
-    ui.exec_action("window-shrink")
+    himena_ui.exec_action("window-expand")
+    himena_ui.exec_action("window-shrink")
 
     # align
-    ui.exec_action("align-window-left")
-    ui.exec_action("align-window-right")
-    ui.exec_action("align-window-top")
-    ui.exec_action("align-window-bottom")
-    ui.exec_action("align-window-center")
+    himena_ui.exec_action("align-window-left")
+    himena_ui.exec_action("align-window-right")
+    himena_ui.exec_action("align-window-top")
+    himena_ui.exec_action("align-window-bottom")
+    himena_ui.exec_action("align-window-center")
 
     # state
-    ui.exec_action("minimize-window")
-    ui.exec_action("maximize-window")
-    ui.exec_action("toggle-full-screen")
-    ui.exec_action("toggle-full-screen")
-    ui.exec_action("close-window")
-    ui.exec_action("show-command-palette")
-    ui.exec_action("new")
+    himena_ui.exec_action("minimize-window")
+    himena_ui.exec_action("maximize-window")
+    himena_ui.exec_action("toggle-full-screen")
+    himena_ui.exec_action("toggle-full-screen")
+    himena_ui.exec_action("close-window")
+    himena_ui.exec_action("show-command-palette")
+    himena_ui.exec_action("new")
 
-    ui.read_file(sample_dir / "text.txt")
-    assert len(ui.tabs) == 1
-    ui.exec_action("full-screen-in-new-tab")
-    assert len(ui.tabs) == 2
-    assert ui.tabs.current_index == 1
+    himena_ui.read_file(sample_dir / "text.txt")
+    assert len(himena_ui.tabs) == 1
+    himena_ui.exec_action("full-screen-in-new-tab")
+    assert len(himena_ui.tabs) == 2
+    assert himena_ui.tabs.current_index == 1
 
-def test_screenshot_commands(ui: MainWindow, sample_dir: Path, tmpdir):
-    ui.read_file(sample_dir / "text.txt")
+def test_screenshot_commands(himena_ui: MainWindow, sample_dir: Path, tmpdir):
+    himena_ui.read_file(sample_dir / "text.txt")
 
     # copy
-    ui.clipboard = ClipboardDataModel(text="")  # just for initialization
-    ui.exec_action("copy-screenshot")
-    assert ui.clipboard.image is not None
-    ui.clipboard = ClipboardDataModel(text="")  # just for initialization
-    ui.exec_action("copy-screenshot-area")
-    assert ui.clipboard.image is not None
-    ui.clipboard = ClipboardDataModel(text="")  # just for initialization
-    ui.exec_action("copy-screenshot-window")
-    assert ui.clipboard.image is not None
+    himena_ui.clipboard = ClipboardDataModel(text="")  # just for initialization
+    himena_ui.exec_action("copy-screenshot")
+    assert himena_ui.clipboard.image is not None
+    himena_ui.clipboard = ClipboardDataModel(text="")  # just for initialization
+    himena_ui.exec_action("copy-screenshot-area")
+    assert himena_ui.clipboard.image is not None
+    himena_ui.clipboard = ClipboardDataModel(text="")  # just for initialization
+    himena_ui.exec_action("copy-screenshot-window")
+    assert himena_ui.clipboard.image is not None
 
     # save
-    ui._instructions = ui._instructions.updated(
+    himena_ui._instructions = himena_ui._instructions.updated(
         file_dialog_response=lambda: Path(tmpdir) / "screenshot.png"
     )
-    ui.exec_action("save-screenshot")
-    ui.exec_action("save-screenshot-area")
-    ui.exec_action("save-screenshot-window")
+    himena_ui.exec_action("save-screenshot")
+    himena_ui.exec_action("save-screenshot-area")
+    himena_ui.exec_action("save-screenshot-window")
     assert Path(tmpdir).joinpath("screenshot.png").exists()
 
-def test_view_menu_commands(ui: MainWindow, sample_dir: Path):
-    ui.exec_action("new-tab")
-    ui.exec_action("close-tab")
-    ui.exec_action("new-tab")
-    ui.read_file(sample_dir / "text.txt")
-    assert ui.tabs.current().current_index == 0
-    ui.read_file(sample_dir / "text.txt")
-    assert ui.tabs.current().current_index == 1
-    ui.exec_action("new-tab")
-    ui.read_file(sample_dir / "text.txt")
-    assert ui.tabs.current_index == 1
-    ui.exec_action("goto-last-tab")
-    assert ui.tabs.current_index == 0
-    assert len(ui.tabs.current()) == 2
-    assert ui.tabs.current()[0].state == "normal"
-    assert ui.tabs.current()[1].state == "normal"
-    ui.exec_action("minimize-other-windows")
-    assert ui.tabs.current()[0].state == "min"
-    assert ui.tabs.current()[1].state == "normal"
-    ui.exec_action("show-all-windows")
-    assert ui.tabs.current()[0].state == "normal"
-    assert ui.tabs.current()[1].state == "normal"
-    ui.exec_action("close-all-windows")
-    assert len(ui.tabs.current()) == 0
+def test_view_menu_commands(himena_ui: MainWindow, sample_dir: Path):
+    himena_ui.exec_action("new-tab")
+    himena_ui.exec_action("close-tab")
+    himena_ui.exec_action("new-tab")
+    himena_ui.read_file(sample_dir / "text.txt")
+    assert himena_ui.tabs.current().current_index == 0
+    himena_ui.read_file(sample_dir / "text.txt")
+    assert himena_ui.tabs.current().current_index == 1
+    himena_ui.exec_action("new-tab")
+    himena_ui.read_file(sample_dir / "text.txt")
+    assert himena_ui.tabs.current_index == 1
+    himena_ui.exec_action("goto-last-tab")
+    assert himena_ui.tabs.current_index == 0
+    assert len(himena_ui.tabs.current()) == 2
+    assert himena_ui.tabs.current()[0].state == "normal"
+    assert himena_ui.tabs.current()[1].state == "normal"
+    himena_ui.exec_action("minimize-other-windows")
+    assert himena_ui.tabs.current()[0].state == "min"
+    assert himena_ui.tabs.current()[1].state == "normal"
+    himena_ui.exec_action("show-all-windows")
+    assert himena_ui.tabs.current()[0].state == "normal"
+    assert himena_ui.tabs.current()[1].state == "normal"
+    himena_ui.exec_action("close-all-windows")
+    assert len(himena_ui.tabs.current()) == 0
 
     # close tab with unsaved
-    win0 = ui.read_file(sample_dir / "text.txt")
+    win0 = himena_ui.read_file(sample_dir / "text.txt")
     win0.widget.set_modified(True)
-    win1 = ui.read_file(sample_dir / "table.csv")
+    win1 = himena_ui.read_file(sample_dir / "table.csv")
     win1.widget.set_modified(True)
-    ui.read_file(sample_dir / "text.txt")
-    ui.exec_action("close-tab")
+    himena_ui.read_file(sample_dir / "text.txt")
+    himena_ui.exec_action("close-tab")
 
-def test_custom_widget(ui: MainWindow):
+def test_custom_widget(himena_ui: MainWindow):
     from qtpy.QtWidgets import QLabel
 
-    ui.show()
+    himena_ui.show()
     label = QLabel("Custom widget test")
-    widget = ui.add_widget(label)
-    assert len(ui.tabs) == 1
-    assert len(ui.tabs[0]) == 1
+    widget = himena_ui.add_widget(label)
+    assert len(himena_ui.tabs) == 1
+    assert len(himena_ui.tabs[0]) == 1
     widget.title = "New title"
     assert widget.title == "New title"
     widget.rect = WindowRect(10, 20, 100, 200)
@@ -218,28 +218,28 @@ def test_custom_widget(ui: MainWindow):
     widget.state = "full"
     assert widget.state == "full"
 
-def test_custom_dock_widget(ui: MainWindow):
+def test_custom_dock_widget(himena_ui: MainWindow):
     from qtpy.QtWidgets import QLabel
 
-    ui.show()
+    himena_ui.show()
     widget = QLabel("Dock widget test")
-    dock = ui.add_dock_widget(widget)
-    assert ui.dock_widgets.len()
+    dock = himena_ui.add_dock_widget(widget)
+    assert himena_ui.dock_widgets.len()
     assert dock.visible
     dock.visible = False
     assert not dock.visible
     dock.title = "New title"
     assert dock.title == "New title"
 
-def test_fallback_widget(ui: MainWindow):
+def test_fallback_widget(himena_ui: MainWindow):
     from himena.qt.registry._widgets import QFallbackWidget
 
     model = WidgetDataModel(value=object(), type="XYZ")
     with pytest.warns(RuntimeWarning):  # no widget class is registered for "XYZ"
-        win = ui.add_data_model(model)
+        win = himena_ui.add_data_model(model)
     assert isinstance(win.widget, QFallbackWidget)
 
-def test_register_widget(ui: MainWindow):
+def test_register_widget(himena_ui: MainWindow):
     from qtpy.QtWidgets import QLabel
 
     class QCustomTextView(QLabel):
@@ -247,14 +247,14 @@ def test_register_widget(ui: MainWindow):
             return self.setText(model.value)
 
     model = WidgetDataModel(value="abc", type="text.xyz")
-    win = ui.add_data_model(model)
+    win = himena_ui.add_data_model(model)
     assert type(win.widget) is _qtw.QTextEdit
     register_widget_class("text.xyz", QCustomTextView)
 
-    win2 = ui.add_data_model(model)
+    win2 = himena_ui.add_data_model(model)
     assert type(win2.widget) is QCustomTextView
 
-def test_register_folder(ui: MainWindow, sample_dir: Path):
+def test_register_folder(himena_ui: MainWindow, sample_dir: Path):
     from himena.plugins import register_reader_provider
 
     def _read(fp: Path):
@@ -282,91 +282,91 @@ def test_register_folder(ui: MainWindow, sample_dir: Path):
             return None
 
     response_open = lambda: sample_dir / "folder"
-    ui._instructions = ui._instructions.updated(
+    himena_ui._instructions = himena_ui._instructions.updated(
         file_dialog_response=response_open,
     )
-    ui.exec_action("open-folder")
-    assert ui.tabs.current_index == 0
-    assert ui.tabs.current().len() == 1
+    himena_ui.exec_action("open-folder")
+    assert himena_ui.tabs.current_index == 0
+    assert himena_ui.tabs.current().len() == 1
 
-def test_clipboard(ui: MainWindow, sample_dir: Path, qtbot: QtBot):
-    qtbot.addWidget(ui._backend_main_window)
+def test_clipboard(himena_ui: MainWindow, sample_dir: Path, qtbot: QtBot):
+    qtbot.addWidget(himena_ui._backend_main_window)
     cmodel = ClipboardDataModel(text="XXX")
-    ui.clipboard = cmodel
+    himena_ui.clipboard = cmodel
 
-    ui.exec_action("paste-as-window")
-    assert ui.current_window is not None
-    assert ui.current_window.to_model().value == "XXX"
+    himena_ui.exec_action("paste-as-window")
+    assert himena_ui.current_window is not None
+    assert himena_ui.current_window.to_model().value == "XXX"
 
     sample_path = sample_dir / "text.txt"
-    ui.read_file(sample_path)
+    himena_ui.read_file(sample_path)
     QtW.QApplication.processEvents()
-    ui.exec_action("copy-path-to-clipboard")
+    himena_ui.exec_action("copy-path-to-clipboard")
     QtW.QApplication.processEvents()
-    assert ui.clipboard.text == str(sample_path)
-    ui.exec_action("copy-data-to-clipboard")
-    assert ui.clipboard.text == sample_path.read_text()
+    assert himena_ui.clipboard.text == str(sample_path)
+    himena_ui.exec_action("copy-data-to-clipboard")
+    assert himena_ui.clipboard.text == sample_path.read_text()
 
-def test_tile_window(ui: MainWindow):
-    ui.add_object("A", type="text")
-    ui.add_object("B", type="text")
-    ui.tabs[0].tile_windows()
-    ui.add_object("C", type="text")
-    ui.tabs[0].tile_windows()
-    ui.add_object("D", type="text")
-    ui.tabs[0].tile_windows()
-    ui.add_object("E", type="text")
-    ui.tabs[0].tile_windows()
-    ui.add_object("F", type="text")
-    ui.tabs[0].tile_windows()
-    ui.add_object("G", type="text")
-    ui.tabs[0].tile_windows()
-    ui.add_object("H", type="text")
-    ui.tabs[0].tile_windows()
+def test_tile_window(himena_ui: MainWindow):
+    himena_ui.add_object("A", type="text")
+    himena_ui.add_object("B", type="text")
+    himena_ui.tabs[0].tile_windows()
+    himena_ui.add_object("C", type="text")
+    himena_ui.tabs[0].tile_windows()
+    himena_ui.add_object("D", type="text")
+    himena_ui.tabs[0].tile_windows()
+    himena_ui.add_object("E", type="text")
+    himena_ui.tabs[0].tile_windows()
+    himena_ui.add_object("F", type="text")
+    himena_ui.tabs[0].tile_windows()
+    himena_ui.add_object("G", type="text")
+    himena_ui.tabs[0].tile_windows()
+    himena_ui.add_object("H", type="text")
+    himena_ui.tabs[0].tile_windows()
 
-def test_move_window(ui: MainWindow):
-    tab0 = ui.add_tab()
-    tab1 = ui.add_tab()
+def test_move_window(himena_ui: MainWindow):
+    tab0 = himena_ui.add_tab()
+    tab1 = himena_ui.add_tab()
     win = tab0.add_data_model(WidgetDataModel(value="A", type="text"))
-    ui.move_window(win, 1)
+    himena_ui.move_window(win, 1)
     assert win not in tab0
     assert win in tab1
     assert tab1[0]._identifier == win._identifier
 
-def test_child_window(ui: MainWindow):
-    win = ui.add_object("A", type="text")
+def test_child_window(himena_ui: MainWindow):
+    win = himena_ui.add_object("A", type="text")
     text_edit = QtW.QTextEdit()
     child = win.add_child(text_edit, title="Child")
-    assert len(ui.tabs.current()) == 2
-    del ui.tabs.current()[0]
-    assert len(ui.tabs.current()) == 0
+    assert len(himena_ui.tabs.current()) == 2
+    del himena_ui.tabs.current()[0]
+    assert len(himena_ui.tabs.current()) == 0
     assert not win.is_alive
     assert not child.is_alive
 
-def test_save_behavior(ui: MainWindow, tmpdir):
-    ui.exec_action("builtins:new-text")
-    win = ui.current_window
+def test_save_behavior(himena_ui: MainWindow, tmpdir):
+    himena_ui.exec_action("builtins:new-text")
+    win = himena_ui.current_window
     assert win is not None
     assert not win._need_ask_save_before_close()
 
-    ui.exec_action("duplicate-window")
-    win2 = ui.current_window
+    himena_ui.exec_action("duplicate-window")
+    win2 = himena_ui.current_window
     assert not win2._need_ask_save_before_close()
     assert isinstance(win2._widget_workflow.last(), CommandExecution)
     # special case for duplicate-window
     assert isinstance(win2.save_behavior, NoNeedToSave)
 
     response_save = lambda: Path(tmpdir) / "text_out.txt"
-    ui._instructions = ui._instructions.updated(file_dialog_response=response_save)
-    ui.exec_action("save-as")
-    win3 = ui.current_window
+    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response_save)
+    himena_ui.exec_action("save-as")
+    win3 = himena_ui.current_window
     assert not win3._need_ask_save_before_close()
     assert isinstance(win3._widget_workflow.last(), CommandExecution)
     assert isinstance(win3.save_behavior, SaveToPath)
 
-    ui.current_window = win3
-    ui.exec_action("open-in:builtins:QTextEdit")
-    win3 = ui.current_window
+    himena_ui.current_window = win3
+    himena_ui.exec_action("open-in:builtins:QTextEdit")
+    win3 = himena_ui.current_window
     assert isinstance(win3.save_behavior, NoNeedToSave)
 
 # NOTE: cannot pickle local object. Must be defined here.
@@ -374,22 +374,22 @@ class MyObj:
     def __init__(self, value):
         self.value = value
 
-def test_dont_use_pickle(ui: MainWindow, tmpdir):
+def test_dont_use_pickle(himena_ui: MainWindow, tmpdir):
     tmpdir = Path(tmpdir)
     data = MyObj(124)
     with pytest.warns(RuntimeWarning):  # no widget class is registered for "myobj"
-        ui.add_object(data, type="myobj")
+        himena_ui.add_object(data, type="myobj")
     response = lambda: tmpdir / "test.txt"
-    ui._instructions = ui._instructions.updated(file_dialog_response=response)
+    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response)
     with pytest.raises(ValueError):
-        ui.exec_action("save")
+        himena_ui.exec_action("save")
     response = lambda: tmpdir / "test.pickle"
-    ui._instructions = ui._instructions.updated(file_dialog_response=response)
-    ui.exec_action("save")
+    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response)
+    himena_ui.exec_action("save")
     assert response().exists()
-    ui._instructions = ui._instructions.updated(file_dialog_response=response)
+    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response)
     with pytest.warns(RuntimeWarning):  # no widget class is registered for "any"
-        ui.exec_action("open-file")
-    model = ui.current_window.to_model()
+        himena_ui.exec_action("open-file")
+    model = himena_ui.current_window.to_model()
     assert isinstance(model.value, MyObj)
     assert model.value.value == 124
