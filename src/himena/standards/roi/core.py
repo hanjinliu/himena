@@ -19,10 +19,10 @@ class RoiModel(BaseModel):
     name: str | None = Field(None, description="Name of the ROI.")
 
     def model_dump_typed(self) -> dict:
-        typ = type(self).__name__.lower()
-        if typ.endswith("roi"):
-            typ = typ[:-3]
-        return {"type": typ, **self.model_dump()}
+        return {
+            "type": _strip_roi_suffix(type(self).__name__.lower()),
+            **self.model_dump(),
+        }
 
     @classmethod
     def construct(cls, typ: str, dict_: dict) -> RoiModel:
@@ -33,10 +33,22 @@ class RoiModel(BaseModel):
 
 @cache
 def _pick_roi_model(typ: str) -> type[RoiModel]:
-    for sub in RoiModel.__subclasses__():
-        if sub.__name__.lower() == typ:
+    for sub in _iter_subclasses(RoiModel):
+        if _strip_roi_suffix(sub.__name__.lower()) == typ:
             return sub
     raise ValueError(f"Unknown ROI type: {typ!r}")
+
+
+def _strip_roi_suffix(typ: str) -> str:
+    if typ.endswith("roi"):
+        typ = typ[:-3]
+    return typ
+
+
+def _iter_subclasses(cls: type) -> Iterator[type]:
+    for sub in cls.__subclasses__():
+        yield sub
+        yield from _iter_subclasses(sub)
 
 
 def default_roi_label(nth: int) -> str:

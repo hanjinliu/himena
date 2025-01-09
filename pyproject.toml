@@ -114,6 +114,9 @@ exclude_lines = [
   "@abstractmethod",
   "raise NotImplementedError",
 ]
+exclude = [
+  "src/himena_builtins/_pytest_fixtures.py",
+]
 
 [tool.hatch.envs.lint]
 detached = true

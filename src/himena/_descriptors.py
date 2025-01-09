@@ -84,11 +84,14 @@ class SaveToPath(SaveBehavior):
         model: "WidgetDataModel",
     ) -> Path | None:
         if self.path.exists() and self.ask_overwrite:
-            res = main.exec_choose_one_dialog(
-                title="Overwrite?",
-                message=f"{self.path}\nalready exists, overwrite?",
-                choices=["Overwrite", "Select another path", "Cancel"],
-            )
+            if main._instructions.confirm:
+                res = main.exec_choose_one_dialog(
+                    title="Overwrite?",
+                    message=f"{self.path}\nalready exists, overwrite?",
+                    choices=["Overwrite", "Select another path", "Cancel"],
+                )
+            else:
+                res = "Overwrite"
             if res == "Cancel":
                 return None
             elif res == "Select another path":

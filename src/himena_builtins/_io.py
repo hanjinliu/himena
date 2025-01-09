@@ -298,6 +298,8 @@ def default_text_writer(model: WidgetDataModel[str], path: Path) -> None:
     """Write text file."""
     if isinstance(meta := model.metadata, TextMeta):
         encoding = meta.encoding
+    else:
+        encoding = None
     return path.write_text(model.value, encoding=encoding)
 
 

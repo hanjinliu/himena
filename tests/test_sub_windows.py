@@ -374,22 +374,59 @@ class MyObj:
     def __init__(self, value):
         self.value = value
 
+def _set_response(himena_ui: MainWindow, path):
+    assert isinstance(path, Path)
+    response = lambda: path
+    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response, confirm=False)
+
 def test_dont_use_pickle(himena_ui: MainWindow, tmpdir):
     tmpdir = Path(tmpdir)
     data = MyObj(124)
     with pytest.warns(RuntimeWarning):  # no widget class is registered for "myobj"
         himena_ui.add_object(data, type="myobj")
-    response = lambda: tmpdir / "test.txt"
-    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response)
+    _set_response(himena_ui, tmpdir / "test.txt")
     with pytest.raises(ValueError):
         himena_ui.exec_action("save")
-    response = lambda: tmpdir / "test.pickle"
-    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response)
+    _set_response(himena_ui, tmpdir / "test.pickle")
     himena_ui.exec_action("save")
-    assert response().exists()
-    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response)
+    assert (tmpdir / "test.pickle").exists()
+    _set_response(himena_ui, tmpdir / "test.pickle")
     with pytest.warns(RuntimeWarning):  # no widget class is registered for "any"
         himena_ui.exec_action("open-file")
     model = himena_ui.current_window.to_model()
     assert isinstance(model.value, MyObj)
     assert model.value.value == 124
+
+def test_open_and_save_files(himena_ui: MainWindow, tmpdir, sample_dir: Path):
+    himena_ui.show()
+    tmpdir = Path(tmpdir)
+    _set_response(himena_ui, sample_dir / "ipynb.ipynb")
+    himena_ui.exec_action("open-file")
+    _set_response(himena_ui, tmpdir / "ipynb.ipynb")
+    himena_ui.exec_action("save-as")
+
+    _set_response(himena_ui, sample_dir / "excel.xlsx")
+    himena_ui.exec_action("open-file")
+    _set_response(himena_ui, tmpdir / "excel.xlsx")
+    himena_ui.exec_action("save-as")
+
+    _set_response(himena_ui, sample_dir / "array.npy")
+    himena_ui.exec_action("open-file")
+    _set_response(himena_ui, tmpdir / "array.npy")
+    himena_ui.exec_action("save-as")
+
+    _set_response(himena_ui, sample_dir / "array_structured.npy")
+    himena_ui.exec_action("open-file")
+    _set_response(himena_ui, tmpdir / "array_structured.npy")
+    himena_ui.exec_action("save-as")
+
+    himena_ui.exec_action("builtins:stack-models", with_params={"models": [], "pattern": ".*"})
+    _set_response(himena_ui, tmpdir / "stack.zip")
+    himena_ui.exec_action("save-as")
+    himena_ui.exec_action("open-file")
+
+    himena_ui.add_object({"x": [1, 2, 3], "y": [4.2, 5.3, -1.5]}, type="dataframe")
+    himena_ui.add_object(
+        {"x": [1, 2, 3], "y": [4.2, 5.3, -1.5], "z": [2.2, 1.1, 2.2]},
+        type="dataframe.plot",
+    )
