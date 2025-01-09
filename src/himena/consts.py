@@ -112,6 +112,7 @@ class MenuId(StrEnum):
     WINDOW_NTH = "window/nth"
     VIEW = "view"
     TOOLS = "tools"
+    TOOLS_DOCK = "tools/dock"
     TOOLBAR = "toolbar"
     HELP = "help"
 
