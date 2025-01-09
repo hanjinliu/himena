@@ -26,12 +26,15 @@ def test_tab_widget(qtbot: QtBot):
     from himena.qt._qtab_widget import QTabWidget
 
     tab_widget = QTabWidget()
-    tab_widget.show()
+    tab_widget.show()  # this is necessary for testing key click
     qtbot.addWidget(tab_widget)
     tab_widget.add_tab_area("X")
     tab_widget._line_edit.start_edit(0)
+    QtW.QApplication.processEvents()
     tab_widget._line_edit.setText("Y")
+    QtW.QApplication.processEvents()
     qtbot.keyClick(tab_widget._line_edit, Qt.Key.Key_Return)
+    QtW.QApplication.processEvents()
     assert tab_widget.tabText(0) == "Y"
 
 def test_int_line_edit(qtbot: QtBot):
