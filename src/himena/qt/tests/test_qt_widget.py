@@ -10,6 +10,7 @@ def test_qt_traceback(qtbot: QtBot):
     exception = ValueError("Test value error")
     widget = QtW.QWidget()
     msgbox = QtErrorMessageBox("Test", exception, parent=widget)
+    qtbot.addWidget(widget)
     qtbot.addWidget(msgbox)
     tb = msgbox._get_traceback()
     tb_dlg = QtTracebackDialog(msgbox)
