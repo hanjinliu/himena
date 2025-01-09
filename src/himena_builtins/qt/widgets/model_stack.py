@@ -241,6 +241,8 @@ class QModelStack(QtW.QSplitter):
     def _update_current_index(self):
         row = self._model_list.currentRow()
         item = self._model_list.item(row)
+        if item is None:
+            return  # the last item is deleted
         widget = item.data(_WIDGET_ROLE)
         if widget is None:
             model = item.data(_MODEL_ROLE)
@@ -272,8 +274,7 @@ class QModelStack(QtW.QSplitter):
                 stack_idx = self._widget_stack.indexOf(native_widget)
                 self._widget_stack.removeWidget(native_widget)
                 native_widget.deleteLater()
-                ctrl_widget = self._control_widget.widget(stack_idx)
-                if ctrl_widget:
+                if ctrl_widget := self._control_widget.widget(stack_idx):
                     self._control_widget.removeWidget(ctrl_widget)
                     ctrl_widget.deleteLater()
 
@@ -308,11 +309,11 @@ class QModelStack(QtW.QSplitter):
         self._delete_widget(ith)
 
     def _delete_widget(self, row: int):
-        widget = self._widget_stack.widget(row)
-        self._widget_stack.removeWidget(widget)
+        if widget := self._widget_stack.widget(row):
+            self._widget_stack.removeWidget(widget)
         self._model_list.takeItem(row)
-        control = self._control_widget.widget(row)
-        self._control_widget.removeWidget(control)
+        if control := self._control_widget.widget(row):
+            self._control_widget.removeWidget(control)
 
 
 def _is_modified(widget: QtW.QWidget):

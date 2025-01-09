@@ -7,7 +7,7 @@ from himena.widgets._initialize import (
     remove_instance,
     init_application,
 )
-from himena.widgets._functions import set_status_tip, notify
+from himena.widgets._functions import set_status_tip, set_clipboard, notify
 
 __all__ = [
     "MainWindow",
@@ -21,5 +21,6 @@ __all__ = [
     "remove_instance",
     "init_application",
     "set_status_tip",
+    "set_clipboard",
     "notify",
 ]
