@@ -233,7 +233,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
             self._set_current_path(Path(pwd_text))
 
     def dragEnterEvent(self, a0):
-        if _drag.get_dragging_model() is not None:
+        if _drag.get_dragging_model() is not None or a0.mimeData().urls():
             a0.accept()
         else:
             a0.ignore()
@@ -246,6 +246,11 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         if model := _drag.drop():
             self._ui.submit_async_task(self._send_model, model)
             set_status_tip("Start sending file ...")
+        elif urls := a0.mimeData().urls():
+            for url in urls:
+                path = Path(url.toLocalFile())
+                self._ui.submit_async_task(self._send_file, path, path.is_dir())
+                set_status_tip(f"Sent to {self._host_name()}:{path.name}", duration=2.8)
 
     def update_configs(
         self,
@@ -262,20 +267,25 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir = Path(tmpdir)
             src_pathobj = data_model.write_to_directory(tmpdir)
-            dst_remote = self._pwd / src_pathobj.name
-            dst = f"{self._host_name()}:{dst_remote.as_posix()}"
-            if self._is_wsl_switch.isChecked():
-                drive = src_pathobj.drive
-                wsl_root = Path("mnt") / drive.lower().rstrip(":")
-                src_pathobj_wsl = (
-                    wsl_root / src_pathobj.relative_to(drive).as_posix()[1:]
-                )
-                src_wsl = "/" + src_pathobj_wsl.as_posix()
-                args = ["wsl", "-e", "scp", src_wsl, dst]
-            else:
-                args = ["scp", src_pathobj.as_posix(), dst]
-            subprocess.run(args)
-            notify(f"Sent to {dst_remote.as_posix()}", duration=2.8)
+            self._send_file(src_pathobj)
+
+    def _send_file(self, src: Path, is_dir: bool = False):
+        dst_remote = self._pwd / src.name
+        dst = f"{self._host_name()}:{dst_remote.as_posix()}"
+        if is_dir:
+            cmd = ["scp", "-r"]
+        else:
+            cmd = ["scp"]
+        if self._is_wsl_switch.isChecked():
+            drive = src.drive
+            wsl_root = Path("mnt") / drive.lower().rstrip(":")
+            src_pathobj_wsl = wsl_root / src.relative_to(drive).as_posix()[1:]
+            src_wsl = "/" + src_pathobj_wsl.as_posix()
+            args = ["wsl", "-e"] + cmd + [src_wsl, dst]
+        else:
+            args = cmd + [src.as_posix(), dst]
+        subprocess.run(args)
+        notify(f"Sent to {dst_remote.as_posix()}", duration=2.8)
 
 
 def _make_ls_args(host: str, path: str, options: str = "-AF") -> list[str]:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 from pathlib import Path
 import warnings
+import shutil
 from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 
@@ -50,16 +51,17 @@ class QRootPathEdit(QtW.QWidget):
         path = QtW.QFileDialog.getExistingDirectory(self, "Select Root Path")
         if not path:
             return
-        self._set_root_path(path)
+        self.set_root_path(path)
 
-    def _set_root_path(self, path: str | Path):
+    def set_root_path(self, path: str | Path):
         path = Path(path)
         self._path_edit.setText("/" + path.name)
         self.rootChanged.emit(path)
+        self._path_edit.setToolTip(path.as_posix())
 
 
 class QExplorerWidget(QtW.QWidget):
-    fileDoubleClicked = QtCore.Signal(Path)
+    open_file_requested = QtCore.Signal(Path)
 
     def __init__(self, ui: MainWindow) -> None:
         super().__init__()
@@ -69,10 +71,10 @@ class QExplorerWidget(QtW.QWidget):
         layout = QtW.QVBoxLayout(self)
         layout.addWidget(self._root)
         layout.addWidget(self._file_tree)
-        self._root._path_edit.setText("/" + Path.cwd().name)
+        self._root.set_root_path(Path.cwd())
         self._root.rootChanged.connect(self._file_tree.setRootPath)
-        self._file_tree.fileDoubleClicked.connect(self.fileDoubleClicked.emit)
-        self.fileDoubleClicked.connect(ui.read_file)
+        self._file_tree.fileDoubleClicked.connect(self.open_file_requested.emit)
+        self.open_file_requested.connect(ui.read_file)
 
     def update_configs(self, cfg: FileExplorerConfig):
         self._file_tree._config = cfg
@@ -94,6 +96,11 @@ class QFileTree(QtW.QTreeView):
         self.setRootIndex(self._model.index(self._model.rootPath()))
         self.setSelectionMode(QtW.QAbstractItemView.SelectionMode.ExtendedSelection)
         self.doubleClicked.connect(self._double_clicked)
+
+        # context menu
+        self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self._show_context_menu)
+
         self.setAcceptDrops(True)
         self._config = FileExplorerConfig()
 
@@ -101,6 +108,29 @@ class QFileTree(QtW.QTreeView):
         path = Path(path)
         self._model.setRootPath(path.as_posix())
         self.setRootIndex(self._model.index(path.as_posix()))
+
+    def _show_context_menu(self, pos: QtCore.QPoint):
+        index = self.indexAt(pos)
+        if not index.isValid():
+            return
+        menu = QtW.QMenu(self)
+        path = Path(self._model.filePath(index))
+        menu.addAction("Open", lambda: self._ui.read_file(path))
+        menu.addSeparator()
+        menu.addAction("Copy", lambda: self._ui.set_clipboard(files=[path]))
+        menu.addAction("Copy path", lambda: self._ui.set_clipboard(text=str(path)))
+        menu.addAction(
+            "Paste",
+            lambda: self._paste_file(
+                self._ui.clipboard.files,
+                self._directory_for_index(index),
+                is_copy=True,
+            ),
+        )
+        menu.addSeparator()
+        menu.addAction("Rename", lambda: self.edit(index))
+        menu.exec(self.viewport().mapToGlobal(pos))
+        return None
 
     def _double_clicked(self, index: QtCore.QModelIndex):
         idx = self._model.index(index.row(), 0, index.parent())
@@ -162,52 +192,70 @@ class QFileTree(QtW.QTreeView):
         return None
 
     def dropEvent(self, a0: QtGui.QDropEvent):
-        index = self._get_directory_index(self.indexAt(a0.pos()))
-        if dirpath := self.model().filePath(index):
-            dirpath = Path(dirpath)
-        else:
-            warnings.warn(f"Invalid destination: {dirpath}", stacklevel=2)
-            return
+        dirpath = self._directory_for_index(self.indexAt(a0.pos()))
         if drag_model := _drag.drop():
             if self._config.allow_drop_data_to_save:
                 data_model = drag_model.data_model()
                 data_model.write_to_directory(dirpath)
         elif mime := a0.mimeData():
-            dst_exists: list[Path] = []
-            src_dst_set: list[tuple[Path, Path]] = []
-            for url in mime.urls():
-                src = Path(url.toLocalFile())
-                if not src.exists():
-                    warnings.warn(f"Path {src} does not exist.", stacklevel=2)
-                    continue
-                dst = dirpath / src.name
-                if src != dst:
-                    if dst.exists():
-                        dst_exists.append(dst)
-                    src_dst_set.append((src, dst))
-            if src_dst_set and self._config.allow_drop_file_to_move:
-                if dst_exists:
-                    conflicts = "\n - ".join(p.name for p in dst_exists)
-                    answer = self._ui.exec_choose_one_dialog(
-                        "Replace existing files?",
-                        f"Name conflict in the destinations:\n{conflicts}",
-                        ["Replace", "Skip", "Cancel"],
-                    )
-                    if answer == "Cancel":
-                        return
-                    elif answer == "Replace":
-                        pass
-                    else:
-                        src_dst_set = [
-                            (src, dst)
-                            for src, dst in src_dst_set
-                            if dst not in dst_exists
-                        ]
-                for src, dst in src_dst_set:
-                    src.rename(dst)
+            paths = [Path(url.toLocalFile()) for url in mime.urls()]
+            self._paste_file(paths, dirpath, is_copy=False)
 
     def dragLeaveEvent(self, e):
         return super().dragLeaveEvent(e)
+
+    def keyPressEvent(self, event):
+        if event.modifiers() & QtCore.Qt.KeyboardModifier.ControlModifier:
+            if event.key() == QtCore.Qt.Key.Key_C:
+                self._ui.set_clipboard(
+                    files=[
+                        Path(self._model.filePath(idx))
+                        for idx in self.selectedIndexes()
+                    ]
+                )
+                return
+            elif event.key() == QtCore.Qt.Key.Key_V:
+                self._paste_file(
+                    self._ui.clipboard.files,
+                    self._directory_for_index(self.currentIndex()),
+                    is_copy=True,
+                )
+                return
+        return super().keyPressEvent(event)
+
+    def _paste_file(self, paths: list[Path], dirpath: Path, is_copy: bool):
+        dst_exists: list[Path] = []
+        src_dst_set: list[tuple[Path, Path]] = []
+        for src in paths:
+            if not src.exists():
+                warnings.warn(f"Path {src} does not exist.", stacklevel=2)
+                continue
+            dst = dirpath / src.name
+            if src != dst:
+                if dst.exists():
+                    dst_exists.append(dst)
+                src_dst_set.append((src, dst))
+        if src_dst_set and self._config.allow_drop_file_to_move:
+            if dst_exists:
+                conflicts = "\n - ".join(p.name for p in dst_exists)
+                answer = self._ui.exec_choose_one_dialog(
+                    "Replace existing files?",
+                    f"Name conflict in the destinations:\n{conflicts}",
+                    ["Replace", "Skip", "Cancel"],
+                )
+                if answer == "Cancel":
+                    return
+                elif answer == "Replace":
+                    pass
+                else:
+                    src_dst_set = [
+                        (src, dst) for src, dst in src_dst_set if dst not in dst_exists
+                    ]
+            for src, dst in src_dst_set:
+                if is_copy:
+                    shutil.copy(src, dst)
+                else:
+                    shutil.move(src, dst)
 
     def _get_directory_index(self, index: QtCore.QModelIndex):
         if not index.isValid():
@@ -217,3 +265,10 @@ class QFileTree(QtW.QTreeView):
             return index
         else:
             return self.model().parent(index)
+
+    def _directory_for_index(self, index: QtCore.QModelIndex) -> Path:
+        dir_index = self._get_directory_index(index)
+        if dirpath := self.model().filePath(dir_index):
+            return Path(dirpath)
+        else:
+            raise ValueError(f"Invalid destination: {dirpath}")

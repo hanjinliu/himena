@@ -175,6 +175,18 @@ class MainWindow(Generic[_W]):
         self._backend_main_window._set_clipboard_data(data)
         return None
 
+    def set_clipboard(
+        self,
+        *,
+        text: str | None = None,
+        html: str | None = None,
+        image: ClipboardDataModel | None = None,
+        files: list[str | Path] | None = None,
+    ) -> None:
+        model = ClipboardDataModel(text=text, html=html, image=image, files=files or [])
+        self.clipboard = model
+        return None
+
     def add_tab(self, title: str | None = None) -> TabArea[_W]:
         """Add a new tab of given name."""
         return self.tabs.add(title)

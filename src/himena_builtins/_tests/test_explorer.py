@@ -8,8 +8,8 @@ def test_workspace_widget(qtbot: QtBot, himena_ui):
     mock = MagicMock()
     widget = QExplorerWidget(himena_ui)
     qtbot.add_widget(widget)
-    widget.fileDoubleClicked.connect(mock)
-    widget._root._set_root_path(Path(__file__).parent)
+    widget.open_file_requested.connect(mock)
+    widget._root.set_root_path(Path(__file__).parent)
     mock.assert_not_called()
     # TODO: not working ...
     # qtree = widget._workspace_tree

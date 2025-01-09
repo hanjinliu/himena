@@ -107,7 +107,8 @@ class AppProfile(BaseModel):
         return self.model_copy(update={"plugin_configs": configs})
 
     def update_plugin_config(self, plugin_id: str, **kwargs) -> None:
-        from himena.plugins.actions import AppActionRegistry, WidgetCallbackBase
+        from himena.plugins.actions import AppActionRegistry
+        from himena.plugins.widget_plugins import WidgetCallbackBase
 
         reg = AppActionRegistry.instance()
         configs = self.plugin_configs.copy()
