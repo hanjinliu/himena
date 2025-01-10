@@ -256,9 +256,6 @@ class QRichTextEdit(QtW.QWidget):
     def initPlainText(self, text: str):
         self._main_text_edit.setHtml(text)
 
-    def toPlainText(self) -> str:
-        return self._main_text_edit.toPlainText()
-
     def setFocus(self):
         self._main_text_edit.setFocus()
 
