@@ -7,10 +7,11 @@ from himena.types import Parametric, WidgetDataModel, WidgetConstructor
 from himena.widgets import MainWindow, notify, set_status_tip
 
 TOOLS_DEBUG = "tools/debug"
+TOOLS_DEBUG_ERROR_WARN = "tools/debug/error_warn"
 
 
 @register_function(
-    menus=TOOLS_DEBUG,
+    menus=TOOLS_DEBUG_ERROR_WARN,
     title="Just raise an exception",
     command_id="debug:raise-exception",
 )
@@ -19,7 +20,20 @@ def raise_exception():
 
 
 @register_function(
-    menus=TOOLS_DEBUG,
+    menus=TOOLS_DEBUG_ERROR_WARN,
+    title="Just raise an exception (async)",
+    command_id="debug:raise-exception-async",
+)
+def raise_exception_async() -> Parametric:
+    @configure_gui(run_async=True)
+    def run():
+        raise ValueError("This is a test exception")
+
+    return run
+
+
+@register_function(
+    menus=TOOLS_DEBUG_ERROR_WARN,
     title="Just warn",
     command_id="debug:warning",
 )
@@ -27,6 +41,21 @@ def raise_warning():
     import warnings
 
     warnings.warn("This is a test warning", UserWarning, stacklevel=2)
+
+
+@register_function(
+    menus=TOOLS_DEBUG_ERROR_WARN,
+    title="Just warn (async)",
+    command_id="debug:warning-async",
+)
+def raise_warning_async() -> Parametric:
+    import warnings
+
+    @configure_gui(run_async=True)
+    def run():
+        warnings.warn("This is a test warning", UserWarning, stacklevel=2)
+
+    return run
 
 
 @register_function(

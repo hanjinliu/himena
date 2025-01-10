@@ -55,10 +55,14 @@ class QParametricWidget(QtW.QWidget):
         self._central_widget_size_hint = self._central_qwidget.sizeHint()
         if isinstance(central, mgw.Container):
             # find the proper size hint
-            min_height = sum(max(each.min_height, 28) for each in central) + 2 * (
-                len(central) - 1
-            )
-            min_width = max(max(each.min_width, 80) for each in central) + 6
+            if len(central) > 0:
+                min_height = sum(max(each.min_height, 28) for each in central) + 2 * (
+                    len(central) - 1
+                )
+                min_width = max(max(each.min_width, 80) for each in central) + 6
+            else:
+                min_height = 20
+                min_width = 60
             self._central_widget_size_hint.setHeight(
                 max(self._central_widget_size_hint.height(), min_height)
             )

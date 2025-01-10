@@ -135,11 +135,6 @@ class HimenaPluginInfo(NamedTuple):
     version: str
     distribution: str
 
-    def load(self):
-        from importlib import import_module
-
-        return import_module(self.place)
-
 
 ENTRY_POINT_GROUP_NAME = "himena.plugin"
 

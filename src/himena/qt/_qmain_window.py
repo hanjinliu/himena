@@ -158,6 +158,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
                 for sub in area.subWindowList():
                     sub._title_bar._set_icon_color(icon_color)
 
+    @ensure_main_thread
     def _on_error(self, exc: Exception) -> None:
         from himena.qt._qtraceback import QtErrorMessageBox
 
@@ -166,6 +167,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         notification.addWidget(mbox)
         return notification.show_and_hide_later()
 
+    @ensure_main_thread
     def _on_warning(self, warning: warnings.WarningMessage) -> None:
         from himena.qt._qtraceback import QtErrorMessageBox
 
@@ -743,8 +745,9 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             if future.cancelled():
                 return
             elif e := future.exception():
-                raise e
-            cb(future, **kwargs)
+                self._on_error(e)
+            else:
+                cb(future, **kwargs)
 
         return ensure_main_thread(_func)
 

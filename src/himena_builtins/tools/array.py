@@ -1,4 +1,4 @@
-from typing import Any, Callable, Literal, TypeVar
+from typing import Any, Literal, TypeVar
 import numpy as np
 from himena._data_wrappers._array import wrap_array
 from himena._descriptors import NoNeedToSave
@@ -123,10 +123,10 @@ def binary_operation() -> Parametric:
     import operator as _op
 
     choices = [
-        ("Add (+)", _op.add), ("Subtract (-)", _op.sub), ("Multiply (*)", _op.mul),
-        ("Divide (/)", _op.truediv), ("Floor Divide (//)", _op.floordiv),
-        ("Modulo (%)", _op.mod), ("Power (**)", _op.pow), ("Bitwise AND (&)", _op.and_),
-        ("Bitwise OR (|)", _op.or_), ("Bitwise XOR (^)", _op.xor),
+        ("Add (+)", "add"), ("Subtract (-)", "sub"), ("Multiply (*)", "mul"),
+        ("Divide (/)", "truediv"), ("Floor Divide (//)", "floordiv"),
+        ("Modulo (%)", "mod"), ("Power (**)", "pow"), ("Bitwise AND (&)", "and_"),
+        ("Bitwise OR (|)", "or_"), ("Bitwise XOR (^)", "xor"),
     ]  # fmt: skip
 
     @configure_gui(
@@ -144,12 +144,12 @@ def binary_operation() -> Parametric:
     )
     def run_calc(
         x: WidgetDataModel,
-        operation: Callable,
+        operation: str,
         y: WidgetDataModel,
         clip_overflows: bool = True,
         result_dtype: Literal["as is", "input", "float32", "float64"] = "as is",
     ) -> WidgetDataModel:
-        op_name = operation.__name__.strip("_")
+        operation_func = getattr(_op, operation)
         if result_dtype == "float32":
             xval = x.value.astype(np.float32, copy=False)
             yval = y.value.astype(np.float32, copy=False)
@@ -158,15 +158,15 @@ def binary_operation() -> Parametric:
             yval = y.value.astype(np.float64, copy=False)
         else:
             xval, yval = x.value, y.value
-        arr_out = operation(xval, yval)
+        arr_out = operation_func(xval, yval)
         if clip_overflows:
-            if operation in (_op.add, _op.mul, _op.pow):
+            if operation in ("add", "mul", "pow"):
                 _replace_overflows(xval, yval, arr_out)
-            elif operation is _op.sub:
+            elif operation == "sub":
                 _replace_underflows(xval, yval, arr_out)
         if result_dtype == "input":
             arr_out = arr_out.astype(xval.dtype, copy=False)
-        return x.with_value(arr_out, title=f"{op_name} {x.title} and {y.title}")
+        return x.with_value(arr_out, title=f"{operation} {x.title} and {y.title}")
 
     return run_calc
 
