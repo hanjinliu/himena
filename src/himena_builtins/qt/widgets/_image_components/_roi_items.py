@@ -211,13 +211,15 @@ class QEllipseRoi(QtW.QGraphicsEllipseItem, QRectRoiBase):
         cy = y + h / 2
         width = w * xscale
         height = h * yscale
-        if h > w:
-            eccentricity = math.sqrt(1 - (width / height) ** 2)
+        if w == 0 or h == 0:
+            eccentricity = "n.a."
+        elif w < h:
+            eccentricity = format(math.sqrt(1 - (width / height) ** 2), ".2f")
         else:
-            eccentricity = math.sqrt(1 - (height / width) ** 2)
+            eccentricity = format(math.sqrt(1 - (height / width) ** 2), ".2f")
         if not unit:
-            return f"center=[{cx:.1f}, {cy:.1f}], width={w:.1f}, height={h:.1f}, eccentricity={eccentricity:.2f}"
-        return f"center=[{cx:.1f}, {cy:.1f}], width={w:.1f} ({width:.1f} {unit}), height={h:.1f} ({height:.1f} {unit}), eccentricity={eccentricity:.2f}"
+            return f"center=[{cx:.1f}, {cy:.1f}], width={w:.1f}, height={h:.1f}, eccentricity={eccentricity}"
+        return f"center=[{cx:.1f}, {cy:.1f}], width={w:.1f} ({width:.1f} {unit}), height={h:.1f} ({height:.1f} {unit}), eccentricity={eccentricity}"
 
 
 class QRotatedRectangleRoi(QRoi):
