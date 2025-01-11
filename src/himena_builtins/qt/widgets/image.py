@@ -456,7 +456,8 @@ class QImageView(QtW.QSplitter):
         if slices is None:
             return
         for i, vis in enumerate(visible):
-            slices[i] = ImageTuple(slices[i].arr, vis)
+            if i < len(slices):
+                slices[i] = ImageTuple(slices[i].arr, vis)
         self._set_image_slices(slices)
 
     def _get_image_slice_for_channel(
