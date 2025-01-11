@@ -1,0 +1,30 @@
+{
+    "steps": [
+        {
+            "type": "local-reader",
+            "datetime": "2025-01-11T00:00:00.000000",
+            "id": "f9b37a61-bda6-4ba9-a5ca-73eb79817ba1",
+            "output_model_type": "table",
+            "plugin": "himena_builtins.io.default_reader_provider",
+            "path": "path/to/table.csv"
+        },
+        {
+            "type": "command",
+            "datetime": "2025-01-11T01:00:00.000000",
+            "id": "a67fd006-0a79-490b-a1b0-ec63793c9f0b",
+            "command_id": "builtins:table-to-text",
+            "contexts": [
+                {
+                    "type": "model",
+                    "name": "model",
+                    "value": "f9b37a61-bda6-4ba9-a5ca-73eb79817ba1",
+                    "model_type": "table"
+                }
+            ],
+            "parameters":[
+                {"type": "user", "name": "format", "value": "CSV"},
+                {"type": "user", "name": "end_of_text", "value": "\n"}
+            ]
+        }
+    ]
+}

@@ -92,8 +92,9 @@ class ReaderProviderStore(ProviderStore[ReaderProviderTuple]):
         path: Path,
         *,
         plugin: str | None = None,
+        min_priority: int = -float("inf"),
     ) -> WidgetDataModel:
-        reader = self.pick(path, plugin=plugin, min_priority=-float("inf"))
+        reader = self.pick(path, plugin=plugin, min_priority=min_priority)
         return reader.read(path)
 
 

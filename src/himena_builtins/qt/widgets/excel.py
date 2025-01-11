@@ -104,7 +104,7 @@ class QExcelEdit(QtW.QTabWidget):
         tb.setText("+")
         tb.setFont(QtGui.QFont("Arial", 12, weight=15))
         tb.setToolTip("New Tab")
-        tb.clicked.connect(self._add_new_tab)
+        tb.clicked.connect(self.add_new_tab)
         self.setCornerWidget(tb, QtCore.Qt.Corner.TopRightCorner)
         self.tabBar().right_clicked.connect(self._tabbar_right_clicked)
         self._model_type = StandardType.EXCEL
@@ -126,7 +126,7 @@ class QExcelEdit(QtW.QTabWidget):
             elif action == delete_action:
                 self.removeTab(index)
 
-    def _add_new_tab(self):
+    def add_new_tab(self):
         table = QSpreadsheet()
         table.update_model(WidgetDataModel(value=None, type=StandardType.TABLE))
         table.setHeaderFormat(QSpreadsheet.HeaderFormat.Alphabetic)
@@ -263,7 +263,9 @@ class QExcelTableStackControl(QtW.QWidget):
         layout.addWidget(self._selection_range)
         self._value_line_edit.editingFinished.connect(self.update_for_editing)
 
-    def update_for_table(self, table: QSpreadsheet):
+    def update_for_table(self, table: QSpreadsheet | None):
+        if table is None:
+            return
         shape = table.model()._arr.shape
         self._label.setText(f"Shape {shape!r}")
         self._selection_range.connect_table(table)

@@ -403,7 +403,7 @@ class QSpreadsheet(QTableBase):
         """Remove the array at the given index."""
         _action = ActionGroup(
             [
-                RemoveAction(idx, axis, self.model()._arr[idx].copy())
+                RemoveAction(idx, axis, self.model()._arr[_sl(idx, axis)].copy())
                 for idx in sorted(indices, reverse=True)
             ]
         )
@@ -632,6 +632,13 @@ class QTableControl(QtW.QWidget):
         menu.addAction("Rows", table._remove_selected_rows)
         menu.addAction("Columns", table._remove_selected_columns)
         return menu
+
+
+def _sl(idx: int, axis: Literal[0, 1]) -> tuple:
+    if axis == 0:
+        return idx, slice(None)
+    else:
+        return slice(None), idx
 
 
 ORD_A = ord("A")

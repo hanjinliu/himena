@@ -14,7 +14,7 @@ import weakref
 from psygnal import Signal
 from magicgui import widgets as mgw
 from himena import anchor as _anchor
-from himena import _providers
+from himena import io_utils
 from himena._utils import get_gui_config, get_widget_class_id
 from himena.consts import ParametricWidgetProtocolNames as PWPN
 from himena.types import (
@@ -353,12 +353,7 @@ class SubWindow(WidgetWrapper[_W], Layout):
     def _write_model(
         self, path: str | Path, plugin: str | None, model: WidgetDataModel
     ) -> None:
-        path = Path(path)
-        ins = _providers.WriterProviderStore.instance()
-        if path.suffix == ".pickle":
-            ins.run(model, path, plugin=plugin)
-        else:
-            ins.run(model, path, plugin=plugin, min_priority=0)
+        io_utils.write(model, path, plugin=plugin)
         self.update_default_save_path(path)
         return None
 

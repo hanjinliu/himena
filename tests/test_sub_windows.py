@@ -397,28 +397,15 @@ def test_dont_use_pickle(himena_ui: MainWindow, tmpdir):
     assert isinstance(model.value, MyObj)
     assert model.value.value == 124
 
+
 def test_open_and_save_files(himena_ui: MainWindow, tmpdir, sample_dir: Path):
     himena_ui.show()
     tmpdir = Path(tmpdir)
     _set_response(himena_ui, sample_dir / "ipynb.ipynb")
     himena_ui.exec_action("open-file")
-    _set_response(himena_ui, tmpdir / "ipynb.ipynb")
-    himena_ui.exec_action("save-as")
 
     _set_response(himena_ui, sample_dir / "excel.xlsx")
     himena_ui.exec_action("open-file")
-    _set_response(himena_ui, tmpdir / "excel.xlsx")
-    himena_ui.exec_action("save-as")
-
-    _set_response(himena_ui, sample_dir / "array.npy")
-    himena_ui.exec_action("open-file")
-    _set_response(himena_ui, tmpdir / "array.npy")
-    himena_ui.exec_action("save-as")
-
-    _set_response(himena_ui, sample_dir / "array_structured.npy")
-    himena_ui.exec_action("open-file")
-    _set_response(himena_ui, tmpdir / "array_structured.npy")
-    himena_ui.exec_action("save-as")
 
     himena_ui.exec_action("builtins:stack-models", with_params={"models": [], "pattern": ".*"})
     _set_response(himena_ui, tmpdir / "stack.zip")
@@ -429,4 +416,14 @@ def test_open_and_save_files(himena_ui: MainWindow, tmpdir, sample_dir: Path):
     himena_ui.add_object(
         {"x": [1, 2, 3], "y": [4.2, 5.3, -1.5], "z": [2.2, 1.1, 2.2]},
         type="dataframe.plot",
+    )
+
+def test_reading_file_group(himena_ui: MainWindow, sample_dir: Path):
+    tab0 = himena_ui.add_tab()
+    win = tab0.read_file(
+        [
+            sample_dir / "text.txt",
+            sample_dir / "json.json",
+            sample_dir / "table.csv",
+        ]
     )

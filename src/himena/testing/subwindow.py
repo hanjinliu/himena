@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Any, Generic, TypeVar, overload
 
 from himena.plugins import _checker
-from himena.types import Size, WidgetDataModel
+from himena.types import DragDataModel, DropResult, Size, WidgetDataModel
 from himena.style.core import get_global_styles
 
 _W = TypeVar("_W")
@@ -25,6 +25,11 @@ class WidgetTester(Generic[_W]):
             _checker.call_widget_resized_callback(
                 self._widget, Size(200, 200), Size(*hint)
             )
+        if hasattr(self._widget, "is_editable"):
+            self._widget.is_editable()
+        if hasattr(self._widget, "set_editable"):
+            self._widget.set_editable(False)
+            self._widget.set_editable(True)
         return self
 
     def __exit__(self, *args):
@@ -47,17 +52,8 @@ class WidgetTester(Generic[_W]):
     def update_model(
         self, model: WidgetDataModel | None = None, **kwargs
     ) -> WidgetTester[_W]:
-        if model:
-            if kwargs:
-                raise TypeError("Cannot specify both model and kwargs")
-            self._widget.update_model(model)
-        else:
-            if kwargs.get("type") is None:
-                try:
-                    kwargs["type"] = self._widget.model_type()
-                except AttributeError:
-                    raise TypeError("`type` argument must be specified") from None
-            self._widget.update_model(WidgetDataModel(**kwargs))
+        model = self._norm_model_input(model, **kwargs)
+        self._widget.update_model(model)
         return self
 
     def to_model(self) -> WidgetDataModel:
@@ -69,9 +65,43 @@ class WidgetTester(Generic[_W]):
         self.update_model(model)
         return model, self.to_model()
 
+    @overload
+    def drop_model(self, model: WidgetDataModel) -> DropResult: ...
+    @overload
+    def drop_model(
+        self,
+        *,
+        value: Any,
+        type: str | None = None,
+        metadata: Any | None = None,
+        **kwargs,
+    ) -> DropResult: ...
+
+    def drop_model(self, model: WidgetDataModel | None = None, **kwargs):
+        model = self._norm_model_input(model, **kwargs)
+        drag_data_model = DragDataModel(getter=model, type=model.type)
+        if not drag_data_model.widget_accepts_me(self.widget):
+            raise ValueError(
+                f"Widget {self.widget!r} does not accept dropping {model.type}"
+            )
+        return self.widget.dropped_callback(model)
+
     def is_modified(self) -> bool:
         return self._widget.is_modified()
 
     @property
     def widget(self) -> _W:
         return self._widget
+
+    def _norm_model_input(self, model, **kwargs) -> WidgetDataModel:
+        if model:
+            if kwargs:
+                raise TypeError("Cannot specify both model and kwargs")
+            return model
+        else:
+            if kwargs.get("type") is None:
+                try:
+                    kwargs["type"] = self._widget.model_type()
+                except AttributeError:
+                    raise TypeError("`type` argument must be specified") from None
+            return WidgetDataModel(**kwargs)
