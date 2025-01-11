@@ -60,7 +60,11 @@ class WidgetTester(Generic[_W]):
         return self._widget.to_model()
 
     def cycle_model(self) -> tuple[WidgetDataModel, WidgetDataModel]:
-        """Cycle `update_model` and `to_model` and return both."""
+        """Cycle `update_model` and `to_model` and return both.
+
+        This function is useful for testing the consistency of widget's `update_model`
+        and `to_model`.
+        """
         model = self.to_model()
         self.update_model(model)
         return model, self.to_model()
