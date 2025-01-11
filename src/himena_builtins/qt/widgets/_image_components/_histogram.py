@@ -331,7 +331,7 @@ class QHistogramItem(QtW.QGraphicsPathItem):
         elif arr.dtype in ("uint16", "int16"):
             _nbin = 128
         else:
-            _nbin = 256
+            _nbin = min(256, int(np.prod(arr.shape[-2:])) // 2)
         # draw histogram
         if arr.dtype.kind == "b":
             edges = np.array([0, 0.5, 1])

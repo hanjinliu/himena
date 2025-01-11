@@ -18,6 +18,9 @@ from himena_builtins.qt.widgets._table_components import (
     format_table_value,
 )
 
+if TYPE_CHECKING:
+    from himena_builtins.qt.widgets._table_components import SelectionModel
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -260,11 +263,16 @@ class QArrayView(QtW.QWidget):
         self._control: QArrayViewControl | None = None
         self._model_type = StandardType.ARRAY
 
+    @property
+    def selection_model(self) -> SelectionModel:
+        """The selection model of the array slice view."""
+        return self._table.selection_model
+
     def update_spinbox_for_shape(self, shape: tuple[int, ...], dims_shown: int = 2):
         nspin = len(self._spinboxes)
-        if nspin < len(shape) - dims_shown:
-            for _i in range(nspin, len(shape) - dims_shown):
-                self._make_spinbox(shape[_i])
+        # make insufficient spinboxes
+        for _i in range(nspin, len(shape) - dims_shown):
+            self._make_spinbox(shape[_i])
 
         for i, sb in enumerate(self._spinboxes):
             if i < len(shape) - dims_shown:

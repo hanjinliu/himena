@@ -229,6 +229,8 @@ class QImageGraphicsView(QBaseGraphicsView):
         self.array_updated.emit(idx, img)
 
     def _on_array_updated(self, idx: int, img: np.ndarray | None):
+        if idx >= len(self._image_widgets):
+            return  # this happens when the number of channels decreased
         widget = self._image_widgets[idx]
         if img is None:
             widget.setVisible(False)

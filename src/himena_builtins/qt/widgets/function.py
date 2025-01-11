@@ -64,6 +64,8 @@ class QFunctionEdit(QtW.QWidget):
     def to_model(self) -> Callable:
         if self._has_source_code:
             code = self._main_text_edit.toPlainText()
+        else:
+            code = None
         return WidgetDataModel(
             value=self._func,
             type=self.model_type(),

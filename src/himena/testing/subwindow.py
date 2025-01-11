@@ -12,18 +12,24 @@ class WidgetTester(Generic[_W]):
     def __init__(self, widget: _W):
         self._widget = widget
 
-    def test_callbacks(self):
+    def __enter__(self) -> WidgetTester[_W]:
         _checker.call_theme_changed_callback(
             self._widget, get_global_styles()["light-green"]
         )
         _checker.call_widget_activated_callback(self._widget)
         _checker.call_widget_added_callback(self._widget)
-        _checker.call_widget_resized_callback(
-            self._widget, Size(200, 200), Size(240, 240)
-        )
-        _checker.call_widget_resized_callback(
-            self._widget, Size(240, 240), Size(200, 200)
-        )
+        if hasattr(self._widget, "control_widget"):
+            self._widget.control_widget()
+        if hasattr(self._widget, "size_hint"):
+            hint = self._widget.size_hint()
+            _checker.call_widget_resized_callback(
+                self._widget, Size(200, 200), Size(*hint)
+            )
+        return self
+
+    def __exit__(self, *args):
+        if hasattr(self._widget, "is_modified"):
+            self._widget.is_modified()
         _checker.call_widget_closed_callback(self._widget)
 
     @overload
@@ -33,7 +39,8 @@ class WidgetTester(Generic[_W]):
         self,
         *,
         value: Any,
-        type: str,
+        type: str | None = None,
+        metadata: Any | None = None,
         **kwargs,
     ) -> WidgetTester[_W]: ...
 
@@ -42,14 +49,28 @@ class WidgetTester(Generic[_W]):
     ) -> WidgetTester[_W]:
         if model:
             if kwargs:
-                raise ValueError("Cannot specify both model and kwargs")
+                raise TypeError("Cannot specify both model and kwargs")
             self._widget.update_model(model)
         else:
+            if kwargs.get("type") is None:
+                try:
+                    kwargs["type"] = self._widget.model_type()
+                except AttributeError:
+                    raise TypeError("`type` argument must be specified") from None
             self._widget.update_model(WidgetDataModel(**kwargs))
         return self
 
     def to_model(self) -> WidgetDataModel:
         return self._widget.to_model()
+
+    def cycle_model(self) -> tuple[WidgetDataModel, WidgetDataModel]:
+        """Cycle `update_model` and `to_model` and return both."""
+        model = self.to_model()
+        self.update_model(model)
+        return model, self.to_model()
+
+    def is_modified(self) -> bool:
+        return self._widget.is_modified()
 
     @property
     def widget(self) -> _W:
