@@ -45,8 +45,9 @@ class QParametricWidget(QtW.QWidget):
         layout_v.addWidget(self._call_btn)
         if connector := getattr(central, PWPN.CONNECT_CHANGED_SIGNAL, None):
             connector(self._on_param_changed)
-        if tracker := getattr(central, ModelTrack._ATTR_NAME, None) is not None:
-            setattr(self, ModelTrack._ATTR_NAME, tracker)
+
+        if tracker := ModelTrack.get(central):
+            tracker.set(self)
         self._result_widget: QtW.QWidget | None = None
 
         self._control = QtW.QWidget()

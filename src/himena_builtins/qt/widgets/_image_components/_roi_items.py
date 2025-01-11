@@ -67,10 +67,10 @@ class QLineRoi(QtW.QGraphicsLineItem, QRoi):
     def toRoi(self, indices) -> roi.LineRoi:
         x1, y1, x2, y2 = self._coordinates()
         return roi.LineRoi(
-            x1=x1,
-            y1=y1,
-            x2=x2,
-            y2=y2,
+            x1=x1 - 0.5,
+            y1=y1 - 0.5,
+            x2=x2 - 0.5,
+            y2=y2 - 0.5,
             indices=indices,
             name=self.label(),
         )
@@ -291,8 +291,8 @@ class QRotatedRectangleRoi(QRoi):
 
     def toRoi(self, indices) -> roi.RotatedRectangleRoi:
         return roi.RotatedRectangleRoi(
-            start=(self.start().x(), self.start().y()),
-            end=(self.end().x(), self.end().y()),
+            start=(self.start().x() - 0.5, self.start().y() - 0.5),
+            end=(self.end().x() - 0.5, self.end().y() - 0.5),
             width=self._width,
             angle=self._angle,
             indices=indices,
@@ -393,8 +393,8 @@ class QSegmentedLineRoi(QtW.QGraphicsPathItem, QRoi):
         xs, ys = [], []
         for i in range(path.elementCount()):
             element = path.elementAt(i)
-            xs.append(element.x)
-            ys.append(element.y)
+            xs.append(element.x - 0.5)
+            ys.append(element.y - 0.5)
         return roi.SegmentedLineRoi(xs=xs, ys=ys, indices=indices, name=self.label())
 
     def setPath(self, *args):
@@ -451,8 +451,8 @@ class QPolygonRoi(QSegmentedLineRoi):
         xs, ys = [], []
         for i in range(path.elementCount()):
             element = path.elementAt(i)
-            xs.append(element.x)
-            ys.append(element.y)
+            xs.append(element.x - 0.5)
+            ys.append(element.y - 0.5)
         return roi.PolygonRoi(xs=xs, ys=ys, indices=indices, name=self.label())
 
     def _roi_type(self) -> str:
@@ -542,7 +542,10 @@ class QPointRoi(QPointRoiBase):
 
     def toRoi(self, indices) -> roi.PointRoi2D:
         return roi.PointRoi2D(
-            x=self._point.x(), y=self._point.y(), indices=indices, name=self.label()
+            x=self._point.x() - 0.5,
+            y=self._point.y() - 0.5,
+            indices=indices,
+            name=self.label(),
         )
 
     def translate(self, dx: float, dy: float):
@@ -588,8 +591,8 @@ class QPointsRoi(QPointRoiBase):
         xs: list[float] = []
         ys: list[float] = []
         for point in self._points:
-            xs.append(point.x())
-            ys.append(point.y())
+            xs.append(point.x() - 0.5)
+            ys.append(point.y() - 0.5)
         return roi.PointsRoi2D(
             xs=np.array(xs), ys=np.array(ys), indices=indices, name=self.label()
         )
