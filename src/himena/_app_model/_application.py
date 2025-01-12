@@ -4,7 +4,7 @@ from typing import Callable, TYPE_CHECKING
 from app_model import Action, Application
 import in_n_out
 from himena._app_model._command_registry import CommandsRegistry
-from himena.types import WidgetDataModel, FutureInfo
+from himena.types import WidgetDataModel, FutureInfo, WindowRect
 
 if TYPE_CHECKING:
     from concurrent.futures import Future
@@ -50,13 +50,21 @@ class HimenaApplication(Application):
             type_hint = info.type_hint
         else:
             type_hint = None
-        if (
-            isinstance(result, WidgetDataModel)
-            and info is not None
-            and info.track is not None
-            and len(result.workflow) == 0
-        ):
-            result.workflow = info.track.to_workflow(info.kwargs)
+        if isinstance(result, WidgetDataModel) and info is not None:
+            if info.track is not None and len(result.workflow) == 0:
+                result.workflow = info.track.to_workflow(info.kwargs)
+            # this clause is used to move the output window to the geometry of preview
+            # window or the parametric window.
+            if (top_left := info.top_left) is not None:
+                _left, _top = top_left
+                if info.size is not None:
+                    result.window_rect_override = lambda size: WindowRect(
+                        _left, _top, *size
+                    )
+                else:
+                    result.window_rect_override = lambda _: WindowRect(
+                        _left, _top, *info.size
+                    )
         self.injection_store.process(result, type_hint=type_hint)
 
 

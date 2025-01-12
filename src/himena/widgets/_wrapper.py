@@ -15,7 +15,7 @@ from psygnal import Signal
 from magicgui import widgets as mgw
 from himena import anchor as _anchor
 from himena import io_utils
-from himena._utils import get_gui_config, get_widget_class_id
+from himena._utils import get_widget_class_id
 from himena.consts import ParametricWidgetProtocolNames as PWPN
 from himena.types import (
     BackendInstructions,
@@ -718,10 +718,18 @@ class ParametricWindow(SubWindow[_W]):
                 # return type cannot be inherited from the callback. Here, we just set
                 # the type hint to Future and let it processed in the
                 # "_future_done_callback" method of himena application.
+                if prev := self._get_preview_window():
+                    top_left = (prev.rect.left, prev.rect.top)
+                    size = prev.rect.size()
+                else:
+                    top_left = (self.rect.left, self.rect.top)
+                    size = None
                 FutureInfo(
                     type_hint=annot.get("return", None),
                     track=tracker,
                     kwargs=kwargs,
+                    top_left=top_left,
+                    size=size,
                 ).set(return_value)
             else:
                 injection_type_hint = annot.get("return", None)
@@ -788,21 +796,6 @@ class ParametricWindow(SubWindow[_W]):
             _checker.call_widget_added_callback(widget)
             return result_widget._update_from_returned_model(model)
         return None
-
-    def _process_parametric_output(
-        self,
-        out,
-        is_func: bool = True,
-    ) -> ParametricWindow[_W]:
-        ui = self._main_window()._himena_main_window
-        if self._auto_close:
-            self._close_me(ui)
-        if is_func:
-            result_widget = ui.add_function(out, **get_gui_config(out))
-        else:
-            result_widget = ui.add_parametric_widget(out, **get_gui_config(out))
-        self._coerce_rect(result_widget)
-        return result_widget
 
     def _coerce_rect(self, result_widget: SubWindow[_W]):
         rect = self.rect

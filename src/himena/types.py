@@ -583,6 +583,8 @@ class FutureInfo(_HasDynamicAttribute):
     type_hint: Any
     track: ModelTrack | None = None
     kwargs: dict[str, Any] = field(default_factory=dict)
+    top_left: tuple[int, int] | None = None
+    size: Size[int] | None = None
 
 
 Parametric = NewType("Parametric", Any)
