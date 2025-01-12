@@ -148,7 +148,7 @@ def compute(workflows: list[Workflow]) -> list["WidgetDataModel | Exception"]:
     """Compute all the workflow with the shared cache."""
     if len(workflows) == 0:
         return []
-    _global_cache = {}
+    _global_cache: dict[uuid.UUID, "WidgetDataModel"] = {}
     results: list["WidgetDataModel"] = []
     all_workflows = Workflow.concat(workflows)
     # share the cache
@@ -164,4 +164,33 @@ def compute(workflows: list[Workflow]) -> list["WidgetDataModel | Exception"]:
     _global_cache.clear()
     for workflow in workflows:
         workflow._model_cache = {}
+    return results
+
+
+def is_reproducible(workflows: list[Workflow]) -> list[bool]:
+    if len(workflows) == 0:
+        return []
+    _global_cache: dict[uuid.UUID, bool] = {}
+
+    def _is_reproducible(
+        step: WorkflowStep,
+        id_to_index_map: dict[uuid.UUID, int],
+    ) -> bool:
+        parents = list(step.iter_parents())
+        if len(parents) == 0:
+            return isinstance(step, LocalReaderMethod)
+        for parent in parents:
+            if parent not in _global_cache:
+                idx = id_to_index_map[parent]
+                _global_cache[parent] = _is_reproducible(
+                    workflows[idx], id_to_index_map
+                )
+            rep = _global_cache[parent]
+            if not rep:
+                return False
+        return True
+
+    results: list[bool] = []
+    for workflow in workflows:
+        results.append(all(_is_reproducible(step) for step in workflow.steps))
     return results

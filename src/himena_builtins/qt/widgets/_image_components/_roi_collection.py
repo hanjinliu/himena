@@ -1,6 +1,6 @@
 from __future__ import annotations
 import weakref
-
+from functools import singledispatch
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from typing import Iterator, TYPE_CHECKING
 
@@ -17,40 +17,60 @@ if TYPE_CHECKING:
     from himena_builtins.qt.widgets.image import QImageView
 
 
+@singledispatch
+def _roi_to_qroi(r: roi.RoiModel) -> _roi_items.QRoi:
+    raise ValueError(f"Unsupported ROI type: {type(r)}")
+
+
+@_roi_to_qroi.register
+def _(r: roi.LineRoi) -> _roi_items.QRoi:
+    return _roi_items.QLineRoi(r.x1 + 0.5, r.y1 + 0.5, r.x2 + 0.5, r.y2 + 0.5)
+
+
+@_roi_to_qroi.register
+def _(r: roi.RectangleRoi) -> _roi_items.QRoi:
+    return _roi_items.QRectangleRoi(r.x, r.y, r.width, r.height)
+
+
+@_roi_to_qroi.register
+def _(r: roi.EllipseRoi) -> _roi_items.QRoi:
+    return _roi_items.QEllipseRoi(r.x, r.y, r.width, r.height)
+
+
+@_roi_to_qroi.register
+def _(r: roi.SegmentedLineRoi) -> _roi_items.QRoi:
+    return _roi_items.QSegmentedLineRoi(r.xs + 0.5, r.ys + 0.5)
+
+
+@_roi_to_qroi.register
+def _(r: roi.PolygonRoi) -> _roi_items.QRoi:
+    return _roi_items.QPolygonRoi(r.xs + 0.5, r.ys + 0.5)
+
+
+@_roi_to_qroi.register
+def _(r: roi.RotatedRectangleRoi) -> _roi_items.QRoi:
+    xstart, ystart = r.start
+    xend, yend = r.end
+    return _roi_items.QRotatedRectangleRoi(
+        QtCore.QPointF(xstart + 0.5, ystart + 0.5),
+        QtCore.QPointF(xend + 0.5, yend + 0.5),
+        width=r.width,
+    )
+
+
+@_roi_to_qroi.register
+def _(r: roi.PointRoi2D) -> _roi_items.QRoi:
+    return _roi_items.QPointRoi(r.x + 0.5, r.y + 0.5)
+
+
+@_roi_to_qroi.register
+def _(r: roi.PointsRoi2D) -> _roi_items.QRoi:
+    return _roi_items.QPointsRoi(r.xs + 0.5, r.ys + 0.5)
+
+
 def from_standard_roi(r: roi.RoiModel, pen: QtGui.QPen) -> _roi_items.QRoi:
-    if isinstance(r, roi.LineRoi):
-        out = _roi_items.QLineRoi(r.x1 + 0.5, r.y1 + 0.5, r.x2 + 0.5, r.y2 + 0.5)
-    elif isinstance(r, roi.RectangleRoi):
-        out = _roi_items.QRectangleRoi(r.x, r.y, r.width, r.height)
-    elif isinstance(r, roi.EllipseRoi):
-        out = _roi_items.QEllipseRoi(r.x, r.y, r.width, r.height)
-    elif isinstance(r, roi.SegmentedLineRoi):
-        out = _roi_items.QSegmentedLineRoi(
-            [x + 0.5 for x in r.xs],
-            [y + 0.5 for y in r.ys],
-        )
-    elif isinstance(r, roi.PolygonRoi):
-        out = _roi_items.QPolygonRoi(
-            [x + 0.5 for x in r.xs],
-            [y + 0.5 for y in r.ys],
-        )
-    elif isinstance(r, roi.RotatedRectangleRoi):
-        xstart, ystart = r.start
-        xend, yend = r.end
-        out = _roi_items.QRotatedRectangleRoi(
-            QtCore.QPointF(xstart + 0.5, ystart + 0.5),
-            QtCore.QPointF(xend + 0.5, yend + 0.5),
-            width=r.width,
-        )
-    elif isinstance(r, roi.PointRoi2D):
-        out = _roi_items.QPointRoi(r.x + 0.5, r.y + 0.5)
-    elif isinstance(r, roi.PointsRoi2D):
-        out = _roi_items.QPointsRoi(
-            [x + 0.5 for x in r.xs],
-            [y + 0.5 for y in r.ys],
-        )
-    else:
-        raise ValueError(f"Unsupported ROI type: {type(r)}")
+    """Convert a standard ROI to a QRoi."""
+    out = _roi_to_qroi(r)
     return out.withPen(pen).withLabel(r.name)
 
 

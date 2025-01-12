@@ -311,7 +311,7 @@ def paste_from_clipboard(ui: MainWindow) -> WidgetDataModel:
     id="load-session",
     title="Load Session ...",
     menus=[
-        {"id": MenuId.FILE, "group": READ_GROUP},
+        {"id": MenuId.FILE_SESSION, "group": READ_GROUP},
         {"id": MenuId.STARTUP, "group": READ_GROUP},
     ],
     keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyL)],
@@ -320,7 +320,7 @@ def load_session_from_dialog(ui: MainWindow) -> None:
     """Load a application session from a file."""
     if path := ui.exec_file_dialog(
         mode="r",
-        allowed_extensions=[".session.yaml"],
+        allowed_extensions=[".session.yaml", ".session.yml", ".session.zip"],
         group="session",
     ):
         ui.load_session(path)
@@ -330,7 +330,7 @@ def load_session_from_dialog(ui: MainWindow) -> None:
 @ACTIONS.append_from_fn(
     id="save-session",
     title="Save Session ...",
-    menus=[{"id": MenuId.FILE, "group": WRITE_GROUP}],
+    menus=[{"id": MenuId.FILE_SESSION, "group": WRITE_GROUP}],
     enablement=_ctx.num_tabs > 0,
 )
 def save_session_from_dialog(ui: MainWindow) -> None:
@@ -409,9 +409,28 @@ def save_session_from_dialog(ui: MainWindow) -> None:
 
 
 @ACTIONS.append_from_fn(
+    id="save-session-stand-alone",
+    title="Save Session (Stand-along) ...",
+    menus=[{"id": MenuId.FILE_SESSION, "group": WRITE_GROUP}],
+    enablement=_ctx.num_tabs > 0,
+)
+def save_session_stand_along_from_dialog(ui: MainWindow) -> None:
+    datetime_str = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    if path := ui.exec_file_dialog(
+        mode="w",
+        extension_default=".session.zip",
+        allowed_extensions=[".session.zip"],
+        start_path=f"himena-{datetime_str}.session.zip",
+        group="session",
+    ):
+        return ui.save_session_stand_alone(path)
+    return Cancelled
+
+
+@ACTIONS.append_from_fn(
     id="save-tab-session",
     title="Save Tab Session ...",
-    menus=[{"id": MenuId.FILE, "group": WRITE_GROUP}],
+    menus=[{"id": MenuId.FILE_SESSION, "group": WRITE_GROUP}],
     enablement=(_ctx.num_tabs > 0) & (_ctx.num_sub_windows > 0),
 )
 def save_tab_session_from_dialog(ui: MainWindow) -> None:

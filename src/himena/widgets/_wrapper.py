@@ -76,7 +76,7 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
             identifier = uuid.uuid4()
         self._identifier = identifier
         self._save_behavior: SaveBehavior = SaveToNewPath()
-        self._widget_workflow = Workflow()
+        self._widget_workflow: Workflow = Workflow()
         self._ask_save_before_close = False
         self._frontend_widget()._himena_widget = self
 

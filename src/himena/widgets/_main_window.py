@@ -388,23 +388,38 @@ class MainWindow(Generic[_W]):
 
     def load_session(self, path: str | Path) -> None:
         """Read a session file and update the main window based on the content."""
-        from himena.session import from_yaml
+        from himena.session import from_yaml, update_from_zip
 
         fp = Path(path)
-        from_yaml(fp).update_gui(self)
+        if fp.suffix == ".zip":
+            update_from_zip(self, fp)
+        else:
+            from_yaml(fp).update_gui(self)
         # always plugin=None for reading a session file as a session
         self._recent_session_manager.append_recent_files([(fp, None)])
         self.set_status_tip(f"Session loaded: {fp}", duration=5)
         return None
 
-    def save_session(self, path: str | Path, *, allow_calculate: bool = False) -> None:
+    def save_session(
+        self,
+        path: str | Path,
+        *,
+        allow_calculate: bool = False,
+    ) -> None:
         """Save the current session to a file."""
-        from himena.session import AppSession
+        from himena.session import dump_yaml
 
-        path = Path(path)
-        AppSession.from_gui(self, allow_calculate=allow_calculate).dump_yaml(path)
+        return dump_yaml(self, path, allow_calculate=allow_calculate)
+
+    def save_session_stand_alone(
+        self,
+        path: str | Path,
+    ) -> None:
+        """Save the current session to a zip file as a stand-along file."""
+        from himena.session import dump_zip
+
+        dump_zip(self, path)
         self.set_status_tip(f"Session saved to {path}")
-        self._recent_session_manager.append_recent_files([(path, None)])
         return None
 
     def clear(self) -> None:

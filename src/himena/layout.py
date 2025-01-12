@@ -81,6 +81,22 @@ def _no_ref() -> None:
     return None
 
 
+class EmptyLayout(Layout):
+    """A layout that does not contain anything."""
+
+    def __init__(self, main: BackendMainWindow | None = None):
+        super().__init__(main)
+        self._rect = WindowRect(0, 0, 0, 0)
+
+    @property
+    def rect(self):
+        return self._rect
+
+    @rect.setter
+    def rect(self, value):
+        self._rect = WindowRect.from_tuple(*value)
+
+
 class LayoutContainer(Layout):
     """Layout that can contain other layouts."""
 

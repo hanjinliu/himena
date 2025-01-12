@@ -28,7 +28,7 @@ def quick_min_max(
     down_sample_to: int = 1048576,
 ) -> tuple[float, float]:
     if arr.dtype.kind == "b":
-        return (0, 0, 1.0)
+        return (0.0, 1.0)
     down_sample_factor = arr.size / down_sample_to
     if down_sample_factor <= 1.0:
         return arr.min(), arr.max()

@@ -20,7 +20,7 @@ def test_type_map_and_session(tmpdir, himena_ui: MainWindow, sample_dir):
     tab1.read_file(sample_dir / "html.html").update(rect=(80, 40, 160, 130), title="My HTML")
     # assert type(tab1.current().widget) is _qtw.QDefaultHTMLEdit ?
 
-    session_path = Path(tmpdir) / "test.session.json"
+    session_path = Path(tmpdir) / "test.session.yaml"
     himena_ui.save_session(session_path)
     himena_ui.clear()
     assert len(himena_ui.tabs) == 0
@@ -45,8 +45,25 @@ def test_session_with_calculation(tmpdir, himena_ui: MainWindow, sample_dir):
     assert len(tab0) == 2
     shape_cropped = tab0[1].to_model().value.shape
     tab0[1].update(rect=(70, 20, 160, 130))
-    session_path = Path(tmpdir) / "test.session.json"
+    session_path = Path(tmpdir) / "test.session.yaml"
     himena_ui.save_session(session_path, allow_calculate=True)
+    himena_ui.clear()
+    himena_ui.load_session(session_path)
+    tab0 = himena_ui.tabs[0]
+    assert len(tab0) == 2
+    assert tab0[0].title == "Im"
+    assert tab0[0].rect == WindowRect(30, 40, 160, 130)
+    assert tab0[1].rect == WindowRect(70, 20, 160, 130)
+    assert tab0[1].to_model().value.shape == shape_cropped
+
+def test_session_stand_alone(tmpdir, himena_ui: MainWindow, sample_dir):
+    tab0 = himena_ui.add_tab()
+    tab0.read_file(sample_dir / "image.png").update(rect=(30, 40, 160, 130), title="Im")
+    himena_ui.exec_action("builtins:image-crop:crop-image", with_params={"y": (1, 3), "x": (1, 3)})
+    shape_cropped = tab0[1].to_model().value.shape
+    tab0[1].update(rect=(70, 20, 160, 130))
+    session_path = Path(tmpdir) / "test.session.zip"
+    himena_ui.save_session_stand_alone(session_path)
     himena_ui.clear()
     himena_ui.load_session(session_path)
     tab0 = himena_ui.tabs[0]

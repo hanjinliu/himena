@@ -78,6 +78,7 @@ class WindowDescription(BaseModel):
         )
 
     def process_model(self, area: "TabArea[_W]", model: "WidgetDataModel"):
+        """Add model to the tab area and update the window properties."""
         model.workflow = self.workflow
         window = area.add_data_model(model)
         window.title = self.title
@@ -203,7 +204,12 @@ class AppSession(BaseModel):
             current_index=main.tabs.current_index,
         )
 
-    def update_gui(self, main: "MainWindow[_W]") -> None:
+    def update_gui(
+        self,
+        main: "MainWindow[_W]",
+        *,
+        workflow_overload: dict[str, Workflow] = {},
+    ) -> None:
         """Update the GUI state based on the session."""
         cur_index = self.current_index
         _tab_sessions: list[TabSession] = []
@@ -215,7 +221,10 @@ class AppSession(BaseModel):
             _new_tab = main.add_tab(tab_session.name)
             for window_session in tab_session.windows:
                 _win_sessions.append(window_session)
-                wf = window_session.prep_workflow()
+                if wf := workflow_overload.get(window_session.id):
+                    pass
+                else:
+                    wf = window_session.prep_workflow()
                 _pending_workflows.append(wf)
                 _target_areas.append(_new_tab)
         models = compute(_pending_workflows)
@@ -236,28 +245,6 @@ class AppSession(BaseModel):
         main.tabs.current_index = self.current_index + cur_index
         _raise_failed(_failed_sessions)
         return None
-
-    def dump_yaml(self, path: str | Path) -> None:
-        """Dump the session to a YAML file."""
-        js = self.model_dump(mode="json")
-        js = {"session": "main", **js}
-        with open(path, "w") as f:
-            yaml.dump(js, f, sort_keys=False)
-        return None
-
-
-def from_yaml(path: str | Path) -> AppSession | TabSession:
-    with open(path) as f:
-        yml = yaml.load(f, Loader=yaml.Loader)
-    if not (isinstance(yml, dict) and "session" in yml):
-        raise ValueError("Invalid session file.")
-    session_type = yml.pop("session")
-    if session_type == "main":
-        return AppSession.model_validate(yml)
-    elif session_type == "tab":
-        return TabSession.model_validate(yml)
-    else:
-        raise ValueError("Invalid session file.")
 
 
 def _raise_failed(failed: list[tuple[WindowDescription, Exception]]) -> None:

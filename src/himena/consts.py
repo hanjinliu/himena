@@ -105,6 +105,7 @@ class MenuId(StrEnum):
     FILE_RECENT = "file/recent"
     FILE_NEW = "file/new"
     FILE_SCREENSHOT = "file/screenshot"
+    FILE_SESSION = "file/session"
     WINDOW = "window"
     WINDOW_RESIZE = "window/resize"
     WINDOW_ALIGN = "window/align"

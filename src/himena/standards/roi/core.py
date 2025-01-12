@@ -4,12 +4,12 @@ from functools import cache
 import math
 from typing import TYPE_CHECKING, Any, Iterator, Union
 import numpy as np
+from numpy.typing import NDArray
 from pydantic import field_serializer
 from pydantic_compat import BaseModel, Field, field_validator
 from himena.types import Rect
 
 if TYPE_CHECKING:
-    from numpy.typing import NDArray
     from typing import Self
 
 
@@ -143,9 +143,11 @@ class RectangleRoi(Roi2D):
         return self.model_copy(update={"x": self.x + dx, "y": self.y + dy})
 
     def area(self) -> float:
+        """Return the area of the rectangle."""
         return self.width * self.height
 
     def bbox(self) -> Rect[float]:
+        """Return the bounding box of the rectangle."""
         return Rect(self.x, self.y, self.width, self.height)
 
 
