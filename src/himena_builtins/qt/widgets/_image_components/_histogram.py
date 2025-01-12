@@ -6,6 +6,7 @@ from psygnal import Signal
 from qtpy import QtCore, QtGui, QtWidgets as QtW
 from ._base import QBaseGraphicsScene, QBaseGraphicsView
 from himena.qt._qlineedit import QDoubleLineEdit
+from himena_builtins.qt.widgets._shared import quick_min_max
 
 if TYPE_CHECKING:
     from numpy import ndarray as NDArray
@@ -24,7 +25,7 @@ class QHistogramView(QBaseGraphicsView):
         self._line_low.valueChanged.connect(self._on_clim_changed)
         self._line_high.valueChanged.connect(self._on_clim_changed)
         self._view_range: tuple[float, float] = (0.0, 1.0)
-        self._minmax = (0.0, 1.0)
+        self._minmax = (0.0, 1.0)  # limits of the movable range
         self._pos_drag_start: QtCore.QPoint | None = None
 
     def _on_clim_changed(self):
@@ -53,7 +54,6 @@ class QHistogramView(QBaseGraphicsView):
         self,
         arr: NDArray[np.number],
         clim: tuple[float, float],
-        minmax: tuple[float, float],
         is_rgb: bool = False,
         color: QtGui.QColor = QtGui.QColor(100, 100, 100),
     ):
@@ -73,16 +73,21 @@ class QHistogramView(QBaseGraphicsView):
             ]  # RGB
             for i, (item, brush) in enumerate(zip(self._hist_items, brushes)):
                 item.with_brush(brush)
-                item.set_hist_for_array(arr[:, :, i], minmax)
+                item.set_hist_for_array(arr[:, :, i])
         else:
             brushes = [QtGui.QBrush(color)]
             self._hist_items[0].with_brush(brushes[0])
-            self._hist_items[0].set_hist_for_array(arr, minmax)
+            self._hist_items[0].set_hist_for_array(arr)
 
-        self.set_minmax(minmax)
+        if arr.dtype.kind in "ui":
+            self.set_minmax((np.iinfo(arr.dtype).min, np.iinfo(arr.dtype).max))
+        elif arr.dtype.kind == "b":
+            self.set_minmax((0, 1))
+        else:
+            self.set_minmax(clim)
         self.set_clim(clim)
         if self._view_range is None:
-            self._view_range = minmax
+            self._view_range = clim
 
     def setValueFormat(self, fmt: str):
         self._line_low.setValueFormat(fmt)
@@ -95,7 +100,7 @@ class QHistogramView(QBaseGraphicsView):
             width = x1 - x0
         return QtCore.QRectF(x0 - width * 0.03, 0, width * 1.06, 1)
 
-    def setViewRange(self, x0: float, x1: float):
+    def set_view_range(self, x0: float, x1: float):
         self._view_range = (x0, x1)
         self.fitInView(self.viewRect(), QtCore.Qt.AspectRatioMode.IgnoreAspectRatio)
 
@@ -105,7 +110,7 @@ class QHistogramView(QBaseGraphicsView):
 
     def showEvent(self, event: QtGui.QShowEvent):
         super().showEvent(event)
-        x0, x1 = self._minmax
+        x0, x1 = self.clim()
         self.fitInView(
             self.viewRect(x1 - x0), QtCore.Qt.AspectRatioMode.IgnoreAspectRatio
         )
@@ -113,10 +118,14 @@ class QHistogramView(QBaseGraphicsView):
         self._line_high.setValue(self._line_high.value())
 
     def mouseDoubleClickEvent(self, event: QtGui.QMouseEvent):
-        x0, x1 = self._minmax
+        rect = self._line_low.boundingRect().united(self._line_high.boundingRect())
+        for hist in self._hist_items:
+            rect = rect.united(hist.boundingRect())
+        x0, x1 = rect.left(), rect.right()
         self.fitInView(
             self.viewRect(x1 - x0), QtCore.Qt.AspectRatioMode.IgnoreAspectRatio
         )
+        self._view_range = (x0, x1)
 
     def wheelEvent(self, event: QtGui.QWheelEvent):
         delta = event.angleDelta().y()
@@ -128,7 +137,7 @@ class QHistogramView(QBaseGraphicsView):
         xcursor = self.mapToScene(event.pos()).x()
         x0 = max((x0 - xcursor) / factor + xcursor, self._minmax[0])
         x1 = min((x1 - xcursor) / factor + xcursor, self._minmax[1])
-        self.setViewRange(x0, x1)
+        self.set_view_range(x0, x1)
 
     def mousePressEvent(self, event: QtGui.QMouseEvent):
         if event.button() == QtCore.Qt.MouseButton.LeftButton:
@@ -140,20 +149,15 @@ class QHistogramView(QBaseGraphicsView):
         if self.scene().grabSource():
             return super().mouseMoveEvent(event)
         if event.buttons() & QtCore.Qt.MouseButton.LeftButton:
+            pos = event.pos()
             if self._pos_drag_prev is not None:
-                delta = self.mapToScene(event.pos()) - self.mapToScene(
-                    self._pos_drag_prev
-                )
+                delta = self.mapToScene(pos) - self.mapToScene(self._pos_drag_prev)
                 delta = delta.x()
                 x0, x1 = self._view_range
-                if x0 - delta < self._minmax[0]:
-                    delta = x0 - self._minmax[0]
-                elif x1 - delta > self._minmax[1]:
-                    delta = x1 - self._minmax[1]
                 x0 -= delta
                 x1 -= delta
-                self.setViewRange(x0, x1)
-            self._pos_drag_prev = event.pos()
+                self.set_view_range(x0, x1)
+            self._pos_drag_prev = pos
         return super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
@@ -171,11 +175,13 @@ class QClimLineItem(QtW.QGraphicsRectItem):
     valueChanged = Signal(float)
     _Y_LOW = -1
     _Y_HIGH = 2
+    _WIDTH_NORMAL = 2
+    _WIDTH_HOVER = 4
 
     def __init__(self, x: float):
         super().__init__()
         self._color = QtGui.QColor(255, 0, 0, 150)
-        pen = QtGui.QPen(self._color, 4)
+        pen = QtGui.QPen(self._color, self._WIDTH_NORMAL)
         pen.setCosmetic(True)
         self._qpen = pen
         self.setZValue(1000)
@@ -215,13 +221,13 @@ class QClimLineItem(QtW.QGraphicsRectItem):
         return super().mouseReleaseEvent(event)
 
     def hoverEnterEvent(self, event):
-        self._qpen.setWidthF(6)
+        self._qpen.setWidthF(self._WIDTH_HOVER)
         self._show_value_label()
         self.update()
         return super().hoverEnterEvent(event)
 
     def hoverLeaveEvent(self, event):
-        self._qpen.setWidthF(4)
+        self._qpen.setWidthF(self._WIDTH_NORMAL)
         self._value_label.hide()
         self.update()
         return super().hoverLeaveEvent(event)
@@ -320,24 +326,20 @@ class QHistogramItem(QtW.QGraphicsPathItem):
         self._hist_brush = brush
         return self
 
-    def set_hist_for_array(
-        self,
-        arr: NDArray[np.number],
-        minmax: tuple[float, float],
-    ):
-        _min, _max = minmax
+    def set_hist_for_array(self, arr: NDArray[np.number]) -> tuple[float, float]:
+        _min, _max = quick_min_max(arr)
         if arr.dtype in ("uint8", "uint8"):
             _nbin = 64
-        elif arr.dtype in ("uint16", "int16"):
-            _nbin = 128
         else:
-            _nbin = min(256, int(np.prod(arr.shape[-2:])) // 2)
+            _nbin = 256
+        _nbin = min(_nbin, int(np.prod(arr.shape[-2:])) // 2)
         # draw histogram
         if arr.dtype.kind == "b":
             edges = np.array([0, 0.5, 1])
             frac_true = np.sum(arr) / arr.size
             hist = np.array([1 - frac_true, frac_true])
         elif _max > _min:
+            arr = arr.clip(_min, _max)
             if arr.dtype.kind in "ui" and _max - _min < _nbin:
                 # bin number is excessive
                 _nbin = int(_max - _min)
@@ -385,7 +387,7 @@ class QClimMenu(QtW.QMenu):
         # update view range
         v0, v1 = self._hist_view._view_range
         if value < v0:
-            self._hist_view.setViewRange(value, v1)
+            self._hist_view.set_view_range(value, v1)
         elif value > v1:
-            self._hist_view.setViewRange(v0, value)
+            self._hist_view.set_view_range(v0, value)
         self.close()

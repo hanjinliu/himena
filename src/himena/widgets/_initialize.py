@@ -208,11 +208,14 @@ def init_application(app: HimenaApplication) -> HimenaApplication:
     @app.injection_store.mark_processor
     def _process_future(future: Future) -> None:
         ui = current_instance(app.name)
-        cb = ui._backend_main_window._process_future_done_callback(
-            app._future_done_callback
-        )
-        future.add_done_callback(cb)
-        app._futures.add(future)
+        if ui._instructions.unwrap_future:
+            app._future_done_callback(future)
+        else:
+            cb = ui._backend_main_window._process_future_done_callback(
+                app._future_done_callback
+            )
+            future.add_done_callback(cb)
+            app._futures.add(future)
         return None
 
     _APP_INITIALIZED.add(app)

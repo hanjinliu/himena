@@ -4,6 +4,7 @@ from concurrent.futures import Future, ThreadPoolExecutor
 from contextlib import contextmanager
 from logging import getLogger
 from pathlib import Path
+import threading
 import uuid
 from typing import (
     Any,
@@ -95,6 +96,7 @@ class MainWindow(Generic[_W]):
         self._recent_session_manager = RecentSessionManager.default(app)
         self._recent_session_manager.update_menu()
         self._executor = ThreadPoolExecutor(max_workers=5)
+        self._global_lock = threading.Lock()
         self.theme = theme
 
     @property
@@ -564,8 +566,6 @@ class MainWindow(Generic[_W]):
                 result = param_widget._callback_with_params(
                     with_params, force_sync=True
                 )
-                if isinstance(result, Future):
-                    result = result.result()
         return result
 
     @overload
@@ -809,17 +809,22 @@ class MainWindow(Generic[_W]):
 
     @contextmanager
     def _execute_in_context(
-        self, is_gui: bool = False, process_model_output: bool = True
+        self,
+        is_gui: bool = False,
+        process_model_output: bool = True,
+        unwrap_future: bool = True,
     ):
-        # TODO: need Lock for this context manager
-        old_inst = self._instructions.model_copy()
-        self._instructions = self._instructions.updated(
-            gui_execution=is_gui, process_model_output=process_model_output
-        )
-        try:
-            yield None
-        finally:
-            self._instructions = old_inst
+        with self._global_lock:
+            old_inst = self._instructions.model_copy()
+            self._instructions = self._instructions.updated(
+                gui_execution=is_gui,
+                process_model_output=process_model_output,
+                unwrap_future=unwrap_future,
+            )
+            try:
+                yield None
+            finally:
+                self._instructions = old_inst
 
     def _iter_widget_class(self, model: WidgetDataModel) -> Iterator[type[_W]]:
         """Pick the most suitable widget class for the given model."""

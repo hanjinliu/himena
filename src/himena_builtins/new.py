@@ -160,7 +160,7 @@ def _make_provider(name: str):
         from urllib.request import urlopen
 
         # read without using pandas
-        with urlopen(f"{_DATASET_SOURCE}/{name}.csv") as resp:
+        with urlopen(f"{_DATASET_SOURCE}/{name}.csv", timeout=12) as resp:
             data = resp.read().decode()
 
         csv_data = list(csv.reader(StringIO(data)))

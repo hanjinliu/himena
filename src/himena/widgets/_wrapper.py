@@ -453,8 +453,11 @@ class SubWindow(WidgetWrapper[_W], Layout):
             )
             if request is None or request == "Cancel":
                 return None
-            elif request == "Save" and not self._save_from_dialog(main):
-                return None
+            elif request == "Save":
+                if cb := self._save_from_dialog(main):
+                    cb()
+                else:
+                    return None
 
         i_tab, i_win = self._find_me(main)
         del main.tabs[i_tab][i_win]
@@ -464,16 +467,21 @@ class SubWindow(WidgetWrapper[_W], Layout):
         main: MainWindow,
         behavior: SaveBehavior | None = None,
         plugin: str | None = None,
-    ) -> bool:
+    ) -> Callable[[], None] | None:
         """Save this window to a new path, return if saved."""
         if behavior is None:
             behavior = self.save_behavior
         model = self.to_model()
         if save_path := behavior.get_save_path(main, model):
-            self._write_model(save_path, plugin=plugin, model=model)
-            main.set_status_tip(f"Saved {self.title!r} to {save_path}", duration=5)
-            return True
-        return False
+
+            def _save():
+                main.set_status_tip(f"Saving {self.title!r} to {save_path}", duration=2)
+                self._write_model(save_path, plugin=plugin, model=model)
+                main.set_status_tip(f"Saved {self.title!r} to {save_path}", duration=2)
+                return None
+
+            return _save
+        return None
 
     def _close_all_children(self, main: MainWindow) -> None:
         """Close all the sub-windows that are children of this window."""

@@ -1,3 +1,4 @@
+from concurrent.futures import Future
 import datetime
 from pathlib import Path
 from typing import Callable
@@ -51,13 +52,10 @@ def _name_of(f: Callable) -> str:
     ],
     keybindings=[StandardKeyBinding.Open],
 )
-def open_file_from_dialog(ui: MainWindow):
+def open_file_from_dialog(ui: MainWindow) -> Future:
     """Open file(s). Multiple files will be opened as separate sub-windows."""
     if result := ui.exec_file_dialog(mode="rm"):
-        return ui.read_files(result)
-        # TODO: eventually, we should return a Future object, but app_model does not
-        # support it yet.
-        # return ui.read_files_async(result)
+        return ui.read_files_async(result)
     raise Cancelled
 
 
@@ -116,7 +114,7 @@ def open_file_using_from_dialog(ui: MainWindow) -> Parametric:
     if (file_path := ui.exec_file_dialog(mode="r")) is None:
         raise Cancelled
 
-    @configure_gui(reader=_get_reader_options(file_path))
+    @configure_gui(reader=_get_reader_options(file_path), run_async=True)
     def choose_a_plugin(reader: _providers.ReaderTuple) -> WidgetDataModel:
         _LOGGER.info("Reading file %s using %r", file_path, reader)
         return _open_file_using_reader(file_path, reader, ui)
@@ -129,10 +127,10 @@ def open_file_using_from_dialog(ui: MainWindow) -> Parametric:
     title="Open File Group ...",
     menus=[{"id": MenuId.FILE, "group": READ_GROUP}],
 )
-def open_file_group_from_dialog(ui: MainWindow):
+def open_file_group_from_dialog(ui: MainWindow) -> Future:
     """Open file group as a single sub-window."""
     if result := ui.exec_file_dialog(mode="rm"):
-        return ui.read_file(result)
+        return ui.read_files_async(result)
     raise Cancelled
 
 
@@ -148,10 +146,10 @@ def open_file_group_from_dialog(ui: MainWindow):
         KeyBindingRule(primary=KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.KeyO))
     ],
 )
-def open_folder_from_dialog(ui: MainWindow) -> Path:
+def open_folder_from_dialog(ui: MainWindow) -> Future:
     """Open a folder as a sub-window."""
     if path := ui.exec_file_dialog(mode="d"):
-        return ui.read_file(path)
+        return ui.read_files_async([path])
     raise Cancelled
 
 
@@ -190,10 +188,10 @@ def watch_file_using_from_dialog(ui: MainWindow) -> Parametric:
     keybindings=[StandardKeyBinding.Save],
     enablement=_ctx.is_active_window_supports_to_model,
 )
-def save_from_dialog(ui: MainWindow, sub_win: SubWindow):
+def save_from_dialog(ui: MainWindow, sub_win: SubWindow) -> Future:
     """Save (overwrite) the current sub-window as a file."""
-    if path := sub_win._save_from_dialog(ui):
-        return path
+    if cb := sub_win._save_from_dialog(ui):
+        return ui._executor.submit(cb)
     raise Cancelled
 
 
@@ -205,10 +203,10 @@ def save_from_dialog(ui: MainWindow, sub_win: SubWindow):
     keybindings=[StandardKeyBinding.SaveAs],
     enablement=_ctx.is_active_window_supports_to_model,
 )
-def save_as_from_dialog(ui: MainWindow, sub_win: SubWindow):
+def save_as_from_dialog(ui: MainWindow, sub_win: SubWindow) -> Future:
     """Save the current sub-window as a new file."""
-    if path := sub_win._save_from_dialog(ui, behavior=SaveToNewPath()):
-        return path
+    if cb := sub_win._save_from_dialog(ui, behavior=SaveToNewPath()):
+        return ui._executor.submit(cb)
     raise Cancelled
 
 
@@ -219,7 +217,7 @@ def save_as_from_dialog(ui: MainWindow, sub_win: SubWindow):
     need_function_callback=True,
     enablement=_ctx.is_active_window_supports_to_model,
 )
-def save_as_using_from_dialog(ui: MainWindow, sub_win: SubWindow):
+def save_as_using_from_dialog(ui: MainWindow, sub_win: SubWindow) -> Future:
     """Save the current sub-window using selected plugin."""
     model = sub_win.to_model()
     ins = _providers.WriterProviderStore().instance()
@@ -238,9 +236,11 @@ def save_as_using_from_dialog(ui: MainWindow, sub_win: SubWindow):
     )
     if writer is None:
         raise Cancelled  # no choice selected
-    if not sub_win._save_from_dialog(
+    if cb := sub_win._save_from_dialog(
         ui, behavior=SaveToNewPath(), plugin=writer.plugin
     ):
+        return ui._executor.submit(cb)
+    else:
         raise Cancelled
 
 
@@ -365,7 +365,9 @@ def save_session_from_dialog(ui: MainWindow) -> None:
         if res == _CS:
             for win in need_save:
                 ui.current_window = win
-                if not win._save_from_dialog(ui, behavior=SaveToNewPath()):
+                if cb := win._save_from_dialog(ui, behavior=SaveToNewPath()):
+                    cb()
+                else:
                     raise Cancelled
         elif res == _CJ:
             pass

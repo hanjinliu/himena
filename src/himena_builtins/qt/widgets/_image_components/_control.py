@@ -224,8 +224,8 @@ class QImageViewControl(QtW.QWidget):
         min_, max_ = img_slice.min(), img_slice.max()
         ch = view.current_channel(sl)
         ch.clim = (min_, max_)
-        ch.minmax = min(ch.minmax[0], min_), max(ch.minmax[1], max_)
         self._histogram.set_clim((min_, max_))
+        self._histogram.set_view_range(min_, max_)
         view._set_image_slice(img_slice, ch)
 
 

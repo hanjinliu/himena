@@ -23,6 +23,7 @@ from himena.consts import ParametricWidgetProtocolNames as PWPN
 from himena.layout import Layout, VBoxLayout, HBoxLayout, VStackLayout
 from himena.plugins import _checker
 from himena.types import (
+    FutureInfo,
     Margins,
     NewWidgetBehavior,
     Size,
@@ -510,8 +511,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
             ui.set_status_tip(f"Opening: {file_paths[0].as_posix()}", duration=5)
         else:
             ui.set_status_tip(f"Opening {len(file_paths)} files", duration=5)
-        # future._ino_type_hint = list[WidgetDataModel]  # TODO
-
+        FutureInfo(list[WidgetDataModel]).set(future)  # set info for injection store
         return future
 
     def save_session(self, file_path: str | Path) -> None:

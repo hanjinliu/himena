@@ -44,22 +44,20 @@ class HimenaApplication(Application):
     def _future_done_callback(self, f: Future) -> None:
         self._futures.discard(f)
         if f.cancelled():
-            pass
-        elif e := f.exception():
-            raise e
+            return
+        result = f.result()
+        if info := FutureInfo.get(f):
+            type_hint = info.type_hint
         else:
-            result = f.result()
-            if info := FutureInfo.get(f):
-                type_hint = info.type_hint
-            else:
-                type_hint = None
-            if (
-                isinstance(result, WidgetDataModel)
-                and info is not None
-                and len(result.workflow) == 0
-            ):
-                result.workflow = info.track.to_workflow(info.kwargs)
-            self.injection_store.process(result, type_hint=type_hint)
+            type_hint = None
+        if (
+            isinstance(result, WidgetDataModel)
+            and info is not None
+            and info.track is not None
+            and len(result.workflow) == 0
+        ):
+            result.workflow = info.track.to_workflow(info.kwargs)
+        self.injection_store.process(result, type_hint=type_hint)
 
 
 class HimenaInjectionStore(in_n_out.Store):

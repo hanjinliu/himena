@@ -581,8 +581,8 @@ class FutureInfo(_HasDynamicAttribute):
     _ATTR_NAME: ClassVar[str] = "__himena_future_info__"
 
     type_hint: Any
-    track: ModelTrack
-    kwargs: dict[str, Any]
+    track: ModelTrack | None = None
+    kwargs: dict[str, Any] = field(default_factory=dict)
 
 
 Parametric = NewType("Parametric", Any)
@@ -642,6 +642,7 @@ class BackendInstructions(BaseModel):
     )
     gui_execution: bool = Field(default=True)
     process_model_output: bool = Field(default=True)
+    unwrap_future: bool = Field(default=False)
 
     def updated(self, **kwargs) -> "BackendInstructions":
         return self.model_copy(update=kwargs)

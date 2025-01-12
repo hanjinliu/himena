@@ -7,7 +7,7 @@ from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
 import numpy as np
 from cmap import Colormap
-from pydantic_compat import BaseModel, Field, field_validator
+from pydantic_compat import BaseModel, Field
 from superqt import ensure_main_thread
 
 from himena.qt._magicgui._toggle_switch import QLabeledToggleSwitch
@@ -30,7 +30,7 @@ from himena_builtins.qt.widgets._image_components import (
     QRoiCollection,
 )
 from himena_builtins.qt.widgets._splitter import QSplitterHandle
-
+from himena_builtins.qt.widgets._shared import quick_min_max
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -214,13 +214,13 @@ class QImageView(QtW.QSplitter):
                 dtype=arr.dtype,
             )
 
-        self._init_channels(meta0, nchannels)
+        self._init_channels(meta0, nchannels, arr.dtype)
 
         if is_same_array and is_sl_same and self._current_image_slices is not None:
             img_slices = self._current_image_slices
         else:
             img_slices = self._get_image_slices(sl_0, nchannels)
-        self._update_channels(meta0, img_slices, nchannels)
+        self._update_channels(meta0, img_slices, nchannels, arr.dtype)
         if not meta0.skip_image_rerendering:
             self._set_image_slices(img_slices)
         if meta0.current_roi:
@@ -248,9 +248,9 @@ class QImageView(QtW.QSplitter):
 
     def _clim_for_ith_channel(self, img_slices: list[ImageTuple], ith: int):
         ar0, _ = img_slices[ith]
-        return ar0.min(), ar0.max()
+        return quick_min_max(ar0)
 
-    def _init_channels(self, meta: model_meta.ImageMeta, nchannels: int):
+    def _init_channels(self, meta: model_meta.ImageMeta, nchannels: int, dtype):
         if len(meta.channels) != nchannels:
             ch0 = meta.channels[0]
             channels = [
@@ -263,7 +263,7 @@ class QImageView(QtW.QSplitter):
                 for ch in meta.channels
             ]
         self._channels = [
-            ChannelInfo.from_channel(i, c) for i, c in enumerate(channels)
+            ChannelInfo.from_channel(i, c, dtype) for i, c in enumerate(channels)
         ]
 
     def _update_channels(
@@ -271,6 +271,7 @@ class QImageView(QtW.QSplitter):
         meta: model_meta.ImageMeta,
         img_slices: list[ImageTuple],
         nchannels: int,
+        dtype: np.dtype,
     ):
         # before calling ChannelInfo.from_channel, contrast_limits must be set
         if len(meta.channels) != nchannels:
@@ -285,7 +286,7 @@ class QImageView(QtW.QSplitter):
                 if ch.contrast_limits is None:
                     ch.contrast_limits = self._clim_for_ith_channel(img_slices, i)
         self._channels = [
-            ChannelInfo.from_channel(i, c) for i, c in enumerate(channels)
+            ChannelInfo.from_channel(i, c, dtype) for i, c in enumerate(channels)
         ]
         if len(self._channels) == 1 and channels[0].colormap is None:
             # ChannelInfo.from_channel returns a single green colormap but it should
@@ -490,14 +491,9 @@ class QImageView(QtW.QSplitter):
                 ),
             )
             self._img_view.clear_rois()
-            channel.minmax = (
-                min(img.min(), channel.minmax[0]),
-                max(img.max(), channel.minmax[1]),
-            )
             self._control._histogram.set_hist_for_array(
                 img,
-                channel.clim,
-                channel.minmax,
+                clim=channel.clim,
                 is_rgb=self._is_rgb,
                 color=color_for_colormap(channel.colormap),
             )
@@ -545,8 +541,7 @@ class QImageView(QtW.QSplitter):
             idx = ch_cur.channel_index or 0
             self._control._histogram.set_hist_for_array(
                 imgs[idx].arr,
-                ch_cur.clim,
-                ch_cur.minmax,
+                clim=ch_cur.clim,
                 is_rgb=self._is_rgb,
                 color=color_for_colormap(ch_cur.colormap),
             )
@@ -650,18 +645,8 @@ class QImageView(QtW.QSplitter):
 class ChannelInfo(BaseModel):
     name: str = Field(...)
     clim: tuple[float, float] = Field((0.0, 1.0))
-    minmax: tuple[float, float] = Field((0.0, 1.0))
     colormap: Colormap = Field(default_factory=lambda: Colormap("gray"))
     channel_index: int | None = Field(None)
-
-    @field_validator("minmax")
-    def _validate_minmax(cls, v, values):
-        vmin, vmax = v
-        if vmin > vmax:
-            raise ValueError("minmax[0] must be less than or equal to minmax[1]")
-        elif vmin == vmax:
-            vmax = vmin + 1
-        return vmin, vmax
 
     def transform_image(
         self,
@@ -698,6 +683,7 @@ class ChannelInfo(BaseModel):
             true_color = (np.array(self.colormap(1.0).rgba) * 255).astype(np.uint8)
             arr_normed = np.where(arr[..., np.newaxis], true_color, false_color)
         elif cmax > cmin:
+            arr = arr.clip(cmin, cmax)
             arr_normed = (self.colormap((arr - cmin) / (cmax - cmin)) * 255).astype(
                 np.uint8
             )
@@ -753,6 +739,7 @@ class ChannelInfo(BaseModel):
         cls,
         idx: int,
         channel: model_meta.ImageChannel,
+        dtype: np.dtype,
     ) -> ChannelInfo:
         input_clim = channel.contrast_limits
         if input_clim is None:
@@ -766,58 +753,7 @@ class ChannelInfo(BaseModel):
             channel_index=idx,
             colormap=colormap,
             clim=channel.contrast_limits,
-            minmax=channel.contrast_limits,
         )
-
-
-def guess_clim(
-    arr: ArrayWrapper,
-    channel_axis: int | None = None,
-    channel_index: int | None = None,
-    is_rgb: bool = False,
-) -> tuple[float, float]:
-    if is_rgb:
-        return (0, 255)
-    if arr.dtype.kind == "b":
-        return (0, 1)
-    if isinstance(np_ndarray := arr.arr, np.ndarray):
-        if channel_axis is not None and channel_index is not None:
-            np_ndarray = np_ndarray[(slice(None),) * channel_axis + (channel_index,)]
-        if np_ndarray.size < 1e7:
-            # not very large, just use min and max
-            return np_ndarray.min(), np_ndarray.max()
-        stride = np_ndarray.size // 1e7
-        np_ndarray_raveled = np_ndarray.ravel()
-        return np_ndarray_raveled[::stride].min(), np_ndarray_raveled[::stride].max()
-
-    ndim = arr.ndim
-    sl = [slice(None)] * ndim
-    if channel_index is not None and channel_axis is not None:
-        sl[channel_axis] = channel_index
-        if channel_axis < ndim - 3:  # such as (C, T, Z, Y, X), (C, Z, Y, X)
-            dim3 = -3
-        else:  # such as (T, Z, C, Y, X)
-            dim3 = -4
-    else:
-        dim3 = -2
-    slices: list[tuple[int | slice, ...]] = []
-    if -dim3 > ndim:
-        slices.append(tuple(sl))
-    else:
-        dim3_size = arr.shape[dim3]
-        if dim3_size < 4:
-            dim3_indices = [0, -1]
-        else:
-            dim3_indices = [0, dim3_size // 2, -1]
-        for i in dim3_indices:
-            sl[dim3] = i
-            slices.append(tuple(sl))
-    img_slices = [arr.get_slice(sl) for sl in slices]
-    if arr.dtype.kind == "c":
-        img_slices = [np.abs(img_slice) for img_slice in img_slices]
-    clim_min = min(img_slice.min() for img_slice in img_slices)
-    clim_max = max(img_slice.max() for img_slice in img_slices)
-    return clim_min, clim_max
 
 
 class ImageTuple(NamedTuple):

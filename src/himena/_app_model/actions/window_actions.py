@@ -1,4 +1,6 @@
 import logging
+from pathlib import Path
+import sys
 import warnings
 from textwrap import dedent
 from app_model.types import (
@@ -318,6 +320,35 @@ def full_screen_in_new_tab(ui: MainWindow) -> None:
         ui.move_window(win, index_new)
         win.state = WindowState.FULL
         ui.tabs.current_index = index_new
+
+
+@ACTIONS.append_from_fn(
+    id="reveal-in-explorer",
+    title="Reveal in explorer",
+    enablement=_ctx.num_sub_windows > 0,
+    menus=[{"id": MenuId.WINDOW, "group": EDIT_GROUP}],
+)
+def reveal_in_explorer(win: SubWindow):
+    from subprocess import Popen
+
+    if isinstance(win.save_behavior, SaveToPath) and win.save_behavior.path.exists():
+        path = win.save_behavior.path
+    elif isinstance(source := win.to_model().source, Path) and source.exists():
+        path = source
+    else:
+        raise ValueError("Could not determine the source file of the window.")
+
+    if sys.platform == "darwin":
+        if path.is_dir():
+            Popen(["open", "-R", str(path)])
+        else:
+            Popen(["open", "-R", str(path.parent)])
+    elif sys.platform == "win32":
+        Popen(["explorer", "/select,", str(path)])
+    elif sys.platform == "linux":
+        Popen(["xdg-open", str(path.parent)])
+    else:
+        raise NotImplementedError(f"Platform {sys.platform} is not supported")
 
 
 _CtrlAlt = KeyMod.CtrlCmd | KeyMod.Alt

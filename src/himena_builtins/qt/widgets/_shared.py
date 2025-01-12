@@ -1,5 +1,7 @@
 from __future__ import annotations
 from qtpy import QtWidgets as QtW
+import numpy as np
+from numpy.typing import NDArray
 
 
 def labeled(
@@ -19,3 +21,17 @@ def labeled(
     if label_width:
         label.setFixedWidth(label_width)
     return new
+
+
+def quick_min_max(
+    arr: NDArray[np.number],
+    down_sample_to: int = 1048576,
+) -> tuple[float, float]:
+    if arr.dtype.kind == "b":
+        return (0, 0, 1.0)
+    down_sample_factor = arr.size / down_sample_to
+    if down_sample_factor <= 1.0:
+        return arr.min(), arr.max()
+    stride = int(np.ceil(down_sample_factor))
+    arr_ref = arr[::stride]
+    return arr_ref.min(), arr_ref.max()
