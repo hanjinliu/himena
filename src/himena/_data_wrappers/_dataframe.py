@@ -276,9 +276,8 @@ class DictWrapper(DataFrameWrapper):
             sep = "\t"
         else:
             raise ValueError(f"DictWrapper does not support writing as a {path.suffix}")
-        with open(path, "w") as f:
-            f.write(sep.join(self._df.keys()))
-            f.write(self.to_csv_string(sep))
+        path.write_text(sep.join(self._df.keys()) + "\n" + self.to_csv_string(sep))
+        return None
 
 
 class PandasWrapper(DataFrameWrapper):

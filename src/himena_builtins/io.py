@@ -64,26 +64,6 @@ def read_as_unknown_provider(file_path: Path):
 
 
 @register_reader_provider(priority=-50)
-def polars_reader_provider(file_path: Path):
-    """Read dataframe using polars."""
-    if isinstance(file_path, list):
-        return None
-    elif file_path.suffix in (".csv", ".txt"):
-        _reader = "polars", "read_csv", {}
-    elif file_path.suffix == ".tsv":
-        _reader = "polars", "read_csv", {"sep": "\t"}
-    elif file_path.suffix == ".feather":
-        _reader = "polars", "read_ipc", {}
-    elif file_path.suffix == ".json":
-        _reader = "polars", "read_json", {}
-    elif file_path.suffix in (".parquet", ".pq"):
-        _reader = "polars", "read_parquet", {}
-    else:
-        return None
-    return _io.DataFrameReader(*_reader), StandardType.DATAFRAME
-
-
-@register_reader_provider(priority=-50)
 def pandas_reader_provider(file_path: Path):
     """Read dataframe using pandas."""
     if file_path.suffix in (".html", ".htm"):
@@ -104,16 +84,36 @@ def pandas_reader_provider(file_path: Path):
 
 
 @register_reader_provider(priority=-50)
-def polars_plot_reader_provider(file_path: Path):
-    out = polars_reader_provider(file_path)
+def polars_reader_provider(file_path: Path):
+    """Read dataframe using polars."""
+    if isinstance(file_path, list):
+        return None
+    elif file_path.suffix in (".csv", ".txt"):
+        _reader = "polars", "read_csv", {}
+    elif file_path.suffix == ".tsv":
+        _reader = "polars", "read_csv", {"sep": "\t"}
+    elif file_path.suffix == ".feather":
+        _reader = "polars", "read_ipc", {}
+    elif file_path.suffix == ".json":
+        _reader = "polars", "read_json", {}
+    elif file_path.suffix in (".parquet", ".pq"):
+        _reader = "polars", "read_parquet", {}
+    else:
+        return None
+    return _io.DataFrameReader(*_reader), StandardType.DATAFRAME
+
+
+@register_reader_provider(priority=-50)
+def pandas_plot_reader_provider(file_path: Path):
+    out = pandas_reader_provider(file_path)
     if out is None:
         return None
     return out[0].as_plot_type(), StandardType.DATAFRAME_PLOT
 
 
 @register_reader_provider(priority=-50)
-def pandas_plot_reader_provider(file_path: Path):
-    out = pandas_reader_provider(file_path)
+def polars_plot_reader_provider(file_path: Path):
+    out = polars_reader_provider(file_path)
     if out is None:
         return None
     return out[0].as_plot_type(), StandardType.DATAFRAME_PLOT

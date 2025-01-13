@@ -176,11 +176,13 @@ class Layout1D(LayoutContainer, MutableSequence[Layout]):
 
     def set_margins(
         self,
+        *,
         left: int | None = None,
         top: int | None = None,
         right: int | None = None,
         bottom: int | None = None,
     ):
+        """Update margins around the layout."""
         margins_old = self.margins
         left = left if left is not None else margins_old.left
         top = top if top is not None else margins_old.top
