@@ -20,6 +20,7 @@ from himena_builtins.tools.array import _cast_meta, _make_index_getter
 
 if TYPE_CHECKING:
     import numpy as np
+    from cmap import Colormap
 
 configure_submenu("tools/image/roi", "ROI")
 configure_submenu("/model_menu/roi", "ROI")
@@ -347,9 +348,10 @@ def set_colormaps(win: SubWindow) -> Parametric:
     }
 
     @configure_gui(gui_options=options, show_parameter_labels=len(channel_names) > 1)
-    def set_cmaps(**kwargs):
+    def set_cmaps(**kwargs: "Colormap"):
         meta.channels = [
-            ch.with_colormap(cmap) for ch, cmap in zip(meta.channels, kwargs.values())
+            ch.with_colormap(cmap.name)
+            for ch, cmap in zip(meta.channels, kwargs.values())
         ]
         win.update_model(model.model_copy(update={"metadata": meta}))
         return None

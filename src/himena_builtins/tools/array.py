@@ -35,7 +35,9 @@ def duplicate_this_slice(model: WidgetDataModel) -> Parametric:
     @configure_gui(run_immediately_with=get_indices)
     def run_duplicate_this_slice(indices) -> WidgetDataModel:
         arr = wrap_array(model.value)
-        arr_sliced = arr.get_slice(tuple(indices))
+        arr_sliced = arr.get_slice(
+            tuple(slice(None) if i is None else i for i in indices)
+        )
         if isinstance(meta := model.metadata, ArrayMeta):
             update = {"current_indices": ()}
             if isinstance(meta, ImageMeta):

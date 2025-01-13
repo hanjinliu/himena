@@ -13,6 +13,7 @@ from himena.consts import StandardType
 from himena.types import Size, WidgetDataModel
 from himena.standards.model_meta import DataFrameMeta, TableMeta, DataFramePlotMeta
 from himena.standards import plotting as hplt
+from himena.standards import roi as _roi
 from himena_builtins.qt.widgets._table_components import (
     QTableBase,
     QSelectionRangeEdit,
@@ -321,6 +322,7 @@ class QDataFramePlotView(QtW.QSplitter):
         layout_right.addWidget(self._plot_widget._toolbar)
         layout_right.addWidget(self._plot_widget)
         self._model_type = StandardType.DATAFRAME_PLOT
+        self._color_cycle: list[str] | None = None
 
         self.addWidget(self._table_widget)
         self.addWidget(right)
@@ -382,11 +384,25 @@ class QDataFramePlotView(QtW.QSplitter):
         model_plot = WidgetDataModel(value=fig, type=StandardType.PLOT)
         self._plot_widget.update_model(model_plot)
         self._model_type = model.type
+        self._color_cycle = [c.hex for c in colors]
         return None
 
     @validate_protocol
     def to_model(self) -> WidgetDataModel:
-        return self._table_widget.to_model()
+        meta = self._table_widget._prep_table_meta()
+        return WidgetDataModel(
+            value=self._table_widget.model().df.unwrap(),
+            type=self.model_type(),
+            extension_default=".csv",
+            metadata=DataFramePlotMeta(
+                current_position=meta.current_position,
+                selections=meta.selections,
+                plot_type="line",
+                plot_color_cycle=self._color_cycle,
+                plot_background_color="#FFFFFF",
+                rois=_roi.RoiListModel(),
+            ),
+        )
 
     @validate_protocol
     def model_type(self) -> str:

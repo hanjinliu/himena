@@ -1,7 +1,10 @@
 from himena import MainWindow, anchor
+from himena.consts import StandardType
 from himena.qt import MainWindowQt
 from himena.qt._qmain_window import QMainWindow
+from himena.standards.model_meta import DataFrameMeta
 from himena_builtins.qt import widgets as _qtw
+
 from qtpy.QtCore import Qt
 from pathlib import Path
 from pytestqt.qtbot import QtBot
@@ -62,17 +65,29 @@ def test_session_stand_alone(tmpdir, himena_ui: MainWindow, sample_dir):
     himena_ui.exec_action("builtins:image-crop:crop-image", with_params={"y": (1, 3), "x": (1, 3)})
     shape_cropped = tab0[1].to_model().value.shape
     tab0[1].update(rect=(70, 20, 160, 130))
+
+    tab1 = himena_ui.add_tab()
+    tab1.read_file(sample_dir / "text.txt")
+    win = tab1.read_file(
+        sample_dir / "table.csv",
+        plugin="himena_builtins.io.pandas_reader_provider",
+    )
+    assert isinstance(win.widget, _qtw.QDataFrameView)
+    win.widget.selection_model.set_ranges([(slice(1, 3), slice(1, 2))])
     session_path = Path(tmpdir) / "test.session.zip"
     himena_ui.save_session_stand_alone(session_path)
     himena_ui.clear()
     himena_ui.load_session(session_path)
     tab0 = himena_ui.tabs[0]
+    tab1 = himena_ui.tabs[1]
     assert len(tab0) == 2
     assert tab0[0].title == "Im"
     assert tab0[0].rect == WindowRect(30, 40, 160, 130)
     assert tab0[1].rect == WindowRect(70, 20, 160, 130)
     assert tab0[1].to_model().value.shape == shape_cropped
-
+    assert tab1[1].model_type() == StandardType.DATAFRAME
+    assert isinstance(meta := tab1[1].to_model().metadata, DataFrameMeta)
+    assert meta.selections == [((1, 3), (1, 2))]
 
 def test_command_palette_events(himena_ui: MainWindowQt, qtbot: QtBot):
     himena_ui.show()

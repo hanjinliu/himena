@@ -1,6 +1,7 @@
 from pathlib import Path
-from himena.widgets import SubWindow
 from himena import io_utils
+from himena.standards.model_meta import BaseMetadata, write_metadata
+from himena.widgets import SubWindow
 import re
 
 
@@ -12,6 +13,7 @@ def write_model_by_title(
 ) -> Path:
     """Write the widget data to a file, return the saved file."""
     model = self.to_model()
+    dirname = Path(dirname)
     title = model.title or "Untitled"
     if Path(title).suffix in model.extensions:
         filename_stem = title
@@ -34,6 +36,11 @@ def write_model_by_title(
     # NOTE: default save path should not be updated, because the file is supposed to
     # be saved
     io_utils.write(model, save_path, plugin=plugin)
+
+    if isinstance(metadata := model.metadata, BaseMetadata):
+        meta_dir = dirname / f"{filename}.himena-meta"
+        meta_dir.mkdir(exist_ok=True)
+        write_metadata(metadata, meta_dir)
     return save_path
 
 

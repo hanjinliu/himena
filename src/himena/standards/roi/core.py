@@ -8,6 +8,7 @@ from numpy.typing import NDArray
 from pydantic import field_serializer
 from pydantic_compat import BaseModel, Field, field_validator
 from himena.types import Rect
+from himena._utils import iter_subclasses
 
 if TYPE_CHECKING:
     from typing import Self
@@ -33,7 +34,7 @@ class RoiModel(BaseModel):
 
 @cache
 def _pick_roi_model(typ: str) -> type[RoiModel]:
-    for sub in _iter_subclasses(RoiModel):
+    for sub in iter_subclasses(RoiModel):
         if _strip_roi_suffix(sub.__name__.lower()) == typ:
             return sub
     raise ValueError(f"Unknown ROI type: {typ!r}")
@@ -43,12 +44,6 @@ def _strip_roi_suffix(typ: str) -> str:
     if typ.endswith("roi"):
         typ = typ[:-3]
     return typ
-
-
-def _iter_subclasses(cls: type) -> Iterator[type]:
-    for sub in cls.__subclasses__():
-        yield sub
-        yield from _iter_subclasses(sub)
 
 
 def default_roi_label(nth: int) -> str:

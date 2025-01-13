@@ -330,13 +330,12 @@ class QImageView(QtW.QSplitter):
             interp = "nearest"
         channels = [
             model_meta.ImageChannel(
-                name=ch.name, contrast_limits=ch.clim, colormap=ch.colormap
+                name=ch.name, contrast_limits=ch.clim, colormap=ch.colormap.name
             )
             for ch in self._channels
         ]
-        _all = slice(None)
         current_indices = self._dims_slider.value()
-        current_slices = current_indices + (_all, _all)
+        current_slices = current_indices + (None, None)
         if item := self._img_view._current_roi_item:
             current_roi = item.toRoi(current_indices)
         else:

@@ -245,8 +245,8 @@ class QArrayView(QtW.QWidget):
     __himena_widget_id__ = "builtins:QArrayView"
     __himena_display_name__ = "Bulit-in Array Viewer"
 
-    def __init__(self, parent=None):
-        super().__init__(parent)
+    def __init__(self):
+        super().__init__()
         self._table = QArraySliceView()
         layout = QtW.QVBoxLayout(self)
 
@@ -341,17 +341,16 @@ class QArrayView(QtW.QWidget):
 
     @validate_protocol
     def to_model(self) -> WidgetDataModel[list[list[Any]]]:
-        selections = []
-        for (r0, r1), (c0, c1) in self._table._get_selections():
-            selections.append((slice(r0, r1), slice(c0, c1)))
-        self._spinbox_group
+        current_indices = tuple(
+            None if isinstance(sl, slice) else sl for sl in self._get_slice()
+        )
         return WidgetDataModel(
             value=self._arr.arr,
             type=self.model_type(),
             extension_default=".npy",
             metadata=ArrayMeta(
-                current_indices=self._get_slice(),
-                selections=selections,
+                current_indices=current_indices,
+                selections=self._table._get_selections(),
             ),
         )
 

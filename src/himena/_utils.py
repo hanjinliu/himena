@@ -39,6 +39,7 @@ from himena.workflow import Workflow
 
 if TYPE_CHECKING:
     _F = TypeVar("_F", bound=Callable)
+    _C = TypeVar("_C", bound=type)
 
     @overload
     def lru_cache(maxsize: int = 128, typed: bool = False) -> Callable[[_F], _F]: ...
@@ -287,6 +288,13 @@ def import_object(full_name: str) -> Any:
     mod = importlib.import_module(mod_name)
     obj = getattr(mod, func_name)
     return obj
+
+
+def iter_subclasses(cls: _C) -> Iterator[_C]:
+    """Recursively iterate over all subclasses of a class."""
+    for sub in cls.__subclasses__():
+        yield sub
+        yield from iter_subclasses(sub)
 
 
 def unwrap_lazy_model(model: WidgetDataModel) -> WidgetDataModel:

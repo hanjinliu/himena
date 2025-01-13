@@ -49,7 +49,9 @@ def update_from_directory(ui: MainWindow, path: str | Path) -> None:
             continue
         ith = int(tab_dir.stem.split("_")[0])
         for file in tab_dir.iterdir():
-            ith_win = int(file.stem.split("_")[0])
+            if file.suffix == ".himena-meta":
+                continue
+            ith_win = int(file.stem.rsplit("_")[0])
             uuid = session.tabs[ith].windows[ith_win].id
             wf_overrides[uuid] = LocalReaderMethod(path=file).construct_workflow()
     session.update_gui(ui, workflow_override=wf_overrides)
