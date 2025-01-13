@@ -230,7 +230,7 @@ def table_to_array(model: WidgetDataModel["np.ndarray"]) -> WidgetDataModel:
 
 @register_conversion_rule(
     type_from=StandardType.DATAFRAME,
-    type_to=StandardType.IMAGE_ROIS,
+    type_to=StandardType.ROIS,
     command_id="builtins:dataframe-to-image_rois",
 )
 def dataframe_to_image_rois(model: WidgetDataModel) -> Parametric:
@@ -291,7 +291,7 @@ def dataframe_to_image_rois(model: WidgetDataModel) -> Parametric:
         return WidgetDataModel(
             value=value,
             title=model.title,
-            type=StandardType.IMAGE_ROIS,
+            type=StandardType.ROIS,
         )
 
     return convert_dataframe_to_image_rois

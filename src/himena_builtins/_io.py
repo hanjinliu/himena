@@ -188,7 +188,7 @@ def default_roi_reader(file_path: Path) -> WidgetDataModel:
         js = json.load(f)
     return WidgetDataModel(
         value=RoiListModel.construct(js),
-        type=StandardType.IMAGE_ROIS,
+        type=StandardType.ROIS,
     )
 
 
@@ -244,10 +244,15 @@ def fallback_reader(file_path: Path | list[Path]) -> WidgetDataModel:
 
 
 class DataFrameReader:
+    _type = StandardType.DATAFRAME
+
     def __init__(self, module: str, method: str, kwargs: dict[str, Any]):
         self._module = module
         self._method = method
         self._kwargs = kwargs
+
+    def as_plot_type(self) -> DataFrameReader:
+        return DataFramePlotReader(self._module, self._method, self._kwargs)
 
     def __repr__(self):
         return f"{self.__class__.__name__}<{self._module}.{self._method}>"
@@ -256,7 +261,11 @@ class DataFrameReader:
         mod = importlib.import_module(self._module)
         method = getattr(mod, self._method)
         df = method(file_path, **self._kwargs)
-        return WidgetDataModel(value=df, type=StandardType.DATAFRAME)
+        return WidgetDataModel(value=df, type=self._type)
+
+
+class DataFramePlotReader(DataFrameReader):
+    _type = StandardType.DATAFRAME_PLOT
 
 
 def default_file_list_reader(file_path: Path | list[Path]) -> WidgetDataModel:

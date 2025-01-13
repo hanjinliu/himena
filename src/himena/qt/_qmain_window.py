@@ -158,6 +158,14 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
                 for sub in area.subWindowList():
                     sub._title_bar._set_icon_color(icon_color)
 
+    def _main_window_rect(self) -> WindowRect:
+        geo = self.geometry()
+        return WindowRect(geo.x(), geo.y(), geo.width(), geo.height())
+
+    def _set_main_window_rect(self, rect: WindowRect) -> None:
+        self.setGeometry(rect.left, rect.top, rect.width, rect.height)
+        return None
+
     @ensure_main_thread
     def _on_error(self, exc: Exception) -> None:
         from himena.qt._qtraceback import QtErrorMessageBox

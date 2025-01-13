@@ -45,6 +45,12 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     def _update_widget_theme(self, theme: Theme):
         """Update the theme of the main window."""
 
+    def _main_window_rect(self) -> WindowRect:
+        """Get the rect of the main window."""
+
+    def _set_main_window_rect(self, rect: WindowRect) -> None:
+        """Set the rect of the main window."""
+
     def _current_tab_index(self) -> int | None:
         """Get the current tab index.
 

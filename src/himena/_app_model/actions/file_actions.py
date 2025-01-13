@@ -568,6 +568,12 @@ SUBMENUS.append_from(
 )
 SUBMENUS.append_from(
     id=MenuId.FILE,
+    submenu=MenuId.FILE_SESSION,
+    title="Session",
+    group=READ_GROUP,
+)
+SUBMENUS.append_from(
+    id=MenuId.FILE,
     submenu=MenuId.FILE_SCREENSHOT,
     title="Screenshot",
     group=SCR_SHOT_GROUP,

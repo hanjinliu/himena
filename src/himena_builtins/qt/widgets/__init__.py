@@ -41,7 +41,7 @@ def register_default_widget_types() -> None:
     register_widget_class(StandardType.DATAFRAME_PLOT, QDataFramePlotView, priority=50)
 
     # others
-    register_widget_class(StandardType.IMAGE_ROIS, QImageRoiView, priority=50)
+    register_widget_class(StandardType.ROIS, QImageRoiView, priority=50)
     register_widget_class(StandardType.EXCEL, QExcelEdit, priority=50)
     register_widget_class(StandardType.MODELS, QModelStack, priority=50)
     register_widget_class(StandardType.READER_NOT_FOUND, QReaderNotFound, priority=0)

@@ -3,12 +3,14 @@ import importlib
 from pathlib import Path
 from typing import Any, TypeVar, TYPE_CHECKING
 import uuid
+import warnings
 from pydantic_compat import BaseModel, Field
 import yaml
 
-from himena._descriptors import SaveToPath
-from himena.types import WindowState, WindowRect, WidgetDataModel
-from himena import anchor
+from himena._descriptors import NoNeedToSave, SaveToPath
+from himena._utils import get_widget_class_id
+from himena.types import WindowState, WindowRect, WidgetDataModel, is_subtype
+from himena import anchor, io_utils
 from himena.workflow import Workflow, compute, WorkflowStepType, LocalReaderMethod
 
 if TYPE_CHECKING:
@@ -43,8 +45,10 @@ class WindowDescription(BaseModel):
     anchor: dict[str, Any] = Field(default_factory=lambda: {"type": "no-anchor"})
     is_editable: bool = Field(default=True)
     id: uuid.UUID
-    short_workflow: WorkflowStepType | None
+    short_workflow: WorkflowStepType | None = Field(default=None)
     workflow: Workflow
+    model_type: str
+    widget_plugin_id: str | None = Field(default=None)
 
     @classmethod
     def from_gui(
@@ -64,23 +68,38 @@ class WindowDescription(BaseModel):
             short_workflow = LocalReaderMethod(
                 path=read_from[0],
                 plugin=read_from[1],
-                output_model_type=window.model_type(),
             )
+        model = window.to_model()
         return WindowDescription(
             title=window.title,
-            workflow=window.to_model().workflow,
             rect=WindowRectModel.from_tuple(window.rect),
             state=window.state,
             anchor=anchor.anchor_to_dict(window.anchor),
             is_editable=window.is_editable,
             id=window._identifier,
             short_workflow=short_workflow,
+            workflow=model.workflow,
+            model_type=model.type,
+            widget_plugin_id=get_widget_class_id(type(window.widget)),
         )
 
     def process_model(self, area: "TabArea[_W]", model: "WidgetDataModel"):
         """Add model to the tab area and update the window properties."""
         model.workflow = self.workflow
-        window = area.add_data_model(model)
+        model.save_behavior_override = NoNeedToSave()
+        if widget_plugin_id := self.widget_plugin_id:
+            try:
+                window = area.add_data_model(model.with_open_plugin(widget_plugin_id))
+            except Exception as e:
+                window = area.add_data_model(model)
+                warnings.warn(
+                    "Could not open the file with the intended widget plugin "
+                    f"{widget_plugin_id} because of the following error: {e}",
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
+        else:
+            window = area.add_data_model(model)
         window.title = self.title
         window.rect = self.rect.to_tuple()
         window.state = self.state
@@ -181,6 +200,9 @@ class AppSession(BaseModel):
     profile: AppProfileInfo | None = Field(default=None)
     tabs: list[TabSession] = Field(default_factory=list)
     current_index: int = Field(default=0)
+    rect: WindowRectModel = Field(
+        default=WindowRectModel(left=200, top=200, width=800, height=600)
+    )
 
     @classmethod
     def from_gui(
@@ -202,13 +224,14 @@ class AppSession(BaseModel):
                 for tab in main.tabs
             ],
             current_index=main.tabs.current_index,
+            rect=WindowRectModel.from_tuple(main.rect),
         )
 
     def update_gui(
         self,
         main: "MainWindow[_W]",
         *,
-        workflow_overload: dict[str, Workflow] = {},
+        workflow_override: dict[str, Workflow] = {},
     ) -> None:
         """Update the GUI state based on the session."""
         cur_index = self.current_index
@@ -221,10 +244,16 @@ class AppSession(BaseModel):
             _new_tab = main.add_tab(tab_session.name)
             for window_session in tab_session.windows:
                 _win_sessions.append(window_session)
-                if wf := workflow_overload.get(window_session.id):
+                if wf := workflow_override.get(window_session.id):
                     pass
                 else:
                     wf = window_session.prep_workflow()
+                if len(wf) == 1 and isinstance(meth := wf[0], LocalReaderMethod):
+                    # look for the best reader according to _win_sessions.model_type
+                    if meth.plugin is None:
+                        meth.plugin = _pick_best_reader_plugin(
+                            meth, window_session.model_type
+                        )
                 _pending_workflows.append(wf)
                 _target_areas.append(_new_tab)
         models = compute(_pending_workflows)
@@ -244,6 +273,7 @@ class AppSession(BaseModel):
                 area.current_index = cur_tab_index
         main.tabs.current_index = self.current_index + cur_index
         _raise_failed(_failed_sessions)
+        main.rect = self.rect.to_tuple()
         return None
 
 
@@ -254,3 +284,23 @@ def _raise_failed(failed: list[tuple[WindowDescription, Exception]]) -> None:
             f"- {win.title} ({type(exc).__name__}:{exc})" for win, exc in failed
         )
         raise ValueError(msg + list_of_failed) from failed[-1][1]
+
+
+def _pick_best_reader_plugin(meth: LocalReaderMethod, expected_type: str) -> str | None:
+    readers = io_utils.get_readers(meth.path, min_priority=-float("inf"))
+    suboptimals: list[int, str] = []
+    for reader in readers:
+        if reader.output_model_type is None:
+            continue
+        if reader.output_model_type == expected_type:
+            if reader.plugin is None:
+                continue
+            return reader.plugin.to_str()
+        elif is_subtype(reader.output_model_type, expected_type):
+            if reader.plugin is None:
+                continue
+            score = len(reader.output_model_type)
+            suboptimals.append((score, reader.plugin.to_str()))
+    if len(suboptimals) == 0:
+        return None
+    return max(suboptimals, key=lambda x: x[0])[1]

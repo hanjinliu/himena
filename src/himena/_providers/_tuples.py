@@ -42,9 +42,25 @@ class WriterProviderTuple(NamedTuple):
 
 
 class ReaderTuple(NamedTuple):
+    """Tuple that represents a reader plugin.
+
+    Attributes
+    ----------
+    reader : callable
+        The reader function that returns a WidgetDataModel.
+    priority : int
+        The priority of the reader. Higher priority readers are called first.
+    plugin : PluginInfo, optional
+        The plugin information of the reader. This can be None if the reader is not
+        properly defined, for example, if it is a local function.
+    output_model_type : str, optional
+        The output model type of the reader. This can be None if user did not specify.
+    """
+
     reader: ReaderFunction
     priority: int
     plugin: PluginInfo | None = None
+    output_model_type: str | None = None
 
     def read(self, path: str | Path | list[str | Path]) -> WidgetDataModel:
         if isinstance(path, list):

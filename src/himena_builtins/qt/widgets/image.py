@@ -379,11 +379,11 @@ class QImageView(QtW.QSplitter):
 
     @validate_protocol
     def allowed_drop_types(self) -> list[str]:
-        return [StandardType.IMAGE_ROIS, StandardType.IMAGE_LABELS]
+        return [StandardType.ROIS, StandardType.IMAGE_LABELS]
 
     @validate_protocol
     def dropped_callback(self, model: WidgetDataModel):
-        if model.type == StandardType.IMAGE_ROIS:
+        if model.type == StandardType.ROIS:
             if isinstance(roi_list := model.value, roi.RoiListModel):
                 self._roi_col.update_from_standard_roi_list(roi_list)
                 self._img_view.clear_rois()
@@ -628,7 +628,7 @@ class QImageView(QtW.QSplitter):
             axes = self._dims_slider._to_image_axes()
             return WidgetDataModel(
                 value=rlist,
-                type=StandardType.IMAGE_ROIS,
+                type=StandardType.ROIS,
                 title="ROIs",
                 metadata=model_meta.ImageRoisMeta(axes=axes),
             )
@@ -636,7 +636,7 @@ class QImageView(QtW.QSplitter):
         nrois = len(indices)
         _s = "" if nrois == 1 else "s"
         drag_model(
-            model=DragDataModel(getter=make_model, type=StandardType.IMAGE_ROIS),
+            model=DragDataModel(getter=make_model, type=StandardType.ROIS),
             desc=f"{nrois} ROI{_s}",
             source=self,
         )

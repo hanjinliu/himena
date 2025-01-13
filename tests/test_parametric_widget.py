@@ -39,6 +39,12 @@ def test_parametric_with_model_types(himena_ui: MainWindow):
     himena_ui.add_object("xyz", type="text")
     win = himena_ui.add_function(func)
 
+def test_parametric_str_output(himena_ui: MainWindow):
+    def f(a: str = "xxxx") -> str:
+        return a + "a"
+    win = himena_ui.add_function(f, run_async=False)
+    win._widget_callback()
+
 def test_parametric_preview(himena_ui: MainWindow):
     def func(a: str = "a", is_previewing: bool = False) -> WidgetDataModel[int]:
         out = "preview" if is_previewing else a
@@ -51,6 +57,10 @@ def test_parametric_preview(himena_ui: MainWindow):
     assert win.is_preview_enabled()
     assert isinstance(prev_win := win._preview_window_ref(), SubWindow)
     rect_prev = prev_win.rect
+    toggle_switch.value = False
+    assert not win.is_preview_enabled()
+    toggle_switch.value = True
+    win._widget_callback()  # call the function
 
 def test_custom_parametric_widget(himena_ui: MainWindow):
     from qtpy import QtWidgets as QtW

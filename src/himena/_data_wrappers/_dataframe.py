@@ -270,8 +270,15 @@ class DictWrapper(DataFrameWrapper):
 
     def write(self, file: str | Path):
         path = Path(file)
+        if path.suffix in (".csv", ".txt"):
+            sep = ","
+        elif path.suffix == ".tsv":
+            sep = "\t"
+        else:
+            raise ValueError(f"DictWrapper does not support writing as a {path.suffix}")
         with open(path, "w") as f:
-            f.write(self.to_csv_string(","))
+            f.write(sep.join(self._df.keys()))
+            f.write(self.to_csv_string(sep))
 
 
 class PandasWrapper(DataFrameWrapper):

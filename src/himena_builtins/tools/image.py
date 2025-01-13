@@ -190,7 +190,7 @@ def duplicate_rois(model: WidgetDataModel) -> WidgetDataModel:
         axes = None
     return WidgetDataModel(
         value=_get_rois_from_model(model),
-        type=StandardType.IMAGE_ROIS,
+        type=StandardType.ROIS,
         title=f"ROIs of {model.title}",
         metadata=ImageRoisMeta(axes=axes),
     )
@@ -198,7 +198,7 @@ def duplicate_rois(model: WidgetDataModel) -> WidgetDataModel:
 
 @register_function(
     title="Filter ROIs",
-    types=StandardType.IMAGE_ROIS,
+    types=StandardType.ROIS,
     menus=["/model_menu"],
     command_id="builtins:filter-rois",
 )
@@ -231,7 +231,7 @@ def filter_rois(model: WidgetDataModel) -> Parametric:
             axes = None
         return WidgetDataModel(
             value=value,
-            type=StandardType.IMAGE_ROIS,
+            type=StandardType.ROIS,
             title=f"{model.title} filtered",
             metadata=ImageRoisMeta(axes=axes),
         )
@@ -241,7 +241,7 @@ def filter_rois(model: WidgetDataModel) -> Parametric:
 
 @register_function(
     title="Select ROIs",
-    types=StandardType.IMAGE_ROIS,
+    types=StandardType.ROIS,
     menus=["/model_menu"],
     command_id="builtins:select-rois",
 )
@@ -262,7 +262,7 @@ def select_rois(model: WidgetDataModel) -> Parametric:
         value = _roi.RoiListModel(rois=list(rois[i] for i in selections))
         return WidgetDataModel(
             value=value,
-            type=StandardType.IMAGE_ROIS,
+            type=StandardType.ROIS,
             title=f"Subset of {model.title}",
             metadata=ImageRoisMeta(axes=axes),
         )
@@ -272,7 +272,7 @@ def select_rois(model: WidgetDataModel) -> Parametric:
 
 @register_function(
     title="Point ROIs to DataFrame",
-    types=StandardType.IMAGE_ROIS,
+    types=StandardType.ROIS,
     menus=["/model_menu"],
     command_id="builtins:point-rois-to-dataframe",
 )
@@ -664,7 +664,7 @@ def _get_rois_from_model(model: WidgetDataModel) -> _roi.RoiListModel:
     if model.type == StandardType.IMAGE:
         meta = _cast_meta(model, ImageMeta)
         rois = _resolve_roi_list_model(meta)
-    elif model.type == StandardType.IMAGE_ROIS:
+    elif model.type == StandardType.ROIS:
         rois = model.value
     else:
         raise ValueError(

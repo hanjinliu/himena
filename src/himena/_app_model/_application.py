@@ -58,12 +58,12 @@ class HimenaApplication(Application):
             if (top_left := info.top_left) is not None:
                 _left, _top = top_left
                 if info.size is not None:
-                    result.window_rect_override = lambda size: WindowRect(
-                        _left, _top, *size
-                    )
-                else:
                     result.window_rect_override = lambda _: WindowRect(
                         _left, _top, *info.size
+                    )
+                else:
+                    result.window_rect_override = lambda size: WindowRect(
+                        _left, _top, *size
                     )
         self.injection_store.process(result, type_hint=type_hint)
 

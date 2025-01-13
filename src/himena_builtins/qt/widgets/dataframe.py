@@ -10,7 +10,7 @@ from qtpy import QtGui, QtCore, QtWidgets as QtW
 from qtpy.QtCore import Qt
 
 from himena.consts import StandardType
-from himena.types import WidgetDataModel
+from himena.types import Size, WidgetDataModel
 from himena.standards.model_meta import DataFrameMeta, TableMeta, DataFramePlotMeta
 from himena.standards import plotting as hplt
 from himena_builtins.qt.widgets._table_components import (
@@ -408,7 +408,15 @@ class QDataFramePlotView(QtW.QSplitter):
     def widget_added_callback(self):
         # adjuct size
         self.setSizes([160, self.width() - 160])
+        self._plot_widget.widget_added_callback()
         return None
+
+    @validate_protocol
+    def widget_resized_callback(self, old: Size, new: Size):
+        left_width = self._table_widget.width()
+        old = Size(max(old.width - left_width, 10), old.height)
+        new = Size(max(new.width - left_width, 10), new.height)
+        self._plot_widget.widget_resized_callback(old, new)
 
     @validate_protocol
     def theme_changed_callback(self, theme):

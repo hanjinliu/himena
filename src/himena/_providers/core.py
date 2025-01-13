@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from logging import getLogger
-from typing import Generic, TypeVar, TYPE_CHECKING
+from typing import Generic, Sequence, TypeVar, TYPE_CHECKING
 import warnings
 from himena._providers._tuples import (
     ReaderProviderTuple,
@@ -58,13 +58,18 @@ class ReaderProviderStore(ProviderStore[ReaderProviderTuple]):
             else:
                 if out is None:
                     _LOGGER.debug("Reader provider %r did not match", info.provider)
-                elif callable(out):
-                    matched.append(ReaderTuple(out, info.priority, info.plugin))
+                    continue
+                if isinstance(out, Sequence) and len(out) == 2:
+                    reader, mtype = out
                 else:
+                    reader, mtype = out, None
+                if not callable(reader):
                     _LOGGER.warning(
-                        f"Reader provider {info.provider!r} returned {out!r}, which "
+                        f"Reader provider {info.provider!r} returned {reader!r}, which "
                         "is not callable."
                     )
+                    continue
+                matched.append(ReaderTuple(reader, info.priority, info.plugin, mtype))
         _LOGGER.debug("Matched reader providers: %r", [x[0] for x in matched])
         if not matched and not empty_ok:
             if isinstance(path, list):

@@ -37,6 +37,7 @@ from himena.types import (
     DockArea,
     DockAreaString,
     BackendInstructions,
+    WindowRect,
 )
 from himena.widgets._backend import BackendMainWindow
 from himena.widgets._hist import HistoryContainer, FileDialogHistoryDict
@@ -160,6 +161,28 @@ class MainWindow(Generic[_W]):
     def area_size(self) -> tuple[int, int]:
         """(width, height) of the main window tab area."""
         return self._backend_main_window._area_size()
+
+    @property
+    def rect(self) -> WindowRect:
+        """Window rect (left, top, width, height) of the main window."""
+        return self._backend_main_window._main_window_rect()
+
+    @rect.setter
+    def rect(self, value) -> None:
+        rect = WindowRect.from_tuple(*value)
+        return self._backend_main_window._set_main_window_rect(rect)
+
+    @property
+    def size(self) -> Size:
+        """Size (width, height) of the main window."""
+        return self.rect.size()
+
+    @size.setter
+    def size(self, size) -> None:
+        r0 = self.rect
+        s0 = Size(*size)
+        self.rect = WindowRect(r0.left, r0.top, s0.width, s0.height)
+        return None
 
     @property
     def clipboard(self) -> ClipboardDataModel | None:

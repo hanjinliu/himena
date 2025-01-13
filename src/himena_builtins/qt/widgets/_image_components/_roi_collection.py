@@ -305,12 +305,12 @@ class QRoiCollection(QSimpleRoiCollection):
             )
             return WidgetDataModel(
                 value=roilist,
-                type=StandardType.IMAGE_ROIS,
+                type=StandardType.ROIS,
                 title=title,
                 metadata=ImageRoisMeta(axes=axes, selections=self.selections()),
             )
 
-        model = DragDataModel(getter=_data_model_getter, type=StandardType.IMAGE_ROIS)
+        model = DragDataModel(getter=_data_model_getter, type=StandardType.ROIS)
         _s = "" if len(self._rois) == 1 else "s"
         return drag_model(model, desc=f"{len(self._rois)} ROI{_s}", source=img_view)
 

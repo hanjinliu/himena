@@ -7,14 +7,13 @@ import yaml
 import zipfile
 import tempfile
 from himena.session._session import AppSession, TabSession
-from himena.session._utils import write_model_by_uuid
+from himena.session._utils import write_model_by_uuid, num_digits
 from himena.workflow import LocalReaderMethod
 
 if TYPE_CHECKING:
     from himena.widgets import MainWindow
 
 _ZIP_SESSION_YAML = "session.yaml"
-_DATA_DIR = "data"
 
 
 def from_yaml(path: str | Path) -> AppSession | TabSession:
@@ -31,7 +30,7 @@ def from_yaml(path: str | Path) -> AppSession | TabSession:
         raise ValueError("Invalid session file.")
 
 
-def update_from_zip(ui: MainWindow, path: str | Path) -> AppSession:
+def update_from_zip(ui: MainWindow, path: str | Path) -> None:
     with (
         zipfile.ZipFile(path) as z,
         tempfile.TemporaryDirectory() as tmpdir,
@@ -46,12 +45,14 @@ def update_from_zip(ui: MainWindow, path: str | Path) -> AppSession:
             session = AppSession.model_validate(yml)
         else:
             raise ValueError("Invalid session file.")
-        wf_overloads = {}
-        for file in tmpdir.joinpath("data").iterdir():
-            uuid_hex = file.stem
-            uuid = UUID(uuid_hex)
-            wf_overloads[uuid] = LocalReaderMethod(path=file).construct_workflow()
-        session.update_gui(ui, workflow_overload=wf_overloads)
+        wf_overrides = {}
+        for tab_dir in tmpdir.glob("Tab-*"):
+            for file in tab_dir.iterdir():
+                uuid_hex = file.stem.split("_")[-1]
+                uuid = UUID(uuid_hex)
+                wf_overrides[uuid] = LocalReaderMethod(path=file).construct_workflow()
+        session.update_gui(ui, workflow_override=wf_overrides)
+    return None
 
 
 def dump_yaml(
@@ -77,24 +78,28 @@ def dump_zip(ui: MainWindow, path: str | Path):
     ```
     my.session.zip/
       ├── session.yaml
-      └── data/
-            ├── xxx.txt
-            ├── yyy.csv
+      └── Tab_0/
+            ├── 00_xxx.txt
+            ├── 01_yyy.csv
             :
     ```
     """
     path = Path(path)
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory() as tmpdir, zipfile.ZipFile(path, "w") as z:
         tmpdir = Path(tmpdir)
-        data_dir = tmpdir / _DATA_DIR
-        data_dir.mkdir()
-        for win in ui.iter_windows():
-            write_model_by_uuid(win, data_dir)
         session = AppSession.from_gui(ui, allow_calculate=True)
-        with zipfile.ZipFile(path, "w") as z:
-            for file in data_dir.iterdir():
-                z.write(file, f"{_DATA_DIR}/{file.name}")
+        ndigits_tab = num_digits(len(ui.tabs))
+        for i_tab, tab in enumerate(ui.tabs):
+            dirname = f"Tab-{i_tab:>0{ndigits_tab}}"
+            data_dir = tmpdir / dirname
+            data_dir.mkdir()
+            ndigits = num_digits(len(tab))
+            for i, win in enumerate(tab):
+                prefix = format(i, f">0{ndigits}")
+                save_path = write_model_by_uuid(win, data_dir, prefix=prefix)
+                z.write(save_path, f"{dirname}/{save_path.name}")
 
-            js = session.model_dump(mode="json")
-            js = {"session": "main", **js}
-            z.writestr(_ZIP_SESSION_YAML, yaml.dump(js, sort_keys=False))
+        js = session.model_dump(mode="json")
+        js = {"session": "main", **js}
+        z.writestr(_ZIP_SESSION_YAML, yaml.dump(js, sort_keys=False))
+    return None

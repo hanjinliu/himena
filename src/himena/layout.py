@@ -235,8 +235,16 @@ class BoxLayout1D(Layout1D):
     def append(self, child: Layout, *, stretch: float = 1) -> None:
         return self.insert(len(self), child, stretch=stretch)
 
-    def add(self, child: Layout, *, stretch: float = 1) -> Self:
+    def add(
+        self,
+        child: Layout,
+        *more: Layout,
+        stretch: float = 1,
+    ) -> Self:
+        """Add child layout(s) to the layout."""
         self.append(child, stretch=stretch)
+        for ch in more:
+            self.append(ch, stretch=stretch)
         return self
 
     def __delitem__(self, key: int):

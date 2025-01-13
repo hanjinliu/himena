@@ -88,7 +88,7 @@ class StandardType(SimpleNamespace):
     ### Other types ###
     WORKFLOW = "workflow"  # himena workflow object
     GROUPBY = "groupby"  # DataFrame GroupBy object
-    IMAGE_ROIS = "image-rois"  # image regions of interest
+    ROIS = "rois"  # regions of interest
     FUNCTION = "function"  # callable object
     FUNCTION_PARTIAL = "function.partial"  # callable object
 

@@ -375,7 +375,9 @@ def is_subtype(string: str, supertype: str) -> bool:
 
 ReaderFunction = Callable[["Path | list[Path]"], WidgetDataModel]
 WriterFunction = Callable[[WidgetDataModel, Path], None]
-ReaderProvider = Callable[["Path | list[Path]"], ReaderFunction]
+ReaderProvider = Callable[
+    ["Path | list[Path]"], ReaderFunction | tuple[ReaderFunction, str]
+]
 WriterProvider = Callable[[WidgetDataModel], WriterFunction]
 
 _V = TypeVar("_V", int, float)

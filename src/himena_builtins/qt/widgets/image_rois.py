@@ -28,7 +28,7 @@ class QImageRoiView(QtW.QWidget):
         self._roi_collection = QSimpleRoiCollection()
         layout.addWidget(self._roi_collection)
         self._is_modified = False
-        self._model_type = StandardType.IMAGE_ROIS
+        self._model_type = StandardType.ROIS
         self._axes: list[ArrayAxis] | None = None
         self._roi_collection.drag_requested.connect(self._run_drag_model)
 
@@ -82,7 +82,7 @@ class QImageRoiView(QtW.QWidget):
             axes = self._axes
             return WidgetDataModel(
                 value=rlist,
-                type=StandardType.IMAGE_ROIS,
+                type=StandardType.ROIS,
                 title="ROIs",
                 metadata=ImageRoisMeta(axes=axes),
             )
@@ -90,7 +90,7 @@ class QImageRoiView(QtW.QWidget):
         nrois = len(indices)
         _s = "" if nrois == 1 else "s"
         drag_model(
-            model=DragDataModel(getter=make_model, type=StandardType.IMAGE_ROIS),
+            model=DragDataModel(getter=make_model, type=StandardType.ROIS),
             desc=f"{nrois} ROI{_s}",
             source=self,
         )
