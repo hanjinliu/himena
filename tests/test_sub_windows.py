@@ -69,7 +69,7 @@ def test_io_commands(himena_ui: MainWindow, tmpdir, sample_dir: Path):
     # session
     response_session = lambda: Path(tmpdir) / "a.session.zip"
     himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response_session)
-    himena_ui.exec_action("save-session")
+    himena_ui.exec_action("save-session", with_params={"save_path": response_session()})
     himena_ui.exec_action("load-session")
 
     himena_ui.exec_action("save-tab-session")

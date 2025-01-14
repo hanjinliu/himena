@@ -16,7 +16,8 @@ from himena.types import (
 )
 from himena.widgets._widget_list import TabArea
 from himena.widgets._wrapper import SubWindow
-from himena._utils import get_gui_config
+from himena._utils import get_gui_config, ModelTrack
+from himena.workflow import CommandExecution
 
 if TYPE_CHECKING:
     from himena._app_model import HimenaApplication
@@ -158,8 +159,19 @@ def init_application(app: HimenaApplication) -> HimenaApplication:
         gui_config, run_immediately_with = get_gui_config(fn)
         win = ins.add_function(fn, **gui_config)
         if run_immediately_with is not None and ins._instructions.gui_execution:
-            kwargs = run_immediately_with()
-            win._callback_with_params(kwargs)
+            try:
+                kwargs = run_immediately_with()
+                win._callback_with_params(kwargs)
+            finally:
+                if win.is_alive:
+                    win._close_me(ins)
+        else:
+            win._widget_workflow = CommandExecution
+            if (tracker := ModelTrack.get(fn)) and tracker.command_id:
+                win._widget_workflow = CommandExecution(
+                    command_id=tracker.command_id,
+                    contexts=tracker.contexts,
+                )
         return None
 
     @app.injection_store.mark_processor

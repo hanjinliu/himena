@@ -74,11 +74,10 @@ class QtErrorMessageBox(QtW.QWidget):
         self.text_edit.setHorizontalScrollBarPolicy(
             QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff
         )
-        self.text_edit.setFixedHeight(55)
         self.text_edit.setPlainText(text)
 
         layout = QtW.QVBoxLayout(self)
-        layout.addWidget(self.text_edit)
+        layout.addWidget(self.text_edit, stretch=100)
 
     def _traceback_button_clicked(self):
         tb = self._get_traceback()

@@ -143,6 +143,10 @@ class QNotificationWidget(_QOverlayBase):
         """
         super().__init__(main)
 
+        size_grip = QtW.QSizeGrip(self)
+        self.layout().addWidget(
+            size_grip, 0, Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
+        )
         effect = QtW.QGraphicsOpacityEffect(self)
         effect.setOpacity(0.9)
         self.setGraphicsEffect(effect)
@@ -176,6 +180,8 @@ class QNotificationWidget(_QOverlayBase):
 
     def slide_in(self):
         """Run animation that fades in the dialog with a slight slide up."""
+        self.resize(280, 120)
+        self.alignToParent()
         geom = self.geometry()
         self.geom_anim.setDuration(200)
         self.geom_anim.setStartValue(geom.translated(0, 20))
@@ -187,6 +193,11 @@ class QNotificationWidget(_QOverlayBase):
         self.opacity_anim.setEndValue(0.9)
         self.geom_anim.start()
         self.opacity_anim.start()
+
+    def moveEvent(self, a0):
+        super().moveEvent(a0)
+        self._align_close_btn()
+        return None
 
     def show(self):
         """Show the overlay widget with animation."""
@@ -220,10 +231,6 @@ class QNotificationWidget(_QOverlayBase):
         if self._timer is not None:
             self._timer.stop()
         self._close_btn.show()
-        pos_loc = self.rect().topRight() - QtCore.QPoint(
-            self._close_btn.width() + 5, -5
-        )
-        self._close_btn.move(self.mapToGlobal(pos_loc))
         return super().enterEvent(a0)
 
     def leaveEvent(self, a0: QtCore.QEvent) -> None:
@@ -232,6 +239,17 @@ class QNotificationWidget(_QOverlayBase):
         if not self.rect().contains(self.mapFromGlobal(QtGui.QCursor.pos())):
             self._close_btn.hide()
         return super().leaveEvent(a0)
+
+    def _align_close_btn(self):
+        pos_loc = self.rect().topRight() - QtCore.QPoint(
+            self._close_btn.width() + 5, -5
+        )
+        self._close_btn.move(self.mapToGlobal(pos_loc))
+
+    def resizeEvent(self, a0):
+        super().resizeEvent(a0)
+        self._align_close_btn()
+        return None
 
 
 class QJobStack(_QOverlayBase):
