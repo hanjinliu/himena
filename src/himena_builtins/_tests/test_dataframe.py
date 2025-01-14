@@ -42,7 +42,8 @@ def test_dataframe_plot(qtbot: QtBot):
 def test_dataframe_command(himena_ui: MainWindow):
     win = himena_ui.add_object({"a": [1, 2], "b": ["p", "q"]}, type="dataframe")
     himena_ui.exec_action("builtins:dataframe:header-to-row")
-    himena_ui.exec_action("builtins:dataframe:series-as-array", with_params={"index": 0})
+    himena_ui.current_window = win
+    himena_ui.exec_action("builtins:dataframe:series-as-array", with_params={"column": "a"})
     himena_ui.current_window = win
     himena_ui.exec_action("builtins:dataframe:select-columns-by-name", with_params={"columns": ["b"]})
     assert _data_frame_equal(himena_ui.current_model.value, {"b": ["p", "q"]})

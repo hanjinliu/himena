@@ -34,20 +34,19 @@ def series_as_array(model: WidgetDataModel) -> Parametric:
     """Convert a single column to an array."""
 
     def _get_column_index():
-        c0 = _get_column_selection_index(model)
+        c0 = _get_column_selection_name(model)
         if c0 is None:
             raise ValueError("Please select a single column.")
-        return {"index": c0}
+        return {"column": c0}
 
     @configure_gui(run_immediately_with=_get_column_index)
-    def run_series_as_array(index: int):
+    def run_series_as_array(column: str):
         df = wrap_dataframe(model.value)
-        column_name = df.column_names()[index]
-        series = df.column_to_array(column_name)
+        series = df.column_to_array(column)
 
         return WidgetDataModel(
             value=series,
-            title=f"{model.title} ({column_name})",
+            title=f"{model.title} ({column})",
             type=StandardType.ARRAY,
             extension_default=".npy",
         )
@@ -89,24 +88,19 @@ def filter_dataframe(model: WidgetDataModel) -> Parametric:
     ]  # fmt: skip
     df = wrap_dataframe(model.value)
     column_names = df.column_names()
-    selected_column_name = None
-    if isinstance(meta := model.metadata, TableMeta):
-        if len(meta.selections) == 1:
-            (r0, r1), (c0, c1) = meta.selections[0]
-            if r0 == 0 and r1 == df.num_rows() and c1 - c0 == 1:
-                selected_column_name = column_names[c0]
+    selected_column_name = _get_column_selection_name(model)
 
     column_name_option = {"choices": column_names}
     if selected_column_name is not None:
         column_name_option["value"] = selected_column_name
 
     @configure_gui(
-        column_name=column_name_option,
+        column=column_name_option,
         operator={"choices": choices},
     )
-    def run(column_name: str, operator: str, value: str):
+    def run(column: str, operator: str, value: str):
         op_func = getattr(_op, operator)
-        series = df[column_name]
+        series = df[column]
         if series.dtype.kind in "iuf":
             value_parsed = float(value)
         elif series.dtype.kind == "b":
@@ -133,10 +127,10 @@ def sort_dataframe(model: WidgetDataModel) -> Parametric:
     column_names = df.column_names()
 
     @configure_gui(
-        column_name={"choices": column_names},
+        column={"choices": column_names},
     )
-    def run(column_name: str, descending: bool = False):
-        df_new = df.sort(column_name, descending=descending).unwrap()
+    def run(column: str, descending: bool = False):
+        df_new = df.sort(column, descending=descending).unwrap()
         return model.with_value(df_new).with_title_numbering()
 
     return run
@@ -168,11 +162,11 @@ def new_column_using_function(model: WidgetDataModel) -> Parametric:
     return run
 
 
-def _get_column_selection_index(model: WidgetDataModel) -> int | None:
+def _get_column_selection_name(model: WidgetDataModel) -> str | None:
     if isinstance(meta := model.metadata, TableMeta):
         if len(meta.selections) == 1:
             df = wrap_dataframe(model.value)
             (r0, r1), (c0, c1) = meta.selections[0]
             if r0 == 0 and r1 == df.num_rows() and c1 - c0 == 1:
-                return c0
+                return df.column_names()[c0]
     return None
