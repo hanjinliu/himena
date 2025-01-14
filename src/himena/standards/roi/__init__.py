@@ -17,6 +17,7 @@ from himena.standards.roi.core import (
     SplineRoi,
     RoiListModel,
     default_roi_label,
+    pick_roi_model,
 )
 
 __all__ = [
@@ -36,4 +37,5 @@ __all__ = [
     "SplineRoi",
     "RoiListModel",
     "default_roi_label",
+    "pick_roi_model",
 ]

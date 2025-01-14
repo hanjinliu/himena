@@ -6,7 +6,7 @@ from himena.plugins import (
     configure_gui,
     configure_submenu,
 )
-from himena.types import Parametric, Rect, WidgetDataModel
+from himena.types import Parametric, WidgetDataModel
 from himena.consts import StandardType
 from himena.standards.model_meta import (
     ArrayAxis,
@@ -74,7 +74,7 @@ def crop_image_multi(model: WidgetDataModel) -> Parametric:
 
     def _get_bbox_list():
         rois = _resolve_roi_list_model(meta, copy=False)
-        bbox_list: list[Rect[int]] = []
+        bbox_list: list[tuple[int, int, int, int]] = []
         for i, roi in enumerate(rois):
             if not isinstance(roi, _roi.Roi2D):
                 continue
@@ -83,7 +83,7 @@ def crop_image_multi(model: WidgetDataModel) -> Parametric:
         return {"bbox_list": bbox_list}
 
     @configure_gui(run_immediately_with=_get_bbox_list)
-    def run_crop_image_multi(bbox_list: list[Rect[int]]):
+    def run_crop_image_multi(bbox_list: list[tuple[int, int, int, int]]):
         meta_out = meta.without_rois()
         cropped_models: list[WidgetDataModel] = []
         for i, bbox in enumerate(bbox_list):
@@ -115,6 +115,8 @@ def crop_image_nd(win: SubWindow) -> Parametric:
     model = win.to_model()
     ndim = wrap_array(model.value).ndim
     meta = _cast_meta(model, ImageMeta)
+    if ndim < 2:
+        raise ValueError("Cannot crop image less than 2D.")
     axes_kwarg_names = [f"axis_{i}" for i in range(ndim)]
     index_yx_rgb = 2 + int(meta.is_rgb)
     if ndim < index_yx_rgb + 1:
@@ -127,7 +129,7 @@ def crop_image_nd(win: SubWindow) -> Parametric:
             "getter": _make_index_getter(win, i),
             "label": axis_name,
         }
-    axis_y, axis_x = axes_kwarg_names[-index_yx_rgb : -index_yx_rgb + 2]
+    axis_y, axis_x = axes_kwarg_names[ndim - index_yx_rgb : ndim - index_yx_rgb + 2]
     conf_kwargs[axis_y] = {"bind": _make_roi_limits_getter(win, "y")}
     conf_kwargs[axis_x] = {"bind": _make_roi_limits_getter(win, "x")}
 
@@ -144,18 +146,23 @@ def crop_image_nd(win: SubWindow) -> Parametric:
     return run_crop_image
 
 
-def _2d_roi_to_bbox(roi: _roi.Roi2D, arr: ArrayWrapper, meta: ImageMeta) -> Rect[int]:
+def _2d_roi_to_bbox(
+    roi: _roi.Roi2D, arr: ArrayWrapper, meta: ImageMeta
+) -> tuple[int, int, int, int]:
     bbox = roi.bbox().adjust_to_int()
     xmax, ymax = _slice_shape(arr, meta)
     bbox = bbox.limit_to(xmax, ymax)
     if bbox.width <= 0 or bbox.height <= 0:
         raise ValueError("Crop range out of bounds.")
-    return bbox
+    return tuple(bbox)
 
 
-def _bbox_to_slice(bbox: Rect[int], meta: ImageMeta) -> tuple[slice, ...]:
-    ysl = slice(bbox.top, bbox.top + bbox.height)
-    xsl = slice(bbox.left, bbox.left + bbox.width)
+def _bbox_to_slice(
+    bbox: tuple[int, int, int, int], meta: ImageMeta
+) -> tuple[slice, ...]:
+    left, top, width, height = bbox
+    ysl = slice(top, top + height)
+    xsl = slice(left, left + width)
     if meta.is_rgb:
         sl = (ysl, xsl, slice(None))
     else:
@@ -171,10 +178,10 @@ def _make_roi_limits_getter(win: SubWindow, dim: Literal["x", "y"]):
         arr = wrap_array(model.value)
         if not isinstance(roi, _roi.Roi2D):
             raise NotImplementedError
-        bbox = _2d_roi_to_bbox(roi, arr, meta)
+        left, top, width, height = _2d_roi_to_bbox(roi, arr, meta)
         if dim == "x":
-            return bbox.left, bbox.left + bbox.width
-        return bbox.top, bbox.top + bbox.height
+            return left, left + width
+        return top, top + height
 
     return _getter
 
@@ -214,17 +221,13 @@ def duplicate_rois(model: WidgetDataModel) -> WidgetDataModel:
 def filter_rois(model: WidgetDataModel) -> Parametric:
     rois = _get_rois_from_model(model)
     _choices = [
-        ("Rectangle", _roi.RectangleRoi),
-        ("Rotated Rectangle", _roi.RotatedRectangleRoi),
-        ("Line", _roi.LineRoi), ("SegmentedLine", _roi.SegmentedLineRoi),
-        ("Point", _roi.PointRoi2D), ("Points", _roi.PointsRoi2D),
-        ("Ellipse", _roi.EllipseRoi), ("Rotated Ellipse", _roi.RotatedEllipseRoi),
-        ("Polygon", _roi.PolygonRoi,)
+        "Rectangle", "RotatedRectangle", "Line", "SegmentedLine", "Point2D", "Points2D",
+        "Ellipse", "Rotated Ellipse", "Polygon"
     ]  # fmt: skip
 
     @configure_gui(types={"choices": _choices, "widget_type": "Select"})
-    def run_filter_rois(types: list[_roi.RoiModel]):
-        types_allowed = set(types)
+    def run_filter_rois(types: list[str]):
+        types_allowed = {_roi.pick_roi_model(typ.lower()) for typ in types}
         value = _roi.RoiListModel(
             rois=list(r for r in rois if type(r) in types_allowed)
         )

@@ -23,20 +23,6 @@ if TYPE_CHECKING:
 _SESSION_YAML = "session.yaml"
 
 
-def from_yaml(path: str | Path) -> AppSession | TabSession:
-    with open(path) as f:
-        yml = yaml.load(f, Loader=yaml.Loader)
-    if not (isinstance(yml, dict) and "session" in yml):
-        raise ValueError("Invalid session file.")
-    session_type = yml.pop("session")
-    if session_type == "main":
-        return AppSession.model_validate(yml)
-    elif session_type == "tab":
-        return TabSession.model_validate(yml)
-    else:
-        raise ValueError("Invalid session file.")
-
-
 def update_from_directory(ui: MainWindow, path: str | Path) -> None:
     dirpath = Path(path)
     with dirpath.joinpath(_SESSION_YAML).open("r") as f:

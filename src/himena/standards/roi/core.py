@@ -28,12 +28,12 @@ class RoiModel(BaseModel):
     @classmethod
     def construct(cls, typ: str, dict_: dict) -> RoiModel:
         """Construct an instance from a dictionary."""
-        model_type = _pick_roi_model(typ)
+        model_type = pick_roi_model(typ)
         return model_type.model_validate(dict_)
 
 
 @cache
-def _pick_roi_model(typ: str) -> type[RoiModel]:
+def pick_roi_model(typ: str) -> type[RoiModel]:
     for sub in iter_subclasses(RoiModel):
         if _strip_roi_suffix(sub.__name__.lower()) == typ:
             return sub

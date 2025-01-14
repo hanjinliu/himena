@@ -817,22 +817,25 @@ class QSubWindowTitleBar(QtW.QFrame):
 
     def wheelEvent(self, event: QtGui.QWheelEvent):
         if event.modifiers() == Qt.KeyboardModifier.NoModifier:
-            subwin = self._subwindow
-            i_tab, i_win = subwin._find_me()
-            main = get_main_window(subwin)
-            sub = main.tabs[i_tab][i_win]
-            size_old = sub.size
-            if event.angleDelta().y() > 0:
-                rect_new = sub.rect.resize_relative(1.1, 1.1)
-            else:
-                rect_new = sub.rect.resize_relative(1 / 1.1, 1 / 1.1)
-            inst = main._instructions.updated(animate=False)
-            sub._set_rect(rect_new, inst)
-            size_new = rect_new.size()
-            _checker.call_widget_resized_callback(
-                subwin._my_wrapper().widget, size_old, size_new
-            )
+            self._wheel_event(event.angleDelta().y())
         return super().wheelEvent(event)
+
+    def _wheel_event(self, dy: int):
+        subwin = self._subwindow
+        i_tab, i_win = subwin._find_me()
+        main = get_main_window(subwin)
+        sub = main.tabs[i_tab][i_win]
+        size_old = sub.size
+        if dy > 0:
+            rect_new = sub.rect.resize_relative(1.1, 1.1)
+        else:
+            rect_new = sub.rect.resize_relative(1 / 1.1, 1 / 1.1)
+        inst = main._instructions.updated(animate=False)
+        sub._set_rect(rect_new, inst)
+        size_new = rect_new.size()
+        return _checker.call_widget_resized_callback(
+            subwin._my_wrapper().widget, size_old, size_new
+        )
 
     def dragEnterEvent(self, a0: QtGui.QDragEnterEvent | None) -> None:
         return self._subwindow.dragEnterEvent(a0)

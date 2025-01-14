@@ -82,19 +82,18 @@ class QArrayModel(QtCore.QAbstractTableModel):
     ):
         if not index.isValid():
             return QtCore.QVariant()
-        if role == Qt.ItemDataRole.TextAlignmentRole:
+        elif role == Qt.ItemDataRole.TextAlignmentRole:
             return Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
-        if role == Qt.ItemDataRole.ToolTipRole:
+        elif role == Qt.ItemDataRole.ToolTipRole:
             r, c = index.row(), index.column()
             array_indices = ", ".join(str(i) for i in self._slice + (r, c))
             return f"A[{array_indices}] = {self._get_item(r, c)}"
-        if role != Qt.ItemDataRole.DisplayRole:
-            return QtCore.QVariant()
-        r, c = index.row(), index.column()
-        if r < self.rowCount() and c < self.columnCount():
-            value = self._get_item(r, c)
-            text = format_table_value(value, self._get_dtype(r, c).kind)
-            return text
+        elif role == Qt.ItemDataRole.DisplayRole:
+            r, c = index.row(), index.column()
+            if r < self.rowCount() and c < self.columnCount():
+                value = self._get_item(r, c)
+                text = format_table_value(value, self._get_dtype(r, c).kind)
+                return text
         return QtCore.QVariant()
 
     def headerData(

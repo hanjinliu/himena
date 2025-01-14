@@ -7,7 +7,7 @@ from himena.standards.model_meta import DataFrameMeta
 from himena.widgets import set_status_tip, notify
 from himena_builtins.qt import widgets as _qtw
 
-from qtpy.QtCore import Qt
+from qtpy.QtCore import Qt, QPoint
 from pathlib import Path
 from pytestqt.qtbot import QtBot
 
@@ -150,7 +150,7 @@ def test_register_function_in_runtime(himena_ui: MainWindowQt, qtbot: QtBot):
     def f():
         pass
 
-def test_notification_and_status_tip(himena_ui: MainWindowQt, qtbot: QtBot):
+def test_notification_and_status_tip(himena_ui: MainWindowQt):
     set_status_tip("my text", duration=0.1)
     notify("my text", duration=0.1)
     himena_ui._backend_main_window._on_error(ValueError("error msg"))
@@ -175,3 +175,21 @@ def test_setting_widget(himena_ui: MainWindow, qtbot: QtBot):
 
     dlg = QSettingsDialog(himena_ui)
     qtbot.addWidget(dlg)
+
+def test_mouse_events(himena_ui: MainWindowQt, qtbot: QtBot):
+    tab = himena_ui.add_tab()
+    win = tab.add_widget(_qtw.QTextEdit())
+    qmain = himena_ui._backend_main_window
+    qarea = qmain._tab_widget.widget_area(0)
+    assert qarea is not None
+    qtbot.mouseClick(qarea, Qt.MouseButton.LeftButton)
+    qtbot.mouseMove(qarea, qarea.rect().center())
+    qtbot.mouseMove(qarea, qarea.rect().center() + QPoint(10, 10))
+    qtbot.mousePress(qarea, Qt.MouseButton.LeftButton)
+    qtbot.mouseMove(qarea, qarea.rect().center())
+    qtbot.mouseMove(qarea, qarea.rect().center() + QPoint(10, 10))
+    qtbot.mouseRelease(qarea, Qt.MouseButton.LeftButton)
+    qtbot.mousePress(qarea, Qt.MouseButton.RightButton)
+    qtbot.mouseMove(qarea, qarea.rect().center())
+    qtbot.mouseMove(qarea, qarea.rect().center() + QPoint(10, 10))
+    qtbot.mouseRelease(qarea, Qt.MouseButton.RightButton)

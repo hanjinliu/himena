@@ -411,13 +411,15 @@ class MainWindow(Generic[_W]):
 
     def load_session(self, path: str | Path) -> None:
         """Read a session file and update the main window based on the content."""
-        from himena.session import from_yaml, update_from_zip
+        from himena.session import update_from_zip, update_from_directory
 
         fp = Path(path)
         if fp.suffix == ".zip":
             update_from_zip(self, fp)
+        elif fp.is_dir():
+            update_from_directory(self, fp)
         else:
-            from_yaml(fp).update_gui(self)
+            raise ValueError(f"Session must be a zip file or a directory, got {fp}.")
         # always plugin=None for reading a session file as a session
         self._recent_session_manager.append_recent_files([(fp, None)])
         self.set_status_tip(f"Session loaded: {fp}", duration=5)

@@ -4,7 +4,10 @@ from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QApplication
 from himena.standards.model_meta import ImageMeta
 from pytestqt.qtbot import QtBot
+from himena import MainWindow
+from himena.standards.roi import RoiListModel, LineRoi, PointRoi2D
 from himena.testing import WidgetTester, image
+from himena.types import WidgetDataModel
 from himena_builtins.qt.widgets.image import QImageView
 from himena_builtins.qt.widgets._image_components import _roi_items as _rois
 
@@ -163,3 +166,66 @@ def test_image_view_current_roi():
 
 def _get_tester():
     return WidgetTester(QImageView())
+
+def test_crop_image(himena_ui: MainWindow):
+    model = WidgetDataModel(
+        value=np.zeros((4, 4, 10, 10)),
+        type="array.image",
+        metadata=ImageMeta(axes=["t", "z", "y", "x"]),
+    )
+    win = himena_ui.add_data_model(model)
+    himena_ui.exec_action("builtins:image-crop:crop-image", with_params={"y": (1, 5), "x": (2, 8)})
+    himena_ui.current_window = win
+    himena_ui.exec_action(
+        "builtins:image-crop:crop-image-multi",
+        with_params={"bbox_list": [(1, 1, 4, 5), (1, 5, 2, 2)]}
+    )
+    himena_ui.current_window = win
+    himena_ui.exec_action(
+        "builtins:image-crop:crop-image-nd",
+        with_params={"axis_0": (2, 4), "axis_1": (0, 1), "axis_2": (1, 5), "axis_3": (2, 8)},
+    )
+
+def test_roi_commands(himena_ui: MainWindow):
+    model = WidgetDataModel(
+        value=np.zeros((4, 4, 10, 10)),
+        type="array.image",
+        metadata=ImageMeta(
+            axes=["t", "z", "y", "x"],
+            rois=RoiListModel(
+                rois=[
+                    LineRoi(indices=(0, 0), name="ROI-0", x1=1, y1=1, x2=4, y2=5),
+                    PointRoi2D(indices=(0, 0), name="ROI-1", x=1, y=5),
+                ]
+            ),
+        ),
+    )
+    win = himena_ui.add_data_model(model)
+    himena_ui.exec_action("builtins:duplicate-rois")
+    assert isinstance(lmodel := himena_ui.current_model.value, RoiListModel)
+    assert len(lmodel) == 2
+    win_roi = himena_ui.current_window
+    himena_ui.exec_action(
+        "builtins:filter-image-rois",
+        with_params={"types": ["Line"]},
+    )
+    himena_ui.current_window = win_roi
+    himena_ui.exec_action(
+        "builtins:select-rois",
+        with_params={"selections": [1]},
+    )
+
+    # specify
+    himena_ui.current_window = win
+    himena_ui.exec_action(
+        "builtins:image-specify:roi-specify-rectangle",
+        with_params={"x": 3, "y": 2, "width": 3.0, "height": 3.0}
+    )
+    himena_ui.exec_action(
+        "builtins:image-specify:roi-specify-ellipse",
+        with_params={"x": 3, "y": 2, "width": 3.0, "height": 3.0}
+    )
+    himena_ui.exec_action(
+        "builtins:image-specify:roi-specify-line",
+        with_params={"x1": 3, "y1": 2, "x2": 3.0, "y2": 3.0}
+    )

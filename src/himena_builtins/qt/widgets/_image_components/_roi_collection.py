@@ -226,6 +226,7 @@ class QRoiCollection(QSimpleRoiCollection):
         self._add_btn.setSizePolicy(
             QtW.QSizePolicy.Policy.Minimum, QtW.QSizePolicy.Policy.Minimum
         )
+        self._add_btn.clicked.connect(parent._img_view.add_current_roi)
         self._remove_btn = QtW.QPushButton("-")
         self._remove_btn.setToolTip("Remove selected ROI from the list")
         self._remove_btn.setFixedSize(14, 14)
@@ -344,15 +345,22 @@ class QRoiListView(QtW.QListView):
         index_under_cursor = self.indexAt(point)
         if not index_under_cursor.isValid():
             return
+        menu = self._prep_context_menu(index_under_cursor)
+        menu.exec(self.mapToGlobal(point))
+
+    def _prep_context_menu(self, index: QtCore.QModelIndex):
         menu = QtW.QMenu(self)
-        action_rename = menu.addAction("Rename", lambda: self.edit(index_under_cursor))
+        action_rename = menu.addAction("Rename", lambda: self.edit(index))
         action_rename.setToolTip("Rename the selected ROI")
         action_flatten = menu.addAction(
-            "Flatten", lambda: self.parent().flatten_roi(index_under_cursor.row())
+            "Flatten", lambda: self.parent().flatten_roi(index.row())
         )
         action_flatten.setToolTip("Flatten the selected ROI into 2D")
-
-        menu.exec(self.mapToGlobal(point))
+        action_delete = menu.addAction(
+            "Delete", lambda: self.parent().pop_roi(index.row())
+        )
+        action_delete.setToolTip("Delete the selected ROIs")
+        return menu
 
     def keyPressEvent(self, a0: QtGui.QKeyEvent):
         if a0.key() == QtCore.Qt.Key.Key_F2:

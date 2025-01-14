@@ -223,6 +223,10 @@ class QImageView(QtW.QSplitter):
         self._update_channels(meta0, img_slices, nchannels, arr.dtype)
         if not meta0.skip_image_rerendering:
             self._set_image_slices(img_slices)
+        if roi_list := meta0.rois:
+            if callable(roi_list):
+                roi_list = roi_list()
+            self._roi_col.update_from_standard_roi_list(roi_list)
         if meta0.current_roi:
             self._img_view.remove_current_item()
             self._img_view.set_current_roi(
