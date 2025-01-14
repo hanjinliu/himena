@@ -62,16 +62,82 @@ def series_as_array(model: WidgetDataModel) -> WidgetDataModel:
     menus=["tools/dataframe"],
     command_id="builtins:select-columns-by-name",
 )
-def select_columns_by_name(model: WidgetDataModel):
+def select_columns_by_name(model: WidgetDataModel) -> Parametric:
     df = wrap_dataframe(model.value)
 
     @configure_gui(
         columns={"choices": df.column_names(), "widget_type": "Select"},
     )
     def run(columns: list[str]):
-        df = wrap_dataframe(model.value)
-        dict_new = {k: v for k, v in df.to_dict().items() if k in columns}
-        df_new = df.from_dict(dict_new)
+        df_new = wrap_dataframe(model.value).select(columns).unwrap()
+        return model.with_value(df_new).with_title_numbering()
+
+    return run
+
+
+@register_function(
+    title="Filter DataFrame ...",
+    types=StandardType.DATAFRAME,
+    menus=["tools/dataframe"],
+    command_id="builtins:filter-dataframe",
+)
+def filter_dataframe(model: WidgetDataModel) -> Parametric:
+    import operator as _op
+
+    choices = [
+        ("Equal (==)", "eq"), ("Not Equal (!=)", "ne"), ("Greater (>)", "gt"),
+        ("Greater Equal (>=)", "ge"), ("Less (<)", "lt"), ("Less Equal (<=)", "le"),
+    ]  # fmt: skip
+    df = wrap_dataframe(model.value)
+    column_names = df.column_names()
+    selected_column_name = None
+    if isinstance(meta := model.metadata, TableMeta):
+        if len(meta.selections) == 1:
+            (r0, r1), (c0, c1) = meta.selections[0]
+            if r0 == 0 and r1 == df.num_rows() and c1 - c0 == 1:
+                selected_column_name = column_names[c0]
+
+    column_name_option = {"choices": column_names}
+    if selected_column_name is not None:
+        column_name_option["value"] = selected_column_name
+
+    @configure_gui(
+        column_name=column_name_option,
+        operator={"choices": choices},
+    )
+    def run(column_name: str, operator: str, value: str):
+        op_func = getattr(_op, operator)
+        series = df[column_name]
+        if series.dtype.kind in "iuf":
+            value_parsed = float(value)
+        elif series.dtype.kind == "b":
+            value_parsed = value.lower() in ["true", "1"]
+        elif series.dtype.kind == "c":
+            value_parsed = complex(value)
+        value_parsed = value
+        sl = op_func(series, value_parsed)
+        df_new = df.filter(sl).unwrap()
+        return model.with_value(df_new).with_title_numbering()
+
+    return run
+
+
+@register_function(
+    title="Sort DataFrame ...",
+    types=StandardType.DATAFRAME,
+    menus=["tools/dataframe"],
+    command_id="builtins:sort-dataframe",
+)
+def sort_dataframe(model: WidgetDataModel) -> Parametric:
+    """Sort the DataFrame by a column."""
+    df = wrap_dataframe(model.value)
+    column_names = df.column_names()
+
+    @configure_gui(
+        column_name={"choices": column_names},
+    )
+    def run(column_name: str, descending: bool = False):
+        df_new = df.sort(column_name, descending=descending).unwrap()
         return model.with_value(df_new).with_title_numbering()
 
     return run
@@ -84,6 +150,7 @@ def select_columns_by_name(model: WidgetDataModel):
     command_id="builtins:new-column-using-function",
 )
 def new_column_using_function(model: WidgetDataModel) -> Parametric:
+    """Add a new column using a user-defined function."""
     df = wrap_dataframe(model.value)
 
     @configure_gui(

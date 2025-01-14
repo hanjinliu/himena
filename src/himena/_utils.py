@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import timeit
 from typing import (
     Callable,
     Any,
@@ -235,6 +236,7 @@ def make_function_callback(
     @wraps(f)
     def _new_f(*args, **kwargs):
         bound = sig.bind(*args, **kwargs)
+        _time_before = timeit.default_timer()
         out = f(*args, **kwargs)
         contexts = []
         workflows = []
@@ -247,11 +249,18 @@ def make_function_callback(
         workflow = Workflow.concat(workflows)
         if isinstance(out, WidgetDataModel):
             out.workflow = out.workflow.with_step(
-                CommandExecution(contexts=contexts, command_id=command_id)
+                CommandExecution(
+                    contexts=contexts,
+                    command_id=command_id,
+                    execution_time=timeit.default_timer() - _time_before,
+                )
             )
         elif f_annot.get("return") in (Parametric, ParametricWidgetProtocol):
             tracker = ModelTrack(
-                contexts=contexts, command_id=command_id, workflow=workflow
+                contexts=contexts,
+                command_id=command_id,
+                workflow=workflow,
+                time_start=_time_before,
             )
             tracker.set(out)
             if title is not None:

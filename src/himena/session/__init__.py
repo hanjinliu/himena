@@ -1,5 +1,11 @@
 from ._session import AppSession, TabSession
-from ._api import from_yaml, update_from_directory, update_from_zip, dump_yaml, dump_zip
+from ._api import (
+    from_yaml,
+    update_from_directory,
+    update_from_zip,
+    dump_directory,
+    dump_zip,
+)
 
 __all__ = [
     "AppSession",
@@ -8,6 +14,6 @@ __all__ = [
     "from_zip",
     "update_from_directory",
     "update_from_zip",
-    "dump_yaml",
+    "dump_directory",
     "dump_zip",
 ]

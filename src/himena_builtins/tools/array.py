@@ -128,7 +128,9 @@ def binary_operation() -> Parametric:
         ("Add (+)", "add"), ("Subtract (-)", "sub"), ("Multiply (*)", "mul"),
         ("Divide (/)", "truediv"), ("Floor Divide (//)", "floordiv"),
         ("Modulo (%)", "mod"), ("Power (**)", "pow"), ("Bitwise AND (&)", "and_"),
-        ("Bitwise OR (|)", "or_"), ("Bitwise XOR (^)", "xor"),
+        ("Bitwise OR (|)", "or_"), ("Bitwise XOR (^)", "xor"), ("Equal (==)", "eq"),
+        ("Not Equal (!=)", "ne"), ("Greater (>)", "gt"), ("Greater Equal (>=)", "ge"),
+        ("Less (<)", "lt"), ("Less Equal (<=)", "le"),
     ]  # fmt: skip
 
     @configure_gui(

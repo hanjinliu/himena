@@ -23,7 +23,8 @@ def test_type_map_and_session(tmpdir, himena_ui: MainWindow, sample_dir):
     tab1.read_file(sample_dir / "html.html").update(rect=(80, 40, 160, 130), title="My HTML")
     # assert type(tab1.current().widget) is _qtw.QDefaultHTMLEdit ?
 
-    session_path = Path(tmpdir) / "test.session.yaml"
+    himena_ui.exec_action("show-whats-this")
+    session_path = Path(tmpdir) / "test.session.zip"
     himena_ui.save_session(session_path)
     himena_ui.clear()
     assert len(himena_ui.tabs) == 0
@@ -48,8 +49,8 @@ def test_session_with_calculation(tmpdir, himena_ui: MainWindow, sample_dir):
     assert len(tab0) == 2
     shape_cropped = tab0[1].to_model().value.shape
     tab0[1].update(rect=(70, 20, 160, 130))
-    session_path = Path(tmpdir) / "test.session.yaml"
-    himena_ui.save_session(session_path, allow_calculate=True)
+    session_path = Path(tmpdir) / "test.session.zip"
+    himena_ui.save_session(session_path, allow_calculate=["builtins:image-crop:crop-image"])
     himena_ui.clear()
     himena_ui.load_session(session_path)
     tab0 = himena_ui.tabs[0]
@@ -75,7 +76,7 @@ def test_session_stand_alone(tmpdir, himena_ui: MainWindow, sample_dir):
     assert isinstance(win.widget, _qtw.QDataFrameView)
     win.widget.selection_model.set_ranges([(slice(1, 3), slice(1, 2))])
     session_path = Path(tmpdir) / "test.session.zip"
-    himena_ui.save_session_stand_alone(session_path)
+    himena_ui.save_session(session_path, save_copies=True)
     himena_ui.clear()
     himena_ui.load_session(session_path)
     tab0 = himena_ui.tabs[0]

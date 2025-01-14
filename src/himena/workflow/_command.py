@@ -97,6 +97,7 @@ class CommandExecution(WorkflowStep):
     command_id: str
     contexts: list[CommandParameterType] = Field(default_factory=list)
     parameters: list[CommandParameterType] = Field(default_factory=list)
+    execution_time: float = Field(default=0.0)  # seconds
 
     def iter_parents(self) -> Iterator[uuid.UUID]:
         for ctx in self.contexts:

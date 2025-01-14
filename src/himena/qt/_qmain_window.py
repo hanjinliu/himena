@@ -776,7 +776,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         text: str,
         style: Literal["plain", "markdown", "html"] = "plain",
     ) -> None:
-        whatsthis = QWhatsThisWidget(self._tab_widget)
+        whatsthis = QWhatsThisWidget(self)
         whatsthis.set_text(text, style)
         whatsthis.show()
         return None

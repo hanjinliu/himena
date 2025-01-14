@@ -55,7 +55,9 @@ def crop_image(model: WidgetDataModel) -> Parametric:
             sl = (ysl, xsl)
         arr_cropped = arr[(...,) + sl]
         meta_out = meta.without_rois()
-        return model.with_value(arr_cropped, metadata=meta_out).with_title_numbering()
+        return model.with_value(
+            arr_cropped.arr, metadata=meta_out
+        ).with_title_numbering()
 
     return run_crop_image
 
@@ -88,7 +90,7 @@ def crop_image_multi(model: WidgetDataModel) -> Parametric:
             sl = _bbox_to_slice(bbox, meta)
             arr_cropped = arr[(...,) + sl]
             model_0 = model.with_value(
-                arr_cropped, metadata=meta_out, title=f"ROI-{i} of {model.title}"
+                arr_cropped.arr, metadata=meta_out, title=f"ROI-{i} of {model.title}"
             )
             cropped_models.append(model_0)
         return WidgetDataModel(
@@ -137,7 +139,7 @@ def crop_image_nd(win: SubWindow) -> Parametric:
         arr_cropped = arr[sl_nd]
         meta_out = meta.without_rois()
         meta_out.current_indices = None  # shape changed, need to reset
-        return model.with_value(arr_cropped, metadata=meta_out)
+        return model.with_value(arr_cropped.arr, metadata=meta_out)
 
     return run_crop_image
 

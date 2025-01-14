@@ -280,17 +280,6 @@ class ImageMeta(ArrayMeta):
         for channel in self.channels:
             channel.colormap = value
 
-    @property
-    def current_indices_channel_composite(self) -> tuple[int | slice, ...]:
-        """Return the current indices with the channel axis set to slice(None)."""
-        if self.current_indices is None:
-            raise ValueError("Tried to obtain current indices but it is not set.")
-        indices = list(slice(None) if i is None else i for i in self.current_indices)
-        if self.channel_axis is not None:
-            indices[self.channel_axis] = slice(None)
-        indices = tuple(indices)
-        return indices
-
     @classmethod
     def from_metadata(cls, dir_path: Path) -> "ImageMeta":
         self = cls.model_validate_json(dir_path.joinpath(_META_NAME).read_text())

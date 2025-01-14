@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from functools import singledispatch
+from datetime import timedelta
 from himena.consts import StandardType, MonospaceFontFamily
 from himena.plugins import validate_protocol
 from himena import workflow as _wf
@@ -265,6 +266,10 @@ def _(step: _wf.CommandExecution) -> QtW.QTreeWidgetItem:
         else:
             raise ValueError(f"Unknown context type {type(ctx)}")
         item.addChild(child)
+    if (dt := step.execution_time) > 0.0:
+        item.addChild(
+            QtW.QTreeWidgetItem([f"execution time = {timedelta(seconds=dt)}"])
+        )
     item.setData(0, _STEP_ROLE, step)
     return item
 

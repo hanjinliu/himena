@@ -11,8 +11,9 @@ from app_model.types import (
     StandardKeyBinding,
 )
 from himena._data_wrappers import wrap_array
-from himena._descriptors import SaveToNewPath, SaveToPath
+from himena._descriptors import SaveToNewPath
 from himena.consts import StandardType, MenuId
+from himena.plugins import configure_gui
 from himena.standards.model_meta import ImageMeta
 from himena.widgets import MainWindow, SubWindow
 from himena import _providers, workflow as _wf
@@ -23,6 +24,7 @@ from himena.types import (
 )
 from himena._app_model._context import AppContext as _ctx
 from himena._app_model.actions._registry import ACTIONS, SUBMENUS
+from himena._utils import OrderedSet
 from himena.exceptions import Cancelled
 
 _CtrlK = KeyMod.CtrlCmd | KeyCode.KeyK
@@ -320,7 +322,7 @@ def load_session_from_dialog(ui: MainWindow) -> None:
     """Load a application session from a file."""
     if path := ui.exec_file_dialog(
         mode="r",
-        allowed_extensions=[".session.yaml", ".session.yml", ".session.zip"],
+        allowed_extensions=[".session.zip"],
         group="session",
     ):
         ui.load_session(path)
@@ -332,99 +334,41 @@ def load_session_from_dialog(ui: MainWindow) -> None:
     title="Save Session ...",
     menus=[{"id": MenuId.FILE_SESSION, "group": WRITE_GROUP}],
     enablement=_ctx.num_tabs > 0,
+    need_function_callback=True,
 )
-def save_session_from_dialog(ui: MainWindow) -> None:
-    """Save current application state to a session."""
-    need_save: list[SubWindow] = []
-    need_overwrite: list[SubWindow] = []
+def save_session(ui: MainWindow) -> Parametric:
+    datetime_str = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    command_ids = OrderedSet[str]()
+    choices: list[tuple[str, str]] = []
     for win in ui.iter_windows():
-        if win._determine_read_from() is None:
-            need_save.append(win)
-        elif win._need_ask_save_before_close():
-            if isinstance(win.save_behavior, SaveToPath):
-                need_overwrite.append(win)
-            else:
-                need_save.append(win)
-    # NOTE: need_save and need_overwrite are disjoint.
-    allow_calc = False
-    if need_save:
-        _CS = "Save one by one"
-        _CJ = "Just skip"
-        _CR = "Recalculate when loaded"
-        _CC = "Cancel"
-        _list = "".join([f"<li>{win.title}</li>" for win in need_save])
-        res = ui.exec_choose_one_dialog(
-            title="Not saved windows",
-            message=(
-                f"Following windows are not saved yet.<ul>{_list}</ul>"
-                "Do you want to save them?"
-            ),
-            choices=[_CS, _CJ, _CR, _CC],
-            how="radiobuttons",
-        )
-        if res == _CS:
-            for win in need_save:
-                ui.current_window = win
-                if cb := win._save_from_dialog(ui, behavior=SaveToNewPath()):
-                    cb()
-                else:
-                    raise Cancelled
-        elif res == _CJ:
-            pass
-        elif res == _CR:
-            allow_calc = True
-        else:
-            raise Cancelled
-    if need_overwrite:
-        _CO = "Overwrite all"
-        _CK = "Keep original"
-        _CC = "Cancel"
-        _list = "".join([f"<li>{win.title}</li>" for win in need_overwrite])
-        res = ui.exec_choose_one_dialog(
-            title="Modified windows",
-            message=(
-                f"Following window are modified.<ul>{_list}</ul>"
-                "Do you want to overwrite them?"
-            ),
-            choices=[_CO, _CK, _CC],
-        )
-        if res == _CO:
-            for win in need_overwrite:
-                assert isinstance(win.save_behavior, SaveToPath)
-                win.write_model(win.save_behavior.path, win.save_behavior.plugin)
-        elif res == _CK:
-            pass
-        else:
-            raise Cancelled
-    datetime_str = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    if path := ui.exec_file_dialog(
-        mode="w",
-        extension_default=".session.yaml",
-        allowed_extensions=[".session.yaml"],
-        start_path=f"himena-{datetime_str}.session.yaml",
-        group="session",
-    ):
-        return ui.save_session(path, allow_calculate=allow_calc)
-    raise Cancelled
+        if isinstance(step := win._widget_workflow.last(), _wf.CommandExecution):
+            if step.command_id in command_ids:
+                continue
+            if cmd := ui.model_app._registered_actions.get(step.command_id):
+                command_ids.add(cmd.id)
+                choices.append((f"{cmd.title} ({cmd.id})", cmd.id))
 
+    @configure_gui(
+        save_path={
+            "mode": "w",
+            "filter": "Session file (*.session.zip);;Session directory (*.session;*)",
+            "value": f"himena-{datetime_str}.session.zip",
+        },
+        allow_calculate={"choices": choices, "widget_type": "Select"},
+        run_async=True,
+    )
+    def run_save_session(
+        save_path: Path,
+        save_copies: bool = False,
+        allow_calculate: list[str] = (),
+    ) -> None:
+        return ui.save_session(
+            save_path,
+            save_copies=save_copies,
+            allow_calculate=allow_calculate,
+        )
 
-@ACTIONS.append_from_fn(
-    id="save-session-stand-alone",
-    title="Save Session (Stand-along) ...",
-    menus=[{"id": MenuId.FILE_SESSION, "group": WRITE_GROUP}],
-    enablement=_ctx.num_tabs > 0,
-)
-def save_session_stand_along_from_dialog(ui: MainWindow) -> None:
-    datetime_str = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    if path := ui.exec_file_dialog(
-        mode="w",
-        extension_default=".session.zip",
-        allowed_extensions=[".session.zip"],
-        start_path=f"himena-{datetime_str}.session.zip",
-        group="session",
-    ):
-        return ui.save_session_stand_alone(path)
-    return Cancelled
+    return run_save_session
 
 
 @ACTIONS.append_from_fn(
