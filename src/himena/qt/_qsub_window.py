@@ -853,6 +853,20 @@ class QSubWindowTitleBar(QtW.QFrame):
             self._subwindow.move(0, self._subwindow.pos().y())
 
     def _show_model_menu(self):
+        context_menu = self._prep_model_menu()
+        return self._exec_menu_at_button(context_menu, self._model_menu_btn)
+
+    def _prep_window_menu(self) -> QtW.QMenu:
+        main = get_main_window(self)
+        app = main._model_app
+
+        context_menu = build_qmodel_menu(MenuId.WINDOW, app=app.name, parent=self)
+        ctx = main._ctx_keys
+        ctx._update(main)
+        context_menu.update_from_context(ctx.dict())
+        return context_menu
+
+    def _prep_model_menu(self) -> QtW.QMenu:
         model_type = self._get_model_type()
         if model_type is None:
             return None
@@ -901,17 +915,6 @@ class QSubWindowTitleBar(QtW.QFrame):
             for menu in supertype_menus:
                 if not menu.isEmpty():
                     context_menu.addMenu(menu)
-
-        return self._exec_menu_at_button(context_menu, self._model_menu_btn)
-
-    def _prep_window_menu(self) -> QtW.QMenu:
-        main = get_main_window(self)
-        app = main._model_app
-
-        context_menu = build_qmodel_menu(MenuId.WINDOW, app=app.name, parent=self)
-        ctx = main._ctx_keys
-        ctx._update(main)
-        context_menu.update_from_context(ctx.dict())
         return context_menu
 
     def _show_window_menu(self):

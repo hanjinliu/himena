@@ -40,6 +40,10 @@ def test_subwindow_interactions(himena_ui: MainWindow, qtbot: QtBot):
         pos=qtitlebar.rect().center(),
     )
 
+    qwin._title_bar._make_tooltip()
+    qwin._title_bar._prep_model_menu()
+    qwin._title_bar._prep_window_menu()
+
 def test_subwindow_drag(himena_ui: MainWindow, qtbot: QtBot):
     himena_ui.show()
     win = himena_ui.add_object("xxx", type="text")

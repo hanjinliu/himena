@@ -1,8 +1,10 @@
+import warnings
 from himena import MainWindow, anchor
 from himena.consts import StandardType
 from himena.qt import MainWindowQt
 from himena.qt._qmain_window import QMainWindow
 from himena.standards.model_meta import DataFrameMeta
+from himena.widgets import set_status_tip, notify
 from himena_builtins.qt import widgets as _qtw
 
 from qtpy.QtCore import Qt
@@ -126,7 +128,7 @@ def test_goto_widget(himena_ui: MainWindowQt, qtbot: QtBot):
     qtbot.keyClick(qmain._goto_widget, Qt.Key.Key_Escape)
 
 def test_register_function_in_runtime(himena_ui: MainWindowQt, qtbot: QtBot):
-    qmain: QMainWindow = himena_ui._backend_main_window
+    qmain = himena_ui._backend_main_window
     assert qmain._menubar.actions()[-2].menu().title() != "Plugins"
 
     @himena_ui.register_function(menus="plugins", title="F0", command_id="pytest:f0")
@@ -147,3 +149,29 @@ def test_register_function_in_runtime(himena_ui: MainWindowQt, qtbot: QtBot):
     @himena_ui.register_function(menus="plugins2/sub", title="F2", command_id="pytest:f2")
     def f():
         pass
+
+def test_notification_and_status_tip(himena_ui: MainWindowQt, qtbot: QtBot):
+    set_status_tip("my text", duration=0.1)
+    notify("my text", duration=0.1)
+    himena_ui._backend_main_window._on_error(ValueError("error msg"))
+    himena_ui._backend_main_window._on_error(ValueError())
+    himena_ui._backend_main_window._on_error(ValueError("msg 1", "msg 2"))
+    himena_ui._backend_main_window._on_warning(warnings.WarningMessage("msg", UserWarning, "file", 1))
+
+def test_dock_widget(himena_ui: MainWindow):
+    assert len(himena_ui.dock_widgets) == 0
+    widget = _qtw.QTextEdit()
+    dock = himena_ui.add_dock_widget(widget)
+    assert len(himena_ui.dock_widgets) == 1
+    dock.hide()
+    dock.show()
+    dock.title = "new title"
+    assert dock.title == "new title"
+    del himena_ui.dock_widgets[0]
+    assert len(himena_ui.dock_widgets) == 0
+
+def test_setting_widget(himena_ui: MainWindow, qtbot: QtBot):
+    from himena.qt.settings import QSettingsDialog
+
+    dlg = QSettingsDialog(himena_ui)
+    qtbot.addWidget(dlg)
