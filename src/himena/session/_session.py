@@ -1,7 +1,7 @@
 from contextlib import suppress
 import importlib
 from pathlib import Path
-from typing import Any, TypeVar, TYPE_CHECKING
+from typing import Any, Mapping, TypeVar, TYPE_CHECKING
 import uuid
 import warnings
 from pydantic_compat import BaseModel, Field
@@ -11,6 +11,7 @@ from himena._descriptors import NoNeedToSave, SaveToPath
 from himena._utils import get_widget_class_id
 from himena.types import WindowState, WindowRect, WidgetDataModel, is_subtype
 from himena import anchor, io_utils
+from himena.widgets._wrapper import ParametricWindow
 from himena.workflow import Workflow, compute, WorkflowStepType, LocalReaderMethod
 
 if TYPE_CHECKING:
@@ -111,12 +112,19 @@ class WindowDescription(BaseModel):
         window._identifier = self.id
         return model
 
-    def prep_workflow(self) -> Workflow:
+    def prep_workflow(self, workflow_override: Mapping[str, Workflow]) -> Workflow:
         """Prepare the most efficient workflow to get the window."""
-        if self.short_workflow is None:
-            wf = self.workflow
+        if wf := workflow_override.get(self.id):
+            pass
         else:
-            wf = Workflow(steps=[self.short_workflow])
+            if self.short_workflow is None:
+                wf = self.workflow
+            else:
+                wf = Workflow(steps=[self.short_workflow])
+        if len(wf) == 1 and isinstance(meth := wf[0], LocalReaderMethod):
+            # look for the best reader according to _win_sessions.model_type
+            if meth.plugin is None:
+                meth.plugin = _pick_best_reader_plugin(meth, self.model_type)
         return wf
 
 
@@ -141,10 +149,16 @@ class TabSession(BaseModel):
             windows=[
                 WindowDescription.from_gui(window, allow_calculate=allow_calculate)
                 for window in tab
+                if not isinstance(window, ParametricWindow)
             ],
         )
 
-    def update_gui(self, main: "MainWindow[_W]") -> None:
+    def update_gui(
+        self,
+        main: "MainWindow[_W]",
+        *,
+        workflow_override: Mapping[str, Workflow] = {},
+    ) -> None:
         """Update the GUI state based on the session."""
         _win_sessions: list[WindowDescription] = []
         _pending_workflows: list[Workflow] = []
@@ -152,7 +166,7 @@ class TabSession(BaseModel):
         cur_index = self.current_index
         for window_session in self.windows:
             _win_sessions.append(window_session)
-            wf = window_session.prep_workflow()
+            wf = window_session.prep_workflow(workflow_override)
             _pending_workflows.append(wf)
 
         models = compute(_pending_workflows)
@@ -231,7 +245,7 @@ class AppSession(BaseModel):
         self,
         main: "MainWindow[_W]",
         *,
-        workflow_override: dict[str, Workflow] = {},
+        workflow_override: Mapping[str, Workflow] = {},
     ) -> None:
         """Update the GUI state based on the session."""
         cur_index = self.current_index
@@ -244,16 +258,7 @@ class AppSession(BaseModel):
             _new_tab = main.add_tab(tab_session.name)
             for window_session in tab_session.windows:
                 _win_sessions.append(window_session)
-                if wf := workflow_override.get(window_session.id):
-                    pass
-                else:
-                    wf = window_session.prep_workflow()
-                if len(wf) == 1 and isinstance(meth := wf[0], LocalReaderMethod):
-                    # look for the best reader according to _win_sessions.model_type
-                    if meth.plugin is None:
-                        meth.plugin = _pick_best_reader_plugin(
-                            meth, window_session.model_type
-                        )
+                wf = window_session.prep_workflow(workflow_override)
                 _pending_workflows.append(wf)
                 _target_areas.append(_new_tab)
         models = compute(_pending_workflows)

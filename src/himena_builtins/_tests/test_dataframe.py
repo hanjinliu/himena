@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 from qtpy.QtCore import Qt
+from himena import MainWindow
 from himena.testing.subwindow import WidgetTester
 from himena_builtins.qt.widgets import QDataFrameView, QDataFramePlotView
 import pandas as pd
@@ -37,3 +38,24 @@ def test_dataframe_plot(qtbot: QtBot):
         tester.update_model(value=df)
         tester.cycle_model()
         qtbot.addWidget(tester.widget)
+
+def test_dataframe_command(himena_ui: MainWindow):
+    win = himena_ui.add_object({"a": [1, 2], "b": ["p", "q"]}, type="dataframe")
+    himena_ui.exec_action("builtins:dataframe:header-to-row")
+    himena_ui.current_window = win
+    himena_ui.exec_action("builtins:dataframe:series-as-array", with_params={"column": "a"})
+    himena_ui.current_window = win
+    himena_ui.exec_action("builtins:dataframe:select-columns-by-name", with_params={"columns": ["b"]})
+    assert _data_frame_equal(himena_ui.current_model.value, {"b": ["p", "q"]})
+    himena_ui.current_window = win
+    himena_ui.exec_action("builtins:dataframe:filter", with_params={"column": "b", "operator": "eq", "value": "p"})
+    assert _data_frame_equal(himena_ui.current_model.value, {"a": [1], "b": ["p"]})
+    himena_ui.current_window = win
+    himena_ui.exec_action("builtins:dataframe:sort", with_params={"column": "b", "descending": True})
+    assert _data_frame_equal(himena_ui.current_model.value, {"a": [2, 1], "b": ["q", "p"]})
+
+def _data_frame_equal(a: dict, b: dict):
+    for k in a.keys():
+        if not np.all(a[k] == b[k]):
+            return False
+    return True

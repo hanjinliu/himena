@@ -1,12 +1,58 @@
+import json
+from pathlib import Path
 from typing import Any, TYPE_CHECKING, Callable, Literal
+import warnings
+import numpy as np
 from pydantic_compat import BaseModel, Field, field_validator
 from himena.standards import roi
+from himena._utils import iter_subclasses
 
 if TYPE_CHECKING:
     from pydantic import ValidationInfo
 
+_META_NAME = "meta.json"
+_CLASS_JSON = ".class.json"
 
-class TextMeta(BaseModel):
+
+class BaseMetadata(BaseModel):
+    """The base class for a model metadata."""
+
+    @classmethod
+    def from_metadata(cls, dir_path: Path) -> "TextMeta":
+        return cls.model_validate_json(dir_path.joinpath(_META_NAME).read_text())
+
+    def write_metadata(self, dir_path: Path) -> None:
+        dir_path.joinpath(_META_NAME).write_text(self.model_dump_json())
+
+    def _class_info(self) -> dict:
+        return {"name": self.__class__.__name__, "module": self.__class__.__module__}
+
+
+def read_metadata(dir_path: Path) -> BaseMetadata:
+    """Read the metadata from a directory."""
+    with dir_path.joinpath(_CLASS_JSON).open("r") as f:
+        class_js = json.load(f)
+    module = class_js["module"]
+    name = class_js["name"]
+    for sub in iter_subclasses(BaseMetadata):
+        if sub.__name__ == name and sub.__module__ == module:
+            metadata_class = sub
+            break
+    else:
+        raise ValueError(f"Metadata class {name=}n {module=} not found.")
+
+    return metadata_class.from_metadata(dir_path)
+
+
+def write_metadata(meta: BaseMetadata, dir_path: Path) -> None:
+    """Write the metadata to a directory."""
+    meta.write_metadata(dir_path)
+    with dir_path.joinpath(_CLASS_JSON).open("w") as f:
+        json.dump(meta._class_info(), f)
+    return None
+
+
+class TextMeta(BaseMetadata):
     """Preset for describing the metadata for a "text" type."""
 
     language: str | None = Field(None, description="Language of the text file.")
@@ -17,7 +63,7 @@ class TextMeta(BaseModel):
     encoding: str | None = Field(None, description="Encoding of the text file.")
 
 
-class TableMeta(BaseModel):
+class TableMeta(BaseMetadata):
     """Preset for describing the metadata for a "table" type."""
 
     current_position: list[int] | None = Field(
@@ -40,7 +86,7 @@ class ExcelMeta(TableMeta):
     current_sheet: str | None = Field(None, description="Current sheet name.")
 
 
-class FunctionMeta(BaseModel):
+class FunctionMeta(BaseMetadata):
     """Preset for describing the metadata for a "function" type."""
 
     source_code: str | None = Field(None, description="Source code of the function.")
@@ -52,13 +98,33 @@ class DataFramePlotMeta(DataFrameMeta):
     plot_type: Literal["line", "scatter"] = Field(
         "line", description="Type of the plot."
     )
-    plot_color_cycle: Any | None = Field(None, description="Color cycle of the plot.")
-    plot_background_color: Any | None = Field(
+    plot_color_cycle: list[str] | None = Field(
+        None, description="Color cycle of the plot."
+    )
+    plot_background_color: str | None = Field(
         "#FFFFFF", description="Background color of the plot."
     )
     rois: roi.RoiListModel | Callable[[], roi.RoiListModel] = Field(
         default_factory=roi.RoiListModel, description="Regions of interest."
     )
+
+    @classmethod
+    def from_metadata(cls, dir_path: Path) -> "DataFramePlotMeta":
+        self = cls.model_validate_json(dir_path.joinpath(_META_NAME).read_text())
+        if (rois_path := dir_path.joinpath("rois.roi.json")).exists():
+            self.rois = roi.RoiListModel.model_validate_json(rois_path.read_text())
+        return self
+
+    def write_metadata(self, dir_path: Path) -> None:
+        dir_path.joinpath(_META_NAME).write_text(self.model_dump_json(exclude={"rois"}))
+        if isinstance(self.rois, roi.RoiListModel):
+            rois = self.rois
+        else:
+            rois = self.rois()
+        if len(rois) > 0:
+            with dir_path.joinpath("rois.roi.json").open("w") as f:
+                json.dump(rois.model_dump_typed(), f)
+        return None
 
 
 class ArrayAxis(BaseModel):
@@ -68,25 +134,27 @@ class ArrayAxis(BaseModel):
     scale: float | None = Field(None, description="Pixel scale of the axis.")
     origin: float = Field(0.0, description="Offset of the axis.")
     unit: str | None = Field(None, description="Unit of the axis spacing.")
+    # TODO: should be:
+    # coordinate: Union[Physical, Categorical]
 
     @field_validator("name", mode="before")
     def _name_to_str(cls, v):
         return str(v)
 
 
-class ArrayMeta(BaseModel):
+class ArrayMeta(BaseMetadata):
     """Preset for describing an array metadata."""
 
     axes: list[ArrayAxis] | None = Field(None, description="Axes of the array.")
-    current_indices: tuple[Any, ...] | None = Field(
+    current_indices: tuple[int | None, ...] | None = Field(
         None, description="Current slice indices to render the array in GUI."
     )
-    selections: list[Any] = Field(
+    selections: list[tuple[tuple[int, int], tuple[int, int]]] = Field(
         default_factory=list,
         description="Selections of the array. This attribute should be any sliceable "
         "objects that can passed to the backend array object.",
     )
-    unit: Any | None = Field(
+    unit: str | None = Field(
         None,
         description="Unit of the array values.",
     )
@@ -100,7 +168,7 @@ class ImageChannel(BaseModel):
     """A channel in an image file."""
 
     name: str | None = Field(None, description="Name of the channel.")
-    colormap: Any | None = Field(None, description="Color map of the channel.")
+    colormap: str | None = Field(None, description="Color map of the channel.")
     contrast_limits: tuple[float, float] | None = Field(
         None, description="Contrast limits of the channel."
     )
@@ -111,7 +179,7 @@ class ImageChannel(BaseModel):
         """Return a default channel (also used for mono-channel images)."""
         return cls(name=None, colormap="gray", contrast_limits=None)
 
-    def with_colormap(self, colormap: Any) -> "ImageChannel":
+    def with_colormap(self, colormap: str) -> "ImageChannel":
         """Set the colormap of the channel."""
         return self.model_copy(update={"colormap": colormap})
 
@@ -212,19 +280,63 @@ class ImageMeta(ArrayMeta):
         for channel in self.channels:
             channel.colormap = value
 
-    @property
-    def current_indices_channel_composite(self) -> tuple[int | slice, ...]:
-        """Return the current indices with the channel axis set to slice(None)."""
-        if self.current_indices is None:
-            raise ValueError("Tried to obtain current indices but it is not set.")
-        indices = list(self.current_indices)
-        if self.channel_axis is not None:
-            indices[self.channel_axis] = slice(None)
-        indices = tuple(indices)
-        return indices
+    @classmethod
+    def from_metadata(cls, dir_path: Path) -> "ImageMeta":
+        self = cls.model_validate_json(dir_path.joinpath(_META_NAME).read_text())
+        if (rois_path := dir_path.joinpath("rois.roi.json")).exists():
+            self.rois = roi.RoiListModel.model_validate_json(rois_path.read_text())
+        if (cur_roi_path := dir_path.joinpath("current_roi.json")).exists():
+            roi_js = json.loads(cur_roi_path.read_text())
+            _type = roi_js.pop("type")
+            self.current_roi = roi.RoiModel.construct(_type, roi_js)
+        if (labels_path := dir_path.joinpath("labels.npy")).exists():
+            self.labels = np.load(labels_path, allow_pickle=False)
+        if (more_meta_path := dir_path.joinpath("more_meta.json")).exists():
+            with more_meta_path.open() as f:
+                self.more_metadata = json.load(f)
+        return self
+
+    def write_metadata(self, dir_path: Path) -> None:
+        dir_path.joinpath(_META_NAME).write_text(
+            self.model_dump_json(
+                exclude={"current_roi", "rois", "labels", "more_metadata"}
+            )
+        )
+        if isinstance(self.rois, roi.RoiListModel):
+            rois = self.rois
+        else:
+            rois = self.rois()
+        if cur_roi := self.current_roi:
+            with dir_path.joinpath("current_roi.json").open("w") as f:
+                json.dump(cur_roi.model_dump_typed(), f)
+        if len(rois) > 0:
+            with dir_path.joinpath("rois.roi.json").open("w") as f:
+                json.dump(rois.model_dump_typed(), f)
+        if (labels := self.labels) is not None:
+            if isinstance(labels, np.ndarray):
+                np.savez_compressed(
+                    dir_path.joinpath("labels.npy"), labels, allow_pickle=False
+                )
+            else:
+                warnings.warn(
+                    f"Unsupported labels type {type(labels)}. Labels are not saved.",
+                    UserWarning,
+                    stacklevel=2,
+                )
+        if (more_metadata := self.more_metadata) is not None:
+            try:
+                with dir_path.joinpath("more_meta.json").open("w") as f:
+                    json.dump(more_metadata, f)
+            except Exception as e:
+                warnings.warn(
+                    f"Failed to save `more_metadata`: {e}",
+                    UserWarning,
+                    stacklevel=2,
+                )
+        return None
 
 
-class ImageRoisMeta(BaseModel):
+class ImageRoisMeta(BaseMetadata):
     """Preset for describing an image-rois metadata."""
 
     axes: list[ArrayAxis] | None = Field(None, description="Axes of the ROIs.")

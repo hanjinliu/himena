@@ -461,7 +461,24 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         file_path: PathOrPaths,
         plugin: str | None = None,
     ) -> SubWindow[_W]:
-        """Read local file(s) and open as a new sub-window in this tab."""
+        """Read local file(s) and open as a new sub-window in this tab.
+
+        Parameters
+        ----------
+        file_path : str or Path or list of them
+            Path(s) to the file to read. If a list is given, they will be read as a
+            group, not as separate windows.
+        plugin : str, optional
+            If given, reader provider will be searched with the plugin name. This value
+            is usually the full import path to the reader provider function, such as
+            `"himena_builtins.io.default_reader_provider"`.
+
+        Returns
+        -------
+        SubWindow
+            The sub-window instance that is constructed based on the return value of
+            the reader.
+        """
         return self.read_files([file_path], plugin=plugin)[0]
 
     def read_files(

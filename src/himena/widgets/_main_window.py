@@ -427,22 +427,23 @@ class MainWindow(Generic[_W]):
         self,
         path: str | Path,
         *,
-        allow_calculate: bool = False,
-    ) -> None:
-        """Save the current session to a file."""
-        from himena.session import dump_yaml
-
-        return dump_yaml(self, path, allow_calculate=allow_calculate)
-
-    def save_session_stand_alone(
-        self,
-        path: str | Path,
+        save_copies: bool = False,
+        allow_calculate: Sequence[str] = (),
     ) -> None:
         """Save the current session to a zip file as a stand-along file."""
-        from himena.session import dump_zip
+        from himena.session import dump_zip, dump_directory
 
-        dump_zip(self, path)
+        path = Path(path)
+        if path.suffix == ".zip":
+            dump_zip(
+                self, path, save_copies=save_copies, allow_calculate=allow_calculate
+            )
+        else:
+            dump_directory(
+                self, path, save_copies=save_copies, allow_calculate=allow_calculate
+            )
         self.set_status_tip(f"Session saved to {path}")
+        self._recent_session_manager.append_recent_files([(path, None)])
         return None
 
     def clear(self) -> None:

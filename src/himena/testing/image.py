@@ -92,18 +92,14 @@ def test_setting_current_indices(tester: WidgetTester):
     tester.update_model(_zyx_image_model())
     model = tester.to_model()
     meta = _cast_meta(model.metadata)
-    if meta.current_indices != (0, slice(None), slice(None)):
-        raise AssertionError(
-            f"Expected (0, slice(None), slice(None)), got {meta.current_indices}"
-        )
+    if meta.current_indices != (0, None, None):
+        raise AssertionError(f"Expected (0, None, None), got {meta.current_indices}")
 
-    tester.update_model(_zyx_image_model(current_indices=(1, slice(None), slice(None))))
+    tester.update_model(_zyx_image_model(current_indices=(1, None, None)))
     model = tester.to_model()
     meta = _cast_meta(model.metadata)
-    if meta.current_indices != (1, slice(None), slice(None)):
-        raise AssertionError(
-            f"Expected (1, slice(None), slice(None)), got {meta.current_indices}"
-        )
+    if meta.current_indices != (1, None, None):
+        raise AssertionError(f"Expected (1, None, None), got {meta.current_indices}")
 
 
 def test_current_roi(tester: WidgetTester):
@@ -114,7 +110,7 @@ def test_current_roi(tester: WidgetTester):
 
     roi = _roi.RectangleRoi(indices=(1,), x=2.9, y=0, width=2, height=2.5)
     tester.update_model(
-        _zyx_image_model(current_roi=roi, current_indices=(1, slice(None), slice(None)))
+        _zyx_image_model(current_roi=roi, current_indices=(1, None, None))
     )
     model = tester.to_model()
     meta = _cast_meta(model.metadata)
@@ -165,14 +161,14 @@ def _zyx_image_model(
     pixel_unit: str = "um",
     colormap: str = "gray",
     unit: str = "a.u.",
-    current_indices=(0, slice(None), slice(None)),
+    current_indices=(0, None, None),
     current_roi: _roi.RoiModel | None = None,
 ) -> WidgetDataModel:
     axes = [
         ArrayAxis(name=name, scale=scale, unit=pixel_unit)
         for name, scale in zip(axis_names, pixel_scale)
     ]
-    channels = [ImageChannel(colormap=Colormap(colormap))]
+    channels = [ImageChannel(colormap=colormap)]
     return WidgetDataModel(
         value=np.arange(48).reshape(3, 4, 4),
         type=StandardType.IMAGE,

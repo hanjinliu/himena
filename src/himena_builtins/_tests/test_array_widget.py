@@ -21,7 +21,7 @@ def test_array_view(qtbot: QtBot):
         qtbot.keyClick(tester.widget, Qt.Key.Key_C, _Ctrl)
         old, new = tester.cycle_model()
         assert np.all(old.value == new.value)
-        assert new.metadata.selections == [(slice(1, 2), slice(1, 3))]
+        assert new.metadata.selections == [((1, 2), (1, 3))]
         assert old.metadata.selections == new.metadata.selections
 
 def test_structured(qtbot):
@@ -40,5 +40,5 @@ def test_structured(qtbot):
         qtbot.keyClick(tester.widget, Qt.Key.Key_C, _Ctrl)
         old, new = tester.cycle_model()
         assert np.all(old.value == new.value)
-        assert new.metadata.selections == [(slice(1, 2), slice(1, 3))]
+        assert new.metadata.selections == [((1, 2), (1, 3))]
         assert old.metadata.selections == new.metadata.selections

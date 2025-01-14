@@ -1,6 +1,7 @@
 from dataclasses import asdict, dataclass, field
 import math
 from pathlib import Path
+import timeit
 from typing import (
     Any,
     Callable,
@@ -558,6 +559,7 @@ class ModelTrack(_HasDynamicAttribute):
     command_id: str
     contexts: list = field(default_factory=list)
     workflow: Workflow = field(default_factory=Workflow)
+    time_start: float = field(default=0.0)
 
     def to_workflow(self, parameters: dict[str, Any]) -> Workflow:
         params = []
@@ -574,6 +576,7 @@ class ModelTrack(_HasDynamicAttribute):
                 command_id=self.command_id,
                 contexts=self.contexts,
                 parameters=params,
+                execution_time=timeit.default_timer() - self.time_start,
             )
         )
 

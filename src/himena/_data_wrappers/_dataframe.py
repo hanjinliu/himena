@@ -7,13 +7,14 @@ import importlib.metadata
 import io
 from pathlib import Path
 import sys
-from typing import TYPE_CHECKING, Any, Mapping, NamedTuple, overload
+from typing import TYPE_CHECKING, Any, Mapping, NamedTuple, overload, Sequence
 import numpy as np
 from himena.consts import ExcelFileTypes
 from himena._utils import lru_cache
 
 if TYPE_CHECKING:
     from typing import TypeGuard, Self
+    from numpy.typing import NDArray
     import pandas as pd
     import polars as pl
     import pyarrow as pa
@@ -115,6 +116,8 @@ class DataFrameWrapper(ABC):
             return self.column_to_array(key)
         elif isinstance(key, tuple):
             return self.get_item(key)
+        else:
+            raise TypeError(f"Unsupported key type: {type(key)}")
 
     @abstractmethod
     def get_item(self, key: tuple[int, int]) -> Any:
@@ -122,7 +125,7 @@ class DataFrameWrapper(ABC):
 
     @abstractmethod
     def get_subset(self, r0, r1, c0, c1) -> DataFrameWrapper:
-        """Return a subset of the dataframe by slicing at df[r0:r1, c0, c1]."""
+        """Return a subset of the dataframe by slicing at df[r0:r1, c0:c1]."""
 
     @abstractmethod
     def num_rows(self) -> int:
@@ -183,6 +186,26 @@ class DataFrameWrapper(ABC):
 
     def __len__(self) -> int:
         return self.num_rows()
+
+    def filter(self, array: NDArray[np.bool_] | Sequence[int]) -> Self:
+        """Filter the dataframe by the given boolean array or indices."""
+        dict_filt = {k: v[array] for k, v in self.to_dict().items()}
+        return self.from_dict(dict_filt)
+
+    def sort(self, key: str, *, descending: bool = False) -> Self:
+        """Sort the dataframe by the given key."""
+        d = self.to_dict()
+        order = np.argsort(d[key])
+        if descending:
+            order = len(order) - 1 - order
+        dict_sorted = {k: v[order] for k, v in d.items()}
+        return self.from_dict(dict_sorted)
+
+    def select(self, columns: list[str]) -> Self:
+        """Select columns by name."""
+        dict_new = {k: v for k, v in self.to_dict().items() if k in columns}
+        df_new = self.from_dict(dict_new)
+        return df_new
 
 
 class DictWrapper(DataFrameWrapper):

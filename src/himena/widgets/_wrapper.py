@@ -498,6 +498,7 @@ class SubWindow(WidgetWrapper[_W], Layout):
         self._alive = False
 
     def _determine_read_from(self) -> tuple[Path | list[Path], str | None] | None:
+        """Determine how can the data be efficiently read."""
         workflow = self._widget_workflow.last()
         if isinstance(workflow, LocalReaderMethod):
             return workflow.path, workflow.plugin

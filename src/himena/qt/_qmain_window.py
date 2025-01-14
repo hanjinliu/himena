@@ -716,7 +716,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         text_edit.setWordWrapMode(QtGui.QTextOption.WrapMode.WordWrap)
         notification = QNotificationWidget(self, duration=int(duration * 1000))
         notification.addWidget(text_edit)
-        notification.setFixedWidth(280)
         return notification.show_and_hide_later()
 
     def _get_menu_action_by_id(self, name: str) -> QtW.QAction:
@@ -776,7 +775,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         text: str,
         style: Literal["plain", "markdown", "html"] = "plain",
     ) -> None:
-        whatsthis = QWhatsThisWidget(self._tab_widget)
+        whatsthis = QWhatsThisWidget(self)
         whatsthis.set_text(text, style)
         whatsthis.show()
         return None

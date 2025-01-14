@@ -3,6 +3,7 @@ from cmap import Color
 from pydantic_compat import BaseModel, Field, field_validator
 from pydantic import field_serializer
 from himena.consts import PYDANTIC_CONFIG_STRICT
+from himena._utils import iter_subclasses
 
 
 class StyledText(BaseModel):
@@ -24,7 +25,7 @@ class BasePlotModel(BaseModel):
 
     @classmethod
     def construct(cls, type: str, dict_: dict[str, Any]) -> "BasePlotModel":
-        for subclass in BasePlotModel.__subclasses__():
+        for subclass in iter_subclasses(BasePlotModel):
             if subclass.__name__.lower() == type:
                 return subclass(**dict_)
         raise ValueError(f"Unknown plot type: {type!r}")

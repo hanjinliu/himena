@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import timeit
 from typing import (
     Callable,
     Any,
@@ -39,6 +40,7 @@ from himena.workflow import Workflow
 
 if TYPE_CHECKING:
     _F = TypeVar("_F", bound=Callable)
+    _C = TypeVar("_C", bound=type)
 
     @overload
     def lru_cache(maxsize: int = 128, typed: bool = False) -> Callable[[_F], _F]: ...
@@ -234,6 +236,7 @@ def make_function_callback(
     @wraps(f)
     def _new_f(*args, **kwargs):
         bound = sig.bind(*args, **kwargs)
+        _time_before = timeit.default_timer()
         out = f(*args, **kwargs)
         contexts = []
         workflows = []
@@ -246,11 +249,18 @@ def make_function_callback(
         workflow = Workflow.concat(workflows)
         if isinstance(out, WidgetDataModel):
             out.workflow = out.workflow.with_step(
-                CommandExecution(contexts=contexts, command_id=command_id)
+                CommandExecution(
+                    contexts=contexts,
+                    command_id=command_id,
+                    execution_time=timeit.default_timer() - _time_before,
+                )
             )
         elif f_annot.get("return") in (Parametric, ParametricWidgetProtocol):
             tracker = ModelTrack(
-                contexts=contexts, command_id=command_id, workflow=workflow
+                contexts=contexts,
+                command_id=command_id,
+                workflow=workflow,
+                time_start=_time_before,
             )
             tracker.set(out)
             if title is not None:
@@ -287,6 +297,13 @@ def import_object(full_name: str) -> Any:
     mod = importlib.import_module(mod_name)
     obj = getattr(mod, func_name)
     return obj
+
+
+def iter_subclasses(cls: _C) -> Iterator[_C]:
+    """Recursively iterate over all subclasses of a class."""
+    for sub in cls.__subclasses__():
+        yield sub
+        yield from iter_subclasses(sub)
 
 
 def unwrap_lazy_model(model: WidgetDataModel) -> WidgetDataModel:

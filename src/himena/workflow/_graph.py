@@ -36,7 +36,7 @@ class Workflow(BaseModel):
 
     steps: list[WorkflowStepType] = Field(default_factory=list)
     _model_cache: dict[uuid.UUID, "WidgetDataModel"] = PrivateAttr(default_factory=dict)
-    _cahce_enabled: bool = PrivateAttr(default=False)
+    _cache_enabled: bool = PrivateAttr(default=False)
 
     def id_to_index_map(self) -> dict[uuid.UUID, int]:
         return {step.id: i for i, step in enumerate(self.steps)}
@@ -57,7 +57,7 @@ class Workflow(BaseModel):
                 all_descendant.append(self.steps[idx])
         indices = sorted(indices)
         out = Workflow(steps=[self.steps[i] for i in indices])
-        out._cahce_enabled = self._cahce_enabled
+        out._cache_enabled = self._cache_enabled
         out._model_cache = self._model_cache  # NOTE: do not update, share the reference
         return out
 
@@ -89,7 +89,7 @@ class Workflow(BaseModel):
             return model
         step = self.step_for_id(id)
         model = step.get_model(self)
-        if self._cahce_enabled:
+        if self._cache_enabled:
             self._model_cache[id] = model
         return model
 
@@ -121,12 +121,12 @@ class Workflow(BaseModel):
         For example, if the workflow is `A -> B0`, `A -> B1`, `B0, B1 -> C`, then
         the result of `A` will be cached and reused when computing `B0` and `B1`.
         """
-        was_enabled = self._cahce_enabled
-        self._cahce_enabled = True
+        was_enabled = self._cache_enabled
+        self._cache_enabled = True
         try:
             yield
         finally:
-            self._cahce_enabled = was_enabled
+            self._cache_enabled = was_enabled
             if not was_enabled:
                 self._model_cache.clear()
 

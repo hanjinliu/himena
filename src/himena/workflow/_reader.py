@@ -1,6 +1,7 @@
 import tempfile
 from typing import Iterator, Literal, Any, TYPE_CHECKING
 from pathlib import Path
+import warnings
 from pydantic_compat import Field
 from himena.workflow._base import WorkflowStep
 
@@ -49,9 +50,9 @@ class LocalReaderMethod(ReaderMethod):
 
     def run(self) -> "WidgetDataModel[Any]":
         """Get model by importing the reader plugin and actually read the file(s)."""
-        from himena._providers import PluginInfo
+        from himena._providers import PluginInfo, ReaderProviderStore
         from himena.types import WidgetDataModel
-        from himena._providers import ReaderProviderStore
+        from himena.standards.model_meta import read_metadata
 
         store = ReaderProviderStore.instance()
         model = store.run(self.path, plugin=self.plugin)
@@ -62,6 +63,17 @@ class LocalReaderMethod(ReaderMethod):
                 source=self.path,
                 plugin=PluginInfo.from_str(self.plugin) if self.plugin else None,
             )
+        if isinstance(self.path, Path):
+            meta_path = self.path.with_name(self.path.name + ".himena-meta")
+            if meta_path.exists():
+                try:
+                    model.metadata = read_metadata(meta_path)
+                except Exception as e:
+                    warnings.warn(
+                        f"Failed to read metadata from {meta_path}: {e}",
+                        RuntimeWarning,
+                        stacklevel=2,
+                    )
         return model
 
 
