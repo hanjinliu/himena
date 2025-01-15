@@ -112,16 +112,6 @@ class QImageView(QtW.QSplitter):
         self._stick_grid_switch.toggled.connect(self._img_view.set_stick_to_grid)
         self._dims_slider = QDimsSlider()
         self._roi_col = QRoiCollection(self)
-        self._roi_col.show_rois_changed.connect(self._img_view.set_show_rois)
-        self._roi_col.show_labels_changed.connect(self._img_view.set_show_labels)
-        self._roi_col.key_pressed.connect(self._img_view.keyPressEvent)
-        self._roi_col.key_released.connect(self._img_view.keyReleaseEvent)
-        self._roi_col.roi_item_clicked.connect(self._roi_item_clicked)
-        self._roi_col._add_btn.clicked.connect(self._img_view.add_current_roi)
-        self._roi_col.drag_requested.connect(self._run_drag_model)
-        self._roi_col._remove_btn.clicked.connect(
-            lambda: self._img_view.remove_current_item(remove_from_list=True)
-        )
         self._roi_col.layout().insertWidget(0, self._roi_buttons)
         self._roi_col.layout().insertWidget(1, self._stick_grid_switch)
         layout.addWidget(self._img_view)
@@ -228,7 +218,7 @@ class QImageView(QtW.QSplitter):
                 roi_list = roi_list()
             self._roi_col.update_from_standard_roi_list(roi_list)
         if meta0.current_roi:
-            self._img_view.remove_current_item()
+            self._img_view.remove_current_item(reason="update_model")
             self._img_view.set_current_roi(
                 from_standard_roi(meta0.current_roi, self._img_view._roi_pen)
             )
@@ -428,9 +418,11 @@ class QImageView(QtW.QSplitter):
             if ninds > 0:
                 higher_dims = ndim_rem - ninds
                 indices_filled = self._dims_slider.value()[:higher_dims] + indices
-                self._dims_slider.setValue(indices_filled)
+                self._dims_slider.set_value_no_emit(indices_filled)
+                self._slider_changed(indices_filled, force_sync=True)
         else:
-            self._dims_slider.setValue(indices)
+            self._dims_slider.set_value_no_emit(indices)
+            self._slider_changed(indices, force_sync=True)
         self._img_view.select_item(qroi)
 
     def _roi_visibility_changed(self, show_rois: bool):
@@ -470,16 +462,20 @@ class QImageView(QtW.QSplitter):
         """Get numpy array for current channel."""
         return self._arr.get_slice(tuple(value))
 
-    def _slider_changed(self, value: tuple[int, ...]):
+    def _slider_changed(self, value: tuple[int, ...], *, force_sync: bool = False):
         if self._arr is None:
             return
         if self._last_slice_future:
             self._last_slice_future.cancel()  # cancel last task
-        # set slice asynchronously
-        self._last_slice_future = self._executor.submit(
-            self._get_image_slices, value, len(self._channels)
-        )
-        self._last_slice_future.add_done_callback(self._set_image_slices_async)
+        if force_sync:
+            img_slices = self._get_image_slices(value, len(self._channels))
+            self._set_image_slices(img_slices)
+        else:
+            # set slice asynchronously
+            self._last_slice_future = self._executor.submit(
+                self._get_image_slices, value, len(self._channels)
+            )
+            self._last_slice_future.add_done_callback(self._set_image_slices_async)
 
     def _set_image_slice(self, img: NDArray[np.number], channel: ChannelInfo):
         idx = channel.channel_index or 0
@@ -576,7 +572,7 @@ class QImageView(QtW.QSplitter):
 
     def _on_roi_removed(self, idx: int):
         indices = self._dims_slider.value()
-        qroi = self._roi_col.pop_roi(indices, idx)
+        qroi = self._roi_col.pop_roi_in_slice(indices, idx)
         set_status_tip(f"Removed a {qroi._roi_type()} ROI")
         self._roi_col.set_selections([])
 

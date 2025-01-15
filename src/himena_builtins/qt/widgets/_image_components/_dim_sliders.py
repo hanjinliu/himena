@@ -81,12 +81,15 @@ class QDimsSlider(QtW.QWidget):
         return tuple(slider._slider.value() for slider in self._sliders)
 
     def setValue(self, value: tuple[int, ...]) -> None:
+        self.set_value_no_emit(value)
+        self.valueChanged.emit(value)
+
+    def set_value_no_emit(self, value: tuple[int, ...]) -> None:
         if len(value) != len(self._sliders):
             raise ValueError(f"Expected {len(self._sliders)} values, got {len(value)}")
         for slider, val in zip(self._sliders, value):
             with qsignal_blocker(slider):
                 slider._slider.setValue(val)
-        self.valueChanged.emit(value)
 
     def axis_names(self) -> list[str]:
         return [slider.text() for slider in self._sliders]

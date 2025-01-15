@@ -157,6 +157,7 @@ class QSimpleRoiCollection(QtW.QWidget):
         return None
 
     def selections(self) -> list[int]:
+        """List of selected indices"""
         return [idx.row() for idx in self._list_view.selectionModel().selectedIndexes()]
 
     def __getitem__(self, key: int) -> _roi_items.QRoi:
@@ -179,14 +180,27 @@ class QSimpleRoiCollection(QtW.QWidget):
             out.extend(self._slice_cache.get(idx, []))
         return out
 
-    def pop_roi(self, indices: Indices, index: int) -> _roi_items.QRoi:
-        qindex = self._list_view.model().index(index)
-        self._list_view.model().beginRemoveRows(qindex, index, index)
+    def pop_roi_in_slice(self, indices: Indices, ith: int) -> _roi_items.QRoi:
+        """Pop the `index`-th ROI in the slice `indices`."""
+        qindex = self._list_view.model().index(ith)
+        self._list_view.model().beginRemoveRows(qindex, ith, ith)
         rois = self._slice_cache[indices]
-        roi = rois.pop(index)
+        roi = rois.pop(ith)
         self._rois.remove((indices, roi))
         self._list_view.model().endRemoveRows()
+        self._list_view.update()
         return roi
+
+    def pop_roi(self, index: int) -> _roi_items.QRoi:
+        self._list_view.model().beginRemoveRows(QtCore.QModelIndex(), index, index)
+        indices, roi = self._rois.pop(index)
+        self._slice_cache[indices].remove(roi)
+        self._list_view.model().endRemoveRows()
+        return roi
+
+    def pop_rois(self, indices: list[int]):
+        for i in sorted(indices, reverse=True):
+            self.pop_roi(i)
 
     def flatten_roi(self, index: int) -> _roi_items.QRoi:
         indices, roi = self._rois[index]
@@ -196,6 +210,11 @@ class QSimpleRoiCollection(QtW.QWidget):
         self._slice_cache[indices].remove(roi)
         self._cache_roi((), roi)
         return roi
+
+    def remove_selected_rois(self):
+        for i in reversed(self.selections()):
+            indices, roi = self._rois[i]
+            self.pop_roi_in_slice(indices, i)
 
 
 class QRoiCollection(QSimpleRoiCollection):
@@ -271,10 +290,22 @@ class QRoiCollection(QSimpleRoiCollection):
             self._roi_labels_btn, alignment=QtCore.Qt.AlignmentFlag.AlignBottom
         )
 
+        self.show_rois_changed.connect(parent._img_view.set_show_rois)
+        self.show_labels_changed.connect(parent._img_view.set_show_labels)
+        self.key_pressed.connect(parent._img_view.keyPressEvent)
+        self.key_released.connect(parent._img_view.keyReleaseEvent)
+        self.roi_item_clicked.connect(parent._roi_item_clicked)
+        self._add_btn.clicked.connect(parent._img_view.add_current_roi)
+        self.drag_requested.connect(parent._run_drag_model)
+        self._remove_btn.clicked.connect(self._remove_selected)
+
         self._roi_visible_btn.toggled.connect(self._on_roi_visible_btn_clicked)
         self._roi_labels_btn.toggled.connect(self._on_roi_labels_btn_clicked)
 
         self.setToolTip("List of ROIs in the image")
+
+    def _remove_selected(self):
+        return self.pop_rois(self.selections())
 
     def _on_roi_visible_btn_clicked(self, checked: bool):
         if self._roi_labels_btn.isChecked() and not checked:
@@ -357,7 +388,7 @@ class QRoiListView(QtW.QListView):
         )
         action_flatten.setToolTip("Flatten the selected ROI into 2D")
         action_delete = menu.addAction(
-            "Delete", lambda: self.parent().pop_roi(index.row())
+            "Delete", lambda: self.parent()._remove_selected()
         )
         action_delete.setToolTip("Delete the selected ROIs")
         return menu

@@ -261,7 +261,7 @@ class QImageGraphicsView(QBaseGraphicsView):
             scene.removeItem(item)
         self._roi_items.clear()
         if not self._is_current_roi_item_not_registered:
-            self.remove_current_item()
+            self.remove_current_item(reason="clear all ROIs")
 
     def extend_qrois(self, rois: Iterable[QRoi]):
         """Set Qt ROIs to display."""
@@ -330,18 +330,18 @@ class QImageGraphicsView(QBaseGraphicsView):
         set_status_tip(f"Zoom factor: {self.transform().m11():.3%}", duration=0.7)
 
     def wheelEvent(self, event: QtGui.QWheelEvent):
-        # Zoom in/out using the mouse wheel
-        factor = 1.1
+        dy = event.angleDelta().y()
+        self._wheel_event(dy)
+        return None  # NOTE: don't call super().wheelEvent(event)
 
-        if event.angleDelta().y() > 0:
+    def _wheel_event(self, dy: int):
+        factor = 1.1
+        if dy > 0:
             zoom_factor = factor
         else:
             zoom_factor = 1 / factor
-        # super().wheelEvent(event)  # not needed?
-        # NOTE: for some reason, following lines must be called after super().wheelEvent
         self.scale_and_update_handles(zoom_factor)
         self._inform_scale()
-        return None
 
     def scale_and_update_handles(self, factor: float):
         """Scale the view and update the selection handle sizes."""
@@ -356,7 +356,7 @@ class QImageGraphicsView(QBaseGraphicsView):
         self.fitInView(scene_rect, Qt.AspectRatioMode.KeepAspectRatio)
         return None
 
-    def remove_current_item(self, remove_from_list: bool = False):
+    def remove_current_item(self, remove_from_list: bool = False, reason: str = ""):
         if self._current_roi_item is not None:
             if not self._is_rois_visible:
                 self._current_roi_item.setVisible(False)
@@ -371,11 +371,16 @@ class QImageGraphicsView(QBaseGraphicsView):
                     self.scene().removeItem(self._current_roi_item)
             self._selection_handles.clear_handles()
             self._current_roi_item = None
+            _LOGGER.debug(
+                "remove_current_item(remove_from_list=%r, reason=%r)",
+                remove_from_list,
+                reason,
+            )
 
     def select_item(self, item: QtW.QGraphicsItem | None):
         """Select the item during selection mode."""
         if item is None:
-            self.remove_current_item()
+            self.remove_current_item(reason="deselect")
         elif isinstance(item, QLineRoi):
             self._selection_handles.connect_line(item)
         elif isinstance(item, (QRectangleRoi, QEllipseRoi)):
@@ -391,6 +396,7 @@ class QImageGraphicsView(QBaseGraphicsView):
         if isinstance(item, QRoi):
             self._current_roi_item = item
             item.setVisible(True)
+            _LOGGER.debug("Item selected: %r", type(item).__name__)
         self._is_current_roi_item_not_registered = False
 
     def select_item_at(self, pos: QtCore.QPointF):
@@ -430,14 +436,14 @@ class QImageGraphicsView(QBaseGraphicsView):
                     is_poly = isinstance(
                         self._current_roi_item, (QPolygonRoi, QSegmentedLineRoi)
                     )
-                    self.remove_current_item()
+                    self.remove_current_item(reason="start drawing polygon")
                     if is_poly:
                         # clear current drawing
                         self.select_item(None)
                         return super().mousePressEvent(event)
                 self._selection_handles.start_drawing_polygon()
                 return super().mousePressEvent(event)
-            self.remove_current_item()
+            self.remove_current_item(reason="start drawing new ROI")
             p = self.mapToScene(self._pos_drag_start)
             if self.mode() is Mode.ROI_LINE:
                 self.set_current_roi(
@@ -581,7 +587,7 @@ class QImageGraphicsView(QBaseGraphicsView):
                 Mode.ROI_ELLIPSE,
                 Mode.ROI_ROTATED_RECTANGLE,
             ):
-                self.remove_current_item()
+                self.remove_current_item(reason=f"stop drawing {self.mode()}")
         elif self._pos_drag_start == event.pos() and _is_right:  # right click
             return super().mouseReleaseEvent(event)
         elif _is_left:
@@ -603,7 +609,7 @@ class QImageGraphicsView(QBaseGraphicsView):
 
     def mouseDoubleClickEvent(self, event: QtGui.QMouseEvent):
         if self._mode in {Mode.ROI_LINE, Mode.ROI_RECTANGLE, Mode.ROI_ELLIPSE}:
-            self.remove_current_item()
+            self.remove_current_item(reason="double-click")
         elif self._mode is Mode.PAN_ZOOM:
             self.fitInView(self.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
         self._selection_handles.finish_drawing_polygon()
@@ -686,20 +692,20 @@ class QImageGraphicsView(QBaseGraphicsView):
                 self.add_current_roi()
             elif _key in (Qt.Key.Key_Delete, Qt.Key.Key_Backspace):
                 if not self._is_key_hold:
-                    self.remove_current_item(remove_from_list=True)
+                    self.remove_current_item(remove_from_list=True, reason="delete key")
             elif _key == Qt.Key.Key_V:
                 if not self._is_key_hold:
                     self.set_show_rois(not self._is_rois_visible)
         elif _mods == Qt.KeyboardModifier.ControlModifier:
             if _key == Qt.Key.Key_A:
                 ny, nx = self._image_widgets[0]._img.shape[:2]
-                self.remove_current_item()
+                self.remove_current_item(reason="Ctrl+A")
                 self.set_current_roi(QRectangleRoi(0, 0, nx, ny).withPen(self._roi_pen))
                 self._selection_handles.connect_rect(self._current_roi_item)
             elif _key == Qt.Key.Key_X:
                 if self._current_roi_item is not None:
                     self._internal_clipboard = self._current_roi_item.copy()
-                    self.remove_current_item(remove_from_list=True)
+                    self.remove_current_item(remove_from_list=True, reason="Ctrl+X")
             elif _key == Qt.Key.Key_C:
                 self._copy_current_roi()
             elif _key == Qt.Key.Key_V and self._internal_clipboard:
