@@ -15,12 +15,14 @@ class QBaseNumericDTypeEdit(QBaseValueWidget):
         )
 
 
-class NumericDTypeEdit(ValueWidget[np.dtype]):
+class NumericDTypeEdit(ValueWidget[str]):
     def __init__(self, value=Undefined, **kwargs):
         app = use_app()
         assert app.native
         if value is Undefined:
-            value = np.dtype("float64")
+            value = "float64"
+        elif isinstance(value, np.dtype):
+            value = str(value)
         ValueWidget.__init__(
             self,
             value=value,

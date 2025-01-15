@@ -59,17 +59,26 @@ def duplicate_this_slice(model: WidgetDataModel) -> Parametric:
     menus=["tools/array"],
     command_id="builtins:crop-array",
 )
-def crop_array(model: WidgetDataModel) -> WidgetDataModel:
+def crop_array(model: WidgetDataModel) -> Parametric:
     """Crop the array."""
     if is_subtype(model.type, StandardType.IMAGE):  # interpret as an image
         from .image import crop_image
 
         return crop_image(model)
-    sel, meta = _get_current_selection_and_meta(model)
-    arr_cropped = wrap_array(model.value)[sel]
-    return model.with_value(
-        arr_cropped, metadata=meta.without_selections()
-    ).with_title_numbering()
+
+    def _get_selection():
+        return {"selection": _get_current_selection(model)}
+
+    @configure_gui(run_immediately_with=_get_selection)
+    def run_crop_array(
+        selection: tuple[tuple[int, int], tuple[int, int]],
+    ) -> WidgetDataModel:
+        rsl, csl = slice(*selection[0]), slice(*selection[1])
+        arr_cropped = wrap_array(model.value)[..., rsl, csl]
+        meta_out = _update_meta(model.metadata)
+        return model.with_value(arr_cropped, metadata=meta_out).with_title_numbering()
+
+    return run_crop_array
 
 
 @register_function(
@@ -89,23 +98,28 @@ def crop_array_nd(win: SubWindow) -> Parametric:
         return crop_image_nd(win)
 
     conf_kwargs = {}
-    for i in range(wrap_array(model.value).ndim - 2):
+    ndim = wrap_array(model.value).ndim
+    for i in range(ndim - 2):
         conf_kwargs[f"axis_{i}"] = {
             "widget_type": SliderRangeGetter,
             "getter": _make_index_getter(win, i),
             "label": f"axis-{i}",
         }
 
-    @configure_gui(**conf_kwargs)
+    conf_kwargs[f"axis_{ndim - 2}"] = {
+        "bind": lambda: slice(*_get_current_selection(model)[0])
+    }
+    conf_kwargs[f"axis_{ndim - 1}"] = {
+        "bind": lambda: slice(*_get_current_selection(model)[1])
+    }
+
+    @configure_gui(gui_options=conf_kwargs)
     def run_crop_image(**kwargs: tuple[int | None, int | None]):
         model = win.to_model()  # NOTE: need to re-fetch the model
         arr = wrap_array(model.value)
-        sel, meta = _get_current_selection_and_meta(model)
-        sl_nd = tuple(slice(x0, x1) for x0, x1 in kwargs.values())
-        sl = sl_nd + tuple(sel)
-        arr_cropped = arr[sl]
-        meta_out = meta.without_selections()
-        meta_out.current_indices = None  # shape changed, need to reset
+        sl_nd = tuple(slice(*_x) for _x in kwargs.values())
+        arr_cropped = arr[sl_nd]
+        meta_out = _update_meta(model.metadata)
         return model.with_value(arr_cropped, metadata=meta_out).with_title_numbering()
 
     return run_crop_image
@@ -209,7 +223,7 @@ def array_astype(model: WidgetDataModel) -> Parametric:
     """Convert the data type of the array using `astype` method."""
     from himena.qt._magicgui import NumericDTypeEdit
 
-    _dtype = np.dtype(wrap_array(model.value).dtype)
+    _dtype = str(np.dtype(wrap_array(model.value).dtype))
 
     @configure_gui(dtype={"widget_type": NumericDTypeEdit, "value": _dtype})
     def run_astype(dtype) -> WidgetDataModel:
@@ -225,22 +239,24 @@ def array_astype(model: WidgetDataModel) -> Parametric:
     command_id="builtins:set-array-scale",
 )
 def set_scale(win: SubWindow) -> Parametric:
+    # TODO: need to consider categorical or physical axis
     model = win.to_model()
     meta = _cast_meta(model, ArrayMeta)
     if (axes := meta.axes) is None:
         raise ValueError("The axes attribute must be set to use this function.")
     gui_options = {}
-    for axis in axes:
+    for i, axis in enumerate(axes):
         if axis.scale is None:
             value = ""
         elif axis.unit is None:
             value = f"{axis.scale:.3f}"
         else:
             value = f"{axis.scale:.3f} {axis.unit}"
-        gui_options[axis.name] = {
+        gui_options[f"axis_{i}"] = {
             "widget_type": "LineEdit",
             "value": value,
             "tooltip": "e.g. '0.1', '0.3 um', '500msec'",
+            "label": axis.name,
         }
 
     @configure_gui(gui_options=gui_options)
@@ -253,11 +269,9 @@ def set_scale(win: SubWindow) -> Parametric:
                 scale, unit = None, None
             else:
                 scale, unit = _parse_float_and_unit(v)
-            for axis in meta.axes:
-                if axis.name == k:
-                    axis.scale = scale
-                    axis.unit = unit
-                    break
+            axis = axes[int(k[5:])]
+            axis.scale = scale
+            axis.unit = unit
             if scale is not None:
                 if unit is None:
                     updated_info.append(f"{k}: {scale:.3g}")
@@ -285,7 +299,7 @@ def _cast_meta(model: WidgetDataModel, cls: type[_C]) -> _C:
 
 def _get_current_selection_and_meta(
     model: WidgetDataModel,
-) -> tuple[Any, ArrayMeta]:
+) -> tuple[tuple[tuple[int, int], tuple[int, int]], ArrayMeta]:
     meta = _cast_meta(model, ArrayMeta)
     if len(sels := meta.selections) != 1:
         raise ValueError(
@@ -296,6 +310,12 @@ def _get_current_selection_and_meta(
     return sel, meta
 
 
+def _get_current_selection(
+    model: WidgetDataModel,
+) -> tuple[tuple[int, int], tuple[int, int]]:
+    return _get_current_selection_and_meta(model)[0]
+
+
 def _make_index_getter(win: SubWindow, ith: int):
     def _getter():
         model = win.to_model()
@@ -303,6 +323,15 @@ def _make_index_getter(win: SubWindow, ith: int):
         return meta.current_indices[ith]
 
     return _getter
+
+
+def _update_meta(metadata: Any) -> ArrayMeta:
+    if isinstance(meta := metadata, ArrayMeta):
+        meta_out = meta.without_selections()
+        meta_out.current_indices = None  # shape changed, need to reset
+    else:
+        meta_out = ArrayMeta()
+    return meta_out
 
 
 def _parse_float_and_unit(s: str) -> tuple[float, str | None]:

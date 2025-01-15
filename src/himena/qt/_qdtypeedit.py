@@ -49,7 +49,7 @@ class QNumericDTypeEdit(QtW.QWidget):
             f"{self._combo_type.currentText()}{self._combo_depth.currentText()}"
         )
 
-    def set_dtype(self, dtype: np.dtype):
-        dtype = self._cast_dtype(dtype)
-        self._combo_type.setCurrentText(dtype.kind)
-        self._combo_depth.setCurrentText(str(dtype.itemsize * 8))
+    def set_dtype(self, dtype: str):
+        _dtype = self._cast_dtype(dtype)
+        self._combo_type.setCurrentText(_dtype.kind)
+        self._combo_depth.setCurrentText(str(_dtype.itemsize * 8))

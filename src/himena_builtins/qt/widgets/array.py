@@ -334,6 +334,12 @@ class QArrayView(QtW.QWidget):
             self._control = QArrayViewControl(self._table)
         self._control.update_for_array(self._arr)
         self._table.update_width_by_dtype()
+        if isinstance(meta := model.metadata, ArrayMeta):
+            if meta.selections:  # if has selections, they need updating
+                self.selection_model.clear()
+            for (r0, r1), (c0, c1) in meta.selections:
+                self.selection_model.append((slice(r0, r1), slice(c0, c1)))
+
         self._model_type = model.type
         self.update()
         return None

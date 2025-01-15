@@ -1,5 +1,8 @@
 from pytestqt.qtbot import QtBot
+from himena import MainWindow
+from himena.standards.model_meta import TableMeta
 from himena.testing import WidgetTester, table
+from himena.types import WidgetDataModel
 from himena_builtins.qt.widgets.table import QSpreadsheet
 from qtpy.QtCore import Qt
 
@@ -66,3 +69,21 @@ def test_table_view_selections(qtbot):
 
 def _get_tester():
     return WidgetTester(QSpreadsheet())
+
+def test_commands(himena_ui: MainWindow):
+    model = WidgetDataModel(
+        value=[["a", "b", "c"], ["d", "e", "f"]],
+        type="table",
+        metadata=TableMeta(selections=[((0, 1), (1, 2))], separator=",")
+    )
+    himena_ui.add_data_model(model)
+    himena_ui.exec_action("builtins:table:crop")
+    himena_ui.exec_action("builtins:table:change-separator", with_params={"separator": "\t"})
+    himena_ui.exec_action(
+        "builtins:table:insert-incrementing-numbers",
+        with_params={"selection": ((0, 1), (1, 4)), "start": 1, "step": 2}
+    )
+    himena_ui.exec_action(
+        "builtins:table:insert-incrementing-numbers",
+        with_params={"selection": ((0, 10), (1, 2)), "start": 1, "step": 1}
+    )

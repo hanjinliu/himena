@@ -209,6 +209,14 @@ class WidgetDataModel(GenericModel[_T]):
             update["save_behavior_override"] = save_behavior_override
         return self.model_copy(update=update)
 
+    def with_metadata(
+        self,
+        metadata: Any,
+    ) -> "WidgetDataModel[_T]":
+        """Return a new instance with the given metadata."""
+        update = {"metadata": metadata}
+        return self.model_copy(update=update)
+
     def write_to_directory(
         self,
         directory: str | Path,

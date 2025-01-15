@@ -166,7 +166,6 @@ def init_application(app: HimenaApplication) -> HimenaApplication:
                 if win.is_alive:
                     win._close_me(ins)
         else:
-            win._widget_workflow = CommandExecution
             if (tracker := ModelTrack.get(fn)) and tracker.command_id:
                 win._widget_workflow = CommandExecution(
                     command_id=tracker.command_id,

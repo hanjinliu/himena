@@ -17,10 +17,9 @@ from ._text_base import QMainTextEdit
 
 
 class QFunctionEdit(QtW.QWidget):
-    """Widget for defining a Python function.
+    """Widget for a Python function.
 
-    Note that the name space of this code is isolated from the main namespace.
-    Technically, the content of this widget is just an independent .py file.
+    A function can be compiled from a text edit widget.
     """
 
     __himena_widget_id__ = "builtins:QFunctionEdit"
@@ -61,7 +60,7 @@ class QFunctionEdit(QtW.QWidget):
         return None
 
     @validate_protocol
-    def to_model(self) -> Callable:
+    def to_model(self) -> WidgetDataModel:
         if self._has_source_code:
             code = self._main_text_edit.toPlainText()
         else:

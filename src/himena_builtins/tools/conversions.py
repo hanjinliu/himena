@@ -19,7 +19,6 @@ from himena.standards.roi import (
 )
 from himena._data_wrappers import (
     wrap_dataframe,
-    list_installed_dataframe_packages,
     read_csv,
 )
 
@@ -66,22 +65,18 @@ def text_to_array(model: WidgetDataModel[str]) -> WidgetDataModel:
     type_to=StandardType.DATAFRAME,
     command_id="builtins:text-to-dataframe",
 )
-def text_to_dataframe(model: WidgetDataModel[str]) -> Parametric:
+def text_to_dataframe(model: WidgetDataModel[str]) -> WidgetDataModel:
     """Convert text to an dataframe-type widget."""
     from io import StringIO
 
-    @configure_gui(module={"choices": list_installed_dataframe_packages()})
-    def convert_text_to_dataframe(module) -> WidgetDataModel[str]:
-        buf = StringIO(model.value)
-        df = read_csv(module, buf)
-        return WidgetDataModel(
-            value=df,
-            title=model.title,
-            type=StandardType.DATAFRAME,
-            extension_default=".csv",
-        )
-
-    return convert_text_to_dataframe
+    buf = StringIO(model.value)
+    df = read_csv("dict", buf)
+    return WidgetDataModel(
+        value=df,
+        title=model.title,
+        type=StandardType.DATAFRAME,
+        extension_default=".csv",
+    )
 
 
 @register_conversion_rule(
@@ -91,12 +86,16 @@ def text_to_dataframe(model: WidgetDataModel[str]) -> Parametric:
 )
 def to_plain_text(model: WidgetDataModel[str]) -> WidgetDataModel:
     """Convert HTML to plain text."""
+    html_block_pattern = re.compile(r"<html>.*?</html>", re.DOTALL)
+    html_text = model.value
+    if html_block_match := html_block_pattern.search(model.value):
+        html_text = html_block_match.group(0)
     html_pattern = re.compile(r"<.*?>")
     header_pattern = re.compile(r"<head>.*?</head>", re.DOTALL)
-    value = html.unescape(
-        html_pattern.sub("", header_pattern.sub("", model.value).replace("<br>", "\n"))
-    )
-    return model.with_value(value)
+    newline_pattern = re.compile(r"<br\s*/?>", re.IGNORECASE)
+    html_text = newline_pattern.sub("\n", html_text)
+    value = html.unescape(html_pattern.sub("", header_pattern.sub("", html_text)))
+    return model.with_value(value, type=StandardType.TEXT)
 
 
 @register_conversion_rule(
@@ -175,23 +174,19 @@ def table_to_text(model: WidgetDataModel) -> Parametric:
     type_to=StandardType.DATAFRAME,
     command_id="builtins:table-to-dataframe",
 )
-def table_to_dataframe(model: WidgetDataModel["np.ndarray"]) -> Parametric:
+def table_to_dataframe(model: WidgetDataModel["np.ndarray"]) -> WidgetDataModel:
     """Convert a table data into a DataFrame."""
 
-    @configure_gui(module={"choices": list_installed_dataframe_packages()})
-    def convert_table_to_dataframe(module) -> WidgetDataModel[str]:
-        buf = StringIO()
-        np.savetxt(buf, model.value, fmt="%s", delimiter=",")
-        buf.seek(0)
-        df = read_csv(module, buf)
-        return WidgetDataModel(
-            value=df,
-            title=model.title,
-            type=StandardType.DATAFRAME,
-            extension_default=".csv",
-        )
-
-    return convert_table_to_dataframe
+    buf = StringIO()
+    np.savetxt(buf, model.value, fmt="%s", delimiter=",")
+    buf.seek(0)
+    df = read_csv("dict", buf)
+    return WidgetDataModel(
+        value=df,
+        title=model.title,
+        type=StandardType.DATAFRAME,
+        extension_default=".csv",
+    )
 
 
 @register_conversion_rule(

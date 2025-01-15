@@ -15,29 +15,38 @@ if TYPE_CHECKING:
     title="Crop selection",
     types=StandardType.TABLE,
     menus=["tools/table"],
-    command_id="builtins:crop-selection",
+    command_id="builtins:table:crop",
 )
-def crop_selection(model: WidgetDataModel["np.ndarray"]) -> WidgetDataModel:
+def crop_selection(model: WidgetDataModel["np.ndarray"]) -> Parametric:
     """Crop the table data at the selection."""
-    arr_str = model.value
-    if isinstance(meta := model.metadata, TableMeta):
+
+    def _get_selection():
+        meta = _cast_meta(model.metadata)
         sels = meta.selections
         if sels is None or len(sels) != 1:
             raise ValueError("Table must contain single selection to crop.")
-        (r0, r1), (c0, c1) = sels[0]
+        return {"selection": sels[0]}
+
+    @configure_gui(run_immediately_with=_get_selection)
+    def run_crop_selection(
+        selection: tuple[tuple[int, int], tuple[int, int]],
+    ) -> WidgetDataModel:
+        (r0, r1), (c0, c1) = selection
+        arr_str = model.value
         arr_new = arr_str[r0:r1, c0:c1]
         out = model.with_value(arr_new)
         if isinstance(meta := out.metadata, TableMeta):
             meta.selections = []
         return out
-    raise ValueError("Table must have a TableMeta as the metadata")
+
+    return run_crop_selection
 
 
 @register_function(
     title="Change separator ...",
     types=StandardType.TABLE,
     menus=["tools/table"],
-    command_id="builtins:table-change-separator",
+    command_id="builtins:table:change-separator",
 )
 def change_separator(win: SubWindow) -> Parametric:
     """Change the separator of the table data."""
@@ -69,33 +78,38 @@ def change_separator(win: SubWindow) -> Parametric:
     title="Insert incrementing numbers",
     types=StandardType.TABLE,
     menus=["tools/table"],
-    command_id="builtins:insert-incrementing-numbers",
+    command_id="builtins:table:insert-incrementing-numbers",
 )
 def insert_incrementing_numbers(win: SubWindow["QSpreadsheet"]) -> Parametric:
     """Insert incrementing numbers (0, 1, 2, ...) in-place to the selected range."""
     widget = win.widget
 
-    @configure_gui(title="Change separator")
+    def _get_selection(*_):
+        meta = _cast_meta(win.to_model().metadata)
+        sels = meta.selections
+        if sels is None or len(sels) != 1:
+            raise ValueError("Table must contain single selection to crop.")
+        return sels[0]
+
+    @configure_gui(title="Change separator", selection={"bind": _get_selection})
     def run_insert(
+        selection: tuple[tuple[int, int], tuple[int, int]],
         start: int = 0,
         step: int = 1,
     ) -> None:
-        rngs = widget.selection_model.ranges
-        if len(rngs) != 1:
-            raise ValueError("Select a single range to insert incrementing numbers.")
-        rsl, csl = rngs[0]
-        length = (rsl.stop - rsl.start) * (csl.stop - csl.start)
-        values = [str(i) for i in range(start, start + length, step)]
-        if rsl.stop - rsl.start != 1 and csl.stop - csl.start != 1:
+        (r0, r1), (c0, c1) = selection
+        length = (r1 - r0) * (c1 - c0)
+        values = [str(i) for i in range(start, start + length * step, step)]
+        if r1 - r0 != 1 and c1 - c0 != 1:
             raise ValueError("Select a single row or column.")
         nr, nc = widget.model()._arr.shape
-        if nr < rsl.stop or nc < csl.stop:
-            widget.array_expand(rsl.stop, csl.stop)
+        if nr < r1 or nc < c1:
+            widget.array_expand(r1, c1)
         target = widget.model()._arr
-        if rsl.stop - rsl.start == 1:
-            target[rsl, csl] = np.array(values, dtype=target.dtype).reshape(1, -1)
+        if r1 - r0 == 1:
+            target[r0:r1, c0:c1] = np.array(values, dtype=target.dtype).reshape(1, -1)
         else:
-            target[rsl, csl] = np.array(values, dtype=target.dtype).reshape(-1, 1)
+            target[r0:r1, c0:c1] = np.array(values, dtype=target.dtype).reshape(-1, 1)
         return
 
     return run_insert

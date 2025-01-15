@@ -1,6 +1,9 @@
 import numpy as np
+from numpy.testing import assert_array_equal
 from qtpy.QtCore import Qt
 from pytestqt.qtbot import QtBot
+from himena import MainWindow
+from himena.standards.model_meta import ArrayMeta
 from himena.testing import WidgetTester
 from himena_builtins.qt.widgets import QArrayView
 
@@ -24,7 +27,7 @@ def test_array_view(qtbot: QtBot):
         assert new.metadata.selections == [((1, 2), (1, 3))]
         assert old.metadata.selections == new.metadata.selections
 
-def test_structured(qtbot):
+def test_structured(qtbot: QtBot):
     with WidgetTester(QArrayView()) as tester:
         qtbot.addWidget(tester.widget)
         tester.update_model(
@@ -42,3 +45,24 @@ def test_structured(qtbot):
         assert np.all(old.value == new.value)
         assert new.metadata.selections == [((1, 2), (1, 3))]
         assert old.metadata.selections == new.metadata.selections
+
+def test_array_commands(himena_ui: MainWindow):
+    win = himena_ui.add_object(np.arange(24).reshape(2, 3, 4), type="array")
+    himena_ui.exec_action("builtins:array-duplicate-slice")
+    assert himena_ui.current_model.value.shape == (3, 4)
+    assert_array_equal(himena_ui.current_model.value, np.arange(12).reshape(3, 4))
+    himena_ui.current_window = win
+    win.update_model(win.to_model().with_metadata(ArrayMeta(selections=[((1, 2), (1, 3))])))
+    himena_ui.exec_action("builtins:crop-array")
+    assert himena_ui.current_model.value.shape == (2, 1, 2)
+    himena_ui.current_window = win
+    himena_ui.exec_action(
+        "builtins:crop-array-nd", with_params={
+            "axis_0": (0, 1),
+            "axis_1": (1, 2),
+            "axis_2": (0, 2),
+        }
+    )
+    assert himena_ui.current_model.value.shape == (1, 1, 2)
+
+    himena_ui.exec_action("builtins:array-astype", with_params={"dtype": "float32"})
