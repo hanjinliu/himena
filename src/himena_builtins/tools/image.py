@@ -1,5 +1,6 @@
-from typing import TYPE_CHECKING, Any, Literal, SupportsIndex
+from typing import Any, Literal, SupportsIndex
 import numpy as np
+from cmap import Colormap
 from himena._data_wrappers._array import wrap_array, ArrayWrapper
 from himena.plugins import (
     register_function,
@@ -17,10 +18,6 @@ from himena.standards.model_meta import (
 )
 from himena.widgets._wrapper import SubWindow
 from himena_builtins.tools.array import _cast_meta, _make_index_getter
-
-if TYPE_CHECKING:
-    import numpy as np
-    from cmap import Colormap
 
 configure_submenu("tools/image/roi", "ROI")
 configure_submenu("/model_menu/roi", "ROI")
@@ -286,7 +283,7 @@ def select_rois(model: WidgetDataModel) -> Parametric:
     title="Point ROIs to DataFrame",
     types=StandardType.IMAGE,
     menus=["tools/image/roi", "/model_menu/roi"],
-    command_id="builtins:image-point-rois-to-dataframe",
+    command_id="builtins:image:point-rois-to-dataframe",
 )
 def point_rois_to_dataframe(model: WidgetDataModel) -> WidgetDataModel:
     rois = _get_rois_from_model(model)
@@ -353,9 +350,9 @@ def set_colormaps(win: SubWindow) -> Parametric:
     }
 
     @configure_gui(gui_options=options, show_parameter_labels=len(channel_names) > 1)
-    def set_cmaps(**kwargs: "Colormap"):
+    def set_cmaps(**kwargs: str):
         meta.channels = [
-            ch.with_colormap(cmap.name)
+            ch.with_colormap(Colormap(cmap).name)
             for ch, cmap in zip(meta.channels, kwargs.values())
         ]
         win.update_model(model.model_copy(update={"metadata": meta}))

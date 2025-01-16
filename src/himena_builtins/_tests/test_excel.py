@@ -1,6 +1,6 @@
 import numpy as np
 from pytestqt.qtbot import QtBot
-from himena.consts import StandardType
+from himena import MainWindow, StandardType
 from himena.testing import WidgetTester
 from himena_builtins.qt.widgets import QExcelEdit
 
@@ -37,3 +37,10 @@ def test_excel_widget(qtbot: QtBot):
 
         control = tester.widget.control_widget()
         control._value_line_edit.setText("abc")
+
+def test_command(himena_ui: MainWindow):
+    himena_ui.add_object({"sheet-0": [[1, 2], [3, 4]]}, type=StandardType.EXCEL)
+    himena_ui.exec_action("builtins:duplicate-sheet-as-table")
+    assert himena_ui.current_model.type == StandardType.TABLE
+    val = himena_ui.current_model.value
+    assert val.tolist() == [["1", "2"], ["3", "4"]]

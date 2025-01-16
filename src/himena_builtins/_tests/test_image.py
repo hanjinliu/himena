@@ -4,7 +4,7 @@ from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QApplication
 from himena.standards.model_meta import ImageMeta
 from pytestqt.qtbot import QtBot
-from himena import MainWindow
+from himena import MainWindow, StandardType
 from himena.standards.roi import RoiListModel, LineRoi, PointRoi2D
 from himena.standards.roi.core import RectangleRoi
 from himena.testing import WidgetTester, image
@@ -171,7 +171,7 @@ def _get_tester():
 def test_crop_image(himena_ui: MainWindow):
     model = WidgetDataModel(
         value=np.zeros((4, 4, 10, 10)),
-        type="array.image",
+        type=StandardType.IMAGE,
         metadata=ImageMeta(
             axes=["t", "z", "y", "x"],
             current_roi=RectangleRoi(indices=(0, 0), x=1, y=1, width=6, height=4),
@@ -193,7 +193,7 @@ def test_crop_image(himena_ui: MainWindow):
 def test_roi_commands(himena_ui: MainWindow):
     model = WidgetDataModel(
         value=np.zeros((4, 4, 10, 10)),
-        type="array.image",
+        type=StandardType.IMAGE,
         metadata=ImageMeta(
             axes=["t", "z", "y", "x"],
             rois=RoiListModel(
@@ -232,4 +232,39 @@ def test_roi_commands(himena_ui: MainWindow):
     himena_ui.exec_action(
         "builtins:image-specify:roi-specify-line",
         with_params={"x1": 3, "y1": 2, "x2": 3.0, "y2": 3.0}
+    )
+
+    himena_ui.add_object(
+        RoiListModel(rois=[PointRoi2D(x=0, y=0), PointRoi2D(x=2, y=1)]),
+        type=StandardType.ROIS,
+    )
+
+    himena_ui.exec_action("builtins:image:point-rois-to-dataframe")
+    assert himena_ui.current_model.type == StandardType.DATAFRAME
+
+    # colormap
+    model = WidgetDataModel(
+        value=np.zeros((4, 2, 10, 10)),
+        type=StandardType.IMAGE,
+        metadata=ImageMeta(
+            axes=["t", "c", "y", "x"],
+            channel_axis=1,
+        ),
+    )
+
+    win = himena_ui.add_data_model(model)
+    himena_ui.exec_action("builtins:set-colormaps", with_params={"ch_0": "green", "ch_1": "red"})
+    assert isinstance(meta := win.to_model().metadata, ImageMeta)
+    assert len(meta.channels) == 2
+    assert meta.channels[0].colormap == "cmap:green"
+    assert meta.channels[1].colormap == "cmap:red"
+    himena_ui.exec_action("builtins:split-channels")
+    mod_g = himena_ui.tabs.current()[-2].to_model()
+    mod_r = himena_ui.tabs.current()[-1].to_model()
+    assert mod_g.metadata.colormap == "cmap:green"
+    assert mod_r.metadata.colormap == "cmap:red"
+    himena_ui.exec_action("builtins:merge-channels", with_params={"images": [mod_g, mod_r]})
+    himena_ui.exec_action(
+        "builtins:stack-images",
+        with_params={"images": [mod_g, mod_r], "axis_name": "p"}
     )

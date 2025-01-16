@@ -116,3 +116,11 @@ def test_commands(himena_ui: MainWindow):
     himena_ui.exec_action("builtins:compile-as-function")
     himena_ui.add_object("def f(x):\n    return x + 1\nf", type=StandardType.TEXT)
     himena_ui.exec_action("builtins:compile-as-function")
+
+def test_open_as_text_anyway(sample_dir: Path, himena_ui: MainWindow):
+    himena_ui.read_file(sample_dir / "random_ext.aaa")
+    assert himena_ui.current_model.type == StandardType.READER_NOT_FOUND
+    himena_ui.exec_action("builtins:open-as-text-anyway")
+    assert len(himena_ui.tabs[0]) == 1
+    assert himena_ui.current_model.type == StandardType.TEXT
+    assert himena_ui.current_model.value == sample_dir.joinpath("random_ext.aaa").read_text()
