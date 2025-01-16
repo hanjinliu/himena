@@ -40,9 +40,9 @@ def crop_image(model: WidgetDataModel) -> Parametric:
         roi, meta = _get_current_roi_and_meta(model)
         if not isinstance(roi, _roi.Roi2D):
             raise NotImplementedError
-        bbox = _2d_roi_to_bbox(roi, arr, meta)
-        x = bbox.left, bbox.left + bbox.width
-        y = bbox.top, bbox.top + bbox.height
+        left, top, width, height = _2d_roi_to_bbox(roi, arr, meta)
+        x = left, left + width
+        y = top, top + height
         return {"y": y, "x": x}
 
     @configure_gui(run_immediately_with=_get_xy)

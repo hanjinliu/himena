@@ -188,6 +188,7 @@ class QTextEdit(QtW.QWidget):
                 language=self._control._language_combobox.currentText(),
                 spaces=int(self._control._tab_spaces_combobox.currentText()),
                 selection=(cursor.selectionStart(), cursor.selectionEnd()),
+                encoding=self._control._encoding.text(),
                 font_family=font.family(),
                 font_size=font.pointSizeF(),
             ),

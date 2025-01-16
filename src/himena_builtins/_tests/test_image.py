@@ -6,6 +6,7 @@ from himena.standards.model_meta import ImageMeta
 from pytestqt.qtbot import QtBot
 from himena import MainWindow
 from himena.standards.roi import RoiListModel, LineRoi, PointRoi2D
+from himena.standards.roi.core import RectangleRoi
 from himena.testing import WidgetTester, image
 from himena.types import WidgetDataModel
 from himena_builtins.qt.widgets.image import QImageView
@@ -171,10 +172,13 @@ def test_crop_image(himena_ui: MainWindow):
     model = WidgetDataModel(
         value=np.zeros((4, 4, 10, 10)),
         type="array.image",
-        metadata=ImageMeta(axes=["t", "z", "y", "x"]),
+        metadata=ImageMeta(
+            axes=["t", "z", "y", "x"],
+            current_roi=RectangleRoi(indices=(0, 0), x=1, y=1, width=6, height=4),
+        ),
     )
     win = himena_ui.add_data_model(model)
-    himena_ui.exec_action("builtins:image-crop:crop-image", with_params={"y": (1, 5), "x": (2, 8)})
+    himena_ui.exec_action("builtins:image-crop:crop-image")
     himena_ui.current_window = win
     himena_ui.exec_action(
         "builtins:image-crop:crop-image-multi",
@@ -182,7 +186,7 @@ def test_crop_image(himena_ui: MainWindow):
     )
     himena_ui.current_window = win
     himena_ui.exec_action(
-        "builtins:image-crop:crop-image-nd",
+        "builtins:crop-array-nd",
         with_params={"axis_0": (2, 4), "axis_1": (0, 1), "axis_2": (1, 5), "axis_3": (2, 8)},
     )
 

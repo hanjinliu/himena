@@ -259,7 +259,8 @@ def band_plot(model: WidgetDataModel) -> Parametric:
 def histogram(model: WidgetDataModel) -> Parametric:
     x0 = _auto_select(model, 1)[0]
     assert x0 is not None  # when num == 1, it must be a tuple.
-    ndata = x0[0].stop - x0[0].start
+    row_sel = x0[0]
+    ndata = row_sel[1] - row_sel[0]
 
     @configure_gui(
         x={"widget_type": SelectionEdit, "getter": _range_getter(model), "value": x0},
@@ -503,9 +504,7 @@ def _get_xy_data(
     return xarr, ys
 
 
-def _auto_select(
-    model: WidgetDataModel, num: int
-) -> "list[None | tuple[SelectionType, SelectionType]]":
+def _auto_select(model: WidgetDataModel, num: int) -> "list[None | SelectionType]":
     from himena._data_wrappers import wrap_dataframe
 
     selections: list[tuple[tuple[int, int], tuple[int, int]]] = []

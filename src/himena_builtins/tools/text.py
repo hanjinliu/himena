@@ -30,7 +30,7 @@ def run_script(model: WidgetDataModel[str]):
 @register_function(
     types=StandardType.TEXT,
     menus=["tools/text"],
-    command_id="builtins:text-change-separator",
+    command_id="builtins:text:change-separator",
 )
 def change_separator(model: WidgetDataModel[str]) -> Parametric:
     """Change the separator (in the sense of CSV or TSV) of a text."""
@@ -57,7 +57,7 @@ def change_separator(model: WidgetDataModel[str]) -> Parametric:
 @register_function(
     types=StandardType.TEXT,
     menus=["tools/text"],
-    command_id="builtins:text-change-encoding",
+    command_id="builtins:text:change-encoding",
 )
 def change_encoding(model: WidgetDataModel[str]) -> Parametric:
     """Change the encoding of a text."""
@@ -93,7 +93,10 @@ def compile_as_function(model: WidgetDataModel[str]) -> WidgetDataModel:
         if len(mod.body) > 1:
             block_pre = ast.Module(body=mod.body[:-1], type_ignores=[])
             exec(compile(block_pre, filename, "exec"), global_vars, local_vars)
-        out = eval(compile(last.value, filename, "eval"), global_vars, local_vars)
+        if isinstance(last.value, ast.Name):
+            out = local_vars[last.value.id]
+        else:
+            out = eval(compile(last.value, filename, "eval"), global_vars, local_vars)
     elif isinstance(last, ast.FunctionDef):
         exec(compile(mod, filename, "exec"), global_vars, local_vars)
         out = local_vars[last.name]

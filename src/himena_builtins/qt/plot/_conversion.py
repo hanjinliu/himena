@@ -135,7 +135,7 @@ def convert_plot_layout(lo: hplt.BaseLayoutModel, fig: plt.Figure):
             ax_mpl.clear()
         _convert_axes_3d(lo.axes, ax_mpl)
         ax_mpl.patch.set_color(lo.background_color)
-        lo.axes = _fill_axis_props(lo.axes, axes)
+        lo.axes = _fill_axis_props(lo.axes, ax_mpl)
     else:
         raise ValueError(f"Unsupported layout model: {lo}")
     return lo

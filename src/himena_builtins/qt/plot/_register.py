@@ -90,9 +90,10 @@ def _add_hist(model: hplt.Histogram, ax: plt.Axes):
         density = False
     else:
         raise ValueError(f"Unsupported histogram stat: {model.stat}")
+    print(repr(model))
     ax.hist(
-        data, bins=model.bins, range=model.range, color=model.face.color,
-        hatch=model.face.hatch, orientation=model.orient, edgecolor=model.edge.color,
+        data, bins=model.bins, range=model.range, color=Color(model.face.color).hex,
+        hatch=model.face.hatch, orientation=model.orient, edgecolor=Color(model.edge.color).hex,
         linewidth=model.edge.width, linestyle=model.edge.style, label=model.name,
         density=density,
     )  # fmt: skip

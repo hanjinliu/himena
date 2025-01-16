@@ -76,7 +76,7 @@ class Layout(ABC):
         if main is None:
             w0, h0 = 100, 100
         else:
-            w0, h0 = self._main_window_ref()._area_size()
+            w0, h0 = main._area_size()
         if anchor in ("top-left", "top left", "top_left"):
             return _anc.TopLeftConstAnchor(rect.left, rect.top)
         elif anchor in ("top-right", "top right", "top_right"):
@@ -329,6 +329,8 @@ def _assert_supports_index(key):
 
 
 class VBoxLayout(BoxLayout1D):
+    """A vertical box layout."""
+
     def _resize_children(self, rect: WindowRect):
         num = len(self._children)
         if num == 0:
@@ -349,6 +351,8 @@ class VBoxLayout(BoxLayout1D):
 
 
 class HBoxLayout(BoxLayout1D):
+    """A horizontal box layout."""
+
     def _resize_children(self, rect: WindowRect):
         num = len(self._children)
         if num == 0:

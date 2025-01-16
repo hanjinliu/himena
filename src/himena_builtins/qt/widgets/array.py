@@ -261,6 +261,7 @@ class QArrayView(QtW.QWidget):
         self._arr: ArrayWrapper | None = None
         self._control: QArrayViewControl | None = None
         self._model_type = StandardType.ARRAY
+        self._axes = None
 
     @property
     def selection_model(self) -> SelectionModel:
@@ -339,6 +340,7 @@ class QArrayView(QtW.QWidget):
                 self.selection_model.clear()
             for (r0, r1), (c0, c1) in meta.selections:
                 self.selection_model.append((slice(r0, r1), slice(c0, c1)))
+            self._axes = meta.axes
 
         self._model_type = model.type
         self.update()
@@ -354,6 +356,7 @@ class QArrayView(QtW.QWidget):
             type=self.model_type(),
             extension_default=".npy",
             metadata=ArrayMeta(
+                axes=self._axes,
                 current_indices=current_indices,
                 selections=self._table._get_selections(),
             ),

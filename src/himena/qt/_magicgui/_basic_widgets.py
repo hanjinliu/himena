@@ -184,10 +184,10 @@ class IntListEdit(LineEdit):
     def __init__(self, value=Undefined, **kwargs):
         app = use_app()
         assert app.native
+        kwargs["widget_type"] = QIntListEdit
         ValueWidget.__init__(
             self,
             value=value,
-            widget_type=QIntListEdit,
             **kwargs,
         )
 
@@ -221,10 +221,10 @@ class FloatListEdit(LineEdit):
     def __init__(self, value=Undefined, **kwargs):
         app = use_app()
         assert app.native
+        kwargs["widget_type"] = QFloatListEdit
         ValueWidget.__init__(
             self,
             value=value,
-            widget_type=QFloatListEdit,
             **kwargs,
         )
 

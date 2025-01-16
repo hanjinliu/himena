@@ -2,8 +2,8 @@ import numpy as np
 from numpy.testing import assert_array_equal
 from qtpy.QtCore import Qt
 from pytestqt.qtbot import QtBot
-from himena import MainWindow
-from himena.standards.model_meta import ArrayMeta
+from himena import MainWindow, StandardType
+from himena.standards.model_meta import ArrayMeta, ArrayAxis
 from himena.testing import WidgetTester
 from himena_builtins.qt.widgets import QArrayView
 
@@ -47,12 +47,25 @@ def test_structured(qtbot: QtBot):
         assert old.metadata.selections == new.metadata.selections
 
 def test_array_commands(himena_ui: MainWindow):
-    win = himena_ui.add_object(np.arange(24).reshape(2, 3, 4), type="array")
+    win = himena_ui.add_object(np.arange(24).reshape(2, 3, 4), type=StandardType.ARRAY)
     himena_ui.exec_action("builtins:array-duplicate-slice")
     assert himena_ui.current_model.value.shape == (3, 4)
     assert_array_equal(himena_ui.current_model.value, np.arange(12).reshape(3, 4))
+
+    himena_ui.add_object(np.arange(24).reshape(2, 3, 4), type=StandardType.IMAGE)
+    himena_ui.exec_action("builtins:array-duplicate-slice")
+    assert himena_ui.current_model.value.shape == (3, 4)
+    assert_array_equal(himena_ui.current_model.value, np.arange(12).reshape(3, 4))
+
     himena_ui.current_window = win
-    win.update_model(win.to_model().with_metadata(ArrayMeta(selections=[((1, 2), (1, 3))])))
+    win.update_model(
+        win.to_model().with_metadata(
+            ArrayMeta(
+                axes=[ArrayAxis(name=name) for name in ("t", "y", "x")],
+                selections=[((1, 2), (1, 3))],
+            )
+        )
+    )
     himena_ui.exec_action("builtins:crop-array")
     assert himena_ui.current_model.value.shape == (2, 1, 2)
     himena_ui.current_window = win
@@ -66,3 +79,21 @@ def test_array_commands(himena_ui: MainWindow):
     assert himena_ui.current_model.value.shape == (1, 1, 2)
 
     himena_ui.exec_action("builtins:array-astype", with_params={"dtype": "float32"})
+
+    himena_ui.exec_action(
+        "builtins:binary-operation",
+        with_params={"x": win.to_model(), "y": win.to_model(), "operation": "sub", "result_dtype": "input"}
+    )
+    himena_ui.exec_action(
+        "builtins:binary-operation",
+        with_params={"x": win.to_model(), "y": win.to_model(), "operation": "sub", "result_dtype": "float32"}
+    )
+    himena_ui.exec_action(
+        "builtins:binary-operation",
+        with_params={"x": win.to_model(), "y": win.to_model(), "operation": "sub", "result_dtype": "float64"}
+    )
+    himena_ui.current_window = win
+    himena_ui.exec_action(
+        "builtins:set-array-scale",
+        with_params={"axis_2": "1.4", "axis_1": "1.0 um", "axis_0": "0.5um"}
+    )

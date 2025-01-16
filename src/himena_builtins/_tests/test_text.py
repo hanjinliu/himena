@@ -1,12 +1,13 @@
 from pathlib import Path
 from qtpy import QtGui
 from qtpy.QtCore import Qt
+from himena import MainWindow, StandardType
+from himena.standards.model_meta import TextMeta
 from himena.types import WidgetDataModel
 from himena_builtins.qt.widgets import (
     QTextEdit,
 )
 from pytestqt.qtbot import QtBot
-from himena.consts import StandardType
 from himena.testing import WidgetTester
 from himena_builtins.qt.widgets.text import QRichTextEdit
 from himena_builtins.qt.widgets.text_previews import QSvgPreview, QMarkdowPreview
@@ -101,3 +102,17 @@ def test_rich_text(sample_dir: Path, qtbot):
         tester.widget._control._on_toggle_italic()
         tester.widget._control._on_toggle_underline()
         tester.widget._control._on_toggle_strike()
+
+def test_commands(himena_ui: MainWindow):
+    win = himena_ui.add_object("print(2)", type=StandardType.TEXT)
+    win.update_model(win.to_model().with_metadata(TextMeta(language="python")))
+    himena_ui.exec_action("builtins:run-script")
+    win = himena_ui.add_object("1,2,3", type=StandardType.TEXT)
+    himena_ui.exec_action("builtins:text:change-separator", with_params={})
+    assert himena_ui.current_model.value == "1\t2\t3"
+    himena_ui.exec_action("builtins:text:change-encoding", with_params={"encoding": "utf-16"})
+    assert himena_ui.current_model.metadata.encoding == "utf-16"
+    himena_ui.add_object("def f(x):\n    return x + 1", type=StandardType.TEXT)
+    himena_ui.exec_action("builtins:compile-as-function")
+    himena_ui.add_object("def f(x):\n    return x + 1\nf", type=StandardType.TEXT)
+    himena_ui.exec_action("builtins:compile-as-function")

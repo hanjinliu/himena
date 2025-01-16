@@ -67,6 +67,25 @@ def test_scatter_plot_via_command(himena_ui: MainWindow, tmpdir):
     himena_ui.current_window.write_model(path)
     himena_ui.read_file(path)
 
+    win = himena_ui.add_object(
+        [["x", "y", "z"],
+         [0, 4, 6],
+         [1, 6, 10],
+         [2, 5, 12]],
+        type="table",
+    )
+    himena_ui.exec_action(
+        "builtins:scatter-plot-3d",
+        with_params={
+            "x": ((0, 99), (0, 1)),
+            "y": ((0, 99), (1, 2)),
+            "z": ((0, 99), (2, 3)),
+        }
+    )
+    path = Path(tmpdir) / "test.plot.json"
+    himena_ui.current_window.write_model(path)
+    himena_ui.read_file(path)
+
 def test_line_plot_via_command(himena_ui: MainWindow, tmpdir):
     win = himena_ui.add_object(
         [["x", "y", "z"],
@@ -91,6 +110,25 @@ def test_line_plot_via_command(himena_ui: MainWindow, tmpdir):
             "x": ((0, 99), (0, 1)),
             "y": ((0, 99), (1, 3)),
             "edge": {"color": Color("black"), "width": 2, "style": None},
+        }
+    )
+    path = Path(tmpdir) / "test.plot.json"
+    himena_ui.current_window.write_model(path)
+    himena_ui.read_file(path)
+
+    win = himena_ui.add_object(
+        [["x", "y", "z"],
+         [0, 4, 6],
+         [1, 6, 10],
+         [2, 5, 12]],
+        type="table",
+    )
+    himena_ui.exec_action(
+        "builtins:line-plot-3d",
+        with_params={
+            "x": ((0, 99), (0, 1)),
+            "y": ((0, 99), (1, 2)),
+            "z": ((0, 99), (2, 3)),
         }
     )
     path = Path(tmpdir) / "test.plot.json"
@@ -212,3 +250,21 @@ def test_band_plot_via_command(himena_ui: MainWindow, tmpdir):
     path = Path(tmpdir) / "test.plot.json"
     himena_ui.current_window.write_model(path)
     himena_ui.read_file(path)
+
+def test_histogram(himena_ui: MainWindow):
+    win = himena_ui.add_object(
+        [["x"], [0], [1], [2], [3.2], [0.2]],
+        type="table",
+    )
+    himena_ui.exec_action(
+        "builtins:histogram",
+        with_params={"x": ((0, 99), (0, 1)), "bins": 2}
+    )
+    himena_ui.exec_action(
+        "builtins:edit-plot",
+        with_params={
+            "x": {"label": "X value"},
+            "y": {"label": "Y value", "lim": (0, 1)},
+            "title": "Title ...",
+        }
+    )

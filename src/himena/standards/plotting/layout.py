@@ -33,6 +33,8 @@ class BaseLayoutModel(BaseModel):
 
     @classmethod
     def construct(self, model_type: str, dict_: dict) -> "BaseLayoutModel":
+        from himena.standards.plotting.layout3d import SingleAxes3D
+
         if model_type == "singleaxes":
             return SingleAxes.model_validate(dict_)
         if model_type == "row":
@@ -41,6 +43,8 @@ class BaseLayoutModel(BaseModel):
             return Column.model_validate(dict_)
         if model_type == "grid":
             return Grid.model_validate(dict_)
+        if model_type == "singleaxes3d":
+            return SingleAxes3D.model_validate(dict_)
         raise ValueError(f"Unknown layout model type: {model_type!r}")
 
     def show(self) -> None:
