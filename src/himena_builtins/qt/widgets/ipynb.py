@@ -74,6 +74,7 @@ class QIpynbEdit(QtW.QScrollArea):
         return WidgetDataModel(
             type=self.model_type(),
             value=js_string,
+            extension_default=".ipynb",
         )
 
     @validate_protocol
