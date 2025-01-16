@@ -88,6 +88,23 @@ def dump_tab_to_directory(
     _dump_tab_to_directory_impl(tab, path, save_copies, cmd_id_allowed)
 
 
+def dump_tab_to_zip(
+    tab: TabArea,
+    path: str | Path,
+    save_copies: bool = False,
+    allow_calculate: Sequence[str] = (),
+):
+    path = Path(path)
+    with tempfile.TemporaryDirectory() as tmpdir, zipfile.ZipFile(path, "w") as z:
+        tmpdir = Path(tmpdir)
+        dump_tab_to_directory(
+            tab, tmpdir, save_copies=save_copies, allow_calculate=allow_calculate
+        )
+        for file in tmpdir.rglob("*"):
+            z.write(file, file.relative_to(tmpdir))
+    return None
+
+
 def _dump_tab_to_directory_impl(
     tab: TabArea,
     dirname: Path,

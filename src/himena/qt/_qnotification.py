@@ -144,6 +144,7 @@ class QNotificationWidget(_QOverlayBase):
         super().__init__(main)
 
         size_grip = QtW.QSizeGrip(self)
+        size_grip.setFixedHeight(8)
         self.layout().addWidget(
             size_grip, 0, Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
         )

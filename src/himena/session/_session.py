@@ -5,10 +5,10 @@ from typing import Any, Mapping, TypeVar, TYPE_CHECKING
 import uuid
 import warnings
 from pydantic_compat import BaseModel, Field
-import yaml
 
 from himena._descriptors import NoNeedToSave, SaveToPath
 from himena._utils import get_widget_class_id
+from himena.layout import construct_layout
 from himena.types import WindowState, WindowRect, WidgetDataModel, is_subtype
 from himena import anchor, io_utils
 from himena.widgets._wrapper import ParametricWindow
@@ -20,28 +20,11 @@ if TYPE_CHECKING:
 _W = TypeVar("_W")  # widget interface
 
 
-class WindowRectModel(BaseModel):
-    """A model version of a window rectangle."""
-
-    left: int
-    top: int
-    width: int
-    height: int
-
-    @classmethod
-    def from_tuple(cls, rect: WindowRect) -> "WindowRectModel":
-        left, top, width, height = rect
-        return WindowRectModel(left=left, top=top, width=width, height=height)
-
-    def to_tuple(self) -> WindowRect:
-        return WindowRect(self.left, self.top, self.width, self.height)
-
-
 class WindowDescription(BaseModel):
     """A model that describes a window state."""
 
     title: str
-    rect: WindowRectModel
+    rect: WindowRect
     state: WindowState = Field(default=WindowState.NORMAL)
     anchor: dict[str, Any] = Field(default_factory=lambda: {"type": "no-anchor"})
     is_editable: bool = Field(default=True)
@@ -50,6 +33,7 @@ class WindowDescription(BaseModel):
     workflow: Workflow
     model_type: str
     widget_plugin_id: str | None = Field(default=None)
+    children: list[uuid.UUID] = Field(default_factory=list)
 
     @classmethod
     def from_gui(
@@ -73,7 +57,7 @@ class WindowDescription(BaseModel):
         model = window.to_model()
         return WindowDescription(
             title=window.title,
-            rect=WindowRectModel.from_tuple(window.rect),
+            rect=window.rect,
             state=window.state,
             anchor=anchor.anchor_to_dict(window.anchor),
             is_editable=window.is_editable,
@@ -82,6 +66,7 @@ class WindowDescription(BaseModel):
             workflow=model.workflow,
             model_type=model.type,
             widget_plugin_id=get_widget_class_id(type(window.widget)),
+            children=[child._identifier for child in window._child_windows],
         )
 
     def process_model(self, area: "TabArea[_W]", model: "WidgetDataModel"):
@@ -102,7 +87,7 @@ class WindowDescription(BaseModel):
         else:
             window = area.add_data_model(model)
         window.title = self.title
-        window.rect = self.rect.to_tuple()
+        window.rect = self.rect
         window.state = self.state
         window.anchor = anchor.dict_to_anchor(self.anchor)
         with suppress(AttributeError):
@@ -110,7 +95,7 @@ class WindowDescription(BaseModel):
         if isinstance(meth := self.short_workflow, LocalReaderMethod):
             window._save_behavior = SaveToPath(path=meth.path, plugin=meth.plugin)
         window._identifier = self.id
-        return model
+        return window
 
     def prep_workflow(self, workflow_override: Mapping[str, Workflow]) -> Workflow:
         """Prepare the most efficient workflow to get the window."""
@@ -134,7 +119,7 @@ class TabSession(BaseModel):
     name: str = Field(default="")
     windows: list[WindowDescription] = Field(default_factory=list)
     current_index: int | None = Field(default=None)
-    # `layout = Field(default_factory=LayoutModel)` in the future
+    layouts: list[dict] = Field(default_factory=list)
 
     @classmethod
     def from_gui(
@@ -143,14 +128,20 @@ class TabSession(BaseModel):
         *,
         allow_calculate: bool = False,
     ) -> "TabSession":
+        layouts: list[dict] = []
+        for ly in tab.layouts:
+            if ly is tab._minimized_window_stack_layout:
+                continue  # this layout does not need to be saved
+            layouts.append(ly._serialize_layout())
         return TabSession(
             name=tab.name,
-            current_index=tab.current_index,
             windows=[
                 WindowDescription.from_gui(window, allow_calculate=allow_calculate)
                 for window in tab
                 if not isinstance(window, ParametricWindow)
             ],
+            current_index=tab.current_index,
+            layouts=layouts,
         )
 
     def update_gui(
@@ -171,24 +162,31 @@ class TabSession(BaseModel):
 
         models = compute(_pending_workflows)
         _failed_sessions: list[tuple[WindowDescription, Exception]] = []
+        _id_to_win: dict[uuid.UUID, "SubWindow"] = {}
         for _win_sess, model_or_exc in zip(_win_sessions, models):
             if isinstance(model_or_exc, Exception):
                 _failed_sessions.append((_win_sess, model_or_exc))
                 continue
-            _win_sess.process_model(self, model_or_exc)
+            _win = _win_sess.process_model(self, model_or_exc)
+            _id_to_win[_win_sess.id] = _win
 
         if 0 <= cur_index < len(area):
             area.current_index = cur_index
         _raise_failed(_failed_sessions)
+        _update_layout(area, self.layouts, main)
+        for _win_sess in self.windows:
+            for child_id in _win_sess.children:
+                _id_to_win[_win_sess.id]._child_windows.add(_id_to_win[child_id])
         return None
 
-    def dump_yaml(self, path: str | Path) -> None:
-        """Dump the session to a YAML file."""
-        js = self.model_dump(mode="json")
-        js = {"session": "tab", **js}
-        with open(path, "w") as f:
-            yaml.dump(js, f, sort_keys=False)
-        return None
+
+def _update_layout(
+    tab: "TabArea[_W]", layouts: list[dict], main: "MainWindow[_W]"
+) -> None:
+    for ly in layouts:
+        _layout_obj = construct_layout(ly, main)
+        tab._add_layout(_layout_obj)
+    return None
 
 
 def _get_version(mod, maybe_file: bool = False) -> str | None:
@@ -214,9 +212,7 @@ class AppSession(BaseModel):
     profile: AppProfileInfo | None = Field(default=None)
     tabs: list[TabSession] = Field(default_factory=list)
     current_index: int = Field(default=0)
-    rect: WindowRectModel = Field(
-        default=WindowRectModel(left=200, top=200, width=800, height=600)
-    )
+    rect: WindowRect = Field(default=WindowRect(200, 200, 800, 600))
 
     @classmethod
     def from_gui(
@@ -238,7 +234,7 @@ class AppSession(BaseModel):
                 for tab in main.tabs
             ],
             current_index=main.tabs.current_index,
-            rect=WindowRectModel.from_tuple(main.rect),
+            rect=main.rect,
         )
 
     def update_gui(
@@ -263,13 +259,15 @@ class AppSession(BaseModel):
                 _target_areas.append(_new_tab)
         models = compute(_pending_workflows)
         _failed_sessions: list[tuple[WindowDescription, Exception]] = []
+        _id_to_win: dict[uuid.UUID, "SubWindow"] = {}
         for _win_sess, _tab_area, model_or_exc in zip(
             _win_sessions, _target_areas, models
         ):
             if isinstance(model_or_exc, Exception):
                 _failed_sessions.append((_win_sess, model_or_exc))
                 continue
-            _win_sess.process_model(_tab_area, model_or_exc)
+            _win = _win_sess.process_model(_tab_area, model_or_exc)
+            _id_to_win[_win_sess.id] = _win
 
         # Update current active window for each tab
         for tab_session, area in zip(_tab_sessions, _target_areas):
@@ -278,7 +276,12 @@ class AppSession(BaseModel):
                 area.current_index = cur_tab_index
         main.tabs.current_index = self.current_index + cur_index
         _raise_failed(_failed_sessions)
-        main.rect = self.rect.to_tuple()
+        main.rect = self.rect
+        for tab_session in self.tabs:
+            _update_layout(main.tabs[tab_session.name], tab_session.layouts, main)
+        for _win_sess in _win_sessions:
+            for child_id in _win_sess.children:
+                _id_to_win[_win_sess.id]._child_windows.add(_id_to_win[child_id])
         return None
 
 

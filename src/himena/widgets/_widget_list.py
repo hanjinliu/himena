@@ -165,7 +165,6 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
 
         main._move_focus_to(front)
         sub_window._alive = True
-        main._himena_main_window._id_to_widget_map[sub_window._identifier] = sub_window
         return None
 
     def current(self, default: _T = None) -> SubWindow[_W] | _T:
@@ -405,7 +404,6 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         if title is None:
             title = getattr(interf, "default_title", _make_title)(len(self))
         out = main.add_widget(front, self._tab_index(), title)
-        main._himena_main_window._id_to_widget_map[sub_window._identifier] = sub_window
         if hasattr(interf, "control_widget"):
             main._set_control_widget(front, interf.control_widget())
 
@@ -531,19 +529,18 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         FutureInfo(list[WidgetDataModel]).set(future)  # set info for injection store
         return future
 
-    def save_session(self, file_path: str | Path) -> None:
+    def save_session(
+        self,
+        file_path: str | Path,
+        save_copies: bool = False,
+        allow_calculate: Sequence[str] = (),
+    ) -> None:
         """Save the current session to a file."""
-        from himena.session import TabSession
+        from himena.session import dump_tab_to_zip
 
-        file_path = self._main_window()._himena_main_window.exec_file_dialog(
-            mode="w",
-            extension_default=".session.yaml",
-            allowed_extensions=[".session.yaml"],
+        dump_tab_to_zip(
+            self, file_path, save_copies=save_copies, allow_calculate=allow_calculate
         )
-        if file_path is None:
-            return None
-        session = TabSession.from_gui(self)
-        session.dump_yaml(file_path)
         return None
 
     def tile_windows(

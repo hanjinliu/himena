@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 ################################
 
 
-def _infer_encoding(file_path: Path) -> str:
+def _infer_encoding(file_path: Path) -> str | None:
     import chardet
 
     with file_path.open("rb") as f:
@@ -127,12 +127,15 @@ def _read_txt_as_numpy(file_path: Path, delimiter: str | None = None):
     encoding = _infer_encoding(file_path)
     sep = delimiter or _infer_separator(file_path, encoding)
     try:
-        arr = np.loadtxt(
-            file_path,
-            dtype=np.dtypes.StringDType(),
-            delimiter=sep,
-            encoding=encoding,
-        )
+        if file_path.stat().st_size == 0:
+            arr = np.array([[]], dtype=np.dtypes.StringDType())
+        else:
+            arr = np.loadtxt(
+                file_path,
+                dtype=np.dtypes.StringDType(),
+                delimiter=sep,
+                encoding=encoding,
+            )
     except ValueError:
         # If the file has different number of columns in each row, np.loadtxt fails.
         with file_path.open("r", encoding=encoding) as f:

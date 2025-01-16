@@ -1,15 +1,18 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from functools import cache
 import weakref
 import numpy as np
-from typing import TYPE_CHECKING, Callable, Iterator, MutableSequence
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Iterator, MutableSequence
 from himena.types import Size, WindowRect, Margins
 from himena import anchor as _anc
+from himena._utils import iter_subclasses
+
 
 if TYPE_CHECKING:
     from typing import Self
-    from himena.widgets import BackendMainWindow
+    from himena.widgets import BackendMainWindow, MainWindow
 
 
 class Layout(ABC):
@@ -28,6 +31,15 @@ class Layout(ABC):
 
     @rect.setter
     def rect(self, value: tuple[int, int, int, int] | WindowRect) -> None: ...
+
+    @abstractmethod
+    def _serialize_layout(self) -> Any:
+        """Serialize the layout instance."""
+
+    @classmethod
+    @abstractmethod
+    def _deserialize_layout(cls, obj, main: MainWindow) -> Any:
+        """Deserialize the layout instance."""
 
     @property
     def size(self) -> Size[int]:
@@ -77,6 +89,19 @@ class Layout(ABC):
             raise ValueError(f"Unknown anchor: {anchor}")
 
 
+@cache
+def get_layout_class(typ: str) -> type[Layout]:
+    for ly in iter_subclasses(Layout):
+        if ly.__name__.lower() == typ:
+            return ly
+    raise ValueError(f"Unknown layout type: {typ}")
+
+
+def construct_layout(obj, main: MainWindow) -> Layout:
+    cls = get_layout_class(obj["type"])
+    return cls._deserialize_layout(obj, main)
+
+
 def _no_ref() -> None:
     return None
 
@@ -95,6 +120,15 @@ class EmptyLayout(Layout):
     @rect.setter
     def rect(self, value):
         self._rect = WindowRect.from_tuple(*value)
+
+    def _serialize_layout(self):
+        return {"type": "empty", "rect": self.rect}
+
+    @classmethod
+    def _deserialize_layout(cls, obj, main: MainWindow):
+        self = cls(main._backend_main_window)
+        self.rect = obj["rect"]
+        return self
 
 
 class LayoutContainer(Layout):
@@ -218,6 +252,24 @@ class Layout1D(LayoutContainer, MutableSequence[Layout]):
         child._parent_layout_ref = _no_ref
         self._resize_children(self.rect)
 
+    def _serialize_layout(self):
+        return {
+            "type": type(self).__name__.lower(),
+            "children": [child._serialize_layout() for child in self._children],
+            "margins": list(self.margins),
+            "spacing": self.spacing,
+        }
+
+    @classmethod
+    def _deserialize_layout(cls, obj, main: MainWindow) -> Self:
+        self = cls(
+            main._backend_main_window, margins=obj["margins"], spacing=obj["spacing"]
+        )
+        for child_obj in obj["children"]:
+            child = construct_layout(child_obj, main)
+            self.append(child)
+        return self
+
 
 class BoxLayout1D(Layout1D):
     def __init__(self, main=None, *, margins=(0, 0, 0, 0), spacing=0):
@@ -228,6 +280,8 @@ class BoxLayout1D(Layout1D):
         """Insert a child layout at the specified index."""
         if stretch <= 0:
             raise ValueError(f"stretch must be positive, got {stretch!r}")
+        if not isinstance(child, Layout):
+            raise TypeError(f"Can only insert a Layout object, got {type(child)}")
         self._children.insert(index, child)
         child._parent_layout_ref = weakref.ref(self)
         self._stretches.insert(index, float(stretch))
@@ -239,11 +293,13 @@ class BoxLayout1D(Layout1D):
 
     def add(
         self,
-        child: Layout,
+        child: Layout | Iterable[Layout],
         *more: Layout,
         stretch: float = 1,
     ) -> Self:
         """Add child layout(s) to the layout."""
+        if not isinstance(child, Layout):
+            child, more = child[0], [*child[1:], *more]
         self.append(child, stretch=stretch)
         for ch in more:
             self.append(ch, stretch=stretch)

@@ -18,7 +18,6 @@ from typing import (
     TYPE_CHECKING,
 )
 import warnings
-import weakref
 from app_model.expressions import create_context
 from psygnal import SignalGroup, Signal
 
@@ -89,7 +88,6 @@ class MainWindow(Generic[_W]):
         app.commands.executed.connect(self._on_command_execution)
         backend._connect_main_window_signals(self)
         self._ctx_keys = AppContext(create_context(self, max_depth=0))
-        self._id_to_widget_map = weakref.WeakValueDictionary[uuid.UUID, SubWindow]()
         self._tab_list.changed.connect(backend._update_context)
         self._dock_widget_list = DockWidgetList(backend)
         self._recent_manager = RecentFileManager.default(app)
@@ -218,7 +216,12 @@ class MainWindow(Generic[_W]):
 
     def window_for_id(self, identifier: uuid.UUID) -> SubWindow[_W] | None:
         """Retrieve a sub-window by its identifier."""
-        return self._id_to_widget_map.get(identifier)
+        if not isinstance(identifier, uuid.UUID):
+            raise ValueError(f"Expected UUID, got {identifier!r}.")
+        for win in self.iter_windows():
+            if win._identifier == identifier:
+                return win
+        return None
 
     def _current_or_new_tab(self) -> tuple[int, TabArea[_W]]:
         if self._new_widget_behavior is NewWidgetBehavior.WINDOW:

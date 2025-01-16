@@ -4,6 +4,8 @@ from ._api import (
     update_from_zip,
     dump_directory,
     dump_zip,
+    dump_tab_to_directory,
+    dump_tab_to_zip,
 )
 
 __all__ = [
@@ -13,4 +15,6 @@ __all__ = [
     "update_from_zip",
     "dump_directory",
     "dump_zip",
+    "dump_tab_to_directory",
+    "dump_tab_to_zip",
 ]

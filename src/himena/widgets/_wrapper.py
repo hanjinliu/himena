@@ -275,6 +275,16 @@ class SubWindow(WidgetWrapper[_W], Layout):
         # same provider/processor.
         return cls
 
+    @classmethod
+    def _deserialize_layout(cls, obj: dict, main: MainWindow) -> SubWindow[Any]:
+        win = main.window_for_id(uuid.UUID(obj["id"]))
+        if win is None:
+            raise RuntimeError(f"SubWindow {obj['id']} not found in main window.")
+        return win
+
+    def _serialize_layout(self):
+        return {"type": "subwindow", "id": self._identifier.hex}
+
     @property
     def title(self) -> str:
         """Title of the sub-window."""
