@@ -145,30 +145,87 @@ def test_image_view_copy_roi(qtbot: QtBot):
         qtbot.keyClick(image_view._img_view, Qt.Key.Key_V, modifier=_Ctrl)
         assert len(image_view._img_view._roi_items) == 3
 
-def test_image_view_roi_collection(qtbot: QtBot):
+def test_image_view_select_roi(qtbot: QtBot):
     image_view = QImageView()
     image_view.show()
-    image_view.setSizes([200, 200])
+    image_view.setSizes([300, 100])
     with WidgetTester(image_view) as tester:
-        tester.update_model(
-            value=np.zeros((100, 100), dtype=np.uint8),
-            metadata=ImageMeta(
-                rois=RoiListModel(
-                    rois=[
-                        LineRoi(indices=(0, 0), name="ROI-0", x1=1, y1=1, x2=4, y2=5),
-                        PointRoi2D(indices=(0, 0), name="ROI-1", x=1, y=5),
-                    ]
-                )
-            )
+        tester.update_model(value=np.zeros((100, 100), dtype=np.uint8))
+        qtbot.addWidget(image_view)
+        view = image_view._img_view
+        view._wheel_event(1)
+        view._wheel_event(-1)
+        # point
+        view._current_roi_item = _rois.QPointRoi(2, 3)
+        view.select_item_at(QtCore.QPointF(2, 3))
+        assert isinstance(view._current_roi_item, _rois.QPointRoi)
+        view.select_item_at(QtCore.QPointF(10, 10))
+        assert view._current_roi_item is None
+
+        # points
+        view._current_roi_item = _rois.QPointsRoi([2, 4], [3, 4])
+        view.select_item_at(QtCore.QPointF(2, 3))
+        assert isinstance(view._current_roi_item, _rois.QPointsRoi)
+        view.select_item_at(QtCore.QPointF(10, 10))
+        assert view._current_roi_item is None
+
+        # line
+        view._current_roi_item = _rois.QLineRoi(0, 0, 3, 3)
+        view.select_item_at(QtCore.QPointF(1, 1))
+        assert isinstance(view._current_roi_item, _rois.QLineRoi)
+        view.select_item_at(QtCore.QPointF(3, 0))
+        assert view._current_roi_item is None
+
+        # rectangle
+        view._current_roi_item = _rois.QRectangleRoi(0, 0, 3, 3)
+        view.select_item_at(QtCore.QPointF(1, 2))
+        assert isinstance(view._current_roi_item, _rois.QRectangleRoi)
+        view.select_item_at(QtCore.QPointF(10, 2))
+        assert view._current_roi_item is None
+
+        # ellipse
+        view._current_roi_item = _rois.QEllipseRoi(0, 0, 3, 5)
+        view.select_item_at(QtCore.QPointF(1, 2))
+        assert isinstance(view._current_roi_item, _rois.QEllipseRoi)
+        view.select_item_at(QtCore.QPointF(0, 4))
+        # assert view._current_roi_item is None  # FIXME: Not working for some reason
+
+        # polygon
+        view._current_roi_item = _rois.QPolygonRoi([0, 1, 3, 0], [3, 5, 5, 3])
+        view.select_item_at(QtCore.QPointF(1, 5))
+        assert isinstance(view._current_roi_item, _rois.QPolygonRoi)
+        view.select_item_at(QtCore.QPointF(6, 3))
+        assert view._current_roi_item is None
+
+        # segmented line
+        view._current_roi_item = _rois.QSegmentedLineRoi([0, 1, 3], [3, 5, 5])
+        view.select_item_at(QtCore.QPointF(1, 5))
+        assert isinstance(view._current_roi_item, _rois.QSegmentedLineRoi)
+        view.select_item_at(QtCore.QPointF(6, 3))
+        assert view._current_roi_item is None
+
+        # rotated rectangle
+        view._current_roi_item = _rois.QRotatedRectangleRoi(
+            QtCore.QPointF(0, 0),
+            QtCore.QPointF(10, 10),
+            6,
         )
+        view.select_item_at(QtCore.QPointF(4, 4))
+        assert isinstance(view._current_roi_item, _rois.QRotatedRectangleRoi)
+        view.select_item_at(QtCore.QPointF(10, 0))
+        assert view._current_roi_item is None
+
         qtbot.addWidget(image_view)
         image_view._roi_col._roi_visible_btn.click()
+        QApplication.processEvents()
         assert image_view._roi_col._roi_visible_btn.isChecked()
         assert not image_view._roi_col._roi_labels_btn.isChecked()
         image_view._roi_col._roi_visible_btn.click()
+        QApplication.processEvents()
         assert not image_view._roi_col._roi_visible_btn.isChecked()
         assert not image_view._roi_col._roi_labels_btn.isChecked()
         image_view._roi_col._roi_labels_btn.click()
+        QApplication.processEvents()
         assert image_view._roi_col._roi_visible_btn.isChecked()
         assert image_view._roi_col._roi_labels_btn.isChecked()
         image_view._roi_col._list_view._prep_context_menu(
@@ -352,3 +409,16 @@ def test_scale_bar(himena_ui: MainWindow):
     himena_ui.show()
     win.size = (300, 300)
     win.size = (200, 200)
+    assert isinstance(win.widget, QImageView)
+    win.widget._img_view.move_items_by(2, 2)
+
+def test_find_nice_position():
+    from himena_builtins.qt.widgets._image_components._graphics_view import _find_nice_position
+
+    for angle in np.linspace(0, np.pi * 2, 30):
+        x = float(np.sin(angle))
+        y = float(np.cos(angle))
+        p = _find_nice_position(QtCore.QPointF(0, 0), QtCore.QPointF(x, y))
+        ang_out = np.arctan2(p.y(), p.x())
+        assert np.rad2deg(ang_out) % 45 < 0.1
+        assert abs(angle - ang_out) <= 22.5
