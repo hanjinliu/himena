@@ -434,6 +434,24 @@ class Rect(Generic[_V]):
     def bottom(self):
         return self.top + self.height
 
+    def with_left(self, left: _V) -> "Rect[_V]":
+        return Rect(left, self.top, self.width, self.height)
+
+    def with_top(self, top: _V) -> "Rect[_V]":
+        return Rect(self.left, top, self.width, self.height)
+
+    def with_width(self, width: _V) -> "Rect[_V]":
+        return Rect(self.left, self.top, width, self.height)
+
+    def with_height(self, height: _V) -> "Rect[_V]":
+        return Rect(self.left, self.top, self.width, height)
+
+    def with_right(self, right: _V) -> "Rect[_V]":
+        return Rect(right - self.width, self.top, self.width, self.height)
+
+    def with_bottom(self, bottom: _V) -> "Rect[_V]":
+        return Rect(self.left, bottom - self.height, self.width, self.height)
+
     def __iter__(self):
         """Iterate over the field to make this class tuple-like."""
         return iter((self.left, self.top, self.width, self.height))

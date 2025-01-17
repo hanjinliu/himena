@@ -8,10 +8,7 @@ from typing import (
     Generator,
     Generic,
     Hashable,
-    Iterable,
     Iterator,
-    MutableSet,
-    Sequence,
     TypeVar,
     TYPE_CHECKING,
     overload,
@@ -140,47 +137,6 @@ def get_display_name(cls: type, sep: str = "\n", class_id: bool = True) -> str:
 
 
 _T = TypeVar("_T", bound=Hashable)
-
-
-class OrderedSet(MutableSet[_T]):
-    def __init__(self, iterable: Iterable[_T] = ()):
-        self._dict: dict[_T, None] = dict.fromkeys(iterable)
-
-    def __contains__(self, other) -> bool:
-        return other in self._dict
-
-    def __iter__(self) -> Iterator[_T]:
-        yield from self._dict
-
-    def __len__(self) -> int:
-        return len(self._dict)
-
-    def add(self, value: _T) -> None:
-        self._dict[value] = None
-
-    def discard(self, value: _T) -> None:
-        self._dict.pop(value, None)
-
-    def update(self, other: Iterable[_T]) -> None:
-        for value in other:
-            self.add(value)
-
-
-class FrozenList(Sequence[_T]):
-    def __init__(self, iterable: Iterable[_T]):
-        self._list = list(iterable)
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({self._list!r})"
-
-    def __getitem__(self, index: int) -> _T:
-        return self._list[index]
-
-    def __len__(self) -> int:
-        return len(self._list)
-
-    def __iter__(self) -> Iterator[_T]:
-        yield from self._list
 
 
 def _is_widget_data_model(a):

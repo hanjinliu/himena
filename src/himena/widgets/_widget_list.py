@@ -31,7 +31,7 @@ from himena.types import (
     WindowState,
     WindowRect,
 )
-from himena._utils import FrozenList
+from himena.utils.collections import FrozenList
 from himena.workflow import ProgrammaticMethod
 from himena.widgets._wrapper import (
     _HasMainWindowRef,

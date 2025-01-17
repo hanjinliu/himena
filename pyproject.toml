@@ -63,6 +63,7 @@ testing = [
   "pytest-qt",
   "pytest-cov",
   "pandas",
+  "pyarrow",
   "himena[all]"
 ]
 

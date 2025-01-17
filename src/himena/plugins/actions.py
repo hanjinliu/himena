@@ -27,6 +27,7 @@ from himena._app_model import AppContext as ctx
 from himena.consts import MenuId
 from himena import _utils
 from himena.types import WidgetDataModel
+from himena.utils.collections import OrderedSet
 
 if TYPE_CHECKING:
     KeyBindingsType = str | KeyBindingRule | Sequence[str] | Sequence[KeyBindingRule]
@@ -130,7 +131,7 @@ class AppActionRegistry:
                 if isinstance(each, SubmenuItem):
                     existing_menu_ids.add(each.submenu)
 
-        added_menu_ids = _utils.OrderedSet[str]()
+        added_menu_ids = OrderedSet[str]()
         for action in actions:
             if action.menus is not None:
                 ids = [a.id for a in action.menus]

@@ -12,7 +12,7 @@ from himena.types import WidgetDataModel
 from himena.plugins import validate_protocol
 from himena.qt._utils import ndarray_to_qimage, qimage_to_ndarray
 from himena.qt._qcoloredit import QColorEdit
-from himena._utils import UndoRedoStack
+from himena.utils.collections import UndoRedoStack
 
 
 class DrawMode(Enum):

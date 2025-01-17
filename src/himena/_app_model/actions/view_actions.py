@@ -4,7 +4,7 @@ from app_model.types import (
     KeyMod,
     StandardKeyBinding,
 )
-from himena._utils import OrderedSet
+from himena.utils.collections import OrderedSet
 from himena.consts import MenuId
 from himena.exceptions import Cancelled
 from himena.plugins._signature import configure_gui

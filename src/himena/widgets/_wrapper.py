@@ -416,12 +416,15 @@ class SubWindow(WidgetWrapper[_W], Layout):
     ):
         if inst is None:
             inst = self._main_window()._himena_main_window._instructions
+        rect_old = self.rect
         main = self._main_window()
         front = self._frontend_widget()
         rect = WindowRect.from_tuple(*value)
         anc = self.anchor.update_for_window_rect(main._area_size(), rect)
         main._set_window_rect(front, rect, inst)
         self.anchor = anc
+        if parent := self._parent_layout_ref():
+            parent._adjust_child_resize(self, rect_old, rect)
 
     def _reanchor(self, size: Size):
         if self.state is WindowState.MIN:

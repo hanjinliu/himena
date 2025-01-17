@@ -19,8 +19,8 @@ from himena._utils import lru_cache, get_display_name
 from himena.consts import MenuId
 from himena.types import DragDataModel, WindowState, WindowRect, Size
 from himena.plugins import _checker
+from himena.utils.resize import ResizeState
 from himena.qt._utils import get_main_window, build_qmodel_menu
-from himena.qt._qwindow_resize import ResizeState
 from himena.qt._qrename import QRenameLineEdit
 from himena import _drag
 
@@ -244,6 +244,11 @@ class QSubWindow(QtW.QMdiSubWindow):
         self._anim_geometry = QtCore.QPropertyAnimation(self, b"geometry")
         self.setAcceptDrops(True)
 
+        min_qsize = widget.minimumSizeHint().expandedTo(self._title_bar.minimumSize())
+        max_qsize = widget.maximumSize()
+        self._min_size = Size(min_qsize.width(), min_qsize.height())
+        self._max_size = Size(max_qsize.width(), max_qsize.height())
+
     def _qt_mdiarea(self) -> QSubWindowArea:
         parent = self
         while parent is not None:
@@ -394,26 +399,33 @@ class QSubWindow(QtW.QMdiSubWindow):
             return None
         resize_state = self._check_resize_state(event_pos)
         if self._current_button == Qt.MouseButton.NoButton:
-            self.setCursor(resize_state.to_cursor_shape())
+            self.setCursor(CURSOR_SHAPE_MAP[resize_state])
         elif self._current_button & Qt.MouseButton.LeftButton:
             # NOTE: Method "minimusSizeHint" represents the minimum size of the widget
             # as a window
-            min_size = self._widget.minimumSizeHint().expandedTo(
-                self._title_bar.minimumSize()
-            )
-            max_size = self._widget.maximumSize()
-            size_old = Size(self.size().width(), self.size().height())
-            if self._resize_state.resize_widget(self, event_pos, min_size, max_size):
-                # update window anchor
-                g = self.geometry()
-                main_qsize = self._qt_mdiarea().size()
+            rect = self.geometry()
+            if new_rect := self._resize_state.resize_widget(
+                WindowRect(rect.left(), rect.top(), rect.width(), rect.height()),
+                mouse_pos=(event_pos.x(), event_pos.y()),
+                min_size=self._min_size,
+                max_size=self._max_size,
+            ):
                 subwin = self._my_wrapper()
+                size_old = Size(rect.width(), rect.height())
+
+                # update window rect
+                subwin.rect = new_rect
+
+                # update window anchor
+                main_qsize = self._qt_mdiarea().size()
                 subwin.anchor = subwin.anchor.update_for_window_rect(
                     (main_qsize.width(), main_qsize.height()),
-                    WindowRect.from_tuple(g.left(), g.top(), g.width(), g.height()),
+                    new_rect,
                 )
                 _checker.call_widget_resized_callback(
-                    self._my_wrapper().widget, size_old, Size(g.width(), g.height())
+                    self._my_wrapper().widget,
+                    size_old,
+                    new_rect.size(),
                 )
         return None
 
@@ -762,6 +774,9 @@ class QSubWindowTitleBar(QtW.QFrame):
             and _subwin._resize_state is ResizeState.NONE
             and not self._is_ctrl_drag
         ):
+            g = _subwin.geometry()
+            main_qsize = _subwin._qt_mdiarea().size()
+            wrapper = _subwin._my_wrapper()
             if _subwin._window_state == WindowState.MAX:
                 # change to normal without moving
                 self._toggle_size_btn.setIcon(
@@ -771,13 +786,12 @@ class QSubWindowTitleBar(QtW.QFrame):
                 _subwin._window_state = WindowState.NORMAL
                 # restore the last size
                 _last_geo = _subwin._last_geometry
-                _next_geo = QtCore.QRect(
+                _next_rect = WindowRect(
                     event.pos().x() - _last_geo.width() // 2,
                     event.pos().y() - self.height() // 2,
                     _last_geo.width(),
                     _last_geo.height(),
                 )
-                _subwin.setGeometry(_next_geo)
                 self._store_drag_position(event.globalPos())
             else:
                 # drag the subwindow
@@ -785,12 +799,10 @@ class QSubWindowTitleBar(QtW.QFrame):
                 offset = self.height() - 4
                 if new_pos.y() < -offset:
                     new_pos.setY(-offset)
-                _subwin.move(new_pos)
+                _next_rect = wrapper.rect.move_top_left(new_pos.x(), new_pos.y())
 
             # update window anchor
-            g = _subwin.geometry()
-            main_qsize = _subwin._qt_mdiarea().size()
-            wrapper = _subwin._my_wrapper()
+            wrapper.rect = _next_rect
             wrapper.anchor = wrapper.anchor.update_for_window_rect(
                 (main_qsize.width(), main_qsize.height()),
                 WindowRect.from_tuple(g.left(), g.top(), g.width(), g.height()),
@@ -947,3 +959,16 @@ def pixmap_resized(
         painter.drawRect(pixmap.rect().adjusted(0, 0, -1, -1))
         painter.end()
     return pixmap
+
+
+CURSOR_SHAPE_MAP = {
+    ResizeState.TOP: Qt.CursorShape.SizeVerCursor,
+    ResizeState.BOTTOM: Qt.CursorShape.SizeVerCursor,
+    ResizeState.LEFT: Qt.CursorShape.SizeHorCursor,
+    ResizeState.RIGHT: Qt.CursorShape.SizeHorCursor,
+    ResizeState.TOP_LEFT: Qt.CursorShape.SizeFDiagCursor,
+    ResizeState.TOP_RIGHT: Qt.CursorShape.SizeBDiagCursor,
+    ResizeState.BOTTOM_LEFT: Qt.CursorShape.SizeBDiagCursor,
+    ResizeState.BOTTOM_RIGHT: Qt.CursorShape.SizeFDiagCursor,
+    ResizeState.NONE: Qt.CursorShape.ArrowCursor,
+}

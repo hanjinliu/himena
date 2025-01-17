@@ -15,7 +15,7 @@ from himena.types import WidgetDataModel
 from himena.standards.model_meta import TableMeta
 from himena.plugins import validate_protocol
 from himena_builtins.qt.widgets._table_components import QTableBase, QSelectionRangeEdit
-from himena._utils import UndoRedoStack
+from himena.utils.collections import UndoRedoStack
 
 
 class HeaderFormat(Enum):

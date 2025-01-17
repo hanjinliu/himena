@@ -12,7 +12,8 @@ from himena.types import WidgetDataModel
 from himena.standards.model_meta import TextMeta
 from himena.plugins import validate_protocol
 
-from himena._utils import OrderedSet, lru_cache
+from himena.utils.collections import OrderedSet
+from himena._utils import lru_cache
 from himena.qt._qcoloredit import QColorSwatch
 from himena_builtins.qt.widgets._text_base import QMainTextEdit
 from himena_builtins.qt.widgets._shared import labeled

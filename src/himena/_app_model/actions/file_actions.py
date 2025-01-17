@@ -24,7 +24,7 @@ from himena.types import (
 )
 from himena._app_model._context import AppContext as _ctx
 from himena._app_model.actions._registry import ACTIONS, SUBMENUS
-from himena._utils import OrderedSet
+from himena.utils.collections import OrderedSet
 from himena.exceptions import Cancelled
 
 _CtrlK = KeyMod.CtrlCmd | KeyCode.KeyK

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from contextlib import contextmanager
 from functools import cache
 import weakref
 import numpy as np
@@ -119,7 +120,10 @@ class EmptyLayout(Layout):
 
     @rect.setter
     def rect(self, value):
+        rect_old = self._rect
         self._rect = WindowRect.from_tuple(*value)
+        if parent := self._parent_layout_ref():
+            parent._adjust_child_resize(self, rect_old, self._rect)
 
     def _serialize_layout(self):
         return {"type": "empty", "rect": self.rect}
@@ -138,6 +142,16 @@ class LayoutContainer(Layout):
         self._rect = WindowRect(0, 0, 1000, 1000)
         super().__init__(main)
         self._anchor = _anc.AllCornersAnchor()
+        self._is_calling_adjust_child_resize = False
+
+    @contextmanager
+    def _adjust_child_resize_context(self):
+        was = self._is_calling_adjust_child_resize
+        self._is_calling_adjust_child_resize = True
+        try:
+            yield
+        finally:
+            self._is_calling_adjust_child_resize = was
 
     @property
     def rect(self):
@@ -146,8 +160,11 @@ class LayoutContainer(Layout):
     @rect.setter
     def rect(self, value):
         rect = WindowRect.from_tuple(*value)
+        rect_old = self._rect
         self._rect = rect
         self._resize_children(rect)
+        if parent := self._parent_layout_ref():
+            parent._adjust_child_resize(self, rect_old, rect)
 
     @abstractmethod
     def _resize_children(self, rect: WindowRect):
@@ -156,6 +173,12 @@ class LayoutContainer(Layout):
     @abstractmethod
     def remove(self, child: Layout) -> None:
         """Remove a child layout from this layout."""
+
+    # @abstractmethod
+    def _adjust_child_resize(
+        self, child: Layout, rect_old: WindowRect, rect_new: WindowRect
+    ):
+        """Adjust layout container based on the child resize/move."""
 
 
 class Layout1D(LayoutContainer, MutableSequence[Layout]):
@@ -250,7 +273,10 @@ class Layout1D(LayoutContainer, MutableSequence[Layout]):
     def remove(self, child: Layout) -> None:
         MutableSequence.remove(self, child)
         child._parent_layout_ref = _no_ref
-        self._resize_children(self.rect)
+        if len(self) > 1:
+            self._resize_children(self.rect)
+        elif len(self) == 1:
+            self.remove(self[0])
 
     def _serialize_layout(self):
         return {
@@ -322,6 +348,18 @@ class BoxLayout1D(Layout1D):
         self.append(layout)
         return layout
 
+    def _may_take_child(
+        self, child: Layout, rect_old: WindowRect, rect_new: WindowRect
+    ) -> Layout:
+        # window moved
+        dist2 = (rect_old.top - rect_new.top) ** 2 + (
+            rect_old.left - rect_new.left
+        ) ** 2
+        if dist2 > 60**2:
+            # remove window from the layout
+            self.remove(child)
+        self._resize_children(self.rect)
+
 
 def _assert_supports_index(key):
     if not hasattr(key, "__index__"):
@@ -331,45 +369,135 @@ def _assert_supports_index(key):
 class VBoxLayout(BoxLayout1D):
     """A vertical box layout."""
 
-    def _resize_children(self, rect: WindowRect):
+    def _iter_edge_and_span(self, rect: WindowRect) -> Iterator[tuple[int, int]]:
         num = len(self._children)
         if num == 0:
+            yield from ()
             return
         h_cumsum = np.cumsum([0] + self._stretches, dtype=np.float32)
         edges = (h_cumsum / h_cumsum[-1] * rect.height).astype(np.int32)
-        width = rect.width - self._margins.left - self._margins.right
-        left = rect.left + self._margins.left
         dy = self.spacing // 2
         edges[0] += self._margins.top - dy
         edges[-1] += self._margins.bottom + dy
         for i in range(num):
             top = edges[i] + dy
             height = edges[i + 1] - edges[i] - self.spacing
-            irect = WindowRect(left, top, width, height)
-            self._children[i].rect = irect
+            yield top, height
+
+    def _ortho_region(self, rect: WindowRect) -> tuple[int, int]:
+        width = rect.width - self._margins.left - self._margins.right
+        left = rect.left + self._margins.left
+        return left, width
+
+    def _resize_children(self, rect: WindowRect):
+        left, width = self._ortho_region(rect)
+        with self._adjust_child_resize_context():
+            for i, (top, height) in enumerate(self._iter_edge_and_span(rect)):
+                irect = WindowRect(left, top, width, height)
+                self._children[i].rect = irect
         return None
+
+    def _adjust_child_resize(self, child: Layout, rect_old, rect_new):
+        if self._is_calling_adjust_child_resize:
+            return
+        top_changed = rect_old.top != rect_new.top
+        bottom_changed = rect_old.bottom != rect_new.bottom
+        with self._adjust_child_resize_context():
+            if top_changed and bottom_changed:
+                return self._may_take_child(child, rect_old, rect_new)
+
+            top, height = self._ortho_region(self.rect)
+            new_rect = child.rect
+            stretches = self._stretches.copy()
+            for i, (left, width) in enumerate(self._iter_edge_and_span(self.rect)):
+                stretches[i] = width
+                if top_changed and self._children[i] is child:
+                    if i == 0:
+                        child.rect = WindowRect(left, top, width, height)
+                    else:
+                        old_sum = stretches[i - 1] + stretches[i]
+                        stretches[i - 1] = old_sum - new_rect.height
+                        stretches[i] = new_rect.height
+                elif bottom_changed and self._children[i - 1] is child:
+                    if i == len(self) - 1:
+                        child.rect = WindowRect(left, top, width, height)
+                    else:
+                        old_sum = stretches[i - 1] + stretches[i]
+                        stretches[i] = old_sum - new_rect.height
+                        stretches[i - 1] = new_rect.height
+                else:
+                    child.rect = WindowRect(left, top, width, height)
+            self._stretches = stretches
+            self._resize_children(self.rect)
 
 
 class HBoxLayout(BoxLayout1D):
     """A horizontal box layout."""
 
-    def _resize_children(self, rect: WindowRect):
+    def _iter_edge_and_span(self, rect: WindowRect) -> Iterator[tuple[int, int]]:
         num = len(self._children)
         if num == 0:
+            yield from ()
             return
         w_cumsum = np.cumsum([0] + self._stretches, dtype=np.float32)
         edges = (w_cumsum / w_cumsum[-1] * rect.width).astype(np.int32)
-        height = rect.height - self._margins.top - self._margins.bottom
-        top = rect.top + self._margins.top
         dx = self.spacing // 2
         edges[0] += self._margins.left - dx
         edges[-1] += self._margins.right + dx
         for i in range(num):
             left = edges[i] + dx
             width = edges[i + 1] - edges[i] - self.spacing
-            irect = WindowRect(left, top, width, height)
-            self._children[i].rect = irect
+            yield left, width
+
+    def _ortho_region(self, rect: WindowRect) -> tuple[int, int]:
+        height = rect.height - self._margins.top - self._margins.bottom
+        top = rect.top + self._margins.top
+        return top, height
+
+    def _resize_children(self, rect: WindowRect):
+        top, height = self._ortho_region(rect)
+        with self._adjust_child_resize_context():
+            for i, (left, width) in enumerate(self._iter_edge_and_span(rect)):
+                irect = WindowRect(left, top, width, height)
+                self._children[i].rect = irect
         return None
+
+    def _adjust_child_resize(self, child: Layout, rect_old, rect_new):
+        if self._is_calling_adjust_child_resize:
+            return
+        left_changed = rect_old.left != rect_new.left
+        right_changed = rect_old.right != rect_new.right
+        with self._adjust_child_resize_context():
+            if left_changed and right_changed:
+                return self._may_take_child(child, rect_old, rect_new)
+
+            top, height = self._ortho_region(self.rect)
+            new_rect = child.rect
+            stretches = self._stretches.copy()
+            for i, (left, width) in enumerate(self._iter_edge_and_span(self.rect)):
+                stretches[i] = width
+                if left_changed and self._children[i] is child:
+                    if i == 0:
+                        child.rect = WindowRect(left, top, width, height)
+                    else:
+                        old_sum = stretches[i - 1] + stretches[i]
+                        w0 = stretches[i - 1] = old_sum - new_rect.width
+                        self._children[i - 1].rect = self._children[
+                            i - 1
+                        ].rect.with_width(w0)
+                        stretches[i] = new_rect.width
+                elif right_changed and self._children[i - 1] is child:
+                    if i == len(self) - 1:
+                        child.rect = WindowRect(left, top, width, height)
+                    else:
+                        old_sum = stretches[i - 1] + stretches[i]
+                        w0 = stretches[i] = old_sum - new_rect.width
+                        self._children[i].rect = new_rect.with_width(w0)
+                        stretches[i - 1] = new_rect.width
+                else:
+                    child.rect = WindowRect(left, top, width, height)
+            self._stretches = stretches
+            self._resize_children(self.rect)
 
 
 class GridLayout(LayoutContainer):
