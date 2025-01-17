@@ -260,7 +260,10 @@ def show_statistics(model: WidgetDataModel) -> WidgetDataModel:
     elif is_subtype(model.type, StandardType.ARRAY):
         if not isinstance(value, np.ndarray):
             raise ValueError(f"Expected a numpy array but got {type(value)}")
-        out = f"<b>Shape:</b> {value.shape}<br><b>Min:</b> {value.min()}<br><b>Max:</b> {value.max()}<br><b>Mean:</b> {value.mean()}<br><b>Std:</b> {value.std(ddof=1)}"
+        if value.dtype.names:
+            out = f"<b>Shape:</b> {value.shape}"
+        else:
+            out = f"<b>Shape:</b> {value.shape}<br><b>Min:</b> {value.min()}<br><b>Max:</b> {value.max()}<br><b>Mean:</b> {value.mean()}<br><b>Std:</b> {value.std(ddof=1)}"
     elif is_subtype(model.type, StandardType.EXCEL):
         value = model.value
         if not isinstance(value, dict):
@@ -288,8 +291,8 @@ def show_metadata(model: WidgetDataModel) -> WidgetDataModel:
     """Show the metadata of the underlying data."""
     meta = model.metadata
     if meta is None:
-        raise ValueError("Model does not have metadata.")
-    if hasattr(meta, "_repr_html_"):
+        out = "<No metadata>"
+    elif hasattr(meta, "_repr_html_"):
         out = meta._repr_html_()
     else:
         meta_repr = html.escape(repr(meta))

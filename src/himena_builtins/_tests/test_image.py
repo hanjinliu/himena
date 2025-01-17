@@ -5,7 +5,7 @@ from qtpy.QtWidgets import QApplication
 from himena.standards.model_meta import ImageMeta
 from pytestqt.qtbot import QtBot
 from himena import MainWindow, StandardType
-from himena.standards.roi import RoiListModel, LineRoi, PointRoi2D
+from himena.standards.roi import RoiListModel, LineRoi, PointRoi2D, PointsRoi2D
 from himena.standards.roi.core import RectangleRoi
 from himena.testing import WidgetTester, image
 from himena.types import WidgetDataModel
@@ -235,7 +235,7 @@ def test_roi_commands(himena_ui: MainWindow):
     )
 
     himena_ui.add_object(
-        RoiListModel(rois=[PointRoi2D(x=0, y=0), PointRoi2D(x=2, y=1)]),
+        RoiListModel(rois=[PointRoi2D(x=0, y=0), PointsRoi2D(xs=[2, 3], ys=[1, 2])]),
         type=StandardType.ROIS,
     )
 

@@ -213,7 +213,7 @@ def default_excel_reader(file_path: Path) -> WidgetDataModel:
                     row_input.append(str(cell.value))
             sheet_data.append(row_input)
 
-        data[sheet] = sheet_data
+        data[sheet] = np.asarray(sheet_data, dtype=np.dtypes.StringDType())
 
     return WidgetDataModel(
         value=data,

@@ -2,7 +2,7 @@ import pytest
 from pathlib import Path
 from himena.consts import StandardType
 from himena.io_utils import read, write
-
+from himena_builtins.tools.others import show_statistics, show_metadata
 
 @pytest.mark.parametrize(
     "file_name, model_type",
@@ -27,3 +27,5 @@ def test_reading_writing_files(sample_dir: Path, tmpdir, file_name: str, model_t
     write(model, tmpdir / file_name)
     model = read(sample_dir / file_name)
     assert model.type == model_type
+    show_statistics(model)
+    show_metadata(model)

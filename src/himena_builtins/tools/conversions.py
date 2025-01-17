@@ -226,14 +226,15 @@ def table_to_array(model: WidgetDataModel["np.ndarray"]) -> WidgetDataModel:
 @register_conversion_rule(
     type_from=StandardType.DATAFRAME,
     type_to=StandardType.ROIS,
-    command_id="builtins:dataframe-to-image_rois",
+    command_id="builtins:dataframe-to-image-rois",
 )
 def dataframe_to_image_rois(model: WidgetDataModel) -> Parametric:
     """Convert a data frame data into image ROIs."""
 
     @configure_gui(roi_type={"choices": ["rectangle", "point"]})
     def convert_dataframe_to_image_rois(
-        roi_type: str, indices: list[str]
+        roi_type: str,
+        indices: list[str] = (),
     ) -> WidgetDataModel:
         df = wrap_dataframe(model.value)
         if indices:
@@ -336,11 +337,11 @@ def _table_to_text(
         ext_default = ".rst"
         language = "rst"
     elif format == "csv":
-        s = "\n".join(",".join(row) for row in data)
+        s = "\n".join(",".join(str(row)) for row in data)
         ext_default = ".csv"
         language = None
     elif format == "tsv":
-        s = "\n".join("\t".join(row) for row in data)
+        s = "\n".join("\t".join(str(row)) for row in data)
         ext_default = ".tsv"
         language = None
     else:
@@ -355,7 +356,7 @@ def _table_to_latex(table: "np.ndarray") -> str:
     latex = "\\begin{tabular}{" + "c" * len(header) + "}\n"
     latex += " & ".join(header) + " \\\\\n"
     for row in body:
-        latex += " & ".join(row) + " \\\\\n"
+        latex += " & ".join(str(r) for r in row) + " \\\\\n"
     latex += "\\hline\n"
     latex += "\\end{tabular}"
     return latex

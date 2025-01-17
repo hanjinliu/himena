@@ -42,17 +42,15 @@ class WidgetTester(Generic[_W]):
     @overload
     def update_model(
         self,
-        *,
         value: Any,
+        *,
         type: str | None = None,
         metadata: Any | None = None,
         **kwargs,
     ) -> WidgetTester[_W]: ...
 
-    def update_model(
-        self, model: WidgetDataModel | None = None, **kwargs
-    ) -> WidgetTester[_W]:
-        model = self._norm_model_input(model, **kwargs)
+    def update_model(self, value, **kwargs) -> WidgetTester[_W]:
+        model = self._norm_model_input(value, **kwargs)
         self._widget.update_model(model)
         return self
 
@@ -74,15 +72,21 @@ class WidgetTester(Generic[_W]):
     @overload
     def drop_model(
         self,
-        *,
         value: Any,
+        *,
         type: str | None = None,
         metadata: Any | None = None,
         **kwargs,
     ) -> DropResult: ...
 
-    def drop_model(self, model: WidgetDataModel | None = None, **kwargs):
-        model = self._norm_model_input(model, **kwargs)
+    def drop_model(self, value, **kwargs):
+        """Emulate dropping a model into the widget.
+
+        The input can be either a `WidgetDataModel` or the input of `WidgetDataModel`.
+        >>> tester.drop_model(WidgetDataModel(value=..., type=...))
+        >>> tester.drop_model(value=..., type=...)
+        """
+        model = self._norm_model_input(value, **kwargs)
         drag_data_model = DragDataModel(getter=model, type=model.type)
         if not drag_data_model.widget_accepts_me(self.widget):
             raise ValueError(
@@ -97,15 +101,15 @@ class WidgetTester(Generic[_W]):
     def widget(self) -> _W:
         return self._widget
 
-    def _norm_model_input(self, model, **kwargs) -> WidgetDataModel:
-        if model:
+    def _norm_model_input(self, val, **kwargs) -> WidgetDataModel:
+        if isinstance(val, WidgetDataModel):
             if kwargs:
                 raise TypeError("Cannot specify both model and kwargs")
-            return model
+            return val
         else:
             if kwargs.get("type") is None:
                 try:
                     kwargs["type"] = self._widget.model_type()
                 except AttributeError:
                     raise TypeError("`type` argument must be specified") from None
-            return WidgetDataModel(**kwargs)
+            return WidgetDataModel(value=val, **kwargs)

@@ -7,7 +7,7 @@ from contextlib import suppress
 import inspect
 import logging
 from pathlib import Path
-from typing import Any, Callable, Generic, TYPE_CHECKING, Literal, TypeVar
+from typing import Any, Callable, Generic, TYPE_CHECKING, Literal, TypeVar, overload
 import uuid
 import weakref
 
@@ -194,10 +194,32 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
             _type = self.to_model().type
         return _type
 
-    def update_model(self, model: WidgetDataModel) -> None:
-        """Import the widget data."""
+    @overload
+    def update_model(self, model: WidgetDataModel) -> None: ...
+    @overload
+    def update_model(
+        self,
+        value: Any,
+        *,
+        type: str | None = None,
+        metadata: Any | None = None,
+        extension_default: str | None = None,
+        extensions: list[str] = (),
+    ) -> None: ...
+
+    def update_model(self, value, **kwargs) -> None:
+        """Update the widget by a widget data model."""
         if not self.supports_update_model:
             raise ValueError("Widget does not have `update_model` method.")
+        if isinstance(value, WidgetDataModel):
+            if kwargs:
+                raise TypeError("Keyword arguments are not allowed with model input.")
+            model = value
+        else:
+            allowed = {"type", "metadata", "extension_default", "extensions"}
+            if invalid := set(kwargs.keys()) - allowed:
+                raise ValueError(f"Invalid keyword arguments: {invalid!r}")
+            model = WidgetDataModel(value=value, **kwargs)
         self.widget.update_model(model)
 
     def _is_drop_accepted(self, incoming: DragDataModel) -> bool:
