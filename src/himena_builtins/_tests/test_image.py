@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 from qtpy import QtCore
 from qtpy.QtCore import Qt
@@ -11,6 +12,7 @@ from himena.testing import WidgetTester, image
 from himena.types import WidgetDataModel
 from himena_builtins.qt.widgets.image import QImageView
 from himena_builtins.qt.widgets._image_components import _roi_items as _rois
+from himena_builtins.qt.widgets._image_components._control import ComplexMode
 
 _Ctrl = Qt.KeyboardModifier.ControlModifier
 
@@ -143,6 +145,70 @@ def test_image_view_copy_roi(qtbot: QtBot):
         qtbot.keyClick(image_view._img_view, Qt.Key.Key_V, modifier=_Ctrl)
         assert len(image_view._img_view._roi_items) == 3
 
+def test_image_view_roi_collection(qtbot: QtBot):
+    image_view = QImageView()
+    image_view.show()
+    image_view.setSizes([200, 200])
+    with WidgetTester(image_view) as tester:
+        tester.update_model(
+            value=np.zeros((100, 100), dtype=np.uint8),
+            metadata=ImageMeta(
+                rois=RoiListModel(
+                    rois=[
+                        LineRoi(indices=(0, 0), name="ROI-0", x1=1, y1=1, x2=4, y2=5),
+                        PointRoi2D(indices=(0, 0), name="ROI-1", x=1, y=5),
+                    ]
+                )
+            )
+        )
+        qtbot.addWidget(image_view)
+        image_view._roi_col._roi_visible_btn.click()
+        assert image_view._roi_col._roi_visible_btn.isChecked()
+        assert not image_view._roi_col._roi_labels_btn.isChecked()
+        image_view._roi_col._roi_visible_btn.click()
+        assert not image_view._roi_col._roi_visible_btn.isChecked()
+        assert not image_view._roi_col._roi_labels_btn.isChecked()
+        image_view._roi_col._roi_labels_btn.click()
+        assert image_view._roi_col._roi_visible_btn.isChecked()
+        assert image_view._roi_col._roi_labels_btn.isChecked()
+        image_view._roi_col._list_view._prep_context_menu(
+            image_view._roi_col._list_view.model().index(0, 0)
+        )
+        qtbot.mouseClick(image_view._roi_col._list_view.viewport(), Qt.MouseButton.LeftButton)
+        qtbot.mouseMove(image_view._roi_col._list_view.viewport(), QtCore.QPoint(3, 3))
+        qtbot.mouseMove(image_view._roi_col._list_view.viewport(), QtCore.QPoint(4, 4))
+        image_view._roi_col.remove_selected_rois()
+
+
+def test_constrast_hist(qtbot: QtBot):
+    image_view = QImageView()
+    image_view.show()
+    with WidgetTester(image_view) as tester:
+        tester.update_model(value=np.zeros((100, 100), dtype=np.uint8))
+        qtbot.addWidget(image_view)
+        control = image_view.control_widget()
+        qtbot.addWidget(control)
+        control._auto_contrast_btn.click()
+        control._histogram.set_clim((1, 2))
+
+def test_complex_image(qtbot: QtBot):
+    image_view = QImageView()
+    image_view.show()
+    yy, xx = np.indices((5, 5))
+    img = np.exp(-1j * (yy + xx))
+    with WidgetTester(image_view) as tester, warnings.catch_warnings():
+        warnings.simplefilter("error")
+        tester.update_model(value=img)
+        qtbot.addWidget(image_view)
+        control = image_view.control_widget()
+        qtbot.addWidget(control)
+        control.show()
+        assert control._complex_mode_combo.isVisible()
+        control._complex_mode_combo.setCurrentText(ComplexMode.REAL)
+        control._complex_mode_combo.setCurrentText(ComplexMode.IMAG)
+        control._complex_mode_combo.setCurrentText(ComplexMode.ABS)
+        control._complex_mode_combo.setCurrentText(ComplexMode.LOG_ABS)
+        control._complex_mode_combo.setCurrentText(ComplexMode.PHASE)
 
 def test_image_view_change_dimensionality():
     image.test_change_dimensionality(_get_tester())

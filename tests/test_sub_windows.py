@@ -443,6 +443,6 @@ def test_watch_file(himena_ui: MainWindow, tmpdir):
     assert win.to_model().value == "x"
     filepath.write_text("yy")
     # need enough time of processing
-    for _ in range(5):
+    for _ in range(10):
         QtW.QApplication.processEvents()
     assert win.to_model().value == "yy"

@@ -242,6 +242,8 @@ class QImageView(QtW.QSplitter):
 
     def _clim_for_ith_channel(self, img_slices: list[ImageTuple], ith: int):
         ar0, _ = img_slices[ith]
+        if ar0.dtype.kind == "c":
+            ar0 = self._control.complex_transform(ar0)
         return quick_min_max(ar0)
 
     def _init_channels(self, meta: model_meta.ImageMeta, nchannels: int, dtype):
@@ -538,8 +540,11 @@ class QImageView(QtW.QSplitter):
             self._img_view.clear_rois()
             ch_cur = self.current_channel()
             idx = ch_cur.channel_index or 0
+            hist_arr_ref = imgs[idx].arr
+            if hist_arr_ref.dtype.kind == "c":
+                hist_arr_ref = self._control.complex_transform(hist_arr_ref)
             self._control._histogram.set_hist_for_array(
-                imgs[idx].arr,
+                hist_arr_ref,
                 clim=ch_cur.clim,
                 is_rgb=self._is_rgb,
                 color=color_for_colormap(ch_cur.colormap),

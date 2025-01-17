@@ -1,5 +1,7 @@
 from functools import partial
 from pytestqt.qtbot import QtBot
+from himena import MainWindow
+from himena.consts import StandardType
 from himena.testing import WidgetTester
 from himena_builtins.qt.widgets import QFunctionEdit, QPartialFunctionEdit
 
@@ -37,3 +39,8 @@ def test_partial_function_widget(qtbot: QtBot):
         tester.update_model(value=partial(_function, 2, b=2))
         tester.cycle_model()
         assert tester.to_model().value.func is _function
+
+def test_partialize(himena_ui: MainWindow):
+    himena_ui.add_object(lambda a, b: a + b, type=StandardType.FUNCTION)
+    himena_ui.exec_action("builtins:partialize-function", with_params={"b": "2"})
+    assert himena_ui.current_model.value(1) == 3

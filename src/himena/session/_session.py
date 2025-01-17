@@ -185,7 +185,7 @@ def _update_layout(
 ) -> None:
     for ly in layouts:
         _layout_obj = construct_layout(ly, main)
-        tab._add_layout(_layout_obj)
+        tab._add_layout_impl(_layout_obj)
     return None
 
 

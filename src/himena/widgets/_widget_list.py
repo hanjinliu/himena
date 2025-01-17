@@ -349,6 +349,10 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         main._move_focus_to(widget0)
         return param_widget
 
+    def add_layout(self, layout: Layout) -> Layout:
+        layout._main_window_ref = weakref.ref(self._main_window())
+        return self._add_layout_impl(layout)
+
     def add_vbox_layout(
         self,
         *,
@@ -366,7 +370,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         """
         main = self._main_window()
         layout = VBoxLayout(main, margins=margins, spacing=spacing)
-        return self._add_layout(layout)
+        return self._add_layout_impl(layout)
 
     def add_hbox_layout(
         self,
@@ -385,9 +389,9 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         """
         main = self._main_window()
         layout = HBoxLayout(main, margins=margins, spacing=spacing)
-        return self._add_layout(layout)
+        return self._add_layout_impl(layout)
 
-    def _add_layout(self, layout: Layout) -> Layout:
+    def _add_layout_impl(self, layout: Layout) -> Layout:
         self._layouts.append(layout)
         layout._reanchor(self._main_window()._area_size())
         return layout

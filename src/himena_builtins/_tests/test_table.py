@@ -44,6 +44,27 @@ def test_table_edit(qtbot: QtBot):
         qtbot.keyClick(tester.widget, Qt.Key.Key_Z, modifier=_Ctrl)
         qtbot.keyClick(tester.widget, Qt.Key.Key_Y, modifier=_Ctrl)
 
+def test_moving_in_table(qtbot: QtBot):
+    with _get_tester() as tester:
+        qtbot.addWidget(tester.widget)
+        tester.widget.show()
+        tester.update_model(value=[["a", "b"], ["c", "bc"]])
+        tester.cycle_model()
+        qtbot.addWidget(tester.widget)
+        tester.widget.selection_model.current_index = (0, 0)
+        qtbot.keyClick(tester.widget, Qt.Key.Key_Right)
+        qtbot.keyClick(tester.widget, Qt.Key.Key_Left)
+        qtbot.keyClick(tester.widget, Qt.Key.Key_Down)
+        qtbot.keyClick(tester.widget, Qt.Key.Key_Up)
+        qtbot.keyClick(tester.widget, Qt.Key.Key_Right, modifier=_Ctrl)
+        qtbot.keyClick(tester.widget, Qt.Key.Key_Left, modifier=_Ctrl)
+        qtbot.keyClick(tester.widget, Qt.Key.Key_Down, modifier=_Ctrl)
+        qtbot.keyClick(tester.widget, Qt.Key.Key_Up, modifier=_Ctrl)
+        qtbot.keyClick(tester.widget, Qt.Key.Key_Home)
+        qtbot.keyClick(tester.widget, Qt.Key.Key_End)
+        qtbot.keyClick(tester.widget, Qt.Key.Key_PageUp)
+        qtbot.keyClick(tester.widget, Qt.Key.Key_PageDown)
+
 def test_find_table(qtbot: QtBot):
     with _get_tester() as tester:
         tester.update_model(value=[["a", "b"], ["c", "bc"]])

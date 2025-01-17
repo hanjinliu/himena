@@ -124,8 +124,11 @@ def _dump_tab_to_directory_impl(
             and step.command_id in cmd_id_allowed
         ):
             write_metadata_by_title(win, dirname, prefix)
-        else:
+        elif win.supports_to_model and win.supports_update_model:
             write_model_by_title(win, dirname, prefix=prefix)
+        else:
+            # Cannot read or write the window state, must rely on command execution
+            write_metadata_by_title(win, dirname, prefix)
 
 
 def dump_directory(

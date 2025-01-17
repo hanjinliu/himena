@@ -224,9 +224,9 @@ class QImageViewControl(QtW.QWidget):
         min_, max_ = img_slice.min(), img_slice.max()
         ch = view.current_channel(sl)
         ch.clim = (min_, max_)
-        self._histogram.set_clim((min_, max_))
         self._histogram.set_view_range(min_, max_)
         view._set_image_slice(img_slice, ch)
+        self._histogram.set_clim((min_, max_))
 
 
 class QChannelToggleSwitches(QtW.QScrollArea):

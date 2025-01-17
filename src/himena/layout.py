@@ -267,6 +267,7 @@ class Layout1D(LayoutContainer, MutableSequence[Layout]):
             raise TypeError(f"Can only set a Layout object, got {type(layout)}")
         _assert_supports_index(key)
         self._children[key] = layout
+        layout._main_window_ref = self._main_window_ref
         layout._parent_layout_ref = weakref.ref(self)
         self._resize_children(self.rect)
 
@@ -309,6 +310,7 @@ class BoxLayout1D(Layout1D):
         if not isinstance(child, Layout):
             raise TypeError(f"Can only insert a Layout object, got {type(child)}")
         self._children.insert(index, child)
+        child._main_window_ref = self._main_window_ref
         child._parent_layout_ref = weakref.ref(self)
         self._stretches.insert(index, float(stretch))
         self._resize_children(self.rect)
@@ -557,6 +559,7 @@ class VStackLayout(Layout1D):
     def insert(self, index: int, child: Layout) -> None:
         """Insert a child layout at the specified index."""
         self._children.insert(index, child)
+        child._main_window_ref = self._main_window_ref
         child._parent_layout_ref = weakref.ref(self)
         self._resize_children(self.rect)
         return self
