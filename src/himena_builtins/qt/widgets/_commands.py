@@ -14,7 +14,7 @@ from ._image_components._scale_bar import ScaleBarAnchor, ScaleBarType
     title="Scale bar ...",
     types=StandardType.IMAGE,
     menus="tools/image",
-    command_id="builtins:setup-image-scale-bar",
+    command_id="builtins:image:setup-image-scale-bar",
 )
 def setup_image_scale_bar(win: SubWindow[QImageView]) -> Parametric:
     scale_bar = win.widget._img_view._scale_bar_widget

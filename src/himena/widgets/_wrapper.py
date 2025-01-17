@@ -63,6 +63,14 @@ class _HasMainWindowRef(Generic[_W]):
         return out
 
 
+class StrongRef(Generic[_W]):
+    def __init__(self, obj: _W):
+        self._obj = obj
+
+    def __call__(self) -> _W:
+        return self._obj
+
+
 class WidgetWrapper(_HasMainWindowRef[_W]):
     def __init__(
         self,
@@ -71,14 +79,22 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         identifier: uuid.UUID | None = None,
     ):
         super().__init__(main_window)
-        self._widget = weakref.ref(widget)
         if identifier is None:
             identifier = uuid.uuid4()
         self._identifier = identifier
         self._save_behavior: SaveBehavior = SaveToNewPath()
         self._widget_workflow: Workflow = Workflow()
         self._ask_save_before_close = False
-        self._frontend_widget()._himena_widget = self
+        interf, front = _split_interface_and_frontend(widget)
+        front._himena_widget = self
+        if interf is front:
+            # the frontend main window will keep the widget, thus this wrapper just
+            # needs a weak reference
+            self._widget = weakref.ref(widget)
+        else:
+            # the frontend main window will not keep the widget, thus this wrapper needs
+            # a strong reference
+            self._widget = StrongRef(widget)
 
     @property
     def is_alive(self) -> bool:
@@ -255,18 +271,21 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         This function is used to separate the interface object that implements the
         himena protocols and the actual widget that will be added to the main window.
         """
-        obj = self.widget
-        if hasattr(obj, "native_widget"):
-            front = obj.native_widget()
-        elif isinstance(obj, mgw.Widget):
-            front = obj.native
-        else:
-            front = obj
-        return obj, front
+        return _split_interface_and_frontend(self.widget)
 
     def _frontend_widget(self) -> _W:
         """Get the frontend widget."""
         return self._split_interface_and_frontend()[1]
+
+
+def _split_interface_and_frontend(obj: _W) -> tuple[object, _W]:
+    if hasattr(obj, "native_widget"):
+        front = obj.native_widget()
+    elif isinstance(obj, mgw.Widget):
+        front = obj.native
+    else:
+        front = obj
+    return obj, front
 
 
 class SubWindow(WidgetWrapper[_W], Layout):

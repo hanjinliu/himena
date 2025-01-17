@@ -3,7 +3,7 @@ import numpy as np
 from qtpy import QtCore
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QApplication
-from himena.standards.model_meta import ImageMeta
+from himena.standards.model_meta import ArrayAxis, ImageMeta
 from pytestqt.qtbot import QtBot
 from himena import MainWindow, StandardType
 from himena.standards.roi import RoiListModel, LineRoi, PointRoi2D, PointsRoi2D
@@ -334,3 +334,21 @@ def test_roi_commands(himena_ui: MainWindow):
         "builtins:stack-images",
         with_params={"images": [mod_g, mod_r], "axis_name": "p"}
     )
+
+def test_scale_bar(himena_ui: MainWindow):
+    win = himena_ui.add_data_model(
+        WidgetDataModel(
+            value=np.zeros((100, 100)),
+            type=StandardType.IMAGE,
+            metadata=ImageMeta(
+                axes=[
+                    ArrayAxis(name="y", scale=0.42, unit="um"),
+                    ArrayAxis(name="x", scale=0.28, unit="um")
+                ]
+            )
+        )
+    )
+    himena_ui.exec_action("builtins:image:setup-image-scale-bar", with_params={})
+    himena_ui.show()
+    win.size = (300, 300)
+    win.size = (200, 200)
