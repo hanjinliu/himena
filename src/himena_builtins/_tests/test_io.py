@@ -29,3 +29,11 @@ def test_reading_writing_files(sample_dir: Path, tmpdir, file_name: str, model_t
     assert model.type == model_type
     show_statistics(model)
     show_metadata(model)
+
+def test_dataframe(sample_dir: Path, tmpdir):
+    tmpdir = Path(tmpdir)
+    model = read(sample_dir / "pq.parquet")
+    assert model.type == StandardType.DATAFRAME
+    write(model, tmpdir / "pq.parquet")
+    model = read(sample_dir / "pq.parquet")
+    assert model.type == StandardType.DATAFRAME

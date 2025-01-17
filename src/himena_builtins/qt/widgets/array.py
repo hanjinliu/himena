@@ -83,11 +83,16 @@ class QArrayModel(QtCore.QAbstractTableModel):
         if not index.isValid():
             return QtCore.QVariant()
         elif role == Qt.ItemDataRole.TextAlignmentRole:
-            return Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+            r, c = index.row(), index.column()
+            if r < self.rowCount() and c < self.columnCount():
+                if self._get_dtype(r, c).kind in "iuf":
+                    return Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+                else:
+                    return Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
         elif role == Qt.ItemDataRole.ToolTipRole:
             r, c = index.row(), index.column()
             array_indices = ", ".join(str(i) for i in self._slice + (r, c))
-            return f"A[{array_indices}] = {self._get_item(r, c)}"
+            return f"A[{array_indices}] = {self._get_item(r, c)!r}"
         elif role == Qt.ItemDataRole.DisplayRole:
             r, c = index.row(), index.column()
             if r < self.rowCount() and c < self.columnCount():

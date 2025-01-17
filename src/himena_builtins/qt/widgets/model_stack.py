@@ -7,7 +7,7 @@ import weakref
 from magicgui import widgets as mgw
 from qtpy import QtWidgets as QtW, QtCore
 from himena.plugins import validate_protocol, _checker
-from himena.types import DragDataModel, DropResult, WidgetDataModel
+from himena.types import DragDataModel, DropResult, Size, WidgetDataModel
 from himena.consts import StandardType
 from himena._utils import unwrap_lazy_model
 from himena_builtins.qt.widgets._splitter import QSplitterHandle
@@ -227,11 +227,14 @@ class QModelStack(QtW.QSplitter):
             item = self._make_eager_item(model.title, model)
         self._model_list.addItem(item)
 
-    # TODO: Implement the following methods
-    # @validate_protocol
-    # def widget_resized_callback(self, size_old: Size, size_new: Size):
-    #     widget = self._widget_stack.currentWidget()
-    #     _checker.call_widget_resized_callback(widget, ...)
+    @validate_protocol
+    def widget_resized_callback(self, size_old: Size, size_new: Size):
+        widget = self._widget_stack.current_interface()
+        if widget:
+            lw = self._model_list.width()
+            _old = size_old.with_width(max(size_old.width - lw, 10))
+            _new = size_new.with_width(max(size_new.width - lw, 10))
+            _checker.call_widget_resized_callback(widget, _old, _new)
 
     @validate_protocol
     def theme_changed_callback(self, theme: Theme):
@@ -365,7 +368,7 @@ class QModelListWidget(QtW.QListWidget):
             index = self.indexAt(e.pos())
             if index.isValid():
                 self.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
-                index_rect = self.rectForIndex(index)
+                index_rect = self.visualRect(index)
                 top_right = index_rect.topRight()
                 top_right.setX(top_right.x() - 14)
                 top_right.setY(top_right.y() + int(index_rect.height() / 2) - 7)

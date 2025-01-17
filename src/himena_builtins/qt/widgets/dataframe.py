@@ -430,8 +430,8 @@ class QDataFramePlotView(QtW.QSplitter):
     @validate_protocol
     def widget_resized_callback(self, old: Size, new: Size):
         left_width = self._table_widget.width()
-        old = Size(max(old.width - left_width, 10), old.height)
-        new = Size(max(new.width - left_width, 10), new.height)
+        old = old.with_width(max(old.width - left_width, 10))
+        new = new.with_width(max(new.width - left_width, 10))
         self._plot_widget.widget_resized_callback(old, new)
 
     @validate_protocol

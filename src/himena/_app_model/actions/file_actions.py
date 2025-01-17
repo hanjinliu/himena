@@ -96,6 +96,7 @@ def _open_file_using_reader(
         output_model_type=model.type,
     ).construct_workflow()
     model.workflow = wf
+    model.editable = False
     return model
 
 

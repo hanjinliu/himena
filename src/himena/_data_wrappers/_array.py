@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import sys
 from abc import abstractmethod
-from collections.abc import Hashable, Sequence
 from typing import (
     TYPE_CHECKING,
     Generic,
@@ -20,13 +19,8 @@ if TYPE_CHECKING:
 
     import dask.array as da
     import numpy.typing as npt
-    import pyopencl.array
-    import sparse
-    import tensorstore as ts
     import xarray as xr
     import zarr
-    from torch._tensor import Tensor
-    import cupy
 
     _T_contra = TypeVar("_T_contra", contravariant=True)
     Index = int | slice
@@ -110,50 +104,6 @@ class XarrayWrapper(ArrayWrapper["xr.DataArray"]):
         return [str(_a) for _a in self._arr.dims]
 
 
-class TensorstoreWrapper(ArrayWrapper["ts.TensorStore"]):
-    """Wrapper for tensorstore.TensorStore objects."""
-
-    def __init__(self, data: Any) -> None:
-        super().__init__(data)
-        import json
-
-        import tensorstore as ts
-
-        self._ts = ts
-
-        spec = self.arr.spec().to_json()
-        labels: Sequence[Hashable] | None = None
-        if (tform := spec.get("transform")) and ("input_labels" in tform):
-            labels = [str(x) for x in tform["input_labels"]]
-        elif (
-            str(spec.get("driver")).startswith("zarr")
-            and (zattrs := self.arr.kvstore.read(".zattrs").result().value)
-            and isinstance((zattr_dict := json.loads(zattrs)), dict)
-            and "_ARRAY_DIMENSIONS" in zattr_dict
-        ):
-            labels = zattr_dict["_ARRAY_DIMENSIONS"]
-
-        if isinstance(labels, Sequence) and len(labels) == len(self._data.domain):
-            self._labels: list[Hashable] = [str(x) for x in labels]
-            self._data = self.data[ts.d[:].label[self._labels]]
-        else:
-            self._labels = list(range(len(self._data.domain)))
-
-    def get_slice(self, sl: tuple[int, ...]) -> np.ndarray:
-        return self._data[sl].read().result()
-
-    @property
-    def dtype(self) -> np.dtype:
-        return np.dtype(self._data.domain.dtype)
-
-    @property
-    def shape(self) -> tuple[int, ...]:
-        return self._data.domain.shape
-
-    def axis_names(self) -> list[str]:
-        return [str(_a) for _a in self._labels]
-
-
 class ArrayLikeWrapper(ArrayWrapper[ArrayT]):
     """Wrapper for numpy duck array-like objects."""
 
@@ -180,20 +130,6 @@ class DaskWrapper(ArrayLikeWrapper["da.Array"]):
         return self._arr[sl].compute()
 
 
-class CLArrayWrapper(ArrayLikeWrapper["pyopencl.array.Array"]):
-    """Wrapper for pyopencl array objects."""
-
-    @staticmethod
-    def _asarray(data: pyopencl.array.Array) -> np.ndarray:
-        return np.asarray(data.get())
-
-
-class SparseArrayWrapper(ArrayLikeWrapper["sparse.Array"]):
-    @staticmethod
-    def _asarray(data: sparse.COO) -> np.ndarray:
-        return np.asarray(data.todense())
-
-
 class ZarrArrayWrapper(ArrayLikeWrapper["zarr.Array"]):
     """Wrapper for zarr array objects."""
 
@@ -207,21 +143,6 @@ class ZarrArrayWrapper(ArrayLikeWrapper["zarr.Array"]):
 
     def axis_names(self) -> list[str]:
         return [str(k) for k in self._names]
-
-
-class TorchTensorWrapper(ArrayWrapper["Tensor"]):
-    """Wrapper for torch tensor objects."""
-
-    def get_slice(self, sl: tuple[int, ...]) -> np.ndarray:
-        return self.arr[sl].numpy(force=True)
-
-
-class CupyArrayWrapper(ArrayLikeWrapper["cupy.ndarray"]):
-    """Wrapper for cupy array objects."""
-
-    @staticmethod
-    def _asarray(data: cupy.ndarray) -> np.ndarray:
-        return data.get()
 
 
 def _see_imported_module(arr: Any, module: str) -> bool:
@@ -243,38 +164,6 @@ def is_dask(data: Any) -> TypeGuard[da.Array]:
     return False
 
 
-def is_cl_array(data: Any) -> TypeGuard[pyopencl.array.Array]:
-    if _see_imported_module(data, "pyopencl"):
-        import pyopencl.array
-
-        return isinstance(data, pyopencl.array.Array)
-    return False
-
-
-def is_sparse(data: Any) -> TypeGuard[sparse.Array]:
-    if _see_imported_module(data, "sparse"):
-        import sparse
-
-        return isinstance(data, sparse.Array)
-    return False
-
-
-def is_tensorstore(data: Any) -> TypeGuard[ts.TensorStore]:
-    if _see_imported_module(data, "tensorstore"):
-        import tensorstore as ts
-
-        return isinstance(data, ts.TensorStore)
-    return False
-
-
-def is_torch_tensor(data: Any) -> TypeGuard[Tensor]:
-    if _see_imported_module(data, "torch"):
-        from torch._tensor import Tensor
-
-        return isinstance(data, Tensor)
-    return False
-
-
 def is_xarray(data: Any) -> TypeGuard[xr.DataArray]:
     if _see_imported_module(data, "xarray"):
         import xarray as xr
@@ -291,14 +180,6 @@ def is_zarr(data: Any) -> TypeGuard[zarr.Array]:
     return False
 
 
-def is_cupy(data: Any) -> TypeGuard[cupy.ndarray]:
-    if _see_imported_module(data, "cupy"):
-        import cupy
-
-        return isinstance(data, cupy.ndarray)
-    return False
-
-
 def wrap_array(arr: Any) -> ArrayWrapper:
     if isinstance(arr, ArrayWrapper):
         return arr
@@ -306,18 +187,8 @@ def wrap_array(arr: Any) -> ArrayWrapper:
         return ArrayLikeWrapper(arr)
     if is_dask(arr):
         return DaskWrapper(arr)
-    if is_cl_array(arr):
-        return CLArrayWrapper(arr)
-    if is_sparse(arr):
-        return SparseArrayWrapper(arr)
-    if is_tensorstore(arr):
-        return TensorstoreWrapper(arr)
-    if is_torch_tensor(arr):
-        return TorchTensorWrapper(arr)
     if is_xarray(arr):
         return XarrayWrapper(arr)
     if is_zarr(arr):
         return ArrayLikeWrapper(arr)
-    if is_cupy(arr):
-        return CupyArrayWrapper(arr)
     return ArrayLikeWrapper(arr)

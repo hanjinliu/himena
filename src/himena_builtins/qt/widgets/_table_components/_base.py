@@ -40,8 +40,7 @@ class QItemDelegate(QtW.QStyledItemDelegate):
         super().paint(painter, option, index)
         if option.state & QtW.QStyle.StateFlag.State_MouseOver:
             painter.setPen(QtGui.QPen(self.parent()._hover_color, 2))
-            option.rect.adjust(1, 1, -1, -1)
-            painter.drawRect(option.rect)
+            painter.drawRect(option.rect.adjusted(1, 1, -1, -1))
 
     def initStyleOption(
         self, option: QtW.QStyleOptionViewItem, index: QtCore.QModelIndex

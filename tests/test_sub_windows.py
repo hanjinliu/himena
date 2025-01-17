@@ -5,6 +5,7 @@ from tempfile import TemporaryDirectory
 from qtpy import QtWidgets as QtW
 from himena import MainWindow, anchor
 from himena._descriptors import NoNeedToSave, SaveToNewPath, SaveToPath
+from himena.consts import StandardType
 from himena.workflow import CommandExecution, LocalReaderMethod, ProgrammaticMethod
 from himena.types import ClipboardDataModel, WidgetDataModel, WindowRect
 from himena.qt import register_widget_class, MainWindowQt
@@ -427,3 +428,21 @@ def test_reading_file_group(himena_ui: MainWindow, sample_dir: Path):
             sample_dir / "table.csv",
         ]
     )
+    assert win.model_type() == StandardType.MODELS
+
+def test_watch_file(himena_ui: MainWindow, tmpdir):
+    filepath = Path(tmpdir) / "test.txt"
+    filepath.write_text("x")
+    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=lambda: filepath)
+    from himena.io_utils import get_readers
+    tuples = get_readers(filepath)
+    himena_ui.exec_action("watch-file-using", with_params={"reader": tuples[0]})
+    win = himena_ui.current_window
+    assert win.model_type() == StandardType.TEXT
+    assert not win.is_editable
+    assert win.to_model().value == "x"
+    filepath.write_text("yy")
+    # need enough time of processing
+    for _ in range(5):
+        QtW.QApplication.processEvents()
+    assert win.to_model().value == "yy"

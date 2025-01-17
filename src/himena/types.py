@@ -410,6 +410,12 @@ class Size(Generic[_V]):
             return self.height
         raise IndexError(f"Index {index!r} out of range.")
 
+    def with_width(self, width: _V) -> "Size[_V]":
+        return Size(width, self.height)
+
+    def with_height(self, height: _V) -> "Size[_V]":
+        return Size(self.width, height)
+
 
 @dataclass(frozen=True)
 class Rect(Generic[_V]):
