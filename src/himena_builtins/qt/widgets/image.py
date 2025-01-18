@@ -176,6 +176,7 @@ class QImageView(QtW.QSplitter):
         # update sliders
         if not is_same_array:
             self._dims_slider.set_dimensions(arr.shape, meta0.axes, is_rgb=self._is_rgb)
+        self._roi_col._qroi_list.set_axis_names([axis.name for axis in meta0.axes[:-2]])
         with qsignal_blocker(self._dims_slider):
             self._dims_slider.setValue(sl_0)
 
@@ -217,7 +218,7 @@ class QImageView(QtW.QSplitter):
         roi_list = meta0.unwrap_rois()
         if len(roi_list) > 0:
             self._roi_col.clear()
-            self._roi_col.update_from_standard_roi_list(roi_list)
+            self._roi_col.extend_from_standard_roi_list(roi_list)
         if meta0.current_roi:
             self._img_view.remove_current_item(reason="update_model")
             self._img_view.set_current_roi(
@@ -334,7 +335,7 @@ class QImageView(QtW.QSplitter):
         current_indices = self._dims_slider.value()
         current_slices = current_indices + (None, None)
         if item := self._img_view._current_roi_item:
-            current_roi = item.toRoi(current_indices)
+            current_roi = item.toRoi()
         else:
             current_roi = None
         axes = self._dims_slider._to_image_axes()
@@ -385,7 +386,7 @@ class QImageView(QtW.QSplitter):
     def dropped_callback(self, model: WidgetDataModel):
         if model.type == StandardType.ROIS:
             if isinstance(roi_list := model.value, roi.RoiListModel):
-                self._roi_col.update_from_standard_roi_list(roi_list)
+                self._roi_col.extend_from_standard_roi_list(roi_list)
                 self._img_view.clear_rois()
                 self._update_rois()
             self._is_modified = True

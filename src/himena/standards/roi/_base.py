@@ -56,28 +56,13 @@ def default_roi_label(nth: int) -> str:
     return f"ROI-{nth}"
 
 
-class RoiND(RoiModel):
-    indices: tuple[int, ...] = Field(
-        default=(), description="Indices of the ROI in the >nD dimensions."
-    )
-
-    def flattened(self) -> Self:
-        """Return a copy of the ROI with indices flattened."""
-        return self.model_copy(update={"indices": ()})
-
-    def drop_index(self, ith: int) -> Self | None:
-        """Drop the i-th index from the ROI."""
-        ind = self.indices[:ith] + self.indices[ith + 1 :]
-        return self.model_copy(update={"indices": ind})
-
-
-class Roi1D(RoiND):
+class Roi1D(RoiModel):
     def shifted(self, dx: float, dy: float) -> Self:
         """Return a new 1D ROI translated by the given amount."""
         raise NotImplementedError
 
 
-class Roi2D(RoiND):
+class Roi2D(RoiModel):
     def bbox(self) -> Rect[float]:
         """Return the bounding box of the ROI."""
         raise NotImplementedError
@@ -87,7 +72,7 @@ class Roi2D(RoiND):
         raise NotImplementedError
 
 
-class Roi3D(RoiND):
+class Roi3D(RoiModel):
     def shifted(self, dx: float, dy: float, dz: float) -> Self:
         """Return a new 3D ROI translated by the given amount."""
         raise NotImplementedError

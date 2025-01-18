@@ -40,7 +40,7 @@ class QImageRoiView(QtW.QWidget):
         if not isinstance(value, roi.RoiListModel):
             raise ValueError(f"Expected a RoiListModel, got {type(value)}")
         self._roi_collection.clear()
-        self._roi_collection.update_from_standard_roi_list(value)
+        self._roi_collection.extend_from_standard_roi_list(value)
         self._model_type = model.type
         if isinstance(meta := model.metadata, ImageRoisMeta):
             if meta.axes:

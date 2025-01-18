@@ -920,6 +920,7 @@ class MainWindow(Generic[_W]):
                 f"{_format_exceptions(exceptions)}"
             ) from exceptions[-1][1]
         if exceptions:
+            raise exceptions[-1][1]
             warnings.warn(
                 "Exceptions occurred while creating a widget:\n"
                 f"{_format_exceptions(exceptions)}",

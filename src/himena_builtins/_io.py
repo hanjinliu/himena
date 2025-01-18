@@ -187,10 +187,8 @@ def default_plot_reader(file_path: Path) -> WidgetDataModel:
 
 def default_roi_reader(file_path: Path) -> WidgetDataModel:
     """Read image ROIs from a json file."""
-    with file_path.open("r") as f:
-        js = json.load(f)
     return WidgetDataModel(
-        value=RoiListModel.construct(js),
+        value=RoiListModel.model_validate_json(file_path.read_text()),
         type=StandardType.ROIS,
     )
 

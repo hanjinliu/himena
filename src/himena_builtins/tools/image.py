@@ -225,9 +225,8 @@ def filter_rois(model: WidgetDataModel) -> Parametric:
     @configure_gui(types={"choices": _choices, "widget_type": "Select"})
     def run_filter_rois(types: list[str]):
         types_allowed = {_roi.pick_roi_model(typ.lower()) for typ in types}
-        value = _roi.RoiListModel(
-            rois=list(r for r in rois if type(r) in types_allowed)
-        )
+        sl = [r for r in rois if type(r) in types_allowed]
+        value = rois.filter_by_selection(sl)
         if isinstance(meta := model.metadata, (ImageRoisMeta, ImageMeta)):
             axes = meta.axes
         else:
@@ -262,9 +261,9 @@ def select_rois(model: WidgetDataModel) -> Parametric:
     def run_select(selections: list[int]) -> WidgetDataModel:
         if len(selections) == 0:
             raise ValueError("No ROIs selected.")
-        value = _roi.RoiListModel(rois=list(rois[i] for i in selections))
+
         return WidgetDataModel(
-            value=value,
+            value=rois.filter_by_selection(selections),
             type=StandardType.ROIS,
             title=f"Subset of {model.title}",
             metadata=ImageRoisMeta(axes=axes),
@@ -717,7 +716,7 @@ def _resolve_roi_list_model(meta: ImageMeta, copy: bool = True) -> _roi.RoiListM
     rois = meta.rois
     if isinstance(rois, _roi.RoiListModel):
         if copy:
-            rois = rois.model_copy()
+            rois = rois.copy()
     elif callable(rois):
         rois = rois()
         if not isinstance(rois, _roi.RoiListModel):

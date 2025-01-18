@@ -95,6 +95,8 @@ class FunctionMeta(BaseMetadata):
 class DataFramePlotMeta(DataFrameMeta):
     """Preset for describing the metadata for a "dataframe.plot" type."""
 
+    model_config = {"arbitrary_types_allowed": True}
+
     plot_type: Literal["line", "scatter"] = Field(
         "line", description="Type of the plot."
     )
@@ -115,12 +117,16 @@ class DataFramePlotMeta(DataFrameMeta):
             self.rois = roi.RoiListModel.model_validate_json(rois_path.read_text())
         return self
 
+    def unwrap_rois(self) -> roi.RoiListModel:
+        """Unwrap the lazy-evaluation of the ROIs."""
+        if isinstance(self.rois, roi.RoiListModel):
+            return self.rois
+        self.rois = self.rois()
+        return self.rois
+
     def write_metadata(self, dir_path: Path) -> None:
         dir_path.joinpath(_META_NAME).write_text(self.model_dump_json(exclude={"rois"}))
-        if isinstance(self.rois, roi.RoiListModel):
-            rois = self.rois
-        else:
-            rois = self.rois.unwrap_rois()
+        rois = self.unwrap_rois()
         if len(rois) > 0:
             with dir_path.joinpath("rois.roi.json").open("w") as f:
                 json.dump(rois.model_dump_typed(), f)
@@ -187,6 +193,8 @@ class ImageChannel(BaseModel):
 class ImageMeta(ArrayMeta):
     """Preset for describing an image file metadata."""
 
+    model_config = {"arbitrary_types_allowed": True}
+
     channels: list[ImageChannel] = Field(
         default_factory=lambda: [ImageChannel.default()],
         description="Channels of the image. At least one channel is required.",
@@ -228,8 +236,7 @@ class ImageMeta(ArrayMeta):
             update["is_rgb"] = False
         elif caxis is not None:
             update["channel_axis"] = caxis - 1 if caxis > index else caxis
-        # TODO: Drop rois for now, but eventually consider them
-        self.unwrap_rois()
+        update["rois"] = self.unwrap_rois().take_axis(index, value)
         return self.model_copy(update=update)
 
     def unwrap_rois(self) -> roi.RoiListModel:
@@ -295,8 +302,7 @@ class ImageMeta(ArrayMeta):
             self.rois = roi.RoiListModel.model_validate_json(rois_path.read_text())
         if (cur_roi_path := dir_path.joinpath("current_roi.json")).exists():
             roi_js = json.loads(cur_roi_path.read_text())
-            _type = roi_js.pop("type")
-            self.current_roi = roi.RoiModel.construct(_type, roi_js)
+            self.current_roi = roi.RoiModel.construct(roi_js.pop("type"), roi_js)
         if (labels_path := dir_path.joinpath("labels.npy")).exists():
             self.labels = np.load(labels_path, allow_pickle=False)
         if (more_meta_path := dir_path.joinpath("more_meta.json")).exists():

@@ -321,9 +321,11 @@ def test_roi_commands(himena_ui: MainWindow):
             axes=["t", "z", "y", "x"],
             rois=RoiListModel(
                 rois=[
-                    LineRoi(indices=(0, 0), name="ROI-0", x1=1, y1=1, x2=4, y2=5),
-                    PointRoi2D(indices=(0, 0), name="ROI-1", x=1, y=5),
-                ]
+                    LineRoi(name="ROI-0", x1=1, y1=1, x2=4, y2=5),
+                    PointRoi2D(name="ROI-1", x=1, y=5),
+                ],
+                indices=np.array([[0, 0], [0, 0]], dtype=np.int32),
+                axis_names=["t", "z"],
             ),
         ),
     )
