@@ -128,6 +128,7 @@ class QImageView(QtW.QSplitter):
         self._control = QImageViewControl(self)
         self._arr: ArrayWrapper | None = None  # the internal array data for display
         self._is_modified = False  # whether the widget is modified
+        self._is_editable = True
         # cached ImageTuples for display
         self._current_image_slices: list[ImageTuple] | None = None
         self._is_rgb = False  # whether the image is RGB
@@ -213,9 +214,9 @@ class QImageView(QtW.QSplitter):
         self._update_channels(meta0, img_slices, nchannels, arr.dtype)
         if not meta0.skip_image_rerendering:
             self._set_image_slices(img_slices)
-        if roi_list := meta0.rois:
-            if callable(roi_list):
-                roi_list = roi_list()
+        roi_list = meta0.unwrap_rois()
+        if len(roi_list) > 0:
+            self._roi_col.clear()
             self._roi_col.update_from_standard_roi_list(roi_list)
         if meta0.current_roi:
             self._img_view.remove_current_item(reason="update_model")
@@ -366,7 +367,11 @@ class QImageView(QtW.QSplitter):
 
     @validate_protocol
     def is_editable(self) -> bool:
-        return False
+        return self._is_editable
+
+    @validate_protocol
+    def set_editable(self, editable: bool):
+        self._is_editable = editable
 
     @validate_protocol
     def control_widget(self) -> QImageViewControl:

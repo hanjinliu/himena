@@ -51,18 +51,22 @@ himena = "himena.__main__:main"
 [project.optional-dependencies]
 pyqt5 = ["pyqt5>=5.12.0"]
 pyqt6 = ["pyqt6"]
-all = [
+recommended = [
   "IPython",
   "qtconsole",
   "openpyxl",
+  "scipy",
   "matplotlib>=3.8.2",
-  "polars",
+]
+all = [
+  "himena[recommended]",
 ]
 testing = [
   "pytest",
   "pytest-qt",
   "pytest-cov",
   "pandas",
+  "polars",
   "pyarrow",
   "himena[all]"
 ]
@@ -176,4 +180,5 @@ exclude = ["**/tests/*.py"]
 "Command History" = "himena_builtins.qt.history"
 "Plotting" = "himena_builtins.qt.plot"
 "Output" = "himena_builtins.qt.output"
+"Image Draw Tools" = "himena_builtins.qt.draw_tool"
 "Widgets" = "himena_builtins.qt.widgets"

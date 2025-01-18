@@ -84,6 +84,7 @@ class QSimpleRoiCollection(QtW.QWidget):
         super().__init__(parent)
         self._rois: list[tuple[Indices, _roi_items.QRoi]] = []
         self._slice_cache: dict[Indices, list[_roi_items.QRoi]] = {}
+        self._axis_names: tuple[str, ...] = ()
         self._pen = QtGui.QPen(QtGui.QColor(238, 238, 0), 2)
         self._pen.setCosmetic(True)
         layout = QtW.QVBoxLayout(self)
@@ -105,6 +106,7 @@ class QSimpleRoiCollection(QtW.QWidget):
         for r in rois:
             if isinstance(r, roi.RoiND):
                 self.add(r.indices, from_standard_roi(r, self._pen))
+        self._axis_names = rois.axis_names
         return self
 
     def to_standard_roi_list(
@@ -115,7 +117,10 @@ class QSimpleRoiCollection(QtW.QWidget):
             all_rois = self._rois
         else:
             all_rois = [self._rois[i] for i in selections]
-        return roi.RoiListModel(rois=[roi.toRoi(indices) for indices, roi in all_rois])
+        return roi.RoiListModel(
+            rois=[roi.toRoi(indices) for indices, roi in all_rois],
+            axis_names=self._axis_names,
+        )
 
     def add(self, indices: Indices, roi: _roi_items.QRoi):
         """Add a ROI on the given slice."""

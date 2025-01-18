@@ -502,6 +502,69 @@ def roi_specify_line(win: SubWindow) -> Parametric:
     return run_roi_specify_coordinates
 
 
+# @register_function(
+#     title="Measure ROIs ...",
+#     types=StandardType.IMAGE,
+#     menus=["tools/image/roi", "/model_menu/roi"],
+#     command_id="builtins:image-measure:roi-measure",
+# )
+# def roi_measure(model: WidgetDataModel) -> Parametric:
+#     choices = ["mean", "std", "min", "max", "sum"]
+#     arr = wrap_array(model.value)
+#     meta = _cast_meta(model, ImageMeta)
+#     if axes := meta.axes:
+#         axis_names = [axis.name for axis in axes[:-2]]
+#     else:
+#         axis_names = [f"axis_{i}" for i in range(arr.ndim - 2)]
+#     axes_choices = [(axis_name, i) for i, axis_name in enumerate(axis_names)]
+
+#     current_indices = meta.current_indices
+#     @configure_gui(
+#         metrics={"choices": choices, "widget_type": "Select"},
+#         along={"choices": axes_choices, "widget_type": "Select"},
+#         current_indices={"bind": current_indices},
+#         run_async=True,
+#     )
+#     def run_measure(
+#         metrics: list[str],
+#         along: list[int],
+#         current_indices: list[int | None],
+#     ) -> WidgetDataModel:
+#         if isinstance(meta.rois, _roi.RoiListModel):
+#             rois = meta.rois
+#         else:
+#             rois = meta.rois()
+#         if len(rois) == 0:
+#             raise ValueError("No ROIs to measure.")
+
+#         first_slice = tuple(slice(None) if i in along else ind for i, ind in enumerate(current_indices[:-2]))
+#         arr_sliced = wrap_array(model.value[first_slice])
+#         funcs = [getattr(np, metric) for metric in metrics]
+#         for along_i in along:
+#             axis_name = axis_names[along_i]
+#             if axis_name in metrics:
+#                 axis_name = axis_name + " (axis)"
+#             out[axis_name] = []
+#         out = {"name": []}
+#         for metric in metrics:
+#             out[metric] = []
+#         for sl in np.ndindex(arr_sliced.shape[:-2]):
+#             arr_slice = arr_sliced.get_slice(sl)
+#             for roi in rois:
+#                 target = roi.slice_array(arr_slice)
+#                 out["name"].append(roi.name)
+#                 for sl_i, axis_name in zip(sl, axis_names):
+#                     out[axis_name].append(sl_i)
+#                 for func, metric in zip(funcs, metrics):
+#                     out[metric].append(func(target))
+#         return WidgetDataModel(
+#             value=out,
+#             type=StandardType.DATAFRAME,
+#             title=f"Results of {model.title}",
+#         )
+#     return run_measure
+
+
 def _get_consensus_axes(arrs: list[Any]) -> list[str]:
     axes_consensus: list[str] | None = None
     for arr in arrs:

@@ -358,7 +358,9 @@ def test_roi_commands(himena_ui: MainWindow):
     )
 
     himena_ui.add_object(
-        RoiListModel(rois=[PointRoi2D(x=0, y=0), PointsRoi2D(xs=[2, 3], ys=[1, 2])]),
+        RoiListModel(
+            rois=[PointRoi2D(x=0, y=0), PointsRoi2D(xs=[2, 3], ys=[1, 2])],
+        ),
         type=StandardType.ROIS,
     )
 

@@ -496,10 +496,13 @@ class SubWindow(WidgetWrapper[_W], Layout):
 
     def _close_me(self, main: MainWindow, confirm: bool = False) -> None:
         if self._ask_save_before_close and confirm:
+            title_short = repr(self.title)
+            if len(title_short) > 60:
+                title_short = title_short[:60] + "..."
             if isinstance(self.save_behavior, SaveToNewPath):
-                message = f"{self.title!r} is not saved yet. Save before closing?"
+                message = f"{title_short} is not saved yet. Save before closing?"
             else:
-                message = f"Save changes to {self.title!r}?"
+                message = f"Save changes to {title_short}?"
             request = main.exec_choose_one_dialog(
                 title="Closing window",
                 message=message,

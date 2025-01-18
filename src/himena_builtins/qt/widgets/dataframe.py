@@ -295,7 +295,16 @@ class DtypeTuple(NamedTuple):
 
 
 class QDataFramePlotView(QtW.QSplitter):
-    """A widget for viewing dataframe on the left and plot on the right."""
+    """A widget for viewing a dataframe on the left and its plot on the right.
+
+    ## Basic Usage
+
+    All the columns of the dataframe must be numerical data type. If there's only one
+    column, it will be considered as the y values. If there are more, the first column
+    will be the x values and the rest of the columns will be separate y values. If there
+    are more than one set of y values, clicking the column will highlight the plot on
+    the right.
+    """
 
     __himena_widget_id__ = "builtins:QDataFramePlotView"
     __himena_display_name__ = "Built-in DataFrame Plot View"

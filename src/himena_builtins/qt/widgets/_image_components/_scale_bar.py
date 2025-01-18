@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW, QtGui, QtCore
-from himena._enum import StrEnum
+from himena.utils.enum import StrEnum
 
 if TYPE_CHECKING:
     from ._graphics_view import QImageGraphicsView
@@ -25,7 +25,7 @@ class QScaleBarItem(QtW.QGraphicsItem):
         self._bar_rect = QtCore.QRectF(0, 0, 0, 0)
         self._bounding_rect = QtCore.QRectF(0, 0, 0, 0)
         self._text_visible = True
-        self._auto_adjust_size = True  # TODO: implement this
+        self._auto_adjust_size = True
         self._current_adjust_factor = 1.0
         self._anchor = ScaleBarAnchor.BOTTOM_RIGHT
         self._scale_bar_type = ScaleBarType.SHADOWED

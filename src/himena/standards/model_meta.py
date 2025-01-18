@@ -120,7 +120,7 @@ class DataFramePlotMeta(DataFrameMeta):
         if isinstance(self.rois, roi.RoiListModel):
             rois = self.rois
         else:
-            rois = self.rois()
+            rois = self.rois.unwrap_rois()
         if len(rois) > 0:
             with dir_path.joinpath("rois.roi.json").open("w") as f:
                 json.dump(rois.model_dump_typed(), f)
@@ -213,7 +213,7 @@ class ImageMeta(ArrayMeta):
         return self.model_copy(update={"rois": roi.RoiListModel(), "current_roi": None})
 
     def get_one_axis(self, index: int, value: int) -> "ImageMeta":
-        """Drop an axis by index."""
+        """Drop an axis by index for the array slicing arr[..., value, ...]."""
         if index < 0:
             index += len(self.axes)
         if index < 0 or index >= len(self.axes):
@@ -229,7 +229,15 @@ class ImageMeta(ArrayMeta):
         elif caxis is not None:
             update["channel_axis"] = caxis - 1 if caxis > index else caxis
         # TODO: Drop rois for now, but eventually consider them
+        self.unwrap_rois()
         return self.model_copy(update=update)
+
+    def unwrap_rois(self) -> roi.RoiListModel:
+        """Unwrap the lazy-evaluation of the ROIs."""
+        if isinstance(self.rois, roi.RoiListModel):
+            return self.rois
+        self.rois = self.rois()
+        return self.rois
 
     @field_validator("axes", mode="before")
     def _strings_to_axes(cls, v, values: "ValidationInfo"):
@@ -302,10 +310,7 @@ class ImageMeta(ArrayMeta):
                 exclude={"current_roi", "rois", "labels", "more_metadata"}
             )
         )
-        if isinstance(self.rois, roi.RoiListModel):
-            rois = self.rois
-        else:
-            rois = self.rois()
+        rois = self.unwrap_rois()
         if cur_roi := self.current_roi:
             with dir_path.joinpath("current_roi.json").open("w") as f:
                 json.dump(cur_roi.model_dump_typed(), f)

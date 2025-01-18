@@ -22,7 +22,7 @@ from himena.workflow import (
     CommandExecution,
     parse_parameter,
 )
-from himena._enum import StrEnum
+from himena.utils.enum import StrEnum
 from himena.consts import PYDANTIC_CONFIG_STRICT
 
 if TYPE_CHECKING:

@@ -1,14 +1,7 @@
 import sys
-from enum import Enum
 import string
 from types import SimpleNamespace, MappingProxyType
-
-if sys.version_info >= (3, 11):
-    from enum import StrEnum
-else:
-
-    class StrEnum(str, Enum):
-        pass
+from himena.utils.enum import StrEnum
 
 
 BasicTextFileTypes = frozenset(
