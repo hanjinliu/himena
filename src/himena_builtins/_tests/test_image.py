@@ -267,25 +267,25 @@ def test_complex_image(qtbot: QtBot):
         control._complex_mode_combo.setCurrentText(ComplexMode.LOG_ABS)
         control._complex_mode_combo.setCurrentText(ComplexMode.PHASE)
 
-def test_image_view_change_dimensionality():
+def test_image_view_change_dimensionality(qtbot: QtBot):
     image.test_change_dimensionality(_get_tester())
 
-def test_image_view_setting_colormap():
+def test_image_view_setting_colormap(qtbot: QtBot):
     image.test_setting_colormap(_get_tester())
 
-def test_image_view_setting_unit():
+def test_image_view_setting_unit(qtbot: QtBot):
     image.test_setting_unit(_get_tester())
 
-def test_image_view_setting_axis_names():
+def test_image_view_setting_axis_names(qtbot: QtBot):
     image.test_setting_axis_names(_get_tester())
 
-def test_image_view_setting_pixel_scale():
+def test_image_view_setting_pixel_scale(qtbot: QtBot):
     image.test_setting_pixel_scale(_get_tester())
 
-def test_image_view_setting_current_indices():
+def test_image_view_setting_current_indices(qtbot: QtBot):
     image.test_setting_current_indices(_get_tester())
 
-def test_image_view_current_roi():
+def test_image_view_current_roi(qtbot: QtBot):
     image.test_current_roi(_get_tester())
 
 def _get_tester():
@@ -320,10 +320,12 @@ def test_roi_commands(himena_ui: MainWindow):
         metadata=ImageMeta(
             axes=["t", "z", "y", "x"],
             rois=RoiListModel(
-                rois=[
-                    LineRoi(indices=(0, 0), name="ROI-0", x1=1, y1=1, x2=4, y2=5),
-                    PointRoi2D(indices=(0, 0), name="ROI-1", x=1, y=5),
-                ]
+                items=[
+                    LineRoi(name="ROI-0", x1=1, y1=1, x2=4, y2=5),
+                    PointRoi2D(name="ROI-1", x=1, y=5),
+                ],
+                indices=np.array([[0, 0], [0, 0]], dtype=np.int32),
+                axis_names=["t", "z"],
             ),
         ),
     )
@@ -358,7 +360,9 @@ def test_roi_commands(himena_ui: MainWindow):
     )
 
     himena_ui.add_object(
-        RoiListModel(rois=[PointRoi2D(x=0, y=0), PointsRoi2D(xs=[2, 3], ys=[1, 2])]),
+        RoiListModel(
+            [PointRoi2D(x=0, y=0), PointsRoi2D(xs=[2, 3], ys=[1, 2])],
+        ),
         type=StandardType.ROIS,
     )
 

@@ -1,86 +1,13 @@
 from __future__ import annotations
 
-from functools import cache
 import math
-from typing import TYPE_CHECKING, Any, Iterator, Union
+from typing import Any, Union
 import numpy as np
 from numpy.typing import NDArray
-from pydantic import field_serializer
-from pydantic_compat import BaseModel, Field, field_validator
+from pydantic_compat import Field, field_validator
 from himena.types import Rect
-from himena._utils import iter_subclasses
-
-if TYPE_CHECKING:
-    from typing import Self
-
-
-class RoiModel(BaseModel):
-    """Base class for ROIs (Region of Interest) in images."""
-
-    name: str | None = Field(None, description="Name of the ROI.")
-
-    def model_dump_typed(self) -> dict:
-        return {
-            "type": _strip_roi_suffix(type(self).__name__.lower()),
-            **self.model_dump(),
-        }
-
-    @classmethod
-    def construct(cls, typ: str, dict_: dict) -> RoiModel:
-        """Construct an instance from a dictionary."""
-        model_type = pick_roi_model(typ)
-        return model_type.model_validate(dict_)
-
-
-@cache
-def pick_roi_model(typ: str) -> type[RoiModel]:
-    for sub in iter_subclasses(RoiModel):
-        if _strip_roi_suffix(sub.__name__.lower()) == typ:
-            return sub
-    raise ValueError(f"Unknown ROI type: {typ!r}")
-
-
-def _strip_roi_suffix(typ: str) -> str:
-    if typ.endswith("roi"):
-        typ = typ[:-3]
-    return typ
-
-
-def default_roi_label(nth: int) -> str:
-    """Return a default label for the n-th ROI."""
-    return f"ROI-{nth}"
-
-
-class RoiND(RoiModel):
-    indices: tuple[int, ...] = Field(
-        default=(), description="Indices of the ROI in the >nD dimensions."
-    )
-
-    def flattened(self) -> Self:
-        """Return a copy of the ROI with indices flattened."""
-        return self.model_copy(update={"indices": ()})
-
-
-class Roi1D(RoiND):
-    def shifted(self, dx: float, dy: float) -> Self:
-        """Return a new 1D ROI translated by the given amount."""
-        raise NotImplementedError
-
-
-class Roi2D(RoiND):
-    def bbox(self) -> Rect[float]:
-        """Return the bounding box of the ROI."""
-        raise NotImplementedError
-
-    def shifted(self, dx: float, dy: float) -> Self:
-        """Return a new 2D ROI translated by the given amount."""
-        raise NotImplementedError
-
-
-class Roi3D(RoiND):
-    def shifted(self, dx: float, dy: float, dz: float) -> Self:
-        """Return a new 3D ROI translated by the given amount."""
-        raise NotImplementedError
+from himena.standards.roi._base import Roi1D, Roi2D
+from himena.standards.roi import _utils
 
 
 class SpanRoi(Roi1D):
@@ -145,6 +72,12 @@ class RectangleRoi(Roi2D):
         """Return the bounding box of the rectangle."""
         return Rect(self.x, self.y, self.width, self.height)
 
+    def to_mask(self, shape: tuple[int, ...]) -> NDArray[np.bool_]:
+        bb = self.bbox().adjust_to_int("inner")
+        arr = np.zeros(shape, dtype=bool)
+        arr[..., bb.top : bb.bottom, bb.left : bb.right] = True
+        return arr
+
 
 class RotatedRoi2D(Roi2D):
     angle: float = Field(..., description="Counter-clockwise angle in degrees.")
@@ -161,28 +94,50 @@ class RotatedRectangleRoi(RotatedRoi2D):
     end: tuple[float, float] = Field(..., description="Y-coordinate of the center.")
     width: float = Field(..., description="Width of the rectangle.")
 
+    def length(self) -> float:
+        start_x, start_y = self.start
+        end_x, end_y = self.end
+        return math.hypot(end_x - start_x, end_y - start_y)
+
+    def area(self) -> float:
+        return self.length() * self.width
+
     def shifted(self, dx: float, dy: float) -> RotatedRectangleRoi:
         start = (self.start[0] + dx, self.start[1] + dy)
         end = (self.end[0] + dx, self.end[1] + dy)
         return self.model_copy(update={"start": start, "end": end})
 
     def bbox(self) -> Rect[float]:
+        p00, p01, p11, p10 = self._get_vertices()
+        xmin = min(p00[0], p01[0], p10[0], p11[0])
+        xmax = max(p00[0], p01[0], p10[0], p11[0])
+        ymin = min(p00[1], p01[1], p10[1], p11[1])
+        ymax = max(p00[1], p01[1], p10[1], p11[1])
+        return Rect(xmin, ymin, xmax - xmin, ymax - ymin)
+
+    def _get_vx_vy(self):
         start_x, start_y = self.start
         end_x, end_y = self.end
         length = math.hypot(end_x - start_x, end_y - start_y)
         rad = math.radians(self.angle)
         vx = np.array([math.cos(rad), math.sin(rad)]) * length
         vy = np.array([-math.sin(rad), math.cos(rad)]) * self.width
+        return vx, vy
+
+    def _get_vertices(self):
+        start_x, start_y = self.start
+        end_x, end_y = self.end
+        vx, vy = self._get_vx_vy()
         center = np.array([start_x + end_x, start_y + end_y]) / 2
         p00 = center - vx / 2 - vy / 2
         p01 = center - vx / 2 + vy / 2
         p10 = center + vx / 2 - vy / 2
         p11 = center + vx / 2 + vy / 2
-        xmin = min(p00[0], p01[0], p10[0], p11[0])
-        xmax = max(p00[0], p01[0], p10[0], p11[0])
-        ymin = min(p00[1], p01[1], p10[1], p11[1])
-        ymax = max(p00[1], p01[1], p10[1], p11[1])
-        return Rect(xmin, ymin, xmax - xmin, ymax - ymin)
+        return p00, p01, p11, p10
+
+    def to_mask(self, shape: tuple[int, ...]):
+        vertices = np.stack(self._get_vertices(), axis=0)
+        return _utils.polygon_mask(shape, vertices[:, ::-1])
 
 
 class EllipseRoi(Roi2D):
@@ -192,6 +147,9 @@ class EllipseRoi(Roi2D):
     y: Union[int, float] = Field(..., description="Y-coordinate of the center.")
     width: Union[int, float] = Field(..., description="Diameter along the x-axis.")
     height: Union[int, float] = Field(..., description="Diameter along the y-axis.")
+
+    def center(self) -> tuple[float, float]:
+        return self.x + self.width / 2, self.y + self.height / 2
 
     def shifted(self, dx: float, dy: float) -> EllipseRoi:
         return self.model_copy(update={"x": self.x + dx, "y": self.y + dy})
@@ -210,6 +168,13 @@ class EllipseRoi(Roi2D):
     def bbox(self) -> Rect[float]:
         return Rect(self.x, self.y, self.width, self.height)
 
+    def to_mask(self, shape: tuple[int, ...]) -> NDArray[np.bool_]:
+        _yy, _xx = np.indices(shape[-2:])
+        cx, cy = self.center()
+        comp_a = (_yy - cy) / self.height * 2
+        comp_b = (_xx - cx) / self.width * 2
+        return comp_a**2 + comp_b**2 <= 1
+
 
 class RotatedEllipseRoi(EllipseRoi, RotatedRoi2D):
     """ROI that represents a rotated ellipse."""
@@ -226,6 +191,11 @@ class PointRoi2D(Roi2D):
 
     def bbox(self) -> Rect[float]:
         return Rect(self.x, self.y, 0, 0)
+
+    def to_mask(self, shape: tuple[int, ...]) -> NDArray[np.bool_]:
+        arr = np.zeros(shape, dtype=bool)
+        arr[..., int(round(self.y)), int(round(self.x))] = True
+        return arr
 
 
 class PointsRoi2D(Roi2D):
@@ -249,25 +219,17 @@ class PointsRoi2D(Roi2D):
         ymin, ymax = np.min(self.ys), np.max(self.ys)
         return Rect(xmin, ymin, xmax - xmin, ymax - ymin)
 
-
-class SegmentedLineRoi(PointsRoi2D):
-    """ROI that represents a segmented line."""
-
-    def length(self) -> float:
-        return np.sum(np.hypot(np.diff(self.xs), np.diff(self.ys)))
-
-
-class PolygonRoi(SegmentedLineRoi):
-    """ROI that represents a closed polygon."""
-
-
-class SplineRoi(Roi2D):
-    """ROI that represents a spline curve."""
-
-    degree: int = Field(3, description="Degree of the spline curve.", ge=1)
+    def to_mask(self, shape: tuple[int, ...]) -> NDArray[np.bool_]:
+        arr = np.zeros(shape, dtype=bool)
+        xs = np.asarray(self.xs).round().astype(int)
+        ys = np.asarray(self.ys).round().astype(int)
+        arr[..., ys, xs] = True
+        return arr
 
 
 class LineRoi(Roi2D):
+    """A 2D line ROI."""
+
     x1: float = Field(..., description="X-coordinate of the first point.")
     y1: float = Field(..., description="Y-coordinate of the first point.")
     x2: float = Field(..., description="X-coordinate of the second point.")
@@ -285,7 +247,7 @@ class LineRoi(Roi2D):
         """Length of the line."""
         return math.hypot(self.x2 - self.x1, self.y2 - self.y1)
 
-    def degree(self) -> float:
+    def angle(self) -> float:
         """Angle in degrees."""
         return math.degrees(math.atan2(self.y2 - self.y1, self.x2 - self.x1))
 
@@ -293,19 +255,21 @@ class LineRoi(Roi2D):
         """Angle in radians."""
         return math.atan2(self.y2 - self.y1, self.x2 - self.x1)
 
-    def linspace(self, num: int) -> NDArray[np.float64]:
+    def linspace(self, num: int) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
         """Return a tuple of x and y coordinates of np.linspace along the line."""
         return np.linspace(self.x1, self.x2, num), np.linspace(self.y1, self.y2, num)
 
-    def arange(self, step: float) -> NDArray[np.float64]:
+    def arange(
+        self, step: float = 1.0
+    ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
         """Return a tuple of x and y coordinates of np.arange along the line."""
         radian = self.radian()
         num, rem = divmod(self.length(), step)
         xrem = rem * math.cos(radian)
         yrem = rem * math.sin(radian)
         return (
-            np.linspace(self.x1, self.x2 - xrem, int(num)),
-            np.linspace(self.y1, self.y2 - yrem, int(num)),
+            np.linspace(self.x1, self.x2 - xrem, int(num) + 1),
+            np.linspace(self.y1, self.y2 - yrem, int(num) + 1),
         )
 
     def bbox(self) -> Rect[float]:
@@ -313,36 +277,69 @@ class LineRoi(Roi2D):
         ymin, ymax = min(self.y1, self.y2), max(self.y1, self.y2)
         return Rect(xmin, ymin, xmax - xmin, ymax - ymin)
 
+    def to_mask(self, shape: tuple[int, ...]) -> NDArray[np.bool_]:
+        arr = np.zeros(shape, dtype=bool)
+        xs, ys = self.linspace(int(math.ceil(self.length())))
+        xs = xs.round().astype(int)
+        ys = ys.round().astype(int)
+        arr[ys, xs] = True
+        return arr
 
-class RoiListModel(BaseModel):
-    """List of ROIs, with useful methods."""
 
-    rois: list[RoiModel] = Field(default_factory=list, description="List of ROIs.")
+class SegmentedLineRoi(PointsRoi2D):
+    """ROI that represents a segmented line."""
 
-    def model_dump_typed(self) -> dict:
-        return {"type": type(self).__name__.lower(), **self.model_dump()}
+    def length(self) -> np.float64:
+        return np.sum(self.lengths())
 
-    @field_serializer("rois")
-    def _serialize_rois(self, v: list[RoiModel]) -> list[dict]:
-        return [roi.model_dump_typed() for roi in v]
+    def lengths(self) -> NDArray[np.float64]:
+        return np.hypot(np.diff(self.xs), np.diff(self.ys))
 
-    @classmethod
-    def construct(cls, dict_: dict) -> RoiListModel:
-        """Construct an instance from a dictionary."""
-        out = cls()
-        for roi_dict in dict_["rois"]:
-            if not isinstance(roi_dict, dict):
-                raise ValueError(f"Expected a dictionary for 'rois', got: {roi_dict!r}")
-            roi_type = roi_dict.pop("type")
-            roi = RoiModel.construct(roi_type, roi_dict)
-            out.rois.append(roi)
-        return out
+    def linspace(self, num: int) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+        """Return a tuple of x and y coordinates of np.linspace along the line."""
+        tnots = np.concatenate([[0], self.lengths()], dtype=np.float64)
+        teval = np.linspace(0, tnots.sum(), num)
+        xi = np.interp(teval, tnots, self.xs)
+        yi = np.interp(teval, tnots, self.ys)
+        return xi, yi
 
-    def __getitem__(self, key: int) -> RoiModel:
-        return self.rois[key]
+    def arange(
+        self, step: float = 1.0
+    ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+        tnots = np.concatenate([[0], self.lengths()], dtype=np.float64)
+        length = tnots.sum()
+        num, rem = divmod(length, step)
+        teval = np.linspace(0, tnots.sum() - rem, num)
+        xi = np.interp(teval, tnots, self.xs)
+        yi = np.interp(teval, tnots, self.ys)
+        return xi, yi
 
-    def __iter__(self) -> Iterator[RoiModel]:
-        return iter(self.rois)
+    def to_mask(self, shape: tuple[int, ...]) -> NDArray[np.bool_]:
+        arr = np.zeros(shape, dtype=bool)
+        xs, ys = self.linspace(int(math.ceil(self.length())))
+        xs = xs.round().astype(int)
+        ys = ys.round().astype(int)
+        arr[ys, xs] = True
+        return arr
 
-    def __len__(self) -> int:
-        return len(self.rois)
+
+class PolygonRoi(SegmentedLineRoi):
+    """ROI that represents a closed polygon."""
+
+    def to_mask(self, shape: tuple[int, ...]) -> NDArray[np.bool_]:
+        return _utils.polygon_mask(shape, np.column_stack((self.ys, self.xs)))
+
+    def area(self) -> float:
+        return (
+            np.abs(
+                np.dot(self.xs, np.roll(self.ys, 1))
+                - np.dot(self.ys, np.roll(self.xs, 1))
+            )
+            / 2
+        )
+
+
+class SplineRoi(Roi2D):
+    """ROI that represents a spline curve."""
+
+    degree: int = Field(3, description="Degree of the spline curve.", ge=1)

@@ -22,7 +22,7 @@ from himena.workflow import (
     CommandExecution,
     parse_parameter,
 )
-from himena._enum import StrEnum
+from himena.utils.enum import StrEnum
 from himena.consts import PYDANTIC_CONFIG_STRICT
 
 if TYPE_CHECKING:
@@ -622,6 +622,14 @@ class FutureInfo(_HasDynamicAttribute):
     kwargs: dict[str, Any] = field(default_factory=dict)
     top_left: tuple[int, int] | None = None
     size: Size[int] | None = None
+
+    def resolve_type_hint(self, ns: dict[str, Any]) -> "FutureInfo":
+        if isinstance(self.type_hint, str):
+            typ = ns.get(self.type_hint)
+            if typ is None:
+                raise ValueError(f"Could not resolve the type hint: {self.type_hint}")
+            self.type_hint = typ
+        return self
 
 
 Parametric = NewType("Parametric", Any)

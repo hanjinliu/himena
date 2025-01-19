@@ -245,7 +245,7 @@ class QModelDropList(QtW.QListWidget):
     def value(self) -> list[WidgetDataModel]:
         return [self.itemWidget(self.item(i)).to_model() for i in range(self.count())]
 
-    def set_value(self, value: WidgetDataModel | None):
+    def set_value(self, value):
         if value is None:
             self.clear()
         else:

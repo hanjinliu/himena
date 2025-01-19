@@ -1,8 +1,11 @@
 import sys
 from himena.qt._qtraceback import QtErrorMessageBox, QtTracebackDialog
+from himena.qt import MainWindowQt
 from qtpy import QtWidgets as QtW
 from qtpy.QtCore import Qt
 from pytestqt.qtbot import QtBot
+
+from himena.types import WidgetDataModel
 
 def test_qt_traceback(qtbot: QtBot):
     from himena.qt._qtraceback import format_exc_info_py310, format_exc_info_py311
@@ -201,3 +204,24 @@ def test_float_line_edit_range(qtbot: QtBot):
     assert line.text() == "1.0"
     line.stepUp()
     assert line.text() == "1.0"
+
+def test_model_drop(qtbot: QtBot, himena_ui: MainWindowQt):
+    from himena.qt._qmodeldrop import QModelDrop, QModelDropList
+
+    himena_ui.add_object("abc", type="text")
+    himena_ui.add_object([[0, 1], [2, 3]], type="table")
+    qdrop = QModelDrop(["text"])
+    qdroplist = QModelDropList(["text"])
+    drop_win = himena_ui.add_widget(qdrop)
+    drop_list = himena_ui.add_widget(qdroplist)
+    qwins = himena_ui._backend_main_window._tab_widget.widget_area(0).subWindowList()
+    qdrop._drop_qsubwindow(qwins[0])
+    qdrop._drop_qsubwindow(qwins[1])
+    assert qdrop.value().type == "text"
+    qdrop.set_value(None)
+    qdrop.set_value(WidgetDataModel(value="ccc", type="text"))
+    qdroplist._drop_qsubwindow(qwins[0])
+    qdroplist._drop_qsubwindow(qwins[1])
+    assert len(qdroplist.value()) == 1
+    assert qdroplist.value()[0].type == "text"
+    qdroplist.set_value(None)

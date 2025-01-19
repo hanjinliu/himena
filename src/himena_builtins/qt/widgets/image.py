@@ -128,6 +128,7 @@ class QImageView(QtW.QSplitter):
         self._control = QImageViewControl(self)
         self._arr: ArrayWrapper | None = None  # the internal array data for display
         self._is_modified = False  # whether the widget is modified
+        self._is_editable = True
         # cached ImageTuples for display
         self._current_image_slices: list[ImageTuple] | None = None
         self._is_rgb = False  # whether the image is RGB
@@ -177,6 +178,10 @@ class QImageView(QtW.QSplitter):
             self._dims_slider.set_dimensions(arr.shape, meta0.axes, is_rgb=self._is_rgb)
         with qsignal_blocker(self._dims_slider):
             self._dims_slider.setValue(sl_0)
+        axis_names = [meta0.axes[i].name for i in range(self._dims_slider.count())]
+        self._roi_col._qroi_list = self._roi_col._qroi_list.coerce_dimensions(
+            axis_names
+        )
 
         # update scale bar
         if (axes := meta0.axes) is not None:
@@ -213,10 +218,12 @@ class QImageView(QtW.QSplitter):
         self._update_channels(meta0, img_slices, nchannels, arr.dtype)
         if not meta0.skip_image_rerendering:
             self._set_image_slices(img_slices)
-        if roi_list := meta0.rois:
-            if callable(roi_list):
-                roi_list = roi_list()
-            self._roi_col.update_from_standard_roi_list(roi_list)
+        roi_list = meta0.unwrap_rois()
+        if len(roi_list) > 0:
+            self._roi_col.clear()
+            self._roi_col.extend_from_standard_roi_list(
+                roi_list.coerce_dimensions(axis_names)
+            )
         if meta0.current_roi:
             self._img_view.remove_current_item(reason="update_model")
             self._img_view.set_current_roi(
@@ -333,7 +340,7 @@ class QImageView(QtW.QSplitter):
         current_indices = self._dims_slider.value()
         current_slices = current_indices + (None, None)
         if item := self._img_view._current_roi_item:
-            current_roi = item.toRoi(current_indices)
+            current_roi = item.toRoi()
         else:
             current_roi = None
         axes = self._dims_slider._to_image_axes()
@@ -366,7 +373,11 @@ class QImageView(QtW.QSplitter):
 
     @validate_protocol
     def is_editable(self) -> bool:
-        return False
+        return self._is_editable
+
+    @validate_protocol
+    def set_editable(self, editable: bool):
+        self._is_editable = editable
 
     @validate_protocol
     def control_widget(self) -> QImageViewControl:
@@ -380,7 +391,7 @@ class QImageView(QtW.QSplitter):
     def dropped_callback(self, model: WidgetDataModel):
         if model.type == StandardType.ROIS:
             if isinstance(roi_list := model.value, roi.RoiListModel):
-                self._roi_col.update_from_standard_roi_list(roi_list)
+                self._roi_col.extend_from_standard_roi_list(roi_list)
                 self._img_view.clear_rois()
                 self._update_rois()
             self._is_modified = True

@@ -1,10 +1,15 @@
 """Standard ROI (Region of Interest) classes for images."""
 
-from himena.standards.roi.core import (
+from himena.standards.roi._base import (
     RoiModel,
+    Roi1D,
     Roi2D,
     Roi3D,
-    RoiND,
+    default_roi_label,
+    pick_roi_model,
+)
+
+from himena.standards.roi.core import (
     RectangleRoi,
     RotatedRectangleRoi,
     EllipseRoi,
@@ -15,16 +20,14 @@ from himena.standards.roi.core import (
     PolygonRoi,
     LineRoi,
     SplineRoi,
-    RoiListModel,
-    default_roi_label,
-    pick_roi_model,
 )
+from himena.standards.roi._list import RoiListModel
 
 __all__ = [
     "RoiModel",
+    "Roi1D",
     "Roi2D",
     "Roi3D",
-    "RoiND",
     "RectangleRoi",
     "RotatedRectangleRoi",
     "EllipseRoi",

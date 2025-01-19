@@ -95,6 +95,8 @@ class FunctionMeta(BaseMetadata):
 class DataFramePlotMeta(DataFrameMeta):
     """Preset for describing the metadata for a "dataframe.plot" type."""
 
+    model_config = {"arbitrary_types_allowed": True}
+
     plot_type: Literal["line", "scatter"] = Field(
         "line", description="Type of the plot."
     )
@@ -115,12 +117,16 @@ class DataFramePlotMeta(DataFrameMeta):
             self.rois = roi.RoiListModel.model_validate_json(rois_path.read_text())
         return self
 
+    def unwrap_rois(self) -> roi.RoiListModel:
+        """Unwrap the lazy-evaluation of the ROIs."""
+        if isinstance(self.rois, roi.RoiListModel):
+            return self.rois
+        self.rois = self.rois()
+        return self.rois
+
     def write_metadata(self, dir_path: Path) -> None:
         dir_path.joinpath(_META_NAME).write_text(self.model_dump_json(exclude={"rois"}))
-        if isinstance(self.rois, roi.RoiListModel):
-            rois = self.rois
-        else:
-            rois = self.rois()
+        rois = self.unwrap_rois()
         if len(rois) > 0:
             with dir_path.joinpath("rois.roi.json").open("w") as f:
                 json.dump(rois.model_dump_typed(), f)
@@ -187,6 +193,8 @@ class ImageChannel(BaseModel):
 class ImageMeta(ArrayMeta):
     """Preset for describing an image file metadata."""
 
+    model_config = {"arbitrary_types_allowed": True}
+
     channels: list[ImageChannel] = Field(
         default_factory=lambda: [ImageChannel.default()],
         description="Channels of the image. At least one channel is required.",
@@ -213,23 +221,28 @@ class ImageMeta(ArrayMeta):
         return self.model_copy(update={"rois": roi.RoiListModel(), "current_roi": None})
 
     def get_one_axis(self, index: int, value: int) -> "ImageMeta":
-        """Drop an axis by index."""
+        """Drop an axis by index for the array slicing arr[..., value, ...]."""
         if index < 0:
             index += len(self.axes)
         if index < 0 or index >= len(self.axes):
             raise IndexError(f"Invalid axis index: {index}.")
         axes = self.axes.copy()
         del axes[index]
-        update = {"axes": axes}
-        caxis = self.channel_axis
+        update = {"axes": axes, "rois": self.unwrap_rois().take_axis(index, value)}
         if (caxis := self.channel_axis) == index:
             update["channels"] = [self.channels[value]]
             update["channel_axis"] = None
             update["is_rgb"] = False
         elif caxis is not None:
             update["channel_axis"] = caxis - 1 if caxis > index else caxis
-        # TODO: Drop rois for now, but eventually consider them
         return self.model_copy(update=update)
+
+    def unwrap_rois(self) -> roi.RoiListModel:
+        """Unwrap the lazy-evaluation of the ROIs."""
+        if isinstance(self.rois, roi.RoiListModel):
+            return self.rois
+        self.rois = self.rois()
+        return self.rois
 
     @field_validator("axes", mode="before")
     def _strings_to_axes(cls, v, values: "ValidationInfo"):
@@ -287,8 +300,7 @@ class ImageMeta(ArrayMeta):
             self.rois = roi.RoiListModel.model_validate_json(rois_path.read_text())
         if (cur_roi_path := dir_path.joinpath("current_roi.json")).exists():
             roi_js = json.loads(cur_roi_path.read_text())
-            _type = roi_js.pop("type")
-            self.current_roi = roi.RoiModel.construct(_type, roi_js)
+            self.current_roi = roi.RoiModel.construct(roi_js.pop("type"), roi_js)
         if (labels_path := dir_path.joinpath("labels.npy")).exists():
             self.labels = np.load(labels_path, allow_pickle=False)
         if (more_meta_path := dir_path.joinpath("more_meta.json")).exists():
@@ -302,10 +314,7 @@ class ImageMeta(ArrayMeta):
                 exclude={"current_roi", "rois", "labels", "more_metadata"}
             )
         )
-        if isinstance(self.rois, roi.RoiListModel):
-            rois = self.rois
-        else:
-            rois = self.rois()
+        rois = self.unwrap_rois()
         if cur_roi := self.current_roi:
             with dir_path.joinpath("current_roi.json").open("w") as f:
                 json.dump(cur_roi.model_dump_typed(), f)

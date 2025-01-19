@@ -105,9 +105,9 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
     @property
     def widget(self) -> _W:
         """Get the internal backend widget."""
-        if out := self._widget():
+        if (out := self._widget()) is not None:
             return out
-        raise RuntimeError("Widget was deleted.")
+        raise RuntimeError(f"Widget in the wrapper {self} was deleted.")
 
     @property
     def save_behavior(self) -> SaveBehavior:
@@ -496,10 +496,13 @@ class SubWindow(WidgetWrapper[_W], Layout):
 
     def _close_me(self, main: MainWindow, confirm: bool = False) -> None:
         if self._ask_save_before_close and confirm:
+            title_short = repr(self.title)
+            if len(title_short) > 60:
+                title_short = title_short[:60] + "..."
             if isinstance(self.save_behavior, SaveToNewPath):
-                message = f"{self.title!r} is not saved yet. Save before closing?"
+                message = f"{title_short} is not saved yet. Save before closing?"
             else:
-                message = f"Save changes to {self.title!r}?"
+                message = f"Save changes to {title_short}?"
             request = main.exec_choose_one_dialog(
                 title="Closing window",
                 message=message,
@@ -785,7 +788,7 @@ class ParametricWindow(SubWindow[_W]):
                     kwargs=kwargs,
                     top_left=top_left,
                     size=size,
-                ).set(return_value)
+                ).resolve_type_hint().set(return_value)
             else:
                 injection_type_hint = annot.get("return", None)
             self._process_other_output(return_value, injection_type_hint)

@@ -7,9 +7,9 @@ from qtpy import QtCore, QtGui
 from superqt.utils import qthrottled
 
 from himena.qt._magicgui._toggle_switch import QLabeledToggleSwitch
-from himena_builtins.qt.widgets._image_components import QHistogramView
 from himena.qt._utils import qsignal_blocker
-from himena._enum import StrEnum
+from himena_builtins.qt.widgets._image_components import QHistogramView
+from himena.utils.enum import StrEnum
 
 if TYPE_CHECKING:
     from himena_builtins.qt.widgets.image import QImageView, ChannelInfo

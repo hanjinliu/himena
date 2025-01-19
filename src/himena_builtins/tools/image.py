@@ -70,7 +70,7 @@ def crop_image_multi(model: WidgetDataModel) -> Parametric:
     arr = wrap_array(model.value)
 
     def _get_bbox_list():
-        rois = _resolve_roi_list_model(meta, copy=False)
+        rois = meta.unwrap_rois()
         bbox_list: list[tuple[int, int, int, int]] = []
         for i, roi in enumerate(rois):
             if not isinstance(roi, _roi.Roi2D):
@@ -225,9 +225,8 @@ def filter_rois(model: WidgetDataModel) -> Parametric:
     @configure_gui(types={"choices": _choices, "widget_type": "Select"})
     def run_filter_rois(types: list[str]):
         types_allowed = {_roi.pick_roi_model(typ.lower()) for typ in types}
-        value = _roi.RoiListModel(
-            rois=list(r for r in rois if type(r) in types_allowed)
-        )
+        sl = [i for i, r in enumerate(rois) if type(r) in types_allowed]
+        value = rois.filter_by_selection(sl)
         if isinstance(meta := model.metadata, (ImageRoisMeta, ImageMeta)):
             axes = meta.axes
         else:
@@ -262,9 +261,9 @@ def select_rois(model: WidgetDataModel) -> Parametric:
     def run_select(selections: list[int]) -> WidgetDataModel:
         if len(selections) == 0:
             raise ValueError("No ROIs selected.")
-        value = _roi.RoiListModel(rois=list(rois[i] for i in selections))
+
         return WidgetDataModel(
-            value=value,
+            value=rois.filter_by_selection(selections),
             type=StandardType.ROIS,
             title=f"Subset of {model.title}",
             metadata=ImageRoisMeta(axes=axes),
@@ -287,21 +286,17 @@ def select_rois(model: WidgetDataModel) -> Parametric:
 )
 def point_rois_to_dataframe(model: WidgetDataModel) -> WidgetDataModel:
     rois = _get_rois_from_model(model)
-    if len(rois.rois) == 0:
+    if len(rois) == 0:
         raise ValueError("No ROIs to convert")
-
-    roi0 = rois[0]
-    if not isinstance(roi0, (_roi.PointRoi2D, _roi.PointsRoi2D)):
-        raise TypeError(f"Expected a PointRoi or PointsRoi, got {type(roi0)}")
-    ndim = len(roi0.indices) + 2
+    ndim = rois.indices.shape[1] + 2
     arrs: list[np.ndarray] = []
-    for roi in rois:
+    for indices, roi in rois.iter_with_indices():
         if isinstance(roi, _roi.PointRoi2D):
-            arr = np.array([roi.indices + (roi.y, roi.x)], dtype=np.float32)
+            arr = np.array([indices + (roi.y, roi.x)], dtype=np.float32)
         elif isinstance(roi, _roi.PointsRoi2D):
             npoints = len(roi.xs)
             arr = np.empty((npoints, ndim))
-            arr[:, :-2] = roi.indices
+            arr[:, :-2] = indices
             arr[:, -2] = roi.ys
             arr[:, -1] = roi.xs
         else:
@@ -650,30 +645,15 @@ def _slider_indices(meta: ImageMeta) -> tuple[int, ...]:
     return indices
 
 
-def _resolve_roi_list_model(meta: ImageMeta, copy: bool = True) -> _roi.RoiListModel:
-    rois = meta.rois
-    if isinstance(rois, _roi.RoiListModel):
-        if copy:
-            rois = rois.model_copy()
-    elif callable(rois):
-        rois = rois()
-        if not isinstance(rois, _roi.RoiListModel):
-            raise ValueError(f"Expected a RoiListModel, got {type(rois)}")
-    else:
-        raise ValueError("Expected a RoiListModel or a factory function.")
-    return rois
-
-
 def _get_rois_from_model(model: WidgetDataModel) -> _roi.RoiListModel:
     if model.type == StandardType.IMAGE:
         meta = _cast_meta(model, ImageMeta)
-        rois = _resolve_roi_list_model(meta)
+        rois = meta.unwrap_rois()
     elif model.type == StandardType.ROIS:
         rois = model.value
     else:
         raise ValueError(
-            "Command 'builtins:duplicate-rois' can only be executed on an 'image' or "
-            "'image-rois' model."
+            "Command can only be executed on an 'image' or 'image-rois' model."
         )
     return rois
 

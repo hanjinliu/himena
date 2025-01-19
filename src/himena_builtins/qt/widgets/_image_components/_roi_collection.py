@@ -1,8 +1,9 @@
 from __future__ import annotations
 import weakref
 from functools import singledispatch
+import numpy as np
 from qtpy import QtWidgets as QtW, QtCore, QtGui
-from typing import Iterator, TYPE_CHECKING
+from typing import Iterator, TYPE_CHECKING, Sequence
 
 from himena.qt._magicgui._toggle_switch import QLabeledToggleSwitch
 from himena.standards import roi
@@ -10,10 +11,12 @@ from himena.consts import StandardType
 from himena.standards.model_meta import ImageRoisMeta
 from himena.types import WidgetDataModel, DragDataModel
 from himena.qt import drag_model
+from himena.utils.ndobject import NDObjectCollection
 from himena_builtins.qt.widgets._image_components import _roi_items
 from himena_builtins.qt.widgets._dragarea import QDraggableArea
 
 if TYPE_CHECKING:
+    from typing import Self
     from himena_builtins.qt.widgets.image import QImageView
 
 
@@ -82,8 +85,7 @@ class QSimpleRoiCollection(QtW.QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._rois: list[tuple[Indices, _roi_items.QRoi]] = []
-        self._slice_cache: dict[Indices, list[_roi_items.QRoi]] = {}
+        self._qroi_list = NDObjectCollection[_roi_items.QRoi]()
         self._pen = QtGui.QPen(QtGui.QColor(238, 238, 0), 2)
         self._pen.setCosmetic(True)
         layout = QtW.QVBoxLayout(self)
@@ -101,44 +103,54 @@ class QSimpleRoiCollection(QtW.QWidget):
     def layout(self) -> QtW.QVBoxLayout:
         return super().layout()
 
-    def update_from_standard_roi_list(self, rois: roi.RoiListModel) -> QRoiCollection:
-        for r in rois:
-            if isinstance(r, roi.RoiND):
-                self.add(r.indices, from_standard_roi(r, self._pen))
+    def extend_from_standard_roi_list(
+        self,
+        rois: NDObjectCollection[roi.RoiModel],
+    ) -> Self:
+        """Extend the collection from a list of himena standard ROIs."""
+        qrois = np.fromiter(
+            (from_standard_roi(r, self._pen) for r in rois),
+            dtype=np.object_,
+        )
+        self.extend(
+            NDObjectCollection[_roi_items.QRoi](
+                items=qrois,
+                indices=rois.indices,
+                axis_names=rois.axis_names,
+            )
+        )
         return self
 
     def to_standard_roi_list(
         self,
         selections: list[int] | None = None,
-    ) -> roi.RoiListModel:
+    ) -> NDObjectCollection[roi.RoiModel]:
         if selections is None:
-            all_rois = self._rois
+            all_rois = self._qroi_list
         else:
-            all_rois = [self._rois[i] for i in selections]
-        return roi.RoiListModel(rois=[roi.toRoi(indices) for indices, roi in all_rois])
+            all_rois = self._qroi_list.filter_by_selection(selections)
+        return all_rois.map_elements(lambda qroi: qroi.toRoi(), into=roi.RoiListModel)
 
     def add(self, indices: Indices, roi: _roi_items.QRoi):
         """Add a ROI on the given slice."""
         self._list_view.model().beginInsertRows(
-            QtCore.QModelIndex(), len(self._rois), len(self._rois)
+            QtCore.QModelIndex(), len(self._qroi_list), len(self._qroi_list)
         )
-        self._rois.append((indices, roi))
-        self._cache_roi(indices, roi)
+        self._qroi_list.add_item(indices, roi)
         self._list_view.model().endInsertRows()
 
-    def _cache_roi(self, indices: Indices, roi: _roi_items.QRoi):
-        if indices not in self._slice_cache:
-            self._slice_cache[indices] = []
-        self._slice_cache[indices].append(roi)
-
-    def extend(self, other: QRoiCollection):
-        for indices, r in other._rois:
-            self.add(indices, r)
+    def extend(self, other: NDObjectCollection[_roi_items.QRoi]):
+        self._list_view.model().beginInsertRows(
+            QtCore.QModelIndex(),
+            len(self._qroi_list),
+            len(self._qroi_list) + len(other),
+        )
+        self._qroi_list.extend(other)
+        self._list_view.model().endInsertRows()
 
     def clear(self):
         self._list_view.model().beginResetModel()
-        self._rois.clear()
-        self._slice_cache.clear()
+        self._qroi_list.clear()
         self._list_view.model().endResetModel()
 
     def set_selections(self, selections: list[int]):
@@ -161,60 +173,52 @@ class QSimpleRoiCollection(QtW.QWidget):
         return [idx.row() for idx in self._list_view.selectionModel().selectedIndexes()]
 
     def __getitem__(self, key: int) -> _roi_items.QRoi:
-        return self._rois[key][1]
+        return self._qroi_list[key]
 
     def __len__(self) -> int:
-        return len(self._rois)
+        return len(self._qroi_list)
 
     def __iter__(self) -> Iterator[_roi_items.QRoi]:
-        for _, r in self._rois:
-            return r
+        yield from self._qroi_list
 
-    def get_rois_on_slice(self, indices: tuple[int, ...]) -> list[_roi_items.QRoi]:
+    def get_rois_on_slice(self, indices: tuple[int, ...]) -> Sequence[_roi_items.QRoi]:
         """Return a list of ROIs on the given slice."""
-        indices_to_collect = []
-        for i in range(len(indices) + 1):  # append until get `()`
-            indices_to_collect.append(indices[i:])
-        out = []
-        for idx in indices_to_collect:
-            out.extend(self._slice_cache.get(idx, []))
+        out = self._qroi_list.filter_by_indices(indices).items
         return out
 
     def pop_roi_in_slice(self, indices: Indices, ith: int) -> _roi_items.QRoi:
         """Pop the `index`-th ROI in the slice `indices`."""
-        qindex = self._list_view.model().index(ith)
-        self._list_view.model().beginRemoveRows(qindex, ith, ith)
-        rois = self._slice_cache[indices]
-        roi = rois.pop(ith)
-        self._rois.remove((indices, roi))
+        mask = self._qroi_list.mask_by_indices(indices)
+        if mask is None:
+            index_total = ith
+        else:
+            index_total = np.where(mask)[0][ith]
+        qindex = self._list_view.model().index(index_total)
+        self._list_view.model().beginRemoveRows(qindex, index_total, index_total)
+        roi = self._qroi_list.pop(index_total)
         self._list_view.model().endRemoveRows()
         self._list_view.update()
         return roi
 
     def pop_roi(self, index: int) -> _roi_items.QRoi:
         self._list_view.model().beginRemoveRows(QtCore.QModelIndex(), index, index)
-        indices, roi = self._rois.pop(index)
-        self._slice_cache[indices].remove(roi)
+        self._qroi_list.pop(index)
         self._list_view.model().endRemoveRows()
         return roi
 
     def pop_rois(self, indices: list[int]):
-        for i in sorted(indices, reverse=True):
-            self.pop_roi(i)
+        sl = np.ones(len(self._qroi_list), dtype=bool)
+        sl[indices] = False
+        self._list_view.model().beginRemoveRows(QtCore.QModelIndex(), 0, len(sl) - 1)
+        self._qroi_list = self._qroi_list.filter_by_selection(sl)
+        self._list_view.model().endRemoveRows()
 
-    def flatten_roi(self, index: int) -> _roi_items.QRoi:
-        indices, roi = self._rois[index]
-        if len(indices) == 0:
-            return roi
-        self._rois[index] = ((), roi)
-        self._slice_cache[indices].remove(roi)
-        self._cache_roi((), roi)
-        return roi
+    def flatten_roi(self, index: int) -> None:
+        self._qroi_list.indices[index, :] = -1
+        return None
 
     def remove_selected_rois(self):
-        for i in reversed(self.selections()):
-            indices, roi = self._rois[i]
-            self.pop_roi_in_slice(indices, i)
+        self.pop_rois(self.selections())
 
 
 class QRoiCollection(QSimpleRoiCollection):
@@ -319,9 +323,10 @@ class QRoiCollection(QSimpleRoiCollection):
 
     def _on_item_clicked(self, index: QtCore.QModelIndex):
         r = index.row()
-        if 0 <= r < len(self._rois):
-            indices, roi = self._rois[r]
-            self.roi_item_clicked.emit(indices, roi)
+        if 0 <= r < len(self._qroi_list):
+            qroi = self._qroi_list[r]
+            indices = self._qroi_list.indices[r]
+            self.roi_item_clicked.emit(tuple(indices), qroi)
 
     def _on_dragged(self):
         img_view = self._image_view_ref()
@@ -332,8 +337,8 @@ class QRoiCollection(QSimpleRoiCollection):
 
         def _data_model_getter():
             axes = img_view._dims_slider._to_image_axes()
-            roilist = roi.RoiListModel(
-                rois=[r.toRoi(indices) for indices, r in self._rois]
+            roilist = self._qroi_list.map_elements(
+                lambda qroi: qroi.toRoi(), into=roi.RoiListModel
             )
             return WidgetDataModel(
                 value=roilist,
@@ -343,8 +348,9 @@ class QRoiCollection(QSimpleRoiCollection):
             )
 
         model = DragDataModel(getter=_data_model_getter, type=StandardType.ROIS)
-        _s = "" if len(self._rois) == 1 else "s"
-        return drag_model(model, desc=f"{len(self._rois)} ROI{_s}", source=img_view)
+        rois = self._qroi_list
+        _s = "" if len(rois) == 1 else "s"
+        return drag_model(model, desc=f"{len(rois)} ROI{_s}", source=img_view)
 
 
 class QRoiListView(QtW.QListView):
@@ -458,7 +464,7 @@ class QRoiListModel(QtCore.QAbstractListModel):
         super().__init__(parent)
         self._col = col
 
-    def rowCount(self, parent):
+    def rowCount(self, parent=None):
         return len(self._col)
 
     def data(self, index: QtCore.QModelIndex, role: int):
@@ -487,8 +493,8 @@ class QRoiListModel(QtCore.QAbstractListModel):
         elif role == QtCore.Qt.ItemDataRole.ToolTipRole:
             r = index.row()
             if 0 <= r < len(self._col):
-                _indices, _roi = self._col._rois[r]
-                _type = _roi._roi_type()
+                _indices = tuple(self._col._qroi_list.indices[r])
+                _type = self._col._qroi_list[r]._roi_type()
                 if len(_indices) > 0:
                     return f"{_type.title()} ROI on slice {_indices}"
                 else:
@@ -500,5 +506,5 @@ class QRoiListModel(QtCore.QAbstractListModel):
 
     def setData(self, index, value, role):
         if role == QtCore.Qt.ItemDataRole.EditRole:
-            self._col._rois[index.row()][1].set_label(value)
+            self._col._qroi_list[index.row()].set_label(value)
             return True

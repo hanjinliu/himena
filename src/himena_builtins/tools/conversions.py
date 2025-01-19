@@ -239,10 +239,12 @@ def dataframe_to_image_rois(model: WidgetDataModel) -> Parametric:
         df = wrap_dataframe(model.value)
         if indices:
             arr_indice = np.stack(
-                [df.column_to_array(indice_column) for indice_column in indices], axis=1
+                [df.column_to_array(indice_column) for indice_column in indices],
+                axis=1,
+                dtype=np.int32,
             )
         else:
-            arr_indice = np.empty((len(df), 0), dtype=int)
+            arr_indice = np.empty((len(df), 0), dtype=np.int32)
         rois: list[Roi2D] = []
         if roi_type == "rectangle":
             arr_xywh = np.stack(
@@ -254,11 +256,10 @@ def dataframe_to_image_rois(model: WidgetDataModel) -> Parametric:
                 ],
                 axis=1,
             )
-            for idx, (indice, xywh) in enumerate(zip(arr_indice, arr_xywh)):
+            for idx, xywh in enumerate(arr_xywh):
                 x, y, w, h = xywh
                 rois.append(
                     RectangleRoi(
-                        indices=tuple(indice),
                         name=default_roi_label(idx),
                         x=x,
                         y=y,
@@ -274,16 +275,12 @@ def dataframe_to_image_rois(model: WidgetDataModel) -> Parametric:
                 ],
                 axis=1,
             )
-            for idx, (indice, xy) in enumerate(zip(arr_indice, arr_xywh)):
+            for idx, xy in enumerate(arr_xywh):
                 x, y = xy
-                rois.append(
-                    PointRoi2D(
-                        indices=tuple(indice), name=default_roi_label(idx), x=x, y=y
-                    )
-                )
+                rois.append(PointRoi2D(name=default_roi_label(idx), x=x, y=y))
         else:
             raise ValueError("Only 'rectangle' and 'point' are supported.")
-        value = RoiListModel(rois=rois)
+        value = RoiListModel(items=rois, indices=arr_indice, axis_names=indices)
         return WidgetDataModel(
             value=value,
             title=model.title,

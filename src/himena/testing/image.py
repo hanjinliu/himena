@@ -117,7 +117,6 @@ def test_current_roi(tester: WidgetTester):
     assert meta.current_roi is not None
     croi = meta.current_roi
     assert isinstance(croi, _roi.RectangleRoi)
-    assert croi.indices == (1,), croi.indices
     assert_allclose([croi.x, croi.y, croi.width, croi.height], [2.9, 0, 2, 2.5])
 
 

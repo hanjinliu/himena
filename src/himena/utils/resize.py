@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from himena._enum import StrEnum
+from himena.utils.enum import StrEnum
 from himena.types import Size, WindowRect
 
 

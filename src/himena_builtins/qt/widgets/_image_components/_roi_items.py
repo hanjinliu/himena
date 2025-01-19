@@ -16,13 +16,16 @@ if TYPE_CHECKING:
 class QRoi(QtW.QGraphicsItem):
     """The base class for all ROI items."""
 
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} {self.label()!r} at {hex(id(self))}>"
+
     def label(self) -> str:
         return getattr(self, "_roi_label", "")
 
     def set_label(self, label: str):
         self._roi_label = label
 
-    def toRoi(self, indices: Iterable[int | None]) -> roi.RoiModel:
+    def toRoi(self) -> roi.RoiModel:
         raise NotImplementedError
 
     def translate(self, dx: float, dy: float):
@@ -64,14 +67,13 @@ class QRoi(QtW.QGraphicsItem):
 class QLineRoi(QtW.QGraphicsLineItem, QRoi):
     changed = Signal(QtCore.QLineF)
 
-    def toRoi(self, indices) -> roi.LineRoi:
+    def toRoi(self) -> roi.LineRoi:
         x1, y1, x2, y2 = self._coordinates()
         return roi.LineRoi(
             x1=x1 - 0.5,
             y1=y1 - 0.5,
             x2=x2 - 0.5,
-            y2=y2 - 0.5,
-            indices=indices,
+            y2=x2 - 0.5,
             name=self.label(),
         )
 
@@ -119,14 +121,13 @@ class QRectRoiBase(QRoi):
 
 
 class QRectangleRoi(QtW.QGraphicsRectItem, QRectRoiBase):
-    def toRoi(self, indices) -> roi.RectangleRoi:
+    def toRoi(self) -> roi.RectangleRoi:
         rect = self.rect()
         return roi.RectangleRoi(
             x=rect.x(),
             y=rect.y(),
             width=rect.width(),
             height=rect.height(),
-            indices=indices,
             name=self.label(),
         )
 
@@ -169,14 +170,13 @@ class QRectangleRoi(QtW.QGraphicsRectItem, QRectRoiBase):
 class QEllipseRoi(QtW.QGraphicsEllipseItem, QRectRoiBase):
     changed = Signal(QtCore.QRectF)
 
-    def toRoi(self, indices) -> roi.EllipseRoi:
+    def toRoi(self) -> roi.EllipseRoi:
         rect = self.rect()
         return roi.EllipseRoi(
             x=rect.x(),
             y=rect.y(),
             width=rect.width(),
             height=rect.height(),
-            indices=indices,
             name=self.label(),
         )
 
@@ -289,13 +289,12 @@ class QRotatedRectangleRoi(QRoi):
         with self._update_and_emit():
             self._width = width
 
-    def toRoi(self, indices) -> roi.RotatedRectangleRoi:
+    def toRoi(self) -> roi.RotatedRectangleRoi:
         return roi.RotatedRectangleRoi(
             start=(self.start().x() - 0.5, self.start().y() - 0.5),
             end=(self.end().x() - 0.5, self.end().y() - 0.5),
             width=self._width,
             angle=self._angle,
-            indices=indices,
             name=self.label(),
         )
 
@@ -388,14 +387,14 @@ class QSegmentedLineRoi(QtW.QGraphicsPathItem, QRoi):
             path.lineTo(x, y)
         self.setPath(path)
 
-    def toRoi(self, indices) -> roi.SegmentedLineRoi:
+    def toRoi(self) -> roi.SegmentedLineRoi:
         path = self.path()
         xs, ys = [], []
         for i in range(path.elementCount()):
             element = path.elementAt(i)
             xs.append(element.x - 0.5)
             ys.append(element.y - 0.5)
-        return roi.SegmentedLineRoi(xs=xs, ys=ys, indices=indices, name=self.label())
+        return roi.SegmentedLineRoi(xs=xs, ys=ys, name=self.label())
 
     def setPath(self, *args):
         super().setPath(*args)
@@ -446,14 +445,14 @@ class QSegmentedLineRoi(QtW.QGraphicsPathItem, QRoi):
 
 
 class QPolygonRoi(QSegmentedLineRoi):
-    def toRoi(self, indices) -> roi.PolygonRoi:
+    def toRoi(self) -> roi.PolygonRoi:
         path = self.path()
         xs, ys = [], []
         for i in range(path.elementCount()):
             element = path.elementAt(i)
             xs.append(element.x - 0.5)
             ys.append(element.y - 0.5)
-        return roi.PolygonRoi(xs=xs, ys=ys, indices=indices, name=self.label())
+        return roi.PolygonRoi(xs=xs, ys=ys, name=self.label())
 
     def _roi_type(self) -> str:
         return "polygon"
@@ -540,11 +539,10 @@ class QPointRoi(QPointRoiBase):
         self._point = point
         self.changed.emit(self._point)
 
-    def toRoi(self, indices) -> roi.PointRoi2D:
+    def toRoi(self) -> roi.PointRoi2D:
         return roi.PointRoi2D(
             x=self._point.x() - 0.5,
             y=self._point.y() - 0.5,
-            indices=indices,
             name=self.label(),
         )
 
@@ -587,15 +585,13 @@ class QPointsRoi(QPointRoiBase):
         self.changed.emit(self._points)
         self._bounding_rect_cache = None
 
-    def toRoi(self, indices) -> roi.PointsRoi2D:
+    def toRoi(self) -> roi.PointsRoi2D:
         xs: list[float] = []
         ys: list[float] = []
         for point in self._points:
             xs.append(point.x() - 0.5)
             ys.append(point.y() - 0.5)
-        return roi.PointsRoi2D(
-            xs=np.array(xs), ys=np.array(ys), indices=indices, name=self.label()
-        )
+        return roi.PointsRoi2D(xs=np.array(xs), ys=np.array(ys), name=self.label())
 
     def translate(self, dx: float, dy: float):
         self._points = [
