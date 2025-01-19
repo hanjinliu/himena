@@ -35,15 +35,41 @@ class NDObjectCollection(Generic[_T]):
             raise ValueError(
                 f"Items must be a 1D array, got {self.items} ({self.items.ndim}D)."
             )
-        if self.indices.size == 0:
+        if self.indices.shape[1] == 0:
             self.indices = np.empty((len(self.items), 0), dtype=np.int32)
         elif self.indices.shape[0] != len(self.items):
             raise ValueError("Indices must have the same length as items.")
+        if self.indices.shape[0] == 0:
+            self.indices = np.empty((0, len(self.axis_names)), dtype=np.int32)
 
     def set_axis_names(self, names: list[str]):
-        self.axis_names = names
+        """Update the axis names and coerce array shapes."""
         if self.indices.shape[0] == 0:
             self.indices = np.empty((0, len(names)), dtype=np.uint32)
+        else:
+            if self.indices.shape[1] != len(names):
+                raise ValueError(
+                    f"Expected {self.indices.shape[1]} axis names, got {len(names)}"
+                )
+        self.axis_names = names
+
+    def coerce_dimensions(self, target_axis_names: list[str]) -> Self:
+        """Reformat the collection to match the target axis names."""
+        if self.axis_names == target_axis_names:
+            return self
+        columns = []
+        for aname in target_axis_names:
+            if aname in self.axis_names:
+                index = self.axis_names.index(aname)
+                columns.append(self.indices[:, index])
+            else:
+                columns.append(-np.ones(len(self.items), dtype=np.int32))
+        indices = np.column_stack(columns)
+        return self.__class__(
+            items=self.items,
+            indices=indices,
+            axis_names=target_axis_names,
+        )
 
     def mask_by_indices(self, key: tuple[int, ...]) -> NDArray[np.bool_] | None:
         """Binary mask for the given indices (None if nothing to mask out)."""
@@ -91,17 +117,17 @@ class NDObjectCollection(Generic[_T]):
         indices = np.atleast_2d(indices)
         self.indices = np.append(self.indices, indices, axis=0)
 
-    def extend(self, other: Self) -> Self:
+    def extend(self, other: Self) -> None:
         if len(self) > 0:
             if self.axis_names != other.axis_names:
                 raise ValueError("Axis names must match.")
-        items = np.concatenate([self.items, other.items], axis=0)
-        indices = np.concatenate([self.indices, other.indices], axis=0)
-        return self.__class__(
-            items=items,
-            indices=indices,
-            axis_names=self.axis_names,
-        )
+        if len(self) == 0:
+            self.items = other.items.copy()
+            self.indices = other.indices.copy()
+        else:
+            self.items = np.concatenate([self.items, other.items], axis=0)
+            self.indices = np.concatenate([self.indices, other.indices], axis=0)
+        return None
 
     def pop(self, index: int) -> _T:
         item = self.items[index]
@@ -125,6 +151,10 @@ class NDObjectCollection(Generic[_T]):
 
     def __iter__(self) -> Iterator[_T]:
         return iter(self.items)
+
+    def iter_with_indices(self) -> Iterator[tuple[tuple[int, ...], _T]]:
+        for indices, item in zip(self.indices, self.items):
+            yield tuple(indices), item
 
     def __len__(self) -> int:
         return len(self.items)

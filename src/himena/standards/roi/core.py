@@ -78,11 +78,6 @@ class RectangleRoi(Roi2D):
         arr[..., bb.top : bb.bottom, bb.left : bb.right] = True
         return arr
 
-    def slice_array(self, arr_nd: np.ndarray):
-        bb = self.bbox().adjust_to_int("inner")
-        arr = arr_nd[..., bb.top : bb.bottom, bb.left : bb.right]
-        return arr.reshape(*arr.shape[:-2], arr.shape[-2] * arr.shape[-1])
-
 
 class RotatedRoi2D(Roi2D):
     angle: float = Field(..., description="Counter-clockwise angle in degrees.")
@@ -103,6 +98,9 @@ class RotatedRectangleRoi(RotatedRoi2D):
         start_x, start_y = self.start
         end_x, end_y = self.end
         return math.hypot(end_x - start_x, end_y - start_y)
+
+    def area(self) -> float:
+        return self.length() * self.width
 
     def shifted(self, dx: float, dy: float) -> RotatedRectangleRoi:
         start = (self.start[0] + dx, self.start[1] + dy)
@@ -177,15 +175,6 @@ class EllipseRoi(Roi2D):
         comp_b = (_xx - cx) / self.width * 2
         return comp_a**2 + comp_b**2 <= 1
 
-    def slice_array(self, arr_nd: np.ndarray):
-        bb = self.bbox().adjust_to_int("inner")
-        arr = arr_nd[..., bb.top : bb.bottom, bb.left : bb.right]
-        _yy, _xx = np.indices(arr.shape[-2:])
-        mask = (_yy - self.y) ** 2 / self.height**2 + (
-            _xx - self.x
-        ) ** 2 / self.width**2 <= 1
-        return arr[..., mask]
-
 
 class RotatedEllipseRoi(EllipseRoi, RotatedRoi2D):
     """ROI that represents a rotated ellipse."""
@@ -207,12 +196,6 @@ class PointRoi2D(Roi2D):
         arr = np.zeros(shape, dtype=bool)
         arr[..., int(round(self.y)), int(round(self.x))] = True
         return arr
-
-    def slice_array(self, arr_nd: np.ndarray):
-        out = _utils.map_coordinates(
-            arr_nd, [[self.y], [self.x]], order=1, mode="nearest"
-        )
-        return out
 
 
 class PointsRoi2D(Roi2D):
@@ -243,11 +226,6 @@ class PointsRoi2D(Roi2D):
         arr[..., ys, xs] = True
         return arr
 
-    def slice_array(self, arr_nd: np.ndarray):
-        coords = np.stack([self.ys, self.xs], axis=1)
-        out = _utils.map_coordinates(arr_nd, coords, order=1, mode="nearest")
-        return out
-
 
 class LineRoi(Roi2D):
     """A 2D line ROI."""
@@ -269,7 +247,7 @@ class LineRoi(Roi2D):
         """Length of the line."""
         return math.hypot(self.x2 - self.x1, self.y2 - self.y1)
 
-    def degree(self) -> float:
+    def angle(self) -> float:
         """Angle in degrees."""
         return math.degrees(math.atan2(self.y2 - self.y1, self.x2 - self.x1))
 
@@ -306,10 +284,6 @@ class LineRoi(Roi2D):
         ys = ys.round().astype(int)
         arr[ys, xs] = True
         return arr
-
-    def slice_array(self, arr_nd):
-        xs, ys = self.arange()
-        return _slice_array_along_line(arr_nd, xs, ys)
 
 
 class SegmentedLineRoi(PointsRoi2D):
@@ -348,10 +322,6 @@ class SegmentedLineRoi(PointsRoi2D):
         arr[ys, xs] = True
         return arr
 
-    def slice_array(self, arr_nd):
-        xs, ys = self.arange()
-        return _slice_array_along_line(arr_nd, xs, ys)
-
 
 class PolygonRoi(SegmentedLineRoi):
     """ROI that represents a closed polygon."""
@@ -359,17 +329,17 @@ class PolygonRoi(SegmentedLineRoi):
     def to_mask(self, shape: tuple[int, ...]) -> NDArray[np.bool_]:
         return _utils.polygon_mask(shape, np.column_stack((self.ys, self.xs)))
 
+    def area(self) -> float:
+        return (
+            np.abs(
+                np.dot(self.xs, np.roll(self.ys, 1))
+                - np.dot(self.ys, np.roll(self.xs, 1))
+            )
+            / 2
+        )
+
 
 class SplineRoi(Roi2D):
     """ROI that represents a spline curve."""
 
     degree: int = Field(3, description="Degree of the spline curve.", ge=1)
-
-
-def _slice_array_along_line(arr_nd: NDArray[np.number], xs, ys):
-    coords = np.stack([ys, xs], axis=1)
-    out = np.empty(arr_nd.shape[:-2] + (coords.shape[0],), dtype=np.float32)
-    for sl in np.ndindex(arr_nd.shape[:-2]):
-        arr_2d = arr_nd[sl]
-        out[sl] = _utils.map_coordinates(arr_2d, coords, order=1, mode="nearest")
-    return out

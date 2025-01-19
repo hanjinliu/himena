@@ -75,13 +75,3 @@ def points_in_poly(points: NDArray[np.number], vertices: NDArray[np.number]):
     # if the number of crossings is odd then the point is inside the polygon
 
     return inside
-
-
-def map_coordinates(
-    arr, coords, order=1, mode="constant", cval=0
-) -> NDArray[np.number]:
-    import scipy.ndimage as ndi
-
-    return ndi.map_coordinates(
-        arr, coords, order=order, mode=mode, cval=cval, prefilter=False
-    )

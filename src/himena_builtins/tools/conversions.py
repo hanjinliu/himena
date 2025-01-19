@@ -280,7 +280,7 @@ def dataframe_to_image_rois(model: WidgetDataModel) -> Parametric:
                 rois.append(PointRoi2D(name=default_roi_label(idx), x=x, y=y))
         else:
             raise ValueError("Only 'rectangle' and 'point' are supported.")
-        value = RoiListModel(rois=rois, indices=arr_indice)
+        value = RoiListModel(items=rois, indices=arr_indice, axis_names=indices)
         return WidgetDataModel(
             value=value,
             title=model.title,

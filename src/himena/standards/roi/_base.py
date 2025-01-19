@@ -32,13 +32,10 @@ class RoiModel(BaseModel):
     def to_mask(self, shape: tuple[int, ...]) -> NDArray[np.bool_]:
         raise NotImplementedError
 
-    def slice_array(self, arr_nd: np.ndarray) -> np.ndarray:
-        mask = self.to_mask(arr_nd.shape)
-        return arr_nd[mask]
-
 
 @cache
 def pick_roi_model(typ: str) -> type[RoiModel]:
+    """Pick an ROI model class from the given type string"""
     for sub in iter_subclasses(RoiModel):
         if _strip_roi_suffix(sub.__name__.lower()) == typ:
             return sub

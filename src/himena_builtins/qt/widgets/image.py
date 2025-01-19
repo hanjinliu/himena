@@ -176,9 +176,12 @@ class QImageView(QtW.QSplitter):
         # update sliders
         if not is_same_array:
             self._dims_slider.set_dimensions(arr.shape, meta0.axes, is_rgb=self._is_rgb)
-        self._roi_col._qroi_list.set_axis_names([axis.name for axis in meta0.axes[:-2]])
         with qsignal_blocker(self._dims_slider):
             self._dims_slider.setValue(sl_0)
+        axis_names = [meta0.axes[i].name for i in range(self._dims_slider.count())]
+        self._roi_col._qroi_list = self._roi_col._qroi_list.coerce_dimensions(
+            axis_names
+        )
 
         # update scale bar
         if (axes := meta0.axes) is not None:
@@ -218,7 +221,9 @@ class QImageView(QtW.QSplitter):
         roi_list = meta0.unwrap_rois()
         if len(roi_list) > 0:
             self._roi_col.clear()
-            self._roi_col.extend_from_standard_roi_list(roi_list)
+            self._roi_col.extend_from_standard_roi_list(
+                roi_list.coerce_dimensions(axis_names)
+            )
         if meta0.current_roi:
             self._img_view.remove_current_item(reason="update_model")
             self._img_view.set_current_roi(

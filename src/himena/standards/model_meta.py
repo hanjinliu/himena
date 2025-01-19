@@ -228,15 +228,13 @@ class ImageMeta(ArrayMeta):
             raise IndexError(f"Invalid axis index: {index}.")
         axes = self.axes.copy()
         del axes[index]
-        update = {"axes": axes}
-        caxis = self.channel_axis
+        update = {"axes": axes, "rois": self.unwrap_rois().take_axis(index, value)}
         if (caxis := self.channel_axis) == index:
             update["channels"] = [self.channels[value]]
             update["channel_axis"] = None
             update["is_rgb"] = False
         elif caxis is not None:
             update["channel_axis"] = caxis - 1 if caxis > index else caxis
-        update["rois"] = self.unwrap_rois().take_axis(index, value)
         return self.model_copy(update=update)
 
     def unwrap_rois(self) -> roi.RoiListModel:
