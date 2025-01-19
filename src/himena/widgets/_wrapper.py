@@ -105,9 +105,9 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
     @property
     def widget(self) -> _W:
         """Get the internal backend widget."""
-        if out := self._widget():
+        if (out := self._widget()) is not None:
             return out
-        raise RuntimeError("Widget was deleted.")
+        raise RuntimeError(f"Widget in the wrapper {self} was deleted.")
 
     @property
     def save_behavior(self) -> SaveBehavior:
@@ -788,7 +788,7 @@ class ParametricWindow(SubWindow[_W]):
                     kwargs=kwargs,
                     top_left=top_left,
                     size=size,
-                ).set(return_value)
+                ).resolve_type_hint().set(return_value)
             else:
                 injection_type_hint = annot.get("return", None)
             self._process_other_output(return_value, injection_type_hint)

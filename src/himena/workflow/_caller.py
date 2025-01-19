@@ -1,8 +1,8 @@
+import inspect
 from pathlib import Path
 from typing import Any, Union
 import uuid
 from pydantic_compat import BaseModel, Field
-from himena.types import WidgetDataModel
 from himena.workflow._base import WorkflowStep
 from himena.workflow._graph import Workflow
 from himena.workflow._reader import ReaderMethod, LocalReaderMethod, SCPReaderMethod
@@ -76,12 +76,16 @@ class WorkflowCaller(BaseModel):
         return arg_name
 
     @property
-    def __annotations__(self) -> dict[str, Any]:
-        annot: dict[str, Any] = {}
-        for rp in self.replacers:
-            annot[rp.arg_name] = rp.make_annotation()
-        annot["return"] = WidgetDataModel
-        return annot
+    def __signature__(self) -> inspect.Signature:
+        params = [
+            inspect.Parameter(
+                name=rp.arg_name,
+                kind=inspect.Parameter.KEYWORD_ONLY,
+                annotation=rp.make_annotation(),
+            )
+            for rp in self.replacers
+        ]
+        return inspect.Signature(parameters=params, return_annotation="WidgetDataModel")
 
     def __call__(self, **kwargs: dict[str, Any]):
         id_to_index_map = self.workflow.id_to_index_map()

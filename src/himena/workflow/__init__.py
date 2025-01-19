@@ -1,6 +1,7 @@
-from ._base import WorkflowStep
-from ._graph import Workflow, compute, WorkflowStepType
-from ._command import (
+from himena.workflow._base import WorkflowStep
+from himena.workflow._graph import Workflow, compute, WorkflowStepType
+from himena.workflow._caller import WorkflowCaller
+from himena.workflow._command import (
     CommandExecution,
     ListOfModelParameter,
     ModelParameter,
@@ -9,7 +10,7 @@ from ._command import (
     WindowParameter,
     parse_parameter,
 )
-from ._reader import (
+from himena.workflow._reader import (
     LocalReaderMethod,
     ProgrammaticMethod,
     ReaderMethod,
@@ -20,6 +21,7 @@ __all__ = [
     "WorkflowStep",
     "Workflow",
     "compute",
+    "WorkflowCaller",
     "WorkflowStepType",
     "ProgrammaticMethod",
     "ReaderMethod",

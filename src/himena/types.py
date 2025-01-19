@@ -623,6 +623,14 @@ class FutureInfo(_HasDynamicAttribute):
     top_left: tuple[int, int] | None = None
     size: Size[int] | None = None
 
+    def resolve_type_hint(self, ns: dict[str, Any]) -> "FutureInfo":
+        if isinstance(self.type_hint, str):
+            typ = ns.get(self.type_hint)
+            if typ is None:
+                raise ValueError(f"Could not resolve the type hint: {self.type_hint}")
+            self.type_hint = typ
+        return self
+
 
 Parametric = NewType("Parametric", Any)
 """Callback for a parametric function.
