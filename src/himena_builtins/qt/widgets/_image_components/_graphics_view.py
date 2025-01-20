@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from enum import Enum, auto
 import math
 from typing import Iterable
 import numpy as np
@@ -21,39 +20,16 @@ from ._roi_items import (
     QEllipseRoi,
     QRotatedRectangleRoi,
     QSegmentedLineRoi,
+    ROI_MODES,
+    Mode,
 )
 from ._handles import QHandleRect, RoiSelectionHandles
 from ._scale_bar import QScaleBarItem
+from himena_builtins.qt.widgets._image_components import _mouse_events as _me
 from himena.qt import ndarray_to_qimage
 from himena.widgets import set_status_tip
 
 _LOGGER = logging.getLogger(__name__)
-
-
-class Mode(Enum):
-    """Mouse interaction modes for the image graphics view."""
-
-    SELECT = auto()
-    PAN_ZOOM = auto()
-    ROI_RECTANGLE = auto()
-    ROI_ROTATED_RECTANGLE = auto()
-    ROI_ELLIPSE = auto()
-    ROI_POINT = auto()
-    ROI_POINTS = auto()
-    ROI_POLYGON = auto()
-    ROI_SEGMENTED_LINE = auto()
-    ROI_LINE = auto()
-
-
-SIMPLE_ROI_MODES = frozenset({
-    Mode.ROI_RECTANGLE, Mode.ROI_ROTATED_RECTANGLE, Mode.ROI_ELLIPSE, Mode.ROI_POINT,
-    Mode.ROI_LINE
-})  # fmt: skip
-MULTIPOINT_ROI_MODES = frozenset({
-    Mode.ROI_POINTS, Mode.ROI_POLYGON, Mode.ROI_SEGMENTED_LINE
-})  # fmt: skip
-ROI_MODES = SIMPLE_ROI_MODES | MULTIPOINT_ROI_MODES
-MULTIPOINT_ROI_CLASSES = (QPolygonRoi, QSegmentedLineRoi, QPointsRoi)
 
 
 class QImageGraphicsWidget(QtW.QGraphicsWidget):
@@ -166,9 +142,8 @@ class QImageGraphicsView(QBaseGraphicsView):
     Mode = Mode
 
     def __init__(self, roi_visible: bool = False, roi_pen: QtGui.QPen | None = None):
+        super().__init__()
         ### Attributes ###
-        self._pos_drag_start: QtCore.QPoint | None = None
-        self._pos_drag_prev: QtCore.QPoint | None = None
         self._is_key_hold = False
         self._roi_items: list[QRoi] = []
         self._current_roi_item: QRoi | None = None
@@ -177,12 +152,12 @@ class QImageGraphicsView(QBaseGraphicsView):
         self._roi_pen.setCosmetic(True)
         self._mode = Mode.PAN_ZOOM
         self._last_mode_before_key_hold = Mode.PAN_ZOOM
+        self._mouse_event_handler = _me.PanZoomMouseEvents(self)
         self._is_drawing_multipoints = False
         self._is_rois_visible = roi_visible
         self._selection_handles = RoiSelectionHandles(self)
         self._initialized = False
         self._image_widgets: list[QImageGraphicsWidget] = []
-        super().__init__()
         self.switch_mode(Mode.PAN_ZOOM)
         self._qroi_labels = self.addItem(QRoiLabels(self))
         self._qroi_labels.setZValue(10000)
@@ -277,10 +252,29 @@ class QImageGraphicsView(QBaseGraphicsView):
         self._mode = mode
         if mode in ROI_MODES:
             self.viewport().setCursor(Qt.CursorShape.CrossCursor)
+            if mode is Mode.ROI_POINT:
+                self._mouse_event_handler = _me.PointRoiMouseEvents(self)
+            elif mode is Mode.ROI_POINTS:
+                self._mouse_event_handler = _me.PointsRoiMouseEvents(self)
+            elif mode is Mode.ROI_LINE:
+                self._mouse_event_handler = _me.LineRoiMouseEvents(self)
+            elif mode is Mode.ROI_RECTANGLE:
+                self._mouse_event_handler = _me.RectangleRoiMouseEvents(self)
+            elif mode is Mode.ROI_ELLIPSE:
+                self._mouse_event_handler = _me.EllipseRoiMouseEvents(self)
+            elif mode is Mode.ROI_POLYGON:
+                self._mouse_event_handler = _me.PolygonRoiMouseEvents(self)
+            elif mode is Mode.ROI_SEGMENTED_LINE:
+                self._mouse_event_handler = _me.SegmentedLineRoiMouseEvents(self)
+            elif mode is Mode.ROI_ROTATED_RECTANGLE:
+                self._mouse_event_handler = _me.RotatedRectangleRoiMouseEvents(self)
+
         elif mode is Mode.SELECT:
             self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
+            self._mouse_event_handler = _me.SelectMouseEvents(self)
         elif mode is Mode.PAN_ZOOM:
             self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
+            self._mouse_event_handler = _me.PanZoomMouseEvents(self)
         self.mode_changed.emit(mode)
 
     def switch_mode(self, mode: Mode):
@@ -422,197 +416,33 @@ class QImageGraphicsView(QBaseGraphicsView):
             # prioritize the handle mouse event
             self.scene().setGrabSource(item_under_cursor)
             return super().mousePressEvent(event)
-        self._pos_drag_start = event.pos()
-        self._pos_drag_prev = self._pos_drag_start
+        self.scene().setGrabSource(self)
         if event.button() == Qt.MouseButton.RightButton:
             return super().mousePressEvent(event)
-        if self._mode in ROI_MODES:
-            grabbing = self.scene().grabSource()
-            if grabbing is not None and grabbing is not self:
-                return super().mousePressEvent(event)
-            self.scene().setGrabSource(self)
-            if self.mode() in MULTIPOINT_ROI_MODES:
-                if not self._selection_handles.is_drawing_polygon():
-                    is_poly = isinstance(
-                        self._current_roi_item, (QPolygonRoi, QSegmentedLineRoi)
-                    )
-                    self.remove_current_item(reason="start drawing polygon")
-                    if is_poly:
-                        # clear current drawing
-                        self.select_item(None)
-                        return super().mousePressEvent(event)
-                self._selection_handles.start_drawing_polygon()
-                return super().mousePressEvent(event)
-            self.remove_current_item(reason="start drawing new ROI")
-            p = self.mapToScene(self._pos_drag_start)
-            if self.mode() is Mode.ROI_LINE:
-                self.set_current_roi(
-                    QLineRoi(p.x(), p.y(), p.x(), p.y()).withPen(self._roi_pen)
-                )
-                self._selection_handles.connect_line(self._current_roi_item)
-            elif self.mode() is Mode.ROI_RECTANGLE:
-                px, py = self._pos_to_tuple(p)
-                self.set_current_roi(QRectangleRoi(px, py, 0, 0).withPen(self._roi_pen))
-                self._selection_handles.connect_rect(self._current_roi_item)
-            elif self.mode() is Mode.ROI_ELLIPSE:
-                px, py = self._pos_to_tuple(p)
-                self.set_current_roi(QEllipseRoi(px, py, 0, 0).withPen(self._roi_pen))
-                self._selection_handles.connect_rect(self._current_roi_item)
-            elif self.mode() is Mode.ROI_ROTATED_RECTANGLE:
-                self.set_current_roi(QRotatedRectangleRoi(p, p).withPen(self._roi_pen))
-                self._selection_handles.connect_rotated_rect(self._current_roi_item)
-            elif self.mode() is Mode.ROI_POINT:
-                pass
-            self._selection_handles.update_handle_size(self.transform().m11())
-
-        elif self.mode() is Mode.SELECT:
-            self.select_item_at(self.mapToScene(event.pos()))
-            self.scene().setGrabSource(self)
-        elif self.mode() is Mode.PAN_ZOOM:
-            self.viewport().setCursor(Qt.CursorShape.ClosedHandCursor)
-            self.scene().setGrabSource(self)
-
+        self._mouse_event_handler.pressed(event)
         return super().mousePressEvent(event)
-
-    def _mouse_move_pan_zoom(self, event: QtGui.QMouseEvent):
-        delta = event.pos() - self._pos_drag_prev
-        self.move_items_by(delta.x(), delta.y())
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent):
         # Move the image using the mouse
-        pos = self.mapToScene(event.pos())
-        _shift_down = event.modifiers() & Qt.KeyboardModifier.ShiftModifier
-        if event.buttons() == Qt.MouseButton.NoButton:
-            self.hovered.emit(pos)
+        if event.button() == Qt.MouseButton.NoButton:
+            self.hovered.emit(self.mapToScene(event.pos()))
+        elif event.button() == Qt.MouseButton.LeftButton:
             if (
-                self._mode in MULTIPOINT_ROI_MODES
-                and self._selection_handles.is_drawing_polygon()
-                and isinstance(self._current_roi_item, (QPolygonRoi, QSegmentedLineRoi))
-            ):
-                # update the last point of the polygon
-                if self._selection_handles._is_last_vertex_added:
-                    self._selection_handles._is_last_vertex_added = False
-                    self._current_roi_item.add_point(pos)
-                else:
-                    num = self._current_roi_item.count()
-                    if num > 1:
-                        self._current_roi_item.update_point(num - 1, pos)
-        elif event.buttons() & Qt.MouseButton.LeftButton:
-            pos = self.mapToScene(event.pos())
-            if (
-                self._pos_drag_start is None
-                or self._pos_drag_prev is None
+                self._mouse_event_handler._pos_drag_start is None
+                or self._mouse_event_handler._pos_drag_prev is None
                 or self.scene().grabSource() is not self
             ):
                 return super().mouseMoveEvent(event)
-            pos0 = self.mapToScene(self._pos_drag_start)
-            if self.mode() is Mode.PAN_ZOOM:
-                self._mouse_move_pan_zoom(event)
-            elif self.mode() is Mode.ROI_LINE:
-                if isinstance(item := self._current_roi_item, QLineRoi):
-                    if _shift_down:
-                        pos = _find_nice_position(pos0, pos)
-                    item.setLine(pos0.x(), pos0.y(), pos.x(), pos.y())
-            elif self.mode() in (Mode.ROI_RECTANGLE, Mode.ROI_ELLIPSE):
-                if isinstance(self._current_roi_item, (QRectangleRoi, QEllipseRoi)):
-                    x0, y0 = self._pos_to_tuple(pos)
-                    x1, y1 = self._pos_to_tuple(pos0)
-                    width = abs(x1 - x0)
-                    height = abs(y1 - y0)
-                    if _shift_down:
-                        width = height = min(width, height)
-                    self._current_roi_item.setRect(
-                        min(x0, x1), min(y0, y1), width, height
-                    )
-            elif self.mode() is Mode.ROI_ROTATED_RECTANGLE:
-                if isinstance(self._current_roi_item, QRotatedRectangleRoi):
-                    if _shift_down:
-                        pos = _find_nice_position(pos0, pos)
-                    self._current_roi_item.set_end(pos)
-            elif self.mode() is Mode.SELECT:
-                if item := self._current_roi_item:
-                    x0, y0 = self._pos_to_tuple(self.mapToScene(self._pos_drag_prev))
-                    x1, y1 = self._pos_to_tuple(pos)
-                    delta = QtCore.QPointF(x1 - x0, y1 - y0)
-                    item.translate(delta.x(), delta.y())
-                else:
-                    # just forward to the pan-zoom mode
-                    self._mouse_move_pan_zoom(event)
-            elif self.mode() in (Mode.ROI_POINTS, Mode.ROI_POINT):
-                self._mouse_move_pan_zoom(event)
-
-            self._pos_drag_prev = event.pos()
+        self._mouse_event_handler.moved(event)
         return super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
-        _is_left = event.button() == Qt.MouseButton.LeftButton
-        _is_right = event.button() == Qt.MouseButton.RightButton
-        if self._pos_drag_start == event.pos() and _is_left:  # left click
-            p0 = self.mapToScene(self._pos_drag_start)
-            if (
-                self._mode in MULTIPOINT_ROI_MODES
-                and self._selection_handles.is_drawing_polygon()
-            ):
-                if not isinstance(self._current_roi_item, MULTIPOINT_ROI_CLASSES):
-                    x1, y1 = p0.x(), p0.y()
-                    if self._mode is Mode.ROI_POLYGON:
-                        self.set_current_roi(
-                            QPolygonRoi([x1], [y1]).withPen(self._roi_pen)
-                        )
-                        self._selection_handles.connect_path(self._current_roi_item)
-                    elif self._mode is Mode.ROI_SEGMENTED_LINE:
-                        self.set_current_roi(
-                            QSegmentedLineRoi([x1], [y1]).withPen(self._roi_pen)
-                        )
-                        self._selection_handles.connect_path(self._current_roi_item)
-                    elif self._mode is Mode.ROI_POINTS:
-                        self.set_current_roi(
-                            QPointsRoi([x1], [y1]).withPen(self._roi_pen)
-                        )
-                        self._selection_handles.connect_points(self._current_roi_item)
-                    else:
-                        raise NotImplementedError
-                elif isinstance(
-                    self._current_roi_item, (QPolygonRoi, QSegmentedLineRoi, QPointsRoi)
-                ):
-                    _LOGGER.info(f"Added point {self._pos_drag_start} to {self._mode}")
-                    self._current_roi_item.add_point(p0)
-                self._selection_handles._is_last_vertex_added = True
-            elif self._mode is Mode.ROI_POINT:
-                self.set_current_roi(QPointRoi(p0.x(), p0.y()).withPen(self._roi_pen))
-                self._selection_handles.connect_point(self._current_roi_item)
-            elif self.mode() in (
-                Mode.ROI_LINE,
-                Mode.ROI_RECTANGLE,
-                Mode.ROI_ELLIPSE,
-                Mode.ROI_ROTATED_RECTANGLE,
-            ):
-                self.remove_current_item(reason=f"stop drawing {self.mode()}")
-        elif self._pos_drag_start == event.pos() and _is_right:  # right click
-            return super().mouseReleaseEvent(event)
-        elif _is_left:
-            if self.mode() in (
-                Mode.ROI_LINE,
-                Mode.ROI_RECTANGLE,
-                Mode.ROI_ELLIPSE,
-                Mode.ROI_ROTATED_RECTANGLE,
-            ) and (cur_item := self._current_roi_item):
-                xscale = yscale = self._scale_bar_widget._scale
-                unit = self._scale_bar_widget._unit
-                set_status_tip(cur_item.short_description(xscale, yscale, unit))
-        if self._mode is Mode.PAN_ZOOM:
-            self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
+        self._mouse_event_handler.released(event)
         self.scene().setGrabSource(None)
-        self._pos_drag_prev = None
-        self._pos_drag_start = None
         return super().mouseReleaseEvent(event)
 
     def mouseDoubleClickEvent(self, event: QtGui.QMouseEvent):
-        if self._mode in {Mode.ROI_LINE, Mode.ROI_RECTANGLE, Mode.ROI_ELLIPSE}:
-            self.remove_current_item(reason="double-click")
-        elif self._mode is Mode.PAN_ZOOM:
-            self.fitInView(self.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
-        self._selection_handles.finish_drawing_polygon()
+        self._mouse_event_handler.double_clicked(event)
         return super().mouseDoubleClickEvent(event)
 
     def move_items_by(self, dx: int, dy: int):
@@ -744,40 +574,3 @@ class QImageGraphicsView(QBaseGraphicsView):
         self._selection_handles.connect_rect(item)
         self._internal_clipboard = item.copy()  # needed for Ctrl+V x2
         self._is_current_roi_item_not_registered = True
-
-
-def _find_nice_position(pos0: QtCore.QPointF, pos1: QtCore.QPointF) -> QtCore.QPointF:
-    """Find the "nice" position when Shift is pressed."""
-    x0, y0 = pos0.x(), pos0.y()
-    x1, y1 = pos1.x(), pos1.y()
-    ang = math.atan2(y1 - y0, x1 - x0)
-    pi = math.pi
-    if -pi / 8 < ang <= pi / 8:  # right direction
-        y1 = y0
-    elif 3 * pi / 8 < ang <= 5 * pi / 8:  # down direction
-        x1 = x0
-    elif -5 * pi / 8 < ang <= -3 * pi / 8:  # up direction
-        x1 = x0
-    elif ang <= -7 * pi / 8 or 7 * pi / 8 < ang:  # left direction
-        y1 = y0
-    elif pi / 8 < ang <= 3 * pi / 8:  # down-right direction
-        if abs(x1 - x0) > abs(y1 - y0):
-            x1 = x0 + abs(y1 - y0)
-        else:
-            y1 = y0 + abs(x1 - x0)
-    elif -3 * pi / 8 < ang <= -pi / 8:  # up-left direction
-        if abs(x1 - x0) > abs(y1 - y0):
-            x1 = x0 + abs(y1 - y0)
-        else:
-            y1 = y0 - abs(x1 - x0)
-    elif 5 * pi / 8 < ang <= 7 * pi / 8:  # down-left direction
-        if abs(x1 - x0) > abs(y1 - y0):
-            x1 = x0 - abs(y1 - y0)
-        else:
-            y1 = y0 + abs(x1 - x0)
-    elif -7 * pi / 8 < ang <= -5 * pi / 8:  # up-right direction
-        if abs(x1 - x0) > abs(y1 - y0):
-            x1 = x0 - abs(y1 - y0)
-        else:
-            y1 = y0 - abs(x1 - x0)
-    return QtCore.QPointF(x1, y1)

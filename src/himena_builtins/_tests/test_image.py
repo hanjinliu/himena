@@ -417,12 +417,15 @@ def test_scale_bar(himena_ui: MainWindow):
     win.widget._img_view.move_items_by(2, 2)
 
 def test_find_nice_position():
-    from himena_builtins.qt.widgets._image_components._graphics_view import _find_nice_position
+    from himena_builtins.qt.widgets._image_components._mouse_events import _find_nice_position, _find_nice_rect_position
 
     for angle in np.linspace(0, np.pi * 2, 30):
         x = float(np.sin(angle))
         y = float(np.cos(angle))
-        p = _find_nice_position(QtCore.QPointF(0, 0), QtCore.QPointF(x, y))
+        p = _find_nice_position(QtCore.QPointF(x, y), QtCore.QPointF(0, 0))
         ang_out = np.arctan2(p.y(), p.x())
         assert np.rad2deg(ang_out) % 45 < 0.1
         assert abs(angle - ang_out) <= 22.5
+
+        p = _find_nice_rect_position(QtCore.QPointF(x, y), QtCore.QPointF(0, 0))
+        assert abs(p.x()) == abs(p.y())

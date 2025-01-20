@@ -1,10 +1,16 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from superqt import QIconifyIcon
-from ._graphics_view import Mode
-from . import _roi_items
+
+from himena.widgets import set_status_tip
+from himena_builtins.qt.widgets._image_components._graphics_view import Mode
+from himena_builtins.qt.widgets._image_components import _roi_items
 from himena.qt._utils import qsignal_blocker
+
+if TYPE_CHECKING:
+    from himena_builtins.qt.widgets.image import QImageView
 
 
 def _tool_btn(
@@ -69,10 +75,9 @@ _THUMBNAIL_ROIS: dict[Mode, _roi_items.QRoi] = {
 
 
 class QRoiButtons(QtW.QWidget):
-    mode_changed = QtCore.Signal(Mode)
-
-    def __init__(self):
+    def __init__(self, view: QImageView):
         super().__init__()
+        self._img_view = view._img_view
         layout = QtW.QGridLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(1)
@@ -144,7 +149,7 @@ class QRoiButtons(QtW.QWidget):
         layout.addWidget(self._btn_point, 2, 2)
         layout.addWidget(self._btn_points, 2, 3)
 
-        self._btn_map = {
+        self._btn_map: dict[Mode, QtW.QToolButton] = {
             Mode.PAN_ZOOM: self._btn_panzoom,
             Mode.SELECT: self._btn_select,
             Mode.ROI_RECTANGLE: self._btn_rect,
@@ -164,10 +169,18 @@ class QRoiButtons(QtW.QWidget):
         if btn := self._btn_map.get(mode):
             with qsignal_blocker(self._button_group):
                 btn.setChecked(True)
+        else:
+            with qsignal_blocker(self._button_group):
+                for button in self._button_group.buttons():
+                    button.setChecked(False)
 
     def btn_released(self, btn: QtW.QToolButton):
         mode = self._btn_map_inv[btn]
-        self.mode_changed.emit(mode)
+        self._img_view.switch_mode(mode)
+        mode_name = mode.name.replace("_", " ")
+        if mode_name.startswith("ROI "):
+            mode_name = mode_name[4:]
+        set_status_tip(f"Switched to {mode_name} mode.")
 
     def _update_colors(self, color: QtGui.QColor):
         for mode, btn in self._btn_map.items():

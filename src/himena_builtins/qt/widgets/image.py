@@ -34,7 +34,6 @@ from himena_builtins.qt.widgets._shared import quick_min_max
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
-    from himena_builtins.qt.widgets._image_components._graphics_view import Mode
     from himena.style import Theme
 
 
@@ -96,8 +95,6 @@ class QImageView(QtW.QSplitter):
         layout = QtW.QVBoxLayout(widget_left)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
-        self._roi_buttons = QRoiButtons()
-        self._roi_buttons.mode_changed.connect(self._on_roi_mode_changed)
         self._stick_grid_switch = QLabeledToggleSwitch()
         self._stick_grid_switch.setText("Stick to Grid")
         self._stick_grid_switch.setChecked(True)
@@ -105,6 +102,7 @@ class QImageView(QtW.QSplitter):
             "If checked, vertices of Rectangle and Ellipse ROIs will stick to the grid of the image."
         )
         self._img_view = QImageGraphicsView()
+        self._roi_buttons = QRoiButtons(self)
         self._img_view.set_stick_to_grid(True)
         self._img_view.hovered.connect(self._on_hovered)
         self._img_view.mode_changed.connect(self._roi_buttons.set_mode)
@@ -591,13 +589,6 @@ class QImageView(QtW.QSplitter):
         qroi = self._roi_col.pop_roi_in_slice(indices, idx)
         set_status_tip(f"Removed a {qroi._roi_type()} ROI")
         self._roi_col.set_selections([])
-
-    def _on_roi_mode_changed(self, mode: Mode):
-        self._img_view.switch_mode(mode)
-        mode_name = mode.name.replace("_", " ")
-        if mode_name.startswith("ROI "):
-            mode_name = mode_name[4:]
-        set_status_tip(f"Switched to {mode_name} mode.")
 
     def _reset_image(self):
         if self._channels is None:  # not initialized yet

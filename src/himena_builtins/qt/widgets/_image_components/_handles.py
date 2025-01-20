@@ -275,9 +275,7 @@ class RoiSelectionHandles:
         @path.changed.connect
         def _path_changed(p: QtGui.QPainterPath):
             offset = 0 if self._is_last_vertex_added else 1
-            for i in range(p.elementCount() - offset, len(self._handles)):
-                self.view().scene().removeItem(self._handles[i])
-            del self._handles[p.elementCount() - offset :]
+            self.remove_handles(p.elementCount() - offset, len(self._handles))
             for i in range(len(self._handles), p.elementCount() - offset):
                 element = p.elementAt(i)
                 h = self.make_handle_at(QtCore.QPointF(element.x, element.y))
@@ -308,9 +306,7 @@ class RoiSelectionHandles:
 
         @points.changed.connect
         def _points_changed(ps: list[QtCore.QPointF]):
-            for i in range(len(ps), len(self._handles)):
-                self.view().scene().removeItem(self._handles[i])
-            del self._handles[len(ps) :]
+            self.remove_handles(len(ps), len(self._handles))
             for i in range(len(self._handles), len(ps)):
                 h = self.make_handle_at(ps[i])
                 h.moved_by_mouse.connect(
@@ -371,3 +367,8 @@ class RoiSelectionHandles:
     def finish_drawing_polygon(self):
         self._is_drawing_polygon = False
         self.draw_finished.emit()
+
+    def remove_handles(self, start: int, end: int):
+        for i in range(start, end):
+            self.view().scene().removeItem(self._handles[i])
+        del self._handles[start:end]

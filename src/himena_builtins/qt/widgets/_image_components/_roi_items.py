@@ -1,7 +1,7 @@
 from __future__ import annotations
 from contextlib import contextmanager
 import math
-
+from enum import Enum, auto
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from psygnal import Signal
 import numpy as np
@@ -631,3 +631,29 @@ class QPointsRoi(QPointRoiBase):
 
     def _repr_points(self):
         return [(0.2, 0.2), (0.5, 0.8), (0.8, 0.6)]
+
+
+class Mode(Enum):
+    """Mouse interaction modes for the image graphics view."""
+
+    SELECT = auto()
+    PAN_ZOOM = auto()
+    ROI_RECTANGLE = auto()
+    ROI_ROTATED_RECTANGLE = auto()
+    ROI_ELLIPSE = auto()
+    ROI_POINT = auto()
+    ROI_POINTS = auto()
+    ROI_POLYGON = auto()
+    ROI_SEGMENTED_LINE = auto()
+    ROI_LINE = auto()
+
+
+SIMPLE_ROI_MODES = frozenset({
+    Mode.ROI_RECTANGLE, Mode.ROI_ROTATED_RECTANGLE, Mode.ROI_ELLIPSE, Mode.ROI_POINT,
+    Mode.ROI_LINE
+})  # fmt: skip
+MULTIPOINT_ROI_MODES = frozenset({
+    Mode.ROI_POINTS, Mode.ROI_POLYGON, Mode.ROI_SEGMENTED_LINE
+})  # fmt: skip
+ROI_MODES = SIMPLE_ROI_MODES | MULTIPOINT_ROI_MODES
+MULTIPOINT_ROI_CLASSES = (QPolygonRoi, QSegmentedLineRoi, QPointsRoi)
