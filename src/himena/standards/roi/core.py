@@ -80,40 +80,21 @@ class RectangleRoi(Roi2D):
 
 
 class RotatedRoi2D(Roi2D):
-    angle: float = Field(..., description="Counter-clockwise angle in degrees.")
-
-
-class RotatedRectangleRoi(RotatedRoi2D):
-    """ROI that represents a rotated rectangle.
-
-    Attribute `angle` is defined by the counter-clockwise rotation around the center of
-    the rectangle.
-    """
-
-    start: tuple[float, float] = Field(..., description="X-coordinate of the center.")
-    end: tuple[float, float] = Field(..., description="Y-coordinate of the center.")
-    width: float = Field(..., description="Width of the rectangle.")
+    start: tuple[float, float] = Field(
+        ..., description="Coordinate of the start point."
+    )
+    end: tuple[float, float] = Field(..., description="Coordinate of the end point.")
+    width: float = Field(..., description="Width of the ROI.")
 
     def length(self) -> float:
         start_x, start_y = self.start
         end_x, end_y = self.end
         return math.hypot(end_x - start_x, end_y - start_y)
 
-    def area(self) -> float:
-        return self.length() * self.width
-
     def shifted(self, dx: float, dy: float) -> RotatedRectangleRoi:
         start = (self.start[0] + dx, self.start[1] + dy)
         end = (self.end[0] + dx, self.end[1] + dy)
         return self.model_copy(update={"start": start, "end": end})
-
-    def bbox(self) -> Rect[float]:
-        p00, p01, p11, p10 = self._get_vertices()
-        xmin = min(p00[0], p01[0], p10[0], p11[0])
-        xmax = max(p00[0], p01[0], p10[0], p11[0])
-        ymin = min(p00[1], p01[1], p10[1], p11[1])
-        ymax = max(p00[1], p01[1], p10[1], p11[1])
-        return Rect(xmin, ymin, xmax - xmin, ymax - ymin)
 
     def _get_vx_vy(self):
         start_x, start_y = self.start
@@ -123,6 +104,27 @@ class RotatedRectangleRoi(RotatedRoi2D):
         vx = np.array([math.cos(rad), math.sin(rad)]) * length
         vy = np.array([-math.sin(rad), math.cos(rad)]) * self.width
         return vx, vy
+
+    def angle(self) -> float:
+        """Counter-clockwise rotation."""
+        return math.degrees(
+            math.atan2(self.end[1] - self.start[1], self.end[0] - self.start[0])
+        )
+
+
+class RotatedRectangleRoi(RotatedRoi2D):
+    """ROI that represents a rotated rectangle."""
+
+    def area(self) -> float:
+        return self.length() * self.width
+
+    def bbox(self) -> Rect[float]:
+        p00, p01, p11, p10 = self._get_vertices()
+        xmin = min(p00[0], p01[0], p10[0], p11[0])
+        xmax = max(p00[0], p01[0], p10[0], p11[0])
+        ymin = min(p00[1], p01[1], p10[1], p11[1])
+        ymax = max(p00[1], p01[1], p10[1], p11[1])
+        return Rect(xmin, ymin, xmax - xmin, ymax - ymin)
 
     def _get_vertices(self):
         start_x, start_y = self.start
@@ -176,8 +178,26 @@ class EllipseRoi(Roi2D):
         return comp_a**2 + comp_b**2 <= 1
 
 
-class RotatedEllipseRoi(EllipseRoi, RotatedRoi2D):
+class RotatedEllipseRoi(RotatedRoi2D):
     """ROI that represents a rotated ellipse."""
+
+    def area(self) -> float:
+        return self.length() * self.width * math.pi / 4
+
+    def to_mask(self, shape: tuple[int, ...]) -> NDArray[np.bool_]:
+        _yy, _xx = np.indices(shape[-2:])
+        start_x, start_y = self.start
+        end_x, end_y = self.end
+        length = math.hypot(end_x - start_x, end_y - start_y)
+        cx, cy = (start_x + end_x) / 2, (start_y + end_y) / 2
+        angle = math.radians(self.angle())
+        comp_a = (_yy - cy) / length * 2
+        comp_b = (_xx - cx) / self.width * 2
+        comp_a, comp_b = (
+            comp_a * math.cos(angle) - comp_b * math.sin(angle),
+            comp_a * math.sin(angle) + comp_b * math.cos(angle),
+        )
+        return comp_a**2 + comp_b**2 <= 1
 
 
 class PointRoi2D(Roi2D):

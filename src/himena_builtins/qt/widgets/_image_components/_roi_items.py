@@ -294,7 +294,6 @@ class QRotatedRectangleRoi(QRoi):
             start=(self.start().x() - 0.5, self.start().y() - 0.5),
             end=(self.end().x() - 0.5, self.end().y() - 0.5),
             width=self._width,
-            angle=self._angle,
             name=self.label(),
         )
 

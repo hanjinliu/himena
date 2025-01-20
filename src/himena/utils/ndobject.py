@@ -195,3 +195,14 @@ class NDObjectCollection(Generic[_T]):
             indices=self.indices,
             axis_names=self.axis_names,
         )
+
+    def simplified(self) -> Self:
+        """Drop axis"""
+        cannot_drop = np.all(self.indices >= 0, axis=0)
+        indices = np.take(self.indices, cannot_drop, axis=1)
+        axis_names = [a for i, a in enumerate(self.axis_names) if i in cannot_drop]
+        return self.__class__(
+            items=self.items,
+            indices=indices,
+            axis_names=axis_names,
+        )
