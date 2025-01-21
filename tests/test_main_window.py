@@ -7,6 +7,7 @@ from himena.standards.model_meta import DataFrameMeta
 from himena.widgets import set_status_tip, notify
 from himena_builtins.qt import widgets as _qtw
 
+from qtpy import QtWidgets as QtW
 from qtpy.QtCore import Qt, QPoint
 from pathlib import Path
 from pytestqt.qtbot import QtBot
@@ -193,3 +194,4 @@ def test_mouse_events(himena_ui: MainWindowQt, qtbot: QtBot):
     qtbot.mouseMove(qarea, qarea.rect().center())
     qtbot.mouseMove(qarea, qarea.rect().center() + QPoint(10, 10))
     qtbot.mouseRelease(qarea, Qt.MouseButton.RightButton)
+    qmain._tab_widget.tabBar().tabButton(0, QtW.QTabBar.ButtonPosition.RightSide).click()

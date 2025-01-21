@@ -42,6 +42,9 @@ def _main(
     with_plugins: list[str] | None = None,
     new: str | None = None,
     remove: str | None = None,
+    install: list[str] = [],
+    uninstall: list[str] = [],
+    list_plugins: bool = False,
     clear_plugin_configs: bool = False,
 ):
     if remove:
@@ -68,14 +71,63 @@ def _main(
         path = profile
         profile = None
 
-    if clear_plugin_configs:
-        from himena.profile import load_app_profile
+    from himena.profile import load_app_profile
 
+    if clear_plugin_configs:
         prof = load_app_profile(profile or "default")
         if prof.plugin_configs:
             prof.plugin_configs.clear()
             prof.save()
             print(f"Plugin configurations are cleared for the profile {profile!r}.")
+
+    if list_plugins:
+        from himena.utils.entries import iter_plugin_info
+
+        app_profile = load_app_profile(profile or "default")
+        print("Profile:", profile or "default")
+        print("Plugins:")
+        for info in iter_plugin_info():
+            if info.place in app_profile.plugins:
+                print(f"- {info.name} ({info.place}, v{info.version})")
+        return
+
+    if install or uninstall:
+        from himena.utils.entries import (
+            iter_plugin_info,
+            is_submodule,
+            HimenaPluginInfo,
+        )
+
+        app_profile = load_app_profile(profile or "default")
+        plugins_to_write = app_profile.plugins.copy()
+        infos_installed: list[HimenaPluginInfo] = []
+        infos_uninstalled: list[HimenaPluginInfo] = []
+        for info in iter_plugin_info():
+            for plugin_name in install:
+                if plugin_name in app_profile.plugins:
+                    print(f"Plugin {plugin_name!r} is already installed.")
+                elif is_submodule(info.place, plugin_name):
+                    plugins_to_write.append(info.place)
+                    infos_installed.append(info)
+
+            for plugin_name in uninstall:
+                if (
+                    is_submodule(info.place, plugin_name)
+                    and info.place in plugins_to_write
+                ):
+                    plugins_to_write.remove(info.place)
+                    infos_uninstalled.append(info)
+        if infos_installed:
+            print("Plugins installed:")
+            for info in infos_installed:
+                print(f"  - {info.name} ({info.place}, v{info.version})")
+        if infos_uninstalled:
+            print("Plugins uninstalled:")
+            for info in infos_uninstalled:
+                print(f"  - {info.name} ({info.place}, v{info.version})")
+        new_prof = app_profile.with_plugins(plugins_to_write)
+        new_prof.save()
+        return
 
     logging.basicConfig(level=log_level)
     ui = new_window(profile, plugins=with_plugins)
@@ -124,6 +176,15 @@ def main():
         help="Remove the profile of the given name."
     )
     parser.add_argument(
+        "--install", nargs="+", default=[], help="Install the given plugins."
+    )
+    parser.add_argument(
+        "--uninstall", nargs="+", default=[], help="Uninstall the given plugins."
+    )
+    parser.add_argument(
+        "--list-plugins", action="store_true", help="List all the available plugins."
+    )
+    parser.add_argument(
         "--clear-plugin-configs", action="store_true",
         help="Clear all the plugin configurations in the given profile."
     )
@@ -138,6 +199,9 @@ def main():
         with_plugins=args.with_plugins,
         new=args.new,
         remove=args.remove,
+        install=args.install,
+        uninstall=args.uninstall,
+        list_plugins=args.list_plugins,
         clear_plugin_configs=args.clear_plugin_configs,
     )
     from himena.widgets._initialize import cleanup

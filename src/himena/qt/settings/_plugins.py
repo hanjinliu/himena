@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Iterator, NamedTuple, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from qtpy import QtWidgets as QtW, QtGui, QtCore
 from qtpy.QtCore import Qt
 from himena.consts import MonospaceFontFamily
 from himena.plugins import AppActionRegistry
+from himena.utils.entries import iter_plugin_info
 from himena.qt.settings._shared import QInstruction
 
 if TYPE_CHECKING:
@@ -127,22 +128,3 @@ class QAvaliablePluginsTree(QtW.QTreeWidget):
             for i in range(item.childCount()):
                 item.child(i).setCheckState(0, item.checkState(0))
         self.stateChanged.emit()
-
-
-class HimenaPluginInfo(NamedTuple):
-    name: str
-    place: str
-    version: str
-    distribution: str
-
-
-ENTRY_POINT_GROUP_NAME = "himena.plugin"
-
-
-def iter_plugin_info() -> Iterator[HimenaPluginInfo]:
-    from importlib.metadata import distributions
-
-    for dist in distributions():
-        for ep in dist.entry_points:
-            if ep.group == ENTRY_POINT_GROUP_NAME:
-                yield HimenaPluginInfo(ep.name, ep.value, dist.version, dist.name)

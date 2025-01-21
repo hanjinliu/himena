@@ -176,6 +176,7 @@ class _RectangleTypeRoiMouseEvents(_SingleDragRoiMouseEvents[_R]):
 class _MultiRoiMouseEvents(RoiMouseEvents[_R]):
     def pressed(self, event: QtGui.QMouseEvent):
         super().pressed(event)
+        self._view.remove_current_item(reason="start drawing new ROI")
         self.selection_handles.start_drawing_polygon()
         self.selection_handles._is_last_vertex_added = True
 

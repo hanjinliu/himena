@@ -10,7 +10,7 @@ from qtpy.QtCore import Qt
 from himena.qt._qclickable_label import QClickableLabel
 from himena.qt._qsub_window import QSubWindowArea, QSubWindow
 from himena.qt._qrename import QTabRenameLineEdit
-from himena.qt._utils import get_main_window, build_qmodel_menu
+from himena.qt._utils import get_main_window
 from himena.consts import ActionGroup, MenuId
 from himena import _drag
 from himena.types import WindowRect
@@ -83,8 +83,6 @@ class QTabBar(QtW.QTabBar):
         i_tab_pressed = self.tabAt(self._pressed_pos)
         if i_tab_released == i_tab_pressed:
             self.setCurrentIndex(i_tab_released)
-            if event.button() == Qt.MouseButton.RightButton:
-                build_qmodel_menu
         return super().mouseReleaseEvent(event)
 
     def tab_widget(self) -> QTabWidget:

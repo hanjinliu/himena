@@ -100,16 +100,17 @@ class RotatedRoi2D(Roi2D):
         start_x, start_y = self.start
         end_x, end_y = self.end
         length = math.hypot(end_x - start_x, end_y - start_y)
-        rad = math.radians(self.angle)
+        rad = self.angle_radian()
         vx = np.array([math.cos(rad), math.sin(rad)]) * length
         vy = np.array([-math.sin(rad), math.cos(rad)]) * self.width
         return vx, vy
 
     def angle(self) -> float:
         """Counter-clockwise rotation."""
-        return math.degrees(
-            math.atan2(self.end[1] - self.start[1], self.end[0] - self.start[0])
-        )
+        return math.degrees(self.angle_radian())
+
+    def angle_radian(self) -> float:
+        return math.atan2(self.end[1] - self.start[1], self.end[0] - self.start[0])
 
 
 class RotatedRectangleRoi(RotatedRoi2D):
@@ -190,7 +191,7 @@ class RotatedEllipseRoi(RotatedRoi2D):
         end_x, end_y = self.end
         length = math.hypot(end_x - start_x, end_y - start_y)
         cx, cy = (start_x + end_x) / 2, (start_y + end_y) / 2
-        angle = math.radians(self.angle())
+        angle = self.angle_radian()
         comp_a = (_yy - cy) / length * 2
         comp_b = (_xx - cx) / self.width * 2
         comp_a, comp_b = (
