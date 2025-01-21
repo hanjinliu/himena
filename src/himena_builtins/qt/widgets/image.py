@@ -105,7 +105,6 @@ class QImageView(QtW.QSplitter):
         self._roi_buttons = QRoiButtons(self)
         self._img_view.set_stick_to_grid(True)
         self._img_view.hovered.connect(self._on_hovered)
-        self._img_view.mode_changed.connect(self._roi_buttons.set_mode)
         self._img_view.roi_visibility_changed.connect(self._roi_visibility_changed)
         self._stick_grid_switch.toggled.connect(self._img_view.set_stick_to_grid)
         self._dims_slider = QDimsSlider()
@@ -422,19 +421,6 @@ class QImageView(QtW.QSplitter):
 
     def _composite_state(self) -> str:
         return self._control._channel_mode_combo.currentText()
-
-    def _roi_item_clicked(self, indices: tuple[int, ...], qroi: QRoi):
-        if (ninds := len(indices)) < (ndim_rem := self._dims_slider.count()):
-            # this happens when the ROI is flattened
-            if ninds > 0:
-                higher_dims = ndim_rem - ninds
-                indices_filled = self._dims_slider.value()[:higher_dims] + indices
-                self._dims_slider.set_value_no_emit(indices_filled)
-                self._slider_changed(indices_filled, force_sync=True)
-        else:
-            self._dims_slider.set_value_no_emit(indices)
-            self._slider_changed(indices, force_sync=True)
-        self._img_view.select_item(qroi)
 
     def _roi_visibility_changed(self, show_rois: bool):
         with qsignal_blocker(self._roi_col):

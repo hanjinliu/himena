@@ -47,7 +47,11 @@ def _(r: roi.SegmentedLineRoi) -> _roi_items.QRoi:
 
 @_roi_to_qroi.register
 def _(r: roi.PolygonRoi) -> _roi_items.QRoi:
-    return _roi_items.QPolygonRoi(r.xs + 0.5, r.ys + 0.5)
+    roi = _roi_items.QPolygonRoi(r.xs + 0.5, r.ys + 0.5)
+    path = roi.path()
+    path.closeSubpath()
+    roi.setPath(path)
+    return roi
 
 
 @_roi_to_qroi.register
@@ -298,7 +302,7 @@ class QRoiCollection(QSimpleRoiCollection):
         self.show_labels_changed.connect(parent._img_view.set_show_labels)
         self.key_pressed.connect(parent._img_view.keyPressEvent)
         self.key_released.connect(parent._img_view.keyReleaseEvent)
-        self.roi_item_clicked.connect(parent._roi_item_clicked)
+        self.roi_item_clicked.connect(self._roi_item_clicked)
         self._add_btn.clicked.connect(parent._img_view.add_current_roi)
         self.drag_requested.connect(parent._run_drag_model)
         self._remove_btn.clicked.connect(self._remove_selected)
@@ -307,6 +311,22 @@ class QRoiCollection(QSimpleRoiCollection):
         self._roi_labels_btn.toggled.connect(self._on_roi_labels_btn_clicked)
 
         self.setToolTip("List of ROIs in the image")
+
+    def _roi_item_clicked(self, indices: tuple[int, ...], qroi: _roi_items.QRoi):
+        view = self._image_view_ref()
+        if view is None:
+            return
+        if (ninds := len(indices)) < (ndim_rem := view._dims_slider.count()):
+            # this happens when the ROI is flattened
+            if ninds > 0:
+                higher_dims = ndim_rem - ninds
+                indices_filled = view._dims_slider.value()[:higher_dims] + indices
+                view._dims_slider.set_value_no_emit(indices_filled)
+                view._slider_changed(indices_filled, force_sync=True)
+        else:
+            view._dims_slider.set_value_no_emit(indices)
+            view._slider_changed(indices, force_sync=True)
+        view._img_view.select_item(qroi)
 
     def _remove_selected(self):
         return self.pop_rois(self.selections())

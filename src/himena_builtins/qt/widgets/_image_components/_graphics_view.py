@@ -113,7 +113,7 @@ class QRoiLabels(QtW.QGraphicsItem):
             width = metrics.width(roi_label)
             height = metrics.height()
             painter.setPen(QtGui.QPen(QtGui.QColor(0, 0, 0, 0), 1))
-            painter.setBrush(QtGui.QBrush(QtGui.QColor(0, 0, 0)))
+            painter.setBrush(QtGui.QBrush(QtGui.QColor(0, 0, 0, 128)))
             rect = QtCore.QRectF(
                 pos.x() - width / 2, pos.y() - height / 2, width, height
             )
@@ -144,7 +144,6 @@ class QImageGraphicsView(QBaseGraphicsView):
     def __init__(self, roi_visible: bool = False, roi_pen: QtGui.QPen | None = None):
         super().__init__()
         ### Attributes ###
-        self._is_key_hold = False
         self._roi_items: list[QRoi] = []
         self._current_roi_item: QRoi | None = None
         self._is_current_roi_item_not_registered = False
@@ -250,6 +249,7 @@ class QImageGraphicsView(QBaseGraphicsView):
 
     def set_mode(self, mode: Mode):
         self._mode = mode
+        _LOGGER.info("Mode changed to %r", mode)
         if mode in ROI_MODES:
             self.viewport().setCursor(Qt.CursorShape.CrossCursor)
             if mode is Mode.ROI_POINT:
@@ -473,15 +473,14 @@ class QImageGraphicsView(QBaseGraphicsView):
             self.roi_added.emit(item)
 
     def keyPressEvent(self, event: QtGui.QKeyEvent | None) -> None:
-        if event is None:
+        if event is None or event.isAutoRepeat():
             return None
         _mods = event.modifiers()
         _key = event.key()
         if _mods == Qt.KeyboardModifier.NoModifier:
             if _key == Qt.Key.Key_Space:
-                if not self._is_key_hold:
-                    self._last_mode_before_key_hold = self.mode()
-                    self.set_mode(Mode.PAN_ZOOM)
+                self._last_mode_before_key_hold = self.mode()
+                self.set_mode(Mode.PAN_ZOOM)
             elif _key == Qt.Key.Key_Up:
                 if item := self._current_roi_item:
                     item.translate(0, -1)
@@ -521,11 +520,9 @@ class QImageGraphicsView(QBaseGraphicsView):
             elif _key == Qt.Key.Key_T:
                 self.add_current_roi()
             elif _key in (Qt.Key.Key_Delete, Qt.Key.Key_Backspace):
-                if not self._is_key_hold:
-                    self.remove_current_item(remove_from_list=True, reason="delete key")
+                self.remove_current_item(remove_from_list=True, reason="delete key")
             elif _key == Qt.Key.Key_V:
-                if not self._is_key_hold:
-                    self.set_show_rois(not self._is_rois_visible)
+                self.set_show_rois(not self._is_rois_visible)
         elif _mods == Qt.KeyboardModifier.ControlModifier:
             if _key == Qt.Key.Key_A:
                 ny, nx = self._image_widgets[0]._img.shape[:2]
@@ -544,12 +541,10 @@ class QImageGraphicsView(QBaseGraphicsView):
                 if self._current_roi_item is not None:
                     self._internal_clipboard = self._current_roi_item.copy()
                     self._paste_roi()
-        self._is_key_hold = True
         return None
 
     def keyReleaseEvent(self, event: QtGui.QKeyEvent | None) -> None:
-        self._is_key_hold = False
-        if event is None:
+        if event is None or event.isAutoRepeat():
             return None
         if event.key() == Qt.Key.Key_Space:
             self.set_mode(self._last_mode_before_key_hold)

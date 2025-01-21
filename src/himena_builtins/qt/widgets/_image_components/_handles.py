@@ -284,10 +284,7 @@ class RoiSelectionHandles:
                 element = p.elementAt(i)
                 h.setCenter(QtCore.QPointF(element.x, element.y))
 
-        if isinstance(path, QPolygonRoi):
-            self.draw_finished.connect(lambda: self._finish_drawing_path(path))
-        else:
-            self.draw_finished.connect(lambda: self._finish_drawing_path(path))
+        self.draw_finished.connect(lambda: self._finish_drawing_path(path))
 
     def connect_point(self, point: QPointRoi):
         self.clear_handles()

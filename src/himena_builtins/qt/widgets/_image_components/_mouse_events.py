@@ -61,6 +61,7 @@ class PanZoomMouseEvents(QtMouseEvent):
         if self._pos_drag_start is None or self._pos_drag_prev is None:
             return
         self._mouse_move_pan_zoom(event.pos())
+        self._pos_drag_prev = event.pos()
 
     def released(self, event):
         self._view.viewport().setCursor(Qt.CursorShape.ArrowCursor)
@@ -77,6 +78,8 @@ class SelectMouseEvents(QtMouseEvent):
         self._view.scene().setGrabSource(self)
 
     def moved(self, event):
+        if self._pos_drag_prev is None:
+            return
         pos = self._view.mapToScene(event.pos())
         if item := self._view._current_roi_item:
             if self._pos_drag_prev is None:
@@ -90,6 +93,7 @@ class SelectMouseEvents(QtMouseEvent):
         else:
             # just forward to the pan-zoom mode
             self._mouse_move_pan_zoom(event)
+        self._pos_drag_prev = event.pos()
 
 
 class RoiMouseEvents(QtMouseEvent, Generic[_R]):
@@ -117,14 +121,14 @@ class _SingleDragRoiMouseEvents(RoiMouseEvents[_R]):
     ) -> tuple[QtCore.QPointF, QtCore.QPointF]:
         return pos, pos0
 
-    def pressed(self, event):
+    def pressed(self, event: QtGui.QMouseEvent):
         super().pressed(event)
         self._view.remove_current_item(reason="start drawing new ROI")
         p = self._view.mapToScene(self._pos_drag_start)
         self.make_roi(p.x(), p.y(), self._view._roi_pen)
         self.selection_handles.update_handle_size(self._view.transform().m11())
 
-    def moved(self, event):
+    def moved(self, event: QtGui.QMouseEvent):
         if self._pos_drag_start is None or self._pos_drag_prev is None:
             return
         pos = self._view.mapToScene(event.pos())
@@ -134,7 +138,7 @@ class _SingleDragRoiMouseEvents(RoiMouseEvents[_R]):
                 pos, pos0 = self._coerce_pos(pos, pos0)
             self._update_roi(pos0, pos)
 
-    def released(self, event):
+    def released(self, event: QtGui.QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
             if self._pos_drag_start == event.pos():
                 self._view.remove_current_item(
@@ -170,12 +174,12 @@ class _RectangleTypeRoiMouseEvents(_SingleDragRoiMouseEvents[_R]):
 
 
 class _MultiRoiMouseEvents(RoiMouseEvents[_R]):
-    def pressed(self, event):
+    def pressed(self, event: QtGui.QMouseEvent):
         super().pressed(event)
         self.selection_handles.start_drawing_polygon()
         self.selection_handles._is_last_vertex_added = True
 
-    def released(self, event):
+    def released(self, event: QtGui.QMouseEvent):
         if self._pos_drag_start is None:
             return
         if self.selection_handles.is_drawing_polygon():

@@ -164,6 +164,7 @@ class QRoiButtons(QtW.QWidget):
         self._btn_map_inv = {v: k for k, v in self._btn_map.items()}
         self.setFixedHeight(70)
         self._btn_panzoom.setChecked(True)
+        self._img_view.mode_changed.connect(self.set_mode)
 
     def set_mode(self, mode: Mode):
         if btn := self._btn_map.get(mode):

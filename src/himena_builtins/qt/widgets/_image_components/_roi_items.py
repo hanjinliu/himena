@@ -73,7 +73,7 @@ class QLineRoi(QtW.QGraphicsLineItem, QRoi):
             x1=x1 - 0.5,
             y1=y1 - 0.5,
             x2=x2 - 0.5,
-            y2=x2 - 0.5,
+            y2=y2 - 0.5,
             name=self.label(),
         )
 
@@ -447,7 +447,8 @@ class QPolygonRoi(QSegmentedLineRoi):
     def toRoi(self) -> roi.PolygonRoi:
         path = self.path()
         xs, ys = [], []
-        for i in range(path.elementCount()):
+        closed = path.elementAt(0) == path.elementAt(path.elementCount() - 1)
+        for i in range(path.elementCount() - int(closed)):
             element = path.elementAt(i)
             xs.append(element.x - 0.5)
             ys.append(element.y - 0.5)

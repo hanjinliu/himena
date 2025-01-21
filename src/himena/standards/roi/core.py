@@ -350,13 +350,9 @@ class PolygonRoi(SegmentedLineRoi):
         return _utils.polygon_mask(shape, np.column_stack((self.ys, self.xs)))
 
     def area(self) -> float:
-        return (
-            np.abs(
-                np.dot(self.xs, np.roll(self.ys, 1))
-                - np.dot(self.ys, np.roll(self.xs, 1))
-            )
-            / 2
-        )
+        dot_xy = np.dot(self.xs, np.roll(self.ys, 1))
+        dot_yx = np.dot(self.ys, np.roll(self.xs, 1))
+        return np.abs(dot_xy - dot_yx) / 2
 
 
 class SplineRoi(Roi2D):
