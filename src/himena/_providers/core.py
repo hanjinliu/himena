@@ -2,32 +2,26 @@ from __future__ import annotations
 
 from pathlib import Path
 from logging import getLogger
-from typing import Generic, Sequence, TypeVar, TYPE_CHECKING
+from typing import Generic, Iterator, TypeVar, TYPE_CHECKING
 import warnings
-from himena._providers._tuples import (
-    ReaderProviderTuple,
-    WriterProviderTuple,
-    ReaderTuple,
-    WriterTuple,
-    PluginInfo,
-)
+from himena.utils.misc import PluginInfo
 from himena.types import WidgetDataModel
 
 if TYPE_CHECKING:
     from typing import Self
+    from himena.plugins.io import ReaderPlugin, WriterPlugin, _IOPluginBase
 
     PathOrPaths = str | Path | list[str | Path]
 
 _LOGGER = getLogger(__name__)
-_S = TypeVar("_S", ReaderProviderTuple, WriterProviderTuple)
-_T = TypeVar("_T", ReaderTuple, WriterTuple)
+_S = TypeVar("_S", bound="_IOPluginBase")
 
 
 class ProviderStore(Generic[_S]):
     _global_instance = None
 
     def __init__(self):
-        self._providers: list[_S] = []
+        self._plugin_items: list[_S] = []
 
     @classmethod
     def instance(cls) -> Self:
@@ -36,41 +30,46 @@ class ProviderStore(Generic[_S]):
         return cls._global_instance
 
 
-class ReaderProviderStore(ProviderStore[ReaderProviderTuple]):
-    def add(self, provider, priority: int, plugin: str | None = None):
-        tup = ReaderProviderTuple(provider, priority, plugin)
-        self._providers.append(tup)
+class ReaderProviderStore(ProviderStore["ReaderPlugin"]):
+    def add_reader(self, reader: ReaderPlugin):
+        self._plugin_items.append(reader)
+
+    def iter_readers(
+        self, path: Path | list[Path], min_priority: int = 0
+    ) -> Iterator[tuple[str, ReaderPlugin]]:
+        for reader in self._plugin_items:
+            if reader.priority < min_priority:
+                continue
+            try:
+                out = reader.match_model_type(path)
+            except Exception as e:
+                _warn_failed_provider(reader, e)
+            else:
+                if out is None:
+                    _LOGGER.debug("Reader %r did not match", reader)
+                else:
+                    yield out, reader
 
     def get(
         self,
         path: Path | list[Path],
         empty_ok: bool = False,
         min_priority: int = 0,
-    ) -> list[ReaderTuple]:
-        matched: list[ReaderTuple] = []
-        for info in self._providers:
-            if info.priority < min_priority:
+    ) -> list[ReaderPlugin]:
+        matched: list[ReaderPlugin] = []
+        for reader in self._plugin_items:
+            if reader.priority < min_priority:
                 continue
             try:
-                out = info.provider(path)
+                out = reader.match_model_type(path)
             except Exception as e:
-                _warn_failed_provider(info.provider, e)
+                _warn_failed_provider(reader, e)
             else:
                 if out is None:
-                    _LOGGER.debug("Reader provider %r did not match", info.provider)
-                    continue
-                if isinstance(out, Sequence) and len(out) == 2:
-                    reader, mtype = out
+                    _LOGGER.debug("%r did not match", reader)
                 else:
-                    reader, mtype = out, None
-                if not callable(reader):
-                    _LOGGER.warning(
-                        f"Reader provider {info.provider!r} returned {reader!r}, which "
-                        "is not callable."
-                    )
-                    continue
-                matched.append(ReaderTuple(reader, info.priority, info.plugin, mtype))
-        _LOGGER.debug("Matched reader providers: %r", [x[0] for x in matched])
+                    matched.append(reader)
+        _LOGGER.debug("Matched readers: %r", matched)
         if not matched and not empty_ok:
             if isinstance(path, list):
                 msg = [p.name for p in path]
@@ -85,7 +84,7 @@ class ReaderProviderStore(ProviderStore[ReaderProviderTuple]):
         *,
         plugin: str | None = None,
         min_priority: int = 0,
-    ) -> ReaderTuple:
+    ) -> ReaderPlugin:
         """Pick a reader that match the inputs."""
         if plugin is not None:
             # if plugin is given, force to use it
@@ -94,7 +93,7 @@ class ReaderProviderStore(ProviderStore[ReaderProviderTuple]):
 
     def run(
         self,
-        path: Path,
+        path: Path | list[Path],
         *,
         plugin: str | None = None,
         min_priority: int = -float("inf"),
@@ -103,10 +102,9 @@ class ReaderProviderStore(ProviderStore[ReaderProviderTuple]):
         return reader.read(path)
 
 
-class WriterProviderStore(ProviderStore[WriterProviderTuple]):
-    def add(self, provider, priority: int, plugin: str | None = None):
-        tup = WriterProviderTuple(provider, priority, plugin)
-        self._providers.append(tup)
+class WriterProviderStore(ProviderStore["WriterPlugin"]):
+    def add_writer(self, reader: WriterPlugin):
+        self._plugin_items.append(reader)
 
     def get(
         self,
@@ -114,26 +112,21 @@ class WriterProviderStore(ProviderStore[WriterProviderTuple]):
         path: Path,
         empty_ok: bool = False,
         min_priority: int = 0,
-    ) -> list[WriterTuple]:
-        matched: list[WriterTuple] = []
-        for info in self._providers:
-            if info.priority < min_priority:
+    ) -> list[WriterPlugin]:
+        matched: list[WriterPlugin] = []
+        for writer in self._plugin_items:
+            if writer.priority < min_priority:
                 continue
             try:
-                out = info.provider(model, path)
+                out = writer.match_input(model, path)
             except Exception as e:
-                _warn_failed_provider(info.provider, e)
+                _warn_failed_provider(writer, e)
             else:
-                if out:
-                    if callable(out):
-                        matched.append(WriterTuple(out, info.priority, info.plugin))
-                    else:
-                        warnings.warn(
-                            f"Writer provider {info.provider!r} returned {out!r}, which is "
-                            "not callable."
-                        )
+                if not out:
+                    _LOGGER.debug("%r did not match", writer)
+                else:
+                    matched.append(writer)
         if not matched and not empty_ok:
-            _LOGGER.info("Writer providers: %r", [x[0] for x in self._providers])
             raise ValueError(f"No writer functions available for {model.type!r}")
         return matched
 
@@ -143,7 +136,7 @@ class WriterProviderStore(ProviderStore[WriterProviderTuple]):
         path: Path,
         plugin: str | None = None,
         min_priority: int = 0,
-    ) -> WriterTuple:
+    ) -> WriterPlugin:
         """Pick a writer that match the inputs to write the model."""
         if plugin is not None:
             # if plugin is given, force to use it
@@ -162,11 +155,11 @@ class WriterProviderStore(ProviderStore[WriterProviderTuple]):
         return writer.write(model, path)
 
 
-def _pick_by_priority(tuples: list[_T]) -> _T:
+def _pick_by_priority(tuples: list[_S]) -> _S:
     return max(tuples, key=lambda x: x.priority)
 
 
-def _pick_from_list(choices: list[_T], plugin: str | None) -> _T:
+def _pick_from_list(choices: list[_S], plugin: str | None) -> _S:
     if plugin is None:
         out = _pick_by_priority(choices)
     else:
@@ -176,19 +169,15 @@ def _pick_from_list(choices: list[_T], plugin: str | None) -> _T:
                 out = each
                 break
         else:
-            _LOGGER.warning(f"Plugin {plugin} not found, using the default one.")
+            warnings.warn(
+                f"Plugin {plugin} not found, using the default one.",
+                UserWarning,
+                stacklevel=2,
+            )
             out = _pick_by_priority(choices)
     _LOGGER.debug("Picked: %r", out)
     return out
 
 
-def _warn_failed_provider(provider, e: Exception):
-    return _LOGGER.error(f"Error in reader provider {provider!r}: {e}")
-
-
-def read_and_update_source(reader: ReaderTuple, source: PathOrPaths) -> WidgetDataModel:
-    """Update the `method` attribute if it is not set."""
-    model = reader.read(source)
-    if len(model.workflow) == 0:
-        model = model._with_source(source=source, plugin=reader.plugin)
-    return model
+def _warn_failed_provider(plugin_obj, e: Exception):
+    return _LOGGER.error(f"Error in {plugin_obj!r}: {e}")

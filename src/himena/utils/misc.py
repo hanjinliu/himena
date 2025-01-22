@@ -1,6 +1,7 @@
 from __future__ import annotations
-from typing import TypeVar, Iterator
+
 import re
+from typing import TypeVar, Iterator, NamedTuple
 
 _C = TypeVar("_C", bound=type)
 
@@ -98,3 +99,20 @@ def ansi2html(
     if in_span:
         yield "</span>"
         in_span = False
+
+
+class PluginInfo(NamedTuple):
+    """Tuple that describes a plugin function."""
+
+    module: str
+    name: str
+
+    def to_str(self) -> str:
+        """Return the string representation of the plugin."""
+        return f"{self.module}.{self.name}"
+
+    @classmethod
+    def from_str(cls, s: str) -> PluginInfo:
+        """Create a PluginInfo from a string."""
+        mod_name, func_name = s.rsplit(".", 1)
+        return PluginInfo(module=mod_name, name=func_name)

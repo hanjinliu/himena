@@ -1,11 +1,7 @@
-from pathlib import Path
-
 import numpy as np
 from himena import new_window, WidgetDataModel
 from himena.consts import StandardType
 from himena.plugins import (
-    register_reader_provider,
-    register_writer_provider,
     register_function,
     register_widget_class,
 )
@@ -51,31 +47,6 @@ class WgpuImageWidget(WgpuWidget):
 
     def to_model(self) -> WidgetDataModel:
         return WidgetDataModel(value=self._arr, type=StandardType.IMAGE)
-
-# `@register_reader_provider` is a decorator that registers a function as one that
-# provides a reader for the given file path.
-@register_reader_provider
-def my_reader_provider(file_path):
-    if Path(file_path).suffix not in {".png", ".jpg", ".jpeg"}:
-        return None
-
-    def _read_image(file_path):
-        im = iio.imread(file_path)
-        return WidgetDataModel(value=im, type=StandardType.IMAGE)
-
-    return _read_image
-
-# `@register_writer_provider` is a decorator that registers a function as one that
-# provides a write for the given data model.
-@register_writer_provider
-def my_writer_provider(model: WidgetDataModel, path: Path):
-    if not isinstance(model.value, np.ndarray):
-        return None
-    if path.suffix not in {".png", ".jpg", ".jpeg"}:
-        return None
-    def _write_image(model: WidgetDataModel):
-        iio.imwrite(path, model.value)
-    return _write_image
 
 
 @register_function(title="Gaussian Filter", types=StandardType.IMAGE, menus="tools/image_processing")

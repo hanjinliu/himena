@@ -21,7 +21,7 @@ from himena import _providers
 from himena._descriptors import SaveToPath
 from himena.consts import ParametricWidgetProtocolNames as PWPN
 from himena.layout import Layout, VBoxLayout, HBoxLayout, VStackLayout
-from himena.plugins import _checker
+from himena.plugins import _checker, ReaderPlugin
 from himena.types import (
     FutureInfo,
     Margins,
@@ -500,21 +500,18 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         return out
 
     def _paths_to_models(self, file_paths: PathOrPaths, plugin: str | None = None):
-        reader_path_sets: list[tuple[_providers.ReaderTuple, PathOrPaths]] = []
+        reader_path_sets: list[tuple[ReaderPlugin, PathOrPaths]] = []
         ins = _providers.ReaderProviderStore.instance()
         file_paths = _norm_paths(file_paths)
         for file_path in file_paths:
             reader_path_sets.append((ins.pick(file_path, plugin=plugin), file_path))
         models = [
-            _providers.read_and_update_source(reader, file_path)
+            reader.read_and_update_source(file_path)
             for reader, file_path in reader_path_sets
         ]
         ui = self._main_window()._himena_main_window
         ui._recent_manager.append_recent_files(
-            [
-                (fp, reader.plugin.to_str() if reader.plugin else None)
-                for reader, fp in reader_path_sets
-            ]
+            [(fp, reader.plugin_str) for reader, fp in reader_path_sets]
         )
         return models
 

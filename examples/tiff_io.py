@@ -6,18 +6,13 @@ from himena import (
 )
 from himena.consts import StandardType
 from himena.plugins import (
-    register_reader_provider,
-    register_writer_provider,
+    register_reader_plugin,
+    register_writer_plugin,
 )
 from himena.standards.model_meta import ImageMeta
 
-@register_reader_provider
+@register_reader_plugin
 def read_tiff_provider(path: Path):
-    if path.suffix not in (".tif", ".tiff"):
-        return None
-    return read_tif
-
-def read_tif(path: Path):
     with TiffFile(path, mode="r") as tif:
         ijmeta = tif.imagej_metadata
         if ijmeta is None:
@@ -35,14 +30,19 @@ def read_tif(path: Path):
         metadata=ImageMeta(axes=axes)
     )
 
-@register_writer_provider
-def write_tiff_provider(model: WidgetDataModel, path: Path):
-    if model.type is not StandardType.IMAGE:
-        return None
-    return write_tif
+@read_tiff_provider.mark_matcher
+def _(path: Path):
+    if path.suffix in (".tif", ".tiff"):
+        return StandardType.IMAGE
+    return None
 
-def write_tif(model: WidgetDataModel, path: Path):
+@register_writer_plugin
+def write_tiff(model: WidgetDataModel, path: Path):
     return imwrite(path, model.value)
+
+@write_tiff.mark_matcher
+def _(model: WidgetDataModel, path: Path):
+    return model.type == StandardType.IMAGE and path.suffix in (".tif", ".tiff")
 
 if __name__ == "__main__":
     ui = new_window()

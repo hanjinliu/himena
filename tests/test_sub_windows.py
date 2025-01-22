@@ -257,10 +257,13 @@ def test_register_widget(himena_ui: MainWindow):
     assert type(win2.widget) is QCustomTextView
 
 def test_register_folder(himena_ui: MainWindow, sample_dir: Path):
-    from himena.plugins import register_reader_provider
+    from himena.plugins import register_reader_plugin
 
-    def _read(fp: Path):
-        files = list(fp.glob("*.*"))
+    @register_reader_plugin
+    def read_text_with_meta(path: Path):
+        if path.is_file():
+            raise ValueError("Not a folder")
+        files = list(path.glob("*.*"))
         if files[0].name == "meta.txt":
             code, meta = files[1], files[0]
         elif files[1].name == "meta.txt":
@@ -273,13 +276,13 @@ def test_register_folder(himena_ui: MainWindow, sample_dir: Path):
             metadata=meta,
         )
 
-    @register_reader_provider
-    def read_text_with_meta(path: Path):
+    @read_text_with_meta.mark_matcher
+    def _(path: Path):
         if path.is_file():
             return None
         files = list(path.glob("*.*"))
         if len(files) == 2 and "meta.txt" in [f.name for f in files]:
-            return _read
+            return "text.with-meta"
         else:
             return None
 
@@ -387,7 +390,7 @@ def test_dont_use_pickle(himena_ui: MainWindow, tmpdir):
     with pytest.warns(RuntimeWarning):  # no widget class is registered for "myobj"
         himena_ui.add_object(data, type="myobj")
     _set_response(himena_ui, tmpdir / "test.txt")
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # No writer function available for "myobj"
         himena_ui.exec_action("save")
     _set_response(himena_ui, tmpdir / "test.pickle")
     himena_ui.exec_action("save")

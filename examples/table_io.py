@@ -6,7 +6,7 @@ from himena import (
     new_window,
     WidgetDataModel,
 )
-from himena.plugins import register_reader_provider, register_writer_provider, register_widget_class
+from himena.plugins import register_reader_plugin, register_writer_plugin, register_widget_class
 
 PANDAS_TABLE_TYPE = "table.pandas"
 
@@ -36,35 +36,37 @@ class DataFrameWidget(QtW.QTableWidget):
     def to_model(self) -> WidgetDataModel:
         return self._data_model
 
-# `@register_reader_provider` is a decorator that registers a function as one that
-# provides a reader for the given file path.
-@register_reader_provider
-def my_reader_provider(file_path: Path):
+# `@register_reader_plugin` is a decorator that registers a function as a reader.
+# A `@reader.mark_matcher` decorator must follow to define a matcher function.
+@register_reader_plugin
+def my_reader(file_path: Path):
     if file_path.suffix == ".csv":
-        def _read(file_path):
-            df = pd.read_csv(file_path)
-            return WidgetDataModel(value=df, type=PANDAS_TABLE_TYPE)
+        df = pd.read_csv(file_path)
+        return WidgetDataModel(value=df, type=PANDAS_TABLE_TYPE)
     elif file_path.suffix == ".xlsx":
-        def _read(file_path):
-            df = pd.read_excel(file_path)
-            return WidgetDataModel(value=df, type=PANDAS_TABLE_TYPE)
-    else:
-        return None
-    return _read
+        df = pd.read_excel(file_path)
+        return WidgetDataModel(value=df, type=PANDAS_TABLE_TYPE)
+    raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
-# `@register_writer_provider` is a decorator that registers a function as one that
-# provides a write for the given data model.
-@register_writer_provider
-def my_writer_provider(model: WidgetDataModel[pd.DataFrame], path: Path):
+@my_reader.mark_matcher
+def _(file_path: Path):
+    if file_path.suffix in (".csv", ".xlsx"):
+        return PANDAS_TABLE_TYPE
+    return None
+
+# `@register_writer_plugin` is a decorator that registers a function as a writer.
+# A `@writer.mark_matcher` decorator must follow to define a matcher function.
+@register_writer_plugin
+def my_writer(model: WidgetDataModel[pd.DataFrame], path: Path):
     if path.suffix == ".csv":
-        def _write(model: WidgetDataModel[pd.DataFrame]):
-            model.value.to_csv(path, index=False)
+        model.value.to_csv(path, index=False)
     elif path.suffix == ".xlsx":
-        def _write(model: WidgetDataModel[pd.DataFrame]):
-            model.value.to_excel(path, index=False)
-    else:
-        return None
-    return _write
+        model.value.to_excel(path, index=False)
+    raise ValueError(f"Unsupported file type: {path.suffix}")
+
+@my_writer.mark_matcher
+def _(model: WidgetDataModel[pd.DataFrame], path: Path):
+    return path.suffix in (".csv", ".xlsx")
 
 def main():
     ui = new_window()

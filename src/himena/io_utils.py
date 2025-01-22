@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from pathlib import Path
 from himena.types import WidgetDataModel
-from himena._providers import ReaderProviderStore, WriterProviderStore, ReaderTuple
+from himena._providers import ReaderProviderStore, WriterProviderStore
+
+if TYPE_CHECKING:
+    from himena.plugins import ReaderPlugin
 
 
 def read(
@@ -17,7 +21,7 @@ def read(
     return ins.run(Path(path), plugin=plugin)
 
 
-def get_readers(path: str | Path, min_priority: int = 0) -> list[ReaderTuple]:
+def get_readers(path: str | Path, min_priority: int = 0) -> list[ReaderPlugin]:
     """Get the list of readers that can read the file."""
     ins = ReaderProviderStore.instance()
     return ins.get(Path(path), empty_ok=True, min_priority=min_priority)

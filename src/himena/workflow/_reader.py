@@ -3,6 +3,7 @@ from typing import Iterator, Literal, Any, TYPE_CHECKING
 from pathlib import Path
 import warnings
 from pydantic_compat import Field
+from himena.utils.misc import PluginInfo
 from himena.workflow._base import WorkflowStep
 
 if TYPE_CHECKING:
@@ -50,7 +51,7 @@ class LocalReaderMethod(ReaderMethod):
 
     def run(self) -> "WidgetDataModel[Any]":
         """Get model by importing the reader plugin and actually read the file(s)."""
-        from himena._providers import PluginInfo, ReaderProviderStore
+        from himena._providers import ReaderProviderStore
         from himena.types import WidgetDataModel
         from himena.standards.model_meta import read_metadata
 

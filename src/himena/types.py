@@ -27,7 +27,7 @@ from himena.consts import PYDANTIC_CONFIG_STRICT
 
 if TYPE_CHECKING:
     from typing import Self
-    from himena._providers import PluginInfo
+    from himena.utils.misc import PluginInfo
 
 
 class DockArea(StrEnum):

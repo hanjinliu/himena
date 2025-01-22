@@ -10,8 +10,6 @@ from himena._app_model import AppContext
 __all__ = [
     "new_window",
     "StandardType",
-    "register_reader_provider",
-    "register_writer_provider",
     "MainWindow",
     "WidgetDataModel",
     "ClipboardDataModel",

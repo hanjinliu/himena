@@ -74,7 +74,7 @@ def test_session_stand_alone(tmpdir, himena_ui: MainWindow, sample_dir):
     tab1.read_file(sample_dir / "text.txt")
     win = tab1.read_file(
         sample_dir / "table.csv",
-        plugin="himena_builtins.io.pandas_reader_provider",
+        plugin="himena_builtins.io.read_as_pandas_dataframe",
     )
     assert isinstance(win.widget, _qtw.QDataFrameView)
     win.widget.selection_model.set_ranges([(slice(1, 3), slice(1, 2))])

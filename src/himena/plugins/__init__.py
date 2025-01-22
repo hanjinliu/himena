@@ -6,7 +6,12 @@ from himena.plugins.widget_class import (
 )
 from himena.plugins._checker import validate_protocol
 from himena.plugins._signature import configure_gui
-from himena.plugins.io import register_reader_provider, register_writer_provider
+from himena.plugins.io import (
+    register_reader_plugin,
+    register_writer_plugin,
+    ReaderPlugin,
+    WriterPlugin,
+)
 from himena.plugins.actions import (
     register_function,
     configure_submenu,
@@ -24,12 +29,14 @@ __all__ = [
     "configure_gui",
     "get_plugin_interface",
     "install_plugins",
-    "register_reader_provider",
-    "register_writer_provider",
+    "register_reader_plugin",
+    "register_writer_plugin",
     "register_function",
     "register_dock_widget_action",
     "register_widget_class",
     "register_conversion_rule",
     "configure_submenu",
     "AppActionRegistry",
+    "ReaderPlugin",
+    "WriterPlugin",
 ]

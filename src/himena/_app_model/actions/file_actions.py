@@ -1,7 +1,6 @@
 from concurrent.futures import Future
 import datetime
 from pathlib import Path
-from typing import Callable
 from logging import getLogger
 from app_model.types import (
     KeyBindingRule,
@@ -13,7 +12,7 @@ from app_model.types import (
 from himena._data_wrappers import wrap_array
 from himena._descriptors import SaveToNewPath
 from himena.consts import StandardType, MenuId
-from himena.plugins import configure_gui
+from himena.plugins import configure_gui, ReaderPlugin
 from himena.standards.model_meta import ImageMeta
 from himena.widgets import MainWindow, SubWindow
 from himena import _providers, workflow as _wf
@@ -37,10 +36,6 @@ SETTINGS_GROUP = "31_settings"
 COPY_SCR_SHOT = "00_copy-screenshot"
 SAVE_SCR_SHOT = "01_save-screenshot"
 EXIT_GROUP = "99_exit"
-
-
-def _name_of(f: Callable) -> str:
-    return getattr(f, "__name__", str(f))
 
 
 @ACTIONS.append_from_fn(
@@ -67,7 +62,7 @@ def _get_reader_options(file_path: Path) -> dict:
 
     # prepare reader plugin choices
     choices_reader = sorted(
-        [(f"{_name_of(r.reader)}\n({r.plugin.name})", r) for r in readers],
+        [(f"{r.__name__}\n({r.plugin.name})", r) for r in readers],
         key=lambda x: x[1].priority,
         reverse=True,
     )
@@ -80,23 +75,21 @@ def _get_reader_options(file_path: Path) -> dict:
 
 def _open_file_using_reader(
     file_path,
-    reader: _providers.ReaderTuple,
+    reader: ReaderPlugin,
     ui: MainWindow | None = None,
+    editable: bool = True,
 ) -> WidgetDataModel:
-    model = _providers.read_and_update_source(reader, file_path)
-    if reader.plugin is not None:
-        plugin = reader.plugin.to_str()
-    else:
-        plugin = None
+    model = reader.read_and_update_source(file_path)
+    plugin_str = reader.plugin_str
     if ui:
-        ui._recent_manager.append_recent_files([(file_path, plugin)])
+        ui._recent_manager.append_recent_files([(file_path, plugin_str)])
     wf = _wf.LocalReaderMethod(
         path=file_path,
-        plugin=plugin,
+        plugin=plugin_str,
         output_model_type=model.type,
     ).construct_workflow()
     model.workflow = wf
-    model.editable = False
+    model.editable = editable
     return model
 
 
@@ -118,7 +111,7 @@ def open_file_using_from_dialog(ui: MainWindow) -> Parametric:
         raise Cancelled
 
     @configure_gui(reader=_get_reader_options(file_path), run_async=True)
-    def choose_a_plugin(reader: _providers.ReaderTuple) -> WidgetDataModel:
+    def choose_a_plugin(reader: ReaderPlugin) -> WidgetDataModel:
         _LOGGER.info("Reading file %s using %r", file_path, reader)
         return _open_file_using_reader(file_path, reader, ui)
 
@@ -170,9 +163,9 @@ def watch_file_using_from_dialog(ui: MainWindow) -> Parametric:
         raise Cancelled
 
     @configure_gui(reader=_get_reader_options(file_path))
-    def choose_a_plugin(reader: _providers.ReaderTuple) -> None:
+    def choose_a_plugin(reader: ReaderPlugin) -> None:
         _LOGGER.info("Watch file %s using %r", file_path, reader)
-        model = _open_file_using_reader(file_path, reader)
+        model = _open_file_using_reader(file_path, reader, editable=False)
         win = ui.add_data_model(model)
         win._switch_to_file_watch_mode()
         return None
@@ -229,7 +222,7 @@ def save_as_using_from_dialog(ui: MainWindow, sub_win: SubWindow) -> Future:
     writers = ins.get(model, Path(save_path), min_priority=-float("inf"))
 
     # prepare reader plugin choices
-    choices_writer = [(f"{_name_of(w.writer)}\n({w.plugin.name})", w) for w in writers]
+    choices_writer = [(f"{w.__name__}\n({w.plugin.name})", w) for w in writers]
 
     writer = ui.exec_choose_one_dialog(
         title="Choose a plugin",

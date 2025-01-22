@@ -3,7 +3,7 @@
 This section tells you how to extend the "Open File(s) ..." and "Save ..." actions so
 that it works for any file types you'd like to use in `himena`.
 
-## Reader/Writer Providers
+## Reader/Writer Plugins
 
 `himena` uses reader/writer providers to choose the reader/writer function for the
 given file path. A reader/writer provider is a function that return A reader/writer
