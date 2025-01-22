@@ -3,7 +3,7 @@ from pydantic_compat import BaseModel, Field, field_validator
 import numpy as np
 from numpy.typing import NDArray
 
-from himena._utils import ansi2html
+from himena.utils.misc import ansi2html
 
 
 class IpynbStreamOutput(BaseModel):

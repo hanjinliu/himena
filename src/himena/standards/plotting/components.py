@@ -3,7 +3,7 @@ from cmap import Color
 from pydantic_compat import BaseModel, Field, field_validator
 from pydantic import field_serializer
 from himena.consts import PYDANTIC_CONFIG_STRICT
-from himena._utils import iter_subclasses
+from himena.utils.misc import iter_subclasses
 
 
 class StyledText(BaseModel):

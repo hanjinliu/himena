@@ -8,7 +8,7 @@ import numpy as np
 from typing import TYPE_CHECKING, Any, Callable, Iterable, Iterator, MutableSequence
 from himena.types import Size, WindowRect, Margins
 from himena import anchor as _anc
-from himena._utils import iter_subclasses
+from himena.utils.misc import iter_subclasses
 
 
 if TYPE_CHECKING:

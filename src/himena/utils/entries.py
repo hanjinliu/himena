@@ -24,7 +24,12 @@ def iter_plugin_info() -> Iterator[HimenaPluginInfo]:
     for dist in distributions():
         for ep in dist.entry_points:
             if ep.group == ENTRY_POINT_GROUP_NAME:
-                yield HimenaPluginInfo(ep.name, ep.value, dist.version, dist.name)
+                yield HimenaPluginInfo(
+                    name=ep.name,
+                    place=ep.value,
+                    version=dist.version,
+                    distribution=dist.name,
+                )
 
 
 def is_submodule(string: str, supertype: str) -> bool:

@@ -4,7 +4,7 @@ from functools import cache
 from typing import TYPE_CHECKING
 from pydantic_compat import BaseModel, Field
 from himena.types import Rect
-from himena._utils import iter_subclasses
+from himena.utils.misc import iter_subclasses
 
 if TYPE_CHECKING:
     from typing import Self

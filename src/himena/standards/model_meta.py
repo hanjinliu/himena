@@ -5,7 +5,7 @@ import warnings
 import numpy as np
 from pydantic_compat import BaseModel, Field, field_validator
 from himena.standards import roi
-from himena._utils import iter_subclasses
+from himena.utils.misc import iter_subclasses
 
 if TYPE_CHECKING:
     from pydantic import ValidationInfo

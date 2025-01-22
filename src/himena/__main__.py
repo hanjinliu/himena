@@ -109,6 +109,9 @@ def _main(
                 elif is_submodule(info.place, plugin_name):
                     plugins_to_write.append(info.place)
                     infos_installed.append(info)
+                elif info.distribution == plugin_name:
+                    plugins_to_write.append(info.place)
+                    infos_installed.append(info)
 
             for plugin_name in uninstall:
                 if (
@@ -117,14 +120,22 @@ def _main(
                 ):
                     plugins_to_write.remove(info.place)
                     infos_uninstalled.append(info)
+                elif info.distribution == plugin_name:
+                    if info.place in plugins_to_write:
+                        plugins_to_write.remove(info.place)
+                        infos_uninstalled.append(info)
+                    else:
+                        print(f"Plugin {plugin_name!r} is not installed.")
         if infos_installed:
             print("Plugins installed:")
             for info in infos_installed:
-                print(f"  - {info.name} ({info.place}, v{info.version})")
+                print(f"- {info.name} ({info.place}, v{info.version})")
         if infos_uninstalled:
             print("Plugins uninstalled:")
             for info in infos_uninstalled:
-                print(f"  - {info.name} ({info.place}, v{info.version})")
+                print(f"- {info.name} ({info.place}, v{info.version})")
+        elif len(infos_uninstalled) == 0 and len(infos_installed) == 0:
+            print("No plugins are installed or uninstalled.")
         new_prof = app_profile.with_plugins(plugins_to_write)
         new_prof.save()
         return

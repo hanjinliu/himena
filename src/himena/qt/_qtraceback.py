@@ -10,7 +10,7 @@ from qtpy import QtWidgets as QtW, QtGui, QtCore
 from psygnal import EmitLoopError
 
 from himena.consts import MonospaceFontFamily
-from himena._utils import ansi2html
+from himena.utils.misc import ansi2html
 
 if TYPE_CHECKING:
     from types import TracebackType
