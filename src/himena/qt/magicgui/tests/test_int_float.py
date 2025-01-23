@@ -1,5 +1,5 @@
 import pytest
-from himena.qt._magicgui._basic_widgets import float_to_str
+from himena.qt.magicgui._basic_widgets import float_to_str
 
 @pytest.mark.parametrize(
     "value, expected",

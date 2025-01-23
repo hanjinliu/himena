@@ -9,7 +9,8 @@ from pydantic_compat import BaseModel, Field
 from himena._descriptors import NoNeedToSave, SaveToPath
 from himena._utils import get_widget_class_id
 from himena.layout import construct_layout
-from himena.types import WindowState, WindowRect, WidgetDataModel, is_subtype
+from himena.types import WindowState, WindowRect, WidgetDataModel
+from himena.utils.misc import is_subtype
 from himena import anchor
 from himena._providers import ReaderProviderStore
 from himena.widgets._wrapper import ParametricWindow

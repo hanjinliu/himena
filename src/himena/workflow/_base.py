@@ -56,3 +56,8 @@ class WorkflowStep(BaseModel):
         from himena.widgets import current_instance
 
         return current_instance().model_app.injection_store
+
+    def construct_workflow(self) -> "Workflow":
+        from himena.workflow import Workflow
+
+        return Workflow(steps=[self])

@@ -170,7 +170,7 @@ def init_application(app: HimenaApplication) -> HimenaApplication:
                 win._widget_workflow = CommandExecution(
                     command_id=tracker.command_id,
                     contexts=tracker.contexts,
-                )
+                ).construct_workflow()
         return None
 
     @app.injection_store.mark_processor

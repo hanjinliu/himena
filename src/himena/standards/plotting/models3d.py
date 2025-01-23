@@ -27,7 +27,7 @@ class Mesh3D(BasePlotModel):
     edge: Edge = Field(default_factory=Edge, description="Properties of the edges.")
 
     def plot_option_dict(self) -> dict[str, Any]:
-        from himena.qt._magicgui import EdgePropertyEdit, FacePropertyEdit
+        from himena.qt.magicgui import EdgePropertyEdit, FacePropertyEdit
 
         return {
             "name": {"widget_type": "LineEdit", "value": self.name},

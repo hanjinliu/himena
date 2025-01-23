@@ -23,6 +23,7 @@ from himena.workflow import (
     parse_parameter,
 )
 from himena.utils.enum import StrEnum
+from himena.utils.misc import is_subtype
 from himena.consts import PYDANTIC_CONFIG_STRICT
 
 if TYPE_CHECKING:
@@ -367,27 +368,6 @@ class DragDataModel(BaseModel):
             return True
         return False
 
-
-def is_subtype(string: str, supertype: str) -> bool:
-    """Check if the type is a subtype of the given type.
-
-    >>> is_subtype_of("text", "text")  # True
-    >>> is_subtype_of("text.plain", "text")  # True
-    >>> is_subtype_of("text.plain", "text.html")  # False
-    """
-    string_parts = string.split(".")
-    supertype_parts = supertype.split(".")
-    if len(supertype_parts) > len(string_parts):
-        return False
-    return string_parts[: len(supertype_parts)] == supertype_parts
-
-
-ReaderFunction = Callable[["Path | list[Path]"], WidgetDataModel]
-WriterFunction = Callable[[WidgetDataModel, Path], None]
-ReaderProvider = Callable[
-    ["Path | list[Path]"], ReaderFunction | tuple[ReaderFunction, str]
-]
-WriterProvider = Callable[[WidgetDataModel], WriterFunction]
 
 _V = TypeVar("_V", int, float)
 

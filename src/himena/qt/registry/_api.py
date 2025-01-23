@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import Callable, TypeVar, overload
 
-from himena.types import is_subtype, WidgetClassTuple
+from himena.types import WidgetClassTuple
+from himena.utils.misc import is_subtype
 from himena.qt.registry._widgets import QFallbackWidget
 
 

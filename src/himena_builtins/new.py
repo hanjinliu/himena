@@ -96,7 +96,7 @@ def new_draw_canvas(ui: MainWindow) -> WidgetDataModel:
 def constant_array(ui: MainWindow) -> Parametric:
     """Generate an array filled with a constant value."""
     import numpy as np
-    from himena.qt._magicgui import NumericDTypeEdit
+    from himena.qt.magicgui import NumericDTypeEdit
     from himena.plugins import configure_gui
 
     @configure_gui(dtype={"widget_type": NumericDTypeEdit})

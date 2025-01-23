@@ -5,7 +5,8 @@ from typing import TYPE_CHECKING, Iterable, Literal
 import uuid
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt
-from himena.types import WidgetDataModel, is_subtype
+from himena.types import WidgetDataModel
+from himena.utils.misc import is_subtype
 from himena.qt._qsub_window import QSubWindow, QSubWindowArea, get_subwindow
 from himena.qt._utils import get_main_window
 from himena import _drag

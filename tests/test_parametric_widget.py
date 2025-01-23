@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from himena import WidgetDataModel, MainWindow
 from himena.consts import StandardType
-from himena.qt._magicgui._toggle_switch import ToggleSwitch
+from himena.qt.magicgui._toggle_switch import ToggleSwitch
 from himena.qt._qparametric import QParametricWidget
 from himena.widgets import SubWindow
 

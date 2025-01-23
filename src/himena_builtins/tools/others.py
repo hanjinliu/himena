@@ -10,7 +10,7 @@ import numpy as np
 from himena._data_wrappers._dataframe import wrap_dataframe
 from himena._descriptors import NoNeedToSave
 from himena.plugins import register_function, configure_gui, widget_classes
-from himena.types import Parametric, WidgetDataModel, is_subtype
+from himena.types import Parametric, WidgetDataModel
 from himena.consts import StandardType, MonospaceFontFamily
 from himena.widgets import SubWindow, MainWindow, ParametricWindow
 from himena.workflow import Workflow
@@ -155,7 +155,7 @@ def filter_model_list(model: WidgetDataModel) -> Parametric:
                 continue
             if unwrap_lazy_objects and m.type == StandardType.LAZY:
                 m = unwrap_lazy_model(m)
-            if model_type and not is_subtype(m.type, model_type):
+            if model_type and not m.is_subtype_of(model_type):
                 continue
             if title_contains and title_contains not in m.title:
                 continue
@@ -226,16 +226,16 @@ def exec_workflow(model: WidgetDataModel) -> None:
 def show_statistics(model: WidgetDataModel) -> WidgetDataModel:
     """Show the statistics of the data."""
     value = model.value
-    if is_subtype(model.type, StandardType.TEXT):
+    if model.is_subtype_of(StandardType.TEXT):
         value_str = str(value)
         nchars = len(value_str)
         nlines = len(value_str.splitlines())
         out = (
             f"<b>Number of characters:</b> {nchars}<br><b>Number of lines:</b> {nlines}"
         )
-    elif is_subtype(model.type, StandardType.TABLE):
+    elif model.is_subtype_of(StandardType.TABLE):
         out = _statistics_table(value)
-    elif is_subtype(model.type, StandardType.DATAFRAME):
+    elif model.is_subtype_of(StandardType.DATAFRAME):
         df = wrap_dataframe(value)
         nr, nc = df.shape
         columns = df.column_names()
@@ -257,14 +257,14 @@ def show_statistics(model: WidgetDataModel) -> WidgetDataModel:
                 stats.append(f"<b>{c!r}</b>: True ... {ntrue}/{len(ar)}")
         stats = "<br>" + "<br>".join(stats)
         out = shape + dtypes + stats
-    elif is_subtype(model.type, StandardType.ARRAY):
+    elif model.is_subtype_of(StandardType.ARRAY):
         if not isinstance(value, np.ndarray):
             raise ValueError(f"Expected a numpy array but got {type(value)}")
         if value.dtype.names:
             out = f"<b>Shape:</b> {value.shape}"
         else:
             out = f"<b>Shape:</b> {value.shape}<br><b>Min:</b> {value.min()}<br><b>Max:</b> {value.max()}<br><b>Mean:</b> {value.mean()}<br><b>Std:</b> {value.std(ddof=1)}"
-    elif is_subtype(model.type, StandardType.EXCEL):
+    elif model.is_subtype_of(StandardType.EXCEL):
         value = model.value
         if not isinstance(value, dict):
             raise ValueError(f"Expected a dict but got {type(out)}")

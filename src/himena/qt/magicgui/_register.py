@@ -1,18 +1,18 @@
 from magicgui.type_map import TypeMap
-from himena.qt._magicgui._basic_widgets import (
+from himena.qt.magicgui._basic_widgets import (
     IntEdit,
     FloatEdit,
     IntListEdit,
     FloatListEdit,
 )
-from himena.qt._magicgui._modeldrop import (
+from himena.qt.magicgui._modeldrop import (
     ModelDrop,
     ModelListDrop,
     SubWindowDrop,
     SubWindowListDrop,
 )
-from himena.qt._magicgui._toggle_switch import ToggleSwitch
-from himena.qt._magicgui._color import ColorEdit, ColormapEdit
+from himena.qt.magicgui._toggle_switch import ToggleSwitch
+from himena.qt.magicgui._color import ColorEdit, ColormapEdit
 from himena.types import WidgetDataModel
 from himena.widgets import SubWindow
 from cmap import Color, Colormap

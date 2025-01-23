@@ -2,14 +2,11 @@ from __future__ import annotations
 
 from functools import wraps
 from pathlib import Path
-from typing import Any, Callable, ForwardRef, TypeVar, overload
-from himena.types import WidgetDataModel, ReaderProvider, WriterProvider
+from typing import Any, Callable, ForwardRef, overload
+from himena.types import WidgetDataModel
 from himena.utils.misc import PluginInfo
 from himena._providers import ReaderProviderStore, WriterProviderStore
 from himena._utils import get_widget_data_model_type_arg
-
-_RP = TypeVar("_RP", bound=ReaderProvider)
-_WP = TypeVar("_WP", bound=WriterProvider)
 
 
 def _plugin_info_from_func(func: Callable) -> PluginInfo | None:

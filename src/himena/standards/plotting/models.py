@@ -20,7 +20,7 @@ class Scatter(BasePlotModel):
     )
 
     def plot_option_dict(self) -> dict[str, Any]:
-        from himena.qt._magicgui import EdgePropertyEdit, FacePropertyEdit
+        from himena.qt.magicgui import EdgePropertyEdit, FacePropertyEdit
 
         return {
             "name": {"widget_type": "LineEdit", "value": self.name},
@@ -40,7 +40,7 @@ class Line(BasePlotModel):
     marker: Scatter | None = Field(None, description="Marker of the line.")
 
     def plot_option_dict(self) -> dict[str, Any]:
-        from himena.qt._magicgui import EdgePropertyEdit
+        from himena.qt.magicgui import EdgePropertyEdit
 
         return {
             "name": {"widget_type": "LineEdit", "value": self.name},
@@ -62,7 +62,7 @@ class Bar(BasePlotModel):
     edge: Edge = Field(default_factory=Edge, description="Properties of the bars.")
 
     def plot_option_dict(self) -> dict[str, Any]:
-        from himena.qt._magicgui import EdgePropertyEdit, FacePropertyEdit
+        from himena.qt.magicgui import EdgePropertyEdit, FacePropertyEdit
 
         return {
             "name": {"widget_type": "LineEdit", "value": self.name},
@@ -86,7 +86,7 @@ class ErrorBar(BasePlotModel):
     )
 
     def plot_option_dict(self) -> dict[str, Any]:
-        from himena.qt._magicgui import EdgePropertyEdit
+        from himena.qt.magicgui import EdgePropertyEdit
 
         return {
             "name": {"widget_type": "LineEdit", "value": self.name},
@@ -108,7 +108,7 @@ class Band(BasePlotModel):
     edge: Edge = Field(default_factory=Edge, description="Properties of the band edge.")
 
     def plot_option_dict(self) -> dict[str, Any]:
-        from himena.qt._magicgui import EdgePropertyEdit, FacePropertyEdit
+        from himena.qt.magicgui import EdgePropertyEdit, FacePropertyEdit
 
         return {
             "name": {"widget_type": "LineEdit", "value": self.name},
@@ -132,7 +132,7 @@ class Span(BasePlotModel):
     edge: Edge = Field(default_factory=Edge, description="Properties of the span edge.")
 
     def plot_option_dict(self) -> dict[str, Any]:
-        from himena.qt._magicgui import EdgePropertyEdit, FacePropertyEdit
+        from himena.qt.magicgui import EdgePropertyEdit, FacePropertyEdit
 
         return {
             "name": {"widget_type": "LineEdit", "value": self.name},
@@ -166,7 +166,7 @@ class Histogram(BasePlotModel):
     )
 
     def plot_option_dict(self) -> dict[str, Any]:
-        from himena.qt._magicgui import (
+        from himena.qt.magicgui import (
             EdgePropertyEdit,
             FacePropertyEdit,
             FloatListEdit,

@@ -13,7 +13,7 @@ from himena import _drag
 from himena.consts import MonospaceFontFamily
 from himena.types import DragDataModel, WidgetDataModel
 from himena.widgets import MainWindow, set_status_tip, notify
-from himena.qt._magicgui._toggle_switch import QLabeledToggleSwitch
+from himena.qt.magicgui._toggle_switch import QLabeledToggleSwitch
 from himena_builtins.qt.widgets._shared import labeled
 
 if TYPE_CHECKING:

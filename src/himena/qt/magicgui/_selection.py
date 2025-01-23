@@ -59,8 +59,8 @@ class SelectionEdit(ValuedContainerWidget[SelectionType]):
             self._line_edit.value = ""
         else:
             rsl, csl = value
-            r0, r1 = _parse_selection(rsl)
-            c0, c1 = _parse_selection(csl)
+            r0, r1 = rsl
+            c0, c1 = csl
             r0 = _index_to_str(r0)
             r1 = _index_to_str(r1)
             c0 = _index_to_str(c0)
@@ -77,11 +77,3 @@ def _str_to_index(s: str) -> int | None:
     if s0 == "":
         return None
     return int(s0)
-
-
-def _parse_selection(sl: slice | tuple[int, int]) -> tuple[int, int]:
-    if isinstance(sl, slice):
-        if sl.step not in (None, 1):
-            raise ValueError(f"Slice must be single step, got {sl}")
-        return sl.start, sl.stop
-    return sl

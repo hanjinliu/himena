@@ -5,9 +5,9 @@ from magicgui.types import Undefined
 from magicgui.widgets import LineEdit, ComboBox
 from magicgui.widgets.bases import ValuedContainerWidget, ValueWidget
 from cmap import Colormap
-from himena.qt._magicgui._color import ColorEdit, ColormapEdit
-from himena.qt._magicgui._basic_widgets import FloatEdit
-from himena.qt._magicgui._toggle_switch import ToggleSwitch
+from himena.qt.magicgui._color import ColorEdit, ColormapEdit
+from himena.qt.magicgui._basic_widgets import FloatEdit
+from himena.qt.magicgui._toggle_switch import ToggleSwitch
 from himena._utils import to_color_or_colormap
 from himena.consts import MonospaceFontFamily
 
@@ -256,7 +256,7 @@ class AxisPropertyEdit(ValuedContainerWidget["AxisPropertyDict"]):
 
 class DictEdit(ValuedContainerWidget[dict]):
     def __init__(self, options: dict[str, dict], value=Undefined, **kwargs):
-        from himena.qt._magicgui import get_type_map
+        from himena.qt.magicgui import get_type_map
 
         type_map = get_type_map()
         self._widget_dict: dict[str, ValueWidget] = {}

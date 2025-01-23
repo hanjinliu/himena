@@ -1,4 +1,4 @@
-from himena.qt._magicgui._selection import SelectionEdit
+from himena.qt.magicgui._selection import SelectionEdit
 
 def test_string_parsing():
     widget = SelectionEdit(value=((3, 6), (5, 10)))

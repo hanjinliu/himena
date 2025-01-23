@@ -2,7 +2,7 @@ from himena.consts import StandardType
 from himena.widgets import SubWindow
 from himena.plugins import register_function, configure_gui
 from himena.types import Parametric
-from himena.qt._magicgui import ColorEdit
+from himena.qt.magicgui import ColorEdit
 from qtpy import QtGui
 from cmap import Color
 from .image import QImageView

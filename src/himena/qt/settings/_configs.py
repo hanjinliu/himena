@@ -8,7 +8,7 @@ from magicgui import widgets as mgw
 from psygnal import throttled
 from himena.profile import AppProfile
 from himena.plugins import AppActionRegistry
-from himena.qt._magicgui import get_type_map
+from himena.qt.magicgui import get_type_map
 
 
 if TYPE_CHECKING:

@@ -116,3 +116,17 @@ class PluginInfo(NamedTuple):
         """Create a PluginInfo from a string."""
         mod_name, func_name = s.rsplit(".", 1)
         return PluginInfo(module=mod_name, name=func_name)
+
+
+def is_subtype(string: str, supertype: str) -> bool:
+    """Check if the type is a subtype of the given type.
+
+    >>> is_subtype_of("text", "text")  # True
+    >>> is_subtype_of("text.plain", "text")  # True
+    >>> is_subtype_of("text.plain", "text.html")  # False
+    """
+    string_parts = string.split(".")
+    supertype_parts = supertype.split(".")
+    if len(supertype_parts) > len(string_parts):
+        return False
+    return string_parts[: len(supertype_parts)] == supertype_parts

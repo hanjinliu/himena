@@ -662,7 +662,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         preview: bool = False,
     ) -> QtW.QWidget:
         from magicgui.signature import MagicSignature
-        from himena.qt._magicgui import ToggleSwitch, get_type_map
+        from himena.qt.magicgui import ToggleSwitch, get_type_map
 
         container = MagicSignature.from_signature(sig).to_container(
             type_map=get_type_map(),

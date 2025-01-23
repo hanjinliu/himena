@@ -1,6 +1,6 @@
 from himena.qt.main_window import MainWindowQt
 from himena.qt.registry import register_widget_class
-from himena.qt._magicgui import register_magicgui_types
+from himena.qt.magicgui import register_magicgui_types
 from himena.qt import settings  # just register
 from himena.qt._utils import drag_model, ndarray_to_qimage, qimage_to_ndarray
 

@@ -5,7 +5,7 @@ import numpy as np
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from typing import Iterator, TYPE_CHECKING, Sequence
 
-from himena.qt._magicgui._toggle_switch import QLabeledToggleSwitch
+from himena.qt.magicgui._toggle_switch import QLabeledToggleSwitch
 from himena.standards import roi
 from himena.consts import StandardType
 from himena.standards.model_meta import ImageRoisMeta

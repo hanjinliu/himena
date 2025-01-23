@@ -3,12 +3,10 @@ import numpy as np
 from himena._data_wrappers._array import wrap_array
 from himena._descriptors import NoNeedToSave
 from himena.plugins import register_function, configure_gui
-from himena.types import Parametric, WidgetDataModel, is_subtype
+from himena.types import Parametric, WidgetDataModel
+from himena.utils.misc import is_subtype
 from himena.consts import StandardType
-from himena.standards.model_meta import (
-    ArrayMeta,
-    ImageMeta,
-)
+from himena.standards.model_meta import ArrayMeta, ImageMeta
 from himena.widgets import set_status_tip, SubWindow
 
 
@@ -89,7 +87,7 @@ def crop_array(model: WidgetDataModel) -> Parametric:
 )
 def crop_array_nd(win: SubWindow) -> Parametric:
     """Crop the array in nD."""
-    from himena.qt._magicgui import SliderRangeGetter
+    from himena.qt.magicgui import SliderRangeGetter
 
     model = win.to_model()
     if is_subtype(model.type, StandardType.IMAGE):  # interpret as an image
@@ -221,7 +219,7 @@ def simple_calculation(model: WidgetDataModel) -> Parametric:
 )
 def array_astype(model: WidgetDataModel) -> Parametric:
     """Convert the data type of the array using `astype` method."""
-    from himena.qt._magicgui import NumericDTypeEdit
+    from himena.qt.magicgui import NumericDTypeEdit
 
     _dtype = str(np.dtype(wrap_array(model.value).dtype))
 

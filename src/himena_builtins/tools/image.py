@@ -107,7 +107,7 @@ def crop_image_multi(model: WidgetDataModel) -> Parametric:
 )
 def crop_image_nd(win: SubWindow) -> Parametric:
     """Crop the image in nD, by drawing a 2D ROI and reading slider values."""
-    from himena.qt._magicgui import SliderRangeGetter
+    from himena.qt.magicgui import SliderRangeGetter
 
     model = win.to_model()
     ndim = wrap_array(model.value).ndim
@@ -323,7 +323,7 @@ def point_rois_to_dataframe(model: WidgetDataModel) -> WidgetDataModel:
     command_id="builtins:set-colormaps",
 )
 def set_colormaps(win: SubWindow) -> Parametric:
-    from himena.qt._magicgui import ColormapEdit
+    from himena.qt.magicgui import ColormapEdit
 
     model = win.to_model()
     meta = _cast_meta(model, ImageMeta).model_copy()

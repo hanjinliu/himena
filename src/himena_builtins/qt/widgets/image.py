@@ -10,7 +10,7 @@ from cmap import Colormap
 from pydantic_compat import BaseModel, Field
 from superqt import ensure_main_thread
 
-from himena.qt._magicgui._toggle_switch import QLabeledToggleSwitch
+from himena.qt.magicgui._toggle_switch import QLabeledToggleSwitch
 from himena_builtins.qt.widgets._image_components._roi_collection import (
     from_standard_roi,
 )

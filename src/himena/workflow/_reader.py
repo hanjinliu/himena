@@ -19,11 +19,6 @@ class NoParentWorkflow(WorkflowStep):
     def iter_parents(self) -> Iterator[int]:
         yield from ()
 
-    def construct_workflow(self) -> "Workflow":
-        from himena.workflow import Workflow
-
-        return Workflow(steps=[self])
-
 
 class ProgrammaticMethod(NoParentWorkflow):
     """Describes that one was created programmatically."""
