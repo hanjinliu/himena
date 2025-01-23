@@ -14,7 +14,12 @@ from himena.qt._magicgui._basic_widgets import (
     FloatListEdit,
 )
 from himena.qt._magicgui._selection import SelectionEdit
-from himena.qt._magicgui._modeldrop import ModelDrop
+from himena.qt._magicgui._modeldrop import (
+    ModelDrop,
+    ModelListDrop,
+    SubWindowDrop,
+    SubWindowListDrop,
+)
 from himena.qt._magicgui._dtypeedit import NumericDTypeEdit
 from himena.qt._magicgui._value_getter import SliderRangeGetter
 
@@ -33,6 +38,9 @@ __all__ = [
     "FloatListEdit",
     "DictEdit",
     "ModelDrop",
+    "ModelListDrop",
+    "SubWindowDrop",
+    "SubWindowListDrop",
     "NumericDTypeEdit",
     "SelectionEdit",
     "NumericDTypeEdit",

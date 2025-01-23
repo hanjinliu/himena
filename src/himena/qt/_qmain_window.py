@@ -18,7 +18,7 @@ from himena._app_model import _formatter, HimenaApplication
 from himena.qt._qnotification import QJobStack, QNotificationWidget, QWhatsThisWidget
 from himena.qt._qtab_widget import QTabWidget
 from himena.qt._qstatusbar import QStatusBar
-from himena.qt._qsub_window import QSubWindow, QSubWindowArea
+from himena.qt._qsub_window import QSubWindow, QSubWindowArea, get_subwindow
 from himena.qt._qdock_widget import QDockWidget
 from himena.qt._qcommand_palette import QCommandPalette
 from himena.qt._qcontrolstack import QControlStack
@@ -357,7 +357,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         return self._tab_widget.widget_area(i_tab)
 
     def _tab_hash_for_window(self, widget: QtW.QWidget) -> Hashable:
-        mdiarea = _get_subwindow(widget)._qt_mdiarea()
+        mdiarea = get_subwindow(widget)._qt_mdiarea()
         assert isinstance(mdiarea, QSubWindowArea)
         return mdiarea
 
@@ -392,11 +392,11 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         return self._tab_widget.setTabText(i_tab, title)
 
     def _window_title(self, widget: QtW.QWidget) -> str:
-        window = _get_subwindow(widget)
+        window = get_subwindow(widget)
         return window.windowTitle()
 
     def _set_window_title(self, widget: QtW.QWidget, title: str) -> None:
-        window = _get_subwindow(widget)
+        window = get_subwindow(widget)
         return window.setWindowTitle(title)
 
     def _list_widget_class(self, type: str):
@@ -534,7 +534,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         return None
 
     def _window_state(self, widget: QtW.QWidget) -> WindowState:
-        return _get_subwindow(widget).state
+        return get_subwindow(widget).state
 
     def _set_window_state(
         self,
@@ -542,11 +542,11 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         state: WindowState,
         inst: BackendInstructions,
     ) -> None:
-        _get_subwindow(widget)._update_window_state(state, animate=inst.animate)
+        get_subwindow(widget)._update_window_state(state, animate=inst.animate)
         return None
 
     def _window_rect(self, widget: QtW.QWidget) -> WindowRect:
-        geo = _get_subwindow(widget).geometry()
+        geo = get_subwindow(widget).geometry()
         return WindowRect(geo.x(), geo.y(), geo.width(), geo.height())
 
     def _set_window_rect(
@@ -557,9 +557,9 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     ) -> None:
         qrect = QtCore.QRect(rect.left, rect.top, rect.width, rect.height)
         if inst.animate:
-            _get_subwindow(widget)._set_geometry_animated(qrect)
+            get_subwindow(widget)._set_geometry_animated(qrect)
         else:
-            _get_subwindow(widget).setGeometry(qrect)
+            get_subwindow(widget).setGeometry(qrect)
         return None
 
     def _area_size(self) -> tuple[int, int]:
@@ -785,13 +785,6 @@ def _is_root_menu_id(app: HimenaApplication, menu_id: str) -> bool:
     if menu_id in (MenuId.TOOLBAR, app.menus.COMMAND_PALETTE_ID):
         return False
     return "/" not in menu_id.replace("//", "")
-
-
-def _get_subwindow(widget: QtW.QWidget) -> QSubWindow:
-    window = widget.parentWidget().parentWidget().parentWidget()
-    if not isinstance(window, QSubWindow):
-        raise ValueError(f"Widget {widget!r} is not in a sub-window.")
-    return window
 
 
 def _ext_to_filter(ext: str) -> str:

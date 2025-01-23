@@ -195,3 +195,13 @@ def test_mouse_events(himena_ui: MainWindowQt, qtbot: QtBot):
     qtbot.mouseMove(qarea, qarea.rect().center() + QPoint(10, 10))
     qtbot.mouseRelease(qarea, Qt.MouseButton.RightButton)
     qmain._tab_widget.tabBar().tabButton(0, QtW.QTabBar.ButtonPosition.RightSide).click()
+
+def test_layout_commands(himena_ui: MainWindowQt, qtbot: QtBot):
+    tab0 = himena_ui.add_tab()
+    win0 = tab0.add_widget(_qtw.QTextEdit())
+    win1 = tab0.add_widget(_qtw.QTextEdit())
+    himena_ui.exec_action("window-layout-horizontal", with_params={"wins": [win0, win1]})
+    tab1 = himena_ui.add_tab()
+    win0 = tab0.add_widget(_qtw.QTextEdit())
+    win1 = tab0.add_widget(_qtw.QTextEdit())
+    himena_ui.exec_action("window-layout-vertical", with_params={"wins": [win0, win1]})

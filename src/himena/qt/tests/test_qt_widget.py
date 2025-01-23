@@ -217,11 +217,10 @@ def test_model_drop(qtbot: QtBot, himena_ui: MainWindowQt):
     qwins = himena_ui._backend_main_window._tab_widget.widget_area(0).subWindowList()
     qdrop._drop_qsubwindow(qwins[0])
     qdrop._drop_qsubwindow(qwins[1])
-    assert qdrop.value().type == "text"
-    qdrop.set_value(None)
-    qdrop.set_value(WidgetDataModel(value="ccc", type="text"))
+    assert qdrop.to_model().type == "text"
+    qdrop.set_model(None)
     qdroplist._drop_qsubwindow(qwins[0])
     qdroplist._drop_qsubwindow(qwins[1])
-    assert len(qdroplist.value()) == 1
-    assert qdroplist.value()[0].type == "text"
-    qdroplist.set_value(None)
+    assert len(qdroplist.models()) == 1
+    assert qdroplist.models()[0].type == "text"
+    qdroplist.set_models(None)

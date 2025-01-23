@@ -34,13 +34,16 @@ def _num_tabs(ui: "MainWindow") -> int:
 
 
 def _get_model_types(ui: "MainWindow") -> str | None:
-    if (win := ui.current_window) and win.supports_to_model:
-        out = win.model_type()
-        if out is None:
-            out = win.to_model().type
+    try:
+        if (win := ui.current_window) and win.supports_to_model:
+            out = win.model_type()
             if out is None:
-                return None
-        return out.split(".")
+                out = win.to_model().type
+                if out is None:
+                    return None
+            return out.split(".")
+    except Exception:
+        return None
     return None
 
 

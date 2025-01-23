@@ -11,11 +11,13 @@ from app_model.types import (
 )
 from himena._descriptors import SaveToPath, NoNeedToSave
 from himena.consts import MenuId, StandardType
+from himena.plugins import configure_gui
 from himena.widgets import MainWindow, SubWindow
 from himena.types import (
     ClipboardDataModel,
     WindowState,
     WidgetDataModel,
+    Parametric,
 )
 from himena._app_model._context import AppContext as _ctx
 from himena._app_model.actions._registry import ACTIONS, SUBMENUS
@@ -27,6 +29,7 @@ _LOGGER = logging.getLogger(__name__)
 EDIT_GROUP = "00_edit"
 STATE_GROUP = "01_state"
 MOVE_GROUP = "02_move"
+LAYOUT_GROUP = "03_layout"
 ZOOM_GROUP = "10_zoom"
 EXIT_GROUP = "99_exit"
 _CtrlK = KeyMod.CtrlCmd | KeyCode.KeyK
@@ -419,6 +422,46 @@ def align_window_center(ui: MainWindow) -> None:
         window._set_rect(window.rect.align_center(ui.area_size))
 
 
+@ACTIONS.append_from_fn(
+    id="window-layout-horizontal",
+    title="Horizontal ...",
+    enablement=(_ctx.num_sub_windows > 1) & (_ctx.num_tabs > 0),
+    menus=[MenuId.WINDOW_LAYOUT],
+    need_function_callback=True,
+)
+def window_layout_horizontal(ui: MainWindow) -> Parametric:
+    windows = [win for win in ui.tabs.current()]
+
+    @configure_gui(
+        show_parameter_labels=False, wins={"layout": "horizontal", "value": windows[:4]}
+    )
+    def run_layout_horizontal(wins: list[SubWindow]) -> None:
+        layout = ui.tabs.current().add_hbox_layout()
+        layout.extend(wins)
+
+    return run_layout_horizontal
+
+
+@ACTIONS.append_from_fn(
+    id="window-layout-vertical",
+    title="Vertical ...",
+    enablement=(_ctx.num_sub_windows > 1) & (_ctx.num_tabs > 0),
+    menus=[MenuId.WINDOW_LAYOUT],
+    need_function_callback=True,
+)
+def window_layout_vertical(ui: MainWindow) -> Parametric:
+    windows = [win for win in ui.tabs.current()]
+
+    @configure_gui(
+        show_parameter_labels=False, wins={"layout": "vertical", "value": windows[:4]}
+    )
+    def run_layout_vertical(wins: list[SubWindow]) -> None:
+        layout = ui.tabs.current().add_vbox_layout()
+        layout.extend(wins)
+
+    return run_layout_vertical
+
+
 # Jump to the nth window
 def make_func(n: int):
     def jump_to_nth_window(ui: MainWindow) -> None:
@@ -470,4 +513,10 @@ SUBMENUS.append_from(
     title="Jump to",
     enablement=_ctx.num_sub_windows > 0,
     group=MOVE_GROUP,
+)
+SUBMENUS.append_from(
+    id=MenuId.WINDOW,
+    submenu=MenuId.WINDOW_LAYOUT,
+    title="Layout",
+    group=LAYOUT_GROUP,
 )

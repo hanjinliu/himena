@@ -972,3 +972,10 @@ CURSOR_SHAPE_MAP = {
     ResizeState.BOTTOM_RIGHT: Qt.CursorShape.SizeFDiagCursor,
     ResizeState.NONE: Qt.CursorShape.ArrowCursor,
 }
+
+
+def get_subwindow(widget: QtW.QWidget) -> QSubWindow:
+    window = widget.parentWidget().parentWidget().parentWidget()
+    if not isinstance(window, QSubWindow):
+        raise ValueError(f"Widget {widget!r} is not in a sub-window.")
+    return window

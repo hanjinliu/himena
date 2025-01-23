@@ -5,10 +5,16 @@ from himena.qt._magicgui._basic_widgets import (
     IntListEdit,
     FloatListEdit,
 )
-from himena.qt._magicgui._modeldrop import ModelDrop, ModelListDrop
+from himena.qt._magicgui._modeldrop import (
+    ModelDrop,
+    ModelListDrop,
+    SubWindowDrop,
+    SubWindowListDrop,
+)
 from himena.qt._magicgui._toggle_switch import ToggleSwitch
 from himena.qt._magicgui._color import ColorEdit, ColormapEdit
 from himena.types import WidgetDataModel
+from himena.widgets import SubWindow
 from cmap import Color, Colormap
 
 TYPE_MAP = TypeMap()
@@ -19,6 +25,8 @@ def register_magicgui_types():
 
     TYPE_MAP.register_type(WidgetDataModel, widget_type=ModelDrop)
     TYPE_MAP.register_type(list[WidgetDataModel], widget_type=ModelListDrop)
+    TYPE_MAP.register_type(SubWindow, widget_type=SubWindowDrop)
+    TYPE_MAP.register_type(list[SubWindow], widget_type=SubWindowListDrop)
     TYPE_MAP.register_type(bool, widget_type=ToggleSwitch)
     TYPE_MAP.register_type(int, widget_type=IntEdit)
     TYPE_MAP.register_type(float, widget_type=FloatEdit)

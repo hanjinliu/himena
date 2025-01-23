@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 from logging import getLogger
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterable, Literal
 import uuid
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt
 from himena.types import WidgetDataModel, is_subtype
-from himena.qt._qsub_window import QSubWindow, QSubWindowArea
+from himena.qt._qsub_window import QSubWindow, QSubWindowArea, get_subwindow
 from himena.qt._utils import get_main_window
 from himena import _drag
 
@@ -16,29 +16,73 @@ if TYPE_CHECKING:
 _LOGGER = getLogger(__name__)
 
 
-class QModelDrop(QtW.QGroupBox):
+class QModelDropBase(QtW.QWidget):
+    def __init__(self, layout: Literal["horizontal", "vertical"] = "horizontal"):
+        super().__init__()
+        self._thumbnail = _QImageLabel()
+        self._target_id: int | None = None
+        self._label = QtW.QLabel()
+        self._label.setAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+        )
+        if layout == "horizontal":
+            self._label.setFixedHeight(THUMBNAIL_SIZE.height() + 2)
+            _layout = QtW.QHBoxLayout(self)
+        else:
+            self._label.setFixedWidth(THUMBNAIL_SIZE.width() + 6)
+            _layout = QtW.QVBoxLayout(self)
+        _layout.setContentsMargins(1, 1, 1, 1)
+        _layout.addWidget(self._thumbnail)
+        _layout.addWidget(self._label)
+
+    def subwindow(self) -> SubWindow | None:
+        if self._target_id is None:
+            return None
+        return get_main_window(self).window_for_id(self._target_id)
+
+    def set_qsubwindow(self, src: QSubWindow):
+        src_wrapper = src._my_wrapper()
+        self._thumbnail.set_pixmap(
+            src._pixmap_resized(THUMBNAIL_SIZE, QtGui.QColor("#f0f0f0"))
+        )
+        self._target_id = src_wrapper._identifier
+        self._label.setText(src.windowTitle())
+
+    def set_subwindow(self, src: SubWindow):
+        raise NotImplementedError("Cannot set SubWindow directly.")
+
+    def to_model(self) -> WidgetDataModel | None:
+        if widget := self.subwindow():
+            return widget.to_model()
+        return None
+
+    def set_model(self, value: WidgetDataModel | None):
+        if value is None:
+            self._label.setText("Drop here")
+            self._thumbnail.unset_pixmap()
+        else:
+            raise ValueError("Cannot set WidgetDataModel directly.")
+
+
+class QModelDrop(QtW.QGroupBox, QModelDropBase):
     """Widget for dropping model data from a subwindow."""
 
     valueChanged = QtCore.Signal(WidgetDataModel)
+    windowChanged = QtCore.Signal(object)
 
     def __init__(
         self,
         types: list[str] | None = None,
+        layout: Literal["horizontal", "vertical"] = "horizontal",
         parent: QtW.QWidget | None = None,
     ):
-        super().__init__(parent)
+        QtW.QGroupBox.__init__(self, parent)
+        QModelDropBase.__init__(self, layout)
         self.setAcceptDrops(True)
-        self._drop_area = QtW.QLabel("Drop here", self)
-        self._drop_area.setAlignment(
+        self._label.setText("Drop here")
+        self._label.setAlignment(
             Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignVCenter
         )
-        self._drop_area.setFixedHeight(THUMBNAIL_SIZE.height() + 2)
-        self._thumbnail = _QImageLabel()
-        layout = QtW.QHBoxLayout(self)
-        layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        layout.addWidget(self._thumbnail)
-        layout.addWidget(self._drop_area)
-        layout.setContentsMargins(0, 0, 0, 0)
         self._allowed_types = types  # the model type
         self._target_id: uuid.UUID | None = None
         self._data_model: WidgetDataModel | None = None
@@ -80,10 +124,6 @@ class QModelDrop(QtW.QGroupBox):
             subwindows = area.subWindowList()
             if len(subwindows) == 1:
                 self._drop_qsubwindow(subwindows[0])
-        elif drag_model := _drag.drop():
-            model = drag_model.data_model()
-            self.set_value(model)
-            self.valueChanged.emit(model)
 
     def _drop_qsubwindow(self, win: QSubWindow):
         widget = win._widget
@@ -91,38 +131,13 @@ class QModelDrop(QtW.QGroupBox):
         _LOGGER.info("Dropped model type %s", model_type)
         if self._is_type_maches(model_type):
             _LOGGER.info("Dropped model %s", win.windowTitle())
-            self.set_subwindow(win)
-            self.valueChanged.emit(widget.to_model())
+            self.set_qsubwindow(win)
+            self._emit_window(win._my_wrapper())
 
-    def set_subwindow(self, src: QSubWindow):
-        src_wrapper = _wrapper_for_qwidget(src)
-        self._target_id = src_wrapper._identifier
-        src_wrapper.closed.connect(self._on_source_closed)
-        self._drop_area.setText(src.windowTitle())
-        self._drop_area.setAlignment(
-            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
-        )
-        self._thumbnail.set_pixmap(
-            src._pixmap_resized(THUMBNAIL_SIZE, QtGui.QColor("#f0f0f0"))
-        )
-        self._data_model = None
-
-    def widget_for_id(self) -> SubWindow | None:
-        return get_main_window(self).window_for_id(self._target_id)
-
-    def value(self) -> WidgetDataModel | None:
-        if widget := self.widget_for_id():
-            return widget.to_model()
-        return self._data_model
-
-    def set_value(self, value: WidgetDataModel | None):
-        if value is None:
-            self._drop_area.setText("Drop here")
-            self._thumbnail.unset_pixmap()
-        else:
-            self._thumbnail.unset_pixmap()
-            self._drop_area.setText(f"Model of <b>{value.type}</b>")
-            self._data_model = value
+    def _emit_window(self, win: SubWindow):
+        self.windowChanged.emit(win)
+        if win.supports_to_model:
+            self.valueChanged.emit(win.to_model())
 
     def _on_source_closed(self):
         self._target_id = None
@@ -135,15 +150,22 @@ class QModelDrop(QtW.QGroupBox):
 
 class QModelDropList(QtW.QListWidget):
     modelsChanged = QtCore.Signal(list)
+    windowsChanged = QtCore.Signal(list)
 
     def __init__(
         self,
         types: list[str] | None = None,
+        layout: Literal["horizontal", "vertical"] = "vertical",
         parent: QtW.QWidget | None = None,
     ):
         super().__init__(parent)
+        if layout == "horizontal":
+            self.setFlow(QtW.QListView.Flow.LeftToRight)
+        else:
+            self.setFlow(QtW.QListView.Flow.TopToBottom)
         self.setAcceptDrops(True)
         self._allowed_types = types  # the model type
+        self._layout = layout
 
     def sizeHint(self) -> QtCore.QSize:
         return QtCore.QSize(150, 100)
@@ -192,12 +214,6 @@ class QModelDropList(QtW.QListWidget):
                 self._drop_qsubwindow(subwindows[0])
                 event.accept()
                 return
-        elif drag_model := _drag.drop():
-            model = drag_model.data_model()
-            self._append_data_model(model)
-            self.modelsChanged.emit(self.value())
-            event.accept()
-            return
         event.ignore()
         event.setDropAction(Qt.DropAction.IgnoreAction)
         return None
@@ -214,26 +230,26 @@ class QModelDropList(QtW.QListWidget):
         if self._is_type_maches(model_type):
             _LOGGER.info("Dropped model %s", win.windowTitle())
             self._append_sub_window(win)
-            self.modelsChanged.emit(self.value())
+            self.windowsChanged.emit(self.windows())
+            self.modelsChanged.emit(self.models())
 
     def _append_item(self) -> QModelListItem:
         item = QtW.QListWidgetItem()
         self.addItem(item)
         item.setSizeHint(QtCore.QSize(100, THUMBNAIL_SIZE.height() + 2))
-        item_widget = QModelListItem()
+        if self.flow() == QtW.QListView.Flow.LeftToRight:
+            item_widget = QModelListItem(layout="vertical")
+        else:
+            item_widget = QModelListItem(layout="horizontal")
         self.setItemWidget(item, item_widget)
         item_widget.close_requested.connect(self._remove_item)
         return item_widget
 
     def _append_sub_window(self, src: QSubWindow):
         item_widget = self._append_item()
-        item_widget.set_subwindow(src)
-        win = _wrapper_for_qwidget(src)
+        item_widget.set_qsubwindow(src)
+        win = src._my_wrapper()
         win.closed.connect(lambda: self._remove_item(item_widget))
-
-    def _append_data_model(self, model: WidgetDataModel):
-        item_widget = self._append_item()
-        item_widget.set_model(model)
 
     def _remove_item(self, item: QModelListItem):
         for i in range(self.count()):
@@ -242,65 +258,50 @@ class QModelDropList(QtW.QListWidget):
                 return
         raise ValueError(f"Item {item} not found")
 
-    def value(self) -> list[WidgetDataModel]:
+    def models(self) -> list[WidgetDataModel]:
         return [self.itemWidget(self.item(i)).to_model() for i in range(self.count())]
 
-    def set_value(self, value):
+    def set_models(self, value):
         if value is None:
             self.clear()
         else:
             raise ValueError("Cannot set list of WidgetDataModel directly.")
+
+    def windows(self) -> list[SubWindow]:
+        return [self.itemWidget(self.item(i)).subwindow() for i in range(self.count())]
+
+    def set_windows(self, value: Iterable[SubWindow] | None):
+        self.clear()
+        if value is not None:
+            for win in value:
+                qwin = get_subwindow(win.widget)
+                self._append_sub_window(qwin)
 
     if TYPE_CHECKING:
 
         def itemWidget(self, item: QtW.QListWidgetItem) -> QModelListItem: ...
 
 
-class QModelListItem(QtW.QWidget):
+class QModelListItem(QModelDropBase):
     close_requested = QtCore.Signal(object)  # emit self
 
-    def __init__(self):
-        super().__init__()
-        self._thumbnail = _QImageLabel()
-        self._target_id: int | None = None
-        self._data_model = None
-        self._label = QtW.QLabel()
-        self._label.setAlignment(
-            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
-        )
+    def __init__(self, layout: Literal["horizontal", "vertical"] = "horizontal"):
+        super().__init__(layout)
         self._close_btn = QtW.QToolButton()
         self._close_btn.setText("✕")
-        self._close_btn.setFixedSize(20, 20)
+        self._close_btn.setFixedSize(15, 15)
         self._close_btn.clicked.connect(lambda: self.close_requested.emit(self))
-        layout = QtW.QHBoxLayout(self)
-        layout.setContentsMargins(1, 1, 1, 1)
-        layout.addWidget(self._thumbnail)
-        layout.addWidget(self._label)
-        layout.addWidget(self._close_btn)
-
-    def set_subwindow(self, src: QSubWindow):
-        src_wrapper = _wrapper_for_qwidget(src)
-        self._thumbnail.set_pixmap(
-            src._pixmap_resized(THUMBNAIL_SIZE, QtGui.QColor("#f0f0f0"))
+        self._close_btn.setParent(
+            self, self._close_btn.windowFlags() | Qt.WindowType.FramelessWindowHint
         )
-        self._target_id = src_wrapper._identifier
-        self._label.setText(src.windowTitle())
-
-    def set_model(self, model: WidgetDataModel):
-        self._thumbnail.unset_pixmap()
-        self._label.setText(f"Model of <b>{model.type}</b>")
-        self._data_model = model
-
-    def widget_for_id(self) -> SubWindow | None:
-        return get_main_window(self).window_for_id(self._target_id)
-
-    def to_model(self) -> WidgetDataModel | None:
-        if widget := self.widget_for_id():
-            return widget.to_model()
-        return self._data_model
+        self._close_btn.hide()
 
     def enterEvent(self, a0):
         self._close_btn.show()
+        pos_loc = self.rect().topRight() - QtCore.QPoint(
+            self._close_btn.width() + 5, -5
+        )
+        self._close_btn.move(self.mapToGlobal(pos_loc))
         return super().enterEvent(a0)
 
     def leaveEvent(self, a0):
@@ -334,8 +335,3 @@ class _QImageLabel(QtW.QLabel):
     def unset_pixmap(self):
         self.setFixedSize(0, 0)
         self.clear()
-
-
-def _wrapper_for_qwidget(src: QSubWindow) -> SubWindow:
-    (i_tab, i_src), main = src._find_me_and_main()
-    return main.tabs[i_tab][i_src]

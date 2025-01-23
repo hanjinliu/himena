@@ -8,14 +8,13 @@ from himena.utils.collections import OrderedSet
 from himena.consts import MenuId
 from himena.exceptions import Cancelled
 from himena.plugins._signature import configure_gui
-from himena.widgets import MainWindow
+from himena.widgets import MainWindow, SubWindow
 from himena.types import (
     Parametric,
     WindowState,
 )
 from himena._app_model._context import AppContext as _ctx
 from himena._app_model.actions._registry import ACTIONS
-from himena.widgets._wrapper import SubWindow
 
 WINDOW_GROUP = "00_window"
 

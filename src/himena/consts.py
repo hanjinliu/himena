@@ -104,6 +104,7 @@ class MenuId(StrEnum):
     WINDOW_ALIGN = "window/align"
     WINDOW_ANCHOR = "window/anchor"
     WINDOW_NTH = "window/nth"
+    WINDOW_LAYOUT = "window/layout"
     VIEW = "view"
     TOOLS = "tools"
     TOOLS_DOCK = "tools/dock"
