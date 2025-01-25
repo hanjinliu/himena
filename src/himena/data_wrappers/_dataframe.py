@@ -7,7 +7,15 @@ import importlib.metadata
 import io
 from pathlib import Path
 import sys
-from typing import TYPE_CHECKING, Any, Mapping, NamedTuple, overload, Sequence
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Mapping,
+    NamedTuple,
+    SupportsIndex,
+    overload,
+    Sequence,
+)
 import numpy as np
 from himena.consts import ExcelFileTypes
 from himena._utils import lru_cache
@@ -25,9 +33,9 @@ if TYPE_CHECKING:
 def list_installed_dataframe_packages() -> list[str]:
     """Return a list of installed dataframe package names."""
     installed: list[str] = ["dict"]
-    for entry in importlib.metadata.distributions():
-        if entry.name in {"pandas", "polars", "pyarrow"}:
-            installed.append(entry.name)
+    for package_name in ["pandas", "polars", "pyarrow"]:
+        if next(importlib.metadata.distributions(name=package_name), None):
+            installed.append(package_name)
     return installed
 
 
@@ -107,7 +115,9 @@ class DataFrameWrapper(ABC):
         return f"{self.type_name()} {self.shape} of data:\n{self._df!r}"
 
     @overload
-    def __getitem__(self, key: tuple[int, int]) -> Any: ...
+    def __getitem__(self, key: tuple[SupportsIndex, SupportsIndex]) -> Any: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, SupportsIndex]) -> np.ndarray: ...
     @overload
     def __getitem__(self, key: str) -> np.ndarray: ...
 
@@ -115,7 +125,18 @@ class DataFrameWrapper(ABC):
         if isinstance(key, str):
             return self.column_to_array(key)
         elif isinstance(key, tuple):
-            return self.get_item(key)
+            r, c = key
+            if hasattr(c, "__index__"):
+                cindex = int(c)
+            else:
+                raise TypeError(f"{type(c)} cannot be used for the column index")
+            if hasattr(r, "__index__"):
+                return self.get_item((r, cindex))
+            elif isinstance(r, slice):
+                cname = self.column_names()[cindex]
+                return self.column_to_array(cname)[r]
+            else:
+                raise TypeError(f"Cannot slice array with {type(r)}")
         else:
             raise TypeError(f"Unsupported key type: {type(key)}")
 

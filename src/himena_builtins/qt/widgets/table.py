@@ -141,7 +141,7 @@ class QStringArrayModel(QtCore.QAbstractTableModel):
     def columnCount(self, parent=None):
         return max(self._ncols + 1, 30)
 
-    def flags(self, index: QtCore.QModelIndex) -> Qt.ItemFlags:
+    def flags(self, index: QtCore.QModelIndex) -> Qt.ItemFlag:
         return _FLAGS
 
     def data(

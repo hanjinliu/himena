@@ -7,7 +7,7 @@ from qtpy import QtGui, QtCore, QtWidgets as QtW
 from qtpy.QtCore import Qt
 import numpy as np
 
-from himena._data_wrappers import ArrayWrapper, wrap_array
+from himena.data_wrappers import ArrayWrapper, wrap_array
 from himena.consts import StandardType, MonospaceFontFamily
 from himena.standards.model_meta import ArrayMeta
 from himena.types import WidgetDataModel
@@ -370,6 +370,10 @@ class QArrayView(QtW.QWidget):
     @validate_protocol
     def model_type(self) -> str:
         return self._model_type
+
+    @validate_protocol
+    def size_hint(self):
+        return 320, 280
 
     @validate_protocol
     def is_modified(self) -> bool:

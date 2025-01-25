@@ -1,7 +1,7 @@
 from typing import Any, Literal, SupportsIndex
 import numpy as np
 from cmap import Colormap
-from himena._data_wrappers._array import wrap_array, ArrayWrapper
+from himena.data_wrappers._array import wrap_array, ArrayWrapper
 from himena.plugins import (
     register_function,
     configure_gui,

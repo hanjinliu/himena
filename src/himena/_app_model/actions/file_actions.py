@@ -9,7 +9,7 @@ from app_model.types import (
     KeyChord,
     StandardKeyBinding,
 )
-from himena._data_wrappers import wrap_array
+from himena.data_wrappers import wrap_array
 from himena._descriptors import SaveToNewPath
 from himena.consts import StandardType, MenuId
 from himena.plugins import configure_gui, ReaderPlugin

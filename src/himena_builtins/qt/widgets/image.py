@@ -20,7 +20,7 @@ from himena.qt._utils import drag_model, qsignal_blocker
 from himena.types import DragDataModel, DropResult, Size, WidgetDataModel
 from himena.plugins import validate_protocol
 from himena.widgets import set_status_tip
-from himena._data_wrappers import ArrayWrapper, wrap_array
+from himena.data_wrappers import ArrayWrapper, wrap_array
 from himena_builtins.qt.widgets._image_components import (
     QImageGraphicsView,
     QRoi,

@@ -70,9 +70,12 @@ def _add_line(model: hplt.Line, ax: plt.Axes):
 
 @register_plot_model(hplt.Bar)
 def _add_bar(model: hplt.Bar, ax: plt.Axes):
+    kwargs = {}
+    if model.bar_width is not None:
+        kwargs["width"] = model.bar_width
     ax.bar(
         model.x, model.y, color=model.face.color, hatch=model.face.hatch,
-        bottom=model.bottom, width=model.bar_width, edgecolor=model.edge.color,
+        bottom=model.bottom, edgecolor=model.edge.color, **kwargs,
         label=model.name, linewidth=model.edge.width, linestyle=model.edge.style,
     )  # fmt: skip
 
@@ -90,7 +93,6 @@ def _add_hist(model: hplt.Histogram, ax: plt.Axes):
         density = False
     else:
         raise ValueError(f"Unsupported histogram stat: {model.stat}")
-    print(repr(model))
     ax.hist(
         data, bins=model.bins, range=model.range, color=Color(model.face.color).hex,
         hatch=model.face.hatch, orientation=model.orient, edgecolor=Color(model.edge.color).hex,

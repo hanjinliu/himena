@@ -249,11 +249,12 @@ class SingleAxes(BaseLayoutModel):
         bins: int = 10,
         range: tuple[float, float] | None = None,
         orient: Literal["vertical", "horizontal"] = "vertical",
+        stat: Literal["count", "density", "probability"] = "count",
         **kwargs,
     ) -> _m.Histogram:
         """Add a histogram plot model to the axes."""
         return self.axes.hist(
-            data=data, bins=bins, range=range, orient=orient, **kwargs
+            data=data, bins=bins, range=range, orient=orient, stat=stat, **kwargs
         )
 
 

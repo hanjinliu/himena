@@ -84,6 +84,7 @@ class StandardType(SimpleNamespace):
     ROIS = "rois"  # regions of interest
     FUNCTION = "function"  # callable object
     FUNCTION_PARTIAL = "function.partial"  # callable object
+    DISTRIBUTION = "distribution"  # probablistic distribution object
 
     # fallback when no reader is found for the file (which means that the file could be
     # opened as a text file)

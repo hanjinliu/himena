@@ -1,4 +1,4 @@
-from himena._data_wrappers._dataframe import wrap_dataframe
+from himena.data_wrappers._dataframe import wrap_dataframe
 from himena.standards.model_meta import TableMeta
 from himena.plugins import register_function, configure_gui
 from himena.types import WidgetDataModel, Parametric

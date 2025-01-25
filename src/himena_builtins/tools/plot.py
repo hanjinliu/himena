@@ -23,7 +23,12 @@ from himena.qt.magicgui import (
 if TYPE_CHECKING:
     from himena.qt.magicgui._plot_elements import FacePropertyDict, EdgePropertyDict
 
-_TABLE_LIKE = [StandardType.TABLE, StandardType.DATAFRAME, StandardType.EXCEL]
+_TABLE_LIKE = [
+    StandardType.TABLE,
+    StandardType.ARRAY,
+    StandardType.DATAFRAME,
+    StandardType.EXCEL,
+]
 _MENU = ["tools/plot", "/model_menu/plot"]
 _EDGE_ONLY_VALUE = {"color": "tab10", "width": 2.0}
 
@@ -456,7 +461,7 @@ def _get_xy_data(
 
 
 def _auto_select(model: WidgetDataModel, num: int) -> "list[None | SelectionType]":
-    from himena._data_wrappers import wrap_dataframe
+    from himena.data_wrappers import wrap_dataframe
 
     selections: list[tuple[tuple[int, int], tuple[int, int]]] = []
     if model.is_subtype_of(StandardType.TABLE):

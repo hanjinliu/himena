@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from himena.plugins import register_reader_plugin, register_writer_plugin
-from himena._data_wrappers import list_installed_dataframe_packages
+from himena.data_wrappers import list_installed_dataframe_packages
 from himena.types import WidgetDataModel
 from himena_builtins import _io
 from himena.consts import (
@@ -215,16 +215,8 @@ def _(file_path: Path) -> str | None:
     if "pandas" not in list_installed_dataframe_packages():
         return None
     if file_path.suffix in {
-        ".csv",
-        ".txt",
-        ".tsv",
-        ".html",
-        ".htm",
-        ".json",
-        ".parquet",
-        ".pq",
-        ".feather",
-    }:
+        ".csv", ".txt", ".tsv", ".html", ".htm", ".json", ".parquet", ".pq", ".feather",
+    }:  # fmt: skip
         return StandardType.DATAFRAME
     return None
 
@@ -235,14 +227,8 @@ def _(file_path: Path) -> str | None:
     if "polars" not in list_installed_dataframe_packages():
         return None
     if file_path.suffix in {
-        ".csv",
-        ".txt",
-        ".tsv",
-        ".feather",
-        ".json",
-        ".parquet",
-        ".pq",
-    }:
+        ".csv", ".txt", ".tsv", ".feather", ".json", ".parquet", ".pq",
+    }:  # fmt: skip
         return StandardType.DATAFRAME
     return None
 

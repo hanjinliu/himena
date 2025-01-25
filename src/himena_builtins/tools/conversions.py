@@ -17,10 +17,7 @@ from himena.standards.roi import (
     RoiListModel,
     default_roi_label,
 )
-from himena._data_wrappers import (
-    wrap_dataframe,
-    read_csv,
-)
+from himena.data_wrappers import wrap_dataframe, read_csv, wrap_array
 
 
 @register_conversion_rule(
@@ -307,6 +304,27 @@ def dataframe_to_dataframe_plot(model: WidgetDataModel) -> WidgetDataModel:
             f"DataFrame contains non-numerical value in columns {col_non_numerical!r}"
         )
     return model.astype(StandardType.DATAFRAME_PLOT)
+
+
+@register_conversion_rule(
+    type_from=StandardType.ARRAY,
+    type_to=StandardType.TABLE,
+    command_id="builtins:array-to-table",
+)
+def array_to_table(model: WidgetDataModel) -> WidgetDataModel:
+    """Convert an array data into a table."""
+    arr = wrap_array(model.value)
+    if arr.ndim > 2:
+        raise ValueError("Cannot convert >2D array to a table.")
+    value = arr.get_slice(()).astype(np.dtypes.StringDType())
+    if value.ndim < 2:
+        value = np.atleast_2d(value)
+    return WidgetDataModel(
+        value=value,
+        title=model.title,
+        type=StandardType.TABLE,
+        extension_default=".csv",
+    )
 
 
 def _table_to_text(

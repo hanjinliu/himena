@@ -21,6 +21,7 @@ from himena.types import (
     BackendInstructions,
     DragDataModel,
     DropResult,
+    Margins,
     ModelTrack,
     Parametric,
     ParametricWidgetProtocol,
@@ -183,8 +184,8 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
             # If the backend widget cannot be converted to a model, there's no need
             # to inform the user "save changes?".
             return None
-        if hasattr(self.widget, "set_modified") and not value:
-            self.widget.set_modified(False)
+        # if hasattr(self.widget, "set_modified") and not value:
+        #     self.widget.set_modified(False)
         self._ask_save_before_close = value
         return None
 
@@ -495,7 +496,7 @@ class SubWindow(WidgetWrapper[_W], Layout):
         raise RuntimeError(f"SubWindow {self.title} not found in main window.")
 
     def _close_me(self, main: MainWindow, confirm: bool = False) -> None:
-        if self._ask_save_before_close and confirm:
+        if self._need_ask_save_before_close() and confirm:
             title_short = repr(self.title)
             if len(title_short) > 60:
                 title_short = title_short[:60] + "..."
@@ -690,6 +691,7 @@ class ParametricWindow(SubWindow[_W]):
             self._widget_preview_callback_done(temp_future)
 
     def _widget_preview_callback_done(self, future: Future):
+        """Callback function when the job of preview is done."""
         return_value = future.result()
         main = self._main_window()
         if return_value is None:
@@ -705,10 +707,13 @@ class ParametricWindow(SubWindow[_W]):
             # create a new preview window
             result_widget = self._model_to_new_window(return_value)
             if self._result_as == "window":
+                # create a new preview window
                 title = f"{return_value.title} (preview)"
                 prev = self.add_child(result_widget, title=title)
-                with suppress(AttributeError):
+                with suppress(AttributeError):  # disable editing if possible
                     prev.is_editable = False
+                # move the window so that it does not overlap with the parametric window
+                prev.rect = _find_where_to_move(self, prev, main)
             else:
                 main._add_widget_to_parametric_window(
                     self, result_widget, self._result_as
@@ -782,13 +787,14 @@ class ParametricWindow(SubWindow[_W]):
                 else:
                     top_left = (self.rect.left, self.rect.top)
                     size = None
+                injection_ns = ui.model_app.injection_store.namespace
                 FutureInfo(
                     type_hint=annot.get("return", None),
                     track=tracker,
                     kwargs=kwargs,
                     top_left=top_left,
                     size=size,
-                ).resolve_type_hint().set(return_value)
+                ).resolve_type_hint(injection_ns).set(return_value)
             else:
                 injection_type_hint = annot.get("return", None)
             self._process_other_output(return_value, injection_type_hint)
@@ -841,6 +847,7 @@ class ParametricWindow(SubWindow[_W]):
         return self.params_changed.emit(self)
 
     def _process_model_output(self, model: WidgetDataModel) -> SubWindow[_W] | None:
+        """Process the returned WidgetDataModel."""
         ui = self._main_window()._himena_main_window
         widget = self._model_to_new_window(model)
         i_tab, i_win = self._find_me(ui)
@@ -949,3 +956,41 @@ def _widget_repr(widget: _W) -> str:
 
 def _do_nothing() -> None:
     return None
+
+
+def _find_where_to_move(
+    win: SubWindow[_W],
+    win_to_move: SubWindow[_W],
+    main: BackendMainWindow,
+) -> WindowRect:
+    """Find a comfortable position to move the window."""
+    offset = 8
+    area_size = Size(*main._area_size())
+    margins = Margins.from_rects(win.rect, WindowRect(0, 0, *area_size))
+    rect_orig = win_to_move.rect
+    size_orig = rect_orig.size()
+    if size_orig.width < margins.right:
+        out = rect_orig.move_top_left(
+            win.rect.right + offset,
+            min(win.rect.top, max(area_size.height - size_orig.height - offset, 0)),
+        )
+    elif size_orig.width < margins.left:
+        out = rect_orig.move_top_right(
+            win.rect.left - offset,
+            min(win.rect.top, max(area_size.height - size_orig.height - offset, 0)),
+        )
+    elif size_orig.height < margins.bottom:
+        out = rect_orig.move_top_left(
+            min(win.rect.left, max(area_size.width - size_orig.width - offset, 0)),
+            win.rect.bottom + offset,
+        )
+    elif size_orig.height < margins.top:
+        out = rect_orig.move_bottom_left(
+            min(win.rect.left, max(area_size.width - size_orig.width - offset, 0)),
+            win.rect.top - offset,
+        )
+    elif margins.bottom < margins.right:
+        out = rect_orig.move_top_left(win.rect.right + offset, win.rect.top)
+    else:
+        out = rect_orig.move_bottom_left(win.rect.left, win.rect.bottom + offset)
+    return out

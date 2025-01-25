@@ -1,6 +1,6 @@
 from typing import Any, Literal, TypeVar
 import numpy as np
-from himena._data_wrappers._array import wrap_array
+from himena.data_wrappers._array import wrap_array
 from himena._descriptors import NoNeedToSave
 from himena.plugins import register_function, configure_gui
 from himena.types import Parametric, WidgetDataModel
@@ -18,7 +18,7 @@ from himena.widgets import set_status_tip, SubWindow
 )
 def duplicate_this_slice(model: WidgetDataModel) -> Parametric:
     """Duplicate the slice of the array."""
-    from himena._data_wrappers import wrap_array
+    from himena.data_wrappers import wrap_array
 
     if not isinstance(meta := model.metadata, ArrayMeta):
         raise TypeError(

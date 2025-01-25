@@ -52,3 +52,5 @@ def test_convert(himena_ui: MainWindow):
     himena_ui.exec_action("builtins:dataframe-to-image-rois", with_params={"roi_type": "rectangle"})
     himena_ui.add_object({"x": [1, 2, 3], "y": [5, 3, 4]}, type=StandardType.DATAFRAME)
     himena_ui.exec_action("builtins:dataframe-to-dataframe-plot")
+    himena_ui.add_object(np.arange(6).reshape(2, 3), type=StandardType.ARRAY)
+    himena_ui.exec_action("builtins:array-to-table")

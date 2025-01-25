@@ -24,7 +24,7 @@ from himena_builtins.qt.widgets._splitter import QSplitterHandle
 from himena_builtins.qt.widgets._dragarea import QDraggableArea
 from himena.plugins import validate_protocol
 from himena.qt import drag_model
-from himena._data_wrappers import wrap_dataframe, DataFrameWrapper
+from himena.data_wrappers import wrap_dataframe, DataFrameWrapper
 
 if TYPE_CHECKING:
     from himena_builtins.qt.widgets._table_components._selection_model import Index

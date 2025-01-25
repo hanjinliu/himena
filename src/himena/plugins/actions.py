@@ -8,6 +8,7 @@ from copy import deepcopy
 from typing import (
     Any,
     Callable,
+    Iterable,
     Iterator,
     Mapping,
     NamedTuple,
@@ -169,9 +170,12 @@ def _norm_menus_with_group(menus: str | Sequence[str], group: str) -> list[dict]
     return [{"id": menu, "group": group} for menu in norm_menus(menus)]
 
 
-def configure_submenu(submenu_id: str, title: str) -> None:
-    """Register a title for a submenu."""
-    AppActionRegistry.instance()._submenu_titles[submenu_id] = title
+def configure_submenu(submenu_id: str | Iterable[str], title: str) -> None:
+    """Register a title for submenu(s)."""
+    if isinstance(submenu_id, str):
+        submenu_id = [submenu_id]
+    for sid in submenu_id:
+        AppActionRegistry.instance()._submenu_titles[sid] = title
 
 
 @overload

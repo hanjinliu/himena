@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Callable, NamedTuple
 from himena.consts import StandardType
 import numpy as np
-from numpy.typing import NDArray
 
 if TYPE_CHECKING:
     from himena.types import WidgetDataModel
@@ -16,7 +15,7 @@ if TYPE_CHECKING:
 
 class NamedArray(NamedTuple):
     name: str | None
-    array: NDArray[np.number]
+    array: np.ndarray
 
 
 def model_to_xy_arrays(
@@ -28,7 +27,7 @@ def model_to_xy_arrays(
     allow_multiple_y: bool = True,
     same_size: bool = True,
 ) -> tuple[NamedArray, list[NamedArray]]:
-    from himena._data_wrappers import wrap_dataframe
+    from himena.data_wrappers import wrap_dataframe
     from himena.standards.model_meta import ExcelMeta
 
     if x is None and not allow_empty_x:
@@ -36,7 +35,7 @@ def model_to_xy_arrays(
     if y is None:
         raise ValueError("The y value must be given.")
     if model.is_subtype_of(StandardType.TABLE):
-        (xlabel, xarr), ys = table_to_xy_arrays(
+        x_out, ys = table_to_xy_arrays(
             model.value, x, y, allow_multiple_y=allow_multiple_y, same_size=same_size
         )
     elif model.is_subtype_of(StandardType.DATAFRAME):
@@ -55,16 +54,68 @@ def model_to_xy_arrays(
                 raise ValueError("x must not be more than one column.")
             xarr = df.column_to_array(column_names_x[0])
             xlabel = column_names_x[0]
+        x_out = NamedArray(xlabel, xarr)
     elif model.is_subtype_of(StandardType.EXCEL):
         if not isinstance(meta := model.metadata, ExcelMeta):
             raise ValueError("Must be a ExcelMeta")
         table = model.value[meta.current_sheet]
-        (xlabel, xarr), ys = table_to_xy_arrays(
+        x_out, ys = table_to_xy_arrays(
             table, x, y, allow_multiple_y=allow_multiple_y, same_size=same_size
         )
     else:
         raise ValueError(f"Table-like data expected, but got model type {model.type!r}")
-    return NamedArray(xlabel, xarr), ys
+    return x_out, ys
+
+
+def model_to_vals_arrays(
+    model: WidgetDataModel,
+    ys: list[SelectionType],
+    *,
+    same_size: bool = True,
+) -> list[NamedArray]:
+    if len(ys) > 1:
+        y0, *yother = ys
+        values: list[NamedArray] = []
+        for i, yn in enumerate(yother):
+            x, y_out = model_to_xy_arrays(
+                model, y0, yn, allow_multiple_y=False, same_size=same_size
+            )
+            if i == 0:
+                values.append(x)
+            values.append(y_out[0])
+    else:
+        x, y_out = model_to_xy_arrays(
+            model, None, ys[0], allow_multiple_y=False, same_size=same_size
+        )
+        values = [y_out[0]]
+    return values
+
+
+def model_to_col_val_arrays(
+    model: WidgetDataModel,
+    col: SelectionType,
+    val: SelectionType,
+) -> tuple[NamedArray, NamedArray]:
+    from himena.data_wrappers import wrap_dataframe
+    from himena.standards.model_meta import ExcelMeta
+
+    if model.is_subtype_of(StandardType.TABLE):
+        x_out, y_out = table_to_col_val_arrays(model.value, col, val)
+    elif model.is_subtype_of(StandardType.DATAFRAME):
+        df = wrap_dataframe(model.value)
+        i_col = _to_single_column_slice(col)
+        i_val = _to_single_column_slice(val)
+        column_names = df.column_names()
+        x_out = df[column_names[i_col]]
+        y_out = df[column_names[i_val]]
+    elif model.is_subtype_of(StandardType.EXCEL):
+        if not isinstance(meta := model.metadata, ExcelMeta):
+            raise ValueError("Must be a ExcelMeta")
+        table = model.value[meta.current_sheet]
+        x_out, y_out = table_to_col_val_arrays(table, col, val)
+    else:
+        raise ValueError(f"Table-like data expected, but got model type {model.type!r}")
+    return x_out, y_out
 
 
 def table_to_xy_arrays(
@@ -89,6 +140,20 @@ def table_to_xy_arrays(
     if not allow_multiple_y and parser.n_components > 1:
         raise ValueError("Multiple Y values are not allowed.")
     return NamedArray(xlabel, xarr), parser.named_arrays
+
+
+def table_to_col_val_arrays(
+    value: np.ndarray,
+    col: SelectionType,
+    val: SelectionType,
+) -> tuple[NamedArray, NamedArray]:
+    col_sl = slice(col[0][0], col[0][1]), slice(col[1][0], col[1][1])
+    val_sl = slice(val[0][0], val[0][1]), slice(val[1][0], val[1][1])
+    parser = TableValueParser.from_array(value[val_sl])
+    if parser.n_components != 1:
+        raise ValueError("Multiple Y values are not allowed.")
+    col_arr = parser.norm_col_value(value[col_sl])
+    return col_arr, parser.named_arrays[0]
 
 
 class TableValueParser:
@@ -164,6 +229,19 @@ class TableValueParser:
             raise ValueError("The number of X values must be the same as the Y values.")
         return NamedArray(label, arr_number)
 
+    def norm_col_value(self, arr: np.ndarray) -> NamedArray:
+        # check if the first value is a label
+        if self._is_column_vector and arr.shape[1] != 1:
+            raise ValueError("The X values must be a 1D column vector.")
+        if not self._is_column_vector and arr.shape[0] != 1:
+            raise ValueError("The X values must be a 1D row vector.")
+        arr = arr.ravel()
+        if arr.size == self.n_samples:
+            label, arr_out = None, arr
+        else:
+            label, arr_out = str(arr[0]), arr[1:]
+        return NamedArray(label, arr_out)
+
 
 def range_getter(win: SubWindow) -> Callable[[], tuple[SelectionType, SelectionType]]:
     """The getter function for SelectionEdit"""
@@ -181,16 +259,13 @@ def range_getter(win: SubWindow) -> Callable[[], tuple[SelectionType, SelectionT
         elif len(meta.selections) > 1:
             raise ValueError(f"More than one selection found in window {model.title!r}")
         sel = meta.selections[0]
-        rindices, cindices = sel
-        _assert_tuple_of_ints(rindices)
-        _assert_tuple_of_ints(cindices)
-        return rindices, cindices
+        return sel
 
     return _getter
 
 
-def _assert_tuple_of_ints(value: tuple[int, int]) -> None:
-    if not isinstance(value, tuple) or len(value) != 2:
-        raise ValueError("Must be a tuple of two integers.")
-    if not all(isinstance(v, int) for v in value):
-        raise ValueError("Must be a tuple of two integers.")
+def _to_single_column_slice(val: SelectionType) -> int:
+    _, csl = val
+    if csl[1] - csl[0] != 1:
+        raise ValueError("Only single column selection is allowed")
+    return csl[1] - csl[0]

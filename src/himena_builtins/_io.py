@@ -394,7 +394,7 @@ def default_dataframe_writer(
     path: Path,
 ) -> None:
     """Write dataframe file."""
-    from himena._data_wrappers import wrap_dataframe
+    from himena.data_wrappers import wrap_dataframe
 
     return wrap_dataframe(model.value).write(path)
 

@@ -531,6 +531,16 @@ class Margins(Generic[_V]):
         """Iterate over the field to make this class tuple-like."""
         return iter((self.left, self.top, self.right, self.bottom))
 
+    @classmethod
+    def from_rects(cls, inner: Rect[_V], outer: Rect[_V]) -> "Margins[_V]":
+        """Calculate the margins from the inner and outer rectangles."""
+        return cls(
+            inner.left - outer.left,
+            inner.top - outer.top,
+            outer.right - inner.right,
+            outer.bottom - inner.bottom,
+        )
+
 
 class _HasDynamicAttribute:
     _ATTR_NAME: str

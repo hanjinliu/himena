@@ -1,5 +1,7 @@
-from himena._data_wrappers._array import wrap_array, ArrayWrapper
-from himena._data_wrappers._dataframe import (
+"""Data wrappers for DataFrame and Array."""
+
+from himena.data_wrappers._array import wrap_array, ArrayWrapper
+from himena.data_wrappers._dataframe import (
     wrap_dataframe,
     DataFrameWrapper,
     list_installed_dataframe_packages,

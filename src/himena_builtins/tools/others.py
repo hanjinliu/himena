@@ -7,7 +7,7 @@ from typing import Iterable, Literal, Mapping
 import warnings
 from datetime import datetime
 import numpy as np
-from himena._data_wrappers._dataframe import wrap_dataframe
+from himena.data_wrappers._dataframe import wrap_dataframe
 from himena._descriptors import NoNeedToSave
 from himena.plugins import register_function, configure_gui, widget_classes
 from himena.types import Parametric, WidgetDataModel
