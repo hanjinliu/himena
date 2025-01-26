@@ -70,6 +70,7 @@ def test_image_view_rgb(qtbot: QtBot):
         tester.update_model(
             value=np.zeros((100, 100, 3), dtype=np.uint8), metadata=ImageMeta(is_rgb=True),
         )
+        qtbot.addWidget(image_view)
         tester.cycle_model()
         assert len(image_view._dims_slider._sliders) == 0
         image_view._control._interp_check_box.setChecked(False)

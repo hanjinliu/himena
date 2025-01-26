@@ -46,6 +46,24 @@ def test_structured(qtbot: QtBot):
         assert new.metadata.selections == [((1, 2), (1, 3))]
         assert old.metadata.selections == new.metadata.selections
 
+
+def test_binary_operations(himena_ui: MainWindow):
+    win = himena_ui.add_object(np.arange(24).reshape(2, 3, 4), type=StandardType.ARRAY)
+    model = win.to_model()
+    himena_ui.exec_action(
+        "builtins:binary-operation",
+        with_params={"x": model, "y": model, "operation": "sub", "result_dtype": "input"},
+    )
+    himena_ui.exec_action(
+        "builtins:binary-operation",
+        with_params={"x": model, "y": model, "operation": "sub", "result_dtype": "float32"}
+    )
+    himena_ui.exec_action(
+        "builtins:binary-operation",
+        with_params={"x": model, "y": model, "operation": "sub", "result_dtype": "float64"}
+    )
+
+
 def test_array_commands(himena_ui: MainWindow):
     win = himena_ui.add_object(np.arange(24).reshape(2, 3, 4), type=StandardType.ARRAY)
     himena_ui.exec_action("builtins:array-duplicate-slice")
@@ -79,19 +97,6 @@ def test_array_commands(himena_ui: MainWindow):
     assert himena_ui.current_model.value.shape == (1, 1, 2)
 
     himena_ui.exec_action("builtins:array-astype", with_params={"dtype": "float32"})
-
-    himena_ui.exec_action(
-        "builtins:binary-operation",
-        with_params={"x": win.to_model(), "y": win.to_model(), "operation": "sub", "result_dtype": "input"}
-    )
-    himena_ui.exec_action(
-        "builtins:binary-operation",
-        with_params={"x": win.to_model(), "y": win.to_model(), "operation": "sub", "result_dtype": "float32"}
-    )
-    himena_ui.exec_action(
-        "builtins:binary-operation",
-        with_params={"x": win.to_model(), "y": win.to_model(), "operation": "sub", "result_dtype": "float64"}
-    )
     himena_ui.current_window = win
     himena_ui.exec_action(
         "builtins:set-array-scale",

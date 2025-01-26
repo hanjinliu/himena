@@ -17,9 +17,11 @@ if TYPE_CHECKING:
 _LOGGER = getLogger(__name__)
 
 
-class QModelDropBase(QtW.QWidget):
-    def __init__(self, layout: Literal["horizontal", "vertical"] = "horizontal"):
-        super().__init__()
+class QModelDropBase(QtW.QGroupBox):
+    def __init__(
+        self, layout: Literal["horizontal", "vertical"] = "horizontal", parent=None
+    ):
+        super().__init__(parent)
         self._thumbnail = _QImageLabel()
         self._target_id: int | None = None
         self._label = QtW.QLabel()
@@ -65,7 +67,7 @@ class QModelDropBase(QtW.QWidget):
             raise ValueError("Cannot set WidgetDataModel directly.")
 
 
-class QModelDrop(QtW.QGroupBox, QModelDropBase):
+class QModelDrop(QModelDropBase):
     """Widget for dropping model data from a subwindow."""
 
     valueChanged = QtCore.Signal(WidgetDataModel)
@@ -77,8 +79,7 @@ class QModelDrop(QtW.QGroupBox, QModelDropBase):
         layout: Literal["horizontal", "vertical"] = "horizontal",
         parent: QtW.QWidget | None = None,
     ):
-        QtW.QGroupBox.__init__(self, parent)
-        QModelDropBase.__init__(self, layout)
+        super().__init__(layout, parent)
         self.setAcceptDrops(True)
         self._label.setText("Drop here")
         self._label.setAlignment(

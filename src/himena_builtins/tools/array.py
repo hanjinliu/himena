@@ -1,4 +1,5 @@
 from typing import Any, Literal, TypeVar
+import operator as _op
 import numpy as np
 from himena.data_wrappers._array import wrap_array
 from himena._descriptors import NoNeedToSave
@@ -123,6 +124,16 @@ def crop_array_nd(win: SubWindow) -> Parametric:
     return run_crop_image
 
 
+_OPERATOR_CHOICES = [
+    ("Add (+)", "add"), ("Subtract (-)", "sub"), ("Multiply (*)", "mul"),
+    ("Divide (/)", "truediv"), ("Floor Divide (//)", "floordiv"),
+    ("Modulo (%)", "mod"), ("Power (**)", "pow"), ("Bitwise AND (&)", "and_"),
+    ("Bitwise OR (|)", "or_"), ("Bitwise XOR (^)", "xor"), ("Equal (==)", "eq"),
+    ("Not Equal (!=)", "ne"), ("Greater (>)", "gt"), ("Greater Equal (>=)", "ge"),
+    ("Less (<)", "lt"), ("Less Equal (<=)", "le"),
+]  # fmt: skip
+
+
 @register_function(
     title="Binary operation ...",
     menus=["tools/array"],
@@ -134,20 +145,10 @@ def binary_operation() -> Parametric:
     Whether the operation succeeds or not depends on the internal array object. This
     function simply applies the operation to the two arrays and returns the result.
     """
-    import operator as _op
-
-    choices = [
-        ("Add (+)", "add"), ("Subtract (-)", "sub"), ("Multiply (*)", "mul"),
-        ("Divide (/)", "truediv"), ("Floor Divide (//)", "floordiv"),
-        ("Modulo (%)", "mod"), ("Power (**)", "pow"), ("Bitwise AND (&)", "and_"),
-        ("Bitwise OR (|)", "or_"), ("Bitwise XOR (^)", "xor"), ("Equal (==)", "eq"),
-        ("Not Equal (!=)", "ne"), ("Greater (>)", "gt"), ("Greater Equal (>=)", "ge"),
-        ("Less (<)", "lt"), ("Less Equal (<=)", "le"),
-    ]  # fmt: skip
 
     @configure_gui(
         x={"types": [StandardType.ARRAY]},
-        operation={"choices": choices},
+        operation={"choices": _OPERATOR_CHOICES},
         y={"types": [StandardType.ARRAY]},
         clip_overflows={
             "tooltip": (

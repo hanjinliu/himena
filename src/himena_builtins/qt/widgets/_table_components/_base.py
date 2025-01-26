@@ -395,8 +395,8 @@ class QTableBase(QtW.QTableView):
 
         # current index
         idx = self._selection_model.current_index
-        if idx >= (0, 0):
-            rect_cursor = self.visualRect(self.model().index(*idx))
+        if idx >= (0, 0) and (_model := self.model()):
+            rect_cursor = self.visualRect(_model.index(*idx))
             rect_cursor.adjust(1, 1, -1, -1)
             pen = QtGui.QPen(self._current_color, 2)
             painter.setPen(pen)
