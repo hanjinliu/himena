@@ -1,3 +1,4 @@
+# pragma: no cover
 import tempfile
 import warnings
 import pytest

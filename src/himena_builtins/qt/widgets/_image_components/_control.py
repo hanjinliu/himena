@@ -63,7 +63,7 @@ class QImageViewControlBase(QtW.QWidget):
 
         self._hover_info = QtW.QLabel()
 
-        layout.addWidget(spacer)
+        layout.addWidget(spacer, stretch=10)
         for wdt in self._widgets_to_add():
             layout.addWidget(wdt)
 
@@ -234,7 +234,10 @@ class QImageViewControl(QImageViewControlBase):
 class QImageLabelViewControl(QImageViewControlBase):
     def __init__(self, image_view: QImageViewBase):
         self._opacity_slider = QLabeledDoubleSlider(QtCore.Qt.Orientation.Horizontal)
+        self._opacity_slider.setValue(0.6)
+        self._opacity_slider.setFixedWidth(120)
         self._opacity_slider.setRange(0.0, 1.0)
+        self._opacity_slider.setToolTip("Opacity of the label colors")
         super().__init__(image_view)
         self._opacity_slider.valueChanged.connect(image_view._reset_image)
 
