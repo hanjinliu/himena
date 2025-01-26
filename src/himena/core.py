@@ -29,7 +29,10 @@ def new_window(
     elif isinstance(profile, AppProfile):
         app_prof = profile
     elif profile is None:
-        app_prof = AppProfile.default(save=True)
+        try:
+            app_prof = load_app_profile("default")
+        except ValueError:
+            app_prof = AppProfile.default(save=True)
     else:
         raise TypeError("`profile` must be a str or an AppProfile object.")
     model_app = get_model_app(app_prof.name)

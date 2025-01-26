@@ -3,11 +3,10 @@ from himena_builtins.qt.widgets.array import QArrayView
 from himena_builtins.qt.widgets.text import QTextEdit, QRichTextEdit
 from himena_builtins.qt.widgets.table import QSpreadsheet
 from himena_builtins.qt.widgets.dataframe import QDataFrameView, QDataFramePlotView
-from himena_builtins.qt.widgets.image import QImageView
+from himena_builtins.qt.widgets.image import QImageView, QImageLabelView
 from himena_builtins.qt.widgets.image_rois import QImageRoiView
 from himena_builtins.qt.widgets.excel import QExcelEdit
 from himena_builtins.qt.widgets.ipynb import QIpynbEdit
-from himena_builtins.qt.widgets.draw import QDrawCanvas
 from himena_builtins.qt.widgets.text_previews import QSvgPreview, QMarkdowPreview
 from himena_builtins.qt.widgets.model_stack import QModelStack
 from himena_builtins.qt.widgets.reader_not_found import QReaderNotFound
@@ -33,8 +32,8 @@ def register_default_widget_types() -> None:
 
     # array
     register_widget_class(StandardType.ARRAY, QArrayView, priority=50)
+    register_widget_class(StandardType.IMAGE_LABELS, QImageLabelView, priority=50)
     register_widget_class(StandardType.IMAGE, QImageView, priority=50)
-    register_widget_class(StandardType.IMAGE, QDrawCanvas, priority=0)
 
     # dataframe
     register_widget_class(StandardType.DATAFRAME, QDataFrameView, priority=50)

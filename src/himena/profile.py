@@ -107,26 +107,30 @@ class AppProfile(BaseModel):
         return self.model_copy(update={"plugin_configs": configs})
 
     def update_plugin_config(self, plugin_id: str, **kwargs) -> None:
+        """Update the config of the plugin specified by `plugin_id`"""
         from himena.plugins.actions import AppActionRegistry
         from himena.plugins.widget_plugins import WidgetCallbackBase
 
         reg = AppActionRegistry.instance()
         configs = self.plugin_configs.copy()
+        # NOTE: during development, keys of cur_config and configs[plugin_id] may
+        # differ. `cur_config` has all the keys that should exist in the current
+        # implementation.
+        cur_config = reg._plugin_default_configs[plugin_id].as_dict()
         if plugin_id in configs:
             # Profile already has the plugin config
-            config = configs[plugin_id].copy()
-        else:
-            # Profile does not have the plugin config. The config is only temporarily
-            # registered in the registry.
-            config = reg._plugin_default_configs[plugin_id].as_dict()
+            for ckey, cval in configs[plugin_id].items():
+                if ckey in cur_config:
+                    cur_config[ckey] = cval
         for k, v in kwargs.items():
-            config[k]["value"] = v
-        configs[plugin_id] = config
+            if k in cur_config:
+                cur_config[k]["value"] = v
+        configs[plugin_id] = cur_config
         self.with_plugin_configs(configs).save()
 
         # update existing dock widgets with the new config
         params = {}
-        for key, opt in config.items():
+        for key, opt in cur_config.items():
             params[key] = opt["value"]
         if cb := WidgetCallbackBase.instance_for_command_id(plugin_id):
             for dock in cb._all_widgets:

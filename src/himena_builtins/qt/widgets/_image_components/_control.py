@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 from qtpy import QtWidgets as QtW
 from qtpy import QtCore, QtGui
+from superqt import QLabeledDoubleSlider
 from superqt.utils import qthrottled
 
 from himena.qt.magicgui._toggle_switch import QLabeledToggleSwitch
@@ -12,7 +13,7 @@ from himena_builtins.qt.widgets._image_components import QHistogramView
 from himena.utils.enum import StrEnum
 
 if TYPE_CHECKING:
-    from himena_builtins.qt.widgets.image import QImageView, ChannelInfo
+    from himena_builtins.qt.widgets.image import QImageViewBase, ChannelInfo
 
 
 class ImageType(StrEnum):
@@ -41,8 +42,8 @@ class RGBMode(StrEnum):
     GRAY = "Gray"
 
 
-class QImageViewControl(QtW.QWidget):
-    def __init__(self, image_view: QImageView):
+class QImageViewControlBase(QtW.QWidget):
+    def __init__(self, image_view: QImageViewBase):
         super().__init__()
         self._image_view = image_view
         layout = QtW.QHBoxLayout(self)
@@ -54,39 +55,6 @@ class QImageViewControl(QtW.QWidget):
             QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Expanding
         )
 
-        self._complex_mode_combo = QtW.QComboBox()
-        self._complex_mode_combo.addItems(
-            [ComplexMode.REAL, ComplexMode.IMAG, ComplexMode.ABS, ComplexMode.LOG_ABS,
-             ComplexMode.PHASE]
-        )  # fmt: skip
-        self._complex_mode_combo.setCurrentIndex(2)
-        self._complex_mode_combo.setToolTip("Method to display complex data")
-        self._complex_mode_old = "Abs"
-        self._complex_mode_combo.currentTextChanged.connect(
-            self._on_complex_mode_change
-        )
-
-        self._channel_visibilities = QChannelToggleSwitches()
-        self._channel_visibilities.stateChanged.connect(
-            self._on_channel_visibility_change
-        )
-
-        self._channel_mode_combo = QtW.QComboBox()
-        self._channel_mode_combo.addItems([""])
-        self._channel_mode_combo.currentTextChanged.connect(
-            self._on_channel_mode_change
-        )
-        self._channel_mode_combo.setToolTip("Method to display multi-channel data")
-        self._image_type = ImageType.OTHERS
-
-        self._auto_contrast_btn = QtW.QPushButton("Auto")
-        self._auto_contrast_btn.clicked.connect(self._auto_contrast)
-        self._auto_contrast_btn.setToolTip("Auto contrast")
-
-        self._histogram = QHistogramView()
-        self._histogram.setFixedWidth(120)
-        self._histogram.clim_changed.connect(self._clim_changed)
-
         self._interp_check_box = QLabeledToggleSwitch()
         self._interp_check_box.setText("smooth")
         self._interp_check_box.setChecked(False)
@@ -96,22 +64,59 @@ class QImageViewControl(QtW.QWidget):
         self._hover_info = QtW.QLabel()
 
         layout.addWidget(spacer)
-        layout.addWidget(self._hover_info)
-        layout.addWidget(self._complex_mode_combo)
-        layout.addWidget(self._channel_visibilities)
-        layout.addWidget(self._channel_mode_combo)
-        layout.addWidget(self._auto_contrast_btn)
-        layout.addWidget(self._histogram)
-        layout.addWidget(self._interp_check_box)
-        self._complex_mode_combo.hide()
-        self._channel_mode_combo.hide()
+        for wdt in self._widgets_to_add():
+            layout.addWidget(wdt)
 
-    def update_for_state(
-        self,
-        is_rgb: bool,
-        nchannels: int,
-        dtype,
-    ):
+    def _widgets_to_add(self) -> list[QtW.QWidget]:
+        return [self._hover_info, self._interp_check_box]
+
+    def _interpolation_changed(self, checked: bool):
+        self._image_view._img_view.setSmoothing(checked)
+
+    def update_rgb_channel_dtype(self, is_rgb: bool, nchannels: int, dtype):
+        pass
+
+
+class QImageViewControl(QImageViewControlBase):
+    def __init__(self, image_view: QImageViewBase):
+        self._complex_mode_old = "Abs"
+        self._cmp_mode_combo = QtW.QComboBox()
+        self._cmp_mode_combo.addItems(
+            [ComplexMode.REAL, ComplexMode.IMAG, ComplexMode.ABS, ComplexMode.LOG_ABS,
+             ComplexMode.PHASE]
+        )  # fmt: skip
+        self._cmp_mode_combo.setCurrentIndex(2)
+        self._cmp_mode_combo.setToolTip("Method to display complex data")
+
+        self._chn_vis = QChannelToggleSwitches()
+
+        self._chn_mode_combo = QtW.QComboBox()
+        self._chn_mode_combo.addItems([""])
+        self._chn_mode_combo.setToolTip("Method to display multi-channel data")
+        self._image_type = ImageType.OTHERS
+
+        self._auto_cont_btn = QtW.QPushButton("Auto")
+        self._auto_cont_btn.setToolTip("Auto contrast")
+
+        self._histogram = QHistogramView()
+        self._histogram.setFixedWidth(120)
+        super().__init__(image_view)
+        self._cmp_mode_combo.hide()
+        self._chn_mode_combo.hide()
+        self._cmp_mode_combo.currentTextChanged.connect(self._on_complex_mode_change)
+        self._chn_vis.stateChanged.connect(self._on_channel_visibility_change)
+        self._histogram.clim_changed.connect(self._clim_changed)
+        self._auto_cont_btn.clicked.connect(self._auto_contrast)
+        self._chn_mode_combo.currentTextChanged.connect(self._on_channel_mode_change)
+
+    def _widgets_to_add(self) -> list[QtW.QWidget]:
+        return [
+            self._hover_info, self._cmp_mode_combo, self._chn_vis,
+            self._chn_mode_combo, self._auto_cont_btn, self._histogram,
+            self._interp_check_box,
+        ]  # fmt: skip
+
+    def update_rgb_channel_dtype(self, is_rgb: bool, nchannels: int, dtype):
         dtype = np.dtype(dtype)
         if is_rgb:
             kind = ImageType.RGB
@@ -121,25 +126,25 @@ class QImageViewControl(QtW.QWidget):
             kind = ImageType.SINGLE
         if kind != self._image_type:
             if kind is ImageType.RGB:
-                self._channel_mode_combo.clear()
-                self._channel_mode_combo.addItems([RGBMode.COLOR, RGBMode.GRAY])
-                self._channel_mode_combo.show()
-                self._channel_visibilities.hide()
+                self._chn_mode_combo.clear()
+                self._chn_mode_combo.addItems([RGBMode.COLOR, RGBMode.GRAY])
+                self._chn_mode_combo.show()
+                self._chn_vis.hide()
             elif kind is ImageType.MULTI:
-                self._channel_mode_combo.clear()
-                self._channel_mode_combo.addItems(
+                self._chn_mode_combo.clear()
+                self._chn_mode_combo.addItems(
                     [ChannelMode.COMP, ChannelMode.MONO, ChannelMode.GRAY]
                 )
-                self._channel_mode_combo.show()
-                self._channel_visibilities.show()
+                self._chn_mode_combo.show()
+                self._chn_vis.show()
             else:
-                self._channel_mode_combo.clear()
-                self._channel_mode_combo.addItems([""])
-                self._channel_mode_combo.hide()
-                self._channel_visibilities.hide()
+                self._chn_mode_combo.clear()
+                self._chn_mode_combo.addItems([""])
+                self._chn_mode_combo.hide()
+                self._chn_vis.hide()
             self._image_type = kind
-            self._channel_mode_combo.setCurrentIndex(0)
-        self._complex_mode_combo.setVisible(dtype.kind == "c")
+            self._chn_mode_combo.setCurrentIndex(0)
+        self._cmp_mode_combo.setVisible(dtype.kind == "c")
         if dtype.kind in "uib":
             self._histogram.setValueFormat(".0f")
         else:
@@ -148,20 +153,17 @@ class QImageViewControl(QtW.QWidget):
 
     def complex_transform(self, arr: np.ndarray) -> np.ndarray:
         """Transform complex array according to the current complex mode."""
-        if self._complex_mode_combo.currentText() == ComplexMode.REAL:
+        if self._cmp_mode_combo.currentText() == ComplexMode.REAL:
             return arr.real
-        if self._complex_mode_combo.currentText() == ComplexMode.IMAG:
+        if self._cmp_mode_combo.currentText() == ComplexMode.IMAG:
             return arr.imag
-        if self._complex_mode_combo.currentText() == ComplexMode.ABS:
+        if self._cmp_mode_combo.currentText() == ComplexMode.ABS:
             return np.abs(arr)
-        if self._complex_mode_combo.currentText() == ComplexMode.LOG_ABS:
+        if self._cmp_mode_combo.currentText() == ComplexMode.LOG_ABS:
             return np.log(np.abs(arr) + 1e-6)
-        if self._complex_mode_combo.currentText() == ComplexMode.PHASE:
+        if self._cmp_mode_combo.currentText() == ComplexMode.PHASE:
             return np.angle(arr)
         return arr
-
-    def _interpolation_changed(self, checked: bool):
-        self._image_view._img_view.setSmoothing(checked)
 
     @qthrottled(timeout=100)
     def _clim_changed(self, clim: tuple[float, float]):
@@ -177,25 +179,25 @@ class QImageViewControl(QtW.QWidget):
                     view._current_image_slices[idx].arr,
                     complex_transform=self.complex_transform,
                     is_rgb=view._is_rgb,
-                    is_gray=self._channel_mode_combo.currentText() in _grays,
+                    is_gray=self._chn_mode_combo.currentText() in _grays,
                 )
             else:
                 arr = None
             view._img_view.set_array(idx, arr)
 
     def _on_channel_mode_change(self, mode: str):
-        self._channel_visibilities.setVisible(mode == ChannelMode.COMP)
+        self._chn_vis.setVisible(mode == ChannelMode.COMP)
         self._on_channel_visibility_change()
 
     def _channel_visibility(self) -> list[bool]:
         caxis = self._image_view._channel_axis
         if caxis is None:
             return [True]  # No channels, always visible
-        is_composite = self._channel_mode_combo.currentText() == ChannelMode.COMP
+        is_composite = self._chn_mode_combo.currentText() == ChannelMode.COMP
         if is_composite:
-            visibilities = self._channel_visibilities._check_states()
+            visibilities = self._chn_vis._check_states()
         else:
-            visibilities = [False] * len(self._channel_visibilities._toggle_switches)
+            visibilities = [False] * len(self._chn_vis._toggle_switches)
             sl = self._image_view._dims_slider.value()
             ith_channel = sl[caxis]
             if len(visibilities) <= ith_channel:
@@ -208,7 +210,7 @@ class QImageViewControl(QtW.QWidget):
         self._image_view._update_image_visibility(visibilities)
 
     def _on_complex_mode_change(self):
-        cur = self._complex_mode_combo.currentText()
+        cur = self._cmp_mode_combo.currentText()
         self._image_view._reset_image()
         self._complex_mode_old = cur
         # TODO: auto contrast and update colormap
@@ -227,6 +229,17 @@ class QImageViewControl(QtW.QWidget):
         self._histogram.set_view_range(min_, max_)
         view._set_image_slice(img_slice, ch)
         self._histogram.set_clim((min_, max_))
+
+
+class QImageLabelViewControl(QImageViewControlBase):
+    def __init__(self, image_view: QImageViewBase):
+        self._opacity_slider = QLabeledDoubleSlider(QtCore.Qt.Orientation.Horizontal)
+        self._opacity_slider.setRange(0.0, 1.0)
+        super().__init__(image_view)
+        self._opacity_slider.valueChanged.connect(image_view._reset_image)
+
+    def _widgets_to_add(self):
+        return [self._hover_info, self._opacity_slider, self._interp_check_box]
 
 
 class QChannelToggleSwitches(QtW.QScrollArea):

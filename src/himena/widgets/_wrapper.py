@@ -646,8 +646,9 @@ class ParametricWindow(SubWindow[_W]):
         main._set_parametric_widget_busy(self, True)
         try:
             self._callback_with_params(self.get_params())
-        finally:
+        except Exception:
             main._set_parametric_widget_busy(self, False)
+            raise
 
     def _call(self, **kwargs):
         """Call the callback (maybe) asynchronously."""
@@ -684,7 +685,7 @@ class ParametricWindow(SubWindow[_W]):
                 self._widget_preview_callback_done
             )
             return_value.add_done_callback(done)
-            # TODO: set busy
+            main._set_parametric_widget_busy(self, True)
         else:
             temp_future = Future()
             temp_future.set_result(return_value)
@@ -692,8 +693,9 @@ class ParametricWindow(SubWindow[_W]):
 
     def _widget_preview_callback_done(self, future: Future):
         """Callback function when the job of preview is done."""
-        return_value = future.result()
         main = self._main_window()
+        main._set_parametric_widget_busy(self, False)
+        return_value = future.result()
         if return_value is None:
             return None
         if not isinstance(return_value, WidgetDataModel):
@@ -727,16 +729,18 @@ class ParametricWindow(SubWindow[_W]):
         return None
 
     def _process_return_value(self, return_value: Any, kwargs: dict[str, Any]):
+        main = self._main_window()
+        ui = main._himena_main_window
+        main._set_parametric_widget_busy(self, False)
         tracker = ModelTrack.get(self._callback)
         _LOGGER.info("Got tracker: %r", tracker)
-        ui = self._main_window()._himena_main_window
         if isinstance(return_value, WidgetDataModel):
             if prev := self._get_preview_window():
                 # no need to create a new window, just use the preview window
                 self._preview_window_ref = _do_nothing
                 if self._result_as != "window":
                     widget = prev.widget  # avoid garbage collection
-                    self._main_window()._remove_widget_from_parametric_window(self)
+                    main._remove_widget_from_parametric_window(self)
                     result_widget = ui.add_widget(widget)
                     result_widget._update_from_returned_model(return_value)
                 else:
@@ -825,9 +829,6 @@ class ParametricWindow(SubWindow[_W]):
                     self._process_return_value,
                     kwargs=kwargs,
                 )
-            )
-            return_value.add_done_callback(
-                lambda _: main._set_parametric_widget_busy(self, False)
             )
             return return_value
         else:

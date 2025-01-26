@@ -10,7 +10,7 @@ from himena.standards.roi import RoiListModel, LineRoi, PointRoi2D, PointsRoi2D
 from himena.standards.roi.core import RectangleRoi
 from himena.testing import WidgetTester, image
 from himena.types import WidgetDataModel
-from himena_builtins.qt.widgets.image import QImageView
+from himena_builtins.qt.widgets.image import QImageView, QImageLabelView
 from himena_builtins.qt.widgets._image_components import _roi_items as _rois
 from himena_builtins.qt.widgets._image_components._control import ComplexMode
 
@@ -34,11 +34,11 @@ def test_image_view(qtbot: QtBot):
         )
         image_view._dims_slider._sliders[0]._slider.setValue(1)
         image_view._dims_slider._sliders[2]._slider.setValue(2)
-        image_view._control._channel_mode_combo.setCurrentText("Gray")
+        image_view._control._chn_mode_combo.setCurrentText("Gray")
         QApplication.processEvents()
-        image_view._control._channel_mode_combo.setCurrentText("Mono")
+        image_view._control._chn_mode_combo.setCurrentText("Mono")
         QApplication.processEvents()
-        image_view._control._channel_mode_combo.setCurrentText("Comp.")
+        image_view._control._chn_mode_combo.setCurrentText("Comp.")
         QApplication.processEvents()
 
         # switch modes
@@ -53,6 +53,16 @@ def test_image_view(qtbot: QtBot):
         qtbot.keyClick(image_view._img_view, Qt.Key.Key_E)
         qtbot.keyClick(image_view._img_view, Qt.Key.Key_G)
 
+def test_image_labels_view(qtbot: QtBot):
+    image_view = QImageLabelView()
+    image_view.show()
+    with WidgetTester(image_view) as tester:
+        tester.update_model(value=np.arange(24, dtype=np.uint8).reshape(2, 3, 4))
+        qtbot.addWidget(image_view)
+        assert len(image_view._dims_slider._sliders) == 1
+
+        image_view._dims_slider._sliders[0]._slider.setValue(1)
+
 def test_image_view_rgb(qtbot: QtBot):
     image_view = QImageView()
     image_view.show()
@@ -64,9 +74,9 @@ def test_image_view_rgb(qtbot: QtBot):
         assert len(image_view._dims_slider._sliders) == 0
         image_view._control._interp_check_box.setChecked(False)
         image_view._control._interp_check_box.setChecked(True)
-        image_view._control._channel_mode_combo.setCurrentText("Gray")
+        image_view._control._chn_mode_combo.setCurrentText("Gray")
         QApplication.processEvents()
-        image_view._control._channel_mode_combo.setCurrentText("Color")
+        image_view._control._chn_mode_combo.setCurrentText("Color")
         QApplication.processEvents()
 
         tester.update_model(
@@ -76,9 +86,9 @@ def test_image_view_rgb(qtbot: QtBot):
         assert len(image_view._dims_slider._sliders) == 0
         image_view._control._interp_check_box.setChecked(False)
         image_view._control._interp_check_box.setChecked(True)
-        image_view._control._channel_mode_combo.setCurrentText("Gray")
+        image_view._control._chn_mode_combo.setCurrentText("Gray")
         QApplication.processEvents()
-        image_view._control._channel_mode_combo.setCurrentText("Color")
+        image_view._control._chn_mode_combo.setCurrentText("Color")
         QApplication.processEvents()
 
 def test_image_view_draw_roi(qtbot: QtBot):
@@ -245,7 +255,7 @@ def test_constrast_hist(qtbot: QtBot):
         qtbot.addWidget(image_view)
         control = image_view.control_widget()
         qtbot.addWidget(control)
-        control._auto_contrast_btn.click()
+        control._auto_cont_btn.click()
         control._histogram.set_clim((1, 2))
 
 def test_complex_image(qtbot: QtBot):
@@ -260,12 +270,12 @@ def test_complex_image(qtbot: QtBot):
         control = image_view.control_widget()
         qtbot.addWidget(control)
         control.show()
-        assert control._complex_mode_combo.isVisible()
-        control._complex_mode_combo.setCurrentText(ComplexMode.REAL)
-        control._complex_mode_combo.setCurrentText(ComplexMode.IMAG)
-        control._complex_mode_combo.setCurrentText(ComplexMode.ABS)
-        control._complex_mode_combo.setCurrentText(ComplexMode.LOG_ABS)
-        control._complex_mode_combo.setCurrentText(ComplexMode.PHASE)
+        assert control._cmp_mode_combo.isVisible()
+        control._cmp_mode_combo.setCurrentText(ComplexMode.REAL)
+        control._cmp_mode_combo.setCurrentText(ComplexMode.IMAG)
+        control._cmp_mode_combo.setCurrentText(ComplexMode.ABS)
+        control._cmp_mode_combo.setCurrentText(ComplexMode.LOG_ABS)
+        control._cmp_mode_combo.setCurrentText(ComplexMode.PHASE)
 
 def test_image_view_change_dimensionality(qtbot: QtBot):
     image.test_change_dimensionality(_get_tester())

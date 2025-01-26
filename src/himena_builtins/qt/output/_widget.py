@@ -76,6 +76,7 @@ class QLogger(QtW.QPlainTextEdit):
 
 class QtOutputWidget(QtW.QTabWidget):
     log_level_changed = Signal(str)
+    log_filter_changed = Signal(str)
 
     def __init__(self):
         super().__init__()
@@ -90,9 +91,15 @@ class QtOutputWidget(QtW.QTabWidget):
         self._log_level = QtW.QComboBox()
         self._log_level.addItems(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
         self._log_level.setCurrentIndex(1)
+        self._log_filter = QtW.QLineEdit()
+        self._log_filter.setPlaceholderText("Log filter text")
+        self._log_filter.editingFinished.connect(
+            lambda: self.log_filter_changed.emit(self._log_filter.text())
+        )
         self._logger = QLogger()
         layout = QtW.QVBoxLayout(logger_container)
         layout.addWidget(self._log_level)
+        layout.addWidget(self._log_filter)
         layout.addWidget(self._logger)
         self._log_level.currentTextChanged.connect(self.log_level_changed.emit)
 
@@ -111,6 +118,7 @@ class OutputInterface(logging.Handler):
         self._default_handlers = self._logger.handlers.copy()
         self._logger.setLevel(logging.INFO)
         self._widget.log_level_changed.connect(self.set_log_level)
+        self._widget.log_filter_changed.connect(self.set_log_filter)
 
     def write(self, msg) -> None:
         """Handle the print event."""
@@ -130,6 +138,10 @@ class OutputInterface(logging.Handler):
         log_level = getattr(logging, level)
         self._logger.setLevel(log_level)
         return None
+
+    def set_log_filter(self, text: str):
+        for hnd in self._logger.handlers:
+            hnd.addFilter(logging.Filter(text))
 
     def connect_stdout(self):
         sys.stdout = self

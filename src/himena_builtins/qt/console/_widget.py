@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 import weakref
@@ -42,7 +43,7 @@ if sys.platform.startswith("win"):
 
 
 class QtConsole(RichJupyterWidget):
-    codeExecuted = Signal(str)
+    codeExecuted = Signal()
 
     def __init__(self, ui: MainWindow):
         super().__init__()
@@ -50,6 +51,8 @@ class QtConsole(RichJupyterWidget):
         self.resize(100, 40)
         self._parent_connected = False
         self._main_window_symbol = "ui"
+        self._matplotlib_backend = "inline"
+        self._matplotlib_backend_orig = os.environ.get("MPLBACKEND")
         self._ui = ui
         self.codeExecuted.connect(self.setFocus)
 
@@ -140,6 +143,11 @@ class QtConsole(RichJupyterWidget):
             ns = {self._main_window_symbol: self._ui}
             self.shell.push(ns)
 
+    def execute(self, source=None, hidden=False, interactive=False):
+        out = super().execute(source, hidden, interactive)
+        self.codeExecuted.emit()
+        return out
+
     def setFocus(self):
         """Set focus to the text edit."""
         self._control.setFocus()
@@ -149,7 +157,15 @@ class QtConsole(RichJupyterWidget):
         """Show event."""
         super().showEvent(event)
         self.setFocus()
+        os.environ["MPLBACKEND"] = self._matplotlib_backend
         return None
+
+    def hideEvent(self, a0):
+        if self._matplotlib_backend_orig is None:
+            del os.environ["MPLBACKEND"]
+        else:
+            os.environ["MPLBACKEND"] = self._matplotlib_backend_orig
+        return super().hideEvent(a0)
 
     @validate_protocol
     def widget_added_callback(self):
@@ -176,6 +192,7 @@ class QtConsole(RichJupyterWidget):
     ):
         old_symbol = self._main_window_symbol
         self._main_window_symbol = cfg.main_window_symbol
+        self._matplotlib_backend = cfg.matplotlib_backend
         if self._parent_connected:
             if (ui := self.shell.user_ns.get(old_symbol)) is self._ui:
                 self.shell.drop_by_id({old_symbol: ui})

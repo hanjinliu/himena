@@ -4,7 +4,13 @@ from ._roi_collection import QSimpleRoiCollection, QRoiCollection
 from ._dim_sliders import QDimsSlider
 from ._roi_buttons import QRoiButtons
 from ._histogram import QHistogramView
-from ._control import QImageViewControl, ComplexMode, ChannelMode
+from ._control import (
+    QImageViewControl,
+    QImageLabelViewControl,
+    QImageViewControlBase,
+    ComplexMode,
+    ChannelMode,
+)
 
 __all__ = [
     "QImageGraphicsView",
@@ -15,6 +21,8 @@ __all__ = [
     "QRoiButtons",
     "QHistogramView",
     "QImageViewControl",
+    "QImageLabelViewControl",
+    "QImageViewControlBase",
     "ComplexMode",
     "ChannelMode",
 ]

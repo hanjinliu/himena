@@ -3,11 +3,11 @@ from __future__ import annotations
 from concurrent.futures import Future, ThreadPoolExecutor
 from typing import TYPE_CHECKING, Any, Callable, NamedTuple
 import warnings
+import dataclasses
 from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
 import numpy as np
 from cmap import Colormap
-from pydantic_compat import BaseModel, Field
 from superqt import ensure_main_thread
 
 from himena.qt.magicgui._toggle_switch import QLabeledToggleSwitch
@@ -27,6 +27,8 @@ from himena_builtins.qt.widgets._image_components import (
     QDimsSlider,
     QRoiButtons,
     QImageViewControl,
+    QImageLabelViewControl,
+    QImageViewControlBase,
     QRoiCollection,
 )
 from himena_builtins.qt.widgets._splitter import QSplitterHandle
@@ -37,54 +39,7 @@ if TYPE_CHECKING:
     from himena.style import Theme
 
 
-class QImageView(QtW.QSplitter):
-    """The default nD image viewer widget for himena.
-
-    ## Basic Usage
-
-    The image canvas can be interactively panned by dragging with the left mouse button,
-    and zoomed by scrolling the mouse wheel. Zooming is reset by double-click. This
-    widget also supports adding ROIs (Regions of Interest) to the image.
-
-    - For multi-dimensional images, dimension sliders will be added to the bottom of the
-      image canvas.
-    - For multi-channel images, channel composition mode can be selected in the control
-      widget. Toggle switches for each channel are available next to it.
-    - The histogram of the current channel is displayed in the control widget. The
-      contrast limits can be adjusted by dragging the handles on the histogram.
-    - A ROI manager is in the right collapsible panel. Press the ROI buttons to switch
-      between ROI modes.
-
-    ## Keyboard Shortcuts
-
-    - `L`: Switch between Line ROI and Segmented Line ROI.
-    - `R`: Switch between Rectangle ROI and Rotated Rectangle ROI.
-    - `E`: Switch to Ellipse ROI.
-    - `G`: Switch to Polygon ROI.
-    - `P`: Switch between Point ROI and Multi-Point ROI.
-    - `Z`: Switch to Pan/Zoom Mode.
-    - `Space`: Hold this key to temporarily switch to Pan/Zoom Mode.
-    - `S`: Switch to Select Mode.
-    - `T`: Add current ROI to the ROI list.
-    - `V`: Toggle visibility of all the added ROIs.
-    - `Delete` / `Backspace`: Remove the current ROI.
-    - `Ctrl+A`: Select the entire image with a rectangle ROI.
-    - `Ctrl+X`: Cut the selected ROI.
-    - `Ctrl+C`: Copy the selected ROI.
-    - `Ctrl+V`: Paste the copied ROI.
-    - `Ctrl+D`: Duplicate the selected ROI.
-
-    ## Drag and Drop
-
-    - This widget accepts dropping models with `StandardType.IMAGE_ROIS` ("image-rois").
-      Dropped ROIs will be added to the ROI list.
-    - ROIs can be dragged out from the ROI manager. The type of the dragged model is
-      `StandardType.IMAGE_ROIS` ("image-rois"). Use the drag indicator in the corner of
-      the ROI list.
-    """
-
-    __himena_widget_id__ = "builtins:QImageView"
-    __himena_display_name__ = "Built-in Image Viewer"
+class QImageViewBase(QtW.QSplitter):
     _executor = ThreadPoolExecutor(max_workers=1)
 
     def __init__(self):
@@ -122,7 +77,7 @@ class QImageView(QtW.QSplitter):
         self.setStretchFactor(0, 6)
         self.setStretchFactor(1, 1)
         self.setSizes([400, 0])
-        self._control = QImageViewControl(self)
+        self._control = self._make_control_widget()
         self._arr: ArrayWrapper | None = None  # the internal array data for display
         self._is_modified = False  # whether the widget is modified
         self._is_editable = True
@@ -142,6 +97,7 @@ class QImageView(QtW.QSplitter):
 
     @validate_protocol
     def update_model(self, model: WidgetDataModel):
+        self._model_type = model.type
         arr = wrap_array(model.value)
         self._original_title = model.title
         is_initialized = self._arr is not None
@@ -200,7 +156,7 @@ class QImageView(QtW.QSplitter):
             self._channel_axis = meta0.channel_axis
 
         with qsignal_blocker(self._control):
-            self._control.update_for_state(
+            self._control.update_rgb_channel_dtype(
                 is_rgb=self._is_rgb,
                 nchannels=nchannels,
                 dtype=arr.dtype,
@@ -227,7 +183,6 @@ class QImageView(QtW.QSplitter):
                 from_standard_roi(meta0.current_roi, self._img_view._roi_pen)
             )
         self._control._interp_check_box.setChecked(meta0.interpolation == "linear")
-        self._model_type = model.type
         self._pixel_unit = meta0.unit or ""
         if ext_default := model.extension_default:
             self._extension_default = ext_default
@@ -244,10 +199,28 @@ class QImageView(QtW.QSplitter):
         self._arr = arr
         self._reset_image()
 
+    def _get_image_slices(
+        self,
+        value: tuple[int, ...],
+        nchannels: int,
+    ) -> list[ImageTuple]:
+        """Get numpy arrays for each channel (None mean hide the channel)."""
+        return [ImageTuple(self._get_image_slice_for_channel(value))]
+
+    def _set_image_slice(self, img: NDArray[np.number], channel: ChannelInfo):
+        raise NotImplementedError
+
+    def _set_image_slices(self, imgs: list[ImageTuple]):
+        """Set image slices using the channel information.
+
+        This method is only used for updating the entire image slices. Channels must be
+        correctly set before calling this method, as it uses the channel information to
+        transform the image slices.
+        """
+        raise NotImplementedError
+
     def _clim_for_ith_channel(self, img_slices: list[ImageTuple], ith: int):
         ar0, _ = img_slices[ith]
-        if ar0.dtype.kind == "c":
-            ar0 = self._control.complex_transform(ar0)
         return quick_min_max(ar0)
 
     def _init_channels(self, meta: model_meta.ImageMeta, nchannels: int, dtype):
@@ -265,6 +238,12 @@ class QImageView(QtW.QSplitter):
         self._channels = [
             ChannelInfo.from_channel(i, c, dtype) for i, c in enumerate(channels)
         ]
+
+    def _make_control_widget(self) -> QImageViewControlBase:
+        raise NotImplementedError
+
+    def _default_colormap(self) -> Colormap:
+        return Colormap("gray")
 
     def _update_channels(
         self,
@@ -291,9 +270,7 @@ class QImageView(QtW.QSplitter):
         if len(self._channels) == 1 and channels[0].colormap is None:
             # ChannelInfo.from_channel returns a single green colormap but it should
             # be gray for single channel images.
-            self._channels[0].colormap = Colormap("gray")
-        if self._composite_state() == "Comp.":
-            self._control._channel_visibilities.set_channels(self._channels)
+            self._channels[0].colormap = self._default_colormap()
 
     def _calc_current_indices(
         self,
@@ -319,6 +296,14 @@ class QImageView(QtW.QSplitter):
         return tuple(
             min(max(0, s), size - 1) for s, size in zip(sl_0, arr_new.shape[:ndim_rem])
         )
+
+    @ensure_main_thread
+    def _set_image_slices_async(self, future: Future[list[ImageTuple]]):
+        self._last_slice_future = None
+        if future.cancelled():
+            return
+        imgs = future.result()
+        self._set_image_slices(imgs)
 
     @validate_protocol
     def to_model(self) -> WidgetDataModel:
@@ -398,14 +383,6 @@ class QImageView(QtW.QSplitter):
         return None
 
     @validate_protocol
-    def theme_changed_callback(self, theme: Theme):
-        if theme.name.startswith("light"):
-            color = QtGui.QColor(0, 0, 0)
-        else:
-            color = QtGui.QColor(255, 255, 255)
-        self._roi_buttons._update_colors(color)
-
-    @validate_protocol
     def widget_resized_callback(self, old: Size, new: Size):
         self._img_view.resize_event(old, new)
 
@@ -419,30 +396,9 @@ class QImageView(QtW.QSplitter):
     def leaveEvent(self, ev) -> None:
         self._control._hover_info.setText("")
 
-    def _composite_state(self) -> str:
-        return self._control._channel_mode_combo.currentText()
-
     def _roi_visibility_changed(self, show_rois: bool):
         with qsignal_blocker(self._roi_col):
             self._roi_col._roi_visible_btn.setChecked(show_rois)
-
-    def _get_image_slices(
-        self,
-        value: tuple[int, ...],
-        nchannels: int,
-    ) -> list[ImageTuple]:
-        """Get numpy arrays for each channel (None mean hide the channel)."""
-        if self._channel_axis is None:
-            return [ImageTuple(self._get_image_slice_for_channel(value))]
-
-        img_slices = []
-        check_states = self._control._channel_visibility()
-        for i in range(nchannels):
-            vis = i >= len(check_states) or check_states[i]
-            sl = list(value)
-            sl[self._channel_axis] = i
-            img_slices.append(ImageTuple(self._get_image_slice_for_channel(sl), vis))
-        return img_slices
 
     def _update_image_visibility(self, visible: list[bool]):
         slices = self._current_image_slices
@@ -473,79 +429,6 @@ class QImageView(QtW.QSplitter):
                 self._get_image_slices, value, len(self._channels)
             )
             self._last_slice_future.add_done_callback(self._set_image_slices_async)
-
-    def _set_image_slice(self, img: NDArray[np.number], channel: ChannelInfo):
-        idx = channel.channel_index or 0
-        with qsignal_blocker(self._control._histogram):
-            self._img_view.set_array(
-                idx,
-                channel.transform_image(
-                    img,
-                    complex_transform=self._control.complex_transform,
-                    is_rgb=self._is_rgb,
-                    is_gray=self._composite_state() == "Gray",
-                ),
-            )
-            self._img_view.clear_rois()
-            self._control._histogram.set_hist_for_array(
-                img,
-                clim=channel.clim,
-                is_rgb=self._is_rgb,
-                color=color_for_colormap(channel.colormap),
-            )
-        if self._current_image_slices is not None:
-            visible = self._current_image_slices[idx].visible
-        else:
-            visible = True
-        self._current_image_slices[idx] = ImageTuple(img, visible)
-
-    @ensure_main_thread
-    def _set_image_slices_async(self, future: Future[list[ImageTuple]]):
-        self._last_slice_future = None
-        if future.cancelled():
-            return
-        imgs = future.result()
-        self._set_image_slices(imgs)
-
-    def _set_image_slices(self, imgs: list[ImageTuple]):
-        """Set image slices using the channel information.
-
-        This method is only used for updating the entire image slices. Channels must be
-        correctly set before calling this method, as it uses the channel information to
-        transform the image slices.
-        """
-        self._current_image_slices = imgs
-        if self._channels is None:
-            return
-        with qsignal_blocker(self._control._histogram):
-            for i, (imtup, ch) in enumerate(zip(imgs, self._channels)):
-                if imtup.visible:
-                    img = imtup.arr
-                else:
-                    img = None
-                self._img_view.set_array(
-                    i,
-                    ch.transform_image(
-                        img,
-                        complex_transform=self._control.complex_transform,
-                        is_rgb=self._is_rgb,
-                        is_gray=self._composite_state() == "Gray",
-                    ),
-                )
-            self._img_view.clear_rois()
-            ch_cur = self.current_channel()
-            idx = ch_cur.channel_index or 0
-            hist_arr_ref = imgs[idx].arr
-            if hist_arr_ref.dtype.kind == "c":
-                hist_arr_ref = self._control.complex_transform(hist_arr_ref)
-            self._control._histogram.set_hist_for_array(
-                hist_arr_ref,
-                clim=ch_cur.clim,
-                is_rgb=self._is_rgb,
-                color=color_for_colormap(ch_cur.colormap),
-            )
-            self._update_rois()
-            self._img_view.set_image_blending([im.visible for im in imgs])
 
     def _update_rois(self):
         rois = self._roi_col.get_rois_on_slice(self._dims_slider.value())
@@ -595,11 +478,14 @@ class QImageView(QtW.QSplitter):
                 self._control._hover_info.setText(f"x={x:.1f}, y={y:.1f} (invisible)")
                 return
             intensity = cur_img.arr[int(y), int(x)]
-            # NOTE: intensity could be an RGBA numpy array.
+            # NOTE: `intensity` could be an RGBA numpy array.
             if isinstance(intensity, np.ndarray) or self._arr.dtype.kind == "b":
                 _int = str(intensity)
             else:
-                fmt = self._control._histogram._line_low._value_fmt
+                if self._arr.dtype.kind == "f":
+                    fmt = ".3g"
+                else:
+                    fmt = ".0f"
                 _int = format(intensity, fmt)
             if self._pixel_unit:
                 _int += f" [{self._pixel_unit}]"
@@ -634,11 +520,259 @@ class QImageView(QtW.QSplitter):
         )
 
 
-class ChannelInfo(BaseModel):
-    name: str = Field(...)
-    clim: tuple[float, float] = Field((0.0, 1.0))
-    colormap: Colormap = Field(default_factory=lambda: Colormap("gray"))
-    channel_index: int | None = Field(None)
+class QImageView(QImageViewBase):
+    """The default nD image viewer widget.
+
+    ## Basic Usage
+
+    The image canvas can be interactively panned by dragging with the left mouse button,
+    and zoomed by scrolling the mouse wheel. Zooming is reset by double-click. This
+    widget also supports adding ROIs (Regions of Interest) to the image.
+
+    - For multi-dimensional images, dimension sliders will be added to the bottom of the
+      image canvas.
+    - For multi-channel images, channel composition mode can be selected in the control
+      widget. Toggle switches for each channel are available next to it.
+    - The histogram of the current channel is displayed in the control widget. The
+      contrast limits can be adjusted by dragging the handles on the histogram.
+    - A ROI manager is in the right collapsible panel. Press the ROI buttons to switch
+      between ROI modes.
+
+    ## Keyboard Shortcuts
+
+    - `L`: Switch between Line ROI and Segmented Line ROI.
+    - `R`: Switch between Rectangle ROI and Rotated Rectangle ROI.
+    - `E`: Switch to Ellipse ROI.
+    - `G`: Switch to Polygon ROI.
+    - `P`: Switch between Point ROI and Multi-Point ROI.
+    - `Z`: Switch to Pan/Zoom Mode.
+    - `Space`: Hold this key to temporarily switch to Pan/Zoom Mode.
+    - `S`: Switch to Select Mode.
+    - `T`: Add current ROI to the ROI list.
+    - `V`: Toggle visibility of all the added ROIs.
+    - `Delete` / `Backspace`: Remove the current ROI.
+    - `Ctrl+A`: Select the entire image with a rectangle ROI.
+    - `Ctrl+X`: Cut the selected ROI.
+    - `Ctrl+C`: Copy the selected ROI.
+    - `Ctrl+V`: Paste the copied ROI.
+    - `Ctrl+D`: Duplicate the selected ROI.
+
+    ## Drag and Drop
+
+    - This widget accepts dropping models with `StandardType.IMAGE_ROIS` ("image-rois").
+      Dropped ROIs will be added to the ROI list.
+    - ROIs can be dragged out from the ROI manager. The type of the dragged model is
+      `StandardType.IMAGE_ROIS` ("image-rois"). Use the drag indicator in the corner of
+      the ROI list.
+    """
+
+    __himena_widget_id__ = "builtins:QImageView"
+    __himena_display_name__ = "Built-in Image Viewer"
+    _control: QImageViewControl
+
+    @validate_protocol
+    def theme_changed_callback(self, theme: Theme):
+        if theme.name.startswith("light"):
+            color = QtGui.QColor(0, 0, 0)
+        else:
+            color = QtGui.QColor(255, 255, 255)
+        self._roi_buttons._update_colors(color)
+
+    def _make_control_widget(self) -> QImageViewControl:
+        return QImageViewControl(self)
+
+    def _update_channels(self, meta, img_slices, nchannels, dtype):
+        super()._update_channels(meta, img_slices, nchannels, dtype)
+        if self._composite_state() == "Comp.":
+            self._control._chn_vis.set_channels(self._channels)
+
+    def _composite_state(self) -> str:
+        return self._control._chn_mode_combo.currentText()
+
+    def _get_image_slices(
+        self,
+        value: tuple[int, ...],
+        nchannels: int,
+    ) -> list[ImageTuple]:
+        """Get numpy arrays for each channel (None mean hide the channel)."""
+        if self._channel_axis is None:
+            return super()._get_image_slices(value, nchannels)
+
+        img_slices = []
+        check_states = self._control._channel_visibility()
+        for i in range(nchannels):
+            vis = i >= len(check_states) or check_states[i]
+            sl = list(value)
+            sl[self._channel_axis] = i
+            img_slices.append(ImageTuple(self._get_image_slice_for_channel(sl), vis))
+        return img_slices
+
+    def _set_image_slice(self, img: NDArray[np.number], channel: ChannelInfo):
+        idx = channel.channel_index or 0
+        with qsignal_blocker(self._control._histogram):
+            self._img_view.set_array(
+                idx,
+                channel.transform_image(
+                    img,
+                    complex_transform=self._control.complex_transform,
+                    is_rgb=self._is_rgb,
+                    is_gray=self._composite_state() == "Gray",
+                ),
+            )
+            self._img_view.clear_rois()
+            self._control._histogram.set_hist_for_array(
+                img,
+                clim=channel.clim,
+                is_rgb=self._is_rgb,
+                color=color_for_colormap(channel.colormap),
+            )
+        if self._current_image_slices is not None:
+            visible = self._current_image_slices[idx].visible
+        else:
+            visible = True
+        self._current_image_slices[idx] = ImageTuple(img, visible)
+
+    def _set_image_slices(self, imgs: list[ImageTuple]):
+        """Set image slices using the channel information.
+
+        This method is only used for updating the entire image slices. Channels must be
+        correctly set before calling this method, as it uses the channel information to
+        transform the image slices.
+        """
+        self._current_image_slices = imgs
+        if self._channels is None:
+            return
+        with qsignal_blocker(self._control._histogram):
+            for i, (imtup, ch) in enumerate(zip(imgs, self._channels)):
+                if imtup.visible:
+                    img = imtup.arr
+                else:
+                    img = None
+                self._img_view.set_array(
+                    i,
+                    ch.transform_image(
+                        img,
+                        complex_transform=self._control.complex_transform,
+                        is_rgb=self._is_rgb,
+                        is_gray=self._composite_state() == "Gray",
+                    ),
+                )
+            self._img_view.clear_rois()
+            ch_cur = self.current_channel()
+            idx = ch_cur.channel_index or 0
+            hist_arr_ref = imgs[idx].arr
+            if hist_arr_ref.dtype.kind == "c":
+                hist_arr_ref = self._control.complex_transform(hist_arr_ref)
+            self._control._histogram.set_hist_for_array(
+                hist_arr_ref,
+                clim=ch_cur.clim,
+                is_rgb=self._is_rgb,
+                color=color_for_colormap(ch_cur.colormap),
+            )
+            self._update_rois()
+            self._img_view.set_image_blending([im.visible for im in imgs])
+
+    def _clim_for_ith_channel(self, img_slices: list[ImageTuple], ith: int):
+        ar0, _ = img_slices[ith]
+        if ar0.dtype.kind == "c":
+            ar0 = self._control.complex_transform(ar0)
+        return quick_min_max(ar0)
+
+
+class QImageLabelView(QImageViewBase):
+    """The default nD image label viewer widget.
+
+    Unlink the image viewer, this widget displays image labels by discrete colors.
+
+    ## Basic Usage
+
+    The image canvas can be interactively panned by dragging with the left mouse button,
+    and zoomed by scrolling the mouse wheel. Zooming is reset by double-click. This
+    widget also supports adding ROIs (Regions of Interest) to the image.
+
+    - For multi-dimensional images, dimension sliders will be added to the bottom of the
+      image canvas.
+    - For multi-channel images, channel composition mode can be selected in the control
+      widget. Toggle switches for each channel are available next to it.
+    - The histogram of the current channel is displayed in the control widget. The
+      contrast limits can be adjusted by dragging the handles on the histogram.
+    - A ROI manager is in the right collapsible panel. Press the ROI buttons to switch
+      between ROI modes.
+
+    ## Keyboard Shortcuts
+
+    - `L`: Switch between Line ROI and Segmented Line ROI.
+    - `R`: Switch between Rectangle ROI and Rotated Rectangle ROI.
+    - `E`: Switch to Ellipse ROI.
+    - `G`: Switch to Polygon ROI.
+    - `P`: Switch between Point ROI and Multi-Point ROI.
+    - `Z`: Switch to Pan/Zoom Mode.
+    - `Space`: Hold this key to temporarily switch to Pan/Zoom Mode.
+    - `S`: Switch to Select Mode.
+    - `T`: Add current ROI to the ROI list.
+    - `V`: Toggle visibility of all the added ROIs.
+    - `Delete` / `Backspace`: Remove the current ROI.
+    - `Ctrl+A`: Select the entire image with a rectangle ROI.
+    - `Ctrl+X`: Cut the selected ROI.
+    - `Ctrl+C`: Copy the selected ROI.
+    - `Ctrl+V`: Paste the copied ROI.
+    - `Ctrl+D`: Duplicate the selected ROI.
+
+    ## Drag and Drop
+
+    - This widget accepts dropping models with `StandardType.IMAGE_ROIS` ("image-rois").
+      Dropped ROIs will be added to the ROI list.
+    - ROIs can be dragged out from the ROI manager. The type of the dragged model is
+      `StandardType.IMAGE_ROIS` ("image-rois"). Use the drag indicator in the corner of
+      the ROI list.
+    """
+
+    __himena_widget_id__ = "builtins:QImageLabelView"
+    __himena_display_name__ = "Built-in Image Label Viewer"
+    _control: QImageLabelViewControl
+
+    def _default_colormap(self) -> Colormap:
+        return Colormap("gnuplot:rainbow")
+
+    def _make_control_widget(self) -> QImageLabelViewControl:
+        return QImageLabelViewControl(self)
+
+    def _get_opacity(self) -> float:
+        return self._control._opacity_slider.value()
+
+    def _set_image_slice(self, img: NDArray[np.number], channel: ChannelInfo):
+        idx = channel.channel_index or 0
+        self._img_view.set_array(
+            idx, channel.transform_labels(img, opacity=self._get_opacity())
+        )
+        self._img_view.clear_rois()
+        self._current_image_slices[idx] = ImageTuple(img)
+
+    def _set_image_slices(self, imgs: list[ImageTuple]):
+        """Set image slices using the channel information.
+
+        This method is only used for updating the entire image slices. Channels must be
+        correctly set before calling this method, as it uses the channel information to
+        transform the image slices.
+        """
+        self._current_image_slices = imgs
+        if self._channels is None:
+            return
+        for i, (imtup, ch) in enumerate(zip(imgs, self._channels)):
+            self._img_view.set_array(
+                i, ch.transform_labels(imtup.arr, opacity=self._get_opacity())
+            )
+        self._img_view.clear_rois()
+        self._update_rois()
+        self._img_view.set_image_blending([im.visible for im in imgs])
+
+
+@dataclasses.dataclass
+class ChannelInfo:
+    name: str
+    clim: tuple[float, float] = dataclasses.field(default=(0.0, 1.0))
+    colormap: Colormap = dataclasses.field(default_factory=lambda: Colormap("gray"))
+    channel_index: int | None = None
 
     def transform_image(
         self,
@@ -656,6 +790,29 @@ class ChannelInfo(BaseModel):
             if is_gray:
                 return self.as_gray().transform_image(arr, complex_transform)
             return self.transform_image_2d(arr, complex_transform)
+
+    def transform_labels(
+        self,
+        arr: NDArray[np.uint] | None,
+        opacity: float = 0.7,
+        period: int = 256,
+    ) -> NDArray[np.uint8] | None:
+        """Transform an uint array to a displayable RGBA image."""
+        if arr is None:
+            return None
+        mask_background = arr == 0
+        if arr.dtype == np.uint8:
+            # NOTE: arr % 256 raises OverflowError for arr.dtype == np.uint8.
+            arr_index = arr.copy()
+        else:
+            arr_index = np.empty(arr.shape, dtype=np.uint8)
+            np.mod(arr - 1, period, out=arr_index)
+        arr_index *= 109
+        arr_normed = self.colormap(arr_index, N=period, bytes=True)
+        arr_normed[:, :, 3] = int(255 * opacity)
+        arr_normed[mask_background] = 0
+        out = np.ascontiguousarray(arr_normed)
+        return out
 
     def transform_image_2d(
         self,
@@ -724,7 +881,12 @@ class ChannelInfo(BaseModel):
         return arr_normed
 
     def as_gray(self) -> ChannelInfo:
-        return self.model_copy(update={"colormap": Colormap("gray")})
+        return ChannelInfo(
+            name=self.name,
+            clim=self.clim,
+            colormap=Colormap("gray"),
+            channel_index=self.channel_index,
+        )
 
     @classmethod
     def from_channel(

@@ -25,12 +25,14 @@ class QFileSystemModel(QtW.QFileSystemModel):
             return QtCore.QSize(18, 16)
         return super().data(index, role)
 
-    def flags(self, index: QtCore.QModelIndex) -> QtCore.Qt.ItemFlags:
+    def flags(self, index: QtCore.QModelIndex) -> QtCore.Qt.ItemFlag:
         # NOTE: renaming of item triggers renaming of the file by default.
         return super().flags(index) | QtCore.Qt.ItemFlag.ItemIsEditable
 
 
 class QRootPathEdit(QtW.QWidget):
+    """Widget to specify the root path of the file explorer."""
+
     rootChanged = QtCore.Signal(Path)
 
     def __init__(self) -> None:
