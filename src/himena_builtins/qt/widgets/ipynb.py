@@ -115,7 +115,7 @@ class QIpynbEdit(QtW.QScrollArea):
         self._control_widget._delete_cell_btn.setEnabled(editable)
 
     @validate_protocol
-    def control_widget(self) -> QtW.QWidget:
+    def control_widget(self) -> QIpynbControl:
         return self._control_widget
 
     def clear_all(self):
@@ -309,7 +309,7 @@ class QIpynbControl(QtW.QWidget):
     def _insert_impl(self, cell_type: str):
         idx = self._ipynb_edit.current_index()
         if idx == -1:
-            idx = len(self._ipynb_edit._cell_widgets)
+            idx = len(self._ipynb_edit._cell_widgets) - 1
         cell = ipynb.IpynbCell(cell_type=cell_type)
         self._ipynb_edit.insert_cell(idx + 1, cell)
 
@@ -318,7 +318,7 @@ class QIpynbControl(QtW.QWidget):
             if widget._output_widget is not None:
                 widget._output_widget.clear()
                 widget._qimages.clear()
-                widget.setParent(None)
+                self._ipynb_edit._layout.removeWidget(widget)
                 widget.deleteLater()
             widget._ipynb_cell.outputs = []
 

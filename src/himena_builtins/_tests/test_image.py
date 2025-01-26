@@ -40,6 +40,7 @@ def test_image_view(qtbot: QtBot):
         QApplication.processEvents()
         image_view._control._chn_mode_combo.setCurrentText("Comp.")
         QApplication.processEvents()
+        image_view._control._histogram._line_low._show_value_label()
 
         # switch modes
         qtbot.keyClick(image_view._img_view, Qt.Key.Key_Z)
