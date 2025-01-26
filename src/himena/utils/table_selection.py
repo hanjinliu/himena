@@ -73,21 +73,12 @@ def model_to_vals_arrays(
     *,
     same_size: bool = True,
 ) -> list[NamedArray]:
-    if len(ys) > 1:
-        y0, *yother = ys
-        values: list[NamedArray] = []
-        for i, yn in enumerate(yother):
-            x, y_out = model_to_xy_arrays(
-                model, y0, yn, allow_multiple_y=False, same_size=same_size
-            )
-            if i == 0:
-                values.append(x)
-            values.append(y_out[0])
-    else:
-        x, y_out = model_to_xy_arrays(
-            model, None, ys[0], allow_multiple_y=False, same_size=same_size
+    values: list[NamedArray] = []
+    for yn in ys:
+        _, y_out = model_to_xy_arrays(
+            model, None, yn, allow_multiple_y=False, same_size=same_size
         )
-        values = [y_out[0]]
+        values.append(y_out[0])
     return values
 
 
@@ -173,23 +164,16 @@ class TableValueParser:
     def from_columns(cls, value: np.ndarray) -> TableValueParser:
         nr, nc = value.shape
         if nr == 1:
-            return cls(
-                [NamedArray(None, value[:, i].astype(np.float64)) for i in range(nc)]
-            )
+            return cls([NamedArray(None, as_f64(value[:, i])) for i in range(nc)])
         try:
-            value[0, :].astype(np.float64)  # try to cast to float
+            as_f64(value[0, :])  # try to cast to float
         except ValueError:
             # The first row is not numerical. Use it as labels.
             return cls(
-                [
-                    NamedArray(str(value[0, i]), value[1:, i].astype(np.float64))
-                    for i in range(nc)
-                ]
+                [NamedArray(str(value[0, i]), as_f64(value[1:, i])) for i in range(nc)]
             )
         else:
-            return cls(
-                [NamedArray(None, value[:, i].astype(np.float64)) for i in range(nc)]
-            )
+            return cls([NamedArray(None, as_f64(value[:, i])) for i in range(nc)])
 
     @classmethod
     def from_rows(cls, value: np.ndarray) -> TableValueParser:
@@ -269,3 +253,9 @@ def _to_single_column_slice(val: SelectionType) -> int:
     if csl[1] - csl[0] != 1:
         raise ValueError("Only single column selection is allowed")
     return csl[1] - csl[0]
+
+
+def as_f64(arr: np.ndarray):
+    if arr.dtype.kind == "T":
+        return np.where(arr == "", "nan", arr).astype(np.float64)
+    return arr.astype(np.float64)
