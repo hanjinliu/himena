@@ -39,15 +39,32 @@ def list_installed_dataframe_packages() -> list[str]:
     return installed
 
 
+def _read_csv_dict(file) -> dict[str, np.ndarray]:
+    if isinstance(file, (str, Path)):
+        with open(file) as f:
+            return _read_csv_dict(f)
+    csv_reader = csv.reader(file)
+    header = next(csv_reader)
+    data = {k: [] for k in header}
+    for row in csv_reader:
+        for k, v in zip(header, row):
+            data[k].append(v)
+    return {k: _as_array(v) for k, v in data.items()}
+
+
+def _as_array(ar: list[str]) -> np.ndarray:
+    try:
+        return np.array(ar, dtype=int)
+    except Exception:
+        try:
+            return np.array(ar, dtype=float)
+        except Exception:
+            return np.array(ar, dtype=np.dtypes.StringDType())
+
+
 def read_csv(mod: str, file) -> Any:
     if mod == "dict":
-        csv_reader = csv.reader(file)
-        header = next(csv_reader)
-        data = {k: [] for k in header}
-        for row in csv_reader:
-            for k, v in zip(header, row):
-                data[k].append(v)
-        return {k: np.array(v) for k, v in data.items()}
+        return _read_csv_dict(file)
     if mod == "pandas":
         return importlib.import_module(mod).read_csv(file, header=0)
     elif mod == "polars":
@@ -166,11 +183,13 @@ class DataFrameWrapper(ABC):
 
     @classmethod
     @abstractmethod
-    def from_csv_string(self, str_or_buf: str | io.StringIO, separator: str) -> Self:
+    def from_csv_string(
+        self, str_or_buf: str | io.StringIO, separator: str = ","
+    ) -> Self:
         """Create a dataframe from a CSV string."""
 
     @abstractmethod
-    def to_csv_string(self, separator: str) -> str:
+    def to_csv_string(self, separator: str = ",") -> str:
         """Convert the dataframe to a CSV string."""
 
     @abstractmethod
@@ -258,7 +277,7 @@ class DictWrapper(DataFrameWrapper):
         return DtypeTuple(str(dtype), dtype.kind)
 
     @classmethod
-    def from_csv_string(self, str_or_buf: str | io.StringIO, separator: str):
+    def from_csv_string(self, str_or_buf: str | io.StringIO, separator: str = ","):
         if isinstance(str_or_buf, str):
             buf = io.StringIO(str_or_buf)
         else:
@@ -269,10 +288,10 @@ class DictWrapper(DataFrameWrapper):
         for row in csv_reader:
             for k, v in zip(header, row):
                 data[k].append(v)
-        return {k: np.array(v) for k, v in data.items()}
+        return DictWrapper({k: _as_array(v) for k, v in data.items()})
 
-    def to_csv_string(self, separator: str) -> str:
-        lines: list[str] = []
+    def to_csv_string(self, separator: str = ",") -> str:
+        lines = [separator.join(self.column_names())]
         for i in range(self.num_rows()):
             lines.append(
                 separator.join(str(self._df[k][i]) for k in self.column_names())
@@ -351,7 +370,7 @@ class PandasWrapper(DataFrameWrapper):
 
     @classmethod
     def from_csv_string(
-        cls, str_or_buf: str | io.StringIO, separator: str
+        cls, str_or_buf: str | io.StringIO, separator: str = ","
     ) -> DataFrameWrapper:
         import pandas as pd
 
@@ -359,7 +378,7 @@ class PandasWrapper(DataFrameWrapper):
             str_or_buf = io.StringIO(str_or_buf)
         return PandasWrapper(pd.read_csv(str_or_buf, sep=separator))
 
-    def to_csv_string(self, separator: str) -> str:
+    def to_csv_string(self, separator: str = ",") -> str:
         return self._df.to_csv(sep=separator, index=False)
 
     def to_list(self) -> list[list[Any]]:
@@ -450,15 +469,15 @@ class PolarsWrapper(DataFrameWrapper):
 
     @classmethod
     def from_csv_string(
-        cls, str_or_buf: str | io.StringIO, separator: str
+        cls, str_or_buf: str | io.StringIO, separator: str = ","
     ) -> PolarsWrapper:
         import polars as pl
 
         if isinstance(str_or_buf, str):
             str_or_buf = io.StringIO(str_or_buf)
-        return PolarsWrapper(pl.read_csv(str_or_buf, sep=separator))
+        return PolarsWrapper(pl.read_csv(str_or_buf, separator=separator))
 
-    def to_csv_string(self, separator: str) -> str:
+    def to_csv_string(self, separator: str = ",") -> str:
         return self._df.write_csv(separator=separator)
 
     def to_list(self) -> list[list[Any]]:
@@ -517,7 +536,7 @@ class PyarrowWrapper(DataFrameWrapper):
     def get_dtype(self, index: int) -> DtypeTuple:
         import pyarrow as pa
 
-        pa_type = self._df.schema[index]
+        pa_type = self._df.schema[index].type
         if pa_type == pa.int8():
             return DtypeTuple("int8", "i")
         if pa_type == pa.int16():
@@ -543,7 +562,7 @@ class PyarrowWrapper(DataFrameWrapper):
         return DtypeTuple(str(pa_type), "O")
 
     @classmethod
-    def from_csv_string(cls, str_or_buf: str, separator: str) -> PyarrowWrapper:
+    def from_csv_string(cls, str_or_buf: str, separator: str = ",") -> PyarrowWrapper:
         import pyarrow as pa
 
         if isinstance(str_or_buf, str):
@@ -551,11 +570,11 @@ class PyarrowWrapper(DataFrameWrapper):
         else:
             buf = io.BytesIO(str_or_buf.getvalue().encode())
         return PyarrowWrapper(
-            pa.csv.read_csv(buf, read_options=pa.csv.ReadOptions(delimiter=separator))
+            pa.csv.read_csv(buf, parse_options=pa.csv.ParseOptions(delimiter=separator))
         )
 
-    def to_csv_string(self, separator: str) -> str:
-        lines: list[str] = []
+    def to_csv_string(self, separator: str = ",") -> str:
+        lines = [separator.join(self.column_names())]
         for a in self._df.to_pylist():
             a: dict[str, Any]
             lines.append(separator.join(str(cell) for cell in a.values()))
@@ -565,7 +584,7 @@ class PyarrowWrapper(DataFrameWrapper):
         return [list(a.values()) for a in self._df.to_pylist()]
 
     def column_to_array(self, name: str) -> np.ndarray:
-        return self._df[name].as_numpy()
+        return self._df[name].to_numpy()
 
     @classmethod
     def from_dict(cls, data: dict) -> DataFrameWrapper:
