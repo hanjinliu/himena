@@ -52,14 +52,15 @@ himena = "himena.__main__:main"
 pyqt5 = ["pyqt5>=5.12.0"]
 pyqt6 = ["pyqt6"]
 recommended = [
+  "pyqt6",
+  "himena[all]",
+]
+all = [
   "IPython",
   "qtconsole",
   "openpyxl",
   "scipy",
   "matplotlib>=3.8.2",
-]
-all = [
-  "himena[recommended]",
 ]
 testing = [
   "pytest",
@@ -68,6 +69,7 @@ testing = [
   "pandas",
   "polars",
   "pyarrow",
+  "xarray",
   "himena[all]"
 ]
 
