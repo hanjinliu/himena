@@ -156,12 +156,11 @@ def init_application(app: HimenaApplication) -> HimenaApplication:
             return None
         _LOGGER.debug("processing %r", fn)
         ins = current_instance(app.name)
-        gui_config, run_immediately_with = get_gui_config(fn)
+        gui_config = get_gui_config(fn)
         win = ins.add_function(fn, **gui_config)
-        if run_immediately_with is not None and ins._instructions.gui_execution:
+        if win._is_run_immediately() and ins._instructions.gui_execution:
             try:
-                kwargs = run_immediately_with()
-                win._callback_with_params(kwargs)
+                win._widget_callback()
             finally:
                 if win.is_alive:
                     win._close_me(ins)

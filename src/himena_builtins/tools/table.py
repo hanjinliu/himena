@@ -20,14 +20,14 @@ if TYPE_CHECKING:
 def crop_selection(model: WidgetDataModel["np.ndarray"]) -> Parametric:
     """Crop the table data at the selection."""
 
-    def _get_selection():
+    def _get_selection(*_):
         meta = _cast_meta(model.metadata)
         sels = meta.selections
         if sels is None or len(sels) != 1:
             raise ValueError("Table must contain single selection to crop.")
-        return {"selection": sels[0]}
+        return sels[0]
 
-    @configure_gui(run_immediately_with=_get_selection)
+    @configure_gui(selection={"bind": _get_selection})
     def run_crop_selection(
         selection: tuple[tuple[int, int], tuple[int, int]],
     ) -> WidgetDataModel:

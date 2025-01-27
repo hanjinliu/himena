@@ -31,12 +31,7 @@ from himena.types import (
     WindowRect,
     FutureInfo,
 )
-from himena._descriptors import (
-    NoNeedToSave,
-    SaveBehavior,
-    SaveToNewPath,
-    SaveToPath,
-)
+from himena._descriptors import NoNeedToSave, SaveBehavior, SaveToNewPath, SaveToPath
 from himena.workflow import (
     CommandExecution,
     LocalReaderMethod,
@@ -44,6 +39,7 @@ from himena.workflow import (
     UserModification,
 )
 from himena.plugins import _checker, AppActionRegistry
+from himena.plugins._signature import _is_annotated, _split_annotated_type
 from himena.layout import Layout
 
 if TYPE_CHECKING:
@@ -619,7 +615,7 @@ class ParametricWindow(SubWindow[_W]):
         # check if callback has "is_previewing" argument
         sig = inspect.signature(callback)
         self._has_is_previewing = self._IS_PREVIEWING in sig.parameters
-        self._return_annotation = sig.return_annotation
+        self._fn_signature = sig
 
     def get_params(self) -> dict[str, Any]:
         """Get the parameters of the widget."""
@@ -639,6 +635,17 @@ class ParametricWindow(SubWindow[_W]):
         if (prev := self._preview_window_ref()) and prev.is_alive:
             return prev
         return None
+
+    def _is_run_immediately(self) -> bool:
+        for param in self._fn_signature.parameters.values():
+            annot = param.annotation
+            if _is_annotated(annot):
+                _, op = _split_annotated_type(annot)
+                if "bind" not in op:
+                    return False
+            else:
+                return False
+        return True
 
     def _widget_callback(self):
         """Callback when the call button is clicked."""
@@ -733,6 +740,7 @@ class ParametricWindow(SubWindow[_W]):
         ui = main._himena_main_window
         main._set_parametric_widget_busy(self, False)
         tracker = ModelTrack.get(self._callback)
+        _return_annot = self._fn_signature.return_annotation
         _LOGGER.info("Got tracker: %r", tracker)
         if isinstance(return_value, WidgetDataModel):
             if prev := self._get_preview_window():
@@ -775,7 +783,7 @@ class ParametricWindow(SubWindow[_W]):
                         return_value.save_behavior_override, NoNeedToSave
                     ):
                         result_widget._set_ask_save_before_close(True)
-        elif self._return_annotation in (Parametric, ParametricWidgetProtocol):
+        elif _return_annot in (Parametric, ParametricWidgetProtocol):
             raise NotImplementedError
         else:
             annot = getattr(self._callback, "__annotations__", {})

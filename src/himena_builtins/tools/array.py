@@ -26,12 +26,12 @@ def duplicate_this_slice(model: WidgetDataModel) -> Parametric:
             "Widget does not have ArrayMeta thus cannot determine the slice indices."
         )
 
-    def get_indices():
+    def _get_indices(*_):
         if (indices := meta.current_indices) is None:
             raise ValueError("The `current_indices` attribute is not set.")
-        return {"indices": indices}
+        return indices
 
-    @configure_gui(run_immediately_with=get_indices)
+    @configure_gui(indices={"bind": _get_indices})
     def run_duplicate_this_slice(indices) -> WidgetDataModel:
         arr = wrap_array(model.value)
         arr_sliced = arr.get_slice(
@@ -65,10 +65,10 @@ def crop_array(model: WidgetDataModel) -> Parametric:
 
         return crop_image(model)
 
-    def _get_selection():
-        return {"selection": _get_current_selection(model)}
+    def _get_selection(*_):
+        return _get_current_selection(model)
 
-    @configure_gui(run_immediately_with=_get_selection)
+    @configure_gui(selection={"bind": _get_selection})
     def run_crop_array(
         selection: tuple[tuple[int, int], tuple[int, int]],
     ) -> WidgetDataModel:

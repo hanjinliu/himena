@@ -220,7 +220,7 @@ def make_function_callback(
     return _new_f
 
 
-def get_gui_config(fn) -> tuple[dict[str, Any], Callable[[], dict[str, Any]] | None]:
+def get_gui_config(fn) -> dict[str, Any]:
     if isinstance(config := GuiConfiguration.get(fn), GuiConfiguration):
         out = config.asdict()
     else:
@@ -230,8 +230,7 @@ def get_gui_config(fn) -> tuple[dict[str, Any], Callable[[], dict[str, Any]] | N
             out["title"] = fn.__name__
         else:
             out["title"] = str(fn)
-    run_immediately_with = out.pop("run_immediately_with", None)
-    return out, run_immediately_with
+    return out
 
 
 def import_object(full_name: str) -> Any:

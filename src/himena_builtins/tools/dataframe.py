@@ -33,13 +33,13 @@ def header_to_row(model: WidgetDataModel) -> WidgetDataModel:
 def series_as_array(model: WidgetDataModel) -> Parametric:
     """Convert a single column to an array."""
 
-    def _get_column_index():
+    def _get_column_index(*_):
         c0 = _get_column_selection_name(model)
         if c0 is None:
             raise ValueError("Please select a single column.")
-        return {"column": c0}
+        return c0
 
-    @configure_gui(run_immediately_with=_get_column_index)
+    @configure_gui(column={"bind": _get_column_index})
     def run_series_as_array(column: str):
         df = wrap_dataframe(model.value)
         series = df.column_to_array(column)

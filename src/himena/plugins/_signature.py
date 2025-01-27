@@ -49,7 +49,6 @@ def configure_gui(
     show_parameter_labels: bool = True,
     gui_options: dict[str, Any] | None = None,
     run_async: bool = False,
-    run_immediately_with: dict[str, Any] | Callable[[], dict[str, Any]] | None = None,
     result_as: Literal["window", "below", "right"] = "window",
     **kwargs,
 ) -> _F: ...
@@ -62,7 +61,6 @@ def configure_gui(
     show_parameter_labels: bool = True,
     gui_options: dict[str, Any] | None = None,
     run_async: bool = False,
-    run_immediately_with: dict[str, Any] | Callable[[], dict[str, Any]] | None = None,
     result_as: Literal["window", "below", "right"] = "window",
     **kwargs,
 ) -> Callable[[_F], _F]: ...
@@ -77,7 +75,6 @@ def configure_gui(
     show_parameter_labels: bool = True,
     gui_options: dict[str, Any] | None = None,
     run_async: bool = False,
-    run_immediately_with: dict[str, Any] | Callable[[], dict[str, Any]] | None = None,
     result_as: Literal["window", "below", "right"] = "window",
     **kwargs,
 ):
@@ -109,9 +106,6 @@ def configure_gui(
     run_async : bool, default False
         If true, the function will be executed asynchronously. Note that if the function
         updates the GUI, running it asynchronously may cause issues.
-    run_immediately_with : dict or () -> dict, optional
-        If provided, the function will be executed immediately with the given
-        parameters. This can be a dictionary or a callable that returns a dictionary.
     """
     kwargs = dict(**kwargs, **(gui_options or {}))
 
@@ -147,29 +141,14 @@ def configure_gui(
         if sig.return_annotation is not inspect.Parameter.empty:
             f.__annotations__["return"] = sig.return_annotation
 
-        if run_immediately_with is not None:
-            if callable(run_immediately_with):
-                _getter = run_immediately_with
-            else:
-                _getter = lambda: run_immediately_with  # noqa: E731
-            annot = {}
-            for k, v in f.__annotations__.items():
-                if k == "return":
-                    annot[k] = v
-                else:
-                    annot[k] = Annotated[v, {"bind": None}]
-        else:
-            _getter = None
-        cfg = GuiConfiguration(
+        GuiConfiguration(
             title=title,
             preview=preview,
             auto_close=auto_close,
             show_parameter_labels=show_parameter_labels,
             run_async=run_async,
             result_as=result_as,
-            run_immediately_with=_getter,
-        )
-        cfg.set(f)
+        ).set(f)
         return f
 
     return _inner if f is None else _inner(f)

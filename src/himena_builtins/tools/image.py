@@ -7,7 +7,7 @@ from himena.plugins import (
     configure_gui,
     configure_submenu,
 )
-from himena.types import Parametric, WidgetDataModel
+from himena.types import Parametric, WidgetDataModel, Rect
 from himena.consts import StandardType
 from himena.standards.model_meta import (
     ArrayAxis,
@@ -33,17 +33,16 @@ def crop_image(model: WidgetDataModel) -> Parametric:
     """Crop the image around the current ROI."""
     arr = wrap_array(model.value)
 
-    def _get_xy():
-        roi, meta = _get_current_roi_and_meta(model)
-        if not isinstance(roi, _roi.Roi2D):
-            raise NotImplementedError
-        left, top, width, height = _2d_roi_to_bbox(roi, arr, meta)
-        x = left, left + width
-        y = top, top + height
-        return {"y": y, "x": x}
+    def _get_x(*_):
+        bbox = _get_roi_box(model)
+        return bbox.left, bbox.right
 
-    @configure_gui(run_immediately_with=_get_xy)
-    def run_crop_image(y: tuple[int, int], x: tuple[int, int]):
+    def _get_y(*_):
+        bbox = _get_roi_box(model)
+        return bbox.top, bbox.bottom
+
+    @configure_gui(x={"bind": _get_x}, y={"bind": _get_y})
+    def run_crop_image(x: tuple[int, int], y: tuple[int, int]):
         xsl, ysl = slice(*x), slice(*y)
         meta = _cast_meta(model, ImageMeta)
         if meta.is_rgb:
@@ -69,17 +68,17 @@ def crop_image_multi(model: WidgetDataModel) -> Parametric:
     meta = _cast_meta(model, ImageMeta)
     arr = wrap_array(model.value)
 
-    def _get_bbox_list():
+    def _get_bbox_list(*_):
         rois = meta.unwrap_rois()
         bbox_list: list[tuple[int, int, int, int]] = []
-        for i, roi in enumerate(rois):
+        for roi in rois:
             if not isinstance(roi, _roi.Roi2D):
                 continue
             bbox = _2d_roi_to_bbox(roi, arr, meta)
-            bbox_list.append(bbox)
-        return {"bbox_list": bbox_list}
+            bbox_list.append(tuple(bbox))
+        return bbox_list
 
-    @configure_gui(run_immediately_with=_get_bbox_list)
+    @configure_gui(bbox_list={"bind": _get_bbox_list})
     def run_crop_image_multi(bbox_list: list[tuple[int, int, int, int]]):
         meta_out = meta.without_rois()
         cropped_models: list[WidgetDataModel] = []
@@ -143,15 +142,13 @@ def crop_image_nd(win: SubWindow) -> Parametric:
     return run_crop_image
 
 
-def _2d_roi_to_bbox(
-    roi: _roi.Roi2D, arr: ArrayWrapper, meta: ImageMeta
-) -> tuple[int, int, int, int]:
+def _2d_roi_to_bbox(roi: _roi.Roi2D, arr: ArrayWrapper, meta: ImageMeta) -> Rect[int]:
     bbox = roi.bbox().adjust_to_int()
     xmax, ymax = _slice_shape(arr, meta)
     bbox = bbox.limit_to(xmax, ymax)
     if bbox.width <= 0 or bbox.height <= 0:
         raise ValueError("Crop range out of bounds.")
-    return tuple(bbox)
+    return bbox
 
 
 def _bbox_to_slice(
@@ -254,10 +251,7 @@ def select_rois(model: WidgetDataModel) -> Parametric:
         raise ValueError(f"Expected an ImageRoisMeta metadata, got {type(meta)}")
     axes = meta.axes
 
-    def _get_selections():
-        return {"selections": meta.selections}
-
-    @configure_gui(run_immediately_with=_get_selections)
+    @configure_gui(selections={"bind": lambda *_: meta.selections})
     def run_select(selections: list[int]) -> WidgetDataModel:
         if len(selections) == 0:
             raise ValueError("No ROIs selected.")
@@ -662,3 +656,11 @@ def _slice_shape(arr: ArrayWrapper, meta: ImageMeta) -> tuple[int, int]:
     if meta.is_rgb:
         return arr.shape[-2], arr.shape[-3]
     return arr.shape[-1], arr.shape[-2]
+
+
+def _get_roi_box(model: WidgetDataModel) -> Rect[int]:
+    arr = wrap_array(model.value)
+    roi, meta = _get_current_roi_and_meta(model)
+    if not isinstance(roi, _roi.Roi2D):
+        raise NotImplementedError
+    return _2d_roi_to_bbox(roi, arr, meta)
