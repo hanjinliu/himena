@@ -330,7 +330,7 @@ class SegmentedLineRoi(PointsRoi2D):
         tnots = np.concatenate([[0], self.lengths()], dtype=np.float64)
         length = tnots.sum()
         num, rem = divmod(length, step)
-        teval = np.linspace(0, tnots.sum() - rem, num)
+        teval = np.linspace(0, tnots.sum() - rem, int(round(num)))
         xi = np.interp(teval, tnots, self.xs)
         yi = np.interp(teval, tnots, self.ys)
         return xi, yi

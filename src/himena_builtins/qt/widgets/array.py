@@ -148,7 +148,6 @@ class QArraySliceView(QTableBase):
     def _update_width(self, width: int):
         header = self.horizontalHeader()
         header.setDefaultSectionSize(width)
-        # header.resizeSections(QtW.QHeaderView.ResizeMode.Fixed)
         for i in range(header.count()):
             header.resizeSection(i, width)
 
@@ -322,6 +321,7 @@ class QArrayView(QtW.QWidget):
 
     @validate_protocol
     def update_model(self, model: WidgetDataModel):
+        was_none = self._arr is None
         arr = wrap_array(model.value)
         self._arr = arr
         arr_structured = _is_structured(arr.arr)
@@ -339,7 +339,8 @@ class QArrayView(QtW.QWidget):
         if self._control is None:
             self._control = QArrayViewControl(self._table)
         self._control.update_for_array(self._arr)
-        self._table.update_width_by_dtype()
+        if was_none:
+            self._table.update_width_by_dtype()
         if isinstance(meta := model.metadata, ArrayMeta):
             if meta.selections:  # if has selections, they need updating
                 self.selection_model.clear()

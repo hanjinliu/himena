@@ -36,7 +36,6 @@ class QItemDelegate(QtW.QStyledItemDelegate):
         option: QtW.QStyleOptionViewItem,
         index: QtCore.QModelIndex,
     ):
-        option.textElideMode = Qt.TextElideMode.ElideNone
         super().paint(painter, option, index)
         if option.state & QtW.QStyle.StateFlag.State_MouseOver:
             painter.setPen(QtGui.QPen(self.parent()._hover_color, 2))
@@ -247,7 +246,28 @@ class QTableBase(QtW.QTableView):
     def keyPressEvent(self, e):
         _mod = e.modifiers()
         _key = e.key()
-        if _mod == Qt.KeyboardModifier.NoModifier:
+        self._selection_model.set_shift(_mod & Qt.KeyboardModifier.ShiftModifier)
+        if _mod & Qt.KeyboardModifier.ControlModifier:
+            nr, nc = self.data_shape()
+            if _key == Qt.Key.Key_Up:
+                dr, dc = -99999999, 0
+            elif _key == Qt.Key.Key_Down:
+                dr, dc = 99999999, 0
+            elif _key == Qt.Key.Key_Left:
+                dr, dc = 0, -99999999
+            elif _key == Qt.Key.Key_Right:
+                dr, dc = 0, 99999999
+            elif _key == Qt.Key.Key_A:
+                self.select_all()
+                return None
+            else:
+                return super().keyPressEvent(e)
+            self._selection_model.move_limited(dr, dc, nr, nc)
+            return None
+        elif (
+            _mod == Qt.KeyboardModifier.NoModifier
+            or _mod & Qt.KeyboardModifier.ShiftModifier
+        ):
             if _key == Qt.Key.Key_Up:
                 dr, dc = -1, 0
             elif _key == Qt.Key.Key_Down:
@@ -266,37 +286,6 @@ class QTableBase(QtW.QTableView):
                 dr, dc = 10, 0
             else:
                 return super().keyPressEvent(e)
-            self._selection_model.move(dr, dc, allow_header=True)
-            return None
-        elif _mod & Qt.KeyboardModifier.ControlModifier:
-            nr, nc = self.data_shape()
-            if _key == Qt.Key.Key_Up:
-                dr, dc = -99999999, 0
-            elif _key == Qt.Key.Key_Down:
-                dr, dc = 99999999, 0
-            elif _key == Qt.Key.Key_Left:
-                dr, dc = 0, -99999999
-            elif _key == Qt.Key.Key_Right:
-                dr, dc = 0, 99999999
-            elif _key == Qt.Key.Key_A:
-                self.select_all()
-                return None
-            else:
-                return super().keyPressEvent(e)
-            self._selection_model.move_limited(dr, dc, nr, nc)
-            return None
-        elif _mod & Qt.KeyboardModifier.ShiftModifier:
-            if _key == Qt.Key.Key_Up:
-                dr, dc = -1, 0
-            elif _key == Qt.Key.Key_Down:
-                dr, dc = 1, 0
-            elif _key == Qt.Key.Key_Left:
-                dr, dc = 0, -1
-            elif _key == Qt.Key.Key_Right:
-                dr, dc = 0, 1
-            else:
-                return super().keyPressEvent(e)
-            self._selection_model.set_shift(True)
             self._selection_model.move(dr, dc, allow_header=True)
             return None
         return super().keyPressEvent(e)

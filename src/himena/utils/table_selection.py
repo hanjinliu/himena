@@ -27,6 +27,38 @@ def model_to_xy_arrays(
     allow_multiple_y: bool = True,
     same_size: bool = True,
 ) -> tuple[NamedArray, list[NamedArray]]:
+    """Extract X, Y values from a table-like model.
+
+    How selection works is just like when you plot data in Excel. This function supports
+    several types of selections.
+
+    1. Value-only column selection.
+       ```
+       +++++ +++++
+       + 1 + + 3 +
+       + 2 + + 6 +
+       + 5 + + 9 +
+       +++++ +++++
+       ```
+    2. Selection with names.
+       ```
+       +++++ +++++
+       + x + + y +
+       + 1 + + 3 +
+       + 2 + + 6 +
+       + 5 + + 9 +
+       +++++ +++++
+       ```
+    3. Multiple Y values.
+       ```
+       +++++ ++++++++
+       + x + + y, z +
+       + 1 + + 3, 1 +
+       + 2 + + 6, 4 +
+       + 5 + + 9, 2 +
+       +++++ ++++++++
+       ```
+    """
     from himena.data_wrappers import wrap_dataframe
     from himena.standards.model_meta import ExcelMeta
 
@@ -79,6 +111,8 @@ def model_to_vals_arrays(
             model, None, yn, allow_multiple_y=False, same_size=same_size
         )
         values.append(y_out[0])
+    if same_size and len({a.array.size for a in values}) != 1:
+        raise ValueError("Selection sizes not consistent.")
     return values
 
 
@@ -87,6 +121,11 @@ def model_to_col_val_arrays(
     col: SelectionType,
     val: SelectionType,
 ) -> tuple[NamedArray, NamedArray]:
+    """Extract a categorical column and a value column from a table-like model.
+
+    Very similar to `model_to_xy_arrays`, but this function does not require a numerical
+    column for the `col` input.
+    """
     from himena.data_wrappers import wrap_dataframe
     from himena.standards.model_meta import ExcelMeta
 
