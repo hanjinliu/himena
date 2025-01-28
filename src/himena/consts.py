@@ -116,9 +116,6 @@ class MenuId(StrEnum):
     STARTUP = "file/.startup"
     MODEL_MENU = "/model_menu"
 
-    def __str__(self) -> str:
-        return self.value
-
 
 class ActionCategory(StrEnum):
     OPEN_RECENT = "open-recent"

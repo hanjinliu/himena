@@ -1,4 +1,6 @@
 import warnings
+
+import pytest
 from himena import MainWindow, anchor
 from himena.consts import StandardType
 from himena.qt import MainWindowQt
@@ -6,6 +8,7 @@ from himena.qt._qmain_window import QMainWindow
 from himena.standards.model_meta import DataFrameMeta
 from himena.widgets import set_status_tip, notify
 from himena_builtins.qt import widgets as _qtw
+from himena_builtins.qt.output import OutputConfig
 
 from qtpy import QtWidgets as QtW
 from qtpy.QtCore import Qt, QPoint
@@ -205,3 +208,28 @@ def test_layout_commands(himena_ui: MainWindowQt, qtbot: QtBot):
     win0 = tab0.add_widget(_qtw.QTextEdit())
     win1 = tab0.add_widget(_qtw.QTextEdit())
     himena_ui.exec_action("window-layout-vertical", with_params={"wins": [win0, win1]})
+
+def test_profile():
+    from himena import profile
+
+    profile.new_app_profile("abc")
+    with pytest.raises(ValueError):
+        profile.new_app_profile("abc")
+
+    profile.iter_app_profiles()
+    profile.remove_app_profile("abc")
+
+def test_builtin_commands(himena_ui: MainWindow):
+    himena_ui.show()
+    himena_ui.exec_action("new-tab")
+    assert len(himena_ui.tabs) == 1
+    assert len(himena_ui.tabs[0]) == 0
+    himena_ui.exec_action("builtins:console")
+    himena_ui.exec_action("builtins:file-explorer")
+    himena_ui.exec_action("builtins:output")
+    himena_ui.exec_action("builtins:new-text")
+    assert len(himena_ui.tabs[0]) == 1
+    himena_ui.exec_action("builtins:seaborn-sample:iris")
+    config = {"format": "%(levelname)s:%(message)s", "date_format": "%Y-%m-%d %H:%M:%S"}
+    himena_ui.app_profile.update_plugin_config("builtins:output", **config)
+    himena_ui.exec_action("quit")

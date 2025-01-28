@@ -163,14 +163,6 @@ def iter_app_profiles() -> Iterable[AppProfile]:
             warnings.warn(f"Could not load profile {path}.")
 
 
-def define_app_profile(name: str, plugins: list[str]):
-    """Define (probably upadte) a profile."""
-    path = profile_dir() / f"{name}.json"
-    profile = AppProfile(name=name, plugins=plugins)
-    profile.save(path)
-    return None
-
-
 def new_app_profile(name: str) -> None:
     """Create a new profile."""
     path = profile_dir() / f"{name}.json"

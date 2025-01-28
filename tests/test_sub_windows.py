@@ -33,18 +33,6 @@ def test_new_window(himena_ui: MainWindow):
     assert len(himena_ui.tabs.current()) == 0
     assert himena_ui.tabs.current().title == "New tab"
 
-def test_builtin_commands(himena_ui: MainWindow):
-    himena_ui.show()
-    himena_ui.exec_action("new-tab")
-    assert len(himena_ui.tabs) == 1
-    assert len(himena_ui.tabs[0]) == 0
-    himena_ui.exec_action("builtins:console")
-    himena_ui.exec_action("builtins:file-explorer")
-    himena_ui.exec_action("builtins:output")
-    himena_ui.exec_action("builtins:new-text")
-    assert len(himena_ui.tabs[0]) == 1
-    himena_ui.exec_action("builtins:seaborn-sample:iris")
-    himena_ui.exec_action("quit")
 
 def test_io_commands(himena_ui: MainWindow, tmpdir, sample_dir: Path):
     response_open = lambda: [sample_dir / "text.txt"]
