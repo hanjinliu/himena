@@ -12,6 +12,15 @@ _Ctrl = Qt.KeyboardModifier.ControlModifier
 def test_array_view(qtbot: QtBot):
     with WidgetTester(QArrayView()) as tester:
         qtbot.addWidget(tester.widget)
+        tester.widget.show()
+        table = tester.widget._table
+        table.update()
+        table.model().data(table.model().index(0, 0), Qt.ItemDataRole.ToolTipRole)
+        table.model().headerData(0, Qt.Orientation.Horizontal, Qt.ItemDataRole.ToolTipRole)
+        table.model().headerData(0, Qt.Orientation.Vertical, Qt.ItemDataRole.ToolTipRole)
+        table.selection_model.set_ranges([(slice(1, 2), slice(1, 3))])
+        table.copy_data()
+        table._make_context_menu()
         tester.update_model(value=np.arange(72).reshape(3, 2, 3, 4))
         assert len(tester.widget._spinboxes) == 2
         assert tester.widget._spinboxes[0].maximum() == 2

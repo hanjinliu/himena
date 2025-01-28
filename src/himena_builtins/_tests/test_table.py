@@ -14,6 +14,14 @@ def test_table_edit(qtbot: QtBot):
         tester.update_model(value=[["a", "b"], [0, 1]])
         tester.cycle_model()
         qtbot.addWidget(tester.widget)
+        tester.widget.selection_model.current_index = (2, 3)
+        tester.widget.model().setData(
+            tester.widget.model().index(2, 3), "a", Qt.ItemDataRole.EditRole
+        )
+        assert tester.widget.to_model().value[2, 3] == "a"
+        tester.widget.undo()
+        tester.widget.redo()
+        tester.widget._make_context_menu()
         qtbot.keyClick(tester.widget, Qt.Key.Key_A, modifier=_Ctrl)
         qtbot.keyClick(tester.widget, Qt.Key.Key_C, modifier=_Ctrl)
         qtbot.keyClick(tester.widget, Qt.Key.Key_X, modifier=_Ctrl)

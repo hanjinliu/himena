@@ -22,6 +22,12 @@ def test_dataframe(qtbot: QtBot, df):
     with WidgetTester(QDataFrameView()) as tester:
         tester.update_model(value=df)
         qtbot.addWidget(tester.widget)
+        table = tester.widget
+        table.selection_model.set_ranges([(slice(1, 2), slice(1, 3))])
+        table.copy_data()
+        table._make_context_menu()
+        table.model().headerData(0, Qt.Orientation.Horizontal, Qt.ItemDataRole.ToolTipRole)
+        table.model().headerData(0, Qt.Orientation.Vertical, Qt.ItemDataRole.ToolTipRole)
         qtbot.keyClick(tester.widget, Qt.Key.Key_F, modifier=_Ctrl)
         finder = tester.widget._finder_widget
         assert finder is not None

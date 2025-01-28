@@ -166,12 +166,6 @@ class QSimpleRoiCollection(QtW.QWidget):
                 model.index(i, 0), QtCore.QItemSelectionModel.SelectionFlag.Select
             )
 
-    def current_row(self) -> int | None:
-        index = self._list_view.currentIndex()
-        if index.isValid():
-            return index.row()
-        return None
-
     def selections(self) -> list[int]:
         """List of selected indices"""
         return [idx.row() for idx in self._list_view.selectionModel().selectedIndexes()]

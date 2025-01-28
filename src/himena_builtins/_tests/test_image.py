@@ -159,6 +159,7 @@ def test_image_view_copy_roi(qtbot: QtBot):
 
 def test_image_view_select_roi(qtbot: QtBot):
     image_view = QImageView()
+    image_view.resize(150, 150)
     image_view.show()
     image_view.setSizes([300, 100])
     with WidgetTester(image_view) as tester:
@@ -227,7 +228,6 @@ def test_image_view_select_roi(qtbot: QtBot):
         view.select_item_at(QtCore.QPointF(10, 0))
         assert view._current_roi_item is None
 
-        qtbot.addWidget(image_view)
         image_view._roi_col._roi_visible_btn.click()
         QApplication.processEvents()
         assert image_view._roi_col._roi_visible_btn.isChecked()
@@ -247,6 +247,10 @@ def test_image_view_select_roi(qtbot: QtBot):
         qtbot.mouseMove(image_view._roi_col._list_view.viewport(), QtCore.QPoint(3, 3))
         qtbot.mouseMove(image_view._roi_col._list_view.viewport(), QtCore.QPoint(4, 4))
         image_view._roi_col.remove_selected_rois()
+        QApplication.processEvents()
+        image_view._img_view.set_current_roi(_rois.QPolygonRoi([0, 1, 3, 0], [3, 5, 5, 3]))
+        QApplication.processEvents()
+        image_view._img_view.remove_current_item()
 
 
 def test_constrast_hist(qtbot: QtBot):
