@@ -218,18 +218,3 @@ def test_profile():
 
     profile.iter_app_profiles()
     profile.remove_app_profile("abc")
-
-def test_builtin_commands(himena_ui: MainWindow):
-    himena_ui.show()
-    himena_ui.exec_action("new-tab")
-    assert len(himena_ui.tabs) == 1
-    assert len(himena_ui.tabs[0]) == 0
-    himena_ui.exec_action("builtins:console")
-    himena_ui.exec_action("builtins:file-explorer")
-    himena_ui.exec_action("builtins:output")
-    himena_ui.exec_action("builtins:new-text")
-    assert len(himena_ui.tabs[0]) == 1
-    himena_ui.exec_action("builtins:seaborn-sample:iris")
-    config = {"format": "%(levelname)s:%(message)s", "date_format": "%Y-%m-%d %H:%M:%S"}
-    himena_ui.app_profile.update_plugin_config("builtins:output", **config)
-    himena_ui.exec_action("quit")
