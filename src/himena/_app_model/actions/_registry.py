@@ -19,11 +19,14 @@ class ActionList(list[Action]):
         enablement=None,
         keybindings=None,
         need_function_callback: bool = False,
+        run_async: bool = False,
         recording: bool = True,
     ) -> Callable[[_F], _F]:
         def inner(fn: _F) -> _F:
-            if need_function_callback:
-                callback = make_function_callback(fn, id, title=title)
+            if need_function_callback or run_async:
+                callback = make_function_callback(
+                    fn, id, title=title, run_async=run_async
+                )
             else:
                 callback = fn
             if not recording:

@@ -101,7 +101,7 @@ def _open_file_using_reader(
         {"id": MenuId.STARTUP, "group": READ_GROUP},
     ],
     keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyO)],
-    need_function_callback=True,
+    run_async=True,
 )
 def open_file_using_from_dialog(ui: MainWindow) -> Parametric:
     """Open file using selected plugin."""
@@ -110,7 +110,7 @@ def open_file_using_from_dialog(ui: MainWindow) -> Parametric:
     if (file_path := ui.exec_file_dialog(mode="r")) is None:
         raise Cancelled
 
-    @configure_gui(reader=_get_reader_options(file_path), run_async=True)
+    @configure_gui(reader=_get_reader_options(file_path))
     def choose_a_plugin(reader: ReaderPlugin) -> WidgetDataModel:
         _LOGGER.info("Reading file %s using %r", file_path, reader)
         return _open_file_using_reader(file_path, reader, ui)
@@ -328,7 +328,7 @@ def load_session_from_dialog(ui: MainWindow) -> None:
     title="Save Session ...",
     menus=[{"id": MenuId.FILE_SESSION, "group": WRITE_GROUP}],
     enablement=_ctx.num_tabs > 0,
-    need_function_callback=True,
+    run_async=True,
 )
 def save_session(ui: MainWindow) -> Parametric:
     datetime_str = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -349,7 +349,6 @@ def save_session(ui: MainWindow) -> Parametric:
             "value": f"himena-{datetime_str}.session.zip",
         },
         allow_calculate={"choices": choices, "widget_type": "Select"},
-        run_async=True,
     )
     def run_save_session(
         save_path: Path,

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import Future
 import timeit
 from typing import (
     Callable,
@@ -16,6 +17,7 @@ from cmap import Colormap, Color
 
 from himena.consts import StandardType
 from himena.types import (
+    FutureInfo,
     ParametricWidgetProtocol,
     WidgetDataModel,
     Parametric,
@@ -149,6 +151,7 @@ def make_function_callback(
     f: _F,
     command_id: str,
     title: str | None = None,
+    run_async: bool = False,
 ) -> _F:
     from himena.widgets._wrapper import SubWindow
 
@@ -181,6 +184,8 @@ def make_function_callback(
     else:
         return f
 
+    is_parametric = f_annot.get("return") in (Parametric, ParametricWidgetProtocol)
+
     @wraps(f)
     def _new_f(*args, **kwargs):
         bound = sig.bind(*args, **kwargs)
@@ -203,21 +208,39 @@ def make_function_callback(
                     execution_time=timeit.default_timer() - _time_before,
                 )
             )
-        elif f_annot.get("return") in (Parametric, ParametricWidgetProtocol):
-            tracker = ModelTrack(
+        elif is_parametric:
+            ModelTrack(
                 contexts=contexts,
                 command_id=command_id,
                 workflow=workflow,
                 time_start=_time_before,
-            )
-            tracker.set(out)
+            ).set(out)
             if title is not None:
                 cfg = GuiConfiguration.get(out) or GuiConfiguration()
                 cfg.title = title
+                cfg.run_async = run_async
                 cfg.set(out)
         return out
 
+    if run_async and not is_parametric:
+        _new_f = _wrap_future(_new_f)
     return _new_f
+
+
+def _wrap_future(f):
+    from himena.widgets import current_instance
+
+    return_annot = f.__annotations__.get("return")
+
+    @wraps(f)
+    def _f(*args, **kwargs):
+        ins = current_instance()
+        future = ins._executor.submit(f, *args, **kwargs)
+        FutureInfo(return_annot).set(future)
+        return future
+
+    _f.__annotations__["return"] = Future
+    return _f
 
 
 def get_gui_config(fn) -> dict[str, Any]:

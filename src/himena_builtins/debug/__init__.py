@@ -8,6 +8,7 @@ from himena.widgets import MainWindow, notify, set_status_tip
 
 TOOLS_DEBUG = "tools/debug"
 TOOLS_DEBUG_ERROR_WARN = "tools/debug/error_warn"
+TOOLS_DEBUG_ASYNC = "tools/debug/async"
 
 
 @register_function(
@@ -22,10 +23,10 @@ def raise_exception():
 @register_function(
     menus=TOOLS_DEBUG_ERROR_WARN,
     title="Just raise an exception (async)",
+    run_async=True,
     command_id="debug:raise-exception-async",
 )
 def raise_exception_async() -> Parametric:
-    @configure_gui(run_async=True)
     def run():
         raise ValueError("This is a test exception")
 
@@ -46,12 +47,12 @@ def raise_warning():
 @register_function(
     menus=TOOLS_DEBUG_ERROR_WARN,
     title="Just warn (async)",
+    run_async=True,
     command_id="debug:warning-async",
 )
 def raise_warning_async() -> Parametric:
     import warnings
 
-    @configure_gui(run_async=True)
     def run():
         warnings.warn("This is a test warning", UserWarning, stacklevel=2)
 
@@ -180,14 +181,28 @@ def plot_test_parametric_right() -> Parametric:
 
 
 @register_function(
-    menus=TOOLS_DEBUG,
+    menus=TOOLS_DEBUG_ASYNC,
+    title="Test async checkpoints (no param)",
+    run_async=True,
+    command_id="debug:test-async-checkpoints-no-param",
+)
+def test_async_checkpoints_no_param() -> WidgetDataModel:
+    import time
+
+    for i in range(10):
+        time.sleep(0.3)
+    return WidgetDataModel(value="Done", type=StandardType.TEXT)
+
+
+@register_function(
+    menus=TOOLS_DEBUG_ASYNC,
     title="Test async checkpoints",
     command_id="debug:test-async-checkpoints",
+    run_async=True,
 )
 def test_async_checkpoints() -> Parametric:
     import time
 
-    @configure_gui(run_async=True)
     def run():
         for i in range(10):
             time.sleep(0.3)
@@ -197,8 +212,9 @@ def test_async_checkpoints() -> Parametric:
 
 
 @register_function(
-    menus=TOOLS_DEBUG,
+    menus=TOOLS_DEBUG_ASYNC,
     title="Test async widget creation",
+    run_async=True,
     command_id="debug:test-async-widget-creation",
 )
 def test_async_widget_creation() -> Parametric:
@@ -210,7 +226,6 @@ def test_async_widget_creation() -> Parametric:
             con.append(LineEdit(value=text))
         return con.native
 
-    @configure_gui(run_async=True)
     def run() -> WidgetConstructor:
         texts = []
         for i in range(10):
@@ -224,10 +239,10 @@ def test_async_widget_creation() -> Parametric:
 @register_function(
     menus=TOOLS_DEBUG,
     title="Test notification",
+    run_async=True,
     command_id="debug:test-notification",
 )
 def test_notification() -> Parametric:
-    @configure_gui(run_async=True)
     def run(notification: bool = True, status_tip: bool = True):
         time.sleep(1)
         if status_tip:

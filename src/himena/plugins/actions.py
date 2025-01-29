@@ -187,6 +187,7 @@ def register_function(
     types: str | Sequence[str] | None = None,
     enablement: BoolOp | None = None,
     keybindings: Sequence[KeyBindingRule] | None = None,
+    run_async: bool = False,
     command_id: str | None = None,
 ) -> None: ...
 
@@ -200,6 +201,7 @@ def register_function(
     types: str | Sequence[str] | None = None,
     enablement: BoolOp | None = None,
     keybindings: Sequence[KeyBindingRule] | None = None,
+    run_async: bool = False,
     command_id: str | None = None,
 ) -> _F: ...
 
@@ -212,6 +214,7 @@ def register_function(
     types=None,
     enablement=None,
     keybindings=None,
+    run_async=False,
     command_id=None,
 ):
     """
@@ -234,6 +237,9 @@ def register_function(
     enablement: Expr, optional
         Expression that describes when the action will be enabled. As this argument
         is a generalized version of `types` argument, you cannot use both of them.
+    run_async : bool, default False
+        If true, the function will be executed asynchronously. Note that if the function
+        updates the GUI, running it asynchronously may cause issues.
     command_id : str, optional
         Command ID. If not given, the function qualname will be used.
     """
@@ -246,6 +252,7 @@ def register_function(
             types=types,
             enablement=enablement,
             keybindings=keybindings,
+            run_async=run_async,
             command_id=command_id,
         )
         AppActionRegistry.instance().add_action(action)
@@ -262,6 +269,7 @@ def make_action_for_function(
     types=None,
     enablement=None,
     keybindings=None,
+    run_async=False,
     command_id=None,
 ):
     types, enablement, menus = _norm_register_function_args(types, enablement, menus)
@@ -289,7 +297,9 @@ def make_action_for_function(
         id=_id,
         title=_title,
         tooltip=tooltip_from_func(f),
-        callback=_utils.make_function_callback(f, command_id=_id, title=_title),
+        callback=_utils.make_function_callback(
+            f, command_id=_id, title=_title, run_async=run_async
+        ),
         menus=menus_normed,
         enablement=_enablement,
         keybindings=kbs,

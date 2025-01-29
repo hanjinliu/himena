@@ -97,7 +97,6 @@ def constant_array(ui: MainWindow) -> Parametric:
     """Generate an array filled with a constant value."""
     import numpy as np
     from himena.qt.magicgui import NumericDTypeEdit
-    from himena.plugins import configure_gui
 
     @configure_gui(dtype={"widget_type": NumericDTypeEdit})
     def generate_constant_array(
@@ -155,7 +154,6 @@ _SEABORN_SAMPLE_NAMES = [
 
 
 def _make_provider(name: str):
-    @configure_gui(run_async=True)
     def fetch_sample_data() -> WidgetDataModel:
         from urllib.request import urlopen
 
@@ -180,5 +178,6 @@ for seaborn_sample_name in _SEABORN_SAMPLE_NAMES:
         _make_provider(seaborn_sample_name),
         title=seaborn_sample_name,
         menus="file/new/seaborn",
+        run_async=True,
         command_id=f"builtins:seaborn-sample:{seaborn_sample_name}",
     )

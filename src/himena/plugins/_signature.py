@@ -48,7 +48,6 @@ def configure_gui(
     auto_close: bool = True,
     show_parameter_labels: bool = True,
     gui_options: dict[str, Any] | None = None,
-    run_async: bool = False,
     result_as: Literal["window", "below", "right"] = "window",
     **kwargs,
 ) -> _F: ...
@@ -60,7 +59,6 @@ def configure_gui(
     auto_close: bool = True,
     show_parameter_labels: bool = True,
     gui_options: dict[str, Any] | None = None,
-    run_async: bool = False,
     result_as: Literal["window", "below", "right"] = "window",
     **kwargs,
 ) -> Callable[[_F], _F]: ...
@@ -74,7 +72,6 @@ def configure_gui(
     auto_close: bool = True,
     show_parameter_labels: bool = True,
     gui_options: dict[str, Any] | None = None,
-    run_async: bool = False,
     result_as: Literal["window", "below", "right"] = "window",
     **kwargs,
 ):
@@ -103,9 +100,6 @@ def configure_gui(
     gui_options : dict, optional
         Additional GUI options to be passed to the `magicgui` decorator. Keys can also
         be passed as variable keyword arguments **kwargs.
-    run_async : bool, default False
-        If true, the function will be executed asynchronously. Note that if the function
-        updates the GUI, running it asynchronously may cause issues.
     """
     kwargs = dict(**kwargs, **(gui_options or {}))
 
@@ -146,7 +140,6 @@ def configure_gui(
             preview=preview,
             auto_close=auto_close,
             show_parameter_labels=show_parameter_labels,
-            run_async=run_async,
             result_as=result_as,
         ).set(f)
         return f
