@@ -617,8 +617,16 @@ class FutureInfo(_HasDynamicAttribute):
             typ = ns.get(self.type_hint)
             if typ is None:
                 raise ValueError(f"Could not resolve the type hint: {self.type_hint}")
-            self.type_hint = typ
-        return self
+            type_hint = typ
+        else:
+            type_hint = self.type_hint
+        return FutureInfo(
+            type_hint=type_hint,
+            track=self.track,
+            kwargs=self.kwargs,
+            top_left=self.top_left,
+            size=self.size,
+        )
 
 
 Parametric = NewType("Parametric", Any)

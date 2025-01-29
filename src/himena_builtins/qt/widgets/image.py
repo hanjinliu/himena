@@ -54,7 +54,8 @@ class QImageViewBase(QtW.QSplitter):
         self._stick_grid_switch.setText("Stick to Grid")
         self._stick_grid_switch.setChecked(True)
         self._stick_grid_switch.setToolTip(
-            "If checked, vertices of Rectangle and Ellipse ROIs will stick to the grid of the image."
+            "If checked, vertices of Rectangle and Ellipse ROIs will stick to the\n"
+            "grid of the image."
         )
         self._img_view = QImageGraphicsView()
         self._roi_buttons = QRoiButtons(self)

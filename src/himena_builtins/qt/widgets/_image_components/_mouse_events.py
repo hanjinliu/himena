@@ -92,7 +92,7 @@ class SelectMouseEvents(QtMouseEvent):
             item.translate(delta.x(), delta.y())
         else:
             # just forward to the pan-zoom mode
-            self._mouse_move_pan_zoom(event)
+            self._mouse_move_pan_zoom(event.pos())
         self._pos_drag_prev = event.pos()
 
 

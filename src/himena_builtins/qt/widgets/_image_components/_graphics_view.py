@@ -391,7 +391,7 @@ class QImageGraphicsView(QBaseGraphicsView):
             self._current_roi_item = item
             item.setVisible(True)
             _LOGGER.debug("Item selected: %r", type(item).__name__)
-        self._is_current_roi_item_not_registered = False
+        # self._is_current_roi_item_not_registered = False
 
     def select_item_at(self, pos: QtCore.QPointF):
         """Select the item at the given position."""

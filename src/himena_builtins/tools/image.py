@@ -165,7 +165,7 @@ def _bbox_to_slice(
 
 
 def _make_roi_limits_getter(win: SubWindow, dim: Literal["x", "y"]):
-    def _getter():
+    def _getter(*_):
         model = win.to_model()
         meta = _cast_meta(model, ImageMeta)
         roi = meta.current_roi

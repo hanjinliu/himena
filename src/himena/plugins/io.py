@@ -95,6 +95,8 @@ class ReaderPlugin(_IOPluginBase):
         """True if the reader can read the file."""
         if self._skip_if_list and isinstance(path, list):
             return None
+        if self._matcher is None:
+            return None
         out = self._matcher(path)
         if out is None or isinstance(out, str):
             return out
