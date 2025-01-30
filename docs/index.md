@@ -8,13 +8,7 @@ mainly focusing on data analysis and visualization.
 [Jump to GitHub repository](https://github.com/hanjinliu/himena).
 
 
-## Installation
+## Index
 
-`himena` is available on PyPI.
-
-``` bash
-pip install himena -U
-```
-
-- [Quickstart](quick_start.md)
+- [Tutorial](tutorial.md)
 - [Developper's Guide](dev/index.md)

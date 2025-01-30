@@ -15,6 +15,6 @@ provides many readers, writers, widgets and tools.
 
 `Ctrl+,`
 
-![](../images/00_chart_io.png)
+![](../images/02_chart_io.png)
 
 ## The Python Interpreter Console

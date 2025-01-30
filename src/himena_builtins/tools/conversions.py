@@ -352,16 +352,21 @@ def _table_to_text(
         ext_default = ".rst"
         language = "rst"
     elif format == "csv":
-        s = "\n".join(",".join(str(row)) for row in data)
+        s = _to_csv_like(data, ",")
         ext_default = ".csv"
         language = None
     elif format == "tsv":
-        s = "\n".join("\t".join(str(row)) for row in data)
+        s = _to_csv_like(data, "\t")
         ext_default = ".tsv"
         language = None
     else:
         raise ValueError(f"Unknown format: {format}")
     return s + end_of_text, ext_default, language
+
+
+def _to_csv_like(data: "np.ndarray", sep: str) -> str:
+    """Convert a table to CSV-like string."""
+    return "\n".join(sep.join(str(r) for r in row) for row in data)
 
 
 def _table_to_latex(table: "np.ndarray") -> str:

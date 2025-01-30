@@ -133,6 +133,18 @@ class DataFramePlotMeta(DataFrameMeta):
         return None
 
 
+class PhysicalCoordinate(BaseModel):
+    type: Literal["physical"] = "physical"
+    scale: float | None = Field(None, description="Pixel scale of the axis.")
+    origin: float = Field(0.0, description="Offset of the axis.")
+    unit: str | None = Field(None, description="Unit of the axis spacing.")
+
+
+class CategoricalCoordinate(BaseModel):
+    type: Literal["categorical"] = "categorical"
+    labels: list[str] = Field(..., description="Category labels of the axis.")
+
+
 class ArrayAxis(BaseModel):
     """An axis in an array."""
 

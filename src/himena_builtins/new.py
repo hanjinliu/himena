@@ -74,20 +74,6 @@ def new_text_python(ui: MainWindow) -> WidgetDataModel:
     )
 
 
-@register_function(menus=MenuId.FILE_NEW, command_id="builtins:new-draw-canvas")
-def new_draw_canvas(ui: MainWindow) -> WidgetDataModel:
-    """New draw canvas."""
-    nwin = _get_n_windows(ui)
-    return WidgetDataModel(
-        value=None,
-        type=StandardType.IMAGE,
-        extension_default=".png",
-        title=f"Canvas-{nwin}",
-        force_open_with="himena_builtins.qt.widgets.draw.QDrawCanvas",
-        save_behavior_override=NoNeedToSave(),
-    )
-
-
 @register_function(
     title="New constant array ...",
     menus=MenuId.FILE_NEW,

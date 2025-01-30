@@ -85,7 +85,7 @@ class WidgetDataModel(GenericModel[_T]):
     """
     A data model that represents a widget containing an internal data.
 
-    Parameters
+    Attributes
     ----------
     value : Any
         Internal value.
@@ -723,7 +723,7 @@ WidgetConstructor = NewType("WidgetConstructor", object)
 class DropResult(BaseModel):
     """Model that can be returned by `dropped_callback` protocol.
 
-    Parameters
+    Attributes
     ----------
     delete_input : bool
         Whether to delete the input data if drop succeeded.
