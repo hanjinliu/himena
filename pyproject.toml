@@ -81,6 +81,7 @@ docs = [
   "mkdocstrings==0.27.0",
   "mkdocstrings-python==1.12.2",
   "mkdocs-gen-files",
+  "griffe-fieldz",
   "himena[all]"
 ]
 

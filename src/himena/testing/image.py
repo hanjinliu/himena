@@ -71,6 +71,7 @@ def test_setting_axis_names(tester: WidgetTester):
     model = tester.to_model()
     meta = _cast_meta(model.metadata)
     assert len(meta.axes) == 3
+    assert meta.axes is not None
     if any(axis.name != name for axis, name in zip(meta.axes, ["z", "y", "x"])):
         raise AssertionError(
             f"Expected names ['z', 'y', 'x'], got {[axis.name for axis in meta.axes]}"

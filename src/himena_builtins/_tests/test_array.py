@@ -1,5 +1,6 @@
 import numpy as np
 from numpy.testing import assert_array_equal
+import pytest
 from qtpy.QtCore import Qt
 from pytestqt.qtbot import QtBot
 from himena import MainWindow, StandardType
@@ -111,3 +112,11 @@ def test_array_commands(himena_ui: MainWindow):
         "builtins:set-array-scale",
         with_params={"axis_2": "1.4", "axis_1": "1.0 um", "axis_0": "0.5um"}
     )
+    meta_new = win.to_model().metadata
+    assert isinstance(meta_new, ArrayMeta)
+    meta_new.axes[0].scale == pytest.approx(0.5)
+    meta_new.axes[0].unit == "um"
+    meta_new.axes[1].scale == pytest.approx(1.0)
+    meta_new.axes[1].unit == "um"
+    meta_new.axes[2].scale == pytest.approx(1.4)
+    meta_new.axes[2].unit == ""

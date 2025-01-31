@@ -404,5 +404,6 @@ class QArrayViewControl(QtW.QWidget):
         if not _is_structured(arr):
             self._label.setText(f"{_type_desc} {arr.shape!r} {arr.dtype}")
         else:
-            self._label.setText(f"{_type_desc} {arr.shape!r} (structured)")
+            ncols = len(arr.dtype.names)
+            self._label.setText(f"{_type_desc} {arr.shape!r} x {ncols} fields")
         return None

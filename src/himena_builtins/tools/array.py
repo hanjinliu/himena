@@ -238,19 +238,16 @@ def array_astype(model: WidgetDataModel) -> Parametric:
     command_id="builtins:set-array-scale",
 )
 def set_scale(win: SubWindow) -> Parametric:
-    # TODO: need to consider categorical or physical axis
     model = win.to_model()
     meta = _cast_meta(model, ArrayMeta)
     if (axes := meta.axes) is None:
         raise ValueError("The axes attribute must be set to use this function.")
     gui_options = {}
     for i, axis in enumerate(axes):
-        if axis.scale is None:
-            value = ""
-        elif axis.unit is None:
-            value = f"{axis.scale:.3f}"
-        else:
+        if axis.unit:
             value = f"{axis.scale:.3f} {axis.unit}"
+        else:
+            value = f"{axis.scale:.3f}"
         gui_options[f"axis_{i}"] = {
             "widget_type": "LineEdit",
             "value": value,
@@ -272,10 +269,10 @@ def set_scale(win: SubWindow) -> Parametric:
             axis.scale = scale
             axis.unit = unit
             if scale is not None:
-                if unit is None:
-                    updated_info.append(f"{k}: {scale:.3g}")
-                else:
+                if unit:
                     updated_info.append(f"{k}: {scale:.3g} [{unit}]")
+                else:
+                    updated_info.append(f"{k}: {scale:.3g}")
         win.update_model(model.model_copy(update={"metadata": meta}))
         updated_info_str = ", ".join(updated_info)
         set_status_tip(f"Scale updated ... {updated_info_str}")

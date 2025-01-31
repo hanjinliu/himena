@@ -2,13 +2,29 @@ import json
 from pathlib import Path
 from typing import Any, TYPE_CHECKING, Callable, Literal
 import warnings
-import numpy as np
 from pydantic_compat import BaseModel, Field, field_validator
 from himena.standards import roi
 from himena.utils.misc import iter_subclasses
 
 if TYPE_CHECKING:
     from pydantic import ValidationInfo
+
+__all__ = [
+    "BaseMetadata",
+    "read_metadata",
+    "write_metadata",
+    "TextMeta",
+    "TableMeta",
+    "DataFrameMeta",
+    "ExcelMeta",
+    "FunctionMeta",
+    "DataFramePlotMeta",
+    "ImageChannel",
+    "ArrayAxis",
+    "ArrayMeta",
+    "ImageMeta",
+    "ImageRoisMeta",
+]
 
 _META_NAME = "meta.json"
 _CLASS_JSON = ".class.json"
@@ -67,11 +83,12 @@ class TableMeta(BaseMetadata):
     """Preset for describing the metadata for a "table" type."""
 
     current_position: list[int] | None = Field(
-        None, description="Current position of (row, columns)."
+        default=None,
+        description="Current index position of (row, column) in the table.",
     )
     selections: list[tuple[tuple[int, int], tuple[int, int]]] = Field(
         default_factory=list,
-        description="Selections of the table. Each selection is a pair of slices.",
+        description="Table selections in the format of ((row_start, row_end), (col_start, col_end)), where the end index is exclusive, as is always the case for the Python indexing.",
     )
     separator: str | None = Field(None, description="Separator of the table.")
 
@@ -133,27 +150,39 @@ class DataFramePlotMeta(DataFrameMeta):
         return None
 
 
-class PhysicalCoordinate(BaseModel):
-    type: Literal["physical"] = "physical"
-    scale: float | None = Field(None, description="Pixel scale of the axis.")
-    origin: float = Field(0.0, description="Offset of the axis.")
-    unit: str | None = Field(None, description="Unit of the axis spacing.")
+class ImageChannel(BaseModel):
+    """A channel in an image file."""
 
+    name: str | None = Field(None, description="Name of the channel.")
+    colormap: str | None = Field(None, description="Color map of the channel.")
+    contrast_limits: tuple[float, float] | None = Field(
+        None, description="Contrast limits of the channel."
+    )
+    visible: bool = Field(True, description="Whether the channel is visible.")
 
-class CategoricalCoordinate(BaseModel):
-    type: Literal["categorical"] = "categorical"
-    labels: list[str] = Field(..., description="Category labels of the axis.")
+    @classmethod
+    def default(cls) -> "ImageChannel":
+        """Return a default channel (also used for mono-channel images)."""
+        return cls(name=None, colormap="gray", contrast_limits=None)
+
+    def with_colormap(self, colormap: str) -> "ImageChannel":
+        """Set the colormap of the channel."""
+        return self.model_copy(update={"colormap": colormap})
 
 
 class ArrayAxis(BaseModel):
     """An axis in an array."""
 
     name: str = Field(..., description="Name of the axis.")
-    scale: float | None = Field(None, description="Pixel scale of the axis.")
-    origin: float = Field(0.0, description="Offset of the axis.")
-    unit: str | None = Field(None, description="Unit of the axis spacing.")
-    # TODO: should be:
-    # coordinate: Union[Physical, Categorical]
+    scale: float = Field(default=1.0, description="Pixel scale of the axis.")
+    origin: float = Field(default=0.0, description="Offset of the axis.")
+    unit: str = Field("", description="Unit of the axis spacing.")
+    labels: list[str] = Field(
+        default_factory=list, description="Category labels of the axis."
+    )
+    default_label_format: str = Field(
+        "{:s}", description="Default format of the labels."
+    )
 
     @field_validator("name", mode="before")
     def _name_to_str(cls, v):
@@ -182,26 +211,6 @@ class ArrayMeta(BaseMetadata):
         return self.model_copy(update={"selections": []})
 
 
-class ImageChannel(BaseModel):
-    """A channel in an image file."""
-
-    name: str | None = Field(None, description="Name of the channel.")
-    colormap: str | None = Field(None, description="Color map of the channel.")
-    contrast_limits: tuple[float, float] | None = Field(
-        None, description="Contrast limits of the channel."
-    )
-    visible: bool = Field(True, description="Whether the channel is visible.")
-
-    @classmethod
-    def default(cls) -> "ImageChannel":
-        """Return a default channel (also used for mono-channel images)."""
-        return cls(name=None, colormap="gray", contrast_limits=None)
-
-    def with_colormap(self, colormap: str) -> "ImageChannel":
-        """Set the colormap of the channel."""
-        return self.model_copy(update={"colormap": colormap})
-
-
 class ImageMeta(ArrayMeta):
     """Preset for describing an image file metadata."""
 
@@ -219,13 +228,13 @@ class ImageMeta(ArrayMeta):
     rois: roi.RoiListModel | Callable[[], roi.RoiListModel] = Field(
         default_factory=roi.RoiListModel, description="Regions of interest."
     )
-    labels: Any | None = Field(None, description="Labels of the image.")
-    interpolation: str | None = Field(None, description="Interpolation method.")
+    interpolation: str | None = Field(
+        default=None,
+        description="Interpolation method.",
+    )
     skip_image_rerendering: bool = Field(
-        False,
-        description="Skip image rerendering when the model is passed to the "
-        "`update_model` method. This field is only used when a function does not touch "
-        "the image data itself.",
+        default=False,
+        description="Skip image rerendering when the model is passed to the `update_model` method. This field is only used when a function does not touch the image data itself.",
     )
     more_metadata: Any | None = Field(None, description="More metadata if exists.")
 
@@ -313,8 +322,6 @@ class ImageMeta(ArrayMeta):
         if (cur_roi_path := dir_path.joinpath("current_roi.json")).exists():
             roi_js = json.loads(cur_roi_path.read_text())
             self.current_roi = roi.RoiModel.construct(roi_js.pop("type"), roi_js)
-        if (labels_path := dir_path.joinpath("labels.npy")).exists():
-            self.labels = np.load(labels_path, allow_pickle=False)
         if (more_meta_path := dir_path.joinpath("more_meta.json")).exists():
             with more_meta_path.open() as f:
                 self.more_metadata = json.load(f)
@@ -333,17 +340,6 @@ class ImageMeta(ArrayMeta):
         if len(rois) > 0:
             with dir_path.joinpath("rois.roi.json").open("w") as f:
                 json.dump(rois.model_dump_typed(), f)
-        if (labels := self.labels) is not None:
-            if isinstance(labels, np.ndarray):
-                np.savez_compressed(
-                    dir_path.joinpath("labels.npy"), labels, allow_pickle=False
-                )
-            else:
-                warnings.warn(
-                    f"Unsupported labels type {type(labels)}. Labels are not saved.",
-                    UserWarning,
-                    stacklevel=2,
-                )
         if (more_metadata := self.more_metadata) is not None:
             try:
                 with dir_path.joinpath("more_meta.json").open("w") as f:

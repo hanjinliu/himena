@@ -73,10 +73,6 @@ class ArrayWrapper(Generic[ArrayT]):
     def size(self) -> int:
         return np.prod(self.shape)
 
-    def axis_names(self) -> list[str]:
-        """Return the names of the axes."""
-        return [f"axis-{i}" for i in range(self.ndim)]
-
     @property
     def ndim(self) -> int:
         return len(self.shape)
@@ -99,9 +95,6 @@ class XarrayWrapper(ArrayWrapper["xr.DataArray"]):
     @property
     def shape(self) -> tuple[int, ...]:
         return self._arr.shape
-
-    def axis_names(self) -> list[str]:
-        return [str(_a) for _a in self._arr.dims]
 
 
 class ArrayLikeWrapper(ArrayWrapper[ArrayT]):
@@ -140,9 +133,6 @@ class ZarrArrayWrapper(ArrayLikeWrapper["zarr.Array"]):
             self._names = data.attrs["_ARRAY_DIMENSIONS"]
         else:
             self._names = list(range(data.ndim))
-
-    def axis_names(self) -> list[str]:
-        return [str(k) for k in self._names]
 
 
 def _see_imported_module(arr: Any, module: str) -> bool:

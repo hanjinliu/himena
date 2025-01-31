@@ -491,13 +491,16 @@ def roi_specify_line(win: SubWindow) -> Parametric:
     return run_roi_specify_coordinates
 
 
-def _get_consensus_axes(arrs: list[Any]) -> list[str]:
+def _get_consensus_axes(models: list[WidgetDataModel]) -> list[str]:
     axes_consensus: list[str] | None = None
-    for arr in arrs:
-        arr_wrapped = wrap_array(arr)
+    for model in models:
+        meta = _cast_meta(model, ImageMeta)
+        if meta.axes is None:
+            raise ValueError(f"Model {model!r} has no axes.")
+        incoming_axes = [axis.name for axis in meta.axes]
         if axes_consensus is None:
-            axes_consensus = arr_wrapped.axis_names()
-        elif axes_consensus != arr_wrapped.axis_names():
+            axes_consensus = incoming_axes
+        elif axes_consensus != incoming_axes:
             raise ValueError("Images have different axes.")
     return axes_consensus
 
@@ -525,9 +528,7 @@ def _stack_and_insert_axis(
     return arr_out, meta
 
 
-@configure_gui(
-    images={"types": [StandardType.IMAGE]},
-)
+@configure_gui(images={"types": [StandardType.IMAGE]})
 def run_merge_channels(
     images: list[WidgetDataModel],
     axis: str = "c",
@@ -540,7 +541,7 @@ def run_merge_channels(
     if meta.channel_axis is not None:
         raise ValueError("Image already has a channel axis.")
     arrs = [m.value for m in images]
-    axes_consensus = _get_consensus_axes(arrs)
+    axes_consensus = _get_consensus_axes(images)
     c_axis = _find_index_to_insert_axis(axis, axes_consensus)
     axes_consensus.insert(c_axis, axis)
 
@@ -581,7 +582,7 @@ def stack_images() -> Parametric:
             raise ValueError("At least two images are required.")
         meta = _cast_meta(images[0], ImageMeta)
         arrs = [m.value for m in images]
-        axes_consensus = _get_consensus_axes(arrs)
+        axes_consensus = _get_consensus_axes(images)
         if axis_name == "":
             axis_name = _make_unique_axis_name(axes_consensus)
         if axis_index is None:

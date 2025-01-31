@@ -28,9 +28,15 @@ def open_as_text_anyway(ui: MainWindow, win: SubWindow) -> WidgetDataModel[str]:
     model = win.to_model()
     if model.type != StandardType.READER_NOT_FOUND:
         raise ValueError(f"Invalid model type: {model.type}")
-    if not isinstance(model.source, Path):
-        raise ValueError("Model has multiple source paths. Cannot open as a text data.")
-    out = model.with_value(model.source.read_text(), type=StandardType.TEXT)
+    if not isinstance(src := model.source, Path):
+        raise ValueError(
+            f"Model has multiple or no local source paths: {src}. Cannot open as a text data."
+        )
+    out = model.with_value(
+        src.read_text(),
+        type=StandardType.TEXT,
+        save_behavior_override=NoNeedToSave(),
+    )
     win._close_me(ui)
     return out
 

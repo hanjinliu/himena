@@ -1,6 +1,6 @@
-# himena.types
+# himena.standards.model_meta
 
-::: himena.types
+::: himena.standards.model_meta
     options:
         show_signature_annotations: false
         heading_level: 4

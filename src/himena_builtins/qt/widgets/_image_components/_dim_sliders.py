@@ -92,10 +92,12 @@ class QDimsSlider(QtW.QWidget):
                 slider._slider.setValue(val)
 
     def axis_names(self) -> list[str]:
-        return [slider.text() for slider in self._sliders]
+        return [slider._name_label.text() for slider in self._sliders]
 
 
 class _QAxisSlider(QtW.QWidget):
+    """A slider widget for an axis."""
+
     def __init__(self) -> None:
         super().__init__()
         layout = QtW.QHBoxLayout(self)
@@ -119,26 +121,17 @@ class _QAxisSlider(QtW.QWidget):
         layout.addWidget(
             self._index_label, alignment=QtCore.Qt.AlignmentFlag.AlignRight
         )
-        self._scale = 1.0
-        self._unit = ""
-        self._origin = 0.0
+        self._axis = model_meta.ArrayAxis(name="")
 
     def update_from_axis(self, axis: model_meta.ArrayAxis):
         self._name_label.setText(axis.name)
-        self._scale = axis.scale if axis.scale is not None else 1.0
-        self._unit = axis.unit
-        self._origin = axis.origin
+        self._axis = axis.model_copy()
 
     def to_axis(self) -> model_meta.ArrayAxis:
-        return model_meta.ArrayAxis(
-            name=self.text(), scale=self._scale, unit=self._unit, origin=self._origin
-        )
+        return self._axis
 
     def text(self) -> str:
         return self._name_label.text()
-
-    def setText(self, text: str) -> None:
-        self._name_label.setText(text)
 
     def setRange(self, start: int, end: int) -> None:
         self._slider.setRange(start, end)

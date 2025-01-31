@@ -33,8 +33,13 @@ nav:
     - Reader/Writer Functions: dev/io_provider.md
     - Register Functions: dev/register_functions.md
   - API Reference:
+    - api/consts.md
+    - api/layout.md
+    - api/profile.md
     - api/plugins.md
     - api/types.md
+    - api/standards/model_meta.md
+    - api/standards/roi.md
 
 plugins:
   - search
@@ -49,6 +54,8 @@ plugins:
             show_source: true
             show_bases: false
             show_signature_annotations: true
+            extensions:
+            - griffe_fieldz: {include_inherited: true}
   # - gen-files:
   #     scripts:
   #       - docs/_scripts/_screenshots.py
