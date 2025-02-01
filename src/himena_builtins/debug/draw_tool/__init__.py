@@ -10,6 +10,6 @@ from himena.plugins import register_dock_widget_action
 )
 def make_widget(ui):
     """Open a file explorer widget as a dock widget."""
-    from himena_builtins.qt.draw_tool._widget import QImageDrawToolWidget
+    from himena_builtins.debug.draw_tool._widget import QImageDrawToolWidget
 
     return QImageDrawToolWidget(ui)

@@ -198,5 +198,4 @@ exclude = ["**/tests/*.py"]
 "Command History" = "himena_builtins.qt.history"
 "Plotting" = "himena_builtins.qt.plot"
 "Output" = "himena_builtins.qt.output"
-"Image Draw Tools" = "himena_builtins.qt.draw_tool"
 "Widgets" = "himena_builtins.qt.widgets"

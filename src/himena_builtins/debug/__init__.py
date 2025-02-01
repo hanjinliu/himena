@@ -5,6 +5,9 @@ from himena.consts import StandardType
 from himena.plugins import register_function, configure_gui
 from himena.types import Parametric, WidgetDataModel, WidgetConstructor
 from himena.widgets import MainWindow, notify, set_status_tip
+from himena_builtins.debug import draw_tool
+
+del draw_tool
 
 TOOLS_DEBUG = "tools/debug"
 TOOLS_DEBUG_ERROR_WARN = "tools/debug/error_warn"
