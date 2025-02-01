@@ -129,6 +129,11 @@ exclude_lines = [
   "raise NotImplementedError",
 ]
 
+[tool.hatch.build.targets.sdist]
+include = [
+  "src/himena_builtins",
+]
+
 [tool.hatch.envs.lint]
 detached = true
 dependencies = [
