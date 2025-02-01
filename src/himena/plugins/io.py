@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any, Callable, ForwardRef, overload
 from himena.types import WidgetDataModel
 from himena.utils.misc import PluginInfo
-from himena._providers import ReaderProviderStore, WriterProviderStore
+from himena._providers import ReaderStore, WriterStore
 from himena._utils import get_widget_data_model_type_arg
 
 
@@ -39,7 +39,7 @@ class _IOPluginBase:
     ):
         self._priority = _check_priority(priority)
         self._func = func
-        self._matcher = matcher
+        self._matcher = matcher or self._undefined_matcher
         self._plugin = _plugin_info_from_func(func)
         self.__name__ = str(func)  # default value
         wraps(func)(self)
@@ -58,6 +58,11 @@ class _IOPluginBase:
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} {self.plugin_str}>"
+
+    def _undefined_matcher(self, *_):
+        raise NotImplementedError(
+            f"Matcher for {self!r} is not defined. Use `define_matcher` to define a matcher for this plugin."
+        )
 
 
 class ReaderPlugin(_IOPluginBase):
@@ -102,8 +107,28 @@ class ReaderPlugin(_IOPluginBase):
             return out
         raise TypeError(f"Matcher {self._matcher!r} did not return a string.")
 
-    def mark_matcher(self, matcher: Callable[[Path | list[Path]], str | None]):
-        """Mark a function as a matcher."""
+    def define_matcher(self, matcher: Callable[[Path | list[Path]], str | None]):
+        """Mark a function as a matcher.
+
+        The matcher function should return a type string if the reader can read the
+        file, or None otherwise. If the reader function is annotated with `Path`, only
+        single Path input is forwarded to the matcher function, otherwise both `Path`
+        and `list[Path]` will be considered.
+
+        Examples
+        --------
+        A reader plugin that reads only text files:
+
+        ```python
+        @my_reader.define_matcher
+        def _(path: Path):
+            if path.suffix == ".txt":
+                return "text"
+            return None
+        ```
+        """
+        if self._matcher is self._undefined_matcher:
+            raise ValueError(f"Matcher for {self!r} is already defined.")
         self._matcher = matcher
         return matcher
 
@@ -141,7 +166,7 @@ class WriterPlugin(_IOPluginBase):
             return False
         return self._matcher(model, path)
 
-    def mark_matcher(
+    def define_matcher(
         self, matcher: Callable[[Path, WidgetDataModel], bool]
     ) -> WriterPlugin:
         self._matcher = matcher
@@ -153,21 +178,54 @@ def register_reader_plugin(
     reader: Callable[[Path | list[Path]], WidgetDataModel],
     *,
     priority: int = 100,
-    function_id: str | None = None,
 ) -> ReaderPlugin: ...
 @overload
 def register_reader_plugin(
     *,
     priority: int = 100,
-    function_id: str | None = None,
 ) -> Callable[[Callable[[Path | list[Path]], WidgetDataModel]], ReaderPlugin]: ...
 
 
-def register_reader_plugin(reader=None, *, priority=100, function_id=None):
+def register_reader_plugin(reader=None, *, priority=100):
+    """Register a reader plugin function.
+
+    Decorate a function to register it as a reader plugin. The function should take a
+    `Path` or a list of `Path`s as input and return a WidgetDataModel.
+
+    ``` python
+    from himena.plugins import register_reader_plugin
+
+    @register_reader_plugin
+    def my_reader(path) -> WidgetDataModel:
+        ...  # read file and return a WidgetDataModel
+    ```
+
+    You will need to define a matcher function to tell whether this function can read
+    a path using `define_matcher` method.
+
+    ```python
+    from himena import StandardType
+
+    @my_reader.define_matcher
+    def _(path: Path):
+        if path.suffix == ".txt":
+            return StandardType.TEXT  # StandardType.TEXT == "text"
+        return None
+    ```
+
+    Parameters
+    ----------
+    priority : int, default 100
+        Priority of choosing this reader when multiple readers are available. The
+        default value 100 is higher than the himena builtin readers, so that your reader
+        will prioritized over the default ones. If priority is less than 0, it will not
+        be used unless users intentionally choose this plugin.
+    """
+
     def _inner(func):
         if not callable(func):
-            raise ValueError("Provider must be callable.")
-        ins = ReaderProviderStore().instance()
+            raise ValueError("Reader plugin must be callable.")
+        ins = ReaderStore().instance()
 
         reader_plugin = ReaderPlugin(func, priority=priority)
         ins.add_reader(reader_plugin)
@@ -181,21 +239,55 @@ def register_writer_plugin(
     writer: Callable[[WidgetDataModel, Path], Any],
     *,
     priority: int = 100,
-    function_id: str | None = None,
 ) -> WriterPlugin: ...
 @overload
 def register_writer_plugin(
     *,
     priority: int = 100,
-    function_id: str | None = None,
 ) -> Callable[[Callable[[WidgetDataModel, Path], Any]], WriterPlugin]: ...
 
 
-def register_writer_plugin(writer=None, *, priority=100, function_id=None):
+def register_writer_plugin(writer=None, *, priority=100):
+    """Register a writer plugin function.
+
+    Decorate a function to register it as a writer plugin. The function should take a
+    `Path` as a save path and a `WidgetDataModel`.
+
+    ``` python
+    from himena.plugins import register_writer_plugin
+
+    @register_writer_plugin
+    def my_writer(path, model) -> None:
+        ...  # read file and return a WidgetDataModel
+    ```
+
+    You will need to define a matcher function to tell whether this function can write
+    a data model to the specified path using `define_matcher` method. Unlike reader
+    plugins, matchers should return bool.
+
+    ```python
+    from himena import StandardType, WidgetDataModel
+
+    @my_writer.define_matcher
+    def _(path: Path, model: WidgetDataModel):
+        if path.suffix == ".txt":
+            return True
+        return False
+    ```
+
+    Parameters
+    ----------
+    priority : int, default 100
+        Priority of choosing this writer when multiple writers are available. The
+        default value 100 is higher than the himena builtin writers, so that your writer
+        will prioritized over the default ones. If priority is less than 0, it will not
+        be used unless users intentionally choose this plugin.
+    """
+
     def _inner(func):
         if not callable(func):
-            raise ValueError("Provider must be callable.")
-        ins = WriterProviderStore().instance()
+            raise ValueError("Writer plugin must be callable.")
+        ins = WriterStore().instance()
 
         writer_plugin = WriterPlugin(func, priority=priority)
         ins.add_writer(writer_plugin)

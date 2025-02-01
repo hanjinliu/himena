@@ -16,8 +16,11 @@ TOOLS_DEBUG_ASYNC = "tools/debug/async"
     title="Just raise an exception",
     command_id="debug:raise-exception",
 )
-def raise_exception():
-    raise ValueError("This is a test exception")
+def raise_exception() -> Parametric:
+    def run(a: int = 0):
+        raise ValueError("This is a test exception")
+
+    return run
 
 
 @register_function(
@@ -27,7 +30,7 @@ def raise_exception():
     command_id="debug:raise-exception-async",
 )
 def raise_exception_async() -> Parametric:
-    def run():
+    def run(a: int = 0):
         raise ValueError("This is a test exception")
 
     return run

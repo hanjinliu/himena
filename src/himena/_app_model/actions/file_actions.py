@@ -57,7 +57,7 @@ def open_file_from_dialog(ui: MainWindow) -> Future:
 
 
 def _get_reader_options(file_path: Path) -> dict:
-    _store = _providers.ReaderProviderStore.instance()
+    _store = _providers.ReaderStore.instance()
     readers = _store.get(file_path, min_priority=-float("inf"))
 
     # prepare reader plugin choices
@@ -216,7 +216,7 @@ def save_as_from_dialog(ui: MainWindow, sub_win: SubWindow) -> Future:
 def save_as_using_from_dialog(ui: MainWindow, sub_win: SubWindow) -> Future:
     """Save the current sub-window using selected plugin."""
     model = sub_win.to_model()
-    ins = _providers.WriterProviderStore().instance()
+    ins = _providers.WriterStore().instance()
     model.title = sub_win.title
     save_path = sub_win._save_behavior._determine_save_path(model) or "~"
     writers = ins.get(model, Path(save_path), min_priority=-float("inf"))

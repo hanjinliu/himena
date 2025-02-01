@@ -689,7 +689,8 @@ class ParametricWindow(SubWindow[_W]):
         return_value = self._call(**kwargs)
         if isinstance(return_value, Future):  # running asynchronously
             done = main._process_future_done_callback(
-                self._widget_preview_callback_done
+                self._widget_preview_callback_done,
+                lambda e: main._set_parametric_widget_busy(self, False),
             )
             return_value.add_done_callback(done)
             main._set_parametric_widget_busy(self, True)
@@ -835,6 +836,7 @@ class ParametricWindow(SubWindow[_W]):
             return_value.add_done_callback(
                 main._process_future_done_callback(
                     self._process_return_value,
+                    lambda e: main._set_parametric_widget_busy(self, False),
                     kwargs=kwargs,
                 )
             )

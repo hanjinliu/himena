@@ -329,6 +329,7 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     def _process_future_done_callback(
         self,
         cb: Callable[[Future], None],
+        cb_errored: Callable[[Exception], None],
         **kwargs,
     ) -> Callable[[Future], None]:
         """Wrap the callback of the future done event so that it can be run in the main

@@ -105,7 +105,7 @@ def open_last_closed_window(ui: MainWindow) -> WidgetDataModel:
     """Open the last closed window."""
     if last := ui._history_closed.pop_last():
         path, plugin = last
-        store = _providers.ReaderProviderStore().instance()
+        store = _providers.ReaderStore().instance()
         model = store.run(path=path, plugin=plugin)
         return model
     warnings.warn("No window to reopen", UserWarning, stacklevel=2)

@@ -501,7 +501,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
 
     def _paths_to_models(self, file_paths: PathOrPaths, plugin: str | None = None):
         reader_path_sets: list[tuple[ReaderPlugin, PathOrPaths]] = []
-        ins = _providers.ReaderProviderStore.instance()
+        ins = _providers.ReaderStore.instance()
         file_paths = _norm_paths(file_paths)
         for file_path in file_paths:
             reader_path_sets.append((ins.pick(file_path, plugin=plugin), file_path))

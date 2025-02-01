@@ -37,7 +37,7 @@ class DataFrameWidget(QtW.QTableWidget):
         return self._data_model
 
 # `@register_reader_plugin` is a decorator that registers a function as a reader.
-# A `@reader.mark_matcher` decorator must follow to define a matcher function.
+# A `@reader.define_matcher` decorator must follow to define a matcher function.
 @register_reader_plugin
 def my_reader(file_path: Path):
     if file_path.suffix == ".csv":
@@ -48,14 +48,14 @@ def my_reader(file_path: Path):
         return WidgetDataModel(value=df, type=PANDAS_TABLE_TYPE)
     raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
-@my_reader.mark_matcher
+@my_reader.define_matcher
 def _(file_path: Path):
     if file_path.suffix in (".csv", ".xlsx"):
         return PANDAS_TABLE_TYPE
     return None
 
 # `@register_writer_plugin` is a decorator that registers a function as a writer.
-# A `@writer.mark_matcher` decorator must follow to define a matcher function.
+# A `@writer.define_matcher` decorator must follow to define a matcher function.
 @register_writer_plugin
 def my_writer(model: WidgetDataModel[pd.DataFrame], path: Path):
     if path.suffix == ".csv":
@@ -64,7 +64,7 @@ def my_writer(model: WidgetDataModel[pd.DataFrame], path: Path):
         model.value.to_excel(path, index=False)
     raise ValueError(f"Unsupported file type: {path.suffix}")
 
-@my_writer.mark_matcher
+@my_writer.define_matcher
 def _(model: WidgetDataModel[pd.DataFrame], path: Path):
     return path.suffix in (".csv", ".xlsx")
 

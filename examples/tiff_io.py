@@ -30,7 +30,7 @@ def read_tiff_provider(path: Path):
         metadata=ImageMeta(axes=axes)
     )
 
-@read_tiff_provider.mark_matcher
+@read_tiff_provider.define_matcher
 def _(path: Path):
     if path.suffix in (".tif", ".tiff"):
         return StandardType.IMAGE
@@ -40,7 +40,7 @@ def _(path: Path):
 def write_tiff(model: WidgetDataModel, path: Path):
     return imwrite(path, model.value)
 
-@write_tiff.mark_matcher
+@write_tiff.define_matcher
 def _(model: WidgetDataModel, path: Path):
     return model.type == StandardType.IMAGE and path.suffix in (".tif", ".tiff")
 

@@ -37,7 +37,7 @@ def read_text(file_path: Path) -> WidgetDataModel:
     raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
 
-@read_text.mark_matcher
+@read_text.define_matcher
 def _(file_path: Path) -> str | None:
     if file_path.suffix == ".csv":
         return StandardType.TABLE
@@ -66,7 +66,7 @@ def read_file_list(file_path: Path | list[Path]) -> WidgetDataModel:
     return _io.default_file_list_reader(file_path)
 
 
-@read_file_list.mark_matcher
+@read_file_list.define_matcher
 def _(file_path: Path | list[Path]) -> str | None:
     if isinstance(file_path, list) or file_path.is_dir():
         return StandardType.MODELS
@@ -80,7 +80,7 @@ def read_image(file_path: Path) -> WidgetDataModel:
     raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
 
-@read_image.mark_matcher
+@read_image.define_matcher
 def _(file_path: Path) -> str | None:
     if file_path.suffix in {".png", ".jpg", ".jpeg"}:
         return StandardType.IMAGE
@@ -94,7 +94,7 @@ def read_excel(file_path: Path) -> WidgetDataModel:
     raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
 
-@read_excel.mark_matcher
+@read_excel.define_matcher
 def _(file_path: Path) -> str | None:
     if file_path.suffix in ExcelFileTypes:
         return StandardType.EXCEL
@@ -108,7 +108,7 @@ def read_numpy_array(file_path: Path) -> WidgetDataModel:
     raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
 
-@read_numpy_array.mark_matcher
+@read_numpy_array.define_matcher
 def _(file_path: Path) -> str | None:
     if file_path.suffix == ".npy":
         return StandardType.ARRAY
@@ -122,7 +122,7 @@ def read_pickle(file_path: Path) -> WidgetDataModel:
     raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
 
-@read_pickle.mark_matcher
+@read_pickle.define_matcher
 def _(file_path: Path) -> str | None:
     if file_path.suffix == ".pickle":
         return StandardType.ANY
@@ -136,7 +136,7 @@ def read_zip(file_path: Path) -> WidgetDataModel:
     raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
 
-@read_zip.mark_matcher
+@read_zip.define_matcher
 def _(file_path: Path) -> str | None:
     if file_path.suffix == ".zip":
         return StandardType.MODELS
@@ -148,7 +148,7 @@ def read_as_text_anyway(file_path: Path) -> WidgetDataModel:
     return _io.default_plain_text_reader(file_path)
 
 
-@read_as_text_anyway.mark_matcher
+@read_as_text_anyway.define_matcher
 def _(file_path: Path) -> str | None:
     return StandardType.TEXT
 
@@ -158,7 +158,7 @@ def read_as_unknown(file_path: Path) -> WidgetDataModel:
     return _io.fallback_reader(file_path)
 
 
-@read_as_unknown.mark_matcher
+@read_as_unknown.define_matcher
 def _(file_path: Path) -> str | None:
     return StandardType.READER_NOT_FOUND
 
@@ -209,8 +209,8 @@ def read_as_polars_plot(file_path: Path) -> WidgetDataModel:
     return model
 
 
-@read_as_pandas_dataframe.mark_matcher
-@read_as_pandas_plot.mark_matcher
+@read_as_pandas_dataframe.define_matcher
+@read_as_pandas_plot.define_matcher
 def _(file_path: Path) -> str | None:
     if "pandas" not in list_installed_dataframe_packages():
         return None
@@ -221,8 +221,8 @@ def _(file_path: Path) -> str | None:
     return None
 
 
-@read_as_polars_dataframe.mark_matcher
-@read_as_polars_plot.mark_matcher
+@read_as_polars_dataframe.define_matcher
+@read_as_polars_plot.define_matcher
 def _(file_path: Path) -> str | None:
     if "polars" not in list_installed_dataframe_packages():
         return None
@@ -238,7 +238,7 @@ def write_text(model: WidgetDataModel, path: Path):
     return _io.default_text_writer(model, path)
 
 
-@write_text.mark_matcher
+@write_text.define_matcher
 def _(model: WidgetDataModel, path: Path) -> bool:
     return model.is_subtype_of(StandardType.TEXT) and isinstance(model.value, str)
 
@@ -248,7 +248,7 @@ def write_table(model: WidgetDataModel, path: Path):
     return _io.default_table_writer(model, path)
 
 
-@write_table.mark_matcher
+@write_table.define_matcher
 def _(model: WidgetDataModel, path: Path) -> bool:
     return model.is_subtype_of(StandardType.TABLE)
 
@@ -258,7 +258,7 @@ def write_image(model: WidgetDataModel, path: Path):
     return _io.default_image_writer(model, path)
 
 
-@write_image.mark_matcher
+@write_image.define_matcher
 def _(model: WidgetDataModel, path: Path) -> bool:
     return model.is_subtype_of(StandardType.IMAGE)
 
@@ -268,7 +268,7 @@ def write_dict(model: WidgetDataModel, path: Path):
     return _io.default_dict_writer(model, path)
 
 
-@write_dict.mark_matcher
+@write_dict.define_matcher
 def _(model: WidgetDataModel, path: Path) -> bool:
     return model.is_subtype_of(StandardType.DICT)
 
@@ -278,7 +278,7 @@ def write_excel(model: WidgetDataModel, path: Path):
     return _io.default_excel_writer(model, path)
 
 
-@write_excel.mark_matcher
+@write_excel.define_matcher
 def _(model: WidgetDataModel, path: Path) -> bool:
     return model.is_subtype_of(StandardType.EXCEL)
 
@@ -288,7 +288,7 @@ def write_array(model: WidgetDataModel, path: Path):
     return _io.default_array_writer(model, path)
 
 
-@write_array.mark_matcher
+@write_array.define_matcher
 def _(model: WidgetDataModel, path: Path) -> bool:
     return model.is_subtype_of(StandardType.ARRAY)
 
@@ -298,7 +298,7 @@ def write_plot(model: WidgetDataModel, path: Path):
     return _io.default_plot_writer(model, path)
 
 
-@write_plot.mark_matcher
+@write_plot.define_matcher
 def _(model: WidgetDataModel, path: Path) -> bool:
     return model.is_subtype_of(StandardType.PLOT)
 
@@ -308,7 +308,7 @@ def write_roi(model: WidgetDataModel, path: Path):
     return _io.default_roi_writer(model, path)
 
 
-@write_roi.mark_matcher
+@write_roi.define_matcher
 def _(model: WidgetDataModel, path: Path) -> bool:
     return model.is_subtype_of(StandardType.ROIS)
 
@@ -318,7 +318,7 @@ def write_dataframe(model: WidgetDataModel, path: Path):
     return _io.default_dataframe_writer(model, path)
 
 
-@write_dataframe.mark_matcher
+@write_dataframe.define_matcher
 def _(model: WidgetDataModel, path: Path) -> bool:
     return model.is_subtype_of(StandardType.DATAFRAME)
 
@@ -328,7 +328,7 @@ def write_models(model: WidgetDataModel, path: Path):
     return _io.default_models_writer(model, path)
 
 
-@write_models.mark_matcher
+@write_models.define_matcher
 def _(model: WidgetDataModel, path: Path) -> bool:
     return model.is_subtype_of(StandardType.MODELS)
 
@@ -338,7 +338,7 @@ def write_workflow(model: WidgetDataModel, path: Path):
     return _io.default_workflow_writer(model, path)
 
 
-@write_workflow.mark_matcher
+@write_workflow.define_matcher
 def _(model: WidgetDataModel, path: Path) -> bool:
     return model.is_subtype_of(StandardType.WORKFLOW)
 
@@ -348,6 +348,6 @@ def write_pickle_anyway(model: WidgetDataModel, path: Path):
     return _io.default_pickle_writer(model, path)
 
 
-@write_pickle_anyway.mark_matcher
+@write_pickle_anyway.define_matcher
 def _(model: WidgetDataModel, path: Path) -> bool:
     return True

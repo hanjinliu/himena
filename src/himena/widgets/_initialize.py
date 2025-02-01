@@ -222,7 +222,7 @@ def init_application(app: HimenaApplication) -> HimenaApplication:
             app._future_done_callback(future)
         else:
             cb = ui._backend_main_window._process_future_done_callback(
-                app._future_done_callback
+                app._future_done_callback, lambda e: None
             )
             future.add_done_callback(cb)
             app._futures.add(future)

@@ -17,7 +17,7 @@ _LOGGER = getLogger(__name__)
 _S = TypeVar("_S", bound="_IOPluginBase")
 
 
-class ProviderStore(Generic[_S]):
+class PluginStore(Generic[_S]):
     _global_instance = None
 
     def __init__(self):
@@ -30,7 +30,7 @@ class ProviderStore(Generic[_S]):
         return cls._global_instance
 
 
-class ReaderProviderStore(ProviderStore["ReaderPlugin"]):
+class ReaderStore(PluginStore["ReaderPlugin"]):
     def add_reader(self, reader: ReaderPlugin):
         self._plugin_items.append(reader)
 
@@ -102,7 +102,7 @@ class ReaderProviderStore(ProviderStore["ReaderPlugin"]):
         return reader.read(path)
 
 
-class WriterProviderStore(ProviderStore["WriterPlugin"]):
+class WriterStore(PluginStore["WriterPlugin"]):
     def add_writer(self, reader: WriterPlugin):
         self._plugin_items.append(reader)
 

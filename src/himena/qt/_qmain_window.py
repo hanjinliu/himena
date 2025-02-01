@@ -746,13 +746,15 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _process_future_done_callback(
         self,
         cb: Callable[[Future], None],
+        cb_errored: Callable[[Exception], None],
         **kwargs,
     ) -> Callable[[Future], None]:
         def _func(future: Future):
             if future.cancelled():
-                return
+                self._show_notification("Cancelled.", duration=2)
             elif e := future.exception():
                 self._on_error(e)
+                cb_errored(e)
             else:
                 cb(future, **kwargs)
 

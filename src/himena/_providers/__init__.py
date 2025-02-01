@@ -1,6 +1,6 @@
-from .core import ReaderProviderStore, WriterProviderStore
+from .core import ReaderStore, WriterStore
 
 __all__ = [
-    "ReaderProviderStore",
-    "WriterProviderStore",
+    "ReaderStore",
+    "WriterStore",
 ]

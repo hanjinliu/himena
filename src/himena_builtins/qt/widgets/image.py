@@ -108,7 +108,7 @@ class QImageViewBase(QtW.QSplitter):
 
         # override widget state if metadata is available
         meta0 = model_meta.ImageMeta(
-            axes=[f"axis_{i}" for i in range(arr.ndim)],
+            axes=arr.infer_axes(),
             interpolation="nearest",
             is_rgb=False,
             unit="a.u.",

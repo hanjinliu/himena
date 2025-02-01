@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from qtpy import QtCore
 from himena._descriptors import SaveToPath, CannotSave
-from himena._providers import ReaderProviderStore
+from himena._providers import ReaderStore
 
 if TYPE_CHECKING:
     from himena.widgets import SubWindow
@@ -31,7 +31,7 @@ class QWatchFileObject(QtCore.QObject):
         self.__class__._instances.add(self)
 
     def _on_file_change(self):
-        ins = ReaderProviderStore.instance()
+        ins = ReaderStore.instance()
         model = ins.run(self._file_path, plugin=self._old_save_behavior.plugin)
         self._subwindow.update_model(model)
 

@@ -226,7 +226,7 @@ class WidgetDataModel(GenericModel[_T]):
     ) -> Path:
         from himena import _providers
 
-        ins = _providers.WriterProviderStore.instance()
+        ins = _providers.WriterStore.instance()
         title = self.title or "Untitled"
         path = Path(directory) / title
         if path.suffix == "":

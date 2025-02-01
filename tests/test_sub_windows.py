@@ -82,7 +82,7 @@ def test_io_commands(himena_ui: MainWindow, tmpdir, sample_dir: Path):
 
     response_open = lambda: sample_dir / "table.csv"
     himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response_open)
-    store = himena._providers.ReaderProviderStore.instance()
+    store = himena._providers.ReaderStore.instance()
     param = store.get(response_open(), min_priority=-500)[2]
     himena_ui.exec_action("open-file-using", with_params={"reader": param})
     assert isinstance(himena_ui.current_window.save_behavior, SaveToPath)
@@ -280,7 +280,7 @@ def test_register_folder(himena_ui: MainWindow, sample_dir: Path):
             metadata=meta,
         )
 
-    @read_text_with_meta.mark_matcher
+    @read_text_with_meta.define_matcher
     def _(path: Path):
         if path.is_file():
             return None

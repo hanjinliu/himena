@@ -16,7 +16,7 @@ from himena.workflow import Workflow
 if TYPE_CHECKING:
     from openpyxl.worksheet.worksheet import Worksheet
     from himena.standards import plotting as hplt
-    from himena._providers import ReaderProviderStore
+    from himena._providers import ReaderStore
 
 ###################
 ##### Readers #########
@@ -111,9 +111,9 @@ def default_zip_reader(file_path: Path) -> WidgetDataModel:
     """Read zip file as a model stack."""
     import zipfile
     import tempfile
-    from himena._providers import ReaderProviderStore
+    from himena._providers import ReaderStore
 
-    store = ReaderProviderStore.instance()
+    store = ReaderStore.instance()
     models = []
     with tempfile.TemporaryDirectory() as tmpdir, zipfile.ZipFile(file_path, "r") as z:
         tmpdir = Path(tmpdir)
@@ -271,14 +271,14 @@ class DataFramePlotReader(DataFrameReader):
 
 def default_file_list_reader(file_path: Path | list[Path]) -> WidgetDataModel:
     """Read list of files."""
-    from himena._providers import ReaderProviderStore
+    from himena._providers import ReaderStore
 
     value: list[WidgetDataModel] = []
     if isinstance(file_path, Path):
         _iterator = file_path.glob("*")
     else:
         _iterator = iter(file_path)
-    store = ReaderProviderStore.instance()
+    store = ReaderStore.instance()
     for path in _iterator:
         model = WidgetDataModel(
             value=_make_lazy_reader(store, path),
@@ -295,7 +295,7 @@ def default_workflow_reader(path: Path) -> WidgetDataModel:
     return WidgetDataModel(value=value, type=StandardType.WORKFLOW)
 
 
-def _make_lazy_reader(store: ReaderProviderStore, path: Path):
+def _make_lazy_reader(store: ReaderStore, path: Path):
     return lambda: store.run(path)._with_source(path)
 
 
@@ -404,9 +404,9 @@ def default_models_writer(
     path: Path,
 ) -> None:
     """Write list of files."""
-    from himena._providers import WriterProviderStore
+    from himena._providers import WriterStore
 
-    store = WriterProviderStore.instance()
+    store = WriterStore.instance()
     if path.suffix == "":
         if not path.exists():
             path.mkdir(parents=True)

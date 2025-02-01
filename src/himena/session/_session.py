@@ -12,7 +12,7 @@ from himena.layout import construct_layout
 from himena.types import WindowState, WindowRect, WidgetDataModel
 from himena.utils.misc import is_subtype
 from himena import anchor
-from himena._providers import ReaderProviderStore
+from himena._providers import ReaderStore
 from himena.widgets._wrapper import ParametricWindow
 from himena.workflow import Workflow, compute, WorkflowStepType, LocalReaderMethod
 
@@ -297,7 +297,7 @@ def _raise_failed(failed: list[tuple[WindowDescription, Exception]]) -> None:
 
 
 def _pick_best_reader_plugin(meth: LocalReaderMethod, expected_type: str) -> str | None:
-    ins = ReaderProviderStore().instance()
+    ins = ReaderStore().instance()
     suboptimals: list[int, str] = []
     for model_type, reader in ins.iter_readers(meth.path, min_priority=-float("inf")):
         if model_type is None:

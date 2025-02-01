@@ -46,11 +46,11 @@ class LocalReaderMethod(ReaderMethod):
 
     def run(self) -> "WidgetDataModel[Any]":
         """Get model by importing the reader plugin and actually read the file(s)."""
-        from himena._providers import ReaderProviderStore
+        from himena._providers import ReaderStore
         from himena.types import WidgetDataModel
         from himena.standards.model_meta import read_metadata
 
-        store = ReaderProviderStore.instance()
+        store = ReaderStore.instance()
         model = store.run(self.path, plugin=self.plugin)
         if not isinstance(model, WidgetDataModel):
             raise ValueError(f"Expected to return a WidgetDataModel but got {model}")
@@ -109,9 +109,9 @@ class SCPReaderMethod(ReaderMethod):
 
     def run(self):
         import subprocess
-        from himena._providers import ReaderProviderStore
+        from himena._providers import ReaderStore
 
-        store = ReaderProviderStore.instance()
+        store = ReaderStore.instance()
         src = self._file_path_repr()
 
         with tempfile.TemporaryDirectory() as tmpdir:
