@@ -130,13 +130,13 @@ exclude_lines = [
 ]
 
 [tool.hatch.build.targets.sdist]
-include = [
+packages = [
   "src/himena",
   "src/himena_builtins",
 ]
 
 [tool.hatch.build.targets.wheel]
-include = [
+packages = [
   "src/himena",
   "src/himena_builtins",
 ]
