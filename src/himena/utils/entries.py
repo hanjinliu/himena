@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Iterator
 from dataclasses import dataclass
-from importlib.metadata import distributions, distribution
+from importlib.metadata import distributions
 
 
 @dataclass(frozen=True)
@@ -30,23 +30,6 @@ def iter_plugin_info() -> Iterator[HimenaPluginInfo]:
                     version=dist.version,
                     distribution=dist.name,
                 )
-
-
-def get_plugin_info(module: str) -> list[HimenaPluginInfo]:
-    dist = distribution(module)
-    out = []
-    for ep in dist.entry_points:
-        if ep.group == ENTRY_POINT_GROUP_NAME:
-            info = HimenaPluginInfo(
-                name=ep.name,
-                place=ep.value,
-                version=dist.version,
-                distribution=dist.name,
-            )
-            out.append(info)
-    if not out:
-        raise ValueError(f"No plugin entry points found in {module}")
-    return out
 
 
 def is_submodule(string: str, supertype: str) -> bool:
