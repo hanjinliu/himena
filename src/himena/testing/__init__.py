@@ -7,5 +7,6 @@ Note that they are not meant to test the GUI, but the logic of `update_model` an
 
 from himena.testing import image, table
 from himena.testing.subwindow import WidgetTester
+from himena.testing._pytest import install_plugin
 
-__all__ = ["image", "table", "WidgetTester"]
+__all__ = ["image", "table", "WidgetTester", "install_plugin"]

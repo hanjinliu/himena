@@ -173,7 +173,7 @@ def table_to_text(model: WidgetDataModel) -> Parametric:
 )
 def table_to_dataframe(model: WidgetDataModel["np.ndarray"]) -> WidgetDataModel:
     """Convert a table data into a DataFrame."""
-
+    # TODO: Choose pandas, dict etc.
     buf = StringIO()
     np.savetxt(buf, model.value, fmt="%s", delimiter=",")
     buf.seek(0)

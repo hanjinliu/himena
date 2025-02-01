@@ -160,6 +160,8 @@ class NDObjectCollection(Generic[_T]):
         return len(self.items)
 
     def take_axis(self, axis: int, index: int):
+        if axis >= len(self.axis_names):
+            return self  # this happens when image is RGB image
         axis_name = self.axis_names[axis]
         column = self.indices[:, axis]
         ok = np.logical_or(column == index, column < 0)
