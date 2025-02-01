@@ -134,6 +134,11 @@ include = [
   "src/himena_builtins",
 ]
 
+[tool.hatch.build.targets.wheel]
+include = [
+  "src/himena_builtins",
+]
+
 [tool.hatch.envs.lint]
 detached = true
 dependencies = [
