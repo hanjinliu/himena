@@ -8,18 +8,23 @@
 
 ![](images/window.png)
 
-`himena` is an infinitely extensible and reusable applications framework.
-
-Python has a lot of third-party GUI libraries for different purposes. They ususally
-implements their own reader/writer functions, widgets and plugins, which forces
-programmers to repeat the same code over and over again for different projects.
-`himena` abstracts the logic of the common workflow to allow different GUI ideas
-to be implemented in a single framework.
+`himena` is an infinitely extensible and reusable applications framework for data
+science.
 
 ## Installation
 
+`himena` is available on PyPI.
+
 ```shell
 pip install himena -U
+```
+
+Alternatively, you can install the latest version from GitHub.
+
+```shell
+git clone git+https://github.com/hanjinliu/himena
+cd himena
+pip install -e .
 ```
 
 ## Start application

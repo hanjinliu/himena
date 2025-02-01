@@ -320,8 +320,13 @@ def set_colormaps(win: SubWindow) -> Parametric:
     from himena.qt.magicgui import ColormapEdit
 
     model = win.to_model()
+    arr = wrap_array(model.value)
     meta = _cast_meta(model, ImageMeta).model_copy()
-    channel_names = _get_channel_names(meta, allow_single=True)
+    if meta.channel_axis is None:
+        channel_names = ["Channel"]
+    else:
+        nchn = arr.shape[meta.channel_axis]
+        channel_names = _get_channel_names(meta, nchn, allow_single=True)
     current_channels = [ch.colormap for ch in meta.channels]
     colormap_defaults = [
         "gray", "green", "magenta", "cyan", "yellow", "red", "blue", "plasma",
@@ -362,7 +367,7 @@ def split_channels(model: WidgetDataModel) -> list[WidgetDataModel]:
     arr = wrap_array(model.value)
     if meta.channel_axis is not None:
         c_axis = meta.channel_axis
-        channel_labels = _get_channel_names(meta)
+        channel_labels = _get_channel_names(meta, arr.shape[c_axis])
     elif meta.is_rgb:
         c_axis = arr.ndim - 1
         channel_labels = ["R", "G", "B"]
@@ -605,13 +610,17 @@ def _get_current_roi_and_meta(
     return roi, meta
 
 
-def _get_channel_names(meta: ImageMeta, allow_single: bool = False) -> list[str]:
-    idx = meta.channel_axis
-    if idx is None:
+def _get_channel_names(
+    meta: ImageMeta, nchannels: int, allow_single: bool = False
+) -> list[str]:
+    if meta.channel_axis is None:
         if allow_single:
             return ["Ch-0"]
         raise ValueError("Image does not have a channel axis.")
-    return [ch.name for ch in meta.channels]
+    if meta.axes is None:
+        raise ValueError("Image does not have axes.")
+    axis = meta.axes[meta.channel_axis]
+    return [axis.get_label(i) for i in range(nchannels)]
 
 
 def _make_unique_axis_name(axes: list[str]) -> str:

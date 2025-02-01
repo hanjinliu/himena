@@ -153,7 +153,6 @@ class DataFramePlotMeta(DataFrameMeta):
 class ImageChannel(BaseModel):
     """A channel in an image file."""
 
-    name: str | None = Field(None, description="Name of the channel.")
     colormap: str | None = Field(None, description="Color map of the channel.")
     contrast_limits: tuple[float, float] | None = Field(
         None, description="Contrast limits of the channel."
@@ -187,6 +186,15 @@ class ArrayAxis(BaseModel):
     @field_validator("name", mode="before")
     def _name_to_str(cls, v):
         return str(v)
+
+    def get_label(self, index: int) -> str:
+        """Return the label of the axis at the given index."""
+        if index < 0:
+            raise ValueError("Index must be non-negative.")
+        try:
+            return self.labels[index]
+        except IndexError:
+            return self.default_label_format.format(str(index))
 
 
 class ArrayMeta(BaseMetadata):

@@ -169,7 +169,7 @@ class QImageViewBase(QtW.QSplitter):
             img_slices = self._current_image_slices
         else:
             img_slices = self._get_image_slices(sl_0, nchannels)
-        self._update_channels(meta0, img_slices, nchannels, arr.dtype)
+        self._update_channels(meta0, img_slices, nchannels)
         if not meta0.skip_image_rerendering:
             self._set_image_slices(img_slices)
         roi_list = meta0.unwrap_rois()
@@ -236,8 +236,9 @@ class QImageViewBase(QtW.QSplitter):
                 ch.model_copy(update={"contrast_limits": (0, 1)})
                 for ch in meta.channels
             ]
+        names = _channel_names(meta, nchannels)
         self._channels = [
-            ChannelInfo.from_channel(i, c, dtype) for i, c in enumerate(channels)
+            ChannelInfo.from_channel(i, names[i], c) for i, c in enumerate(channels)
         ]
 
     def _make_control_widget(self) -> QImageViewControlBase:
@@ -251,7 +252,6 @@ class QImageViewBase(QtW.QSplitter):
         meta: model_meta.ImageMeta,
         img_slices: list[ImageTuple],
         nchannels: int,
-        dtype: np.dtype,
     ):
         # before calling ChannelInfo.from_channel, contrast_limits must be set
         if len(meta.channels) != nchannels:
@@ -265,8 +265,9 @@ class QImageViewBase(QtW.QSplitter):
             for i, ch in enumerate(channels):
                 if ch.contrast_limits is None:
                     ch.contrast_limits = self._clim_for_ith_channel(img_slices, i)
+        names = _channel_names(meta, nchannels)
         self._channels = [
-            ChannelInfo.from_channel(i, c, dtype) for i, c in enumerate(channels)
+            ChannelInfo.from_channel(i, names[i], c) for i, c in enumerate(channels)
         ]
         if len(self._channels) == 1 and channels[0].colormap is None:
             # ChannelInfo.from_channel returns a single green colormap but it should
@@ -315,9 +316,7 @@ class QImageViewBase(QtW.QSplitter):
         else:
             interp = "nearest"
         channels = [
-            model_meta.ImageChannel(
-                name=ch.name, contrast_limits=ch.clim, colormap=ch.colormap.name
-            )
+            model_meta.ImageChannel(contrast_limits=ch.clim, colormap=ch.colormap.name)
             for ch in self._channels
         ]
         current_indices = self._dims_slider.value()
@@ -582,8 +581,8 @@ class QImageView(QImageViewBase):
     def _make_control_widget(self) -> QImageViewControl:
         return QImageViewControl(self)
 
-    def _update_channels(self, meta, img_slices, nchannels, dtype):
-        super()._update_channels(meta, img_slices, nchannels, dtype)
+    def _update_channels(self, meta, img_slices, nchannels):
+        super()._update_channels(meta, img_slices, nchannels)
         if self._composite_state() == "Comp.":
             self._control._chn_vis.set_channels(self._channels)
 
@@ -893,8 +892,8 @@ class ChannelInfo:
     def from_channel(
         cls,
         idx: int,
+        name: str,
         channel: model_meta.ImageChannel,
-        dtype: np.dtype,
     ) -> ChannelInfo:
         input_clim = channel.contrast_limits
         if input_clim is None:
@@ -904,7 +903,7 @@ class ChannelInfo:
         else:
             colormap = Colormap(channel.colormap)
         return cls(
-            name=channel.name or f"Ch {idx}",
+            name=name,
             channel_index=idx,
             colormap=colormap,
             clim=channel.contrast_limits,
@@ -957,3 +956,13 @@ def _update_meta(meta0: model_meta.ImageMeta, meta: model_meta.ImageMeta):
         meta0.interpolation = meta.interpolation
     meta0.skip_image_rerendering = meta.skip_image_rerendering
     return None
+
+
+def _channel_names(meta: model_meta.ImageMeta, nchannels: int) -> list[str]:
+    if meta.channel_axis is None:
+        names = [""]
+    elif meta.axes is None:
+        names = [f"Ch-{i}" for i in range(nchannels)]
+    else:
+        names = [meta.axes[meta.channel_axis].get_label(i) for i in range(nchannels)]
+    return names
