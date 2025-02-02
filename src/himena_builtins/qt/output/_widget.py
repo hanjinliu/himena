@@ -109,6 +109,13 @@ class QtOutputWidget(QtW.QTabWidget):
 
 
 class OutputInterface(logging.Handler):
+    """A widget for displaying the standard output and logs.
+
+    When this widget is opened, all the outputs to the standard output and loggings
+    are redirected to this widget. In the logging tab, you can filter the logs by
+    the log level and the module name.
+    """
+
     _instances: dict[str, OutputInterface] = {}
 
     def __init__(self):

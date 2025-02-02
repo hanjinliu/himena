@@ -6,7 +6,7 @@ from app_model import Application
 from app_model.types import MenuItem
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt
-
+from superqt.utils import thread_worker
 from himena.qt._qclickable_label import QClickableLabel
 from himena.qt._qsub_window import QSubWindowArea, QSubWindow
 from himena.qt._qrename import QTabRenameLineEdit
@@ -14,6 +14,7 @@ from himena.qt._utils import get_main_window
 from himena.consts import ActionGroup, MenuId
 from himena import _drag
 from himena.types import WindowRect
+from himena.workflow._reader import ReaderMethod
 
 
 class QCloseTabToolButton(QtW.QToolButton):
@@ -204,6 +205,7 @@ class QTabWidget(QtW.QTabWidget):
         else:
             drop_pos = event.pos()
 
+        ui = get_main_window(self)
         if QtW.QApplication.widgetAt(glob_pos) is self:
             # dropped on the tabbar outside the existing tabs
             if isinstance(src := event.source(), QSubWindow):
@@ -218,7 +220,7 @@ class QTabWidget(QtW.QTabWidget):
             else:
                 model = model.data_model()
                 model.window_rect_override = lambda s: _center_title_bar_on(s, drop_pos)
-                get_main_window(self).add_data_model(model)
+                ui.add_data_model(model)
         elif mime_data.hasUrls():
             if isinstance(win := event.source(), QSubWindow):
                 # subwindow dragged and dropped without changing tabs
@@ -227,10 +229,15 @@ class QTabWidget(QtW.QTabWidget):
                 return super().dropEvent(event)
             urls = mime_data.urls()
             paths = [url.toLocalFile() for url in urls if url.isLocalFile()]
-            ui = get_main_window(self)
             future = ui.read_files_async(paths)
             ui._backend_main_window._add_job_progress(future, "Reading files")
             ui.model_app.injection_store.process(future)
+        elif callable(rft := getattr(mime_data.parent(), "readers_from_text", None)):
+            readers = rft(mime_data.text())
+            worker = self._read_one_by_one(readers)
+            worker.yielded.connect(ui.add_data_model)
+            worker.start()
+            ui.set_status_tip("Opening files from remote sources ...", duration=2)
         return super().dropEvent(event)
 
     def widget_area(self, index: int) -> QSubWindowArea | None:
@@ -249,6 +256,12 @@ class QTabWidget(QtW.QTabWidget):
         super().resizeEvent(a0)
         self.resized.emit()
         return None
+
+    @thread_worker
+    def _read_one_by_one(self, readers: list[ReaderMethod]):
+        for reader in readers:
+            model = reader.run()
+            yield model
 
 
 class QStartupWidget(QtW.QWidget):

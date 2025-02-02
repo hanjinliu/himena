@@ -7,6 +7,7 @@ from qtpy import QtWidgets as QtW, QtCore, QtGui
 
 from himena import _drag
 from himena.widgets import MainWindow
+from himena_builtins.qt.explorer._widget_ssh import QSSHRemoteExplorerWidget
 
 if TYPE_CHECKING:
     from himena_builtins.qt.explorer import FileExplorerConfig
@@ -63,6 +64,8 @@ class QRootPathEdit(QtW.QWidget):
 
 
 class QExplorerWidget(QtW.QWidget):
+    """A normal file explorer widget."""
+
     open_file_requested = QtCore.Signal(Path)
 
     def __init__(self, ui: MainWindow) -> None:
@@ -121,14 +124,7 @@ class QFileTree(QtW.QTreeView):
         menu.addSeparator()
         menu.addAction("Copy", lambda: self._ui.set_clipboard(files=[path]))
         menu.addAction("Copy path", lambda: self._ui.set_clipboard(text=str(path)))
-        menu.addAction(
-            "Paste",
-            lambda: self._paste_file(
-                self._ui.clipboard.files,
-                self._directory_for_index(index),
-                is_copy=True,
-            ),
-        )
+        menu.addAction("Paste", self._paste_from_clipboard)
         menu.addSeparator()
         menu.addAction("Rename", lambda: self.edit(index))
         menu.exec(self.viewport().mapToGlobal(pos))
@@ -169,7 +165,9 @@ class QFileTree(QtW.QTreeView):
 
     def dragEnterEvent(self, a0: QtGui.QDragEnterEvent):
         mime = a0.mimeData()
-        if mime and mime.hasUrls():
+        if mime and (
+            mime.hasUrls() or isinstance(mime.parent(), QSSHRemoteExplorerWidget)
+        ):
             a0.accept()
         elif _drag.get_dragging_model() is not None:
             a0.accept()
@@ -179,7 +177,9 @@ class QFileTree(QtW.QTreeView):
 
     def dragMoveEvent(self, a0: QtGui.QDragMoveEvent):
         mime = a0.mimeData()
-        if mime and mime.hasUrls():
+        if mime and (
+            mime.hasUrls() or isinstance(mime.parent(), QSSHRemoteExplorerWidget)
+        ):
             a0.accept()
         elif _drag.get_dragging_model() is not None:
             a0.accept()
@@ -200,8 +200,7 @@ class QFileTree(QtW.QTreeView):
                 data_model = drag_model.data_model()
                 data_model.write_to_directory(dirpath)
         elif mime := a0.mimeData():
-            paths = [Path(url.toLocalFile()) for url in mime.urls()]
-            self._paste_file(paths, dirpath, is_copy=False)
+            self._paste_mime_data(mime, dirpath)
 
     def dragLeaveEvent(self, e):
         return super().dragLeaveEvent(e)
@@ -217,13 +216,24 @@ class QFileTree(QtW.QTreeView):
                 )
                 return
             elif event.key() == QtCore.Qt.Key.Key_V:
-                self._paste_file(
-                    self._ui.clipboard.files,
-                    self._directory_for_index(self.currentIndex()),
-                    is_copy=True,
-                )
-                return
+                return self._paste_from_clipboard()
         return super().keyPressEvent(event)
+
+    def _paste_from_clipboard(self):
+        if clipboard := QtW.QApplication.clipboard():
+            dirpath = self._directory_for_index(self.currentIndex())
+            self._paste_mime_data(clipboard.mimeData(), dirpath)
+
+    def _paste_mime_data(self, mime: QtCore.QMimeData, dirpath: Path):
+        if isinstance(par := mime.parent(), QSSHRemoteExplorerWidget):
+            for reader in par.readers_from_text(mime.text()):
+                reader.run_scp(dirpath)
+        else:
+            self._paste_file(
+                self._ui.clipboard.files,
+                dirpath=dirpath,
+                is_copy=True,
+            )
 
     def _paste_file(self, paths: list[Path], dirpath: Path, is_copy: bool):
         dst_exists: list[Path] = []

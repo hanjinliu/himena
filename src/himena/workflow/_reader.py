@@ -2,6 +2,8 @@ import tempfile
 from typing import Iterator, Literal, Any, TYPE_CHECKING
 from pathlib import Path
 import warnings
+import subprocess
+
 from pydantic_compat import Field
 from himena.utils.misc import PluginInfo
 from himena.workflow._base import WorkflowStep
@@ -33,6 +35,9 @@ class ReaderMethod(NoParentWorkflow):
     """Describes that one was read from a file."""
 
     plugin: str | None = Field(default=None)
+
+    def run(self) -> "WidgetDataModel":
+        raise NotImplementedError
 
 
 class LocalReaderMethod(ReaderMethod):
@@ -100,7 +105,8 @@ class SCPReaderMethod(ReaderMethod):
             output_model_type=output_model_type,
         )
 
-    def _file_path_repr(self) -> str:
+    def to_str(self) -> str:
+        """Return the remote file path representation."""
         return f"{self.username}@{self.host}:{self.path.as_posix()}"
 
     def _get_model_impl(self, wf: "Workflow") -> "WidgetDataModel":
@@ -108,28 +114,31 @@ class SCPReaderMethod(ReaderMethod):
         return model
 
     def run(self):
-        import subprocess
         from himena._providers import ReaderStore
 
         store = ReaderStore.instance()
-        src = self._file_path_repr()
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            if self.wsl:
-                dst_pathobj = Path(tmpdir).joinpath(self.path.name)
-                drive = dst_pathobj.drive
-                wsl_root = Path("mnt") / drive.lower().rstrip(":")
-                dst_pathobj_wsl = (
-                    wsl_root / dst_pathobj.relative_to(drive).as_posix()[1:]
-                )
-                dst_wsl = "/" + dst_pathobj_wsl.as_posix()
-                dst = dst_pathobj.as_posix()
-                args = ["wsl", "-e", "scp", src, dst_wsl]
-            else:
-                dst = Path(tmpdir).joinpath(self.path.name).as_posix()
-                args = ["scp", src, dst]
-            subprocess.run(args)
-            model = store.run(Path(dst), plugin=self.plugin)
+            dst_path = Path(tmpdir).joinpath(self.path.name)
+            self.run_scp(dst_path)
+            model = store.run(dst_path, plugin=self.plugin)
             model.title = self.path.name
         model.workflow = self.construct_workflow()
         return model
+
+    def run_scp(self, dst_path: Path, stdout=None):
+        """Run scp command to move the file from remote to local `dst_path`."""
+        src = self.to_str()
+
+        if self.wsl:
+            drive = dst_path.drive
+            wsl_root = Path("mnt") / drive.lower().rstrip(":")
+            dst_pathobj_wsl = wsl_root / dst_path.relative_to(drive).as_posix()[1:]
+            dst_wsl = "/" + dst_pathobj_wsl.as_posix()
+            dst = dst_path.as_posix()
+            args = ["wsl", "-e", "scp", src, dst_wsl]
+        else:
+            dst = dst_path.as_posix()
+            args = ["scp", src, dst]
+        subprocess.run(args, stdout=stdout)
+        return None

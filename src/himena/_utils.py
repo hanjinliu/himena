@@ -13,6 +13,7 @@ from typing import (
 import inspect
 from functools import wraps
 import warnings
+from textwrap import dedent
 from cmap import Colormap, Color
 
 from himena.consts import StandardType
@@ -299,3 +300,11 @@ def to_color_or_colormap(value) -> Color | Colormap:
         except Exception:
             value = Color(value)
     return value
+
+
+def doc_to_whats_this(doc: str):
+    lines = doc.splitlines()
+    first_line = lines[0]
+    others = "\n".join(lines[1:])
+    doc_dedent = dedent(first_line) + "\n" + dedent(others)
+    return doc_dedent

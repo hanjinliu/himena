@@ -2,7 +2,6 @@ import logging
 from pathlib import Path
 import sys
 import warnings
-from textwrap import dedent
 from app_model.types import (
     KeyCode,
     KeyMod,
@@ -46,11 +45,8 @@ def show_whats_this(ui: MainWindow) -> None:
     """Show the docstring of the current widget."""
     if window := ui.current_window:
         if doc := getattr(window.widget, "__doc__", ""):
-            lines = doc.splitlines()
-            first_line = lines[0]
-            others = "\n".join(lines[1:])
-            doc_dedent = dedent(first_line) + "\n" + dedent(others)
-            ui._backend_main_window._add_whats_this(doc_dedent, style="markdown")
+            doc_formatted = _utils.doc_to_whats_this(doc)
+            ui._backend_main_window._add_whats_this(doc_formatted, style="markdown")
 
 
 @ACTIONS.append_from_fn(

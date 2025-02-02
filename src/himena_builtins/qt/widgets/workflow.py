@@ -220,7 +220,7 @@ def _(step: _wf.LocalReaderMethod) -> QtW.QTreeWidgetItem:
 @_step_to_item.register
 def _(step: _wf.SCPReaderMethod) -> QtW.QTreeWidgetItem:
     item = QtW.QTreeWidgetItem([f"[Remote Path] (type={step.output_model_type!r})"])
-    item.addChild(QtW.QTreeWidgetItem([f"{step._file_path_repr()}"]))
+    item.addChild(QtW.QTreeWidgetItem([f"{step.to_str()}"]))
     item.addChild(QtW.QTreeWidgetItem([f"plugin = {step.plugin!r}"]))
     item.setToolTip(0, str(step.path))
     item.setData(0, _STEP_ROLE, step)
