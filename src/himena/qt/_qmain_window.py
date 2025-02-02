@@ -277,6 +277,12 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         subwindow._set_icon_color(icon_color)
         return subwindow
 
+    def set_widget_as_preview(self, subwindow: SubWindow):
+        qsubwindow = get_subwindow(subwindow._split_interface_and_frontend()[1])
+        qsubwindow._title_bar._model_menu_btn.hide()
+        qsubwindow._title_bar._window_menu_btn.hide()
+        return None
+
     def _connect_window_events(self, sub: SubWindow, qsub: QSubWindow):
         @qsub.state_change_requested.connect
         def _(state: WindowState):
