@@ -15,6 +15,7 @@ from superqt.utils import ensure_main_thread
 from himena.consts import MenuId
 from himena.consts import ParametricWidgetProtocolNames as PWPN
 from himena._app_model import _formatter, HimenaApplication
+from himena._utils import doc_to_whats_this
 from himena.qt._qnotification import QJobStack, QNotificationWidget, QWhatsThisWidget
 from himena.qt._qtab_widget import QTabWidget
 from himena.qt._qstatusbar import QStatusBar
@@ -127,7 +128,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self._anim_subwindow = QtCore.QPropertyAnimation()
         self._confirm_close = True
         self.setMinimumSize(400, 300)
-        self.resize(800, 600)
+        self.resize(1000, 720)
 
         # connect notifications
         self._event_loop_handler.errored.connect(self._on_error)
@@ -199,6 +200,8 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         dock_widget = QDockWidget(widget, title, allowed_areas)
         self.addDockWidget(dock_widget.area_normed(area), dock_widget)
         dock_widget.closed.connect(self._update_context)
+        if doc := getattr(widget, "__doc__", ""):
+            dock_widget.whats_this.connect(lambda: self._show_dock_whats_this(doc))
         QtW.QApplication.processEvents()
         return dock_widget
 
@@ -781,6 +784,10 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         whatsthis.set_text(text, style)
         whatsthis.show()
         return None
+
+    def _show_dock_whats_this(self, doc: str):
+        doc_formatted = doc_to_whats_this(doc)
+        self._add_whats_this(doc_formatted, style="markdown")
 
 
 def _is_root_menu_id(app: HimenaApplication, menu_id: str) -> bool:

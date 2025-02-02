@@ -65,6 +65,8 @@ class QRootPathEdit(QtW.QWidget):
 
 
 class QExplorerWidget(QtW.QWidget):
+    """A normal file explorer widget."""
+
     open_file_requested = QtCore.Signal(Path)
 
     def __init__(self, ui: MainWindow) -> None:

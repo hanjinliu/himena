@@ -43,6 +43,26 @@ if sys.platform.startswith("win"):
 
 
 class QtConsole(RichJupyterWidget):
+    """Console widget for the Python interpreter.
+
+    The main window instance is passed to the console as variable `ui` by default.
+    Tabs, windows, and the internal data models can be accessed from its attributes.
+
+    ```python
+    ui.tabs[0]  # get the first tab instance
+    ui.tabs[0][1]  # get the second window in the first tab instance
+    ui.current_window  # get the current sub-window instance
+    ui.current_model  # get the current data model instance
+    ```
+
+    New data can be added to the GUI by its methods.
+
+    ```python
+    ui.add_tab()  # add a new tab
+    ui.add_data_model(WidgetDataModel(...))  # add a new data model
+    ui.add_object(..., type=...)  # add a new python object
+    """
+
     codeExecuted = Signal()
 
     def __init__(self, ui: MainWindow):

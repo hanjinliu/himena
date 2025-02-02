@@ -17,6 +17,12 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class QCommandHistory(QtW.QWidget):
+    """List of command history.
+
+    The executed commands are listed in the widget, and can be re-executed by clicking
+    the button.
+    """
+
     def __init__(self, ui: MainWindow):
         super().__init__()
         layout = QtW.QVBoxLayout(self)

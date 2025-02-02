@@ -21,6 +21,16 @@ if TYPE_CHECKING:
 
 
 class QSSHRemoteExplorerWidget(QtW.QWidget):
+    """A widget for exploring remote files via SSH.
+
+    This widget will execute `ls`, `ssh` and `scp` commands to list, read and send
+    files when needed. This widget accepts copy-and-paste drag-and-drop from the local
+    file system, including the normal explorer dock widget and the OS file explorer.
+
+    If you are using Windows, checking the "Use WSL" switch will forward all the
+    subprocess commands to WSL.
+    """
+
     on_ls = QtCore.Signal(object)
 
     def __init__(self, ui: MainWindow) -> None:

@@ -2,14 +2,12 @@ from __future__ import annotations
 
 from qtpy import QtWidgets as QtW, QtCore
 from qtpy.QtCore import Qt, Signal
-from himena.types import (
-    DockArea,
-    DockAreaString,
-)
+from himena.types import DockArea, DockAreaString
 
 
 class QDockWidget(QtW.QDockWidget):
     closed = QtCore.Signal()
+    whats_this = QtCore.Signal()
 
     def __init__(
         self,
@@ -22,6 +20,7 @@ class QDockWidget(QtW.QDockWidget):
         _titlebar = QDockWidgetTitleBar(title, self)
         self.setTitleBarWidget(_titlebar)
         _titlebar.closeSignal.connect(self.close)
+        _titlebar.whatsThisSignal.connect(self.whats_this.emit)
         if allowed_areas is None:
             allowed_areas = [
                 DockArea.LEFT,
@@ -71,11 +70,12 @@ class QDockWidgetTitleFrame(QtW.QFrame):
 class QDockWidgetTitleBar(QtW.QWidget):
     """A custom title bar for a dock widget"""
 
+    whatsThisSignal = Signal()
     closeSignal = Signal()
 
     def __init__(self, title: str = "", parent: QtW.QWidget | None = None) -> None:
         super().__init__(parent)
-        _layout = QtW.QHBoxLayout()
+        _layout = QtW.QHBoxLayout(self)
         _layout.setContentsMargins(4, 0, 4, 0)
         _layout.setSpacing(0)
 
@@ -89,12 +89,19 @@ class QDockWidgetTitleBar(QtW.QWidget):
         self._close_button.setFixedSize(QtCore.QSize(16, 16))
         self._close_button.setCursor(Qt.CursorShape.ArrowCursor)
 
+        self._whats_this_button = QtW.QToolButton()
+        self._whats_this_button.setText("?")
+        self._whats_this_button.setToolTip("What's this widget?")
+        self._whats_this_button.setFixedSize(QtCore.QSize(16, 16))
+        self._whats_this_button.setCursor(Qt.CursorShape.ArrowCursor)
+
         _layout.addWidget(self._title_label)
         _layout.addWidget(_frame)
+        _layout.addWidget(self._whats_this_button)
         _layout.addWidget(self._close_button)
         _layout.setAlignment(self._close_button, Qt.AlignmentFlag.AlignRight)
-        self.setLayout(_layout)
 
+        self._whats_this_button.clicked.connect(self.whatsThisSignal.emit)
         self._close_button.clicked.connect(self.closeSignal.emit)
 
         self.setTitle(title)
