@@ -720,6 +720,7 @@ class ParametricWindow(SubWindow[_W]):
                 # create a new preview window
                 title = f"{return_value.title} (preview)"
                 prev = self.add_child(result_widget, title=title)
+                main.set_widget_as_preview(prev)
                 with suppress(AttributeError):  # disable editing if possible
                     prev.is_editable = False
                 # move the window so that it does not overlap with the parametric window

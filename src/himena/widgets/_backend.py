@@ -211,6 +211,9 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
         Return the backend widget.
         """
 
+    def set_widget_as_preview(self, widget: _W):
+        """Set the widget state as the preview mode."""
+
     def add_tab(self, title: str) -> None:
         """Add a empty tab with the title."""
 
