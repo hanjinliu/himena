@@ -453,7 +453,8 @@ class QSubWindow(QtW.QMdiSubWindow):
         main = get_main_window(self)
         for i_tab, tab in main.tabs.enumerate():
             for i_win, win in tab.enumerate():
-                if win.widget is self._widget:
+                _, qwidget = win._split_interface_and_frontend()
+                if qwidget is self._widget:
                     return (i_tab, i_win), main
         raise RuntimeError("Could not find the sub-window in the main window.")
 

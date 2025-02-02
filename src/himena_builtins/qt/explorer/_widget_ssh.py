@@ -69,18 +69,11 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         self._conn_btn.setFixedWidth(60)
         self._conn_btn.setToolTip("Connect to the remote host with the given user name")
 
-        self._file_list_widget = QtW.QTreeWidget()
-        self._file_list_widget.setIndentation(0)
-        self._file_list_widget.setColumnWidth(0, 180)
-        self._file_list_widget.itemActivated.connect(self._on_item_double_clicked)
+        self._file_list_widget = QRemoteTreeWidget(self)
+        self._file_list_widget.itemActivated.connect(self._read_item_to_gui)
         self._file_list_widget.setFont(font)
-        self._file_list_widget.setHeaderLabels(
-            ["Name", "Datetime", "Size", "Group", "Owner", "Link", "Permission"]
-        )
-        self._file_list_widget.header().setDefaultAlignment(
-            QtCore.Qt.AlignmentFlag.AlignCenter
-        )
-        self._file_list_widget.header().setFixedHeight(20)
+        self._file_list_widget.item_copied.connect(self._copy_item_paths)
+        self._file_list_widget.item_pasted.connect(self._send_files)
 
         self._pwd = Path("~")
         self._last_dir = Path("~")
@@ -185,7 +178,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         self._pwd = path
         return items
 
-    def _on_item_double_clicked(self, item: QtW.QTreeWidgetItem):
+    def _read_item_to_gui(self, item: QtW.QTreeWidgetItem):
         item_type = _item_type(item)
         if item_type == "d":
             self._set_current_path(self._pwd / item.text(0))
@@ -205,15 +198,45 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         else:
             self._read_and_add_model(self._pwd / item.text(0))
 
-    @thread_worker
-    def _read_remote_path_worker(self, path: Path) -> WidgetDataModel:
-        method = SCPReaderMethod(
+    def _copy_item_paths(self, items: list[QtW.QTreeWidgetItem]):
+        mime = self._make_mimedata_for_items(items)
+        clipboard = QtGui.QGuiApplication.clipboard()
+        clipboard.setMimeData(mime)
+
+    def _send_files(self, paths: list[Path]):
+        for path in paths:
+            self._ui.submit_async_task(self._send_file, path, path.is_dir())
+
+    def _make_reader_method(self, path: Path) -> SCPReaderMethod:
+        return SCPReaderMethod(
             host=self._host_edit.text(),
             username=self._user_name_edit.text(),
             path=path,
             wsl=self._is_wsl_switch.isChecked(),
         )
-        return method.run()
+
+    def _make_mimedata_for_items(
+        self,
+        items: list[QtW.QTreeWidgetItem],
+    ) -> QtCore.QMimeData:
+        urls: list[str] = []
+        mime = QtCore.QMimeData()
+        for item in items:
+            item_type = _item_type(item)
+            if item_type == "l":
+                _, real_path = item.text(0).split(" -> ")
+                remote_path = self._pwd / real_path
+            else:
+                remote_path = self._pwd / item.text(0)
+            meth = self._make_reader_method(remote_path)
+            urls.append(meth.to_str())
+        mime.setText("\n".join([url for url in urls]))
+        mime.setParent(self)
+        return mime
+
+    @thread_worker
+    def _read_remote_path_worker(self, path: Path) -> WidgetDataModel:
+        return self._make_reader_method(path).run()
 
     def _read_and_add_model(self, path: Path):
         """Read the remote file in another thread and add the model in the main."""
@@ -270,6 +293,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
             self._send_file(src_pathobj)
 
     def _send_file(self, src: Path, is_dir: bool = False):
+        """Send local file to the remote host."""
         dst_remote = self._pwd / src.name
         dst = f"{self._host_name()}:{dst_remote.as_posix()}"
         if is_dir:
@@ -285,7 +309,80 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         else:
             args = cmd + [src.as_posix(), dst]
         subprocess.run(args)
-        notify(f"Sent to {dst_remote.as_posix()}", duration=2.8)
+        notify(f"Sent {src.as_posix()} to {dst_remote.as_posix()}", duration=2.8)
+
+
+class QRemoteTreeWidget(QtW.QTreeWidget):
+    item_copied = QtCore.Signal(list)
+    item_pasted = QtCore.Signal(list)  # list of local Path objects
+
+    def __init__(self, parent: QSSHRemoteExplorerWidget):
+        super().__init__(parent)
+        self.setIndentation(0)
+        self.setColumnWidth(0, 180)
+        self.setHeaderLabels(
+            ["Name", "Datetime", "Size", "Group", "Owner", "Link", "Permission"]
+        )
+        self.header().setDefaultAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.header().setFixedHeight(20)
+        self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self._show_context_menu)
+
+    def parent(self) -> QSSHRemoteExplorerWidget:
+        return super().parent()
+
+    def _make_context_menu(self):
+        menu = QtW.QMenu(self)
+        open_action = menu.addAction("Open")
+        open_action.triggered.connect(
+            lambda: self.itemActivated.emit(self.currentItem(), 0)
+        )
+        copy_action = menu.addAction("Copy")
+        copy_action.triggered.connect(
+            lambda: self.item_copied.emit(self.selectedItems())
+        )
+        paste_action = menu.addAction("Paste")
+        paste_action.triggered.connect(self._paste_from_clipboard)
+        return menu
+
+    def _show_context_menu(self, pos: QtCore.QPoint):
+        self._make_context_menu().exec_(self.viewport().mapToGlobal(pos))
+
+    def keyPressEvent(self, event):
+        _mod = event.modifiers()
+        _key = event.key()
+        if _mod == QtCore.Qt.KeyboardModifier.ControlModifier:
+            if _key == QtCore.Qt.Key.Key_C:
+                items = self.selectedItems()
+                self.item_copied.emit(items)
+                return None
+            elif _key == QtCore.Qt.Key.Key_V:
+                return self._paste_from_clipboard()
+        return super().keyPressEvent(event)
+
+    def _paste_from_clipboard(self):
+        clipboard = QtGui.QGuiApplication.clipboard()
+        mime = clipboard.mimeData()
+        if mime.hasUrls():
+            urls = mime.urls()
+            paths = [Path(url.toLocalFile()) for url in urls]
+            self.item_pasted.emit(paths)
+        else:
+            notify("No valid file paths in the clipboard.")
+
+    # drag-and-drop
+    def mouseMoveEvent(self, e: QtGui.QMouseEvent):
+        if e.buttons() & QtCore.Qt.MouseButton.LeftButton:
+            self._start_drag(e.pos())
+            return None
+        return super().mouseMoveEvent(e)
+
+    def _start_drag(self, pos: QtCore.QPoint):
+        items = self.selectedItems()
+        mime = self.parent()._make_mimedata_for_items(items)
+        drag = QtGui.QDrag(self)
+        drag.setMimeData(mime)
+        drag.exec(QtCore.Qt.DropAction.CopyAction)
 
 
 def _make_ls_args(host: str, path: str, options: str = "-AF") -> list[str]:
