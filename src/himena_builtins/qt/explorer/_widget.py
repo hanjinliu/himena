@@ -7,7 +7,6 @@ from qtpy import QtWidgets as QtW, QtCore, QtGui
 
 from himena import _drag
 from himena.widgets import MainWindow
-from himena.workflow._reader import SCPReaderMethod
 from himena_builtins.qt.explorer._widget_ssh import QSSHRemoteExplorerWidget
 
 if TYPE_CHECKING:
@@ -227,9 +226,8 @@ class QFileTree(QtW.QTreeView):
 
     def _paste_mime_data(self, mime: QtCore.QMimeData, dirpath: Path):
         if isinstance(par := mime.parent(), QSSHRemoteExplorerWidget):
-            for line in mime.text().splitlines():
-                is_wsl = par._is_wsl_switch.isChecked()
-                SCPReaderMethod.from_str(line, wsl=is_wsl).run_scp(dirpath)
+            for reader in par.readers_from_text(mime.text()):
+                reader.run_scp(dirpath)
         else:
             self._paste_file(
                 self._ui.clipboard.files,

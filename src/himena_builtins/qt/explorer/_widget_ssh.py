@@ -225,12 +225,29 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
             wsl=self._is_wsl_switch.isChecked(),
         )
 
+    def readers_from_text(self, text: str):
+        is_wsl = self._is_wsl_switch.isChecked()
+        return [
+            SCPReaderMethod.from_str(line, wsl=is_wsl) for line in text.splitlines()
+        ]
+
     def _make_mimedata_for_items(
         self,
         items: list[QtW.QTreeWidgetItem],
     ) -> QtCore.QMimeData:
-        urls: list[str] = []
         mime = QtCore.QMimeData()
+        mime.setText(
+            "\n".join(
+                meth.to_str() for meth in self._make_reader_methods_for_items(items)
+            )
+        )
+        mime.setParent(self)
+        return mime
+
+    def _make_reader_methods_for_items(
+        self, items: list[QtW.QTreeWidgetItem]
+    ) -> list[SCPReaderMethod]:
+        methods: list[SCPReaderMethod] = []
         for item in items:
             item_type = _item_type(item)
             if item_type == "l":
@@ -239,10 +256,8 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
             else:
                 remote_path = self._pwd / item.text(0)
             meth = self._make_reader_method(remote_path)
-            urls.append(meth.to_str())
-        mime.setText("\n".join([url for url in urls]))
-        mime.setParent(self)
-        return mime
+            methods.append(meth)
+        return methods
 
     @thread_worker
     def _read_remote_path_worker(self, path: Path) -> WidgetDataModel:

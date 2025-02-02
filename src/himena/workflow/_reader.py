@@ -36,6 +36,9 @@ class ReaderMethod(NoParentWorkflow):
 
     plugin: str | None = Field(default=None)
 
+    def run(self) -> "WidgetDataModel":
+        raise NotImplementedError
+
 
 class LocalReaderMethod(ReaderMethod):
     """Describes that one was read from a local source file."""
