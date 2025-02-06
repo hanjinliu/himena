@@ -174,9 +174,6 @@ features = ["testing"]
 [tool.hatch.envs.test.scripts]
 run = "pytest -v --cov --cov-report=xml"
 
-[project.entry-points.pytest11]
-himena = "himena_builtins._pytest_fixtures"
-
 [[tool.hatch.envs.test.matrix]]
 backend = ["pyqt5", "pyqt6"]
 
@@ -185,6 +182,9 @@ matrix.backend.features = [
   { value = "pyqt5", if = ["pyqt5"] },
   { value = "pyqt6", if = ["pyqt6"] },
 ]
+
+[project.entry-points.pytest11]
+himena = "himena_builtins._pytest_fixtures"
 
 [tool.ruff]
 exclude = ["**/tests/*.py"]
