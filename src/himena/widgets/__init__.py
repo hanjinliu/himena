@@ -10,12 +10,14 @@ from himena.widgets._initialize import (
 from himena.widgets._functions import set_status_tip, set_clipboard, notify
 
 __all__ = [
+    # widgets
     "MainWindow",
     "TabArea",
     "BackendMainWindow",
     "SubWindow",
     "ParametricWindow",
     "DockWidget",
+    # functions
     "current_instance",
     "set_current_instance",
     "remove_instance",

@@ -32,3 +32,11 @@ pip install -e .
 ```shell
 himena
 ```
+
+## Plugins
+
+You can customize `himena` for your needs by installing plugins. Here's some example plugins:
+
+- [himena-image](https://github.com/hanjinliu/himena-image): image processing and analysis
+- [himena-stats](https://github.com/hanjinliu/himena-stats): statistical testing and modeling.
+- [himena-seaborn](https://github.com/hanjinliu/himena-seaborn): [seaborn](https://github.com/mwaskom/seaborn) plotting.
