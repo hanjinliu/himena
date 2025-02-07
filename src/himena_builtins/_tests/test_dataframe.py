@@ -14,6 +14,7 @@ _Ctrl = Qt.KeyboardModifier.ControlModifier
     "df",
     [
         {"a": [1, -2], "b": [3.0, -4.0], "str": ["a", "b"]},
+        {"a": [3], "b": ["ggg"]},
         pd.DataFrame({"a": [1, -2], "b": [3.0, -4.0], "str": ["a", "b"]}),
         pl.DataFrame({"a": [1, -2], "b": [3.0, -4.0], "str": ["a", "b"]}),
     ],
