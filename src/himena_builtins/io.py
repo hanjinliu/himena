@@ -263,7 +263,7 @@ def _(model: WidgetDataModel, path: Path) -> bool:
     return model.is_subtype_of(StandardType.IMAGE)
 
 
-@register_writer_plugin(priority=50)
+@register_writer_plugin(priority=10)
 def write_dict(model: WidgetDataModel, path: Path):
     return _io.default_dict_writer(model, path)
 

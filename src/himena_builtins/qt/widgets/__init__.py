@@ -3,6 +3,7 @@ from himena_builtins.qt.widgets.array import QArrayView
 from himena_builtins.qt.widgets.text import QTextEdit, QRichTextEdit
 from himena_builtins.qt.widgets.table import QSpreadsheet
 from himena_builtins.qt.widgets.dataframe import QDataFrameView, QDataFramePlotView
+from himena_builtins.qt.widgets.dict_subtypes import QDataFrameStack, QArrayStack
 from himena_builtins.qt.widgets.image import QImageView, QImageLabelView
 from himena_builtins.qt.widgets.image_rois import QImageRoiView
 from himena_builtins.qt.widgets.excel import QExcelEdit
@@ -38,6 +39,9 @@ def register_default_widget_types() -> None:
     # dataframe
     register_widget_class(StandardType.DATAFRAME, QDataFrameView, priority=50)
     register_widget_class(StandardType.DATAFRAME_PLOT, QDataFramePlotView, priority=50)
+
+    register_widget_class(StandardType.DATAFRAMES, QDataFrameStack, priority=50)
+    register_widget_class(StandardType.ARRAYS, QArrayStack, priority=50)
 
     # others
     register_widget_class(StandardType.ROIS, QImageRoiView, priority=50)

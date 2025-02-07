@@ -89,8 +89,12 @@ class WidgetTester(Generic[_W]):
         model = self._norm_model_input(value, **kwargs)
         drag_data_model = DragDataModel(getter=model, type=model.type)
         if not drag_data_model.widget_accepts_me(self.widget):
+            try:
+                allowed = self.widget.allowed_drop_types()
+            except AttributeError:
+                allowed = []
             raise ValueError(
-                f"Widget {self.widget!r} does not accept dropping {model.type}"
+                f"Widget {self.widget!r} does not accept dropping {model.type}. Allowed types are: {allowed}"
             )
         return self.widget.dropped_callback(model)
 
