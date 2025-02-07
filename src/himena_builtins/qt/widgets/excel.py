@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from qtpy import QtWidgets as QtW, QtCore
 
 from himena_builtins.qt.widgets._table_components._selection_model import Index
@@ -48,11 +46,6 @@ class QExcelEdit(QDictOfWidgetEdit):
     @validate_protocol
     def control_widget(self) -> QExcelTableStackControl:
         return self._control
-
-    if TYPE_CHECKING:
-
-        def widget(self, index: int) -> QSpreadsheet: ...
-        def currentWidget(self) -> QSpreadsheet: ...
 
 
 _R_CENTER = QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter

@@ -2,7 +2,7 @@ import numpy as np
 from pytestqt.qtbot import QtBot
 from himena import MainWindow, StandardType
 from himena.testing import WidgetTester
-from himena_builtins.qt.widgets import QExcelEdit
+from himena_builtins.qt.widgets import QExcelEdit, QDataFrameStack, QArrayStack
 
 def test_excel_widget(qtbot: QtBot):
     excel_edit = QExcelEdit()
@@ -46,6 +46,33 @@ def test_excel_widget(qtbot: QtBot):
         control._remove_selected_rows()
         control._remove_selected_columns()
 
+def test_dataframe_dict(qtbot: QtBot):
+    widget = QDataFrameStack()
+    with WidgetTester(widget) as tester:
+        qtbot.addWidget(widget)
+        widget.show()
+        tester.update_model(
+            value={
+                "sheet-0": {"a": [1, 2]},
+                "sheet-1": {"a": [3, 4], "b": [5, 4]},
+            },
+        )
+        tester.cycle_model()
+        tester.widget.control_widget()
+
+def test_array_dict(qtbot: QtBot):
+    widget = QArrayStack()
+    with WidgetTester(widget) as tester:
+        qtbot.addWidget(widget)
+        widget.show()
+        tester.update_model(
+            value={
+                "sheet-0": np.array([[1, 2], [3, 4]]),
+                "sheet-1": np.array([[5, 6], [7, 8]]),
+            },
+        )
+        tester.cycle_model()
+        tester.widget.control_widget()
 
 def test_command(himena_ui: MainWindow):
     himena_ui.add_object({"sheet-0": [[1, 2], [3, 4]]}, type=StandardType.EXCEL)

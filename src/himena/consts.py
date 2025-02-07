@@ -48,10 +48,13 @@ class StandardType(SimpleNamespace):
     DATAFRAME = "dataframe"  # DataFrame object
 
     ### Subtypes ###
-    # text subtypes
+    # dict subtypes
     EXCEL = "dict.table"  # Excel file (~= tabbed tables)
     DATAFRAMES = "dict.dataframe"
     ARRAYS = "dict.array"
+    IMAGES = "dict.array.image"
+
+    # text subtypes
     HTML = "text.html"  # HTML text
     SVG = "text.svg"  # SVG text
     MARKDOWN = "text.markdown"  # markdown text

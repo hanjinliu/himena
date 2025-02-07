@@ -204,7 +204,7 @@ class QDataFrameView(QTableBase):
                 self._selection_model.append((slice(r0, r1), slice(c0, c1)))
 
         if self._control is None:
-            self._control = QDataFrameViewControl(self)
+            self._control = QDataFrameViewControl()
         self._control.update_for_table(self)
         self._model_type = model.type
         self.update()
@@ -269,7 +269,7 @@ _R_CENTER = QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVC
 
 
 class QDataFrameViewControl(QtW.QWidget):
-    def __init__(self, table: QDataFrameView):
+    def __init__(self):
         super().__init__()
         layout = QtW.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -277,13 +277,17 @@ class QDataFrameViewControl(QtW.QWidget):
         self._label = QtW.QLabel("")
         self._label.setAlignment(_R_CENTER)
         layout.addWidget(self._label)
-        layout.addWidget(QSelectionRangeEdit(table))
+        self._selection_range = QSelectionRangeEdit()
+        layout.addWidget(self._selection_range)
 
-    def update_for_table(self, table: QDataFrameView):
+    def update_for_table(self, table: QDataFrameView | None):
+        if table is None:
+            return
         model = table.model()
         self._label.setText(
             f"{model.df.type_name()} ({model.rowCount()}, {model.columnCount()})"
         )
+        self._selection_range.connect_table(table)
         return None
 
 

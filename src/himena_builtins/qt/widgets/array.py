@@ -337,8 +337,8 @@ class QArrayView(QtW.QWidget):
             self._table.setModel(QArrayModel(arr.get_slice(sl)))
 
         if self._control is None:
-            self._control = QArrayViewControl(self._table)
-        self._control.update_for_array(self._arr)
+            self._control = QArrayViewControl()
+        self._control.update_for_array(self)
         if was_none:
             self._table.update_width_by_dtype()
         if isinstance(meta := model.metadata, ArrayMeta):
@@ -389,7 +389,7 @@ _R_CENTER = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
 
 
 class QArrayViewControl(QtW.QWidget):
-    def __init__(self, view: QArrayView):
+    def __init__(self):
         super().__init__()
         layout = QtW.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -397,13 +397,21 @@ class QArrayViewControl(QtW.QWidget):
         self._label = QtW.QLabel("")
         self._label.setAlignment(_R_CENTER)
         layout.addWidget(self._label)
-        layout.addWidget(QSelectionRangeEdit(view))
+        self._selection_range = QSelectionRangeEdit()
+        layout.addWidget(self._selection_range)
 
-    def update_for_array(self, arr: ArrayWrapper):
-        _type_desc = arr.model_type()
+    def update_for_array(self, widget: QArrayView):
+        if widget is None:
+            return None
+        _type_desc = widget.model_type()
+        arr = widget._arr
+        if arr is None:
+            self._label.setText("No data available.")
+            return None
         if not _is_structured(arr):
             self._label.setText(f"{_type_desc} {arr.shape!r} {arr.dtype}")
         else:
             ncols = len(arr.dtype.names)
             self._label.setText(f"{_type_desc} {arr.shape!r} x {ncols} fields")
+        self._selection_range.connect_table(widget._table)
         return None
