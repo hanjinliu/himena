@@ -16,7 +16,7 @@ __all__ = [
     "TextMeta",
     "TableMeta",
     "DataFrameMeta",
-    "ExcelMeta",
+    "DictMeta",
     "FunctionMeta",
     "DataFramePlotMeta",
     "ImageChannel",
@@ -97,10 +97,11 @@ class DataFrameMeta(TableMeta):
     """Preset for describing the metadata for a "dataframe" type."""
 
 
-class ExcelMeta(TableMeta):
-    """Preset for describing the metadata for a "excel" type."""
-
-    current_sheet: str | None = Field(None, description="Current sheet name.")
+class DictMeta(BaseMetadata):
+    current_tab: str | None = Field(None, description="Current tab name.")
+    child_meta: dict[str, BaseMetadata] = Field(
+        default_factory=dict, description="Metadata of the child models."
+    )
 
 
 class FunctionMeta(BaseMetadata):

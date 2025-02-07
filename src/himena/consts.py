@@ -46,10 +46,12 @@ class StandardType(SimpleNamespace):
     ARRAY = "array"  # nD grid data such as numpy array
     DICT = "dict"  # dictionary
     DATAFRAME = "dataframe"  # DataFrame object
-    EXCEL = "excel"  # Excel file (~= tabbed tables)
 
     ### Subtypes ###
     # text subtypes
+    EXCEL = "dict.table"  # Excel file (~= tabbed tables)
+    DATAFRAMES = "dict.dataframe"
+    ARRAYS = "dict.array"
     HTML = "text.html"  # HTML text
     SVG = "text.svg"  # SVG text
     MARKDOWN = "text.markdown"  # markdown text

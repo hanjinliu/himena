@@ -60,7 +60,7 @@ def model_to_xy_arrays(
        ```
     """
     from himena.data_wrappers import wrap_dataframe
-    from himena.standards.model_meta import ExcelMeta
+    from himena.standards.model_meta import DictMeta
 
     if x is None and not allow_empty_x:
         raise ValueError("The x value must be given.")
@@ -88,9 +88,9 @@ def model_to_xy_arrays(
             xlabel = column_names_x[0]
         x_out = NamedArray(xlabel, xarr)
     elif model.is_subtype_of(StandardType.EXCEL):
-        if not isinstance(meta := model.metadata, ExcelMeta):
-            raise ValueError("Must be a ExcelMeta")
-        table = model.value[meta.current_sheet]
+        if not isinstance(meta := model.metadata, DictMeta):
+            raise ValueError("Must be a DictMeta")
+        table = model.value[meta.current_tab]
         x_out, ys = table_to_xy_arrays(
             table, x, y, allow_multiple_y=allow_multiple_y, same_size=same_size
         )
@@ -127,7 +127,7 @@ def model_to_col_val_arrays(
     column for the `col` input.
     """
     from himena.data_wrappers import wrap_dataframe
-    from himena.standards.model_meta import ExcelMeta
+    from himena.standards.model_meta import DictMeta
 
     if model.is_subtype_of(StandardType.TABLE):
         x_out, y_out = table_to_col_val_arrays(model.value, col, val)
@@ -139,9 +139,9 @@ def model_to_col_val_arrays(
         x_out = df[column_names[i_col]]
         y_out = df[column_names[i_val]]
     elif model.is_subtype_of(StandardType.EXCEL):
-        if not isinstance(meta := model.metadata, ExcelMeta):
-            raise ValueError("Must be a ExcelMeta")
-        table = model.value[meta.current_sheet]
+        if not isinstance(meta := model.metadata, DictMeta):
+            raise ValueError("Must be a DictMeta")
+        table = model.value[meta.current_tab]
         x_out, y_out = table_to_col_val_arrays(table, col, val)
     else:
         raise ValueError(f"Table-like data expected, but got model type {model.type!r}")

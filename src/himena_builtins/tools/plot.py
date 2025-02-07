@@ -10,7 +10,7 @@ from himena.types import Parametric, WidgetDataModel
 from himena.utils.table_selection import model_to_xy_arrays, range_getter
 from himena.consts import StandardType
 from himena.widgets import SubWindow
-from himena.standards.model_meta import ExcelMeta, TableMeta
+from himena.standards.model_meta import DictMeta, TableMeta
 from himena.standards import plotting as hplt
 from himena.qt.magicgui import (
     SelectionEdit,
@@ -477,13 +477,13 @@ def _auto_select(model: WidgetDataModel, num: int) -> "list[None | SelectionType
         if isinstance(meta := model.metadata, TableMeta):
             selections = meta.selections
     elif model.is_subtype_of(StandardType.EXCEL):
-        if not isinstance(meta := model.metadata, ExcelMeta):
-            raise ValueError(f"Expected an ExcelMeta, got {type(meta)}")
-        table = model.value[meta.current_sheet]
+        if not isinstance(meta := model.metadata, DictMeta):
+            raise ValueError(f"Expected an DictMeta, got {type(meta)}")
+        table = model.value[meta.current_tab]
         if not isinstance(table, np.ndarray):
             raise ValueError(f"Table must be a numpy array, got {type(table)}")
         shape = table.shape
-        selections = meta.selections
+        selections = meta.child_meta[meta.current_tab].selections
     else:
         raise ValueError(f"Table-like data expected, but got model type {model.type!r}")
     ncols = shape[1]

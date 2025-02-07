@@ -49,7 +49,7 @@ def test_excel_widget(qtbot: QtBot):
 
 def test_command(himena_ui: MainWindow):
     himena_ui.add_object({"sheet-0": [[1, 2], [3, 4]]}, type=StandardType.EXCEL)
-    himena_ui.exec_action("builtins:duplicate-sheet-as-table")
+    himena_ui.exec_action("builtins:duplicate-dict-tab")
     assert himena_ui.current_model.type == StandardType.TABLE
     val = himena_ui.current_model.value
     assert val.tolist() == [["1", "2"], ["3", "4"]]
