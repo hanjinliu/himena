@@ -36,18 +36,23 @@ _LOGGER = logging.getLogger(__name__)
 class QDataFrameModel(QtCore.QAbstractTableModel):
     """Table model for data frame."""
 
-    def __init__(self, df: DataFrameWrapper, parent=None):
+    def __init__(self, df: DataFrameWrapper, transpose: bool = False, parent=None):
         super().__init__(parent)
         self._df = df
+        self._transpose = transpose
 
     @property
     def df(self) -> DataFrameWrapper:
         return self._df
 
     def rowCount(self, parent=None):
+        if self._transpose:
+            return self.df.num_columns()
         return self.df.num_rows()
 
     def columnCount(self, parent=None):
+        if self._transpose:
+            return self.df.num_rows()
         return self.df.num_columns()
 
     def data(
@@ -55,13 +60,14 @@ class QDataFrameModel(QtCore.QAbstractTableModel):
         index: QtCore.QModelIndex,
         role: Qt.ItemDataRole = Qt.ItemDataRole.DisplayRole,
     ):
-        if not index.isValid():
-            return QtCore.QVariant()
+        if self._transpose:
+            r, c = index.column(), index.row()
+        else:
+            r, c = index.row(), index.column()
         if role != Qt.ItemDataRole.DisplayRole:
             return QtCore.QVariant()
-        r, c = index.row(), index.column()
         df = self.df
-        if r < self.rowCount() and c < self.columnCount():
+        if r < df.num_rows() and c < df.num_columns():
             value = df[r, c]
             dtype = df.get_dtype(c)
             text = format_table_value(value, dtype.kind)
@@ -77,7 +83,11 @@ class QDataFrameModel(QtCore.QAbstractTableModel):
         orientation: Qt.Orientation,
         role: int = Qt.ItemDataRole.DisplayRole,
     ):
-        if orientation == Qt.Orientation.Horizontal:
+        if self._transpose:
+            is_header = orientation == Qt.Orientation.Vertical
+        else:
+            is_header = orientation == Qt.Orientation.Horizontal
+        if is_header:
             if role == Qt.ItemDataRole.DisplayRole:
                 if section >= self.df.num_columns():
                     return None
@@ -87,7 +97,7 @@ class QDataFrameModel(QtCore.QAbstractTableModel):
                     return self._column_tooltip(section)
                 return None
 
-        if orientation == Qt.Orientation.Vertical:
+        else:
             if role == Qt.ItemDataRole.DisplayRole:
                 return str(section)
 
@@ -192,7 +202,11 @@ class QDataFrameView(QTableBase):
 
     @validate_protocol
     def update_model(self, model: WidgetDataModel):
-        self.setModel(QDataFrameModel(wrap_dataframe(model.value)))
+        df = wrap_dataframe(model.value)
+        is_single_row = df.num_rows() == 1
+        self.setModel(QDataFrameModel(df, transpose=is_single_row))
+        if is_single_row:
+            self.resizeColumnsToContents()
 
         if isinstance(meta := model.metadata, TableMeta):
             self._selection_model.clear()
