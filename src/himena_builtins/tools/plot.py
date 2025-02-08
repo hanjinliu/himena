@@ -10,7 +10,7 @@ from himena.types import Parametric, WidgetDataModel
 from himena.utils.table_selection import model_to_xy_arrays, range_getter
 from himena.consts import StandardType
 from himena.widgets import SubWindow
-from himena.standards.model_meta import DictMeta, TableMeta
+from himena.standards.model_meta import ArrayMeta, DictMeta, TableMeta
 from himena.standards import plotting as hplt
 from himena.qt.magicgui import (
     SelectionEdit,
@@ -464,26 +464,32 @@ def _auto_select(model: WidgetDataModel, num: int) -> "list[None | SelectionType
     from himena.data_wrappers import wrap_dataframe
 
     selections: list[tuple[tuple[int, int], tuple[int, int]]] = []
+    val = model.value
     if model.is_subtype_of(StandardType.TABLE):
-        val = model.value
         if not isinstance(val, np.ndarray):
             raise ValueError(f"Table must be a numpy array, got {type(val)}")
         shape = val.shape
         if isinstance(meta := model.metadata, TableMeta):
             selections = meta.selections
     elif model.is_subtype_of(StandardType.DATAFRAME):
-        df = wrap_dataframe(model.value)
+        df = wrap_dataframe(val)
         shape = df.shape
         if isinstance(meta := model.metadata, TableMeta):
             selections = meta.selections
     elif model.is_subtype_of(StandardType.EXCEL):
         if not isinstance(meta := model.metadata, DictMeta):
             raise ValueError(f"Expected an DictMeta, got {type(meta)}")
-        table = model.value[meta.current_tab]
+        table = val[meta.current_tab]
         if not isinstance(table, np.ndarray):
             raise ValueError(f"Table must be a numpy array, got {type(table)}")
         shape = table.shape
         selections = meta.child_meta[meta.current_tab].selections
+    elif model.is_subtype_of(StandardType.ARRAY):
+        if not isinstance(val, np.ndarray):
+            raise ValueError(f"Array must be a numpy array, got {type(val)}")
+        if isinstance(meta := model.metadata, ArrayMeta):
+            selections = meta.selections
+        shape = val.shape
     else:
         raise ValueError(f"Table-like data expected, but got model type {model.type!r}")
     ncols = shape[1]

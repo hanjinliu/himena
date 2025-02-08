@@ -119,10 +119,9 @@ class CommandExecution(WorkflowStep):
         window_context = None
         ui = current_instance()
         for _ctx in self.contexts:
-            if isinstance(_ctx, ModelParameter):
+            if isinstance(_ctx, (ModelParameter, WindowParameter)):
                 model_context = wf.model_for_id(_ctx.value)
-            elif isinstance(_ctx, WindowParameter):
-                model_context = wf.model_for_id(_ctx.value)
+                # window_context = _ctx.value
             else:
                 raise ValueError(f"Context parameter must be a model: {_ctx}")
 

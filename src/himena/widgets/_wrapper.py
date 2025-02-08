@@ -861,11 +861,11 @@ class ParametricWindow(SubWindow[_W]):
     def _process_model_output(self, model: WidgetDataModel) -> SubWindow[_W] | None:
         """Process the returned WidgetDataModel."""
         ui = self._main_window()._himena_main_window
-        widget = self._model_to_new_window(model)
         i_tab, i_win = self._find_me(ui)
         if self._auto_close:
             del ui.tabs[i_tab][i_win]
         if ui._instructions.process_model_output:
+            widget = self._model_to_new_window(model)
             result_widget = ui.tabs[i_tab].add_widget(
                 widget, title=model.title, auto_size=False
             )

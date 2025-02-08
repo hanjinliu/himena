@@ -564,7 +564,7 @@ class MainWindow(Generic[_W]):
         id: str,
         *,
         model_context: WidgetDataModel | None = None,
-        window_context: SubWindow | None = None,
+        window_context: SubWindow | uuid.UUID | None = None,
         with_params: dict[str, Any] | None = None,
         process_model_output: bool = True,
     ) -> Any:
@@ -577,18 +577,33 @@ class MainWindow(Generic[_W]):
         model_context : WidgetDataModel, optional
             If given, this model will override the application context for the type
             `WidgetDataModel` before the execution.
-        window_context : SubWindow, optional
+        window_context : SubWindow or UUID, optional
             If given, this window will override the application context for the type
             `SubWindow` before the execution.
         with_params : dict, optional
             Parameters to pass to the parametric action. These parameters will directly
             be passed to the parametric window created after the action is executed.
+        process_model_output : bool, default True
+            If True, the output result will be processed by the application context. If
+            the command return a `WidgetDataModel` instance, it will be converted to a
+            sub-window.
         """
         providers: list[tuple[Any, type]] = []
         if model_context is not None:
             providers.append((model_context, WidgetDataModel, 1000))
         if window_context is not None:
-            providers.append((window_context, SubWindow, 1000))
+            if isinstance(window_context, SubWindow):
+                _window_context = window_context
+            elif isinstance(window_context, uuid.UUID):
+                # _window_context = self.window_for_id(window_context)
+                # if _window_context is None:
+                #     raise ValueError(f"Window with ID {window_context!r} not found.")
+                raise NotImplementedError("Window ID input is not supported yet.")
+            else:
+                raise TypeError(
+                    f"`window_context` must be SubWindow or UUID, got {window_context}"
+                )
+            providers.append((_window_context, SubWindow, 1000))
         # execute the command under the given context
         with (
             self.model_app.injection_store.register(providers=providers),
@@ -603,6 +618,10 @@ class MainWindow(Generic[_W]):
                 else:  # pragma: no cover
                     raise RuntimeError("Unreachable code.")
                 if not isinstance(param_widget, ParametricWindow):
+                    if len(with_params) == 0:
+                        if isinstance(result, Future):
+                            return result.result()  # or appropriate handling
+                        return result
                     raise ValueError(
                         f"Parametric widget expected but got {param_widget}."
                     )
