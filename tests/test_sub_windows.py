@@ -345,8 +345,7 @@ def test_move_window(make_himena_ui, backend: str):
     assert win in tab1
     assert tab1[0]._identifier == win._identifier
 
-def test_child_window(make_himena_ui, backend: str):
-    himena_ui: MainWindow = make_himena_ui(backend)
+def test_child_window(himena_ui: MainWindow):
     win = himena_ui.add_object("A", type="text")
     text_edit = QtW.QTextEdit()
     child = win.add_child(text_edit, title="Child")

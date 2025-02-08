@@ -829,8 +829,8 @@ class MainWindow(Generic[_W]):
         if i_tab is None or i_win is None or target_index == i_tab:
             return None
         title = self.tabs[i_tab][i_win].title
+        old_rect = self.tabs[i_tab][i_win].rect
         win, widget = self.tabs[i_tab]._pop_no_emit(i_win)
-        old_rect = win.rect
         if target_index < 0:
             self.add_tab()
         self.tabs[target_index].append(win, title)
