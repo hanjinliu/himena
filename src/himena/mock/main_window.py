@@ -225,7 +225,7 @@ class MockBackend(BackendMainWindow):
         Return the backend widget.
         """
         sub_window = MockSubWindow(widget, self._tabs[i_tab], title)
-        widget.subwindow = sub_window
+        widget.set_subwindow(sub_window)
         self._tabs[i_tab].sub_windows.append(sub_window)
         return sub_window
 
