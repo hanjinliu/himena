@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from typing import TypeVar, Iterator, NamedTuple, Callable, overload, TYPE_CHECKING
+import numpy as np
 
 _C = TypeVar("_C", bound=type)
 
@@ -21,6 +22,11 @@ def iter_subclasses(cls: _C) -> Iterator[_C]:
     for sub in cls.__subclasses__():
         yield sub
         yield from iter_subclasses(sub)
+
+
+def is_structured(arr: np.ndarray) -> bool:
+    """True if the array is structured."""
+    return isinstance(arr.dtype, (np.void, np.dtypes.VoidDType))
 
 
 ANSI_STYLES = {

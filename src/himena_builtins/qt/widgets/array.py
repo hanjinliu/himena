@@ -12,6 +12,7 @@ from himena.consts import StandardType, MonospaceFontFamily
 from himena.standards.model_meta import ArrayMeta
 from himena.types import WidgetDataModel
 from himena.plugins import validate_protocol
+from himena.utils.misc import is_structured
 from himena_builtins.qt.widgets._table_components import (
     QTableBase,
     QSelectionRangeEdit,
@@ -23,10 +24,6 @@ if TYPE_CHECKING:
 
 
 _LOGGER = logging.getLogger(__name__)
-
-
-def _is_structured(arr: np.ndarray) -> bool:
-    return isinstance(arr.dtype, (np.void, np.dtypes.VoidDType))
 
 
 class QArrayModel(QtCore.QAbstractTableModel):
@@ -44,7 +41,7 @@ class QArrayModel(QtCore.QAbstractTableModel):
             self._get_dtype = self._get_dtype_nonstructured
             self._get_item = self._get_item_nonstructured
         else:
-            if arr.ndim != 1 or not _is_structured(arr):
+            if arr.ndim != 1 or not is_structured(arr):
                 raise ValueError(
                     f"Only 1D structured array is supported (got {arr.ndim}D array "
                     f"with dtype {arr.dtype!r})."
@@ -53,9 +50,6 @@ class QArrayModel(QtCore.QAbstractTableModel):
             self._nrows, self._ncols = arr.shape[0], len(arr.dtype.names)
             self._get_dtype = self._get_dtype_structured
             self._get_item = self._get_item_structured
-
-    def _is_structured(self) -> bool:
-        return isinstance(self._dtype, np.void)
 
     def _get_dtype_nonstructured(self, r: int, c: int) -> np.dtype:
         return self._dtype
@@ -109,14 +103,14 @@ class QArrayModel(QtCore.QAbstractTableModel):
     ):
         if role == Qt.ItemDataRole.DisplayRole:
             if (
-                _is_structured(self._arr_slice)
+                is_structured(self._arr_slice)
                 and orientation == Qt.Orientation.Horizontal
             ):
                 return self._dtype.names[section]
             return str(section)
         elif role == Qt.ItemDataRole.ToolTipRole:
             if (
-                _is_structured(self._arr_slice)
+                is_structured(self._arr_slice)
                 and orientation == Qt.Orientation.Horizontal
             ):
                 name = self._dtype.names[section]
@@ -177,7 +171,7 @@ class QArraySliceView(QTableBase):
         sel = sels[0]
         arr_slice = self.model()._arr_slice
         buf = StringIO()
-        if _is_structured(arr_slice):
+        if is_structured(arr_slice):
             fields = [
                 arr_slice.dtype.names[i] for i in range(sel[1].start, sel[1].stop)
             ]
@@ -298,14 +292,14 @@ class QArrayView(QtW.QWidget):
             return
         sl = self._get_slice()
         arr = self._arr.get_slice(sl)
-        if arr.ndim < 2 and not _is_structured(self._arr.arr):
+        if arr.ndim < 2 and not is_structured(self._arr.arr):
             arr = arr.reshape(-1, 1)
         self._table.set_array(arr, sl)
 
     def _get_slice(self) -> tuple[int | slice, ...]:
         if self._arr.ndim < 2:
             return (slice(None),)
-        arr_structured = _is_structured(self._arr.arr)
+        arr_structured = is_structured(self._arr.arr)
         if arr_structured:
             last_sl = (slice(None),)
         else:
@@ -324,11 +318,11 @@ class QArrayView(QtW.QWidget):
         was_none = self._arr is None
         arr = wrap_array(model.value)
         self._arr = arr
-        arr_structured = _is_structured(arr.arr)
+        arr_structured = is_structured(arr.arr)
         self.update_spinbox_for_shape(arr.shape, dims_shown=1 if arr_structured else 2)
         if arr.ndim < 2:
             arr_slice = arr.get_slice(())
-            if _is_structured(arr_slice):
+            if is_structured(arr_slice):
                 self._table.setModel(QArrayModel(arr_slice))
             else:
                 self._table.setModel(QArrayModel(arr_slice.reshape(-1, 1)))
@@ -408,7 +402,7 @@ class QArrayViewControl(QtW.QWidget):
         if arr is None:
             self._label.setText("No data available.")
             return None
-        if not _is_structured(arr):
+        if not is_structured(arr):
             self._label.setText(f"{_type_desc} {arr.shape!r} {arr.dtype}")
         else:
             ncols = len(arr.dtype.names)
