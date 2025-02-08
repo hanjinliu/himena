@@ -34,7 +34,7 @@ _T = TypeVar("_T")
 
 
 class MainWindowMock(MainWindow["MockBackend"]):
-    """Main window with Qt backend."""
+    """A mock instance of main window."""
 
     _backend_main_window: MockBackend
 

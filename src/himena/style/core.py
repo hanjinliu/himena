@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, asdict
 import warnings
-from himena._utils import lru_cache
+from himena.utils.misc import lru_cache
 import json
 from pathlib import Path
 from cmap import Color
@@ -83,3 +83,7 @@ def get_global_styles() -> dict[str, Theme]:
                 style["highlight_strong"] = _mix_colors(base, bg, 0.4).hex
             global_styles[name] = Theme(name=name, **style)
     return global_styles
+
+
+def default_style() -> Theme:
+    return get_global_styles()["light-green"]

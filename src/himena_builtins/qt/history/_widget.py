@@ -8,7 +8,7 @@ from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt
 from superqt import QIconifyIcon
 
-from himena._utils import lru_cache
+from himena.utils.misc import lru_cache
 
 if TYPE_CHECKING:
     from himena.widgets import MainWindow

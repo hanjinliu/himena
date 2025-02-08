@@ -44,6 +44,7 @@ SelectionType = tuple[tuple[int, int], tuple[int, int]]
     command_id="builtins:scatter-plot",
 )
 def scatter_plot(win: SubWindow) -> Parametric:
+    """Make a scatter plot."""
     x0, y0 = _auto_select(win.to_model(), 2)
 
     @configure_gui(

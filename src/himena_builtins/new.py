@@ -2,6 +2,7 @@
 
 import csv
 from io import StringIO
+import numpy as np
 
 from himena._descriptors import NoNeedToSave
 from himena.plugins import register_function, configure_gui
@@ -81,7 +82,6 @@ def new_text_python(ui: MainWindow) -> WidgetDataModel:
 )
 def constant_array(ui: MainWindow) -> Parametric:
     """Generate an array filled with a constant value."""
-    import numpy as np
     from himena.qt.magicgui import NumericDTypeEdit
 
     @configure_gui(dtype={"widget_type": NumericDTypeEdit})
@@ -147,7 +147,9 @@ def _make_provider(name: str):
         with urlopen(f"{_DATASET_SOURCE}/{name}.csv", timeout=12) as resp:
             data = resp.read().decode()
 
-        csv_data = list(csv.reader(StringIO(data)))
+        csv_data = np.array(
+            list(csv.reader(StringIO(data))), dtype=np.dtypes.StringDType()
+        )
         return WidgetDataModel(
             value=csv_data,
             type=StandardType.TABLE,

@@ -1,9 +1,19 @@
 from __future__ import annotations
 
 import re
-from typing import TypeVar, Iterator, NamedTuple
+from typing import TypeVar, Iterator, NamedTuple, Callable, overload, TYPE_CHECKING
 
 _C = TypeVar("_C", bound=type)
+
+if TYPE_CHECKING:
+    _F = TypeVar("_F", bound=Callable)
+
+    @overload
+    def lru_cache(maxsize: int = 128, typed: bool = False) -> Callable[[_F], _F]: ...
+    @overload
+    def lru_cache(f: _F) -> _F: ...
+else:
+    from functools import lru_cache  # noqa: F401
 
 
 def iter_subclasses(cls: _C) -> Iterator[_C]:

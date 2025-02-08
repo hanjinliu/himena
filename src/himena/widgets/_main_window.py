@@ -84,16 +84,18 @@ class MainWindow(Generic[_W]):
         self._history_command = HistoryContainer[str](max_size=200)
         self._history_closed = HistoryContainer[tuple[Path, str | None]](max_size=10)
         self._file_dialog_hist = FileDialogHistoryDict()
-        set_current_instance(app.name, self)
         app.commands.executed.connect(self._on_command_execution)
         backend._connect_main_window_signals(self)
         self._ctx_keys = AppContext(create_context(self, max_depth=0))
         self._tab_list.changed.connect(backend._update_context)
         self._dock_widget_list = DockWidgetList(backend)
         self._recent_manager = RecentFileManager.default(app)
-        self._recent_manager.update_menu()
         self._recent_session_manager = RecentSessionManager.default(app)
-        self._recent_session_manager.update_menu()
+        if "." not in app.name:
+            # likely a mock instance
+            set_current_instance(app.name, self)
+            self._recent_manager.update_menu()
+            self._recent_session_manager.update_menu()
         self._executor = ThreadPoolExecutor(max_workers=5)
         self._global_lock = threading.Lock()
         self.theme = theme
@@ -564,7 +566,7 @@ class MainWindow(Generic[_W]):
         id: str,
         *,
         model_context: WidgetDataModel | None = None,
-        window_context: SubWindow | uuid.UUID | None = None,
+        window_context: SubWindow | None = None,
         with_params: dict[str, Any] | None = None,
         process_model_output: bool = True,
     ) -> Any:
@@ -577,7 +579,7 @@ class MainWindow(Generic[_W]):
         model_context : WidgetDataModel, optional
             If given, this model will override the application context for the type
             `WidgetDataModel` before the execution.
-        window_context : SubWindow or UUID, optional
+        window_context : SubWindow, optional
             If given, this window will override the application context for the type
             `SubWindow` before the execution.
         with_params : dict, optional
@@ -594,11 +596,6 @@ class MainWindow(Generic[_W]):
         if window_context is not None:
             if isinstance(window_context, SubWindow):
                 _window_context = window_context
-            elif isinstance(window_context, uuid.UUID):
-                # _window_context = self.window_for_id(window_context)
-                # if _window_context is None:
-                #     raise ValueError(f"Window with ID {window_context!r} not found.")
-                raise NotImplementedError("Window ID input is not supported yet.")
             else:
                 raise TypeError(
                     f"`window_context` must be SubWindow or UUID, got {window_context}"

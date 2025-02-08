@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from himena.plugins import register_widget_class
 from himena.consts import StandardType
-from himena._utils import lru_cache
+from himena.utils.misc import lru_cache
 
 
 BACKEND_HIMENA = "module://himena_builtins.qt.plot._canvas"

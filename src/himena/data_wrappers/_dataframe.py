@@ -18,7 +18,7 @@ from typing import (
 )
 import numpy as np
 from himena.consts import ExcelFileTypes
-from himena._utils import lru_cache
+from himena.utils.misc import lru_cache
 
 if TYPE_CHECKING:
     from typing import TypeGuard, Self
