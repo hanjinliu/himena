@@ -15,7 +15,8 @@ from superqt import QIconifyIcon
 from superqt.utils import qthrottled
 
 from himena.workflow import LocalReaderMethod
-from himena._utils import lru_cache, get_display_name
+from himena._utils import get_display_name
+from himena.utils.misc import lru_cache
 from himena.consts import MenuId
 from himena.types import DragDataModel, WindowState, WindowRect, Size
 from himena.plugins import _checker

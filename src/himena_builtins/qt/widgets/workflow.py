@@ -239,7 +239,7 @@ def _(step: _wf.UserModification) -> QtW.QTreeWidgetItem:
 def _(step: _wf.CommandExecution) -> QtW.QTreeWidgetItem:
     item = QtW.QTreeWidgetItem([f"[Command] {step.command_id}"])
     item.setToolTip(0, step.command_id)
-    for param in step.parameters:
+    for param in step.parameters or []:
         if isinstance(param, _wf.UserParameter):
             child = QtW.QTreeWidgetItem([f"(parameter) {param.name} = {param.value!r}"])
         elif isinstance(param, _wf.ModelParameter):

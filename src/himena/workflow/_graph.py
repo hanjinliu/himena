@@ -15,6 +15,9 @@ from himena.workflow._command import CommandExecution, UserModification
 
 if TYPE_CHECKING:
     from himena.types import WidgetDataModel
+    from himena.mock import MainWindowMock
+    from himena.mock.widget import MockWidget
+    from himena.widgets import SubWindow
 
 WorkflowStepType = Union[
     ProgrammaticMethod,
@@ -23,6 +26,14 @@ WorkflowStepType = Union[
     CommandExecution,
     UserModification,
 ]
+
+
+def _make_mock_main_window():
+    from himena.mock import MainWindowMock
+    from himena._app_model import get_model_app
+    from himena.style import default_style
+
+    return MainWindowMock(get_model_app("."), default_style())
 
 
 class Workflow(BaseModel):
@@ -35,7 +46,10 @@ class Workflow(BaseModel):
     """
 
     steps: list[WorkflowStepType] = Field(default_factory=list)
-    _model_cache: dict[uuid.UUID, "WidgetDataModel"] = PrivateAttr(default_factory=dict)
+    # _model_cache: dict[uuid.UUID, "WidgetDataModel"] = PrivateAttr(default_factory=dict)
+    _mock_main_window: "MainWindowMock" = PrivateAttr(
+        default_factory=_make_mock_main_window
+    )
     _cache_enabled: bool = PrivateAttr(default=False)
 
     def id_to_index_map(self) -> dict[uuid.UUID, int]:
@@ -58,7 +72,10 @@ class Workflow(BaseModel):
         indices = sorted(indices)
         out = Workflow(steps=[self.steps[i] for i in indices])
         out._cache_enabled = self._cache_enabled
-        out._model_cache = self._model_cache  # NOTE: do not update, share the reference
+        out._mock_main_window = (
+            self._mock_main_window
+        )  # NOTE: do not update, share the reference
+        # out._model_cache = self._model_cache  # NOTE: do not update, share the reference
         return out
 
     def __getitem__(self, index: int) -> WorkflowStep:
@@ -83,14 +100,27 @@ class Workflow(BaseModel):
                 return step
         raise ValueError(f"Workflow with id {id} not found.")
 
-    def model_for_id(self, id: uuid.UUID) -> "WidgetDataModel":
-        """Get the widget data model for the given ID."""
-        if model := self._model_cache.get(id):
-            return model
+    def window_for_id(self, id: uuid.UUID) -> "SubWindow[MockWidget]":
+        """Get the sub-window for the given ID."""
+        if win := self._mock_main_window.window_for_id(id):
+            return win
         step = self.step_for_id(id)
         model = step.get_model(self)
         if self._cache_enabled:
-            self._model_cache[id] = model
+            win = self._mock_main_window.add_data_model(model)
+            win._identifier = id
+            return win
+        raise ValueError("Window input cannot be resolved in this context.")
+
+    def model_for_id(self, id: uuid.UUID) -> "WidgetDataModel":
+        """Get the widget data model for the given ID."""
+        if win := self._mock_main_window.window_for_id(id):
+            return win.to_model()
+        step = self.step_for_id(id)
+        model = step.get_model(self)
+        if self._cache_enabled:
+            win = self._mock_main_window.add_data_model(model)
+            win._identifier = id
         return model
 
     def __iter__(self):
@@ -128,7 +158,7 @@ class Workflow(BaseModel):
         finally:
             self._cache_enabled = was_enabled
             if not was_enabled:
-                self._model_cache.clear()
+                self._mock_main_window.clear()
 
     @classmethod
     def concat(cls, workflows: Iterable["Workflow"]) -> "Workflow":
@@ -148,12 +178,12 @@ def compute(workflows: list[Workflow]) -> list["WidgetDataModel | Exception"]:
     """Compute all the workflow with the shared cache."""
     if len(workflows) == 0:
         return []
-    _global_cache: dict[uuid.UUID, "WidgetDataModel"] = {}
+    _global_ui = _make_mock_main_window()
     results: list["WidgetDataModel"] = []
     all_workflows = Workflow.concat(workflows)
     # share the cache
     for workflow in workflows:
-        workflow._model_cache = _global_cache
+        workflow._mock_main_window = _global_ui
     with all_workflows._cache_context():
         for workflow in workflows:
             try:
@@ -161,9 +191,9 @@ def compute(workflows: list[Workflow]) -> list["WidgetDataModel | Exception"]:
             except Exception as e:
                 result = e
             results.append(result)
-    _global_cache.clear()
+    _global_ui.clear()
     for workflow in workflows:
-        workflow._model_cache = {}
+        workflow._mock_main_window = _make_mock_main_window()
     return results
 
 

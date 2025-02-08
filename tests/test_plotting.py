@@ -4,10 +4,15 @@ from cmap import Color, Colormap
 import numpy as np
 import matplotlib.pyplot as plt
 
+from himena.standards.model_meta import ArrayMeta
+from himena.types import WidgetDataModel
 from himena.widgets import MainWindow
 import himena.standards.plotting as hplt
 from himena_builtins.qt.plot import BACKEND_HIMENA
 from himena_builtins.qt.plot._canvas import QMatplotlibCanvas
+
+def _str_array(arr):
+    return np.array(arr, dtype=np.dtypes.StringDType())
 
 def test_direct_plot(himena_ui: MainWindow):
     assert os.environ["MPLBACKEND"] == BACKEND_HIMENA
@@ -35,12 +40,15 @@ def test_plot_model():
     fig.axes.x.label = "X-axis"
     fig.axes.y.label = "Y-axis"
 
-def test_scatter_plot_via_command(himena_ui: MainWindow, tmpdir):
+def test_scatter_plot_via_command(make_himena_ui, tmpdir):
+    himena_ui: MainWindow = make_himena_ui("mock")
     win = himena_ui.add_object(
-        [["x", "y", "z"],
-         [0, 4, 6],
-         [1, 6, 10],
-         [2, 5, 12]],
+        _str_array(
+            [["x", "y", "z"],
+             [0, 4, 6],
+             [1, 6, 10],
+             [2, 5, 12]],
+        ),
         type="table",
     )
     himena_ui.current_window  = win
@@ -68,10 +76,12 @@ def test_scatter_plot_via_command(himena_ui: MainWindow, tmpdir):
     himena_ui.read_file(path)
 
     win = himena_ui.add_object(
-        [["x", "y", "z"],
-         [0, 4, 6],
-         [1, 6, 10],
-         [2, 5, 12]],
+        _str_array(
+            [["x", "y", "z"],
+             [0, 4, 6],
+             [1, 6, 10],
+             [2, 5, 12]],
+        ),
         type="table",
     )
     himena_ui.exec_action(
@@ -86,12 +96,34 @@ def test_scatter_plot_via_command(himena_ui: MainWindow, tmpdir):
     himena_ui.current_window.write_model(path)
     himena_ui.read_file(path)
 
-def test_line_plot_via_command(himena_ui: MainWindow, tmpdir):
+def test_scatter_plot_many_data_types(make_himena_ui):
+    himena_ui: MainWindow = make_himena_ui("mock")
+    himena_ui.add_data_model(
+        WidgetDataModel(
+            value=np.array([[1, 2], [2, 3], [3, 2]]),
+            type="array",
+            metadata=ArrayMeta(),
+        )
+    )
+    himena_ui.exec_action(
+        "builtins:scatter-plot",
+        with_params={"x": ((0, 3), (0, 1)), "y": ((0, 3), (1, 2))},
+    )
+    himena_ui.add_object({"x": [1, 2, 3], "y": [2, 3, 2]}, type="dataframe")
+    himena_ui.exec_action(
+        "builtins:scatter-plot",
+        with_params={"x": ((0, 3), (0, 1)), "y": ((0, 3), (1, 2))},
+    )
+
+def test_line_plot_via_command(make_himena_ui, tmpdir):
+    himena_ui: MainWindow = make_himena_ui("mock")
     win = himena_ui.add_object(
-        [["x", "y", "z"],
-         [0, 4, 6],
-         [1, 6, 10],
-         [2, 5, 12]],
+        _str_array(
+            [["x", "y", "z"],
+             [0, 4, 6],
+             [1, 6, 10],
+             [2, 5, 12]],
+        ),
         type="table",
     )
     himena_ui.current_window  = win
@@ -117,10 +149,12 @@ def test_line_plot_via_command(himena_ui: MainWindow, tmpdir):
     himena_ui.read_file(path)
 
     win = himena_ui.add_object(
-        [["x", "y", "z"],
-         [0, 4, 6],
-         [1, 6, 10],
-         [2, 5, 12]],
+        _str_array(
+            [["x", "y", "z"],
+             [0, 4, 6],
+             [1, 6, 10],
+             [2, 5, 12]],
+        ),
         type="table",
     )
     himena_ui.exec_action(
@@ -135,12 +169,15 @@ def test_line_plot_via_command(himena_ui: MainWindow, tmpdir):
     himena_ui.current_window.write_model(path)
     himena_ui.read_file(path)
 
-def test_bar_plot_via_command(himena_ui: MainWindow, tmpdir):
+def test_bar_plot_via_command(make_himena_ui, tmpdir):
+    himena_ui: MainWindow = make_himena_ui()
     win = himena_ui.add_object(
-        [["x", "y", "z"],
-         [0, 4, 6],
-         [1, 6, 10],
-         [2, 5, 12]],
+        _str_array(
+            [["x", "y", "z"],
+             [0, 4, 6],
+             [1, 6, 10],
+             [2, 5, 12]],
+        ),
         type="table",
     )
     himena_ui.current_window  = win
@@ -180,12 +217,15 @@ def test_bar_plot_via_command(himena_ui: MainWindow, tmpdir):
     himena_ui.current_window.write_model(path)
     himena_ui.read_file(path)
 
-def test_errorbar_plot_via_command(himena_ui: MainWindow, tmpdir):
+def test_errorbar_plot_via_command(make_himena_ui, tmpdir):
+    himena_ui: MainWindow = make_himena_ui("mock")
     win = himena_ui.add_object(
-        [["x", "y", "yerr"],
-         [0, 4, 0.5],
-         [1, 6, 0.3],
-         [2, 5, 0.4]],
+        _str_array(
+            [["x", "y", "yerr"],
+             [0, 4, 0.5],
+             [1, 6, 0.3],
+             [2, 5, 0.4]],
+        ),
         type="table",
     )
     himena_ui.current_window  = win
@@ -228,12 +268,15 @@ def test_errorbar_plot_via_command(himena_ui: MainWindow, tmpdir):
     himena_ui.current_window.write_model(path)
     himena_ui.read_file(path)
 
-def test_band_plot_via_command(himena_ui: MainWindow, tmpdir):
+def test_band_plot_via_command(make_himena_ui, tmpdir):
+    himena_ui: MainWindow = make_himena_ui("mock")
     win = himena_ui.add_object(
-        [["x", "y0", "y1"],
-         [0, 4, 6],
-         [1, 6, 10],
-         [2, 5, 12]],
+        _str_array(
+            [["x", "y0", "y1"],
+             [0, 4, 6],
+             [1, 6, 10],
+             [2, 5, 12]],
+        ),
         type="table",
     )
     himena_ui.current_window  = win
@@ -251,9 +294,10 @@ def test_band_plot_via_command(himena_ui: MainWindow, tmpdir):
     himena_ui.current_window.write_model(path)
     himena_ui.read_file(path)
 
-def test_histogram(himena_ui: MainWindow):
+def test_histogram(make_himena_ui):
+    himena_ui: MainWindow = make_himena_ui("mock")
     win = himena_ui.add_object(
-        [["x"], [0], [1], [2], [3.2], [0.2]],
+        _str_array([["x"], [0], [1], [2], [3.2], [0.2]]),
         type="table",
     )
     himena_ui.exec_action(

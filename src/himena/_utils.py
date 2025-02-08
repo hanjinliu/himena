@@ -6,8 +6,6 @@ from typing import (
     Callable,
     Any,
     TypeVar,
-    TYPE_CHECKING,
-    overload,
     get_origin,
 )
 import inspect
@@ -25,6 +23,7 @@ from himena.types import (
     ModelTrack,
     GuiConfiguration,
 )
+from himena.utils.misc import lru_cache
 from himena.workflow import (
     CommandExecution,
     ModelParameter,
@@ -33,16 +32,7 @@ from himena.workflow import (
 )
 from himena.workflow import Workflow
 
-if TYPE_CHECKING:
-    _F = TypeVar("_F", bound=Callable)
-    _C = TypeVar("_C", bound=type)
-
-    @overload
-    def lru_cache(maxsize: int = 128, typed: bool = False) -> Callable[[_F], _F]: ...
-    @overload
-    def lru_cache(f: _F) -> _F: ...
-else:
-    from functools import lru_cache  # noqa: F401
+_F = TypeVar("_F", bound=Callable)
 
 
 def _get_type_arg(func: Callable, target: type) -> type | None:

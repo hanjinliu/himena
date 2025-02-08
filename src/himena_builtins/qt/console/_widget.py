@@ -10,7 +10,7 @@ from contextlib import suppress
 from qtpy.QtCore import Signal
 from qtpy import QtWidgets as QtW, QtGui
 from qtconsole.rich_jupyter_widget import RichJupyterWidget
-from himena._utils import lru_cache
+from himena.utils.misc import lru_cache
 from himena.qt._utils import get_stylesheet_path
 from himena.plugins import validate_protocol
 

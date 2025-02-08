@@ -13,7 +13,8 @@ from himena.qt import register_widget_class, MainWindowQt
 from himena_builtins.qt import widgets as _qtw
 import himena._providers
 
-def test_new_window(himena_ui: MainWindow):
+def test_new_window(make_himena_ui, backend: str):
+    himena_ui: MainWindow = make_himena_ui(backend)
     himena_ui.show()
     assert len(himena_ui.tabs) == 0
     with TemporaryDirectory() as tmp:
@@ -316,7 +317,8 @@ def test_clipboard(himena_ui: MainWindow, sample_dir: Path, qtbot: QtBot):
     himena_ui.exec_action("copy-data-to-clipboard")
     assert himena_ui.clipboard.text == sample_path.read_text()
 
-def test_tile_window(himena_ui: MainWindow):
+def test_tile_window(make_himena_ui, backend: str):
+    himena_ui: MainWindow = make_himena_ui(backend)
     himena_ui.add_object("A", type="text")
     himena_ui.add_object("B", type="text")
     himena_ui.tabs[0].tile_windows()
@@ -333,7 +335,8 @@ def test_tile_window(himena_ui: MainWindow):
     himena_ui.add_object("H", type="text")
     himena_ui.tabs[0].tile_windows()
 
-def test_move_window(himena_ui: MainWindow):
+def test_move_window(make_himena_ui, backend: str):
+    himena_ui: MainWindow = make_himena_ui(backend)
     tab0 = himena_ui.add_tab()
     tab1 = himena_ui.add_tab()
     win = tab0.add_data_model(WidgetDataModel(value="A", type="text"))

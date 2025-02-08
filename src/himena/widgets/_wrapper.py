@@ -105,7 +105,8 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         """Get the internal backend widget."""
         if (out := self._widget()) is not None:
             return out
-        raise RuntimeError(f"Widget in the wrapper {self} was deleted.")
+        # NOTE: do not call repr(self) because it will cause infinite recursion
+        raise RuntimeError("Widget in the wrapper was deleted.")
 
     @property
     def save_behavior(self) -> SaveBehavior:
@@ -305,8 +306,7 @@ class SubWindow(WidgetWrapper[_W], Layout):
 
     def __repr__(self) -> str:
         return (
-            f"{type(self).__name__}(title={self.title!r}, "
-            f"widget={_widget_repr(self.widget)})"
+            f"{type(self).__name__}(title={self.title!r}, widget={_widget_repr(self)})"
         )
 
     def __class_getitem__(cls, widget_type: type[_W]):
@@ -864,26 +864,23 @@ class ParametricWindow(SubWindow[_W]):
     def _process_model_output(self, model: WidgetDataModel) -> SubWindow[_W] | None:
         """Process the returned WidgetDataModel."""
         ui = self._main_window()._himena_main_window
-        widget = self._model_to_new_window(model)
         i_tab, i_win = self._find_me(ui)
+        rect = self.rect
         if self._auto_close:
             del ui.tabs[i_tab][i_win]
         if ui._instructions.process_model_output:
+            widget = self._model_to_new_window(model)
             result_widget = ui.tabs[i_tab].add_widget(
                 widget, title=model.title, auto_size=False
             )
-            self._coerce_rect(result_widget)
+            # coerce rect
+            if size_hint := result_widget.size_hint():
+                new_rect = (rect.left, rect.top, size_hint[0], size_hint[1])
+            else:
+                new_rect = rect
+            result_widget.rect = new_rect
             _checker.call_widget_added_callback(widget)
             return result_widget._update_from_returned_model(model)
-        return None
-
-    def _coerce_rect(self, result_widget: SubWindow[_W]):
-        rect = self.rect
-        if size_hint := result_widget.size_hint():
-            new_rect = (rect.left, rect.top, size_hint[0], size_hint[1])
-        else:
-            new_rect = rect
-        result_widget.rect = new_rect
         return None
 
     def _model_to_new_window(self, model: WidgetDataModel) -> _W:
@@ -913,8 +910,7 @@ class DockWidget(WidgetWrapper[_W]):
 
     def __repr__(self) -> str:
         return (
-            f"{type(self).__name__}(title={self.title!r}, "
-            f"widget={_widget_repr(self.widget)})"
+            f"{type(self).__name__}(title={self.title!r}, widget={_widget_repr(self)})"
         )
 
     @property
@@ -964,8 +960,11 @@ class DockWidget(WidgetWrapper[_W]):
         return None
 
 
-def _widget_repr(widget: _W) -> str:
-    wid = get_widget_class_id(type(widget))
+def _widget_repr(wrapper: WidgetWrapper[_W]) -> str:
+    if widget := wrapper._widget():
+        wid = get_widget_class_id(type(widget))
+    else:
+        wid = "deleted"
     return f"<{wid}>"
 
 

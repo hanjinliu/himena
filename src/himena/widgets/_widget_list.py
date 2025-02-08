@@ -120,18 +120,19 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
 
     def __delitem__(self, index_or_name: int | str) -> None:
         index = self._norm_index_or_name(index_or_name)
-        widget = self._pop_no_emit(index)
-        _checker.call_widget_closed_callback(widget.widget)
-        widget.closed.emit()
+        win, widget = self._pop_no_emit(index)
+        _checker.call_widget_closed_callback(widget)
+        win.closed.emit()
 
-    def _pop_no_emit(self, index: int):
+    def _pop_no_emit(self, index: int) -> tuple[SubWindow[_W], _W]:
         main = self._main_window()
         win = self[index]
+        widget = win.widget  # get widget here to avoid garbage collection
         main._del_widget_at(self._tab_index(), index)
-        main._remove_control_widget(win.widget)
+        main._remove_control_widget(widget)
         if isinstance(sb := win.save_behavior, SaveToPath):
             main._himena_main_window._history_closed.add((sb.path, sb.plugin))
-        return win
+        return win, widget
 
     def __len__(self) -> int:
         return len(self._main_window()._get_widget_list(self._tab_index()))
