@@ -153,7 +153,7 @@ class MockBackend(BackendMainWindow):
 
     def _set_window_rect(
         self,
-        widget: Any,
+        widget: MockWidget,
         rect: WindowRect,
         inst: BackendInstructions,
     ) -> None:

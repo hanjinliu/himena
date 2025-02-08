@@ -829,7 +829,7 @@ class MainWindow(Generic[_W]):
         if i_tab is None or i_win is None or target_index == i_tab:
             return None
         title = self.tabs[i_tab][i_win].title
-        win = self.tabs[i_tab]._pop_no_emit(i_win)
+        win, widget = self.tabs[i_tab]._pop_no_emit(i_win)
         old_rect = win.rect
         if target_index < 0:
             self.add_tab()
@@ -937,12 +937,6 @@ class MainWindow(Generic[_W]):
             ) from exceptions[-1][1]
         if exceptions:
             raise exceptions[-1][1]
-            warnings.warn(
-                "Exceptions occurred while creating a widget:\n"
-                f"{_format_exceptions(exceptions)}",
-                RuntimeWarning,
-                stacklevel=2,
-            )
         return widget
 
     def _on_command_execution(self, id: str, result: Future):
