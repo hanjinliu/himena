@@ -7,7 +7,7 @@ from magicgui.application import use_app
 from magicgui.backends._qtpy.widgets import QBaseValueWidget
 from cmap import Color, Colormap
 from superqt import QColormapComboBox
-from himena._utils import lru_cache
+from himena.utils.misc import lru_cache
 from himena.qt._qcoloredit import QColorEdit
 
 

@@ -96,6 +96,17 @@ def test_session_stand_alone(tmpdir, himena_ui: MainWindow, sample_dir):
     assert isinstance(meta := tab1[1].to_model().metadata, DataFrameMeta)
     assert meta.selections == [((1, 3), (1, 2))]
 
+def test_session_window_input(himena_ui: MainWindow):
+    from himena_builtins.tools.others import exec_workflow
+    himena_ui.exec_action("builtins:seaborn-sample:iris")
+    himena_ui.exec_action(
+        "builtins:scatter-plot",
+        with_params={"x": ((0, 10), (0, 1)), "y": ((0, 10), (1, 2))},
+    )
+    himena_ui.exec_action("show-workflow-graph")
+    exec_workflow(himena_ui.current_model)
+    assert himena_ui.current_window.model_type() == StandardType.PLOT
+
 def test_command_palette_events(himena_ui: MainWindowQt, qtbot: QtBot):
     himena_ui.show()
     himena_ui.exec_action("show-command-palette")

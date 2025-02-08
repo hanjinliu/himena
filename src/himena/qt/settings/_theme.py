@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW, QtGui, QtCore
 from qtpy.QtCore import Qt, Signal
 
-from himena.style.core import Theme, get_global_styles
+from himena.style import Theme, get_global_styles
 
 if TYPE_CHECKING:
     from himena.widgets import MainWindow

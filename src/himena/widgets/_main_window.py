@@ -84,16 +84,18 @@ class MainWindow(Generic[_W]):
         self._history_command = HistoryContainer[str](max_size=200)
         self._history_closed = HistoryContainer[tuple[Path, str | None]](max_size=10)
         self._file_dialog_hist = FileDialogHistoryDict()
-        set_current_instance(app.name, self)
         app.commands.executed.connect(self._on_command_execution)
         backend._connect_main_window_signals(self)
         self._ctx_keys = AppContext(create_context(self, max_depth=0))
         self._tab_list.changed.connect(backend._update_context)
         self._dock_widget_list = DockWidgetList(backend)
         self._recent_manager = RecentFileManager.default(app)
-        self._recent_manager.update_menu()
         self._recent_session_manager = RecentSessionManager.default(app)
-        self._recent_session_manager.update_menu()
+        if "." not in app.name:
+            # likely a mock instance
+            set_current_instance(app.name, self)
+            self._recent_manager.update_menu()
+            self._recent_session_manager.update_menu()
         self._executor = ThreadPoolExecutor(max_workers=5)
         self._global_lock = threading.Lock()
         self.theme = theme
@@ -583,12 +585,22 @@ class MainWindow(Generic[_W]):
         with_params : dict, optional
             Parameters to pass to the parametric action. These parameters will directly
             be passed to the parametric window created after the action is executed.
+        process_model_output : bool, default True
+            If True, the output result will be processed by the application context. If
+            the command return a `WidgetDataModel` instance, it will be converted to a
+            sub-window.
         """
         providers: list[tuple[Any, type]] = []
         if model_context is not None:
             providers.append((model_context, WidgetDataModel, 1000))
         if window_context is not None:
-            providers.append((window_context, SubWindow, 1000))
+            if isinstance(window_context, SubWindow):
+                _window_context = window_context
+            else:
+                raise TypeError(
+                    f"`window_context` must be SubWindow or UUID, got {window_context}"
+                )
+            providers.append((_window_context, SubWindow, 1000))
         # execute the command under the given context
         with (
             self.model_app.injection_store.register(providers=providers),
@@ -603,6 +615,10 @@ class MainWindow(Generic[_W]):
                 else:  # pragma: no cover
                     raise RuntimeError("Unreachable code.")
                 if not isinstance(param_widget, ParametricWindow):
+                    if len(with_params) == 0:
+                        if isinstance(result, Future):
+                            return result.result()  # or appropriate handling
+                        return result
                     raise ValueError(
                         f"Parametric widget expected but got {param_widget}."
                     )
@@ -813,8 +829,8 @@ class MainWindow(Generic[_W]):
         if i_tab is None or i_win is None or target_index == i_tab:
             return None
         title = self.tabs[i_tab][i_win].title
-        win = self.tabs[i_tab]._pop_no_emit(i_win)
-        old_rect = win.rect
+        old_rect = self.tabs[i_tab][i_win].rect
+        win, widget = self.tabs[i_tab]._pop_no_emit(i_win)
         if target_index < 0:
             self.add_tab()
         self.tabs[target_index].append(win, title)
@@ -921,12 +937,6 @@ class MainWindow(Generic[_W]):
             ) from exceptions[-1][1]
         if exceptions:
             raise exceptions[-1][1]
-            warnings.warn(
-                "Exceptions occurred while creating a widget:\n"
-                f"{_format_exceptions(exceptions)}",
-                RuntimeWarning,
-                stacklevel=2,
-            )
         return widget
 
     def _on_command_execution(self, id: str, result: Future):

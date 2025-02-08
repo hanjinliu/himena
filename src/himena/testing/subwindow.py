@@ -3,7 +3,7 @@ from typing import Any, Generic, TypeVar, overload
 
 from himena.plugins import _checker
 from himena.types import DragDataModel, DropResult, Size, WidgetDataModel
-from himena.style.core import get_global_styles
+from himena.style import default_style
 
 _W = TypeVar("_W")
 
@@ -13,9 +13,7 @@ class WidgetTester(Generic[_W]):
         self._widget = widget
 
     def __enter__(self) -> WidgetTester[_W]:
-        _checker.call_theme_changed_callback(
-            self._widget, get_global_styles()["light-green"]
-        )
+        _checker.call_theme_changed_callback(self._widget, default_style())
         _checker.call_widget_activated_callback(self._widget)
         _checker.call_widget_added_callback(self._widget)
         if hasattr(self._widget, "control_widget"):

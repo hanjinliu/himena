@@ -61,8 +61,9 @@ class MockDockWidget:
         self._visible = True
 
 
-class MockParametricWidget:
+class MockParametricWidget(MockWidget):
     def __init__(self, sig: inspect.Signature):
+        super().__init__()
         self._sig = sig
 
     def get_params(self):
@@ -80,8 +81,9 @@ class MockParametricWidget:
         return False
 
 
-class MockModelWrapper:
+class MockModelWrapper(MockWidget):
     def __init__(self):
+        super().__init__()
         self._model: WidgetDataModel | None = None
 
     def update_model(self, model: WidgetDataModel) -> None:

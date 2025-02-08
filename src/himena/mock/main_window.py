@@ -34,7 +34,7 @@ _T = TypeVar("_T")
 
 
 class MainWindowMock(MainWindow["MockBackend"]):
-    """Main window with Qt backend."""
+    """A mock instance of main window."""
 
     _backend_main_window: MockBackend
 
@@ -153,7 +153,7 @@ class MockBackend(BackendMainWindow):
 
     def _set_window_rect(
         self,
-        widget: Any,
+        widget: MockWidget,
         rect: WindowRect,
         inst: BackendInstructions,
     ) -> None:
@@ -225,7 +225,7 @@ class MockBackend(BackendMainWindow):
         Return the backend widget.
         """
         sub_window = MockSubWindow(widget, self._tabs[i_tab], title)
-        widget.subwindow = sub_window
+        widget.set_subwindow(sub_window)
         self._tabs[i_tab].sub_windows.append(sub_window)
         return sub_window
 

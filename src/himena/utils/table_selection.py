@@ -59,8 +59,8 @@ def model_to_xy_arrays(
        +++++ ++++++++
        ```
     """
-    from himena.data_wrappers import wrap_dataframe
-    from himena.standards.model_meta import DictMeta
+    from himena.data_wrappers import wrap_dataframe, wrap_array
+    from himena.standards.model_meta import DictMeta, ArrayMeta
 
     if x is None and not allow_empty_x:
         raise ValueError("The x value must be given.")
@@ -89,10 +89,23 @@ def model_to_xy_arrays(
         x_out = NamedArray(xlabel, xarr)
     elif model.is_subtype_of(StandardType.EXCEL):
         if not isinstance(meta := model.metadata, DictMeta):
-            raise ValueError("Must be a DictMeta")
+            raise ValueError(f"Must be a DictMeta, got {type(model.metadata)!r}")
         table = model.value[meta.current_tab]
         x_out, ys = table_to_xy_arrays(
             table, x, y, allow_multiple_y=allow_multiple_y, same_size=same_size
+        )
+    elif model.is_subtype_of(StandardType.ARRAY):
+        if not isinstance(meta := model.metadata, ArrayMeta):
+            raise ValueError(f"Must be an ArrayMeta, got {type(model.metadata)!r}")
+        if meta.current_indices is None:
+            sl = ()
+        else:
+            sl = tuple(
+                slice(None) if ind is None else ind for ind in meta.current_indices
+            )
+        arr = wrap_array(model.value).get_slice(sl)
+        x_out, ys = table_to_xy_arrays(
+            arr, x, y, allow_multiple_y=allow_multiple_y, same_size=same_size
         )
     else:
         raise ValueError(f"Table-like data expected, but got model type {model.type!r}")
@@ -268,14 +281,19 @@ class TableValueParser:
 
 def range_getter(win: SubWindow) -> Callable[[], tuple[SelectionType, SelectionType]]:
     """The getter function for SelectionEdit"""
-    from himena.standards.model_meta import TableMeta
+    from himena.standards.model_meta import TableMeta, ArrayMeta
 
     def _getter():
         model = win.to_model()
-        types = [StandardType.TABLE, StandardType.DATAFRAME, StandardType.EXCEL]
+        types = [
+            StandardType.TABLE,
+            StandardType.DATAFRAME,
+            StandardType.ARRAY,
+            StandardType.EXCEL,
+        ]
         if model.type not in types:
             raise ValueError(f"Cannot plot model of type {model.type!r}")
-        if not isinstance(meta := model.metadata, TableMeta):
+        if not isinstance(meta := model.metadata, (TableMeta, ArrayMeta)):
             raise ValueError("Excel must have TableMeta as the additional data.")
         if len(meta.selections) == 0:
             raise ValueError(f"No selection found in window {model.title!r}")

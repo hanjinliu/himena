@@ -31,7 +31,7 @@ def make_himena_ui(qtbot: QtBot, request: pytest.FixtureRequest):
 
 
 def _make_himena_ui(qtbot: QtBot, request: pytest.FixtureRequest):
-    from himena import new_window
+    from himena import new_window, MainWindow
     from himena._app_model._application import HimenaApplication
     from himena.widgets._initialize import _APP_INSTANCES, cleanup
 
@@ -49,7 +49,7 @@ def _make_himena_ui(qtbot: QtBot, request: pytest.FixtureRequest):
             RuntimeWarning,
             stacklevel=2,
         )
-    window = None
+    window: MainWindow | None = None
 
     def _factory(backend="qt"):
         nonlocal window
@@ -63,7 +63,9 @@ def _make_himena_ui(qtbot: QtBot, request: pytest.FixtureRequest):
     try:
         yield _factory
     finally:
+        assert window is not None
         Application.destroy(window.model_app)
+        Application.destroy(".")
         window.close()
         assert window.model_app not in Application._instances
         assert window.model_app not in HimenaApplication._instances

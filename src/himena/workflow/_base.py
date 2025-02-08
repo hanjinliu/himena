@@ -30,8 +30,8 @@ class WorkflowStep(BaseModel):
         raise NotImplementedError("This method must be implemented in a subclass.")
 
     def get_model(self, wf: "Workflow") -> "WidgetDataModel":
-        if out := wf._model_cache.get(self.id):
-            return out
+        if win := wf._mock_main_window.window_for_id(self.id):
+            return win.to_model()
         model = self._get_model_impl(wf)
         model.workflow = wf
         return model

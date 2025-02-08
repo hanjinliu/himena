@@ -122,7 +122,8 @@ class CommandExecution(WorkflowStep):
             if isinstance(_ctx, ModelParameter):
                 model_context = wf.model_for_id(_ctx.value)
             elif isinstance(_ctx, WindowParameter):
-                model_context = wf.model_for_id(_ctx.value)
+                window_context = wf.window_for_id(_ctx.value)
+                model_context = window_context.to_model()
             else:
                 raise ValueError(f"Context parameter must be a model: {_ctx}")
 
@@ -132,6 +133,8 @@ class CommandExecution(WorkflowStep):
                 params[_p.name] = _p.value
             elif isinstance(_p, ModelParameter):
                 params[_p.name] = wf.filter(_p.value).model_for_id(_p.value)
+            elif isinstance(_p, WindowParameter):
+                params[_p.name] = wf.filter(_p.value).window_for_id(_p.value)
             elif isinstance(_p, ListOfModelParameter):
                 params[_p.name] = [
                     wf.filter(each).model_for_id(each) for each in _p.value
