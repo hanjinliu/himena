@@ -313,6 +313,7 @@ class MockBackend(BackendMainWindow):
         The incoming widget must implements the `get_params` method, which gives the
         dictionary of parameters.
         """
+        return widget
 
     def _connect_parametric_widget_events(
         self,

@@ -73,6 +73,12 @@ class MockParametricWidget:
             out[param.name] = param.default
         return out
 
+    def connect_changed_signal(self, callback):
+        """Do nothing."""
+
+    def is_preview_enabled(self):
+        return False
+
 
 class MockModelWrapper:
     def __init__(self):
