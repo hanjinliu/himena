@@ -64,6 +64,7 @@ def show_workflow_graph(model: WidgetDataModel) -> WidgetDataModel:
         type=StandardType.WORKFLOW,
         title=f"Workflow of {model.title}",
         save_behavior_override=NoNeedToSave(),
+        extension_default=".workflow.json",
         workflow=workflow,
     )
 

@@ -305,7 +305,7 @@ class WidgetDataModel(GenericModel[_T]):
         else:
             source_repr = None
         return (
-            f"{self.__class__.__name__}(value={value_repr}, source={source_repr}), "
+            f"{self.__class__.__name__}(value={value_repr}, source={source_repr}, "
             f"type={self.type!r}, title={self.title!r})"
         )
 

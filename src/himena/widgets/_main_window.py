@@ -921,12 +921,6 @@ class MainWindow(Generic[_W]):
             ) from exceptions[-1][1]
         if exceptions:
             raise exceptions[-1][1]
-            warnings.warn(
-                "Exceptions occurred while creating a widget:\n"
-                f"{_format_exceptions(exceptions)}",
-                RuntimeWarning,
-                stacklevel=2,
-            )
         return widget
 
     def _on_command_execution(self, id: str, result: Future):

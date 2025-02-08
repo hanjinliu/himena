@@ -291,7 +291,7 @@ def _raise_failed(failed: list[tuple[WindowDescription, Exception]]) -> None:
     if len(failed) > 0:
         msg = "Could not load the following windows:\n"
         list_of_failed = "\n".join(
-            f"- {win.title} ({type(exc).__name__}:{exc})" for win, exc in failed
+            f"- {win.title} ({type(exc).__name__}: {exc})" for win, exc in failed
         )
         raise ValueError(msg + list_of_failed) from failed[-1][1]
 

@@ -107,7 +107,8 @@ def filter_dataframe(model: WidgetDataModel) -> Parametric:
             value_parsed = value.lower() in ["true", "1"]
         elif series.dtype.kind == "c":
             value_parsed = complex(value)
-        value_parsed = value
+        else:
+            value_parsed = value
         sl = op_func(series, value_parsed)
         df_new = df.filter(sl).unwrap()
         return model.with_value(df_new).with_title_numbering()

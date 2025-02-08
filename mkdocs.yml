@@ -25,9 +25,9 @@ nav:
   - Usage:
     - Overview: usage/index.md
     - Basics: usage/basics.md
-  - Developper's Guide:
+  - Developer's Guide:
     - Overview: dev/index.md
-    - The WidgetDataMode Standard: dev/widget_data_model.md
+    - The WidgetDataModel Standard: dev/widget_data_model.md
     - Model Types: dev/model_types.md
     - Plugin System: dev/plugin_system.md
     - Reader/Writer Functions: dev/io_provider.md

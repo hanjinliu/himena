@@ -456,6 +456,8 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         if rect_factory := model.window_rect_override:
             rect = WindowRect.from_tuple(*rect_factory(sub_win.size))
             sub_win.rect = rect
+        if model.extension_default is not None:
+            sub_win._extension_default_fallback = model.extension_default
         return sub_win
 
     def read_file(

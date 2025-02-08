@@ -35,7 +35,7 @@ def _get_save_path(model: WidgetDataModel, dirname: Path, prefix: str = "") -> P
                 ext = model.extensions[0]
             else:
                 raise ValueError(
-                    "Could not determine the file extension to be used to save."
+                    f"Could not determine the file extension to be used to save {model!r}"
                 )
         else:
             ext = model.extension_default
