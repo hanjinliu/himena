@@ -1,13 +1,15 @@
 from __future__ import annotations
 
-from app_model import Application
-from qtpy import QtWidgets as QtW
-from himena.style import Theme
+from typing import TYPE_CHECKING
 from himena.widgets import MainWindow
 from himena.qt._qmain_window import QMainWindow
 
+if TYPE_CHECKING:
+    from app_model import Application
+    from himena.style import Theme
 
-class MainWindowQt(MainWindow[QtW.QWidget]):
+
+class MainWindowQt(MainWindow["QtW.QWidget"]):
     """Main window with Qt backend."""
 
     _backend_main_window: QMainWindow

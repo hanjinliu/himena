@@ -104,7 +104,10 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         """Get the internal backend widget."""
         if (out := self._widget()) is not None:
             return out
-        raise RuntimeError(f"Widget in the wrapper {self} was deleted.")
+        # NOTE: do not call repr(self) because it will cause infinite recursion
+        raise RuntimeError(
+            f"Widget in the wrapper of ID {self._identifier} was deleted."
+        )
 
     @property
     def save_behavior(self) -> SaveBehavior:
