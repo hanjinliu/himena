@@ -6,7 +6,6 @@ from himena.profile import AppProfile, load_app_profile
 
 if TYPE_CHECKING:
     from himena.widgets import MainWindow
-    from qtpy import QtWidgets as QtW
 
 _LOGGER = getLogger(__name__)
 
@@ -15,9 +14,9 @@ def new_window(
     profile: str | AppProfile | None = None,
     *,
     plugins: Sequence[str] | None = None,
-) -> MainWindow[QtW.QWidget]:
+    backend: str = "qt",
+) -> MainWindow:
     """Create a new window with the specified profile and additional plugins."""
-    from himena.qt import MainWindowQt
     from himena._app_model import get_model_app
     from himena.widgets._initialize import init_application
 
@@ -43,7 +42,7 @@ def new_window(
         install_plugins(model_app, plugins)
     # create the main window
     init_application(model_app)
-    main_window = MainWindowQt(model_app, theme=app_prof.theme)
+    main_window = _get_main_window_class(backend)(model_app, theme=app_prof.theme)
 
     # execute startup commands (don't raise exceptions, just log them)
     exceptions: list[tuple[str, dict, Exception]] = []
@@ -57,3 +56,14 @@ def new_window(
         for cmd, kwargs, exc in exceptions:
             _LOGGER.error("  %r (parameters=%r): %s", cmd, kwargs, exc)
     return main_window
+
+
+def _get_main_window_class(backend: str) -> MainWindow:
+    if backend == "qt":
+        from himena.qt import MainWindowQt
+
+        return MainWindowQt
+    elif backend == "mock":
+        from himena.mock import MainWindowMock
+
+        return MainWindowMock

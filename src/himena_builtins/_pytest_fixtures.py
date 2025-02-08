@@ -20,6 +20,17 @@ def patch_user_data_dir(request: pytest.FixtureRequest):
 
 @pytest.fixture
 def himena_ui(qtbot: QtBot, request: pytest.FixtureRequest):
+    _factory = _make_himena_ui(qtbot, request)
+    window = next(_factory)()
+    yield window
+
+
+@pytest.fixture
+def make_himena_ui(qtbot: QtBot, request: pytest.FixtureRequest):
+    yield from _make_himena_ui(qtbot, request)
+
+
+def _make_himena_ui(qtbot: QtBot, request: pytest.FixtureRequest):
     from himena import new_window
     from himena._app_model._application import HimenaApplication
     from himena.widgets._initialize import _APP_INSTANCES, cleanup
@@ -38,18 +49,24 @@ def himena_ui(qtbot: QtBot, request: pytest.FixtureRequest):
             RuntimeWarning,
             stacklevel=2,
         )
-    window = new_window()
-    app = window.model_app
-    window._instructions = window._instructions.updated(confirm=False)
-    window._pytest_name = request.node.name
-    qtbot.add_widget(window._backend_main_window)
+    window = None
+
+    def _factory(backend="qt"):
+        nonlocal window
+        window = new_window(backend=backend)
+        window._instructions = window._instructions.updated(confirm=False)
+        window._pytest_name = request.node.name
+        if backend == "qt":
+            qtbot.add_widget(window._backend_main_window)
+        return window
+
     try:
-        yield window
+        yield _factory
     finally:
-        Application.destroy(app)
+        Application.destroy(window.model_app)
         window.close()
-        assert app not in Application._instances
-        assert app not in HimenaApplication._instances
+        assert window.model_app not in Application._instances
+        assert window.model_app not in HimenaApplication._instances
         assert len(_APP_INSTANCES) == 0
 
         QApplication.processEvents()
