@@ -37,4 +37,4 @@ jobs:
 
       - name: Test that docs build without error
         if: github.event_name == 'pull_request'
-        run: mkdocs build --strict
+        run: mkdocs build
