@@ -1,12 +1,12 @@
 import re
 from pathlib import Path
 from textwrap import dedent
-from imageio import imwrite
 import mkdocs_gen_files
 
 from himena import new_window
 from himena.qt._qsub_window import get_subwindow
 from himena.qt._utils import ArrayQImage
+from PIL import Image
 
 DOCS: Path = Path(__file__).parent.parent
 CODE_BLOCK = re.compile("``` ?python image=.*?\n([^`]*)```")
@@ -32,6 +32,7 @@ def main() -> None:
             arr = ArrayQImage.from_qwidget(subwin).to_numpy()
             dest = f"_images/screenshot-{file_name}.png"
             with mkdocs_gen_files.open(dest, "wb") as f:
-                imwrite(f.name, arr, format="png")
+                image = Image.fromarray(arr)
+                image.save(f, format="png")
 
 main()
