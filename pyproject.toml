@@ -80,6 +80,7 @@ docs = [
   "mkdocs-material-extensions",
   "mkdocstrings",
   "mkdocstrings-python",
+  "mkdocs-gen-files",
   "griffe-fieldz",
   "himena[all]"
 ]
