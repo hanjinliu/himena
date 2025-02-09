@@ -75,14 +75,14 @@ testing = [
 
 docs = [
   "mkdocs",
-  "mkdocs-autorefs==1.0.1",
-  "mkdocs-material==9.5.46",
-  "mkdocs-material-extensions==1.3.1",
-  "mkdocstrings==0.27.0",
-  "mkdocstrings-python==1.12.2",
+  "mkdocs-autorefs",
+  "mkdocs-material",
+  "mkdocs-material-extensions",
+  "mkdocstrings",
+  "mkdocstrings-python",
   "mkdocs-gen-files",
   "griffe-fieldz",
-  "himena[all]"
+  "himena[recommended]"
 ]
 
 [tool.hatch.version]

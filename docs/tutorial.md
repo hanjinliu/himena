@@ -26,14 +26,20 @@ himena
 and plugins. You can create a new profile with:
 
 ``` shell
-himena --new test-profile
+himena --new test
 ```
 
 and start the application with the profile:
 
 ``` shell
-himena test-profile
+himena test
 ```
+
+!!! note
+
+    A profile can be used to separate the configurations for different users, or for
+    different purposes. For example, you can have a profile "img" for image analysis,
+    in which `himena img` is just like a sub-command of `himena`.
 
 ## Open a Data
 

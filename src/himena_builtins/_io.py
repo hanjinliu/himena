@@ -275,7 +275,10 @@ def default_file_list_reader(file_path: Path | list[Path]) -> WidgetDataModel:
 
     value: list[WidgetDataModel] = []
     if isinstance(file_path, Path):
-        _iterator = file_path.glob("*")
+        _iterator = sorted(
+            file_path.glob("*"),
+            key=lambda fp: 1 if fp.is_file() else 0,
+        )
     else:
         _iterator = iter(file_path)
     store = ReaderStore.instance()

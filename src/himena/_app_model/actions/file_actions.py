@@ -95,7 +95,7 @@ def _open_file_using_reader(
 
 @ACTIONS.append_from_fn(
     id="open-file-using",
-    title="Open File Using ...",
+    title="Open File With ...",
     menus=[
         {"id": MenuId.FILE, "group": READ_GROUP},
         {"id": MenuId.STARTUP, "group": READ_GROUP},

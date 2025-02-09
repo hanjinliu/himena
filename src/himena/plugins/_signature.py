@@ -79,9 +79,11 @@ def configure_gui(
 
     This decorator sets the configuration options for the parametric GUI window.
 
-    >>> @configure_gui(a={"label": "A", "widget_type": "FloatSlider"})
-    ... def my_func(a: float):
-    ...     pass
+    ``` python
+    @configure_gui(a={"label": "A", "widget_type": "FloatSlider"})
+    def my_func(a: float):
+        pass
+    ```
 
     Parameters
     ----------

@@ -672,8 +672,10 @@ def char_arange(start: int, stop: int | None = None):
 
     Examples
     --------
-    >>> char_arange(3)  # array(["A", "B", "C"])
-    >>> char_arange(25, 28)  # array(["Z", "AA", "AB"])
+    ``` python
+    char_arange(3)  # array(["A", "B", "C"])
+    char_arange(25, 28)  # array(["Z", "AA", "AB"])
+    ```
     """
     global LONGEST
     if stop is None:

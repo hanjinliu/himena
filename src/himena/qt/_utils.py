@@ -46,6 +46,10 @@ class ArrayQImage:
     def dtype(self) -> np.dtype:
         return np.dtype(np.uint8)
 
+    @classmethod
+    def from_qwidget(cls, widget: QtW.QWidget) -> ArrayQImage:
+        return cls(widget.grab().toImage())
+
 
 def get_stylesheet_path() -> Path:
     """Get the path to the stylesheet file"""

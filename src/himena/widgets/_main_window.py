@@ -308,6 +308,8 @@ class MainWindow(Generic[_W]):
         *,
         type: str | None = None,
         title: str | None = None,
+        force_open_with: str | None = None,
+        metadata: Any | None = None,
     ) -> SubWindow[_W]:
         """
         Add any data as a widget data model.
@@ -328,10 +330,13 @@ class MainWindow(Generic[_W]):
         SubWindow
             The sub-window handler.
         """
+        # TODO: determine default `type`
         wd = WidgetDataModel(
             value=value,
             type=type,
             title=title,
+            force_open_with=force_open_with,
+            metadata=metadata,
             workflow=ProgrammaticMethod(output_model_type=type).construct_workflow(),
         )
         return self.add_data_model(wd)
@@ -519,9 +524,11 @@ class MainWindow(Generic[_W]):
 
         Example
         -------
-        >>> @ui.register_function(menus="plugins", title="Test functions)
-        >>> def test_function():
-        ...     print("test")
+        ``` python
+        @ui.register_function(menus="plugins", title="Test functions)
+        def test_function():
+            print("test")
+        ```
 
         Parameters
         ----------

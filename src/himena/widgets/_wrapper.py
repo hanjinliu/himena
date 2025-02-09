@@ -92,6 +92,7 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
             # the frontend main window will not keep the widget, thus this wrapper needs
             # a strong reference
             self._widget = StrongRef(widget)
+        self._extension_default_fallback: str | None = None
 
     @property
     def is_alive(self) -> bool:
@@ -378,6 +379,8 @@ class SubWindow(WidgetWrapper[_W], Layout):
             model.workflow = model.workflow.with_step(
                 UserModification(original=model.workflow[-1].id)
             )
+        if model.extension_default is None:
+            model.extension_default = self._extension_default_fallback
         return model
 
     def update_value(self, value: Any) -> None:

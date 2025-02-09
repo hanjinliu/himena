@@ -29,8 +29,10 @@ class QFunctionEdit(QtW.QWidget):
         super().__init__()
         layout = QtW.QVBoxLayout(self)
         layout.setContentsMargins(2, 2, 2, 2)
+        _label = "<code>f(x) = </code>"
         self._main_text_edit = QMainTextEdit()
         self._main_text_edit.setReadOnly(True)
+        layout.addWidget(QtW.QLabel(_label))
         layout.addWidget(self._main_text_edit)
         self._model_type = StandardType.FUNCTION
         self._func: Callable | None = None

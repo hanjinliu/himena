@@ -57,7 +57,7 @@ class _IOPluginBase:
         return self._plugin.to_str() if self._plugin else None
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__} {self.plugin_str}>"
+        return f"<{self.__class__.__name__} {self.plugin_str or self.__name__}>"
 
     def _undefined_matcher(self, *_):
         raise NotImplementedError(
@@ -127,6 +127,9 @@ class ReaderPlugin(_IOPluginBase):
             return None
         ```
         """
+        # NOTE: matcher don't have to return the priority. If users want to define
+        # a plugin that has different priority for different file type, they can just
+        # split the plugin function into two.
         if self._matcher is self._undefined_matcher:
             raise ValueError(f"Matcher for {self!r} is already defined.")
         self._matcher = matcher

@@ -48,6 +48,7 @@ class QWorkflowView(QtW.QWidget):
         return WidgetDataModel(
             value=self._tree_widget._workflow,
             type=self.model_type(),
+            extension_default=".workflow.json",
         )
 
     @validate_protocol
@@ -285,6 +286,6 @@ def _(step: _wf.ProgrammaticMethod) -> QtW.QTreeWidgetItem:
 
 def _add_common_child(item: QtW.QTreeWidgetItem, step: _wf.WorkflowStep):
     item.addChild(
-        QtW.QTreeWidgetItem([f"(datetime) {step.datetime:%Y-%m-%d %H:%M:%S}"])
+        QtW.QTreeWidgetItem([f"datetime = {step.datetime:%Y-%m-%d %H:%M:%S}"])
     )
     return item

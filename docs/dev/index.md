@@ -1,8 +1,8 @@
-# Developper's Guide
-
+# Developer's Guide
 
 - [The WidgetDataModel Standard](widget_data_model.md)
-- [Model Types](model_types.md)
+- [Plugin System](plugin_system.md)
 - [Reader and Writer Functions](io_provider.md)
 - [Register Functions](register_functions.md)
-- [Plugin System](plugin_system.md)
+- [Register Widgets](register_widgets.md)
+- [Register Dock Widgets](register_dock_widgets.md)

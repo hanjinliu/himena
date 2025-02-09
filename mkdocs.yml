@@ -20,18 +20,24 @@ theme:
     code: Roboto Mono
 
 nav:
-  - Overview: index.md
+  - Index: index.md
   - Tutorial: tutorial.md
   - Usage:
-    - Overview: usage/index.md
+    - Index: usage/index.md
     - Basics: usage/basics.md
-  - Developper's Guide:
-    - Overview: dev/index.md
-    - The WidgetDataMode Standard: dev/widget_data_model.md
-    - Model Types: dev/model_types.md
+    - Tab/Window Manipulation: usage/tab_and_window.md
+    - Workflows: usage/workflows.md
+    - Sessions: usage/sessions.md
+    - Built-in Widgets: usage/builtin_widgets.md
+    - Built-in Dock Widgets: usage/builtin_dock_widgets.md
+  - Developer's Guide:
+    - Index: dev/index.md
+    - The WidgetDataModel Standard: dev/widget_data_model.md
     - Plugin System: dev/plugin_system.md
     - Reader/Writer Functions: dev/io_provider.md
     - Register Functions: dev/register_functions.md
+    - Register Widgets: dev/register_widgets.md
+    - Register Dock Widgets: dev/register_dock_widgets.md
   - API Reference:
     - api/consts.md
     - api/layout.md
@@ -56,15 +62,21 @@ plugins:
             show_signature_annotations: true
             extensions:
             - griffe_fieldz: {include_inherited: true}
-  # - gen-files:
-  #     scripts:
-  #       - docs/_scripts/_screenshots.py
+  - gen-files:
+      scripts:
+        - docs/_scripts/_screenshots.py
 
 markdown_extensions:
   - admonition
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.keys
+  - pymdownx.tabbed:
+      alternate_style: true
   - pymdownx.arithmatex:
       generic: true
   - attr_list
@@ -73,10 +85,14 @@ markdown_extensions:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
-# hooks:
-#   - docs/_scripts/_hooks.py
+hooks:
+  - docs/_scripts/_hooks.py
 
 
 extra_javascript:
   - https://polyfill.io/v3/polyfill.min.js?features=es6
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+  - https://unpkg.com/mermaid@8.0.0/dist/mermaid.min.js
+
+extra_css:
+  - https://unpkg.com/mermaid@8.0.0/dist/mermaid.css
