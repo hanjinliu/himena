@@ -635,20 +635,20 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def _screenshot(self, target: str):
         if target == "main":
-            qimg = self.grab().toImage()
+            qwidget = self
         elif target == "area":
             if widget := self._tab_widget.current_widget_area():
-                qimg = widget.grab().toImage()
+                qwidget = widget
             else:
                 raise ValueError("No active area.")
         elif target == "window":
             if sub := self._tab_widget.current_widget_area().currentSubWindow():
-                qimg = sub._widget.grab().toImage()
+                qwidget = sub._widget
             else:
                 raise ValueError("No active window.")
         else:
             raise ValueError(f"Invalid target name {target!r}.")
-        return ArrayQImage(qimg)
+        return ArrayQImage.from_qwidget(qwidget)
 
     def _process_parametric_widget(
         self,

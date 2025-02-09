@@ -58,6 +58,17 @@ class SemiMutableSequence(Sequence[_T]):
     def __repr__(self) -> str:
         return f"{type(self).__name__}({list(self)})"
 
+    def _repr_pretty_(self, p, cycle):
+        if cycle:
+            p.text(f"{type(self).__name__}(...)")
+        else:
+            p.text(f"{type(self).__name__}([\n")
+            for item in self:
+                p.text("  ")
+                p.pretty(item)
+                p.text(",\n")
+            p.text("])")
+
     def clear(self):
         """Clear all the contents of the list."""
         for _ in range(len(self)):

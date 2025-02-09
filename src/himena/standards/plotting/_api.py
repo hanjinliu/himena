@@ -7,10 +7,12 @@ def figure(background_color: Any = "white") -> layout.SingleAxes:
 
     Examples
     --------
-    >>> from himena.standards import plotting as hplt
-    >>> fig = hplt.figure()
-    >>> fig.plot([0, 1, 2], [4, 2, 3], color="red")
-    >>> fig.show()  # show as a sub-window in the current widget
+    ``` python
+    from himena.standards import plotting as hplt
+    fig = hplt.figure()
+    fig.plot([0, 1, 2], [4, 2, 3], color="red")
+    fig.show()  # show as a sub-window in the current widget
+    ```
     """
     lo = layout.SingleAxes(background_color=background_color)
     return lo
@@ -21,10 +23,12 @@ def figure_3d(background_color: Any = "white") -> layout3d.SingleAxes3D:
 
     Examples
     --------
-    >>> from himena.standards import plotting as hplt
-    >>> fig = hplt.figure_3d()
-    >>> fig.plot([0, 1, 2], [4, 2, 3], [6, 8, 7], color="red")
-    >>> fig.show()  # show as a sub-window in the current widget
+    ``` python
+    from himena.standards import plotting as hplt
+    fig = hplt.figure_3d()
+    fig.plot([0, 1, 2], [4, 2, 3], [6, 8, 7], color="red")
+    fig.show()  # show as a sub-window in the current widget
+    ```
     """
     lo = layout3d.SingleAxes3D(background_color=background_color)
     return lo
@@ -35,13 +39,15 @@ def row(num: int = 1, *, background_color: Any = "white") -> layout.Row:
 
     Examples
     --------
-    >>> from himena.standards import plotting as hplt
-    >>> row = hplt.row(2)
-    >>> row[0].plot([0, 1, 2], [4, 2, 3], color="red")
-    >>> fig.show()  # show as a sub-window in the current widget
+    ``` python
+    from himena.standards import plotting as hplt
+    row = hplt.row(2)
+    row[0].plot([0, 1, 2], [4, 2, 3], color="red")
+    row.show()  # show as a sub-window in the current widget
+    ```
     """
     lo = layout.Row.fill(num)
-    lo.background_color = "white"
+    lo.background_color = background_color
     return lo
 
 
@@ -55,10 +61,12 @@ def column(num: int = 1, *, background_color: Any = "white") -> layout.Column:
 
     Examples
     --------
-    >>> from himena.standards import plotting as hplt
-    >>> col = hplt.column(3)
-    >>> col[0].plot([0, 1, 2], [4, 2, 3], color="blue")
-    >>> col.show()  # show as a sub-window in the current widget
+    ``` python
+    from himena.standards import plotting as hplt
+    col = hplt.column(3)
+    col[0].plot([0, 1, 2], [4, 2, 3], color="blue")
+    col.show()  # show as a sub-window in the current widget
+    ```
     """
     lo = layout.Column.fill(num)
     lo.background_color = "white"
@@ -79,10 +87,12 @@ def grid(
 
     Examples
     --------
-    >>> from himena.standards import plotting as hplt
-    >>> grd = hplt.grid(2, 3)
-    >>> grd[0, 0].plot([0, 1, 2], [4, 2, 3], color="green")
-    >>> grd.show()  # show as a sub-window in the current widget
+    ``` python
+    from himena.standards import plotting as hplt
+    grd = hplt.grid(2, 3)
+    grd[0, 0].plot([0, 1, 2], [4, 2, 3], color="green")
+    grd.show()  # show as a sub-window in the current widget
+    ```
     """
     lo = layout.Grid.fill(rows, cols)
     lo.background_color = "white"

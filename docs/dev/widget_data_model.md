@@ -1,4 +1,4 @@
-# The WidgetDataMode Standard
+# The WidgetDataModel Standard
 
 All the widgets in `himena` are built on the `WidgetDataModel` standard. A
 `WidgetDataModel` is a Python object that represents a value of any type, tagged with
@@ -9,9 +9,9 @@ data "xyz" read from a txt file can be written as follows:
 WidgetDataModel(value="abc", type="text")
 ```
 
-All the widgets in `himena` implements `update_model()` method to update the state of
-the widget from a `WidgetDataModel` object, and `to_model()` method to dump the state
-of the widget to a `WidgetDataModel` object.
+All the "data-embedded" widgets in `himena` implements `update_model()` method to update
+the state of the widget from a `WidgetDataModel` object, and `to_model()` method to dump
+the state of the widget to a `WidgetDataModel` object.
 
 ``` python
 class TextViewer:
@@ -25,7 +25,7 @@ class TextViewer:
         return WidgetDataModel(value=self.get_text(), type="text")
 ```
 
-And this widget is registered as a widget that represents a `"text"`-type data using
+This widget can be registered as a widget that represents a `"text"`-type data using
 `register_widget_class()` function.
 
 ``` python
@@ -39,7 +39,7 @@ The `WidgetDataModel` standard makes the different part of development very clea
 - Reader function is a **GUI-independent** function that reads a file and returns
   a `WidgetDataModel`.
 
-    ``` python
+    ``` python title="Example reader function"
     def read_txt(file_path: Path) -> WidgetDataModel:
         text_value = file_path.read_text()
         return WidgetDataModel(value=text_value, type="text")
@@ -51,52 +51,46 @@ The `WidgetDataModel` standard makes the different part of development very clea
 - Writer function is a **GUI-independent** function that writes a `WidgetDataModel`
   to a file.
 
-    ``` python
+    ``` python title="Example writer function"
     def write_text(file_path: Path, model: WidgetDataModel):
         file_path.write_text(model.value)
     ```
 
-  A widget will be automatically converted to a model using `to_model()` method  before
+  A widget will be automatically converted to a model using `to_model()` method before
   calling this writer function.
 
 - Any function for data processing or analysis is also **GUI-independent** functions
   that just convert a `WidgetDataModel` into another.
 
-    ``` python
+    ``` python title="Example data processing function"
     def to_upper(model: WidgetDataModel) -> WidgetDataModel:
         assert isinstance(model.value, str)
         return WidgetDataModel(value=model.value.upper(), type="text")
     ```
 
-  A widget will be automatically converted to a model using `to_model()` method before
-  calling this function, and sent back to the GUI as another widget created based on the
-  returned model.
+    A widget will be automatically converted to a model using `to_model()` method before
+    calling this function, and sent back to the GUI as another widget created based on the
+    returned model.
 
-    ``` mermaid
-    flowchart LR
-        widget0([Widget A])
-        widget1([Widget B])
-        model0[[WidgetDataModel A]]
-        model1[[WidgetDataModel B]]
-        widget0 --> model0 == to_upper() ==> model1 --> widget1
-    ```
+## Choosing the Type
 
-!!! note
+You can use any string for `type` field, but to make your widget interpretable for
+the `himena` built-in functions and probably for other plugins, you may want to
+use the [`StandardType`][himena.consts.StandardType].
 
-    You can use any string for `type` field, but make your widget interpretable for
-    the `himena` built-in functions and probably for other plugins, you may want to
-    use the `StandardType`.
+``` python
+from himena.const import StandardType
 
-    ``` python
-    from himena.const import StandardType
+StandardType.TEXT  # "text"
+StandardType.TABLE  # "table"
+StandardType.ARRAY  # "array"
+StandardType.IMAGE  # "array.image"
+```
 
-    StandardType.TEXT  # "text"
-    StandardType.TABLE  # "table"
-    StandardType.ARRAY  # "array"
-    StandardType.IMAGE  # "array.image"
-    ```
-
-    For the detail, see the [Model Types](./model_types.md) section.
+You can use "." to separate the type into a hierarchy. For example, the standard type
+`"array.image"` is used for an image data, but it is under "array" type because all the
+image data are essentially arrays. A benefit of this subtyping is that all the "array"
+functions can be applied to the "array.image" data.
 
 ## More Specifications
 

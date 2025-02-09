@@ -81,8 +81,11 @@ class WidgetTester(Generic[_W]):
         """Emulate dropping a model into the widget.
 
         The input can be either a `WidgetDataModel` or the input of `WidgetDataModel`.
-        >>> tester.drop_model(WidgetDataModel(value=..., type=...))
-        >>> tester.drop_model(value=..., type=...)
+
+        ``` python
+        tester.drop_model(WidgetDataModel(value=..., type=...))
+        tester.drop_model(value=..., type=...)
+        ```
         """
         model = self._norm_model_input(value, **kwargs)
         drag_data_model = DragDataModel(getter=model, type=model.type)

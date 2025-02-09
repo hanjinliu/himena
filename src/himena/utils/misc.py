@@ -137,9 +137,11 @@ class PluginInfo(NamedTuple):
 def is_subtype(string: str, supertype: str) -> bool:
     """Check if the type is a subtype of the given type.
 
-    >>> is_subtype_of("text", "text")  # True
-    >>> is_subtype_of("text.plain", "text")  # True
-    >>> is_subtype_of("text.plain", "text.html")  # False
+    ``` python
+    is_subtype_of("text", "text")  # True
+    is_subtype_of("text.plain", "text")  # True
+    is_subtype_of("text.plain", "text.html")  # False
+    ```
     """
     string_parts = string.split(".")
     supertype_parts = supertype.split(".")

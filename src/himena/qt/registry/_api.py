@@ -39,10 +39,12 @@ def register_widget_class(type_, widget_class=None, app=None, priority=100):
     must implement `update_model` method to update the widget state from a
     WidgetDataModel.
 
-    >>> @register_widget("text")
-    ... class MyTextEdit(QtW.QPlainTextEdit):
-    ...     def update_model(self, model: WidgetDataModel):
-    ...         self.setPlainText(model.value)
+    ``` python
+    @register_widget("text")
+    class MyTextEdit(QtW.QPlainTextEdit):
+        def update_model(self, model: WidgetDataModel):
+            self.setPlainText(model.value)
+    ```
     """
 
     if app is not None and not isinstance(app, str):

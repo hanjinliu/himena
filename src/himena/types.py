@@ -636,12 +636,14 @@ This type can be interpreted by the injection store processor. For example, in t
 following code, `my_plugin_function` will be converted into a parametric widget
 with inputs `a` and `b`..
 
->>> from himena.plugin import register_function
->>> @register_function(...)
->>> def my_plugin_function(...) -> Parametric:
-...     def callback_func(a: int, b: str) -> WidgetDataModel:
-...         ...
-...     return my_plugin_function
+``` python
+from himena.plugin import register_function
+@register_function(...)
+def my_plugin_function(...) -> Parametric:
+    def callback_func(a: int, b: str) -> WidgetDataModel:
+        ...
+    return my_plugin_function
+```
 """
 
 
@@ -704,19 +706,23 @@ class WidgetClassTuple(NamedTuple):
 WidgetType = NewType("WidgetType", object)
 """This type is used for the return annotation.
 
->>> from himena.plugin import register_function
->>> @register_function(...)
->>> def my_plugin_function() -> WidgetType:
-...     return MyWidget()
+``` python
+from himena.plugin import register_function
+@register_function(...)
+def my_plugin_function() -> WidgetType:
+    return MyWidget()
+```
 """
 
 WidgetConstructor = NewType("WidgetConstructor", object)
 """This type is used for the return annotation.
 
->>> from himena.plugin import register_function
->>> @register_function(...)
->>> def my_plugin_function() -> WidgetConstructor:
-...     return MyWidget
+``` python
+from himena.plugin import register_function
+@register_function(...)
+def my_plugin_function() -> WidgetConstructor:
+    return MyWidget
+```
 """
 
 

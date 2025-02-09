@@ -99,17 +99,24 @@ def register_dock_widget_action(
         application profile and will be used to update the dock widget via the method
         `update_configs(self, cfg) -> None`. This argument must be a dict, dataclass
         or pydantic.BaseModel. If a dict, the format must be like:
-        >>> plugin_configs = {
-        ...    "config_0": {"value": 0, "tooltip": ...},
-        ...    "config_1": {"value": "xyz", "tooltip": ...},
-        ... }
+
+        ``` python
+        plugin_configs = {
+           "config_0": {"value": 0, "tooltip": ...},
+           "config_1": {"value": "xyz", "tooltip": ...},
+        }
+        ```
+
         where only "value" is required. If a dataclass or pydantic.BaseModel, field
         objects will be used instead of the dict.
-        >>> @dataclass
-        ... class MyPluginConfig:
-        ...     config_0: int = Field(default=0, metadata={"tooltip": ...})
-        ...     config_1: str = Field(default="xyz", metadata={"tooltip": ...})
-        ... plugin_configs = MyPluginConfig()
+
+        ``` python
+        @dataclass
+        class MyPluginConfig:
+            config_0: int = Field(default=0, metadata={"tooltip": ...})
+            config_1: str = Field(default="xyz", metadata={"tooltip": ...})
+        plugin_configs = MyPluginConfig()
+        ```
     command_id : str, optional
         Command ID. If not given, the function name will be used.
     """

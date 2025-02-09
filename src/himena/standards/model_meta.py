@@ -43,6 +43,14 @@ class BaseMetadata(BaseModel):
     def _class_info(self) -> dict:
         return {"name": self.__class__.__name__, "module": self.__class__.__module__}
 
+    def _repr_pretty_(self, p, cycle):
+        """Pretty print the metadata."""
+        lines = [f"{self.__class__.__name__}("]
+        for key, value in self.__repr_args__():
+            lines.append(f"  {key}={value!r},")
+        lines.append(")")
+        p.text("\n".join(lines))
+
 
 def read_metadata(dir_path: Path) -> BaseMetadata:
     """Read the metadata from a directory."""

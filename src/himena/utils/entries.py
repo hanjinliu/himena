@@ -35,9 +35,11 @@ def iter_plugin_info() -> Iterator[HimenaPluginInfo]:
 def is_submodule(string: str, supertype: str) -> bool:
     """Check if a module is a submodule of another module.
 
-    >>> is_submodule("himena_builtins.io", "himena_builtins")  # True
-    >>> is_submodule("himena_builtins.io", "himena_builtins.io")  # True
-    >>> is_submodule("himena_builtins.io", "himena_test_plugin.io")  # False
+    ``` python
+    is_submodule("himena_builtins.io", "himena_builtins")  # True
+    is_submodule("himena_builtins.io", "himena_builtins.io")  # True
+    is_submodule("himena_builtins.io", "himena_test_plugin.io")  # False
+    ```
     """
     string_parts = string.split(".")
     supertype_parts = supertype.split(".")

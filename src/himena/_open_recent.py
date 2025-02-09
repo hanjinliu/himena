@@ -46,6 +46,8 @@ class OpenSessionFunction:
 
 
 class RecentFileManager:
+    _MENU_UPDATED: set[str] = set()
+
     def __init__(
         self,
         app: Application,
@@ -65,6 +67,8 @@ class RecentFileManager:
 
     def update_menu(self):
         """Update the menu for the recent file list."""
+        if self._app.name in self._MENU_UPDATED:
+            return None
         file_args = self._list_args_for_recent()[::-1]
         if len(file_args) == 0:
             return None
@@ -76,6 +80,7 @@ class RecentFileManager:
         self._disposer = self._app.register_actions(actions)
         _LOGGER.debug("Recent files updated: %r", [p for p, _ in file_args[:3]])
         self._app.menus.menus_changed.emit({self._menu_id})
+        self.__class__._MENU_UPDATED.add(self._app.name)
         return None
 
     @classmethod
