@@ -11,6 +11,8 @@
 `himena` is an infinitely extensible and reusable applications framework for data
 science.
 
+### [&rarr; Documentation](https://hanjinliu.github.io/himena/)
+
 ## Installation
 
 `himena` is available on PyPI.
