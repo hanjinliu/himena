@@ -82,7 +82,7 @@ docs = [
   "mkdocstrings-python",
   "mkdocs-gen-files",
   "griffe-fieldz",
-  "himena[all]"
+  "himena[recommended]"
 ]
 
 [tool.hatch.version]
