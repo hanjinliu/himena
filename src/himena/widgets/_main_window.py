@@ -934,7 +934,9 @@ class MainWindow(Generic[_W]):
                     widget = factory()
                 widget_id = get_widget_class_id(type(widget))
                 reg = _actions.AppActionRegistry.instance()
-                if plugin_configs := self.app_profile.plugin_configs.get(widget_id):
+                if self.model_app.name != "." and (
+                    plugin_configs := self.app_profile.plugin_configs.get(widget_id)
+                ):
                     params = {}
                     for k, v in plugin_configs.items():
                         params[k] = v["value"]
