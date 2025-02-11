@@ -365,7 +365,7 @@ class MainWindow(Generic[_W]):
 
         Parameters
         ----------
-        fn : function (...) -> WidgetDataModel
+        func : function (...) -> WidgetDataModel
             Function that generates a model from the input parameters.
         title : str, optional
             Title of the sub-window.
@@ -972,10 +972,7 @@ class MainWindow(Generic[_W]):
 def _format_exceptions(exceptions: list[tuple[Any, Exception]]) -> str:
     strs: list[str] = []
     for factory, e in exceptions:
-        if hasattr(factory, "__himena_widget_id__"):
-            fname = factory.__himena_widget_id__
-        else:
-            fname = repr(factory)
+        fname = getattr(factory, "__himena_widget_id__", repr(factory))
         strs.append(f"- {type(e).__name__} in {fname}\n  {e}")
     return "\n".join(strs)
 
