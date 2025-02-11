@@ -95,9 +95,9 @@ Sometimes your widget needs to catch the GUI events to update the widget state.
 
 ### Drag and Drop
 
-Drag-and-drop operation is handled using [`DragDropModel`][himena.types.DragDropModel].
+Drag-and-drop operation is handled using [`DragDataModel`][himena.types.DragDataModel].
 
-- `dropped_callback(self, model: DragDropModel) -> None`: Callback method when an item
+- `dropped_callback(self, model: DragDataModel) -> None`: Callback method when an item
   is dropped on the widget.
 - `allowed_drop_types(self) -> list[str]`: List of types that the widget accepts.
 

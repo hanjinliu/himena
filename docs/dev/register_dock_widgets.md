@@ -24,8 +24,9 @@ class MyDockWidget:
     ...  # implementation
 
 @register_dock_widget_action(
-    title="My Dock Widget",  # (1)
-    area="bottom",  # (2)
+    title="My Dock Widget",  # (1)!
+    area="bottom",  # (2)!
+    singleton=True,  # (3)!
 )
 def my_dock_widget_action(ui):
     # Construct and return the dock widget.
@@ -35,6 +36,7 @@ def my_dock_widget_action(ui):
 1. `title`: The title of the dock widget.
 2. `area`: The area where the dock widget is placed. The value can be one of `"left"`,
    `"right"`, `"top"`, or `"bottom"`.
+3. `singleton`: If `True`, only one instance of the dock widget can be created.
 
 ## Plugin Configuration
 

@@ -28,6 +28,7 @@ nav:
     - Tab/Window Manipulation: usage/tab_and_window.md
     - Workflows: usage/workflows.md
     - Sessions: usage/sessions.md
+    - Customization: usage/customization.md
     - Built-in Widgets: usage/builtin_widgets.md
     - Built-in Dock Widgets: usage/builtin_dock_widgets.md
   - Developer's Guide:
@@ -46,6 +47,7 @@ nav:
     - api/types.md
     - api/standards/model_meta.md
     - api/standards/roi.md
+    - api/widgets.md
 
 plugins:
   - search

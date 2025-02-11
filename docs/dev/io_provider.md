@@ -50,7 +50,7 @@ def _(path: Path):
 ```
 
 
-??? note"Plugin priority"
+??? note "Plugin priority"
 
     You can define the priority of the plugin to be chosen by passing the `priority`
     argument.
@@ -69,7 +69,7 @@ def _(path: Path):
     choose your plugin by "Open File With ..." command.
 
 
-!!! danger Matcher must be fast
+!!! danger "Matcher must be fast"
 
     The matcher function must not be a time-consuming function. When the application
     tries to open a file, all registered matcher functions are called.
