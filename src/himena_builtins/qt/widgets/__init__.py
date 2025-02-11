@@ -1,8 +1,12 @@
 from himena.plugins import register_widget_class, register_previewer_class
 from himena_builtins.qt.widgets.array import QArrayView
 from himena_builtins.qt.widgets.text import QTextEdit, QRichTextEdit
-from himena_builtins.qt.widgets.table import QSpreadsheet
-from himena_builtins.qt.widgets.dataframe import QDataFrameView, QDataFramePlotView
+from himena_builtins.qt.widgets.table import QSpreadsheet, SpreadsheetConfigs
+from himena_builtins.qt.widgets.dataframe import (
+    QDataFrameView,
+    QDataFramePlotView,
+    DataFrameConfigs,
+)
 from himena_builtins.qt.widgets.dict_subtypes import QDataFrameStack, QArrayStack
 from himena_builtins.qt.widgets.image import QImageView, QImageLabelView
 from himena_builtins.qt.widgets.image_rois import QImageRoiView
@@ -29,7 +33,12 @@ def register_default_widget_types() -> None:
     register_widget_class(StandardType.IPYNB, QIpynbEdit, priority=50)
 
     # table
-    register_widget_class(StandardType.TABLE, QSpreadsheet, priority=50)
+    register_widget_class(
+        StandardType.TABLE,
+        QSpreadsheet,
+        priority=50,
+        plugin_configs=SpreadsheetConfigs(),
+    )
 
     # array
     register_widget_class(StandardType.ARRAY, QArrayView, priority=50)
@@ -37,7 +46,12 @@ def register_default_widget_types() -> None:
     register_widget_class(StandardType.IMAGE, QImageView, priority=50)
 
     # dataframe
-    register_widget_class(StandardType.DATAFRAME, QDataFrameView, priority=50)
+    register_widget_class(
+        StandardType.DATAFRAME,
+        QDataFrameView,
+        priority=50,
+        plugin_configs=DataFrameConfigs(),
+    )
     register_widget_class(StandardType.DATAFRAME_PLOT, QDataFramePlotView, priority=50)
 
     register_widget_class(StandardType.DATAFRAMES, QDataFrameStack, priority=50)

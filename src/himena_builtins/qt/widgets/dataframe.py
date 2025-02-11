@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 import logging
 from typing import TYPE_CHECKING, Any, NamedTuple
 import weakref
@@ -40,6 +41,7 @@ class QDataFrameModel(QtCore.QAbstractTableModel):
         super().__init__(parent)
         self._df = df
         self._transpose = transpose
+        self._cfg = DataFrameConfigs()
 
     @property
     def df(self) -> DataFrameWrapper:
@@ -121,10 +123,11 @@ class QDraggableHorizontalHeader(QHorizontalHeaderView):
         self._hover_drag_indicator.setFixedSize(14, 14)
         self._hover_drag_indicator.hide()
         self._hover_drag_indicator.dragged.connect(self._drag_event)
+        self._drag_enabled = True
 
     def mouseMoveEvent(self, e: QtGui.QMouseEvent):
         view = self._table_view_ref()
-        if view is None:
+        if view is None or not self._drag_enabled:
             return super().mouseMoveEvent(e)
         if e.button() == QtCore.Qt.MouseButton.NoButton:
             # hover
@@ -152,7 +155,7 @@ class QDraggableHorizontalHeader(QHorizontalHeaderView):
 
     def _drag_event(self):
         view = self._table_view_ref()
-        if view is None:
+        if view is None or not self._drag_enabled:
             return
         df = view.model().df
         nrows = df.num_rows()
@@ -194,11 +197,13 @@ class QDataFrameView(QTableBase):
 
     def __init__(self):
         super().__init__()
-        self.setHorizontalHeader(QDraggableHorizontalHeader(self))
+        self._hor_header = QDraggableHorizontalHeader(self)
+        self.setHorizontalHeader(self._hor_header)
         self.horizontalHeader().setFixedHeight(18)
         self.horizontalHeader().setDefaultSectionSize(75)
         self._control: QDataFrameViewControl | None = None
         self._model_type = StandardType.DATAFRAME
+        self._sep_on_copy = "\t"
 
     @validate_protocol
     def update_model(self, model: WidgetDataModel):
@@ -236,6 +241,11 @@ class QDataFrameView(QTableBase):
     @validate_protocol
     def model_type(self) -> str:
         return self._model_type
+
+    @validate_protocol
+    def update_configs(self, cfg: DataFrameConfigs):
+        self._sep_on_copy = cfg.separator_on_copy.encode().decode("unicode_escape")
+        self._hor_header._drag_enabled = cfg.column_drag_enabled
 
     @validate_protocol
     def is_modified(self) -> bool:
@@ -490,3 +500,14 @@ class QDataFramePlotView(QtW.QSplitter):
             WidgetDataModel(value=axes_layout, type=StandardType.PLOT)
         )
         return None
+
+
+@dataclass
+class DataFrameConfigs:
+    column_drag_enabled: bool = field(default=True)
+    separator_on_copy: str = field(
+        default="\\t",
+        metadata={
+            "tooltip": "Separator used when the content of table is copied to the clipboard."
+        },
+    )

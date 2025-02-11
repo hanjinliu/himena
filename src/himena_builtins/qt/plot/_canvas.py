@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 from matplotlib.figure import Figure
 from matplotlib.backends import backend_qtagg
 from qtpy import QtWidgets as QtW, QtGui
@@ -11,6 +10,7 @@ from himena.consts import StandardType
 from himena.style import Theme
 from himena.standards import plotting as hplt
 from himena_builtins.qt.plot._conversion import convert_plot_layout, update_axis_props
+from himena_builtins.qt.plot._config import MatplotlibCanvasConfigs
 
 
 class QMatplotlibCanvasBase(QtW.QWidget):
@@ -22,6 +22,7 @@ class QMatplotlibCanvasBase(QtW.QWidget):
         self._toolbar: backend_qtagg.NavigationToolbar2QT | None = None
         self._plot_models: hplt.BaseLayoutModel | None = None
         self._modified = False
+        self._cfg = MatplotlibCanvasConfigs()
 
     @property
     def figure(self) -> Figure:
@@ -124,13 +125,16 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
 
     @validate_protocol
     def update_model(self, model: WidgetDataModel):
+        import matplotlib.pyplot as plt
+
         was_none = self._canvas is None
         if was_none:
             self._canvas = FigureCanvasQTAgg()
             self.layout().addWidget(self._canvas)
             self._toolbar = self._prep_toolbar(QNavigationToolBar)
         if isinstance(model.value, hplt.BaseLayoutModel):
-            self._plot_models = convert_plot_layout(model.value, self.figure)
+            with plt.style.context(self._cfg.to_dict()):
+                self._plot_models = convert_plot_layout(model.value, self.figure)
             self._canvas.draw()
         else:
             raise ValueError(f"Unsupported model: {model.value}")
@@ -163,6 +167,10 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
     @validate_protocol
     def model_type(self) -> str:
         return StandardType.PLOT
+
+    @validate_protocol
+    def update_configs(self, cfg: MatplotlibCanvasConfigs):
+        self._cfg = cfg
 
     @validate_protocol
     def dropped_callback(self, model: WidgetDataModel):
