@@ -23,7 +23,7 @@ from psygnal import SignalGroup, Signal
 
 from himena._app_model import AppContext, HimenaApplication
 from himena._open_recent import RecentFileManager, RecentSessionManager
-from himena._utils import import_object
+from himena._utils import get_widget_class_id, import_object
 from himena.consts import NO_RECORDING_FIELD
 from himena.plugins import _checker, actions as _actions
 from himena.profile import AppProfile, load_app_profile
@@ -932,6 +932,18 @@ class MainWindow(Generic[_W]):
                     widget = factory(self)
                 except TypeError:
                     widget = factory()
+                widget_id = get_widget_class_id(type(widget))
+                reg = _actions.AppActionRegistry.instance()
+                if self.model_app.name != "." and (
+                    plugin_configs := self.app_profile.plugin_configs.get(widget_id)
+                ):
+                    params = {}
+                    for k, v in plugin_configs.items():
+                        params[k] = v["value"]
+                    cfgs = reg._plugin_default_configs
+                    cfg_type = cfgs[widget_id].config_class
+                    # widget should always have `update_configs` in this case
+                    widget.update_configs(cfg_type(**params))
                 widget.update_model(model)
             except Exception as e:
                 exceptions.append((factory, e))
@@ -944,6 +956,7 @@ class MainWindow(Generic[_W]):
             ) from exceptions[-1][1]
         if exceptions:
             raise exceptions[-1][1]
+
         return widget
 
     def _on_command_execution(self, id: str, result: Future):

@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import Enum, auto
 from io import StringIO
 from typing import TYPE_CHECKING, Any, Iterable, Literal, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import numpy as np
 
 from qtpy import QtWidgets as QtW
@@ -237,6 +237,7 @@ class QSpreadsheet(QTableBase):
         self._model_type = StandardType.TABLE
         self._undo_stack = UndoRedoStack[TableAction](size=25)
         self._modified_override: bool | None = None
+        self._sep_on_copy = "\t"
 
     def setHeaderFormat(self, value: HeaderFormat) -> None:
         if model := self.model():
@@ -307,6 +308,12 @@ class QSpreadsheet(QTableBase):
     @validate_protocol
     def model_type(self):
         return self._model_type
+
+    @validate_protocol
+    def update_configs(self, cfg: SpreadsheetConfigs):
+        self.horizontalHeader().setDefaultSectionSize(cfg.default_cell_width)
+        self.verticalHeader().setDefaultSectionSize(cfg.default_cell_height)
+        self._sep_on_copy = cfg.separator_on_copy.encode().decode("unicode_escape")
 
     @validate_protocol
     def is_modified(self) -> bool:
@@ -440,7 +447,7 @@ class QSpreadsheet(QTableBase):
         sel = sels[0]
         values = self.model()._arr[sel]
         if values.size > 0:
-            string = "\n".join(["\t".join(cells) for cells in values])
+            string = "\n".join([self._sep_on_copy.join(cells) for cells in values])
             QtW.QApplication.clipboard().setText(string)
 
     def _paste_from_clipboard(self):
@@ -703,3 +710,19 @@ def _array_like_to_array(value) -> np.ndarray:
     if table.ndim < 2:
         table = table.reshape(-1, 1)
     return table
+
+
+@dataclass
+class SpreadsheetConfigs:
+    default_cell_width: int = field(
+        default=75, metadata={"tooltip": "Default width (pixel) of cells."}
+    )
+    default_cell_height: int = field(
+        default=22, metadata={"tooltip": "Default height (pixel) of cells."}
+    )
+    separator_on_copy: str = field(
+        default="\\t",
+        metadata={
+            "tooltip": "Separator used when the content of table is copied to the clipboard."
+        },
+    )

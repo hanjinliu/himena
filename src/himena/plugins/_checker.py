@@ -28,6 +28,7 @@ _ALLOWED_METHODS = frozenset(
         "default_title",
         "native_widget",
         "update_value",
+        "update_configs",
     ]
 )
 

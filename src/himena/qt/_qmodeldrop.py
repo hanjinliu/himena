@@ -34,6 +34,7 @@ class QModelDropBase(QtW.QGroupBox):
         else:
             self._label.setFixedWidth(THUMBNAIL_SIZE.width() + 6)
             _layout = QtW.QVBoxLayout(self)
+        self._label.setToolTip("Drop a subwindow here by Ctrl+dragging the title bar.")
         _layout.setContentsMargins(1, 1, 1, 1)
         _layout.addWidget(self._thumbnail)
         _layout.addWidget(self._label)

@@ -92,6 +92,7 @@ class QImageViewBase(QtW.QSplitter):
         self._extension_default: str = ".png"
         self._original_title: str | None = None
         self._last_slice_future: Future | None = None
+        self._cfg = ImageViewConfigs()
 
     def createHandle(self):
         return QSplitterHandle(self)
@@ -578,6 +579,14 @@ class QImageView(QImageViewBase):
             color = QtGui.QColor(255, 255, 255)
         self._roi_buttons._update_colors(color)
 
+    @validate_protocol
+    def update_configs(self, cfg: ImageViewConfigs):
+        self._cfg = cfg
+        self._img_view.set_stick_to_grid(cfg.default_stick_to_grid)
+        self._img_view.set_show_rois(cfg.default_show_all)
+        self._img_view.set_show_labels(cfg.default_show_labels)
+        self._img_view._selection_handles._handle_size = cfg.roi_handle_size
+
     def _make_control_widget(self) -> QImageViewControl:
         return QImageViewControl(self)
 
@@ -966,3 +975,11 @@ def _channel_names(meta: model_meta.ImageMeta, nchannels: int) -> list[str]:
     else:
         names = [meta.axes[meta.channel_axis].get_label(i) for i in range(nchannels)]
     return names
+
+
+@dataclasses.dataclass
+class ImageViewConfigs:
+    default_stick_to_grid: bool = dataclasses.field(default=True)
+    roi_handle_size: int = dataclasses.field(default=5, metadata={"min": 1, "max": 10})
+    default_show_all: bool = dataclasses.field(default=True)
+    default_show_labels: bool = dataclasses.field(default=True)

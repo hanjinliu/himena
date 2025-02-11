@@ -1,15 +1,22 @@
+from __future__ import annotations
+
 from types import MappingProxyType
 from typing import Callable, overload, TypeVar, TYPE_CHECKING
 from app_model.types import Action
 from himena._descriptors import NoNeedToSave
 from himena._utils import get_display_name, get_widget_class_id
 from himena._app_model import AppContext as ctx
-from himena.plugins.actions import AppActionRegistry, _type_to_expression
+from himena.plugins.actions import (
+    AppActionRegistry,
+    _type_to_expression,
+    PluginConfigTuple,
+)
 
 from himena.types import WidgetDataModel
 
 if TYPE_CHECKING:
     from himena.widgets import SubWindow, MainWindow
+    from himena.plugins.actions import PluginConfigType
 
 _T = TypeVar("_T")
 _WIDGET_ID_TO_WIDGET_CLASS: dict[str, type] = {}
@@ -24,6 +31,7 @@ def register_widget_class(
     type_: str,
     widget_class: _T,
     priority: int = 100,
+    plugin_configs: PluginConfigType | None = None,
 ) -> _T: ...
 
 
@@ -32,10 +40,11 @@ def register_widget_class(
     type_: str,
     widget_class: None,
     priority: int = 100,
+    plugin_configs: PluginConfigType | None = None,
 ) -> Callable[[_T], _T]: ...
 
 
-def register_widget_class(type_, widget_class=None, priority=100):
+def register_widget_class(type_, widget_class=None, priority=100, plugin_configs=None):
     """Register a frontend widget class for the given model type.
 
     The `__init__` method of the registered class must not take any argument. The class
@@ -80,8 +89,17 @@ def register_widget_class(type_, widget_class=None, priority=100):
         _WIDGET_ID_TO_WIDGET_CLASS[widget_id] = wcls
         himena.qt.register_widget_class(type_, wcls, priority=priority)
         fn = OpenDataInFunction(type_, wcls)
-        AppActionRegistry.instance().add_action(fn.to_action())
+        reg = AppActionRegistry.instance()
+        reg.add_action(fn.to_action())
         wcls.__himena_model_type__ = type_
+
+        if plugin_configs:
+            cfg_type = type(plugin_configs)
+            reg._plugin_default_configs[widget_id] = PluginConfigTuple(
+                get_display_name(wcls, sep=" ", class_id=False),
+                plugin_configs,
+                cfg_type,
+            )
         return wcls
 
     return inner if widget_class is None else inner(widget_class)
@@ -160,7 +178,7 @@ class PreviewDataInFunction:
         self._action_id = "preview-in:" + self._plugin_id
         self._type = type_
 
-    def __call__(self, win: "SubWindow", ui: "MainWindow"):
+    def __call__(self, win: SubWindow, ui: MainWindow):
         model = win.to_model().with_open_plugin(self._plugin_id)
         previewer = ui.add_data_model(model)
         previewer._switch_to_file_watch_mode()

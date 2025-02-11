@@ -4,7 +4,7 @@ import os
 from himena.plugins import register_widget_class
 from himena.consts import StandardType
 from himena.utils.misc import lru_cache
-
+from himena_builtins.qt.plot._config import MatplotlibCanvasConfigs
 
 BACKEND_HIMENA = "module://himena_builtins.qt.plot._canvas"
 
@@ -26,7 +26,12 @@ def register_mpl_widget():
     if not _is_matplotlib_available():
         return
 
-    register_widget_class(StandardType.PLOT, model_matplotlib_canvas, priority=0)
+    register_widget_class(
+        StandardType.PLOT,
+        model_matplotlib_canvas,
+        priority=0,
+        plugin_configs=MatplotlibCanvasConfigs(),
+    )
     register_widget_class(StandardType.MPL_FIGURE, matplotlib_canvas, priority=0)
 
 
