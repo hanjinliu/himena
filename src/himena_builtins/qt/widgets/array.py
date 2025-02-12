@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from typing import TYPE_CHECKING, Any, cast
-
+from dataclasses import dataclass
 from qtpy import QtGui, QtCore, QtWidgets as QtW
 from qtpy.QtCore import Qt
 import numpy as np
@@ -12,11 +12,14 @@ from himena.consts import StandardType, MonospaceFontFamily
 from himena.standards.model_meta import ArrayMeta
 from himena.types import WidgetDataModel
 from himena.plugins import validate_protocol
+from himena.utils.collections import UndoRedoStack
 from himena.utils.misc import is_structured
 from himena_builtins.qt.widgets._table_components import (
     QTableBase,
+    Editability,
     QSelectionRangeEdit,
     format_table_value,
+    FLAGS,
 )
 
 if TYPE_CHECKING:
@@ -29,11 +32,11 @@ _LOGGER = logging.getLogger(__name__)
 class QArrayModel(QtCore.QAbstractTableModel):
     """Table model for data frame."""
 
-    def __init__(self, arr: np.ndarray, parent=None):
+    def __init__(self, arr: np.ndarray, parent: QArrayView | None = None):
         super().__init__(parent)
         self._arr_slice = arr  # 2D
         self._slice: tuple[int, ...] = ()
-        if arr.dtype.names is None:
+        if not is_structured(arr):
             if arr.ndim != 2:
                 raise ValueError("Only 2D array is supported.")
             self._dtype = np.dtype(arr.dtype)
@@ -62,6 +65,9 @@ class QArrayModel(QtCore.QAbstractTableModel):
 
     def _get_item_structured(self, r: int, c: int) -> Any:
         return self._arr_slice[r][self._dtype.names[c]]
+
+    def flags(self, index: QtCore.QModelIndex) -> Qt.ItemFlag:
+        return FLAGS
 
     def rowCount(self, parent=None):
         return self._nrows
@@ -95,6 +101,14 @@ class QArrayModel(QtCore.QAbstractTableModel):
                 return text
         return QtCore.QVariant()
 
+    def setData(self, index: QtCore.QModelIndex, value: Any, role: int = ...) -> bool:
+        if role == Qt.ItemDataRole.EditRole:
+            view = self.parent()
+            sl = view._get_indices() + (index.row(), index.column())
+            view.array_update(sl, value, record_undo=True)
+            return True
+        return False
+
     def headerData(
         self,
         section: int,
@@ -117,6 +131,10 @@ class QArrayModel(QtCore.QAbstractTableModel):
                 return f"{name} (dtype: {self._dtype.fields[name][0]})"
             return None
 
+    if TYPE_CHECKING:
+
+        def parent(self) -> QArrayView: ...
+
 
 class QArraySliceView(QTableBase):
     def __init__(self):
@@ -126,6 +144,7 @@ class QArraySliceView(QTableBase):
         self.horizontalHeader().setDefaultSectionSize(55)
         self.setModel(QArrayModel(np.zeros((0, 0))))
         self.setFont(QtGui.QFont(MonospaceFontFamily, 10))
+        self._modified_override: bool | None = None
 
     def update_width_by_dtype(self):
         kind = self.model()._dtype.kind
@@ -198,30 +217,6 @@ class QArraySliceView(QTableBase):
         def model(self) -> QArrayModel: ...
 
 
-def dtype_to_fmt(dtype: np.dtype) -> str:
-    """Choose a proper format string for the dtype to convert to text."""
-    if dtype.kind == "fc":
-        dtype = cast(np.number, dtype)
-        s = 1 if dtype.kind == "f" else 2
-        if dtype.itemsize / s == 2:
-            # 16bit has 10bit (~10^3) fraction
-            return "%.4e"
-        if dtype.itemsize / s == 4:
-            # 32bit has 23bit (~10^7) fraction
-            return "%.8e"
-        if dtype.itemsize / s == 8:
-            # 64bit has 52bit (~10^15) fraction
-            return "%.16e"
-        if dtype.itemsize / s == 16:
-            # 128bit has 112bit (~10^33) fraction
-            return "%.34e"
-        raise RuntimeError(f"Unsupported float dtype: {dtype}")
-
-    if dtype.kind in "iub":
-        return "%d"
-    return "%s"
-
-
 class QArrayView(QtW.QWidget):
     """A widget for viewing 2-D arrays.
 
@@ -259,6 +254,7 @@ class QArrayView(QtW.QWidget):
         self._arr: ArrayWrapper | None = None
         self._control: QArrayViewControl | None = None
         self._model_type = StandardType.ARRAY
+        self._undo_stack = UndoRedoStack[EditAction](size=20)
         self._axes = None
 
     @property
@@ -304,7 +300,10 @@ class QArrayView(QtW.QWidget):
             last_sl = (slice(None),)
         else:
             last_sl = (slice(None), slice(None))
-        return tuple(sb.value() for sb in self._spinboxes) + last_sl
+        return self._get_indices() + last_sl
+
+    def _get_indices(self) -> tuple[int, ...]:
+        return tuple(sb.value() for sb in self._spinboxes)
 
     def _make_spinbox(self, max_value: int):
         spinbox = QtW.QSpinBox()
@@ -323,12 +322,12 @@ class QArrayView(QtW.QWidget):
         if arr.ndim < 2:
             arr_slice = arr.get_slice(())
             if is_structured(arr_slice):
-                self._table.setModel(QArrayModel(arr_slice))
+                self._table.setModel(QArrayModel(arr_slice, self))
             else:
-                self._table.setModel(QArrayModel(arr_slice.reshape(-1, 1)))
+                self._table.setModel(QArrayModel(arr_slice.reshape(-1, 1), self))
         else:
             sl = self._get_slice()
-            self._table.setModel(QArrayModel(arr.get_slice(sl)))
+            self._table.setModel(QArrayModel(arr.get_slice(sl), self))
 
         if self._control is None:
             self._control = QArrayViewControl()
@@ -343,6 +342,7 @@ class QArrayView(QtW.QWidget):
             self._axes = meta.axes
 
         self._model_type = model.type
+        self._modified_override = None
         self.update()
         return None
 
@@ -372,11 +372,60 @@ class QArrayView(QtW.QWidget):
 
     @validate_protocol
     def is_modified(self) -> bool:
-        return False
+        if self._modified_override is not None:
+            return self._modified_override
+        return self._undo_stack.undoable()
+
+    @validate_protocol
+    def set_modified(self, value: bool) -> None:
+        self._modified_override = value
+
+    @validate_protocol
+    def set_editable(self, value: bool) -> None:
+        if value:
+            trig = Editability.TRUE
+        else:
+            trig = Editability.FALSE
+        self._table.setEditTriggers(trig)
 
     @validate_protocol
     def control_widget(self):
         return self._control
+
+    def array_update(
+        self,
+        sl,
+        value: str,
+        *,
+        record_undo: bool = True,
+    ) -> None:
+        """Update the data at the given index."""
+        _ud_old_data = self._arr[sl]
+        self._arr[sl] = parse_string(value, self._arr.dtype)
+        _ud_new_data = self._arr[sl]
+        _action = EditAction(_ud_old_data, _ud_new_data, sl)
+        if record_undo:
+            self._undo_stack.push(_action)
+
+    def undo(self):
+        if action := self._undo_stack.undo():
+            action.invert().apply(self)
+            self.update()
+
+    def redo(self):
+        if action := self._undo_stack.redo():
+            action.apply(self)
+            self.update()
+
+    def keyPressEvent(self, e: QtGui.QKeyEvent) -> None:
+        _Ctrl = QtCore.Qt.KeyboardModifier.ControlModifier
+        if e.modifiers() & _Ctrl and e.key() == QtCore.Qt.Key.Key_Z:
+            self.undo()
+            return
+        elif e.modifiers() & _Ctrl and e.key() == QtCore.Qt.Key.Key_Y:
+            self.redo()
+            return
+        return super().keyPressEvent(e)
 
 
 _R_CENTER = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
@@ -409,3 +458,54 @@ class QArrayViewControl(QtW.QWidget):
             self._label.setText(f"{_type_desc} {arr.shape!r} x {ncols} fields")
         self._selection_range.connect_table(widget._table)
         return None
+
+
+def dtype_to_fmt(dtype: np.dtype) -> str:
+    """Choose a proper format string for the dtype to convert to text."""
+    if dtype.kind == "fc":
+        dtype = cast(np.number, dtype)
+        s = 1 if dtype.kind == "f" else 2
+        if dtype.itemsize / s == 2:
+            # 16bit has 10bit (~10^3) fraction
+            return "%.4e"
+        if dtype.itemsize / s == 4:
+            # 32bit has 23bit (~10^7) fraction
+            return "%.8e"
+        if dtype.itemsize / s == 8:
+            # 64bit has 52bit (~10^15) fraction
+            return "%.16e"
+        if dtype.itemsize / s == 16:
+            # 128bit has 112bit (~10^33) fraction
+            return "%.34e"
+        raise RuntimeError(f"Unsupported float dtype: {dtype}")
+
+    if dtype.kind in "iub":
+        return "%d"
+    return "%s"
+
+
+def parse_string(value: str, dtype: np.dtype) -> Any:
+    if dtype.kind in "iu":
+        return int(value)
+    if dtype.kind == "f":
+        return float(value)
+    if dtype.kind == "b":
+        return bool(value)
+    if dtype.kind == "c":
+        return complex(value)
+    if dtype.kind == "S":
+        return value.encode()
+    return value
+
+
+@dataclass
+class EditAction:
+    old: str | np.ndarray
+    new: str | np.ndarray
+    index: Any
+
+    def invert(self) -> EditAction:
+        return EditAction(self.new, self.old, self.index)
+
+    def apply(self, table: QArrayView):
+        return table.array_update(self.index, self.new, record_undo=False)

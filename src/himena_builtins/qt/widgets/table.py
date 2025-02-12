@@ -14,7 +14,11 @@ from himena.consts import StandardType
 from himena.types import WidgetDataModel
 from himena.standards.model_meta import TableMeta
 from himena.plugins import validate_protocol
-from himena_builtins.qt.widgets._table_components import QTableBase, QSelectionRangeEdit
+from himena_builtins.qt.widgets._table_components import (
+    QTableBase,
+    QSelectionRangeEdit,
+    FLAGS,
+)
 from himena.utils.collections import UndoRedoStack
 
 
@@ -111,13 +115,6 @@ class ActionGroup(TableAction):
             action.apply(table)
 
 
-_FLAGS = (
-    Qt.ItemFlag.ItemIsEnabled
-    | Qt.ItemFlag.ItemIsSelectable
-    | Qt.ItemFlag.ItemIsEditable
-)
-
-
 class QStringArrayModel(QtCore.QAbstractTableModel):
     """Table model for a string array."""
 
@@ -142,7 +139,7 @@ class QStringArrayModel(QtCore.QAbstractTableModel):
         return max(self._ncols + 1, 30)
 
     def flags(self, index: QtCore.QModelIndex) -> Qt.ItemFlag:
-        return _FLAGS
+        return FLAGS
 
     def data(
         self,
