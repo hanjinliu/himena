@@ -447,3 +447,18 @@ class MouseTrack:
         self.last_rightclick_pos: QtCore.QPoint | None = None
         self.was_right_dragging: bool = False
         self.last_button: Literal["left", "right"] | None = None
+
+
+class Editability:
+    TRUE = (
+        QtW.QAbstractItemView.EditTrigger.DoubleClicked
+        | QtW.QAbstractItemView.EditTrigger.EditKeyPressed
+    )
+    FALSE = QtW.QAbstractItemView.EditTrigger.NoEditTriggers
+
+
+FLAGS = (
+    Qt.ItemFlag.ItemIsEnabled
+    | Qt.ItemFlag.ItemIsSelectable
+    | Qt.ItemFlag.ItemIsEditable
+)
