@@ -124,3 +124,4 @@ def test_open_as_text_anyway(sample_dir: Path, himena_ui: MainWindow):
     assert len(himena_ui.tabs[0]) == 1
     assert himena_ui.current_model.type == StandardType.TEXT
     assert himena_ui.current_model.value == sample_dir.joinpath("random_ext.aaa").read_text()
+    assert himena_ui.current_model.extension_default == ".aaa"

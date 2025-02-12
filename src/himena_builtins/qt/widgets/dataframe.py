@@ -204,6 +204,7 @@ class QDataFrameView(QTableBase):
         self._control: QDataFrameViewControl | None = None
         self._model_type = StandardType.DATAFRAME
         self._sep_on_copy = "\t"
+        self._extension_default = ".csv"
 
     @validate_protocol
     def update_model(self, model: WidgetDataModel):
@@ -212,7 +213,8 @@ class QDataFrameView(QTableBase):
         self.setModel(QDataFrameModel(df, transpose=is_single_row))
         if is_single_row:
             self.resizeColumnsToContents()
-
+        if ext := model.extension_default:
+            self._extension_default = ext
         if isinstance(meta := model.metadata, TableMeta):
             self._selection_model.clear()
             if (pos := meta.current_position) is not None:
@@ -234,7 +236,7 @@ class QDataFrameView(QTableBase):
         return WidgetDataModel(
             value=self.model().df.unwrap(),
             type=self.model_type(),
-            extension_default=".csv",
+            extension_default=self._extension_default,
             metadata=self._prep_table_meta(cls=DataFrameMeta),
         )
 

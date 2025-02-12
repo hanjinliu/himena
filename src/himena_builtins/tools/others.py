@@ -37,6 +37,7 @@ def open_as_text_anyway(ui: MainWindow, win: SubWindow) -> WidgetDataModel[str]:
         type=StandardType.TEXT,
         save_behavior_override=NoNeedToSave(),
     )
+    out.extension_default = src.suffix
     win._close_me(ui)
     return out
 

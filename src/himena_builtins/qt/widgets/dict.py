@@ -122,6 +122,7 @@ class QDictOfWidgetEdit(QtW.QTabWidget):
             self.setCurrentIndex(0)
             self.control_widget().update_for_component(self.widget(0))
         self._model_type = model.type
+        self._extension_default = model.extension_default
         return None
 
     @validate_protocol
