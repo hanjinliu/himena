@@ -19,11 +19,14 @@ def duplicate_this_tab(
 ) -> WidgetDataModel["np.ndarray"]:
     """Convert the current tab into a separate window"""
     meta, tab = _meta_and_sheet(model)
-
+    if model.type.startswith("dict."):
+        type_out = model.type[5:]
+    else:
+        type_out = model.type
     return WidgetDataModel(
         value=model.value[tab],
         title=f"{model.title} ({tab})",
-        type=StandardType.TABLE,
+        type=type_out,
         extension_default=".csv",
         metadata=meta.child_meta[tab],
     )
