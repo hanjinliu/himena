@@ -85,7 +85,7 @@ def test_io_commands(himena_ui: MainWindow, tmpdir, sample_dir: Path):
     himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response_open)
     store = himena._providers.ReaderStore.instance()
     param = store.get(response_open(), min_priority=-500)[2]
-    himena_ui.exec_action("open-file-using", with_params={"reader": param})
+    himena_ui.exec_action("open-file-with", with_params={"reader": param})
     assert isinstance(himena_ui.current_window.save_behavior, SaveToPath)
     last = himena_ui.current_window._widget_workflow.last()
     assert isinstance(last, LocalReaderMethod)

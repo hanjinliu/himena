@@ -119,7 +119,9 @@ def default_zip_reader(file_path: Path) -> WidgetDataModel:
         tmpdir = Path(tmpdir)
         z.extractall(tmpdir)
         for each in tmpdir.glob("*"):
-            models.append(store.run(each))
+            model = store.run(each)
+            model.title = each.name
+            models.append(model)
     return WidgetDataModel(value=models, type=StandardType.MODELS)
 
 
