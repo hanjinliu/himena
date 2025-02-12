@@ -187,7 +187,7 @@ class QTextEdit(QtW.QWidget):
         return WidgetDataModel(
             value=self._main_text_edit.toPlainText(),
             type=self.model_type(),
-            extension_default=".txt",
+            extension_default=self._extension_default,
             metadata=TextMeta(
                 language=self._control._language_combobox.currentText(),
                 spaces=int(self._control._tab_spaces_combobox.currentText()),
