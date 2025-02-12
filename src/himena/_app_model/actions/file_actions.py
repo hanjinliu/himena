@@ -62,7 +62,7 @@ def _get_reader_options(file_path: Path) -> dict:
 
     # prepare reader plugin choices
     choices_reader = sorted(
-        [(f"{r.__name__}\n({r.plugin.name})", r) for r in readers],
+        [(f"{r.__name__}\n({r.plugin_str})", r) for r in readers],
         key=lambda x: x[1].priority,
         reverse=True,
     )
@@ -94,7 +94,7 @@ def _open_file_using_reader(
 
 
 @ACTIONS.append_from_fn(
-    id="open-file-using",
+    id="open-file-with",
     title="Open File With ...",
     menus=[
         {"id": MenuId.FILE, "group": READ_GROUP},
