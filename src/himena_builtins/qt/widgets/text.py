@@ -134,6 +134,7 @@ class QTextEdit(QtW.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._main_text_edit)
         self._model_type = StandardType.TEXT
+        self._extension_default = ".txt"
 
     @validate_protocol
     def control_widget(self) -> QTextControl:
@@ -175,6 +176,8 @@ class QTextEdit(QtW.QWidget):
         if encoding:
             self._control._encoding.setText(encoding)
         self._model_type = model.type
+        if ext := model.extension_default:
+            self._extension_default = ext
         return None
 
     @validate_protocol

@@ -238,6 +238,7 @@ class QSpreadsheet(QTableBase):
         self._undo_stack = UndoRedoStack[TableAction](size=25)
         self._modified_override: bool | None = None
         self._sep_on_copy = "\t"
+        self._extension_default = ".csv"
 
     def setHeaderFormat(self, value: HeaderFormat) -> None:
         if model := self.model():
@@ -291,6 +292,8 @@ class QSpreadsheet(QTableBase):
             self._control._separator = None
             self._control._separator_label.hide()
         self._model_type = model.type
+        if ext := model.extension_default:
+            self._extension_default = ext
         return None
 
     @validate_protocol
@@ -301,7 +304,7 @@ class QSpreadsheet(QTableBase):
         return WidgetDataModel(
             value=self.model()._arr,
             type=self.model_type(),
-            extension_default=".csv",
+            extension_default=self._extension_default,
             metadata=meta,
         )
 

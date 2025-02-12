@@ -144,41 +144,6 @@ class QModelStack(QtW.QSplitter):
                 item = self._make_eager_item(name, model)
             self._model_list.addItem(item)
 
-    def _make_lazy_item(self, name: str, model: WidgetDataModel):
-        """Make a list item that will convert a file into a widget when needed."""
-        item = QtW.QListWidgetItem(name)
-        item.setFlags(item.flags() | QtCore.Qt.ItemFlag.ItemIsEditable)
-        item.setData(_MODEL_ROLE, model)
-        item.setData(_WIDGET_ROLE, None)
-        item.setToolTip(_make_tooltip(name, model))
-        return item
-
-    def _make_eager_item(self, name: str, model: WidgetDataModel):
-        """Make a list item that will immediately converted intoa widget."""
-        item = QtW.QListWidgetItem(name)
-        item.setFlags(item.flags() | QtCore.Qt.ItemFlag.ItemIsEditable)
-        item.setData(_MODEL_ROLE, None)
-        item.setToolTip(_make_tooltip(name, model))
-        widget = self._model_to_widget(model)
-        self._add_widget(item, widget)
-        return item
-
-    def _model_to_widget(self, model: WidgetDataModel) -> Any:
-        # this may return the interface, not the QWidget!
-        return self._ui._pick_widget(model)
-
-    def _add_widget(self, item: QtW.QListWidgetItem, widget: Any):
-        interf, native_widget = _split_widget_and_interface(widget)
-        self._widget_stack.add_widget(interf, native_widget)
-
-        if hasattr(interf, "control_widget"):
-            self._control_widget.addWidget(interf.control_widget())
-        else:
-            self._control_widget.addWidget(QtW.QWidget())  # empty
-        item.setData(_WIDGET_ROLE, interf)
-        _checker.call_widget_added_callback(interf)
-        _checker.call_theme_changed_callback(interf, self._ui.theme)
-
     @validate_protocol
     def to_model(self) -> WidgetDataModel:
         models: list[WidgetDataModel] = []
@@ -190,7 +155,11 @@ class QModelStack(QtW.QSplitter):
             name = item.text()
             model.title = name
             models.append(model)
-        return WidgetDataModel(value=models, type=StandardType.MODELS)
+        return WidgetDataModel(
+            value=models,
+            type=StandardType.MODELS,
+            extension_default=".zip",
+        )
 
     @validate_protocol
     def model_type(self) -> StandardType:
@@ -240,6 +209,41 @@ class QModelStack(QtW.QSplitter):
     def theme_changed_callback(self, theme: Theme):
         if widget := self._widget_stack.current_interface():
             _checker.call_theme_changed_callback(widget, theme)
+
+    def _make_lazy_item(self, name: str, model: WidgetDataModel):
+        """Make a list item that will convert a file into a widget when needed."""
+        item = QtW.QListWidgetItem(name)
+        item.setFlags(item.flags() | QtCore.Qt.ItemFlag.ItemIsEditable)
+        item.setData(_MODEL_ROLE, model)
+        item.setData(_WIDGET_ROLE, None)
+        item.setToolTip(_make_tooltip(name, model))
+        return item
+
+    def _make_eager_item(self, name: str, model: WidgetDataModel):
+        """Make a list item that will immediately converted intoa widget."""
+        item = QtW.QListWidgetItem(name)
+        item.setFlags(item.flags() | QtCore.Qt.ItemFlag.ItemIsEditable)
+        item.setData(_MODEL_ROLE, None)
+        item.setToolTip(_make_tooltip(name, model))
+        widget = self._model_to_widget(model)
+        self._add_widget(item, widget)
+        return item
+
+    def _model_to_widget(self, model: WidgetDataModel) -> Any:
+        # this may return the interface, not the QWidget!
+        return self._ui._pick_widget(model)
+
+    def _add_widget(self, item: QtW.QListWidgetItem, widget: Any):
+        interf, native_widget = _split_widget_and_interface(widget)
+        self._widget_stack.add_widget(interf, native_widget)
+
+        if hasattr(interf, "control_widget"):
+            self._control_widget.addWidget(interf.control_widget())
+        else:
+            self._control_widget.addWidget(QtW.QWidget())  # empty
+        item.setData(_WIDGET_ROLE, interf)
+        _checker.call_widget_added_callback(interf)
+        _checker.call_theme_changed_callback(interf, self._ui.theme)
 
     def _update_current_index(self):
         row = self._model_list.currentRow()

@@ -11,6 +11,8 @@ from himena.plugins import validate_protocol
 
 
 class QDataFrameStack(QDictOfWidgetEdit):
+    """DataFrame Stack widget."""
+
     __himena_widget_id__ = "builtins:QDataFrameStack"
     __himena_display_name__ = "Built-in DataFrame Stack"
 
