@@ -74,7 +74,7 @@ ui.add_widget(QPushButton("Hello, world!"))
 # add a magicgui widget
 from magicgui.widgets import LineEdit
 
-ui.add_magicgui(LineEdit(name="name", value="abc"))
+ui.add_widget(LineEdit(name="name", value="abc"))
 ```
 
 ## Access to the Data and Widget States

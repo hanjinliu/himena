@@ -1,5 +1,8 @@
 # Register Widgets
 
+In this section, you will learn how to define and register custom widgets for specific
+data types.
+
 ## Protocols
 
 To avoid the potential dangers of metaclass collision and method collision, `himena` do
@@ -22,8 +25,9 @@ communication between the plugin and the main application.
             ...
     ```
 
-All the protocols are optional, but to make the plugin better, you should implement as
-many protocols as possible.
+All the protocols are optional except for `update_model`, which is called when the
+widget is constructed from a data model.
+To make the plugin better, you should implement as many protocols as possible.
 
 ### Compatibility with `WidgetDataModel` Standard
 
