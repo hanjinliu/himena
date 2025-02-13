@@ -553,4 +553,4 @@ class EditAction:
         return EditAction(self.new, self.old, self.index)
 
     def apply(self, table: QDataFrameView):
-        return table.array_update(self.index, self.new, record_undo=False)
+        raise NotImplementedError
