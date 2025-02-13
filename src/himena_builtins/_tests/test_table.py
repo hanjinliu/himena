@@ -1,3 +1,4 @@
+from numpy.testing import assert_equal
 from pytestqt.qtbot import QtBot
 from himena import MainWindow
 from himena.standards.model_meta import TableMeta
@@ -95,6 +96,27 @@ def test_table_view_current_position(qtbot):
 
 def test_table_view_selections(qtbot):
     table.test_selections(_get_tester())
+
+def test_copy_and_paste(qtbot):
+    tester = _get_tester()
+    qtbot.addWidget(tester.widget)
+    tester.update_model(value=[["a", "b"], ["c", "bc"]])
+    tester.widget.selection_model.current_index = (0, 0)
+    tester.widget.selection_model.set_ranges([(slice(0, 1), slice(0, 1))])
+    tester.widget._copy_to_clipboard()
+    tester.widget.selection_model.current_index = (1, 1)
+    tester.widget.selection_model.set_ranges([(slice(1, 2), slice(1, 2))])
+    tester.widget._paste_from_clipboard()
+    assert_equal(tester.widget.to_model().value, [["a", "b"], ["c", "a"]])
+    tester.widget.selection_model.set_ranges([(slice(0, 2), slice(0, 3))])
+    tester.widget._paste_from_clipboard()
+    assert_equal(tester.widget.to_model().value, [["a", "a", "a"], ["a", "a", "a"]])
+    tester.update_model(value=[["a", "b"], ["c", "bc"]])
+    tester.widget.selection_model.set_ranges([(slice(0, 2), slice(0, 1))])
+    tester.widget._copy_to_clipboard()
+    tester.widget.selection_model.set_ranges([(slice(0, 2), slice(1, 2))])
+    tester.widget._paste_from_clipboard()
+    assert_equal(tester.widget.to_model().value, [["a", "a"], ["c", "c"]])
 
 def _get_tester():
     return WidgetTester(QSpreadsheet())

@@ -200,9 +200,13 @@ class DataFrameWrapper(ABC):
     def column_to_array(self, name: str) -> np.ndarray:
         """Return a column of the dataframe as an 1D numpy array."""
 
+    @abstractmethod
+    def with_columns(self, data: dict[str, np.ndarray]) -> Self:
+        """Set the columns of the dataframe using a dictionary of names and 1D numpy arrays."""
+
     @classmethod
     @abstractmethod
-    def from_dict(cls, data: dict[str, np.ndarray]) -> DataFrameWrapper:
+    def from_dict(cls, data: dict[str, np.ndarray]) -> Self:
         """Create a dataframe from a dictionary of column names and arrays."""
 
     def to_dict(self) -> dict[str, np.ndarray]:
@@ -307,6 +311,16 @@ class DictWrapper(DataFrameWrapper):
     def column_to_array(self, name: str) -> np.ndarray:
         return np.asarray(self._df[name])
 
+    def set_column_by_array(self, name: str, array: np.ndarray):
+        if name not in self._df:
+            self._columns.append(name)
+        self._df[name] = array
+
+    def with_columns(self, data: dict[str, np.ndarray]) -> DictWrapper:
+        new_df = dict(self._df)
+        new_df.update(data)
+        return DictWrapper(new_df)
+
     @classmethod
     def from_dict(cls, data: dict) -> DataFrameWrapper:
         content: dict[str, np.ndarray] = {}
@@ -386,6 +400,10 @@ class PandasWrapper(DataFrameWrapper):
 
     def column_to_array(self, name: str) -> np.ndarray:
         return self._df[name].to_numpy()
+
+    def with_columns(self, data: dict[str, np.ndarray]) -> PandasWrapper:
+        df_new = self._df.assign(**data)
+        return PandasWrapper(df_new)
 
     @classmethod
     def from_dict(cls, data: dict) -> DataFrameWrapper:
@@ -486,6 +504,10 @@ class PolarsWrapper(DataFrameWrapper):
     def column_to_array(self, name: str) -> np.ndarray:
         return self._df[name].to_numpy()
 
+    def with_columns(self, data: dict[str, np.ndarray]) -> PolarsWrapper:
+        df_new = self._df.with_columns(data)
+        return PolarsWrapper(df_new)
+
     @classmethod
     def from_dict(cls, data: dict) -> DataFrameWrapper:
         import polars as pl
@@ -585,6 +607,11 @@ class PyarrowWrapper(DataFrameWrapper):
 
     def column_to_array(self, name: str) -> np.ndarray:
         return self._df[name].to_numpy()
+
+    def with_columns(self, data: dict[str, np.ndarray]) -> PyarrowWrapper:
+        new_columns = {name: pa.array(data[name]) for name in data}
+        new_table = self._df.append_columns(new_columns)
+        return PyarrowWrapper(new_table)
 
     @classmethod
     def from_dict(cls, data: dict) -> DataFrameWrapper:

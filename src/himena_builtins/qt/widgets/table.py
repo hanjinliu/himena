@@ -14,8 +14,13 @@ from himena.consts import StandardType
 from himena.types import WidgetDataModel
 from himena.standards.model_meta import TableMeta
 from himena.plugins import validate_protocol
-from himena_builtins.qt.widgets._table_components import QTableBase, QSelectionRangeEdit
+from himena_builtins.qt.widgets._table_components import (
+    QTableBase,
+    QSelectionRangeEdit,
+    FLAGS,
+)
 from himena.utils.collections import UndoRedoStack
+from himena_builtins.qt.widgets._table_components._base import Editability
 
 
 class HeaderFormat(Enum):
@@ -111,13 +116,6 @@ class ActionGroup(TableAction):
             action.apply(table)
 
 
-_FLAGS = (
-    Qt.ItemFlag.ItemIsEnabled
-    | Qt.ItemFlag.ItemIsSelectable
-    | Qt.ItemFlag.ItemIsEditable
-)
-
-
 class QStringArrayModel(QtCore.QAbstractTableModel):
     """Table model for a string array."""
 
@@ -142,7 +140,7 @@ class QStringArrayModel(QtCore.QAbstractTableModel):
         return max(self._ncols + 1, 30)
 
     def flags(self, index: QtCore.QModelIndex) -> Qt.ItemFlag:
-        return _FLAGS
+        return FLAGS
 
     def data(
         self,
@@ -236,7 +234,6 @@ class QSpreadsheet(QTableBase):
         self._control = None
         self._model_type = StandardType.TABLE
         self._undo_stack = UndoRedoStack[TableAction](size=25)
-        self._modified_override: bool | None = None
         self._sep_on_copy = "\t"
         self._extension_default = ".csv"
 
@@ -329,11 +326,15 @@ class QSpreadsheet(QTableBase):
         self._modified_override = value
 
     @validate_protocol
+    def is_editable(self) -> bool:
+        return self.editTriggers() == Editability.TRUE
+
+    @validate_protocol
     def set_editable(self, value: bool) -> None:
         if value:
-            trig = _EDITABLE
+            trig = Editability.TRUE
         else:
-            trig = _NOT_EDITABLE
+            trig = Editability.FALSE
         self.setEditTriggers(trig)
 
     @validate_protocol
@@ -342,7 +343,7 @@ class QSpreadsheet(QTableBase):
 
     def array_update(
         self,
-        index: tuple[int, int],
+        index: tuple[int | slice, int | slice],
         value: str,
         *,
         record_undo: bool = True,
@@ -351,10 +352,12 @@ class QSpreadsheet(QTableBase):
         r, c = index
         arr = self.model()._arr
         _ud_old_shape = arr.shape
-        if r >= arr.shape[0] or c >= arr.shape[1]:  # need expansion
+        r_max = r.stop if isinstance(r, slice) else r
+        c_max = c.stop if isinstance(c, slice) else c
+        if r_max >= arr.shape[0] or c_max >= arr.shape[1]:  # need expansion
             _ud_old_data = ""
             _ud_old_shape = arr.shape
-            self.array_expand(r + 1, c + 1)
+            self.array_expand(r_max + 1, c_max + 1)
             _ud_new_shape = arr.shape
             _action_reshape = ReshapeAction(_ud_old_shape, _ud_new_shape)
             arr = self.model()._arr
@@ -454,7 +457,6 @@ class QSpreadsheet(QTableBase):
             QtW.QApplication.clipboard().setText(string)
 
     def _paste_from_clipboard(self):
-        idx = self._selection_model.current_index
         text = QtW.QApplication.clipboard().text()
         if not text:
             return
@@ -465,13 +467,11 @@ class QSpreadsheet(QTableBase):
         )
         # undo info
         arr = self.model()._arr
-        row0, col0 = idx.row, idx.column
-        lr, lc = arr_paste.shape
-        sl = (slice(row0, row0 + lr), slice(col0, col0 + lc))
+        sl = self._selection_model.get_single_range()
         _ud_old_shape = self.data_shape()
         _ud_old_data = arr[sl].copy()
 
-        self._paste_array((idx.row, idx.column), arr_paste)
+        self._paste_array(arr_paste)
 
         # undo info
         _ud_new_shape = self.data_shape()
@@ -484,11 +484,13 @@ class QSpreadsheet(QTableBase):
             _action = ActionGroup([_action_reshape, _action_edit])
         self._undo_stack.push(_action)
 
-    def _paste_array(self, origin: tuple[int, int], arr_paste: np.ndarray):
+    def _paste_array(self, arr_paste: np.ndarray):
         arr = self.model()._arr
         # paste in the text
-        row0, col0 = origin
-        lr, lc = arr_paste.shape
+        rng = self._selection_model.get_single_range()
+        row0, col0 = rng[0].start, rng[1].start
+        lr = max(arr_paste.shape[0], rng[0].stop - rng[0].start)
+        lc = max(arr_paste.shape[1], rng[1].stop - rng[1].start)
 
         # expand the table if necessary
         if (row0 + lr) > arr.shape[0]:

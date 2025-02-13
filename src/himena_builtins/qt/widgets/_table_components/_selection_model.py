@@ -85,6 +85,12 @@ class SelectionModel:
     def ranges(self) -> list[Range]:
         return list(self._ranges)
 
+    def get_single_range(self) -> Range:
+        """Return the only range in the selection model."""
+        if len(self._ranges) == 1:
+            return self._ranges[0]
+        raise ValueError("Multiple ranges are selected.")
+
     def iter_row_selections(self) -> Iterator[slice]:
         for i in self._row_selection_indices:
             yield self._ranges[i][0]

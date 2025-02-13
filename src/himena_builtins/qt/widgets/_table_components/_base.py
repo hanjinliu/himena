@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterable, Iterator, Literal
+from typing import TYPE_CHECKING, Any, Iterable, Iterator, Literal
 from qtpy import QtWidgets as QtW
 from qtpy import QtCore, QtGui
 from qtpy.QtCore import Qt
@@ -57,8 +57,8 @@ class QItemDelegate(QtW.QStyledItemDelegate):
 class QTableBase(QtW.QTableView):
     """The base class for high-performance table widgets."""
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent: QtW.QWidget | None = None) -> None:
+        super().__init__(parent)
         self.setVerticalHeader(QVerticalHeaderView(self))
         self.setHorizontalHeader(QHorizontalHeaderView(self))
 
@@ -89,6 +89,7 @@ class QTableBase(QtW.QTableView):
         self._hover_color = QtGui.QColor(self._selection_color)
         self._current_color = QtGui.QColor("#A7A7A7")
         self._mouse_track = MouseTrack()
+        self._modified_override: bool | None = None
 
     @property
     def selection_model(self) -> SelectionModel:
@@ -447,3 +448,32 @@ class MouseTrack:
         self.last_rightclick_pos: QtCore.QPoint | None = None
         self.was_right_dragging: bool = False
         self.last_button: Literal["left", "right"] | None = None
+
+
+class Editability:
+    TRUE = (
+        QtW.QAbstractItemView.EditTrigger.DoubleClicked
+        | QtW.QAbstractItemView.EditTrigger.EditKeyPressed
+    )
+    FALSE = QtW.QAbstractItemView.EditTrigger.NoEditTriggers
+
+
+FLAGS = (
+    Qt.ItemFlag.ItemIsEnabled
+    | Qt.ItemFlag.ItemIsSelectable
+    | Qt.ItemFlag.ItemIsEditable
+)
+
+
+def parse_string(value: str, dtype_kind: str) -> Any:
+    if dtype_kind in "iu":
+        return int(value)
+    if dtype_kind == "f":
+        return float(value)
+    if dtype_kind == "b":
+        return bool(value)
+    if dtype_kind == "c":
+        return complex(value)
+    if dtype_kind == "S":
+        return value.encode()
+    return value

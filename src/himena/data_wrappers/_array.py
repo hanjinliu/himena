@@ -46,7 +46,13 @@ class ArrayWrapper(Generic[ArrayT]):
         self._arr = data
 
     def __getitem__(self, sl: tuple[Index, ...]) -> Self:
+        is_scalar = all(hasattr(s, "__index__") for s in sl)
+        if is_scalar:
+            return self._arr[sl]
         return self.__class__(self._arr[sl])
+
+    def __setitem__(self, sl: tuple[Index, ...], value: ArrayT) -> None:
+        self._arr[sl] = value
 
     @property
     def arr(self) -> ArrayT:

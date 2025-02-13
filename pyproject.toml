@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "himena"
 dynamic = ["version"]
-description = "An infinitely extensible and reusable applications framework."
+description = "An infinitely extensible and reusable application framework."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }

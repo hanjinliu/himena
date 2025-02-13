@@ -2,6 +2,7 @@ import numpy as np
 from numpy.testing import assert_array_equal
 import pytest
 from qtpy.QtCore import Qt
+from qtpy import QtWidgets as QtW
 from pytestqt.qtbot import QtBot
 from himena import MainWindow, StandardType
 from himena.standards.model_meta import ArrayMeta, ArrayAxis
@@ -20,7 +21,7 @@ def test_array_view(qtbot: QtBot):
         table.model().headerData(0, Qt.Orientation.Horizontal, Qt.ItemDataRole.ToolTipRole)
         table.model().headerData(0, Qt.Orientation.Vertical, Qt.ItemDataRole.ToolTipRole)
         table.selection_model.set_ranges([(slice(1, 2), slice(1, 3))])
-        table.copy_data()
+        table._copy_data()
         table._make_context_menu()
         tester.update_model(value=np.arange(72).reshape(3, 2, 3, 4))
         assert len(tester.widget._spinboxes) == 2
@@ -55,6 +56,22 @@ def test_structured(qtbot: QtBot):
         assert np.all(old.value == new.value)
         assert new.metadata.selections == [((1, 2), (1, 3))]
         assert old.metadata.selections == new.metadata.selections
+
+def test_copy_and_paste(qtbot: QtBot):
+    with WidgetTester(QArrayView()) as tester:
+        tester.update_model(value=np.zeros((3, 5, 3, 4), dtype=np.int32))
+        tester.widget.set_indices(1, 2)
+        tester.widget.selection_model.current_index = (2, 0)
+        qtbot.keyClick(tester.widget._table, Qt.Key.Key_F2)
+        tester.widget._table.set_string_input(2, 0, "4")
+        assert tester.to_model().value[1, 2, 2, 0] == 4
+        # test copy and paste
+        tester.widget.selection_model.set_ranges([(slice(2, 3), slice(0, 1))])
+        tester.widget._table._copy_data()
+        assert QtW.QApplication.clipboard().text() == "4"
+        tester.widget.selection_model.set_ranges([(slice(0, 2), slice(1, 3))])
+        tester.widget._table._paste_from_clipboard()
+        assert_array_equal(tester.to_model().value[1, 2, 0:2, 1:3], 4)
 
 
 def test_binary_operations(himena_ui: MainWindow):
