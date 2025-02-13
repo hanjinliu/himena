@@ -1208,6 +1208,8 @@
 
 
 <h1 id="register-widgets">Register Widgets</h1>
+<p>In this section, you will learn how to define and register custom widgets for specific
+data types.</p>
 <h2 id="protocols">Protocols</h2>
 <p>To avoid the potential dangers of metaclass collision and method collision, <code>himena</code> do
 not use a super class to define plugin widgets. Instead, your plugin widgets have to
@@ -1226,8 +1228,9 @@ you can decorate the protocol methods with <code>validate_protocol</code> decora
         <span class="o">...</span>
 </code></pre></div>
 </details>
-<p>All the protocols are optional, but to make the plugin better, you should implement as
-many protocols as possible.</p>
+<p>All the protocols are optional except for <code>update_model</code>, which is called when the
+widget is constructed from a data model.
+To make the plugin better, you should implement as many protocols as possible.</p>
 <h3 id="compatibility-with-widgetdatamodel-standard">Compatibility with <code>WidgetDataModel</code> Standard</h3>
 <p>To make the plugin widgets compatible with the <code>WidgetDataModel</code> standard that is used
 everywhere in <code>himena</code>, you have to implement the following protocols:</p>

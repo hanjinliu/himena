@@ -3885,7 +3885,7 @@
 
 
               <details class="quote">
-                <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+                <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
                 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 37</span>
 <span class="normal"> 38</span>
 <span class="normal"> 39</span>
@@ -4538,7 +4538,7 @@
         <p>Add a job to the job stack.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">344</span>
 <span class="normal">345</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_add_job_progress</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">future</span><span class="p">:</span> <span class="n">Future</span><span class="p">,</span> <span class="n">desc</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">total</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Add a job to the job stack.&quot;&quot;&quot;</span>
@@ -4562,7 +4562,7 @@
         <p>Add a what's this text to the main window.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">347</span>
 <span class="normal">348</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_add_whats_this</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">style</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;plain&quot;</span><span class="p">,</span> <span class="s2">&quot;markdown&quot;</span><span class="p">,</span> <span class="s2">&quot;html&quot;</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Add a what&#39;s this text to the main window.&quot;&quot;&quot;</span>
@@ -4586,7 +4586,7 @@
         <p>Add a widget to the parametric window.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">306</span>
 <span class="normal">307</span>
 <span class="normal">308</span>
@@ -4620,7 +4620,7 @@
         <p>Get the size of the tab area.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">142</span>
 <span class="normal">143</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_area_size</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the size of the tab area.&quot;&quot;&quot;</span>
@@ -4644,7 +4644,7 @@
         <p>Get the clipboard data.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">275</span>
 <span class="normal">276</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_clipboard_data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ClipboardDataModel</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the clipboard data.&quot;&quot;&quot;</span>
@@ -4668,7 +4668,7 @@
         <p>Connect the signal of the backend main window to the callbacks.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">262</span>
 <span class="normal">263</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_connect_main_window_signals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">main_window</span><span class="p">:</span> <span class="n">MainWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Connect the signal of the backend main window to the callbacks.&quot;&quot;&quot;</span>
@@ -4692,7 +4692,7 @@
         <p>Connect the events between the wrapper parametric window and the backend.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">291</span>
 <span class="normal">292</span>
 <span class="normal">293</span>
@@ -4724,7 +4724,7 @@
         <p>Connect the events between the wrapper sub window and the backend widget.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">265</span>
 <span class="normal">266</span>
 <span class="normal">267</span>
@@ -4757,7 +4757,7 @@
 <p>If there is no sub window, or the tab area itself is selected, return None.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">72</span>
 <span class="normal">73</span>
 <span class="normal">74</span>
@@ -4788,7 +4788,7 @@
 <p>If there is no tab, return None.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">54</span>
 <span class="normal">55</span>
 <span class="normal">56</span>
@@ -4818,7 +4818,7 @@
         <p>Delete the dock widget.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">245</span>
 <span class="normal">246</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_del_dock_widget</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">widget</span><span class="p">:</span> <span class="n">_W</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Delete the dock widget.&quot;&quot;&quot;</span>
@@ -4844,7 +4844,7 @@
 wrapper side).</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">198</span>
 <span class="normal">199</span>
 <span class="normal">200</span>
@@ -4876,7 +4876,7 @@ wrapper side).</p>
         <p>Delete the <code>i_window</code>-th window in the <code>i_tab</code>-th tab.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">192</span>
 <span class="normal">193</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_del_widget_at</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i_tab</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">i_window</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Delete the `i_window`-th window in the `i_tab`-th tab.&quot;&quot;&quot;</span>
@@ -4900,7 +4900,7 @@ wrapper side).</p>
         <p>Get the title of the dock widget.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">239</span>
 <span class="normal">240</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_dock_widget_title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">widget</span><span class="p">:</span> <span class="n">_W</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the title of the dock widget.&quot;&quot;&quot;</span>
@@ -4924,7 +4924,7 @@ wrapper side).</p>
         <p>Whether the dock widget is visible.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">233</span>
 <span class="normal">234</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_dock_widget_visible</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">widget</span><span class="p">:</span> <span class="n">_W</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether the dock widget is visible.&quot;&quot;&quot;</span>
@@ -4948,7 +4948,7 @@ wrapper side).</p>
         <p>Close the main window (confirm if needed).</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">186</span>
 <span class="normal">187</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_exit_main_window</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">confirm</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Close the main window (confirm if needed).&quot;&quot;&quot;</span>
@@ -4972,7 +4972,7 @@ wrapper side).</p>
         <p>Get the list of tab names.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">195</span>
 <span class="normal">196</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_get_tab_name_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the list of tab names.&quot;&quot;&quot;</span>
@@ -4996,7 +4996,7 @@ wrapper side).</p>
         <p>Get the list of widgets in the tab.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">189</span>
 <span class="normal">190</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_get_widget_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i_tab</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_W</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the list of widgets in the tab.&quot;&quot;&quot;</span>
@@ -5022,7 +5022,7 @@ wrapper side).</p>
 fallback class)</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">252</span>
 <span class="normal">253</span>
 <span class="normal">254</span>
@@ -5060,7 +5060,7 @@ fallback class)</p>
         <p>Get the rect of the main window.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">48</span>
 <span class="normal">49</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_main_window_rect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WindowRect</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the rect of the main window.&quot;&quot;&quot;</span>
@@ -5084,7 +5084,7 @@ fallback class)</p>
         <p>Move the focus to the widget.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">320</span>
 <span class="normal">321</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_move_focus_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">widget</span><span class="p">:</span> <span class="n">_W</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Move the focus to the widget.&quot;&quot;&quot;</span>
@@ -5108,7 +5108,7 @@ fallback class)</p>
         <p>Get the number of tabs.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">69</span>
 <span class="normal">70</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_num_tabs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the number of tabs.&quot;&quot;&quot;</span>
@@ -5136,7 +5136,7 @@ fallback class)</p>
         <p>Open a file dialog.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">164</span>
 <span class="normal">165</span>
 <span class="normal">166</span>
@@ -5175,7 +5175,7 @@ fallback class)</p>
 thread.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">332</span>
 <span class="normal">333</span>
 <span class="normal">334</span>
@@ -5213,7 +5213,7 @@ thread.</p>
 dictionary of parameters.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">284</span>
 <span class="normal">285</span>
 <span class="normal">286</span>
@@ -5245,7 +5245,7 @@ dictionary of parameters.</p>
         <p>Register the actions at runtime.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">329</span>
 <span class="normal">330</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_rebuild_for_runtime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_menus</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Register the actions at runtime.&quot;&quot;&quot;</span>
@@ -5269,7 +5269,7 @@ dictionary of parameters.</p>
         <p>Remove the control widget for the given sub window widget from the stack.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 99</span>
 <span class="normal">100</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_remove_control_widget</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">widget</span><span class="p">:</span> <span class="n">_W</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Remove the control widget for the given sub window widget from the stack.&quot;&quot;&quot;</span>
@@ -5293,7 +5293,7 @@ dictionary of parameters.</p>
         <p>Remove a widget from the parametric window.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">314</span>
 <span class="normal">315</span>
 <span class="normal">316</span>
@@ -5323,7 +5323,7 @@ dictionary of parameters.</p>
         <p>Start renaming the <code>i_window</code>-th window in the <code>i_tab</code>-th tab.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">205</span>
 <span class="normal">206</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_rename_window_at</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i_tab</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">i_window</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Start renaming the `i_window`-th window in the `i_tab`-th tab.&quot;&quot;&quot;</span>
@@ -5347,7 +5347,7 @@ dictionary of parameters.</p>
         <p>Request a choice dialog and return the clicked text.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">174</span>
 <span class="normal">175</span>
 <span class="normal">176</span>
@@ -5383,7 +5383,7 @@ dictionary of parameters.</p>
         <p>Take a screenshot of the target area.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">281</span>
 <span class="normal">282</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_screenshot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Take a screenshot of the target area.&quot;&quot;&quot;</span>
@@ -5407,7 +5407,7 @@ dictionary of parameters.</p>
         <p>Set the clipboard data.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">278</span>
 <span class="normal">279</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_set_clipboard_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">ClipboardDataModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Set the clipboard data.&quot;&quot;&quot;</span>
@@ -5434,7 +5434,7 @@ used to display the state of the widget, edit the widget efficiently, etc. For
 example, a font size spinbox for a text editor widget.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">85</span>
 <span class="normal">86</span>
 <span class="normal">87</span>
@@ -5470,7 +5470,7 @@ example, a font size spinbox for a text editor widget.</p>
 will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">78</span>
 <span class="normal">79</span>
 <span class="normal">80</span>
@@ -5502,7 +5502,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
         <p>Update the current tab index.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">60</span>
 <span class="normal">61</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_set_current_tab_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i_tab</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Update the current tab index.&quot;&quot;&quot;</span>
@@ -5526,7 +5526,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
         <p>Update the title of the dock widget.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">242</span>
 <span class="normal">243</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_set_dock_widget_title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">widget</span><span class="p">:</span> <span class="n">_W</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Update the title of the dock widget.&quot;&quot;&quot;</span>
@@ -5550,7 +5550,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
         <p>Update the visibility of the dock widget.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">236</span>
 <span class="normal">237</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_set_dock_widget_visible</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">widget</span><span class="p">:</span> <span class="n">_W</span><span class="p">,</span> <span class="n">visible</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Update the visibility of the dock widget.&quot;&quot;&quot;</span>
@@ -5574,7 +5574,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
         <p>Set the rect of the main window.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">51</span>
 <span class="normal">52</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_set_main_window_rect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rect</span><span class="p">:</span> <span class="n">WindowRect</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Set the rect of the main window.&quot;&quot;&quot;</span>
@@ -5598,7 +5598,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
         <p>Set the parametric widget busy status (disable call button etc).</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">341</span>
 <span class="normal">342</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_set_parametric_widget_busy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wrapper</span><span class="p">:</span> <span class="n">ParametricWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">],</span> <span class="n">busy</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Set the parametric widget busy status (disable call button etc).&quot;&quot;&quot;</span>
@@ -5622,7 +5622,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
         <p>Set the status tip of the main window for a duration (sec).</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">323</span>
 <span class="normal">324</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_set_status_tip</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tip</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Set the status tip of the main window for a duration (sec).&quot;&quot;&quot;</span>
@@ -5646,7 +5646,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
         <p>Update the title of the tab at the index.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">119</span>
 <span class="normal">120</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_set_tab_title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i_tab</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Update the title of the tab at the index.&quot;&quot;&quot;</span>
@@ -5671,7 +5671,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
 <p>The BackendInstructions indicates the animation or other effects to be applied.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">131</span>
 <span class="normal">132</span>
 <span class="normal">133</span>
@@ -5712,7 +5712,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
 <p>The BackendInstructions indicates the animation or other effects to be applied.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">105</span>
 <span class="normal">106</span>
 <span class="normal">107</span>
@@ -5752,7 +5752,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
         <p>Update the title of the window.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">125</span>
 <span class="normal">126</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_set_window_title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">widget</span><span class="p">:</span> <span class="n">_W</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Update the title of the window.&quot;&quot;&quot;</span>
@@ -5776,7 +5776,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
         <p>Show the command palette widget of the given kind.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">183</span>
 <span class="normal">184</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_show_command_palette</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Show the command palette widget of the given kind.&quot;&quot;&quot;</span>
@@ -5800,7 +5800,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
         <p>Show notification for a duration (sec).</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">326</span>
 <span class="normal">327</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_show_notification</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Show notification for a duration (sec).&quot;&quot;&quot;</span>
@@ -5824,7 +5824,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
         <p>Convert a function signature to a widget that can run it.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">298</span>
 <span class="normal">299</span>
 <span class="normal">300</span>
@@ -5858,7 +5858,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
         <p>Get a hashable value of the tab at the index.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">63</span>
 <span class="normal">64</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_tab_hash</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i_tab</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hashable</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get a hashable value of the tab at the index.&quot;&quot;&quot;</span>
@@ -5882,7 +5882,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
         <p>Get a hashable value of the tab containing the window.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">66</span>
 <span class="normal">67</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_tab_hash_for_window</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">widget</span><span class="p">:</span> <span class="n">_W</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hashable</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get a hashable value of the tab containing the window.&quot;&quot;&quot;</span>
@@ -5906,7 +5906,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
         <p>Get the title of the tab at the index.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">116</span>
 <span class="normal">117</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_tab_title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i_tab</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the title of the tab at the index.&quot;&quot;&quot;</span>
@@ -5930,7 +5930,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
         <p>Update the application context.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">272</span>
 <span class="normal">273</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_update_context</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Update the application context.&quot;&quot;&quot;</span>
@@ -5955,7 +5955,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
 <p>If None is given, the control widget will be just hidden.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">93</span>
 <span class="normal">94</span>
 <span class="normal">95</span>
@@ -5985,7 +5985,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
         <p>Update the theme of the main window.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">45</span>
 <span class="normal">46</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_update_widget_theme</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theme</span><span class="p">:</span> <span class="n">Theme</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Update the theme of the main window.&quot;&quot;&quot;</span>
@@ -6009,7 +6009,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
         <p>Get the rectangle relative to the tab area of the window.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">128</span>
 <span class="normal">129</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_window_rect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">widget</span><span class="p">:</span> <span class="n">_W</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WindowRect</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the rectangle relative to the tab area of the window.&quot;&quot;&quot;</span>
@@ -6033,7 +6033,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
         <p>The state (min, normal, etc.) of the window.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">102</span>
 <span class="normal">103</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_window_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">widget</span><span class="p">:</span> <span class="n">_W</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WindowState</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The state (min, normal, etc.) of the window.&quot;&quot;&quot;</span>
@@ -6057,7 +6057,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
         <p>Get the title of the window.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">122</span>
 <span class="normal">123</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_window_title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">widget</span><span class="p">:</span> <span class="n">_W</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the title of the window.&quot;&quot;&quot;</span>
@@ -6082,7 +6082,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
 <p>Return the backend dock widget.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">220</span>
 <span class="normal">221</span>
 <span class="normal">222</span>
@@ -6124,7 +6124,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
         <p>Add a empty tab with the title.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">217</span>
 <span class="normal">218</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">add_tab</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Add a empty tab with the title.&quot;&quot;&quot;</span>
@@ -6149,7 +6149,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
 <p>Return the backend widget.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">208</span>
 <span class="normal">209</span>
 <span class="normal">210</span>
@@ -6179,7 +6179,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
         <p>Set the widget state as the preview mode.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">214</span>
 <span class="normal">215</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">set_widget_as_preview</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">widget</span><span class="p">:</span> <span class="n">_W</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Set the widget state as the preview mode.&quot;&quot;&quot;</span>
@@ -6203,7 +6203,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
         <p>Show the main window and run the app immediately if <code>run</code> is True</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_backend.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">249</span>
 <span class="normal">250</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Show the main window and run the app immediately if `run` is True&quot;&quot;&quot;</span>
@@ -6241,7 +6241,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
 
 
               <details class="quote">
-                <summary>Source code in <code>src/himena/widgets/_wrapper.py</code></summary>
+                <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
                 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">899</span>
 <span class="normal">900</span>
 <span class="normal">901</span>
@@ -6438,7 +6438,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
         <p>Hide the dock widget.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_wrapper.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">931</span>
 <span class="normal">932</span>
 <span class="normal">933</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">hide</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -6464,7 +6464,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
         <p>Show the dock widget.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_wrapper.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">927</span>
 <span class="normal">928</span>
 <span class="normal">929</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -6490,7 +6490,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
         <p>Update the configuration of the dock widget.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_wrapper.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">954</span>
 <span class="normal">955</span>
 <span class="normal">956</span>
@@ -6540,7 +6540,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
 
 
               <details class="quote">
-                <summary>Source code in <code>src/himena/widgets/_main_window.py</code></summary>
+                <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
                 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 66</span>
 <span class="normal"> 67</span>
 <span class="normal"> 68</span>
@@ -8613,7 +8613,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
         <p>Pick the most suitable widget class for the given model.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_main_window.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">896</span>
 <span class="normal">897</span>
 <span class="normal">898</span>
@@ -8691,7 +8691,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
         <p>Pick the most suitable widget for the given model.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_main_window.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">926</span>
 <span class="normal">927</span>
 <span class="normal">928</span>
@@ -8781,7 +8781,7 @@ will be deselected). <code>i_window</code> is asserted to be non-negative.</p>
         <p>Add a widget data model as a widget.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_main_window.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">344</span>
 <span class="normal">345</span>
 <span class="normal">346</span>
@@ -8912,7 +8912,7 @@ appears.</p>
     </table>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_main_window.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">266</span>
 <span class="normal">267</span>
 <span class="normal">268</span>
@@ -9080,7 +9080,7 @@ interpreted by the application.</p>
     </table>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_main_window.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">349</span>
 <span class="normal">350</span>
 <span class="normal">351</span>
@@ -9258,7 +9258,7 @@ with a proper widget class.</p>
     </table>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_main_window.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">305</span>
 <span class="normal">306</span>
 <span class="normal">307</span>
@@ -9354,7 +9354,7 @@ with a proper widget class.</p>
         <p>Add a new tab of given name.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_main_window.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">215</span>
 <span class="normal">216</span>
 <span class="normal">217</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">add_tab</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TabArea</span><span class="p">[</span><span class="n">_W</span><span class="p">]:</span>
@@ -9451,7 +9451,7 @@ generated.</p>
     </table>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_main_window.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">241</span>
 <span class="normal">242</span>
 <span class="normal">243</span>
@@ -9519,7 +9519,7 @@ generated.</p>
         <p>Clear all widgets in the main window.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_main_window.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">461</span>
 <span class="normal">462</span>
 <span class="normal">463</span>
@@ -9549,7 +9549,7 @@ generated.</p>
         <p>Close the main window.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_main_window.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">761</span>
 <span class="normal">762</span>
 <span class="normal">763</span>
@@ -9679,7 +9679,7 @@ sub-window.</p>
     </table>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_main_window.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">571</span>
 <span class="normal">572</span>
 <span class="normal">573</span>
@@ -9916,7 +9916,7 @@ for vertically arranged radio buttons.</p>
     </table>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_main_window.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">655</span>
 <span class="normal">656</span>
 <span class="normal">657</span>
@@ -9996,7 +9996,7 @@ for vertically arranged radio buttons.</p>
         <p>Execute a file dialog to get file path(s).</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_main_window.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">707</span>
 <span class="normal">708</span>
 <span class="normal">709</span>
@@ -10098,7 +10098,7 @@ for vertically arranged radio buttons.</p>
         <p>Iterate over all the sub-windows in this main window.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_main_window.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">803</span>
 <span class="normal">804</span>
 <span class="normal">805</span>
@@ -10126,7 +10126,7 @@ for vertically arranged radio buttons.</p>
         <p>Read a session file and update the main window based on the content.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_main_window.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">422</span>
 <span class="normal">423</span>
 <span class="normal">424</span>
@@ -10176,7 +10176,7 @@ for vertically arranged radio buttons.</p>
         <p>Move the sub-window to the target tab index.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_main_window.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">826</span>
 <span class="normal">827</span>
 <span class="normal">828</span>
@@ -10242,7 +10242,7 @@ for vertically arranged radio buttons.</p>
         <p>Read local file(s) and open as a new sub-window.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_main_window.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">403</span>
 <span class="normal">404</span>
 <span class="normal">405</span>
@@ -10278,7 +10278,7 @@ for vertically arranged radio buttons.</p>
         <p>Read multiple files one by one and open as new sub-windows in a same tab.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_main_window.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">412</span>
 <span class="normal">413</span>
 <span class="normal">414</span>
@@ -10306,7 +10306,7 @@ for vertically arranged radio buttons.</p>
         <p>Read multiple files asynchronously and open as new sub-windows.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_main_window.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">417</span>
 <span class="normal">418</span>
 <span class="normal">419</span>
@@ -10458,7 +10458,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
     </table>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_main_window.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">511</span>
 <span class="normal">512</span>
 <span class="normal">513</span>
@@ -10596,7 +10596,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
         <p>Save the current session to a zip file as a stand-along file.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_main_window.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">438</span>
 <span class="normal">439</span>
 <span class="normal">440</span>
@@ -10708,7 +10708,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
     </table>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_main_window.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">467</span>
 <span class="normal">468</span>
 <span class="normal">469</span>
@@ -10787,7 +10787,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
     </table>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_main_window.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">749</span>
 <span class="normal">750</span>
 <span class="normal">751</span>
@@ -10829,7 +10829,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
         <p>Submit a task to the thread pool.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_main_window.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">128</span>
 <span class="normal">129</span>
 <span class="normal">130</span>
@@ -10881,7 +10881,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
         <p>Retrieve a sub-window by its identifier.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_main_window.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">219</span>
 <span class="normal">220</span>
 <span class="normal">221</span>
@@ -10933,7 +10933,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 
 
               <details class="quote">
-                <summary>Source code in <code>src/himena/widgets/_wrapper.py</code></summary>
+                <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
                 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">595</span>
 <span class="normal">596</span>
 <span class="normal">597</span>
@@ -11566,7 +11566,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
         <p>Call the callback (maybe) asynchronously.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_wrapper.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">663</span>
 <span class="normal">664</span>
 <span class="normal">665</span>
@@ -11608,7 +11608,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
         <p>Return the preview window if it is alive.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_wrapper.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">636</span>
 <span class="normal">637</span>
 <span class="normal">638</span>
@@ -11638,7 +11638,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
         <p>Process the returned WidgetDataModel.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_wrapper.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">864</span>
 <span class="normal">865</span>
 <span class="normal">866</span>
@@ -11700,7 +11700,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
         <p>Callback when the call button is clicked.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_wrapper.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">653</span>
 <span class="normal">654</span>
 <span class="normal">655</span>
@@ -11738,7 +11738,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
         <p>Callback function of parameter change during preview</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_wrapper.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">675</span>
 <span class="normal">676</span>
 <span class="normal">677</span>
@@ -11816,7 +11816,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
         <p>Callback function when the job of preview is done.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_wrapper.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">705</span>
 <span class="normal">706</span>
 <span class="normal">707</span>
@@ -11910,7 +11910,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
         <p>Get the parameters of the widget.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_wrapper.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">623</span>
 <span class="normal">624</span>
 <span class="normal">625</span>
@@ -11954,7 +11954,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
         <p>Whether the widget supports preview.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_wrapper.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">853</span>
 <span class="normal">854</span>
 <span class="normal">855</span>
@@ -11996,7 +11996,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 
 
               <details class="quote">
-                <summary>Source code in <code>src/himena/widgets/_wrapper.py</code></summary>
+                <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
                 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">290</span>
 <span class="normal">291</span>
 <span class="normal">292</span>
@@ -12739,7 +12739,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
         <p>Close all the sub-windows that are children of this window.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_wrapper.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">543</span>
 <span class="normal">544</span>
 <span class="normal">545</span>
@@ -12771,7 +12771,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
         <p>Determine how can the data be efficiently read.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_wrapper.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">557</span>
 <span class="normal">558</span>
 <span class="normal">559</span>
@@ -12809,7 +12809,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
         <p>Save this window to a new path, return if saved.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_wrapper.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">522</span>
 <span class="normal">523</span>
 <span class="normal">524</span>
@@ -12869,7 +12869,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
         <p>Update the sub-window based on the returned model.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_wrapper.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">567</span>
 <span class="normal">568</span>
 <span class="normal">569</span>
@@ -12925,7 +12925,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
         <p>Add a child sub-window, which is automatically closed when the parent is closed.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_wrapper.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">475</span>
 <span class="normal">476</span>
 <span class="normal">477</span>
@@ -12969,7 +12969,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
         <p>Export the widget data.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_wrapper.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">363</span>
 <span class="normal">364</span>
 <span class="normal">365</span>
@@ -13033,7 +13033,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
         <p>A helper method to update window properties.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_wrapper.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">456</span>
 <span class="normal">457</span>
 <span class="normal">458</span>
@@ -13089,7 +13089,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
         <p>Update the value of the widget.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_wrapper.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">386</span>
 <span class="normal">387</span>
 <span class="normal">388</span>
@@ -13123,7 +13123,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
         <p>Write the widget data to a file.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_wrapper.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">394</span>
 <span class="normal">395</span>
 <span class="normal">396</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">write_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">plugin</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -13165,7 +13165,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 
 
               <details class="quote">
-                <summary>Source code in <code>src/himena/widgets/_widget_list.py</code></summary>
+                <summary>Source code in <code>src\himena\widgets\_widget_list.py</code></summary>
                 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">103</span>
 <span class="normal">104</span>
 <span class="normal">105</span>
@@ -14275,7 +14275,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
         <p>Add, resize, and set the focus to the new widget.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_widget_list.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_widget_list.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">411</span>
 <span class="normal">412</span>
 <span class="normal">413</span>
@@ -14377,7 +14377,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
         <p>Add a widget data model as a widget.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_widget_list.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_widget_list.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">453</span>
 <span class="normal">454</span>
 <span class="normal">455</span>
@@ -14560,7 +14560,7 @@ button, and the preview window will be created when it is enabled.</p>
     </table>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_widget_list.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_widget_list.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">241</span>
 <span class="normal">242</span>
 <span class="normal">243</span>
@@ -14731,7 +14731,7 @@ button, and the preview window will be created when it is enabled.</p>
     </table>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_widget_list.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_widget_list.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">387</span>
 <span class="normal">388</span>
 <span class="normal">389</span>
@@ -14927,7 +14927,7 @@ window.</p>
     </table>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_widget_list.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_widget_list.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">294</span>
 <span class="normal">295</span>
 <span class="normal">296</span>
@@ -15132,7 +15132,7 @@ window.</p>
     </table>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_widget_list.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_widget_list.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">368</span>
 <span class="normal">369</span>
 <span class="normal">370</span>
@@ -15260,7 +15260,7 @@ generated.</p>
     </table>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_widget_list.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_widget_list.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">211</span>
 <span class="normal">212</span>
 <span class="normal">213</span>
@@ -15338,7 +15338,7 @@ generated.</p>
         <p>Append a sub-window to the tab area.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_widget_list.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_widget_list.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">157</span>
 <span class="normal">158</span>
 <span class="normal">159</span>
@@ -15406,7 +15406,7 @@ generated.</p>
         <p>Get the current sub-window or a default value.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_widget_list.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_widget_list.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">182</span>
 <span class="normal">183</span>
 <span class="normal">184</span>
@@ -15518,7 +15518,7 @@ the reader.</p>
     </table>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_widget_list.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_widget_list.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">475</span>
 <span class="normal">476</span>
 <span class="normal">477</span>
@@ -15586,7 +15586,7 @@ the reader.</p>
         <p>Read multiple files and open as new sub-windows in this tab.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_widget_list.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_widget_list.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">500</span>
 <span class="normal">501</span>
 <span class="normal">502</span>
@@ -15636,7 +15636,7 @@ the reader.</p>
         <p>Save the current session to a file.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_widget_list.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_widget_list.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">547</span>
 <span class="normal">548</span>
 <span class="normal">549</span>
@@ -15691,7 +15691,7 @@ the reader.</p>
         <p>Get current instance of the main window (raise if not exists).</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_initialize.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_initialize.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">32</span>
 <span class="normal">33</span>
 <span class="normal">34</span>
@@ -15721,7 +15721,7 @@ the reader.</p>
         <p>Show a notification popup in the bottom right corner.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_functions.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_functions.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">29</span>
 <span class="normal">30</span>
 <span class="normal">31</span>
@@ -15751,7 +15751,7 @@ the reader.</p>
         <p>Remove the instance from the list.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_initialize.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_initialize.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">57</span>
 <span class="normal">58</span>
 <span class="normal">59</span>
@@ -15791,7 +15791,7 @@ the reader.</p>
         <p>Set the instance as the current one.</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_initialize.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_initialize.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">39</span>
 <span class="normal">40</span>
 <span class="normal">41</span>
@@ -15827,7 +15827,7 @@ the reader.</p>
         <p>Set a status tip to the current main window for duration (second).</p>
 
             <details class="quote">
-              <summary>Source code in <code>src/himena/widgets/_functions.py</code></summary>
+              <summary>Source code in <code>src\himena\widgets\_functions.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 9</span>
 <span class="normal">10</span>
 <span class="normal">11</span>
