@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from io import StringIO
 import logging
 from typing import TYPE_CHECKING, Any, cast
 from dataclasses import dataclass
@@ -137,8 +138,8 @@ class QArrayModel(QtCore.QAbstractTableModel):
 
 
 class QArraySliceView(QTableBase):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent):
+        super().__init__(parent)
         self.horizontalHeader().setFixedHeight(18)
         self.verticalHeader().setDefaultSectionSize(20)
         self.horizontalHeader().setDefaultSectionSize(55)
@@ -169,20 +170,7 @@ class QArraySliceView(QTableBase):
         self.model()._slice = slice_
         self.update()
 
-    def keyPressEvent(self, e: QtGui.QKeyEvent) -> None:
-        if e.matches(QtGui.QKeySequence.StandardKey.Copy):
-            return self.copy_data()
-        if (
-            e.modifiers() & Qt.KeyboardModifier.ControlModifier
-            and e.key() == QtCore.Qt.Key.Key_F
-        ):
-            self._find_string()
-            return
-        return super().keyPressEvent(e)
-
-    def copy_data(self):
-        from io import StringIO
-
+    def _copy_data(self):
         sels = self._selection_model.ranges
         if len(sels) > 1:
             _LOGGER.warning("Multiple selections.")
@@ -204,17 +192,64 @@ class QArraySliceView(QTableBase):
             delimiter="\t",
             fmt=fmt,
         )
-        clipboard = QtGui.QGuiApplication.clipboard()
+        clipboard = QtW.QApplication.clipboard()
         clipboard.setText(buf.getvalue())
+
+    def _paste_from_clipboard(self):
+        text = QtW.QApplication.clipboard().text()
+        if not text:
+            return
+
+        buf = StringIO(text)
+        arr_paste = np.loadtxt(
+            buf, dtype=np.dtypes.StringDType(), delimiter="\t", ndmin=2
+        )
+        # undo info
+        rng = self._selection_model.get_single_range()
+        sl = self.parent()._get_indices() + rng
+        _ud_old_data = self.parent()._arr.get_slice(sl).copy()
+
+        self._paste_array(sl, arr_paste)
+
+        # undo info
+        _ud_new_data = arr_paste.copy()
+        _action_edit = EditAction(_ud_old_data, _ud_new_data, sl)
+        self.parent()._undo_stack.push(_action_edit)
+
+        # select what was just pasted
+        self._selection_model.set_ranges([rng])
+        self.update()
+
+    def _paste_array(self, sl, arr_paste: np.ndarray):
+        arr_slice = self.model()._arr_slice
+        arr = self.parent()._arr
+
+        rng = self._selection_model.get_single_range()
+        row0, col0 = rng[0].start, rng[1].start
+        lr = max(arr_paste.shape[0], rng[0].stop - rng[0].start)
+        lc = max(arr_paste.shape[1], rng[1].stop - rng[1].start)
+
+        # expand the table if necessary
+        if (row0 + lr) > arr_slice.shape[0] or (col0 + lc) > arr_slice.shape[1]:
+            raise ValueError("Cannot paste outside of the array.")
+
+        # paste the data
+        if is_structured(arr):
+            raise NotImplementedError("Structured array paste is not implemented.")
+        else:
+            arr[sl] = arr_paste
+        self.parent()._spinbox_changed()
 
     def _make_context_menu(self):
         menu = QtW.QMenu(self)
-        menu.addAction("Copy", self.copy_data)
+        menu.addAction("Copy", self._copy_data)
+        menu.addAction("Paste", self._paste_from_clipboard)
         return menu
 
     if TYPE_CHECKING:
 
         def model(self) -> QArrayModel: ...
+        def parent(self) -> QArrayView: ...
 
 
 class QArrayView(QtW.QWidget):
@@ -239,7 +274,7 @@ class QArrayView(QtW.QWidget):
 
     def __init__(self):
         super().__init__()
-        self._table = QArraySliceView()
+        self._table = QArraySliceView(self)
         layout = QtW.QVBoxLayout(self)
 
         self._spinbox_group = QtW.QWidget()
@@ -395,13 +430,18 @@ class QArrayView(QtW.QWidget):
     def array_update(
         self,
         sl,
-        value: str,
+        value: Any,
         *,
         record_undo: bool = True,
     ) -> None:
         """Update the data at the given index."""
         _ud_old_data = self._arr[sl]
-        self._arr[sl] = parse_string(value, self._arr.dtype)
+        if isinstance(value, np.ndarray):
+            self._arr[sl] = value
+        elif isinstance(value, str):
+            self._arr[sl] = parse_string(value, self._arr.dtype)
+        else:
+            raise TypeError(f"Unsupported type for value: {type(value)}")
         _ud_new_data = self._arr[sl]
         _action = EditAction(_ud_old_data, _ud_new_data, sl)
         if record_undo:
@@ -419,13 +459,23 @@ class QArrayView(QtW.QWidget):
 
     def keyPressEvent(self, e: QtGui.QKeyEvent) -> None:
         _Ctrl = QtCore.Qt.KeyboardModifier.ControlModifier
-        if e.modifiers() & _Ctrl and e.key() == QtCore.Qt.Key.Key_Z:
+        _mod = e.modifiers()
+        _key = e.key()
+        if _mod & _Ctrl and _key == QtCore.Qt.Key.Key_Z:
             self.undo()
             return
-        elif e.modifiers() & _Ctrl and e.key() == QtCore.Qt.Key.Key_Y:
+        elif _mod & _Ctrl and _key == QtCore.Qt.Key.Key_Y:
             self.redo()
             return
+        if _mod & _Ctrl and _key == QtCore.Qt.Key.Key_C:
+            return self._table._copy_data()
+        if _mod & _Ctrl and _key == QtCore.Qt.Key.Key_F:
+            self._table._find_string()
+            return
         return super().keyPressEvent(e)
+
+    def setFocus(self) -> None:
+        self._table.setFocus()
 
 
 _R_CENTER = Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
@@ -500,8 +550,8 @@ def parse_string(value: str, dtype: np.dtype) -> Any:
 
 @dataclass
 class EditAction:
-    old: str | np.ndarray
-    new: str | np.ndarray
+    old: Any
+    new: Any
     index: Any
 
     def invert(self) -> EditAction:

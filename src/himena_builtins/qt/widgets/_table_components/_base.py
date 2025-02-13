@@ -57,8 +57,8 @@ class QItemDelegate(QtW.QStyledItemDelegate):
 class QTableBase(QtW.QTableView):
     """The base class for high-performance table widgets."""
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent: QtW.QWidget | None = None) -> None:
+        super().__init__(parent)
         self.setVerticalHeader(QVerticalHeaderView(self))
         self.setHorizontalHeader(QHorizontalHeaderView(self))
 
