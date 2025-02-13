@@ -20,6 +20,7 @@ from himena_builtins.qt.widgets._table_components import (
     FLAGS,
 )
 from himena.utils.collections import UndoRedoStack
+from himena_builtins.qt.widgets._table_components._base import Editability
 
 
 class HeaderFormat(Enum):
@@ -323,11 +324,15 @@ class QSpreadsheet(QTableBase):
         self._modified_override = value
 
     @validate_protocol
+    def is_editable(self) -> bool:
+        return self.editTriggers() == Editability.TRUE
+
+    @validate_protocol
     def set_editable(self, value: bool) -> None:
         if value:
-            trig = _EDITABLE
+            trig = Editability.TRUE
         else:
-            trig = _NOT_EDITABLE
+            trig = Editability.FALSE
         self.setEditTriggers(trig)
 
     @validate_protocol

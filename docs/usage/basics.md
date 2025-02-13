@@ -137,3 +137,48 @@ from the "Show workflow graph" command in the [window menu](../tutorial.md#windo
 !!! note
     The workflow is just a `WidgetDataModel` with type `"workflow"`. Therefore, this
     operation is just a data processing like any other operations.
+
+## Adding Custom Widgets
+
+Currently, `himena` supports `Qt` as its GUI backend. Any `Qt` widgets can be added to
+the application using `add_widget()` method.
+
+``` python
+from qtpy.QtWidgets import QLabel
+
+label = QLabel("Hello, world!")
+ui.add_widget(label, title="My Label")
+```
+
+If you have a widget wrapper of a `Qt` widget, it can also be added by defining the
+`native_widget()` interface method.
+
+``` python
+class MyLabel:
+    def __init__(self, text):
+        self._qt_label = QLabel(text)
+
+    def native_widget(self):
+        return self._qt_label
+
+label = MyLabel("Hello, world!")
+ui.add_widget(label, title="My Label Wrapper")
+```
+
+??? note "Using `magicgui`"
+
+    Because `himena` depends on `magicgui` in many places, `magicgui` widgets can
+    be directly used without the `native_widget()` method.
+
+    ``` python
+    from magicgui import magicgui
+
+    @magicgui
+    def my_func(x: int, y: str):
+        print(x, y)
+
+    ui.add_widget(my_func, title="My MagicGUI")
+    ```
+
+This rule also applies to the widget plugin system. See [here](../dev/register_widgets.md#use-wrapper-class)
+for more details.

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterable, Iterator, Literal
+from typing import TYPE_CHECKING, Any, Iterable, Iterator, Literal
 from qtpy import QtWidgets as QtW
 from qtpy import QtCore, QtGui
 from qtpy.QtCore import Qt
@@ -462,3 +462,17 @@ FLAGS = (
     | Qt.ItemFlag.ItemIsSelectable
     | Qt.ItemFlag.ItemIsEditable
 )
+
+
+def parse_string(value: str, dtype_kind: str) -> Any:
+    if dtype_kind in "iu":
+        return int(value)
+    if dtype_kind == "f":
+        return float(value)
+    if dtype_kind == "b":
+        return bool(value)
+    if dtype_kind == "c":
+        return complex(value)
+    if dtype_kind == "S":
+        return value.encode()
+    return value

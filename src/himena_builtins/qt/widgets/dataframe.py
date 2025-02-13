@@ -15,11 +15,15 @@ from himena.types import Size, WidgetDataModel
 from himena.standards.model_meta import DataFrameMeta, TableMeta, DataFramePlotMeta
 from himena.standards import plotting as hplt
 from himena.standards import roi as _roi
+from himena.utils.collections import UndoRedoStack
 from himena_builtins.qt.widgets._table_components import (
     QTableBase,
     QSelectionRangeEdit,
     format_table_value,
     QHorizontalHeaderView,
+    Editability,
+    FLAGS,
+    parse_string,
 )
 from himena_builtins.qt.widgets._splitter import QSplitterHandle
 from himena_builtins.qt.widgets._dragarea import QDraggableArea
@@ -76,8 +80,18 @@ class QDataFrameModel(QtCore.QAbstractTableModel):
             return text
         return QtCore.QVariant()
 
+    def setData(self, index: QtCore.QModelIndex, value: Any, role: int = ...) -> bool:
+        if role == Qt.ItemDataRole.EditRole:
+            val = parse_string(value, self.df.get_dtype(index.column()).kind)
+            name = self.df.column_names()[index.column()]
+            col = self.df.column_to_array(name)
+            col[index.row()] = val
+            self._df = self.df.with_columns({name: col})
+            return True
+        return False
+
     def flags(self, index):
-        return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
+        return FLAGS
 
     def headerData(
         self,
@@ -203,6 +217,7 @@ class QDataFrameView(QTableBase):
         self.horizontalHeader().setDefaultSectionSize(75)
         self._control: QDataFrameViewControl | None = None
         self._model_type = StandardType.DATAFRAME
+        self._undo_stack = UndoRedoStack[EditAction](size=20)
         self._sep_on_copy = "\t"
 
     @validate_protocol
@@ -249,7 +264,25 @@ class QDataFrameView(QTableBase):
 
     @validate_protocol
     def is_modified(self) -> bool:
-        return False
+        if self._modified_override is not None:
+            return self._modified_override
+        return self._undo_stack.undoable()
+
+    @validate_protocol
+    def set_modified(self, value: bool) -> None:
+        self._modified_override = value
+
+    @validate_protocol
+    def is_editable(self) -> bool:
+        return self.editTriggers() == Editability.TRUE
+
+    @validate_protocol
+    def set_editable(self, value: bool) -> None:
+        if value:
+            trig = Editability.TRUE
+        else:
+            trig = Editability.FALSE
+        self.setEditTriggers(trig)
 
     @validate_protocol
     def control_widget(self):
@@ -267,12 +300,9 @@ class QDataFrameView(QTableBase):
         return super().keyPressEvent(e)
 
     def copy_data(self):
-        sels = self._selection_model.ranges
-        if len(sels) > 1:
-            _LOGGER.warning("Multiple selections.")
-            return
+        rng = self._selection_model.get_single_range()
 
-        rsl, csl = sels[0]
+        rsl, csl = rng
         r0, r1 = rsl.start, rsl.stop
         c0, c1 = csl.start, csl.stop
         csv_text = self.model().df.get_subset(r0, r1, c0, c1).to_csv_string("\t")
@@ -511,3 +541,16 @@ class DataFrameConfigs:
             "tooltip": "Separator used when the content of table is copied to the clipboard."
         },
     )
+
+
+@dataclass
+class EditAction:
+    old: Any
+    new: Any
+    index: Any
+
+    def invert(self) -> EditAction:
+        return EditAction(self.new, self.old, self.index)
+
+    def apply(self, table: QDataFrameView):
+        return table.array_update(self.index, self.new, record_undo=False)

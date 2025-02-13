@@ -21,6 +21,7 @@ from himena_builtins.qt.widgets._table_components import (
     QSelectionRangeEdit,
     format_table_value,
     FLAGS,
+    parse_string,
 )
 
 if TYPE_CHECKING:
@@ -104,9 +105,7 @@ class QArrayModel(QtCore.QAbstractTableModel):
 
     def setData(self, index: QtCore.QModelIndex, value: Any, role: int = ...) -> bool:
         if role == Qt.ItemDataRole.EditRole:
-            view = self.parent()
-            sl = view._get_indices() + (index.row(), index.column())
-            view.array_update(sl, value, record_undo=True)
+            self.parent()._table.set_string_input(index.row(), index.column(), value)
             return True
         return False
 
@@ -170,6 +169,11 @@ class QArraySliceView(QTableBase):
         self.model()._slice = slice_
         self.update()
 
+    def set_string_input(self, r: int, c: int, value: str):
+        view = self.parent()
+        sl = view._get_indices() + (r, c)
+        view.array_update(sl, value, record_undo=True)
+
     def _copy_data(self):
         sels = self._selection_model.ranges
         if len(sels) > 1:
@@ -193,7 +197,7 @@ class QArraySliceView(QTableBase):
             fmt=fmt,
         )
         clipboard = QtW.QApplication.clipboard()
-        clipboard.setText(buf.getvalue())
+        clipboard.setText(buf.getvalue().rstrip("\n"))
 
     def _paste_from_clipboard(self):
         text = QtW.QApplication.clipboard().text()
@@ -297,7 +301,12 @@ class QArrayView(QtW.QWidget):
         """The selection model of the array slice view."""
         return self._table.selection_model
 
-    def update_spinbox_for_shape(self, shape: tuple[int, ...], dims_shown: int = 2):
+    def set_indices(self, *indices):
+        for sb, idx in zip(self._spinboxes, indices, strict=True):
+            sb.setValue(idx)
+        self._spinbox_changed()
+
+    def _update_spinbox_for_shape(self, shape: tuple[int, ...], dims_shown: int = 2):
         nspin = len(self._spinboxes)
         # make insufficient spinboxes
         for _i in range(nspin, len(shape) - dims_shown):
@@ -353,7 +362,7 @@ class QArrayView(QtW.QWidget):
         arr = wrap_array(model.value)
         self._arr = arr
         arr_structured = is_structured(arr.arr)
-        self.update_spinbox_for_shape(arr.shape, dims_shown=1 if arr_structured else 2)
+        self._update_spinbox_for_shape(arr.shape, dims_shown=1 if arr_structured else 2)
         if arr.ndim < 2:
             arr_slice = arr.get_slice(())
             if is_structured(arr_slice):
@@ -414,6 +423,10 @@ class QArrayView(QtW.QWidget):
     @validate_protocol
     def set_modified(self, value: bool) -> None:
         self._modified_override = value
+
+    @validate_protocol
+    def is_editable(self) -> bool:
+        return self._table.editTriggers() == Editability.TRUE
 
     @validate_protocol
     def set_editable(self, value: bool) -> None:
@@ -532,20 +545,6 @@ def dtype_to_fmt(dtype: np.dtype) -> str:
     if dtype.kind in "iub":
         return "%d"
     return "%s"
-
-
-def parse_string(value: str, dtype: np.dtype) -> Any:
-    if dtype.kind in "iu":
-        return int(value)
-    if dtype.kind == "f":
-        return float(value)
-    if dtype.kind == "b":
-        return bool(value)
-    if dtype.kind == "c":
-        return complex(value)
-    if dtype.kind == "S":
-        return value.encode()
-    return value
 
 
 @dataclass
