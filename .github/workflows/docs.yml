@@ -19,13 +19,6 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Create virtual environment
-        env:
-          BIN: ${{ matrix.os == 'windows-latest' && 'Scripts' || 'bin' }}
-        run: |
-          python -m venv .venv
-          echo "$GITHUB_WORKSPACE/.venv/$BIN" >> $GITHUB_PATH
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -33,7 +26,7 @@ jobs:
 
       - name: Deploy docs to GitHub Pages
         if: github.event_name == 'push'
-        run: mkdocs gh-deploy --strict --force
+        run: mkdocs gh-deploy --force
 
       - name: Test that docs build without error
         if: github.event_name == 'pull_request'
