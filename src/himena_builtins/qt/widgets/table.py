@@ -234,7 +234,6 @@ class QSpreadsheet(QTableBase):
         self._control = None
         self._model_type = StandardType.TABLE
         self._undo_stack = UndoRedoStack[TableAction](size=25)
-        self._modified_override: bool | None = None
         self._sep_on_copy = "\t"
 
     def setHeaderFormat(self, value: HeaderFormat) -> None:

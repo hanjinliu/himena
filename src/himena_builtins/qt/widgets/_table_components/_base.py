@@ -89,6 +89,7 @@ class QTableBase(QtW.QTableView):
         self._hover_color = QtGui.QColor(self._selection_color)
         self._current_color = QtGui.QColor("#A7A7A7")
         self._mouse_track = MouseTrack()
+        self._modified_override: bool | None = None
 
     @property
     def selection_model(self) -> SelectionModel:

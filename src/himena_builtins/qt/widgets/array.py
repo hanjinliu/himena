@@ -144,7 +144,6 @@ class QArraySliceView(QTableBase):
         self.horizontalHeader().setDefaultSectionSize(55)
         self.setModel(QArrayModel(np.zeros((0, 0))))
         self.setFont(QtGui.QFont(MonospaceFontFamily, 10))
-        self._modified_override: bool | None = None
 
     def update_width_by_dtype(self):
         kind = self.model()._dtype.kind
@@ -452,7 +451,7 @@ class QArrayView(QtW.QWidget):
         if isinstance(value, np.ndarray):
             self._arr[sl] = value
         elif isinstance(value, str):
-            self._arr[sl] = parse_string(value, self._arr.dtype)
+            self._arr[sl] = parse_string(value, self._arr.dtype.kind)
         else:
             raise TypeError(f"Unsupported type for value: {type(value)}")
         _ud_new_data = self._arr[sl]
