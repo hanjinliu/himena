@@ -95,11 +95,14 @@ class QArrayModel(QtCore.QAbstractTableModel):
             r, c = index.row(), index.column()
             array_indices = ", ".join(str(i) for i in self._slice + (r, c))
             return f"A[{array_indices}] = {self._get_item(r, c)!r}"
-        elif role == Qt.ItemDataRole.DisplayRole:
+        elif role in (Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.EditRole):
             r, c = index.row(), index.column()
             if r < self.rowCount() and c < self.columnCount():
                 value = self._get_item(r, c)
-                text = format_table_value(value, self._get_dtype(r, c).kind)
+                if role == Qt.ItemDataRole.DisplayRole:
+                    text = format_table_value(value, self._get_dtype(r, c).kind)
+                else:
+                    text = str(value)
                 return text
         return QtCore.QVariant()
 
@@ -256,13 +259,13 @@ class QArraySliceView(QTableBase):
 
 
 class QArrayView(QtW.QWidget):
-    """A widget for viewing 2-D arrays.
+    """A widget for viewing n-D arrays.
 
     ## Basic Usage
 
     The 2D array sliced for the last dimensions (such as A[2, 1, :, :]) are shown in the
-    table. "2D array" can be any numpy-like arrays, including xarray.DataArray,
-    dask.array.Array, cupy.ndarray, etc. If the array is more than 2D, spinboxes are
+    table. "2D array" can be any numpy-like arrays, including `xarray.DataArray`,
+    `dask.array.Array`, `cupy.ndarray`, etc. If the array is more than 2D, spinboxes are
     shown in the bottom of the widget to select the slice. Numpy structured arrays are
     also supported.
 
@@ -270,6 +273,11 @@ class QArrayView(QtW.QWidget):
 
     Selected range can be copied `Ctrl+C`. The copied data is in tab-separated format so
     that it can be pasted to spreadsheet softwares.
+
+    ## Editing Data
+
+    You can edit the data in the current slice of the array. Input text will be parsed
+    to the dtype of the array.
     """
 
     __himena_widget_id__ = "builtins:QArrayView"
@@ -448,12 +456,11 @@ class QArrayView(QtW.QWidget):
     ) -> None:
         """Update the data at the given index."""
         _ud_old_data = self._arr[sl]
-        if isinstance(value, np.ndarray):
-            self._arr[sl] = value
-        elif isinstance(value, str):
+        if isinstance(value, str):
             self._arr[sl] = parse_string(value, self._arr.dtype.kind)
         else:
-            raise TypeError(f"Unsupported type for value: {type(value)}")
+            # called in undo/redo
+            self._arr[sl] = value
         _ud_new_data = self._arr[sl]
         _action = EditAction(_ud_old_data, _ud_new_data, sl)
         if record_undo:
