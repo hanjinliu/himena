@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 import logging
-from typing import TYPE_CHECKING, Any, NamedTuple
+from typing import TYPE_CHECKING, Any
 import weakref
 
 from cmap import Color, Colormap
@@ -347,13 +347,6 @@ class QDataFrameViewControl(QtW.QWidget):
         )
         self._selection_range.connect_table(table)
         return None
-
-
-class DtypeTuple(NamedTuple):
-    """Normalized dtype description."""
-
-    name: str
-    kind: str
 
 
 class QDataFramePlotView(QtW.QSplitter):
