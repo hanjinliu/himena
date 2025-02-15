@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 import logging
-from typing import TYPE_CHECKING, Any, NamedTuple
+from typing import TYPE_CHECKING, Any
 import weakref
 
 from cmap import Color, Colormap
@@ -70,14 +70,16 @@ class QDataFrameModel(QtCore.QAbstractTableModel):
             r, c = index.column(), index.row()
         else:
             r, c = index.row(), index.column()
-        if role != Qt.ItemDataRole.DisplayRole:
-            return QtCore.QVariant()
-        df = self.df
-        if r < df.num_rows() and c < df.num_columns():
-            value = df[r, c]
-            dtype = df.get_dtype(c)
-            text = format_table_value(value, dtype.kind)
-            return text
+        if role in (Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.EditRole):
+            df = self.df
+            if r < df.num_rows() and c < df.num_columns():
+                value = df[r, c]
+                dtype = df.get_dtype(c)
+                if role == Qt.ItemDataRole.DisplayRole:
+                    text = format_table_value(value, dtype.kind)
+                else:
+                    text = str(value)
+                return text
         return QtCore.QVariant()
 
     def setData(self, index: QtCore.QModelIndex, value: Any, role: int = ...) -> bool:
@@ -345,13 +347,6 @@ class QDataFrameViewControl(QtW.QWidget):
         )
         self._selection_range.connect_table(table)
         return None
-
-
-class DtypeTuple(NamedTuple):
-    """Normalized dtype description."""
-
-    name: str
-    kind: str
 
 
 class QDataFramePlotView(QtW.QSplitter):
