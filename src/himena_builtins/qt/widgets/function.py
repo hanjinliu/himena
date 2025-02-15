@@ -153,6 +153,8 @@ class QFunctionEditControl(QtW.QWidget):
 
 
 class QPythonLiteralLineEdit(QtW.QWidget):
+    """Line edit in param_name = XYZ format"""
+
     def __init__(self):
         super().__init__()
         layout = QtW.QHBoxLayout(self)
@@ -183,7 +185,7 @@ class QPythonLiteralLineEdit(QtW.QWidget):
         return self._label.text()
 
     def setLabel(self, label: str):
-        self._label.setText(label)
+        self._label.setText(label + " = ")
 
 
 def _function_type_repr(f) -> str:

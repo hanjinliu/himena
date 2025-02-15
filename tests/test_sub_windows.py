@@ -139,6 +139,7 @@ def test_window_commands(himena_ui: MainWindowQt, sample_dir: Path):
     himena_ui.exec_action("full-screen-in-new-tab")
     assert len(himena_ui.tabs) == 2
     assert himena_ui.tabs.current_index == 1
+    himena_ui.exec_action("show-whats-this")
 
 def test_screenshot_commands(himena_ui: MainWindow, sample_dir: Path, tmpdir):
     himena_ui.read_file(sample_dir / "text.txt")
