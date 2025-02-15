@@ -163,6 +163,15 @@ def _add_line_3d(model: hplt.Line3D, ax: plt3d.Axes3D):
     )  # fmt: skip
 
 
+@register_plot_model(hplt.Surface3D)
+def _add_surface_3d(model: hplt.Surface3D, ax: plt3d.Axes3D):
+    ax.plot_surface(
+        model.x, model.y, model.z, color=model.face.color, edgecolor=model.edge.color,
+        linewidth=model.edge.width or 0.0, linestyle=model.edge.style or "-",
+        label=model.name,
+    )  # fmt: skip
+
+
 @register_plot_model(hplt.Mesh3D)
 def _add_mesh_3d(model: hplt.Mesh3D, ax: plt3d.Axes3D):
     ax.plot_trisurf(

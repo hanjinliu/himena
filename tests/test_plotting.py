@@ -312,3 +312,23 @@ def test_histogram(make_himena_ui):
             "title": "Title ...",
         }
     )
+
+def test_plot_from_function(himena_ui: MainWindow):
+    himena_ui.add_object(
+        lambda x: np.sin(x),
+        type="function",
+        title="sin(x)",
+    )
+    himena_ui.exec_action(
+        "builtins:plot-function-1d",
+        with_params={"xmin": -1, "xmax": 1},
+    )
+    himena_ui.add_object(
+        lambda x, y: np.sin(x + y / 2),
+        type="function",
+        title="sin(x + y / 2)",
+    )
+    himena_ui.exec_action(
+        "builtins:plot-function-2d",
+        with_params={"xmin": -2, "xmax": 2, "ymin": -1, "ymax": 1},
+    )

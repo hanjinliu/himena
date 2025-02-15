@@ -28,6 +28,7 @@ from himena.standards.plotting.layout3d import (
 from himena.standards.plotting.models3d import (
     Scatter3D,
     Line3D,
+    Surface3D,
     Mesh3D,
 )
 
@@ -62,5 +63,6 @@ __all__ = [
     "SingleAxes3D",
     "Scatter3D",
     "Line3D",
+    "Surface3D",
     "Mesh3D",
 ]

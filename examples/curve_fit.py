@@ -30,7 +30,7 @@ def curve_fit() -> Parametric:
         param_names.pop(0)
         return WidgetDataModel(
             value=partial(func, **{k: float(v) for k, v in zip(param_names, popt)}),
-            type=StandardType.FUNCTION_PARTIAL,
+            type=StandardType.FUNCTION,
             title=function.title + " optimized"
         )
     return run_fit

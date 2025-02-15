@@ -3,7 +3,7 @@ from pytestqt.qtbot import QtBot
 from himena import MainWindow
 from himena.consts import StandardType
 from himena.testing import WidgetTester
-from himena_builtins.qt.widgets import QFunctionEdit, QPartialFunctionEdit
+from himena_builtins.qt.widgets import QFunctionEdit
 
 _lambda_function = lambda x: x + 1  # noqa: E731
 
@@ -34,7 +34,7 @@ def test_function_widget(qtbot: QtBot):
         assert tester.to_model().value is fn
 
 def test_partial_function_widget(qtbot: QtBot):
-    with WidgetTester(QPartialFunctionEdit()) as tester:
+    with WidgetTester(QFunctionEdit()) as tester:
         qtbot.addWidget(tester.widget)
         tester.update_model(value=partial(_function, 2, b=2))
         tester.cycle_model()

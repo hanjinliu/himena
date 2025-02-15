@@ -30,12 +30,20 @@ class QFunctionEdit(QtW.QWidget):
         layout = QtW.QVBoxLayout(self)
         layout.setContentsMargins(2, 2, 2, 2)
         _label = "<code>f(x) = </code>"
+        layout.addWidget(QtW.QLabel(_label))
+
         self._main_text_edit = QMainTextEdit()
         self._main_text_edit.setReadOnly(True)
-        layout.addWidget(QtW.QLabel(_label))
         layout.addWidget(self._main_text_edit)
+
+        self._parameter_edit = QtW.QWidget()
+        self._parameter_layout = QtW.QFormLayout(self._parameter_edit)
+        self._parameter_layout.setContentsMargins(0, 0, 0, 0)
+        self._parameter_widgets: list[QPythonLiteralLineEdit] = []
+        layout.addWidget(self._parameter_edit)
+
         self._model_type = StandardType.FUNCTION
-        self._func: Callable | None = None
+        self._func_orig: Callable | None = None
         self._has_source_code = False
         self._control = QFunctionEditControl()
 
@@ -43,22 +51,47 @@ class QFunctionEdit(QtW.QWidget):
     def update_model(self, model: WidgetDataModel):
         if not callable(func := model.value):
             raise TypeError(f"Input value must be callable, got {type(func)}.")
-        # try to ge the source
+        if isinstance(func, partial):
+            self._pfunc = func
+            _func = func.func
+            _func_orig = func
+            args = func.args
+            keywords = func.keywords
+            sig = inspect.signature(func)
+            bound = sig.bind_partial(*args, **keywords)
+            for _ in range(len(bound.arguments) - self._parameter_layout.count()):
+                edit = QPythonLiteralLineEdit()
+                self._parameter_layout.addRow(edit)
+                self._parameter_widgets.append(edit)
+            for _ in range(self._parameter_layout.count() - len(bound.arguments)):
+                self._parameter_layout.takeAt(0)
+                self._parameter_widgets.pop(0)
+            for ith, (key, value) in enumerate(bound.arguments.items()):
+                edit = self._parameter_widgets[ith]
+                edit.setLabel(key)
+                edit.setValue(value)
+        else:
+            _func = _func_orig = func
+        # try to get the source
         code_text: str | None = None
         if isinstance(meta := model.metadata, FunctionMeta):
             code_text = meta.source_code
-        elif isinstance(model.value, FunctionType):
-            code_text = getsource(model.value)
-        self._func = func
+        if code_text is None and isinstance(_func, FunctionType):
+            try:
+                code_text = getsource(_func)
+            except Exception:
+                # local function etc.
+                code_text = None
+        self._func_orig = _func_orig
         if code_text:
             self._main_text_edit.setPlainText(code_text)
             self._main_text_edit.syntax_highlight("python")
             self._has_source_code = True
         else:
-            self._main_text_edit.setPlainText(repr(func))
+            self._main_text_edit.setPlainText(repr(_func))
             self._main_text_edit.syntax_highlight(None)
             self._has_source_code = False
-        self._control._type_label.setText(_function_type_repr(func))
+        self._control._type_label.setText(_function_type_repr(_func_orig))
         return None
 
     @validate_protocol
@@ -68,7 +101,7 @@ class QFunctionEdit(QtW.QWidget):
         else:
             code = None
         return WidgetDataModel(
-            value=self._func,
+            value=self._func_orig,
             type=self.model_type(),
             metadata=FunctionMeta(source_code=code),
         )
@@ -82,8 +115,16 @@ class QFunctionEdit(QtW.QWidget):
         return self._control
 
     @validate_protocol
+    def is_editable(self) -> bool:
+        return self._parameter_edit.isEnabled()
+
+    @validate_protocol
+    def set_editable(self, editable: bool):
+        return self._parameter_edit.setEnabled(editable)
+
+    @validate_protocol
     def size_hint(self) -> tuple[int, int]:
-        return 280, 200
+        return 280, 200 + 28 * self._parameter_layout.count()
 
     @validate_protocol
     def theme_changed_callback(self, theme: Theme):
@@ -109,81 +150,6 @@ class QFunctionEditControl(QtW.QWidget):
         )
         layout.addWidget(QtW.QWidget(), 10)
         layout.addWidget(self._type_label)
-
-
-class QPartialFunctionEdit(QtW.QWidget):
-    def __init__(self):
-        super().__init__()
-        self._pfunc: partial | None = None
-        self._function_edit = QFunctionEdit()
-        self._parameter_edit = QtW.QWidget()
-        self._parameter_layout = QtW.QFormLayout(self._parameter_edit)
-        self._parameter_layout.setContentsMargins(0, 0, 0, 0)
-        self._parameter_widgets: list[QPythonLiteralLineEdit] = []
-        self._model_type = StandardType.FUNCTION_PARTIAL
-        layout = QtW.QVBoxLayout(self)
-        layout.setContentsMargins(2, 2, 2, 2)
-        layout.addWidget(self._function_edit)
-        layout.addWidget(self._parameter_edit)
-        self._control = QFunctionEditControl()
-
-    @validate_protocol
-    def update_model(self, model: WidgetDataModel):
-        pfunc = model.value
-        if not isinstance(pfunc, partial):
-            raise ValueError(f"Value must be a partial function, got {type(pfunc)}.")
-        self._model_type = model.type
-        self._pfunc = pfunc
-        func = pfunc.func
-        args = pfunc.args
-        keywords = pfunc.keywords
-        self._function_edit.update_model(
-            WidgetDataModel(value=func, type=StandardType.FUNCTION)
-        )
-        sig = inspect.signature(func)
-        bound = sig.bind_partial(*args, **keywords)
-        for _ in range(len(bound.arguments) - self._parameter_layout.count()):
-            edit = QPythonLiteralLineEdit()
-            self._parameter_layout.addRow(edit)
-            self._parameter_widgets.append(edit)
-        for _ in range(self._parameter_layout.count() - len(bound.arguments)):
-            self._parameter_layout.takeAt(0)
-            self._parameter_widgets.pop(0)
-        for ith, (key, value) in enumerate(bound.arguments.items()):
-            edit = self._parameter_widgets[ith]
-            edit.setLabel(key)
-            edit.setValue(value)
-        self._control._type_label.setText(
-            "functools.partial of " + _function_type_repr(func)
-        )
-        return None
-
-    @validate_protocol
-    def to_model(self):
-        return WidgetDataModel(
-            value=self._pfunc,
-            type=self.model_type(),
-        )
-
-    @validate_protocol
-    def model_type(self) -> str:
-        return self._model_type
-
-    @validate_protocol
-    def control_widget(self) -> QtW.QWidget:
-        return self._control
-
-    @validate_protocol
-    def is_editable(self) -> bool:
-        return self._parameter_edit.isEnabled()
-
-    @validate_protocol
-    def set_editable(self, editable: bool):
-        return self._parameter_edit.setEnabled(editable)
-
-    @validate_protocol
-    def size_hint(self) -> tuple[int, int]:
-        return 280, 320
 
 
 class QPythonLiteralLineEdit(QtW.QWidget):
@@ -221,5 +187,7 @@ class QPythonLiteralLineEdit(QtW.QWidget):
 
 
 def _function_type_repr(f) -> str:
+    if isinstance(f, partial):
+        return f"functools.partial of {_function_type_repr(f.func)}"
     ftype = type(f)
     return f"{ftype.__module__}.{ftype.__name__}"
