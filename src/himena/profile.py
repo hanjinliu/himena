@@ -4,8 +4,7 @@ from pathlib import Path
 from typing import Any, Iterable, TYPE_CHECKING
 import warnings
 from platformdirs import user_data_dir
-from pydantic import field_validator
-from pydantic_compat import BaseModel, Field
+from pydantic_compat import BaseModel, Field, field_validator
 from himena.consts import ALLOWED_LETTERS
 
 if TYPE_CHECKING:

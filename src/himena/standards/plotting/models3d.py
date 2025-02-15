@@ -18,6 +18,25 @@ class Line3D(_m.Line):
     z: Any = Field(..., description="Z-axis values.")
 
 
+class Surface3D(BasePlotModel):
+    """Plot model for a 3D surface plot."""
+
+    x: Any = Field(..., description="X-axis values.")
+    y: Any = Field(..., description="Y-axis values.")
+    z: Any = Field(..., description="Z-axis values.")
+    face: Face = Field(default_factory=Face, description="Properties of the faces.")
+    edge: Edge = Field(default_factory=Edge, description="Properties of the edges.")
+
+    def plot_option_dict(self) -> dict[str, Any]:
+        from himena.qt.magicgui import EdgePropertyEdit, FacePropertyEdit
+
+        return {
+            "name": {"widget_type": "LineEdit", "value": self.name},
+            "face": {"widget_type": FacePropertyEdit, "value": self.face.model_dump()},
+            "edge": {"widget_type": EdgePropertyEdit, "value": self.edge.model_dump()},
+        }
+
+
 class Mesh3D(BasePlotModel):
     """Plot model for a 3D mesh plot."""
 

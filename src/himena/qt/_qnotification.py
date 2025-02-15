@@ -51,14 +51,6 @@ class _QOverlayBase(QtW.QDialog):
         self._widget = None
         self.resize(QtCore.QSize(0, 0))
 
-    def widget(self) -> QtW.QWidget:
-        """The central widget."""
-        return self._widget
-
-    def anchor(self) -> Anchor:
-        """Anchor position."""
-        return self._anchor
-
     def setAnchor(self, anc: Anchor | str) -> None:
         """Set anchor position of the overlay widget."""
         self._anchor = Anchor(anc)

@@ -51,6 +51,18 @@ class Axes3D(AxesBase):
         self.models.append(model)
         return model
 
+    def surface(
+        self,
+        x: "NDArray[np.number]",
+        y: "NDArray[np.number]",
+        z: "NDArray[np.number]",
+        **kwargs,
+    ) -> _m3d.Surface3D:
+        """Create a 3D surface plot."""
+        model = _m3d.Surface3D(x=x, y=y, z=z, **parse_face_edge(kwargs))
+        self.models.append(model)
+        return model
+
     def mesh(
         self,
         vertices: "NDArray[np.number]",

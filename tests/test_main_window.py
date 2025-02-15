@@ -29,7 +29,6 @@ def test_type_map_and_session(tmpdir, himena_ui: MainWindow, sample_dir):
     tab1.read_file(sample_dir / "html.html").update(rect=(80, 40, 160, 130), title="My HTML")
     # assert type(tab1.current().widget) is _qtw.QDefaultHTMLEdit ?
 
-    himena_ui.exec_action("show-whats-this")
     session_path = Path(tmpdir) / "test.session.zip"
     himena_ui.save_session(session_path)
     himena_ui.clear()
@@ -166,6 +165,7 @@ def test_register_function_in_runtime(himena_ui: MainWindowQt, qtbot: QtBot):
         pass
 
 def test_notification_and_status_tip(himena_ui: MainWindowQt):
+    himena_ui.show()
     set_status_tip("my text", duration=0.1)
     notify("my text", duration=0.1)
     himena_ui._backend_main_window._on_error(ValueError("error msg"))

@@ -374,11 +374,68 @@ def partialize_function(model: WidgetDataModel) -> Parametric:
         kwargs_evaled = {k: ast.literal_eval(v) for k, v in kwargs.items() if v.strip()}
         return WidgetDataModel(
             value=partial(func, **kwargs_evaled),
-            type=StandardType.FUNCTION_PARTIAL,
+            type=StandardType.FUNCTION,
             title=f"[Partial] {model.title}",
         )
 
     return run_partialize
+
+
+@register_function(
+    title="Plot y = f(x)...",
+    menus=["tools"],
+    types=[StandardType.FUNCTION],
+    command_id="builtins:plot-function-1d",
+)
+def plot_function_1d(model: WidgetDataModel) -> Parametric:
+    """Plot function by its first argument."""
+
+    def run_plot(
+        xmin: float = -1, xmax: float = 1, num_points: int = 100
+    ) -> WidgetDataModel:
+        func = model.value
+        x = np.linspace(xmin, xmax, num_points)
+        y = func(x)
+        return WidgetDataModel(
+            value={"x": x, "y": y},
+            type=StandardType.DATAFRAME_PLOT,
+            title=f"Plot of {model.title}",
+        )
+
+    return run_plot
+
+
+@register_function(
+    title="Plot z = f(x, y)...",
+    menus=["tools"],
+    types=[StandardType.FUNCTION],
+    command_id="builtins:plot-function-2d",
+)
+def plot_function_2d(model: WidgetDataModel) -> Parametric:
+    """Plot function by its first two arguments."""
+    from himena.standards import plotting as hplt
+
+    def run_plot(
+        xmin: float = -1,
+        xmax: float = 1,
+        ymin: float = -1,
+        ymax: float = 1,
+        num_points: int = 100,
+    ) -> WidgetDataModel:
+        func = model.value
+        xvals = np.linspace(xmin, xmax, num_points)
+        yvals = np.linspace(ymin, ymax, num_points)
+        x, y = np.meshgrid(xvals, yvals)
+        z = func(x, y)
+        fig = hplt.figure_3d()
+        fig.axes.surface(x, y, z)
+        return WidgetDataModel(
+            value=fig,
+            type=StandardType.PLOT,
+            title=f"Plot of {model.title}",
+        )
+
+    return run_plot
 
 
 def _statistics_table(value) -> str:
