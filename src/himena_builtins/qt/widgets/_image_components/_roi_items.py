@@ -634,7 +634,7 @@ class QPointsRoi(QPointRoiBase):
         return [(0.2, 0.2), (0.5, 0.8), (0.8, 0.6)]
 
 
-class Mode(Enum):
+class MouseMode(Enum):
     """Mouse interaction modes for the image graphics view."""
 
     SELECT = auto()
@@ -650,11 +650,14 @@ class Mode(Enum):
 
 
 SIMPLE_ROI_MODES = frozenset({
-    Mode.ROI_RECTANGLE, Mode.ROI_ROTATED_RECTANGLE, Mode.ROI_ELLIPSE, Mode.ROI_POINT,
-    Mode.ROI_LINE
+    MouseMode.ROI_RECTANGLE,
+    MouseMode.ROI_ROTATED_RECTANGLE,
+    MouseMode.ROI_ELLIPSE,
+    MouseMode.ROI_POINT,
+    MouseMode.ROI_LINE
 })  # fmt: skip
 MULTIPOINT_ROI_MODES = frozenset({
-    Mode.ROI_POINTS, Mode.ROI_POLYGON, Mode.ROI_SEGMENTED_LINE
+    MouseMode.ROI_POINTS, MouseMode.ROI_POLYGON, MouseMode.ROI_SEGMENTED_LINE
 })  # fmt: skip
 ROI_MODES = SIMPLE_ROI_MODES | MULTIPOINT_ROI_MODES
 MULTIPOINT_ROI_CLASSES = (QPolygonRoi, QSegmentedLineRoi, QPointsRoi)

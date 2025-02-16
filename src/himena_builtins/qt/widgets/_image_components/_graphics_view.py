@@ -21,7 +21,7 @@ from ._roi_items import (
     QRotatedRectangleRoi,
     QSegmentedLineRoi,
     ROI_MODES,
-    Mode,
+    MouseMode,
 )
 from ._handles import QHandleRect, RoiSelectionHandles
 from ._scale_bar import QScaleBarItem
@@ -134,12 +134,12 @@ class QImageGraphicsView(QBaseGraphicsView):
     roi_added = QtCore.Signal(QRoi)
     roi_removed = QtCore.Signal(int)
     roi_visibility_changed = QtCore.Signal(bool)
-    mode_changed = QtCore.Signal(Mode)
+    mode_changed = QtCore.Signal(MouseMode)
     hovered = QtCore.Signal(QtCore.QPointF)
     geometry_changed = QtCore.Signal(QtCore.QRectF)
     array_updated = QtCore.Signal(int, object)
 
-    Mode = Mode
+    Mode = MouseMode
 
     def __init__(self, roi_visible: bool = False, roi_pen: QtGui.QPen | None = None):
         super().__init__()
@@ -149,15 +149,15 @@ class QImageGraphicsView(QBaseGraphicsView):
         self._is_current_roi_item_not_registered = False
         self._roi_pen = roi_pen or QtGui.QPen(QtGui.QColor(225, 225, 0), 3)
         self._roi_pen.setCosmetic(True)
-        self._mode = Mode.PAN_ZOOM
-        self._last_mode_before_key_hold = Mode.PAN_ZOOM
+        self._mode = MouseMode.PAN_ZOOM
+        self._last_mode_before_key_hold = MouseMode.PAN_ZOOM
         self._mouse_event_handler = _me.PanZoomMouseEvents(self)
         self._is_drawing_multipoints = False
         self._is_rois_visible = roi_visible
         self._selection_handles = RoiSelectionHandles(self)
         self._initialized = False
         self._image_widgets: list[QImageGraphicsWidget] = []
-        self.switch_mode(Mode.PAN_ZOOM)
+        self.switch_mode(MouseMode.PAN_ZOOM)
         self._qroi_labels = self.addItem(QRoiLabels(self))
         self._qroi_labels.setZValue(10000)
         self._scale_bar_widget = self.addItem(QScaleBarItem(self))
@@ -202,6 +202,14 @@ class QImageGraphicsView(QBaseGraphicsView):
         # NOTE: image must be ready for conversion to QImage (uint8, mono or RGB)
         self.array_updated.emit(idx, img)
 
+    def select_image(self):
+        """Add a selection ROI to the entire image."""
+        ny, nx = self._image_widgets[0]._img.shape[:2]
+        self.remove_current_item(reason="Ctrl+A")
+        self.set_current_roi(QRectangleRoi(0, 0, nx, ny).withPen(self._roi_pen))
+        self._selection_handles.connect_rect(self._current_roi_item)
+        return None
+
     def _on_array_updated(self, idx: int, img: np.ndarray | None):
         if idx >= len(self._image_widgets):
             return  # this happens when the number of channels decreased
@@ -244,40 +252,40 @@ class QImageGraphicsView(QBaseGraphicsView):
             roi.setVisible(self._is_rois_visible)
             self._roi_items.append(roi)
 
-    def mode(self) -> Mode:
+    def mode(self) -> MouseMode:
         return self._mode
 
-    def set_mode(self, mode: Mode):
+    def set_mode(self, mode: MouseMode):
         self._mode = mode
         _LOGGER.info("Mode changed to %r", mode)
         if mode in ROI_MODES:
             self.viewport().setCursor(Qt.CursorShape.CrossCursor)
-            if mode is Mode.ROI_POINT:
+            if mode is MouseMode.ROI_POINT:
                 self._mouse_event_handler = _me.PointRoiMouseEvents(self)
-            elif mode is Mode.ROI_POINTS:
+            elif mode is MouseMode.ROI_POINTS:
                 self._mouse_event_handler = _me.PointsRoiMouseEvents(self)
-            elif mode is Mode.ROI_LINE:
+            elif mode is MouseMode.ROI_LINE:
                 self._mouse_event_handler = _me.LineRoiMouseEvents(self)
-            elif mode is Mode.ROI_RECTANGLE:
+            elif mode is MouseMode.ROI_RECTANGLE:
                 self._mouse_event_handler = _me.RectangleRoiMouseEvents(self)
-            elif mode is Mode.ROI_ELLIPSE:
+            elif mode is MouseMode.ROI_ELLIPSE:
                 self._mouse_event_handler = _me.EllipseRoiMouseEvents(self)
-            elif mode is Mode.ROI_POLYGON:
+            elif mode is MouseMode.ROI_POLYGON:
                 self._mouse_event_handler = _me.PolygonRoiMouseEvents(self)
-            elif mode is Mode.ROI_SEGMENTED_LINE:
+            elif mode is MouseMode.ROI_SEGMENTED_LINE:
                 self._mouse_event_handler = _me.SegmentedLineRoiMouseEvents(self)
-            elif mode is Mode.ROI_ROTATED_RECTANGLE:
+            elif mode is MouseMode.ROI_ROTATED_RECTANGLE:
                 self._mouse_event_handler = _me.RotatedRectangleRoiMouseEvents(self)
 
-        elif mode is Mode.SELECT:
+        elif mode is MouseMode.SELECT:
             self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
             self._mouse_event_handler = _me.SelectMouseEvents(self)
-        elif mode is Mode.PAN_ZOOM:
+        elif mode is MouseMode.PAN_ZOOM:
             self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
             self._mouse_event_handler = _me.PanZoomMouseEvents(self)
         self.mode_changed.emit(mode)
 
-    def switch_mode(self, mode: Mode):
+    def switch_mode(self, mode: MouseMode):
         self.set_mode(mode)
         self._last_mode_before_key_hold = mode
 
@@ -472,83 +480,68 @@ class QImageGraphicsView(QBaseGraphicsView):
             self._qroi_labels.update()
             self.roi_added.emit(item)
 
-    def keyPressEvent(self, event: QtGui.QKeyEvent | None) -> None:
-        if event is None or event.isAutoRepeat():
-            return None
-        _mods = event.modifiers()
-        _key = event.key()
-        if _mods == Qt.KeyboardModifier.NoModifier:
-            if _key == Qt.Key.Key_Space:
-                self._last_mode_before_key_hold = self.mode()
-                self.set_mode(Mode.PAN_ZOOM)
-            elif _key == Qt.Key.Key_Up:
-                if item := self._current_roi_item:
-                    item.translate(0, -1)
-            elif _key == Qt.Key.Key_Down:
-                if item := self._current_roi_item:
-                    item.translate(0, 1)
-            elif _key == Qt.Key.Key_Left:
-                if item := self._current_roi_item:
-                    item.translate(-1, 0)
-            elif _key == Qt.Key.Key_Right:
-                if item := self._current_roi_item:
-                    item.translate(1, 0)
-            elif _key == Qt.Key.Key_R:
-                if self.mode() is Mode.ROI_RECTANGLE:
-                    self.switch_mode(Mode.ROI_ROTATED_RECTANGLE)
-                else:
-                    self.switch_mode(Mode.ROI_RECTANGLE)
-            elif _key == Qt.Key.Key_E:
-                self.switch_mode(Mode.ROI_ELLIPSE)
-            elif _key == Qt.Key.Key_P:
-                # switch similar modes in turn
-                if self.mode() is Mode.ROI_POINT:
-                    self.switch_mode(Mode.ROI_POINTS)
-                else:
-                    self.switch_mode(Mode.ROI_POINT)
-            elif _key == Qt.Key.Key_L:
-                if self.mode() is Mode.ROI_LINE:
-                    self.switch_mode(Mode.ROI_SEGMENTED_LINE)
-                else:
-                    self.switch_mode(Mode.ROI_LINE)
-            elif _key == Qt.Key.Key_G:
-                self.switch_mode(Mode.ROI_POLYGON)
-            elif _key == Qt.Key.Key_S:
-                self.switch_mode(Mode.SELECT)
-            elif _key == Qt.Key.Key_Z:
-                self.switch_mode(Mode.PAN_ZOOM)
-            elif _key == Qt.Key.Key_T:
-                self.add_current_roi()
-            elif _key in (Qt.Key.Key_Delete, Qt.Key.Key_Backspace):
-                self.remove_current_item(remove_from_list=True, reason="delete key")
-            elif _key == Qt.Key.Key_V:
-                self.set_show_rois(not self._is_rois_visible)
-        elif _mods == Qt.KeyboardModifier.ControlModifier:
-            if _key == Qt.Key.Key_A:
-                ny, nx = self._image_widgets[0]._img.shape[:2]
-                self.remove_current_item(reason="Ctrl+A")
-                self.set_current_roi(QRectangleRoi(0, 0, nx, ny).withPen(self._roi_pen))
-                self._selection_handles.connect_rect(self._current_roi_item)
-            elif _key == Qt.Key.Key_X:
-                if self._current_roi_item is not None:
-                    self._internal_clipboard = self._current_roi_item.copy()
-                    self.remove_current_item(remove_from_list=True, reason="Ctrl+X")
-            elif _key == Qt.Key.Key_C:
-                self._copy_current_roi()
-            elif _key == Qt.Key.Key_V and self._internal_clipboard:
-                self._paste_roi()
-            elif _key == Qt.Key.Key_D:  # duplicate ROI
-                if self._current_roi_item is not None:
-                    self._internal_clipboard = self._current_roi_item.copy()
-                    self._paste_roi()
-        return None
+    def standard_key_press(self, _key: Qt.Key):
+        if _key == Qt.Key.Key_Space:
+            self._last_mode_before_key_hold = self.mode()
+            self.set_mode(MouseMode.PAN_ZOOM)
+        elif _key == Qt.Key.Key_Up:
+            if item := self._current_roi_item:
+                item.translate(0, -1)
+        elif _key == Qt.Key.Key_Down:
+            if item := self._current_roi_item:
+                item.translate(0, 1)
+        elif _key == Qt.Key.Key_Left:
+            if item := self._current_roi_item:
+                item.translate(-1, 0)
+        elif _key == Qt.Key.Key_Right:
+            if item := self._current_roi_item:
+                item.translate(1, 0)
+        elif _key == Qt.Key.Key_R:
+            if self.mode() is MouseMode.ROI_RECTANGLE:
+                self.switch_mode(MouseMode.ROI_ROTATED_RECTANGLE)
+            else:
+                self.switch_mode(MouseMode.ROI_RECTANGLE)
+        elif _key == Qt.Key.Key_E:
+            self.switch_mode(MouseMode.ROI_ELLIPSE)
+        elif _key == Qt.Key.Key_P:
+            # switch similar modes in turn
+            if self.mode() is MouseMode.ROI_POINT:
+                self.switch_mode(MouseMode.ROI_POINTS)
+            else:
+                self.switch_mode(MouseMode.ROI_POINT)
+        elif _key == Qt.Key.Key_L:
+            if self.mode() is MouseMode.ROI_LINE:
+                self.switch_mode(MouseMode.ROI_SEGMENTED_LINE)
+            else:
+                self.switch_mode(MouseMode.ROI_LINE)
+        elif _key == Qt.Key.Key_G:
+            self.switch_mode(MouseMode.ROI_POLYGON)
+        elif _key == Qt.Key.Key_S:
+            self.switch_mode(MouseMode.SELECT)
+        elif _key == Qt.Key.Key_Z:
+            self.switch_mode(MouseMode.PAN_ZOOM)
+        elif _key == Qt.Key.Key_T:
+            self.add_current_roi()
+        elif _key in (Qt.Key.Key_Delete, Qt.Key.Key_Backspace):
+            self.remove_current_item(remove_from_list=True, reason="delete key")
+        elif _key == Qt.Key.Key_V:
+            self.set_show_rois(not self._is_rois_visible)
 
-    def keyReleaseEvent(self, event: QtGui.QKeyEvent | None) -> None:
-        if event is None or event.isAutoRepeat():
-            return None
-        if event.key() == Qt.Key.Key_Space:
-            self.set_mode(self._last_mode_before_key_hold)
-        return None
+    def standard_ctrl_key_press(self, key: Qt.Key):
+        if key == Qt.Key.Key_A:
+            self.select_image()
+        elif key == Qt.Key.Key_X:
+            if self._current_roi_item is not None:
+                self._internal_clipboard = self._current_roi_item.copy()
+                self.remove_current_item(remove_from_list=True, reason="Ctrl+X")
+        elif key == Qt.Key.Key_C:
+            self._copy_current_roi()
+        elif key == Qt.Key.Key_V and self._internal_clipboard:
+            self._paste_roi()
+        elif key == Qt.Key.Key_D:  # duplicate ROI
+            if self._current_roi_item is not None:
+                self._internal_clipboard = self._current_roi_item.copy()
+                self._paste_roi()
 
     def _copy_current_roi(self):
         if self._current_roi_item is not None:
