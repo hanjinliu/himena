@@ -2,9 +2,10 @@ from io import StringIO
 from typing import TYPE_CHECKING
 import numpy as np
 from himena.plugins import register_function, configure_gui
-from himena.types import Parametric, WidgetDataModel
+from himena.types import ClipboardDataModel, Parametric, WidgetDataModel
 from himena.standards.model_meta import TableMeta
 from himena.consts import StandardType
+from himena.utils.misc import table_to_text
 from himena.widgets import SubWindow
 
 if TYPE_CHECKING:
@@ -20,14 +21,7 @@ if TYPE_CHECKING:
 def crop_selection(model: WidgetDataModel["np.ndarray"]) -> Parametric:
     """Crop the table data at the selection."""
 
-    def _get_selection(*_):
-        meta = _cast_meta(model.metadata)
-        sels = meta.selections
-        if sels is None or len(sels) != 1:
-            raise ValueError("Table must contain single selection to crop.")
-        return sels[0]
-
-    @configure_gui(selection={"bind": _get_selection})
+    @configure_gui(selection={"bind": lambda *_: _get_selection(model)})
     def run_crop_selection(
         selection: tuple[tuple[int, int], tuple[int, int]],
     ) -> WidgetDataModel:
@@ -59,9 +53,7 @@ def change_separator(win: SubWindow) -> Parametric:
 
     def change_separator(separator: str = ",") -> None:
         model = win.to_model()
-        buf = StringIO()
-        np.savetxt(buf, arr_str, fmt="%s", delimiter=sep)
-        buf.seek(0)
+        buf = _arr_to_buf(arr_str, sep)
         arr_new = np.loadtxt(
             buf,
             delimiter=separator.encode().decode("unicode_escape"),
@@ -72,6 +64,50 @@ def change_separator(win: SubWindow) -> Parametric:
         return win.update_model(model.with_value(arr_new, metadata=meta))
 
     return change_separator
+
+
+@register_function(
+    title="Copy as CSV",
+    types=StandardType.TABLE,
+    menus=["tools/table/copy", "/model_menu/copy"],
+    command_id="builtins:table:copy-as-csv",
+)
+def copy_as_csv(model: WidgetDataModel) -> ClipboardDataModel:
+    """Copy the table data as CSV format."""
+    return _to_clipboard_data_model(model, "CSV")
+
+
+@register_function(
+    title="Copy as Markdown",
+    types=StandardType.TABLE,
+    menus=["tools/table/copy", "/model_menu/copy"],
+    command_id="builtins:table:copy-as-markdown",
+)
+def copy_as_markdown(model: WidgetDataModel) -> ClipboardDataModel:
+    """Copy the table data as Markdown format."""
+    return _to_clipboard_data_model(model, "Markdown")
+
+
+@register_function(
+    title="Copy as HTML",
+    types=StandardType.TABLE,
+    menus=["tools/table/copy", "/model_menu/copy"],
+    command_id="builtins:table:copy-as-html",
+)
+def copy_as_html(model: WidgetDataModel) -> ClipboardDataModel:
+    """Copy the table data as HTML format."""
+    return _to_clipboard_data_model(model, "HTML")
+
+
+@register_function(
+    title="Copy as rST",
+    types=StandardType.TABLE,
+    menus=["tools/table/copy", "/model_menu/copy"],
+    command_id="builtins:table:copy-as-rst",
+)
+def copy_as_rst(model: WidgetDataModel) -> ClipboardDataModel:
+    """Copy the table data as reStructuredText format."""
+    return _to_clipboard_data_model(model, "rST")
 
 
 @register_function(
@@ -119,3 +155,26 @@ def _cast_meta(meta) -> TableMeta:
     if not isinstance(meta, TableMeta):
         raise ValueError("Table must have a TableMeta as the metadata")
     return meta
+
+
+def _arr_to_buf(arr: "np.ndarray", sep: str = ",") -> StringIO:
+    buf = StringIO()
+    np.savetxt(buf, arr, fmt="%s", delimiter=sep)
+    buf.seek(0)
+    return buf
+
+
+def _get_selection(
+    model: WidgetDataModel["np.ndarray"],
+) -> tuple[tuple[int, int], tuple[int, int]]:
+    meta = _cast_meta(model.metadata)
+    sels = meta.selections
+    if sels is None or len(sels) != 1:
+        raise ValueError("Table must contain single selection to crop.")
+    return sels[0]
+
+
+def _to_clipboard_data_model(model: WidgetDataModel, format: str) -> ClipboardDataModel:
+    (r0, r1), (c0, c1) = _get_selection(model)
+    string, _, _ = table_to_text(model.value[r0:r1, c0:c1], format=format)
+    return ClipboardDataModel(text=string)

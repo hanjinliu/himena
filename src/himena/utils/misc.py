@@ -1,7 +1,15 @@
 from __future__ import annotations
 
 import re
-from typing import TypeVar, Iterator, NamedTuple, Callable, overload, TYPE_CHECKING
+from typing import (
+    TypeVar,
+    Iterator,
+    NamedTuple,
+    Callable,
+    overload,
+    TYPE_CHECKING,
+    Literal,
+)
 import numpy as np
 
 _C = TypeVar("_C", bound=type)
@@ -148,3 +156,58 @@ def is_subtype(string: str, supertype: str) -> bool:
     if len(supertype_parts) > len(string_parts):
         return False
     return string_parts[: len(supertype_parts)] == supertype_parts
+
+
+def table_to_text(
+    data: np.ndarray,
+    format: Literal["CSV", "TSV", "Markdown", "Latex", "rST", "HTML"] = "CSV",
+    end_of_text: Literal["", "\n"] = "\n",
+) -> tuple[str, str, str]:
+    from tabulate import tabulate
+
+    format = format.lower()
+    if format == "markdown":
+        s = tabulate(data[1:], headers=data[0], tablefmt="github")
+        ext_default = ".md"
+        language = "markdown"
+    elif format == "latex":
+        s = _table_to_latex(data)
+        ext_default = ".tex"
+        language = "latex"
+    elif format == "html":
+        s = tabulate(data, tablefmt="html")
+        ext_default = ".html"
+        language = "html"
+    elif format == "rst":
+        s = tabulate(data, tablefmt="rst")
+        ext_default = ".rst"
+        language = "rst"
+    elif format == "csv":
+        s = _to_csv_like(data, ",")
+        ext_default = ".csv"
+        language = None
+    elif format == "tsv":
+        s = _to_csv_like(data, "\t")
+        ext_default = ".tsv"
+        language = None
+    else:
+        raise ValueError(f"Unknown format: {format}")
+    return s + end_of_text, ext_default, language
+
+
+def _to_csv_like(data: np.ndarray, sep: str) -> str:
+    """Convert a table to CSV-like string."""
+    return "\n".join(sep.join(str(r) for r in row) for row in data)
+
+
+def _table_to_latex(table: np.ndarray) -> str:
+    """Convert a table to LaTeX."""
+    header = table[0]
+    body = table[1:]
+    latex = "\\begin{tabular}{" + "c" * len(header) + "}\n"
+    latex += " & ".join(header) + " \\\\\n"
+    for row in body:
+        latex += " & ".join(str(r) for r in row) + " \\\\\n"
+    latex += "\\hline\n"
+    latex += "\\end{tabular}"
+    return latex
