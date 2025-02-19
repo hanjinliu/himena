@@ -305,17 +305,13 @@ class QRotatedRectangleRoi(QRoi):
         self.update()
 
     def translate(self, dx: float, dy: float):
-        self._center += QtCore.QPointF(dx, dy)
-        self._update_and_emit()
+        with self._update_and_emit():
+            self._center += QtCore.QPointF(dx, dy)
 
     def copy(self) -> QRotatedRectangleRoi:
         return QRotatedRectangleRoi(self.start(), self.end(), self._width).withPen(
             self.pen()
         )
-
-    def _update_and_emit(self):
-        self.update()
-        self.changed.emit(self)
 
     @contextmanager
     def _update_and_emit(self):

@@ -288,6 +288,7 @@ class QImageGraphicsView(QBaseGraphicsView):
     def switch_mode(self, mode: MouseMode):
         self.set_mode(mode)
         self._last_mode_before_key_hold = mode
+        set_status_tip(f"Mouse mode: {mode.name}", duration=1)
 
     def setSmoothing(self, enabled: bool):
         # Enable or disable pixmap smoothing
@@ -418,6 +419,27 @@ class QImageGraphicsView(QBaseGraphicsView):
             return int(round(pos.x())), int(round(pos.y()))
         return pos.x(), pos.y()
 
+    def keyPressEvent(self, event):
+        _key = event.key()
+        if event.modifiers() == Qt.KeyboardModifier.NoModifier:
+            if _key == Qt.Key.Key_Up:
+                if item := self._current_roi_item:
+                    item.translate(0, -1)
+                    return
+            elif _key == Qt.Key.Key_Down:
+                if item := self._current_roi_item:
+                    item.translate(0, 1)
+                    return
+            elif _key == Qt.Key.Key_Left:
+                if item := self._current_roi_item:
+                    item.translate(-1, 0)
+                    return
+            elif _key == Qt.Key.Key_Right:
+                if item := self._current_roi_item:
+                    item.translate(1, 0)
+                    return
+        return super().keyPressEvent(event)
+
     def mousePressEvent(self, event):
         # Store the position of the mouse when the button is pressed
         if isinstance(item_under_cursor := self.itemAt(event.pos()), QHandleRect):
@@ -484,18 +506,6 @@ class QImageGraphicsView(QBaseGraphicsView):
         if _key == Qt.Key.Key_Space:
             self._last_mode_before_key_hold = self.mode()
             self.set_mode(MouseMode.PAN_ZOOM)
-        elif _key == Qt.Key.Key_Up:
-            if item := self._current_roi_item:
-                item.translate(0, -1)
-        elif _key == Qt.Key.Key_Down:
-            if item := self._current_roi_item:
-                item.translate(0, 1)
-        elif _key == Qt.Key.Key_Left:
-            if item := self._current_roi_item:
-                item.translate(-1, 0)
-        elif _key == Qt.Key.Key_Right:
-            if item := self._current_roi_item:
-                item.translate(1, 0)
         elif _key == Qt.Key.Key_R:
             if self.mode() is MouseMode.ROI_RECTANGLE:
                 self.switch_mode(MouseMode.ROI_ROTATED_RECTANGLE)
