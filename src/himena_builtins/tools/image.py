@@ -390,7 +390,7 @@ def split_channels(model: WidgetDataModel) -> list[WidgetDataModel]:
     menus=["tools/image", "/model_menu"],
     command_id="builtins:copy-slice-to-clipboard",
 )
-def copy_slice_to_clipboard(model: WidgetDataModel) -> None:
+def copy_slice_to_clipboard(model: WidgetDataModel) -> Parametric:
     """Copy the current slice to the clipboard."""
     arr = wrap_array(model.value)
     meta = _cast_meta(model, ImageMeta)
