@@ -18,9 +18,10 @@ from himena_builtins.qt.widgets._table_components import (
     QTableBase,
     QSelectionRangeEdit,
     FLAGS,
+    Editability,
 )
 from himena.utils.collections import UndoRedoStack
-from himena_builtins.qt.widgets._table_components._base import Editability
+from himena.utils.misc import table_to_text
 
 
 class HeaderFormat(Enum):
@@ -186,13 +187,6 @@ class QStringArrayModel(QtCore.QAbstractTableModel):
                 return str(section + 1)
 
 
-_EDITABLE = (
-    QtW.QAbstractItemView.EditTrigger.DoubleClicked
-    | QtW.QAbstractItemView.EditTrigger.EditKeyPressed
-)
-_NOT_EDITABLE = QtW.QAbstractItemView.EditTrigger.NoEditTriggers
-
-
 class QSpreadsheet(QTableBase):
     """Table widget for editing a 2D string array.
 
@@ -230,7 +224,7 @@ class QSpreadsheet(QTableBase):
 
     def __init__(self):
         QTableBase.__init__(self)
-        self.setEditTriggers(_EDITABLE)
+        self.setEditTriggers(Editability.TRUE)
         self._control = None
         self._model_type = StandardType.TABLE
         self._undo_stack = UndoRedoStack[TableAction](size=25)
@@ -439,6 +433,11 @@ class QSpreadsheet(QTableBase):
         menu = QtW.QMenu(self)
         menu.addAction("Cut", self._cut_and_copy_to_clipboard)
         menu.addAction("Copy", self._copy_to_clipboard)
+        copy_as_menu = menu.addMenu("Copy as ...")
+        copy_as_menu.addAction("CSV", self._copy_as_csv)
+        copy_as_menu.addAction("Markdown", self._copy_as_markdown)
+        copy_as_menu.addAction("HTML", self._copy_as_html)
+        copy_as_menu.addAction("rST", self._copy_as_rst)
         menu.addAction("Paste", self._paste_from_clipboard)
         return menu
 
@@ -446,15 +445,27 @@ class QSpreadsheet(QTableBase):
         self._copy_to_clipboard()
         self._delete_selection()
 
-    def _copy_to_clipboard(self):
+    def _copy_to_clipboard(self, format="TSV"):
         sels = self._selection_model.ranges
         if len(sels) != 1:
             return
         sel = sels[0]
         values = self.model()._arr[sel]
         if values.size > 0:
-            string = "\n".join([self._sep_on_copy.join(cells) for cells in values])
+            string = table_to_text(values, format=format)[0]
             QtW.QApplication.clipboard().setText(string)
+
+    def _copy_as_csv(self):
+        return self._copy_to_clipboard("CSV")
+
+    def _copy_as_markdown(self):
+        return self._copy_to_clipboard("Markdown")
+
+    def _copy_as_html(self):
+        return self._copy_to_clipboard("HTML")
+
+    def _copy_as_rst(self):
+        return self._copy_to_clipboard("rST")
 
     def _paste_from_clipboard(self):
         text = QtW.QApplication.clipboard().text()
