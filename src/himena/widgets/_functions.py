@@ -1,5 +1,6 @@
 from __future__ import annotations
 from pathlib import Path
+from typing import Any, overload
 
 from himena.types import ClipboardDataModel
 from himena.widgets import current_instance
@@ -15,14 +16,35 @@ def set_status_tip(text: str, duration: float = 10.0) -> None:
     return None
 
 
+def get_clipboard() -> ClipboardDataModel:
+    """Get the current clipboard data."""
+    return current_instance().clipboard
+
+
+@overload
 def set_clipboard(
     *,
     text: str | None = None,
     html: str | None = None,
-    image: ClipboardDataModel | None = None,
+    image: Any | None = None,
     files: list[str | Path] | None = None,
-) -> None:
-    current_instance().set_clipboard(text=text, html=html, image=image, files=files)
+    interanal_data: Any | None = None,
+) -> None: ...
+
+
+@overload
+def set_clipboard(model: ClipboardDataModel, /) -> None: ...
+
+
+def set_clipboard(model=None, **kwargs) -> None:
+    """Set data to clipboard."""
+    ins = current_instance()
+    if model is not None:
+        if kwargs:
+            raise TypeError("Cannot specify both model and keyword arguments")
+        ins.clipboard = model
+    else:
+        ins.set_clipboard(**kwargs)
     return None
 
 

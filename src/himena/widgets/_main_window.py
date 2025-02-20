@@ -74,8 +74,9 @@ class MainWindow(Generic[_W]):
     ) -> None:
         from himena.widgets._initialize import set_current_instance
 
-        self.events: MainWindowEvents[_W] = MainWindowEvents()
+        self._events = MainWindowEvents()
         self._backend_main_window = backend
+        self._internal_clipboard_data: Any | None = None
         self._tab_list = TabList(backend)
         self._new_widget_behavior = NewWidgetBehavior.WINDOW
         self._model_app = app
@@ -99,6 +100,11 @@ class MainWindow(Generic[_W]):
         self._executor = ThreadPoolExecutor(max_workers=5)
         self._global_lock = threading.Lock()
         self.theme = theme
+
+    @property
+    def events(self) -> MainWindowEvents[_W]:
+        """Main window events."""
+        return self._events
 
     @property
     def theme(self) -> Theme:
@@ -187,7 +193,9 @@ class MainWindow(Generic[_W]):
     @property
     def clipboard(self) -> ClipboardDataModel | None:
         """Get the clipboard data as a ClipboardDataModel instance."""
-        return self._backend_main_window._clipboard_data()
+        model = self._backend_main_window._clipboard_data()
+        model.internal_data = self._internal_clipboard_data
+        return model
 
     @clipboard.setter
     def clipboard(self, data: str | ClipboardDataModel) -> None:
@@ -198,6 +206,7 @@ class MainWindow(Generic[_W]):
             raise ValueError("Clipboard data must be a ClipboardDataModel instance.")
         _LOGGER.info("Setting clipboard data: %r", data)
         self._backend_main_window._set_clipboard_data(data)
+        self._internal_clipboard_data = data.internal_data
         return None
 
     def set_clipboard(
@@ -205,11 +214,17 @@ class MainWindow(Generic[_W]):
         *,
         text: str | None = None,
         html: str | None = None,
-        image: ClipboardDataModel | None = None,
+        image: Any | None = None,
         files: list[str | Path] | None = None,
+        internal_data: Any | None = None,
     ) -> None:
-        model = ClipboardDataModel(text=text, html=html, image=image, files=files or [])
-        self.clipboard = model
+        self.clipboard = ClipboardDataModel(
+            text=text,
+            html=html,
+            image=image,
+            files=files or [],
+            internal_data=internal_data,
+        )
         return None
 
     def add_tab(self, title: str | None = None) -> TabArea[_W]:

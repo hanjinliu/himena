@@ -331,6 +331,15 @@ class ClipboardDataModel(BaseModel):
         default_factory=list,
         description="List of file paths in the clipboard if exists.",
     )
+    internal_data: Any | None = Field(
+        default=None,
+        description="Application specific data in the clipboard if exists. This data "
+        "cannot be used across application, but is useful to send Python object to "
+        "other widgets.",
+    )
+
+    def with_internal_data(self, internal_data) -> "ClipboardDataModel":
+        return self.model_copy(update={"internal_data": internal_data})
 
 
 class DragDataModel(BaseModel):
