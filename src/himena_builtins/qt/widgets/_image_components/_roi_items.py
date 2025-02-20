@@ -305,17 +305,13 @@ class QRotatedRectangleRoi(QRoi):
         self.update()
 
     def translate(self, dx: float, dy: float):
-        self._center += QtCore.QPointF(dx, dy)
-        self._update_and_emit()
+        with self._update_and_emit():
+            self._center += QtCore.QPointF(dx, dy)
 
     def copy(self) -> QRotatedRectangleRoi:
         return QRotatedRectangleRoi(self.start(), self.end(), self._width).withPen(
             self.pen()
         )
-
-    def _update_and_emit(self):
-        self.update()
-        self.changed.emit(self)
 
     @contextmanager
     def _update_and_emit(self):
@@ -634,7 +630,7 @@ class QPointsRoi(QPointRoiBase):
         return [(0.2, 0.2), (0.5, 0.8), (0.8, 0.6)]
 
 
-class Mode(Enum):
+class MouseMode(Enum):
     """Mouse interaction modes for the image graphics view."""
 
     SELECT = auto()
@@ -650,11 +646,14 @@ class Mode(Enum):
 
 
 SIMPLE_ROI_MODES = frozenset({
-    Mode.ROI_RECTANGLE, Mode.ROI_ROTATED_RECTANGLE, Mode.ROI_ELLIPSE, Mode.ROI_POINT,
-    Mode.ROI_LINE
+    MouseMode.ROI_RECTANGLE,
+    MouseMode.ROI_ROTATED_RECTANGLE,
+    MouseMode.ROI_ELLIPSE,
+    MouseMode.ROI_POINT,
+    MouseMode.ROI_LINE
 })  # fmt: skip
 MULTIPOINT_ROI_MODES = frozenset({
-    Mode.ROI_POINTS, Mode.ROI_POLYGON, Mode.ROI_SEGMENTED_LINE
+    MouseMode.ROI_POINTS, MouseMode.ROI_POLYGON, MouseMode.ROI_SEGMENTED_LINE
 })  # fmt: skip
 ROI_MODES = SIMPLE_ROI_MODES | MULTIPOINT_ROI_MODES
 MULTIPOINT_ROI_CLASSES = (QPolygonRoi, QSegmentedLineRoi, QPointsRoi)

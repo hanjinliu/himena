@@ -318,6 +318,10 @@ def test_crop_image(himena_ui: MainWindow):
     )
     win = himena_ui.add_data_model(model)
     himena_ui.exec_action("builtins:image-crop:crop-image")
+    himena_ui.exec_action(
+        "builtins:copy-slice-to-clipboard",
+        with_params={"bbox": (1, 2, 4, 3), "indices": [1, 0, None, None]}
+    )
     himena_ui.current_window = win
     himena_ui.exec_action(
         "builtins:image-crop:crop-image-multi",

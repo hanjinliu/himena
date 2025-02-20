@@ -6,14 +6,12 @@ import warnings
 import dataclasses
 from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
+from qtpy.QtCore import Qt
 import numpy as np
 from cmap import Colormap
 from superqt import ensure_main_thread
 
 from himena.qt.magicgui._toggle_switch import QLabeledToggleSwitch
-from himena_builtins.qt.widgets._image_components._roi_collection import (
-    from_standard_roi,
-)
 from himena.consts import StandardType
 from himena.standards import roi, model_meta
 from himena.qt._utils import drag_model, qsignal_blocker
@@ -30,6 +28,7 @@ from himena_builtins.qt.widgets._image_components import (
     QImageLabelViewControl,
     QImageViewControlBase,
     QRoiCollection,
+    from_standard_roi,
 )
 from himena_builtins.qt.widgets._splitter import QSplitterHandle
 from himena_builtins.qt.widgets._shared import quick_min_max
@@ -494,12 +493,24 @@ class QImageViewBase(QtW.QSplitter):
         else:
             self._control._hover_info.setText("")
 
-    # forward key events to image graphics view
-    def keyPressEvent(self, a0: QtGui.QKeyEvent | None) -> None:
-        return self._img_view.keyPressEvent(a0)
+    def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
+        if event is None or event.isAutoRepeat():
+            return None
+        _mods = event.modifiers()
+        _key = event.key()
+        view = self._img_view
+        if _mods == Qt.KeyboardModifier.NoModifier:
+            view.standard_key_press(_key)
+        elif _mods == Qt.KeyboardModifier.ControlModifier:
+            view.standard_ctrl_key_press(_key)
+        return None
 
-    def keyReleaseEvent(self, a0: QtGui.QKeyEvent | None) -> None:
-        return self._img_view.keyReleaseEvent(a0)
+    def keyReleaseEvent(self, event: QtGui.QKeyEvent | None) -> None:
+        if event is None or event.isAutoRepeat():
+            return None
+        if event.key() == Qt.Key.Key_Space:
+            self._img_view.set_mode(self._img_view._last_mode_before_key_hold)
+        return None
 
     def _run_drag_model(self, indices: list[int]):
         def make_model():

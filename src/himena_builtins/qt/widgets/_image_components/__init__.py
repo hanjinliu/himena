@@ -1,6 +1,6 @@
-from ._graphics_view import QImageGraphicsView
+from ._graphics_view import QImageGraphicsView, MouseMode
 from ._roi_items import QRoi
-from ._roi_collection import QSimpleRoiCollection, QRoiCollection
+from ._roi_collection import QSimpleRoiCollection, QRoiCollection, from_standard_roi
 from ._dim_sliders import QDimsSlider
 from ._roi_buttons import QRoiButtons
 from ._histogram import QHistogramView
@@ -25,4 +25,6 @@ __all__ = [
     "QImageViewControlBase",
     "ComplexMode",
     "ChannelMode",
+    "MouseMode",
+    "from_standard_roi",
 ]

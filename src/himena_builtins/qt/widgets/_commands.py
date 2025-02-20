@@ -39,3 +39,28 @@ def setup_image_scale_bar(win: SubWindow[QImageView]) -> Parametric:
         )  # fmt: skip
 
     return setup
+
+
+@register_function(
+    title="Set zoom factor ...",
+    types=StandardType.IMAGE,
+    menus="tools/image",
+    command_id="builtins:image:set-zoom-factor",
+)
+def set_zoom_factor(win: SubWindow[QImageView]) -> Parametric:
+    """Set the zoom factor of the canvas."""
+    view = win.widget._img_view
+    current_scale = view.transform().m11()
+
+    @configure_gui(
+        scale={
+            "value": round(current_scale * 100, 2),
+            "min": 0.001,
+            "label": "Zoom (%)",
+        }
+    )
+    def run_set_zoom(scale: float):
+        ratio = scale / (current_scale * 100)
+        view.scale_and_update_handles(ratio)
+
+    return run_set_zoom

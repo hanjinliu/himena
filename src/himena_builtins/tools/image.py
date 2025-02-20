@@ -7,7 +7,7 @@ from himena.plugins import (
     configure_gui,
     configure_submenu,
 )
-from himena.types import Parametric, WidgetDataModel, Rect
+from himena.types import ClipboardDataModel, Parametric, WidgetDataModel, Rect
 from himena.consts import StandardType
 from himena.standards.model_meta import (
     ArrayAxis,
@@ -382,6 +382,45 @@ def split_channels(model: WidgetDataModel) -> list[WidgetDataModel]:
         title = f"[{channel_labels[idx]}] {model.title}"
         models.append(model.with_value(arr_i, metadata=meta_i, title=title))
     return models
+
+
+@register_function(
+    title="Copy slice to clipboard",
+    types=StandardType.IMAGE,
+    menus=["tools/image", "/model_menu"],
+    command_id="builtins:copy-slice-to-clipboard",
+)
+def copy_slice_to_clipboard(model: WidgetDataModel) -> Parametric:
+    """Copy the current slice to the clipboard."""
+    arr = wrap_array(model.value)
+    meta = _cast_meta(model, ImageMeta)
+
+    def _get_bbox(*_):
+        bbox = None
+        if isinstance(rect := meta.current_roi, _roi.RectangleRoi):
+            bbox = tuple(_2d_roi_to_bbox(rect, arr, meta))
+        return bbox
+
+    def _get_indices(*_):
+        if (indices := meta.current_indices) is None:
+            raise ValueError("The `current_indices` attribute is not set.")
+        return indices
+
+    @configure_gui(bbox={"bind": _get_bbox}, indices={"bind": _get_indices})
+    def run_copy(
+        bbox: tuple[int, int, int, int],
+        indices: list[int | None],
+    ) -> ClipboardDataModel:
+        if bbox is None:
+            bbox = 0, 0, arr.shape[-1], arr.shape[-2]
+        arr_sliced = arr.get_slice(
+            tuple(slice(None) if i is None else i for i in indices)
+        )
+        sl = _bbox_to_slice(bbox, meta)
+        arr_cropped = arr_sliced[sl]
+        return ClipboardDataModel(image=arr_cropped)
+
+    return run_copy
 
 
 @register_function(
