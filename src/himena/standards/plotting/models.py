@@ -188,3 +188,33 @@ class Histogram(BasePlotModel):
             "face": {"widget_type": FacePropertyEdit, "value": self.face.model_dump()},
             "edge": {"widget_type": EdgePropertyEdit, "value": self.edge.model_dump()},
         }
+
+
+ANCHOR_STRINGS = Literal[
+    "center", "left", "right", "top", "bottom", "top_left", "top_right",
+    "bottom_left", "bottom_right"
+]  # fmt: skip
+
+
+class Texts(BasePlotModel):
+    """Plot model for texts."""
+
+    x: Any = Field(..., description="X-axis values.")
+    y: Any = Field(..., description="Y-axis values.")
+    texts: Any = Field(..., description="Texts to be displayed.")
+    size: int = Field(12, description="Font size of the texts.")
+    color: str = Field("black", description="Font color of the texts.")
+    family: str = Field("Arial", description="Font family of the texts.")
+    anchor: ANCHOR_STRINGS = Field(
+        "center",
+        description="Anchor position of the texts. 'center' means the center of the text.",
+    )
+    rotation: float = Field(0, description="Rotation angle of the texts.")
+
+    def plot_option_dict(self) -> dict[str, Any]:
+        return {
+            "name": {"widget_type": "LineEdit", "value": self.name},
+            "font_size": {"annotation": int, "value": self.size},
+            "font_color": {"annotation": str, "value": self.color},
+            "font_family": {"annotation": str, "value": self.family},
+        }
