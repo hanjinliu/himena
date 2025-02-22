@@ -153,9 +153,9 @@ def test_image_view_copy_roi(himena_ui: MainWindow, qtbot: QtBot):
         qtbot.mouseRelease(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(50, 50))
 
         qtbot.keyClick(image_view, Qt.Key.Key_C, modifier=_Ctrl)
-        qtbot.keyClick(image_view, Qt.Key.Key_V, modifier=_Ctrl)
+        image_view._img_view.standard_ctrl_key_press(Qt.Key.Key_V)
         assert len(image_view._img_view._roi_items) == 2
-        qtbot.keyClick(image_view, Qt.Key.Key_V, modifier=_Ctrl)
+        image_view._img_view.standard_ctrl_key_press(Qt.Key.Key_V)
         assert len(image_view._img_view._roi_items) == 3
 
 def test_image_view_select_roi(qtbot: QtBot):
