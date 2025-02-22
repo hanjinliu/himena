@@ -137,9 +137,10 @@ def test_image_view_draw_roi(qtbot: QtBot):
         # FIXME: Not working for some reason
         # assert image_view._img_view._current_roi_item is None
 
-def test_image_view_copy_roi(qtbot: QtBot):
+def test_image_view_copy_roi(himena_ui: MainWindow, qtbot: QtBot):
     image_view = QImageView()
-    image_view.show()
+    himena_ui.add_widget(image_view)
+    himena_ui.show()
     with WidgetTester(image_view) as tester:
         tester.update_model(value=np.zeros((100, 100), dtype=np.uint8))
         qtbot.addWidget(image_view)

@@ -27,7 +27,7 @@ from ._handles import QHandleRect, RoiSelectionHandles
 from ._scale_bar import QScaleBarItem
 from himena_builtins.qt.widgets._image_components import _mouse_events as _me
 from himena.qt import ndarray_to_qimage
-from himena.widgets import set_status_tip
+from himena.widgets import set_status_tip, get_clipboard, set_clipboard
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -164,7 +164,6 @@ class QImageGraphicsView(QBaseGraphicsView):
         self._scale_bar_widget.setZValue(10000)
         self._scale_bar_widget.setVisible(False)
         self.geometry_changed.connect(self._scale_bar_widget.update_rect)
-        self._internal_clipboard: QRoi | None = None
         self._stick_to_grid = False
         self.array_updated.connect(self._on_array_updated)
 
@@ -369,6 +368,7 @@ class QImageGraphicsView(QBaseGraphicsView):
                     idx = self._roi_items.index(self._current_roi_item)
                     del self._roi_items[idx]
                     self.roi_removed.emit(idx)
+                self._qroi_labels.update()
             else:
                 if self._is_current_roi_item_not_registered:
                     self.scene().removeItem(self._current_roi_item)
@@ -400,7 +400,6 @@ class QImageGraphicsView(QBaseGraphicsView):
             self._current_roi_item = item
             item.setVisible(True)
             _LOGGER.debug("Item selected: %r", type(item).__name__)
-        # self._is_current_roi_item_not_registered = False
 
     def select_item_at(self, pos: QtCore.QPointF):
         """Select the item at the given position."""
@@ -542,26 +541,31 @@ class QImageGraphicsView(QBaseGraphicsView):
             self.select_image()
         elif key == Qt.Key.Key_X:
             if self._current_roi_item is not None:
-                self._internal_clipboard = self._current_roi_item.copy()
+                item = self._current_roi_item.copy()
                 self.remove_current_item(remove_from_list=True, reason="Ctrl+X")
+                set_clipboard(text=str(item), internal_data=item)
         elif key == Qt.Key.Key_C:
             self._copy_current_roi()
-        elif key == Qt.Key.Key_V and self._internal_clipboard:
+        elif key == Qt.Key.Key_V:
             self._paste_roi()
         elif key == Qt.Key.Key_D:  # duplicate ROI
             if self._current_roi_item is not None:
-                self._internal_clipboard = self._current_roi_item.copy()
+                # item = self._current_roi_item.copy()
+                # set_clipboard(text=str(item), internal_data=item)
+                self._copy_current_roi()
                 self._paste_roi()
 
     def _copy_current_roi(self):
         if self._current_roi_item is not None:
             if self._is_current_roi_item_not_registered:
                 self.add_current_roi()
-            self._internal_clipboard = self._current_roi_item.copy()
+            item = self._current_roi_item.copy()
+            set_clipboard(text=str(item), internal_data=item)
 
     def _paste_roi(self):
-        item = self._internal_clipboard
-        if item is None:
+        model = get_clipboard()
+        item = model.internal_data
+        if not isinstance(item, QRoi):
             return
         sx, sy = self.transform().m11(), self.transform().m22()
         delta = QtCore.QPointF(4 / sx, 4 / sy)
@@ -570,5 +574,4 @@ class QImageGraphicsView(QBaseGraphicsView):
         self.set_current_roi(item)
         self.add_current_roi()
         self._selection_handles.connect_rect(item)
-        self._internal_clipboard = item.copy()  # needed for Ctrl+V x2
-        self._is_current_roi_item_not_registered = True
+        set_clipboard(model.with_internal_data(item.copy()))  # needed for Ctrl+V x2

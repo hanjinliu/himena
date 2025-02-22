@@ -131,8 +131,8 @@ class NDObjectCollection(Generic[_T]):
 
     def pop(self, index: int) -> _T:
         item = self.items[index]
-        self.items = np.delete(self.items, index)
-        self.indices = np.delete(self.indices, index)
+        self.items = np.delete(self.items, index, axis=0)
+        self.indices = np.delete(self.indices, index, axis=0)
         return item
 
     def clear(self) -> None:

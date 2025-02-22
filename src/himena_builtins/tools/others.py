@@ -346,7 +346,7 @@ def specify_widget(model: WidgetDataModel) -> Parametric:
 
 @register_function(
     title="Partialize function ...",
-    menus=["tools"],
+    menus=["tools/function"],
     types=[StandardType.FUNCTION],
     command_id="builtins:partialize-function",
 )
@@ -383,7 +383,7 @@ def partialize_function(model: WidgetDataModel) -> Parametric:
 
 @register_function(
     title="Plot y = f(x)...",
-    menus=["tools"],
+    menus=["tools/function"],
     types=[StandardType.FUNCTION],
     command_id="builtins:plot-function-1d",
 )
@@ -407,7 +407,7 @@ def plot_function_1d(model: WidgetDataModel) -> Parametric:
 
 @register_function(
     title="Plot z = f(x, y)...",
-    menus=["tools"],
+    menus=["tools/function"],
     types=[StandardType.FUNCTION],
     command_id="builtins:plot-function-2d",
 )
