@@ -17,6 +17,7 @@ from himena.standards.plotting.models import (
     Span,
     ErrorBar,
     Histogram,
+    Texts,
 )
 
 # 3D
@@ -58,6 +59,7 @@ __all__ = [
     "Span",
     "ErrorBar",
     "Histogram",
+    "Texts",
     "StyledText",
     "Axes3D",
     "SingleAxes3D",

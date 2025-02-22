@@ -141,6 +141,16 @@ def _add_span(model: hplt.Span, ax: plt.Axes):
     )
 
 
+@register_plot_model(hplt.Texts)
+def _add_texts(model: hplt.Texts, ax: plt.Axes):
+    ha, va = _ANCHOR_MAP[model.anchor]
+    for x, y, text in zip(model.x, model.y, model.texts):
+        ax.text(
+            x, y, text, color=model.color, fontsize=model.size, clip_on=True,
+            label=model.name, rotation=model.rotation, ha=ha, va=va,
+        )  # fmt: skip
+
+
 @register_plot_model(hplt.Scatter3D)
 def _add_scatter_3d(model: hplt.Scatter3D, ax: plt3d.Axes3D):
     if model.size is not None:
@@ -179,3 +189,16 @@ def _add_mesh_3d(model: hplt.Mesh3D, ax: plt3d.Axes3D):
         triangles=model.face_indices, color=model.face.color, edgecolor=model.edge.color,
         linewidth=model.edge.width, linestyle=model.edge.style, label=model.name,
     )  # fmt: skip
+
+
+_ANCHOR_MAP = {
+    "center": ("center", "center"),
+    "left": ("left", "center"),
+    "right": ("right", "center"),
+    "top": ("center", "top"),
+    "bottom": ("center", "bottom"),
+    "top_left": ("left", "top"),
+    "top_right": ("right", "top"),
+    "bottom_left": ("left", "bottom"),
+    "bottom_right": ("right", "bottom"),
+}

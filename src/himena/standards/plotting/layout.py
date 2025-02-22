@@ -172,6 +172,26 @@ class Axes(AxesBase):
         self.models.append(model)
         return model
 
+    def text(
+        self,
+        x: Sequence[float],
+        y: Sequence[float],
+        text: Sequence[str],
+        *,
+        size: int = 12,
+        color: str = "black",
+        family: str = "Arial",
+        anchor: _m.ANCHOR_STRINGS,
+        rotation: float = 0,
+    ) -> _m.Texts:
+        """Add a text plot model to the axes."""
+        model = _m.Texts(
+            x=x, y=y, texts=text, size=size, color=color, family=family, anchor=anchor,
+            rotation=rotation,
+        )  # fmt: skip
+        self.models.append(model)
+        return model
+
 
 class SingleAxes(BaseLayoutModel):
     axes: Axes = Field(default_factory=Axes, description="Child axes.")
@@ -256,6 +276,24 @@ class SingleAxes(BaseLayoutModel):
         return self.axes.hist(
             data=data, bins=bins, range=range, orient=orient, stat=stat, **kwargs
         )
+
+    def text(
+        self,
+        x: Sequence[float],
+        y: Sequence[float],
+        text: Sequence[str],
+        *,
+        size: int = 12,
+        color: str = "black",
+        family: str = "Arial",
+        rotation: float = 0,
+        anchor: _m.ANCHOR_STRINGS = "center",
+    ) -> _m.Texts:
+        """Add a text plot model to the axes."""
+        return self.axes.text(
+            x=x, y=y, text=text, size=size, color=color, family=family, anchor=anchor,
+            rotation=rotation,
+        )  # fmt: skip
 
 
 class Layout1D(BaseLayoutModel):
