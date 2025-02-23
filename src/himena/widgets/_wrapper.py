@@ -93,6 +93,7 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
             # a strong reference
             self._widget = StrongRef(widget)
         self._extension_default_fallback: str | None = None
+        self._force_not_editable: bool = False
 
     @property
     def is_alive(self) -> bool:
@@ -174,7 +175,15 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         set_editable_func = getattr(self.widget, "set_editable", None)
         if not callable(set_editable_func):
             raise AttributeError("Widget does not have `set_editable` method.")
+        if self._force_not_editable and value:
+            raise ValueError("Widget is forced to be not editable.")
         set_editable_func(value)
+
+    def force_not_editable(self, editable: bool):
+        self._force_not_editable = editable
+        if editable:
+            with suppress(AttributeError):
+                self.is_editable = False
 
     def _set_ask_save_before_close(self, value: bool) -> None:
         """Set the modified state of the widget."""
@@ -724,8 +733,7 @@ class ParametricWindow(SubWindow[_W]):
                 title = f"{return_value.title} (preview)"
                 prev = self.add_child(result_widget, title=title)
                 main.set_widget_as_preview(prev)
-                with suppress(AttributeError):  # disable editing if possible
-                    prev.is_editable = False
+                prev.force_not_editable(True)  # disable editing if possible
                 # move the window so that it does not overlap with the parametric window
                 prev.rect = _find_where_to_move(self, prev, main)
             else:

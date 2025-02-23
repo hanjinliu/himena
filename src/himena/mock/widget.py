@@ -85,6 +85,7 @@ class MockModelWrapper(MockWidget):
     def __init__(self):
         super().__init__()
         self._model: WidgetDataModel | None = None
+        self._editable = True
 
     def update_model(self, model: WidgetDataModel) -> None:
         self._model = model
@@ -93,3 +94,9 @@ class MockModelWrapper(MockWidget):
         if self._model is None:
             raise ValueError("Model not set")
         return self._model.model_copy()
+
+    def is_editable(self) -> bool:
+        return self._editable
+
+    def set_editable(self, val):
+        self._editable = val
