@@ -2,12 +2,12 @@ from himena.data_wrappers._dataframe import wrap_dataframe
 from himena.standards.model_meta import TableMeta
 from himena.plugins import register_function, configure_gui
 from himena.types import WidgetDataModel, Parametric
-from himena.consts import StandardType
+from himena.consts import StandardType, MenuId
 
 
 @register_function(
     types=StandardType.DATAFRAME,
-    menus=["tools/dataframe"],
+    menus=[MenuId.TOOLS_DATAFRAME],
     command_id="builtins:dataframe:header-to-row",
 )
 def header_to_row(model: WidgetDataModel) -> WidgetDataModel:
@@ -27,7 +27,7 @@ def header_to_row(model: WidgetDataModel) -> WidgetDataModel:
 @register_function(
     title="Series as array",
     types=StandardType.DATAFRAME,
-    menus=["tools/dataframe"],
+    menus=[MenuId.TOOLS_DATAFRAME],
     command_id="builtins:dataframe:series-as-array",
 )
 def series_as_array(model: WidgetDataModel) -> Parametric:
@@ -57,7 +57,7 @@ def series_as_array(model: WidgetDataModel) -> Parametric:
 @register_function(
     title="Select columns by name ...",
     types=StandardType.DATAFRAME,
-    menus=["tools/dataframe"],
+    menus=[MenuId.TOOLS_DATAFRAME],
     command_id="builtins:dataframe:select-columns-by-name",
 )
 def select_columns_by_name(model: WidgetDataModel) -> Parametric:
@@ -76,7 +76,7 @@ def select_columns_by_name(model: WidgetDataModel) -> Parametric:
 @register_function(
     title="Filter DataFrame ...",
     types=StandardType.DATAFRAME,
-    menus=["tools/dataframe"],
+    menus=[MenuId.TOOLS_DATAFRAME],
     command_id="builtins:dataframe:filter",
 )
 def filter_dataframe(model: WidgetDataModel) -> Parametric:
@@ -119,7 +119,7 @@ def filter_dataframe(model: WidgetDataModel) -> Parametric:
 @register_function(
     title="Sort DataFrame ...",
     types=StandardType.DATAFRAME,
-    menus=["tools/dataframe"],
+    menus=[MenuId.TOOLS_DATAFRAME],
     command_id="builtins:dataframe:sort",
 )
 def sort_dataframe(model: WidgetDataModel) -> Parametric:
@@ -140,7 +140,7 @@ def sort_dataframe(model: WidgetDataModel) -> Parametric:
 @register_function(
     title="New column using function ...",
     types=StandardType.DATAFRAME,
-    menus=["tools/dataframe"],
+    menus=[MenuId.TOOLS_DATAFRAME],
     command_id="builtins:dataframe:new-column-using-function",
 )
 def new_column_using_function(model: WidgetDataModel) -> Parametric:

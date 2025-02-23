@@ -4,7 +4,7 @@ import numpy as np
 from himena.plugins import register_function, configure_gui
 from himena.types import ClipboardDataModel, Parametric, WidgetDataModel
 from himena.standards.model_meta import TableMeta
-from himena.consts import StandardType
+from himena.consts import StandardType, MenuId
 from himena.utils.misc import table_to_text
 from himena.widgets import SubWindow
 
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 @register_function(
     title="Crop selection",
     types=StandardType.TABLE,
-    menus=["tools/table"],
+    menus=[MenuId.TOOLS_TABLE],
     command_id="builtins:table:crop",
 )
 def crop_selection(model: WidgetDataModel["np.ndarray"]) -> Parametric:
@@ -39,7 +39,7 @@ def crop_selection(model: WidgetDataModel["np.ndarray"]) -> Parametric:
 @register_function(
     title="Change separator ...",
     types=StandardType.TABLE,
-    menus=["tools/table"],
+    menus=[MenuId.TOOLS_TABLE],
     command_id="builtins:table:change-separator",
 )
 def change_separator(win: SubWindow) -> Parametric:
@@ -69,7 +69,7 @@ def change_separator(win: SubWindow) -> Parametric:
 @register_function(
     title="Copy as CSV",
     types=StandardType.TABLE,
-    menus=["tools/table/copy", "/model_menu/copy"],
+    menus=[MenuId.TOOLS_TABLE_COPY, "/model_menu/copy"],
     command_id="builtins:table:copy-as-csv",
 )
 def copy_as_csv(model: WidgetDataModel) -> ClipboardDataModel:
@@ -80,7 +80,7 @@ def copy_as_csv(model: WidgetDataModel) -> ClipboardDataModel:
 @register_function(
     title="Copy as Markdown",
     types=StandardType.TABLE,
-    menus=["tools/table/copy", "/model_menu/copy"],
+    menus=[MenuId.TOOLS_TABLE_COPY, "/model_menu/copy"],
     command_id="builtins:table:copy-as-markdown",
 )
 def copy_as_markdown(model: WidgetDataModel) -> ClipboardDataModel:
@@ -91,7 +91,7 @@ def copy_as_markdown(model: WidgetDataModel) -> ClipboardDataModel:
 @register_function(
     title="Copy as HTML",
     types=StandardType.TABLE,
-    menus=["tools/table/copy", "/model_menu/copy"],
+    menus=[MenuId.TOOLS_TABLE_COPY, "/model_menu/copy"],
     command_id="builtins:table:copy-as-html",
 )
 def copy_as_html(model: WidgetDataModel) -> ClipboardDataModel:
@@ -102,7 +102,7 @@ def copy_as_html(model: WidgetDataModel) -> ClipboardDataModel:
 @register_function(
     title="Copy as rST",
     types=StandardType.TABLE,
-    menus=["tools/table/copy", "/model_menu/copy"],
+    menus=[MenuId.TOOLS_TABLE_COPY, "/model_menu/copy"],
     command_id="builtins:table:copy-as-rst",
 )
 def copy_as_rst(model: WidgetDataModel) -> ClipboardDataModel:
@@ -113,7 +113,7 @@ def copy_as_rst(model: WidgetDataModel) -> ClipboardDataModel:
 @register_function(
     title="Insert incrementing numbers",
     types=StandardType.TABLE,
-    menus=["tools/table"],
+    menus=[MenuId.TOOLS_TABLE],
     command_id="builtins:table:insert-incrementing-numbers",
 )
 def insert_incrementing_numbers(win: SubWindow["QSpreadsheet"]) -> Parametric:

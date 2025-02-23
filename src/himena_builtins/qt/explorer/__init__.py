@@ -1,8 +1,9 @@
 """Builtin File explorer plugin."""
 
 import sys
-from himena.plugins import register_dock_widget_action
 from dataclasses import dataclass, field
+from himena.consts import MenuId
+from himena.plugins import register_dock_widget_action
 
 
 @dataclass
@@ -33,7 +34,7 @@ class FileExplorerSSHConfig:
 
 @register_dock_widget_action(
     title="File Explorer",
-    menus=["tools/dock"],
+    menus=[MenuId.TOOLS_DOCK],
     area="left",
     keybindings="Ctrl+Shift+E",
     command_id="builtins:file-explorer",
@@ -49,7 +50,7 @@ def make_file_explorer_widget(ui):
 
 @register_dock_widget_action(
     title="File Explorer (SSH)",
-    menus=["tools/dock"],
+    menus=[MenuId.TOOLS_DOCK],
     area="left",
     command_id="builtins:file-explorer-ssh",
     singleton=True,

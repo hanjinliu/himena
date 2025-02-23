@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 from himena.standards.model_meta import DictMeta
 from himena.plugins import register_function
 from himena.types import WidgetDataModel
-from himena.consts import StandardType
+from himena.consts import StandardType, MenuId
 
 if TYPE_CHECKING:
     import numpy as np
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 @register_function(
     title="Duplicate this tab",
     types=StandardType.DICT,
-    menus=["tools/excel"],
+    menus=[MenuId.TOOLS_EXCEL],
     command_id="builtins:duplicate-dict-tab",
 )
 def duplicate_this_tab(

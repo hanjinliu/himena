@@ -8,7 +8,7 @@ from himena._utils import to_color_or_colormap
 from himena.plugins import register_function, configure_gui
 from himena.types import Parametric, WidgetDataModel
 from himena.utils.table_selection import model_to_xy_arrays, range_getter
-from himena.consts import StandardType
+from himena.consts import StandardType, MenuId
 from himena.widgets import SubWindow
 from himena.standards.model_meta import ArrayMeta, DictMeta, TableMeta
 from himena.standards import plotting as hplt
@@ -29,7 +29,7 @@ _TABLE_LIKE = [
     StandardType.DATAFRAME,
     StandardType.EXCEL,
 ]
-_MENU = ["tools/plot", "/model_menu/plot"]
+_MENU = [MenuId.TOOLS_PLOT, "/model_menu/plot"]
 _EDGE_ONLY_VALUE = {"color": "tab10", "width": 2.0}
 
 # Single 2D selection in the form of ((row start, row stop), (col start, col stop))
@@ -307,7 +307,7 @@ def histogram(win: SubWindow) -> Parametric:
 @register_function(
     title="Edit plot ...",
     types=[StandardType.PLOT],
-    menus="tools/plot",
+    menus=[MenuId.TOOLS_PLOT],
     command_id="builtins:edit-plot",
 )
 def edit_plot(win: SubWindow) -> Parametric:

@@ -1,9 +1,10 @@
+from himena.consts import MenuId
 from himena.plugins import register_dock_widget_action
 
 
 @register_dock_widget_action(
     title="Image Draw Tool",
-    menus=["tools/dock"],
+    menus=[MenuId.TOOLS_DOCK],
     area="right",
     command_id="builtins:image-draw-tool",
     singleton=True,

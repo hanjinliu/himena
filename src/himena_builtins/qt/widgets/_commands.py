@@ -1,4 +1,4 @@
-from himena.consts import StandardType
+from himena.consts import StandardType, MenuId
 from himena.widgets import SubWindow
 from himena.plugins import register_function, configure_gui
 from himena.types import Parametric
@@ -13,7 +13,7 @@ from ._image_components._scale_bar import ScaleBarAnchor, ScaleBarType
 @register_function(
     title="Scale bar ...",
     types=StandardType.IMAGE,
-    menus="tools/image",
+    menus=[MenuId.TOOLS_IMAGE],
     command_id="builtins:image:setup-image-scale-bar",
 )
 def setup_image_scale_bar(win: SubWindow[QImageView]) -> Parametric:
@@ -44,7 +44,7 @@ def setup_image_scale_bar(win: SubWindow[QImageView]) -> Parametric:
 @register_function(
     title="Set zoom factor ...",
     types=StandardType.IMAGE,
-    menus="tools/image",
+    menus=[MenuId.TOOLS_IMAGE],
     command_id="builtins:image:set-zoom-factor",
 )
 def set_zoom_factor(win: SubWindow[QImageView]) -> Parametric:

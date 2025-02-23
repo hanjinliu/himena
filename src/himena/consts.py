@@ -99,6 +99,8 @@ class StandardType(SimpleNamespace):
 
 
 class MenuId(StrEnum):
+    """Preset of menu IDs."""
+
     FILE = "file"
     FILE_RECENT = "file/recent"
     FILE_NEW = "file/new"
@@ -111,8 +113,37 @@ class MenuId(StrEnum):
     WINDOW_NTH = "window/nth"
     WINDOW_LAYOUT = "window/layout"
     VIEW = "view"
+
+    # "Tools" menu
     TOOLS = "tools"
     TOOLS_DOCK = "tools/dock"
+    """Menu ID for the dock widgets."""
+    TOOLS_ARRAY = "tools/array"
+    """Menu ID for the commands related to "array"-type data."""
+    TOOLS_DATAFRAME = "tools/dataframe"
+    """Menu ID for the commands related to "dataframe"-type data."""
+    TOOLS_EXCEL = "tools/excel"
+    """Menu ID for the commands related to "excel"-type data."""
+    TOOLS_IMAGE = "tools/image"
+    """Menu ID for the commands related to "image"-type data."""
+    TOOLS_IMAGE_ROI = "tools/image/roi"
+    """Menu ID for the commands related to image ROIs."""
+    TOOLS_IMAGE_CHANNELS = "tools/image/channels"
+    """Menu ID for the commands related to image channels."""
+    TOOLS_PLOT = "tools/plot"
+    """Menu ID for the commands related to "plot"-type data."""
+    TOOLS_TEXT = "tools/text"
+    """Menu ID for the commands related to "text"-type data."""
+    TOOLS_TABLE = "tools/table"
+    """Menu ID for the commands related to "table"-type data."""
+    TOOLS_TABLE_COPY = "tools/table/copy"
+    """Menu ID for the commands that copy the "table"-type data."""
+    TOOLS_MODELS = "tools/models"
+    """Menu ID for the commands related to "models"-type data."""
+    TOOLS_FUNCTION = "tools/function"
+    """Menu ID for the commands related to "function"-type data."""
+
+    # Others
     TOOLBAR = "toolbar"
     HELP = "help"
 
