@@ -23,6 +23,9 @@ def test_new_window(make_himena_ui, backend: str):
         himena_ui.read_file(path)
     assert len(himena_ui.tabs) == 1
     assert len(himena_ui.tabs[0]) == 1
+    assert himena_ui.tabs[0][-1].is_editable
+    himena_ui.exec_action("window-toggle-editable")
+    assert not himena_ui.tabs[0][-1].is_editable
     with TemporaryDirectory() as tmp:
         path = Path(tmp) / "test.txt"
         path.write_text("Hello, World! 2")

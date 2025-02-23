@@ -69,8 +69,7 @@ class QWatchWindowObject(QtCore.QObject):
         window_watch.closed.connect(self._on_target_window_closed)
         self.__class__._instances.add(self)
         self._was_editable = window_update.is_editable
-        with suppress(AttributeError):
-            window_update.is_editable = False
+        window_update.force_not_editable(True)
 
     def _elapsed(self):
         self._win_update.update_model(self._win_watch.to_model())

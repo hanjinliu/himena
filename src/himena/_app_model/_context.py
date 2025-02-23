@@ -13,6 +13,12 @@ def _is_active_window_savable(ui: "MainWindow") -> bool:
     return False
 
 
+def _is_active_window_editable(ui: "MainWindow") -> bool:
+    if win := ui.current_window:
+        return win.is_editable
+    return False
+
+
 def _active_window_state(ui: "MainWindow"):
     if win := ui.current_window:
         return win.state
@@ -97,6 +103,11 @@ class AppContext(ContextNamespace["MainWindow"]):
         False,
         "if the current window supports to_model method",
         _is_active_window_savable,
+    )
+    is_active_window_editable = ContextKey(
+        False,
+        "if the current window is editable",
+        _is_active_window_editable,
     )
     active_window_state = ContextKey(
         WindowState.NORMAL,

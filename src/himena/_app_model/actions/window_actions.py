@@ -3,6 +3,8 @@ from pathlib import Path
 import sys
 import warnings
 from app_model.types import (
+    Action,
+    ToggleRule,
     KeyCode,
     KeyMod,
     KeyChord,
@@ -417,6 +419,22 @@ def align_window_center(ui: MainWindow) -> None:
     """Align the window to the center of the tab area."""
     if window := ui.current_window:
         window._set_rect(window.rect.align_center(ui.area_size))
+
+
+def toggle_editable(win: SubWindow) -> None:
+    win.is_editable = not win.is_editable
+
+
+ACTIONS.append(
+    Action(
+        id="window-toggle-editable",
+        title="Window editable",
+        callback=toggle_editable,
+        enablement=_ctx.is_subwindow_focused,
+        menus=[{"id": MenuId.WINDOW, "group": EDIT_GROUP}],
+        toggled=ToggleRule(condition=_ctx.is_active_window_editable),
+    )
+)
 
 
 @ACTIONS.append_from_fn(
