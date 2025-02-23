@@ -179,9 +179,9 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
             raise ValueError("Widget is forced to be not editable.")
         set_editable_func(value)
 
-    def force_not_editable(self, editable: bool):
-        self._force_not_editable = editable
-        if editable:
+    def force_not_editable(self, force: bool):
+        self._force_not_editable = force
+        if force:
             with suppress(AttributeError):
                 self.is_editable = False
 
@@ -773,6 +773,7 @@ class ParametricWindow(SubWindow[_W]):
                 # differ, thus the widget needs update.
                 if self._has_is_previewing:
                     result_widget.update_model(return_value)
+                result_widget.force_not_editable(False)
                 with suppress(AttributeError):
                     result_widget.is_editable = True
                 if self._auto_close:
