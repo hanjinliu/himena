@@ -705,6 +705,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#place-the-function-in-any-places-in-menu-bar" class="md-nav__link">
+    <span class="md-ellipsis">
+      Place the Function in Any Places in Menu Bar
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#parametric-functions" class="md-nav__link">
     <span class="md-ellipsis">
       Parametric Functions
@@ -1087,6 +1096,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#place-the-function-in-any-places-in-menu-bar" class="md-nav__link">
+    <span class="md-ellipsis">
+      Place the Function in Any Places in Menu Bar
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#parametric-functions" class="md-nav__link">
     <span class="md-ellipsis">
       Parametric Functions
@@ -1172,6 +1190,7 @@ default) and the command palette. When this function is called from the GUI, cur
 active window will be converted into a <code>WidgetDataModel</code> object and passed to the
 function. The returned <code>WidgetDataModel</code> object will then be converted into another
 window.</p>
+<hr />
 <h2 id="dependency-injection-and-type-narrowing">Dependency Injection and Type Narrowing</h2>
 <p><code>himena</code> uses <a href="https://github.com/pyapp-kit/in-n-out"><code>in_n_out</code></a> library to inject
 the application context into functions. For example, in the previous example, the
@@ -1211,6 +1230,30 @@ argument of the <code>register_function()</code> decorator.</p>
 <p>With this, the "Format JSON Text" menu will be enabled only if the current window is a
 widget for <code>"text"</code>-type data. Another benefit is that this command will be added to the
 <a href="../../tutorial/#model-menu-button">model menu</a> of the <code>"text"</code>-type widget.</p>
+<hr />
+<h2 id="place-the-function-in-any-places-in-menu-bar">Place the Function in Any Places in Menu Bar</h2>
+<p>The place to put the function in the menu bar can be specified by the <code>menus</code> argument
+of the <code>register_function()</code> decorator. Each menu is specified by a "/"-separated string
+identifier. Following is an example that puts the function in the
+"my-plugins &gt; my-text-plugins" menu.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">himena</span><span class="w"> </span><span class="kn">import</span> <span class="n">WidgetDataModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">himena.plugins</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_function</span>
+
+<span class="nd">@register_function</span><span class="p">(</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Format JSON Text&quot;</span><span class="p">,</span>
+    <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="n">StandardType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">],</span>
+<span class="hll">    <span class="n">menus</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;my-plugins/my-text-plugins&quot;</span><span class="p">],</span>
+</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">format_json</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">WidgetDataModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WidgetDataModel</span><span class="p">:</span>
+    <span class="o">...</span>
+</code></pre></div>
+<p>To define how to display the menu title, you can use <a class="autorefs autorefs-internal" href="../../api/plugins/#himena.plugins.configure_submenu"><code>configure_submenu()</code></a>.</p>
+<div class="highlight"><pre><span></span><code><span class="hll"><span class="kn">from</span><span class="w"> </span><span class="nn">himena.plugins</span><span class="w"> </span><span class="kn">import</span> <span class="n">configure_submenu</span>
+</span>
+<span class="n">configure_submenu</span><span class="p">(</span><span class="s2">&quot;my-plugins&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;My Plugins&quot;</span><span class="p">)</span>
+<span class="n">configure_submenu</span><span class="p">(</span><span class="s2">&quot;my-plugins/my-text-plugins&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;My Text Plugins&quot;</span><span class="p">)</span>
+</code></pre></div>
+<hr />
 <h2 id="parametric-functions">Parametric Functions</h2>
 <p>Many functions require parameter inputs. It is very easy to implement a parametric
 function in Python: just add more arguments to the function. However, implementing
@@ -1246,6 +1289,7 @@ of parameters, you need to <strong>annotate the returned value with the <code>Pa
 <li><code>WidgetDataModel</code>, <code>list[WidgetDataModel]</code>, <code>SubWindow</code>, <code>list[SubWindow]</code>
   &rarr; Drop area that can drop other sub-windows to provide the corresponding data.</li>
 </ul>
+<hr />
 <h2 id="configure-parameter-input-window">Configure Parameter Input Window</h2>
 <p>The parameter input window is automatically generated by <code>magicgui</code>. You can further
 customize its appearance by <a class="autorefs autorefs-internal" href="../../api/plugins/#himena.plugins.configure_gui"><code>configure_gui()</code></a> decorator.</p>
@@ -1288,6 +1332,7 @@ and use <code>dict</code> to configure the widget used for the parameter input.<
     <span class="k">return</span> <span class="n">WidgetDataModel</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">)</span>
 </code></pre></div>
 </div>
+<hr />
 <h2 id="preview-function-outputs">Preview Function Outputs</h2>
 <p>In some cases, parameters should be tuned based on the output of the function. For
 example in the case of the <code>format_json</code> function, the user may want to see the output
@@ -1305,6 +1350,7 @@ input window, just add the <code>preview</code> argument to the <code>configure_
     <span class="k">return</span> <span class="n">run_format_json</span>
 </code></pre></div>
 <p><img alt="" loading="lazy" src="../../images/02_preview.gif" width="700px" /></p>
+<hr />
 <h2 id="asynchronous-execution">Asynchronous Execution</h2>
 <p>It is also very easy to make your function asynchronous (make the application responsive
 during the execution). Just add the <code>run_async=True</code> argument to the
