@@ -11,7 +11,7 @@ from himena.data_wrappers._dataframe import wrap_dataframe
 from himena._descriptors import NoNeedToSave
 from himena.plugins import register_function, configure_gui, widget_classes
 from himena.types import Parametric, WidgetDataModel
-from himena.consts import StandardType, MonospaceFontFamily
+from himena.consts import StandardType, MonospaceFontFamily, MenuId
 from himena.widgets import SubWindow, MainWindow, ParametricWindow
 from himena.workflow import Workflow
 from himena import AppContext as ctx
@@ -43,7 +43,7 @@ def open_as_text_anyway(ui: MainWindow, win: SubWindow) -> WidgetDataModel[str]:
 
 
 @register_function(
-    menus=["tools/models"],
+    menus=[MenuId.TOOLS_MODELS],
     title="Stack models ...",
     command_id="builtins:stack-models",
     enablement=(ctx.num_tabs > 0) & (ctx.num_sub_windows > 0),
@@ -89,7 +89,7 @@ def stack_models(ui: MainWindow) -> Parametric:
 
 
 @register_function(
-    menus=["tools/models"],
+    menus=[MenuId.TOOLS_MODELS],
     types=[StandardType.MODELS],
     command_id="builtins:sort-model-list",
 )
@@ -125,7 +125,7 @@ def sort_model_list(model: WidgetDataModel) -> Parametric:
 
 
 @register_function(
-    menus=["tools/models"],
+    menus=[MenuId.TOOLS_MODELS],
     types=[StandardType.MODELS],
     command_id="builtins:filter-model-list",
 )
@@ -175,7 +175,7 @@ def filter_model_list(model: WidgetDataModel) -> Parametric:
 @register_function(
     title="Compute lazy items",
     types=[StandardType.MODELS],
-    menus=["tools/models"],
+    menus=[MenuId.TOOLS_MODELS],
     command_id="builtins:compute-lazy-items",
 )
 def compute_lazy_items(model: WidgetDataModel) -> WidgetDataModel:
@@ -346,7 +346,7 @@ def specify_widget(model: WidgetDataModel) -> Parametric:
 
 @register_function(
     title="Partialize function ...",
-    menus=["tools/function"],
+    menus=[MenuId.TOOLS_FUNCTION],
     types=[StandardType.FUNCTION],
     command_id="builtins:partialize-function",
 )
@@ -383,7 +383,7 @@ def partialize_function(model: WidgetDataModel) -> Parametric:
 
 @register_function(
     title="Plot y = f(x)...",
-    menus=["tools/function"],
+    menus=[MenuId.TOOLS_FUNCTION],
     types=[StandardType.FUNCTION],
     command_id="builtins:plot-function-1d",
 )
@@ -407,7 +407,7 @@ def plot_function_1d(model: WidgetDataModel) -> Parametric:
 
 @register_function(
     title="Plot z = f(x, y)...",
-    menus=["tools/function"],
+    menus=[MenuId.TOOLS_FUNCTION],
     types=[StandardType.FUNCTION],
     command_id="builtins:plot-function-2d",
 )

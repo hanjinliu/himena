@@ -8,7 +8,7 @@ from himena.plugins import (
     configure_submenu,
 )
 from himena.types import ClipboardDataModel, Parametric, WidgetDataModel, Rect
-from himena.consts import StandardType
+from himena.consts import StandardType, MenuId
 from himena.standards.model_meta import (
     ArrayAxis,
     ArrayMeta,
@@ -19,13 +19,13 @@ from himena.standards.model_meta import (
 from himena.widgets._wrapper import SubWindow
 from himena_builtins.tools.array import _cast_meta, _make_index_getter
 
-configure_submenu("tools/image/roi", "ROI")
+configure_submenu(MenuId.TOOLS_IMAGE_ROI, "ROI")
 configure_submenu("/model_menu/roi", "ROI")
 
 
 @register_function(
     types=StandardType.IMAGE,
-    menus=["tools/image/roi", "/model_menu/roi"],
+    menus=[MenuId.TOOLS_IMAGE_ROI, "/model_menu/roi"],
     command_id="builtins:image-crop:crop-image",
     keybindings=["Ctrl+Shift+X"],
 )
@@ -60,7 +60,7 @@ def crop_image(model: WidgetDataModel) -> Parametric:
 
 @register_function(
     types=StandardType.IMAGE,
-    menus=["tools/image/roi", "/model_menu/roi"],
+    menus=[MenuId.TOOLS_IMAGE_ROI, "/model_menu/roi"],
     command_id="builtins:image-crop:crop-image-multi",
 )
 def crop_image_multi(model: WidgetDataModel) -> Parametric:
@@ -101,7 +101,7 @@ def crop_image_multi(model: WidgetDataModel) -> Parametric:
 @register_function(
     title="Crop Image (nD) ...",
     types=StandardType.IMAGE,
-    menus=["tools/image/roi", "/model_menu/roi"],
+    menus=[MenuId.TOOLS_IMAGE_ROI, "/model_menu/roi"],
     command_id="builtins:image-crop:crop-image-nd",
 )
 def crop_image_nd(win: SubWindow) -> Parametric:
@@ -183,7 +183,7 @@ def _make_roi_limits_getter(win: SubWindow, dim: Literal["x", "y"]):
 @register_function(
     title="Duplicate ROIs",
     types=StandardType.IMAGE,
-    menus=["tools/image/roi", "/model_menu/roi"],
+    menus=[MenuId.TOOLS_IMAGE_ROI, "/model_menu/roi"],
     command_id="builtins:duplicate-rois",
 )
 def duplicate_rois(model: WidgetDataModel) -> WidgetDataModel:
@@ -209,7 +209,7 @@ def duplicate_rois(model: WidgetDataModel) -> WidgetDataModel:
 @register_function(
     title="Filter ROIs",
     types=StandardType.IMAGE,
-    menus=["tools/image/roi", "/model_menu/roi"],
+    menus=[MenuId.TOOLS_IMAGE_ROI, "/model_menu/roi"],
     command_id="builtins:filter-image-rois",
 )
 def filter_rois(model: WidgetDataModel) -> Parametric:
@@ -275,7 +275,7 @@ def select_rois(model: WidgetDataModel) -> Parametric:
 @register_function(
     title="Point ROIs to DataFrame",
     types=StandardType.IMAGE,
-    menus=["tools/image/roi", "/model_menu/roi"],
+    menus=[MenuId.TOOLS_IMAGE_ROI, "/model_menu/roi"],
     command_id="builtins:image:point-rois-to-dataframe",
 )
 def point_rois_to_dataframe(model: WidgetDataModel) -> WidgetDataModel:
@@ -313,7 +313,7 @@ def point_rois_to_dataframe(model: WidgetDataModel) -> WidgetDataModel:
 @register_function(
     title="Set colormap ...",
     types=StandardType.IMAGE,
-    menus=["tools/image/channels", "/model_menu/channels"],
+    menus=[MenuId.TOOLS_IMAGE_CHANNELS, "/model_menu/channels"],
     command_id="builtins:set-colormaps",
 )
 def set_colormaps(win: SubWindow) -> Parametric:
@@ -358,7 +358,7 @@ def set_colormaps(win: SubWindow) -> Parametric:
 @register_function(
     title="Split channels",
     types=StandardType.IMAGE,
-    menus=["tools/image/channels", "/model_menu/channels"],
+    menus=[MenuId.TOOLS_IMAGE_CHANNELS, "/model_menu/channels"],
     command_id="builtins:split-channels",
 )
 def split_channels(model: WidgetDataModel) -> list[WidgetDataModel]:
@@ -387,7 +387,7 @@ def split_channels(model: WidgetDataModel) -> list[WidgetDataModel]:
 @register_function(
     title="Copy slice to clipboard",
     types=StandardType.IMAGE,
-    menus=["tools/image", "/model_menu"],
+    menus=[MenuId.TOOLS_IMAGE, "/model_menu"],
     command_id="builtins:copy-slice-to-clipboard",
 )
 def copy_slice_to_clipboard(model: WidgetDataModel) -> Parametric:
@@ -426,7 +426,7 @@ def copy_slice_to_clipboard(model: WidgetDataModel) -> Parametric:
 @register_function(
     title="Specify rectangle ...",
     types=StandardType.IMAGE,
-    menus=["tools/image/roi", "/model_menu/roi"],
+    menus=[MenuId.TOOLS_IMAGE_ROI, "/model_menu/roi"],
     command_id="builtins:image-specify:roi-specify-rectangle",
 )
 def roi_specify_rectangle(win: SubWindow) -> Parametric:
@@ -464,7 +464,7 @@ def roi_specify_rectangle(win: SubWindow) -> Parametric:
 @register_function(
     title="Specify ellipse ...",
     types=StandardType.IMAGE,
-    menus=["tools/image/roi", "/model_menu/roi"],
+    menus=[MenuId.TOOLS_IMAGE_ROI, "/model_menu/roi"],
     command_id="builtins:image-specify:roi-specify-ellipse",
 )
 def roi_specify_ellipse(win: SubWindow) -> Parametric:
@@ -502,7 +502,7 @@ def roi_specify_ellipse(win: SubWindow) -> Parametric:
 @register_function(
     title="Specify line ...",
     types=StandardType.IMAGE,
-    menus=["tools/image/roi", "/model_menu/roi"],
+    menus=[MenuId.TOOLS_IMAGE_ROI, "/model_menu/roi"],
     command_id="builtins:image-specify:roi-specify-line",
 )
 def roi_specify_line(win: SubWindow) -> Parametric:
@@ -600,7 +600,7 @@ def run_merge_channels(
 
 @register_function(
     title="Merge channels ...",
-    menus=["tools/image/channels", "/model_menu/channels"],
+    menus=[MenuId.TOOLS_IMAGE_CHANNELS, "/model_menu/channels"],
     command_id="builtins:merge-channels",
 )
 def merge_channels() -> Parametric:
@@ -610,7 +610,7 @@ def merge_channels() -> Parametric:
 
 @register_function(
     title="Stack images ...",
-    menus=["tools/image"],
+    menus=[MenuId.TOOLS_IMAGE],
     command_id="builtins:stack-images",
 )
 def stack_images() -> Parametric:

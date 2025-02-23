@@ -5,12 +5,12 @@ from types import FunctionType
 from himena.plugins import register_function
 from himena.types import Parametric, WidgetDataModel
 from himena.standards.model_meta import TextMeta, FunctionMeta
-from himena.consts import StandardType
+from himena.consts import StandardType, MenuId
 
 
 @register_function(
     types=StandardType.TEXT,
-    menus=["tools/text"],
+    menus=[MenuId.TOOLS_TEXT],
     keybindings="Ctrl+F5",
     command_id="builtins:run-script",
 )
@@ -29,7 +29,7 @@ def run_script(model: WidgetDataModel[str]):
 
 @register_function(
     types=StandardType.TEXT,
-    menus=["tools/text"],
+    menus=[MenuId.TOOLS_TEXT],
     command_id="builtins:text:change-separator",
 )
 def change_separator(model: WidgetDataModel[str]) -> Parametric:
@@ -56,7 +56,7 @@ def change_separator(model: WidgetDataModel[str]) -> Parametric:
 
 @register_function(
     types=StandardType.TEXT,
-    menus=["tools/text"],
+    menus=[MenuId.TOOLS_TEXT],
     command_id="builtins:text:change-encoding",
 )
 def change_encoding(model: WidgetDataModel[str]) -> Parametric:
@@ -75,7 +75,7 @@ def change_encoding(model: WidgetDataModel[str]) -> Parametric:
 @register_function(
     title="Compile as a function",
     types=StandardType.TEXT,
-    menus=["tools/text"],
+    menus=[MenuId.TOOLS_TEXT],
     command_id="builtins:compile-as-function",
 )
 def compile_as_function(model: WidgetDataModel[str]) -> WidgetDataModel:

@@ -39,6 +39,8 @@ active window will be converted into a `WidgetDataModel` object and passed to th
 function. The returned `WidgetDataModel` object will then be converted into another
 window.
 
+---
+
 ## Dependency Injection and Type Narrowing
 
 `himena` uses [`in_n_out`](https://github.com/pyapp-kit/in-n-out) library to inject
@@ -84,6 +86,39 @@ With this, the "Format JSON Text" menu will be enabled only if the current windo
 widget for `"text"`-type data. Another benefit is that this command will be added to the
 [model menu](../tutorial.md#model-menu-button) of the `"text"`-type widget.
 
+---
+
+## Place the Function in Any Places in Menu Bar
+
+The place to put the function in the menu bar can be specified by the `menus` argument
+of the `register_function()` decorator. Each menu is specified by a "/"-separated string
+identifier. Following is an example that puts the function in the
+"my-plugins > my-text-plugins" menu.
+
+``` python hl_lines="7"
+from himena import WidgetDataModel
+from himena.plugins import register_function
+
+@register_function(
+    title="Format JSON Text",
+    types=[StandardType.TEXT],
+    menus=["my-plugins/my-text-plugins"],
+)
+def format_json(model: WidgetDataModel) -> WidgetDataModel:
+    ...
+```
+
+To define how to display the menu title, you can use [`configure_submenu()`][himena.plugins.configure_submenu].
+
+``` python hl_lines="1 9"
+from himena.plugins import configure_submenu
+
+configure_submenu("my-plugins", title="My Plugins")
+configure_submenu("my-plugins/my-text-plugins", title="My Text Plugins")
+```
+
+---
+
 ## Parametric Functions
 
 Many functions require parameter inputs. It is very easy to implement a parametric
@@ -124,6 +159,8 @@ The type-to-widget mapping is as follows:
 - `tuple` &rarr; Group box with the corresponding types.
 - `WidgetDataModel`, `list[WidgetDataModel]`, `SubWindow`, `list[SubWindow]`
   &rarr; Drop area that can drop other sub-windows to provide the corresponding data.
+
+---
 
 ## Configure Parameter Input Window
 
@@ -174,6 +211,8 @@ Here's some of the options you can use.
         return WidgetDataModel(value=value, type="text")
     ```
 
+---
+
 ## Preview Function Outputs
 
 In some cases, parameters should be tuned based on the output of the function. For
@@ -195,6 +234,8 @@ def format_json(model: WidgetDataModel) -> Parametric:
 ```
 
 ![](../images/02_preview.gif){ loading=lazy width=700px }
+
+---
 
 ## Asynchronous Execution
 
