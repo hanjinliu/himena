@@ -497,6 +497,7 @@ class QImageGraphicsView(QBaseGraphicsView):
                 # do not add the same item
                 return
             _LOGGER.info(f"Added ROI item {item}")
+            self._selection_handles.finish_drawing_polygon()
             self._roi_items.append(item)
             self._qroi_labels.update()
             self.roi_added.emit(item)

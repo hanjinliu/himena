@@ -362,8 +362,10 @@ class RoiSelectionHandles:
         return self._is_drawing_polygon
 
     def finish_drawing_polygon(self):
+        was_drawing_polygon = self._is_drawing_polygon
         self._is_drawing_polygon = False
-        self.draw_finished.emit()
+        if was_drawing_polygon:
+            self.draw_finished.emit()
 
     def remove_handles(self, start: int, end: int):
         for i in range(start, end):
