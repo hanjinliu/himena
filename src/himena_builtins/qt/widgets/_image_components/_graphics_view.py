@@ -455,7 +455,7 @@ class QImageGraphicsView(QBaseGraphicsView):
         # Move the image using the mouse
         if event.button() == Qt.MouseButton.NoButton:
             self.hovered.emit(self.mapToScene(event.pos()))
-        elif event.button() == Qt.MouseButton.LeftButton:
+        elif event.buttons() & Qt.MouseButton.LeftButton:
             if (
                 self._mouse_event_handler._pos_drag_start is None
                 or self._mouse_event_handler._pos_drag_prev is None
