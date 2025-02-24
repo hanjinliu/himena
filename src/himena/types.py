@@ -592,6 +592,7 @@ class ModelTrack(_HasDynamicAttribute):
     time_start: float = field(default=0.0)
 
     def to_workflow(self, parameters: dict[str, Any]) -> Workflow:
+        """Construct a workflow based on the given parameters."""
         params = []
         more_workflows: list[Workflow] = []
         for k, v in parameters.items():

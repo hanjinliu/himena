@@ -40,6 +40,7 @@ if TYPE_CHECKING:
 
 class QImageViewBase(QtW.QSplitter):
     _executor = ThreadPoolExecutor(max_workers=1)
+    images_changed = QtCore.Signal(list)
 
     def __init__(self):
         super().__init__(QtCore.Qt.Orientation.Horizontal)
@@ -651,6 +652,7 @@ class QImageView(QImageViewBase):
         else:
             visible = True
         self._current_image_slices[idx] = ImageTuple(img, visible)
+        self.images_changed(self._current_image_slices)
 
     def _set_image_slices(self, imgs: list[ImageTuple]):
         """Set image slices using the channel information.
@@ -662,12 +664,14 @@ class QImageView(QImageViewBase):
         self._current_image_slices = imgs
         if self._channels is None:
             return
+        images: list[NDArray[np.number] | None] = []
         with qsignal_blocker(self._control._histogram):
             for i, (imtup, ch) in enumerate(zip(imgs, self._channels)):
                 if imtup.visible:
                     img = imtup.arr
                 else:
                     img = None
+                images.append(img)
                 self._img_view.set_array(
                     i,
                     ch.transform_image(
@@ -691,6 +695,7 @@ class QImageView(QImageViewBase):
             )
             self._update_rois()
             self._img_view.set_image_blending([im.visible for im in imgs])
+        self.images_changed.emit(images)
 
     def _clim_for_ith_channel(self, img_slices: list[ImageTuple], ith: int):
         ar0, _ = img_slices[ith]
