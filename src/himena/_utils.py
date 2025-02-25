@@ -2,12 +2,7 @@ from __future__ import annotations
 
 from concurrent.futures import Future
 import timeit
-from typing import (
-    Callable,
-    Any,
-    TypeVar,
-    get_origin,
-)
+from typing import Callable, Any, TypeVar, get_origin
 import inspect
 from functools import wraps
 import warnings
@@ -135,7 +130,12 @@ def _is_subwindow(a):
 
 
 def _is_parametric(a):
-    return a is Parametric
+    return a in (
+        Parametric,
+        "Parametric",
+        ParametricWidgetProtocol,
+        "ParametricWidgetProtocol",
+    )
 
 
 def make_function_callback(
@@ -175,7 +175,7 @@ def make_function_callback(
     else:
         return f
 
-    is_parametric = f_annot.get("return") in (Parametric, ParametricWidgetProtocol)
+    is_parametric = _is_parametric(f_annot.get("return"))
 
     @wraps(f)
     def _new_f(*args, **kwargs):
