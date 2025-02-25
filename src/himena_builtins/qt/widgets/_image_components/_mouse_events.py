@@ -139,7 +139,7 @@ class _SingleDragRoiMouseEvents(RoiMouseEvents[_R]):
             self._update_roi(pos0, pos)
 
     def released(self, event: QtGui.QMouseEvent):
-        if event.button() == Qt.MouseButton.LeftButton:
+        if event.buttons() & Qt.MouseButton.LeftButton:
             if self._pos_drag_start == event.pos():
                 self._view.remove_current_item(
                     reason=f"stop drawing {self._view.mode()}"
@@ -175,13 +175,20 @@ class _RectangleTypeRoiMouseEvents(_SingleDragRoiMouseEvents[_R]):
 
 class _MultiRoiMouseEvents(RoiMouseEvents[_R]):
     def pressed(self, event: QtGui.QMouseEvent):
-        super().pressed(event)
-        self._view.remove_current_item(reason="start drawing new ROI")
-        self.selection_handles.start_drawing_polygon()
-        self.selection_handles._is_last_vertex_added = True
+        if not self.selection_handles.is_drawing_polygon():
+            if isinstance(self._view._current_roi_item, self.roi_type()):
+                self._view.remove_current_item(reason="start drawing new polygon")
+                self._view.select_item(None)
+            else:
+                self._view.remove_current_item(reason="start drawing new ROI")
+            self.selection_handles.start_drawing_polygon()
+            self.selection_handles._is_last_vertex_added = True
+        return super().pressed(event)
 
     def released(self, event: QtGui.QMouseEvent):
         if self._pos_drag_start is None:
+            return
+        if self._pos_drag_start != event.pos():
             return
         if self.selection_handles.is_drawing_polygon():
             p0 = self._view.mapToScene(self._pos_drag_start)
@@ -189,6 +196,7 @@ class _MultiRoiMouseEvents(RoiMouseEvents[_R]):
             if not isinstance(item, self.roi_type()):
                 x1, y1 = p0.x(), p0.y()
                 self.make_roi(x1, y1, self._view._roi_pen)
+                self.selection_handles.update_handle_size(self._view.transform().m11())
             else:
                 _LOGGER.info(
                     f"Added point {self._pos_drag_start} to {self._view.mode()}"
@@ -197,16 +205,12 @@ class _MultiRoiMouseEvents(RoiMouseEvents[_R]):
             self.selection_handles._is_last_vertex_added = True
         return super().released(event)
 
+    def double_clicked(self, event):
+        self.selection_handles.finish_drawing_polygon()
+        self._pos_drag_start = self._pos_drag_prev = None
+
 
 class _SegmentedTypeRoiMouseEvents(_MultiRoiMouseEvents[_R1]):
-    def pressed(self, event: QtGui.QMouseEvent):
-        if not self.selection_handles.is_drawing_polygon():
-            if isinstance(self._view._current_roi_item, self.roi_type()):
-                self._view.remove_current_item(reason="start drawing new polygon")
-                self._view.select_item(None)
-                return None
-        return super().pressed(event)
-
     def moved(self, event: QtGui.QMouseEvent):
         pos = self._view.mapToScene(event.pos())
         if event.button() == Qt.MouseButton.NoButton:
@@ -234,8 +238,10 @@ class PointsRoiMouseEvents(_MultiRoiMouseEvents[QPointsRoi]):
         return roi
 
     def moved(self, event: QtGui.QMouseEvent):
-        if event.button() == Qt.MouseButton.LeftButton:
-            return self._mouse_move_pan_zoom(event.pos())
+        if event.buttons() & Qt.MouseButton.LeftButton:
+            self._mouse_move_pan_zoom(event.pos())
+            self._pos_drag_prev = event.pos()
+            return
         return super().moved(event)
 
 
@@ -249,9 +255,6 @@ class SegmentedLineRoiMouseEvents(_SegmentedTypeRoiMouseEvents[QSegmentedLineRoi
         self.selection_handles.connect_path(roi)
         return roi
 
-    def double_clicked(self, event):
-        self.selection_handles.finish_drawing_polygon()
-
 
 class PolygonRoiMouseEvents(_SegmentedTypeRoiMouseEvents[QPolygonRoi]):
     def roi_type(self) -> type[QPolygonRoi]:
@@ -262,9 +265,6 @@ class PolygonRoiMouseEvents(_SegmentedTypeRoiMouseEvents[QPolygonRoi]):
         self._view.set_current_roi(roi)
         self.selection_handles.connect_path(roi)
         return roi
-
-    def double_clicked(self, event):
-        self.selection_handles.finish_drawing_polygon()
 
 
 class LineRoiMouseEvents(_LineTypeRoiMouseEvents[QLineRoi]):
@@ -348,15 +348,19 @@ class PointRoiMouseEvents(RoiMouseEvents[QPointRoi]):
         return roi
 
     def moved(self, event: QtGui.QMouseEvent):
-        if event.button() == Qt.MouseButton.LeftButton:
+        if event.buttons() & Qt.MouseButton.LeftButton:
             self._mouse_move_pan_zoom(event.pos())
+            self._pos_drag_prev = event.pos()
 
     def released(self, event: QtGui.QMouseEvent):
         if (
-            event.button() == Qt.MouseButton.LeftButton
-            and self._pos_drag_start == event.pos()
+            event.buttons() & Qt.MouseButton.LeftButton
+            and self._pos_drag_start == event.pos()  # clicked
         ):
+            pos = self._view.mapToScene(event.pos())
             self._view.remove_current_item(reason=f"stop drawing {self._view.mode()}")
+            self.make_roi(pos.x(), pos.y(), self._view._roi_pen)
+            self.selection_handles.update_handle_size(self._view.transform().m11())
         return super().released(event)
 
 

@@ -455,7 +455,7 @@ class QImageGraphicsView(QBaseGraphicsView):
         # Move the image using the mouse
         if event.button() == Qt.MouseButton.NoButton:
             self.hovered.emit(self.mapToScene(event.pos()))
-        elif event.button() == Qt.MouseButton.LeftButton:
+        elif event.buttons() & Qt.MouseButton.LeftButton:
             if (
                 self._mouse_event_handler._pos_drag_start is None
                 or self._mouse_event_handler._pos_drag_prev is None
@@ -497,6 +497,7 @@ class QImageGraphicsView(QBaseGraphicsView):
                 # do not add the same item
                 return
             _LOGGER.info(f"Added ROI item {item}")
+            self._selection_handles.finish_drawing_polygon()
             self._roi_items.append(item)
             self._qroi_labels.update()
             self.roi_added.emit(item)
