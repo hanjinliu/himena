@@ -652,7 +652,7 @@ class QImageView(QImageViewBase):
         else:
             visible = True
         self._current_image_slices[idx] = ImageTuple(img, visible)
-        self.images_changed(self._current_image_slices)
+        self.images_changed.emit(self._current_image_slices)
 
     def _set_image_slices(self, imgs: list[ImageTuple]):
         """Set image slices using the channel information.
