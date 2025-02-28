@@ -370,17 +370,6 @@ QGroupBox::title {
     color: #[base_color];
 }
 
-QCheckBox {
-    color: #[foreground_dim];
-    border: 1px solid #[foreground_dim];
-}
-
-QCheckBox::indicator {
-    color: #[foreground_dim];
-    background: none;
-    border: 1px solid #[foreground_dim];
-}
-
 QRadioButton {
     background: none;
 }
