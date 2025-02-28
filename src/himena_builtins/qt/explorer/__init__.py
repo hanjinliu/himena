@@ -30,6 +30,10 @@ class FileExplorerSSHConfig:
             "enabled": sys.platform == "win32",
         },
     )
+    default_protocol: str = field(
+        default="rsync",
+        metadata={"tooltip": "The default protocol to use (rsync or scp)"},
+    )
 
 
 @register_dock_widget_action(
@@ -49,7 +53,7 @@ def make_file_explorer_widget(ui):
 
 
 @register_dock_widget_action(
-    title="File Explorer (SSH)",
+    title="Remote File Explorer",
     menus=[MenuId.TOOLS_DOCK],
     area="left",
     command_id="builtins:file-explorer-ssh",
@@ -57,7 +61,7 @@ def make_file_explorer_widget(ui):
     plugin_configs=FileExplorerSSHConfig(),
 )
 def make_file_explorer_ssh_widget(ui):
-    """Open a file explorer widget remotely as a dock widget."""
+    """Open a remote file explorer widget as a dock widget."""
     from himena_builtins.qt.explorer._widget_ssh import QSSHRemoteExplorerWidget
 
     return QSSHRemoteExplorerWidget(ui)

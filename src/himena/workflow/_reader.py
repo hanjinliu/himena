@@ -6,6 +6,7 @@ import subprocess
 
 from pydantic_compat import Field
 from himena.utils.misc import PluginInfo
+from himena.utils.cli import remote_to_local
 from himena.workflow._base import WorkflowStep
 
 if TYPE_CHECKING:
@@ -78,14 +79,15 @@ class LocalReaderMethod(ReaderMethod):
         return model
 
 
-class SCPReaderMethod(ReaderMethod):
-    """Describes that one was read from a remote source file via scp command."""
+class RemoteReaderMethod(ReaderMethod):
+    """Describes that one was read from a remote source file."""
 
-    type: Literal["scp-reader"] = "scp-reader"
+    type: Literal["remote-reader"] = "remote-reader"
     host: str
     username: str
     path: Path
     wsl: bool = Field(default=False)
+    protocol: str = Field(default="rsync")
 
     @classmethod
     def from_str(
@@ -93,8 +95,9 @@ class SCPReaderMethod(ReaderMethod):
         s: str,
         /,
         wsl: bool = False,
+        protocol: str = "rsync",
         output_model_type: str | None = None,
-    ) -> "SCPReaderMethod":
+    ) -> "RemoteReaderMethod":
         username, rest = s.split("@")
         host, path = rest.split(":")
         return cls(
@@ -102,6 +105,7 @@ class SCPReaderMethod(ReaderMethod):
             host=host,
             path=Path(path),
             wsl=wsl,
+            protocol=protocol,
             output_model_type=output_model_type,
         )
 
@@ -120,25 +124,23 @@ class SCPReaderMethod(ReaderMethod):
 
         with tempfile.TemporaryDirectory() as tmpdir:
             dst_path = Path(tmpdir).joinpath(self.path.name)
-            self.run_scp(dst_path)
+            self.run_command(dst_path)
             model = store.run(dst_path, plugin=self.plugin)
             model.title = self.path.name
         model.workflow = self.construct_workflow()
         return model
 
-    def run_scp(self, dst_path: Path, stdout=None):
-        """Run scp command to move the file from remote to local `dst_path`."""
-        src = self.to_str()
-
-        if self.wsl:
-            drive = dst_path.drive
-            wsl_root = Path("mnt") / drive.lower().rstrip(":")
-            dst_pathobj_wsl = wsl_root / dst_path.relative_to(drive).as_posix()[1:]
-            dst_wsl = "/" + dst_pathobj_wsl.as_posix()
-            dst = dst_path.as_posix()
-            args = ["wsl", "-e", "scp", src, dst_wsl]
-        else:
-            dst = dst_path.as_posix()
-            args = ["scp", src, dst]
+    def run_command(self, dst_path: Path, stdout=None):
+        """Run scp/rsync command to move the file from remote to local `dst_path`."""
+        args = remote_to_local(self.protocol, self.to_str(), dst_path, is_wsl=self.wsl)
         subprocess.run(args, stdout=stdout)
         return None
+
+    def _to_command_args(self, src: str, dst: str) -> list[str]:
+        if self.protocol == "rsync":
+            return ["rsync", "-a", "--progress", src, dst]
+        elif self.protocol == "scp":
+            return ["scp", src, dst]
+        raise ValueError(
+            f"Unsupported method {self.protocol!r} (must be 'rsync' or 'scp')"
+        )

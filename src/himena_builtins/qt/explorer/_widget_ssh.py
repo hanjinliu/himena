@@ -8,10 +8,11 @@ from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from superqt.utils import thread_worker
 
-from himena.workflow import SCPReaderMethod
+from himena.workflow import RemoteReaderMethod
 from himena import _drag
 from himena.consts import MonospaceFontFamily
 from himena.types import DragDataModel, WidgetDataModel
+from himena.utils.cli import local_to_remote
 from himena.widgets import MainWindow, set_status_tip, notify
 from himena.qt.magicgui._toggle_switch import QLabeledToggleSwitch
 from himena_builtins.qt.widgets._shared import labeled
@@ -50,9 +51,13 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         self._is_wsl_switch.setVisible(sys.platform == "win32")
         self._is_wsl_switch.setToolTip(
             "Use WSL (Windows Subsystem for Linux) to access remote files. If \n "
-            "checked, all the subprocess commands such as `scp` and `ls` will be \n"
-            "prefixed with `wsl -e`."
+            "checked, all the subprocess commands such as `ls` will be prefixed \n"
+            "with `wsl -e`."
         )
+        self._protocol_choice = QtW.QComboBox()
+        self._protocol_choice.addItems(["rsync", "scp"])
+        self._protocol_choice.setCurrentIndex(0)
+        self._protocol_choice.setToolTip("Choose the protocol to send files.")
 
         self._show_hidden_files_switch = QLabeledToggleSwitch()
         self._show_hidden_files_switch.setText("Hidden Files")
@@ -100,6 +105,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         hlayout1.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(hlayout1)
         hlayout1.addWidget(self._is_wsl_switch)
+        hlayout1.addWidget(self._protocol_choice)
         hlayout1.addWidget(self._conn_btn)
 
         layout.addWidget(QSeparator())
@@ -217,18 +223,21 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         for path in paths:
             self._ui.submit_async_task(self._send_file, path, path.is_dir())
 
-    def _make_reader_method(self, path: Path) -> SCPReaderMethod:
-        return SCPReaderMethod(
+    def _make_reader_method(self, path: Path) -> RemoteReaderMethod:
+        return RemoteReaderMethod(
             host=self._host_edit.text(),
             username=self._user_name_edit.text(),
             path=path,
             wsl=self._is_wsl_switch.isChecked(),
+            protocol=self._protocol_choice.currentText(),
         )
 
-    def readers_from_text(self, text: str):
+    def readers_from_text(self, text: str) -> list[RemoteReaderMethod]:
         is_wsl = self._is_wsl_switch.isChecked()
+        prot = self._protocol_choice.currentText()
         return [
-            SCPReaderMethod.from_str(line, wsl=is_wsl) for line in text.splitlines()
+            RemoteReaderMethod.from_str(line, wsl=is_wsl, protocol=prot)
+            for line in text.splitlines()
         ]
 
     def _make_mimedata_for_items(
@@ -246,8 +255,8 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
 
     def _make_reader_methods_for_items(
         self, items: list[QtW.QTreeWidgetItem]
-    ) -> list[SCPReaderMethod]:
-        methods: list[SCPReaderMethod] = []
+    ) -> list[RemoteReaderMethod]:
+        methods: list[RemoteReaderMethod] = []
         for item in items:
             item_type = _item_type(item)
             if item_type == "l":
@@ -307,6 +316,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         self._host_edit.setText(cfg.default_host)
         self._user_name_edit.setText(cfg.default_user)
         self._is_wsl_switch.setChecked(cfg.default_use_wsl)
+        self._protocol_choice.setCurrentText(cfg.default_protocol)
         if cfg.default_host and cfg.default_user and self._pwd == Path("~"):
             self._set_current_path(Path("~"))
 
@@ -320,19 +330,13 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
     def _send_file(self, src: Path, is_dir: bool = False):
         """Send local file to the remote host."""
         dst_remote = self._pwd / src.name
-        dst = f"{self._host_name()}:{dst_remote.as_posix()}"
-        if is_dir:
-            cmd = ["scp", "-r"]
-        else:
-            cmd = ["scp"]
-        if self._is_wsl_switch.isChecked():
-            drive = src.drive
-            wsl_root = Path("mnt") / drive.lower().rstrip(":")
-            src_pathobj_wsl = wsl_root / src.relative_to(drive).as_posix()[1:]
-            src_wsl = "/" + src_pathobj_wsl.as_posix()
-            args = ["wsl", "-e"] + cmd + [src_wsl, dst]
-        else:
-            args = cmd + [src.as_posix(), dst]
+        args = local_to_remote(
+            self._protocol_choice.currentText(),
+            src,
+            f"{self._host_name()}:{dst_remote.as_posix()}",
+            is_wsl=self._is_wsl_switch.isChecked(),
+            is_dir=is_dir,
+        )
         subprocess.run(args)
         notify(f"Sent {src.as_posix()} to {dst_remote.as_posix()}", duration=2.8)
 
@@ -371,7 +375,7 @@ class QRemoteTreeWidget(QtW.QTreeWidget):
         return menu
 
     def _show_context_menu(self, pos: QtCore.QPoint):
-        self._make_context_menu().exec_(self.viewport().mapToGlobal(pos))
+        self._make_context_menu().exec(self.viewport().mapToGlobal(pos))
 
     def keyPressEvent(self, event):
         _mod = event.modifiers()
