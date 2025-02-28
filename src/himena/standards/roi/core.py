@@ -300,7 +300,7 @@ class LineRoi(Roi2D):
 
     def to_mask(self, shape: tuple[int, ...]) -> NDArray[np.bool_]:
         arr = np.zeros(shape, dtype=bool)
-        xs, ys = self.linspace(int(math.ceil(self.length())))
+        xs, ys = self.linspace(int(self.length() + 1))
         xs = xs.round().astype(int)
         ys = ys.round().astype(int)
         arr[ys, xs] = True
@@ -318,8 +318,8 @@ class SegmentedLineRoi(PointsRoi2D):
 
     def linspace(self, num: int) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
         """Return a tuple of x and y coordinates of np.linspace along the line."""
-        tnots = np.concatenate([[0], self.lengths()], dtype=np.float64)
-        teval = np.linspace(0, tnots.sum(), num)
+        tnots = np.cumsum(np.concatenate([[0], self.lengths()], dtype=np.float64))
+        teval = np.linspace(0, tnots[-1], num)
         xi = np.interp(teval, tnots, self.xs)
         yi = np.interp(teval, tnots, self.ys)
         return xi, yi
@@ -327,10 +327,10 @@ class SegmentedLineRoi(PointsRoi2D):
     def arange(
         self, step: float = 1.0
     ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
-        tnots = np.concatenate([[0], self.lengths()], dtype=np.float64)
-        length = tnots.sum()
+        tnots = np.cumsum(np.concatenate([[0], self.lengths()], dtype=np.float64))
+        length = tnots[-1]
         num, rem = divmod(length, step)
-        teval = np.linspace(0, tnots.sum() - rem, int(round(num)))
+        teval = np.linspace(0, length - rem, int(num + 1))
         xi = np.interp(teval, tnots, self.xs)
         yi = np.interp(teval, tnots, self.ys)
         return xi, yi
