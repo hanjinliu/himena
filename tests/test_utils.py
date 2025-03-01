@@ -1,4 +1,5 @@
 from pathlib import Path
+import sys
 from himena.utils.misc import is_subtype
 import pytest
 
@@ -24,27 +25,32 @@ def test_cli_args():
     assert cli.to_command_args("scp", "src", "dst") == ["scp", "src", "dst"]
     assert cli.to_command_args("scp", "src", "dst", is_dir=True) == ["scp", "-r", "src", "dst"]
 
-    assert cli.to_wsl_path(Path("C:/Users/username")) == "/mnt/c/Users/username"
-    assert cli.to_wsl_path(Path("C:/Users/username/")) == "/mnt/c/Users/username"
-    assert cli.to_wsl_path(Path("C:/")) == "/mnt/c"
-    assert cli.to_wsl_path(Path("C:/Program Files/")) == "/mnt/c/Program Files"
-    assert cli.to_wsl_path(Path("D:/")) == "/mnt/d"
+    if sys.platform == "win32":
+        assert cli.to_wsl_path(Path("C:/Users/username")) == "/mnt/c/Users/username"
+        assert cli.to_wsl_path(Path("C:/Users/username/")) == "/mnt/c/Users/username"
+        assert cli.to_wsl_path(Path("C:/")) == "/mnt/c"
+        assert cli.to_wsl_path(Path("C:/Program Files/")) == "/mnt/c/Program Files"
+        assert cli.to_wsl_path(Path("D:/")) == "/mnt/d"
 
     assert cli.local_to_remote("rsync", Path("C:/src"), "dst") == ["rsync", "-a", "--progress", "C:/src", "dst"]
     assert cli.local_to_remote("rsync", Path("C:/src"), "dst", is_dir=True) == ["rsync", "-ar", "--progress", "C:/src", "dst"]
-    assert cli.local_to_remote("rsync", Path("C:/src"), "~/dst", is_wsl=True) == ["wsl", "-e", "rsync", "-a", "--progress", "/mnt/c/src", "~/dst"]
+    if sys.platform == "win32":
+        assert cli.local_to_remote("rsync", Path("C:/src"), "~/dst", is_wsl=True) == ["wsl", "-e", "rsync", "-a", "--progress", "/mnt/c/src", "~/dst"]
 
     assert cli.local_to_remote("scp", Path("C:/src"), "dst") == ["scp", "C:/src", "dst"]
     assert cli.local_to_remote("scp", Path("C:/src"), "dst", is_dir=True) == ["scp", "-r", "C:/src", "dst"]
-    assert cli.local_to_remote("scp", Path("C:/src"), "~/dst", is_wsl=True) == ["wsl", "-e", "scp", "/mnt/c/src", "~/dst"]
+    if sys.platform == "win32":
+        assert cli.local_to_remote("scp", Path("C:/src"), "~/dst", is_wsl=True) == ["wsl", "-e", "scp", "/mnt/c/src", "~/dst"]
 
     assert cli.remote_to_local("rsync", "src", Path("dst")) == ["rsync", "-a", "--progress", "src", "dst"]
     assert cli.remote_to_local("rsync", "src", Path("dst"), is_dir=True) == ["rsync", "-ar", "--progress", "src", "dst"]
-    assert cli.remote_to_local("rsync", "~/src", Path("C:/dst"), is_wsl=True) == ["wsl", "-e", "rsync", "-a", "--progress", "~/src", "/mnt/c/dst"]
+    if sys.platform == "win32":
+        assert cli.remote_to_local("rsync", "~/src", Path("C:/dst"), is_wsl=True) == ["wsl", "-e", "rsync", "-a", "--progress", "~/src", "/mnt/c/dst"]
 
     assert cli.remote_to_local("scp", "src", Path("dst")) == ["scp", "src", "dst"]
     assert cli.remote_to_local("scp", "src", Path("dst"), is_dir=True) == ["scp", "-r", "src", "dst"]
-    assert cli.remote_to_local("scp", "~/src", Path("C:/dst"), is_wsl=True) == ["wsl", "-e", "scp", "~/src", "/mnt/c/dst"]
+    if sys.platform == "win32":
+        assert cli.remote_to_local("scp", "~/src", Path("C:/dst"), is_wsl=True) == ["wsl", "-e", "scp", "~/src", "/mnt/c/dst"]
 
 def test_submodule():
     from himena.utils.entries import is_submodule

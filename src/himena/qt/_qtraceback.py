@@ -208,7 +208,10 @@ def format_exc_info_ipython(info: ExcInfo, as_html: bool, color="Neutral") -> st
 
     # avoid verbose printing of the array data
     with np.printoptions(precision=5, threshold=10, edgeitems=2):
-        vbtb = IPython.core.ultratb.VerboseTB(color_scheme=color)
+        if IPython.version_info >= (9, 0):
+            vbtb = IPython.core.ultratb.VerboseTB(theme_name=color.lower())
+        else:
+            vbtb = IPython.core.ultratb.VerboseTB(color_scheme=color)
         if as_html:
             ansi_string = (
                 vbtb.text(typ, exc, tb)
