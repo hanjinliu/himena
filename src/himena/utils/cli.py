@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import sys
 
 
 def local_to_remote(
@@ -57,6 +58,10 @@ def to_command_args(
 
 def to_wsl_path(src: Path) -> str:
     drive = src.drive
-    wsl_root = Path("mnt") / drive.lower().rstrip(":")
-    src_pathobj_wsl = wsl_root / src.relative_to(drive).as_posix()[1:]
+    if sys.version_info < (3, 12):
+        drive_rel = drive
+    else:
+        drive_rel = drive + "/"
+    wsl_root = Path("mnt") / drive_rel.lower().rstrip(":")
+    src_pathobj_wsl = wsl_root / src.relative_to(drive_rel).as_posix()[1:]
     return "/" + src_pathobj_wsl.as_posix()
