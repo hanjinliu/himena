@@ -226,7 +226,7 @@ class QFileTree(QtW.QTreeView):
 
     def _paste_mime_data(self, mime: QtCore.QMimeData, dirpath: Path):
         if isinstance(par := mime.parent(), QSSHRemoteExplorerWidget):
-            for reader in par.readers_from_text(mime.text()):
+            for reader in par.readers_from_meme(mime):
                 reader.run_command(dirpath)
         else:
             self._paste_file(

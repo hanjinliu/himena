@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import re
 import subprocess
 import tempfile
 from pathlib import Path
@@ -223,22 +224,36 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         for path in paths:
             self._ui.submit_async_task(self._send_file, path, path.is_dir())
 
-    def _make_reader_method(self, path: Path) -> RemoteReaderMethod:
+    def _make_reader_method(self, path: Path, is_dir: bool) -> RemoteReaderMethod:
         return RemoteReaderMethod(
             host=self._host_edit.text(),
             username=self._user_name_edit.text(),
             path=path,
             wsl=self._is_wsl_switch.isChecked(),
             protocol=self._protocol_choice.currentText(),
+            force_directory=is_dir,
         )
 
-    def readers_from_text(self, text: str) -> list[RemoteReaderMethod]:
+    def readers_from_meme(self, meme: QtCore.QMimeData) -> list[RemoteReaderMethod]:
         is_wsl = self._is_wsl_switch.isChecked()
         prot = self._protocol_choice.currentText()
-        return [
-            RemoteReaderMethod.from_str(line, wsl=is_wsl, protocol=prot)
-            for line in text.splitlines()
-        ]
+        out: list[RemoteReaderMethod] = []
+        for line in meme.html().split("<br>"):
+            if not line:
+                continue
+            if m := re.compile(r"<span ftype=\"(d|f)\">(.+)</span>").match(line):
+                is_dir = m.group(1) == "d"
+                line = m.group(2)
+            else:
+                continue
+            meth = RemoteReaderMethod.from_str(
+                line,
+                wsl=is_wsl,
+                protocol=prot,
+                force_directory=is_dir,
+            )
+            out.append(meth)
+        return out
 
     def _make_mimedata_for_items(
         self,
@@ -248,6 +263,12 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         mime.setText(
             "\n".join(
                 meth.to_str() for meth in self._make_reader_methods_for_items(items)
+            )
+        )
+        mime.setHtml(
+            "<br>".join(
+                f"<span ftype=\"{'d' if meth.force_directory else 'f'}\">{meth.to_str()}</span>"
+                for meth in self._make_reader_methods_for_items(items)
             )
         )
         mime.setParent(self)
@@ -262,19 +283,23 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
             if item_type == "l":
                 _, real_path = item.text(0).split(" -> ")
                 remote_path = self._pwd / real_path
+                is_dir = False
             else:
                 remote_path = self._pwd / item.text(0)
-            meth = self._make_reader_method(remote_path)
+                is_dir = item_type == "d"
+            meth = self._make_reader_method(remote_path, is_dir)
             methods.append(meth)
         return methods
 
     @thread_worker
-    def _read_remote_path_worker(self, path: Path) -> WidgetDataModel:
-        return self._make_reader_method(path).run()
+    def _read_remote_path_worker(
+        self, path: Path, is_dir: bool = False
+    ) -> WidgetDataModel:
+        return self._make_reader_method(path, is_dir).run()
 
-    def _read_and_add_model(self, path: Path):
+    def _read_and_add_model(self, path: Path, is_dir: bool = False):
         """Read the remote file in another thread and add the model in the main."""
-        worker = self._read_remote_path_worker(path)
+        worker = self._read_remote_path_worker(path, is_dir)
         worker.returned.connect(self._ui.add_data_model)
         worker.started.connect(lambda: self._set_busy(True))
         worker.finished.connect(lambda: self._set_busy(False))

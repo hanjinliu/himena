@@ -88,6 +88,7 @@ class RemoteReaderMethod(ReaderMethod):
     path: Path
     wsl: bool = Field(default=False)
     protocol: str = Field(default="rsync")
+    force_directory: bool = Field(default=False)
 
     @classmethod
     def from_str(
@@ -97,6 +98,7 @@ class RemoteReaderMethod(ReaderMethod):
         wsl: bool = False,
         protocol: str = "rsync",
         output_model_type: str | None = None,
+        force_directory: bool = False,
     ) -> "RemoteReaderMethod":
         username, rest = s.split("@")
         host, path = rest.split(":")
@@ -107,6 +109,7 @@ class RemoteReaderMethod(ReaderMethod):
             wsl=wsl,
             protocol=protocol,
             output_model_type=output_model_type,
+            force_directory=force_directory,
         )
 
     def to_str(self) -> str:
@@ -132,15 +135,12 @@ class RemoteReaderMethod(ReaderMethod):
 
     def run_command(self, dst_path: Path, stdout=None):
         """Run scp/rsync command to move the file from remote to local `dst_path`."""
-        args = remote_to_local(self.protocol, self.to_str(), dst_path, is_wsl=self.wsl)
+        args = remote_to_local(
+            self.protocol,
+            self.to_str(),
+            dst_path,
+            is_wsl=self.wsl,
+            is_dir=self.force_directory,
+        )
         subprocess.run(args, stdout=stdout)
         return None
-
-    def _to_command_args(self, src: str, dst: str) -> list[str]:
-        if self.protocol == "rsync":
-            return ["rsync", "-a", "--progress", src, dst]
-        elif self.protocol == "scp":
-            return ["scp", src, dst]
-        raise ValueError(
-            f"Unsupported method {self.protocol!r} (must be 'rsync' or 'scp')"
-        )
