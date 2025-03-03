@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-import sys
 
 
 def local_to_remote(
@@ -57,11 +56,15 @@ def to_command_args(
 
 
 def to_wsl_path(src: Path) -> str:
+    """Convert an absolute Windows path to a WSL path.
+
+    Examples
+    --------
+    to_wsl_path(Path("C:/Users/me/Documents")) -> "/mnt/c/Users/me/Documents"
+    to_wsl_path(Path("D:/path/to/file.txt")) -> "/mnt/d/path/to/file.txt"
+    """
     drive = src.drive
-    if sys.version_info < (3, 12):
-        drive_rel = drive
-    else:
-        drive_rel = drive + "/"
-    wsl_root = Path("mnt") / drive_rel.lower().rstrip(":")
-    src_pathobj_wsl = wsl_root / src.relative_to(drive_rel).as_posix()[1:]
+    drive_rel = drive + "/"
+    wsl_root = Path("mnt") / drive.lower().rstrip(":")
+    src_pathobj_wsl = wsl_root / src.relative_to(drive_rel).as_posix()
     return "/" + src_pathobj_wsl.as_posix()
