@@ -9,7 +9,7 @@ from himena.workflow._base import WorkflowStep
 from himena.workflow._reader import (
     ProgrammaticMethod,
     LocalReaderMethod,
-    SCPReaderMethod,
+    RemoteReaderMethod,
 )
 from himena.workflow._command import CommandExecution, UserModification
 
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 WorkflowStepType = Union[
     ProgrammaticMethod,
     LocalReaderMethod,
-    SCPReaderMethod,
+    RemoteReaderMethod,
     CommandExecution,
     UserModification,
 ]

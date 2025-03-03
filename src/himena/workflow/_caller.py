@@ -5,7 +5,7 @@ import uuid
 from pydantic_compat import BaseModel, Field
 from himena.workflow._base import WorkflowStep
 from himena.workflow._graph import Workflow
-from himena.workflow._reader import ReaderMethod, LocalReaderMethod, SCPReaderMethod
+from himena.workflow._reader import ReaderMethod, LocalReaderMethod, RemoteReaderMethod
 
 
 class WorkflowCaller(BaseModel):
@@ -136,8 +136,8 @@ class LocalReaderReplacer(ReaderReplacer):
 class SCPReaderReplacer(ReaderReplacer):
     wsl: bool = Field(default=False)
 
-    def create_step(self, path_str: str) -> SCPReaderMethod:
-        return SCPReaderMethod.from_str(path_str, wsl=self.wsl)
+    def create_step(self, path_str: str) -> RemoteReaderMethod:
+        return RemoteReaderMethod.from_str(path_str, wsl=self.wsl)
 
     def make_annotation(self):
         return str

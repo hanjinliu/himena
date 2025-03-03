@@ -125,7 +125,7 @@ class AppActionRegistry:
         # look for existing menu items
         if actions is None:
             actions = list(self.iter_actions(app))
-        existing_menu_ids = {_id.value for _id in MenuId}
+        existing_menu_ids = {_id.value for _id in MenuId if "/" not in _id.value}
         for menu_id, menu in app.menus:
             existing_menu_ids.add(menu_id)
             for each in menu:

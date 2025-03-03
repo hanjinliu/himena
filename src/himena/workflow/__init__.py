@@ -14,7 +14,7 @@ from himena.workflow._reader import (
     LocalReaderMethod,
     ProgrammaticMethod,
     ReaderMethod,
-    SCPReaderMethod,
+    RemoteReaderMethod,
 )
 
 __all__ = [
@@ -26,7 +26,7 @@ __all__ = [
     "ProgrammaticMethod",
     "ReaderMethod",
     "LocalReaderMethod",
-    "SCPReaderMethod",
+    "RemoteReaderMethod",
     "CommandExecution",
     "parse_parameter",
     "ModelParameter",
