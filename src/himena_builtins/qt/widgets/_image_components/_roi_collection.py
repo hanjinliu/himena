@@ -310,6 +310,8 @@ class QRoiCollection(QSimpleRoiCollection):
         view = self._image_view_ref()
         if view is None:
             return
+
+        # find the proper slider indices
         if (ninds := len(indices)) < (ndim_rem := view._dims_slider.count()):
             # this happens when the ROI is flattened
             if ninds > 0:
@@ -320,6 +322,8 @@ class QRoiCollection(QSimpleRoiCollection):
         else:
             view._dims_slider.set_value_no_emit(indices)
             view._slider_changed(indices, force_sync=True)
+
+        # update selection in the image viewer
         view._img_view.select_item(qroi)
 
     def _remove_selected(self):

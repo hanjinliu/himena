@@ -400,6 +400,10 @@ class SubWindow(WidgetWrapper[_W], Layout):
             model = self.to_model()
             self.update_model(model.with_value(value))
 
+    def update_metadata(self, metadata: Any) -> None:
+        """Update the metadata of the widget data model."""
+        return self.update_model(self.to_model().with_metadata(metadata))
+
     def write_model(self, path: str | Path, plugin: str | None = None) -> None:
         """Write the widget data to a file."""
         return self._write_model(path, plugin, self.to_model())

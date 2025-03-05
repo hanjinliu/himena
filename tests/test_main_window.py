@@ -5,7 +5,8 @@ from himena import MainWindow, anchor
 from himena.consts import StandardType
 from himena.qt import MainWindowQt
 from himena.qt._qmain_window import QMainWindow
-from himena.standards.model_meta import DataFrameMeta
+from himena.standards.model_meta import DataFrameMeta, ImageMeta
+from himena.standards.roi import RectangleRoi
 from himena.widgets import set_status_tip, notify
 from himena_builtins.qt import widgets as _qtw
 from himena_builtins.qt.output import OutputConfig
@@ -27,7 +28,7 @@ def test_type_map_and_session(tmpdir, himena_ui: MainWindow, sample_dir):
     tab1.read_file(sample_dir / "image.png").update(rect=(30, 40, 160, 130), title="My Image")
     assert type(tab1.current().widget) is _qtw.QImageView
     tab1.read_file(sample_dir / "html.html").update(rect=(80, 40, 160, 130), title="My HTML")
-    # assert type(tab1.current().widget) is _qtw.QDefaultHTMLEdit ?
+    assert type(tab1.current().widget) is _qtw.QRichTextEdit
 
     session_path = Path(tmpdir) / "test.session.zip"
     himena_ui.save_session(session_path)
@@ -54,6 +55,11 @@ def test_session_with_calculation(tmpdir, himena_ui: MainWindow, sample_dir):
     assert len(tab0) == 2
     shape_cropped = tab0[1].to_model().value.shape
     tab0[1].update(rect=(70, 20, 160, 130))
+    tab0[1].update_metadata(ImageMeta(current_roi=RectangleRoi(x=1, y=1, width=1, height=1)))
+    meta = tab0[1].to_model().metadata
+    assert isinstance(meta, ImageMeta)
+    assert isinstance(meta.current_roi, RectangleRoi)
+    tab0[1].title = "cropped Im"
     session_path = Path(tmpdir) / "test.session.zip"
     himena_ui.save_session(session_path, allow_calculate=["builtins:image-crop:crop-image"])
     himena_ui.clear()
@@ -62,8 +68,16 @@ def test_session_with_calculation(tmpdir, himena_ui: MainWindow, sample_dir):
     assert len(tab0) == 2
     assert tab0[0].title == "Im"
     assert tab0[0].rect == WindowRect(30, 40, 160, 130)
+    assert tab0[1].title == "cropped Im"
     assert tab0[1].rect == WindowRect(70, 20, 160, 130)
     assert tab0[1].to_model().value.shape == shape_cropped
+    meta = tab0[1].to_model().metadata
+    assert isinstance(meta, ImageMeta)
+    assert isinstance(roi := meta.current_roi, RectangleRoi)
+    assert roi.x == 1
+    assert roi.y == 1
+    assert roi.width == 1
+    assert roi.height == 1
 
 def test_session_stand_alone(tmpdir, himena_ui: MainWindow, sample_dir):
     tab0 = himena_ui.add_tab()

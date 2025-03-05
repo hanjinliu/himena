@@ -644,6 +644,26 @@ class MouseMode(Enum):
     ROI_SEGMENTED_LINE = auto()
     ROI_LINE = auto()
 
+    @classmethod
+    def from_roi(cls, roi: QRoi) -> MouseMode:
+        if isinstance(roi, QRectangleRoi):
+            return cls.ROI_RECTANGLE
+        if isinstance(roi, QRotatedRectangleRoi):
+            return cls.ROI_ROTATED_RECTANGLE
+        if isinstance(roi, QEllipseRoi):
+            return cls.ROI_ELLIPSE
+        if isinstance(roi, QPointRoi):
+            return cls.ROI_POINT
+        if isinstance(roi, QPointsRoi):
+            return cls.ROI_POINTS
+        if isinstance(roi, QPolygonRoi):
+            return cls.ROI_POLYGON
+        if isinstance(roi, QSegmentedLineRoi):
+            return cls.ROI_SEGMENTED_LINE
+        if isinstance(roi, QLineRoi):
+            return cls.ROI_LINE
+        raise ValueError(f"Unknown ROI type: {type(roi)}")
+
 
 SIMPLE_ROI_MODES = frozenset({
     MouseMode.ROI_RECTANGLE,
