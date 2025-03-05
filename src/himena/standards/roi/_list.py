@@ -32,7 +32,8 @@ class RoiListModel(NDObjectCollection[RoiModel]):
             axis_names=dict_["axis_names"],
         )
 
-    def model_validate_json(self, text: str) -> RoiListModel:
+    @classmethod
+    def model_validate_json(cls, text: str) -> RoiListModel:
         """Validate the json string and return an instance."""
         js = json.loads(text)
-        return self.construct(js)
+        return cls.construct(js)

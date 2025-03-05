@@ -1,7 +1,6 @@
 import tempfile
 from typing import Iterator, Literal, Any, TYPE_CHECKING
 from pathlib import Path
-import warnings
 import subprocess
 
 from pydantic_compat import Field
@@ -36,6 +35,7 @@ class ReaderMethod(NoParentWorkflow):
     """Describes that one was read from a file."""
 
     plugin: str | None = Field(default=None)
+    metadata_override: Any | None = Field(default=None)
 
     def run(self) -> "WidgetDataModel":
         raise NotImplementedError
@@ -54,7 +54,6 @@ class LocalReaderMethod(ReaderMethod):
         """Get model by importing the reader plugin and actually read the file(s)."""
         from himena._providers import ReaderStore
         from himena.types import WidgetDataModel
-        from himena.standards.model_meta import read_metadata
 
         store = ReaderStore.instance()
         model = store.run(self.path, plugin=self.plugin)
@@ -65,17 +64,8 @@ class LocalReaderMethod(ReaderMethod):
                 source=self.path,
                 plugin=PluginInfo.from_str(self.plugin) if self.plugin else None,
             )
-        if isinstance(self.path, Path):
-            meta_path = self.path.with_name(self.path.name + ".himena-meta")
-            if meta_path.exists():
-                try:
-                    model.metadata = read_metadata(meta_path)
-                except Exception as e:
-                    warnings.warn(
-                        f"Failed to read metadata from {meta_path}: {e}",
-                        RuntimeWarning,
-                        stacklevel=2,
-                    )
+        if self.metadata_override is not None:
+            model.metadata = self.metadata_override
         return model
 
 

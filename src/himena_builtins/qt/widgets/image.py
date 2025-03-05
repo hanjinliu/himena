@@ -29,6 +29,7 @@ from himena_builtins.qt.widgets._image_components import (
     QImageViewControlBase,
     QRoiCollection,
     from_standard_roi,
+    MouseMode,
 )
 from himena_builtins.qt.widgets._splitter import QSplitterHandle
 from himena_builtins.qt.widgets._shared import quick_min_max
@@ -179,11 +180,13 @@ class QImageViewBase(QtW.QSplitter):
             self._roi_col.extend_from_standard_roi_list(
                 roi_list.coerce_dimensions(axis_names)
             )
+            self._update_rois()
         if meta0.current_roi:
             self._img_view.remove_current_item(reason="update_model")
-            self._img_view.set_current_roi(
-                from_standard_roi(meta0.current_roi, self._img_view._roi_pen)
-            )
+            qroi = from_standard_roi(meta0.current_roi, self._img_view._roi_pen)
+            self._img_view.set_mode(MouseMode.from_roi(qroi))
+            self._img_view.set_current_roi(qroi)
+            self._img_view._selection_handles.connect_roi(qroi)
         self._control._interp_check_box.setChecked(meta0.interpolation == "linear")
         self._pixel_unit = meta0.unit or ""
         if ext_default := model.extension_default:

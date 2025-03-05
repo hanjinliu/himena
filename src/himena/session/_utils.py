@@ -21,7 +21,8 @@ def write_model_by_title(
     # be saved
     io_utils.write(model, save_path, plugin=plugin)
 
-    _save_metadata(model.metadata, dirname, save_path)
+    i_win = int(save_path.name.split("_", 1)[0])
+    _save_metadata(model.metadata, dirname, f"{i_win}_{win.title}")
     return save_path
 
 
@@ -55,13 +56,14 @@ def write_metadata_by_title(
     model = win.to_model()
     dirname = Path(dirname)
     save_path = _get_save_path(model, dirname, prefix)
-    _save_metadata(model.metadata, dirname, save_path)
+    i_win = int(save_path.name.split("_", 1)[0])
+    _save_metadata(model.metadata, dirname, f"{i_win}_{win.title}")
     return save_path
 
 
-def _save_metadata(metadata, dirname: Path, save_path: Path):
+def _save_metadata(metadata, dirname: Path, title: str):
     if isinstance(metadata, BaseMetadata):
-        meta_dir = dirname / f"{save_path.name}.himena-meta"
+        meta_dir = dirname / f"{title}.himena-meta"
         meta_dir.mkdir(exist_ok=True)
         write_metadata(metadata, meta_dir)
     return None
@@ -72,7 +74,3 @@ PATTERN_NOT_ALLOWED = re.compile(r"[\\/:*?\"<>|]")
 
 def replace_invalid_characters(title: str) -> str:
     return PATTERN_NOT_ALLOWED.sub("_", title)
-
-
-def num_digits(n: int) -> int:
-    return len(str(n - 1))

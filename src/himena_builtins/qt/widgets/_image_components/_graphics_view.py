@@ -382,20 +382,22 @@ class QImageGraphicsView(QBaseGraphicsView):
 
     def select_item(self, item: QtW.QGraphicsItem | None):
         """Select the item during selection mode."""
-        if item is None:
+        if item is not self._current_roi_item:
             self.remove_current_item(reason="deselect")
-        elif isinstance(item, QLineRoi):
-            self._selection_handles.connect_line(item)
-        elif isinstance(item, (QRectangleRoi, QEllipseRoi)):
-            self._selection_handles.connect_rect(item)
-        elif isinstance(item, (QPolygonRoi, QSegmentedLineRoi)):
-            self._selection_handles.connect_path(item)
-        elif isinstance(item, QPointsRoi):
-            self._selection_handles.connect_points(item)
-        elif isinstance(item, QPointRoi):
-            self._selection_handles.connect_point(item)
-        elif isinstance(item, QRotatedRectangleRoi):
-            self._selection_handles.connect_rotated_rect(item)
+        if item is not None:
+            if isinstance(item, QLineRoi):
+                self._selection_handles.connect_line(item)
+            elif isinstance(item, (QRectangleRoi, QEllipseRoi)):
+                self._selection_handles.connect_rect(item)
+            elif isinstance(item, (QPolygonRoi, QSegmentedLineRoi)):
+                self._selection_handles.connect_path(item)
+            elif isinstance(item, QPointsRoi):
+                self._selection_handles.connect_points(item)
+            elif isinstance(item, QPointRoi):
+                self._selection_handles.connect_point(item)
+            elif isinstance(item, QRotatedRectangleRoi):
+                self._selection_handles.connect_rotated_rect(item)
+            self._is_current_roi_item_not_registered = False
         if isinstance(item, QRoi):
             self._current_roi_item = item
             item.setVisible(True)

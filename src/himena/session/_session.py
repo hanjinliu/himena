@@ -14,6 +14,7 @@ from himena.utils.misc import is_subtype
 from himena import anchor
 from himena._providers import ReaderStore
 from himena.widgets._wrapper import ParametricWindow
+from himena.standards.model_meta import read_metadata
 from himena.workflow import Workflow, compute, WorkflowStepType, LocalReaderMethod
 
 if TYPE_CHECKING:
@@ -151,24 +152,36 @@ class TabSession(BaseModel):
         main: "MainWindow[_W]",
         *,
         workflow_override: Mapping[str, Workflow] = {},
+        dirpath: Path,
     ) -> None:
         """Update the GUI state based on the session."""
-        _win_sessions: list[WindowDescription] = []
+        _win_sessions: list[tuple[int, WindowDescription]] = []
         _pending_workflows: list[Workflow] = []
         area = main.add_tab(self.name)
         cur_index = self.current_index
-        for window_session in self.windows:
-            _win_sessions.append(window_session)
+        for i_win, window_session in enumerate(self.windows):
+            _win_sessions.append((i_win, window_session))
             wf = window_session.prep_workflow(workflow_override)
             _pending_workflows.append(wf)
 
         models = compute(_pending_workflows)
         _failed_sessions: list[tuple[WindowDescription, Exception]] = []
         _id_to_win: dict[uuid.UUID, "SubWindow"] = {}
-        for _win_sess, model_or_exc in zip(_win_sessions, models):
+        for (i_win_sess, _win_sess), model_or_exc in zip(_win_sessions, models):
             if isinstance(model_or_exc, Exception):
                 _failed_sessions.append((_win_sess, model_or_exc))
                 continue
+            # look for the metadata
+            meta_path = dirpath / f"{i_win_sess}_{_win_sess.title}.himena-meta"
+            if meta_path.exists():
+                try:
+                    model_or_exc.metadata = read_metadata(meta_path)
+                except Exception as e:
+                    warnings.warn(
+                        f"Failed to read metadata from {meta_path}: {e}",
+                        RuntimeWarning,
+                        stacklevel=2,
+                    )
             _win = _win_sess.process_model(self, model_or_exc)
             _id_to_win[_win_sess.id] = _win
 
@@ -182,9 +195,7 @@ class TabSession(BaseModel):
         return None
 
 
-def _update_layout(
-    tab: "TabArea[_W]", layouts: list[dict], main: "MainWindow[_W]"
-) -> None:
+def _update_layout(tab: "TabArea[_W]", layouts: list[dict], main: "MainWindow[_W]"):
     for ly in layouts:
         _layout_obj = construct_layout(ly, main)
         tab._add_layout_impl(_layout_obj)
@@ -244,35 +255,52 @@ class AppSession(BaseModel):
         main: "MainWindow[_W]",
         *,
         workflow_override: Mapping[str, Workflow] = {},
+        dirpath: Path,
     ) -> None:
         """Update the GUI state based on the session."""
         cur_index = self.current_index
-        _tab_sessions: list[TabSession] = []
-        _win_sessions: list[WindowDescription] = []
-        _target_areas: list[TabArea] = []
+        _tab_sessions: list[tuple[int, TabSession]] = []
+        _win_sessions: list[tuple[int, WindowDescription]] = []
+        _target_areas: list[tuple[int, TabArea]] = []
         _pending_workflows: list[Workflow] = []
-        for tab_session in self.tabs:
-            _tab_sessions.append(tab_session)
+        for i_tab, tab_session in enumerate(self.tabs):
+            _tab_sessions.append((i_tab, tab_session))
             _new_tab = main.add_tab(tab_session.name)
-            for window_session in tab_session.windows:
-                _win_sessions.append(window_session)
+            for i_win, window_session in enumerate(tab_session.windows):
+                _win_sessions.append((i_win, window_session))
                 wf = window_session.prep_workflow(workflow_override)
                 _pending_workflows.append(wf)
-                _target_areas.append(_new_tab)
+                _target_areas.append((i_tab, _new_tab))
         models = compute(_pending_workflows)
         _failed_sessions: list[tuple[WindowDescription, Exception]] = []
         _id_to_win: dict[uuid.UUID, "SubWindow"] = {}
-        for _win_sess, _tab_area, model_or_exc in zip(
+        for (i_win, _win_sess), (i_tab, _tab_area), model_or_exc in zip(
             _win_sessions, _target_areas, models
         ):
             if isinstance(model_or_exc, Exception):
                 _failed_sessions.append((_win_sess, model_or_exc))
                 continue
+            # look for the metadata
+            meta_path = (
+                dirpath
+                / f"{i_tab}_{_tab_area.title}"
+                / f"{i_win}_{_win_sess.title}.himena-meta"
+            )
+            if meta_path.exists():
+                try:
+                    model_or_exc.metadata = read_metadata(meta_path)
+                except Exception as e:
+                    warnings.warn(
+                        f"Failed to read metadata from {meta_path}: {e}",
+                        RuntimeWarning,
+                        stacklevel=2,
+                    )
+
             _win = _win_sess.process_model(_tab_area, model_or_exc)
             _id_to_win[_win_sess.id] = _win
 
         # Update current active window for each tab
-        for tab_session, area in zip(_tab_sessions, _target_areas):
+        for (_, tab_session), (_, area) in zip(_tab_sessions, _target_areas):
             cur_tab_index = tab_session.current_index
             if cur_tab_index is not None and 0 <= cur_tab_index < len(area):
                 area.current_index = cur_tab_index
@@ -281,7 +309,9 @@ class AppSession(BaseModel):
         main.rect = self.rect
         for tab_session in self.tabs:
             _update_layout(main.tabs[tab_session.name], tab_session.layouts, main)
-        for _win_sess in _win_sessions:
+
+        # connect window children to their parents
+        for _, _win_sess in _win_sessions:
             for child_id in _win_sess.children:
                 _id_to_win[_win_sess.id]._child_windows.add(_id_to_win[child_id])
         return None

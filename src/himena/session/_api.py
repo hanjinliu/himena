@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Iterator, Sequence
 from pathlib import Path
+import warnings
 import yaml
 import zipfile
 import tempfile
@@ -9,9 +10,9 @@ from himena.session._session import AppSession, TabSession
 from himena.session._utils import (
     write_model_by_title,
     write_metadata_by_title,
-    num_digits,
     replace_invalid_characters,
 )
+from himena.standards.model_meta import read_metadata
 from himena.widgets._wrapper import ParametricWindow
 from himena.workflow import LocalReaderMethod
 from himena.workflow._command import CommandExecution
@@ -38,13 +39,11 @@ def update_from_directory(ui: MainWindow, path: str | Path) -> None:
             ith = int(tab_dir.stem.split("_")[0])
             for uuid, meth in _iter_reader_method(tab_dir, session.tabs[ith]):
                 wf_overrides[uuid] = meth
-        session.update_gui(ui, workflow_override=wf_overrides)
+        session.update_gui(ui, workflow_override=wf_overrides, dirpath=dirpath)
     else:
         session = TabSession.model_validate(yml)
-        wf_overrides = {
-            uuid: meth for uuid, meth in _iter_reader_method(dirpath, session)
-        }
-        session.update_gui(ui, workflow_override=wf_overrides)
+        wf_overrides = dict(_iter_reader_method(dirpath, session))
+        session.update_gui(ui, workflow_override=wf_overrides, dirpath=dirpath)
     return None
 
 
@@ -56,8 +55,21 @@ def _iter_reader_method(
         if file.suffix == ".himena-meta":
             continue
         ith_win = int(file.stem.rsplit("_")[0])
-        uuid = tab_session.windows[ith_win].id
-        yield uuid, LocalReaderMethod(path=file).construct_workflow()
+        win_sess = tab_session.windows[ith_win]
+        uuid = win_sess.id
+        meta_path = file.with_name(f"{ith_win}_{win_sess.title}.himena-meta")
+        metadata = None
+        if meta_path.exists():
+            try:
+                metadata = read_metadata(meta_path)
+            except Exception as e:
+                warnings.warn(
+                    f"Failed to read metadata from {meta_path}: {e}",
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
+        meth = LocalReaderMethod(path=file, metadata_override=metadata)
+        yield uuid, meth.construct_workflow()
 
 
 def update_from_zip(ui: MainWindow, path: str | Path) -> None:
@@ -111,11 +123,10 @@ def _dump_tab_to_directory_impl(
     save_copies: bool,
     cmd_id_allowed: set[str],
 ):
-    ndigits = num_digits(len(tab))
     for i, win in enumerate(tab):
         if isinstance(win, ParametricWindow):
             continue
-        prefix = format(i, f">0{ndigits}")
+        prefix = str(i)
         read_from = win._determine_read_from()
         if read_from is not None and isinstance(read_from[0], Path) and not save_copies:
             write_metadata_by_title(win, dirname, prefix)
@@ -157,10 +168,9 @@ def dump_directory(
         js = session.model_dump(mode="json")
         js = {"session": "main", **js}
         yaml.dump(js, f, sort_keys=False)
-    ndigits_tab = num_digits(len(ui.tabs))
     for i_tab, tab in enumerate(ui.tabs):
         tab_title = replace_invalid_characters(tab.title)
-        dirname = path / f"{i_tab:>0{ndigits_tab}}_{tab_title}"
+        dirname = path / f"{i_tab}_{tab_title}"
         dirname.mkdir()
         _dump_tab_to_directory_impl(tab, dirname, save_copies, cmd_id_allowed)
     return None

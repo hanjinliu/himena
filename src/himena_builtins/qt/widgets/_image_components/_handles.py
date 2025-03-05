@@ -345,6 +345,22 @@ class RoiSelectionHandles:
             h_t.setCenter(rect.top())
             h_b.setCenter(rect.bottom())
 
+    def connect_roi(self, roi_item):
+        if isinstance(roi_item, QLineRoi):
+            self.connect_line(roi_item)
+        elif isinstance(roi_item, (QRectangleRoi, QEllipseRoi)):
+            self.connect_rect(roi_item)
+        elif isinstance(roi_item, (QPolygonRoi, QSegmentedLineRoi)):
+            self.connect_path(roi_item)
+        elif isinstance(roi_item, QPointRoi):
+            self.connect_point(roi_item)
+        elif isinstance(roi_item, QPointsRoi):
+            self.connect_points(roi_item)
+        elif isinstance(roi_item, QRotatedRectangleRoi):
+            self.connect_rotated_rect(roi_item)
+        else:
+            pass
+
     def _finish_drawing_path(self, path: QPolygonRoi | QSegmentedLineRoi):
         painter_path = path.path()
         if isinstance(path, QPolygonRoi):
