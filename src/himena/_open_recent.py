@@ -128,7 +128,7 @@ class RecentFileManager:
         to_remove: list[int] = []
         now = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
         for each_path_input, plugin in inputs:
-            if plugin == "himena_builtins.io.read_as_unknown_provider":
+            if plugin == "himena_builtins.io.read_as_unknown":
                 # This plugin should not be used again from the open recent menu.
                 plugin = None
             each = _norm_path_input(each_path_input)
@@ -157,7 +157,6 @@ class RecentFileManager:
         from superqt.utils import ensure_main_thread
 
         ensure_main_thread(self.update_menu)()
-        # self.update_menu()
         return None
 
     def action_for_file(
@@ -200,6 +199,8 @@ class RecentFileManager:
 
 
 class RecentSessionManager(RecentFileManager):
+    _MENU_UPDATED: set[str] = set()
+
     @classmethod
     def default(cls, app: Application) -> RecentSessionManager:
         return cls(
