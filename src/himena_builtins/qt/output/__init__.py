@@ -2,7 +2,6 @@
 
 from typing import TYPE_CHECKING
 from dataclasses import dataclass, field
-from himena.consts import MenuId
 from himena.plugins import register_dock_widget_action
 
 if TYPE_CHECKING:
@@ -25,7 +24,6 @@ class OutputConfig:
 
 @register_dock_widget_action(
     title="Output",
-    menus=[MenuId.TOOLS_DOCK],
     area="right",
     keybindings=["Ctrl+Shift+U"],
     singleton=True,

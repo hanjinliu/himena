@@ -1,7 +1,7 @@
 from app_model.types import KeyBindingRule, KeyCode, KeyMod
 from himena.consts import MenuId
 from himena.widgets import MainWindow
-from himena._app_model.actions._registry import ACTIONS, SUBMENUS
+from himena._app_model.actions._registry import ACTIONS
 from himena._app_model._context import AppContext as _ctx
 
 
@@ -51,10 +51,3 @@ def repeat_last_command(ui: MainWindow) -> None:
             ctx = ui._ctx_keys.dict()
             if action.enablement is None or action.enablement.eval(ctx):
                 ui.exec_action(id)
-
-
-SUBMENUS.append_from(
-    id=MenuId.TOOLS,
-    submenu=MenuId.TOOLS_DOCK,
-    title="Dock widgets",
-)

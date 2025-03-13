@@ -74,7 +74,8 @@ class AppActionRegistry:
 
     def __init__(self):
         self._actions: dict[str, Action] = {}
-        self._submenu_titles: dict[str, str] = {}
+        self._submenu_titles: dict[str, str] = {MenuId.TOOLS_DOCK: "Dock widgets"}
+        self._submenu_groups: dict[str, str] = {MenuId.TOOLS_DOCK: "00_dock"}
         self._installed_plugins: list[str] = []
         self._plugin_default_configs: dict[str, PluginConfigTuple] = {}
 
@@ -103,9 +104,14 @@ class AppActionRegistry:
                 yield action
 
     def submenu_title(self, id: str) -> str:
+        """Get the title of a submenu."""
         if title := self._submenu_titles.get(id):
             return title
         return id.split("/")[-1].title()
+
+    def submenu_group(self, id: str) -> str | None:
+        """Get the group of a submenu."""
+        return self._submenu_groups.get(id, None)
 
     @property
     def submenu_titles(self) -> dict[str, str]:
@@ -152,7 +158,8 @@ class AppActionRegistry:
                 if submenu in existing_menu_ids:
                     continue
                 title = self.submenu_title(submenu)
-                item = SubmenuItem(title=title, submenu=submenu)
+                group = self.submenu_group(submenu)
+                item = SubmenuItem(title=title, submenu=submenu, group=group)
                 to_add.append((menu_id, item))
 
         app.register_actions(actions)
@@ -170,12 +177,30 @@ def _norm_menus_with_group(menus: str | Sequence[str], group: str) -> list[dict]
     return [{"id": menu, "group": group} for menu in norm_menus(menus)]
 
 
-def configure_submenu(submenu_id: str | Iterable[str], title: str) -> None:
-    """Register a title for submenu(s)."""
+def configure_submenu(
+    submenu_id: str | Iterable[str],
+    title: str | None = None,
+    *,
+    group: str | None = None,
+) -> None:
+    """Register a configuration for submenu(s).
+
+    Parameters
+    ----------
+    submenu_id : str or iterable of str
+        Submenu ID(s) to configure.
+    title : str, optional
+        Specify the title of the submenu.
+    group : str, optional
+        Specify the group ID of the submenu.
+    """
     if isinstance(submenu_id, str):
         submenu_id = [submenu_id]
     for sid in submenu_id:
-        AppActionRegistry.instance()._submenu_titles[sid] = title
+        if title is not None:
+            AppActionRegistry.instance()._submenu_titles[sid] = title
+        if group is not None:
+            AppActionRegistry.instance()._submenu_groups[sid] = group
 
 
 @overload

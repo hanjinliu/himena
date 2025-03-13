@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass, field
 from typing import Literal
-from himena.consts import MenuId
 from himena.plugins import register_dock_widget_action
 
 
@@ -36,7 +35,6 @@ class ConsoleConfig:
 
 @register_dock_widget_action(
     title="Console",
-    menus=[MenuId.TOOLS_DOCK],
     area="bottom",
     keybindings=["Ctrl+Shift+C"],
     singleton=True,
