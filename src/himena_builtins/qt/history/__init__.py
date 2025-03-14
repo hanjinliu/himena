@@ -1,10 +1,8 @@
-from himena.consts import MenuId
 from himena.plugins import register_dock_widget_action
 
 
 @register_dock_widget_action(
     title="Command History",
-    menus=[MenuId.TOOLS_DOCK],
     area="right",
     keybindings=["Ctrl+Shift+H"],
     singleton=True,

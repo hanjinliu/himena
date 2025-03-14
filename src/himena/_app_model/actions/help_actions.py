@@ -13,24 +13,35 @@ def _open_url(url: str):
 
 
 REPOSITORY_URL = "https://github.com/hanjinliu/himena"
+DOCUMENTATION_URL = "https://hanjinliu.github.io/himena/"
 
 
 @ACTIONS.append_from_fn(
     id="github-repo",
     title="GitHub Repository",
-    menus=[{"id": MenuId.HELP, "group": "98_open-github-group"}],
+    menus=[{"id": MenuId.HELP, "group": "98_open-site-group"}],
 )
-def open_github_repo(ui: MainWindow) -> None:
+def open_github_repo() -> None:
     """Open the GitHub repository in the default browser."""
     _open_url(REPOSITORY_URL)
 
 
 @ACTIONS.append_from_fn(
+    id="documentation",
+    title="Documentation",
+    menus=[{"id": MenuId.HELP, "group": "98_open-site-group"}],
+)
+def open_documentation() -> None:
+    """Open the himena documentation."""
+    _open_url(DOCUMENTATION_URL)
+
+
+@ACTIONS.append_from_fn(
     id="report-issue",
     title="Report Issue",
-    menus=[{"id": MenuId.HELP, "group": "98_open-github-group"}],
+    menus=[{"id": MenuId.HELP, "group": "98_open-site-group"}],
 )
-def report_issue(ui: MainWindow) -> None:
+def report_issue() -> None:
     """Open the issue tracker in the default browser."""
     _open_url(REPOSITORY_URL + "/issues/new")
 

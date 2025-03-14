@@ -2,11 +2,7 @@ from typing import Any, Literal, SupportsIndex
 import numpy as np
 from cmap import Colormap
 from himena.data_wrappers._array import wrap_array, ArrayWrapper
-from himena.plugins import (
-    register_function,
-    configure_gui,
-    configure_submenu,
-)
+from himena.plugins import register_function, configure_gui, configure_submenu
 from himena.types import ClipboardDataModel, Parametric, WidgetDataModel, Rect
 from himena.consts import StandardType, MenuId
 from himena.standards.model_meta import (

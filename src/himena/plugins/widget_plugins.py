@@ -15,7 +15,7 @@ import weakref
 from app_model.types import Action, ToggleRule
 
 from himena.types import DockArea, DockAreaString
-from himena.consts import NO_RECORDING_FIELD
+from himena.consts import NO_RECORDING_FIELD, MenuId
 from himena.plugins.actions import (
     normalize_keybindings,
     AppActionRegistry,
@@ -39,7 +39,7 @@ _W = TypeVar("_W", bound="WidgetWrapper")
 def register_dock_widget_action(
     widget_factory: _F,
     *,
-    menus: str | Sequence[str] = "plugins",
+    menus: str | Sequence[str] | None = None,
     title: str | None = None,
     area: DockArea | DockAreaString = DockArea.RIGHT,
     allowed_areas: Sequence[DockArea | DockAreaString] | None = None,
@@ -54,7 +54,7 @@ def register_dock_widget_action(
 def register_dock_widget_action(
     widget_factory: None = None,
     *,
-    menus: str | Sequence[str] = "plugins",
+    menus: str | Sequence[str] | None = None,
     title: str | None = None,
     area: DockArea | DockAreaString = DockArea.RIGHT,
     allowed_areas: Sequence[DockArea | DockAreaString] | None = None,
@@ -68,7 +68,7 @@ def register_dock_widget_action(
 def register_dock_widget_action(
     widget_factory=None,
     *,
-    menus: str | Sequence[str] = "plugins",
+    menus: str | Sequence[str] | None = None,
     title: str | None = None,
     area: DockArea | DockAreaString = DockArea.RIGHT,
     allowed_areas: Sequence[DockArea | DockAreaString] | None = None,
@@ -77,13 +77,14 @@ def register_dock_widget_action(
     plugin_configs: PluginConfigType | None = None,
     command_id: str | None = None,
 ):
-    """
-    Register a widget factory as a dock widget function.
+    """Register a widget factory as a dock widget function.
 
     Parameters
     ----------
     widget_factory : callable, optional
         Class of dock widget, or a factory function for the dock widget.
+    menus : str or sequence of str, optional
+        Menu ID or list of menu IDs where the action will be added.
     title : str, optional
         Title of the dock widget.
     area : DockArea or DockAreaString, optional
@@ -121,6 +122,8 @@ def register_dock_widget_action(
         Command ID. If not given, the function name will be used.
     """
     kbs = normalize_keybindings(keybindings)
+    if menus is None:
+        menus = [MenuId.TOOLS_DOCK]
 
     def _inner(wf: Callable):
         _command_id = command_id_from_func(wf, command_id)
@@ -158,104 +161,6 @@ def register_dock_widget_action(
         return wf
 
     return _inner if widget_factory is None else _inner(widget_factory)
-
-
-# TODO: Implement the following function
-# @overload
-# def register_widget_action(
-#     widget_factory: _F,
-#     *,
-#     menus: str | Sequence[str] = "plugins",
-#     title: str | None = None,
-#     area: DockArea | DockAreaString = DockArea.RIGHT,
-#     allowed_areas: Sequence[DockArea | DockAreaString] | None = None,
-#     keybindings: KeyBindingsType | None = None,
-#     singleton: bool = False,
-#     plugin_configs: PluginConfigType | None = None,
-#     command_id: str | None = None,
-# ) -> _F: ...
-
-# @overload
-# def register_widget_action(
-#     widget_factory: None = None,
-#     *,
-#     menus: str | Sequence[str] = "plugins",
-#     title: str | None = None,
-#     area: DockArea | DockAreaString = DockArea.RIGHT,
-#     allowed_areas: Sequence[DockArea | DockAreaString] | None = None,
-#     keybindings: KeyBindingsType | None = None,
-#     singleton: bool = False,
-#     plugin_configs: PluginConfigType | None = None,
-#     command_id: str | None = None,
-# ) -> Callable[[_F], _F]: ...
-
-# def register_widget_action(
-#     widget_factory=None,
-#     *,
-#     menus: str | Sequence[str] = "plugins",
-#     title: str | None = None,
-#     keybindings: KeyBindingsType | None = None,
-#     plugin_configs: PluginConfigType | None = None,
-#     command_id: str | None = None,
-# ):
-#     """
-#     Register a widget factory as a widget action.
-
-#     Parameters
-#     ----------
-#     widget_factory : callable, optional
-#         Class of widget, or a factory function for the widget.
-#     title : str, optional
-#         Title of the widget.
-#     keybindings : sequence of keybinding rule, optional
-#         Keybindings to trigger the widget.
-#     plugin_configs : dict, dataclass or pydantic.BaseModel, optional
-#         Default configuration for the plugin. This config will be saved in the
-#         application profile and will be used to update the widget via the method
-#         `update_configs(self, cfg) -> None`. This argument must be a dict, dataclass
-#         or pydantic.BaseModel. If a dict, the format must be like:
-#         >>> plugin_configs = {
-#         ...    "config_0": {"value": 0, "tooltip": ...},
-#         ...    "config_1": {"value": "xyz", "tooltip": ...},
-#         ... }
-#         where only "value" is required. If a dataclass or pydantic.BaseModel, field
-#         objects will be used instead of the dict.
-#         >>> @dataclass
-#         ... class MyPluginConfig:
-#         ...     config_0: int = Field(default=0, metadata={"tooltip": ...})
-#         ...     config_1: str = Field(default="xyz", metadata={"tooltip": ...})
-#         ... plugin_configs = MyPluginConfig()
-#     command_id : str, optional
-#         Command ID. If not given, the function name will be used.
-#     """
-#     kbs = normalize_keybindings(keybindings)
-
-#     def _inner(wf: Callable):
-#         _command_id = command_id_from_func(wf, command_id)
-#         _callback = WidgetCallback(
-#             wf,
-#             title=title,
-#             uuid=uuid.uuid4(),
-#             command_id=_command_id,
-#         )
-#         action = Action(
-#             id=_command_id,
-#             title=_callback._title,
-#             tooltip=tooltip_from_func(wf),
-#             callback=_callback,
-#             menus=norm_menus(menus),
-#             keybindings=kbs,
-#         )
-#         reg = AppActionRegistry.instance()
-#         reg.add_action(action)
-#         if plugin_configs:
-#             cfg_type = type(plugin_configs)
-#             reg._plugin_default_configs[_command_id] = PluginConfigTuple(
-#                 _callback._title, plugin_configs, cfg_type,
-#             )
-#         return wf
-
-#     return _inner if widget_factory is None else _inner(widget_factory)
 
 
 class WidgetCallbackBase(Generic[_W]):
@@ -341,44 +246,6 @@ class DockWidgetCallback(WidgetCallbackBase["DockWidget"]):
         if widget := self._widget_ref():
             return widget.visible
         return False
-
-
-# class WidgetCallback(WidgetCallbackBase["SubWindow"]):
-#     """Callback for registering widgets."""
-
-#     def __init__(
-#         self,
-#         func: Callable,
-#         title: str | None,
-#         uuid: uuid.UUID | None,
-#         command_id: str,
-#     ):
-#         super().__init__(func, title=title, uuid=uuid, command_id=command_id)
-
-#     def __call__(self, ui: MainWindow) -> SubWindow:
-#         try:
-#             widget = self._func(ui)
-#         except TypeError:
-#             widget = self._func()
-#         win = ui.add_widget(
-#             widget,
-#             title=self._title,
-#             _identifier=self._uuid,
-#         )
-#         self._all_widgets.add(widget)
-#         self._widget_ref = weakref.ref(widget)
-#         plugin_configs = ui.app_profile.plugin_configs.get(self._command_id)
-#         if plugin_configs:
-#             if not hasattr(widget, 'update_configs'):
-#                 raise ValueError(
-#                     "The widget must have 'update_configs' method if plugin config "
-#                     "fields are given.",
-#                 )
-#             params = {}
-#             for k, v in plugin_configs.items():
-#                 params[k] = v["value"]
-#             widget.update_configs(params)
-#         return win
 
 
 def _normalize_title(title: str | None, func: Callable) -> str:

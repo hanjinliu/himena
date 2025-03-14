@@ -170,8 +170,17 @@ class WriterPlugin(_IOPluginBase):
         return self._matcher(model, path)
 
     def define_matcher(
-        self, matcher: Callable[[Path, WidgetDataModel], bool]
+        self, matcher: Callable[[WidgetDataModel, Path], bool]
     ) -> WriterPlugin:
+        """Define how to match the input data model and the save path to this writer.
+
+        Examples
+        --------
+        ```python
+        @my_writer.define_matcher
+        def _(model: WidgetDataModel, path: Path) -> bool:
+            return path.suffix == ".txt" and model.type == "text"
+        """
         self._matcher = matcher
         return self
 
