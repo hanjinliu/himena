@@ -90,7 +90,7 @@ def register_widget_class(type_, widget_class=None, priority=100, plugin_configs
         himena.qt.register_widget_class(type_, wcls, priority=priority)
         fn = OpenDataInFunction(type_, wcls)
         reg = AppActionRegistry.instance()
-        reg.add_action(fn.to_action())
+        reg.add_action(fn.to_action(), is_dynamic=True)
         wcls.__himena_model_type__ = type_
 
         if plugin_configs:
@@ -130,9 +130,9 @@ def register_previewer_class(type_: str, widget_class: type):
         _WIDGET_ID_TO_WIDGET_CLASS[widget_id] = wcls
         himena.qt.register_widget_class(type_, wcls, priority=-10)
         fn = OpenDataInFunction(type_, wcls)
-        AppActionRegistry.instance().add_action(fn.to_action())
+        AppActionRegistry.instance().add_action(fn.to_action(), is_dynamic=True)
         fn = PreviewDataInFunction(type_, wcls)
-        AppActionRegistry.instance().add_action(fn.to_action())
+        AppActionRegistry.instance().add_action(fn.to_action(), is_dynamic=True)
         return type_
 
     return inner if widget_class is None else inner(widget_class)

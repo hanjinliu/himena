@@ -32,8 +32,7 @@ def register_widget_class(
 
 
 def register_widget_class(type_, widget_class=None, app=None, priority=100):
-    """
-    Register a frontend Qt widget class for the given model type.
+    """Register a frontend Qt widget class for the given model type.
 
     The `__init__` method of the registered class must not take any argument. The class
     must implement `update_model` method to update the widget state from a
