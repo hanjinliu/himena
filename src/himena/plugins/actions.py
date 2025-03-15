@@ -20,7 +20,7 @@ from typing import (
 
 from pydantic_compat import BaseModel
 
-from app_model import Action, Application
+from app_model import Action
 from app_model.types import SubmenuItem, KeyBindingRule
 from app_model.expressions import BoolOp
 
@@ -31,6 +31,8 @@ from himena.types import WidgetDataModel
 from himena.utils.collections import OrderedSet
 
 if TYPE_CHECKING:
+    from himena._app_model import HimenaApplication
+
     KeyBindingsType = str | KeyBindingRule | Sequence[str] | Sequence[KeyBindingRule]
     PluginConfigType = Any
 
@@ -74,6 +76,7 @@ class AppActionRegistry:
 
     def __init__(self):
         self._actions: dict[str, Action] = {}
+        self._actions_dynamic: set[str] = set()
         self._submenu_titles: dict[str, str] = {MenuId.TOOLS_DOCK: "Dock widgets"}
         self._submenu_groups: dict[str, str] = {MenuId.TOOLS_DOCK: "00_dock"}
         self._installed_plugins: list[str] = []
@@ -86,19 +89,21 @@ class AppActionRegistry:
             cls._global_instance = cls()
         return cls._global_instance
 
-    def add_action(self, action: Action) -> None:
+    def add_action(self, action: Action, is_dynamic: bool = False) -> None:
         """Add an action to the registry."""
         id_ = action.id
         if id_ in self._actions:
             raise ValueError(f"Action ID {id_} already exists.")
         self._actions[id_] = action
+        if is_dynamic:
+            self._actions_dynamic.add(id_)
 
     @property
     def installed_plugins(self) -> list[str]:
         """List of modules or python paths that are installed as plugins."""
         return self._installed_plugins
 
-    def iter_actions(self, app: Application) -> Iterator[Action]:
+    def iter_actions(self, app: HimenaApplication) -> Iterator[Action]:
         for id_, action in self._actions.items():
             if id_ not in app.commands:
                 yield action
@@ -119,7 +124,7 @@ class AppActionRegistry:
 
     def install_to(
         self,
-        app: Application,
+        app: HimenaApplication,
         actions: list[Action] | None = None,
     ) -> list[str]:
         """Install actions to the application.
@@ -164,6 +169,7 @@ class AppActionRegistry:
 
         app.register_actions(actions)
         app.menus.append_menu_items(to_add)
+        app._dynamic_command_ids.update(self._actions_dynamic)
         return new_menu_ids
 
 

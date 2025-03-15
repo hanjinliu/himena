@@ -495,7 +495,7 @@ for n in range(10):
     keycode = getattr(KeyCode, f"Digit{n}")
     ACTIONS.append_from_fn(
         id=f"jump-to-window-{n}",
-        title=f"{n}{th} window",
+        title=f"Jump to {n}{th} window",
         enablement=_ctx.num_sub_windows > n,
         menus=[MenuId.WINDOW_NTH],
         keybindings=[{"primary": KeyMod.Alt | keycode}],
