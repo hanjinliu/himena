@@ -5,20 +5,24 @@ import re
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from superqt.utils import thread_worker
+from superqt import QIconifyIcon
 
 from himena.workflow import RemoteReaderMethod
 from himena import _drag
 from himena.consts import MonospaceFontFamily
 from himena.types import DragDataModel, WidgetDataModel
+from himena.utils.misc import lru_cache
 from himena.utils.cli import local_to_remote
 from himena.widgets import MainWindow, set_status_tip, notify
+from himena.plugins import validate_protocol
 from himena.qt.magicgui._toggle_switch import QLabeledToggleSwitch
 from himena_builtins.qt.widgets._shared import labeled
 
 if TYPE_CHECKING:
+    from himena.style import Theme
     from himena_builtins.qt.explorer import FileExplorerSSHConfig
 
 
@@ -42,9 +46,14 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         self._ui = ui
         self._host_edit = QtW.QLineEdit()
         self._host_edit.setFont(font)
-        self._host_edit.setMaximumWidth(140)
+        self._host_edit.setMaximumWidth(100)
         self._user_name_edit = QtW.QLineEdit()
         self._user_name_edit.setFont(font)
+        self._user_name_edit.setMaximumWidth(80)
+        self._port_edit = QtW.QLineEdit()
+        self._port_edit.setFont(font)
+        self._port_edit.setValidator(QtGui.QIntValidator(0, 65535))
+        self._port_edit.setMaximumWidth(40)
         self._is_wsl_switch = QLabeledToggleSwitch()
         self._is_wsl_switch.setText("Use WSL")
         self._is_wsl_switch.setFixedHeight(24)
@@ -101,6 +110,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         layout.addLayout(hlayout0)
         hlayout0.addWidget(labeled("Host:", self._host_edit, label_width=30), 3)
         hlayout0.addWidget(labeled("User:", self._user_name_edit, label_width=30), 2)
+        hlayout0.addWidget(labeled("Port:", self._port_edit, label_width=30), 2)
 
         hlayout1 = QtW.QHBoxLayout()
         hlayout1.setContentsMargins(0, 0, 0, 0)
@@ -116,7 +126,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         hlayout2.setContentsMargins(0, 0, 0, 0)
         hlayout2.addWidget(self._last_dir_btn, 0, QtCore.Qt.AlignmentFlag.AlignLeft)
         hlayout2.addWidget(self._up_one_btn, 0, QtCore.Qt.AlignmentFlag.AlignLeft)
-        hlayout2.addWidget(QtW.QWidget())
+        hlayout2.addWidget(QtW.QWidget(), 100)  # spacer
         hlayout2.addWidget(self._show_hidden_files_switch)
         hlayout2.addWidget(self._refresh_btn, 0, QtCore.Qt.AlignmentFlag.AlignRight)
         layout.addLayout(hlayout2)
@@ -133,6 +143,11 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         self._show_hidden_files_switch.toggled.connect(
             lambda: self._set_current_path(self._pwd)
         )
+        self._light_background = True
+
+    @validate_protocol
+    def theme_changed_callback(self, theme: Theme) -> None:
+        self._light_background = theme.is_light_background()
 
     def _set_current_path(self, path: Path):
         self._pwd_widget.setText(path.as_posix())
@@ -167,7 +182,12 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
     @thread_worker
     def _run_ls_command(self, path: Path) -> list[QtW.QTreeWidgetItem]:
         opt = "-lhAF" if self._show_hidden_files_switch.isChecked() else "-lhF"
-        args = _make_ls_args(self._host_name(), path.as_posix(), options=opt)
+        args = _make_ls_args(
+            self._host_name(),
+            path.as_posix(),
+            options=opt,
+            port=int(self._port_edit.text()),
+        )
         if self._is_wsl_switch.isChecked():
             args = ["wsl", "-e"] + args
         result = subprocess.run(args, capture_output=True)
@@ -184,6 +204,8 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
                 name = name[:-1]  # executable
             item = QtW.QTreeWidgetItem([name, datetime] + others[::-1])
             item.setToolTip(0, name)
+            icon = _icon_for_file_type(_item_type(item), self._light_background)
+            item.setIcon(0, icon)
             items.append(item)
 
         # sort directories first
@@ -201,7 +223,9 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
             self._set_current_path(self._pwd / item.text(0))
         elif item_type == "l":
             _, real_path = item.text(0).split(" -> ")
-            args_check_type = _make_get_type_args(self._host_name(), real_path)
+            args_check_type = _make_get_type_args(
+                self._host_name(), real_path, port=int(self._port_edit.text())
+            )
             if self._is_wsl_switch.isChecked():
                 args_check_type = ["wsl", "-e"] + args_check_type
             result = subprocess.run(args_check_type, capture_output=True)
@@ -229,6 +253,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
             host=self._host_edit.text(),
             username=self._user_name_edit.text(),
             path=path,
+            port=int(self._port_edit.text()),
             wsl=self._is_wsl_switch.isChecked(),
             protocol=self._protocol_choice.currentText(),
             force_directory=is_dir,
@@ -340,6 +365,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
     ) -> None:
         self._host_edit.setText(cfg.default_host)
         self._user_name_edit.setText(cfg.default_user)
+        self._port_edit.setText(str(cfg.default_port))
         self._is_wsl_switch.setChecked(cfg.default_use_wsl)
         self._protocol_choice.setCurrentText(cfg.default_protocol)
         if cfg.default_host and cfg.default_user and self._pwd == Path("~"):
@@ -361,6 +387,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
             f"{self._host_name()}:{dst_remote.as_posix()}",
             is_wsl=self._is_wsl_switch.isChecked(),
             is_dir=is_dir,
+            port=int(self._port_edit.text()),
         )
         subprocess.run(args)
         notify(f"Sent {src.as_posix()} to {dst_remote.as_posix()}", duration=2.8)
@@ -381,9 +408,6 @@ class QRemoteTreeWidget(QtW.QTreeWidget):
         self.header().setFixedHeight(20)
         self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self._show_context_menu)
-
-    def parent(self) -> QSSHRemoteExplorerWidget:
-        return super().parent()
 
     def _make_context_menu(self):
         menu = QtW.QMenu(self)
@@ -438,18 +462,36 @@ class QRemoteTreeWidget(QtW.QTreeWidget):
         drag.setMimeData(mime)
         drag.exec(QtCore.Qt.DropAction.CopyAction)
 
+    if TYPE_CHECKING:
 
-def _make_ls_args(host: str, path: str, options: str = "-AF") -> list[str]:
-    return ["ssh", host, "ls", path + "/", options]
-
-
-def _make_get_type_args(host: str, path: str) -> list[str]:
-    return ["ssh", host, "stat", path, "--format='%F'"]
+        def parent(self) -> QSSHRemoteExplorerWidget: ...
 
 
-def _item_type(item: QtW.QTreeWidgetItem) -> str:
+def _make_ls_args(
+    host: str, path: str, port: int = 22, options: str = "-AF"
+) -> list[str]:
+    return ["ssh", "-p", str(port), host, "ls", path + "/", options]
+
+
+def _make_get_type_args(host: str, path: str, port: int = 22) -> list[str]:
+    return ["ssh", "-p", str(port), host, "stat", path, "--format='%F'"]
+
+
+def _item_type(item: QtW.QTreeWidgetItem) -> Literal["d", "l", "f"]:
     """First character of the permission string."""
     return item.text(6)[0]
+
+
+@lru_cache(maxsize=10)
+def _icon_for_file_type(file_type: str, light_background: bool) -> QIconifyIcon:
+    color = "#222222" if light_background else "#eeeeee"
+    if file_type == "d":
+        icon = QIconifyIcon("material-symbols:folder", color=color)
+    elif file_type == "l":
+        icon = QIconifyIcon("octicon:file-directory-symlink-16", color=color)
+    else:
+        icon = QIconifyIcon("mdi:file-outline", color=color)
+    return icon
 
 
 class QSeparator(QtW.QFrame):
