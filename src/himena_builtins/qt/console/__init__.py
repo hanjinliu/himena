@@ -45,4 +45,4 @@ def install_console(ui):
     """Python interpreter widget."""
     from himena_builtins.qt.console._widget import QtConsole
 
-    return QtConsole(ui)
+    return QtConsole.get_or_create(ui)

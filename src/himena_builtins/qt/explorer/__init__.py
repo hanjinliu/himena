@@ -22,6 +22,9 @@ class FileExplorerSSHConfig:
         default="", metadata={"tooltip": "The default host name or IP address"}
     )
     default_user: str = field(default="", metadata={"tooltip": "The default user name"})
+    default_port: int = field(
+        default=22, metadata={"tooltip": "The default port number"}
+    )
     default_use_wsl: bool = field(
         default=False,
         metadata={

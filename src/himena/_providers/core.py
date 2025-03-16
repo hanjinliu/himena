@@ -31,6 +31,8 @@ class PluginStore(Generic[_S]):
 
 
 class ReaderStore(PluginStore["ReaderPlugin"]):
+    """Class that stores all the reader plugins."""
+
     def add_reader(self, reader: ReaderPlugin):
         self._plugin_items.append(reader)
 
@@ -56,19 +58,8 @@ class ReaderStore(PluginStore["ReaderPlugin"]):
         empty_ok: bool = False,
         min_priority: int = 0,
     ) -> list[ReaderPlugin]:
-        matched: list[ReaderPlugin] = []
-        for reader in self._plugin_items:
-            if reader.priority < min_priority:
-                continue
-            try:
-                out = reader.match_model_type(path)
-            except Exception as e:
-                _warn_failed_provider(reader, e)
-            else:
-                if out is None:
-                    _LOGGER.debug("%r did not match", reader)
-                else:
-                    matched.append(reader)
+        """List of reader plugins that can read the path."""
+        matched = self._get_impl(_remove_tilde(path), min_priority=min_priority)
         _LOGGER.debug("Matched readers: %r", matched)
         if not matched and not empty_ok:
             if isinstance(path, list):
@@ -101,6 +92,26 @@ class ReaderStore(PluginStore["ReaderPlugin"]):
         reader = self.pick(path, plugin=plugin, min_priority=min_priority)
         return reader.read(path)
 
+    def _get_impl(
+        self,
+        path: Path | list[Path],
+        min_priority: int = 0,
+    ) -> list[ReaderPlugin]:
+        matched: list[ReaderPlugin] = []
+        for reader in self._plugin_items:
+            if reader.priority < min_priority:
+                continue
+            try:
+                out = reader.match_model_type(path)
+            except Exception as e:
+                _warn_failed_provider(reader, e)
+            else:
+                if out is None:
+                    _LOGGER.debug("%r did not match", reader)
+                else:
+                    matched.append(reader)
+        return matched
+
 
 class WriterStore(PluginStore["WriterPlugin"]):
     def add_writer(self, reader: WriterPlugin):
@@ -113,19 +124,8 @@ class WriterStore(PluginStore["WriterPlugin"]):
         empty_ok: bool = False,
         min_priority: int = 0,
     ) -> list[WriterPlugin]:
-        matched: list[WriterPlugin] = []
-        for writer in self._plugin_items:
-            if writer.priority < min_priority:
-                continue
-            try:
-                out = writer.match_input(model, path)
-            except Exception as e:
-                _warn_failed_provider(writer, e)
-            else:
-                if not out:
-                    _LOGGER.debug("%r did not match", writer)
-                else:
-                    matched.append(writer)
+        """List of writer plugins that can write the model."""
+        matched = self._get_impl(model, _remove_tilde(path), min_priority=min_priority)
         if not matched and not empty_ok:
             raise ValueError(f"No writer functions available for {model.type!r}")
         return matched
@@ -154,6 +154,27 @@ class WriterStore(PluginStore["WriterPlugin"]):
         writer = self.pick(model, path, plugin=plugin, min_priority=min_priority)
         return writer.write(model, path)
 
+    def _get_impl(
+        self,
+        model: WidgetDataModel,
+        path: Path,
+        min_priority: int = 0,
+    ) -> list[WriterPlugin]:
+        matched: list[WriterPlugin] = []
+        for writer in self._plugin_items:
+            if writer.priority < min_priority:
+                continue
+            try:
+                out = writer.match_input(model, path)
+            except Exception as e:
+                _warn_failed_provider(writer, e)
+            else:
+                if not out:
+                    _LOGGER.debug("%r did not match", writer)
+                else:
+                    matched.append(writer)
+        return matched
+
 
 def _pick_by_priority(tuples: list[_S]) -> _S:
     return max(tuples, key=lambda x: x.priority)
@@ -181,3 +202,15 @@ def _pick_from_list(choices: list[_S], plugin: str | None) -> _S:
 
 def _warn_failed_provider(plugin_obj, e: Exception):
     return _LOGGER.error(f"Error in {plugin_obj!r}: {e}")
+
+
+def _is_backup_file(path: Path | list[Path]) -> bool:
+    if isinstance(path, list):
+        return False
+    return path.stem.endswith("~")
+
+
+def _remove_tilde(path: Path | list[Path]) -> Path | list[Path]:
+    if isinstance(path, list):
+        return [p.with_name(p.name.rstrip("~")) for p in path]
+    return path.with_name(path.name.rstrip("~"))

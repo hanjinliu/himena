@@ -40,9 +40,10 @@ def new_window(
         from himena.plugins import install_plugins
 
         install_plugins(model_app, plugins)
+
     # create the main window
     init_application(model_app)
-    main_window = _get_main_window_class(backend)(model_app, theme=app_prof.theme)
+    main_window = _get_main_window(backend, model_app, theme=app_prof.theme)
 
     # execute startup commands (don't raise exceptions, just log them)
     exceptions: list[tuple[str, dict, Exception]] = []
@@ -58,12 +59,13 @@ def new_window(
     return main_window
 
 
-def _get_main_window_class(backend: str) -> MainWindow:
+def _get_main_window(backend: str, *args, **kwargs) -> MainWindow:
     if backend == "qt":
         from himena.qt import MainWindowQt
 
-        return MainWindowQt
+        return MainWindowQt(*args, **kwargs)
     elif backend == "mock":
         from himena.mock import MainWindowMock
 
-        return MainWindowMock
+        return MainWindowMock(*args, **kwargs)
+    raise ValueError(f"Invalid backend: {backend}")

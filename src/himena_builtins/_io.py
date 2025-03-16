@@ -53,15 +53,16 @@ def _infer_separator(file_path: Path, encoding: str | None = None) -> str:
 
 def default_text_reader(file_path: Path) -> WidgetDataModel:
     """Read text file."""
-    if file_path.suffix in (".html", ".htm"):
+    suffix = file_path.suffix.rstrip("~")
+    if suffix in (".html", ".htm"):
         typ = StandardType.HTML
-    elif file_path.suffix == ".json":
+    elif suffix == ".json":
         typ = StandardType.JSON
-    elif file_path.suffix == ".svg":
+    elif suffix == ".svg":
         typ = StandardType.SVG
-    elif file_path.suffix == ".md":
+    elif suffix == ".md":
         typ = StandardType.MARKDOWN
-    elif file_path.suffix == ".ipynb":
+    elif suffix == ".ipynb":
         typ = StandardType.IPYNB
     else:
         typ = StandardType.TEXT
@@ -71,7 +72,7 @@ def default_text_reader(file_path: Path) -> WidgetDataModel:
         value=value,
         type=typ,
         source=file_path,
-        extension_default=file_path.suffix,
+        extension_default=suffix,
         metadata=TextMeta(encoding=encoding),
     )
 
@@ -321,10 +322,11 @@ def default_text_writer(model: WidgetDataModel[str], path: Path) -> None:
 def default_table_writer(model: WidgetDataModel[np.ndarray], path: Path) -> None:
     """Write table data to a text file."""
     delimiter = None
+    suffix = path.suffix.rstrip("~")
     if isinstance(meta := model.metadata, TableMeta):
         delimiter = meta.separator
     if delimiter is None:
-        if path.suffix == ".tsv":
+        if suffix == ".tsv":
             delimiter = "\t"
         else:
             delimiter = ","

@@ -7,6 +7,7 @@ from himena.qt._qmain_window import QMainWindow
 if TYPE_CHECKING:
     from app_model import Application
     from himena.style import Theme
+    from qtpy import QtWidgets as QtW  # noqa: F401
 
 
 class MainWindowQt(MainWindow["QtW.QWidget"]):
