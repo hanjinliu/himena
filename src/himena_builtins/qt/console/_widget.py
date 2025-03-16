@@ -64,6 +64,7 @@ class QtConsole(RichJupyterWidget):
     """
 
     codeExecuted = Signal()
+    _instance = None
 
     def __init__(self, ui: MainWindow):
         super().__init__()
@@ -76,6 +77,12 @@ class QtConsole(RichJupyterWidget):
         self._ui = ui
         self.codeExecuted.connect(self.setFocus)
 
+    @classmethod
+    def get_or_create(cls, ui) -> QtConsole:
+        if cls._instance is None:
+            cls._instance = cls(ui)
+        return cls._instance
+
     def connect_parent(self):
         from IPython import get_ipython
         from IPython.terminal.interactiveshell import TerminalInteractiveShell
@@ -86,7 +93,7 @@ class QtConsole(RichJupyterWidget):
         from qtconsole.inprocess import QtInProcessKernelManager
 
         if self._parent_connected:
-            raise RuntimeError("Console already connected to a window.")
+            return
         self._parent_connected = True
         shell = get_ipython()
 
