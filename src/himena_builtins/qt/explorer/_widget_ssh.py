@@ -46,9 +46,10 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         self._ui = ui
         self._host_edit = QtW.QLineEdit()
         self._host_edit.setFont(font)
-        self._host_edit.setMaximumWidth(140)
+        self._host_edit.setMaximumWidth(100)
         self._user_name_edit = QtW.QLineEdit()
         self._user_name_edit.setFont(font)
+        self._user_name_edit.setMaximumWidth(80)
         self._port_edit = QtW.QLineEdit()
         self._port_edit.setFont(font)
         self._port_edit.setValidator(QtGui.QIntValidator(0, 65535))
@@ -125,7 +126,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         hlayout2.setContentsMargins(0, 0, 0, 0)
         hlayout2.addWidget(self._last_dir_btn, 0, QtCore.Qt.AlignmentFlag.AlignLeft)
         hlayout2.addWidget(self._up_one_btn, 0, QtCore.Qt.AlignmentFlag.AlignLeft)
-        hlayout2.addWidget(QtW.QWidget())
+        hlayout2.addWidget(QtW.QWidget(), 100)  # spacer
         hlayout2.addWidget(self._show_hidden_files_switch)
         hlayout2.addWidget(self._refresh_btn, 0, QtCore.Qt.AlignmentFlag.AlignRight)
         layout.addLayout(hlayout2)
