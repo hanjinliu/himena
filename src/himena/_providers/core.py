@@ -210,5 +210,7 @@ def _is_backup_file(path: Path | list[Path]) -> bool:
     return path.stem.endswith("~")
 
 
-def _remove_tilde(path: Path) -> Path:
+def _remove_tilde(path: Path | list[Path]) -> Path | list[Path]:
+    if isinstance(path, list):
+        return [p.with_name(p.name.rstrip("~")) for p in path]
     return path.with_name(path.name.rstrip("~"))
