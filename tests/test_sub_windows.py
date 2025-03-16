@@ -4,6 +4,9 @@ import pytest
 from pytestqt.qtbot import QtBot
 from tempfile import TemporaryDirectory
 from qtpy import QtWidgets as QtW
+import numpy as np
+import polars as pl
+
 from himena import MainWindow, anchor
 from himena._descriptors import NoNeedToSave, SaveToNewPath, SaveToPath
 from himena.consts import StandardType
@@ -106,6 +109,11 @@ def test_io_commands(himena_ui: MainWindow, tmpdir, sample_dir: Path):
     himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response_save)
     himena_ui.exec_action("save")
 
+    # test adding object directly
+    himena_ui.add_object("ABC")
+    himena_ui.add_object(np.arange(4))
+    himena_ui.add_object(np.array([[1, 2], [3, 4]], dtype=np.dtypes.StringDType()))
+    himena_ui.add_object(pl.DataFrame({"x": [1, 2, 3], "y": [4.2, 5.3, -1.5]}))
 
 def test_window_commands(himena_ui: MainWindowQt, sample_dir: Path):
     himena_ui.exec_action("show-command-palette")
