@@ -49,6 +49,10 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         self._host_edit.setMaximumWidth(140)
         self._user_name_edit = QtW.QLineEdit()
         self._user_name_edit.setFont(font)
+        self._port_edit = QtW.QLineEdit()
+        self._port_edit.setFont(font)
+        self._port_edit.setValidator(QtGui.QIntValidator(0, 65535))
+        self._port_edit.setMaximumWidth(40)
         self._is_wsl_switch = QLabeledToggleSwitch()
         self._is_wsl_switch.setText("Use WSL")
         self._is_wsl_switch.setFixedHeight(24)
@@ -105,6 +109,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         layout.addLayout(hlayout0)
         hlayout0.addWidget(labeled("Host:", self._host_edit, label_width=30), 3)
         hlayout0.addWidget(labeled("User:", self._user_name_edit, label_width=30), 2)
+        hlayout0.addWidget(labeled("Port:", self._port_edit, label_width=30), 2)
 
         hlayout1 = QtW.QHBoxLayout()
         hlayout1.setContentsMargins(0, 0, 0, 0)
@@ -176,7 +181,12 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
     @thread_worker
     def _run_ls_command(self, path: Path) -> list[QtW.QTreeWidgetItem]:
         opt = "-lhAF" if self._show_hidden_files_switch.isChecked() else "-lhF"
-        args = _make_ls_args(self._host_name(), path.as_posix(), options=opt)
+        args = _make_ls_args(
+            self._host_name(),
+            path.as_posix(),
+            options=opt,
+            port=int(self._port_edit.text()),
+        )
         if self._is_wsl_switch.isChecked():
             args = ["wsl", "-e"] + args
         result = subprocess.run(args, capture_output=True)
@@ -212,7 +222,9 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
             self._set_current_path(self._pwd / item.text(0))
         elif item_type == "l":
             _, real_path = item.text(0).split(" -> ")
-            args_check_type = _make_get_type_args(self._host_name(), real_path)
+            args_check_type = _make_get_type_args(
+                self._host_name(), real_path, port=int(self._port_edit.text())
+            )
             if self._is_wsl_switch.isChecked():
                 args_check_type = ["wsl", "-e"] + args_check_type
             result = subprocess.run(args_check_type, capture_output=True)
@@ -240,6 +252,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
             host=self._host_edit.text(),
             username=self._user_name_edit.text(),
             path=path,
+            port=int(self._port_edit.text()),
             wsl=self._is_wsl_switch.isChecked(),
             protocol=self._protocol_choice.currentText(),
             force_directory=is_dir,
@@ -351,6 +364,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
     ) -> None:
         self._host_edit.setText(cfg.default_host)
         self._user_name_edit.setText(cfg.default_user)
+        self._port_edit.setText(str(cfg.default_port))
         self._is_wsl_switch.setChecked(cfg.default_use_wsl)
         self._protocol_choice.setCurrentText(cfg.default_protocol)
         if cfg.default_host and cfg.default_user and self._pwd == Path("~"):
@@ -372,6 +386,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
             f"{self._host_name()}:{dst_remote.as_posix()}",
             is_wsl=self._is_wsl_switch.isChecked(),
             is_dir=is_dir,
+            port=int(self._port_edit.text()),
         )
         subprocess.run(args)
         notify(f"Sent {src.as_posix()} to {dst_remote.as_posix()}", duration=2.8)
@@ -451,12 +466,14 @@ class QRemoteTreeWidget(QtW.QTreeWidget):
         def parent(self) -> QSSHRemoteExplorerWidget: ...
 
 
-def _make_ls_args(host: str, path: str, options: str = "-AF") -> list[str]:
-    return ["ssh", host, "ls", path + "/", options]
+def _make_ls_args(
+    host: str, path: str, port: int = 22, options: str = "-AF"
+) -> list[str]:
+    return ["ssh", "-p", str(port), host, "ls", path + "/", options]
 
 
-def _make_get_type_args(host: str, path: str) -> list[str]:
-    return ["ssh", host, "stat", path, "--format='%F'"]
+def _make_get_type_args(host: str, path: str, port: int = 22) -> list[str]:
+    return ["ssh", "-p", str(port), host, "stat", path, "--format='%F'"]
 
 
 def _item_type(item: QtW.QTreeWidgetItem) -> Literal["d", "l", "f"]:

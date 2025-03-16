@@ -76,6 +76,7 @@ class RemoteReaderMethod(ReaderMethod):
     host: str
     username: str
     path: Path
+    port: int = Field(default=22)
     wsl: bool = Field(default=False)
     protocol: str = Field(default="rsync")
     force_directory: bool = Field(default=False)
@@ -131,6 +132,9 @@ class RemoteReaderMethod(ReaderMethod):
             dst_path,
             is_wsl=self.wsl,
             is_dir=self.force_directory,
+            port=self.port,
         )
-        subprocess.run(args, stdout=stdout)
+        result = subprocess.run(args, stdout=stdout)
+        if result.returncode != 0:
+            raise ValueError(f"Failed to run command {args}: {result!r}")
         return None
