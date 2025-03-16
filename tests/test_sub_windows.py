@@ -96,6 +96,17 @@ def test_io_commands(himena_ui: MainWindow, tmpdir, sample_dir: Path):
     assert param.plugin is not None
     assert last.plugin == param.plugin.to_str()
 
+    # backup
+    response_open = lambda: sample_dir / "text.txt~"
+    response_save = lambda: Path(tmpdir) / "out.log~"
+    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response_open)
+    himena_ui.exec_action("open-file")
+    assert himena_ui.current_window.to_model().type == StandardType.TEXT
+    assert himena_ui.current_window.to_model().value == "ab\n"
+    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response_save)
+    himena_ui.exec_action("save")
+
+
 def test_window_commands(himena_ui: MainWindowQt, sample_dir: Path):
     himena_ui.exec_action("show-command-palette")
     himena_ui.read_file(sample_dir / "text.txt")
