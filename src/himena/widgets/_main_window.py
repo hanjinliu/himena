@@ -41,6 +41,7 @@ from himena.types import (
 from himena.widgets._backend import BackendMainWindow
 from himena.widgets._hist import HistoryContainer, FileDialogHistoryDict
 from himena.widgets._initialize import remove_instance
+from himena.widgets._typemap import ObjectTypeMap, register_defaults
 from himena.widgets._widget_list import TabList, TabArea, DockWidgetList
 from himena.widgets._wrapper import ParametricWindow, SubWindow, DockWidget
 from himena.workflow import ProgrammaticMethod
@@ -99,12 +100,19 @@ class MainWindow(Generic[_W]):
             self._recent_session_manager.update_menu()
         self._executor = ThreadPoolExecutor(max_workers=5)
         self._global_lock = threading.Lock()
+        self._object_type_map = ObjectTypeMap()
         self.theme = theme
+        register_defaults(self._object_type_map)
 
     @property
     def events(self) -> MainWindowEvents[_W]:
         """Main window events."""
         return self._events
+
+    @property
+    def object_type_map(self) -> ObjectTypeMap:
+        """Mapping object to string that describes the type."""
+        return self._object_type_map
 
     @property
     def theme(self) -> Theme:
@@ -259,8 +267,7 @@ class MainWindow(Generic[_W]):
         *,
         title: str | None = None,
     ) -> SubWindow[_W]:
-        """
-        Add a widget to the sub window.
+        """Add a widget to the sub window.
 
         Parameters
         ----------
@@ -287,8 +294,7 @@ class MainWindow(Generic[_W]):
         allowed_areas: list[DockAreaString | DockArea] | None = None,
         _identifier: uuid.UUID | None = None,
     ) -> DockWidget[_W]:
-        """
-        Add a custom widget as a dock widget of the main window.
+        """Add a custom widget as a dock widget of the main window.
 
         Parameters
         ----------
@@ -326,8 +332,7 @@ class MainWindow(Generic[_W]):
         force_open_with: str | None = None,
         metadata: Any | None = None,
     ) -> SubWindow[_W]:
-        """
-        Add any data as a widget data model.
+        """Add any data as a widget data model.
 
         Parameters
         ----------
@@ -345,7 +350,8 @@ class MainWindow(Generic[_W]):
         SubWindow
             The sub-window handler.
         """
-        # TODO: determine default `type`
+        if type is None:
+            type = self._object_type_map.pick_type(value)
         wd = WidgetDataModel(
             value=value,
             type=type,
@@ -372,8 +378,7 @@ class MainWindow(Generic[_W]):
         run_async: bool = False,
         result_as: Literal["window", "below", "right"] = "window",
     ) -> ParametricWindow[_W]:
-        """
-        Add a function as a parametric sub-window.
+        """Add a function as a parametric sub-window.
 
         The input function must return a `WidgetDataModel` instance, which can be
         interpreted by the application.
