@@ -3,22 +3,25 @@ from __future__ import annotations
 from pathlib import Path
 from timeit import default_timer as timer
 from app_model import Application
+from dataclasses import dataclass, field
 import logging
 
 _LOGGER = logging.getLogger(__name__)
 
 
-def install_plugins(app: Application, plugins: list[str]):
+def install_plugins(app: Application, plugins: list[str]) -> list[PluginInstallResult]:
     """Install plugins to the application."""
     from importlib import import_module
     from himena.plugins import AppActionRegistry
     from himena.profile import load_app_profile
 
     reg = AppActionRegistry.instance()
+    results = []
     for name in plugins:
         if name in reg._installed_plugins:
             continue
         _time_0 = timer()
+        _exc = None
         if isinstance(name, str):
             if name.endswith(".py"):
                 if not Path(name).exists():
@@ -32,12 +35,15 @@ def install_plugins(app: Application, plugins: list[str]):
                     import_module(name)
                 except ModuleNotFoundError:
                     _LOGGER.error(f"Plugin {name} not found.")
+                    continue
                 except Exception as e:
                     _LOGGER.error(f"Error installing plugin {name}: {e}")
+                    _exc = e
         else:
             raise TypeError(f"Invalid plugin type: {type(name)}")
         _msec = (timer() - _time_0) * 1000
         _LOGGER.info(f"Plugin {name} installed in {_msec:.3f} msec.")
+        results.append(PluginInstallResult(name, _msec, _exc))
     reg.install_to(app)
     reg._installed_plugins.extend(plugins)
     prof = load_app_profile(app.name)
@@ -46,3 +52,11 @@ def install_plugins(app: Application, plugins: list[str]):
         prof.plugin_configs.setdefault(k, cfg.as_dict())
 
     prof.save()
+    return results
+
+
+@dataclass
+class PluginInstallResult:
+    plugin: str
+    time: float = field(default=0.0)
+    error: Exception | None = None
