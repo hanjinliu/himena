@@ -36,8 +36,6 @@ def register_defaults(map: ObjectTypeMap):
             if value.ndim == 2 and isinstance(value.dtype, np.dtypes.StringDType):
                 return StandardType.TABLE
             return StandardType.ARRAY
-        if hasattr(value, "__array__"):
-            return StandardType.ARRAY
         return None
 
     @map.register
