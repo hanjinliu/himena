@@ -15,13 +15,14 @@ from himena.consts import (
 
 @register_reader_plugin(priority=50)
 def read_text(file_path: Path) -> WidgetDataModel:
-    if file_path.suffix == ".csv":
+    suffix = file_path.suffix.rstrip("~")
+    if suffix == ".csv":
         return _io.default_csv_reader(file_path)
-    elif file_path.suffix == ".tsv":
+    elif suffix == ".tsv":
         return _io.default_tsv_reader(file_path)
-    elif file_path.suffix in {".png", ".jpg", ".jpeg"}:
+    elif suffix in {".png", ".jpg", ".jpeg"}:
         return _io.default_image_reader(file_path)
-    elif file_path.suffix == ".json":
+    elif suffix == ".json":
         if file_path.suffixes == [".plot", ".json"]:
             return _io.default_plot_reader(file_path)
         elif file_path.suffixes == [".roi", ".json"]:
@@ -30,22 +31,23 @@ def read_text(file_path: Path) -> WidgetDataModel:
             return _io.default_workflow_reader(file_path)
         else:
             return _io.default_text_reader(file_path)
-    elif file_path.suffix in BasicTextFileTypes:
+    elif suffix in BasicTextFileTypes:
         return _io.default_text_reader(file_path)
-    elif file_path.name in ConventionalTextFileNames:
+    elif file_path.name.rstrip("~") in ConventionalTextFileNames:
         return _io.default_text_reader(file_path)
     raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
 
 @read_text.define_matcher
 def _(file_path: Path) -> str | None:
-    if file_path.suffix == ".csv":
+    suffix = file_path.suffix.rstrip("~")
+    if suffix == ".csv":
         return StandardType.TABLE
-    elif file_path.suffix == ".tsv":
+    elif suffix == ".tsv":
         return StandardType.TABLE
-    elif file_path.suffix in {".png", ".jpg", ".jpeg"}:
+    elif suffix in {".png", ".jpg", ".jpeg"}:
         return StandardType.IMAGE
-    elif file_path.suffix == ".json":
+    elif suffix == ".json":
         if file_path.suffixes == [".plot", ".json"]:
             return StandardType.PLOT
         elif file_path.suffixes == [".roi", ".json"]:
@@ -54,9 +56,9 @@ def _(file_path: Path) -> str | None:
             return StandardType.WORKFLOW
         else:
             return StandardType.TEXT
-    elif file_path.suffix in BasicTextFileTypes:
+    elif suffix in BasicTextFileTypes:
         return StandardType.TEXT
-    elif file_path.name in ConventionalTextFileNames:
+    elif file_path.name.rstrip("~") in ConventionalTextFileNames:
         return StandardType.TEXT
     return None
 
@@ -75,70 +77,70 @@ def _(file_path: Path | list[Path]) -> str | None:
 
 @register_reader_plugin(priority=50)
 def read_image(file_path: Path) -> WidgetDataModel:
-    if file_path.suffix in {".png", ".jpg", ".jpeg"}:
+    if file_path.suffix.rstrip("~") in {".png", ".jpg", ".jpeg"}:
         return _io.default_image_reader(file_path)
     raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
 
 @read_image.define_matcher
 def _(file_path: Path) -> str | None:
-    if file_path.suffix in {".png", ".jpg", ".jpeg"}:
+    if file_path.suffix.rstrip("~") in {".png", ".jpg", ".jpeg"}:
         return StandardType.IMAGE
     return None
 
 
 @register_reader_plugin(priority=50)
 def read_excel(file_path: Path) -> WidgetDataModel:
-    if file_path.suffix in ExcelFileTypes:
+    if file_path.suffix.rstrip("~") in ExcelFileTypes:
         return _io.default_excel_reader(file_path)
     raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
 
 @read_excel.define_matcher
 def _(file_path: Path) -> str | None:
-    if file_path.suffix in ExcelFileTypes:
+    if file_path.suffix.rstrip("~") in ExcelFileTypes:
         return StandardType.EXCEL
     return None
 
 
 @register_reader_plugin(priority=50)
 def read_numpy_array(file_path: Path) -> WidgetDataModel:
-    if file_path.suffix == ".npy":
+    if file_path.suffix.rstrip("~") == ".npy":
         return _io.default_array_reader(file_path)
     raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
 
 @read_numpy_array.define_matcher
 def _(file_path: Path) -> str | None:
-    if file_path.suffix == ".npy":
+    if file_path.suffix.rstrip("~") == ".npy":
         return StandardType.ARRAY
     return None
 
 
 @register_reader_plugin(priority=50)
 def read_pickle(file_path: Path) -> WidgetDataModel:
-    if file_path.suffix == ".pickle":
+    if file_path.suffix.rstrip("~") == ".pickle":
         return _io.default_pickle_reader(file_path)
     raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
 
 @read_pickle.define_matcher
 def _(file_path: Path) -> str | None:
-    if file_path.suffix == ".pickle":
+    if file_path.suffix.rstrip("~") == ".pickle":
         return StandardType.ANY
     return None
 
 
 @register_reader_plugin(priority=50)
 def read_zip(file_path: Path) -> WidgetDataModel:
-    if file_path.suffix == ".zip":
+    if file_path.suffix.rstrip("~") == ".zip":
         return _io.default_zip_reader(file_path)
     raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
 
 @read_zip.define_matcher
 def _(file_path: Path) -> str | None:
-    if file_path.suffix == ".zip":
+    if file_path.suffix.rstrip("~") == ".zip":
         return StandardType.MODELS
     return None
 
@@ -165,34 +167,36 @@ def _(file_path: Path) -> str | None:
 
 @register_reader_plugin(priority=50)
 def read_as_pandas_dataframe(file_path: Path) -> WidgetDataModel:
-    if file_path.suffix in {".csv", ".txt"}:
+    suffix = file_path.suffix.rstrip("~")
+    if suffix in {".csv", ".txt"}:
         return _io.DataFrameReader("pandas", "read_csv", {})(file_path)
-    elif file_path.suffix == ".tsv":
+    elif suffix == ".tsv":
         return _io.DataFrameReader("pandas", "read_csv", {"sep": "\t"})(file_path)
-    elif file_path.suffix in {".html", ".htm"}:
+    elif suffix in {".html", ".htm"}:
         return _io.DataFrameReader("pandas", "read_html", {})(file_path)
-    elif file_path.suffix == ".json":
+    elif suffix == ".json":
         return _io.DataFrameReader("pandas", "read_json", {})(file_path)
-    elif file_path.suffix in {".parquet", ".pq"}:
+    elif suffix in {".parquet", ".pq"}:
         return _io.DataFrameReader("pandas", "read_parquet", {})(file_path)
-    elif file_path.suffix == ".feather":
+    elif suffix == ".feather":
         return _io.DataFrameReader("pandas", "read_feather", {})(file_path)
     raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
 
 @register_reader_plugin(priority=50)
 def read_as_polars_dataframe(file_path: Path) -> WidgetDataModel:
-    if file_path.suffix in {".csv", ".txt"}:
+    suffix = file_path.suffix.rstrip("~")
+    if suffix in {".csv", ".txt"}:
         return _io.DataFrameReader("polars", "read_csv", {})(file_path)
-    elif file_path.suffix == ".tsv":
+    elif suffix == ".tsv":
         return _io.DataFrameReader("polars", "read_csv", {"sep": "\t"})(file_path)
-    elif file_path.suffix == ".feather":
+    elif suffix == ".feather":
         return _io.DataFrameReader("polars", "read_ipc", {})(file_path)
-    elif file_path.suffix == ".json":
+    elif suffix == ".json":
         return _io.DataFrameReader("polars", "read_json", {})(file_path)
-    elif file_path.suffix in {".parquet", ".pq"}:
+    elif suffix in {".parquet", ".pq"}:
         return _io.DataFrameReader("polars", "read_parquet", {})(file_path)
-    raise ValueError(f"Unsupported file type: {file_path.suffix}")
+    raise ValueError(f"Unsupported file type: {suffix}")
 
 
 @register_reader_plugin(priority=20)
@@ -214,7 +218,7 @@ def read_as_polars_plot(file_path: Path) -> WidgetDataModel:
 def _(file_path: Path) -> str | None:
     if "pandas" not in list_installed_dataframe_packages():
         return None
-    if file_path.suffix in {
+    if file_path.suffix.rstrip("~") in {
         ".csv", ".txt", ".tsv", ".html", ".htm", ".json", ".parquet", ".pq", ".feather",
     }:  # fmt: skip
         return StandardType.DATAFRAME
@@ -226,7 +230,7 @@ def _(file_path: Path) -> str | None:
 def _(file_path: Path) -> str | None:
     if "polars" not in list_installed_dataframe_packages():
         return None
-    if file_path.suffix in {
+    if file_path.suffix.rstrip("~") in {
         ".csv", ".txt", ".tsv", ".feather", ".json", ".parquet", ".pq",
     }:  # fmt: skip
         return StandardType.DATAFRAME

@@ -99,6 +99,16 @@ def test_io_commands(himena_ui: MainWindow, tmpdir, sample_dir: Path):
     assert param.plugin is not None
     assert last.plugin == param.plugin.to_str()
 
+    # backup
+    response_open = lambda: sample_dir / "text.txt~"
+    response_save = lambda: Path(tmpdir) / "out.log~"
+    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response_open)
+    himena_ui.exec_action("open-file")
+    assert himena_ui.current_window.to_model().type == StandardType.TEXT
+    assert himena_ui.current_window.to_model().value == "ab\n"
+    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response_save)
+    himena_ui.exec_action("save")
+
     # test adding object directly
     himena_ui.add_object("ABC")
     himena_ui.add_object(np.arange(4))
