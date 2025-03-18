@@ -127,6 +127,7 @@ exclude_lines = [
   "@overload",
   "@abstractmethod",
   "raise NotImplementedError",
+  "raise Cancelled",
 ]
 
 [tool.hatch.build.targets.sdist]

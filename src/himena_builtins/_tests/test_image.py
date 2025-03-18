@@ -1,5 +1,6 @@
 import warnings
 import numpy as np
+from pathlib import Path
 from qtpy import QtCore
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QApplication
@@ -333,6 +334,19 @@ def test_crop_image(himena_ui: MainWindow):
         "builtins:crop-array-nd",
         with_params={"axis_0": (2, 4), "axis_1": (0, 1), "axis_2": (1, 5), "axis_3": (2, 8)},
     )
+
+def test_image_view_commands(himena_ui: MainWindow, tmpdir):
+    himena_ui.add_data_model(
+        WidgetDataModel(
+            value=np.zeros((20, 20)),
+            type=StandardType.IMAGE,
+        )
+    )
+    himena_ui.exec_action("builtins:image:set-zoom-factor", with_params={"scale": 100.0})
+    himena_ui.exec_action("builtins:image-screenshot:copy-viewer-screenshot")
+    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=lambda: Path(tmpdir) / "tmp.png")
+    himena_ui.exec_action("builtins:image-screenshot:save-viewer-screenshot")
+
 
 def test_roi_commands(himena_ui: MainWindow):
     model = WidgetDataModel(
