@@ -87,9 +87,17 @@ class ReaderPlugin(_IOPluginBase):
     def read(self, path: Path | list[Path]) -> WidgetDataModel:
         """Read file(s) and return a data model."""
         if isinstance(path, list):
-            out = self._func([Path(p) for p in path])
+            paths: list[Path] = []
+            for p in path:
+                if not p.exists():
+                    raise FileNotFoundError(f"File {p!r} does not exist.")
+                paths.append(p)
+            out = self._func(paths)
         else:
-            out = self._func(Path(path))
+            path = Path(path)
+            if not path.exists():
+                raise FileNotFoundError(f"File {path!r} does not exist.")
+            out = self._func(path)
         if not isinstance(out, WidgetDataModel):
             raise TypeError(f"Reader plugin {self!r} did not return a WidgetDataModel.")
         return out
