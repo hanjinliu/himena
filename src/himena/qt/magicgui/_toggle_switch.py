@@ -8,8 +8,7 @@ from magicgui.backends._qtpy.widgets import QBaseButtonWidget
 
 
 class QToggleSwitch(QtW.QWidget):
-    """
-    A iPhone style toggle switch.
+    """A iPhone style toggle switch.
     See https://stackoverflow.com/questions/14780517/toggle-switch-in-qt
 
      ooooo
@@ -151,7 +150,7 @@ class QToggleSwitch(QtW.QWidget):
             return self._height // 2
 
 
-class _QLabel(QtW.QLabel):
+class _QToggleSwitchLabel(QtW.QLabel):
     clicked = Signal()
 
     def mousePressEvent(self, ev: QtGui.QMouseEvent) -> None:
@@ -166,7 +165,7 @@ class QLabeledToggleSwitch(QtW.QWidget):
         layout = QtW.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         self._switch = QToggleSwitch(self)
-        self._text = _QLabel(self)
+        self._text = _QToggleSwitchLabel(self)
         self._text.clicked.connect(self._switch.toggle)
         layout.addWidget(self._switch)
         layout.addWidget(self._text)

@@ -9,6 +9,7 @@ from himena.qt.settings._theme import QThemePanel
 from himena.qt.settings._plugins import QPluginListEditor
 from himena.qt.settings._startup_commands import QStartupCommandsPanel
 from himena.qt.settings._configs import QPluginConfigs
+from himena.qt.settings._keybind_edit import QKeybindEdit
 
 if TYPE_CHECKING:
     from himena.widgets import MainWindow
@@ -61,6 +62,7 @@ class QSettingsDialog(QtW.QDialog):
         self.addPanel("Apperance", "Color Theme", QThemePanel(self._ui))
         self.addPanel("Plugins", "Plugins", QPluginListEditor(self._ui))
         self.addPanel("Startup", "Startup Commands", QStartupCommandsPanel(self._ui))
+        self.addPanel("Keybindings", "Keybindings", QKeybindEdit(self._ui))
         self.addPanel(
             "Configurations", "Plugin Configurations", QPluginConfigs(self._ui)
         )

@@ -19,7 +19,7 @@ from himena.plugins.actions import (
     AppActionRegistry,
 )
 from himena.plugins.widget_plugins import register_dock_widget_action
-from himena.plugins.install import install_plugins
+from himena.plugins.install import install_plugins, override_keybindings
 
 __all__ = [
     "get_widget_class",
@@ -29,6 +29,7 @@ __all__ = [
     "configure_gui",
     "get_plugin_interface",
     "install_plugins",
+    "override_keybindings",
     "register_reader_plugin",
     "register_writer_plugin",
     "register_function",

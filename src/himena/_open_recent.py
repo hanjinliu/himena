@@ -10,7 +10,7 @@ from himena.profile import data_dir
 from datetime import datetime
 
 if TYPE_CHECKING:
-    from app_model import Application
+    from himena._app_model import HimenaApplication
     from himena.widgets._main_window import MainWindow
 
     _PathInput = Path | list[Path]
@@ -50,7 +50,7 @@ class RecentFileManager:
 
     def __init__(
         self,
-        app: Application,
+        app: HimenaApplication,
         menu_id: MenuId = MenuId.FILE_RECENT,
         file_name: str = "recent.json",
         group: str = ActionGroup.RECENT_FILE,
@@ -78,13 +78,15 @@ class RecentFileManager:
         ]
         self._disposer()
         self._disposer = self._app.register_actions(actions)
+        for action in actions:
+            self._app._dynamic_command_ids.add(action.id)
         _LOGGER.debug("Recent files updated: %r", [p for p, _ in file_args[:3]])
         self._app.menus.menus_changed.emit({self._menu_id})
         self.__class__._MENU_UPDATED.add(self._app.name)
         return None
 
     @classmethod
-    def default(cls, app: Application) -> RecentFileManager:
+    def default(cls, app: HimenaApplication) -> RecentFileManager:
         return cls(app)
 
     def _list_args_for_recent(self) -> list[tuple[_PathInput, str | None]]:
@@ -202,7 +204,7 @@ class RecentSessionManager(RecentFileManager):
     _MENU_UPDATED: set[str] = set()
 
     @classmethod
-    def default(cls, app: Application) -> RecentSessionManager:
+    def default(cls, app: HimenaApplication) -> RecentSessionManager:
         return cls(
             app,
             file_name="recent_sessions.json",

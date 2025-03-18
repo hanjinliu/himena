@@ -27,6 +27,7 @@ class HimenaApplication(Application):
             raise_synchronous_exceptions=True,
         )
         self._registered_actions: dict[str, Action] = {}
+        self._dynamic_command_ids: set[str] = set()
         self._futures: set[Future] = set()
 
     def register_actions(self, actions: list[Action]) -> Callable[[], None]:

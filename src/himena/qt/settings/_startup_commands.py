@@ -9,6 +9,8 @@ if TYPE_CHECKING:
 
 
 class QStartupCommandsPanel(QtW.QWidget):
+    """Widget to edit the startup commands."""
+
     def __init__(self, ui: MainWindow):
         super().__init__()
         self._ui = ui
