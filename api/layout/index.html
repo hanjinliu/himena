@@ -961,33 +961,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#himena.layout.Layout._deserialize_layout" class="md-nav__link">
-    <span class="md-ellipsis">
-      _deserialize_layout
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#himena.layout.Layout._reanchor" class="md-nav__link">
-    <span class="md-ellipsis">
-      _reanchor
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#himena.layout.Layout._serialize_layout" class="md-nav__link">
-    <span class="md-ellipsis">
-      _serialize_layout
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -1044,24 +1017,6 @@
   
     <nav class="md-nav" aria-label="LayoutContainer">
       <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#himena.layout.LayoutContainer._adjust_child_resize" class="md-nav__link">
-    <span class="md-ellipsis">
-      _adjust_child_resize
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#himena.layout.LayoutContainer._resize_children" class="md-nav__link">
-    <span class="md-ellipsis">
-      _resize_children
-    </span>
-  </a>
-  
-</li>
         
           <li class="md-nav__item">
   <a href="#himena.layout.LayoutContainer.remove" class="md-nav__link">
@@ -1405,33 +1360,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#himena.layout.Layout._deserialize_layout" class="md-nav__link">
-    <span class="md-ellipsis">
-      _deserialize_layout
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#himena.layout.Layout._reanchor" class="md-nav__link">
-    <span class="md-ellipsis">
-      _reanchor
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#himena.layout.Layout._serialize_layout" class="md-nav__link">
-    <span class="md-ellipsis">
-      _serialize_layout
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -1488,24 +1416,6 @@
   
     <nav class="md-nav" aria-label="LayoutContainer">
       <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#himena.layout.LayoutContainer._adjust_child_resize" class="md-nav__link">
-    <span class="md-ellipsis">
-      _adjust_child_resize
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#himena.layout.LayoutContainer._resize_children" class="md-nav__link">
-    <span class="md-ellipsis">
-      _resize_children
-    </span>
-  </a>
-  
-</li>
         
           <li class="md-nav__item">
   <a href="#himena.layout.LayoutContainer.remove" class="md-nav__link">
@@ -2519,100 +2429,6 @@
 
 
 
-<div class="doc doc-object doc-function">
-
-
-<h5 id="himena.layout.Layout._deserialize_layout" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">_deserialize_layout</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">main</span><span class="p">)</span></code>
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
-      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
-  </span>
-
-</h5>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Deserialize the layout instance.</p>
-
-
-            <details class="quote">
-              <summary>Source code in <code>src\himena\layout.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">40</span>
-<span class="normal">41</span>
-<span class="normal">42</span>
-<span class="normal">43</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
-<span class="nd">@abstractmethod</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">_deserialize_layout</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">main</span><span class="p">:</span> <span class="n">MainWindow</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Deserialize the layout instance.&quot;&quot;&quot;</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h5 id="himena.layout.Layout._reanchor" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">_reanchor</span><span class="p">(</span><span class="n">size</span><span class="p">)</span></code>
-
-</h5>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Reanchor all windows if needed (such as minimized windows).</p>
-
-
-            <details class="quote">
-              <summary>Source code in <code>src\himena\layout.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">69</span>
-<span class="normal">70</span>
-<span class="normal">71</span>
-<span class="normal">72</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_reanchor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Size</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reanchor all windows if needed (such as minimized windows).&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">rect</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_anchor</span><span class="o">.</span><span class="n">apply_anchor</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">rect</span> <span class="o">=</span> <span class="n">rect</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h5 id="himena.layout.Layout._serialize_layout" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">_serialize_layout</span><span class="p">()</span></code>
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
-  </span>
-
-</h5>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Serialize the layout instance.</p>
-
-
-            <details class="quote">
-              <summary>Source code in <code>src\himena\layout.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">36</span>
-<span class="normal">37</span>
-<span class="normal">38</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@abstractmethod</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">_serialize_layout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Serialize the layout instance.&quot;&quot;&quot;</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
-
 
 
   </div>
@@ -3130,66 +2946,6 @@
 
 
 
-
-<div class="doc doc-object doc-function">
-
-
-<h5 id="himena.layout.LayoutContainer._adjust_child_resize" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">_adjust_child_resize</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">rect_old</span><span class="p">,</span> <span class="n">rect_new</span><span class="p">)</span></code>
-
-</h5>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Adjust layout container based on the child resize/move.</p>
-
-
-            <details class="quote">
-              <summary>Source code in <code>src\himena\layout.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">178</span>
-<span class="normal">179</span>
-<span class="normal">180</span>
-<span class="normal">181</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_adjust_child_resize</span><span class="p">(</span>
-    <span class="bp">self</span><span class="p">,</span> <span class="n">child</span><span class="p">:</span> <span class="n">Layout</span><span class="p">,</span> <span class="n">rect_old</span><span class="p">:</span> <span class="n">WindowRect</span><span class="p">,</span> <span class="n">rect_new</span><span class="p">:</span> <span class="n">WindowRect</span>
-<span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adjust layout container based on the child resize/move.&quot;&quot;&quot;</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h5 id="himena.layout.LayoutContainer._resize_children" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">_resize_children</span><span class="p">(</span><span class="n">rect</span><span class="p">)</span></code>
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
-  </span>
-
-</h5>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Resize all children layouts based on the geometry of this layout.</p>
-
-
-            <details class="quote">
-              <summary>Source code in <code>src\himena\layout.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">169</span>
-<span class="normal">170</span>
-<span class="normal">171</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@abstractmethod</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">_resize_children</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rect</span><span class="p">:</span> <span class="n">WindowRect</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resize all children layouts based on the geometry of this layout.&quot;&quot;&quot;</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
 
 <div class="doc doc-object doc-function">
 

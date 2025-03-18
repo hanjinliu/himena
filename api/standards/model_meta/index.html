@@ -992,21 +992,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="BaseMetadata">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#himena.standards.model_meta.BaseMetadata._repr_pretty_" class="md-nav__link">
-    <span class="md-ellipsis">
-      _repr_pretty_
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
@@ -1338,21 +1323,6 @@
       BaseMetadata
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="BaseMetadata">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#himena.standards.model_meta.BaseMetadata._repr_pretty_" class="md-nav__link">
-    <span class="md-ellipsis">
-      _repr_pretty_
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -2097,41 +2067,6 @@
 
 
 
-
-<div class="doc doc-object doc-function">
-
-
-<h5 id="himena.standards.model_meta.BaseMetadata._repr_pretty_" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">_repr_pretty_</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">cycle</span><span class="p">)</span></code>
-
-</h5>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Pretty print the metadata.</p>
-
-
-            <details class="quote">
-              <summary>Source code in <code>src\himena\standards\model_meta.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">46</span>
-<span class="normal">47</span>
-<span class="normal">48</span>
-<span class="normal">49</span>
-<span class="normal">50</span>
-<span class="normal">51</span>
-<span class="normal">52</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_repr_pretty_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">cycle</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pretty print the metadata.&quot;&quot;&quot;</span>
-    <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(&quot;</span><span class="p">]</span>
-    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__repr_args__</span><span class="p">():</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">,&quot;</span><span class="p">)</span>
-    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;)&quot;</span><span class="p">)</span>
-    <span class="n">p</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">))</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
 
 
 
