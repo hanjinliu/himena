@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from pathlib import Path
 from timeit import default_timer as timer
 from app_model import Application
+from app_model.types import KeyBindingRule
 from dataclasses import dataclass, field
 import logging
+
+if TYPE_CHECKING:
+    from himena.profile import AppProfile
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -53,6 +58,17 @@ def install_plugins(app: Application, plugins: list[str]) -> list[PluginInstallR
 
     prof.save()
     return results
+
+
+def override_keybindings(app: Application, prof: AppProfile) -> None:
+    """Override keybindings in the application."""
+    for ko in prof.keybinding_overrides:
+        if kb := app.keybindings.get_keybinding(ko.command_id):
+            app.keybindings._keybindings.remove(kb)
+        app.keybindings.register_keybinding_rule(
+            ko.command_id,
+            KeyBindingRule(primary=ko.key),
+        )
 
 
 @dataclass

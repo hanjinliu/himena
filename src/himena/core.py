@@ -19,6 +19,7 @@ def new_window(
     """Create a new window with the specified profile and additional plugins."""
     from himena._app_model import get_model_app
     from himena.widgets._initialize import init_application
+    from himena.plugins import install_plugins, override_keybindings
 
     plugins = list(plugins or [])
 
@@ -37,12 +38,11 @@ def new_window(
     model_app = get_model_app(app_prof.name)
     plugins = app_prof.plugins + plugins
     if plugins:
-        from himena.plugins import install_plugins
-
         install_plugins(model_app, plugins)
 
     # create the main window
     init_application(model_app)
+    override_keybindings(model_app, app_prof)
     main_window = _get_main_window(backend, model_app, theme=app_prof.theme)
 
     # execute startup commands (don't raise exceptions, just log them)

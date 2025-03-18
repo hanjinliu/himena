@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterable, Iterator
+from logging import getLogger
 from contextlib import contextmanager
 from concurrent.futures import Future, ThreadPoolExecutor
 import warnings
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt
 from app_model.types import KeyBindingRule
-from app_model.backends.qt import QModelKeyBindingEdit
+from app_model.backends.qt import QModelKeyBindingEdit, QCommandAction, QModelMenu
 from superqt import ensure_main_thread
 
 from himena.consts import MonospaceFontFamily
@@ -16,7 +17,8 @@ if TYPE_CHECKING:
     from himena._app_model import HimenaApplication
     from himena.qt.main_window import MainWindowQt
 
-EXECUTOR = ThreadPoolExecutor()
+_EXECUTOR = ThreadPoolExecutor()
+_LOGGER = getLogger(__name__)
 
 
 class H:
@@ -48,8 +50,15 @@ class QKeybindEdit(QtW.QWidget):
         self._table.filter_by_text_async(text)
 
     def _on_keybinding_updated(self, command_id: str, new_keybinding: str):
+        _LOGGER.info("Keybindings registered.")
         self._table.update_table_from_model_app(self._ui.model_app)
         self._table.filter_by_text(self._search.text())  # re-filter
+        self._ui.app_profile.with_keybinding_override(new_keybinding, command_id).save()
+        qui = self._ui._backend_main_window
+        for a in _find_action(qui._menubar.actions(), command_id):
+            a.setShortcut(new_keybinding)
+        for a in _find_action(qui._toolbar.actions(), command_id):
+            a.setShortcut(new_keybinding)
 
 
 class QKeybindSearch(QtW.QLineEdit):
@@ -162,7 +171,7 @@ class QKeybindTable(QtW.QTableWidget):
     def filter_by_text_async(self, text: str) -> Future:
         if self._last_future:
             self._last_future.cancel()
-        future = EXECUTOR.submit(self.filter_by_text, text)
+        future = _EXECUTOR.submit(self.filter_by_text, text)
         self._last_future = future
         future.add_done_callback(self._filter_done)
         return future
@@ -190,19 +199,6 @@ class QKeybindTable(QtW.QTableWidget):
         finally:
             self._update_blocked = was_blocked
 
-    def serialize(self) -> list[dict[str, str]]:
-        keybindings = []
-        for row in range(self.rowCount()):
-            keybinding = self.item(row, H.KEYBINDING).text()
-            command_id = self.item(row, H.COMMAND_ID).text()
-            keybindings.append(
-                {
-                    "key": keybinding,
-                    "command": command_id,
-                }
-            )
-        return keybindings
-
     def _update_keybinding(self, row: int, col: int):
         if col != H.KEYBINDING or self._update_blocked:
             return
@@ -218,9 +214,12 @@ class QKeybindTable(QtW.QTableWidget):
             if conflictions:
                 warnings.warn(
                     f"Keybinding {new_shortcut} probably conflicts with the following "
-                    f"commands: {conflictions}"
+                    f"commands: {conflictions}",
+                    RuntimeWarning,
+                    stacklevel=2,
                 )
-            self._app.keybindings._keybindings.remove(kbd_current)
+            if kbd_current is not None:
+                self._app.keybindings._keybindings.remove(kbd_current)
             self._app.keybindings.register_keybinding_rule(
                 command_id, KeyBindingRule(primary=new_shortcut)
             )
@@ -278,3 +277,17 @@ class QKeybindDelegate(QtW.QItemDelegate):
     ):
         text = widget.keySequence().toString()
         abstract_item_model.setData(model_index, text, Qt.ItemDataRole.EditRole)
+
+
+def _find_action(
+    actions: Iterable[QtW.QAction], command_id: str
+) -> Iterator[QCommandAction]:
+    """Yield all actions with the given command ID."""
+    for action in actions:
+        if isinstance(action, QCommandAction):
+            if action._command_id == command_id:
+                yield action
+            elif menu := action.menu():
+                yield from _find_action(menu.actions(), command_id)
+        elif isinstance(menu := action.menu(), QModelMenu):
+            yield from _find_action(menu.actions(), command_id)

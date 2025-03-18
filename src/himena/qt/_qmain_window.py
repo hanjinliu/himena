@@ -140,13 +140,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self._job_stack = QJobStack(self)
         self._job_stack.setAnchor("bottom_left")
 
-        @self._app.keybindings.registered.connect
-        def _on_keybindings_registered():
-            for child in self._menubar.children():
-                if isinstance(child, QModelMenu):
-                    child.rebuild()
-            self._toolbar.rebuild()
-
     def _update_widget_theme(self, style: Theme):
         self.setStyleSheet(style.format_text(get_stylesheet_path().read_text()))
         if style.is_light_background():

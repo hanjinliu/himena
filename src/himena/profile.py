@@ -54,6 +54,11 @@ def _default_plugins() -> list[str]:
     ]
 
 
+class KeyBindingOverride(BaseModel):
+    key: str
+    command_id: str
+
+
 class AppProfile(BaseModel):
     """Model of a profile."""
 
@@ -68,6 +73,7 @@ class AppProfile(BaseModel):
         default_factory=list,
         description="Startup commands that will be executed when the app starts.",
     )
+    keybinding_overrides: list[KeyBindingOverride] = Field(default_factory=list)
     plugin_configs: dict[str, dict[str, Any]] = Field(default_factory=dict)
 
     @classmethod
@@ -104,6 +110,17 @@ class AppProfile(BaseModel):
     def with_plugin_configs(self, configs: dict[str, dict[str, Any]]) -> "AppProfile":
         """Return a new profile with new plugin configs."""
         return self.model_copy(update={"plugin_configs": configs})
+
+    def with_keybinding_override(self, key: str, command_id: str) -> "AppProfile":
+        """Return a new profile with new keybind overrides."""
+        _overrides = self.keybinding_overrides.copy()
+        for entry in _overrides:
+            if entry.command_id == command_id:
+                entry.key = key
+                break
+        else:
+            _overrides.append(KeyBindingOverride(key=key, command_id=command_id))
+        return self.model_copy(update={"keybinding_overrides": _overrides})
 
     def update_plugin_config(self, plugin_id: str, **kwargs) -> None:
         """Update the config of the plugin specified by `plugin_id`"""
