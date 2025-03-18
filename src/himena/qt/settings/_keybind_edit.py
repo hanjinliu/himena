@@ -8,7 +8,7 @@ import warnings
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt
 from app_model.types import KeyBindingRule
-from app_model.backends.qt import QModelKeyBindingEdit, QCommandAction, QModelMenu
+from app_model.backends.qt import QCommandAction, QModelMenu, QKeyBindingSequence
 from superqt import ensure_main_thread
 
 from himena.consts import MonospaceFontFamily
@@ -42,7 +42,13 @@ class QKeybindEdit(QtW.QWidget):
         self._table = QKeybindTable(ui.model_app, self)
         layout.addWidget(self._table)
         self._table.update_table_from_model_app(ui.model_app)
-
+        self._restore_default_btn = QtW.QPushButton("Restore")
+        self._restore_default_btn.setToolTip("Restore the default keybindings.")
+        self._restore_default_btn.setFixedWidth(84)
+        self._restore_default_btn.clicked.connect(self._restore_default)
+        layout.addWidget(
+            self._restore_default_btn, alignment=Qt.AlignmentFlag.AlignRight
+        )
         self._search.textChanged.connect(self._on_search_text_changed)
         self._table.keybinding_updated.connect(self._on_keybinding_updated)
 
@@ -55,10 +61,34 @@ class QKeybindEdit(QtW.QWidget):
         self._table.filter_by_text(self._search.text())  # re-filter
         self._ui.app_profile.with_keybinding_override(new_keybinding, command_id).save()
         qui = self._ui._backend_main_window
-        for a in _find_action(qui._menubar.actions(), command_id):
-            a.setShortcut(new_keybinding)
-        for a in _find_action(qui._toolbar.actions(), command_id):
-            a.setShortcut(new_keybinding)
+        for qa in _iter_command_action(qui._menubar.actions() + qui._toolbar.actions()):
+            if qa._command_id == command_id:
+                qa.setShortcut(new_keybinding)
+
+    def _restore_default(self):
+        _LOGGER.info("Restoring keybindings.")
+        qui = self._ui._backend_main_window
+        app = self._ui.model_app
+        for ko in self._ui.app_profile.keybinding_overrides:
+            keybind = app.keybindings.get_keybinding(ko.command_id)
+            if keybind:
+                app.keybindings._keybindings.remove(keybind)
+        self._ui.app_profile.keybinding_overrides.clear()
+        self._ui.app_profile.save()
+        for qa in _iter_command_action(qui._menubar.actions() + qui._toolbar.actions()):
+            if action := self._ui.model_app._registered_actions.get(qa._command_id):
+                if action.keybindings:
+                    for kb in action.keybindings:
+                        if kb.primary:
+                            app.keybindings.register_keybinding_rule(
+                                action.id, KeyBindingRule(primary=kb.primary)
+                            )
+                            kb_obj = app.keybindings.get_keybinding(
+                                action.id
+                            ).keybinding
+                            qa.setShortcut(QKeyBindingSequence(kb_obj))
+        self._table.update_table_from_model_app(self._ui.model_app)
+        self._table.filter_by_text(self._search.text())  # re-filter
 
 
 class QKeybindSearch(QtW.QLineEdit):
@@ -101,7 +131,7 @@ class QKeybindTable(QtW.QTableWidget):
         self.setColumnWidth(H.WHEN, 120)
         self.setColumnWidth(H.WEIGHT, 40)
         self.setColumnWidth(H.SOURCE, 60)
-        self.setColumnWidth(H.COMMAND_ID, 80)
+        self.setColumnWidth(H.COMMAND_ID, 180)
 
         self._update_blocked = False
         self._last_future: Future | None = None
@@ -252,18 +282,18 @@ class QKeybindDelegate(QtW.QItemDelegate):
     """Delegate that handles when user types in new shortcut."""
 
     def createEditor(self, widget, style_option, model_index):
-        self._editor = QModelKeyBindingEdit(widget)
+        self._editor = QKeybindingLineEdit(widget)
         return self._editor
 
     def setEditorData(
-        self, widget: QModelKeyBindingEdit, model_index: QtCore.QModelIndex
+        self, widget: QKeybindingLineEdit, model_index: QtCore.QModelIndex
     ):
-        text: str = model_index.model().data(model_index, Qt.ItemDataRole.EditRole)
+        text = widget.keySequence().toString()
         widget.setKeySequence(text)
 
     def updateEditorGeometry(
         self,
-        widget: QModelKeyBindingEdit,
+        widget: QKeybindingLineEdit,
         style_option: QtW.QStyleOptionViewItem,
         model_index: QtCore.QModelIndex,
     ):
@@ -271,12 +301,16 @@ class QKeybindDelegate(QtW.QItemDelegate):
 
     def setModelData(
         self,
-        widget: QModelKeyBindingEdit,
+        widget: QKeybindingLineEdit,
         abstract_item_model: QtCore.QAbstractItemModel,
         model_index: QtCore.QModelIndex,
     ):
         text = widget.keySequence().toString()
         abstract_item_model.setData(model_index, text, Qt.ItemDataRole.EditRole)
+
+
+class QKeybindingLineEdit(QtW.QKeySequenceEdit):
+    """Widget used to edit keybindings."""
 
 
 def _find_action(
@@ -291,3 +325,11 @@ def _find_action(
                 yield from _find_action(menu.actions(), command_id)
         elif isinstance(menu := action.menu(), QModelMenu):
             yield from _find_action(menu.actions(), command_id)
+
+
+def _iter_command_action(actions: Iterable[QtW.QAction]) -> Iterator[QCommandAction]:
+    for action in actions:
+        if isinstance(action, QCommandAction):
+            yield action
+        elif isinstance(menu := action.menu(), QModelMenu):
+            yield from _iter_command_action(menu.actions())
