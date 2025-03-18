@@ -243,3 +243,29 @@ def test_profile():
 
     profile.iter_app_profiles()
     profile.remove_app_profile("abc")
+
+def test_setting_dialog_contents(himena_ui: MainWindowQt, qtbot: QtBot):
+    from himena.qt.settings._plugins import QPluginListEditor
+    from himena.qt.settings._startup_commands import QStartupCommandsPanel
+    from himena.qt.settings._keybind_edit import QKeybindEdit
+    from himena.qt.settings._theme import QThemePanel
+
+    editor = QPluginListEditor(himena_ui)
+    qtbot.addWidget(editor)
+    editor._apply_changes()
+
+    startup = QStartupCommandsPanel(himena_ui)
+    startup._apply_changes()
+    startup._on_text_changed()
+
+    theme_panel = QThemePanel(himena_ui)
+    qtbot.addWidget(theme_panel)
+    theme_panel.setTheme("light-blue")
+
+    keybind_edit = QKeybindEdit(himena_ui)
+    qtbot.addWidget(keybind_edit)
+    keybind_edit._search.setText("A")
+    keybind_edit._search.setText("")
+    keybind_edit._table.setCurrentCell(0, 1)
+    keybind_edit._table.edit(keybind_edit._table.currentIndex())
+    keybind_edit._restore_default_btn.click()

@@ -116,10 +116,14 @@ class AppProfile(BaseModel):
         _overrides = self.keybinding_overrides.copy()
         for entry in _overrides:
             if entry.command_id == command_id:
-                entry.key = key
+                if key:
+                    entry.key = key
+                else:
+                    _overrides.remove(entry)
                 break
         else:
-            _overrides.append(KeyBindingOverride(key=key, command_id=command_id))
+            if key:
+                _overrides.append(KeyBindingOverride(key=key, command_id=command_id))
         return self.model_copy(update={"keybinding_overrides": _overrides})
 
     def update_plugin_config(self, plugin_id: str, **kwargs) -> None:

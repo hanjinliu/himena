@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Iterable, Iterator
 from logging import getLogger
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from concurrent.futures import Future, ThreadPoolExecutor
 import warnings
 from qtpy import QtWidgets as QtW, QtCore, QtGui
@@ -55,15 +55,15 @@ class QKeybindEdit(QtW.QWidget):
     def _on_search_text_changed(self, text: str):
         self._table.filter_by_text_async(text)
 
-    def _on_keybinding_updated(self, command_id: str, new_keybinding: str):
+    def _on_keybinding_updated(self, command_id: str, new_shortcut: str):
         _LOGGER.info("Keybindings registered.")
         self._table.update_table_from_model_app(self._ui.model_app)
         self._table.filter_by_text(self._search.text())  # re-filter
-        self._ui.app_profile.with_keybinding_override(new_keybinding, command_id).save()
+        self._ui.app_profile.with_keybinding_override(new_shortcut, command_id).save()
         qui = self._ui._backend_main_window
         for qa in _iter_command_action(qui._menubar.actions() + qui._toolbar.actions()):
             if qa._command_id == command_id:
-                qa.setShortcut(new_keybinding)
+                qa.setShortcut(new_shortcut)
 
     def _restore_default(self):
         _LOGGER.info("Restoring keybindings.")
@@ -212,12 +212,14 @@ class QKeybindTable(QtW.QTableWidget):
             return
         result = future.result()
         self._last_future = None
-        if result is not None:
-            for i, show in enumerate(result):
-                self.setRowHidden(i, not show)
-        else:
-            for i in range(self.rowCount()):
-                self.setRowHidden(i, False)
+        with suppress(RuntimeError):
+            # this function may be called after the widget is destroyed
+            if result is not None:
+                for i, show in enumerate(result):
+                    self.setRowHidden(i, not show)
+            else:
+                for i in range(self.rowCount()):
+                    self.setRowHidden(i, False)
         return None
 
     @contextmanager
@@ -250,9 +252,10 @@ class QKeybindTable(QtW.QTableWidget):
                 )
             if kbd_current is not None:
                 self._app.keybindings._keybindings.remove(kbd_current)
-            self._app.keybindings.register_keybinding_rule(
-                command_id, KeyBindingRule(primary=new_shortcut)
-            )
+            if new_shortcut:
+                self._app.keybindings.register_keybinding_rule(
+                    command_id, KeyBindingRule(primary=new_shortcut)
+                )
             self.keybinding_updated.emit(command_id, new_shortcut)
 
     def _get_confliction_command_ids(
