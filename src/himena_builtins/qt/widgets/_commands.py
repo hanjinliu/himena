@@ -1,8 +1,10 @@
 from himena.consts import StandardType, MenuId
-from himena.widgets import SubWindow
+from himena.exceptions import Cancelled
+from himena.widgets import SubWindow, MainWindow
 from himena.plugins import register_function, configure_gui
 from himena.types import Parametric
 from himena.qt.magicgui import ColorEdit
+
 from qtpy import QtGui
 from cmap import Color
 from .image import QImageView
@@ -64,3 +66,35 @@ def set_zoom_factor(win: SubWindow[QImageView]) -> Parametric:
         view.scale_and_update_handles(ratio)
 
     return run_set_zoom
+
+
+@register_function(
+    title="Copy viewer screenshot",
+    types=StandardType.IMAGE,
+    menus=[MenuId.TOOLS_IMAGE],
+    command_id="builtins:image-screenshot:copy-viewer-screenshot",
+)
+def copy_image_view_screenshot(win: SubWindow[QImageView]):
+    """Copy the screenshot of the image view to the clipboard."""
+    qimage = win.widget._img_view.grab().toImage()
+    QtGui.QGuiApplication.clipboard().setImage(qimage)
+
+
+@register_function(
+    title="Save viewer screenshot",
+    types=StandardType.IMAGE,
+    menus=[MenuId.TOOLS_IMAGE],
+    command_id="builtins:image-screenshot:save-viewer-screenshot",
+)
+def save_image_view_screenshot(win: SubWindow[QImageView], ui: MainWindow):
+    """Save the screenshot of the image view to a file."""
+    qimage = win.widget._img_view.grab().toImage()
+
+    if file_path := ui.exec_file_dialog(
+        mode="w",
+        extension_default=".png",
+        allowed_extensions=[".png", ".jpg", ".jpeg"],
+        caption="Save image view screenshot",
+    ):
+        return qimage.save(str(file_path))
+    raise Cancelled
