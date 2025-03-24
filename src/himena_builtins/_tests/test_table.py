@@ -129,6 +129,13 @@ def test_commands(himena_ui: MainWindow):
     model = WidgetDataModel(
         value=[["a", "b", "c"], ["d", "e", "f"]],
         type="table",
+        metadata=TableMeta(selections=[], separator="\t")
+    )
+    himena_ui.add_data_model(model)
+    himena_ui.exec_action("builtins:table:copy-as-csv")
+    model = WidgetDataModel(
+        value=[["a", "b", "c"], ["d", "e", "f"]],
+        type="table",
         metadata=TableMeta(selections=[((0, 1), (1, 2))], separator=",")
     )
     himena_ui.add_data_model(model)
@@ -142,7 +149,9 @@ def test_commands(himena_ui: MainWindow):
         "builtins:table:insert-incrementing-numbers",
         with_params={"selection": ((0, 1), (1, 4)), "start": 1, "step": 2}
     )
+    assert_equal(himena_ui.current_model.value[0, 1:4], ["1", "3", "5"])
     himena_ui.exec_action(
         "builtins:table:insert-incrementing-numbers",
         with_params={"selection": ((0, 10), (1, 2)), "start": 1, "step": 1}
     )
+    assert_equal(himena_ui.current_model.value[0:10, 1], [str(i) for i in range(1, 11)])
