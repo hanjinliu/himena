@@ -8,9 +8,8 @@ from qtpy import QtGui, QtCore
 from himena.consts import MonospaceFontFamily
 from himena.qt._qfinderwidget import QFinderWidget
 
-_POINT_SIZES: list[int] = [
-    5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72,
-]  # fmt: skip
+POINT_SIZES: list[int] = [5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72]  # fmt: skip
+TAB_SIZES: list[int] = [1, 2, 3, 4, 5, 6, 7, 8]
 
 
 class QMainTextEdit(QtW.QPlainTextEdit):
@@ -345,13 +344,13 @@ def _get_indents(text: str, tab_spaces: int = 4) -> str:
 
 def change_point_size(cur_font: QtGui.QFont, step: int) -> QtGui.QFont:
     current_size = cur_font.pointSize()
-    nmax = len(_POINT_SIZES)
+    nmax = len(POINT_SIZES)
     cur_idx = nmax - 1
-    for idx, size in enumerate(_POINT_SIZES):
+    for idx, size in enumerate(POINT_SIZES):
         if current_size <= size:
             cur_idx = idx
             break
     next_idx = min(max(cur_idx + step, 0), nmax - 1)
-    new_size = _POINT_SIZES[next_idx]
+    new_size = POINT_SIZES[next_idx]
     cur_font.setPointSize(new_size)
     return cur_font

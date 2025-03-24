@@ -50,11 +50,15 @@ class QPluginConfigs(QtW.QScrollArea):
                     _opt = opt.copy()
                     value = _opt.pop("value")
                     annotation = _opt.pop("annotation", None)
-                    label = f'<font color="#808080">{plugin_title}:</font> {_opt.pop("label", param)}'
+                    widget_type = None
+                    if "choices" in _opt:
+                        annotation = None
+                        widget_type = "ComboBox"
                     widget = type_map.create_widget(
                         value=value,
                         annotation=annotation,
-                        label=label,
+                        widget_type=widget_type,
+                        label=_make_label_text(plugin_title, param, _opt),
                         options=_opt,
                         name=param,
                     )
@@ -74,3 +78,8 @@ class QPluginConfigs(QtW.QScrollArea):
 @throttled(timeout=100)
 def _update_configs_throttled(prof: AppProfile, container: mgw.Container):
     prof.update_plugin_config(container.name, **container.asdict())
+
+
+def _make_label_text(plugin_title: str, param: str, opt: dict) -> str:
+    param_text = opt.pop("label", param.replace("_", " ").capitalize())
+    return f'<font color="#808080">{plugin_title}:</font> {param_text}'

@@ -54,7 +54,6 @@ class PluginConfigTuple(NamedTuple):
             out = {}
             for _f in fields(config):
                 out[_f.name] = {"value": getattr(config, _f.name), **_f.metadata}
-                _f.__doc__
         elif isinstance(config, BaseModel):
             out = {}
             for _fname, _finfo in config.model_fields.items():
