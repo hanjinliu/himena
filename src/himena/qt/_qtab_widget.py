@@ -269,6 +269,7 @@ class QStartupWidget(QtW.QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self._app = get_main_window(self).model_app
         self._to_delete: list[QtW.QWidget] = []
 

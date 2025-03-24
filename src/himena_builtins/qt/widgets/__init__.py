@@ -1,6 +1,7 @@
+from functools import partial
 from himena.plugins import register_widget_class, register_previewer_class
 from himena_builtins.qt.widgets.array import QArrayView
-from himena_builtins.qt.widgets.text import QTextEdit, QRichTextEdit
+from himena_builtins.qt.widgets.text import QTextEdit, QRichTextEdit, TextEditConfigs
 from himena_builtins.qt.widgets.table import QSpreadsheet, SpreadsheetConfigs
 from himena_builtins.qt.widgets.dataframe import (
     QDataFrameView,
@@ -30,50 +31,36 @@ def register_default_widget_types() -> None:
     from himena_builtins.qt.widgets import _commands
 
     del _commands
+    _register = partial(register_widget_class, priority=50)
 
     # text
-    register_widget_class(StandardType.TEXT, QTextEdit, priority=50)
-    register_widget_class(StandardType.HTML, QRichTextEdit, priority=50)
-    register_widget_class(StandardType.IPYNB, QIpynbEdit, priority=50)
+    _register(StandardType.TEXT, QTextEdit, plugin_configs=TextEditConfigs())
+    _register(StandardType.HTML, QRichTextEdit)
+    _register(StandardType.IPYNB, QIpynbEdit)
 
     # table
-    register_widget_class(
-        StandardType.TABLE,
-        QSpreadsheet,
-        priority=50,
-        plugin_configs=SpreadsheetConfigs(),
-    )
+    _register(StandardType.TABLE, QSpreadsheet, plugin_configs=SpreadsheetConfigs())
 
     # array
-    register_widget_class(StandardType.ARRAY, QArrayView, priority=50)
-    register_widget_class(StandardType.IMAGE_LABELS, QImageLabelView, priority=50)
-    register_widget_class(
-        StandardType.IMAGE,
-        QImageView,
-        priority=50,
-        plugin_configs=ImageViewConfigs(),
-    )
+    _register(StandardType.ARRAY, QArrayView)
+    _register(StandardType.IMAGE_LABELS, QImageLabelView)
+    _register(StandardType.IMAGE, QImageView, plugin_configs=ImageViewConfigs())
 
     # dataframe
-    register_widget_class(
-        StandardType.DATAFRAME,
-        QDataFrameView,
-        priority=50,
-        plugin_configs=DataFrameConfigs(),
-    )
-    register_widget_class(StandardType.DATAFRAME_PLOT, QDataFramePlotView, priority=50)
+    _register(StandardType.DATAFRAME, QDataFrameView, plugin_configs=DataFrameConfigs())
+    _register(StandardType.DATAFRAME_PLOT, QDataFramePlotView)
 
-    register_widget_class(StandardType.DATAFRAMES, QDataFrameStack, priority=50)
-    register_widget_class(StandardType.ARRAYS, QArrayStack, priority=50)
+    _register(StandardType.DATAFRAMES, QDataFrameStack)
+    _register(StandardType.ARRAYS, QArrayStack)
 
     # others
-    register_widget_class(StandardType.ROIS, QImageRoiView, priority=50)
-    register_widget_class(StandardType.EXCEL, QExcelEdit, priority=50)
-    register_widget_class(StandardType.MODELS, QModelStack, priority=50)
-    register_widget_class(StandardType.READER_NOT_FOUND, QReaderNotFound, priority=0)
-    register_widget_class(StandardType.FUNCTION, QFunctionEdit, priority=50)
-    register_widget_class(StandardType.WORKFLOW, QWorkflowView, priority=50)
+    _register(StandardType.ROIS, QImageRoiView)
+    _register(StandardType.EXCEL, QExcelEdit)
+    _register(StandardType.MODELS, QModelStack)
+    _register(StandardType.FUNCTION, QFunctionEdit)
+    _register(StandardType.WORKFLOW, QWorkflowView)
 
+    register_widget_class(StandardType.READER_NOT_FOUND, QReaderNotFound, priority=0)
     register_previewer_class(StandardType.SVG, QSvgPreview)
     register_previewer_class(StandardType.MARKDOWN, QMarkdowPreview)
 

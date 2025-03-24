@@ -256,7 +256,7 @@ def open_recent(ui: MainWindow) -> WidgetDataModel:
 
 @ACTIONS.append_from_fn(
     id="new",
-    title="New ...",
+    title="New data...",
     menus=[
         {"id": MenuId.FILE_NEW, "group": "02_more", "order": 99},
         {"id": MenuId.STARTUP, "group": READ_GROUP},
@@ -265,7 +265,7 @@ def open_recent(ui: MainWindow) -> WidgetDataModel:
     recording=False,
 )
 def open_new(ui: MainWindow) -> WidgetDataModel:
-    """Open a new file as a sub-window."""
+    """Open a new data as a sub-window."""
     return ui._backend_main_window._show_command_palette("new")
 
 
@@ -495,12 +495,6 @@ SUBMENUS.append_from(
     id=MenuId.FILE,
     submenu=MenuId.FILE_RECENT,
     title="Open Recent",
-    group=READ_GROUP,
-)
-SUBMENUS.append_from(
-    id=MenuId.FILE,
-    submenu=MenuId.FILE_NEW,
-    title="New",
     group=READ_GROUP,
 )
 SUBMENUS.append_from(

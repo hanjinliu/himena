@@ -166,15 +166,21 @@ def _arr_to_buf(arr: "np.ndarray", sep: str = ",") -> StringIO:
 
 def _get_selection(
     model: WidgetDataModel["np.ndarray"],
+    allow_no_selection: bool = False,
 ) -> tuple[tuple[int, int], tuple[int, int]]:
     meta = _cast_meta(model.metadata)
     sels = meta.selections
-    if sels is None or len(sels) != 1:
-        raise ValueError("Table must contain single selection to crop.")
+    if sels is None or len(sels) == 0:
+        if allow_no_selection:
+            nr, nc = model.value.shape
+            return (0, nr), (0, nc)
+        raise ValueError("Table has no selection.")
+    if len(sels) != 1:
+        raise ValueError("Table must not contain multiple selections.")
     return sels[0]
 
 
 def _to_clipboard_data_model(model: WidgetDataModel, format: str) -> ClipboardDataModel:
-    (r0, r1), (c0, c1) = _get_selection(model)
+    (r0, r1), (c0, c1) = _get_selection(model, allow_no_selection=True)
     string, _, _ = table_to_text(model.value[r0:r1, c0:c1], format=format)
     return ClipboardDataModel(text=string)

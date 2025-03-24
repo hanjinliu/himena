@@ -192,7 +192,8 @@ class QSpreadsheet(QTableBase):
 
     ## Basic Usage
 
-    Moving cells,
+    Moving, selecting, editing and copying/pasting cells are supported like many other
+    spreadsheet applications.
 
     ## Keyboard Shortcuts
 
@@ -408,23 +409,31 @@ class QSpreadsheet(QTableBase):
         record_undo: bool = True,
     ):
         """Remove the array at the given index."""
+        # Make action group that remove the row/column one by one. Here, indices may be
+        # out of range, as this widget is a spreadsheet.
+        size_of_axis = self.model()._arr.shape[axis]
         _action = ActionGroup(
             [
                 RemoveAction(idx, axis, self.model()._arr[_sl(idx, axis)].copy())
                 for idx in sorted(indices, reverse=True)
+                if idx < size_of_axis
             ]
         )
+        # Update the underlying array data and redraw the table.
         self.model()._arr = np.delete(self.model()._arr, list(indices), axis=axis)
         self.update()
+        # Record the action if necessary.
         if record_undo:
             self._undo_stack.push(_action)
 
     def undo(self):
+        """Undo the last action."""
         if action := self._undo_stack.undo():
             action.invert().apply(self)
             self.update()
 
     def redo(self):
+        """Redo the last undone action."""
         if action := self._undo_stack.redo():
             action.apply(self)
             self.update()
@@ -439,6 +448,14 @@ class QSpreadsheet(QTableBase):
         copy_as_menu.addAction("HTML", self._copy_as_html)
         copy_as_menu.addAction("rST", self._copy_as_rst)
         menu.addAction("Paste", self._paste_from_clipboard)
+        menu.addSeparator()
+        menu.addAction("Insert row above", self._insert_row_above)
+        menu.addAction("Insert row below", self._insert_row_below)
+        menu.addAction("Insert column left", self._insert_column_left)
+        menu.addAction("Insert column right", self._insert_column_right)
+        menu.addSeparator()
+        menu.addAction("Remove selected rows", self._remove_selected_rows)
+        menu.addAction("Remove selected columns", self._remove_selected_columns)
         return menu
 
     def _cut_and_copy_to_clipboard(self):
@@ -690,8 +707,7 @@ def _iter_char(start: int, stop: int):
 
 
 def char_arange(start: int, stop: int | None = None):
-    """
-    A char version of np.arange.
+    """A char version of np.arange.
 
     Examples
     --------

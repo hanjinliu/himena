@@ -906,7 +906,10 @@ class ParametricWindow(SubWindow[_W]):
         ui = self._main_window()._himena_main_window
         ui.model_app.injection_store.process(return_value, type_hint=type_hint)
         if self._auto_close:
-            self._close_me(ui)
+            with suppress(RuntimeError):
+                # FIXME: if the async command does not require parameter input, this
+                # window is already closed. We just ignore the error for now.
+                self._close_me(ui)
 
 
 class DockWidget(WidgetWrapper[_W]):

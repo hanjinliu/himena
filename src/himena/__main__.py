@@ -106,6 +106,8 @@ def _main(
             for plugin_name in install:
                 if plugin_name in app_profile.plugins:
                     print(f"Plugin {plugin_name!r} is already installed.")
+                elif _is_path_like(plugin_name):
+                    raise NotImplementedError
                 elif is_submodule(info.place, plugin_name):
                     plugins_to_write.append(info.place)
                     infos_installed.append(info)
@@ -120,6 +122,8 @@ def _main(
                 ):
                     plugins_to_write.remove(info.place)
                     infos_uninstalled.append(info)
+                elif _is_path_like(plugin_name):
+                    raise NotImplementedError
                 elif info.distribution == plugin_name:
                     if info.place in plugins_to_write:
                         plugins_to_write.remove(info.place)
@@ -145,6 +149,10 @@ def _main(
     if path is not None:
         ui.read_file(path)
     ui.show(run=not _is_testing())
+
+
+def _is_path_like(name: str) -> bool:
+    return "/" in name or "\\" in name
 
 
 def main():

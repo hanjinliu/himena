@@ -21,6 +21,7 @@ ENTRY_POINT_GROUP_NAME = "himena.plugin"
 
 
 def iter_plugin_info() -> Iterator[HimenaPluginInfo]:
+    """Iterate over all the available plugins in the env."""
     for dist in distributions():
         for ep in dist.entry_points:
             if ep.group == ENTRY_POINT_GROUP_NAME:

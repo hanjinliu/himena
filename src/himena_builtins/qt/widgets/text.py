@@ -1,5 +1,6 @@
 from __future__ import annotations
 from contextlib import contextmanager
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterator, TYPE_CHECKING
 
@@ -15,7 +16,7 @@ from himena.plugins import validate_protocol
 from himena.utils.collections import OrderedSet
 from himena.utils.misc import lru_cache
 from himena.qt._qcoloredit import QColorSwatch
-from himena_builtins.qt.widgets._text_base import QMainTextEdit
+from himena_builtins.qt.widgets._text_base import QMainTextEdit, POINT_SIZES, TAB_SIZES
 from himena_builtins.qt.widgets._shared import labeled
 
 if TYPE_CHECKING:
@@ -73,7 +74,7 @@ class QTextControl(QtW.QWidget):
         self._language_combobox.currentIndexChanged.connect(self._emit_language_changed)
 
         self._tab_spaces_combobox = QtW.QComboBox()
-        self._tab_spaces_combobox.addItems(["1", "2", "3", "4", "5", "6", "7", "8"])
+        self._tab_spaces_combobox.addItems([str(x) for x in TAB_SIZES])
         self._tab_spaces_combobox.setCurrentText("4")
         self._tab_spaces_combobox.setToolTip("Tab size")
         self._tab_spaces_combobox.currentTextChanged.connect(
@@ -140,12 +141,11 @@ class QTextEdit(QtW.QWidget):
     def control_widget(self) -> QTextControl:
         return self._control
 
-    def setFocus(self):
-        self._main_text_edit.setFocus()
-
-    def _update_line_numbers(self):
-        line_num = self._main_text_edit.textCursor().blockNumber() + 1
-        self._control._line_num.setText(str(line_num))
+    @validate_protocol
+    def update_configs(self, configs: TextEditConfigs):
+        self._main_text_edit._default_font.setPointSize(configs.default_font_size)
+        self._main_text_edit.setFont(self._main_text_edit._default_font)
+        self._control._tab_spaces_combobox.setCurrentText(str(configs.default_tab_size))
 
     @validate_protocol
     def update_model(self, model: WidgetDataModel):
@@ -243,6 +243,13 @@ class QTextEdit(QtW.QWidget):
             self._main_text_edit._find_string()
             return None
         return super().keyPressEvent(a0)
+
+    def setFocus(self):
+        self._main_text_edit.setFocus()
+
+    def _update_line_numbers(self):
+        line_num = self._main_text_edit.textCursor().blockNumber() + 1
+        self._control._line_num.setText(str(line_num))
 
 
 class QRichTextEdit(QtW.QWidget):
@@ -442,3 +449,21 @@ class QRichTextEditControl(QtW.QWidget):
         yield fmt
         cursor.mergeCharFormat(fmt)
         self._text_edit._main_text_edit.setTextCursor(cursor)
+
+
+@dataclass
+class TextEditConfigs:
+    default_font_size: int = field(
+        default=10,
+        metadata={
+            "label": "Default font size (pt).",
+            "choices": POINT_SIZES,
+        },
+    )
+    default_tab_size: int = field(
+        default=4,
+        metadata={
+            "label": "Default tab size.",
+            "choices": TAB_SIZES,
+        },
+    )
