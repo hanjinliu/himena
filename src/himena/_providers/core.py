@@ -204,13 +204,10 @@ def _warn_failed_provider(plugin_obj, e: Exception):
     return _LOGGER.error(f"Error in {plugin_obj!r}: {e}")
 
 
-def _is_backup_file(path: Path | list[Path]) -> bool:
-    if isinstance(path, list):
-        return False
-    return path.stem.endswith("~")
-
-
 def _remove_tilde(path: Path | list[Path]) -> Path | list[Path]:
-    if isinstance(path, list):
-        return [p.with_name(p.name.rstrip("~")) for p in path]
-    return path.with_name(path.name.rstrip("~"))
+    try:
+        if isinstance(path, list):
+            return [p.with_name(p.name.rstrip("~")) for p in path]
+        return path.with_name(path.name.rstrip("~"))
+    except Exception:
+        return path

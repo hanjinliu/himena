@@ -77,8 +77,14 @@ class AppActionRegistry:
     def __init__(self):
         self._actions: dict[str, Action] = {}
         self._actions_dynamic: set[str] = set()
-        self._submenu_titles: dict[str, str] = {MenuId.TOOLS_DOCK: "Dock widgets"}
-        self._submenu_groups: dict[str, str] = {MenuId.TOOLS_DOCK: "00_dock"}
+        self._submenu_titles: dict[str, str] = {
+            MenuId.FILE_NEW: "New ...",
+            MenuId.TOOLS_DOCK: "Dock widgets",
+        }
+        self._submenu_groups: dict[str, str] = {
+            MenuId.FILE_NEW: "00_new",
+            MenuId.TOOLS_DOCK: "00_dock",
+        }
         self._installed_plugins: list[str] = []
         self._plugin_default_configs: dict[str, PluginConfigTuple] = {}
 

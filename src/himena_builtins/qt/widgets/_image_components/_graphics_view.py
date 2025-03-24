@@ -347,6 +347,13 @@ class QImageGraphicsView(QBaseGraphicsView):
 
     def scale_and_update_handles(self, factor: float):
         """Scale the view and update the selection handle sizes."""
+        if len(self._image_widgets) > 0:
+            image_size = self._image_widgets[0]._qimage.size()
+            length = min(image_size.width(), image_size.height())
+            new_scale = self.transform().m11() * factor
+            if length * new_scale < 1 or new_scale > 1000:
+                # too small or too large, do not zoom
+                return
         if factor > 0:
             self.scale(factor, factor)
         tr = self.transform()
