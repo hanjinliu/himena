@@ -16,24 +16,32 @@ if TYPE_CHECKING:
 
 
 class QSettingsDialog(QtW.QDialog):
+    """The dialog used for settings."""
+
     def __init__(self, ui: MainWindow) -> None:
         super().__init__(ui._backend_main_window)
         self._ui = ui
         self.setWindowTitle("Settings")
         self.resize(600, 400)
-        layout = QtW.QHBoxLayout()
-        self.setLayout(layout)
+        layout = QtW.QHBoxLayout(self)
+
+        layout_left = QtW.QVBoxLayout()
+        layout_left.setContentsMargins(0, 0, 0, 0)
+        layout.addLayout(layout_left)
 
         self._list = QtW.QListWidget(self)
         self._list.setFixedWidth(150)
         self._list.setFont(QtGui.QFont("Arial", 13))
+        self._open_json_btn = QtW.QPushButton("Open JSON")
+        self._open_json_btn.clicked.connect(self._open_json)
         self._stack = QtW.QStackedWidget(self)
 
         self._list.currentRowChanged.connect(
             lambda: self._stack.setCurrentIndex(self._list.currentRow())
         )
 
-        layout.addWidget(self._list)
+        layout_left.addWidget(self._list)
+        layout_left.addWidget(self._open_json_btn)
         layout.addWidget(self._stack)
 
         self._setup_panels()
@@ -66,6 +74,10 @@ class QSettingsDialog(QtW.QDialog):
         self.addPanel(
             "Configurations", "Plugin Configurations", QPluginConfigs(self._ui)
         )
+
+    def _open_json(self):
+        self._ui.read_file(self._ui.app_profile.profile_path())
+        self.close()
 
 
 class QTitleLabel(QtW.QLabel):

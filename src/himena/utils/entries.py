@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Iterator
 from dataclasses import dataclass
 from importlib.metadata import distributions
@@ -15,6 +16,19 @@ class HimenaPluginInfo:
     """Plugin version, such as '0.1.0'."""
     distribution: str
     """Distribution name, such as 'himena-test-plugin'."""
+
+    @classmethod
+    def from_local_file(cls, path: str) -> HimenaPluginInfo:
+        _path = Path(path).resolve()
+        return HimenaPluginInfo(
+            name=_path.name,
+            place=_path.as_posix(),
+            version="0.0.0",
+            distribution="<local>",
+        )
+
+    def is_local_plugin(self) -> bool:
+        return self.distribution == "<local>"
 
 
 ENTRY_POINT_GROUP_NAME = "himena.plugin"

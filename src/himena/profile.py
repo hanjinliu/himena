@@ -94,10 +94,13 @@ class AppProfile(BaseModel):
     def save(self, path: str | Path | None = None) -> None:
         """Save profile as a json file."""
         if path is None:
-            path = profile_dir() / f"{self.name}.json"
+            path = self.profile_path()
         with open(path, "w") as f:
             json.dump(self.model_dump(), f, indent=4)
         return None
+
+    def profile_path(self) -> Path:
+        return profile_dir() / f"{self.name}.json"
 
     def with_name(self, name: str) -> "AppProfile":
         """Return a new profile with a new name."""
