@@ -51,6 +51,14 @@ def test_install_uninstall_local(sample_dir):
     main()
     prof = load_app_profile("default")
     assert Path(plugin_path).resolve().as_posix() in prof.plugins
+    with pytest.raises(FileNotFoundError):
+        sys.argv = ["himena", "--install", str(plugin_path) + "xyz"]
+        main()
+    # just run again (no effect)
+    sys.argv = ["himena", "--install", str(plugin_path)]
+    main()
+    assert prof.plugins == load_app_profile("default").plugins
+
     sys.argv = ["himena", "--uninstall", str(plugin_path)]
     main()
     prof = load_app_profile("default")
