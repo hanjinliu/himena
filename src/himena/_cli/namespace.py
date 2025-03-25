@@ -9,7 +9,6 @@ class HimenaCliNamespace(argparse.Namespace):
     profile: str | None
     path: str | None
     log_level: str
-    with_plugins: list[str] | None
     new: str | None
     remove: str | None
     install: list[str]
@@ -56,13 +55,6 @@ class HimenaArgumentParser(argparse.ArgumentParser):
             "--log-level", nargs="?", default="WARNING",
             choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
             help="Set the default log level.",
-        )
-        self.add_argument(
-            "--with-plugins", nargs="+", default=None,
-            help=(
-                "Additional plugins to be loaded. Can be submodule names (xyz.abc) or file "
-                "paths."
-            )
         )
         self.add_argument(
             "--new", default=None,

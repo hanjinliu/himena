@@ -1,6 +1,8 @@
+from pathlib import Path
 import sys
 import pytest
 from himena.__main__ import main
+from himena.profile import load_app_profile
 
 def test_simple():
     sys.argv = ["himena"]
@@ -42,3 +44,22 @@ def test_install_uninstall():
     main()
     sys.argv = ["himena", "--install", "himena_builtins.new"]
     main()
+
+def test_install_uninstall_local(sample_dir):
+    plugin_path = sample_dir / "local_plugin.py"
+    sys.argv = ["himena", "--install", str(plugin_path)]
+    main()
+    prof = load_app_profile("default")
+    assert Path(plugin_path).resolve().as_posix() in prof.plugins
+    with pytest.raises(FileNotFoundError):
+        sys.argv = ["himena", "--install", str(plugin_path) + "xyz"]
+        main()
+    # just run again (no effect)
+    sys.argv = ["himena", "--install", str(plugin_path)]
+    main()
+    assert prof.plugins == load_app_profile("default").plugins
+
+    sys.argv = ["himena", "--uninstall", str(plugin_path)]
+    main()
+    prof = load_app_profile("default")
+    assert Path(plugin_path).resolve().as_posix() not in prof.plugins
