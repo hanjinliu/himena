@@ -62,7 +62,7 @@ def _main(args: HimenaCliNamespace):
     # now it's ready to start the GUI
     from himena import new_window
 
-    ui = new_window(args.profile, plugins=args.with_plugins)
+    ui = new_window(args.profile)
     if args.path is not None:
         ui.read_file(args.path)
     ui.show(run=not _is_testing())
