@@ -2,6 +2,7 @@ import re
 from pathlib import Path
 from textwrap import dedent
 import mkdocs_gen_files
+from qtpy.QtWidgets import QApplication
 
 from himena import new_window
 from himena.qt._qsub_window import get_subwindow
@@ -34,5 +35,10 @@ def main() -> None:
             with mkdocs_gen_files.open(dest, "wb") as f:
                 image = Image.fromarray(arr)
                 image.save(f, format="png")
+
+    ui.close()
+    for _ in range(5):
+        QApplication.processEvents()
+
 
 main()
