@@ -8,5 +8,13 @@ Note that they are not meant to test the GUI, but the logic of `update_model` an
 from himena.testing import image, table
 from himena.testing.subwindow import WidgetTester
 from himena.testing._pytest import install_plugin
+from himena.testing.dialog import file_dialog_response, choose_one_dialog_response
 
-__all__ = ["image", "table", "WidgetTester", "install_plugin"]
+__all__ = [
+    "image",
+    "table",
+    "WidgetTester",
+    "install_plugin",
+    "file_dialog_response",
+    "choose_one_dialog_response",
+]

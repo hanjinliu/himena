@@ -130,6 +130,8 @@ class MenuId(StrEnum):
     """Menu ID for the commands related to image ROIs."""
     TOOLS_IMAGE_CHANNELS = "tools/image/channels"
     """Menu ID for the commands related to image channels."""
+    TOOLS_IMAGE_CAPTURE = "tools/image/capture"
+    """Menu ID for the commands related to capturing current image slice."""
     TOOLS_PLOT = "tools/plot"
     """Menu ID for the commands related to "plot"-type data."""
     TOOLS_TEXT = "tools/text"

@@ -451,7 +451,7 @@ class QImageGraphicsView(QBaseGraphicsView):
                     return
         return super().keyPressEvent(event)
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: QtGui.QMouseEvent):
         # Store the position of the mouse when the button is pressed
         if isinstance(item_under_cursor := self.itemAt(event.pos()), QHandleRect):
             # prioritize the handle mouse event

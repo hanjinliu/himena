@@ -12,6 +12,7 @@ from himena._descriptors import NoNeedToSave, SaveToNewPath, SaveToPath
 from himena.consts import StandardType
 from himena.workflow import CommandExecution, LocalReaderMethod, ProgrammaticMethod
 from himena.types import ClipboardDataModel, WidgetDataModel, WindowRect
+from himena.testing import file_dialog_response
 from himena.qt import register_widget_class, MainWindowQt
 from himena_builtins.qt import widgets as _qtw
 import himena._providers
@@ -58,56 +59,54 @@ def test_builtin_commands(himena_ui: MainWindow):
 
 
 def test_io_commands(himena_ui: MainWindow, tmpdir, sample_dir: Path):
-    response_open = lambda: [sample_dir / "text.txt"]
-    response_save = lambda: Path(tmpdir) / "text_out.txt"
-    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response_open)
-    himena_ui.exec_action("open-file")
+    open_path = [sample_dir / "text.txt"]
+
+    with file_dialog_response(himena_ui, open_path):
+        himena_ui.exec_action("open-file")
     assert isinstance(himena_ui.current_window.save_behavior, SaveToPath)
     last = himena_ui.current_window._widget_workflow.last()
     assert isinstance(last, LocalReaderMethod)
     assert last.output_model_type == "text"
-    assert last.path == response_open()[0]
+    assert last.path == open_path[0]
 
     himena_ui.add_object("Hello", type="text")
     assert isinstance(himena_ui.current_window.save_behavior, SaveToNewPath)
     assert isinstance(meth := himena_ui.current_window._widget_workflow.last(), ProgrammaticMethod)
     assert meth.output_model_type == "text"
-    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response_save)
-    himena_ui.exec_action("save")
-    assert isinstance(himena_ui.current_window.save_behavior, SaveToPath)
-    assert himena_ui.current_window.save_behavior.path == response_save()
-    assert isinstance(himena_ui.current_window._widget_workflow.last(), ProgrammaticMethod)
-    himena_ui.exec_action("save-as")
+    with file_dialog_response(himena_ui, Path(tmpdir) / "text_out.txt") as save_path:
+        himena_ui.exec_action("save")
+        assert save_path.exists()
+        save_path.unlink()
+        assert isinstance(himena_ui.current_window.save_behavior, SaveToPath)
+        assert himena_ui.current_window.save_behavior.path == save_path
+        assert isinstance(himena_ui.current_window._widget_workflow.last(), ProgrammaticMethod)
+        himena_ui.exec_action("save-as")
+        assert save_path.exists()
 
     # session
-    response_session = lambda: Path(tmpdir) / "a.session.zip"
-    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response_session)
-    himena_ui.exec_action("save-session", with_params={"save_path": response_session()})
-    himena_ui.exec_action("load-session")
+    with file_dialog_response(himena_ui, Path(tmpdir) / "a.session.zip") as session_path:
+        himena_ui.exec_action("save-session", with_params={"save_path": session_path})
+        himena_ui.exec_action("load-session")
+        himena_ui.exec_action("save-tab-session")
 
-    himena_ui.exec_action("save-tab-session")
-
-    response_open = lambda: sample_dir / "table.csv"
-    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response_open)
-    store = himena._providers.ReaderStore.instance()
-    param = store.get(response_open(), min_priority=-500)[2]
-    himena_ui.exec_action("open-file-with", with_params={"reader": param})
-    assert isinstance(himena_ui.current_window.save_behavior, SaveToPath)
-    last = himena_ui.current_window._widget_workflow.last()
-    assert isinstance(last, LocalReaderMethod)
-    assert last.path == response_open()
-    assert param.plugin is not None
-    assert last.plugin == param.plugin.to_str()
+    with file_dialog_response(himena_ui, sample_dir / "table.csv") as open_path:
+        store = himena._providers.ReaderStore.instance()
+        param = store.get(open_path, min_priority=-500)[2]
+        himena_ui.exec_action("open-file-with", with_params={"reader": param})
+        assert isinstance(himena_ui.current_window.save_behavior, SaveToPath)
+        last = himena_ui.current_window._widget_workflow.last()
+        assert isinstance(last, LocalReaderMethod)
+        assert last.path == open_path
+        assert param.plugin is not None
+        assert last.plugin == param.plugin.to_str()
 
     # backup
-    response_open = lambda: sample_dir / "text.txt~"
-    response_save = lambda: Path(tmpdir) / "out.log~"
-    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response_open)
-    himena_ui.exec_action("open-file")
-    assert himena_ui.current_window.to_model().type == StandardType.TEXT
-    assert himena_ui.current_window.to_model().value == "ab\n"
-    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response_save)
-    himena_ui.exec_action("save")
+    with file_dialog_response(himena_ui, sample_dir / "text.txt~") as open_path:
+        himena_ui.exec_action("open-file")
+        assert himena_ui.current_window.to_model().type == StandardType.TEXT
+        assert himena_ui.current_window.to_model().value == "ab\n"
+    with file_dialog_response(himena_ui, Path(tmpdir) / "out.log~") as save_path:
+        himena_ui.exec_action("save")
 
     # test adding object directly
     himena_ui.add_object("ABC")
@@ -178,13 +177,16 @@ def test_screenshot_commands(himena_ui: MainWindow, sample_dir: Path, tmpdir):
     assert himena_ui.clipboard.image is not None
 
     # save
-    himena_ui._instructions = himena_ui._instructions.updated(
-        file_dialog_response=lambda: Path(tmpdir) / "screenshot.png"
-    )
-    himena_ui.exec_action("save-screenshot")
-    himena_ui.exec_action("save-screenshot-area")
-    himena_ui.exec_action("save-screenshot-window")
-    assert Path(tmpdir).joinpath("screenshot.png").exists()
+    with file_dialog_response(himena_ui, Path(tmpdir) / "screenshot.png") as save_path:
+        himena_ui.exec_action("save-screenshot")
+        assert save_path.exists()
+        save_path.unlink()
+        himena_ui.exec_action("save-screenshot-area")
+        assert save_path.exists()
+        save_path.unlink()
+        himena_ui.exec_action("save-screenshot-window")
+        assert save_path.exists()
+        save_path.unlink()
 
 def test_view_menu_commands(himena_ui: MainWindow, sample_dir: Path):
     himena_ui.exec_action("new-tab")
@@ -314,11 +316,8 @@ def test_register_folder(himena_ui: MainWindow, sample_dir: Path):
         else:
             return None
 
-    response_open = lambda: sample_dir / "folder"
-    himena_ui._instructions = himena_ui._instructions.updated(
-        file_dialog_response=response_open,
-    )
-    himena_ui.exec_action("open-folder")
+    with file_dialog_response(himena_ui, sample_dir / "folder"):
+        himena_ui.exec_action("open-folder")
     assert himena_ui.tabs.current_index == 0
     assert himena_ui.tabs.current().len() == 1
 
@@ -391,9 +390,8 @@ def test_save_behavior(himena_ui: MainWindow, tmpdir):
     # special case for duplicate-window
     assert isinstance(win2.save_behavior, NoNeedToSave)
 
-    response_save = lambda: Path(tmpdir) / "text_out.txt"
-    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response_save)
-    himena_ui.exec_action("save-as")
+    with file_dialog_response(himena_ui, Path(tmpdir) / "test.txt") as response_save:
+        himena_ui.exec_action("save-as")
     win3 = himena_ui.current_window
     assert not win3._need_ask_save_before_close()
     assert isinstance(win3._widget_workflow.last(), CommandExecution)
@@ -409,25 +407,20 @@ class MyObj:
     def __init__(self, value):
         self.value = value
 
-def _set_response(himena_ui: MainWindow, path):
-    assert isinstance(path, Path)
-    response = lambda: path
-    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response, confirm=False)
 
 def test_dont_use_pickle(himena_ui: MainWindow, tmpdir):
     tmpdir = Path(tmpdir)
     data = MyObj(124)
     with pytest.warns(RuntimeWarning):  # no widget class is registered for "myobj"
         himena_ui.add_object(data, type="myobj")
-    _set_response(himena_ui, tmpdir / "test.txt")
-    with pytest.raises(ValueError):  # No writer function available for "myobj"
+    with file_dialog_response(himena_ui, tmpdir / "test.txt"):
+        with pytest.raises(ValueError):  # No writer function available for "myobj"
+            himena_ui.exec_action("save")
+    with file_dialog_response(himena_ui, tmpdir / "test.pickle"):
         himena_ui.exec_action("save")
-    _set_response(himena_ui, tmpdir / "test.pickle")
-    himena_ui.exec_action("save")
-    assert (tmpdir / "test.pickle").exists()
-    _set_response(himena_ui, tmpdir / "test.pickle")
-    with pytest.warns(RuntimeWarning):  # no widget class is registered for "any"
-        himena_ui.exec_action("open-file")
+        assert (tmpdir / "test.pickle").exists()
+        with pytest.warns(RuntimeWarning):  # no widget class is registered for "any"
+            himena_ui.exec_action("open-file")
     model = himena_ui.current_window.to_model()
     assert isinstance(model.value, MyObj)
     assert model.value.value == 124
@@ -436,16 +429,16 @@ def test_dont_use_pickle(himena_ui: MainWindow, tmpdir):
 def test_open_and_save_files(himena_ui: MainWindow, tmpdir, sample_dir: Path):
     himena_ui.show()
     tmpdir = Path(tmpdir)
-    _set_response(himena_ui, sample_dir / "ipynb.ipynb")
-    himena_ui.exec_action("open-file")
+    with file_dialog_response(himena_ui, sample_dir / "ipynb.ipynb"):
+        himena_ui.exec_action("open-file")
 
-    _set_response(himena_ui, sample_dir / "excel.xlsx")
-    himena_ui.exec_action("open-file")
+    with file_dialog_response(himena_ui, tmpdir / "excel.xlsx"):
+        himena_ui.exec_action("open-file")
 
     himena_ui.exec_action("builtins:stack-models", with_params={"models": [], "pattern": ".*"})
-    _set_response(himena_ui, tmpdir / "stack.zip")
-    himena_ui.exec_action("save-as")
-    himena_ui.exec_action("open-file")
+    with file_dialog_response(himena_ui, tmpdir / "stack.zip"):
+        himena_ui.exec_action("save-as")
+        himena_ui.exec_action("open-file")
 
     himena_ui.add_object({"x": [1, 2, 3], "y": [4.2, 5.3, -1.5]}, type="dataframe")
     himena_ui.add_object(
@@ -467,17 +460,17 @@ def test_reading_file_group(himena_ui: MainWindow, sample_dir: Path):
 def test_watch_file(himena_ui: MainWindow, tmpdir):
     filepath = Path(tmpdir) / "test.txt"
     filepath.write_text("x")
-    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=lambda: filepath)
-    from himena.io_utils import get_readers
-    tuples = get_readers(filepath)
-    himena_ui.exec_action("watch-file-using", with_params={"reader": tuples[0]})
-    win = himena_ui.current_window
-    assert win.model_type() == StandardType.TEXT
-    assert not win.is_editable
-    assert win.to_model().value == "x"
-    filepath.write_text("yy")
-    # need enough time of processing
-    for _ in range(5):
-        QtW.QApplication.processEvents()
-    if sys.platform != "darwin":  # this sometimes fails in mac
-        assert win.to_model().value == "yy"
+    with file_dialog_response(himena_ui, filepath):
+        from himena.io_utils import get_readers
+        tuples = get_readers(filepath)
+        himena_ui.exec_action("watch-file-using", with_params={"reader": tuples[0]})
+        win = himena_ui.current_window
+        assert win.model_type() == StandardType.TEXT
+        assert not win.is_editable
+        assert win.to_model().value == "x"
+        filepath.write_text("yy")
+        # need enough time of processing
+        for _ in range(5):
+            QtW.QApplication.processEvents()
+        if sys.platform != "darwin":  # this sometimes fails in mac
+            assert win.to_model().value == "yy"

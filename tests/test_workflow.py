@@ -2,6 +2,7 @@ from himena import MainWindow
 from pathlib import Path
 
 from himena.consts import StandardType
+from himena.testing import file_dialog_response
 
 def test_compute_workflow(himena_ui: MainWindow, sample_dir: Path, tmpdir):
     tmpdir = Path(tmpdir)
@@ -14,10 +15,9 @@ def test_compute_workflow(himena_ui: MainWindow, sample_dir: Path, tmpdir):
     assert model_recalc.value == model.value
     himena_ui.exec_action("show-workflow-graph")
     assert himena_ui.current_model.type == StandardType.WORKFLOW
-    response = lambda: tmpdir / "output.workflow.json"
-    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response)
-    himena_ui.exec_action("save-as")
-    himena_ui.exec_action("open-file")
+    with file_dialog_response(himena_ui, tmpdir / "output.workflow.json"):
+        himena_ui.exec_action("save-as")
+        himena_ui.exec_action("open-file")
 
 def test_compute_workflow_binary(himena_ui: MainWindow, tmpdir):
     tmpdir = Path(tmpdir)
@@ -35,9 +35,8 @@ def test_compute_workflow_binary(himena_ui: MainWindow, tmpdir):
     )
     wf = tab[3].to_model().workflow
     himena_ui.exec_action("show-workflow-graph")
-    response = lambda: tmpdir / "output.workflow.json"
-    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=response)
-    himena_ui.exec_action("save-as")
-    himena_ui.exec_action("open-file")
-    model = wf.compute(process_output=False)
-    assert model.value.tolist() == tab[3].to_model().value.tolist()
+    with file_dialog_response(himena_ui, tmpdir / "output.workflow.json"):
+        himena_ui.exec_action("save-as")
+        himena_ui.exec_action("open-file")
+        model = wf.compute(process_output=False)
+        assert model.value.tolist() == tab[3].to_model().value.tolist()

@@ -9,7 +9,7 @@ from pytestqt.qtbot import QtBot
 from himena import MainWindow, StandardType
 from himena.standards.roi import RoiListModel, LineRoi, PointRoi2D, PointsRoi2D
 from himena.standards.roi.core import RectangleRoi
-from himena.testing import WidgetTester, image
+from himena.testing import WidgetTester, image, file_dialog_response
 from himena.types import WidgetDataModel
 from himena_builtins.qt.widgets.image import QImageView, QImageLabelView
 from himena_builtins.qt.widgets._image_components import _roi_items as _rois
@@ -125,6 +125,9 @@ def test_image_view_draw_roi(qtbot: QtBot):
         qtbot.mouseMove(vp, pos=QtCore.QPoint(50, 50))
         qtbot.mouseRelease(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(50, 50))
         assert isinstance(image_view._img_view._current_roi_item, _rois.QLineRoi)
+        qtbot.mouseClick(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(30, 10))
+        # line should be removed by clicking somewhere else
+        assert image_view._img_view._current_roi_item is None
 
         # polygon
         image_view._img_view.switch_mode(image_view._img_view.Mode.ROI_POLYGON)
@@ -309,7 +312,7 @@ def test_image_view_current_roi(qtbot: QtBot):
 def _get_tester():
     return WidgetTester(QImageView())
 
-def test_crop_image(himena_ui: MainWindow):
+def test_crop_image(himena_ui: MainWindow, tmpdir):
     model = WidgetDataModel(
         value=np.zeros((4, 4, 10, 10)),
         type=StandardType.IMAGE,
@@ -320,10 +323,35 @@ def test_crop_image(himena_ui: MainWindow):
     )
     win = himena_ui.add_data_model(model)
     himena_ui.exec_action("builtins:image-crop:crop-image")
+    himena_ui.exec_action("builtins:image-capture:copy-slice-to-clipboard")
+    with file_dialog_response(himena_ui, Path(tmpdir) / "tmp.png"):
+        himena_ui.exec_action("builtins:image-capture:save-slice")
+    himena_ui.current_window = win
     himena_ui.exec_action(
-        "builtins:copy-slice-to-clipboard",
-        with_params={"bbox": (1, 2, 4, 3), "indices": [1, 0, None, None]}
+        "builtins:image-crop:crop-image-multi",
+        with_params={"bbox_list": [(1, 1, 4, 5), (1, 5, 2, 2)]}
     )
+    himena_ui.current_window = win
+    himena_ui.exec_action(
+        "builtins:crop-array-nd",
+        with_params={"axis_0": (2, 4), "axis_1": (0, 1), "axis_2": (1, 5), "axis_3": (2, 8)},
+    )
+
+    # multi-channel image
+    model = WidgetDataModel(
+        value=np.zeros((4, 3, 10, 10)),
+        type=StandardType.IMAGE,
+        metadata=ImageMeta(
+            axes=["t", "c", "y", "x"],
+            current_roi=RectangleRoi(indices=(0, 0), x=1, y=1, width=6, height=4),
+            channel_axis=1,
+        ),
+    )
+    win = himena_ui.add_data_model(model)
+    himena_ui.exec_action("builtins:image-crop:crop-image")
+    himena_ui.exec_action("builtins:image-capture:copy-slice-to-clipboard")
+    with file_dialog_response(himena_ui, Path(tmpdir) / "tmp.png"):
+        himena_ui.exec_action("builtins:image-capture:save-slice")
     himena_ui.current_window = win
     himena_ui.exec_action(
         "builtins:image-crop:crop-image-multi",
@@ -344,8 +372,9 @@ def test_image_view_commands(himena_ui: MainWindow, tmpdir):
     )
     himena_ui.exec_action("builtins:image:set-zoom-factor", with_params={"scale": 100.0})
     himena_ui.exec_action("builtins:image-screenshot:copy-viewer-screenshot")
-    himena_ui._instructions = himena_ui._instructions.updated(file_dialog_response=lambda: Path(tmpdir) / "tmp.png")
-    himena_ui.exec_action("builtins:image-screenshot:save-viewer-screenshot")
+    with file_dialog_response(himena_ui, Path(tmpdir) / "tmp.png") as save_path:
+        himena_ui.exec_action("builtins:image-screenshot:save-viewer-screenshot")
+        assert save_path.exists()
 
 
 def test_roi_commands(himena_ui: MainWindow):

@@ -73,12 +73,36 @@ def set_zoom_factor(win: SubWindow[QImageView]) -> Parametric:
 @register_function(
     title="Copy slice to clipboard",
     types=StandardType.IMAGE,
-    menus=[MenuId.TOOLS_IMAGE, "/model_menu"],
-    command_id="builtins:copy-slice-to-clipboard",
+    menus=[MenuId.TOOLS_IMAGE_CAPTURE, "/model_menu/capture"],
+    command_id="builtins:image-capture:copy-slice-to-clipboard",
 )
 def copy_slice_to_clipboard(win: SubWindow[QImageView]):
     """Copy the current slice to the clipboard as is."""
-    view = win.widget
+    qimage = _get_qimage_of_current_slice(win.widget)
+    QtGui.QGuiApplication.clipboard().setImage(qimage)
+    return None
+
+
+@register_function(
+    title="Save slice to clipboard",
+    types=StandardType.IMAGE,
+    menus=[MenuId.TOOLS_IMAGE_CAPTURE, "/model_menu/capture"],
+    command_id="builtins:image-capture:save-slice",
+)
+def save_slice(win: SubWindow[QImageView], ui: MainWindow):
+    """Save the current slice to file as is."""
+    if path := ui.exec_file_dialog(
+        mode="w",
+        extension_default=".png",
+        allowed_extensions=[".png", ".jpg", ".jpeg"],
+        caption="Save slice to clipboard",
+    ):
+        qimage = _get_qimage_of_current_slice(win.widget)
+        qimage.save(str(path))
+    return None
+
+
+def _get_qimage_of_current_slice(view: QImageView) -> QtGui.QImage:
     if isinstance(current_roi := view.current_roi(), _roi.RectangleRoi):
         bbox = image_utils.roi_2d_to_bbox(current_roi, view._arr, view._is_rgb)
     else:
@@ -93,8 +117,7 @@ def copy_slice_to_clipboard(win: SubWindow[QImageView]):
             graphics.initPainter(painter)
             painter.drawImage(target_rect, graphics._qimage.copy(source_rect))
     painter.end()
-    QtGui.QGuiApplication.clipboard().setImage(qimage)
-    return None
+    return qimage
 
 
 @register_function(
