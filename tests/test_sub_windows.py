@@ -432,7 +432,7 @@ def test_open_and_save_files(himena_ui: MainWindow, tmpdir, sample_dir: Path):
     with file_dialog_response(himena_ui, sample_dir / "ipynb.ipynb"):
         himena_ui.exec_action("open-file")
 
-    with file_dialog_response(himena_ui, tmpdir / "excel.xlsx"):
+    with file_dialog_response(himena_ui, sample_dir / "excel.xlsx"):
         himena_ui.exec_action("open-file")
 
     himena_ui.exec_action("builtins:stack-models", with_params={"models": [], "pattern": ".*"})

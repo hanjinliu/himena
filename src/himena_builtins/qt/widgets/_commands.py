@@ -123,7 +123,7 @@ def _get_qimage_of_current_slice(view: QImageView) -> QtGui.QImage:
 @register_function(
     title="Copy viewer screenshot",
     types=StandardType.IMAGE,
-    menus=[MenuId.TOOLS_IMAGE],
+    menus=[MenuId.TOOLS_IMAGE_CAPTURE, "/model_menu/capture"],
     command_id="builtins:image-screenshot:copy-viewer-screenshot",
 )
 def copy_image_view_screenshot(win: SubWindow[QImageView]):
@@ -135,7 +135,7 @@ def copy_image_view_screenshot(win: SubWindow[QImageView]):
 @register_function(
     title="Save viewer screenshot",
     types=StandardType.IMAGE,
-    menus=[MenuId.TOOLS_IMAGE],
+    menus=[MenuId.TOOLS_IMAGE_CAPTURE, "/model_menu/capture"],
     command_id="builtins:image-screenshot:save-viewer-screenshot",
 )
 def save_image_view_screenshot(win: SubWindow[QImageView], ui: MainWindow):
