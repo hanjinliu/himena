@@ -2,10 +2,12 @@ from himena.consts import StandardType, MenuId
 from himena.exceptions import Cancelled
 from himena.widgets import SubWindow, MainWindow
 from himena.plugins import register_function, configure_gui
-from himena.types import Parametric
+from himena.types import Parametric, Rect
+from himena.standards import roi as _roi
+from himena.utils import image_utils
 from himena.qt.magicgui import ColorEdit
 
-from qtpy import QtGui
+from qtpy import QtGui, QtCore
 from cmap import Color
 from .image import QImageView
 from ._image_components._scale_bar import ScaleBarAnchor, ScaleBarType
@@ -66,6 +68,33 @@ def set_zoom_factor(win: SubWindow[QImageView]) -> Parametric:
         view.scale_and_update_handles(ratio)
 
     return run_set_zoom
+
+
+@register_function(
+    title="Copy slice to clipboard",
+    types=StandardType.IMAGE,
+    menus=[MenuId.TOOLS_IMAGE, "/model_menu"],
+    command_id="builtins:copy-slice-to-clipboard",
+)
+def copy_slice_to_clipboard(win: SubWindow[QImageView]):
+    """Copy the current slice to the clipboard as is."""
+    view = win.widget
+    if isinstance(current_roi := view.current_roi(), _roi.RectangleRoi):
+        bbox = image_utils.roi_2d_to_bbox(current_roi, view._arr, view._is_rgb)
+    else:
+        bbox = Rect(0, 0, view._arr.shape[-1], view._arr.shape[-2])
+    # manually paint the graphics items and copy the image to the clipboard
+    qimage = QtGui.QImage(bbox.width, bbox.height, QtGui.QImage.Format.Format_RGBA8888)
+    painter = QtGui.QPainter(qimage)
+    target_rect = QtCore.QRect(0, 0, bbox.width, bbox.height)
+    source_rect = QtCore.QRect(bbox.left, bbox.top, bbox.width, bbox.height)
+    for graphics in view._img_view._image_widgets:
+        if graphics.isVisible():
+            graphics.initPainter(painter)
+            painter.drawImage(target_rect, graphics._qimage.copy(source_rect))
+    painter.end()
+    QtGui.QGuiApplication.clipboard().setImage(qimage)
+    return None
 
 
 @register_function(

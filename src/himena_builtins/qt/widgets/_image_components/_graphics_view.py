@@ -57,14 +57,17 @@ class QImageGraphicsWidget(QtW.QGraphicsWidget):
         self._smoothing = enabled
         self.update()
 
-    def paint(self, painter, option, widget=None):
-        if self._qimage.isNull():
-            return
-
+    def initPainter(self, painter: QtGui.QPainter):
         painter.setCompositionMode(self._comp_mode)
         painter.setRenderHint(
             QtGui.QPainter.RenderHint.SmoothPixmapTransform, self._smoothing
         )
+
+    def paint(self, painter, option, widget=None):
+        if self._qimage.isNull():
+            return
+
+        self.initPainter(painter)
         bounding_rect = self.boundingRect()
         painter.drawImage(bounding_rect, self._qimage)
         is_light_bg = (
