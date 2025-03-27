@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from qtpy import QtWidgets as QtW, QtCore
+from qtpy import QtWidgets as QtW, QtCore, QtGui
 
 from himena.standards import model_meta
 from himena.qt._utils import qsignal_blocker
 
 
 class QDimsSlider(QtW.QWidget):
+    """Dimension sliders for an array."""
+
     valueChanged = QtCore.Signal(tuple)
 
     def __init__(self):
@@ -113,6 +115,7 @@ class _QAxisSlider(QtW.QWidget):
         )
 
         self._index_label = QtW.QLabel()
+        self._index_label.setCursor(QtCore.Qt.CursorShape.IBeamCursor)
         self._index_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         self._slider.valueChanged.connect(self._on_slider_changed)
 
@@ -122,6 +125,11 @@ class _QAxisSlider(QtW.QWidget):
             self._index_label, alignment=QtCore.Qt.AlignmentFlag.AlignRight
         )
         self._axis = model_meta.ArrayAxis(name="")
+        self._edit_value_line = QtW.QLineEdit()
+        self._edit_value_line.setParent(self, QtCore.Qt.WindowType.Popup)
+        self._edit_value_line.hide()
+        self._edit_value_line.setFont(self._index_label.font())
+        self._edit_value_line.editingFinished.connect(self._on_edit_finished)
 
     def update_from_axis(self, axis: model_meta.ArrayAxis):
         self._name_label.setText(axis.name)
@@ -136,6 +144,28 @@ class _QAxisSlider(QtW.QWidget):
     def setRange(self, start: int, end: int) -> None:
         self._slider.setRange(start, end)
         self._index_label.setText(f"{self._slider.value()}/{end}")
+        self._edit_value_line.setValidator(
+            QtGui.QIntValidator(start, end, self._edit_value_line)
+        )
 
     def _on_slider_changed(self, value: int) -> None:
         self._index_label.setText(f"{value}/{self._slider.maximum()}")
+
+    def _on_edit_finished(self):
+        value = int(self._edit_value_line.text())
+        self._slider.setValue(value)
+        self._index_label.setText(f"{value}/{self._slider.maximum()}")
+        self._edit_value_line.hide()
+        self.parentWidget().setFocus()
+
+    def mouseDoubleClickEvent(self, a0):
+        if self._index_label.geometry().contains(a0.pos()):
+            self._edit_value_line.show()
+            self._edit_value_line.resize(self._index_label.size())
+            geo = self._index_label.geometry()
+            self._edit_value_line.move(self.mapToGlobal(geo.topLeft()))
+            self._edit_value_line.setText(self._index_label.text().split("/")[0])
+            self._edit_value_line.setSelection(0, len(self._edit_value_line.text()))
+            return
+
+        return super().mouseDoubleClickEvent(a0)

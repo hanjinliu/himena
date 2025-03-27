@@ -191,6 +191,7 @@ class QImageViewBase(QtW.QSplitter):
         self._pixel_unit = meta0.unit or ""
         if ext_default := model.extension_default:
             self._extension_default = ext_default
+        self.set_hover_info(self._default_hover_info())
         return None
 
     @validate_protocol
@@ -203,6 +204,7 @@ class QImageViewBase(QtW.QSplitter):
             )
         self._arr = arr
         self._reset_image()
+        self.set_hover_info(self._default_hover_info())
 
     def _get_image_slices(
         self,
@@ -402,7 +404,7 @@ class QImageViewBase(QtW.QSplitter):
         return self._img_view.setFocus()
 
     def leaveEvent(self, ev) -> None:
-        self._control._hover_info.setText("")
+        self.set_hover_info(self._default_hover_info())
 
     def _roi_visibility_changed(self, show_rois: bool):
         with qsignal_blocker(self._roi_col):
@@ -483,7 +485,7 @@ class QImageViewBase(QtW.QSplitter):
         ny, nx, *_ = cur_img.arr.shape
         if 0 <= iy < ny and 0 <= ix < nx:
             if not cur_img.visible:
-                self._control._hover_info.setText(f"x={x:.1f}, y={y:.1f} (invisible)")
+                self.set_hover_info(f"x={x:.1f}, y={y:.1f} (invisible)")
                 return
             intensity = cur_img.arr[int(y), int(x)]
             # NOTE: `intensity` could be an RGBA numpy array.
@@ -497,9 +499,18 @@ class QImageViewBase(QtW.QSplitter):
                 _int = format(intensity, fmt)
             if self._pixel_unit:
                 _int += f" [{self._pixel_unit}]"
-            self._control._hover_info.setText(f"x={x:.1f}, y={y:.1f}, value={_int}")
+            self.set_hover_info(f"x={x:.1f}, y={y:.1f}, value={_int}")
         else:
-            self._control._hover_info.setText("")
+            self.set_hover_info(self._default_hover_info())
+
+    def set_hover_info(self, text: str):
+        """Set the hover info text to the control widget."""
+        self._control._hover_info.setText(text)
+
+    def _default_hover_info(self) -> str:
+        if self._arr is None:
+            return
+        return f"{self._arr.shape}, {self._arr.dtype}"
 
     def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
         if event is None or event.isAutoRepeat():
