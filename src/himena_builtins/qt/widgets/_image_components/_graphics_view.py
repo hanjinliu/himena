@@ -57,14 +57,17 @@ class QImageGraphicsWidget(QtW.QGraphicsWidget):
         self._smoothing = enabled
         self.update()
 
-    def paint(self, painter, option, widget=None):
-        if self._qimage.isNull():
-            return
-
+    def initPainter(self, painter: QtGui.QPainter):
         painter.setCompositionMode(self._comp_mode)
         painter.setRenderHint(
             QtGui.QPainter.RenderHint.SmoothPixmapTransform, self._smoothing
         )
+
+    def paint(self, painter, option, widget=None):
+        if self._qimage.isNull():
+            return
+
+        self.initPainter(painter)
         bounding_rect = self.boundingRect()
         painter.drawImage(bounding_rect, self._qimage)
         is_light_bg = (
@@ -448,7 +451,7 @@ class QImageGraphicsView(QBaseGraphicsView):
                     return
         return super().keyPressEvent(event)
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: QtGui.QMouseEvent):
         # Store the position of the mouse when the button is pressed
         if isinstance(item_under_cursor := self.itemAt(event.pos()), QHandleRect):
             # prioritize the handle mouse event

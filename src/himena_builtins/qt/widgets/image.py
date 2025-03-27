@@ -87,7 +87,7 @@ class QImageViewBase(QtW.QSplitter):
         self._current_image_slices: list[ImageTuple] | None = None
         self._is_rgb = False  # whether the image is RGB
         self._channel_axis: int | None = None
-        self._channels: list[ChannelInfo] | None = None
+        self._channels: list[ChannelInfo] = [ChannelInfo(name="")]
         self._model_type: str = StandardType.IMAGE
         self._pixel_unit: str = "a.u."
         self._extension_default: str = ".png"
@@ -311,6 +311,14 @@ class QImageViewBase(QtW.QSplitter):
         imgs = future.result()
         self._set_image_slices(imgs)
 
+    def current_roi(self) -> roi.RoiModel | None:
+        """Return the current ROI as a standard ROI model."""
+        if item := self._img_view._current_roi_item:
+            current_roi = item.toRoi()
+        else:
+            current_roi = None
+        return current_roi
+
     @validate_protocol
     def to_model(self) -> WidgetDataModel:
         assert self._arr is not None
@@ -325,10 +333,6 @@ class QImageViewBase(QtW.QSplitter):
         ]
         current_indices = self._dims_slider.value()
         current_slices = current_indices + (None, None)
-        if item := self._img_view._current_roi_item:
-            current_roi = item.toRoi()
-        else:
-            current_roi = None
         axes = self._dims_slider._to_image_axes()
         if self._is_rgb:
             axes.append(model_meta.ArrayAxis(name="RGB"))
@@ -341,7 +345,7 @@ class QImageViewBase(QtW.QSplitter):
                 axes=axes,
                 channels=channels,
                 channel_axis=self._channel_axis,
-                current_roi=current_roi,
+                current_roi=self.current_roi(),
                 rois=self._roi_col.to_standard_roi_list,
                 is_rgb=self._is_rgb,
                 interpolation=interp,

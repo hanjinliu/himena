@@ -54,7 +54,11 @@ def _make_himena_ui(qtbot: QtBot, request: pytest.FixtureRequest):
     def _factory(backend="qt"):
         nonlocal window
         window = new_window(backend=backend)
-        window._instructions = window._instructions.updated(confirm=False)
+        window._instructions = window._instructions.updated(
+            confirm=False,
+            file_dialog_response=_raise_dialog_error,
+            choose_one_dialog_response=_raise_dialog_error,
+        )
         window._pytest_name = request.node.name
         if backend == "qt":
             qtbot.add_widget(window._backend_main_window)
@@ -80,3 +84,16 @@ def _make_himena_ui(qtbot: QtBot, request: pytest.FixtureRequest):
 @pytest.fixture
 def sample_dir() -> Path:
     return Path(__file__).parent.parent.parent / "tests" / "samples"
+
+
+class UserResponseRequested(RuntimeError):
+    """Raised when a user response is requested during testing."""
+
+
+def _raise_dialog_error():  # pragma: no cover
+    raise UserResponseRequested(
+        "User response is requested during testing. This error is raised to prevent "
+        "blocking the test execution. To fix this, you can use the testing functions "
+        "`file_dialog_response` and `choose_one_dialog_response` from the "
+        "`himena.testing` submodule."
+    )

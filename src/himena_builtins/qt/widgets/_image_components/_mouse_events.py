@@ -50,6 +50,10 @@ class QtMouseEvent(MouseEventHandler[QtGui.QMouseEvent]):
         self._pos_drag_prev = None
         self._pos_drag_start = None
 
+    def is_click(self, event: QtGui.QMouseEvent) -> bool:
+        """Check if the event is a click."""
+        return self._pos_drag_start == event.pos()
+
 
 class PanZoomMouseEvents(QtMouseEvent):
     def pressed(self, event):
@@ -139,8 +143,8 @@ class _SingleDragRoiMouseEvents(RoiMouseEvents[_R]):
             self._update_roi(pos0, pos)
 
     def released(self, event: QtGui.QMouseEvent):
-        if event.buttons() & Qt.MouseButton.LeftButton:
-            if self._pos_drag_start == event.pos():
+        if event.button() == Qt.MouseButton.LeftButton:
+            if self.is_click(event):
                 self._view.remove_current_item(
                     reason=f"stop drawing {self._view.mode()}"
                 )
@@ -238,7 +242,7 @@ class PointsRoiMouseEvents(_MultiRoiMouseEvents[QPointsRoi]):
         return roi
 
     def moved(self, event: QtGui.QMouseEvent):
-        if event.buttons() & Qt.MouseButton.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             self._mouse_move_pan_zoom(event.pos())
             self._pos_drag_prev = event.pos()
             return
@@ -348,13 +352,13 @@ class PointRoiMouseEvents(RoiMouseEvents[QPointRoi]):
         return roi
 
     def moved(self, event: QtGui.QMouseEvent):
-        if event.buttons() & Qt.MouseButton.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             self._mouse_move_pan_zoom(event.pos())
             self._pos_drag_prev = event.pos()
 
     def released(self, event: QtGui.QMouseEvent):
         if (
-            event.buttons() & Qt.MouseButton.LeftButton
+            event.button() == Qt.MouseButton.LeftButton
             and self._pos_drag_start == event.pos()  # clicked
         ):
             pos = self._view.mapToScene(event.pos())

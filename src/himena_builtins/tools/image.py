@@ -1,9 +1,9 @@
 from typing import Any, Literal, SupportsIndex
 import numpy as np
 from cmap import Colormap
-from himena.data_wrappers._array import wrap_array, ArrayWrapper
+from himena.data_wrappers._array import wrap_array
 from himena.plugins import register_function, configure_gui, configure_submenu
-from himena.types import ClipboardDataModel, Parametric, WidgetDataModel, Rect
+from himena.types import Parametric, WidgetDataModel, Rect
 from himena.consts import StandardType, MenuId
 from himena.standards.model_meta import (
     ArrayAxis,
@@ -13,6 +13,7 @@ from himena.standards.model_meta import (
     roi as _roi,
 )
 from himena.widgets._wrapper import SubWindow
+from himena.utils import image_utils
 from himena_builtins.tools.array import _cast_meta, _make_index_getter
 
 configure_submenu(MenuId.TOOLS_IMAGE_ROI, "ROI")
@@ -70,7 +71,7 @@ def crop_image_multi(model: WidgetDataModel) -> Parametric:
         for roi in rois:
             if not isinstance(roi, _roi.Roi2D):
                 continue
-            bbox = _2d_roi_to_bbox(roi, arr, meta)
+            bbox = image_utils.roi_2d_to_bbox(roi, arr, meta.is_rgb)
             bbox_list.append(tuple(bbox))
         return bbox_list
 
@@ -79,7 +80,7 @@ def crop_image_multi(model: WidgetDataModel) -> Parametric:
         meta_out = meta.without_rois()
         cropped_models: list[WidgetDataModel] = []
         for i, bbox in enumerate(bbox_list):
-            sl = _bbox_to_slice(bbox, meta)
+            sl = image_utils.bbox_to_slice(bbox, meta)
             arr_cropped = arr[(...,) + sl]
             model_0 = model.with_value(
                 arr_cropped.arr, metadata=meta_out, title=f"ROI-{i} of {model.title}"
@@ -138,28 +139,6 @@ def crop_image_nd(win: SubWindow) -> Parametric:
     return run_crop_image
 
 
-def _2d_roi_to_bbox(roi: _roi.Roi2D, arr: ArrayWrapper, meta: ImageMeta) -> Rect[int]:
-    bbox = roi.bbox().adjust_to_int()
-    xmax, ymax = _slice_shape(arr, meta)
-    bbox = bbox.limit_to(xmax, ymax)
-    if bbox.width <= 0 or bbox.height <= 0:
-        raise ValueError("Crop range out of bounds.")
-    return bbox
-
-
-def _bbox_to_slice(
-    bbox: tuple[int, int, int, int], meta: ImageMeta
-) -> tuple[slice, ...]:
-    left, top, width, height = bbox
-    ysl = slice(top, top + height)
-    xsl = slice(left, left + width)
-    if meta.is_rgb:
-        sl = (ysl, xsl, slice(None))
-    else:
-        sl = (ysl, xsl)
-    return sl
-
-
 def _make_roi_limits_getter(win: SubWindow, dim: Literal["x", "y"]):
     def _getter(*_):
         model = win.to_model()
@@ -168,7 +147,7 @@ def _make_roi_limits_getter(win: SubWindow, dim: Literal["x", "y"]):
         arr = wrap_array(model.value)
         if not isinstance(roi, _roi.Roi2D):
             raise NotImplementedError
-        left, top, width, height = _2d_roi_to_bbox(roi, arr, meta)
+        left, top, width, height = image_utils.roi_2d_to_bbox(roi, arr, meta.is_rgb)
         if dim == "x":
             return left, left + width
         return top, top + height
@@ -275,6 +254,7 @@ def select_rois(model: WidgetDataModel) -> Parametric:
     command_id="builtins:image:point-rois-to-dataframe",
 )
 def point_rois_to_dataframe(model: WidgetDataModel) -> WidgetDataModel:
+    """Convert point ROIs to a DataFrame."""
     rois = _get_rois_from_model(model)
     if len(rois) == 0:
         raise ValueError("No ROIs to convert")
@@ -313,6 +293,7 @@ def point_rois_to_dataframe(model: WidgetDataModel) -> WidgetDataModel:
     command_id="builtins:set-colormaps",
 )
 def set_colormaps(win: SubWindow) -> Parametric:
+    """Set the colormaps for each channel."""
     from himena.qt.magicgui import ColormapEdit
 
     model = win.to_model()
@@ -381,45 +362,6 @@ def split_channels(model: WidgetDataModel) -> list[WidgetDataModel]:
 
 
 @register_function(
-    title="Copy slice to clipboard",
-    types=StandardType.IMAGE,
-    menus=[MenuId.TOOLS_IMAGE, "/model_menu"],
-    command_id="builtins:copy-slice-to-clipboard",
-)
-def copy_slice_to_clipboard(model: WidgetDataModel) -> Parametric:
-    """Copy the current slice to the clipboard."""
-    arr = wrap_array(model.value)
-    meta = _cast_meta(model, ImageMeta)
-
-    def _get_bbox(*_):
-        bbox = None
-        if isinstance(rect := meta.current_roi, _roi.RectangleRoi):
-            bbox = tuple(_2d_roi_to_bbox(rect, arr, meta))
-        return bbox
-
-    def _get_indices(*_):
-        if (indices := meta.current_indices) is None:
-            raise ValueError("The `current_indices` attribute is not set.")
-        return indices
-
-    @configure_gui(bbox={"bind": _get_bbox}, indices={"bind": _get_indices})
-    def run_copy(
-        bbox: tuple[int, int, int, int],
-        indices: list[int | None],
-    ) -> ClipboardDataModel:
-        if bbox is None:
-            bbox = 0, 0, arr.shape[-1], arr.shape[-2]
-        arr_sliced = arr.get_slice(
-            tuple(slice(None) if i is None else i for i in indices)
-        )
-        sl = _bbox_to_slice(bbox, meta)
-        arr_cropped = arr_sliced[sl]
-        return ClipboardDataModel(image=arr_cropped)
-
-    return run_copy
-
-
-@register_function(
     title="Specify rectangle ...",
     types=StandardType.IMAGE,
     menus=[MenuId.TOOLS_IMAGE_ROI, "/model_menu/roi"],
@@ -433,7 +375,7 @@ def roi_specify_rectangle(win: SubWindow) -> Parametric:
     if isinstance(roi := meta.current_roi, _roi.RectangleRoi):
         x0, y0, w0, h0 = roi.x, roi.y, roi.width, roi.height
     else:
-        nx, ny = _slice_shape(wrap_array(model.value), meta)
+        nx, ny = image_utils.slice_shape(wrap_array(model.value), meta)
         x0, y0 = nx / 4, ny / 4
         w0, h0 = nx / 2, ny / 2
 
@@ -471,7 +413,7 @@ def roi_specify_ellipse(win: SubWindow) -> Parametric:
     if isinstance(roi := meta.current_roi, _roi.EllipseRoi):
         x0, y0, w0, h0 = roi.x, roi.y, roi.width, roi.height
     else:
-        nx, ny = _slice_shape(wrap_array(model.value), meta)
+        nx, ny = image_utils.slice_shape(wrap_array(model.value), meta)
         x0, y0 = nx / 4, ny / 4
         w0, h0 = nx / 2, ny / 2
 
@@ -509,7 +451,7 @@ def roi_specify_line(win: SubWindow) -> Parametric:
     if isinstance(roi := meta.current_roi, _roi.LineRoi):
         x1, y1, x2, y2 = roi.x1, roi.y1, roi.x2, roi.y2
     else:
-        nx, ny = _slice_shape(wrap_array(model.value), meta)
+        nx, ny = image_utils.slice_shape(wrap_array(model.value), meta)
         x1, y1 = nx / 4, ny / 4
         x2, y2 = nx / 4 * 3, ny / 4 * 3
 
@@ -606,7 +548,7 @@ def merge_channels() -> Parametric:
 
 @register_function(
     title="Stack images ...",
-    menus=[MenuId.TOOLS_IMAGE],
+    menus=[MenuId.TOOLS_IMAGE, "/model_menu/channels"],
     command_id="builtins:stack-images",
 )
 def stack_images() -> Parametric:
@@ -697,15 +639,9 @@ def _get_rois_from_model(model: WidgetDataModel) -> _roi.RoiListModel:
     return rois
 
 
-def _slice_shape(arr: ArrayWrapper, meta: ImageMeta) -> tuple[int, int]:
-    if meta.is_rgb:
-        return arr.shape[-2], arr.shape[-3]
-    return arr.shape[-1], arr.shape[-2]
-
-
 def _get_roi_box(model: WidgetDataModel) -> Rect[int]:
     arr = wrap_array(model.value)
     roi, meta = _get_current_roi_and_meta(model)
     if not isinstance(roi, _roi.Roi2D):
         raise NotImplementedError
-    return _2d_roi_to_bbox(roi, arr, meta)
+    return image_utils.roi_2d_to_bbox(roi, arr, meta.is_rgb)
