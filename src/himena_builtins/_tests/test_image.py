@@ -55,6 +55,20 @@ def test_image_view(qtbot: QtBot):
         qtbot.keyClick(image_view._img_view, Qt.Key.Key_E)
         qtbot.keyClick(image_view._img_view, Qt.Key.Key_G)
 
+        # click sliders
+        slider = image_view._dims_slider._sliders[0]
+        assert not slider._edit_value_line.isVisible()
+        qtbot.mouseDClick(slider._index_label, Qt.MouseButton.LeftButton)
+        assert slider._edit_value_line.isVisible()
+        qtbot.keyClick(slider._edit_value_line, Qt.Key.Key_Escape)
+        assert not slider._edit_value_line.isVisible()
+        qtbot.mouseDClick(slider._index_label, Qt.MouseButton.LeftButton)
+        assert slider._edit_value_line.isVisible()
+        slider._edit_value_line.setText("2")
+        qtbot.keyClick(slider._edit_value_line, Qt.Key.Key_Return)
+        assert not slider._edit_value_line.isVisible()
+        assert slider._slider.value() == 2
+
 def test_image_labels_view(qtbot: QtBot):
     image_view = QImageLabelView()
     image_view.show()
