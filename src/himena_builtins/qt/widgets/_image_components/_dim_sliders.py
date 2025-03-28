@@ -50,10 +50,14 @@ class QDimsSlider(QtW.QWidget):
             aname = axis.name
             slider.update_from_axis(axis)
             # TODO: show scale, unit and origin
-            width = slider._name_label.fontMetrics().width(aname)
+            width = slider._name_label.fontMetrics().boundingRect(aname).width()
             _axis_width_max = max(_axis_width_max, width)
             _i_max = slider._slider.maximum()
-            width = slider._index_label.fontMetrics().width(f"{_i_max}/{_i_max}")
+            width = (
+                slider._index_label.fontMetrics()
+                .boundingRect(f"{_i_max}/{_i_max}")
+                .width()
+            )
             _index_width_max = max(_index_width_max, width)
         for slider in self._sliders:
             slider._name_label.setFixedWidth(_axis_width_max + 6)
@@ -125,11 +129,9 @@ class _QAxisSlider(QtW.QWidget):
             self._index_label, alignment=QtCore.Qt.AlignmentFlag.AlignRight
         )
         self._axis = model_meta.ArrayAxis(name="")
-        self._edit_value_line = QtW.QLineEdit()
-        self._edit_value_line.setParent(self, QtCore.Qt.WindowType.Popup)
-        self._edit_value_line.hide()
+        self._edit_value_line = QCurrentIndexEdit(self)
         self._edit_value_line.setFont(self._index_label.font())
-        self._edit_value_line.editingFinished.connect(self._on_edit_finished)
+        self._edit_value_line.edited.connect(self._on_edit_finished)
 
     def update_from_axis(self, axis: model_meta.ArrayAxis):
         self._name_label.setText(axis.name)
@@ -151,21 +153,58 @@ class _QAxisSlider(QtW.QWidget):
     def _on_slider_changed(self, value: int) -> None:
         self._index_label.setText(f"{value}/{self._slider.maximum()}")
 
-    def _on_edit_finished(self):
-        value = int(self._edit_value_line.text())
+    def _on_edit_finished(self, value: int) -> None:
         self._slider.setValue(value)
         self._index_label.setText(f"{value}/{self._slider.maximum()}")
-        self._edit_value_line.hide()
-        self.parentWidget().setFocus()
 
     def mouseDoubleClickEvent(self, a0):
         if self._index_label.geometry().contains(a0.pos()):
-            self._edit_value_line.show()
-            self._edit_value_line.resize(self._index_label.size())
-            geo = self._index_label.geometry()
-            self._edit_value_line.move(self.mapToGlobal(geo.topLeft()))
-            self._edit_value_line.setText(self._index_label.text().split("/")[0])
-            self._edit_value_line.setSelection(0, len(self._edit_value_line.text()))
-            return
+            self._edit_value_line._double_clicked(self._index_label)
+        else:
+            return super().mouseDoubleClickEvent(a0)
 
-        return super().mouseDoubleClickEvent(a0)
+
+class QCurrentIndexEdit(QtW.QLineEdit):
+    """A line edit for current index."""
+
+    edited = QtCore.Signal(int)
+
+    def __init__(self, parent: QtW.QWidget):
+        super().__init__()
+        self.setParent(
+            parent,
+            QtCore.Qt.WindowType.Dialog | QtCore.Qt.WindowType.FramelessWindowHint,
+        )
+        self.hide()
+        self.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+
+    def _finish_edit(self):
+        self.edited.emit(int(self.text()))
+        self._cancel_edit()
+
+    def _cancel_edit(self):
+        self.hide()
+        self.parentWidget().setFocus()
+
+    def _double_clicked(self, label: QtW.QLabel):
+        self.show()
+        current, _max = label.text().split("/", 1)
+        dx = self.fontMetrics().boundingRect(f"/{_max}").width() + 1
+        size = label.size()
+        self.resize(size.width() - dx, size.height())
+        geo = label.geometry()
+        self.move(self.parentWidget().mapToGlobal(geo.topLeft()))
+        self.setText(current)
+        self.setSelection(0, len(self.text()))
+
+    def focusOutEvent(self, a0):
+        self._finish_edit()
+        return super().focusOutEvent(a0)
+
+    def keyPressEvent(self, a0):
+        if a0.key() == QtCore.Qt.Key.Key_Return:
+            self._finish_edit()
+        elif a0.key() == QtCore.Qt.Key.Key_Escape:
+            self._cancel_edit()
+        else:
+            return super().keyPressEvent(a0)
