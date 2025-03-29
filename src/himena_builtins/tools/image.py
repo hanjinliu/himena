@@ -120,7 +120,7 @@ def crop_image_nd(win: SubWindow) -> Parametric:
         conf_kwargs[axis_name] = {
             "widget_type": SliderRangeGetter,
             "getter": _make_index_getter(win, i),
-            "label": axis_name,
+            "label": axis_name,  # TODO: use axis label
         }
     axis_y, axis_x = axes_kwarg_names[ndim - index_yx_rgb : ndim - index_yx_rgb + 2]
     conf_kwargs[axis_y] = {"bind": _make_roi_limits_getter(win, "y")}
@@ -130,7 +130,7 @@ def crop_image_nd(win: SubWindow) -> Parametric:
     def run_crop_image(**kwargs: tuple[int | None, int | None]):
         model = win.to_model()  # NOTE: need to re-fetch the model
         arr = wrap_array(model.value)
-        sl_nd = tuple(slice(x0, x1 + 1) for x0, x1 in kwargs.values())
+        sl_nd = tuple(slice(x0, x1) for x0, x1 in kwargs.values())
         arr_cropped = arr[sl_nd]
         meta_out = meta.without_rois()
         meta_out.current_indices = None  # shape changed, need to reset

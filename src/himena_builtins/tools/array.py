@@ -119,7 +119,7 @@ def crop_array_nd(win: SubWindow) -> Parametric:
     def run_crop_array(**kwargs: tuple[int | None, int | None]):
         model = win.to_model()  # NOTE: need to re-fetch the model
         arr = wrap_array(model.value)
-        sl_nd = tuple(slice(x0, x1 + 1) for x0, x1 in kwargs.values())
+        sl_nd = tuple(slice(x0, x1) for x0, x1 in kwargs.values())
         arr_cropped = arr[sl_nd]
         meta_out = _update_meta(model.metadata)
         return model.with_value(arr_cropped, metadata=meta_out).with_title_numbering()
