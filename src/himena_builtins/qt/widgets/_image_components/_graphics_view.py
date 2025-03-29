@@ -169,6 +169,7 @@ class QImageGraphicsView(QBaseGraphicsView):
         self.geometry_changed.connect(self._scale_bar_widget.update_rect)
         self._stick_to_grid = False
         self.array_updated.connect(self._on_array_updated)
+        self._last_mouse_press_event: QtGui.QMouseEvent = None
 
     def add_image_layer(self, additive: bool = False):
         self._image_widgets.append(
@@ -369,16 +370,21 @@ class QImageGraphicsView(QBaseGraphicsView):
         return None
 
     def remove_current_item(self, remove_from_list: bool = False, reason: str = ""):
+        """Remove current ROI item.
+
+        Parameters
+        ----------
+        remove_from_list : bool, optional
+            If True, remove the item from the list of ROIs, otherwise just remove it
+            from the scene.
+        reason : str, optional
+            Only used for logging.
+        """
         if self._current_roi_item is not None:
             if not self._is_rois_visible:
                 self._current_roi_item.setVisible(False)
             if remove_from_list:
-                self.scene().removeItem(self._current_roi_item)
-                if not self._is_current_roi_item_not_registered:
-                    idx = self._roi_items.index(self._current_roi_item)
-                    del self._roi_items[idx]
-                    self.roi_removed.emit(idx)
-                self._qroi_labels.update()
+                self.remove_item(self._current_roi_item)
             else:
                 if self._is_current_roi_item_not_registered:
                     self.scene().removeItem(self._current_roi_item)
@@ -390,7 +396,21 @@ class QImageGraphicsView(QBaseGraphicsView):
                 reason,
             )
 
-    def select_item(self, item: QtW.QGraphicsItem | None):
+    def remove_item(self, item: QRoi):
+        self.scene().removeItem(item)
+        if not (
+            item is self._current_roi_item and self._is_current_roi_item_not_registered
+        ):
+            idx = self._roi_items.index(item)
+            del self._roi_items[idx]
+            self.roi_removed.emit(idx)
+        self._qroi_labels.update()
+
+    def select_item(
+        self,
+        item: QtW.QGraphicsItem | None,
+        is_registered_roi: bool = False,
+    ):
         """Select the item during selection mode."""
         if item is not self._current_roi_item:
             self.remove_current_item(reason="deselect")
@@ -407,23 +427,27 @@ class QImageGraphicsView(QBaseGraphicsView):
                 self._selection_handles.connect_point(item)
             elif isinstance(item, QRotatedRectangleRoi):
                 self._selection_handles.connect_rotated_rect(item)
-            self._is_current_roi_item_not_registered = False
+            self._is_current_roi_item_not_registered = not is_registered_roi
         if isinstance(item, QRoi):
             self._current_roi_item = item
             item.setVisible(True)
             _LOGGER.debug("Item selected: %r", type(item).__name__)
 
-    def select_item_at(self, pos: QtCore.QPointF):
+    def select_item_at(self, pos: QtCore.QPointF) -> QRoi | None:
         """Select the item at the given position."""
         item_clicked = None
         if self._current_roi_item and self._current_roi_item.contains(pos):
             item_clicked = self._current_roi_item
+            is_registered = not self._is_current_roi_item_not_registered
         elif self._is_rois_visible:
+            is_registered = False
             for item in reversed(self._roi_items):
                 if item.contains(pos):
                     item_clicked = item
+                    is_registered = True
                     break
-        self.select_item(item_clicked)
+        self.select_item(item_clicked, is_registered_roi=is_registered)
+        return item_clicked
 
     def _pos_to_tuple(self, pos: QtCore.QPointF) -> tuple[float, float]:
         if self._stick_to_grid:
@@ -453,14 +477,14 @@ class QImageGraphicsView(QBaseGraphicsView):
 
     def mousePressEvent(self, event: QtGui.QMouseEvent):
         # Store the position of the mouse when the button is pressed
+        self._last_mouse_press_event = event
         if isinstance(item_under_cursor := self.itemAt(event.pos()), QHandleRect):
             # prioritize the handle mouse event
             self.scene().setGrabSource(item_under_cursor)
             return super().mousePressEvent(event)
         self.scene().setGrabSource(self)
-        if event.button() == Qt.MouseButton.RightButton:
-            return super().mousePressEvent(event)
-        self._mouse_event_handler.pressed(event)
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._mouse_event_handler.pressed(event)
         return super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent):
@@ -478,8 +502,17 @@ class QImageGraphicsView(QBaseGraphicsView):
         return super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
-        self._mouse_event_handler.released(event)
+        if self._last_mouse_press_event.button() == Qt.MouseButton.LeftButton:
+            self._mouse_event_handler.released(event)
+        elif self._last_mouse_press_event.button() == Qt.MouseButton.RightButton:
+            if item := self.select_item_at(self.mapToScene(event.pos())):
+                menu = self._make_menu_for_roi(item)
+                menu.exec(event.globalPos())
+            else:
+                menu = self._make_menu_for_view()
+                menu.exec(event.globalPos())
         self.scene().setGrabSource(None)
+        self._last_mouse_press_event = None
         return super().mouseReleaseEvent(event)
 
     def mouseDoubleClickEvent(self, event: QtGui.QMouseEvent):
@@ -588,3 +621,21 @@ class QImageGraphicsView(QBaseGraphicsView):
         self.add_current_roi()
         self._selection_handles.connect_rect(item)
         set_clipboard(model.with_internal_data(item.copy()))  # needed for Ctrl+V x2
+
+    def _make_menu_for_roi(self, roi: QRoi):
+        menu = QtW.QMenu(self)
+        action = menu.addAction("Copy ROI")
+        action.triggered.connect(
+            lambda: set_clipboard(text=str(roi), internal_data=roi.copy())
+        )
+        action = menu.addAction("Delete ROI")
+        action.triggered.connect(lambda: self.remove_item(roi))
+        return menu
+
+    def _make_menu_for_view(self):
+        menu = QtW.QMenu(self)
+        action = menu.addAction("Copy view to clipboard")
+        action.triggered.connect(
+            lambda: QtW.QApplication.clipboard().setImage(self.grab().toImage())
+        )
+        return menu

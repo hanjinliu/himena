@@ -147,8 +147,11 @@ class OutputInterface(logging.Handler):
         return None
 
     def set_log_filter(self, text: str):
+        text = text.strip()
         for hnd in self._logger.handlers:
-            hnd.addFilter(logging.Filter(text))
+            hnd.filters.clear()
+            if text:
+                hnd.addFilter(logging.Filter(text))
 
     def connect_stdout(self):
         sys.stdout = self

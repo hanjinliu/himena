@@ -324,7 +324,7 @@ class QRoiCollection(QSimpleRoiCollection):
             view._slider_changed(indices, force_sync=True)
 
         # update selection in the image viewer
-        view._img_view.select_item(qroi)
+        view._img_view.select_item(qroi, is_registered_roi=True)
 
     def _remove_selected(self):
         return self.pop_rois(self.selections())
