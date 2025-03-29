@@ -26,7 +26,7 @@ def duplicate_this_slice(model: WidgetDataModel) -> Parametric:
             "Widget does not have ArrayMeta thus cannot determine the slice indices."
         )
 
-    def _get_indices(*_):
+    def _get_indices(*_) -> "tuple[int | None, ...]":
         if (indices := meta.current_indices) is None:
             raise ValueError("The `current_indices` attribute is not set.")
         return indices
@@ -42,7 +42,11 @@ def duplicate_this_slice(model: WidgetDataModel) -> Parametric:
             if isinstance(meta, ImageMeta):
                 update["axes"] = meta.axes[-2:] if meta.axes is not None else None
                 update["channel_axis"] = None
-                update["channels"] = None
+                # if the input image is colored, inherit the colormap
+                if meta.channel_axis is not None:
+                    update["channels"] = [meta.channels[indices[meta.channel_axis]]]
+                else:
+                    update["channels"] = None
             meta_sliced = meta.model_copy(update=update)
         else:
             meta_sliced = ArrayMeta(current_indices=())
