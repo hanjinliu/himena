@@ -117,7 +117,7 @@ class QSubWindowArea(QtW.QMdiArea):
                     self.subWindowActivated.emit(sub_window)
                 break
         else:
-            if event.buttons() & Qt.MouseButton.RightButton:
+            if event.button() == Qt.MouseButton.RightButton:
                 # context menu
                 app = get_main_window(self).model_app
                 menu = build_qmodel_menu(MenuId.FILE_NEW, app, self)
@@ -814,10 +814,10 @@ class QSubWindowTitleBar(QtW.QFrame):
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
         self._is_ctrl_drag = False
         self._is_double_clicking = False
-        if event.buttons() & Qt.MouseButton.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             self._drag_position = None
             self._fix_position()
-        elif event.buttons() & Qt.MouseButton.RightButton:
+        elif event.button() == Qt.MouseButton.RightButton:
             # context menu
             context_menu = self._prep_window_menu()
             context_menu.exec(event.globalPos())

@@ -294,7 +294,7 @@ class QImageGraphicsView(QBaseGraphicsView):
         set_status_tip(f"Mouse mode: {mode.name}", duration=1)
 
     def setSmoothing(self, enabled: bool):
-        # Enable or disable pixmap smoothing
+        """Enable/disable image smoothing."""
         for im in self._image_widgets:
             im.setSmoothingEnabled(enabled)
 
@@ -302,6 +302,7 @@ class QImageGraphicsView(QBaseGraphicsView):
         return super().scene()
 
     def resize_event(self, old_size: Size, new_size: Size):
+        """Process the resize event."""
         if (w_new := new_size.width) < 10 or (h_new := new_size.height) < 10:
             return
         if (w_old := old_size.width) == 0 or (h_old := old_size.height) == 0:
@@ -401,7 +402,7 @@ class QImageGraphicsView(QBaseGraphicsView):
         if not (
             item is self._current_roi_item and self._is_current_roi_item_not_registered
         ):
-            idx = self._roi_items.index(item)
+            idx = self._roi_items.index(self._current_roi_item)
             del self._roi_items[idx]
             self.roi_removed.emit(idx)
         self._qroi_labels.update()
