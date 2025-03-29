@@ -5,6 +5,7 @@ from io import StringIO
 from typing import TYPE_CHECKING, Any, Iterable, Literal, Mapping
 from dataclasses import dataclass, field
 import numpy as np
+from numpy.typing import NDArray
 
 from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
@@ -384,8 +385,8 @@ class QSpreadsheet(QTableBase):
         r, c = index
         arr = self.model()._arr
         _ud_old_shape = arr.shape
-        r_max = r.stop if isinstance(r, slice) else r
-        c_max = c.stop if isinstance(c, slice) else c
+        r_max = r.stop - 1 if isinstance(r, slice) else r
+        c_max = c.stop - 1 if isinstance(c, slice) else c
         if r_max >= arr.shape[0] or c_max >= arr.shape[1]:  # need expansion
             _ud_old_data = ""
             _ud_old_shape = arr.shape
@@ -396,7 +397,7 @@ class QSpreadsheet(QTableBase):
         else:
             _ud_old_data = arr[r, c]
             _action_reshape = None
-        arr[r, c] = str(value)
+        arr[r, c] = value
         _ud_new_data = arr[r, c]
         _action = EditAction(_ud_old_data, _ud_new_data, (r, c))
         if _action_reshape is not None:
@@ -448,7 +449,7 @@ class QSpreadsheet(QTableBase):
 
     def array_delete(
         self,
-        indices: int | Iterable[int],
+        indices: Iterable[int],
         axis: Literal[0, 1],
         *,
         record_undo: bool = True,
@@ -457,6 +458,7 @@ class QSpreadsheet(QTableBase):
         # Make action group that remove the row/column one by one. Here, indices may be
         # out of range, as this widget is a spreadsheet.
         size_of_axis = self.model()._arr.shape[axis]
+        indices = list(indices)
         _action = ActionGroup(
             [
                 RemoveAction(idx, axis, self.model()._arr[_sl(idx, axis)].copy())
@@ -539,17 +541,14 @@ class QSpreadsheet(QTableBase):
             buf, dtype=np.dtypes.StringDType(), delimiter="\t", ndmin=2
         )
         # undo info
-        arr = self.model()._arr
-        sl = self._selection_model.get_single_range()
         _ud_old_shape = self.data_shape()
-        _ud_old_data = arr[sl].copy()
 
-        self._paste_array(arr_paste)
+        sl0, sl1, _ud_old_data = self._paste_array(arr_paste)
 
         # undo info
         _ud_new_shape = self.data_shape()
         _ud_new_data = arr_paste.copy()
-        _action_edit = EditAction(_ud_old_data, _ud_new_data, sl)
+        _action_edit = EditAction(_ud_old_data, _ud_new_data, (sl0, sl1))
         if _ud_old_shape == _ud_new_shape:
             _action = _action_edit
         else:
@@ -557,7 +556,8 @@ class QSpreadsheet(QTableBase):
             _action = ActionGroup([_action_reshape, _action_edit])
         self._undo_stack.push(_action)
 
-    def _paste_array(self, arr_paste: np.ndarray):
+    def _paste_array(self, arr_paste: np.ndarray) -> tuple[slice, slice, np.ndarray]:
+        """Update the array and return the pasteed range and old data."""
         arr = self.model()._arr
         # paste in the text
         rng = self._selection_model.get_single_range()
@@ -582,22 +582,36 @@ class QSpreadsheet(QTableBase):
             )
 
         # paste the data
-        arr[row0 : row0 + lr, col0 : col0 + lc] = arr_paste
+        target_slice = (slice(row0, row0 + lr), slice(col0, col0 + lc))
+        old_data = arr[target_slice].copy()
+        arr[target_slice] = arr_paste
         self.model().set_array(arr)
 
         # select what was just pasted
-        self._selection_model.set_ranges(
-            [(slice(row0, row0 + lr), slice(col0, col0 + lc))]
-        )
+        self._selection_model.set_ranges([target_slice])
         self.update()
+        return target_slice + (old_data,)
 
     def _delete_selection(self):
         _actions = []
+        _maybe_empty_edges = False
+        arr = self.model()._arr
+        # replace all the selected cells with empty strings.
         for sel in self._selection_model.ranges:
-            old_array = self.model()._arr.copy()
+            old_array = arr[sel].copy()
             new_array = np.zeros_like(old_array)
             _actions.append(EditAction(old_array, new_array, sel))
-            self.model()._arr[sel] = ""
+            arr[sel] = ""
+            if sel[0].stop == arr.shape[0] or sel[1].stop == arr.shape[1]:
+                _maybe_empty_edges = True
+        # if this deletion makes the array edges empty, array should be shrunk.
+        if _maybe_empty_edges:
+            arr_nchars = np.char.str_len(arr)
+            size_0 = _size_to_shrink(np.max(arr_nchars, axis=1))
+            size_1 = _size_to_shrink(np.max(arr_nchars, axis=0))
+            if size_0 < arr_nchars.shape[0] or size_1 < arr_nchars.shape[1]:
+                self.array_shrink(size_0, size_1)
+                _actions.append(ReshapeAction(arr_nchars.shape, (size_0, size_1)))
         self.update()
         self._undo_stack.push(ActionGroup(_actions))
 
@@ -617,13 +631,13 @@ class QSpreadsheet(QTableBase):
         selected_rows = set[int]()
         for sel in self._selection_model.ranges:
             selected_rows.update(range(sel[0].start, sel[0].stop))
-        self.array_delete(selected_rows, 0)
+        self.array_delete(selected_rows, axis=0)
 
     def _remove_selected_columns(self):
         selected_cols = set[int]()
         for sel in self._selection_model.ranges:
             selected_cols.update(range(sel[1].start, sel[1].stop))
-        self.array_delete(selected_cols, 1)
+        self.array_delete(selected_cols, axis=1)
 
     def keyPressEvent(self, e: QtGui.QKeyEvent):
         _Ctrl = QtCore.Qt.KeyboardModifier.ControlModifier
@@ -787,6 +801,20 @@ def _array_like_to_array(value) -> np.ndarray:
     if table.ndim < 2:
         table = table.reshape(-1, 1)
     return table
+
+
+def _size_to_shrink(proj: NDArray[np.intp]) -> int:
+    """Determine the number of rows/columns array should be shrunk to.
+
+    >>> _num_to_shrink(np.array([4, 3, 0, 0]))  # 2
+    >>> _num_to_shrink(np.array([4, 3, 6, 0]))  # 3
+    >>> _num_to_shrink(np.array([4, 3]))  # 2
+    """
+    _len = proj.size
+    for i in range(_len - 1, -1, -1):
+        if proj[i] != 0:
+            return i + 1
+    return _len
 
 
 @dataclass

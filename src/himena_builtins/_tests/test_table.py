@@ -190,3 +190,47 @@ def test_large_data(qtbot: QtBot):
     ss.redo()
     assert ss.model().rowCount() == 184
     assert ss.model().columnCount() == 195
+
+def test_table_deletion_at_edges(qtbot: QtBot):
+    # test deleting at the edges of the table
+    ss = QSpreadsheet()
+    qtbot.addWidget(ss)
+    # "a" "b" ""
+    # "c" [d] "e" <- delete this cell
+    ss.update_model(WidgetDataModel(value=[["a", "b", ""], ["c", "d", "e"]], type="table"))
+    ss._selection_model.set_ranges([(slice(1, 2), slice(1, 2))])
+    ss._delete_selection()
+    assert_equal(ss.to_model().value, [["a", "b", ""], ["c", "", "e"]])
+
+    # "a" "b" ""
+    # "c" "d" [e] <- delete this cell
+    ss.update_model(WidgetDataModel(value=[["a", "b", ""], ["c", "d", "e"]], type="table"))
+    ss._selection_model.set_ranges([(slice(1, 2), slice(2, 3))])
+    ss._delete_selection()
+    assert_equal(ss.to_model().value, [["a", "b"], ["c", "d"]])
+
+    # "a" "b" ""
+    # "c" "d" "e"
+    # ""  [f] "" <- delete this cell
+    ss.update_model(
+        WidgetDataModel(
+            value=[["a", "b", ""], ["c", "d", "e"], ["", "f", ""]],
+            type="table",
+        )
+    )
+    ss._selection_model.set_ranges([(slice(2, 3), slice(1, 2))])
+    ss._delete_selection()
+    assert_equal(ss.to_model().value, [["a", "b", ""], ["c", "d", "e"]])
+
+    # "a" "b" ""
+    # "" "" ""
+    # "" "" [c] <- delete this cell
+    ss.update_model(
+        WidgetDataModel(
+            value=[["a", "b", ""], ["", "", ""], ["", "", "c"]],
+            type="table",
+        )
+    )
+    ss._selection_model.set_ranges([(slice(2, 3), slice(2, 3))])
+    ss._delete_selection()
+    assert_equal(ss.to_model().value, [["a", "b"]])
