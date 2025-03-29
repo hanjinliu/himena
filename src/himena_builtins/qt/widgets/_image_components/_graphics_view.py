@@ -169,7 +169,7 @@ class QImageGraphicsView(QBaseGraphicsView):
         self.geometry_changed.connect(self._scale_bar_widget.update_rect)
         self._stick_to_grid = False
         self.array_updated.connect(self._on_array_updated)
-        self._last_mouse_press_event: QtGui.QMouseEvent = None
+        self._last_mouse_press_event: QtGui.QMouseEvent | None = None
 
     def add_image_layer(self, additive: bool = False):
         self._image_widgets.append(
@@ -411,7 +411,15 @@ class QImageGraphicsView(QBaseGraphicsView):
         item: QtW.QGraphicsItem | None,
         is_registered_roi: bool = False,
     ):
-        """Select the item during selection mode."""
+        """Select the item during selection mode.
+
+        Parameters
+        ----------
+        item : QGraphicsItem or None
+            The item to select. If None, deselect the current item.
+        is_registered_roi : bool, optional
+            If True, the `item` is a considered as a registered ROI.
+        """
         if item is not self._current_roi_item:
             self.remove_current_item(reason="deselect")
         if item is not None:
@@ -491,7 +499,7 @@ class QImageGraphicsView(QBaseGraphicsView):
         # Move the image using the mouse
         if event.button() == Qt.MouseButton.NoButton:
             self.hovered.emit(self.mapToScene(event.pos()))
-        elif event.buttons() & Qt.MouseButton.LeftButton:
+        elif event.button() == Qt.MouseButton.LeftButton:
             if (
                 self._mouse_event_handler._pos_drag_start is None
                 or self._mouse_event_handler._pos_drag_prev is None
@@ -502,6 +510,8 @@ class QImageGraphicsView(QBaseGraphicsView):
         return super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
+        if self._last_mouse_press_event is None:
+            return super().mouseReleaseEvent(event)
         if self._last_mouse_press_event.button() == Qt.MouseButton.LeftButton:
             self._mouse_event_handler.released(event)
         elif self._last_mouse_press_event.button() == Qt.MouseButton.RightButton:

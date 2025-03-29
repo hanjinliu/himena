@@ -52,7 +52,10 @@ class QtMouseEvent(MouseEventHandler[QtGui.QMouseEvent]):
 
     def is_click(self, event: QtGui.QMouseEvent) -> bool:
         """Check if the event is a click."""
-        return self._pos_drag_start == event.pos()
+        return (
+            self._pos_drag_start is not None
+            and (self._pos_drag_start - event.pos()).manhattanLength() < 2
+        )
 
 
 class PanZoomMouseEvents(QtMouseEvent):

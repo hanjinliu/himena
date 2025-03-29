@@ -271,10 +271,10 @@ class QRoiCollection(QSimpleRoiCollection):
         self._dragarea.dragged.connect(self._on_dragged)
         self._roi_visible_btn = QToggleSwitch()
         self._roi_visible_btn.setText("Show ROIs")
-        self._roi_visible_btn.setChecked(False)
+        self._roi_visible_btn.setChecked(True)
         self._roi_labels_btn = QToggleSwitch()
         self._roi_labels_btn.setText("Labels")
-        self._roi_labels_btn.setChecked(False)
+        self._roi_labels_btn.setChecked(True)
         self._roi_visible_btn.setSizePolicy(
             QtW.QSizePolicy(
                 QtW.QSizePolicy.Policy.Minimum, QtW.QSizePolicy.Policy.Minimum

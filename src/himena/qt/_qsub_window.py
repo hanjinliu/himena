@@ -81,7 +81,7 @@ class QSubWindowArea(QtW.QMdiArea):
     def mousePressEvent(self, event: QtGui.QMouseEvent):
         self._last_drag_pos = self._last_press_pos = event.pos()
         if (
-            event.button() == Qt.MouseButton.LeftButton
+            event.buttons() & Qt.MouseButton.LeftButton
             and event.modifiers() & Qt.KeyboardModifier.ControlModifier
         ):
             self.setCursor(Qt.CursorShape.ClosedHandCursor)
@@ -117,7 +117,7 @@ class QSubWindowArea(QtW.QMdiArea):
                     self.subWindowActivated.emit(sub_window)
                 break
         else:
-            if event.button() == Qt.MouseButton.RightButton:
+            if event.buttons() & Qt.MouseButton.RightButton:
                 # context menu
                 app = get_main_window(self).model_app
                 menu = build_qmodel_menu(MenuId.FILE_NEW, app, self)
@@ -725,7 +725,7 @@ class QSubWindowTitleBar(QtW.QFrame):
         self._is_ctrl_drag = False
         if self._is_double_clicking:
             return super().mousePressEvent(event)
-        if event.button() == Qt.MouseButton.LeftButton:
+        if event.buttons() & Qt.MouseButton.LeftButton:
             _subwin = self._subwindow
             if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
                 # start dragging subwindow
@@ -814,10 +814,10 @@ class QSubWindowTitleBar(QtW.QFrame):
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
         self._is_ctrl_drag = False
         self._is_double_clicking = False
-        if event.button() == Qt.MouseButton.LeftButton:
+        if event.buttons() & Qt.MouseButton.LeftButton:
             self._drag_position = None
             self._fix_position()
-        elif event.button() == Qt.MouseButton.RightButton:
+        elif event.buttons() & Qt.MouseButton.RightButton:
             # context menu
             context_menu = self._prep_window_menu()
             context_menu.exec(event.globalPos())
@@ -825,7 +825,7 @@ class QSubWindowTitleBar(QtW.QFrame):
 
     def mouseDoubleClickEvent(self, event: QtGui.QMouseEvent):
         self._is_double_clicking = True
-        if event.button() == Qt.MouseButton.LeftButton:
+        if event.buttons() & Qt.MouseButton.LeftButton:
             self._toggle_size()
         return super().mouseDoubleClickEvent(event)
 
