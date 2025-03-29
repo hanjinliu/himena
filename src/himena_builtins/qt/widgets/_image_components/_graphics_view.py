@@ -385,7 +385,12 @@ class QImageGraphicsView(QBaseGraphicsView):
             if not self._is_rois_visible:
                 self._current_roi_item.setVisible(False)
             if remove_from_list:
-                self.remove_item(self._current_roi_item)
+                self.scene().removeItem(self._current_roi_item)
+                if not self._is_current_roi_item_not_registered:
+                    idx = self._roi_items.index(self._current_roi_item)
+                    del self._roi_items[idx]
+                    self.roi_removed.emit(idx)
+                self._qroi_labels.update()
             else:
                 if self._is_current_roi_item_not_registered:
                     self.scene().removeItem(self._current_roi_item)
