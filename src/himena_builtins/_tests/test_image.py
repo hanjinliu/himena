@@ -511,8 +511,24 @@ def test_find_nice_position():
 def test_flat_roi_always_selected(qtbot: QtBot):
     view = QImageView()
     qtbot.addWidget(view)
+    cur_roi = LineRoi(x1=2, y1=4, x2=5, y2=5)
     view.update_model(
         WidgetDataModel(
             value=np.zeros((5, 10, 10)),
+            type=StandardType.IMAGE,
+            metadata=ImageMeta(
+                axes=[
+                    ArrayAxis(name="t"),
+                    ArrayAxis(name="y"),
+                    ArrayAxis(name="x"),
+                ],
+                current_roi=cur_roi,
+                rois=RoiListModel(
+                    items=[cur_roi], indices=np.array([[-1, -1]]), axis_names=["t"],
+                ),
+            ),
         )
     )
+    assert view._img_view._current_roi_item is not None
+    view._dims_slider.setValue((1,))
+    assert view._img_view._current_roi_item is not None
