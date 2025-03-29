@@ -11,7 +11,7 @@ from himena.qt._qclickable_label import QClickableLabel
 from himena.qt._qsub_window import QSubWindowArea, QSubWindow
 from himena.qt._qrename import QTabRenameLineEdit
 from himena.qt._utils import get_main_window
-from himena.consts import ActionGroup, MenuId
+from himena.consts import ActionGroup, MenuId, MonospaceFontFamily
 from himena import _drag
 from himena.types import WindowRect
 from himena.workflow._reader import ReaderMethod
@@ -25,6 +25,7 @@ class QCloseTabToolButton(QtW.QToolButton):
         self.setFixedSize(12, 12)
         self.clicked.connect(self.close_area)
         self.setToolTip("Close this tab")
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
 
     def close_area(self):
         main = get_main_window(self)
@@ -43,6 +44,18 @@ class QTabBar(QtW.QTabBar):
         self.setAcceptDrops(True)
         self._pressed_pos = QtCore.QPoint()
 
+        # "new tab" button
+        tb = QtW.QToolButton()
+        tb.setParent(parent)
+        tb.setText("+")
+        tb.setFont(QtGui.QFont(MonospaceFontFamily, 12, 15))
+        tb.setToolTip("New Tab")
+        tb.clicked.connect(lambda: get_main_window(self).add_tab())
+        tb.setFixedWidth(20)
+        tb.hide()
+        self._plus_btn = tb
+        self._plus_btn.setFixedHeight(18)
+
     def dragEnterEvent(self, e: QtGui.QDragEnterEvent) -> None:
         e.accept()
 
@@ -55,6 +68,29 @@ class QTabBar(QtW.QTabBar):
             main = get_main_window(self)
             main.tabs[target_index].add_data_model(model)
         return super().dropEvent(e)
+
+    def resizeEvent(self, a0):
+        super().resizeEvent(a0)
+        self._move_plus_btn()
+
+    def tabLayoutChange(self):
+        super().tabLayoutChange()
+        self._move_plus_btn()
+
+    def showEvent(self, a0):
+        super().showEvent(a0)
+        self._move_plus_btn()
+
+    def _move_plus_btn(self) -> None:
+        """Move the "+" button to the right of the last tab."""
+        if self.tab_widget()._is_startup_only():
+            self._plus_btn.hide()
+            return None
+        self._plus_btn.show()
+        size = self.width()
+        self._plus_btn.move(size + 4, 1)
+        self._plus_btn.show()
+        return None
 
     def _process_drop_event(self, sub: QSubWindow, target_index: int) -> None:
         # this is needed to initialize the drag state
@@ -113,22 +149,14 @@ class QTabWidget(QtW.QTabWidget):
         self.setAcceptDrops(True)
 
         self.activeWindowChanged.connect(self._repolish)
-
-        # "new tab" button
-        tb = QtW.QToolButton()
-        tb.setText("+")
-        tb.setFont(QtGui.QFont("Arial", 12, weight=15))
-        tb.setToolTip("New Tab")
-        tb.clicked.connect(lambda: get_main_window(self).add_tab())
-        self.setCornerWidget(tb, Qt.Corner.TopRightCorner)
+        self._tabbar._plus_btn.hide()
 
     def _init_startup(self):
         self._startup_widget = QStartupWidget(self)
         self._add_startup_widget()
 
     def add_tab_area(self, tab_name: str | None = None) -> QSubWindowArea:
-        """
-        Add a new tab with a sub-window area.
+        """Add a new tab with a sub-window area.
 
         Parameters
         ----------
@@ -255,6 +283,7 @@ class QTabWidget(QtW.QTabWidget):
     def resizeEvent(self, a0):
         super().resizeEvent(a0)
         self.resized.emit()
+        self._tabbar.setMaximumWidth(self.width() - 22)
         return None
 
     @thread_worker

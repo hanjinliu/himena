@@ -128,10 +128,10 @@ class QGotoWidget(QtW.QWidget):
 
     def activate_window_for_current_index(self):
         i_tab = self._stack.currentIndex()
-        i_win = self.currentListWidget().currentRow()
         main = self._main._himena_main_window
         main.tabs.current_index = i_tab
-        main.tabs.current().current_index = i_win
+        if self.currentListWidget().count() > 0:
+            main.tabs.current().current_index = self.currentListWidget().currentRow()
         if (win := main.current_window) and win.state is WindowState.MIN:
             win.state = WindowState.NORMAL
         self.close()
