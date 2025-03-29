@@ -169,7 +169,6 @@ class QImageGraphicsView(QBaseGraphicsView):
         self.geometry_changed.connect(self._scale_bar_widget.update_rect)
         self._stick_to_grid = False
         self.array_updated.connect(self._on_array_updated)
-        self._last_mouse_press_event: QtGui.QMouseEvent | None = None
 
     def add_image_layer(self, additive: bool = False):
         self._image_widgets.append(
@@ -402,7 +401,7 @@ class QImageGraphicsView(QBaseGraphicsView):
         if not (
             item is self._current_roi_item and self._is_current_roi_item_not_registered
         ):
-            idx = self._roi_items.index(self._current_roi_item)
+            idx = self._roi_items.index(item)
             del self._roi_items[idx]
             self.roi_removed.emit(idx)
         self._qroi_labels.update()
@@ -486,7 +485,6 @@ class QImageGraphicsView(QBaseGraphicsView):
 
     def mousePressEvent(self, event: QtGui.QMouseEvent):
         # Store the position of the mouse when the button is pressed
-        self._last_mouse_press_event = event
         if isinstance(item_under_cursor := self.itemAt(event.pos()), QHandleRect):
             # prioritize the handle mouse event
             self.scene().setGrabSource(item_under_cursor)
@@ -513,11 +511,9 @@ class QImageGraphicsView(QBaseGraphicsView):
         return super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
-        if self._last_mouse_press_event is None:
-            return super().mouseReleaseEvent(event)
-        if self._last_mouse_press_event.button() == Qt.MouseButton.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             self._mouse_event_handler.released(event)
-        elif self._last_mouse_press_event.button() == Qt.MouseButton.RightButton:
+        elif event.button() == Qt.MouseButton.RightButton:
             if item := self.select_item_at(self.mapToScene(event.pos())):
                 menu = self._make_menu_for_roi(item)
                 menu.exec(event.globalPos())
@@ -525,7 +521,6 @@ class QImageGraphicsView(QBaseGraphicsView):
                 menu = self._make_menu_for_view()
                 menu.exec(event.globalPos())
         self.scene().setGrabSource(None)
-        self._last_mouse_press_event = None
         return super().mouseReleaseEvent(event)
 
     def mouseDoubleClickEvent(self, event: QtGui.QMouseEvent):
