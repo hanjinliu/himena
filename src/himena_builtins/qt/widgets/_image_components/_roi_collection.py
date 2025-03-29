@@ -86,6 +86,7 @@ Indices = tuple[int, ...]
 
 class QSimpleRoiCollection(QtW.QWidget):
     drag_requested = QtCore.Signal(list)  # list[int] of selected indices
+    rois_removed = QtCore.Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -198,12 +199,6 @@ class QSimpleRoiCollection(QtW.QWidget):
         self._list_view.update()
         return roi
 
-    def pop_roi(self, index: int) -> _roi_items.QRoi:
-        self._list_view.model().beginRemoveRows(QtCore.QModelIndex(), index, index)
-        self._qroi_list.pop(index)
-        self._list_view.model().endRemoveRows()
-        return roi
-
     def pop_rois(self, indices: list[int]):
         sl = np.ones(len(self._qroi_list), dtype=bool)
         sl[indices] = False
@@ -217,6 +212,7 @@ class QSimpleRoiCollection(QtW.QWidget):
 
     def remove_selected_rois(self):
         self.pop_rois(self.selections())
+        self.rois_removed.emit()
 
 
 class QRoiCollection(QSimpleRoiCollection):
@@ -299,7 +295,7 @@ class QRoiCollection(QSimpleRoiCollection):
         self.roi_item_clicked.connect(self._roi_item_clicked)
         self._add_btn.clicked.connect(parent._img_view.add_current_roi)
         self.drag_requested.connect(parent._run_drag_model)
-        self._remove_btn.clicked.connect(self._remove_selected)
+        self._remove_btn.clicked.connect(self.remove_selected_rois)
 
         self._roi_visible_btn.toggled.connect(self._on_roi_visible_btn_clicked)
         self._roi_labels_btn.toggled.connect(self._on_roi_labels_btn_clicked)
@@ -325,9 +321,6 @@ class QRoiCollection(QSimpleRoiCollection):
 
         # update selection in the image viewer
         view._img_view.select_item(qroi)
-
-    def _remove_selected(self):
-        return self.pop_rois(self.selections())
 
     def _on_roi_visible_btn_clicked(self, checked: bool):
         if self._roi_labels_btn.isChecked() and not checked:
@@ -412,7 +405,7 @@ class QRoiListView(QtW.QListView):
         )
         action_flatten.setToolTip("Flatten the selected ROI into 2D")
         action_delete = menu.addAction(
-            "Delete", lambda: self.parent()._remove_selected()
+            "Delete", lambda: self.parent().remove_selected_rois()
         )
         action_delete.setToolTip("Delete the selected ROIs")
         return menu

@@ -507,3 +507,12 @@ def test_find_nice_position():
 
         p = _find_nice_rect_position(QtCore.QPointF(x, y), QtCore.QPointF(0, 0))
         assert abs(p.x()) == abs(p.y())
+
+def test_flat_roi_always_selected(qtbot: QtBot):
+    view = QImageView()
+    qtbot.addWidget(view)
+    view.update_model(
+        WidgetDataModel(
+            value=np.zeros((5, 10, 10)),
+        )
+    )
