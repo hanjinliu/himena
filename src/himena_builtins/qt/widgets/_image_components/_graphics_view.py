@@ -436,11 +436,11 @@ class QImageGraphicsView(QBaseGraphicsView):
     def select_item_at(self, pos: QtCore.QPointF) -> QRoi | None:
         """Select the item at the given position."""
         item_clicked = None
+        is_registered = False
         if self._current_roi_item and self._current_roi_item.contains(pos):
             item_clicked = self._current_roi_item
             is_registered = not self._is_current_roi_item_not_registered
         elif self._is_rois_visible:
-            is_registered = False
             for item in reversed(self._roi_items):
                 if item.contains(pos):
                     item_clicked = item
