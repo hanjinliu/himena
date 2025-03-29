@@ -5,6 +5,7 @@ from himena.standards.model_meta import TableMeta
 from himena.testing import WidgetTester, table
 from himena.types import WidgetDataModel
 from himena_builtins.qt.widgets.table import QSpreadsheet
+from qtpy.QtWidgets import QApplication
 from qtpy.QtCore import Qt
 
 _Ctrl = Qt.KeyboardModifier.ControlModifier
@@ -155,3 +156,37 @@ def test_commands(himena_ui: MainWindow):
         with_params={"selection": ((0, 10), (1, 2)), "start": 1, "step": 1}
     )
     assert_equal(himena_ui.current_model.value[0:10, 1], [str(i) for i in range(1, 11)])
+
+def test_large_data(qtbot: QtBot):
+    # initialize with a large data
+    ss = QSpreadsheet()
+    qtbot.addWidget(ss)
+    ss.update_model(
+        WidgetDataModel(
+            value=[["a"] * 100] * 1000,
+            type="table",
+        )
+    )
+    assert ss.model().rowCount() == 1001
+    assert ss.model().columnCount() == 101
+
+    # paste a large data
+    ss = QSpreadsheet()
+    qtbot.addWidget(ss)
+    ss.update_model(WidgetDataModel(value=[["a"]], type="table"))
+    ss.setCurrentIndex(ss.model().index(0, 0))
+    row_count_old = ss.model().rowCount()
+    col_count_old = ss.model().columnCount()
+    row = "\t".join(str(i) for i in range(194))
+    data = "\n".join([row for _ in range(183)])
+    QApplication.clipboard().setText(data)
+    ss._selection_model.set_ranges([(slice(0, 1), slice(0, 1))])
+    ss._paste_from_clipboard()
+    assert ss.model().rowCount() == 184
+    assert ss.model().columnCount() == 195
+    ss.undo()
+    assert ss.model().rowCount() == row_count_old
+    assert ss.model().columnCount() == col_count_old
+    ss.redo()
+    assert ss.model().rowCount() == 184
+    assert ss.model().columnCount() == 195
