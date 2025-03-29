@@ -491,7 +491,9 @@ class QImageGraphicsView(QBaseGraphicsView):
             self.scene().setGrabSource(item_under_cursor)
             return super().mousePressEvent(event)
         self.scene().setGrabSource(self)
-        if event.buttons() & Qt.MouseButton.LeftButton:
+        if event.button() == Qt.MouseButton.RightButton:
+            pass
+        else:
             self._mouse_event_handler.pressed(event)
         return super().mousePressEvent(event)
 
