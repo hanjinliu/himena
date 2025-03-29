@@ -9,9 +9,8 @@ from qtpy import QtGui, QtCore
 from qtpy.QtCore import Qt
 import numpy as np
 from cmap import Colormap
-from superqt import ensure_main_thread
+from superqt import ensure_main_thread, QToggleSwitch
 
-from himena.qt.magicgui._toggle_switch import QLabeledToggleSwitch
 from himena.consts import StandardType
 from himena.standards import roi, model_meta
 from himena.qt._utils import drag_model, qsignal_blocker
@@ -51,7 +50,7 @@ class QImageViewBase(QtW.QSplitter):
         layout = QtW.QVBoxLayout(widget_left)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
-        self._stick_grid_switch = QLabeledToggleSwitch()
+        self._stick_grid_switch = QToggleSwitch()
         self._stick_grid_switch.setText("Stick to Grid")
         self._stick_grid_switch.setChecked(True)
         self._stick_grid_switch.setToolTip(

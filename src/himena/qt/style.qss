@@ -665,3 +665,8 @@ QCircularProgressBar {
 QModelDrop {
     border-radius: 8px;
 }
+
+QChannelToggleSwitch {
+    qproperty-handleSize: 14;
+    qproperty-offColor: #[background_dim];
+}

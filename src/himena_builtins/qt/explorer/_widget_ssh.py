@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from superqt.utils import thread_worker
-from superqt import QIconifyIcon
+from superqt import QIconifyIcon, QToggleSwitch
 
 from himena.workflow import RemoteReaderMethod
 from himena import _drag
@@ -18,7 +18,6 @@ from himena.utils.misc import lru_cache
 from himena.utils.cli import local_to_remote
 from himena.widgets import MainWindow, set_status_tip, notify
 from himena.plugins import validate_protocol
-from himena.qt.magicgui._toggle_switch import QLabeledToggleSwitch
 from himena_builtins.qt.widgets._shared import labeled
 
 if TYPE_CHECKING:
@@ -54,7 +53,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         self._port_edit.setFont(font)
         self._port_edit.setValidator(QtGui.QIntValidator(0, 65535))
         self._port_edit.setMaximumWidth(40)
-        self._is_wsl_switch = QLabeledToggleSwitch()
+        self._is_wsl_switch = QToggleSwitch()
         self._is_wsl_switch.setText("Use WSL")
         self._is_wsl_switch.setFixedHeight(24)
         self._is_wsl_switch.setChecked(False)
@@ -69,7 +68,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         self._protocol_choice.setCurrentIndex(0)
         self._protocol_choice.setToolTip("Choose the protocol to send files.")
 
-        self._show_hidden_files_switch = QLabeledToggleSwitch()
+        self._show_hidden_files_switch = QToggleSwitch()
         self._show_hidden_files_switch.setText("Hidden Files")
         self._show_hidden_files_switch.setToolTip("Also show hidden files")
         self._show_hidden_files_switch.setFixedHeight(24)
@@ -292,7 +291,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         )
         mime.setHtml(
             "<br>".join(
-                f"<span ftype=\"{'d' if meth.force_directory else 'f'}\">{meth.to_str()}</span>"
+                f'<span ftype="{"d" if meth.force_directory else "f"}">{meth.to_str()}</span>'
                 for meth in self._make_reader_methods_for_items(items)
             )
         )
