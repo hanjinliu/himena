@@ -245,6 +245,8 @@ class QImageLabelViewControl(QImageViewControlBase):
 
 
 class QChannelToggleSwitch(QToggleSwitch):
+    """Toggle switch for channel visibility."""
+
     def __init__(self, channel: ChannelInfo):
         super().__init__()
         self._channel_info = channel

@@ -1,3 +1,4 @@
+from cmap import Colormap
 import numpy as np
 from numpy.testing import assert_array_equal
 import pytest
@@ -5,7 +6,7 @@ from qtpy.QtCore import Qt
 from qtpy import QtWidgets as QtW
 from pytestqt.qtbot import QtBot
 from himena import MainWindow, StandardType
-from himena.standards.model_meta import ArrayMeta, ArrayAxis
+from himena.standards.model_meta import ArrayMeta, ArrayAxis, ImageChannel, ImageMeta
 from himena.testing import WidgetTester
 from himena_builtins.qt.widgets import QArrayView
 
@@ -97,9 +98,18 @@ def test_array_commands(himena_ui: MainWindow):
     assert himena_ui.current_model.value.shape == (3, 4)
     assert_array_equal(himena_ui.current_model.value, np.arange(12).reshape(3, 4))
 
-    himena_ui.add_object(np.arange(24).reshape(2, 3, 4), type=StandardType.IMAGE)
+    himena_ui.add_object(
+        np.arange(24).reshape(2, 3, 4),
+        type=StandardType.IMAGE,
+        metadata=ImageMeta(
+            channel_axis=0,
+            channels=[ImageChannel(colormap="red"), ImageChannel(colormap="green")],
+        )
+    )
     himena_ui.exec_action("builtins:array-duplicate-slice")
     assert himena_ui.current_model.value.shape == (3, 4)
+    assert himena_ui.current_model.metadata.channel_axis is None
+    assert himena_ui.current_model.metadata.channels[0].colormap == Colormap("red")
     assert_array_equal(himena_ui.current_model.value, np.arange(12).reshape(3, 4))
 
     himena_ui.current_window = win

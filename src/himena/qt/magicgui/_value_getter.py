@@ -14,6 +14,8 @@ def _label(text: str, width: int) -> Label:
 
 
 class SliderRangeGetter(ValuedContainerWidget[tuple[_V, _V]]):
+    """Widget to get a min and max value from an array widget."""
+
     def __init__(
         self,
         getter: Callable[[], _V],
@@ -31,10 +33,10 @@ class SliderRangeGetter(ValuedContainerWidget[tuple[_V, _V]]):
 
         super().__init__(
             widgets=[
-                _label("min", 20),
+                _label("min", 24),
                 self._value_min,
                 self._get_value_btn_min,
-                _label("max", 20),
+                _label("max", 24),
                 self._value_max,
                 self._get_value_btn_max,
             ],
@@ -65,9 +67,16 @@ class SliderRangeGetter(ValuedContainerWidget[tuple[_V, _V]]):
         if self._value_max.value.strip() == "":
             _value_max = None
         else:
-            _value_max = int(self._value_max.value)
+            _value_max = int(self._value_max.value + 1)
         return (_value_min, _value_max)
 
     def set_value(self, value: tuple[_V, _V]):
-        self._value_min.value = repr(value[0])
-        self._value_max.value = repr(value[1])
+        if value[0] is None:
+            self._value_min.value = ""
+        else:
+            self._value_min.value = repr(value[0])
+        if value[1] is None:
+            self._value_max.value = ""
+        else:
+            # The max value is exclusive, so we need to subtract 1
+            self._value_max.value = repr(value[1] - 1)

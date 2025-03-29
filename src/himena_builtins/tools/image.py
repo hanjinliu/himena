@@ -120,7 +120,7 @@ def crop_image_nd(win: SubWindow) -> Parametric:
         conf_kwargs[axis_name] = {
             "widget_type": SliderRangeGetter,
             "getter": _make_index_getter(win, i),
-            "label": axis_name,
+            "label": axis_name,  # TODO: use axis label
         }
     axis_y, axis_x = axes_kwarg_names[ndim - index_yx_rgb : ndim - index_yx_rgb + 2]
     conf_kwargs[axis_y] = {"bind": _make_roi_limits_getter(win, "y")}
@@ -145,9 +145,13 @@ def _make_roi_limits_getter(win: SubWindow, dim: Literal["x", "y"]):
         meta = _cast_meta(model, ImageMeta)
         roi = meta.current_roi
         arr = wrap_array(model.value)
-        if not isinstance(roi, _roi.Roi2D):
-            raise NotImplementedError
-        left, top, width, height = image_utils.roi_2d_to_bbox(roi, arr, meta.is_rgb)
+        if roi is None:
+            width, height = image_utils.slice_shape(arr, meta.is_rgb)
+            left = top = 0
+        else:
+            if not isinstance(roi, _roi.Roi2D):
+                raise NotImplementedError
+            left, top, width, height = image_utils.roi_2d_to_bbox(roi, arr, meta.is_rgb)
         if dim == "x":
             return left, left + width
         return top, top + height
