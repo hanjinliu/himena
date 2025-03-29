@@ -6,6 +6,8 @@ _E = TypeVar("_E")
 
 
 class MouseEventHandler(Generic[_E]):
+    """General mouse event handler class."""
+
     def pressed(self, event: _E):
         """Callback for when the mouse is pressed."""
 

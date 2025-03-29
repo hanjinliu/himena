@@ -267,10 +267,10 @@ class QRoiCollection(QSimpleRoiCollection):
         self._dragarea.dragged.connect(self._on_dragged)
         self._roi_visible_btn = QToggleSwitch()
         self._roi_visible_btn.setText("Show ROIs")
-        self._roi_visible_btn.setChecked(False)
+        self._roi_visible_btn.setChecked(True)
         self._roi_labels_btn = QToggleSwitch()
         self._roi_labels_btn.setText("Labels")
-        self._roi_labels_btn.setChecked(False)
+        self._roi_labels_btn.setChecked(True)
         self._roi_visible_btn.setSizePolicy(
             QtW.QSizePolicy(
                 QtW.QSizePolicy.Policy.Minimum, QtW.QSizePolicy.Policy.Minimum
@@ -290,8 +290,8 @@ class QRoiCollection(QSimpleRoiCollection):
 
         self.show_rois_changed.connect(parent._img_view.set_show_rois)
         self.show_labels_changed.connect(parent._img_view.set_show_labels)
-        self.key_pressed.connect(parent._img_view.keyPressEvent)
-        self.key_released.connect(parent._img_view.keyReleaseEvent)
+        self.key_pressed.connect(parent.keyPressEvent)
+        self.key_released.connect(parent.keyReleaseEvent)
         self.roi_item_clicked.connect(self._roi_item_clicked)
         self._add_btn.clicked.connect(parent._img_view.add_current_roi)
         self.drag_requested.connect(parent._run_drag_model)
@@ -320,7 +320,7 @@ class QRoiCollection(QSimpleRoiCollection):
             view._slider_changed(indices, force_sync=True)
 
         # update selection in the image viewer
-        view._img_view.select_item(qroi)
+        view._img_view.select_item(qroi, is_registered_roi=True)
 
     def _on_roi_visible_btn_clicked(self, checked: bool):
         if self._roi_labels_btn.isChecked() and not checked:

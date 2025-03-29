@@ -69,6 +69,8 @@ def test_image_view(qtbot: QtBot):
         assert not slider._edit_value_line.isVisible()
         assert slider._slider.value() == 2
 
+        image_view._img_view._make_menu_for_view()
+
 def test_image_labels_view(qtbot: QtBot):
     image_view = QImageLabelView()
     image_view.show()
@@ -125,6 +127,7 @@ def test_image_view_draw_roi(qtbot: QtBot):
         assert isinstance(image_view._img_view._current_roi_item, _rois.QRectangleRoi)
         qtbot.keyPress(image_view._img_view, Qt.Key.Key_T)
         assert len(image_view._img_view._roi_items) == 1
+        image_view._img_view._make_menu_for_roi(image_view._img_view._roi_items[0])
 
         # ellipse
         image_view._img_view.switch_mode(image_view._img_view.Mode.ROI_ELLIPSE)
@@ -247,7 +250,7 @@ def test_image_view_select_roi(qtbot: QtBot):
         view.select_item_at(QtCore.QPointF(10, 0))
         assert view._current_roi_item is None
 
-        image_view._roi_col._roi_visible_btn.click()
+        image_view._roi_col._roi_labels_btn.click()
         QApplication.processEvents()
         assert image_view._roi_col._roi_visible_btn.isChecked()
         assert not image_view._roi_col._roi_labels_btn.isChecked()

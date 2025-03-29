@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-import logging
 from typing import TYPE_CHECKING, Any
 import weakref
 
@@ -33,9 +32,6 @@ from himena.data_wrappers import wrap_dataframe, DataFrameWrapper
 
 if TYPE_CHECKING:
     from himena_builtins.qt.widgets._table_components._selection_model import Index
-
-
-_LOGGER = logging.getLogger(__name__)
 
 
 class QDataFrameModel(QtCore.QAbstractTableModel):
@@ -217,7 +213,7 @@ class QDataFrameView(QTableBase):
         self.setHorizontalHeader(self._hor_header)
         self.horizontalHeader().setFixedHeight(18)
         self.horizontalHeader().setDefaultSectionSize(75)
-        self._control: QDataFrameViewControl | None = None
+        self._control: QDataFrameViewControl | None = None  # deferred
         self._model_type = StandardType.DATAFRAME
         self._undo_stack = UndoRedoStack[EditAction](size=20)
         self._sep_on_copy = "\t"
@@ -226,12 +222,16 @@ class QDataFrameView(QTableBase):
     @validate_protocol
     def update_model(self, model: WidgetDataModel):
         df = wrap_dataframe(model.value)
-        is_single_row = df.num_rows() == 1
-        self.setModel(QDataFrameModel(df, transpose=is_single_row))
-        if is_single_row:
+        transpose = False
+        if isinstance(meta := model.metadata, DataFrameMeta):
+            transpose = meta.transpose
+        self.setModel(QDataFrameModel(df, transpose=transpose))
+        if df.num_rows() == 1 and transpose:
+            # single-row, row-orinted table should be expanded
             self.resizeColumnsToContents()
         if ext := model.extension_default:
             self._extension_default = ext
+        # update the table-widget-specific settings
         if isinstance(meta := model.metadata, TableMeta):
             self._selection_model.clear()
             if (pos := meta.current_position) is not None:
