@@ -247,12 +247,21 @@ class QImageGraphicsView(QBaseGraphicsView):
         if not self._is_current_roi_item_not_registered:
             self.remove_current_item(reason="clear all ROIs")
 
-    def extend_qrois(self, rois: Iterable[QRoi]):
+    def remove_rois(self, rois: Iterable[QRoi]):
+        """Remove Qt ROIs from the view."""
+        for roi in rois:
+            if roi in self._roi_items:
+                self._roi_items.remove(roi)
+                self.scene().removeItem(roi)
+
+    def extend_qrois(self, rois: Iterable[QRoi], current_roi: QRoi | None = None):
         """Set Qt ROIs to display."""
         for roi in rois:
             self.scene().addItem(roi)
             roi.setVisible(self._is_rois_visible)
             self._roi_items.append(roi)
+            if roi is current_roi:
+                self.select_item(roi)
 
     def mode(self) -> MouseMode:
         return self._mode

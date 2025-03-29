@@ -262,7 +262,7 @@ class QChannelToggleSwitch(QToggleSwitch):
         is_checked = option.state & QtW.QStyle.StateFlag.State_On
         painter.setBrush(self._channel_on_color if is_checked else option.off_color)
         painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing, True)
-        painter.setOpacity(0.8)
+        painter.setOpacity(0.65)
         painter.drawRect(rect)
 
     def drawHandle(self, painter, rect, option):

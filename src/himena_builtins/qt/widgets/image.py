@@ -65,6 +65,7 @@ class QImageViewBase(QtW.QSplitter):
         self._stick_grid_switch.toggled.connect(self._img_view.set_stick_to_grid)
         self._dims_slider = QDimsSlider()
         self._roi_col = QRoiCollection(self)
+        self._roi_col.rois_removed.connect(self._update_rois)
         self._roi_col.layout().insertWidget(0, self._roi_buttons)
         self._roi_col.layout().insertWidget(1, self._stick_grid_switch)
         layout.addWidget(self._img_view)
@@ -383,7 +384,6 @@ class QImageViewBase(QtW.QSplitter):
         if model.type == StandardType.ROIS:
             if isinstance(roi_list := model.value, roi.RoiListModel):
                 self._roi_col.extend_from_standard_roi_list(roi_list)
-                self._img_view.clear_rois()
                 self._update_rois()
             self._is_modified = True
             return DropResult(delete_input=False)
@@ -425,6 +425,7 @@ class QImageViewBase(QtW.QSplitter):
         return self._arr.get_slice(tuple(value))
 
     def _slider_changed(self, value: tuple[int, ...], *, force_sync: bool = False):
+        """Callback for slider value change."""
         if self._arr is None:
             return
         if self._last_slice_future:
@@ -440,10 +441,17 @@ class QImageViewBase(QtW.QSplitter):
             self._last_slice_future.add_done_callback(self._set_image_slices_async)
 
     def _update_rois(self):
+        cur_item = self._img_view._current_roi_item
+        self._img_view.clear_rois()
         rois = self._roi_col.get_rois_on_slice(self._dims_slider.value())
-        self._img_view.extend_qrois(rois)
+        self._img_view.extend_qrois(rois, cur_item)
 
     def current_channel(self, slider_value: tuple[int] | None = None) -> ChannelInfo:
+        """Get the current channel info.
+
+        This method always returns a channel, as even a monochrome image is set with a
+        gray colormap.
+        """
         if slider_value is None:
             _slider_value = self._dims_slider.value()
         else:
@@ -466,7 +474,7 @@ class QImageViewBase(QtW.QSplitter):
         indices = self._dims_slider.value()
         qroi = self._roi_col.pop_roi_in_slice(indices, idx)
         set_status_tip(f"Removed a {qroi._roi_type()} ROI")
-        self._roi_col.set_selections([])
+        self._roi_col.set_selections([])  # deselect
 
     def _reset_image(self):
         if self._channels is None:  # not initialized yet
@@ -698,7 +706,6 @@ class QImageView(QImageViewBase):
                         is_gray=self._composite_state() == "Gray",
                     ),
                 )
-            self._img_view.clear_rois()
             ch_cur = self.current_channel()
             idx = ch_cur.channel_index or 0
             hist_arr_ref = imgs[idx].arr
@@ -804,7 +811,6 @@ class QImageLabelView(QImageViewBase):
             self._img_view.set_array(
                 i, ch.transform_labels(imtup.arr, opacity=self._get_opacity())
             )
-        self._img_view.clear_rois()
         self._update_rois()
         self._img_view.set_image_blending([im.visible for im in imgs])
 
