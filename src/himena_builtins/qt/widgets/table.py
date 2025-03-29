@@ -5,6 +5,7 @@ from io import StringIO
 from typing import TYPE_CHECKING, Any, Iterable, Literal, Mapping
 from dataclasses import dataclass, field
 import numpy as np
+from numpy.typing import NDArray
 
 from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
@@ -70,7 +71,7 @@ class ReshapeAction(TableAction):
         if r_old == r_new and c_old == c_new:
             pass
         elif r_old < r_new and c_old < c_new:
-            table.array_expand(r_new - r_old, c_new - c_old)
+            table.array_expand(r_new, c_new)
         elif r_old > r_new and c_old > c_new:
             table.array_shrink(r_new, r_new)
         else:
@@ -120,6 +121,9 @@ class ActionGroup(TableAction):
 class QStringArrayModel(QtCore.QAbstractTableModel):
     """Table model for a string array."""
 
+    MIN_ROW_COUNT = 100
+    MIN_COLUMN_COUNT = 30
+
     def __init__(self, arr: np.ndarray, parent: QSpreadsheet):
         super().__init__(parent)
         self._arr = arr  # 2D
@@ -130,15 +134,48 @@ class QStringArrayModel(QtCore.QAbstractTableModel):
         self._nrows, self._ncols = arr.shape
         self._header_format = HeaderFormat.NumberZeroIndexed
 
+    @classmethod
+    def empty(cls, parent: QSpreadsheet) -> QStringArrayModel:
+        return cls(np.empty((0, 0), dtype=np.dtypes.StringDType()), parent)
+
     if TYPE_CHECKING:
 
         def parent(self) -> QSpreadsheet: ...  # fmt: skip
 
     def rowCount(self, parent=None):
-        return max(self._nrows + 1, 100)
+        return max(self._nrows + 1, self.MIN_ROW_COUNT)
 
     def columnCount(self, parent=None):
-        return max(self._ncols + 1, 30)
+        return max(self._ncols + 1, self.MIN_COLUMN_COUNT)
+
+    def set_array(self, arr: np.ndarray) -> None:
+        if arr.ndim != 2:
+            raise ValueError("Only 2D array is supported.")
+        nr, nc = arr.shape
+        nr0, nc0 = self.rowCount(), self.columnCount()
+        self._arr = arr
+        self._nrows, self._ncols = arr.shape
+
+        # adjust the model size to fit the new array.
+        _index = QtCore.QModelIndex()
+        if nr + 1 > nr0:
+            self.beginInsertRows(_index, nr0, nr)
+            self.insertRows(nr0, nr + 1 - nr0, _index)
+            self.endInsertRows()
+        elif nr + 1 < nr0:
+            nr_next = max(self.MIN_ROW_COUNT, nr + 1)
+            self.beginRemoveRows(_index, nr_next, nr0 - 1)
+            self.removeRows(nr_next, nr0 - nr_next - 2, _index)
+            self.endRemoveRows()
+        if nc + 1 > nc0:
+            self.beginInsertColumns(_index, nc0, nc)
+            self.insertColumns(nc0, nc + 1 - nc0, _index)
+            self.endInsertColumns()
+        elif nc + 1 < nc0:
+            nc_next = max(self.MIN_COLUMN_COUNT, nc + 1)
+            self.beginRemoveColumns(_index, nc_next, nc0 - 1)
+            self.removeColumns(nc_next, nc0 - nc_next - 2, _index)
+            self.endRemoveColumns()
 
     def flags(self, index: QtCore.QModelIndex) -> Qt.ItemFlag:
         return FLAGS
@@ -231,6 +268,7 @@ class QSpreadsheet(QTableBase):
         self._undo_stack = UndoRedoStack[TableAction](size=25)
         self._sep_on_copy = "\t"
         self._extension_default = ".csv"
+        self.setModel(QStringArrayModel.empty(self))
 
     def setHeaderFormat(self, value: HeaderFormat) -> None:
         if model := self.model():
@@ -254,7 +292,7 @@ class QSpreadsheet(QTableBase):
         if self.model() is None:
             self.setModel(QStringArrayModel(table, self))
         else:
-            self.model()._arr = table
+            self.model().set_array(table)
         sep: str | None = None
         if isinstance(meta := model.metadata, TableMeta):
             if meta.separator is not None:
@@ -347,8 +385,8 @@ class QSpreadsheet(QTableBase):
         r, c = index
         arr = self.model()._arr
         _ud_old_shape = arr.shape
-        r_max = r.stop if isinstance(r, slice) else r
-        c_max = c.stop if isinstance(c, slice) else c
+        r_max = r.stop - 1 if isinstance(r, slice) else r
+        c_max = c.stop - 1 if isinstance(c, slice) else c
         if r_max >= arr.shape[0] or c_max >= arr.shape[1]:  # need expansion
             _ud_old_data = ""
             _ud_old_shape = arr.shape
@@ -359,7 +397,7 @@ class QSpreadsheet(QTableBase):
         else:
             _ud_old_data = arr[r, c]
             _action_reshape = None
-        arr[r, c] = str(value)
+        arr[r, c] = value
         _ud_new_data = arr[r, c]
         _action = EditAction(_ud_old_data, _ud_new_data, (r, c))
         if _action_reshape is not None:
@@ -368,20 +406,25 @@ class QSpreadsheet(QTableBase):
             self._undo_stack.push(_action)
 
     def array_expand(self, nr: int, nc: int):
-        """Expand the array to the given shape."""
-        nr0, nc0 = self.model()._arr.shape
-        self.model()._arr = np.pad(
-            self.model()._arr,
+        """Expand the array to the given shape (nr, nc)."""
+        # ReshapeAction must be recorded outside this function.
+        old_arr = self.model()._arr
+        nr0, nc0 = old_arr.shape
+        new_arr = np.pad(
+            old_arr,
             [(0, max(nr - nr0, 0)), (0, max(nc - nc0, 0))],
             mode="constant",
             constant_values="",
         )
+        self.model().set_array(new_arr)
         self._control.update_for_table(self)
+        self.update()
 
     def array_shrink(self, nr: int, nc: int):
         """Shrink the array to the given shape."""
-        self.model()._arr = self.model()._arr[:nr, :nc]
+        self.model().set_array(self.model()._arr[:nr, :nc])
         self._control.update_for_table(self)
+        self.update()
 
     def array_insert(
         self,
@@ -392,18 +435,21 @@ class QSpreadsheet(QTableBase):
         record_undo: bool = True,
     ) -> None:
         """Insert an empty array at the given index."""
-        arr = self.model()._arr
-        if values is None:
-            self.model()._arr = np.insert(arr, index, "", axis=axis)
-        else:
-            self.model()._arr = np.insert(arr, index, values, axis=axis)
+        self.model().set_array(
+            np.insert(
+                self.model()._arr,
+                index,
+                "" if values is None else values,
+                axis=axis,
+            )
+        )
         if record_undo:
             self._undo_stack.push(InsertAction(index, axis, values))
         self.update()
 
     def array_delete(
         self,
-        indices: int | Iterable[int],
+        indices: Iterable[int],
         axis: Literal[0, 1],
         *,
         record_undo: bool = True,
@@ -412,6 +458,7 @@ class QSpreadsheet(QTableBase):
         # Make action group that remove the row/column one by one. Here, indices may be
         # out of range, as this widget is a spreadsheet.
         size_of_axis = self.model()._arr.shape[axis]
+        indices = list(indices)
         _action = ActionGroup(
             [
                 RemoveAction(idx, axis, self.model()._arr[_sl(idx, axis)].copy())
@@ -420,7 +467,7 @@ class QSpreadsheet(QTableBase):
             ]
         )
         # Update the underlying array data and redraw the table.
-        self.model()._arr = np.delete(self.model()._arr, list(indices), axis=axis)
+        self.model().set_array(np.delete(self.model()._arr, list(indices), axis=axis))
         self.update()
         # Record the action if necessary.
         if record_undo:
@@ -494,17 +541,14 @@ class QSpreadsheet(QTableBase):
             buf, dtype=np.dtypes.StringDType(), delimiter="\t", ndmin=2
         )
         # undo info
-        arr = self.model()._arr
-        sl = self._selection_model.get_single_range()
         _ud_old_shape = self.data_shape()
-        _ud_old_data = arr[sl].copy()
 
-        self._paste_array(arr_paste)
+        sl0, sl1, _ud_old_data = self._paste_array(arr_paste)
 
         # undo info
         _ud_new_shape = self.data_shape()
         _ud_new_data = arr_paste.copy()
-        _action_edit = EditAction(_ud_old_data, _ud_new_data, sl)
+        _action_edit = EditAction(_ud_old_data, _ud_new_data, (sl0, sl1))
         if _ud_old_shape == _ud_new_shape:
             _action = _action_edit
         else:
@@ -512,7 +556,8 @@ class QSpreadsheet(QTableBase):
             _action = ActionGroup([_action_reshape, _action_edit])
         self._undo_stack.push(_action)
 
-    def _paste_array(self, arr_paste: np.ndarray):
+    def _paste_array(self, arr_paste: np.ndarray) -> tuple[slice, slice, np.ndarray]:
+        """Update the array and return the pasteed range and old data."""
         arr = self.model()._arr
         # paste in the text
         rng = self._selection_model.get_single_range()
@@ -537,22 +582,36 @@ class QSpreadsheet(QTableBase):
             )
 
         # paste the data
-        arr[row0 : row0 + lr, col0 : col0 + lc] = arr_paste
-        self.model()._arr = arr
+        target_slice = (slice(row0, row0 + lr), slice(col0, col0 + lc))
+        old_data = arr[target_slice].copy()
+        arr[target_slice] = arr_paste
+        self.model().set_array(arr)
 
         # select what was just pasted
-        self._selection_model.set_ranges(
-            [(slice(row0, row0 + lr), slice(col0, col0 + lc))]
-        )
+        self._selection_model.set_ranges([target_slice])
         self.update()
+        return target_slice + (old_data,)
 
     def _delete_selection(self):
         _actions = []
+        _maybe_empty_edges = False
+        arr = self.model()._arr
+        # replace all the selected cells with empty strings.
         for sel in self._selection_model.ranges:
-            old_array = self.model()._arr.copy()
+            old_array = arr[sel].copy()
             new_array = np.zeros_like(old_array)
             _actions.append(EditAction(old_array, new_array, sel))
-            self.model()._arr[sel] = ""
+            arr[sel] = ""
+            if sel[0].stop == arr.shape[0] or sel[1].stop == arr.shape[1]:
+                _maybe_empty_edges = True
+        # if this deletion makes the array edges empty, array should be shrunk.
+        if _maybe_empty_edges:
+            arr_nchars = np.char.str_len(arr)
+            size_0 = _size_to_shrink(np.max(arr_nchars, axis=1))
+            size_1 = _size_to_shrink(np.max(arr_nchars, axis=0))
+            if size_0 < arr_nchars.shape[0] or size_1 < arr_nchars.shape[1]:
+                self.array_shrink(size_0, size_1)
+                _actions.append(ReshapeAction(arr_nchars.shape, (size_0, size_1)))
         self.update()
         self._undo_stack.push(ActionGroup(_actions))
 
@@ -572,13 +631,13 @@ class QSpreadsheet(QTableBase):
         selected_rows = set[int]()
         for sel in self._selection_model.ranges:
             selected_rows.update(range(sel[0].start, sel[0].stop))
-        self.array_delete(selected_rows, 0)
+        self.array_delete(selected_rows, axis=0)
 
     def _remove_selected_columns(self):
         selected_cols = set[int]()
         for sel in self._selection_model.ranges:
             selected_cols.update(range(sel[1].start, sel[1].stop))
-        self.array_delete(selected_cols, 1)
+        self.array_delete(selected_cols, axis=1)
 
     def keyPressEvent(self, e: QtGui.QKeyEvent):
         _Ctrl = QtCore.Qt.KeyboardModifier.ControlModifier
@@ -742,6 +801,20 @@ def _array_like_to_array(value) -> np.ndarray:
     if table.ndim < 2:
         table = table.reshape(-1, 1)
     return table
+
+
+def _size_to_shrink(proj: NDArray[np.intp]) -> int:
+    """Determine the number of rows/columns array should be shrunk to.
+
+    >>> _num_to_shrink(np.array([4, 3, 0, 0]))  # 2
+    >>> _num_to_shrink(np.array([4, 3, 6, 0]))  # 3
+    >>> _num_to_shrink(np.array([4, 3]))  # 2
+    """
+    _len = proj.size
+    for i in range(_len - 1, -1, -1):
+        if proj[i] != 0:
+            return i + 1
+    return _len
 
 
 @dataclass

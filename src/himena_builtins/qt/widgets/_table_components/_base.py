@@ -282,9 +282,9 @@ class QTableBase(QtW.QTableView):
             elif _key == Qt.Key.Key_PageDown:
                 dr, dc = 10, 0
             elif _key == Qt.Key.Key_Home:
-                dr, dc = -10, 0
+                dr, dc = 0, -10
             elif _key == Qt.Key.Key_End:
-                dr, dc = 10, 0
+                dr, dc = 0, 10
             else:
                 return super().keyPressEvent(e)
             self._selection_model.move(dr, dc, allow_header=True)
@@ -354,7 +354,7 @@ class QTableBase(QtW.QTableView):
                 # right click
                 menu = self._make_context_menu()
                 if menu is not None:
-                    menu.exec_(self.viewport().mapToGlobal(e.pos()))
+                    menu.exec(self.viewport().mapToGlobal(e.pos()))
         self._mouse_track.last_rightclick_pos = None
         self._mouse_track.last_button = None
         self._selection_model.set_shift(
@@ -391,6 +391,7 @@ class QTableBase(QtW.QTableView):
             pen = QtGui.QPen(self._current_color, 2)
             painter.setPen(pen)
             painter.drawRect(rect_cursor)
+        painter.end()
         return None
 
     def _rect_from_ranges(
