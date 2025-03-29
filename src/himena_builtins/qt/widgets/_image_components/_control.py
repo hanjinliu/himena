@@ -4,10 +4,9 @@ from typing import TYPE_CHECKING
 import numpy as np
 from qtpy import QtWidgets as QtW
 from qtpy import QtCore, QtGui
-from superqt import QLabeledDoubleSlider
+from superqt import QLabeledDoubleSlider, QToggleSwitch
 from superqt.utils import qthrottled
 
-from himena.qt.magicgui._toggle_switch import QLabeledToggleSwitch
 from himena.qt._utils import qsignal_blocker
 from himena_builtins.qt.widgets._image_components import QHistogramView
 from himena.utils.enum import StrEnum
@@ -55,7 +54,7 @@ class QImageViewControlBase(QtW.QWidget):
             QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Expanding
         )
 
-        self._interp_check_box = QLabeledToggleSwitch()
+        self._interp_check_box = QToggleSwitch()
         self._interp_check_box.setText("smooth")
         self._interp_check_box.setChecked(False)
         self._interp_check_box.setMaximumHeight(36)
@@ -245,6 +244,33 @@ class QImageLabelViewControl(QImageViewControlBase):
         return [self._hover_info, self._opacity_slider, self._interp_check_box]
 
 
+class QChannelToggleSwitch(QToggleSwitch):
+    def __init__(self, channel: ChannelInfo):
+        super().__init__()
+        self._channel_info = channel
+        self.setChecked(True)
+
+    def set_channel(self, channel: ChannelInfo):
+        self._channel_info = channel
+        self.setText(channel.name)
+        self._channel_on_color = QtGui.QColor.fromRgbF(*channel.colormap(0.5))
+
+    def drawGroove(self, painter, rect, option):
+        painter.setPen(QtCore.Qt.PenStyle.NoPen)
+        is_checked = option.state & QtW.QStyle.StateFlag.State_On
+        painter.setBrush(self._channel_on_color if is_checked else option.off_color)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing, True)
+        painter.setOpacity(0.8)
+        painter.drawRect(rect)
+
+    def drawHandle(self, painter, rect, option):
+        painter.setPen(QtCore.Qt.PenStyle.SolidLine)
+        is_checked = option.state & QtW.QStyle.StateFlag.State_On
+        painter.setBrush(self._channel_on_color if is_checked else option.off_color)
+        painter.setOpacity(1.0)
+        painter.drawRect(rect)
+
+
 class QChannelToggleSwitches(QtW.QScrollArea):
     stateChanged = QtCore.Signal()
 
@@ -257,15 +283,14 @@ class QChannelToggleSwitches(QtW.QScrollArea):
         layout = QtW.QGridLayout(central)
         layout.setContentsMargins(2, 2, 2, 2)
         self._layout = layout
-        self._toggle_switches: list[QLabeledToggleSwitch] = []
+        self._toggle_switches: list[QChannelToggleSwitch] = []
         self.setWidget(central)
         self._label_font = QtGui.QFont("Arial", 8)
 
     def set_channels(self, channels: list[ChannelInfo]):
         labels = [ch.name for ch in channels]
         for ith in range(len(self._toggle_switches), len(labels)):
-            sw = QLabeledToggleSwitch()
-            sw.setSize(9)
+            sw = QChannelToggleSwitch(channels[ith])
             sw.setChecked(True)
             sw.setFont(self._label_font)
             sw.toggled.connect(self._emit_state_changed)
@@ -275,12 +300,9 @@ class QChannelToggleSwitches(QtW.QScrollArea):
         while len(self._toggle_switches) > len(labels):
             sw = self._toggle_switches.pop()
             sw.setParent(None)
-        for i, label in enumerate(labels):
+        for i in range(len(channels)):
             sw = self._toggle_switches[i]
-            sw.setText(label)
-            sw._switch._on_color_override = QtGui.QColor.fromRgbF(
-                *channels[i].colormap(0.5)
-            )
+            sw.set_channel(channels[i])
 
     def _emit_state_changed(self):
         self.stateChanged.emit()
