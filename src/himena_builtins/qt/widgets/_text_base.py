@@ -20,6 +20,7 @@ class QMainTextEdit(QtW.QPlainTextEdit):
         self._default_font = font
         self.setFont(font)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.setTabStopDistance(self.fontMetrics().horizontalAdvance(" ") * 4)
         self._tab_size = 4
         self._highlight = None
         self._language = "Plain Text"
@@ -47,6 +48,7 @@ class QMainTextEdit(QtW.QPlainTextEdit):
 
     def set_tab_size(self, size: int):
         self._tab_size = size
+        self.setTabStopDistance(self.fontMetrics().horizontalAdvance(" ") * size)
 
     def event(self, ev: QtCore.QEvent):
         try:
@@ -156,7 +158,7 @@ class QMainTextEdit(QtW.QPlainTextEdit):
                     and _mod & QtCore.Qt.KeyboardModifier.ControlModifier
                 ):
                     clip = QtGui.QGuiApplication.clipboard()
-                    text = clip.text().replace("\t", " " * self.tab_size())
+                    text = clip.text().replace("\n\t", "\n" + " " * self.tab_size())
                     cursor = self.textCursor()
                     cursor.insertText(text)
                     return True
