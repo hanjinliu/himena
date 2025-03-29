@@ -294,8 +294,8 @@ class QRoiCollection(QSimpleRoiCollection):
 
         self.show_rois_changed.connect(parent._img_view.set_show_rois)
         self.show_labels_changed.connect(parent._img_view.set_show_labels)
-        self.key_pressed.connect(parent._img_view.keyPressEvent)
-        self.key_released.connect(parent._img_view.keyReleaseEvent)
+        self.key_pressed.connect(parent.keyPressEvent)
+        self.key_released.connect(parent.keyReleaseEvent)
         self.roi_item_clicked.connect(self._roi_item_clicked)
         self._add_btn.clicked.connect(parent._img_view.add_current_roi)
         self.drag_requested.connect(parent._run_drag_model)
