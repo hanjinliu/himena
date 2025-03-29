@@ -5,7 +5,6 @@ from himena.data_wrappers._array import wrap_array
 from himena._descriptors import NoNeedToSave
 from himena.plugins import register_function, configure_gui
 from himena.types import Parametric, WidgetDataModel
-from himena.utils.misc import is_subtype
 from himena.consts import StandardType, MenuId
 from himena.standards.model_meta import ArrayMeta, ImageMeta
 from himena.widgets import set_status_tip, SubWindow
@@ -64,7 +63,7 @@ def duplicate_this_slice(model: WidgetDataModel) -> Parametric:
 )
 def crop_array(model: WidgetDataModel) -> Parametric:
     """Crop the array."""
-    if is_subtype(model.type, StandardType.IMAGE):  # interpret as an image
+    if model.is_subtype_of(StandardType.IMAGE):  # interpret as an image
         from .image import crop_image
 
         return crop_image(model)
@@ -95,7 +94,7 @@ def crop_array_nd(win: SubWindow) -> Parametric:
     from himena.qt.magicgui import SliderRangeGetter
 
     model = win.to_model()
-    if is_subtype(model.type, StandardType.IMAGE):  # interpret as an image
+    if model.is_subtype_of(StandardType.IMAGE):  # interpret as an image
         from .image import crop_image_nd
 
         return crop_image_nd(win)
@@ -117,15 +116,15 @@ def crop_array_nd(win: SubWindow) -> Parametric:
     }
 
     @configure_gui(gui_options=conf_kwargs)
-    def run_crop_image(**kwargs: tuple[int | None, int | None]):
+    def run_crop_array(**kwargs: tuple[int | None, int | None]):
         model = win.to_model()  # NOTE: need to re-fetch the model
         arr = wrap_array(model.value)
-        sl_nd = tuple(slice(*_x) for _x in kwargs.values())
+        sl_nd = tuple(slice(x0, x1) for x0, x1 in kwargs.values())
         arr_cropped = arr[sl_nd]
         meta_out = _update_meta(model.metadata)
         return model.with_value(arr_cropped, metadata=meta_out).with_title_numbering()
 
-    return run_crop_image
+    return run_crop_array
 
 
 _OPERATOR_CHOICES = [

@@ -145,9 +145,13 @@ def _make_roi_limits_getter(win: SubWindow, dim: Literal["x", "y"]):
         meta = _cast_meta(model, ImageMeta)
         roi = meta.current_roi
         arr = wrap_array(model.value)
-        if not isinstance(roi, _roi.Roi2D):
-            raise NotImplementedError
-        left, top, width, height = image_utils.roi_2d_to_bbox(roi, arr, meta.is_rgb)
+        if roi is None:
+            width, height = image_utils.slice_shape(arr, meta.is_rgb)
+            left = top = 0
+        else:
+            if not isinstance(roi, _roi.Roi2D):
+                raise NotImplementedError
+            left, top, width, height = image_utils.roi_2d_to_bbox(roi, arr, meta.is_rgb)
         if dim == "x":
             return left, left + width
         return top, top + height
