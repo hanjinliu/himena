@@ -179,12 +179,17 @@ class _RectangleTypeRoiMouseEvents(_SingleDragRoiMouseEvents[_R]):
 
 class _MultiRoiMouseEvents(RoiMouseEvents[_R]):
     def pressed(self, event: QtGui.QMouseEvent):
-        if not self.selection_handles.is_drawing_polygon():
-            if isinstance(self._view._current_roi_item, self.roi_type()):
-                self._view.remove_current_item(reason="start drawing new polygon")
-                self._view.select_item(None)
-            else:
-                self._view.remove_current_item(reason="start drawing new ROI")
+        if (
+            type(self._view._current_roi_item) is self.roi_type()
+            and not self.selection_handles.is_drawing_polygon()
+        ):
+            # drawing the same ROI type, remove the previous one and end.
+            self._view.remove_current_item(reason="start drawing new polygon")
+            self._view.select_item(None)
+        elif type(self._view._current_roi_item) is not self.roi_type():
+            # just after switched from another ROI type, remove the previous one
+            # and start drawing the current one.
+            self._view.remove_current_item(reason="start drawing new ROI")
             self.selection_handles.start_drawing_polygon()
             self.selection_handles._is_last_vertex_added = True
         return super().pressed(event)
