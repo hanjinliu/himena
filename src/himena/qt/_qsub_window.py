@@ -81,7 +81,7 @@ class QSubWindowArea(QtW.QMdiArea):
     def mousePressEvent(self, event: QtGui.QMouseEvent):
         self._last_drag_pos = self._last_press_pos = event.pos()
         if (
-            event.buttons() & Qt.MouseButton.LeftButton
+            event.button() == Qt.MouseButton.LeftButton
             and event.modifiers() & Qt.KeyboardModifier.ControlModifier
         ):
             self.setCursor(Qt.CursorShape.ClosedHandCursor)
@@ -92,7 +92,7 @@ class QSubWindowArea(QtW.QMdiArea):
         return None
 
     def _mouse_move_event(self, event: QtGui.QMouseEvent):
-        if event.buttons() & Qt.MouseButton.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             if self._last_drag_pos is None:
                 return None
             if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
@@ -725,7 +725,7 @@ class QSubWindowTitleBar(QtW.QFrame):
         self._is_ctrl_drag = False
         if self._is_double_clicking:
             return super().mousePressEvent(event)
-        if event.buttons() & Qt.MouseButton.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             _subwin = self._subwindow
             if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
                 # start dragging subwindow
@@ -825,7 +825,7 @@ class QSubWindowTitleBar(QtW.QFrame):
 
     def mouseDoubleClickEvent(self, event: QtGui.QMouseEvent):
         self._is_double_clicking = True
-        if event.buttons() & Qt.MouseButton.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             self._toggle_size()
         return super().mouseDoubleClickEvent(event)
 
