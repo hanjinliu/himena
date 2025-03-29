@@ -250,7 +250,7 @@ def test_image_view_select_roi(qtbot: QtBot):
         view.select_item_at(QtCore.QPointF(10, 0))
         assert view._current_roi_item is None
 
-        image_view._roi_col._roi_visible_btn.click()
+        image_view._roi_col._roi_labels_btn.click()
         QApplication.processEvents()
         assert image_view._roi_col._roi_visible_btn.isChecked()
         assert not image_view._roi_col._roi_labels_btn.isChecked()

@@ -104,6 +104,10 @@ class TableMeta(BaseMetadata):
 class DataFrameMeta(TableMeta):
     """Preset for describing the metadata for a "dataframe" type."""
 
+    transpose: bool = Field(
+        default=False, description="Whether the table is transposed."
+    )
+
 
 class DictMeta(BaseMetadata):
     current_tab: str | None = Field(None, description="Current tab name.")
