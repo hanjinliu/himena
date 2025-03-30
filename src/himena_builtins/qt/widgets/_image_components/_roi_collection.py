@@ -8,9 +8,7 @@ from superqt import QToggleSwitch
 
 from himena.standards import roi
 from himena.consts import StandardType
-from himena.standards.model_meta import ImageRoisMeta
-from himena.types import WidgetDataModel, DragDataModel
-from himena.qt import drag_model
+from himena.qt import drag_command
 from himena.utils.ndobject import NDObjectCollection
 from himena_builtins.qt.widgets._image_components import _roi_items
 from himena_builtins.qt.widgets._dragarea import QDraggableArea
@@ -294,7 +292,7 @@ class QRoiCollection(QSimpleRoiCollection):
         self.key_released.connect(parent.keyReleaseEvent)
         self.roi_item_clicked.connect(self._roi_item_clicked)
         self._add_btn.clicked.connect(parent._img_view.add_current_roi)
-        self.drag_requested.connect(parent._run_drag_model)
+        self.drag_requested.connect(parent._on_drag_roi_requested)
         self._remove_btn.clicked.connect(self.remove_selected_rois)
 
         self._roi_visible_btn.toggled.connect(self._on_roi_visible_btn_clicked)
@@ -340,28 +338,13 @@ class QRoiCollection(QSimpleRoiCollection):
             self.roi_item_clicked.emit(tuple(indices), qroi)
 
     def _on_dragged(self):
-        img_view = self._image_view_ref()
-        if img_view._original_title is not None:
-            title = f"ROIs or {img_view._original_title}"
-        else:
-            title = "ROIs"
-
-        def _data_model_getter():
-            axes = img_view._dims_slider._to_image_axes()
-            roilist = self._qroi_list.map_elements(
-                lambda qroi: qroi.toRoi(), into=roi.RoiListModel
-            )
-            return WidgetDataModel(
-                value=roilist,
-                type=StandardType.ROIS,
-                title=title,
-                metadata=ImageRoisMeta(axes=axes, selections=self.selections()),
-            )
-
-        model = DragDataModel(getter=_data_model_getter, type=StandardType.ROIS)
-        rois = self._qroi_list
-        _s = "" if len(rois) == 1 else "s"
-        return drag_model(model, desc=f"{len(rois)} ROI{_s}", source=img_view)
+        _s = "" if len(self._qroi_list) == 1 else "s"
+        return drag_command(
+            self._image_view_ref(),
+            command_id="builtins:duplicate-rois",
+            type=StandardType.ROIS,
+            desc=f"{len(self._qroi_list)} ROI{_s}",
+        )
 
 
 class QRoiListView(QtW.QListView):

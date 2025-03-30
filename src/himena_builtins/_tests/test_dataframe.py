@@ -37,6 +37,7 @@ def test_dataframe(qtbot: QtBot, df):
         qtbot.keyClick(finder, Qt.Key.Key_Enter, modifier=Qt.KeyboardModifier.ShiftModifier)
         assert type(tester.to_model().value) is type(df)
         tester.is_modified()
+        assert tester.widget._hor_header._data_model_for_drag() is not None
 
 def test_dataframe_plot(qtbot: QtBot):
     x = np.linspace(0, 3, 20)

@@ -10,11 +10,13 @@ from qtpy import QtGui, QtCore, QtWidgets as QtW
 from qtpy.QtCore import Qt
 
 from himena.consts import StandardType
-from himena.types import Size, WidgetDataModel
+from himena.types import Size, WidgetDataModel, Parametric
+from himena.standards import plotting as hplt, roi as _roi
 from himena.standards.model_meta import DataFrameMeta, TableMeta, DataFramePlotMeta
-from himena.standards import plotting as hplt
-from himena.standards import roi as _roi
 from himena.utils.collections import UndoRedoStack
+from himena.plugins import validate_protocol, register_function
+from himena.qt import drag_command
+from himena.data_wrappers import wrap_dataframe, DataFrameWrapper
 from himena_builtins.qt.widgets._table_components import (
     QTableBase,
     QSelectionRangeEdit,
@@ -26,9 +28,6 @@ from himena_builtins.qt.widgets._table_components import (
 )
 from himena_builtins.qt.widgets._splitter import QSplitterHandle
 from himena_builtins.qt.widgets._dragarea import QDraggableArea
-from himena.plugins import validate_protocol
-from himena.qt import drag_model
-from himena.data_wrappers import wrap_dataframe, DataFrameWrapper
 
 if TYPE_CHECKING:
     from himena_builtins.qt.widgets._table_components._selection_model import Index
@@ -165,27 +164,27 @@ class QDraggableHorizontalHeader(QHorizontalHeaderView):
         self._hover_drag_indicator.hide()
         return super().leaveEvent(a0)
 
-    def _drag_event(self):
+    def _data_model_for_drag(self) -> QtGui.QDrag | None:
         view = self._table_view_ref()
         if view is None or not self._drag_enabled:
             return
-        df = view.model().df
-        nrows = df.num_rows()
-        dict_out = {}
-        for sel in view.selection_model.iter_col_selections():
-            dict_out.update(df.get_subset(0, nrows, sel.start, sel.stop).to_dict())
-        df = df.from_dict(dict_out)
-        model = WidgetDataModel(
-            value=df.unwrap(),
-            type=view.model_type(),
-        )
-        drag_model(
-            model,
-            desc=f"{len(dict_out)} columns",
-            source=view,
+        cols = [sel.start for sel in view.selection_model.iter_col_selections()]
+        model = view.to_model()
+        df = wrap_dataframe(model.value)
+        s = "" if len(cols) == 1 else "s"
+        return drag_command(
+            view,
+            "builtins:QDataFrameView:select-columns",
+            StandardType.DATAFRAME,
+            with_params={"columns": cols},
+            desc=f"{df.num_columns()} column{s}",
             text_data=lambda: df.to_csv_string("\t"),
+            exec=False,
         )
-        return None
+
+    def _drag_event(self):
+        if drag := self._data_model_for_drag():
+            drag.exec()
 
 
 class QDataFrameView(QTableBase):
@@ -323,12 +322,28 @@ class QDataFrameView(QTableBase):
         def model(self) -> QDataFrameModel: ...
 
 
-_R_CENTER = QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter
+@register_function(command_id="builtins:QDataFrameView:select-columns", menus=[])
+def select_columns(model: WidgetDataModel) -> Parametric:
+    """Select columns, used for dragging columns off a dataframe."""
+
+    def run(columns: list[int]) -> WidgetDataModel:
+        df = wrap_dataframe(model.value)
+        nrows = df.num_rows()
+        dict_out = {}
+        for icol in columns:
+            dict_out.update(df.get_subset(0, nrows, icol, icol + 1).to_dict())
+        df = df.from_dict(dict_out)
+        return model.with_value(df.unwrap())
+
+    return run
 
 
 class QDataFrameViewControl(QtW.QWidget):
     def __init__(self):
         super().__init__()
+        _R_CENTER = (
+            QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter
+        )
         layout = QtW.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(_R_CENTER)

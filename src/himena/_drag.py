@@ -5,7 +5,7 @@ from himena.types import DragDataModel, WidgetDataModel
 _DRAGGING_MODEL: DragDataModel | None = None
 
 
-def drag(model: DragDataModel | WidgetDataModel):
+def drag(model: DragDataModel | WidgetDataModel) -> None:
     global _DRAGGING_MODEL
 
     if isinstance(model, WidgetDataModel):
