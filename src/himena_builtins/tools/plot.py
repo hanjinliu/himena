@@ -313,10 +313,7 @@ def histogram(win: SubWindow) -> Parametric:
 def edit_plot(win: SubWindow) -> Parametric:
     """Edit the appearance of the plot."""
     model = win.to_model()
-    if not isinstance(lo := model.value, hplt.BaseLayoutModel):
-        raise ValueError("Invalid layout model")
-    if not isinstance(lo, hplt.SingleAxes):
-        raise NotImplementedError("Only SingleAxes is supported for now.")
+    lo = _get_single_axes(model)
     plot_models = lo.axes.models
     gui_options = {
         "title": {"widget_type": "LineEdit", "value": lo.axes.title or ""},
@@ -358,9 +355,10 @@ def edit_plot(win: SubWindow) -> Parametric:
     title="Scatter plot 3D ...",
     types=_TABLE_LIKE,
     menus=_MENU,
-    command_id="builtins:scatter-plot-3d",
+    command_id="builtins:plot-3d:scatter-plot-3d",
 )
 def scatter_plot_3d(win: SubWindow) -> Parametric:
+    """3D scatter plot."""
     x0, y0, z0 = _auto_select(win.to_model(), 3)
 
     @configure_gui(
@@ -410,9 +408,10 @@ def scatter_plot_3d(win: SubWindow) -> Parametric:
     title="Line plot 3D ...",
     types=_TABLE_LIKE,
     menus=_MENU,
-    command_id="builtins:line-plot-3d",
+    command_id="builtins:plot-3d:line-plot-3d",
 )
 def line_plot_3d(win: SubWindow) -> Parametric:
+    """3D line plot."""
     x0, y0, z0 = _auto_select(win.to_model(), 3)
 
     @configure_gui(
@@ -447,6 +446,53 @@ def line_plot_3d(win: SubWindow) -> Parametric:
         )
 
     return configure_plot
+
+
+@register_function(
+    title="Plot to DataFrame ...",
+    types=StandardType.PLOT,
+    menus=[MenuId.TOOLS_PLOT],
+    command_id="builtins:plot-to-dataframe",
+)
+def plot_to_dataframe(model: WidgetDataModel) -> Parametric:
+    """Convert a plot component to a DataFrame."""
+
+    lo = _get_single_axes(model)
+    plot_models = lo.axes.models
+    choices = [(f"({i}) {m.name}", i) for i, m in enumerate(plot_models)]
+
+    @configure_gui(component={"choices": choices})
+    def run(component: int) -> WidgetDataModel:
+        """Convert the selected plot component to a DataFrame."""
+        plot_model = plot_models[component]
+        if isinstance(plot_model, hplt.Histogram):
+            df = {"data": plot_model.data}
+        elif isinstance(plot_model, hplt.Texts):
+            df = {"x": plot_model.x, "y": plot_model.y, "text": plot_model.texts}
+        elif isinstance(plot_model, hplt.ErrorBar):
+            df = {
+                "x": plot_model.x,
+                "y": plot_model.y,
+                "x_error": plot_model.x_error,
+                "y_error": plot_model.y_error,
+            }
+        elif isinstance(plot_model, hplt.Span):
+            df = {"start": plot_model.start, "end": plot_model.end}
+        elif isinstance(plot_model, hplt.models.PlotModelXY):
+            df = {"x": plot_model.x, "y": plot_model.y}
+        elif isinstance(plot_model, hplt.Band):
+            df = {"x": plot_model.x, "y0": plot_model.y0, "y1": plot_model.y1}
+        elif isinstance(plot_model, (hplt.Scatter3D, hplt.Line3D)):
+            df = {"x": plot_model.x, "y": plot_model.y, "z": plot_model.z}
+        else:
+            raise NotImplementedError(f"Type {type(plot_model)} is not supported.")
+        return WidgetDataModel(
+            value=df,
+            type=StandardType.DATAFRAME,
+            title=f"Data of {model.title}",
+        )
+
+    return run
 
 
 def _get_xy_data(
@@ -542,3 +588,11 @@ def _ignore_label(
     else:
         val = None
     return val
+
+
+def _get_single_axes(model: WidgetDataModel) -> hplt.SingleAxes | hplt.SingleAxes3D:
+    if not isinstance(lo := model.value, hplt.BaseLayoutModel):
+        raise ValueError(f"Expected a layout model, got {type(lo)}")
+    if not isinstance(lo, (hplt.SingleAxes, hplt.SingleAxes3D)):
+        raise NotImplementedError("Only SingleAxes is supported for now.")
+    return lo
