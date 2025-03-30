@@ -14,7 +14,7 @@ from himena.utils.misc import is_subtype
 from himena import anchor
 from himena._providers import ReaderStore
 from himena.widgets._wrapper import ParametricWindow
-from himena.standards.model_meta import read_metadata
+from himena.standards import read_metadata
 from himena.workflow import Workflow, compute, WorkflowStepType, LocalReaderMethod
 
 if TYPE_CHECKING:

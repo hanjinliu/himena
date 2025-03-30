@@ -12,7 +12,7 @@ from himena.session._utils import (
     write_metadata_by_title,
     replace_invalid_characters,
 )
-from himena.standards.model_meta import read_metadata
+from himena.standards import read_metadata
 from himena.widgets._wrapper import ParametricWindow
 from himena.workflow import LocalReaderMethod
 from himena.workflow._command import CommandExecution

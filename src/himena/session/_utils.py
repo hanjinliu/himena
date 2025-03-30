@@ -1,6 +1,6 @@
 from pathlib import Path
 from himena import io_utils
-from himena.standards.model_meta import BaseMetadata, write_metadata
+from himena.standards import BaseMetadata, write_metadata
 from himena.types import WidgetDataModel
 from himena.widgets import SubWindow
 import re

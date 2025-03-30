@@ -1,13 +1,17 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING, Sequence, TypeVar
 from logging import getLogger
+from himena.consts import StandardType
+from himena.types import WidgetDataModel
+from himena.standards import BaseMetadata
 from himena.profile import AppProfile, load_app_profile
 
 if TYPE_CHECKING:
     from himena.widgets import MainWindow
 
 _LOGGER = getLogger(__name__)
+_T = TypeVar("_T")
 
 
 def new_window(
@@ -57,6 +61,35 @@ def new_window(
         for cmd, kwargs, exc in exceptions:
             _LOGGER.error("  %r (parameters=%r): %s", cmd, kwargs, exc)
     return main_window
+
+
+def create_model(
+    value: _T,
+    *,
+    type: str | None = None,
+    title: str | None = None,
+    extension_default: str | None = None,
+    extensions: list[str] | None = None,
+    metadata: object | None = None,
+    force_open_with: str | None = None,
+    editable: bool = True,
+) -> WidgetDataModel[_T]:
+    """Helper function to create a WidgetDataModel."""
+    if type is None:
+        if isinstance(metadata, BaseMetadata):
+            type = metadata.expected_type()
+    if type is None:
+        type = StandardType.ANY
+    return WidgetDataModel(
+        value=value,
+        type=type,
+        title=title,
+        extension_default=extension_default,
+        extensions=extensions or [],
+        metadata=metadata,
+        force_open_with=force_open_with,
+        editable=editable,
+    )
 
 
 def _get_main_window(backend: str, *args, **kwargs) -> MainWindow:

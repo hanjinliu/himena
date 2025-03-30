@@ -3,6 +3,7 @@ from himena.standards.model_meta import TableMeta
 from himena.plugins import register_function, configure_gui
 from himena.types import WidgetDataModel, Parametric
 from himena.consts import StandardType, MenuId
+from himena.core import create_model
 
 
 @register_function(
@@ -41,11 +42,8 @@ def series_as_array(model: WidgetDataModel) -> Parametric:
 
     @configure_gui(column={"bind": _get_column_index})
     def run_series_as_array(column: str):
-        df = wrap_dataframe(model.value)
-        series = df.column_to_array(column)
-
-        return WidgetDataModel(
-            value=series,
+        return create_model(
+            wrap_dataframe(model.value).column_to_array(column),
             title=f"{model.title} ({column})",
             type=StandardType.ARRAY,
             extension_default=".npy",
