@@ -126,7 +126,8 @@ def drag_model(
     desc: str | None = None,
     source: QtW.QWidget | None = None,
     text_data: str | Callable[[], str] | None = None,
-):
+    exec: bool = True,
+) -> QtGui.QDrag:
     """Create a QDrag object for the given model"""
     drag = QtGui.QDrag(source)
     _drag.drag(model)
@@ -151,4 +152,46 @@ def drag_model(
     drag.setPixmap(pixmap)
     drag.setMimeData(mime)
     drag.destroyed.connect(_drag.clear)
-    drag.exec()
+    if exec:
+        drag.exec()
+    return drag
+
+
+def drag_command(
+    source: QtW.QWidget,
+    command_id: str,
+    type: str,
+    *,
+    with_params: dict[str, object] | None = None,
+    desc: str | None = None,
+    text_data: str | Callable[[], str] | None = None,
+    exec: bool = True,
+) -> QtGui.QDrag:
+    """Drag a command that will be executed when dropped."""
+
+    def _cb():
+        ui = get_main_window(source)
+        win = None
+        for win in ui.iter_windows():
+            front = win._split_interface_and_frontend()[1]
+            if front is source:
+                break
+        if win is None:
+            raise ValueError("No subwindow found for the dragging widget.")
+        model = win.to_model()
+        out = ui.exec_action(
+            command_id,
+            window_context=win,
+            model_context=model,
+            with_params=with_params,
+            process_model_output=False,
+        )
+        return out
+
+    return drag_model(
+        DragDataModel(getter=_cb, type=type),
+        desc=desc,
+        text_data=text_data,
+        source=source,
+        exec=exec,
+    )

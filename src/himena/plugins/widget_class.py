@@ -6,11 +6,8 @@ from app_model.types import Action
 from himena._descriptors import NoNeedToSave
 from himena._utils import get_display_name, get_widget_class_id
 from himena._app_model import AppContext as ctx
-from himena.plugins.actions import (
-    AppActionRegistry,
-    _type_to_expression,
-    PluginConfigTuple,
-)
+from himena.plugins.actions import AppActionRegistry, PluginConfigTuple
+from himena.plugins._utils import type_to_expression
 
 from himena.types import WidgetDataModel
 
@@ -148,7 +145,7 @@ class OpenDataInFunction:
         self._type = type_
         self._enablement = (
             # disable action if the model data type is different
-            _type_to_expression(self._type)
+            type_to_expression(self._type)
             # disable action that open the same data in the same widget
             & (ctx.active_window_widget_id != self._plugin_id)
         )

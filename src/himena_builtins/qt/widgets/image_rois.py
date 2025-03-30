@@ -1,17 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW
 from himena.plugins import validate_protocol
-from himena.qt._utils import drag_model
+from himena.qt._utils import drag_command
 from himena.standards import roi
 from himena.standards.model_meta import ImageRoisMeta, ArrayAxis
 from himena.consts import StandardType
-from himena.types import DragDataModel, WidgetDataModel
+from himena.types import WidgetDataModel
 from ._image_components import QSimpleRoiCollection
-
-if TYPE_CHECKING:
-    pass
 
 
 class QImageRoiView(QtW.QWidget):
@@ -30,7 +26,7 @@ class QImageRoiView(QtW.QWidget):
         self._is_modified = False
         self._model_type = StandardType.ROIS
         self._axes: list[ArrayAxis] | None = None
-        self._roi_collection.drag_requested.connect(self._run_drag_model)
+        self._roi_collection.drag_requested.connect(self._on_drag_requested)
 
     @validate_protocol
     def update_model(self, model: WidgetDataModel):
@@ -76,21 +72,13 @@ class QImageRoiView(QtW.QWidget):
     def size_hint(self) -> tuple[int, int]:
         return 180, 300
 
-    def _run_drag_model(self, indices: list[int]):
-        def make_model():
-            rlist = self._roi_collection.to_standard_roi_list(indices)
-            axes = self._axes
-            return WidgetDataModel(
-                value=rlist,
-                type=StandardType.ROIS,
-                title="ROIs",
-                metadata=ImageRoisMeta(axes=axes),
-            )
-
+    def _on_drag_requested(self, indices: list[int]):
         nrois = len(indices)
         _s = "" if nrois == 1 else "s"
-        drag_model(
-            model=DragDataModel(getter=make_model, type=StandardType.ROIS),
+        return drag_command(
+            self,
+            "builtins:select-rois",
+            StandardType.ROIS,
+            with_params={"selections": indices},
             desc=f"{nrois} ROI{_s}",
-            source=self,
         )

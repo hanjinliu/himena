@@ -167,6 +167,7 @@ def _make_roi_limits_getter(win: SubWindow, dim: Literal["x", "y"]):
 )
 def duplicate_rois(model: WidgetDataModel) -> WidgetDataModel:
     """Duplicate the ROIs as a new window with the ROI data."""
+    # NOTE: this command will also be used by drag-and-drop of image view widget.
     if isinstance(meta := model.metadata, ArrayMeta):
         axes = meta.axes
     else:
@@ -203,10 +204,7 @@ def filter_rois(model: WidgetDataModel) -> Parametric:
         types_allowed = {_roi.pick_roi_model(typ.lower()) for typ in types}
         sl = [i for i, r in enumerate(rois) if type(r) in types_allowed]
         value = rois.filter_by_selection(sl)
-        if isinstance(meta := model.metadata, (ImageRoisMeta, ImageMeta)):
-            axes = meta.axes
-        else:
-            axes = None
+        axes = _axes_from_metadata(model)
         return WidgetDataModel(
             value=value,
             type=StandardType.ROIS,
@@ -223,10 +221,16 @@ def filter_rois(model: WidgetDataModel) -> Parametric:
     menus=["/model_menu"],
     command_id="builtins:select-rois",
 )
+@register_function(
+    title="Select ROIs",
+    types=StandardType.IMAGE,
+    menus=[MenuId.TOOLS_IMAGE_ROI, "/model_menu/roi"],
+    command_id="builtins:select-image-rois",
+)
 def select_rois(model: WidgetDataModel) -> Parametric:
     """Make a new ROI list with the selected ROIs."""
     rois = _get_rois_from_model(model)
-    if not isinstance(meta := model.metadata, ImageRoisMeta):
+    if not isinstance(meta := model.metadata, (ImageRoisMeta, ImageMeta)):
         raise ValueError(f"Expected an ImageRoisMeta metadata, got {type(meta)}")
     axes = meta.axes
 
@@ -243,6 +247,14 @@ def select_rois(model: WidgetDataModel) -> Parametric:
         )
 
     return run_select
+
+
+def _axes_from_metadata(model: WidgetDataModel):
+    if isinstance(meta := model.metadata, (ImageRoisMeta, ImageMeta)):
+        axes = meta.axes
+    else:
+        axes = None
+    return axes
 
 
 @register_function(

@@ -785,6 +785,9 @@ class ParametricWindow(SubWindow[_W]):
             else:
                 result_widget = self._process_model_output(return_value)
                 if result_widget is None:
+                    if tracker is not None:
+                        new_workflow = tracker.to_workflow(kwargs)
+                        return_value.workflow = new_workflow  # needs inheritance
                     return None
             _LOGGER.info("Got subwindow: %r", result_widget)
             if tracker is not None:

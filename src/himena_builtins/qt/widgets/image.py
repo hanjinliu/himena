@@ -13,8 +13,8 @@ from superqt import ensure_main_thread, QToggleSwitch
 
 from himena.consts import StandardType
 from himena.standards import roi, model_meta
-from himena.qt._utils import drag_model, qsignal_blocker
-from himena.types import DragDataModel, DropResult, Size, WidgetDataModel
+from himena.qt._utils import drag_command, qsignal_blocker
+from himena.types import DropResult, Size, WidgetDataModel
 from himena.plugins import validate_protocol
 from himena.widgets import set_status_tip
 from himena.data_wrappers import ArrayWrapper, wrap_array
@@ -538,23 +538,15 @@ class QImageViewBase(QtW.QSplitter):
             self._img_view.set_mode(self._img_view._last_mode_before_key_hold)
         return None
 
-    def _run_drag_model(self, indices: list[int]):
-        def make_model():
-            rlist = self._roi_col.to_standard_roi_list(indices)
-            axes = self._dims_slider._to_image_axes()
-            return WidgetDataModel(
-                value=rlist,
-                type=StandardType.ROIS,
-                title="ROIs",
-                metadata=model_meta.ImageRoisMeta(axes=axes),
-            )
-
+    def _on_drag_roi_requested(self, indices: list[int]):
         nrois = len(indices)
         _s = "" if nrois == 1 else "s"
-        drag_model(
-            model=DragDataModel(getter=make_model, type=StandardType.ROIS),
+        return drag_command(
+            self,
+            command_id="builtins:select-image-rois",
+            type=StandardType.ROIS,
+            with_params={"selections": indices},
             desc=f"{nrois} ROI{_s}",
-            source=self,
         )
 
 
@@ -597,10 +589,10 @@ class QImageView(QImageViewBase):
 
     ## Drag and Drop
 
-    - This widget accepts dropping models with `StandardType.IMAGE_ROIS` ("image-rois").
+    - This widget accepts dropping models with `StandardType.ROIS` ("image-rois").
       Dropped ROIs will be added to the ROI list.
     - ROIs can be dragged out from the ROI manager. The type of the dragged model is
-      `StandardType.IMAGE_ROIS` ("image-rois"). Use the drag indicator in the corner of
+      `StandardType.ROIS` ("image-rois"). Use the drag indicator in the corner of
       the ROI list.
     """
 

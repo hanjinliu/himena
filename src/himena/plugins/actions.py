@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import is_dataclass, fields
-from functools import reduce
-import operator
 import logging
 from copy import deepcopy
 from typing import (
@@ -29,6 +27,7 @@ from himena.consts import MenuId
 from himena import _utils
 from himena.types import WidgetDataModel
 from himena.utils.collections import OrderedSet
+from himena.plugins import _utils as _plugins_utils
 
 if TYPE_CHECKING:
     from himena._app_model import HimenaApplication
@@ -216,7 +215,6 @@ def configure_submenu(
 
 @overload
 def register_function(
-    func: None = None,
     *,
     menus: str | Sequence[str] = "plugins",
     title: str | None = None,
@@ -253,8 +251,7 @@ def register_function(
     run_async=False,
     command_id=None,
 ):
-    """
-    Register a function as a callback of a plugin action.
+    """Register a function as a callback of a plugin action.
 
     This function can be used either as a decorator or a simple function.
 
@@ -316,12 +313,16 @@ def make_action_for_function(
         _title = title
     _enablement = enablement
     if _utils.has_widget_data_model_argument(f):
-        _enablement = _expr_and(_enablement, ctx.is_active_window_supports_to_model)
+        _enablement = _plugins_utils.expr_and(
+            _enablement, ctx.is_active_window_supports_to_model
+        )
 
     if inner_widget_class := _utils.get_subwindow_type_arg(f):
         # function is annotated with SubWindow[W]. Use W for enablement.
         widget_id = _utils.get_widget_class_id(inner_widget_class)
-        _enablement = _expr_and(_enablement, ctx.active_window_widget_id == widget_id)
+        _enablement = _plugins_utils.expr_and(
+            _enablement, ctx.active_window_widget_id == widget_id
+        )
 
     _id = command_id_from_func(f, command_id)
     if isinstance(command_id, str) and ":" in command_id:
@@ -342,12 +343,6 @@ def make_action_for_function(
     )
 
 
-def _expr_and(expr: BoolOp | None, other: BoolOp) -> BoolOp:
-    if expr is None:
-        return other
-    return expr & other
-
-
 def _norm_register_function_args(
     types: str | Sequence[str] | None,
     enablement: BoolOp | None,
@@ -360,7 +355,7 @@ def _norm_register_function_args(
     else:
         _types = types
     if len(_types) > 0:
-        type_enablement = _types_to_expression(_types)
+        type_enablement = _plugins_utils.types_to_expression(_types)
         if enablement is None:
             enablement = type_enablement
         else:
@@ -376,7 +371,7 @@ def _norm_register_function_args(
     reg = AppActionRegistry.instance()
     for menu in norm_menus(menus):
         # if "/model_menu/..." submenu is specified by the user, reallocate it.
-        if _is_model_menu_prefix(menu):
+        if _plugins_utils.is_model_menu_prefix(menu):
             _, _, other = menu.split("/", maxsplit=2)
             _LOGGER.debug("Reallocated: %r ", menu)
             for _type in _types:
@@ -401,32 +396,6 @@ def _norm_register_function_args(
             menu_out.append(new_place)
             _LOGGER.debug("Menu added: %r", new_place)
     return _types, enablement, menu_out
-
-
-def _types_to_expression(types: list[str]) -> BoolOp:
-    return reduce(operator.or_, map(_type_to_expression, types))
-
-
-def _type_to_expression(typ: str) -> BoolOp:
-    subtypes = typ.split(".")
-    nsub = len(subtypes)
-    out = ctx.active_window_model_type == subtypes[0]
-    if nsub >= 2:
-        out &= ctx.active_window_model_subtype_1 == subtypes[1]
-        if nsub >= 3:
-            out &= ctx.active_window_model_subtype_2 == subtypes[2]
-            if nsub >= 4:
-                out &= ctx.active_window_model_subtype_3 == subtypes[3]
-                if nsub >= 5:
-                    raise ValueError(f"The maximum number of subtypes are 4, got {typ}")
-    return out
-
-
-def _is_model_menu_prefix(menu_id: str) -> bool:
-    ids = menu_id.split("/")
-    if len(ids) < 3:
-        return False
-    return (ids[0], ids[1]) == ("", "model_menu")
 
 
 def normalize_keybindings(keybindings):
