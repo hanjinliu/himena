@@ -3,6 +3,7 @@ from himena.standards.model_meta import DictMeta
 from himena.plugins import register_function
 from himena.types import WidgetDataModel
 from himena.consts import StandardType, MenuId
+from himena.core import create_model
 
 if TYPE_CHECKING:
     import numpy as np
@@ -23,8 +24,8 @@ def duplicate_this_tab(
         type_out = model.type[5:]
     else:
         type_out = model.type
-    return WidgetDataModel(
-        value=model.value[tab],
+    return create_model(
+        model.value[tab],
         title=f"{model.title} ({tab})",
         type=type_out,
         extension_default=".csv",

@@ -9,7 +9,8 @@ import numpy as np
 from himena.plugins import configure_gui, register_conversion_rule
 from himena.types import Parametric, WidgetDataModel
 from himena.consts import StandardType
-from himena.standards.model_meta import TextMeta
+from himena.core import create_model
+from himena.standards.model_meta import TextMeta, TableMeta, DataFrameMeta
 from himena.standards.roi import (
     Roi2D,
     RectangleRoi,
@@ -33,8 +34,8 @@ def text_to_table(model: WidgetDataModel[str]) -> WidgetDataModel:
     sep = dialect.delimiter
     buf.seek(0)
     table = np.array(list(csv.reader(buf, delimiter=sep)))
-    return WidgetDataModel(
-        value=table,
+    return create_model(
+        table,
         type=StandardType.TABLE,
         title=model.title,
         extension_default=".csv",
@@ -50,8 +51,8 @@ def text_to_array(model: WidgetDataModel[str]) -> WidgetDataModel:
     """Convert text to an array-type widget using numpy."""
     text = model.value
     arr = np.loadtxt(StringIO(text), delimiter=",")
-    return WidgetDataModel(
-        value=arr,
+    return create_model(
+        arr,
         type=StandardType.ARRAY,
         title=model.title,
         extension_default=".npy",
@@ -69,8 +70,8 @@ def text_to_dataframe(model: WidgetDataModel[str]) -> WidgetDataModel:
 
     buf = StringIO(model.value)
     df = read_csv("dict", buf)
-    return WidgetDataModel(
-        value=df,
+    return create_model(
+        df,
         title=model.title,
         type=StandardType.DATAFRAME,
         extension_default=".csv",
@@ -104,11 +105,14 @@ def to_plain_text(model: WidgetDataModel[str]) -> WidgetDataModel:
 def dataframe_to_table(model: WidgetDataModel) -> WidgetDataModel["np.ndarray"]:
     """Convert a table data into a DataFrame."""
     df = wrap_dataframe(model.value)
-    return WidgetDataModel(
-        value=[df.column_names()] + df.to_list(),
+    if isinstance(meta := model.metadata, TableMeta):
+        # TODO: do we need to inherit current_position and selections?
+        separator = meta.separator
+    return create_model(
+        [df.column_names()] + df.to_list(),
         title=model.title,
-        type=StandardType.TABLE,
         extension_default=".csv",
+        metadata=TableMeta(separator=separator),
     )
 
 
@@ -129,10 +133,9 @@ def dataframe_to_text(model: WidgetDataModel) -> Parametric:
         table_input.insert(0, df.column_names())
         end_of_text = "\n" if end_of_text == "\\n" else ""
         value, ext_default, language = _table_to_text(table_input, format, end_of_text)
-        return WidgetDataModel(
-            value=value,
+        return create_model(
+            value,
             title=model.title,
-            type=StandardType.TEXT,
             extension_default=ext_default,
             metadata=TextMeta(language=language),
         )
@@ -156,9 +159,8 @@ def table_to_text(model: WidgetDataModel) -> Parametric:
         end_of_text: Literal["", "\n"] = "\n",
     ) -> WidgetDataModel[str]:
         value, ext_default, language = _table_to_text(model.value, format, end_of_text)
-        return WidgetDataModel(
-            value=value,
-            type=StandardType.TEXT,
+        return create_model(
+            value,
             title=model.title,
             extension_default=ext_default,
             metadata=TextMeta(language=language),
@@ -175,15 +177,17 @@ def table_to_text(model: WidgetDataModel) -> Parametric:
 def table_to_dataframe(model: WidgetDataModel["np.ndarray"]) -> WidgetDataModel:
     """Convert a table data into a DataFrame."""
     # TODO: Choose pandas, dict etc.
+    if isinstance(meta := model.metadata, TableMeta):
+        separator = meta.separator
     buf = StringIO()
     np.savetxt(buf, model.value, fmt="%s", delimiter=",")
     buf.seek(0)
     df = read_csv("dict", buf)
-    return WidgetDataModel(
-        value=df,
+    return create_model(
+        df,
         title=model.title,
-        type=StandardType.DATAFRAME,
         extension_default=".csv",
+        metadata=DataFrameMeta(separator=separator),
     )
 
 
@@ -213,8 +217,8 @@ def table_to_array(model: WidgetDataModel["np.ndarray"]) -> WidgetDataModel:
     if not ok:
         pass
 
-    return WidgetDataModel(
-        value=arr,
+    return create_model(
+        arr,
         type=StandardType.ARRAY,
         title=model.title,
         extension_default=".npy",
@@ -278,9 +282,8 @@ def dataframe_to_image_rois(model: WidgetDataModel) -> Parametric:
                 rois.append(PointRoi2D(name=default_roi_label(idx), x=x, y=y))
         else:
             raise ValueError("Only 'rectangle' and 'point' are supported.")
-        value = RoiListModel(items=rois, indices=arr_indice, axis_names=indices)
-        return WidgetDataModel(
-            value=value,
+        return create_model(
+            RoiListModel(items=rois, indices=arr_indice, axis_names=indices),
             title=model.title,
             type=StandardType.ROIS,
         )
@@ -320,8 +323,8 @@ def array_to_table(model: WidgetDataModel) -> WidgetDataModel:
     value = arr.get_slice(()).astype(np.dtypes.StringDType())
     if value.ndim < 2:
         value = np.atleast_2d(value)
-    return WidgetDataModel(
-        value=value,
+    return create_model(
+        value,
         title=model.title,
         type=StandardType.TABLE,
         extension_default=".csv",

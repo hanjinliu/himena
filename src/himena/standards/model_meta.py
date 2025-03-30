@@ -3,16 +3,14 @@ from pathlib import Path
 from typing import Any, TYPE_CHECKING, Callable, Literal
 import warnings
 from pydantic_compat import BaseModel, Field, field_validator
+from himena.consts import StandardType
 from himena.standards import roi
-from himena.utils.misc import iter_subclasses
+from himena.standards._base import BaseMetadata, _META_NAME
 
 if TYPE_CHECKING:
     from pydantic import ValidationInfo
 
 __all__ = [
-    "BaseMetadata",
-    "read_metadata",
-    "write_metadata",
     "TextMeta",
     "TableMeta",
     "DataFrameMeta",
@@ -26,55 +24,6 @@ __all__ = [
     "ImageRoisMeta",
 ]
 
-_META_NAME = "meta.json"
-_CLASS_JSON = ".class.json"
-
-
-class BaseMetadata(BaseModel):
-    """The base class for a model metadata."""
-
-    @classmethod
-    def from_metadata(cls, dir_path: Path) -> "TextMeta":
-        return cls.model_validate_json(dir_path.joinpath(_META_NAME).read_text())
-
-    def write_metadata(self, dir_path: Path) -> None:
-        dir_path.joinpath(_META_NAME).write_text(self.model_dump_json())
-
-    def _class_info(self) -> dict:
-        return {"name": self.__class__.__name__, "module": self.__class__.__module__}
-
-    def _repr_pretty_(self, p, cycle):
-        """Pretty print the metadata."""
-        lines = [f"{self.__class__.__name__}("]
-        for key, value in self.__repr_args__():
-            lines.append(f"  {key}={value!r},")
-        lines.append(")")
-        p.text("\n".join(lines))
-
-
-def read_metadata(dir_path: Path) -> BaseMetadata:
-    """Read the metadata from a directory."""
-    with dir_path.joinpath(_CLASS_JSON).open("r") as f:
-        class_js = json.load(f)
-    module = class_js["module"]
-    name = class_js["name"]
-    for sub in iter_subclasses(BaseMetadata):
-        if sub.__name__ == name and sub.__module__ == module:
-            metadata_class = sub
-            break
-    else:
-        raise ValueError(f"Metadata class {name=}n {module=} not found.")
-
-    return metadata_class.from_metadata(dir_path)
-
-
-def write_metadata(meta: BaseMetadata, dir_path: Path) -> None:
-    """Write the metadata to a directory."""
-    meta.write_metadata(dir_path)
-    with dir_path.joinpath(_CLASS_JSON).open("w") as f:
-        json.dump(meta._class_info(), f)
-    return None
-
 
 class TextMeta(BaseMetadata):
     """Preset for describing the metadata for a "text" type."""
@@ -85,6 +34,9 @@ class TextMeta(BaseMetadata):
     font_family: str | None = Field(None, description="Font family.")
     font_size: float = Field(10, description="Font size.")
     encoding: str | None = Field(None, description="Encoding of the text file.")
+
+    def expected_type(self):
+        return StandardType.TEXT
 
 
 class TableMeta(BaseMetadata):
@@ -100,6 +52,9 @@ class TableMeta(BaseMetadata):
     )
     separator: str | None = Field(None, description="Separator of the table.")
 
+    def expected_type(self):
+        return StandardType.TABLE
+
 
 class DataFrameMeta(TableMeta):
     """Preset for describing the metadata for a "dataframe" type."""
@@ -108,6 +63,9 @@ class DataFrameMeta(TableMeta):
         default=False, description="Whether the table is transposed."
     )
 
+    def expected_type(self):
+        return StandardType.DATAFRAME
+
 
 class DictMeta(BaseMetadata):
     current_tab: str | None = Field(None, description="Current tab name.")
@@ -115,11 +73,17 @@ class DictMeta(BaseMetadata):
         default_factory=dict, description="Metadata of the child models."
     )
 
+    def expected_type(self):
+        return StandardType.DICT
+
 
 class FunctionMeta(BaseMetadata):
     """Preset for describing the metadata for a "function" type."""
 
     source_code: str | None = Field(None, description="Source code of the function.")
+
+    def expected_type(self):
+        return StandardType.FUNCTION
 
 
 class DataFramePlotMeta(DataFrameMeta):
@@ -161,6 +125,9 @@ class DataFramePlotMeta(DataFrameMeta):
             with dir_path.joinpath("rois.roi.json").open("w") as f:
                 json.dump(rois.model_dump_typed(), f)
         return None
+
+    def expected_type(self):
+        return StandardType.DATAFRAME_PLOT
 
 
 class ImageChannel(BaseModel):
@@ -230,6 +197,9 @@ class ArrayMeta(BaseMetadata):
     def without_selections(self) -> "ArrayMeta":
         """Make a copy of the metadata without selections."""
         return self.model_copy(update={"selections": []})
+
+    def expected_type(self):
+        return StandardType.ARRAY
 
 
 class ImageMeta(ArrayMeta):
@@ -373,9 +343,15 @@ class ImageMeta(ArrayMeta):
                 )
         return None
 
+    def expected_type(self):
+        return StandardType.IMAGE
+
 
 class ImageRoisMeta(BaseMetadata):
     """Preset for describing an image-rois metadata."""
 
     axes: list[ArrayAxis] | None = Field(None, description="Axes of the ROIs.")
     selections: list[int] = Field(default_factory=list)
+
+    def expected_type(self):
+        return StandardType.ROIS
