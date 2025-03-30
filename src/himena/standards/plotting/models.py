@@ -5,11 +5,14 @@ from pydantic_compat import Field
 from himena.standards.plotting.components import BasePlotModel, Face, Edge
 
 
-class Scatter(BasePlotModel):
-    """Plot model for scatter plot."""
-
+class PlotModelXY(BasePlotModel):
     x: Any = Field(..., description="X-axis values.")
     y: Any = Field(..., description="Y-axis values.")
+
+
+class Scatter(PlotModelXY):
+    """Plot model for scatter plot."""
+
     symbol: Any | None = Field(None, description="Symbol of the markers.")
     size: Any | None = Field(None, description="Size of the markers.")
     face: Face = Field(
@@ -31,11 +34,9 @@ class Scatter(BasePlotModel):
         }
 
 
-class Line(BasePlotModel):
+class Line(PlotModelXY):
     """Plot model for line plot."""
 
-    x: Any = Field(..., description="X-axis values.")
-    y: Any = Field(..., description="Y-axis values.")
     edge: Edge = Field(default_factory=Edge, description="Properties of the line.")
     marker: Scatter | None = Field(None, description="Marker of the line.")
 
@@ -48,11 +49,9 @@ class Line(BasePlotModel):
         }
 
 
-class Bar(BasePlotModel):
+class Bar(PlotModelXY):
     """Plot model for bar plot."""
 
-    x: Any = Field(..., description="X-axis values.")
-    y: Any = Field(..., description="Y-axis values.")
     bottom: float | Any = Field(0, description="Bottom values of the bars.")
     bar_width: float | None = Field(None, description="Width of the bars.")
     orient: Literal["vertical", "horizontal"] = Field(
@@ -73,11 +72,9 @@ class Bar(BasePlotModel):
         }
 
 
-class ErrorBar(BasePlotModel):
+class ErrorBar(PlotModelXY):
     """Plot model for error bar plot."""
 
-    x: Any = Field(..., description="X-axis values.")
-    y: Any = Field(..., description="Y-axis values.")
     x_error: Any | None = Field(None, description="X-axis error values.")
     y_error: Any | None = Field(None, description="Y-axis error values.")
     capsize: float | None = Field(None, description="Cap size of the error bars.")
@@ -196,11 +193,9 @@ ANCHOR_STRINGS = Literal[
 ]  # fmt: skip
 
 
-class Texts(BasePlotModel):
+class Texts(PlotModelXY):
     """Plot model for texts."""
 
-    x: Any = Field(..., description="X-axis values.")
-    y: Any = Field(..., description="Y-axis values.")
     texts: Any = Field(..., description="Texts to be displayed.")
     size: int = Field(12, description="Font size of the texts.")
     color: str = Field("black", description="Font color of the texts.")

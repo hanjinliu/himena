@@ -628,6 +628,7 @@ class MainWindow(Generic[_W]):
                     f"`window_context` must be SubWindow or UUID, got {window_context}"
                 )
             providers.append((_window_context, SubWindow, 1000))
+            providers.append((_window_context.to_model(), WidgetDataModel, 999))
         # execute the command under the given context
         with (
             self.model_app.injection_store.register(providers=providers),

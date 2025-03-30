@@ -86,16 +86,19 @@ def test_scatter_plot_via_command(make_himena_ui, tmpdir):
         type="table",
     )
     himena_ui.exec_action(
-        "builtins:scatter-plot-3d",
+        "builtins:plot-3d:scatter-plot-3d",
         with_params={
             "x": ((0, 99), (0, 1)),
             "y": ((0, 99), (1, 2)),
             "z": ((0, 99), (2, 3)),
         }
     )
+    win_3d = himena_ui.current_window
     path = Path(tmpdir) / "test.plot.json"
     himena_ui.current_window.write_model(path)
     himena_ui.read_file(path)
+    himena_ui.exec_action("builtins:plot-to-dataframe", with_params={"component": 0})
+    himena_ui.exec_action("builtins:plot-to-dataframe", with_params={"component": 0}, window_context=win_3d)
 
 def test_scatter_plot_many_data_types(make_himena_ui):
     himena_ui: MainWindow = make_himena_ui("mock")
@@ -159,16 +162,19 @@ def test_line_plot_via_command(make_himena_ui, tmpdir):
         type="table",
     )
     himena_ui.exec_action(
-        "builtins:line-plot-3d",
+        "builtins:plot-3d:line-plot-3d",
         with_params={
             "x": ((0, 99), (0, 1)),
             "y": ((0, 99), (1, 2)),
             "z": ((0, 99), (2, 3)),
         }
     )
+    win_3d = himena_ui.current_window
     path = Path(tmpdir) / "test.plot.json"
     himena_ui.current_window.write_model(path)
     himena_ui.read_file(path)
+    himena_ui.exec_action("builtins:plot-to-dataframe", with_params={"component": 0})
+    himena_ui.exec_action("builtins:plot-to-dataframe", with_params={"component": 0}, window_context=win_3d)
 
 def test_bar_plot_via_command(make_himena_ui, tmpdir):
     himena_ui: MainWindow = make_himena_ui()
@@ -217,6 +223,7 @@ def test_bar_plot_via_command(make_himena_ui, tmpdir):
     path = Path(tmpdir) / "test.plot.json"
     himena_ui.current_window.write_model(path)
     himena_ui.read_file(path)
+    himena_ui.exec_action("builtins:plot-to-dataframe", with_params={"component": 0})
 
 def test_errorbar_plot_via_command(make_himena_ui, tmpdir):
     himena_ui: MainWindow = make_himena_ui("mock")
@@ -268,6 +275,7 @@ def test_errorbar_plot_via_command(make_himena_ui, tmpdir):
     path = Path(tmpdir) / "test.plot.json"
     himena_ui.current_window.write_model(path)
     himena_ui.read_file(path)
+    himena_ui.exec_action("builtins:plot-to-dataframe", with_params={"component": 0})
 
 def test_band_plot_via_command(make_himena_ui, tmpdir):
     himena_ui: MainWindow = make_himena_ui("mock")
@@ -294,6 +302,7 @@ def test_band_plot_via_command(make_himena_ui, tmpdir):
     path = Path(tmpdir) / "test.plot.json"
     himena_ui.current_window.write_model(path)
     himena_ui.read_file(path)
+    himena_ui.exec_action("builtins:plot-to-dataframe", with_params={"component": 0})
 
 def test_histogram(make_himena_ui):
     himena_ui: MainWindow = make_himena_ui("mock")
@@ -305,13 +314,16 @@ def test_histogram(make_himena_ui):
         "builtins:histogram",
         with_params={"x": ((0, 99), (0, 1)), "bins": 2}
     )
+    win_hist = himena_ui.current_window
+    himena_ui.exec_action("builtins:plot-to-dataframe", with_params={"component": 0}, window_context=win_hist)
     himena_ui.exec_action(
         "builtins:edit-plot",
         with_params={
             "x": {"label": "X value"},
             "y": {"label": "Y value", "lim": (0, 1)},
             "title": "Title ...",
-        }
+        },
+        window_context=win_hist,
     )
 
 def test_plot_from_function(himena_ui: MainWindow):
