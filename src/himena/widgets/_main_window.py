@@ -28,6 +28,7 @@ from himena.consts import NO_RECORDING_FIELD
 from himena.plugins import _checker, actions as _actions
 from himena.profile import AppProfile, load_app_profile
 from himena.style import Theme
+from himena.standards import BaseMetadata
 from himena.types import (
     ClipboardDataModel,
     Size,
@@ -350,6 +351,9 @@ class MainWindow(Generic[_W]):
         SubWindow
             The sub-window handler.
         """
+        if type is None:
+            if isinstance(metadata, BaseMetadata):
+                type = metadata.expected_type()
         if type is None:
             type = self._object_type_map.pick_type(value)
         wd = WidgetDataModel(

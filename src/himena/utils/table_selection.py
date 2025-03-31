@@ -9,9 +9,9 @@ if TYPE_CHECKING:
     from himena.widgets import SubWindow
     from himena.qt.magicgui import SelectionEdit
 
-    # Single 2D selection in the form of ((row start, row stop), (col start, col stop))
-    # We should avoid using slice because it is not serializable.
-    SelectionType = tuple[tuple[int, int], tuple[int, int]]
+# Single 2D selection in the form of ((row start, row stop), (col start, col stop))
+# We should avoid using slice because it is not serializable.
+SelectionType = tuple[tuple[int, int], tuple[int, int]]
 
 
 class NamedArray(NamedTuple):
