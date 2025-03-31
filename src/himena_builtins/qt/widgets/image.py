@@ -15,7 +15,7 @@ from himena.consts import StandardType
 from himena.standards import roi, model_meta
 from himena.qt._utils import drag_command, qsignal_blocker
 from himena.types import DropResult, Parametric, Size, WidgetDataModel
-from himena.plugins import validate_protocol, register_function, configure_gui
+from himena.plugins import validate_protocol, register_function
 from himena.widgets import set_status_tip
 from himena.data_wrappers import ArrayWrapper, wrap_array
 from himena_builtins.qt.widgets._image_components import (
@@ -559,7 +559,6 @@ def _select_image_rois(model: WidgetDataModel) -> Parametric:
     rois = meta.unwrap_rois()
     axes = meta.axes
 
-    @configure_gui(selections={"bind": lambda *_: meta.selections})
     def run_select(selections: list[int]) -> WidgetDataModel:
         if len(selections) == 0:
             raise ValueError("No ROIs selected.")

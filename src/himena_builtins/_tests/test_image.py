@@ -535,3 +535,24 @@ def test_flat_roi_always_selected(qtbot: QtBot):
     assert view._img_view._current_roi_item is not None
     view._dims_slider.setValue((1,))
     assert view._img_view._current_roi_item is not None
+
+def test_select_rois(himena_ui: MainWindow):
+    model = WidgetDataModel(
+        value=np.zeros((4, 4, 10, 10)),
+        type=StandardType.IMAGE,
+        metadata=ImageMeta(
+            axes=["t", "z", "y", "x"],
+            rois=RoiListModel(
+                items=[
+                    LineRoi(name="ROI-0", x1=1, y1=1, x2=4, y2=5),
+                    PointRoi2D(name="ROI-1", x=1, y=5),
+                ],
+                indices=np.array([[0, 0], [0, 0]], dtype=np.int32),
+            ),
+        ),
+    )
+    himena_ui.add_data_model(model)
+    himena_ui.exec_action("builtins:select-image-rois", with_params={"selections": [0]})
+    assert isinstance(lmodel := himena_ui.current_model.value, RoiListModel)
+    assert len(lmodel) == 1
+    assert lmodel.items[0].name == "ROI-0"
