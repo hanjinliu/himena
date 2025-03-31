@@ -302,8 +302,8 @@ def make_action_for_function(
     types=None,
     enablement=None,
     keybindings=None,
-    run_async=False,
-    command_id=None,
+    run_async: bool = False,
+    command_id: str | None = None,
 ):
     types, enablement, menus = _norm_register_function_args(types, enablement, menus)
     kbs = normalize_keybindings(keybindings)

@@ -14,8 +14,8 @@ from superqt import ensure_main_thread, QToggleSwitch
 from himena.consts import StandardType
 from himena.standards import roi, model_meta
 from himena.qt._utils import drag_command, qsignal_blocker
-from himena.types import DropResult, Size, WidgetDataModel
-from himena.plugins import validate_protocol
+from himena.types import DropResult, Parametric, Size, WidgetDataModel
+from himena.plugins import validate_protocol, register_function
 from himena.widgets import set_status_tip
 from himena.data_wrappers import ArrayWrapper, wrap_array
 from himena_builtins.qt.widgets._image_components import (
@@ -543,11 +543,34 @@ class QImageViewBase(QtW.QSplitter):
         _s = "" if nrois == 1 else "s"
         return drag_command(
             self,
-            command_id="builtins:select-image-rois",
+            command_id=_COMMAND_ID,
             type=StandardType.ROIS,
             with_params={"selections": indices},
             desc=f"{nrois} ROI{_s}",
         )
+
+
+_COMMAND_ID = "builtins:select-image-rois"
+
+
+@register_function(menus=[], command_id=_COMMAND_ID)
+def _select_image_rois(model: WidgetDataModel) -> Parametric:
+    assert isinstance(meta := model.metadata, model_meta.ImageMeta)
+    rois = meta.unwrap_rois()
+    axes = meta.axes
+
+    def run_select(selections: list[int]) -> WidgetDataModel:
+        if len(selections) == 0:
+            raise ValueError("No ROIs selected.")
+
+        return WidgetDataModel(
+            value=rois.filter_by_selection(selections),
+            type=StandardType.ROIS,
+            title=f"Subset of {model.title}",
+            metadata=model_meta.ImageRoisMeta(axes=axes),
+        )
+
+    return run_select
 
 
 class QImageView(QImageViewBase):

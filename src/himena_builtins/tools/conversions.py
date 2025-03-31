@@ -27,7 +27,7 @@ from himena.utils.misc import table_to_text as _table_to_text
     type_to=StandardType.TABLE,
     command_id="builtins:text-to-table",
 )
-def text_to_table(model: WidgetDataModel[str]) -> WidgetDataModel:
+def text_to_table(model: WidgetDataModel[str]) -> WidgetDataModel["np.ndarray"]:
     """Convert text to a table-type widget."""
     buf = StringIO(model.value)
     dialect = csv.Sniffer().sniff(buf.read(1024))
@@ -47,7 +47,7 @@ def text_to_table(model: WidgetDataModel[str]) -> WidgetDataModel:
     type_to=StandardType.ARRAY,
     command_id="builtins:text-to-array",
 )
-def text_to_array(model: WidgetDataModel[str]) -> WidgetDataModel:
+def text_to_array(model: WidgetDataModel[str]) -> WidgetDataModel["np.ndarray"]:
     """Convert text to an array-type widget using numpy."""
     text = model.value
     arr = np.loadtxt(StringIO(text), delimiter=",")
@@ -83,7 +83,7 @@ def text_to_dataframe(model: WidgetDataModel[str]) -> WidgetDataModel:
     type_to=StandardType.TEXT,
     command_id="builtins:to-plain-text",
 )
-def to_plain_text(model: WidgetDataModel[str]) -> WidgetDataModel:
+def to_plain_text(model: WidgetDataModel[str]) -> WidgetDataModel[str]:
     """Convert HTML to plain text."""
     html_block_pattern = re.compile(r"<html>.*?</html>", re.DOTALL)
     html_text = model.value

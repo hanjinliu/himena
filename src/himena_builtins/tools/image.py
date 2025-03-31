@@ -111,6 +111,9 @@ def crop_image_nd(win: SubWindow) -> Parametric:
     if ndim < 2:
         raise ValueError("Cannot crop image less than 2D.")
     axes_kwarg_names = [f"axis_{i}" for i in range(ndim)]
+    image_axes = meta.axes
+    if image_axes is None:
+        image_axes = [ArrayAxis(name=f"axis-{i}") for i in range(ndim)]
     index_yx_rgb = 2 + int(meta.is_rgb)
     if ndim < index_yx_rgb + 1:
         raise ValueError("Image only has 2D data.")
@@ -120,7 +123,7 @@ def crop_image_nd(win: SubWindow) -> Parametric:
         conf_kwargs[axis_name] = {
             "widget_type": SliderRangeGetter,
             "getter": _make_index_getter(win, i),
-            "label": axis_name,  # TODO: use axis label
+            "label": image_axes[i].name,
         }
     axis_y, axis_x = axes_kwarg_names[ndim - index_yx_rgb : ndim - index_yx_rgb + 2]
     conf_kwargs[axis_y] = {"bind": _make_roi_limits_getter(win, "y")}
@@ -193,6 +196,7 @@ def duplicate_rois(model: WidgetDataModel) -> WidgetDataModel:
     command_id="builtins:filter-image-rois",
 )
 def filter_rois(model: WidgetDataModel) -> Parametric:
+    """Filter ROIs by their types."""
     rois = _get_rois_from_model(model)
     _choices = [
         "Rectangle", "RotatedRectangle", "Line", "SegmentedLine", "Point2D", "Points2D",
@@ -221,12 +225,6 @@ def filter_rois(model: WidgetDataModel) -> Parametric:
     menus=["/model_menu"],
     command_id="builtins:select-rois",
 )
-@register_function(
-    title="Select ROIs",
-    types=StandardType.IMAGE,
-    menus=[MenuId.TOOLS_IMAGE_ROI, "/model_menu/roi"],
-    command_id="builtins:select-image-rois",
-)
 def select_rois(model: WidgetDataModel) -> Parametric:
     """Make a new ROI list with the selected ROIs."""
     rois = _get_rois_from_model(model)
@@ -249,7 +247,7 @@ def select_rois(model: WidgetDataModel) -> Parametric:
     return run_select
 
 
-def _axes_from_metadata(model: WidgetDataModel):
+def _axes_from_metadata(model: WidgetDataModel) -> list[ArrayAxis] | None:
     if isinstance(meta := model.metadata, (ImageRoisMeta, ImageMeta)):
         axes = meta.axes
     else:

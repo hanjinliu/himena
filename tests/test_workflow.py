@@ -3,8 +3,10 @@ from pathlib import Path
 
 from himena.consts import StandardType
 from himena.testing import file_dialog_response
+from himena.workflow import LocalReaderMethod, CommandExecution
 
-def test_compute_workflow(himena_ui: MainWindow, sample_dir: Path, tmpdir):
+def test_compute_workflow(make_himena_ui, sample_dir: Path, tmpdir):
+    himena_ui: MainWindow = make_himena_ui("qt")  # TODO: bug in mock mode?
     tmpdir = Path(tmpdir)
     himena_ui.read_file(sample_dir / "table.csv")
     himena_ui.exec_action("builtins:table-to-text", with_params={})
@@ -19,7 +21,8 @@ def test_compute_workflow(himena_ui: MainWindow, sample_dir: Path, tmpdir):
         himena_ui.exec_action("save-as")
         himena_ui.exec_action("open-file")
 
-def test_compute_workflow_binary(himena_ui: MainWindow, tmpdir):
+def test_compute_workflow_binary(make_himena_ui, tmpdir):
+    himena_ui: MainWindow = make_himena_ui("mock")
     tmpdir = Path(tmpdir)
     tab = himena_ui.add_tab()
     himena_ui.exec_action("builtins:constant-array", with_params={"shape": (3, 3), "value": 1})
@@ -40,3 +43,27 @@ def test_compute_workflow_binary(himena_ui: MainWindow, tmpdir):
         himena_ui.exec_action("open-file")
         model = wf.compute(process_output=False)
         assert model.value.tolist() == tab[3].to_model().value.tolist()
+
+def test_workflow_inherited(make_himena_ui, sample_dir: Path):
+    himena_ui: MainWindow = make_himena_ui("mock")
+    himena_ui.read_file(sample_dir / "table.csv")
+    win0 = himena_ui.current_window
+    himena_ui.exec_action("builtins:table-to-text", with_params={})
+    win1 = himena_ui.current_window
+    himena_ui.exec_action("builtins:table-to-dataframe", window_context=win0)
+    win2 = himena_ui.current_window
+    himena_ui.exec_action("builtins:dataframe-to-table")
+    win3 = himena_ui.current_window
+
+    assert len(win0.to_model().workflow) == 1
+    assert isinstance(win0.to_model().workflow.steps[0], LocalReaderMethod)
+    assert len(win1.to_model().workflow) == 2
+    assert isinstance(win1.to_model().workflow.steps[0], LocalReaderMethod)
+    assert isinstance(win1.to_model().workflow.steps[1], CommandExecution)
+    assert len(win2.to_model().workflow) == 2
+    assert isinstance(win2.to_model().workflow.steps[0], LocalReaderMethod)
+    assert isinstance(win2.to_model().workflow.steps[1], CommandExecution)
+    assert len(win3.to_model().workflow) == 3
+    assert isinstance(win3.to_model().workflow.steps[0], LocalReaderMethod)
+    assert isinstance(win3.to_model().workflow.steps[1], CommandExecution)
+    assert isinstance(win3.to_model().workflow.steps[2], CommandExecution)
