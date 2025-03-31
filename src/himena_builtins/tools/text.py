@@ -1,30 +1,62 @@
 import ast
 import csv
+import inspect
 from io import StringIO
 from types import FunctionType
-from himena.plugins import register_function
+from himena.plugins import register_function, configure_gui
 from himena.types import Parametric, WidgetDataModel
 from himena.standards.model_meta import TextMeta, FunctionMeta
 from himena.consts import StandardType, MenuId
+from himena import create_model
 
 
 @register_function(
     types=StandardType.TEXT,
     menus=[MenuId.TOOLS_TEXT],
     keybindings="Ctrl+F5",
-    command_id="builtins:run-script",
+    command_id="builtins:text-run:run-script",
 )
 def run_script(model: WidgetDataModel[str]):
     """Run a Python script."""
     script = model.value
-    if isinstance(model.metadata, TextMeta):
-        if model.metadata.language.lower() == "python":
-            exec(script)
-        else:
-            raise ValueError(f"Cannot run {model.metadata.language}.")
+    if _maybe_python(model):
+        exec(script)
     else:
-        raise ValueError("Unknown language.")
+        raise ValueError("Cannot run non-Python script.")
     return None
+
+
+@register_function(
+    title="Run Main Function ...",
+    menus=[MenuId.TOOLS_TEXT],
+    types=StandardType.TEXT,
+    command_id="builtins:text-run:run-script-main",
+)
+def run_main_function(model: WidgetDataModel[str]) -> Parametric:
+    """Run the main function of a Python script with parameters."""
+    script = model.value
+    if not _maybe_python(model):
+        raise ValueError("Cannot run non-Python script.")
+    ns = {"create_model": create_model}
+    loc = {}
+    exec(script, ns, loc)
+    if not callable(main := loc.get("main")):
+        raise ValueError("No callable `main` function found in the script.")
+    gui_options = {}
+    for param in inspect.signature(main).parameters.values():
+        if param.annotation in (
+            inspect.Parameter.empty,
+            WidgetDataModel,
+            "WidgetDataModel",
+        ):
+            annot = WidgetDataModel
+        else:
+            annot = param.annotation
+        gui_options[param.name] = {"annotation": annot, "label": param.name}
+        if param.default is not inspect.Parameter.empty:
+            gui_options[param.name]["default"] = param.default
+
+    return configure_gui(main, gui_options=gui_options)
 
 
 @register_function(
@@ -73,13 +105,16 @@ def change_encoding(model: WidgetDataModel[str]) -> Parametric:
 
 
 @register_function(
-    title="Compile as a function",
+    title="Compile As a Function",
     types=StandardType.TEXT,
     menus=[MenuId.TOOLS_TEXT],
-    command_id="builtins:compile-as-function",
+    command_id="builtins:text-run:compile-as-function",
 )
 def compile_as_function(model: WidgetDataModel[str]) -> WidgetDataModel:
+    """Compile a Python script as a function data."""
     code = model.value
+    if not _maybe_python(model):
+        raise ValueError("Cannot compile non-Python script.")
     mod = ast.parse(code)
     global_vars = {}
     local_vars = {}
@@ -113,3 +148,10 @@ def compile_as_function(model: WidgetDataModel[str]) -> WidgetDataModel:
         type=StandardType.FUNCTION,
         metadata=FunctionMeta(source_code=code),
     )
+
+
+def _maybe_python(model: WidgetDataModel[str]) -> bool:
+    if isinstance(model.metadata, TextMeta):
+        lang = model.metadata.language or ""
+        return lang.lower() in ("python", "plain text", "")
+    return True

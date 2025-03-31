@@ -120,12 +120,16 @@ def configure_gui(
                 param = inspect.Parameter(name=k, kind=inspect.Parameter.KEYWORD_ONLY)
             else:
                 param = sig.parameters[k]
+            if isinstance(v, dict) and "annotation" in v:
+                param_annotation = v.pop("annotation")
+            else:
+                param_annotation = param.annotation
             # unwrap Annotated types
-            if not _is_annotated(param.annotation):
-                annot = _prioritize_choices(param.annotation, v)
+            if not _is_annotated(param_annotation):
+                annot = _prioritize_choices(param_annotation, v)
                 param = param.replace(annotation=Annotated[annot, v])
             else:
-                typ, meta = _split_annotated_type(param.annotation)
+                typ, meta = _split_annotated_type(param_annotation)
                 meta.update(v)
                 typ = _prioritize_choices(typ, meta)
                 param = param.replace(annotation=Annotated[typ, meta])
