@@ -106,16 +106,18 @@ def test_rich_text(sample_dir: Path, qtbot):
 def test_commands(himena_ui: MainWindow):
     win = himena_ui.add_object("print(2)", type=StandardType.TEXT)
     win.update_model(win.to_model().with_metadata(TextMeta(language="python")))
-    himena_ui.exec_action("builtins:run-script")
+    himena_ui.exec_action("builtins:text-run:run-script")
     win = himena_ui.add_object("1,2,3", type=StandardType.TEXT)
     himena_ui.exec_action("builtins:text:change-separator", with_params={})
     assert himena_ui.current_model.value == "1\t2\t3"
     himena_ui.exec_action("builtins:text:change-encoding", with_params={"encoding": "utf-16"})
     assert himena_ui.current_model.metadata.encoding == "utf-16"
     himena_ui.add_object("def f(x):\n    return x + 1", type=StandardType.TEXT)
-    himena_ui.exec_action("builtins:compile-as-function")
+    himena_ui.exec_action("builtins:text-run:compile-as-function")
     himena_ui.add_object("def f(x):\n    return x + 1\nf", type=StandardType.TEXT)
-    himena_ui.exec_action("builtins:compile-as-function")
+    himena_ui.exec_action("builtins:text-run:compile-as-function")
+    himena_ui.add_object("def main(x):\n    return x\n", type=StandardType.TEXT)
+    himena_ui.exec_action("builtins:text-run:run-script-main", with_params={"x": himena_ui.tabs[0][0]})
 
 def test_open_as_text_anyway(sample_dir: Path, himena_ui: MainWindow):
     himena_ui.read_file(sample_dir / "random_ext.aaa")

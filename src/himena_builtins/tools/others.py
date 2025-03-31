@@ -100,20 +100,21 @@ def sort_model_list(model: WidgetDataModel) -> Parametric:
         descending: bool = False,
         sort_by: Literal["title", "type", "time"] = "title",
     ) -> WidgetDataModel:
+        """Run sorting.
+
+        Parameters
+        ----------
+        descending : bool
+            Sort by descending order.
+        sort_by : str
+            Specify how to sort the list.
+        """
         if sort_by == "title":
-
-            def _sort_func(m: WidgetDataModel) -> str:
-                return m.title
+            _sort_func = _sort_func_title
         elif sort_by == "type":
-
-            def _sort_func(m: WidgetDataModel) -> str:
-                return m.type
+            _sort_func = _sort_func_type
         elif sort_by == "time":
-
-            def _sort_func(m: WidgetDataModel) -> datetime:
-                if last := m.workflow.last():
-                    return last.datetime
-                return datetime(9999, 12, 31)
+            _sort_func = _sort_func_datetime
         else:
             raise ValueError(f"Invalid `sort_by` argument: {sort_by}")
         models = sorted(
@@ -122,6 +123,20 @@ def sort_model_list(model: WidgetDataModel) -> Parametric:
         return model.with_value(models, title=f"{model.title} sorted")
 
     return run_sort
+
+
+def _sort_func_title(m: WidgetDataModel) -> str:
+    return m.title
+
+
+def _sort_func_type(m: WidgetDataModel) -> str:
+    return m.type
+
+
+def _sort_func_datetime(m: WidgetDataModel) -> datetime:
+    if last := m.workflow.last():
+        return last.datetime
+    return datetime(9999, 12, 31)
 
 
 @register_function(
