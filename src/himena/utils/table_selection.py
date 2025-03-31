@@ -7,10 +7,11 @@ import numpy as np
 if TYPE_CHECKING:
     from himena.types import WidgetDataModel
     from himena.widgets import SubWindow
+    from himena.qt.magicgui import SelectionEdit
 
-    # Single 2D selection in the form of ((row start, row stop), (col start, col stop))
-    # We should avoid using slice because it is not serializable.
-    SelectionType = tuple[tuple[int, int], tuple[int, int]]
+# Single 2D selection in the form of ((row start, row stop), (col start, col stop))
+# We should avoid using slice because it is not serializable.
+SelectionType = tuple[tuple[int, int], tuple[int, int]]
 
 
 class NamedArray(NamedTuple):
@@ -279,19 +280,34 @@ class TableValueParser:
         return NamedArray(label, arr_out)
 
 
-def range_getter(win: SubWindow) -> Callable[[], tuple[SelectionType, SelectionType]]:
+TABLE_LIKE_TYPES = [
+    StandardType.TABLE,
+    StandardType.DATAFRAME,
+    StandardType.ARRAY,
+    StandardType.EXCEL,
+]
+
+
+def range_getter(
+    ref: SubWindow | str,
+) -> Callable[..., tuple[SelectionType, SelectionType]]:
     """The getter function for SelectionEdit"""
     from himena.standards.model_meta import TableMeta, ArrayMeta
+    from magicgui.widgets.bases import ContainerWidget
 
-    def _getter():
-        model = win.to_model()
-        types = [
-            StandardType.TABLE,
-            StandardType.DATAFRAME,
-            StandardType.ARRAY,
-            StandardType.EXCEL,
-        ]
-        if model.type not in types:
+    def _getter(widget: SelectionEdit):
+        if isinstance(ref, str):
+            if not isinstance(fgui := widget.parent, ContainerWidget):
+                raise ValueError(
+                    f"Parent of a selection edit must be a ContainerWidget, but was {type(fgui)}"
+                )
+            for child in fgui:
+                if child.name == ref:
+                    model = child.value.to_model()
+                    break
+        else:
+            model = ref.to_model()
+        if model.type not in TABLE_LIKE_TYPES:
             raise ValueError(f"Cannot plot model of type {model.type!r}")
         if not isinstance(meta := model.metadata, (TableMeta, ArrayMeta)):
             raise ValueError("Excel must have TableMeta as the additional data.")
@@ -303,6 +319,92 @@ def range_getter(win: SubWindow) -> Callable[[], tuple[SelectionType, SelectionT
         return sel
 
     return _getter
+
+
+def table_selection_gui_option(
+    ref: SubWindow | str,
+    default: SelectionType | None = None,
+) -> dict:
+    """GUI option used for a parameter of a single table selection.
+
+    This function is always used with `configure_gui()`. If a parameter `x` is a table
+    selection type that takes a ((int, int), (int, int)) tuple, then the GUI option can
+    be easily configured by this function.
+    If the table widget window `win` is known, use the expression
+
+    ```python
+    @configure_gui(x=table_selection_gui_option(win, default))
+    def inner_function(x: SelectionType | None): ...
+    ```
+
+    If the table widget is to be  determined by another parameter named "table"
+
+    ```python
+    @configure_gui(
+        table={"types": TABLE_LIKE_TYPES}
+        x=table_selection_gui_option("table", default)
+    )
+    def inner_function(table: SubWindow, x: SelectionType | None): ...
+    ```
+
+    For many cases, the default value can be nicely determined by the `auto_select()`
+    function.
+    """
+    from himena.qt.magicgui import SelectionEdit
+
+    return {"widget_type": SelectionEdit, "getter": range_getter(ref), "value": default}
+
+
+def auto_select(model: WidgetDataModel, num: int) -> list[None | SelectionType]:
+    """Automatically select a number of columns from a table-like model.
+
+    This function will select the columns from left to right by default, but will first
+    select the already selected columns if any.
+    """
+    from himena.data_wrappers import wrap_dataframe
+    from himena.standards.model_meta import TableMeta, ArrayMeta, DictMeta
+
+    selections: list[tuple[tuple[int, int], tuple[int, int]]] = []
+    val = model.value
+    if model.is_subtype_of(StandardType.TABLE):
+        if not isinstance(val, np.ndarray):
+            raise ValueError(f"Table must be a numpy array, got {type(val)}")
+        shape = val.shape
+        if isinstance(meta := model.metadata, TableMeta):
+            selections = meta.selections
+    elif model.is_subtype_of(StandardType.DATAFRAME):
+        df = wrap_dataframe(val)
+        shape = df.shape
+        if isinstance(meta := model.metadata, TableMeta):
+            selections = meta.selections
+    elif model.is_subtype_of(StandardType.EXCEL):
+        if not isinstance(meta := model.metadata, DictMeta):
+            raise ValueError(f"Expected an DictMeta, got {type(meta)}")
+        table = val[meta.current_tab]
+        if not isinstance(table, np.ndarray):
+            raise ValueError(f"Table must be a numpy array, got {type(table)}")
+        shape = table.shape
+        selections = meta.child_meta[meta.current_tab].selections
+    elif model.is_subtype_of(StandardType.ARRAY):
+        if not isinstance(val, np.ndarray):
+            raise ValueError(f"Array must be a numpy array, got {type(val)}")
+        if isinstance(meta := model.metadata, ArrayMeta):
+            selections = meta.selections
+        shape = val.shape
+    else:
+        raise ValueError(f"Table-like data expected, but got model type {model.type!r}")
+    ncols = shape[1]
+    if num == len(selections):
+        return selections
+    if ncols == 0:
+        raise ValueError("The table must have at least one column.")
+    elif ncols < num:
+        out = [None] * num
+        for i in range(ncols):
+            out[i + num - ncols] = ((0, shape[0]), (i, i + 1))
+        return out
+    else:
+        return [((0, shape[0]), (i, i + 1)) for i in range(num)]
 
 
 def _to_single_column_slice(val: SelectionType) -> int:

@@ -38,7 +38,7 @@ class SelectionEdit(ValuedContainerWidget[SelectionType]):
         self.margins = (0, 0, 0, 0)
 
     def _get_selection(self):
-        self.set_value(self._selection_getter())
+        self.set_value(self._selection_getter(self))
 
     def get_value(self) -> SelectionType | None:
         text = self._line_edit.value.strip()

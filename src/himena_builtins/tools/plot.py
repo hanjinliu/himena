@@ -7,13 +7,15 @@ import numpy as np
 from himena._utils import to_color_or_colormap
 from himena.plugins import register_function, configure_gui
 from himena.types import Parametric, WidgetDataModel
-from himena.utils.table_selection import model_to_xy_arrays, range_getter
+from himena.utils.table_selection import (
+    model_to_xy_arrays,
+    table_selection_gui_option,
+    auto_select,
+)
 from himena.consts import StandardType, MenuId
 from himena.widgets import SubWindow
-from himena.standards.model_meta import ArrayMeta, DictMeta, TableMeta
 from himena.standards import plotting as hplt
 from himena.qt.magicgui import (
-    SelectionEdit,
     FacePropertyEdit,
     EdgePropertyEdit,
     AxisPropertyEdit,
@@ -45,11 +47,11 @@ SelectionType = tuple[tuple[int, int], tuple[int, int]]
 )
 def scatter_plot(win: SubWindow) -> Parametric:
     """Make a scatter plot."""
-    x0, y0 = _auto_select(win.to_model(), 2)
+    x0, y0 = auto_select(win.to_model(), 2)
 
     @configure_gui(
-        x={"widget_type": SelectionEdit, "getter": range_getter(win), "value": x0},
-        y={"widget_type": SelectionEdit, "getter": range_getter(win), "value": y0},
+        x=table_selection_gui_option(win, default=x0),
+        y=table_selection_gui_option(win, default=y0),
         face={"widget_type": FacePropertyEdit},
         edge={"widget_type": EdgePropertyEdit},
     )
@@ -89,11 +91,11 @@ def scatter_plot(win: SubWindow) -> Parametric:
     command_id="builtins:line-plot",
 )
 def line_plot(win: SubWindow) -> Parametric:
-    x0, y0 = _auto_select(win.to_model(), 2)
+    x0, y0 = auto_select(win.to_model(), 2)
 
     @configure_gui(
-        x={"widget_type": SelectionEdit, "getter": range_getter(win), "value": x0},
-        y={"widget_type": SelectionEdit, "getter": range_getter(win), "value": y0},
+        x=table_selection_gui_option(win, default=x0),
+        y=table_selection_gui_option(win, default=y0),
         edge={"widget_type": EdgePropertyEdit, "value": _EDGE_ONLY_VALUE},
     )
     def configure_plot(
@@ -126,12 +128,12 @@ def line_plot(win: SubWindow) -> Parametric:
 )
 def bar_plot(win: SubWindow) -> Parametric:
     model = win.to_model()
-    x0, y0 = _auto_select(model, 2)
+    x0, y0 = auto_select(model, 2)
 
     @configure_gui(
-        x={"widget_type": SelectionEdit, "getter": range_getter(win), "value": x0},
-        y={"widget_type": SelectionEdit, "getter": range_getter(win), "value": y0},
-        bottom={"widget_type": SelectionEdit, "getter": range_getter(win)},
+        x=table_selection_gui_option(win, default=x0),
+        y=table_selection_gui_option(win, default=y0),
+        bottom=table_selection_gui_option(win),
         face={"widget_type": FacePropertyEdit},
         edge={"widget_type": EdgePropertyEdit},
     )
@@ -174,13 +176,13 @@ def bar_plot(win: SubWindow) -> Parametric:
     command_id="builtins:errorbar-plot",
 )
 def errorbar_plot(win: SubWindow) -> Parametric:
-    x0, y0 = _auto_select(win.to_model(), 2)
+    x0, y0 = auto_select(win.to_model(), 2)
 
     @configure_gui(
-        x={"widget_type": SelectionEdit, "getter": range_getter(win), "value": x0},
-        y={"widget_type": SelectionEdit, "getter": range_getter(win), "value": y0},
-        xerr={"widget_type": SelectionEdit, "getter": range_getter(win)},
-        yerr={"widget_type": SelectionEdit, "getter": range_getter(win)},
+        x=table_selection_gui_option(win, default=x0),
+        y=table_selection_gui_option(win, default=y0),
+        xerr=table_selection_gui_option(win),
+        yerr=table_selection_gui_option(win),
         edge={"widget_type": EdgePropertyEdit, "value": _EDGE_ONLY_VALUE},
     )
     def configure_plot(
@@ -224,12 +226,12 @@ def errorbar_plot(win: SubWindow) -> Parametric:
     command_id="builtins:band-plot",
 )
 def band_plot(win: SubWindow) -> Parametric:
-    x0, y10, y20 = _auto_select(win.to_model(), 3)
+    x0, y10, y20 = auto_select(win.to_model(), 3)
 
     @configure_gui(
-        x={"widget_type": SelectionEdit, "getter": range_getter(win), "value": x0},
-        y0={"widget_type": SelectionEdit, "getter": range_getter(win), "value": y10},
-        y1={"widget_type": SelectionEdit, "getter": range_getter(win), "value": y20},
+        x=table_selection_gui_option(win, default=x0),
+        y0=table_selection_gui_option(win, default=y10),
+        y1=table_selection_gui_option(win, default=y20),
         face={"widget_type": FacePropertyEdit},
         edge={"widget_type": EdgePropertyEdit},
     )
@@ -269,13 +271,13 @@ def band_plot(win: SubWindow) -> Parametric:
     command_id="builtins:histogram",
 )
 def histogram(win: SubWindow) -> Parametric:
-    x0 = _auto_select(win.to_model(), 1)[0]
+    x0 = auto_select(win.to_model(), 1)[0]
     assert x0 is not None  # when num == 1, it must be a tuple.
     row_sel = x0[0]
     ndata = row_sel[1] - row_sel[0]
 
     @configure_gui(
-        x={"widget_type": SelectionEdit, "getter": range_getter(win), "value": x0},
+        x=table_selection_gui_option(win, default=x0),
         bins={"min": 1, "value": max(int(np.sqrt(ndata)), 2)},
         face={"widget_type": FacePropertyEdit},
         edge={"widget_type": EdgePropertyEdit},
@@ -359,12 +361,12 @@ def edit_plot(win: SubWindow) -> Parametric:
 )
 def scatter_plot_3d(win: SubWindow) -> Parametric:
     """3D scatter plot."""
-    x0, y0, z0 = _auto_select(win.to_model(), 3)
+    x0, y0, z0 = auto_select(win.to_model(), 3)
 
     @configure_gui(
-        x={"widget_type": SelectionEdit, "getter": range_getter(win), "value": x0},
-        y={"widget_type": SelectionEdit, "getter": range_getter(win), "value": y0},
-        z={"widget_type": SelectionEdit, "getter": range_getter(win), "value": z0},
+        x=table_selection_gui_option(win, default=x0),
+        y=table_selection_gui_option(win, default=y0),
+        z=table_selection_gui_option(win, default=z0),
         face={"widget_type": FacePropertyEdit},
         edge={"widget_type": EdgePropertyEdit},
     )
@@ -412,12 +414,12 @@ def scatter_plot_3d(win: SubWindow) -> Parametric:
 )
 def line_plot_3d(win: SubWindow) -> Parametric:
     """3D line plot."""
-    x0, y0, z0 = _auto_select(win.to_model(), 3)
+    x0, y0, z0 = auto_select(win.to_model(), 3)
 
     @configure_gui(
-        x={"widget_type": SelectionEdit, "getter": range_getter(win), "value": x0},
-        y={"widget_type": SelectionEdit, "getter": range_getter(win), "value": y0},
-        z={"widget_type": SelectionEdit, "getter": range_getter(win), "value": z0},
+        x=table_selection_gui_option(win, default=x0),
+        y=table_selection_gui_option(win, default=y0),
+        z=table_selection_gui_option(win, default=z0),
         edge={"widget_type": EdgePropertyEdit, "value": _EDGE_ONLY_VALUE},
     )
     def configure_plot(
@@ -505,52 +507,6 @@ def _get_xy_data(
     if xarr.name:
         axes.x.label = xarr.name
     return xarr.array, yarrs
-
-
-def _auto_select(model: WidgetDataModel, num: int) -> "list[None | SelectionType]":
-    from himena.data_wrappers import wrap_dataframe
-
-    selections: list[tuple[tuple[int, int], tuple[int, int]]] = []
-    val = model.value
-    if model.is_subtype_of(StandardType.TABLE):
-        if not isinstance(val, np.ndarray):
-            raise ValueError(f"Table must be a numpy array, got {type(val)}")
-        shape = val.shape
-        if isinstance(meta := model.metadata, TableMeta):
-            selections = meta.selections
-    elif model.is_subtype_of(StandardType.DATAFRAME):
-        df = wrap_dataframe(val)
-        shape = df.shape
-        if isinstance(meta := model.metadata, TableMeta):
-            selections = meta.selections
-    elif model.is_subtype_of(StandardType.EXCEL):
-        if not isinstance(meta := model.metadata, DictMeta):
-            raise ValueError(f"Expected an DictMeta, got {type(meta)}")
-        table = val[meta.current_tab]
-        if not isinstance(table, np.ndarray):
-            raise ValueError(f"Table must be a numpy array, got {type(table)}")
-        shape = table.shape
-        selections = meta.child_meta[meta.current_tab].selections
-    elif model.is_subtype_of(StandardType.ARRAY):
-        if not isinstance(val, np.ndarray):
-            raise ValueError(f"Array must be a numpy array, got {type(val)}")
-        if isinstance(meta := model.metadata, ArrayMeta):
-            selections = meta.selections
-        shape = val.shape
-    else:
-        raise ValueError(f"Table-like data expected, but got model type {model.type!r}")
-    ncols = shape[1]
-    if num == len(selections):
-        return selections
-    if ncols == 0:
-        raise ValueError("The table must have at least one column.")
-    elif ncols < num:
-        out = [None] * num
-        for i in range(ncols):
-            out[i + num - ncols] = ((0, shape[0]), (i, i + 1))
-        return out
-    else:
-        return [((0, shape[0]), (i, i + 1)) for i in range(num)]
 
 
 def _iter_face(face: "FacePropertyDict | dict", prefix: str = "") -> Iterator[dict]:

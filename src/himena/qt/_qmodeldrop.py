@@ -3,6 +3,7 @@ from __future__ import annotations
 from logging import getLogger
 from typing import TYPE_CHECKING, Iterable, Literal
 import uuid
+import weakref
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt
 from himena.types import WidgetDataModel
@@ -24,6 +25,7 @@ class QModelDropBase(QtW.QGroupBox):
         super().__init__(parent)
         self._thumbnail = _QImageLabel()
         self._target_id: int | None = None
+        self._main_window_ref = lambda: None
         self._label = QtW.QLabel()
         self._label.setAlignment(
             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
@@ -40,9 +42,13 @@ class QModelDropBase(QtW.QGroupBox):
         _layout.addWidget(self._label)
 
     def subwindow(self) -> SubWindow | None:
+        """The dropped subwindow."""
         if self._target_id is None:
             return None
-        return get_main_window(self).window_for_id(self._target_id)
+        ui = self._main_window_ref()
+        if ui is None:
+            return None
+        return ui.window_for_id(self._target_id)
 
     def set_qsubwindow(self, src: QSubWindow):
         src_wrapper = src._my_wrapper()
@@ -50,10 +56,11 @@ class QModelDropBase(QtW.QGroupBox):
             src._pixmap_resized(THUMBNAIL_SIZE, QtGui.QColor("#f0f0f0"))
         )
         self._target_id = src_wrapper._identifier
+        self._main_window_ref = weakref.ref(get_main_window(src))
         self._label.setText(src.windowTitle())
 
     def set_subwindow(self, src: SubWindow):
-        raise NotImplementedError("Cannot set SubWindow directly.")
+        self.set_qsubwindow(get_subwindow(src.widget))
 
     def to_model(self) -> WidgetDataModel | None:
         if widget := self.subwindow():
