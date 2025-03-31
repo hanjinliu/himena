@@ -184,7 +184,6 @@ def make_function_callback(
         out = f(*args, **kwargs)
         contexts = []
         workflows = []
-
         for key, input_ in bound.arguments.items():
             input_param, wf = parse_parameter(key, input_)
             if isinstance(input_param, (ModelParameter, WindowParameter)):
@@ -192,7 +191,7 @@ def make_function_callback(
                 workflows.append(wf)
         workflow = Workflow.concat(workflows)
         if isinstance(out, WidgetDataModel):
-            out.workflow = out.workflow.with_step(
+            out.workflow = workflow.with_step(
                 CommandExecution(
                     contexts=contexts,
                     command_id=command_id,
