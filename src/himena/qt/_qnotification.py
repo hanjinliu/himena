@@ -221,17 +221,23 @@ class QNotificationWidget(_QOverlayBase):
         return None
 
     def enterEvent(self, a0: QtCore.QEvent) -> None:
+        self._enter_event()
+        return super().enterEvent(a0)
+
+    def _enter_event(self):
         if self._timer is not None:
             self._timer.stop()
         self._close_btn.show()
-        return super().enterEvent(a0)
 
     def leaveEvent(self, a0: QtCore.QEvent) -> None:
+        self._leave_event()
+        return super().leaveEvent(a0)
+
+    def _leave_event(self):
         if self._timer is not None:
             self._timer.start()
         if not self.rect().contains(self.mapFromGlobal(QtGui.QCursor.pos())):
             self._close_btn.hide()
-        return super().leaveEvent(a0)
 
     def _align_close_btn(self):
         pos_loc = self.rect().topRight() - QtCore.QPoint(

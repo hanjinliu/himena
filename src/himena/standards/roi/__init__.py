@@ -10,6 +10,9 @@ from himena.standards.roi._base import (
 )
 
 from himena.standards.roi.core import (
+    SpanRoi,
+    PointRoi1D,
+    PointsRoi1D,
     RectangleRoi,
     RotatedRectangleRoi,
     EllipseRoi,
@@ -28,6 +31,9 @@ __all__ = [
     "Roi1D",
     "Roi2D",
     "Roi3D",
+    "SpanRoi",
+    "PointRoi1D",
+    "PointsRoi1D",
     "RectangleRoi",
     "RotatedRectangleRoi",
     "EllipseRoi",

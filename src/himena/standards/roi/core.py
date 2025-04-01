@@ -16,8 +16,8 @@ class SpanRoi(Roi1D):
     start: float = Field(..., description="Start of the span.")
     end: float = Field(..., description="End of the span.")
 
-    def shifted(self, dx: float, dy: float) -> SpanRoi:
-        return SpanRoi(start=self.start + dx, end=self.end + dy)
+    def shifted(self, dx: float) -> SpanRoi:
+        return SpanRoi(start=self.start + dx, end=self.end + dx)
 
     def width(self) -> float:
         return self.end - self.start
@@ -28,7 +28,7 @@ class PointRoi1D(Roi1D):
 
     x: float = Field(..., description="X-coordinate of the point.")
 
-    def shifted(self, dx: float, dy: float) -> PointRoi1D:
+    def shifted(self, dx: float) -> PointRoi1D:
         return PointRoi1D(x=self.x + dx)
 
 
@@ -44,7 +44,7 @@ class PointsRoi1D(Roi1D):
             raise ValueError("Must be a numerical array.")
         return out
 
-    def shifted(self, dx: float, dy: float) -> PointsRoi1D:
+    def shifted(self, dx: float) -> PointsRoi1D:
         return PointsRoi1D(xs=self.xs + dx)
 
 
@@ -165,8 +165,9 @@ class EllipseRoi(Roi2D):
         return math.pi * (3 * (a + b) - math.sqrt((3 * a + b) * (a + 3 * b)))
 
     def eccentricity(self) -> float:
-        a, b = self.width / 2, self.height / 2
-        return math.sqrt(1 - b**2 / a**2)
+        """Eccentricity of the ellipse."""
+        a, b = sorted([self.width / 2, self.height / 2])
+        return math.sqrt(1 - a**2 / b**2)
 
     def bbox(self) -> Rect[float]:
         return Rect(self.x, self.y, self.width, self.height)
