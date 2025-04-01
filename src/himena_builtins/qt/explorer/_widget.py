@@ -114,10 +114,7 @@ class QFileTree(QtW.QTreeView):
         self._model.setRootPath(path.as_posix())
         self.setRootIndex(self._model.index(path.as_posix()))
 
-    def _show_context_menu(self, pos: QtCore.QPoint):
-        index = self.indexAt(pos)
-        if not index.isValid():
-            return
+    def _make_context_menu(self, index: QtCore.QModelIndex):
         menu = QtW.QMenu(self)
         path = Path(self._model.filePath(index))
         menu.addAction("Open", lambda: self._ui.read_file(path))
@@ -127,8 +124,14 @@ class QFileTree(QtW.QTreeView):
         menu.addAction("Paste", self._paste_from_clipboard)
         menu.addSeparator()
         menu.addAction("Rename", lambda: self.edit(index))
+        return menu
+
+    def _show_context_menu(self, pos: QtCore.QPoint):
+        index = self.indexAt(pos)
+        if not index.isValid():
+            return
+        menu = self._make_context_menu(index)
         menu.exec(self.viewport().mapToGlobal(pos))
-        return None
 
     def _double_clicked(self, index: QtCore.QModelIndex):
         idx = self._model.index(index.row(), 0, index.parent())
@@ -145,7 +148,7 @@ class QFileTree(QtW.QTreeView):
             return None
         return super().mouseMoveEvent(e)
 
-    def _start_drag(self, pos: QtCore.QPoint):
+    def _make_drag(self) -> QtGui.QDrag:
         mime = QtCore.QMimeData()
         selected_indices = self.selectedIndexes()
         urls = [self._model.filePath(idx) for idx in selected_indices]
@@ -161,6 +164,10 @@ class QFileTree(QtW.QTreeView):
         drag.setPixmap(pixmap)
         cursor = QtGui.QCursor(QtCore.Qt.CursorShape.OpenHandCursor)
         drag.setDragCursor(cursor.pixmap(), QtCore.Qt.DropAction.MoveAction)
+        return drag
+
+    def _start_drag(self, pos: QtCore.QPoint):
+        drag = self._make_drag()
         drag.exec(QtCore.Qt.DropAction.MoveAction)
 
     def dragEnterEvent(self, a0: QtGui.QDragEnterEvent):
