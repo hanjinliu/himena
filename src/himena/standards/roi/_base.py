@@ -54,7 +54,7 @@ def default_roi_label(nth: int) -> str:
 
 
 class Roi1D(RoiModel):
-    def shifted(self, dx: float, dy: float) -> Self:
+    def shifted(self, dx: float) -> Self:
         """Return a new 1D ROI translated by the given amount."""
         raise NotImplementedError
 

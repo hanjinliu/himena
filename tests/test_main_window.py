@@ -268,4 +268,15 @@ def test_setting_dialog_contents(himena_ui: MainWindowQt, qtbot: QtBot):
     keybind_edit._search.setText("")
     keybind_edit._table.setCurrentCell(0, 1)
     keybind_edit._table.edit(keybind_edit._table.currentIndex())
+    keybind_edit._on_keybinding_updated("builtins:seaborn-sample:iris", "Ctrl+Alt+K")
+    keybind_edit._table._update_keybinding(0, 1)
     keybind_edit._restore_default_btn.click()
+
+def test_notification(himena_ui: MainWindowQt):
+    from himena.qt._qnotification import QNotificationWidget
+
+    notif = QNotificationWidget(himena_ui._backend_main_window, duration=0)
+    notif.show()
+    notif._enter_event()
+    notif._leave_event()
+    notif.hide()
