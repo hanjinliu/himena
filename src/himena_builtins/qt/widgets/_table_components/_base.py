@@ -436,8 +436,15 @@ class QTableEditor(QtW.QLineEdit):
             self.parentWidget().keyPressEvent(event)
             return None
         elif event.key() == Qt.Key.Key_Right and pos == nchar:
-            self.parentWidget().setFocus()
-            self.parentWidget().keyPressEvent(event)
+            if self.selectionLength() > 0:
+                # just after entering the editor, all the text is selected and the
+                # cursor is at the end. In this case, user is probably trying to
+                # deselect the text, so we need to move the cursor to the end instead of
+                # moving to the next cell.
+                self.setCursorPosition(nchar)
+            else:
+                self.parentWidget().setFocus()
+                self.parentWidget().keyPressEvent(event)
             return None
         return super().keyPressEvent(event)
 
