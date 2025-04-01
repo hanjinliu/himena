@@ -274,6 +274,32 @@ def test_image_view_select_roi(qtbot: QtBot):
         QApplication.processEvents()
         image_view._img_view.remove_current_item()
 
+def test_image_view_roi_selection_from_list_widget(qtbot: QtBot):
+    """Check if clicking ROIs from the QRoiCollection works as expected."""
+    image_view = QImageView()
+    image_view.setSizes([300, 100])
+    with WidgetTester(image_view) as tester:
+        tester.update_model(
+            value=np.zeros((100, 100), dtype=np.uint8),
+            metadata=ImageMeta(
+                rois=RoiListModel(
+                    items=[
+                        LineRoi(name="ROI-0", x1=1, y1=1, x2=4, y2=5),
+                        PointRoi2D(name="ROI-1", x=1, y=5),
+                    ],
+                ),
+            ),
+        )
+        qtbot.addWidget(image_view)
+        assert image_view._roi_col.count() == 2
+        list_view = image_view._roi_col._list_view
+        image_view._roi_col._on_item_clicked(list_view.model().index(0, 0))
+        assert isinstance(image_view._img_view._current_roi_item, _rois.QLineRoi)
+        image_view._roi_col._on_item_clicked(list_view.model().index(1, 0))
+        assert isinstance(image_view._img_view._current_roi_item, _rois.QPointRoi)
+        assert len(image_view._img_view._roi_items) == 2
+        assert any(isinstance(item, _rois.QLineRoi) for item in image_view._img_view.items())
+        assert any(isinstance(item, _rois.QPointRoi) for item in image_view._img_view.items())
 
 def test_constrast_hist(qtbot: QtBot):
     image_view = QImageView()

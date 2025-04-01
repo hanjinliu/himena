@@ -261,7 +261,9 @@ class QImageGraphicsView(QBaseGraphicsView):
             roi.setVisible(self._is_rois_visible)
             self._roi_items.append(roi)
             if roi is current_roi:
-                self.select_item(roi)
+                self.select_item(
+                    roi, is_registered_roi=not self._is_current_roi_item_not_registered
+                )
 
     def mode(self) -> MouseMode:
         return self._mode
@@ -427,7 +429,8 @@ class QImageGraphicsView(QBaseGraphicsView):
         item : QGraphicsItem or None
             The item to select. If None, deselect the current item.
         is_registered_roi : bool, optional
-            If True, the `item` is a considered as a registered ROI.
+            If True, the `item` is a considered as a registered ROI. This parameter is
+            ususally used to select ROIs from the ROI list widget.
         """
         if item is not self._current_roi_item:
             self.remove_current_item(reason="deselect")
@@ -553,6 +556,7 @@ class QImageGraphicsView(QBaseGraphicsView):
         _LOGGER.info(f"Set current ROI item to {item}")
 
     def add_current_roi(self):
+        """Register the current ROI item."""
         if item := self._current_roi_item:
             self._is_current_roi_item_not_registered = False
             if len(self._roi_items) > 0 and self._roi_items[-1] is item:

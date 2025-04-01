@@ -172,8 +172,10 @@ class QSimpleRoiCollection(QtW.QWidget):
     def __getitem__(self, key: int) -> _roi_items.QRoi:
         return self._qroi_list[key]
 
-    def __len__(self) -> int:
+    def count(self) -> int:
         return len(self._qroi_list)
+
+    __len__ = count
 
     def __iter__(self) -> Iterator[_roi_items.QRoi]:
         yield from self._qroi_list
@@ -198,7 +200,7 @@ class QSimpleRoiCollection(QtW.QWidget):
         return roi
 
     def pop_rois(self, indices: list[int]):
-        sl = np.ones(len(self._qroi_list), dtype=bool)
+        sl = np.ones(self.count(), dtype=bool)
         sl[indices] = False
         self._list_view.model().beginRemoveRows(QtCore.QModelIndex(), 0, len(sl) - 1)
         self._qroi_list = self._qroi_list.filter_by_selection(sl)
