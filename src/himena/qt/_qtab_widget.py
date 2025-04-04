@@ -60,8 +60,8 @@ class QTabBar(QtW.QTabBar):
         e.accept()
 
     def dropEvent(self, e: QtGui.QDropEvent) -> None:
+        target_index = self.tabAt(e.pos())
         if isinstance(sub := e.source(), QSubWindow):
-            target_index = self.tabAt(e.pos())
             self._process_drop_event(sub, target_index)
         elif model := _drag.drop():
             model = model.data_model()
