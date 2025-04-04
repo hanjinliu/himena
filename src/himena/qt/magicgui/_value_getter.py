@@ -67,7 +67,7 @@ class SliderRangeGetter(ValuedContainerWidget[tuple[_V, _V]]):
         if self._value_max.value.strip() == "":
             _value_max = None
         else:
-            _value_max = int(self._value_max.value + 1)
+            _value_max = int(self._value_max.value) + 1
         return (_value_min, _value_max)
 
     def set_value(self, value: tuple[_V, _V]):

@@ -770,7 +770,9 @@ class QSubWindowTitleBar(QtW.QFrame):
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent):
         _subwin = self._subwindow
-        if (
+        if event.buttons() == Qt.MouseButton.NoButton:
+            self._drag_position = None
+        elif (
             event.buttons() == Qt.MouseButton.LeftButton
             and self._drag_position is not None
             and _subwin._resize_state is ResizeState.NONE
