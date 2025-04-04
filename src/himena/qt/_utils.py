@@ -167,7 +167,29 @@ def drag_command(
     text_data: str | Callable[[], str] | None = None,
     exec: bool = True,
 ) -> QtGui.QDrag:
-    """Drag a command that will be executed when dropped."""
+    """Drag a command that will be executed when dropped.
+
+    Parameters
+    ----------
+    source : QWidget
+        The widget that is the source of the drag. This is also used to find the input
+        subwindow and the main window.
+    command_id : str
+        The command ID to execute when the drag is dropped.
+    type : str
+        The output type of the command.
+    with_params : dict[str, object], optional
+        Additional parameters to pass to the command. This parameter will be forwarded
+        to `ui.exec_action`.
+    desc : str, optional
+        The description of the drag. This will be shown in the drag image.
+    text_data : str or callable, optional
+        The text data to set in the drag. If a callable is provided, it will be called
+        to get the text data. This text data will be set as a fallback data in the drag,
+        e.g. dropped to an external text editor.
+    exec : bool, default True
+        Whether to execute the drag immediately.
+    """
 
     def _cb():
         ui = get_main_window(source)

@@ -36,11 +36,11 @@ from himena.workflow import (
     CommandExecution,
     LocalReaderMethod,
     Workflow,
-    UserModification,
 )
 from himena.plugins import _checker, AppActionRegistry
 from himena.plugins._signature import _is_annotated, _split_annotated_type
 from himena.layout import Layout
+from himena.widgets._modifications import Modifications
 
 if TYPE_CHECKING:
     from himena.widgets import BackendMainWindow, MainWindow, TabArea
@@ -94,6 +94,7 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
             self._widget = StrongRef(widget)
         self._extension_default_fallback: str | None = None
         self._force_not_editable: bool = False
+        self._data_modifications = Modifications()
 
     @property
     def is_alive(self) -> bool:
@@ -384,10 +385,8 @@ class SubWindow(WidgetWrapper[_W], Layout):
             model.title = self.title
         if len(model.workflow) == 0:
             model.workflow = self._widget_workflow
-        if self.is_modified and not isinstance(model.workflow[-1], UserModification):
-            model.workflow = model.workflow.with_step(
-                UserModification(original=model.workflow[-1].id)
-            )
+        if self.is_modified:
+            self._data_modifications.update_workflow(model)
         if model.extension_default is None:
             model.extension_default = self._extension_default_fallback
         return model
@@ -420,6 +419,19 @@ class SubWindow(WidgetWrapper[_W], Layout):
         io_utils.write(model, path, plugin=plugin)
         self.update_default_save_path(path)
         return None
+
+    def _set_modification_tracking(self, enabled: bool) -> None:
+        if self._data_modifications.track_enabled == enabled:
+            return None  # already in the desired state
+        if enabled and self.supports_to_model:
+            self._data_modifications = Modifications(
+                initial_value=self.to_model().value,
+                track_enabled=True,
+            )
+        else:
+            self._data_modifications = Modifications(
+                initial_value=None, track_enabled=False
+            )
 
     def _set_state(self, value: WindowState, inst: BackendInstructions | None = None):
         main = self._main_window()
@@ -594,6 +606,9 @@ class SubWindow(WidgetWrapper[_W], Layout):
         if not model.editable:
             with suppress(AttributeError):
                 self.is_editable = False
+
+        if model.is_subtype_of("text"):
+            self._set_modification_tracking(True)
         return self
 
     def _switch_to_file_watch_mode(self):
