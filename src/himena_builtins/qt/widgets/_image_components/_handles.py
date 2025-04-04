@@ -200,53 +200,61 @@ class RoiSelectionHandles:
         @h_tl.moved_by_mouse.connect
         def _tl_moved(ev: QtW.QGraphicsSceneMouseEvent):
             other = rect.rect().bottomRight()
-            x0, x1 = sorted([other.x(), ev.pos().x()])
-            y0, y1 = sorted([other.y(), ev.pos().y()])
+            ex, ey = self.view()._pos_to_tuple(ev.pos())
+            x0, x1 = sorted([other.x(), ex])
+            y0, y1 = sorted([other.y(), ey])
             rect.setRect(x0, y0, x1 - x0, y1 - y0)
 
         @h_br.moved_by_mouse.connect
         def _br_moved(ev: QtW.QGraphicsSceneMouseEvent):
             other = rect.rect().topLeft()
-            x0, x1 = sorted([other.x(), ev.pos().x()])
+            ex, ey = self.view()._pos_to_tuple(ev.pos())
+            x0, x1 = sorted([other.x(), ex])
             y0, y1 = sorted([other.y(), ev.pos().y()])
             rect.setRect(x0, y0, x1 - x0, y1 - y0)
 
         @h_tr.moved_by_mouse.connect
         def _tr_moved(ev: QtW.QGraphicsSceneMouseEvent):
             other = rect.rect().bottomLeft()
-            x0, x1 = sorted([other.x(), ev.pos().x()])
-            y0, y1 = sorted([other.y(), ev.pos().y()])
+            ex, ey = self.view()._pos_to_tuple(ev.pos())
+            x0, x1 = sorted([other.x(), ex])
+            y0, y1 = sorted([other.y(), ey])
             rect.setRect(x0, y0, x1 - x0, y1 - y0)
 
         @h_bl.moved_by_mouse.connect
         def _bl_moved(ev: QtW.QGraphicsSceneMouseEvent):
             other = rect.rect().topRight()
-            x0, x1 = sorted([other.x(), ev.pos().x()])
-            y0, y1 = sorted([other.y(), ev.pos().y()])
+            ex, ey = self.view()._pos_to_tuple(ev.pos())
+            x0, x1 = sorted([other.x(), ex])
+            y0, y1 = sorted([other.y(), ey])
             rect.setRect(x0, y0, x1 - x0, y1 - y0)
 
         @h_t.moved_by_mouse.connect
         def _t_moved(ev: QtW.QGraphicsSceneMouseEvent):
             r0 = rect.rect()
-            y0, y1 = sorted([r0.bottom(), ev.pos().y()])
+            _, ey = self.view()._pos_to_tuple(ev.pos())
+            y0, y1 = sorted([r0.bottom(), ey])
             rect.setRect(r0.x(), y0, r0.width(), y1 - y0)
 
         @h_b.moved_by_mouse.connect
         def _b_moved(ev: QtW.QGraphicsSceneMouseEvent):
             r0 = rect.rect()
-            y0, y1 = sorted([r0.top(), ev.pos().y()])
+            _, ey = self.view()._pos_to_tuple(ev.pos())
+            y0, y1 = sorted([r0.top(), ey])
             rect.setRect(r0.x(), y0, r0.width(), y1 - y0)
 
         @h_l.moved_by_mouse.connect
         def _l_moved(ev: QtW.QGraphicsSceneMouseEvent):
             r0 = rect.rect()
-            x0, x1 = sorted([r0.right(), ev.pos().x()])
+            ex, _ = self.view()._pos_to_tuple(ev.pos())
+            x0, x1 = sorted([r0.right(), ex])
             rect.setRect(x0, r0.y(), x1 - x0, r0.height())
 
         @h_r.moved_by_mouse.connect
         def _r_moved(ev: QtW.QGraphicsSceneMouseEvent):
             r0 = rect.rect()
-            x0, x1 = sorted([r0.left(), ev.pos().x()])
+            ex, _ = self.view()._pos_to_tuple(ev.pos())
+            x0, x1 = sorted([r0.left(), ex])
             rect.setRect(x0, r0.y(), x1 - x0, r0.height())
 
         @rect.changed.connect
