@@ -66,7 +66,7 @@ class ColorOrColorCycleEdit(ValuedContainerWidget):
         self._color.visible = not v
 
     def get_value(self) -> Any:
-        if self._color_cycle.value:
+        if self._use_color_cycle.value:
             cmap_value = self._color_cycle.value
             if cmap_value.name == "custom colormap":
                 value = cmap_value.as_dict()

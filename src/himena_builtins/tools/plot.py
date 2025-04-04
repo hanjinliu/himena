@@ -40,13 +40,13 @@ SelectionType = tuple[tuple[int, int], tuple[int, int]]
 
 
 @register_function(
-    title="Scatter plot ...",
+    title="Scatter Plot ...",
     types=_TABLE_LIKE,
     menus=_MENU,
     command_id="builtins:scatter-plot",
 )
 def scatter_plot(win: SubWindow) -> Parametric:
-    """Make a scatter plot."""
+    """Make a scatter plot from a table-like data."""
     x0, y0 = auto_select(win.to_model(), 2)
 
     @configure_gui(
@@ -85,12 +85,13 @@ def scatter_plot(win: SubWindow) -> Parametric:
 
 
 @register_function(
-    title="Line plot ...",
+    title="Line Plot ...",
     types=_TABLE_LIKE,
     menus=_MENU,
     command_id="builtins:line-plot",
 )
 def line_plot(win: SubWindow) -> Parametric:
+    """Make a line plot from a table-like data."""
     x0, y0 = auto_select(win.to_model(), 2)
 
     @configure_gui(
@@ -121,12 +122,13 @@ def line_plot(win: SubWindow) -> Parametric:
 
 
 @register_function(
-    title="Bar plot ...",
+    title="Bar Plot ...",
     types=_TABLE_LIKE,
     menus=_MENU,
     command_id="builtins:bar-plot",
 )
 def bar_plot(win: SubWindow) -> Parametric:
+    """Make a bar plot from a table-like data."""
     model = win.to_model()
     x0, y0 = auto_select(model, 2)
 
@@ -170,12 +172,13 @@ def bar_plot(win: SubWindow) -> Parametric:
 
 
 @register_function(
-    title="Errorbar plot ...",
+    title="Errorbar Plot ...",
     types=_TABLE_LIKE,
     menus=_MENU,
     command_id="builtins:errorbar-plot",
 )
 def errorbar_plot(win: SubWindow) -> Parametric:
+    """Make an error bar plot from a table-like data."""
     x0, y0 = auto_select(win.to_model(), 2)
 
     @configure_gui(
@@ -220,12 +223,13 @@ def errorbar_plot(win: SubWindow) -> Parametric:
 
 
 @register_function(
-    title="Band plot ...",
+    title="Band Plot ...",
     types=_TABLE_LIKE,
     menus=_MENU,
     command_id="builtins:band-plot",
 )
 def band_plot(win: SubWindow) -> Parametric:
+    """Make a band plot from a table-like data."""
     x0, y10, y20 = auto_select(win.to_model(), 3)
 
     @configure_gui(
@@ -271,6 +275,7 @@ def band_plot(win: SubWindow) -> Parametric:
     command_id="builtins:histogram",
 )
 def histogram(win: SubWindow) -> Parametric:
+    """Make a histogram from a table-like data."""
     x0 = auto_select(win.to_model(), 1)[0]
     assert x0 is not None  # when num == 1, it must be a tuple.
     row_sel = x0[0]
@@ -307,7 +312,7 @@ def histogram(win: SubWindow) -> Parametric:
 
 
 @register_function(
-    title="Edit plot ...",
+    title="Edit Plot ...",
     types=[StandardType.PLOT],
     menus=[MenuId.TOOLS_PLOT],
     command_id="builtins:edit-plot",
@@ -354,7 +359,7 @@ def edit_plot(win: SubWindow) -> Parametric:
 
 
 @register_function(
-    title="Scatter plot 3D ...",
+    title="3D Scatter Plot ...",
     types=_TABLE_LIKE,
     menus=_MENU,
     command_id="builtins:plot-3d:scatter-plot-3d",
@@ -407,7 +412,7 @@ def scatter_plot_3d(win: SubWindow) -> Parametric:
 
 
 @register_function(
-    title="Line plot 3D ...",
+    title="3D Line Plot ...",
     types=_TABLE_LIKE,
     menus=_MENU,
     command_id="builtins:plot-3d:line-plot-3d",
