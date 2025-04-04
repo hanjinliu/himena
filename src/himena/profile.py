@@ -1,14 +1,14 @@
 from contextlib import contextmanager
 import json
 from pathlib import Path
-from typing import Any, Iterable, TYPE_CHECKING
+from typing import Any, Iterable
 import warnings
 from platformdirs import user_data_dir
 from pydantic_compat import BaseModel, Field, field_validator
+import importlib.metadata
+from packaging.version import Version
 from himena.consts import ALLOWED_LETTERS
 
-if TYPE_CHECKING:
-    pass
 
 USER_DATA_DIR = Path(user_data_dir("himena"))
 
@@ -39,19 +39,33 @@ def profile_dir() -> Path:
     return _dir
 
 
+# Plugin place and the version added.
+# NOTE: The version added DEFAULT_PLUGINS is 0.0.8.
+DEFAULT_PLUGINS: list[tuple[str, Version]] = [
+    ("himena_builtins.qt.console", Version("0.0.0")),
+    ("himena_builtins.qt.explorer", Version("0.0.0")),
+    ("himena_builtins.qt.history", Version("0.0.0")),
+    ("himena_builtins.qt.output", Version("0.0.0")),
+    ("himena_builtins.qt.plot", Version("0.0.0")),
+    ("himena_builtins.qt.widgets", Version("0.0.0")),
+    ("himena_builtins.tools", Version("0.0.0")),
+    ("himena_builtins.io", Version("0.0.0")),
+    ("himena_builtins.new", Version("0.0.0")),
+    ("himena_builtins.user_modifications", Version("0.0.8")),
+]
+
+
 def _default_plugins() -> list[str]:
     """Factory function for the default plugin list."""
-    return [
-        "himena_builtins.qt.console",
-        "himena_builtins.qt.explorer",
-        "himena_builtins.qt.history",
-        "himena_builtins.qt.output",
-        "himena_builtins.qt.plot",
-        "himena_builtins.qt.widgets",
-        "himena_builtins.tools",
-        "himena_builtins.io",
-        "himena_builtins.new",
-    ]
+    return [place for place, _ in DEFAULT_PLUGINS]
+
+
+def _current_version() -> str:
+    """Get the current version of himena."""
+    try:
+        return importlib.metadata.version("himena")
+    except Exception:
+        return "0.0.1"
 
 
 class KeyBindingOverride(BaseModel):
@@ -63,7 +77,14 @@ class AppProfile(BaseModel):
     """Model of a profile."""
 
     name: str = Field(
-        default="default", description="Name of the profile.", frozen=True
+        default="default",
+        description="Name of the profile.",
+        frozen=True,
+    )
+    version: str = Field(
+        default_factory=_current_version,
+        description="Version of this profile saved.",
+        frozen=True,
     )
     plugins: list[str] = Field(
         default_factory=_default_plugins, description="List of plugins to load."
@@ -81,7 +102,15 @@ class AppProfile(BaseModel):
         """Construct an AppProfile from a json file."""
         with open(path) as f:
             data = json.load(f)
-        return cls(**data)
+        version_saved = Version(data.get("version", "0.0.1"))
+        self = cls(**data)
+        if version_saved < Version(_current_version()):
+            for place, version_added in DEFAULT_PLUGINS:
+                if version_added > version_saved and place not in self.plugins:
+                    # Add the default plugin that is implemented after the profile was
+                    # saved.
+                    self.plugins.append(place)
+        return self
 
     @classmethod
     def default(cls, save: bool = False) -> "AppProfile":
@@ -100,6 +129,7 @@ class AppProfile(BaseModel):
         return None
 
     def profile_path(self) -> Path:
+        """Path to this profile."""
         return profile_dir() / f"{self.name}.json"
 
     def with_name(self, name: str) -> "AppProfile":
@@ -131,7 +161,7 @@ class AppProfile(BaseModel):
 
     def update_plugin_config(self, plugin_id: str, **kwargs) -> None:
         """Update the config of the plugin specified by `plugin_id`"""
-        from himena.plugins.actions import AppActionRegistry
+        from himena.plugins import AppActionRegistry
         from himena.plugins.widget_plugins import WidgetCallbackBase
 
         reg = AppActionRegistry.instance()

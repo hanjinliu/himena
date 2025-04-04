@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import is_dataclass, fields
+from dataclasses import dataclass, field, is_dataclass, fields
+from functools import partial
 import logging
 from copy import deepcopy
 from typing import (
@@ -36,6 +37,7 @@ if TYPE_CHECKING:
     PluginConfigType = Any
 
 _F = TypeVar("_F", bound=Callable)
+_T = TypeVar("_T")
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -69,6 +71,16 @@ class PluginConfigTuple(NamedTuple):
         return out
 
 
+@dataclass
+class ReproduceArgs:
+    """Command and its arguments to reproduce a user modification."""
+
+    command_id: str
+    with_params: dict[str, Any] = field(
+        default_factory=dict
+    )  # values must be serializable
+
+
 class AppActionRegistry:
     _global_instance: AppActionRegistry | None = None
 
@@ -85,6 +97,7 @@ class AppActionRegistry:
         }
         self._installed_plugins: list[str] = []
         self._plugin_default_configs: dict[str, PluginConfigTuple] = {}
+        self._modification_trackers: dict[str, Callable[[_T, _T], ReproduceArgs]] = {}
 
     @classmethod
     def instance(cls) -> AppActionRegistry:
@@ -294,6 +307,10 @@ def register_function(
     return _inner if func is None else _inner(func)
 
 
+register_hidden_function = partial(register_function, menus=[])
+"""A shorthand for `register_function(menus=[])`."""
+
+
 def make_action_for_function(
     f: Callable,
     *,
@@ -472,14 +489,14 @@ def register_conversion_rule(*args, **kwargs):
         annot = getattr(func, "__annotations__", {})
         annot.setdefault("return", WidgetDataModel)
         func.__annotations__ = annot
-        action = make_conversion_rule(func, *args, **kwargs)
+        action = _make_conversion_rule(func, *args, **kwargs)
         AppActionRegistry.instance().add_action(action)
         return func
 
     return inner if no_func else inner(args[0])
 
 
-def make_conversion_rule(
+def _make_conversion_rule(
     func: Callable,
     type_from: str,
     type_to: str,
@@ -499,3 +516,18 @@ def make_conversion_rule(
         enablement=ctx.active_window_model_type == type_from,
         keybindings=kbs,
     )
+
+
+def register_modification_tracker(
+    type: str,
+) -> Callable[[Callable[[_T, _T], ReproduceArgs]], Callable[[_T, _T], ReproduceArgs]]:
+    """Register a modification tracker."""
+    reg = AppActionRegistry.instance()
+    if type in reg._modification_trackers:
+        raise ValueError(f"Modification tracker for {type} already exists.")
+
+    def inner(fn):
+        reg._modification_trackers[type] = fn
+        return fn
+
+    return inner

@@ -425,14 +425,29 @@ def toggle_editable(win: SubWindow) -> None:
     win.is_editable = not win.is_editable
 
 
+def toggle_track_modification(win: SubWindow) -> None:
+    win._set_modification_tracking(not win._data_modifications.track_enabled)
+
+
 ACTIONS.append(
     Action(
         id="window-toggle-editable",
-        title="Window editable",
+        title="Window Editable",
         callback=toggle_editable,
         enablement=_ctx.is_subwindow_focused,
         menus=[{"id": MenuId.WINDOW, "group": EDIT_GROUP}],
         toggled=ToggleRule(condition=_ctx.is_active_window_editable),
+    )
+)
+
+ACTIONS.append(
+    Action(
+        id="window-toggle-track-modifications",
+        title="Track User Modifications",
+        callback=toggle_editable,
+        enablement=_ctx.is_subwindow_focused,
+        menus=[{"id": MenuId.WINDOW, "group": EDIT_GROUP}],
+        toggled=ToggleRule(condition=_ctx.is_active_window_track_modification),
     )
 )
 

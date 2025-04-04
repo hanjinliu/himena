@@ -19,6 +19,12 @@ def _is_active_window_editable(ui: "MainWindow") -> bool:
     return False
 
 
+def _is_active_window_track_modification(ui: "MainWindow") -> bool:
+    if win := ui.current_window:
+        return win._data_modifications.track_enabled
+    return False
+
+
 def _active_window_state(ui: "MainWindow"):
     if win := ui.current_window:
         return win.state
@@ -108,6 +114,11 @@ class AppContext(ContextNamespace["MainWindow"]):
         False,
         "if the current window is editable",
         _is_active_window_editable,
+    )
+    is_active_window_track_modification = ContextKey(
+        False,
+        "if the current window is tracking user modifications",
+        _is_active_window_track_modification,
     )
     active_window_state = ContextKey(
         WindowState.NORMAL,
