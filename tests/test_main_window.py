@@ -9,7 +9,6 @@ from himena.standards.model_meta import DataFrameMeta, ImageMeta
 from himena.standards.roi import RectangleRoi
 from himena.widgets import set_status_tip, notify
 from himena_builtins.qt import widgets as _qtw
-from himena_builtins.qt.output import OutputConfig
 
 from qtpy import QtWidgets as QtW
 from qtpy.QtCore import Qt, QPoint
@@ -112,6 +111,9 @@ def test_session_stand_alone(tmpdir, himena_ui: MainWindow, sample_dir):
 def test_session_window_input(himena_ui: MainWindow):
     from himena_builtins.tools.others import exec_workflow
     himena_ui.exec_action("builtins:seaborn-sample:iris")
+    win = himena_ui.current_window
+    assert isinstance(win.widget, _qtw.QSpreadsheet)
+    win.widget.array_update((1, 1), "10.4")
     himena_ui.exec_action(
         "builtins:scatter-plot",
         with_params={"x": ((0, 10), (0, 1)), "y": ((0, 10), (1, 2))},

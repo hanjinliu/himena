@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.testing import assert_equal
 import pytest
 from himena import WidgetDataModel, create_model
 from himena.consts import StandardType
@@ -30,19 +31,28 @@ def test_reproduce_text_modification(
     assert out.value == new
 
 @pytest.mark.parametrize(
-    "old, new",
+    "old, new, size_limit",
     [
-        ([["00", "01"], ["99", "11"]], [["00", "01"], ["10", "11"]]),  # edit
-        ([[]], [["00", "01"], ["10", "11"]]),  # new table
-        ([["00", "01"]], [["00"], ["10"]]),  # new shape
-        ([["00", "01"], ["10", "11"], ["20", "21"]], [["00", "01", "12"], ["10", "11", "12"]]),
+        ([["00", "01"], ["99", "11"]], [["00", "01"], ["10", "11"]], 100),  # edit
+        ([[]], [["00", "01"], ["10", "11"]], 100),  # new table
+        ([["00", "01"]], [["00"], ["10"]], 100),  # new shape
+        ([["00", "01"], ["10", "11"], ["20", "21"]], [["00", "01", "12"], ["10", "11", "12"]], 100),
+        ([[]], [["00", "01"], ["10", "11"]], 1),  # new table
+        ([["00", "01"]], [["00"], ["10"]], 1),  # new shape
+        ([["00", "01"], ["10", "11"], ["20", "21"]], [["00", "01", "12"], ["10", "11", "12"]], 1),
     ],
 )
-def test_reproduce_table_modification(old, new):
+def test_reproduce_table_modification(
+    old: list[list[str]],
+    new: list[list[str]],
+    size_limit: int,
+    monkeypatch,
+):
+    monkeypatch.setattr(_um, "USE_SPARSE_TABLE_DIFF_LIMIT", size_limit)
     old_arr = np.array(old, dtype=np.dtypes.StringDType())
     new_arr = np.array(new, dtype=np.dtypes.StringDType())
     args = _um.table_modification_tracker(old_arr, new_arr)
     model_old = create_model(old_arr, type=StandardType.TABLE)
-    model_new = create_model(new_arr, type=StandardType.TABLE)
     out = _um.reproduce_table_modification(model_old)(args.with_params["diff"])
-    assert out.value.tolist() == new_arr.tolist()
+    assert isinstance(out, WidgetDataModel)
+    assert_equal(out.value, new_arr)

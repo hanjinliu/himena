@@ -9,6 +9,9 @@ from himena.plugins import (
 )
 from himena.types import Parametric, WidgetDataModel
 
+USE_DIFFLIB_LIMIT = 1000  # Limit for the number of characters to switch to difflib
+USE_SPARSE_TABLE_DIFF_LIMIT = 100  # Limit for the size to switch to sparse table diff
+
 
 @register_hidden_function(command_id="builtins:user-modification:text")
 def reproduce_text_modification(model: WidgetDataModel) -> Parametric:
@@ -35,9 +38,6 @@ def reproduce_text_modification(model: WidgetDataModel) -> Parametric:
         return model
 
     return run
-
-
-USE_DIFFLIB_LIMIT = 1000  # Limit for the number of characters to switch to difflib
 
 
 @register_modification_tracker(type=StandardType.TEXT)
@@ -76,14 +76,16 @@ def text_modification_tracker(old: str, new: str) -> ReproduceArgs:
 def reproduce_table_modification(model: WidgetDataModel) -> Parametric:
     def run(diff: dict[str, list[Any]]) -> WidgetDataModel:
         if "array" in diff:
-            model.value = np.array(diff["array"], dtype=np.dtypes.StringDType())
+            out = np.array(diff["array"], dtype=np.dtypes.StringDType())
         else:
             shape = diff["shape"]
             out = np.zeros(shape, dtype=np.dtypes.StringDType())
             r0, c0 = model.value.shape
-            out[: max(out.shape[0], r0), : max(out.shape[1], c0)] = model.value
+            sl = slice(0, min(r0, shape[0])), slice(0, min(c0, shape[1]))
+            out[sl] = model.value[sl]
             for row, col, value in zip(diff["rows"], diff["cols"], diff["values"]):
                 out[row, col] = value
+        model.value = out
         return model
 
     return run
@@ -92,25 +94,26 @@ def reproduce_table_modification(model: WidgetDataModel) -> Parametric:
 @register_modification_tracker(type=StandardType.TABLE)
 def table_modification_tracker(old: np.ndarray, new: np.ndarray) -> ReproduceArgs:
     """Track modifications to table widgets."""
-    if new.size < 100 or new.size > old.size * 2:
+    if new.size < USE_SPARSE_TABLE_DIFF_LIMIT or new.size > old.size * 2:
         diff = {"array": new.tolist()}
     else:
         old_normed = old.copy()
-        r0, c0 = old.shape
         if old.shape[0] > new.shape[0]:
             old_normed = old_normed[: new.shape[0]]
         elif old.shape[0] < new.shape[0]:
+            r0, c0 = old_normed.shape
             old_normed = np.vstack(
                 (old_normed, np.zeros((new.shape[0] - r0, c0), dtype=old_normed.dtype))
             )
         if old.shape[1] > new.shape[1]:
             old_normed = old_normed[:, : new.shape[1]]
         elif old.shape[1] < new.shape[1]:
+            r0, c0 = old_normed.shape
             old_normed = np.hstack(
                 (old_normed, np.zeros((r0, new.shape[1] - c0), dtype=old_normed.dtype))
             )
 
-        rows, cols = np.where(old_normed.shape != new.shape)
+        rows, cols = np.where(old_normed != new)
         if len(rows) * 3 > new.size:
             diff = {"array": new.tolist()}
         else:
