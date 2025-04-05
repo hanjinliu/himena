@@ -217,10 +217,28 @@ def select_tab(model: WidgetDataModel) -> Parametric:
 def merge_tab(model: WidgetDataModel) -> Parametric:
     def run(incoming: WidgetDataModel) -> WidgetDataModel:
         out = dict(model.value)
-        if isinstance(incoming.value, dict):
-            out.update(incoming.value)
+        if incoming.is_subtype_of(StandardType.DICT):
+            for key, value in dict(incoming.value).items():
+                _update_dict_no_duplicate(out, key, value)
         else:
-            out[incoming.title] = incoming.value
+            _update_dict_no_duplicate(out, incoming.title, incoming.value)
         return model.with_value(out)
 
     return run
+
+
+def _update_dict_no_duplicate(dict_: dict, key: str, value):
+    if key not in dict_:
+        dict_[key] = value
+        return dict_
+
+    if "-" in key and key.rsplit("-")[-1].isdigit():
+        prefix, num_str = key.rsplit("-", 1)
+        num = int(num_str) + 1
+    else:
+        prefix = key
+        num = 0
+    while f"{prefix}-{num}" in dict_:
+        num += 1
+    dict_[f"{prefix}-{num}"] = value
+    return dict_

@@ -4,6 +4,8 @@ from typing import Any, Generic, TypeVar, overload
 from himena.plugins import _checker
 from himena.types import DragDataModel, DropResult, Size, WidgetDataModel
 from himena.style import default_style
+from himena.widgets import current_instance
+from himena.workflow import ProgrammaticMethod
 
 _W = TypeVar("_W")
 
@@ -53,7 +55,13 @@ class WidgetTester(Generic[_W]):
         return self
 
     def to_model(self) -> WidgetDataModel:
-        return self._widget.to_model()
+        model = self._widget.to_model()
+        if not isinstance(model, WidgetDataModel):
+            raise TypeError(
+                f"Widget {self.widget!r} returned {model!r}, expected WidgetDataModel"
+            )
+        model.workflow = ProgrammaticMethod().construct_workflow()
+        return model
 
     def cycle_model(self) -> tuple[WidgetDataModel, WidgetDataModel]:
         """Cycle `update_model` and `to_model` and return both.
@@ -97,7 +105,27 @@ class WidgetTester(Generic[_W]):
             raise ValueError(
                 f"Widget {self.widget!r} does not accept dropping {model.type}. Allowed types are: {allowed}"
             )
-        return self.widget.dropped_callback(model)
+        model.workflow = ProgrammaticMethod().construct_workflow()
+        out = self.widget.dropped_callback(model)
+        if out is None:
+            out = DropResult()
+        elif not isinstance(out, DropResult):
+            raise TypeError(
+                f"Widget {self.widget!r} returned {out!r}, expected DropResult"
+            )
+        if out.command_id is not None:
+            returned_model = current_instance().exec_action(
+                out.command_id,
+                model_context=self.to_model(),
+                with_params=out.with_params,
+                process_model_output=False,
+            )
+            if not isinstance(returned_model, WidgetDataModel):
+                raise ValueError(
+                    f"Command {out.command_id} did not return a WidgetDataModel."
+                )
+            self.update_model(returned_model)
+        return out
 
     def is_modified(self) -> bool:
         return self._widget.is_modified()
