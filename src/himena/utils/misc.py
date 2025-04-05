@@ -37,7 +37,7 @@ def is_structured(arr: np.ndarray) -> bool:
     return isinstance(arr.dtype, (np.void, np.dtypes.VoidDType))
 
 
-ANSI_STYLES = {
+_ANSI_BASIC = {
     1: {"font_weight": "bold"},
     2: {"font_weight": "lighter"},
     3: {"font_weight": "italic"},
@@ -46,11 +46,27 @@ ANSI_STYLES = {
     6: {"text_decoration": "blink"},
     8: {"visibility": "hidden"},
     9: {"text_decoration": "line-through"},
-    30: {"color": "black"},
+}
+
+ANSI_STYLES_LIGHT = {
+    **_ANSI_BASIC,
+    30: {"color": "white"},
     31: {"color": "red"},
     32: {"color": "green"},
-    33: {"color": "yellow"},
+    33: {"color": "teal"},
     34: {"color": "blue"},
+    35: {"color": "magenta"},
+    36: {"color": "darkblue"},
+    37: {"color": "black"},
+}
+
+ANSI_STYLES_DARK = {
+    **_ANSI_BASIC,
+    30: {"color": "black"},
+    31: {"color": "orange"},
+    32: {"color": "#a0ffae"},
+    33: {"color": "yellow"},
+    34: {"color": "#8e9dff"},
     35: {"color": "magenta"},
     36: {"color": "cyan"},
     37: {"color": "white"},
@@ -58,7 +74,8 @@ ANSI_STYLES = {
 
 
 def ansi2html(
-    ansi_string: str, styles: dict[int, dict[str, str]] = ANSI_STYLES
+    ansi_string: str,
+    is_dark: bool = False,
 ) -> Iterator[str]:
     """Convert ansi string to colored HTML
 
@@ -76,6 +93,7 @@ def ansi2html(
         HTML strings that can be joined to form the final html
     """
     previous_end = 0
+    styles = ANSI_STYLES_DARK if is_dark else ANSI_STYLES_LIGHT
     in_span = False
     ansi_codes = []
     ansi_finder = re.compile("\033\\[([\\d;]*)([a-zA-Z])")

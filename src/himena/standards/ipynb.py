@@ -54,7 +54,7 @@ class IpynbErrorOutput(BaseModel):
     evalue: str = Field(default="")
     traceback: list[str] = Field(default_factory=list)
 
-    def get_html(self) -> str:
+    def get_html(self, is_dark: bool = False) -> str:
         _html = (
             "\n".join(self.traceback)
             .replace(" ", "&nbsp;")
@@ -62,7 +62,7 @@ class IpynbErrorOutput(BaseModel):
             .replace(">", "&gt;")
             .replace("\n", "<br>")
         )
-        out = "".join(ansi2html(_html))
+        out = "".join(ansi2html(_html, is_dark=is_dark))
         return out
 
 
