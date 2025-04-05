@@ -5,10 +5,12 @@ import numpy as np
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from typing import Iterator, TYPE_CHECKING, Sequence
 from superqt import QToggleSwitch
+from magicgui.widgets import Container
 
 from himena.standards import roi
 from himena.consts import StandardType
 from himena.qt import drag_command
+from himena.qt.magicgui import get_type_map
 from himena.utils.ndobject import NDObjectCollection
 from himena_builtins.qt.widgets._image_components import _roi_items
 from himena_builtins.qt.widgets._dragarea import QDraggableArea
@@ -84,7 +86,7 @@ Indices = tuple[int, ...]
 
 class QSimpleRoiCollection(QtW.QWidget):
     drag_requested = QtCore.Signal(list)  # list[int] of selected indices
-    rois_removed = QtCore.Signal()
+    roi_update_requested = QtCore.Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -206,13 +208,24 @@ class QSimpleRoiCollection(QtW.QWidget):
         self._qroi_list = self._qroi_list.filter_by_selection(sl)
         self._list_view.model().endRemoveRows()
 
-    def flatten_roi(self, index: int) -> None:
-        self._qroi_list.indices[index, :] = -1
+    def flatten_roi(self, indices: int | list[int]) -> None:
+        return self.flatten_roi_along(indices, slice(None))
+
+    def flatten_roi_along(self, indices: int | list[int], axis) -> None:
+        self._qroi_list.indices[indices, axis] = -1
+        return None
+
+    def move_roi(self, indices: int | list[int], new_dims: tuple[int, ...]) -> None:
+        if not isinstance(indices, list):
+            indices = [indices]
+        for i in indices:
+            self._qroi_list.indices[i, :] = new_dims
+        self.roi_update_requested.emit()
         return None
 
     def remove_selected_rois(self):
         self.pop_rois(self.selections())
-        self.rois_removed.emit()
+        self.roi_update_requested.emit()
 
 
 class QRoiCollection(QSimpleRoiCollection):
@@ -314,10 +327,10 @@ class QRoiCollection(QSimpleRoiCollection):
                 higher_dims = ndim_rem - ninds
                 indices_filled = view._dims_slider.value()[:higher_dims] + indices
                 view._dims_slider.set_value_no_emit(indices_filled)
-                view._slider_changed(indices_filled, force_sync=True)
+                view._slider_changed(view._dims_slider.value(), force_sync=True)
         else:
             view._dims_slider.set_value_no_emit(indices)
-            view._slider_changed(indices, force_sync=True)
+            view._slider_changed(view._dims_slider.value(), force_sync=True)
 
         # update selection in the image viewer
         view._img_view.select_item(qroi, is_registered_roi=True)
@@ -382,18 +395,94 @@ class QRoiListView(QtW.QListView):
         menu.exec(self.mapToGlobal(point))
 
     def _prep_context_menu(self, index: QtCore.QModelIndex):
+        _qroi_list = self.parent()._qroi_list
         menu = QtW.QMenu(self)
+        selected_indices = self.parent().selections()
         action_rename = menu.addAction("Rename", lambda: self.edit(index))
         action_rename.setToolTip("Rename the selected ROI")
-        action_flatten = menu.addAction(
-            "Flatten", lambda: self.parent().flatten_roi(index.row())
+        menu_flatten = menu.addMenu("Flatten Along ...")
+
+        action_flatten = menu_flatten.addAction(
+            "All axes", lambda: self.parent().flatten_roi(selected_indices)
         )
+        menu_flatten.addSeparator()
+        for i in range(_qroi_list.ndim):
+            _action = menu_flatten.addAction(
+                f"{i}: {_qroi_list.axis_names[i]}",
+                lambda i=i: self.parent().flatten_roi_along(selected_indices, [i]),
+            )
+            _action.setToolTip(
+                f"Flatten the selected ROI along {_qroi_list.axis_names[i]!r} axis"
+            )
         action_flatten.setToolTip("Flatten the selected ROI into 2D")
+        action_move = menu.addAction(
+            "Move To ...",
+            lambda: self._move_to(selected_indices),
+        )
+        action_move.setToolTip("Move the selected ROI to another dimension")
         action_delete = menu.addAction(
             "Delete", lambda: self.parent().remove_selected_rois()
         )
         action_delete.setToolTip("Delete the selected ROIs")
         return menu
+
+    def _move_to(self, indices):
+        if dims := self._select_dimensions_from_dialog():
+            self.parent().move_roi(indices, dims)
+
+    def _make_dialog(self, options: dict[str, dict]) -> tuple[QtW.QDialog, Container]:
+        mgui_typemap = get_type_map()
+        dialog = QtW.QDialog(self)
+        dialog.setWindowTitle("Select dimensions")
+        layout = QtW.QVBoxLayout(dialog)
+        container = Container()
+        container.margins = (0, 0, 0, 0)
+        for name, each in options.items():
+            annotation = each.pop("annotation", None)
+            widget = mgui_typemap.create_widget(
+                annotation=annotation,
+                name=name,
+                options=each,
+            )
+            container.append(widget)
+        layout.addWidget(container.native)
+        button_layout = QtW.QHBoxLayout()
+        button_layout.setContentsMargins(0, 0, 0, 0)
+        button_layout.setSpacing(2)
+        button_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        ok_button = QtW.QPushButton("OK")
+        cancel_button = QtW.QPushButton("Cancel")
+        button_layout.addWidget(ok_button)
+        button_layout.addWidget(cancel_button)
+        layout.addLayout(button_layout)
+        ok_button.clicked.connect(dialog.accept)
+        cancel_button.clicked.connect(dialog.reject)
+        return dialog, container
+
+    def _options_for_select_dimensions(self) -> dict[str, dict]:
+        options = {}
+        img_view = self.parent()._image_view_ref()
+        if img_view is None:
+            return None
+        slider_dims = img_view._dims_slider.maximums()
+        slider_values = list(img_view._dims_slider.value())
+        for ith, axis in enumerate(self.parent()._qroi_list.axis_names):
+            options[axis] = {
+                "value": slider_values[ith],
+                "annotation": int,
+                "widget_type": "Slider",
+                "min": 0,
+                "max": slider_dims[ith],
+            }
+        return options
+
+    def _select_dimensions_from_dialog(self) -> tuple[int, ...] | None:
+        options = self._options_for_select_dimensions()
+        dialog, container = self._make_dialog(options)
+        if dialog.exec() == QtW.QDialog.DialogCode.Accepted:
+            return tuple(each.value for each in container)
+        else:
+            return None
 
     def keyPressEvent(self, a0: QtGui.QKeyEvent):
         if a0.key() == QtCore.Qt.Key.Key_F2:

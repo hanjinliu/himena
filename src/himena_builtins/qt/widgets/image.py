@@ -65,7 +65,7 @@ class QImageViewBase(QtW.QSplitter):
         self._stick_grid_switch.toggled.connect(self._img_view.set_stick_to_grid)
         self._dims_slider = QDimsSlider()
         self._roi_col = QRoiCollection(self)
-        self._roi_col.rois_removed.connect(self._update_rois)
+        self._roi_col.roi_update_requested.connect(self._update_rois)
         self._roi_col.layout().insertWidget(0, self._roi_buttons)
         self._roi_col.layout().insertWidget(1, self._stick_grid_switch)
         layout.addWidget(self._img_view)

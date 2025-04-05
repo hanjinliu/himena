@@ -26,6 +26,10 @@ class QDimsSlider(QtW.QWidget):
         """Number of sliders."""
         return len(self._sliders)
 
+    def maximums(self) -> tuple[int, ...]:
+        """Return the maximum values of the sliders."""
+        return tuple(slider._slider.maximum() for slider in self._sliders)
+
     def set_dimensions(
         self,
         shape: tuple[int, ...],
@@ -94,6 +98,8 @@ class QDimsSlider(QtW.QWidget):
         if len(value) != len(self._sliders):
             raise ValueError(f"Expected {len(self._sliders)} values, got {len(value)}")
         for slider, val in zip(self._sliders, value):
+            if val == -1:  # flattened axis, no need to update slider
+                continue
             with qsignal_blocker(slider):
                 slider._slider.setValue(val)
 

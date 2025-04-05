@@ -1,5 +1,6 @@
 import warnings
 import numpy as np
+from numpy.testing import assert_equal
 from pathlib import Path
 from qtpy import QtCore
 from qtpy.QtCore import Qt
@@ -300,6 +301,40 @@ def test_image_view_roi_selection_from_list_widget(qtbot: QtBot):
         assert len(image_view._img_view._roi_items) == 2
         assert any(isinstance(item, _rois.QLineRoi) for item in image_view._img_view.items())
         assert any(isinstance(item, _rois.QPointRoi) for item in image_view._img_view.items())
+
+def test_image_view_roi_actions(qtbot: QtBot):
+    image_view = QImageView()
+    image_view.setSizes([300, 100])
+    with WidgetTester(image_view) as tester:
+        tester.update_model(
+            value=np.zeros((5, 2, 30, 30), dtype=np.uint8),
+            metadata=ImageMeta(
+                axes=[ArrayAxis(name=name) for name in ["t", "c", "y", "x"]],
+                rois=RoiListModel(
+                    items=[
+                        LineRoi(name="ROI-0", x1=1, y1=1, x2=4, y2=5),
+                        PointRoi2D(name="ROI-1", x=1, y=5),
+                        RectangleRoi(name="ROI-2", x=1, y=1, width=3, height=4),
+                    ],
+                    indices=np.array([[0, 0], [1, 0], [0, 1]], dtype=np.int32),
+                    axis_names=["t", "c"],
+                ),
+            ),
+        )
+        qtbot.addWidget(image_view)
+        assert image_view._roi_col.count() == 3
+        image_view._roi_col.flatten_roi(0)
+        image_view._roi_col.flatten_roi_along(1, axis=1)
+        image_view._roi_col.move_roi(2, (3, 0))
+        meta = tester.to_model().metadata
+        assert isinstance(meta, ImageMeta)
+        assert_equal(meta.unwrap_rois().indices, [[-1, -1], [1, -1], [3, 0]])
+        opt = image_view._roi_col._list_view._options_for_select_dimensions()
+        dlg, container = image_view._roi_col._list_view._make_dialog(opt)
+        qtbot.addWidget(dlg)
+        assert len(container) == 2
+        assert container[0].label == "t"
+        assert container[1].label == "c"
 
 def test_constrast_hist(qtbot: QtBot):
     image_view = QImageView()
