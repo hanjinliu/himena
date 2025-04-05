@@ -7,6 +7,7 @@ from app_model import Application
 from app_model.types import KeyBindingRule
 from dataclasses import dataclass, field
 import logging
+import traceback
 
 if TYPE_CHECKING:
     from himena.profile import AppProfile
@@ -42,7 +43,12 @@ def install_plugins(app: Application, plugins: list[str]) -> list[PluginInstallR
                     _LOGGER.error(f"Plugin {name} not found.")
                     continue
                 except Exception as e:
-                    _LOGGER.error(f"Error installing plugin {name}: {e}")
+                    msg = "".join(
+                        traceback.format_exception(type(e), e, e.__traceback__)
+                    )
+                    _LOGGER.error(
+                        f"Error installing plugin {name}, traceback follows:\n{msg}"
+                    )
                     _exc = e
         else:
             raise TypeError(f"Invalid plugin type: {type(name)}")

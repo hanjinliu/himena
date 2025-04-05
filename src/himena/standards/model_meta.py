@@ -347,11 +347,16 @@ class ImageMeta(ArrayMeta):
         return StandardType.IMAGE
 
 
-class ImageRoisMeta(BaseMetadata):
+class ListMeta(BaseMetadata):
+    """Preset for describing a metadata for a list-like object."""
+
+    selections: list[int] = Field(default_factory=list)
+
+
+class ImageRoisMeta(ListMeta):
     """Preset for describing an image-rois metadata."""
 
     axes: list[ArrayAxis] | None = Field(None, description="Axes of the ROIs.")
-    selections: list[int] = Field(default_factory=list)
 
     def expected_type(self):
         return StandardType.ROIS

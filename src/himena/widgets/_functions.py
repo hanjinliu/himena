@@ -55,6 +55,13 @@ def notify(text: str, duration: float = 5.0) -> None:
     return None
 
 
+def append_result(item: dict[str, Any], /) -> None:
+    """Append a new result to the result stack."""
+    ins = current_instance()
+    ins._backend_main_window._append_result(item)
+    return None
+
+
 # def subprocess_run(command_args, /, *args, blocking: bool = True, **kwargs):
 #     """Run a subprocess command."""
 #     import subprocess

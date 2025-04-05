@@ -12,6 +12,7 @@ from himena.widgets._functions import (
     get_clipboard,
     set_clipboard,
     notify,
+    append_result,
 )
 
 __all__ = [
@@ -31,4 +32,5 @@ __all__ = [
     "get_clipboard",
     "set_clipboard",
     "notify",
+    "append_result",
 ]

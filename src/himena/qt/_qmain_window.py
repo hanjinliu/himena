@@ -6,6 +6,7 @@ import logging
 from typing import Callable, Hashable, Literal, TypeVar, TYPE_CHECKING, cast
 from pathlib import Path
 import warnings
+import weakref
 import numpy as np
 
 from qtpy import QtWidgets as QtW, QtGui, QtCore
@@ -25,6 +26,7 @@ from himena.qt._qcommand_palette import QCommandPalette
 from himena.qt._qcontrolstack import QControlStack
 from himena.qt._qparametric import QParametricWidget
 from himena.qt._qgoto import QGotoWidget
+from himena.qt._qresult_stack import QResultStack
 from himena.types import (
     DockArea,
     DockAreaString,
@@ -794,6 +796,18 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _show_dock_whats_this(self, doc: str):
         doc_formatted = doc_to_whats_this(doc)
         self._add_whats_this(doc_formatted, style="markdown")
+
+    @ensure_main_thread
+    def _append_result(self, item):
+        ui = self._himena_main_window
+        tab = ui.tabs.current()
+        if tab is None:
+            tab = ui.add_tab()
+        if (result_stack := tab._result_stack_ref()) is None:
+            result_stack = QResultStack()
+            tab._result_stack_ref = weakref.ref(result_stack)
+            tab.add_widget(result_stack, title="Results")
+        result_stack.append_result(item)
 
 
 def _is_root_menu_id(app: HimenaApplication, menu_id: str) -> bool:

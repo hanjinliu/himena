@@ -346,3 +346,6 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
 
     def _add_whats_this(self, text: str, style: Literal["plain", "markdown", "html"]):
         """Add a what's this text to the main window."""
+
+    def _append_result(self, item: dict[str, object]) -> None:
+        """Append a new result to the result stack."""

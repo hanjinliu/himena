@@ -110,6 +110,8 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         self._minimized_window_stack_layout = VStackLayout(main_window, inverted=True)
         self._layouts = [self._minimized_window_stack_layout]
         self._minimized_window_stack_layout._reanchor(Size(*main_window._area_size()))
+        # the tab-specific result stack
+        self._result_stack_ref = lambda: None
 
     @property
     def layouts(self) -> FrozenList[Layout]:

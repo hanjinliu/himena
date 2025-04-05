@@ -41,12 +41,12 @@ def test_model_stack_widget(himena_ui: MainWindow, qtbot: QtBot):
 def test_commands(himena_ui: MainWindow):
     win0 = himena_ui.add_object(value="abc", type=StandardType.TEXT)
     win1 = himena_ui.add_object(value=[[1, 2], [3, 2]], type=StandardType.TABLE)
-    himena_ui.exec_action("builtins:stack-models", with_params={"models": [win1.to_model(), win0.to_model()]})
+    himena_ui.exec_action("builtins:models:stack-models", with_params={"models": [win1.to_model(), win0.to_model()]})
     win2 = himena_ui.current_window
     assert isinstance(win2.widget, QModelStack)
     assert win2.widget._model_list.count() == 2
-    himena_ui.exec_action("builtins:sort-model-list", with_params={"sort_by": "title"})
-    himena_ui.exec_action("builtins:sort-model-list", with_params={"sort_by": "type"})
-    himena_ui.exec_action("builtins:sort-model-list", with_params={"sort_by": "time"})
-    himena_ui.exec_action("builtins:filter-model-list", with_params={"model_type": "text"})
-    himena_ui.exec_action("builtins:filter-model-list", with_params={"title_contains": "X"})
+    himena_ui.exec_action("builtins:models:sort-model-list", with_params={"sort_by": "title"})
+    himena_ui.exec_action("builtins:models:sort-model-list", with_params={"sort_by": "type"})
+    himena_ui.exec_action("builtins:models:sort-model-list", with_params={"sort_by": "time"})
+    himena_ui.exec_action("builtins:models:filter-model-list", with_params={"model_type": "text"})
+    himena_ui.exec_action("builtins:models:filter-model-list", with_params={"title_contains": "X"})
