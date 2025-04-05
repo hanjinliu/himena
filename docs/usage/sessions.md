@@ -13,12 +13,14 @@ click the "File > Session > Save Session ..." menu.
 
 A session is saved as a zip file suffixed with `.session.zip`. The zip file contains:
 
-1. Files that are created by writing all the sub-windows in the application.
+1. Files created by writing all the sub-windows in the application.
 2. Directories that store the metadata of each data model.
 3. `session.yaml` that describes many other states of the application.
 
-Therefore, if any of the windows cannot be written to files, saving the session will
-lose the data (or [use workflows](#restore-subset-of-the-data-by-workflows) to avoid this).
+During saving the session, `himena` tries to find the best writer plugin to write every
+sub-window. Therefore, if any of the windows cannot be written to files, saving the
+session will lose the data (or [use workflows](#restore-subset-of-the-data-by-workflows)
+to avoid this).
 
 ## Make the Session Portable
 
@@ -28,7 +30,7 @@ moved. To make the session portable, you have to check the "save copies" option.
 
 ## Restore Subset of the Data by Workflows
 
-Instead of saving a sub-window as a file, you can restore the data by rerunning all the
+Instead of saving a sub-window as a file, you can restore the data by re-running all the
 commands needed to generate the data. As each sub-window has its workflow to track its
 history, this workflow can be used to restore the data.
 

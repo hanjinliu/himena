@@ -1,12 +1,11 @@
 # Tab/Window Manipulation
 
-The current state of the application can be programmatically manipulated by using the
-`ui` variable.
+The current state of the application can be programmatically manipulated.
 
 ## Access to Tabs and Sub-windows
 
-`ui.tabs` is a list-like object that contains all the tab. Each tab is another list-like
-objects that contains all the sub-windows.
+`ui.tabs` is a list-like object that contains all the tabs. Each tab is another
+list-like objects that contains all the sub-windows.
 
 ``` python
 ui.tabs[0]  # The first tab
@@ -27,7 +26,7 @@ ui.tabs[0][1]  # The second sub-window in the first tab
 SubWindow(title='Untitled-1', widget=<builtins:QTextEdit>)
 ```
 
-Currently active tab and sub-window can be accessed by followign properties.
+Indices of the active tab or sub-window can be accessed by following properties.
 
 ``` python
 ui.tabs.current_index  # The index of the current tab
@@ -59,7 +58,7 @@ tab if there is no tab.
 # add array object to the current tab
 ui.add_object(np.arange(10), type="array", title="my array")
 
-# add array object to the current tab
+# add array object to the first tab
 ui.tabs[0].add_object(np.arange(10), type="array", title="my array")
 
 # add a WidgetDataModel
@@ -155,4 +154,18 @@ win.rect
 
 ``` title="Output"
 WindowRect(left=10, top=20, width=200, height=250)
+```
+
+## Changing the Window State
+
+The window state can be changed by `state` property. The state is a [`WindowState`][himena.types.WindowState] enum object, but it can be set by a string. Supported states are:
+"min", "max", "normal" and "full".
+
+``` python
+ui.current_window.state = "max"
+ui.current_window.state
+```
+
+``` title="Output"
+<WindowState.MAX: 'max'>
 ```

@@ -15,6 +15,12 @@ Alternatively, you can programmatically change it by setting the `theme` propert
 ui.theme = "dark-green"
 ```
 
+## Keyboard Shortcuts
+
+You can customize keyboard shortcuts for various actions registered in the application.
+
+![](../images/02_keyboard_shortcuts.gif){ loading=lazy width=600px }
+
 ## Plugin Settings
 
 Many settings that are not directly relevant to the data itself (such as the table cell

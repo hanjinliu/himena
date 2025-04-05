@@ -34,6 +34,8 @@ def register_magicgui_types():
     TYPE_MAP.register_type(list[float], widget_type=FloatListEdit)
     TYPE_MAP.register_type(Color, widget_type=ColorEdit)
     TYPE_MAP.register_type(Colormap, widget_type=ColormapEdit)
+    TYPE_MAP._simple_types.pop(range, None)
+    TYPE_MAP._simple_types.pop(slice, None)
 
 
 def get_type_map():

@@ -238,12 +238,14 @@ def example_function(x):
 ui.add_object(
     example_function,
     type="function",
-    metadata=FunctionMeta(source_code="def example_function(x):\n    return x**2"),
     title="Function Data",
 )
 ```
 
-## Image ROI Widget
+## ROI Widget
+
+This widget represents a list of ROIs (Region of Interests). ROIs are usually used in
+images, and the built-in image viewer supports drawing ROIs on the image.
 
 |*Specification*||
 |---|---|
@@ -297,6 +299,9 @@ ui.add_object(text, type="text.json.ipynb", title="Jupyter Notebook")
 ```
 
 ## Model Stack Widget
+
+This widget is used for displaying a folder. Data is lazily loaded so that opening a
+large folder does not take much time.
 
 |*Specification*||
 |---|---|
