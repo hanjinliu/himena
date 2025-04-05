@@ -595,9 +595,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#image-roi-widget" class="md-nav__link">
+  <a href="#roi-widget" class="md-nav__link">
     <span class="md-ellipsis">
-      Image ROI Widget
+      ROI Widget
     </span>
   </a>
   
@@ -1244,9 +1244,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#image-roi-widget" class="md-nav__link">
+  <a href="#roi-widget" class="md-nav__link">
     <span class="md-ellipsis">
-      Image ROI Widget
+      ROI Widget
     </span>
   </a>
   
@@ -1690,12 +1690,13 @@ or <code>scipy.integrate</code>.</p>
 <span class="n">ui</span><span class="o">.</span><span class="n">add_object</span><span class="p">(</span>
     <span class="n">example_function</span><span class="p">,</span>
     <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;function&quot;</span><span class="p">,</span>
-    <span class="n">metadata</span><span class="o">=</span><span class="n">FunctionMeta</span><span class="p">(</span><span class="n">source_code</span><span class="o">=</span><span class="s2">&quot;def example_function(x):</span><span class="se">\n</span><span class="s2">    return x**2&quot;</span><span class="p">),</span>
     <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Function Data&quot;</span><span class="p">,</span>
 <span class="p">)</span>
 </code></pre></div>
 </div>
-<h2 id="image-roi-widget">Image ROI Widget</h2>
+<h2 id="roi-widget">ROI Widget</h2>
+<p>This widget represents a list of ROIs (Region of Interests). ROIs are usually used in
+images, and the built-in image viewer supports drawing ROIs on the image.</p>
 <table>
 <thead>
 <tr>
@@ -1780,6 +1781,8 @@ or <code>scipy.integrate</code>.</p>
 </code></pre></div>
 </div>
 <h2 id="model-stack-widget">Model Stack Widget</h2>
+<p>This widget is used for displaying a folder. Data is lazily loaded so that opening a
+large folder does not take much time.</p>
 <table>
 <thead>
 <tr>

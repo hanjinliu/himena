@@ -1130,18 +1130,20 @@ in some special cases. Please make sure you will not lose your important data.</
 <h2 id="how-it-works">How it Works</h2>
 <p>A session is saved as a zip file suffixed with <code>.session.zip</code>. The zip file contains:</p>
 <ol>
-<li>Files that are created by writing all the sub-windows in the application.</li>
+<li>Files created by writing all the sub-windows in the application.</li>
 <li>Directories that store the metadata of each data model.</li>
 <li><code>session.yaml</code> that describes many other states of the application.</li>
 </ol>
-<p>Therefore, if any of the windows cannot be written to files, saving the session will
-lose the data (or <a href="#restore-subset-of-the-data-by-workflows">use workflows</a> to avoid this).</p>
+<p>During saving the session, <code>himena</code> tries to find the best writer plugin to write every
+sub-window. Therefore, if any of the windows cannot be written to files, saving the
+session will lose the data (or <a href="#restore-subset-of-the-data-by-workflows">use workflows</a>
+to avoid this).</p>
 <h2 id="make-the-session-portable">Make the Session Portable</h2>
 <p>By default, sub-windows directly read from the local disk will not be saved again in the
 session. However, this session will not work on another computer, or if the file is
 moved. To make the session portable, you have to check the "save copies" option.</p>
 <h2 id="restore-subset-of-the-data-by-workflows">Restore Subset of the Data by Workflows</h2>
-<p>Instead of saving a sub-window as a file, you can restore the data by rerunning all the
+<p>Instead of saving a sub-window as a file, you can restore the data by re-running all the
 commands needed to generate the data. As each sub-window has its workflow to track its
 history, this workflow can be used to restore the data.</p>
 <p>In the "Save Session ..." dialog, you can select which command you will allow to be

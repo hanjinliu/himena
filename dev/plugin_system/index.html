@@ -619,6 +619,19 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Plugin System
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -630,6 +643,67 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#defining-the-entry-point" class="md-nav__link">
+    <span class="md-ellipsis">
+      Defining the Entry Point
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-plugins" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing Plugins
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing Plugins">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-using-pytest" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test using pytest
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#single-file-plugin" class="md-nav__link">
+    <span class="md-ellipsis">
+      Single-file Plugin
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1007,6 +1081,56 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#defining-the-entry-point" class="md-nav__link">
+    <span class="md-ellipsis">
+      Defining the Entry Point
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-plugins" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing Plugins
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing Plugins">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-using-pytest" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test using pytest
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#single-file-plugin" class="md-nav__link">
+    <span class="md-ellipsis">
+      Single-file Plugin
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1025,6 +1149,7 @@
 
 
 <h1 id="plugin-system">Plugin System</h1>
+<h2 id="defining-the-entry-point">Defining the Entry Point</h2>
 <p>To make your module discoverable by <code>himena</code>, you need to configure the <code>pyproject.toml</code>
 file.</p>
 <p>For example, if you have a module named <code>himena_my_plugin</code> and all the IO functions are
@@ -1033,8 +1158,8 @@ registered in the <code>io</code> submodule, you need to add the following confi
 <div class="highlight"><pre><span></span><code><span class="k">[project.entry-points.</span><span class="s2">&quot;himena.plugin&quot;</span><span class="k">]</span>
 <span class="hll"><span class="s2">&quot;My Plugin IO&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;himena_my_plugin.io&quot;</span>
 </span></code></pre></div>
-<p>The "My Plugin IO" is the display name of your plugin, and the value is the import path
-to the submodule.</p>
+<p>The "My Plugin IO" is the display name of your plugin, and the value "himena_my_plugin.io"
+is the import path to the submodule.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>You don't have to create a new package just for the plugin. This single TOML field
@@ -1048,6 +1173,39 @@ different submodules.</p>
 <span class="s2">&quot;My Plugin Widgets&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;himena_my_plugin.widgets&quot;</span>
 <span class="s2">&quot;My Plugin Data Processing&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;himena_my_plugin.processing&quot;</span>
 </code></pre></div>
+<h2 id="testing-plugins">Testing Plugins</h2>
+<p>To locally test your plugin, first install your package to the python environment</p>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+</code></pre></div>
+<p>and run the following command to install to a <code>himena</code> profile.</p>
+<div class="highlight"><pre><span></span><code>himena<span class="w"> </span>&lt;my-profile&gt;<span class="w"> </span>--install<span class="w"> </span>himena-my-plugin
+</code></pre></div>
+<p>All the submodules listed in the "himena.plugin" entry point will be imported on the
+application startup.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Make sure all the files are imported in the <code>__init__.py</code> file of the submodule.</p>
+</div>
+<h3 id="test-using-pytest">Test using <code>pytest</code></h3>
+<p>Testing <code>himena</code> plugins sometimes causes problems because <code>himena</code> application is
+initialized multiple times in the same test session.
+To avoid this, you can use the <code>install_plugin()</code> helper function to ensure that the
+plugin is installed only once in the beginning.</p>
+<div class="highlight"><span class="filename">tests/conftest.py</span><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">himena.testing</span><span class="w"> </span><span class="kn">import</span> <span class="n">install_plugin</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">(</span><span class="n">scope</span><span class="o">=</span><span class="s2">&quot;session&quot;</span><span class="p">,</span> <span class="n">autouse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">init_pytest</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">install_plugin</span><span class="p">(</span><span class="s2">&quot;himena-image&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="single-file-plugin">Single-file Plugin</h2>
+<p>Sometimes you may prefer to create a plugin in a single file. This is useful for such as
+daily data analysis, in which you want to define different functions under different
+folders.</p>
+<p>You can do this by simply installing a python file.</p>
+<div class="highlight"><pre><span></span><code>himena<span class="w"> </span>&lt;my-profile&gt;<span class="w"> </span>--install<span class="w"> </span>path/to/my_plugin.py
+</code></pre></div>
+<p>The installed files will be run as a script on the startup.</p>
 
 
 

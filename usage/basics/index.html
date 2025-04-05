@@ -1331,7 +1331,7 @@
 <li><strong>Python interpreter console</strong>. A console widget that can execute Python codes.</li>
 <li><strong>Dock widget</strong>. Widgets docked to the main window. These widgets are usually added
    by plugins. The Python interpreter console is also a dock widget.</li>
-<li><strong>Status bar</strong>. It shows a simple one-line message.</li>
+<li><strong>Status bar</strong>. It shows simple one-line messages.</li>
 </ol>
 <h3 id="sub-window">Sub-window</h3>
 <p>A sub-window usually represents a single data, such as a <code>ndarray</code> or <code>DataFrame</code>.
@@ -1340,6 +1340,8 @@ Therefore, data processing is usually done by taking sub-windows as input and ou
 <p>Each data is wrapped by a <a class="autorefs autorefs-internal" href="../../api/types/#himena.types.WidgetDataModel"><code>WidgetDataModel</code></a> object,
 which is tagged with some GUI-related information, so that the application understands
 how to display, save and track the data.</p>
+<p>In the Python interpreter console (<span class="keys"><kbd class="key-control">Ctrl</kbd><span>+</span><kbd class="key-shift">Shift</kbd><span>+</span><kbd class="key-c">C</kbd></span>), variable <code>ui</code> is available as the
+handler of the main window.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">himena.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">WidgetDataModel</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
@@ -1380,7 +1382,16 @@ tab.</p>
 <p>This is the most common way to open a file. You can open a file from "File" menu press
 <span class="keys"><kbd class="key-control">Ctrl</kbd><span>+</span><kbd class="key-o">O</kbd></span> or drag-and-drop the file to the application.</p>
 <p>Whether the file can be opened, and the opened data can be displayed as a widget,
-depends on the plugins installed in the application profile.</p>
+depends on the plugins installed in the application profile. For example, <code>himena</code>
+built-in readers cannot open TIFF files, but a TIFF reader is available in the
+<a href="https://github.com/hanjinliu/himena-image"><code>himena-image</code></a> plugin.</p>
+<details class="tip">
+<summary>Data analysis without widget plugin</summary>
+<p>If <code>himena</code> cannot find a widget to represent the data that has just been read, you
+will see a widget saying "No widget registered for ...". This does not mean <code>himena</code>
+cannot read the data. You just don't have a "nice" way to visualize the data. You
+can still use the internal data model in the application.</p>
+</details>
 <h4 id="2-open-a-folder-as-a-sub-window">(2) Open a folder as a sub-window</h4>
 <p>A special built-in widget can display a list of <code>WidgetDataModel</code> as a nested widget.
 Opening a folder will read the folder contents as a collection like below.
@@ -1388,7 +1399,8 @@ This command is available from the "File" menu, <span class="keys"><kbd class="k
 drag-and-drop the folder to the application.</p>
 <p><img alt="" loading="lazy," src="../../images/01_file_list_widgetpng.png" width="500px" /></p>
 <h4 id="3-open-a-group-of-files-as-a-sub-window">(3) Open a group of files as a sub-window</h4>
-<p>Instead of opening a folder, you can open a group of files as a sub-window.</p>
+<p>Instead of opening a folder, you can open a group of files as a sub-window just like
+(2).</p>
 <h3 id="saving-files-to-the-local-disk">Saving files to the local disk</h3>
 <p>You can save the data in the sub-window to the local disk by selecting "File" &rarr;
 "Save" or pressing <span class="keys"><kbd class="key-control">Ctrl</kbd><span>+</span><kbd class="key-s">S</kbd></span>. Whether the data can be saved to the specified format
@@ -1418,17 +1430,17 @@ the application using <code>add_widget()</code> method.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">qtpy.QtWidgets</span><span class="w"> </span><span class="kn">import</span> <span class="n">QLabel</span>
 
 <span class="n">label</span> <span class="o">=</span> <span class="n">QLabel</span><span class="p">(</span><span class="s2">&quot;Hello, world!&quot;</span><span class="p">)</span>
-<span class="n">ui</span><span class="o">.</span><span class="n">add_widget</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;My Label&quot;</span><span class="p">)</span>
-</code></pre></div>
+<span class="hll"><span class="n">ui</span><span class="o">.</span><span class="n">add_widget</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;My Label&quot;</span><span class="p">)</span>
+</span></code></pre></div>
 <p>If you have a widget wrapper of a <code>Qt</code> widget, it can also be added by defining the
 <code>native_widget()</code> interface method.</p>
 <div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MyLabel</span><span class="p">:</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_qt_label</span> <span class="o">=</span> <span class="n">QLabel</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">native_widget</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qt_label</span>
-
+<span class="hll">    <span class="k">def</span><span class="w"> </span><span class="nf">native_widget</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span class="hll">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qt_label</span>
+</span>
 <span class="n">label</span> <span class="o">=</span> <span class="n">MyLabel</span><span class="p">(</span><span class="s2">&quot;Hello, world!&quot;</span><span class="p">)</span>
 <span class="n">ui</span><span class="o">.</span><span class="n">add_widget</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;My Label Wrapper&quot;</span><span class="p">)</span>
 </code></pre></div>
@@ -1445,7 +1457,11 @@ be directly used without the <code>native_widget()</code> method.</p>
 <span class="n">ui</span><span class="o">.</span><span class="n">add_widget</span><span class="p">(</span><span class="n">my_func</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;My MagicGUI&quot;</span><span class="p">)</span>
 </code></pre></div>
 </details>
-<p>This rule also applies to the widget plugin system. See <a href="../../dev/register_widgets/#use-wrapper-class">here</a>
+<p>Alternatively, you can add the widget as a dock widget using <code>add_dock_widget()</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="n">label</span> <span class="o">=</span> <span class="n">MyLabel</span><span class="p">(</span><span class="s2">&quot;Hello, world!&quot;</span><span class="p">)</span>
+<span class="hll"><span class="n">ui</span><span class="o">.</span><span class="n">add_dock_widget</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;My Label Dock Widget&quot;</span><span class="p">)</span>
+</span></code></pre></div>
+<p>These rules also apply to the widget plugin system. See <a href="../../dev/register_widgets/#use-wrapper-class">here</a>
 for more details.</p>
 
 

@@ -751,6 +751,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#bind-values-to-parameter-input" class="md-nav__link">
+    <span class="md-ellipsis">
+      Bind Values to Parameter Input
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#preview-function-outputs" class="md-nav__link">
     <span class="md-ellipsis">
       Preview Function Outputs
@@ -1154,6 +1163,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#bind-values-to-parameter-input" class="md-nav__link">
+    <span class="md-ellipsis">
+      Bind Values to Parameter Input
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#preview-function-outputs" class="md-nav__link">
     <span class="md-ellipsis">
       Preview Function Outputs
@@ -1221,6 +1239,11 @@ default) and the command palette. When this function is called from the GUI, cur
 active window will be converted into a <code>WidgetDataModel</code> object and passed to the
 function. The returned <code>WidgetDataModel</code> object will then be converted into another
 window.</p>
+<details class="running functions without registered widget">
+<summary>Running</summary>
+<p>Because all the internal data is stored in <code>WidgetDataModel</code> objects, you can even
+run functions without registered widgets.</p>
+</details>
 <hr />
 <h2 id="dependency-injection-and-type-narrowing">Dependency Injection and Type Narrowing</h2>
 <p><code>himena</code> uses <a href="https://github.com/pyapp-kit/in-n-out"><code>in_n_out</code></a> library to inject
@@ -1228,11 +1251,12 @@ the application context into functions. For example, in the previous example, th
 <code>WidgetDataModel</code> of the current window is injected to the <code>model</code> argument of the
 <code>format_json</code> function. If no window is activated, the "Format JSON Text" menu is grayed
 out.</p>
-<p>Here are the list of type hints that will be provided to the argument.</p>
+<p>Here are the list of type hints that will be provided to the argument of the registered
+functions.</p>
 <ul>
 <li><a class="autorefs autorefs-internal" href="../../api/types/#himena.types.WidgetDataModel"><code>WidgetDataModel</code></a>: The current window's data.</li>
 <li><a class="autorefs autorefs-internal" href="../../api/widgets/#himena.widgets.TabArea"><code>TabArea</code></a>: The current tab area.</li>
-<li><a class="autorefs autorefs-internal" href="../../api/widgets/#himena.widgets.SubWindow"><code>SubWindow</code></a>: The current window.</li>
+<li><a class="autorefs autorefs-internal" href="../../api/widgets/#himena.widgets.SubWindow"><code>SubWindow</code></a>: The current sub-window.</li>
 <li><a class="autorefs autorefs-internal" href="../../api/widgets/#himena.widgets.MainWindow"><code>MainWindow</code></a>: The main window.</li>
 <li><a class="autorefs autorefs-internal" href="../../api/types/#himena.types.ClipboardDataModel"><code>ClipboardDataModel</code></a>: The clipboard data.</li>
 </ul>
@@ -1275,7 +1299,7 @@ widget for <code>"text"</code>-type data. Another benefit is that this command w
 of the <code>register_function()</code> decorator. Each menu is specified by a "/"-separated string
 identifier. Following is an example that puts the function in the
 "my-plugins &gt; my-text-plugins" menu.</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">himena</span><span class="w"> </span><span class="kn">import</span> <span class="n">WidgetDataModel</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">himena</span><span class="w"> </span><span class="kn">import</span> <span class="n">WidgetDataModel</span><span class="p">,</span> <span class="n">StandardType</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">himena.plugins</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_function</span>
 
 <span class="nd">@register_function</span><span class="p">(</span>
@@ -1292,9 +1316,18 @@ identifier. Following is an example that puts the function in the
 <span class="n">configure_submenu</span><span class="p">(</span><span class="s2">&quot;my-plugins&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;My Plugins&quot;</span><span class="p">)</span>
 <span class="n">configure_submenu</span><span class="p">(</span><span class="s2">&quot;my-plugins/my-text-plugins&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;My Text Plugins&quot;</span><span class="p">)</span>
 </code></pre></div>
+<p>If a menu has many items, it is better to group them. You can use the <code>group</code> argument
+of <code>configure_submenu()</code> for this purpose. Groups are sorted alphabetically, so it is
+a good idea to prefix the group name with a number to control the order.</p>
+<div class="highlight"><pre><span></span><code><span class="n">configure_submenu</span><span class="p">(</span>
+    <span class="s2">&quot;my-plugins/my-text-plugins&quot;</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;My Text Plugins&quot;</span><span class="p">,</span>
+<span class="hll">    <span class="n">group</span><span class="o">=</span><span class="s2">&quot;00_process-text&quot;</span><span class="p">,</span>
+</span><span class="p">)</span>
+</code></pre></div>
 <hr />
 <h2 id="parametric-functions">Parametric Functions</h2>
-<p>Many functions require parameter inputs. It is very easy to implement a parametric
+<p>Many functions require user parameter inputs. It is very easy to implement a parametric
 function in Python: just add more arguments to the function. However, implementing
 parametric functions in GUI is usually tedious, as you need to create a specific
 widget for every function.</p>
@@ -1305,7 +1338,7 @@ that takes parameters.</p>
 <p>To tell <code>himena</code> that the returned value should be converted into a GUI for user input
 of parameters, you need to <strong>annotate the returned value with the <code>Parametric</code> type</strong>.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">himena.plugins</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_function</span>
-<span class="hll"><span class="kn">from</span><span class="w"> </span><span class="nn">himena.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parametric</span>
+<span class="hll"><span class="kn">from</span><span class="w"> </span><span class="nn">himena</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parametric</span><span class="p">,</span> <span class="n">StandardType</span><span class="p">,</span> <span class="n">WidgetDataModel</span>
 </span>
 <span class="nd">@register_function</span><span class="p">(</span>
     <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Format JSON Text&quot;</span><span class="p">,</span>
@@ -1328,22 +1361,28 @@ of parameters, you need to <strong>annotate the returned value with the <code>Pa
 <li><code>WidgetDataModel</code>, <code>list[WidgetDataModel]</code>, <code>SubWindow</code>, <code>list[SubWindow]</code>
   &rarr; Drop area that can drop other sub-windows to provide the corresponding data.</li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">Serialization</p>
+<p>The input parameters should be serializable for <a href="../../usage/workflows/">workflow</a>
+recording. Although <code>magicgui</code> can support various type-to-widget mapping, the input
+values are restricted to those that can be serialized by <code>himena</code>. For example,
+<code>slice</code> and <code>range</code> objects are not supported as input types in <code>himena</code>.</p>
+</div>
 <hr />
 <h2 id="configure-parameter-input-window">Configure Parameter Input Window</h2>
 <p>The parameter input window is automatically generated by <code>magicgui</code>. You can further
-customize its appearance by <a class="autorefs autorefs-internal" title="configure_gui(f=None, *, title=None, preview=False, auto_close=True, show_parameter_labels=True, gui_options=None, result_as='window', **kwargs)" href="../../api/plugins/#himena.plugins.configure_gui"><code>configure_gui()</code></a> decorator.</p>
+customize its appearance and GUI properties by <a class="autorefs autorefs-internal" title="configure_gui(f=None, *, title=None, preview=False, auto_close=True, show_parameter_labels=True, gui_options=None, result_as='window', **kwargs)" href="../../api/plugins/#himena.plugins.configure_gui"><code>configure_gui()</code></a>
+decorator.</p>
 <div class="highlight"><pre><span></span><code><span class="hll"><span class="kn">from</span><span class="w"> </span><span class="nn">himena.plugins</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_function</span><span class="p">,</span> <span class="n">configure_gui</span>
-</span><span class="kn">from</span><span class="w"> </span><span class="nn">himena.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parametric</span>
+</span><span class="kn">from</span><span class="w"> </span><span class="nn">himena</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parametric</span><span class="p">,</span> <span class="n">StandardType</span><span class="p">,</span> <span class="n">WidgetDataModel</span>
 
 <span class="nd">@register_function</span><span class="p">(</span>
     <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Format JSON Text&quot;</span><span class="p">,</span>
     <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="n">StandardType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">],</span>
 <span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">format_json</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">WidgetDataModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Parametric</span><span class="p">:</span>
-<span class="hll">    <span class="nd">@configure_gui</span><span class="p">(</span>
-</span>        <span class="n">indent</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Indent in Spaces&quot;</span><span class="p">,</span> <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mi">8</span><span class="p">},</span>
-    <span class="p">)</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">run_format_json</span><span class="p">(</span><span class="n">indent</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">):</span>
+<span class="hll">    <span class="nd">@configure_gui</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Indent in Spaces&quot;</span><span class="p">,</span> <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mi">8</span><span class="p">})</span>
+</span>    <span class="k">def</span><span class="w"> </span><span class="nf">run_format_json</span><span class="p">(</span><span class="n">indent</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">):</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">value</span><span class="p">),</span> <span class="n">indent</span><span class="o">=</span><span class="n">indent</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">WidgetDataModel</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">run_format_json</span>
@@ -1367,10 +1406,77 @@ and use <code>dict</code> to configure the widget used for the parameter input.<
     <span class="n">gui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;indent&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Indent in Spaces&quot;</span><span class="p">,</span> <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mi">8</span><span class="p">}},</span>
 <span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">run_format_json</span><span class="p">(</span><span class="n">indent</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">):</span>
-    <span class="n">value</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">value</span><span class="p">),</span> <span class="n">indent</span><span class="o">=</span><span class="n">indent</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">WidgetDataModel</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">)</span>
+    <span class="o">...</span>
 </code></pre></div>
 </div>
+<hr />
+<h2 id="bind-values-to-parameter-input">Bind Values to Parameter Input</h2>
+<p>Some parameters are better to be retrieved from the input sub-window. For example, if
+a function counts the number of "a"s in a subset of a text, the user may want to
+select the text in the sub-window and pass the selected range to the function instead of
+requesting a range (int, int) using a parameter input.</p>
+<p>The "bind" option of <code>magicgui</code> is very useful for this purpose. The value passed to the
+"bind" option will be directly used as the value for the parameter. Because the selected
+range is available in the <a class="autorefs autorefs-internal" href="../../api/standards/model_meta/#himena.standards.model_meta.TextMeta"><code>TextMeta</code></a> metadata
+as the <code>selection</code> property, you can define a function as follows.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">himena.plugins</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_function</span><span class="p">,</span> <span class="n">configure_gui</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">himena</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parametric</span><span class="p">,</span> <span class="n">StandardType</span><span class="p">,</span> <span class="n">WidgetDataModel</span>
+
+<span class="nd">@register_function</span><span class="p">(</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Count &#39;a&#39;&quot;</span><span class="p">,</span>
+    <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="n">StandardType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">count_a</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">WidgetDataModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Parametric</span><span class="p">:</span>
+<span class="hll">    <span class="nd">@configure_gui</span><span class="p">(</span><span class="n">text_range</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;bind&quot;</span><span class="p">:</span> <span class="n">model</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">selection</span><span class="p">})</span>
+</span>    <span class="k">def</span><span class="w"> </span><span class="nf">run_count_a</span><span class="p">(</span><span class="n">text_range</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]):</span>
+        <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">text_range</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">run_count_a</span>
+</code></pre></div>
+<p>This function does not have any parameter that can be specified by the user, thus no
+parameter input widget will be shown. The function will be immediately called when the
+command menu is clicked.</p>
+<p>If the function has other parameters that do not have bound values, the parameter input
+widget will be shown as usual.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">himena.plugins</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_function</span><span class="p">,</span> <span class="n">configure_gui</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">himena</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parametric</span><span class="p">,</span> <span class="n">StandardType</span><span class="p">,</span> <span class="n">WidgetDataModel</span>
+
+<span class="nd">@register_function</span><span class="p">(</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Count &#39;a&#39;&quot;</span><span class="p">,</span>
+    <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="n">StandardType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">count_a_2</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">WidgetDataModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Parametric</span><span class="p">:</span>
+    <span class="nd">@configure_gui</span><span class="p">(</span><span class="n">text_range</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;bind&quot;</span><span class="p">:</span> <span class="n">model</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">selection</span><span class="p">})</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run_count_a</span><span class="p">(</span><span class="n">text_range</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">case_sensitive</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">text_range</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">case_sensitive</span><span class="p">:</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">run_count_a</span>
+</code></pre></div>
+<details class="note">
+<summary>Why do we ever need to bind values?</summary>
+<p>You may ask why don't we just directly use <code>model.metadata.selection</code> inside
+the registered function, instead of returning a function to make the command
+parametric.</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@register_function</span><span class="p">(</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Count &#39;a&#39;&quot;</span><span class="p">,</span>
+    <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="n">StandardType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">count_a</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">WidgetDataModel</span><span class="p">):</span>
+    <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">selection</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">))</span>
+</code></pre></div>
+<p>A benefit of using a parametric function is that the function becomes reproducible.
+When the function is re-executed from a workflow, the input text edit does not
+necessarily in the same state as when the function was executed. In the example
+above, the text selection range is not likely to be the same, so that you will get a
+different result.</p>
+<p>In general, all the information in the <code>metadata</code> property should not be directly
+used in commands; they should always be passed as "bind" options.</p>
+</details>
 <hr />
 <h2 id="preview-function-outputs">Preview Function Outputs</h2>
 <p>In some cases, parameters should be tuned based on the output of the function. For

@@ -1115,11 +1115,15 @@ the state of the widget to a <code>WidgetDataModel</code> object.</p>
         <span class="c1"># some GUI-specific initialization ...</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">update_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">WidgetDataModel</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>  <span class="c1"># (1)!</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">to_model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WidgetDataModel</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">WidgetDataModel</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_text</span><span class="p">(),</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">WidgetDataModel</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_text</span><span class="p">(),</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">)</span>  <span class="c1"># (2)!</span>
 </code></pre></div>
+<p>(1) The incoming text data is stored in <code>model.value</code>. The <code>set_text()</code> method is just
+    an example.
+(2) A <code>WidgetDataModel</code> must be returned here. The "text" type is the standard type
+    string for the string-type text data.</p>
 <p>This widget can be registered as a widget that represents a <code>"text"</code>-type data using
 <code>register_widget_class()</code> function.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">himena.plugins</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_widget_class</span>
@@ -1135,22 +1139,18 @@ the state of the widget to a <code>WidgetDataModel</code> object.</p>
     <span class="n">text_value</span> <span class="o">=</span> <span class="n">file_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">WidgetDataModel</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">text_value</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">)</span>
 </code></pre></div>
-</li>
-</ul>
 <p>A proper widget class will be automatically selected based on the <code>type</code> field, and
-  updated based on the returned model using <code>update_model()</code> method.</p>
-<ul>
+updated based on the returned model using <code>update_model()</code> method.</p>
+</li>
 <li>
 <p>Writer function is a <strong>GUI-independent</strong> function that writes a <code>WidgetDataModel</code>
   to a file.</p>
 <div class="highlight"><span class="filename">Example writer function</span><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">write_text</span><span class="p">(</span><span class="n">file_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">WidgetDataModel</span><span class="p">):</span>
     <span class="n">file_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
 </code></pre></div>
-</li>
-</ul>
 <p>A widget will be automatically converted to a model using <code>to_model()</code> method before
-  calling this writer function.</p>
-<ul>
+calling this writer function.</p>
+</li>
 <li>
 <p>Any function for data processing or analysis is also <strong>GUI-independent</strong> functions
   that just convert a <code>WidgetDataModel</code> into another.</p>

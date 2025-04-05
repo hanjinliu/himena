@@ -29,6 +29,8 @@ def main() -> None:
             except Exception as e:
                 print(f"Error in\n\n{code}\n\n")
                 raise e
+            QApplication.processEvents()
+            QApplication.processEvents()
             subwin = get_subwindow(ui.current_window.widget)
             arr = ArrayQImage.from_qwidget(subwin).to_numpy()
             dest = f"_images/screenshot-{file_name}.png"

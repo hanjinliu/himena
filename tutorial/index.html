@@ -1249,7 +1249,7 @@
 <div class="highlight"><pre><span></span><code>himena
 </code></pre></div>
 <p><code>himena</code> can manage multiple profiles. A profile is a set of configurations, color theme
-and plugins. You can create a new profile with:</p>
+and plugins. You can create a new profile of name "test" with:</p>
 <div class="highlight"><pre><span></span><code>himena<span class="w"> </span>--new<span class="w"> </span><span class="nb">test</span>
 </code></pre></div>
 <p>and start the application with the profile:</p>
@@ -1263,7 +1263,7 @@ in which <code>himena img</code> is just like a sub-command of <code>himena</cod
 </div>
 <h2 id="open-a-data">Open a Data</h2>
 <p>Let's start with a simple example. From the menubar, select <code>File &gt; New &gt; Seaborn &gt; iris</code>.
-This command will fetch the iris dataset online open it as a subwindow.</p>
+This command will fetch the iris dataset online and open it as a subwindow.</p>
 <p><img alt="" loading="lazy," src="../images/00_iris_window.png" width="400px" /></p>
 <p>In <code>himena</code>, a subwindow represents a single data model. For example, this iris dataset
 is opened as a "table" data model. <code>himena</code> automatically picked the table viewer widget
@@ -1277,30 +1277,30 @@ menu, or you can use <span class="keys"><kbd class="key-control">Ctrl</kbd><span
 to run a command.</p>
 <h3 id="window-menu-button">Window Menu Button</h3>
 <p><img alt="" loading="lazy," src="../images/00_window_menu.png" width="300px" /></p>
-<p>The "window menu button" will show a menu that contains the commands relevant to the
+<p>The "window menu button" pops up a menu that contains the commands relevant to the
 operation on the current window. These commands are always available regardless of the
 data model the window represents. For example, "Duplicate window" and "Copy path to
 cliboard" are in the window menu.</p>
 <h3 id="model-menu-button">Model Menu Button</h3>
 <p><img alt="" loading="lazy," src="../images/00_model_menu.png" width="300px" /></p>
-<p>The "model menu button" will show a menu that contains the commands relevant to the type
+<p>The "model menu button" pops up a menu that contains the commands relevant to the type
 of the underlying data model. For example, the "Convert table to text" is available in
 the window "iris" just opened above.</p>
 <h3 id="command-palette">Command Palette</h3>
 <p><img alt="" loading="lazy," src="../images/00_command_palette.png" width="420px" /></p>
 <p>All the commands are accessible from the command palette. Press <span class="keys"><kbd class="key-control">Ctrl</kbd><span>+</span><kbd class="key-shift">Shift</kbd><span>+</span><kbd class="key-p">P</kbd></span> to open
-the command palette.</p>
+the command palette and you can search for any commands by the name.</p>
 <h2 id="manage-plugins">Manage Plugins</h2>
 <p><code>himena</code> is designed to be highly extensible. You can install plugins to add new IO
 supports, new widgets, and commands. For example, <a href="https://github.com/hanjinliu/himena-stats"><code>himena-stats</code></a>,
 a himena plugin for statistical analysis, can be installed with the following lines.</p>
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>himena-stats<span class="w"> </span>-U
-himena<span class="w"> </span>--install<span class="w"> </span>himena-stats
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>himena-stats<span class="w"> </span>-U<span class="w">  </span><span class="c1"># install to the python virtual environment</span>
+himena<span class="w"> </span>--install<span class="w"> </span>himena-stats<span class="w">  </span><span class="c1"># install the module to the default profile</span>
 himena<span class="w"> </span>your-profile-name<span class="w"> </span>--install<span class="w"> </span>himena-stats<span class="w">  </span><span class="c1"># install to a specific profile</span>
 </code></pre></div>
-<p>You can also select which plugins installed to the Python virtual environment to be
-included in the <code>himena</code> profile from the setting. A setting dialog can be opened from
-<code>File &gt; Settings ...</code> or shortcut <span class="keys"><kbd class="key-control">Ctrl</kbd><span>+</span><kbd class="key-comma">,</kbd></span></p>
+<p>You can also select which plugins to be included in the <code>himena</code> profile from the
+setting dialog. A setting dialog can be opened from <code>File &gt; Settings ...</code> or shortcut
+<span class="keys"><kbd class="key-control">Ctrl</kbd><span>+</span><kbd class="key-comma">,</kbd></span></p>
 <p><img alt="" loading="lazy," src="../images/00_setting_plugins.png" width="500px" /></p>
 <h2 id="the-python-interpreter-console">The Python Interpreter Console</h2>
 <p>A built-in Qt console dock widget plugin is registered by default. You can oepn it by
