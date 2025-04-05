@@ -459,16 +459,15 @@ def line_plot_3d(win: SubWindow) -> Parametric:
     title="Plot to DataFrame ...",
     types=StandardType.PLOT,
     menus=[MenuId.TOOLS_PLOT],
-    command_id="builtins:plot-to-dataframe",
+    command_id="builtins:plot:plot-to-dataframe",
 )
 def plot_to_dataframe(model: WidgetDataModel) -> Parametric:
     """Convert a plot component to a DataFrame."""
 
     lo = _get_single_axes(model)
     plot_models = lo.axes.models
-    choices = [(f"({i}) {m.name}", i) for i, m in enumerate(plot_models)]
 
-    @configure_gui(component={"choices": choices})
+    @configure_gui(component={"choices": _make_choices(plot_models)})
     def run(component: int) -> WidgetDataModel:
         """Convert the selected plot component to a DataFrame."""
         plot_model = plot_models[component]
@@ -498,6 +497,51 @@ def plot_to_dataframe(model: WidgetDataModel) -> Parametric:
             type=StandardType.DATAFRAME,
             title=f"Data of {model.title}",
         )
+
+    return run
+
+
+@register_function(
+    title="Select Plot Components ...",
+    types=StandardType.PLOT,
+    menus=[MenuId.TOOLS_PLOT],
+    command_id="builtins:plot:select-plot-components",
+)
+def select_plot_components(model: WidgetDataModel) -> Parametric:
+    """Select a subset of the plot component."""
+    lo = _get_single_axes(model)
+    plot_models = lo.axes.models
+
+    @configure_gui(
+        components={"choices": _make_choices(plot_models), "widget_type": "Select"}
+    )
+    def run(components: list[int]) -> WidgetDataModel:
+        models = [plot_models[i] for i in components]
+        axes = lo.axes.model_copy(update={"models": models})
+        out = lo.model_copy(update={"axes": axes})
+        return model.with_value(out).with_title_numbering()
+
+    return run
+
+
+@register_function(
+    title="Concatenate With ...",
+    types=StandardType.PLOT,
+    menus=[MenuId.TOOLS_PLOT],
+    command_id="builtins:plot:concatenate-with",
+)
+def concatenate_with(model: WidgetDataModel) -> Parametric:
+    """Concatenate the plot with another plot."""
+    lo = _get_single_axes(model)
+
+    @configure_gui(others={"types": StandardType.PLOT})
+    def run(others: list[WidgetDataModel]) -> WidgetDataModel:
+        """Concatenate the plot with another plot."""
+        out = lo
+        for other in others:
+            lo_other = _get_single_axes(other)
+            out = out.merge_with(lo_other)
+        return model.with_value(out).with_title_numbering()
 
     return run
 
@@ -557,3 +601,7 @@ def _get_single_axes(model: WidgetDataModel) -> hplt.SingleAxes | hplt.SingleAxe
     if not isinstance(lo, (hplt.SingleAxes, hplt.SingleAxes3D)):
         raise NotImplementedError("Only SingleAxes is supported for now.")
     return lo
+
+
+def _make_choices(models: list[hplt.BasePlotModel]) -> list[tuple[str, int]]:
+    return [(f"({i}) {m.name}", i) for i, m in enumerate(models)]

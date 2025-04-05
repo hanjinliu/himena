@@ -382,6 +382,7 @@ class QImageViewBase(QtW.QSplitter):
     @validate_protocol
     def dropped_callback(self, model: WidgetDataModel):
         if model.type == StandardType.ROIS:
+            # dropping ROIs to concatenate to the current ROI list
             if isinstance(roi_list := model.value, roi.RoiListModel):
                 self._roi_col.extend_from_standard_roi_list(roi_list)
                 self._update_rois()

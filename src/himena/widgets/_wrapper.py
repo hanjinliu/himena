@@ -251,29 +251,6 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         widget = self.widget
         return incoming.widget_accepts_me(widget)
 
-    def _process_drop_event(
-        self,
-        incoming: DragDataModel,
-        source: SubWindow[_W] | None = None,
-    ) -> bool:
-        if hasattr(self.widget, "dropped_callback"):
-            # to remember how the model was mapped to a widget class
-            model = incoming.data_model()
-            if source is not None:
-                model.force_open_with = get_widget_class_id(source.widget)
-            drop_result = self.widget.dropped_callback(model)
-            if drop_result is None:
-                drop_result = DropResult()
-            ui = self._main_window()._himena_main_window
-            if outputs := drop_result.outputs:
-                ui.model_app.injection_store.process(outputs)
-            if source is not None:
-                if drop_result.delete_input:
-                    source._close_me(ui)
-                ui._backend_main_window._move_focus_to(source._frontend_widget())
-            return True
-        return False
-
     def _split_interface_and_frontend(self) -> tuple[object, _W]:
         """Split the interface that defines methods and the frontend widget.
 
@@ -477,6 +454,39 @@ class SubWindow(WidgetWrapper[_W], Layout):
             self.rect = WindowRect(0, 0, *size)
         else:
             super()._reanchor(size)
+
+    def _process_drop_event(
+        self,
+        incoming: DragDataModel,
+        source: SubWindow[_W] | None = None,
+    ) -> bool:
+        if hasattr(self.widget, "dropped_callback"):
+            # to remember how the model was mapped to a widget class
+            model = incoming.data_model()
+            if source is not None:
+                model.force_open_with = get_widget_class_id(source.widget)
+            drop_result = self.widget.dropped_callback(model)
+            if drop_result is None:
+                drop_result = DropResult()
+            ui = self._main_window()._himena_main_window
+            if drop_result.command_id:
+                # record the command
+                out = ui.exec_action(
+                    drop_result.command_id,
+                    window_context=self,
+                    model_context=self.to_model(),
+                    with_params=drop_result.with_params,
+                    process_model_output=False,
+                )
+                if isinstance(out, WidgetDataModel):
+                    self.update_model(out)
+                    self._update_model_workflow(out.workflow)
+            if source is not None:
+                if drop_result.delete_input:
+                    source._close_me(ui)
+                ui._backend_main_window._move_focus_to(source._frontend_widget())
+            return True
+        return False
 
     def update(
         self,

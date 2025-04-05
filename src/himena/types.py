@@ -736,16 +736,20 @@ def my_plugin_function() -> WidgetConstructor:
 """
 
 
-class DropResult(BaseModel):
+@dataclass(frozen=True)
+class DropResult:
     """Model that can be returned by `dropped_callback` protocol.
 
     Attributes
     ----------
     delete_input : bool
         Whether to delete the input data if drop succeeded.
-    outputs : WidgetDataModel | list[WidgetDataModel] | None
-        If given, the output data will be added to the GUI.
+    command_id : str | None
+        Command that will be executed when the drop succeeded.
+    with_params : dict[str, object] | None
+        Parameters that will be passed to the command.
     """
 
     delete_input: bool = False
-    outputs: WidgetDataModel | list[WidgetDataModel] | None = Field(None)
+    command_id: str | None = None
+    with_params: dict[str, object] | None = None

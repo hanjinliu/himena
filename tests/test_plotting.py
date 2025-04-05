@@ -97,8 +97,8 @@ def test_scatter_plot_via_command(make_himena_ui, tmpdir):
     path = Path(tmpdir) / "test.plot.json"
     himena_ui.current_window.write_model(path)
     himena_ui.read_file(path)
-    himena_ui.exec_action("builtins:plot-to-dataframe", with_params={"component": 0})
-    himena_ui.exec_action("builtins:plot-to-dataframe", with_params={"component": 0}, window_context=win_3d)
+    himena_ui.exec_action("builtins:plot:plot-to-dataframe", with_params={"component": 0})
+    himena_ui.exec_action("builtins:plot:plot-to-dataframe", with_params={"component": 0}, window_context=win_3d)
 
 def test_scatter_plot_many_data_types(make_himena_ui):
     himena_ui: MainWindow = make_himena_ui("mock")
@@ -173,8 +173,8 @@ def test_line_plot_via_command(make_himena_ui, tmpdir):
     path = Path(tmpdir) / "test.plot.json"
     himena_ui.current_window.write_model(path)
     himena_ui.read_file(path)
-    himena_ui.exec_action("builtins:plot-to-dataframe", with_params={"component": 0})
-    himena_ui.exec_action("builtins:plot-to-dataframe", with_params={"component": 0}, window_context=win_3d)
+    himena_ui.exec_action("builtins:plot:plot-to-dataframe", with_params={"component": 0})
+    himena_ui.exec_action("builtins:plot:plot-to-dataframe", with_params={"component": 0}, window_context=win_3d)
 
 def test_bar_plot_via_command(make_himena_ui, tmpdir):
     himena_ui: MainWindow = make_himena_ui()
@@ -223,7 +223,7 @@ def test_bar_plot_via_command(make_himena_ui, tmpdir):
     path = Path(tmpdir) / "test.plot.json"
     himena_ui.current_window.write_model(path)
     himena_ui.read_file(path)
-    himena_ui.exec_action("builtins:plot-to-dataframe", with_params={"component": 0})
+    himena_ui.exec_action("builtins:plot:plot-to-dataframe", with_params={"component": 0})
 
 def test_errorbar_plot_via_command(make_himena_ui, tmpdir):
     himena_ui: MainWindow = make_himena_ui("mock")
@@ -275,7 +275,7 @@ def test_errorbar_plot_via_command(make_himena_ui, tmpdir):
     path = Path(tmpdir) / "test.plot.json"
     himena_ui.current_window.write_model(path)
     himena_ui.read_file(path)
-    himena_ui.exec_action("builtins:plot-to-dataframe", with_params={"component": 0})
+    himena_ui.exec_action("builtins:plot:plot-to-dataframe", with_params={"component": 0})
 
 def test_band_plot_via_command(make_himena_ui, tmpdir):
     himena_ui: MainWindow = make_himena_ui("mock")
@@ -302,7 +302,7 @@ def test_band_plot_via_command(make_himena_ui, tmpdir):
     path = Path(tmpdir) / "test.plot.json"
     himena_ui.current_window.write_model(path)
     himena_ui.read_file(path)
-    himena_ui.exec_action("builtins:plot-to-dataframe", with_params={"component": 0})
+    himena_ui.exec_action("builtins:plot:plot-to-dataframe", with_params={"component": 0})
 
 def test_histogram(make_himena_ui):
     himena_ui: MainWindow = make_himena_ui("mock")
@@ -315,7 +315,7 @@ def test_histogram(make_himena_ui):
         with_params={"x": ((0, 99), (0, 1)), "bins": 2}
     )
     win_hist = himena_ui.current_window
-    himena_ui.exec_action("builtins:plot-to-dataframe", with_params={"component": 0}, window_context=win_hist)
+    himena_ui.exec_action("builtins:plot:plot-to-dataframe", with_params={"component": 0}, window_context=win_hist)
     himena_ui.exec_action(
         "builtins:edit-plot",
         with_params={
@@ -345,3 +345,27 @@ def test_plot_from_function(himena_ui: MainWindow):
         "builtins:plot-function-2d",
         with_params={"xmin": -2, "xmax": 2, "ymin": -1, "ymax": 1},
     )
+
+def test_plot_model_processing(make_himena_ui):
+    himena_ui: MainWindow = make_himena_ui("mock")
+    win = himena_ui.add_object(
+        _str_array(
+            [["x", "y", "z"],
+             [0, 4, 6],
+             [1, 6, 10],
+             [2, 5, 12]],
+        ),
+        type="table",
+    )
+    himena_ui.exec_action(
+        "builtins:scatter-plot",
+        with_params={
+            "x": ((0, 3), (0, 1)),
+            "y": ((0, 3), (1, 3)),
+        }
+    )
+    himena_ui.exec_action(
+        "builtins:plot:select-plot-components",
+        with_params={"components": [1]},
+    )
+    assert len(himena_ui.current_model.value.axes.models) == 1

@@ -5,7 +5,7 @@ from matplotlib.backends import backend_qtagg
 from qtpy import QtWidgets as QtW, QtGui
 
 from himena.plugins import validate_protocol
-from himena.types import Size, WidgetDataModel
+from himena.types import DropResult, Size, WidgetDataModel
 from himena.consts import StandardType
 from himena.style import Theme
 from himena.standards import plotting as hplt
@@ -182,10 +182,9 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
                 f"Both models must be BaseLayoutModel, got {model.value!r} and "
                 f"{self._plot_models!r}"
             )
-        self._plot_models = model.value.merge_with(self._plot_models)
-        convert_plot_layout(self._plot_models, self.figure)
-        self._canvas.draw()
-        self._modified = True
+        return DropResult(
+            command_id="builtins:plot:concatenate-with", with_params={"others": [model]}
+        )
 
     @validate_protocol
     def allowed_drop_types(self) -> list[str]:
@@ -222,8 +221,7 @@ class QNavigationToolBar(backend_qtagg.NavigationToolbar2QT):
         (None, None, None, None),
         (
             "Pan",
-            "Left button pans, Right button zooms\n"
-            "x/y fixes axis, CTRL fixes aspect",
+            "Left button pans, Right button zooms\nx/y fixes axis, CTRL fixes aspect",
             "move",
             "pan",
         ),

@@ -2,16 +2,18 @@ from __future__ import annotations
 
 from pathlib import Path
 import logging
-from typing import TYPE_CHECKING, Any, Mapping, Sequence
+from typing import TYPE_CHECKING, Any, Callable, Mapping, Sequence
 import weakref
 from magicgui import widgets as mgw
 from qtpy import QtWidgets as QtW, QtCore
-from himena.plugins import validate_protocol, _checker
-from himena.types import DragDataModel, DropResult, Size, WidgetDataModel
+from himena.plugins import validate_protocol, _checker, register_hidden_function
+from himena.qt._utils import get_main_window
+from himena.types import DropResult, Parametric, Size, WidgetDataModel
 from himena.consts import StandardType
 from himena._utils import unwrap_lazy_model
+from himena.workflow import ProgrammaticMethod
 from himena_builtins.qt.widgets._splitter import QSplitterHandle
-from himena.qt import drag_model
+from himena.qt import drag_command
 from himena import _drag
 from himena_builtins.qt.widgets._dragarea import QDraggableArea
 
@@ -343,15 +345,17 @@ class QModelListWidget(QtW.QListWidget):
         )
         self._hover_drag_indicator.setFixedSize(14, 14)
         self._hover_drag_indicator.hide()
-        self._hover_drag_indicator.dragged.connect(self._on_drag)
+        self._hover_drag_indicator.dragged.connect(self._exec_drag)
         self._indicator_index: int = -1
         self.setMouseTracking(True)
         self.setAcceptDrops(True)
 
-    def getter_for_item(self, item: QtW.QListWidgetItem):
+    def getter_for_item(
+        self, item: QtW.QListWidgetItem
+    ) -> Callable[[], WidgetDataModel]:
         return lambda: self.model_for_item(item)
 
-    def model_for_item(self, item: QtW.QListWidgetItem):
+    def model_for_item(self, item: QtW.QListWidgetItem) -> WidgetDataModel:
         model = item.data(_MODEL_ROLE)
         if model is None:  # not a lazy item
             model = item.data(_WIDGET_ROLE).to_model()
@@ -408,34 +412,40 @@ class QModelListWidget(QtW.QListWidget):
                 item = stack._make_eager_item(model.title, model)
             stack._model_list.addItem(item)
 
-    def _on_drag(self) -> list[int]:
+    def _on_drag(self):
         items = self.selectedItems()
         if item_under_cursor := self.item(self._indicator_index):
             item_under_cursor.setSelected(True)
+        _s = "s" if len(items) > 1 else ""
+        desc = f"{len(items)} item{_s}"
         if len(items) == 0:
             return None
         if len(items) == 1:
-
-            def _getter():
-                return self.model_for_item(items[0])
-
             if item_model := items[0].data(_MODEL_ROLE):
                 model_type = item_model.type
             else:
                 model_type = None
+            return drag_command(
+                source=self,
+                command_id="builtins:QModelStack:choose-one",
+                type=model_type,
+                with_params={"index": self.row(items[0])},
+                desc=desc,
+                exec=False,
+            )
         else:
+            return drag_command(
+                source=self,
+                command_id="builtins:QModelStack:select-models",
+                type=self._model_stack_ref().model_type(),
+                with_params={"index": [self.row(item) for item in items]},
+                desc=desc,
+                exec=False,
+            )
 
-            def _getter():
-                return WidgetDataModel(
-                    value=[self.model_for_item(item) for item in items],
-                    type=StandardType.MODELS,
-                    title="Models",
-                )
-
-            model_type = StandardType.MODELS
-        model = DragDataModel(getter=_getter, type=model_type)
-        _s = "s" if len(items) > 1 else ""
-        drag_model(model, desc=f"{len(items)} item{_s}", source=self._model_stack_ref())
+    def _exec_drag(self):
+        if drag := self._on_drag():
+            drag.exec()
 
 
 class QStackedModelWidget(QtW.QStackedWidget):
@@ -479,11 +489,41 @@ class QStackedModelWidget(QtW.QStackedWidget):
             drop_result = widget.dropped_callback(model)
             if drop_result is None:
                 drop_result = DropResult()
-            if outputs := drop_result.outputs:
-                from himena.widgets import current_instance
+            if command_id := drop_result.command_id:
+                ui = get_main_window(self)
+                model: WidgetDataModel = widget.to_model()
+                model.workflow = ProgrammaticMethod().construct_workflow()
+                out = ui.exec_action(
+                    command_id,
+                    with_params=drop_result.with_params,
+                    model_context=model,
+                    process_model_output=False,
+                )
+                widget.update_model(out)
 
-                ui = current_instance()
-                ui.model_app.injection_store.process(outputs)
+
+@register_hidden_function(command_id="builtins:QModelStack:choose-one")
+def _choose_one(model: WidgetDataModel) -> Parametric:
+    """Choose one model from the list."""
+
+    def run(index: int) -> WidgetDataModel:
+        return model.value[index]
+
+    return run
+
+
+@register_hidden_function(command_id="builtins:QModelStack:select-models")
+def _select_models(model: WidgetDataModel) -> Parametric:
+    """Select models from the list."""
+
+    def run(index: Sequence[int]) -> WidgetDataModel:
+        return WidgetDataModel(
+            value=[model.value[i] for i in index],
+            type=StandardType.MODELS,
+            title=model.title,
+        )
+
+    return run
 
 
 def _exec_lazy_loading(model: WidgetDataModel) -> WidgetDataModel:
