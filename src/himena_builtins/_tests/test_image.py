@@ -180,6 +180,37 @@ def test_image_view_copy_roi(himena_ui: MainWindow, qtbot: QtBot):
         image_view._img_view.standard_ctrl_key_press(Qt.Key.Key_V)
         assert len(image_view._img_view._roi_items) == 3
 
+def test_image_view_copy_roi_from_window_to_window(himena_ui: MainWindow, qtbot: QtBot):
+    image_view_0 = QImageView()
+    image_view_1 = QImageView()
+    himena_ui.add_widget(image_view_0)
+    himena_ui.add_widget(image_view_1)
+    himena_ui.show()
+    with (
+        WidgetTester(image_view_0) as tester_0,
+        WidgetTester(image_view_1) as tester_1
+    ):
+        tester_0.update_model(
+            value=np.zeros((100, 100), dtype=np.uint8),
+            metadata=ImageMeta(
+                rois=RoiListModel(
+                    items=[LineRoi(name="ROI-0", x1=1, y1=1, x2=4, y2=5)],
+                )
+            )
+        )
+        tester_1.update_model(value=np.zeros((100, 100), dtype=np.uint8))
+        qtbot.addWidget(image_view_0)
+        qtbot.addWidget(image_view_1)
+        image_view_0._roi_col._list_view.set_selection([0])
+        qtbot.keyClick(image_view_0, Qt.Key.Key_C, modifier=_Ctrl)
+        image_view_1._img_view.standard_ctrl_key_press(Qt.Key.Key_V)
+        assert len(image_view_0._img_view._roi_items) == 1
+        assert len(image_view_1._img_view._roi_items) == 1
+        qtbot.keyClick(image_view_1._roi_col._list_view, Qt.Key.Key_V, modifier=_Ctrl)
+        assert len(image_view_0._img_view._roi_items) == 1
+        assert len(image_view_1._img_view._roi_items) == 2
+
+
 def test_image_view_select_roi(qtbot: QtBot):
     image_view = QImageView()
     image_view.resize(150, 150)

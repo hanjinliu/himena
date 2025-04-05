@@ -387,6 +387,17 @@ class QRoiListView(QtW.QListView):
         self._hover_drag_indicator.dragged.connect(self._on_drag)
         self._indicator_index: int = -1
 
+    def set_selection(self, indices: list[int]):
+        """Set the selection of the list view."""
+        self.clearSelection()
+        for i in indices:
+            index = self.model().index(i, 0)
+            self.selectionModel().select(
+                index, QtCore.QItemSelectionModel.SelectionFlag.Select
+            )
+        if len(indices) > 0:
+            self.parent()._on_item_clicked(self.model().index(indices[0], 0))
+
     def _show_context_menu(self, point):
         index_under_cursor = self.indexAt(point)
         if not index_under_cursor.isValid():
@@ -491,7 +502,6 @@ class QRoiListView(QtW.QListView):
         elif a0.key() in (QtCore.Qt.Key.Key_Up, QtCore.Qt.Key.Key_Down):
             return super().keyPressEvent(a0)
         self.key_pressed.emit(a0)
-        return super().keyPressEvent(a0)
 
     def keyReleaseEvent(self, a0):
         self.key_released.emit(a0)

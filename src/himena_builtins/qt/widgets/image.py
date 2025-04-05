@@ -398,6 +398,7 @@ class QImageViewBase(QtW.QSplitter):
     @validate_protocol
     def widget_added_callback(self):
         self._img_view.auto_range()
+        self._img_view.update_handle_sizes()
 
     def setFocus(self):
         return self._img_view.setFocus()
