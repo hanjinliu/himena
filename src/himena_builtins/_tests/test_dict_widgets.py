@@ -4,7 +4,7 @@ from himena import MainWindow, StandardType
 from himena.testing import WidgetTester
 from himena_builtins.qt.widgets import QExcelEdit, QDataFrameStack, QArrayStack
 
-def test_excel_widget(qtbot: QtBot):
+def test_excel_widget(qtbot: QtBot, himena_ui: MainWindow):
     excel_edit = QExcelEdit()
     with WidgetTester(excel_edit) as tester:
         qtbot.addWidget(excel_edit)
@@ -29,9 +29,7 @@ def test_excel_widget(qtbot: QtBot):
         )
         assert excel_edit.count() == 5
         tester.drop_model(
-            value={
-                "sheet-0": {"a": [1, 2]},
-            },
+            value={"a": [1, 2]},
             type=StandardType.TABLE,
         )
         assert excel_edit.count() == 6

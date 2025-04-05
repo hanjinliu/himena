@@ -454,6 +454,8 @@ def plot_function_2d(model: WidgetDataModel) -> Parametric:
 
 
 def _statistics_table(value) -> str:
+    if value is None:
+        value = np.array([[""]], dtype=np.dtypes.StringDType())
     if not isinstance(value, np.ndarray):
         raise ValueError(
             f"Expected a numpy array for the table data but got {type(value)}"

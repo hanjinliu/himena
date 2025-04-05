@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, Mapping
 import weakref
 
@@ -7,16 +5,16 @@ from qtpy import QtWidgets as QtW, QtCore, QtGui
 
 from himena.standards.model_meta import DictMeta
 from himena.qt._qrename import QTabRenameLineEdit
-from himena.qt import drag_model
-from himena.types import DragDataModel, DropResult, WidgetDataModel
+from himena.qt import drag_command
+from himena.types import DropResult, Parametric, WidgetDataModel
 from himena.consts import StandardType
-from himena.plugins import validate_protocol
+from himena.plugins import validate_protocol, register_hidden_function
 
 
 class QRightClickableTabBar(QtW.QTabBar):
     right_clicked = QtCore.Signal(int)
 
-    def __init__(self, parent: QDictOfWidgetEdit) -> None:
+    def __init__(self, parent: "QDictOfWidgetEdit") -> None:
         super().__init__(parent)
         self._last_right_clicked: int | None = None
         self._is_dragging = False
@@ -30,25 +28,14 @@ class QRightClickableTabBar(QtW.QTabBar):
     def mouseMoveEvent(self, a0):
         if self._is_dragging:
             return super().mouseMoveEvent(a0)
-        self._is_dragging = True
         if (
             a0.modifiers() & QtCore.Qt.KeyboardModifier.ControlModifier
             and a0.buttons() & QtCore.Qt.MouseButton.LeftButton
-        ) or QtCore.Qt.MouseButton.MiddleButton:
-            if (qexcel := self._parent_ref()) and (widget := qexcel.currentWidget()):
-                tab_text = qexcel.tabText(qexcel.currentIndex())
-
-                def _getter():
-                    model: WidgetDataModel = widget.to_model()
-                    model.title = tab_text
-                    return model
-
-                drag_model(
-                    DragDataModel(getter=_getter, type=self._parent_ref().model_type()),
-                    desc=tab_text,
-                    source=qexcel,
-                )
-
+        ) or (a0.buttons() & QtCore.Qt.MouseButton.MiddleButton):
+            self._is_dragging = True
+            if drag := self._make_drag():
+                drag.exec()
+                return
         return super().mouseMoveEvent(a0)
 
     def mouseReleaseEvent(self, a0: QtGui.QMouseEvent | None) -> None:
@@ -58,6 +45,21 @@ class QRightClickableTabBar(QtW.QTabBar):
         self._last_right_clicked = None
         self._is_dragging = False
         return super().mouseReleaseEvent(a0)
+
+    def _make_drag(self) -> QtGui.QDrag | None:
+        if (qexcel := self._parent_ref()) and (index := qexcel.currentIndex()) >= 0:
+            return drag_command(
+                source=qexcel,
+                type=qexcel._model_type_component,
+                command_id="builtins:QDictOfWidgetEdit:select-tab",
+                with_params={
+                    "index": qexcel.currentIndex(),
+                    "model_type": qexcel._model_type_component,
+                },
+                exec=False,
+                desc=qexcel.tabText(index),
+            )
+        return None
 
 
 class QDictOfWidgetEdit(QtW.QTabWidget):
@@ -144,7 +146,7 @@ class QDictOfWidgetEdit(QtW.QTabWidget):
         )
 
     @validate_protocol
-    def control_widget(self) -> QTabControl:
+    def control_widget(self) -> "QTabControl":
         raise NotImplementedError
 
     @validate_protocol
@@ -180,21 +182,11 @@ class QDictOfWidgetEdit(QtW.QTabWidget):
 
     @validate_protocol
     def dropped_callback(self, model: WidgetDataModel) -> DropResult:
-        if model.type == self._model_type:  # merge all the sheets
-            assert isinstance(model.value, dict)
-            for key, value in model.value.items():
-                table = self._default_widget()
-                table.update_model(
-                    WidgetDataModel(value=value, type=self._model_type_component)
-                )
-                self.addTab(table, key)
-        elif model.type == self._model_type_component:  # merge as a new sheet
-            table = self._default_widget()
-            table.update_model(model)
-            self.addTab(table, model.title)
-        else:
-            raise ValueError(f"Cannot merge {model.type} with {self._model_type}")
-        return DropResult(delete_input=True)
+        return DropResult(
+            delete_input=True,
+            command_id="builtins:QDictOfWidgetEdit:merge-tab",
+            with_params={"incoming": model},
+        )
 
     if TYPE_CHECKING:
 
@@ -204,3 +196,49 @@ class QDictOfWidgetEdit(QtW.QTabWidget):
 class QTabControl(QtW.QWidget):
     def update_for_component(self, widget: QtW.QWidget | None):
         raise NotImplementedError
+
+
+@register_hidden_function(command_id="builtins:QDictOfWidgetEdit:select-tab")
+def select_tab(model: WidgetDataModel) -> Parametric:
+    def run(index: int, model_type: str) -> WidgetDataModel:
+        d = dict(model.value)
+        key = list(d.keys())[index]
+        value = d[key]
+        return WidgetDataModel(
+            value=value,
+            type=model_type,
+            title=key,
+        )
+
+    return run
+
+
+@register_hidden_function(command_id="builtins:QDictOfWidgetEdit:merge-tab")
+def merge_tab(model: WidgetDataModel) -> Parametric:
+    def run(incoming: WidgetDataModel) -> WidgetDataModel:
+        out = dict(model.value)
+        if incoming.is_subtype_of(StandardType.DICT):
+            for key, value in dict(incoming.value).items():
+                _update_dict_no_duplicate(out, key, value)
+        else:
+            _update_dict_no_duplicate(out, incoming.title, incoming.value)
+        return model.with_value(out)
+
+    return run
+
+
+def _update_dict_no_duplicate(dict_: dict, key: str, value):
+    if key not in dict_:
+        dict_[key] = value
+        return dict_
+
+    if "-" in key and key.rsplit("-")[-1].isdigit():
+        prefix, num_str = key.rsplit("-", 1)
+        num = int(num_str) + 1
+    else:
+        prefix = key
+        num = 0
+    while f"{prefix}-{num}" in dict_:
+        num += 1
+    dict_[f"{prefix}-{num}"] = value
+    return dict_
