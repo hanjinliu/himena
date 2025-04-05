@@ -17,7 +17,7 @@
 6. **Python interpreter console**. A console widget that can execute Python codes.
 7. **Dock widget**. Widgets docked to the main window. These widgets are usually added
    by plugins. The Python interpreter console is also a dock widget.
-8. **Status bar**. It shows a simple one-line message.
+8. **Status bar**. It shows simple one-line messages.
 
 ### Sub-window
 
@@ -29,6 +29,9 @@ Therefore, data processing is usually done by taking sub-windows as input and ou
 Each data is wrapped by a [`WidgetDataModel`][himena.types.WidgetDataModel] object,
 which is tagged with some GUI-related information, so that the application understands
 how to display, save and track the data.
+
+In the Python interpreter console (++ctrl+shift+c++), variable `ui` is available as the
+handler of the main window.
 
 ``` python
 from himena.types import WidgetDataModel
@@ -90,7 +93,16 @@ This is the most common way to open a file. You can open a file from "File" menu
 ++ctrl+o++ or drag-and-drop the file to the application.
 
 Whether the file can be opened, and the opened data can be displayed as a widget,
-depends on the plugins installed in the application profile.
+depends on the plugins installed in the application profile. For example, `himena`
+built-in readers cannot open TIFF files, but a TIFF reader is available in the
+[`himena-image`](https://github.com/hanjinliu/himena-image) plugin.
+
+??? tip "Data analysis without widget plugin"
+
+    If `himena` cannot find a widget to represent the data that has just been read, you
+    will see a widget saying "No widget registered for ...". This does not mean `himena`
+    cannot read the data. You just don't have a "nice" way to visualize the data. You
+    can still use the internal data model in the application.
 
 #### (2) Open a folder as a sub-window
 
@@ -103,7 +115,8 @@ drag-and-drop the folder to the application.
 
 #### (3) Open a group of files as a sub-window
 
-Instead of opening a folder, you can open a group of files as a sub-window.
+Instead of opening a folder, you can open a group of files as a sub-window just like
+(2).
 
 ### Saving files to the local disk
 
@@ -143,7 +156,7 @@ from the "Show workflow graph" command in the [window menu](../tutorial.md#windo
 Currently, `himena` supports `Qt` as its GUI backend. Any `Qt` widgets can be added to
 the application using `add_widget()` method.
 
-``` python
+``` python hl_lines="4"
 from qtpy.QtWidgets import QLabel
 
 label = QLabel("Hello, world!")
@@ -153,7 +166,7 @@ ui.add_widget(label, title="My Label")
 If you have a widget wrapper of a `Qt` widget, it can also be added by defining the
 `native_widget()` interface method.
 
-``` python
+``` python hl_lines="5 6"
 class MyLabel:
     def __init__(self, text):
         self._qt_label = QLabel(text)
@@ -180,5 +193,12 @@ ui.add_widget(label, title="My Label Wrapper")
     ui.add_widget(my_func, title="My MagicGUI")
     ```
 
-This rule also applies to the widget plugin system. See [here](../dev/register_widgets.md#use-wrapper-class)
+Alternatively, you can add the widget as a dock widget using `add_dock_widget()`.
+
+``` python hl_lines="2"
+label = MyLabel("Hello, world!")
+ui.add_dock_widget(label, title="My Label Dock Widget")
+```
+
+These rules also apply to the widget plugin system. See [here](../dev/register_widgets.md#use-wrapper-class)
 for more details.

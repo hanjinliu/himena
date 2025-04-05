@@ -485,7 +485,7 @@ def _item_type(item: QtW.QTreeWidgetItem) -> Literal["d", "l", "f"]:
 def _icon_for_file_type(file_type: str, light_background: bool) -> QIconifyIcon:
     color = "#222222" if light_background else "#eeeeee"
     if file_type == "d":
-        icon = QIconifyIcon("material-symbols:folder", color=color)
+        icon = QIconifyIcon("material-symbols:folder-rounded", color=color)
     elif file_type == "l":
         icon = QIconifyIcon("octicon:file-directory-symlink-16", color=color)
     else:

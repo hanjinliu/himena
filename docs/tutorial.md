@@ -23,7 +23,7 @@ himena
 ```
 
 `himena` can manage multiple profiles. A profile is a set of configurations, color theme
-and plugins. You can create a new profile with:
+and plugins. You can create a new profile of name "test" with:
 
 ``` shell
 himena --new test
@@ -44,7 +44,7 @@ himena test
 ## Open a Data
 
 Let's start with a simple example. From the menubar, select `File > New > Seaborn > iris`.
-This command will fetch the iris dataset online open it as a subwindow.
+This command will fetch the iris dataset online and open it as a subwindow.
 
 ![](images/00_iris_window.png){ loading=lazy, width=400px }
 
@@ -67,7 +67,7 @@ to run a command.
 
 ![](images/00_window_menu.png){ loading=lazy, width=300px }
 
-The "window menu button" will show a menu that contains the commands relevant to the
+The "window menu button" pops up a menu that contains the commands relevant to the
 operation on the current window. These commands are always available regardless of the
 data model the window represents. For example, "Duplicate window" and "Copy path to
 cliboard" are in the window menu.
@@ -76,7 +76,7 @@ cliboard" are in the window menu.
 
 ![](images/00_model_menu.png){ loading=lazy, width=300px }
 
-The "model menu button" will show a menu that contains the commands relevant to the type
+The "model menu button" pops up a menu that contains the commands relevant to the type
 of the underlying data model. For example, the "Convert table to text" is available in
 the window "iris" just opened above.
 
@@ -85,7 +85,7 @@ the window "iris" just opened above.
 ![](images/00_command_palette.png){ loading=lazy, width=420px }
 
 All the commands are accessible from the command palette. Press ++ctrl+shift+p++ to open
-the command palette.
+the command palette and you can search for any commands by the name.
 
 ## Manage Plugins
 
@@ -94,14 +94,14 @@ supports, new widgets, and commands. For example, [`himena-stats`](https://githu
 a himena plugin for statistical analysis, can be installed with the following lines.
 
 ``` shell
-pip install himena-stats -U
-himena --install himena-stats
+pip install himena-stats -U  # install to the python virtual environment
+himena --install himena-stats  # install the module to the default profile
 himena your-profile-name --install himena-stats  # install to a specific profile
 ```
 
-You can also select which plugins installed to the Python virtual environment to be
-included in the `himena` profile from the setting. A setting dialog can be opened from
-`File > Settings ...` or shortcut ++ctrl+comma++
+You can also select which plugins to be included in the `himena` profile from the
+setting dialog. A setting dialog can be opened from `File > Settings ...` or shortcut
+++ctrl+comma++
 
 ![](images/00_setting_plugins.png){ loading=lazy, width=500px }
 

@@ -19,11 +19,16 @@ class TextViewer:
         # some GUI-specific initialization ...
 
     def update_model(self, model: WidgetDataModel):
-        self.set_text(model.value)
+        self.set_text(model.value)  # (1)!
 
     def to_model(self) -> WidgetDataModel:
-        return WidgetDataModel(value=self.get_text(), type="text")
+        return WidgetDataModel(value=self.get_text(), type="text")  # (2)!
 ```
+
+(1) The incoming text data is stored in `model.value`. The `set_text()` method is just
+    an example.
+(2) A `WidgetDataModel` must be returned here. The "text" type is the standard type
+    string for the string-type text data.
 
 This widget can be registered as a widget that represents a `"text"`-type data using
 `register_widget_class()` function.
@@ -45,8 +50,8 @@ The `WidgetDataModel` standard makes the different part of development very clea
         return WidgetDataModel(value=text_value, type="text")
     ```
 
-  A proper widget class will be automatically selected based on the `type` field, and
-  updated based on the returned model using `update_model()` method.
+    A proper widget class will be automatically selected based on the `type` field, and
+    updated based on the returned model using `update_model()` method.
 
 - Writer function is a **GUI-independent** function that writes a `WidgetDataModel`
   to a file.
@@ -56,8 +61,8 @@ The `WidgetDataModel` standard makes the different part of development very clea
         file_path.write_text(model.value)
     ```
 
-  A widget will be automatically converted to a model using `to_model()` method before
-  calling this writer function.
+    A widget will be automatically converted to a model using `to_model()` method before
+    calling this writer function.
 
 - Any function for data processing or analysis is also **GUI-independent** functions
   that just convert a `WidgetDataModel` into another.
