@@ -147,12 +147,15 @@ class QtErrorMessageBox(QtW.QWidget):
         )
 
     def _get_traceback(self) -> str:
+        is_dark = (
+            not self._main_window()._himena_main_window.theme.is_light_background()
+        )
         if self._exc is None:
             import traceback
 
             tb = traceback.format_exc()
         else:
-            tb = get_tb_formatter()(self._exc_info(), as_html=True)
+            tb = get_tb_formatter()(self._exc_info(), as_html=True, is_dark=is_dark)
         return tb
 
 
@@ -160,7 +163,7 @@ class QtErrorMessageBox(QtW.QWidget):
 # See https://github.com/napari/napari/blob/main/napari/utils/_tracebacks.py
 
 
-def get_tb_formatter() -> Callable[[ExcInfo, bool, str], str]:
+def get_tb_formatter() -> Callable[[ExcInfo, bool, bool], str]:
     """Return a formatter callable that uses IPython VerboseTB if available.
 
     Imports IPython lazily if available to take advantage of ultratb.VerboseTB.
@@ -200,10 +203,11 @@ def _filter_traceback(tb: TracebackType) -> TracebackType:
     return tb_orig
 
 
-def format_exc_info_ipython(info: ExcInfo, as_html: bool, color="Neutral") -> str:
+def format_exc_info_ipython(info: ExcInfo, as_html: bool, is_dark: bool = False) -> str:
     import IPython.core.ultratb
 
     typ, exc, tb = info
+    color = "Neutral"
     tb = _filter_traceback(tb)
 
     # avoid verbose printing of the array data
@@ -220,7 +224,7 @@ def format_exc_info_ipython(info: ExcInfo, as_html: bool, color="Neutral") -> st
                 .replace(">", "&gt;")
                 .replace("\n", "<br>")
             )
-            _html = "".join(ansi2html(ansi_string))
+            _html = "".join(ansi2html(ansi_string, is_dark=is_dark))
             _html = (
                 f"<span style='font-family: monaco,{MonospaceFontFamily},"
                 "monospace;'>" + _html + "</span>"
@@ -259,7 +263,7 @@ def cgitb_html(exc: Exception) -> str:
     return cgitb.html(info)
 
 
-def format_exc_info_py310(info: ExcInfo, as_html: bool, color=None) -> str:
+def format_exc_info_py310(info: ExcInfo, as_html: bool, is_dark=False) -> str:
     import traceback
 
     # avoid verbose printing of the array data
@@ -275,7 +279,7 @@ def format_exc_info_py310(info: ExcInfo, as_html: bool, color=None) -> str:
             html = re.sub(r"(<tr><td><small.*</tr>)", "<br>\\1<br>", html)
             # weird 2-part syntax is a workaround for hard-to-grep text.
             html = html.replace(
-                "<p>A problem occurred in a Python script.  " "Here is the sequence of",
+                "<p>A problem occurred in a Python script.  Here is the sequence of",
                 "",
             )
             html = html.replace(
@@ -297,7 +301,7 @@ def format_exc_info_py310(info: ExcInfo, as_html: bool, color=None) -> str:
     return tb_text
 
 
-def format_exc_info_py311(info: ExcInfo, as_html: bool, color=None) -> str:
+def format_exc_info_py311(info: ExcInfo, as_html: bool, is_dark=False) -> str:
     import traceback
 
     # avoid verbose printing of the array data
