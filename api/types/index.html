@@ -2603,6 +2603,10 @@ with inputs <code>a</code> and <code>b</code>..</p>
             <code>DropResult</code>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
 </h4>
 
 
@@ -2641,10 +2645,26 @@ with inputs <code>a</code> and <code>b</code>..</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>outputs</code>
+                <code>command_id</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="WidgetDataModel (himena.types.WidgetDataModel)" href="#himena.types.WidgetDataModel">WidgetDataModel</a> | <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a>[<a class="autorefs autorefs-internal" title="WidgetDataModel (himena.types.WidgetDataModel)" href="#himena.types.WidgetDataModel">WidgetDataModel</a>] | None</code>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>with_params</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a>, <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#object">object</a>] | None</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2681,13 +2701,24 @@ with inputs <code>a</code> and <code>b</code>..</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code><span title="himena.types.DropResult.outputs">outputs</span></code></td>
+            <td><code><span title="himena.types.DropResult.command_id">command_id</span></code></td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="WidgetDataModel (himena.types.WidgetDataModel)" href="#himena.types.WidgetDataModel">WidgetDataModel</a> | <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a>[<a class="autorefs autorefs-internal" title="WidgetDataModel (himena.types.WidgetDataModel)" href="#himena.types.WidgetDataModel">WidgetDataModel</a>] | None</code>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> | None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If given, the output data will be added to the GUI.</p>
+                <p>Command that will be executed when the drop succeeded.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="himena.types.DropResult.with_params">with_params</span></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a>, <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#object">object</a>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Parameters that will be passed to the command.</p>
               </div>
             </td>
           </tr>
@@ -2714,19 +2745,27 @@ with inputs <code>a</code> and <code>b</code>..</p>
 <span class="normal">748</span>
 <span class="normal">749</span>
 <span class="normal">750</span>
-<span class="normal">751</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">DropResult</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="normal">751</span>
+<span class="normal">752</span>
+<span class="normal">753</span>
+<span class="normal">754</span>
+<span class="normal">755</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DropResult</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Model that can be returned by `dropped_callback` protocol.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
 <span class="sd">    delete_input : bool</span>
 <span class="sd">        Whether to delete the input data if drop succeeded.</span>
-<span class="sd">    outputs : WidgetDataModel | list[WidgetDataModel] | None</span>
-<span class="sd">        If given, the output data will be added to the GUI.</span>
+<span class="sd">    command_id : str | None</span>
+<span class="sd">        Command that will be executed when the drop succeeded.</span>
+<span class="sd">    with_params : dict[str, object] | None</span>
+<span class="sd">        Parameters that will be passed to the command.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">delete_input</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="n">outputs</span><span class="p">:</span> <span class="n">WidgetDataModel</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">WidgetDataModel</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">command_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">with_params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
