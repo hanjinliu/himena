@@ -147,9 +147,10 @@ class QtErrorMessageBox(QtW.QWidget):
         )
 
     def _get_traceback(self) -> str:
-        is_dark = (
-            not self._main_window()._himena_main_window.theme.is_light_background()
+        background = (
+            self._main_window().palette().color(QtGui.QPalette.ColorRole.Window)
         )
+        is_dark = background.lightnessF() < 0.5
         if self._exc is None:
             import traceback
 
