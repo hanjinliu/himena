@@ -371,9 +371,12 @@ class QImageGraphicsView(QBaseGraphicsView):
                 return
         if factor > 0:
             self.scale(factor, factor)
+        self.update_handle_sizes()
+        self.geometry_changed.emit(self.sceneRect())
+
+    def update_handle_sizes(self):
         tr = self.transform()
         self._selection_handles.update_handle_size(tr.m11())
-        self.geometry_changed.emit(self.sceneRect())
 
     def auto_range(self):
         scene_rect = self.sceneRect()
@@ -617,8 +620,6 @@ class QImageGraphicsView(QBaseGraphicsView):
             self._paste_roi()
         elif key == Qt.Key.Key_D:  # duplicate ROI
             if self._current_roi_item is not None:
-                # item = self._current_roi_item.copy()
-                # set_clipboard(text=str(item), internal_data=item)
                 self._copy_current_roi()
                 self._paste_roi()
 
@@ -629,7 +630,7 @@ class QImageGraphicsView(QBaseGraphicsView):
             item = self._current_roi_item.copy()
             set_clipboard(text=str(item), internal_data=item)
 
-    def _paste_roi(self):
+    def _paste_roi(self) -> None:
         model = get_clipboard()
         item = model.internal_data
         if not isinstance(item, QRoi):
@@ -640,10 +641,11 @@ class QImageGraphicsView(QBaseGraphicsView):
         item.translate(max(dx, 1), max(dy, 1))
         self.set_current_roi(item)
         self.add_current_roi()
-        self._selection_handles.connect_rect(item)
+        self._selection_handles.connect_roi(item)
+        self.update_handle_sizes()
         set_clipboard(model.with_internal_data(item.copy()))  # needed for Ctrl+V x2
 
-    def _make_menu_for_roi(self, roi: QRoi):
+    def _make_menu_for_roi(self, roi: QRoi) -> QtW.QMenu:
         menu = QtW.QMenu(self)
         action = menu.addAction("Copy ROI")
         action.triggered.connect(

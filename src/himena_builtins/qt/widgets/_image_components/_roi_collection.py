@@ -491,7 +491,6 @@ class QRoiListView(QtW.QListView):
         elif a0.key() in (QtCore.Qt.Key.Key_Up, QtCore.Qt.Key.Key_Down):
             return super().keyPressEvent(a0)
         self.key_pressed.emit(a0)
-        return super().keyPressEvent(a0)
 
     def keyReleaseEvent(self, a0):
         self.key_released.emit(a0)
