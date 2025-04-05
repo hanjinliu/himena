@@ -42,15 +42,18 @@ class NDObjectCollection(Generic[_T]):
         if self.indices.shape[0] == 0:
             self.indices = np.empty((0, len(self.axis_names)), dtype=np.int32)
 
+    @property
+    def ndim(self) -> int:
+        """Number of dimensions of the collection."""
+        return self.indices.shape[1]
+
     def set_axis_names(self, names: list[str]):
         """Update the axis names and coerce array shapes."""
         if self.indices.shape[0] == 0:
             self.indices = np.empty((0, len(names)), dtype=np.uint32)
         else:
-            if self.indices.shape[1] != len(names):
-                raise ValueError(
-                    f"Expected {self.indices.shape[1]} axis names, got {len(names)}"
-                )
+            if self.ndim != len(names):
+                raise ValueError(f"Expected {self.ndim} axis names, got {len(names)}")
         self.axis_names = names
 
     def coerce_dimensions(self, target_axis_names: list[str]) -> Self:
@@ -76,9 +79,7 @@ class NDObjectCollection(Generic[_T]):
         if self.indices is None:
             raise ValueError("Indices are not set.")
         if len(self.axis_names) != len(key):
-            raise ValueError(
-                f"Expected {self.indices.shape[1]} indices, got {len(key)}"
-            )
+            raise ValueError(f"Expected {self.ndim} indices, got {len(key)}")
         ok = None
         for column_index, value in enumerate(key):
             column = self.indices[:, column_index]
