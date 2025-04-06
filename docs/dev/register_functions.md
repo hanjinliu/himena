@@ -374,3 +374,23 @@ def format_json(model: WidgetDataModel) -> Parametric:
     def add_widget(ui: MainWindow):
         ui.add_widget(QtW.QLabel("Hello, world!"))
     ```
+
+---
+
+## Functions That Only Works in A Specific Widget
+
+If you know that the function only works in a specific widget `T`, you can use the
+annotation `SubWindow[T]`. This command will only be enabled when the current sub-window
+is built with the widget `T`.
+
+For example, the following built-in plugin function only works for the `QImageView`
+widget.
+
+``` python hl_lines="5"
+@register_function(
+    title="Scale bar ...",
+    ...,
+)
+def setup_image_scale_bar(win: SubWindow[QImageView]) -> Parametric:
+    ...
+```

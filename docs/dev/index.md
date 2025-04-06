@@ -10,6 +10,5 @@ In this section, you will learn how to develop plugins for `himena`.
 - [Register Dock Widgets](register_dock_widgets.md)
 
 Here's some useful standardized objects to make plugins compatible with each other.
-- [Model Metadata]
-- [Plotting]
-- [Region of Interest (ROI)]
+
+- [Plotting in Himena](plotting.md)
