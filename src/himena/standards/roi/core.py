@@ -108,7 +108,8 @@ class RotatedRoi2D(Roi2D):
         return math.degrees(self.angle_radian())
 
     def angle_radian(self) -> float:
-        return math.atan2(self.end[1] - self.start[1], self.end[0] - self.start[0])
+        # NOTE: invert y so that angle is CCW
+        return math.atan2(self.start[1] - self.end[1], self.end[0] - self.start[0])
 
 
 class RotatedRectangleRoi(RotatedRoi2D):
@@ -288,7 +289,7 @@ class LineRoi(Roi2D):
 
     def angle_radian(self) -> float:
         dx = self.x2 - self.x1
-        dy = self.y2 - self.y1
+        dy = self.y1 - self.y2  # NOTE: invert y so that angle is CCW
         return math.atan2(dy, dx)
 
     def linspace(self, num: int) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
