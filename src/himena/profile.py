@@ -42,13 +42,33 @@ def profile_dir() -> Path:
 # Plugin place and the version added.
 # NOTE: The version added DEFAULT_PLUGINS is 0.0.8.
 DEFAULT_PLUGINS: list[tuple[str, Version]] = [
+    # Dock widgets
     ("himena_builtins.qt.console", Version("0.0.0")),
     ("himena_builtins.qt.explorer", Version("0.0.0")),
     ("himena_builtins.qt.history", Version("0.0.0")),
     ("himena_builtins.qt.output", Version("0.0.0")),
     ("himena_builtins.qt.plot", Version("0.0.0")),
-    ("himena_builtins.qt.widgets", Version("0.0.0")),
-    ("himena_builtins.tools", Version("0.0.0")),
+    # Widgets
+    ("himena_builtins.qt.array", Version("0.0.8")),
+    ("himena_builtins.qt.basic", Version("0.0.8")),
+    ("himena_builtins.qt.dataframe", Version("0.0.8")),
+    ("himena_builtins.qt.image", Version("0.0.8")),
+    ("himena_builtins.qt.ipynb", Version("0.0.8")),
+    ("himena_builtins.qt.rois", Version("0.0.8")),
+    ("himena_builtins.qt.stack", Version("0.0.8")),
+    ("himena_builtins.qt.table", Version("0.0.8")),
+    ("himena_builtins.qt.text", Version("0.0.8")),
+    # Tools
+    ("himena_builtins.tools.array", Version("0.0.8")),
+    ("himena_builtins.tools.conversions", Version("0.0.8")),
+    ("himena_builtins.tools.dataframe", Version("0.0.8")),
+    ("himena_builtins.tools.dict", Version("0.0.8")),
+    ("himena_builtins.tools.image", Version("0.0.8")),
+    ("himena_builtins.tools.others", Version("0.0.8")),
+    ("himena_builtins.tools.plot", Version("0.0.8")),
+    ("himena_builtins.tools.table", Version("0.0.8")),
+    ("himena_builtins.tools.text", Version("0.0.8")),
+    # Others
     ("himena_builtins.io", Version("0.0.0")),
     ("himena_builtins.new", Version("0.0.0")),
     ("himena_builtins.user_modifications", Version("0.0.8")),
