@@ -3,6 +3,7 @@ import sys
 import pytest
 from himena.__main__ import main
 from himena.profile import load_app_profile
+from himena._cli.install import uninstall_outdated
 
 def test_simple():
     sys.argv = ["himena"]
@@ -63,3 +64,12 @@ def test_install_uninstall_local(sample_dir):
     main()
     prof = load_app_profile("default")
     assert Path(plugin_path).resolve().as_posix() not in prof.plugins
+
+def test_uninstall_outdated():
+    prof = load_app_profile(PROF_NAME)
+    prof.plugins.append("himena_outdated_module")
+    prof.plugins.append("himena_builtins.outdated_submodule")
+    uninstall_outdated(PROF_NAME)
+    prof = load_app_profile(PROF_NAME)
+    assert "himena_outdated_module" not in prof.plugins
+    assert "himena_builtins.outdated_submodule" not in prof.plugins

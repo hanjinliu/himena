@@ -6,6 +6,7 @@ from typing import Generic, TypeVar
 import warnings
 from himena.types import WidgetDataModel
 from himena.plugins import AppActionRegistry
+from himena.utils.misc import is_subtype
 from himena.workflow import (
     CommandExecution,
     parse_parameter,
@@ -32,14 +33,20 @@ class Modifications(Generic[_T]):
             # Already has a untrackable modification, so we don't need to do anything
             return
         _reg = AppActionRegistry.instance()
-        if model.type not in _reg._modification_trackers:
+        diff = None
+        mod_tracker = None
+        for _type in _reg._modification_trackers:
+            if is_subtype(model.type, _type):
+                # Look for the modification tracker
+                mod_tracker = _reg._modification_trackers[_type]
+                break
+        if mod_tracker is None:
             warnings.warn(
                 f"Modification tracking not available for {model.type}.",
                 UserWarning,
                 stacklevel=2,
             )
         else:
-            mod_tracker = _reg._modification_trackers[model.type]
             try:
                 diff = mod_tracker(self.initial_value, model.value)
             except Exception as e:
