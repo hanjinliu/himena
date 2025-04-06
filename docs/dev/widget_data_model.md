@@ -92,15 +92,31 @@ StandardType.ARRAY  # "array"
 StandardType.IMAGE  # "array.image"
 ```
 
-<detail><summary>The full list of the pre-defined standards</summary>
+<detail><summary>The list of the pre-defined standards</summary>
 
-| String type | Constant             | Internal Python object type                     |
-|:-----------:|:--------------------:|:-----------------------------------------------:|
-|`"text"`     |`StandardType.TEXT`   | `str`                                           |
-|`"table"`    |`StandardType.TABLE`  | `numpy.ndarray` of `np.dtypes.StringDType`      |
-|`"array"`    |`StandardType.ARRAY`  | `numpy.ndarray`                                 |
-|`"array.image"`|`StandardType.IMAGE`  | `numpy.ndarray` of numerical dtype            |
-|`"
+Basic types
+
+| String type      | Constant                | Internal Python object type             |
+|:----------------:|:-----------------------:|:---------------------------------------:|
+|`"text"`          |`StandardType.TEXT`      | `str`                                   |
+|`"table"`         |`StandardType.TABLE`     | `ndarray` of `np.dtypes.StringDType`    |
+|`"array"`         |`StandardType.ARRAY`     | array-like object of numerical dtype    |
+|`"dataframe"`     |`StandardType.DATAFRAME` | Any dataframe-like object such as `dict[str, ndarray]`, `pandas.DataFrame` and `polars.DataFrame` |
+|`"dict"`          |`StandardType.DICT`      | `dict[str, T]`, where T is any type     |
+|`"plot"`          |`StandardType.PLOT`      | `himena.standard.plotting.BaseLayoutModel` object|
+|`"rois"`          |`StandardType.ROIS`     | `himena.standard.roi.RoiListModel` object|
+|`"matplotlib-figure"`|`StandardType.MPL_FIGURE`| `matplotlib.Figure` object           |
+|`"mesh"`          |`StandardType.MESH`      | tuple of vertices, faces and values     |
+|`"models"`        |`StandardType.MODELS`    | `list[WidgetDataModel]`                 |
+|`"function"`      |`StandardType.FUNCTION`  | any callable object                     |
+|`"lazy"`          |`StandardType.LAZY`      | callable `() -> WidgetDataModel`        |
+|`"workflow"`      |`StandardType.WORKFLOW`  | `himena.workflow.Workflow` object       |
+
+Subtypes
+
+|`"array.image"`   |`StandardType.IMAGE`     | array-like object of numerical dtype    |
+|`"array.image.labels"`|`StandardType.IMAGE_LABELS`| array-like object of integer dtype|
+|`"dict.table"`|`StandardType.EXCEL`| `dict[str, ndarray]`, where the dtype of the array is `np.dtypes.StringDType`|
 
 </detail>
 
