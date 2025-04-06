@@ -4,13 +4,10 @@ from qtpy.QtCore import Qt
 from himena import MainWindow, StandardType
 from himena.standards.model_meta import TextMeta
 from himena.types import WidgetDataModel
-from himena_builtins.qt.widgets import (
-    QTextEdit,
-)
+from himena_builtins.qt.text import QTextEdit, QRichTextEdit, QSvgPreview, QMarkdowPreview
 from pytestqt.qtbot import QtBot
 from himena.testing import WidgetTester
-from himena_builtins.qt.widgets.text import QRichTextEdit
-from himena_builtins.qt.widgets.text_previews import QSvgPreview, QMarkdowPreview
+
 _Ctrl = Qt.KeyboardModifier.ControlModifier
 
 

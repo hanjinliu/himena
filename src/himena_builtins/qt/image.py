@@ -1,7 +1,7 @@
 from himena import StandardType
 from himena.plugins import register_widget_class
 from himena_builtins.qt.widgets import _image_commands
-
+from himena_builtins.qt.widgets._image_components import QImageGraphicsView
 
 from himena_builtins.qt.widgets.image import (
     QImageView,
@@ -15,3 +15,5 @@ register_widget_class(
 register_widget_class(StandardType.IMAGE_LABELS, QImageLabelView, priority=50)
 
 del _image_commands
+
+__all__ = ["QImageGraphicsView", "QImageView", "QImageLabelView", "ImageViewConfigs"]

@@ -2,7 +2,7 @@ from pathlib import Path
 from qtpy.QtCore import QPoint
 from pytestqt.qtbot import QtBot
 from himena.testing import WidgetTester
-from himena_builtins.qt.widgets import QIpynbEdit
+from himena_builtins.qt.ipynb import QIpynbEdit
 from himena_builtins._io import default_text_reader
 
 def test_ipynb_widget(qtbot: QtBot, sample_dir: Path):

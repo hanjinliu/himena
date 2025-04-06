@@ -4,7 +4,7 @@ from himena import MainWindow
 from himena.standards.model_meta import TableMeta
 from himena.testing import WidgetTester, table
 from himena.types import WidgetDataModel
-from himena_builtins.qt.widgets.table import QSpreadsheet
+from himena_builtins.qt.table import QSpreadsheet
 from qtpy.QtWidgets import QApplication
 from qtpy.QtCore import Qt
 

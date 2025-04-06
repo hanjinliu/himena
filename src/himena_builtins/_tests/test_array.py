@@ -8,7 +8,7 @@ from pytestqt.qtbot import QtBot
 from himena import MainWindow, StandardType
 from himena.standards.model_meta import ArrayMeta, ArrayAxis, ImageChannel, ImageMeta
 from himena.testing import WidgetTester
-from himena_builtins.qt.widgets import QArrayView
+from himena_builtins.qt.array import QArrayView
 
 _Ctrl = Qt.KeyboardModifier.ControlModifier
 
