@@ -195,6 +195,7 @@ def make_function_callback(
                 CommandExecution(
                     contexts=contexts,
                     command_id=command_id,
+                    parameters=None,
                     execution_time=timeit.default_timer() - _time_before,
                 )
             )

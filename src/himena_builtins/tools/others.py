@@ -303,6 +303,7 @@ def show_statistics(model: WidgetDataModel) -> WidgetDataModel:
         value=out,
         type=StandardType.HTML,
         title=f"Statistics of {model.title}",
+        extension_default=".html",
         editable=False,
         save_behavior_override=NoNeedToSave(),
     )

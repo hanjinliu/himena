@@ -642,7 +642,7 @@ class MainWindow(Generic[_W]):
         ):
             result = self.model_app.commands.execute_command(id).result()
             if with_params is not None:
-                if tab := self.tabs.current():
+                if (tab := self.tabs.current()) is not None and len(tab) > 0:
                     param_widget = tab[-1]
                 else:  # pragma: no cover
                     raise RuntimeError("Unreachable code.")

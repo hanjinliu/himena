@@ -1,3 +1,4 @@
+from concurrent.futures import Future
 from typing import Iterator, Literal, Any, cast, Union, TYPE_CHECKING
 import uuid
 from pydantic_compat import BaseModel, Field
@@ -96,7 +97,10 @@ class CommandExecution(WorkflowStep):
     type: Literal["command"] = "command"
     command_id: str
     contexts: list[CommandParameterType] = Field(default_factory=list)
-    parameters: list[CommandParameterType] = Field(default_factory=list)
+    parameters: list[CommandParameterType] | None = Field(
+        default=None,
+        description="Parameters passed to the command. None if the command is not parametric.",
+    )
     execution_time: float = Field(default=0.0)  # seconds
 
     def iter_parents(self) -> Iterator[uuid.UUID]:
@@ -105,7 +109,8 @@ class CommandExecution(WorkflowStep):
                 yield ctx.value
             elif isinstance(ctx, WindowParameter):
                 yield ctx.value
-        for param in self.parameters:
+
+        for param in self.parameters or []:
             if isinstance(param, ModelParameter):
                 yield param.value
             elif isinstance(param, ListOfModelParameter):
@@ -127,20 +132,23 @@ class CommandExecution(WorkflowStep):
             else:
                 raise ValueError(f"Context parameter must be a model: {_ctx}")
 
-        params = {}
-        for _p in self.parameters:
-            if isinstance(_p, UserParameter):
-                params[_p.name] = _p.value
-            elif isinstance(_p, ModelParameter):
-                params[_p.name] = wf.filter(_p.value).model_for_id(_p.value)
-            elif isinstance(_p, WindowParameter):
-                params[_p.name] = wf.filter(_p.value).window_for_id(_p.value)
-            elif isinstance(_p, ListOfModelParameter):
-                params[_p.name] = [
-                    wf.filter(each).model_for_id(each) for each in _p.value
-                ]
-            else:
-                raise ValueError(f"Unknown parameter type: {_p}")
+        if self.parameters is None:
+            params = None
+        else:
+            params = {}
+            for _p in self.parameters:
+                if isinstance(_p, UserParameter):
+                    params[_p.name] = _p.value
+                elif isinstance(_p, ModelParameter):
+                    params[_p.name] = wf.filter(_p.value).model_for_id(_p.value)
+                elif isinstance(_p, WindowParameter):
+                    params[_p.name] = wf.filter(_p.value).window_for_id(_p.value)
+                elif isinstance(_p, ListOfModelParameter):
+                    params[_p.name] = [
+                        wf.filter(each).model_for_id(each) for each in _p.value
+                    ]
+                else:  # pragma: no cover
+                    raise ValueError(f"Unknown parameter type: {_p}")
         result = ui.exec_action(
             self.command_id,
             window_context=window_context,
@@ -148,6 +156,8 @@ class CommandExecution(WorkflowStep):
             with_params=params,
             process_model_output=False,
         )
+        if isinstance(result, Future):
+            result = result.result()
         if not isinstance(result, WidgetDataModel):
             raise ValueError(f"Expected to return a WidgetDataModel but got {result}")
         return result

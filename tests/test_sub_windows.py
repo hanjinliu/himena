@@ -55,6 +55,9 @@ def test_builtin_commands(himena_ui: MainWindow):
     himena_ui.exec_action("builtins:seaborn-sample:iris")
     config = {"format": "%(levelname)s:%(message)s", "date_format": "%Y-%m-%d %H:%M:%S"}
     himena_ui.app_profile.update_plugin_config("builtins:output", **config)
+    himena_ui.exec_action("builtins:new-table")
+    himena_ui.exec_action("builtins:new-excel")
+    himena_ui.exec_action("builtins:new-text-python")
     himena_ui.exec_action("quit")
 
 
