@@ -1,5 +1,6 @@
 import warnings
 
+import numpy as np
 import pytest
 from himena import MainWindow, anchor
 from himena.consts import StandardType
@@ -7,7 +8,7 @@ from himena.qt import MainWindowQt
 from himena.qt._qmain_window import QMainWindow
 from himena.standards.model_meta import DataFrameMeta, ImageMeta
 from himena.standards.roi import RectangleRoi
-from himena.widgets import set_status_tip, notify
+from himena.widgets import set_status_tip, notify, append_result
 from himena_builtins.qt import widgets as _qtw
 
 from qtpy import QtWidgets as QtW
@@ -282,3 +283,23 @@ def test_notification(himena_ui: MainWindowQt):
     notif._enter_event()
     notif._leave_event()
     notif.hide()
+
+def test_result_stack(himena_ui: MainWindowQt, qtbot: QtBot):
+    from himena.qt._qresult_stack import QResultStack
+
+    assert len(himena_ui.tabs) == 0
+    append_result({"a": 10, "b": np.arange(3)})
+    assert len(himena_ui.tabs) == 1
+    assert len(himena_ui.tabs[0]) == 1
+    assert (rstack := himena_ui.tabs[0]._result_stack_ref()) is not None
+    assert isinstance(rstack, QResultStack)
+    append_result({"a": 4, "b": 5})
+    append_result({"a": 2, "c": 6})
+    rstack.selectRow(0)
+    rstack._select_rows_with_same_keys()
+    assert rstack.selections() == [0, 1]
+    rstack._make_context_menu()
+    rstack._copy_items([0, 1])
+    win = himena_ui.current_window
+    himena_ui.exec_action("builtins:results:results-to-table", window_context=win)
+    himena_ui.exec_action("builtins:results:selected-results-to-table", window_context=win)

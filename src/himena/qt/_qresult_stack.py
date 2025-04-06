@@ -23,7 +23,7 @@ class QResultStack(QtW.QTableWidget):
         self.setVerticalScrollMode(QtW.QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.setHorizontalScrollMode(QtW.QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.horizontalHeader().hide()
-        self._items: list[dict[str, Any]] = []
+        self._items: list[dict[str, Any]] = []  # the actual python objects
 
     def append_result(self, item: dict[str, Any]) -> None:
         """Append a new result to the stack."""
@@ -71,6 +71,10 @@ class QResultStack(QtW.QTableWidget):
 
     def model_type(self) -> StandardType:
         return StandardType.RESULTS
+
+    def size_hint(self) -> tuple[int, int]:
+        """Return the size hint for the widget."""
+        return 320, 320
 
     def selections(self) -> list[int]:
         """Return the selected row indices."""
