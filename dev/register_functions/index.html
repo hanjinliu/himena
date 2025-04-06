@@ -535,6 +535,8 @@
       
         
       
+        
+      
     
     
     
@@ -777,6 +779,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#functions-that-only-works-in-a-specific-widget" class="md-nav__link">
+    <span class="md-ellipsis">
+      Functions That Only Works in A Specific Widget
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -832,6 +843,29 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plotting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Plotting in Himena
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -847,6 +881,8 @@
   
     
     
+      
+        
       
         
       
@@ -1045,6 +1081,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../../api/standards/plotting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    himena.standards.plotting
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../api/standards/roi/" class="md-nav__link">
         
   
@@ -1184,6 +1243,15 @@
   <a href="#asynchronous-execution" class="md-nav__link">
     <span class="md-ellipsis">
       Asynchronous Execution
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#functions-that-only-works-in-a-specific-widget" class="md-nav__link">
+    <span class="md-ellipsis">
+      Functions That Only Works in A Specific Widget
     </span>
   </a>
   
@@ -1523,6 +1591,20 @@ updated in the main thread.</p>
     <span class="n">ui</span><span class="o">.</span><span class="n">add_widget</span><span class="p">(</span><span class="n">QtW</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s2">&quot;Hello, world!&quot;</span><span class="p">))</span>
 </code></pre></div>
 </div>
+<hr />
+<h2 id="functions-that-only-works-in-a-specific-widget">Functions That Only Works in A Specific Widget</h2>
+<p>If you know that the function only works in a specific widget <code>T</code>, you can use the
+annotation <code>SubWindow[T]</code>. This command will only be enabled when the current sub-window
+is built with the widget <code>T</code>.</p>
+<p>For example, the following built-in plugin function only works for the <code>QImageView</code>
+widget.</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@register_function</span><span class="p">(</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Scale bar ...&quot;</span><span class="p">,</span>
+    <span class="o">...</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="hll"><span class="k">def</span><span class="w"> </span><span class="nf">setup_image_scale_bar</span><span class="p">(</span><span class="n">win</span><span class="p">:</span> <span class="n">SubWindow</span><span class="p">[</span><span class="n">QImageView</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Parametric</span><span class="p">:</span>
+</span>    <span class="o">...</span>
+</code></pre></div>
 
 
 

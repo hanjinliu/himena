@@ -535,6 +535,8 @@
       
         
       
+        
+      
     
     
     
@@ -635,6 +637,15 @@
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#to-summarize" class="md-nav__link">
+    <span class="md-ellipsis">
+      To summarize
+    </span>
+  </a>
+  
+</li>
       
         <li class="md-nav__item">
   <a href="#choosing-the-type" class="md-nav__link">
@@ -778,6 +789,29 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plotting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Plotting in Himena
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -793,6 +827,8 @@
   
     
     
+      
+        
       
         
       
@@ -991,6 +1027,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../../api/standards/plotting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    himena.standards.plotting
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../api/standards/roi/" class="md-nav__link">
         
   
@@ -1062,6 +1121,15 @@
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#to-summarize" class="md-nav__link">
+    <span class="md-ellipsis">
+      To summarize
+    </span>
+  </a>
+  
+</li>
       
         <li class="md-nav__item">
   <a href="#choosing-the-type" class="md-nav__link">
@@ -1163,6 +1231,20 @@ calling this function, and sent back to the GUI as another widget created based 
 returned model.</p>
 </li>
 </ul>
+<h4 id="to-summarize">To summarize</h4>
+<p>Let's say you intend to read a text file, convert it into a table and save it to the
+local disk.</p>
+<p><img alt="" src="../../images/02_chart_io.png" /></p>
+<ul>
+<li>If you are a user, you will not see the "memory" layer. You will open the text file
+  (1, 2), run the command to convert it to a table (3, 4, 5), and save the table to the
+  local disk (6, 7).</li>
+<li>If you are a plugin developer, you will implement the reader function (1), the text
+  editor widget with the proper protocols (2, 3), the converter function (4), the table
+  viewer widget with the proper protocols (5, 6), and the writer function (7).</li>
+</ul>
+<p>It is interesting to note that what plugin developers do are always half step behind
+what users do.</p>
 <h2 id="choosing-the-type">Choosing the Type</h2>
 <p>You can use any string for <code>type</code> field, but to make your widget interpretable for
 the <code>himena</code> built-in functions and probably for other plugins, you may want to
@@ -1174,6 +1256,90 @@ use the <a class="autorefs autorefs-internal" href="../../api/consts/#himena.con
 <span class="n">StandardType</span><span class="o">.</span><span class="n">ARRAY</span>  <span class="c1"># &quot;array&quot;</span>
 <span class="n">StandardType</span><span class="o">.</span><span class="n">IMAGE</span>  <span class="c1"># &quot;array.image&quot;</span>
 </code></pre></div>
+<details class="info">
+<summary>The list of the pre-defined standards</summary>
+<p>Basic types</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">String type</th>
+<th style="text-align: center;">Constant</th>
+<th style="text-align: center;">Internal Python object type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>"text"</code></td>
+<td style="text-align: center;"><code>StandardType.TEXT</code></td>
+<td style="text-align: center;"><code>str</code></td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>"table"</code></td>
+<td style="text-align: center;"><code>StandardType.TABLE</code></td>
+<td style="text-align: center;"><code>ndarray</code> of <code>np.dtypes.StringDType</code></td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>"array"</code></td>
+<td style="text-align: center;"><code>StandardType.ARRAY</code></td>
+<td style="text-align: center;">array-like object of numerical dtype</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>"dataframe"</code></td>
+<td style="text-align: center;"><code>StandardType.DATAFRAME</code></td>
+<td style="text-align: center;">Any dataframe-like object such as <code>dict[str, ndarray]</code>, <code>pandas.DataFrame</code> and <code>polars.DataFrame</code></td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>"dict"</code></td>
+<td style="text-align: center;"><code>StandardType.DICT</code></td>
+<td style="text-align: center;"><code>dict[str, T]</code>, where T is any type</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>"plot"</code></td>
+<td style="text-align: center;"><code>StandardType.PLOT</code></td>
+<td style="text-align: center;"><code>himena.standard.plotting.BaseLayoutModel</code> object</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>"rois"</code></td>
+<td style="text-align: center;"><code>StandardType.ROIS</code></td>
+<td style="text-align: center;"><code>himena.standard.roi.RoiListModel</code> object</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>"matplotlib-figure"</code></td>
+<td style="text-align: center;"><code>StandardType.MPL_FIGURE</code></td>
+<td style="text-align: center;"><code>matplotlib.Figure</code> object</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>"mesh"</code></td>
+<td style="text-align: center;"><code>StandardType.MESH</code></td>
+<td style="text-align: center;">tuple of vertices, faces and values</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>"models"</code></td>
+<td style="text-align: center;"><code>StandardType.MODELS</code></td>
+<td style="text-align: center;"><code>list[WidgetDataModel]</code></td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>"function"</code></td>
+<td style="text-align: center;"><code>StandardType.FUNCTION</code></td>
+<td style="text-align: center;">any callable object</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>"lazy"</code></td>
+<td style="text-align: center;"><code>StandardType.LAZY</code></td>
+<td style="text-align: center;">callable <code>() -&gt; WidgetDataModel</code></td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>"workflow"</code></td>
+<td style="text-align: center;"><code>StandardType.WORKFLOW</code></td>
+<td style="text-align: center;"><code>himena.workflow.Workflow</code> object</td>
+</tr>
+</tbody>
+</table>
+<p>Subtypes</p>
+<p>|<code>"array.image"</code>   |<code>StandardType.IMAGE</code>     | array-like object of numerical dtype    |
+|<code>"array.image.labels"</code>|<code>StandardType.IMAGE_LABELS</code>| array-like object of integer dtype|
+|<code>"dict.table"</code>|<code>StandardType.EXCEL</code>| <code>dict[str, ndarray]</code>, where the dtype of the array is <code>np.dtypes.StringDType</code>|</p>
+</details>
 <p>You can use "." to separate the type into a hierarchy. For example, the standard type
 <code>"array.image"</code> is used for an image data, but it is under "array" type because all the
 image data are essentially arrays. A benefit of this subtyping is that all the "array"
