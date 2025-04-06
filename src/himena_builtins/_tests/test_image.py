@@ -194,7 +194,7 @@ def test_image_view_copy_roi_from_window_to_window(himena_ui: MainWindow, qtbot:
             value=np.zeros((100, 100), dtype=np.uint8),
             metadata=ImageMeta(
                 rois=RoiListModel(
-                    items=[LineRoi(name="ROI-0", x1=1, y1=1, x2=4, y2=5)],
+                    items=[LineRoi(name="ROI-0", start=(1, 1), end=(4, 5),)],
                 )
             )
         )
@@ -316,7 +316,7 @@ def test_image_view_roi_selection_from_list_widget(qtbot: QtBot):
             metadata=ImageMeta(
                 rois=RoiListModel(
                     items=[
-                        LineRoi(name="ROI-0", x1=1, y1=1, x2=4, y2=5),
+                        LineRoi(name="ROI-0", start=(1, 1), end=(4, 5)),
                         PointRoi2D(name="ROI-1", x=1, y=5),
                     ],
                 ),
@@ -343,7 +343,7 @@ def test_image_view_roi_actions(qtbot: QtBot):
                 axes=[ArrayAxis(name=name) for name in ["t", "c", "y", "x"]],
                 rois=RoiListModel(
                     items=[
-                        LineRoi(name="ROI-0", x1=1, y1=1, x2=4, y2=5),
+                        LineRoi(name="ROI-0", start=(1, 1), end=(4, 5)),
                         PointRoi2D(name="ROI-1", x=1, y=5),
                         RectangleRoi(name="ROI-2", x=1, y=1, width=3, height=4),
                     ],
@@ -494,7 +494,7 @@ def test_roi_commands(himena_ui: MainWindow):
             axes=["t", "z", "y", "x"],
             rois=RoiListModel(
                 items=[
-                    LineRoi(name="ROI-0", x1=1, y1=1, x2=4, y2=5),
+                    LineRoi(name="ROI-0", start=(1, 1), end=(4, 5)),
                     PointRoi2D(name="ROI-1", x=1, y=5),
                 ],
                 indices=np.array([[0, 0], [0, 0]], dtype=np.int32),
@@ -606,7 +606,7 @@ def test_find_nice_position():
 def test_flat_roi_always_selected(qtbot: QtBot):
     view = QImageView()
     qtbot.addWidget(view)
-    cur_roi = LineRoi(x1=2, y1=4, x2=5, y2=5)
+    cur_roi = LineRoi(start=(2, 4), end=(5, 5))
     view.update_model(
         WidgetDataModel(
             value=np.zeros((5, 10, 10)),
@@ -636,7 +636,7 @@ def test_select_rois(himena_ui: MainWindow):
             axes=["t", "z", "y", "x"],
             rois=RoiListModel(
                 items=[
-                    LineRoi(name="ROI-0", x1=1, y1=1, x2=4, y2=5),
+                    LineRoi(name="ROI-0", start=(1, 1), end=(4, 5)),
                     PointRoi2D(name="ROI-1", x=1, y=5),
                 ],
                 indices=np.array([[0, 0], [0, 0]], dtype=np.int32),

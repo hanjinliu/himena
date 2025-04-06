@@ -480,7 +480,7 @@ def roi_specify_line(win: SubWindow) -> Parametric:
         model = win.to_model()
         meta = _cast_meta(model, ImageMeta)
         indices = _slider_indices(meta)
-        meta.current_roi = _roi.LineRoi(indices=indices, x1=x1, y1=y1, x2=x2, y2=y2)
+        meta.current_roi = _roi.LineRoi(indices=indices, start=(x1, y1), end=(x2, y2))
         meta.skip_image_rerendering = True
         win.update_model(model.model_copy(update={"metadata": meta}))
 

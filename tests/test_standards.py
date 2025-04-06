@@ -5,7 +5,7 @@ from himena.standards import roi
 from numpy .testing import assert_allclose
 
 def test_line_roi():
-    r0 = roi.LineRoi(x1=0, y1=0, x2=6, y2=3)
+    r0 = roi.LineRoi(start=(0, 0), end=(6, 3))
     assert r0.length() == pytest.approx(math.sqrt(6**2 + 3**2))
     xs, ys = r0.arange()
     assert_allclose(xs, np.arange(7) * math.cos(math.atan(3/6)))

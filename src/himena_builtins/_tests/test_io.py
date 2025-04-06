@@ -37,3 +37,5 @@ def test_dataframe(sample_dir: Path, tmpdir):
     write(model, tmpdir / "pq.parquet")
     model = read(sample_dir / "pq.parquet")
     assert model.type == StandardType.DATAFRAME
+    show_statistics(model)
+    show_metadata(model)

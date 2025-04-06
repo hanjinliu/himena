@@ -70,10 +70,8 @@ class QLineRoi(QtW.QGraphicsLineItem, QRoi):
     def toRoi(self) -> roi.LineRoi:
         x1, y1, x2, y2 = self._coordinates()
         return roi.LineRoi(
-            x1=x1 - 0.5,
-            y1=y1 - 0.5,
-            x2=x2 - 0.5,
-            y2=y2 - 0.5,
+            start=(x1 - 0.5, y1 - 0.5),
+            end=(x2 - 0.5, y2 - 0.5),
             name=self.label(),
         )
 
