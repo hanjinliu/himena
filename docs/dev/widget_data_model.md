@@ -77,6 +77,23 @@ The `WidgetDataModel` standard makes the different part of development very clea
     calling this function, and sent back to the GUI as another widget created based on the
     returned model.
 
+#### To summarize
+
+Let's say you intend to read a text file, convert it into a table and save it to the
+local disk.
+
+![](../images/02_chart_io.png)
+
+- If you are a user, you will not see the "memory" layer. You will open the text file
+  (1, 2), run the command to convert it to a table (3, 4, 5), and save the table to the
+  local disk (6, 7).
+- If you are a plugin developer, you will implement the reader function (1), the text
+  editor widget with the proper protocols (2, 3), the converter function (4), the table
+  viewer widget with the proper protocols (5, 6), and the writer function (7).
+
+It is interesting to note that what plugin developers do are always half step behind
+what users do.
+
 ## Choosing the Type
 
 You can use any string for `type` field, but to make your widget interpretable for
@@ -91,6 +108,32 @@ StandardType.TABLE  # "table"
 StandardType.ARRAY  # "array"
 StandardType.IMAGE  # "array.image"
 ```
+
+??? info "The list of the pre-defined standards"
+
+    Basic types
+
+    | String type      | Constant                | Internal Python object type             |
+    |:----------------:|:-----------------------:|:---------------------------------------:|
+    |`"text"`          |`StandardType.TEXT`      | `str`                                   |
+    |`"table"`         |`StandardType.TABLE`     | `ndarray` of `np.dtypes.StringDType`    |
+    |`"array"`         |`StandardType.ARRAY`     | array-like object of numerical dtype    |
+    |`"dataframe"`     |`StandardType.DATAFRAME` | Any dataframe-like object such as `dict[str, ndarray]`, `pandas.DataFrame` and `polars.DataFrame` |
+    |`"dict"`          |`StandardType.DICT`      | `dict[str, T]`, where T is any type     |
+    |`"plot"`          |`StandardType.PLOT`      | `himena.standard.plotting.BaseLayoutModel` object|
+    |`"rois"`          |`StandardType.ROIS`     | `himena.standard.roi.RoiListModel` object|
+    |`"matplotlib-figure"`|`StandardType.MPL_FIGURE`| `matplotlib.Figure` object           |
+    |`"mesh"`          |`StandardType.MESH`      | tuple of vertices, faces and values     |
+    |`"models"`        |`StandardType.MODELS`    | `list[WidgetDataModel]`                 |
+    |`"function"`      |`StandardType.FUNCTION`  | any callable object                     |
+    |`"lazy"`          |`StandardType.LAZY`      | callable `() -> WidgetDataModel`        |
+    |`"workflow"`      |`StandardType.WORKFLOW`  | `himena.workflow.Workflow` object       |
+
+    Subtypes
+
+    |`"array.image"`   |`StandardType.IMAGE`     | array-like object of numerical dtype    |
+    |`"array.image.labels"`|`StandardType.IMAGE_LABELS`| array-like object of integer dtype|
+    |`"dict.table"`|`StandardType.EXCEL`| `dict[str, ndarray]`, where the dtype of the array is `np.dtypes.StringDType`|
 
 You can use "." to separate the type into a hierarchy. For example, the standard type
 `"array.image"` is used for an image data, but it is under "array" type because all the

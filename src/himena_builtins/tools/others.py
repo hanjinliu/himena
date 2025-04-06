@@ -221,6 +221,7 @@ def _norm_model_list(models) -> Iterable[WidgetDataModel]:
 
 
 @register_function(
+    title="Execute workflow",
     types=[StandardType.WORKFLOW],
     menus=[],
     command_id="builtins:exec-workflow",

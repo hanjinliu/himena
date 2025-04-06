@@ -8,3 +8,7 @@ In this section, you will learn how to develop plugins for `himena`.
 - [Register Functions](register_functions.md)
 - [Register Widgets](register_widgets.md)
 - [Register Dock Widgets](register_dock_widgets.md)
+
+Here's some useful standardized objects to make plugins compatible with each other.
+
+- [Plotting in Himena](plotting.md)

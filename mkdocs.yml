@@ -39,6 +39,7 @@ nav:
     - Register Functions: dev/register_functions.md
     - Register Widgets: dev/register_widgets.md
     - Register Dock Widgets: dev/register_dock_widgets.md
+    - Plotting in Himena: dev/plotting.md
   - API Reference:
     - api/consts.md
     - api/layout.md
@@ -46,6 +47,7 @@ nav:
     - api/plugins.md
     - api/types.md
     - api/standards/model_meta.md
+    - api/standards/plotting.md
     - api/standards/roi.md
     - api/widgets.md
 
