@@ -15,6 +15,7 @@ from superqt import QIconifyIcon
 from superqt.utils import ensure_main_thread
 from himena.consts import MenuId
 from himena.consts import ParametricWidgetProtocolNames as PWPN
+from himena.utils.window_rect import prevent_window_overlap
 from himena._app_model import _formatter, HimenaApplication
 from himena._utils import doc_to_whats_this
 from himena.qt._qnotification import QJobStack, QNotificationWidget, QWhatsThisWidget
@@ -806,7 +807,11 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         if (result_stack := tab._result_stack_ref()) is None:
             result_stack = QResultStack()
             tab._result_stack_ref = weakref.ref(result_stack)
-            tab.add_widget(result_stack, title="Results")
+            sub = tab.current()
+            win = tab.add_widget(result_stack, title="Results")
+            win.closed.connect(tab._discard_result_stack_ref)
+            if sub:
+                win.rect = prevent_window_overlap(sub, win, self._area_size())
         result_stack.append_result(item)
 
 

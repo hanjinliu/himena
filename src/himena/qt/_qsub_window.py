@@ -20,7 +20,7 @@ from himena.utils.misc import lru_cache
 from himena.consts import MenuId
 from himena.types import DragDataModel, WindowState, WindowRect, Size
 from himena.plugins import _checker
-from himena.utils.resize import ResizeState
+from himena.utils.window_rect import ResizeState
 from himena.qt._utils import get_main_window, build_qmodel_menu
 from himena.qt._qrename import QRenameLineEdit
 from himena import _drag

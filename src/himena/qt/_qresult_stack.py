@@ -20,6 +20,8 @@ class QResultStack(QtW.QTableWidget):
         self.setAlternatingRowColors(True)
         self.setSelectionMode(QtW.QAbstractItemView.SelectionMode.ExtendedSelection)
         self.setSelectionBehavior(QtW.QAbstractItemView.SelectionBehavior.SelectRows)
+        self.setVerticalScrollMode(QtW.QAbstractItemView.ScrollMode.ScrollPerPixel)
+        self.setHorizontalScrollMode(QtW.QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.horizontalHeader().hide()
         self._items: list[dict[str, Any]] = []
 
@@ -37,13 +39,13 @@ class QResultStack(QtW.QTableWidget):
         add_new_column = len(item) > self.columnCount()
         if add_new_column:
             self.setColumnCount(len(item))
+        flags = QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsSelectable
         for column, (key, value) in enumerate(item.items()):
             label = QtW.QLabel(f"<b><font color='#808080'>{key}:</font></b> {value!r}")
+            label.setContentsMargins(5, 2, 5, 2)
             table_item = QtW.QTableWidgetItem()
             table_item.setToolTip(f"{key}: {value!r}")
-            table_item.setFlags(
-                QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsSelectable
-            )
+            table_item.setFlags(flags)
             model_index = self.model().index(self.rowCount() - 1, column)
             self.setIndexWidget(model_index, label)
             self.setItem(self.rowCount() - 1, column, table_item)
