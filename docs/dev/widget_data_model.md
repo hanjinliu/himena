@@ -92,6 +92,18 @@ StandardType.ARRAY  # "array"
 StandardType.IMAGE  # "array.image"
 ```
 
+<detail><summary>The full list of the pre-defined standards</summary>
+
+| String type | Constant             | Internal Python object type                     |
+|:-----------:|:--------------------:|:-----------------------------------------------:|
+|`"text"`     |`StandardType.TEXT`   | `str`                                           |
+|`"table"`    |`StandardType.TABLE`  | `numpy.ndarray` of `np.dtypes.StringDType`      |
+|`"array"`    |`StandardType.ARRAY`  | `numpy.ndarray`                                 |
+|`"array.image"`|`StandardType.IMAGE`  | `numpy.ndarray` of numerical dtype            |
+|`"
+
+</detail>
+
 You can use "." to separate the type into a hierarchy. For example, the standard type
 `"array.image"` is used for an image data, but it is under "array" type because all the
 image data are essentially arrays. A benefit of this subtyping is that all the "array"
