@@ -258,10 +258,10 @@ from himena.standards import roi
 
 roilist = roi.RoiListModel(
     items=[
-        roi.LineRoi(x1=4, y1=6, x2=18, y2=-1, name="line-roi-0"),
-        roi.LineRoi(x1=12, y1=14, x2=6, y2=4, name="line-roi-1"),
+        roi.LineRoi(start=(4, 6), end=(18, -1), name="line-roi-0"),
+        roi.LineRoi(start=(12, 14), end=(6, 4), name="line-roi-1"),
         roi.RectangleRoi(x=6, y=7, width=8, height=8.4, name="rect-roi-0"),
-        roi.LineRoi(x1=4, y1=6, x2=18, y2=-1, name="line-roi-2"),
+        roi.LineRoi(start=(4, 6), end=(18, -1), name="line-roi-2"),
         roi.EllipseRoi(x=6, y=7, width=8, height=8.4, name="ellipse-roi-0")
     ]
 )
