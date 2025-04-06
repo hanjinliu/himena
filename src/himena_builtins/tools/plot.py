@@ -21,6 +21,7 @@ from himena.qt.magicgui import (
     AxisPropertyEdit,
     DictEdit,
 )
+from himena._app_model import AppContext as _ctx
 
 if TYPE_CHECKING:
     from himena.qt.magicgui._plot_elements import FacePropertyDict, EdgePropertyDict
@@ -33,6 +34,7 @@ _TABLE_LIKE = [
 ]
 _MENU = [MenuId.TOOLS_PLOT, "/model_menu/plot"]
 _EDGE_ONLY_VALUE = {"color": "tab10", "width": 2.0}
+_NOT_AN_IMAGE = _ctx.active_window_model_subtype_1 != "image"
 
 # Single 2D selection in the form of ((row start, row stop), (col start, col stop))
 # We should avoid using slice because it is not serializable.
@@ -44,6 +46,7 @@ SelectionType = tuple[tuple[int, int], tuple[int, int]]
     types=_TABLE_LIKE,
     menus=_MENU,
     command_id="builtins:scatter-plot",
+    enablement=_NOT_AN_IMAGE,
 )
 def scatter_plot(win: SubWindow) -> Parametric:
     """Make a scatter plot from a table-like data."""
@@ -89,6 +92,7 @@ def scatter_plot(win: SubWindow) -> Parametric:
     types=_TABLE_LIKE,
     menus=_MENU,
     command_id="builtins:line-plot",
+    enablement=_NOT_AN_IMAGE,
 )
 def line_plot(win: SubWindow) -> Parametric:
     """Make a line plot from a table-like data."""
@@ -126,6 +130,7 @@ def line_plot(win: SubWindow) -> Parametric:
     types=_TABLE_LIKE,
     menus=_MENU,
     command_id="builtins:bar-plot",
+    enablement=_NOT_AN_IMAGE,
 )
 def bar_plot(win: SubWindow) -> Parametric:
     """Make a bar plot from a table-like data."""
@@ -176,6 +181,7 @@ def bar_plot(win: SubWindow) -> Parametric:
     types=_TABLE_LIKE,
     menus=_MENU,
     command_id="builtins:errorbar-plot",
+    enablement=_NOT_AN_IMAGE,
 )
 def errorbar_plot(win: SubWindow) -> Parametric:
     """Make an error bar plot from a table-like data."""
@@ -227,6 +233,7 @@ def errorbar_plot(win: SubWindow) -> Parametric:
     types=_TABLE_LIKE,
     menus=_MENU,
     command_id="builtins:band-plot",
+    enablement=_NOT_AN_IMAGE,
 )
 def band_plot(win: SubWindow) -> Parametric:
     """Make a band plot from a table-like data."""
@@ -273,6 +280,7 @@ def band_plot(win: SubWindow) -> Parametric:
     types=_TABLE_LIKE,
     menus=_MENU,
     command_id="builtins:histogram",
+    enablement=_NOT_AN_IMAGE,
 )
 def histogram(win: SubWindow) -> Parametric:
     """Make a histogram from a table-like data."""
@@ -363,6 +371,7 @@ def edit_plot(win: SubWindow) -> Parametric:
     types=_TABLE_LIKE,
     menus=_MENU,
     command_id="builtins:plot-3d:scatter-plot-3d",
+    enablement=_NOT_AN_IMAGE,
 )
 def scatter_plot_3d(win: SubWindow) -> Parametric:
     """3D scatter plot."""
@@ -416,6 +425,7 @@ def scatter_plot_3d(win: SubWindow) -> Parametric:
     types=_TABLE_LIKE,
     menus=_MENU,
     command_id="builtins:plot-3d:line-plot-3d",
+    enablement=_NOT_AN_IMAGE,
 )
 def line_plot_3d(win: SubWindow) -> Parametric:
     """3D line plot."""
