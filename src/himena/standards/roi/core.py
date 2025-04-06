@@ -80,10 +80,8 @@ class RectangleRoi(Roi2D):
 
 
 class RotatedRoi2D(Roi2D):
-    start: tuple[float, float] = Field(
-        ..., description="Coordinate of the start point."
-    )
-    end: tuple[float, float] = Field(..., description="Coordinate of the end point.")
+    start: tuple[float, float] = Field(..., description="(X, Y) coordinate of the start point.")  # fmt: skip
+    end: tuple[float, float] = Field(..., description="(X, Y) coordinate of the end point.")  # fmt: skip
     width: float = Field(..., description="Width of the ROI.")
 
     def length(self) -> float:
@@ -110,7 +108,8 @@ class RotatedRoi2D(Roi2D):
         return math.degrees(self.angle_radian())
 
     def angle_radian(self) -> float:
-        return math.atan2(self.end[1] - self.start[1], self.end[0] - self.start[0])
+        # NOTE: invert y so that angle is CCW
+        return math.atan2(self.start[1] - self.end[1], self.end[0] - self.start[0])
 
 
 class RotatedRectangleRoi(RotatedRoi2D):
@@ -252,30 +251,46 @@ class PointsRoi2D(Roi2D):
 class LineRoi(Roi2D):
     """A 2D line ROI."""
 
-    x1: float = Field(..., description="X-coordinate of the first point.")
-    y1: float = Field(..., description="Y-coordinate of the first point.")
-    x2: float = Field(..., description="X-coordinate of the second point.")
-    y2: float = Field(..., description="Y-coordinate of the second point.")
+    start: tuple[float, float] = Field(..., description="(X, Y) coordinate of the start point.")  # fmt: skip
+    end: tuple[float, float] = Field(..., description="(X, Y) coordinate of the end point.")  # fmt: skip
+
+    @property
+    def x1(self) -> float:
+        return self.start[0]
+
+    @property
+    def y1(self) -> float:
+        return self.start[1]
+
+    @property
+    def x2(self) -> float:
+        return self.end[0]
+
+    @property
+    def y2(self) -> float:
+        return self.end[1]
 
     def shifted(self, dx: float, dy: float) -> LineRoi:
+        """Shift the line by the given amount."""
         return LineRoi(
-            x1=self.x1 + dx,
-            y1=self.y1 + dy,
-            x2=self.x2 + dx,
-            y2=self.y2 + dy,
+            start=(self.x1 + dx, self.y1 + dy),
+            end=(self.x2 + dx, self.y2 + dy),
         )
 
     def length(self) -> float:
         """Length of the line."""
-        return math.hypot(self.x2 - self.x1, self.y2 - self.y1)
+        dx = self.x2 - self.x1
+        dy = self.y2 - self.y1
+        return math.hypot(dx, dy)
 
     def angle(self) -> float:
         """Angle in degrees."""
-        return math.degrees(math.atan2(self.y2 - self.y1, self.x2 - self.x1))
+        return math.degrees(self.angle_radian())
 
-    def radian(self) -> float:
-        """Angle in radians."""
-        return math.atan2(self.y2 - self.y1, self.x2 - self.x1)
+    def angle_radian(self) -> float:
+        dx = self.x2 - self.x1
+        dy = self.y1 - self.y2  # NOTE: invert y so that angle is CCW
+        return math.atan2(dy, dx)
 
     def linspace(self, num: int) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
         """Return a tuple of x and y coordinates of np.linspace along the line."""
@@ -285,7 +300,7 @@ class LineRoi(Roi2D):
         self, step: float = 1.0
     ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
         """Return a tuple of x and y coordinates of np.arange along the line."""
-        radian = self.radian()
+        radian = -self.angle_radian()
         num, rem = divmod(self.length(), step)
         xrem = rem * math.cos(radian)
         yrem = rem * math.sin(radian)

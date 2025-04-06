@@ -143,22 +143,26 @@ class QDraggableHorizontalHeader(QHorizontalHeaderView):
         if e.button() == QtCore.Qt.MouseButton.NoButton:
             # hover
             index = self.logicalIndexAt(e.pos())
-            hovered_column_selected = False
-            for sel in view.selection_model.iter_col_selections():
-                if sel.start <= index < sel.stop:
-                    hovered_column_selected = True
-                    break
-            if hovered_column_selected and index >= 0:
-                index_rect = self.visualRectAtIndex(index)
-                top_right = index_rect.topRight()
-                top_right.setX(top_right.x() - 14)
-                dy = (index_rect.height() - self._hover_drag_indicator.height()) / 2
-                top_right.setY(top_right.y() + int(dy))
-                self._hover_drag_indicator.move(top_right)
-                self._hover_drag_indicator.show()
-            else:
-                self._hover_drag_indicator.hide()
+            self._process_move_event(index)
         return super().mouseMoveEvent(e)
+
+    def _process_move_event(self, index: int):
+        view = self._table_view_ref()
+        hovered_column_selected = False
+        for sel in view.selection_model.iter_col_selections():
+            if sel.start <= index < sel.stop:
+                hovered_column_selected = True
+                break
+        if hovered_column_selected and index >= 0:
+            index_rect = self.visualRectAtIndex(index)
+            top_right = index_rect.topRight()
+            top_right.setX(top_right.x() - 14)
+            dy = (index_rect.height() - self._hover_drag_indicator.height()) / 2
+            top_right.setY(top_right.y() + int(dy))
+            self._hover_drag_indicator.move(top_right)
+            self._hover_drag_indicator.show()
+        else:
+            self._hover_drag_indicator.hide()
 
     def leaveEvent(self, a0):
         self._hover_drag_indicator.hide()

@@ -38,6 +38,7 @@ def test_dataframe(qtbot: QtBot, df):
         assert type(tester.to_model().value) is type(df)
         tester.is_modified()
         assert tester.widget._hor_header._data_model_for_drag() is not None
+        tester.widget._hor_header._process_move_event(0)
 
 def test_dataframe_plot(qtbot: QtBot):
     x = np.linspace(0, 3, 20)
