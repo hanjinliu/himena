@@ -300,7 +300,7 @@ class LineRoi(Roi2D):
         self, step: float = 1.0
     ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
         """Return a tuple of x and y coordinates of np.arange along the line."""
-        radian = self.angle_radian()
+        radian = -self.angle_radian()
         num, rem = divmod(self.length(), step)
         xrem = rem * math.cos(radian)
         yrem = rem * math.sin(radian)

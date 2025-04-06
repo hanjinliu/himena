@@ -36,8 +36,8 @@ def test_rotated_rectangle():
     assert r0.length() == pytest.approx(math.sqrt(2), rel=1e-5)
     assert r1.start == (3, 4)
     assert r1.end == (4, 5)
-    assert r0.angle() == pytest.approx(45)
-    assert r1.angle_radian() == pytest.approx(math.pi / 4, rel=1e-5)
+    assert r0.angle() == pytest.approx(-45)
+    assert r1.angle_radian() == pytest.approx(-math.pi / 4, rel=1e-5)
     assert r0.to_mask((5, 5)).sum() < 3
 
 def test_ellipse():
