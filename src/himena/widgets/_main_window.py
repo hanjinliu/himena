@@ -543,8 +543,7 @@ class MainWindow(Generic[_W]):
         keybindings=None,
         command_id=None,
     ):
-        """
-        Register a function as a callback in runtime.
+        """Register a function as a callback in runtime.
 
         Example
         -------

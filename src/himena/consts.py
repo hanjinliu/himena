@@ -97,6 +97,9 @@ class StandardType(SimpleNamespace):
     # fallback when no specific widget can be used for the data
     ANY = "any"
 
+    # type used for result stack
+    RESULTS = "results"
+
 
 class MenuId(StrEnum):
     """Preset of menu IDs."""
@@ -140,10 +143,10 @@ class MenuId(StrEnum):
     """Menu ID for the commands related to "table"-type data."""
     TOOLS_TABLE_COPY = "tools/table/copy"
     """Menu ID for the commands that copy the "table"-type data."""
-    TOOLS_MODELS = "tools/models"
-    """Menu ID for the commands related to "models"-type data."""
     TOOLS_FUNCTION = "tools/function"
     """Menu ID for the commands related to "function"-type data."""
+    TOOLS_OTHERS = "tools/others"
+    """Menu ID for the commands related to other data."""
 
     # Others
     TOOLBAR = "toolbar"

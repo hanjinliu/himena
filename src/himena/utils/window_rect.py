@@ -1,7 +1,13 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any, TypeVar
 from himena.utils.enum import StrEnum
-from himena.types import Size, WindowRect
+from himena.types import Size, WindowRect, Margins
+
+if TYPE_CHECKING:
+    from himena.widgets import SubWindow
+
+_W = TypeVar("_W", bound=Any)
 
 
 class ResizeState(StrEnum):
@@ -118,3 +124,51 @@ RESIZE_STATE_MAP = {
     (False, False, False, True): ResizeState.BOTTOM,
     (False, False, False, False): ResizeState.NONE,
 }
+
+
+def prevent_window_overlap(
+    win: SubWindow[_W],
+    win_to_move: SubWindow[_W],
+    area_size: tuple[int, int],
+) -> WindowRect:
+    """Find a comfortable position to move the window.
+
+    Parameters
+    ----------
+    win : SubWindow
+        The window that should not be overlapped by the other window.
+    win_to_move : SubWindow
+        The window that should be moved to prevent overlap with `win`.
+    area_size : tuple[int, int]
+        The size of the area in which the window should be moved.
+    """
+    offset = 8
+    asize = Size(*area_size)
+    margins = Margins.from_rects(win.rect, WindowRect(0, 0, *asize))
+    rect_orig = win_to_move.rect
+    size_orig = rect_orig.size()
+    if size_orig.width < margins.right:
+        out = rect_orig.move_top_left(
+            win.rect.right + offset,
+            min(win.rect.top, max(asize.height - size_orig.height - offset, 0)),
+        )
+    elif size_orig.width < margins.left:
+        out = rect_orig.move_top_right(
+            win.rect.left - offset,
+            min(win.rect.top, max(asize.height - size_orig.height - offset, 0)),
+        )
+    elif size_orig.height < margins.bottom:
+        out = rect_orig.move_top_left(
+            min(win.rect.left, max(asize.width - size_orig.width - offset, 0)),
+            win.rect.bottom + offset,
+        )
+    elif size_orig.height < margins.top:
+        out = rect_orig.move_bottom_left(
+            min(win.rect.left, max(asize.width - size_orig.width - offset, 0)),
+            win.rect.top - offset,
+        )
+    elif margins.bottom < margins.right:
+        out = rect_orig.move_top_left(win.rect.right + offset, win.rect.top)
+    else:
+        out = rect_orig.move_bottom_left(win.rect.left, win.rect.bottom + offset)
+    return out

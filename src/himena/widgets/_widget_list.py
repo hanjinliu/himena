@@ -110,6 +110,8 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         self._minimized_window_stack_layout = VStackLayout(main_window, inverted=True)
         self._layouts = [self._minimized_window_stack_layout]
         self._minimized_window_stack_layout._reanchor(Size(*main_window._area_size()))
+        # the tab-specific result stack
+        self._result_stack_ref: Callable[[], _W | None] = lambda: None
 
     @property
     def layouts(self) -> FrozenList[Layout]:
@@ -249,8 +251,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         run_async: bool = False,
         result_as: Literal["window", "below", "right"] = "window",
     ) -> ParametricWindow[_W]:
-        """
-        Add a function as a parametric sub-window.
+        """Add a function as a parametric sub-window.
 
         The input function must return a `WidgetDataModel` instance, which can be
         interpreted by the application.
@@ -534,6 +535,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         file_paths: PathOrPaths,
         plugin: str | None = None,
     ) -> Future:
+        """Read multiple files asynchronously and return a future."""
         ui = self._main_window()._himena_main_window
         file_paths = _norm_paths(file_paths)
         future = ui._executor.submit(self._paths_to_models, file_paths, plugin=plugin)
@@ -599,6 +601,10 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
                 index = index_or_name
         return index
 
+    def _discard_result_stack_ref(self):
+        """Discard the result stack reference."""
+        self._result_stack_ref = lambda: None
+
 
 def _norm_nrows_ncols(nrows: int | None, ncols: int | None, n: int) -> tuple[int, int]:
     if nrows is None:
@@ -613,6 +619,8 @@ def _norm_nrows_ncols(nrows: int | None, ncols: int | None, n: int) -> tuple[int
 
 
 class TabList(SemiMutableSequence[TabArea[_W]], _HasMainWindowRef[_W], Generic[_W]):
+    """List of tab areas in the main window."""
+
     changed = Signal()
 
     def __init__(self, main_window: BackendMainWindow[_W]):
@@ -639,6 +647,7 @@ class TabList(SemiMutableSequence[TabArea[_W]], _HasMainWindowRef[_W], Generic[_
         return None
 
     def add(self, name: str) -> TabArea[_W]:
+        """Add a new tab area with the given name."""
         main = self._main_window()
         n_tab = len(self)
         if name is None:

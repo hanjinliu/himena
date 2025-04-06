@@ -16,12 +16,12 @@ from magicgui import widgets as mgw
 from himena import anchor as _anchor
 from himena import io_utils
 from himena._utils import get_widget_class_id
+from himena.utils.window_rect import prevent_window_overlap
 from himena.consts import ParametricWidgetProtocolNames as PWPN
 from himena.types import (
     BackendInstructions,
     DragDataModel,
     DropResult,
-    Margins,
     ModelTrack,
     Parametric,
     ParametricWidgetProtocol,
@@ -764,7 +764,7 @@ class ParametricWindow(SubWindow[_W]):
                 main.set_widget_as_preview(prev)
                 prev.force_not_editable(True)  # disable editing if possible
                 # move the window so that it does not overlap with the parametric window
-                prev.rect = _find_where_to_move(self, prev, main)
+                prev.rect = prevent_window_overlap(self, prev, main._area_size())
             else:
                 main._add_widget_to_parametric_window(
                     self, result_widget, self._result_as
@@ -1014,41 +1014,3 @@ def _widget_repr(wrapper: WidgetWrapper[_W]) -> str:
 
 def _do_nothing() -> None:
     return None
-
-
-def _find_where_to_move(
-    win: SubWindow[_W],
-    win_to_move: SubWindow[_W],
-    main: BackendMainWindow,
-) -> WindowRect:
-    """Find a comfortable position to move the window."""
-    offset = 8
-    area_size = Size(*main._area_size())
-    margins = Margins.from_rects(win.rect, WindowRect(0, 0, *area_size))
-    rect_orig = win_to_move.rect
-    size_orig = rect_orig.size()
-    if size_orig.width < margins.right:
-        out = rect_orig.move_top_left(
-            win.rect.right + offset,
-            min(win.rect.top, max(area_size.height - size_orig.height - offset, 0)),
-        )
-    elif size_orig.width < margins.left:
-        out = rect_orig.move_top_right(
-            win.rect.left - offset,
-            min(win.rect.top, max(area_size.height - size_orig.height - offset, 0)),
-        )
-    elif size_orig.height < margins.bottom:
-        out = rect_orig.move_top_left(
-            min(win.rect.left, max(area_size.width - size_orig.width - offset, 0)),
-            win.rect.bottom + offset,
-        )
-    elif size_orig.height < margins.top:
-        out = rect_orig.move_bottom_left(
-            min(win.rect.left, max(area_size.width - size_orig.width - offset, 0)),
-            win.rect.top - offset,
-        )
-    elif margins.bottom < margins.right:
-        out = rect_orig.move_top_left(win.rect.right + offset, win.rect.top)
-    else:
-        out = rect_orig.move_bottom_left(win.rect.left, win.rect.bottom + offset)
-    return out

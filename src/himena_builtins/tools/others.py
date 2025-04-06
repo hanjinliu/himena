@@ -3,15 +3,17 @@ import inspect
 from pathlib import Path
 import html
 import re
-from typing import Iterable, Literal, Mapping
+from typing import Any, Iterable, Literal, Mapping
 import warnings
 from datetime import datetime
 import numpy as np
 from himena.data_wrappers._dataframe import wrap_dataframe
 from himena._descriptors import NoNeedToSave
 from himena.plugins import register_function, configure_gui, widget_classes
+from himena.standards.model_meta import ListMeta
 from himena.types import Parametric, WidgetDataModel
 from himena.consts import StandardType, MonospaceFontFamily, MenuId
+from himena.utils.collections import OrderedSet
 from himena.widgets import SubWindow, MainWindow, ParametricWindow
 from himena.workflow import Workflow
 from himena import AppContext as ctx
@@ -43,9 +45,9 @@ def open_as_text_anyway(ui: MainWindow, win: SubWindow) -> WidgetDataModel[str]:
 
 
 @register_function(
-    menus=[MenuId.TOOLS_MODELS],
+    menus=[MenuId.TOOLS_OTHERS],
     title="Stack models ...",
-    command_id="builtins:stack-models",
+    command_id="builtins:models:stack-models",
     enablement=(ctx.num_tabs > 0) & (ctx.num_sub_windows > 0),
 )
 def stack_models(ui: MainWindow) -> Parametric:
@@ -89,9 +91,9 @@ def stack_models(ui: MainWindow) -> Parametric:
 
 
 @register_function(
-    menus=[MenuId.TOOLS_MODELS],
+    menus=[MenuId.TOOLS_OTHERS],
     types=[StandardType.MODELS],
-    command_id="builtins:sort-model-list",
+    command_id="builtins:models:sort-model-list",
 )
 def sort_model_list(model: WidgetDataModel) -> Parametric:
     """Sort the model list."""
@@ -140,9 +142,9 @@ def _sort_func_datetime(m: WidgetDataModel) -> datetime:
 
 
 @register_function(
-    menus=[MenuId.TOOLS_MODELS],
+    menus=[MenuId.TOOLS_OTHERS],
     types=[StandardType.MODELS],
-    command_id="builtins:filter-model-list",
+    command_id="builtins:models:filter-model-list",
 )
 def filter_model_list(model: WidgetDataModel) -> Parametric:
     """Filter the model list."""
@@ -190,8 +192,8 @@ def filter_model_list(model: WidgetDataModel) -> Parametric:
 @register_function(
     title="Compute lazy items",
     types=[StandardType.MODELS],
-    menus=[MenuId.TOOLS_MODELS],
-    command_id="builtins:compute-lazy-items",
+    menus=[MenuId.TOOLS_OTHERS],
+    command_id="builtins:models:compute-lazy-items",
 )
 def compute_lazy_items(model: WidgetDataModel) -> WidgetDataModel:
     """Compute all the lazy items in the model list."""
@@ -451,6 +453,57 @@ def plot_function_2d(model: WidgetDataModel) -> Parametric:
         )
 
     return run_plot
+
+
+@register_function(
+    title="Results To Table",
+    menus=[MenuId.TOOLS_OTHERS],
+    types=[StandardType.RESULTS],
+    command_id="builtins:results:results-to-table",
+)
+def results_to_table(model: WidgetDataModel) -> WidgetDataModel:
+    """Convert the result stack to a table."""
+    vals: list[dict[str, Any]] = model.value
+    return _results_to_table(vals, title=f"{model.title} (Table)")
+
+
+@register_function(
+    title="Results To Table (Selected)",
+    menus=[MenuId.TOOLS_OTHERS],
+    types=[StandardType.RESULTS],
+    command_id="builtins:results:selected-results-to-table",
+)
+def selected_results_to_table(model: WidgetDataModel) -> WidgetDataModel:
+    """Convert the selected results to a table."""
+    meta = model.metadata
+    if not isinstance(meta, ListMeta):
+        raise ValueError(f"Expected a ListMeta but got {type(meta)}")
+    vals: list[dict[str, Any]] = [model.value[i] for i in meta.selections]
+    if not vals:
+        raise ValueError("No item selected.")
+    return _results_to_table(vals, title=f"{model.title} (Table)")
+
+
+def _results_to_table(vals: list[dict[str, Any]], title: str) -> WidgetDataModel:
+    """Convert the result stack to a table."""
+    columns = OrderedSet[str]()
+    for val in vals:
+        if not isinstance(val, dict):
+            raise TypeError(f"Expected a dict but got {type(val)}")
+        columns.update(val.keys())
+    column_name_to_index = {name: i for i, name in enumerate(columns)}
+    arr = np.zeros((len(vals) + 1, len(columns)), dtype=np.dtypes.StringDType())
+    arr[0, :] = [str(name) for name in columns]
+    for i, val in enumerate(vals):
+        for name, value in val.items():
+            if name not in column_name_to_index:
+                raise ValueError(f"Unknown column name: {name}")
+            arr[i + 1, column_name_to_index[name]] = str(value)
+    return WidgetDataModel(
+        value=arr,
+        type=StandardType.TABLE,
+        title=title,
+    )
 
 
 def _statistics_table(value) -> str:
