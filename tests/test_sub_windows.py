@@ -14,7 +14,7 @@ from himena.workflow import CommandExecution, LocalReaderMethod, ProgrammaticMet
 from himena.types import ClipboardDataModel, WidgetDataModel, WindowRect
 from himena.testing import file_dialog_response
 from himena.qt import register_widget_class, MainWindowQt
-from himena_builtins.qt import widgets as _qtw
+from himena_builtins.qt.text import QTextEdit
 import himena._providers
 
 def test_new_window(make_himena_ui, backend: str):
@@ -281,7 +281,7 @@ def test_register_widget(himena_ui: MainWindow):
 
     model = WidgetDataModel(value="abc", type="text.xyz")
     win = himena_ui.add_data_model(model)
-    assert type(win.widget) is _qtw.QTextEdit
+    assert type(win.widget) is QTextEdit
     register_widget_class("text.xyz", QCustomTextView)
 
     win2 = himena_ui.add_data_model(model)

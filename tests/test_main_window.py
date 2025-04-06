@@ -9,7 +9,10 @@ from himena.qt._qmain_window import QMainWindow
 from himena.standards.model_meta import DataFrameMeta, ImageMeta
 from himena.standards.roi import RectangleRoi
 from himena.widgets import set_status_tip, notify, append_result
-from himena_builtins.qt import widgets as _qtw
+from himena_builtins.qt.text import QTextEdit, QRichTextEdit
+from himena_builtins.qt.image import QImageView
+from himena_builtins.qt.dataframe import QDataFrameView
+from himena_builtins.qt.table import QSpreadsheet
 
 from qtpy import QtWidgets as QtW
 from qtpy.QtCore import Qt, QPoint
@@ -21,14 +24,14 @@ from himena.types import WidgetDataModel, WindowRect
 def test_type_map_and_session(tmpdir, himena_ui: MainWindow, sample_dir):
     tab0 = himena_ui.add_tab()
     tab0.read_file(sample_dir / "text.txt").update(rect=(30, 40, 120, 150))
-    assert type(tab0.current().widget) is _qtw.QTextEdit
+    assert type(tab0.current().widget) is QTextEdit
     tab0.read_file(sample_dir / "json.json").update(rect=(150, 40, 250, 150), anchor="top-left")
-    assert type(tab0.current().widget) is _qtw.QTextEdit
+    assert type(tab0.current().widget) is QTextEdit
     tab1 = himena_ui.add_tab()
     tab1.read_file(sample_dir / "image.png").update(rect=(30, 40, 160, 130), title="My Image")
-    assert type(tab1.current().widget) is _qtw.QImageView
+    assert type(tab1.current().widget) is QImageView
     tab1.read_file(sample_dir / "html.html").update(rect=(80, 40, 160, 130), title="My HTML")
-    assert type(tab1.current().widget) is _qtw.QRichTextEdit
+    assert type(tab1.current().widget) is QRichTextEdit
 
     session_path = Path(tmpdir) / "test.session.zip"
     himena_ui.save_session(session_path)
@@ -92,7 +95,7 @@ def test_session_stand_alone(tmpdir, himena_ui: MainWindow, sample_dir):
         sample_dir / "table.csv",
         plugin="himena_builtins.io.read_as_pandas_dataframe",
     )
-    assert isinstance(win.widget, _qtw.QDataFrameView)
+    assert isinstance(win.widget, QDataFrameView)
     win.widget.selection_model.set_ranges([(slice(1, 3), slice(1, 2))])
     session_path = Path(tmpdir) / "test.session.zip"
     himena_ui.save_session(session_path, save_copies=True)
@@ -113,7 +116,7 @@ def test_session_window_input(himena_ui: MainWindow):
     from himena_builtins.tools.others import exec_workflow
     himena_ui.exec_action("builtins:seaborn-sample:iris")
     win = himena_ui.current_window
-    assert isinstance(win.widget, _qtw.QSpreadsheet)
+    assert isinstance(win.widget, QSpreadsheet)
     win.widget.array_update((1, 1), "10.4")
     himena_ui.exec_action(
         "builtins:scatter-plot",
@@ -192,7 +195,7 @@ def test_notification_and_status_tip(himena_ui: MainWindowQt):
 
 def test_dock_widget(himena_ui: MainWindow):
     assert len(himena_ui.dock_widgets) == 0
-    widget = _qtw.QTextEdit()
+    widget = QTextEdit()
     dock = himena_ui.add_dock_widget(widget)
     assert len(himena_ui.dock_widgets) == 1
     dock.hide()
@@ -210,7 +213,7 @@ def test_setting_widget(himena_ui: MainWindow, qtbot: QtBot):
 
 def test_mouse_events(himena_ui: MainWindowQt, qtbot: QtBot):
     tab = himena_ui.add_tab()
-    win = tab.add_widget(_qtw.QTextEdit())
+    win = tab.add_widget(QTextEdit())
     qmain = himena_ui._backend_main_window
     qarea = qmain._tab_widget.widget_area(0)
     assert qarea is not None
@@ -229,12 +232,12 @@ def test_mouse_events(himena_ui: MainWindowQt, qtbot: QtBot):
 
 def test_layout_commands(himena_ui: MainWindowQt, qtbot: QtBot):
     tab0 = himena_ui.add_tab()
-    win0 = tab0.add_widget(_qtw.QTextEdit())
-    win1 = tab0.add_widget(_qtw.QTextEdit())
+    win0 = tab0.add_widget(QTextEdit())
+    win1 = tab0.add_widget(QTextEdit())
     himena_ui.exec_action("window-layout-horizontal", with_params={"wins": [win0, win1]})
     tab1 = himena_ui.add_tab()
-    win0 = tab0.add_widget(_qtw.QTextEdit())
-    win1 = tab0.add_widget(_qtw.QTextEdit())
+    win0 = tab0.add_widget(QTextEdit())
+    win1 = tab0.add_widget(QTextEdit())
     himena_ui.exec_action("window-layout-vertical", with_params={"wins": [win0, win1]})
 
 def test_profile():

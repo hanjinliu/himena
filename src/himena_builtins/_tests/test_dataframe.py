@@ -3,7 +3,7 @@ import pytest
 from qtpy.QtCore import Qt
 from himena import MainWindow
 from himena.testing.subwindow import WidgetTester
-from himena_builtins.qt.widgets import QDataFrameView, QDataFramePlotView
+from himena_builtins.qt.dataframe import QDataFrameView, QDataFramePlotView
 import pandas as pd
 import polars as pl
 from pytestqt.qtbot import QtBot

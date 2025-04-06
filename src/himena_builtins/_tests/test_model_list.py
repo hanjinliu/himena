@@ -2,7 +2,7 @@ from qtpy.QtCore import Qt, QPoint
 from pytestqt.qtbot import QtBot
 from himena import MainWindow, StandardType, WidgetDataModel
 from himena.testing import WidgetTester
-from himena_builtins.qt.widgets import QModelStack
+from himena_builtins.qt.basic import QModelStack
 
 def test_model_stack_widget(himena_ui: MainWindow, qtbot: QtBot):
     win = himena_ui.add_object(

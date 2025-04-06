@@ -2,7 +2,7 @@ import numpy as np
 from pytestqt.qtbot import QtBot
 from himena import MainWindow, StandardType
 from himena.testing import WidgetTester
-from himena_builtins.qt.widgets import QExcelEdit, QDataFrameStack, QArrayStack
+from himena_builtins.qt.stack import QExcelEdit, QDataFrameStack, QArrayStack
 
 def test_excel_widget(qtbot: QtBot, himena_ui: MainWindow):
     excel_edit = QExcelEdit()

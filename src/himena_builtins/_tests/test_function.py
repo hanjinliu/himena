@@ -3,7 +3,7 @@ from pytestqt.qtbot import QtBot
 from himena import MainWindow
 from himena.consts import StandardType
 from himena.testing import WidgetTester
-from himena_builtins.qt.widgets import QFunctionEdit
+from himena_builtins.qt.basic import QFunctionEdit
 
 _lambda_function = lambda x: x + 1  # noqa: E731
 
