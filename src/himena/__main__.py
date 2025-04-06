@@ -41,6 +41,11 @@ def _main(args: HimenaCliNamespace):
                 f"Plugin configurations are cleared for the profile {args.profile!r}."
             )
 
+    if args.uninstall_outdated:
+        from himena._cli.install import uninstall_outdated
+
+        return uninstall_outdated(args.profile)
+
     if args.list_plugins:
         from himena.utils.entries import iter_plugin_info
 

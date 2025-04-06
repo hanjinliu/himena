@@ -66,5 +66,34 @@ def install_and_uninstall(
     new_prof.save()
 
 
+def uninstall_outdated(profile: str | None):
+    app_profile = load_app_profile(profile or "default")
+    plugins_updated = app_profile.plugins.copy()
+    plugins_outdated = []
+
+    for plugin_name in plugins_updated:
+        for info in iter_plugin_info():
+            if _is_path_like(info.place):
+                continue
+            if is_submodule(info.place, plugin_name):
+                break
+            elif info.distribution == plugin_name:
+                break
+        else:
+            plugins_outdated.append(plugin_name)
+
+    if plugins_outdated:
+        print("Plugins outdated:")
+        for plugin_name in plugins_outdated:
+            print(f"- {plugin_name}")
+
+        for plugin_name in plugins_outdated:
+            plugins_updated.remove(plugin_name)
+        new_prof = app_profile.with_plugins(plugins_updated)
+        new_prof.save()
+    else:
+        print("No outdated plugins found.")
+
+
 def _is_path_like(name: str) -> bool:
     return "/" in name or "\\" in name
