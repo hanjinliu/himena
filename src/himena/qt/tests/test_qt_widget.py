@@ -221,5 +221,5 @@ def test_model_drop(himena_ui: MainWindowQt):
     qdroplist._drop_qsubwindow(qwins[1])
     assert len(qdroplist.models()) == 1
     assert qdroplist.models()[0].type == "text"
-    qdroplist.set_models(None)
     qdroplist.itemWidget(qdroplist.item(0))._update_btn_pos()
+    qdroplist.set_models(None)
