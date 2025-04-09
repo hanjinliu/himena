@@ -65,4 +65,6 @@ You can customize `himena` for your needs by installing plugins. Here's some exa
 - [himena-image](https://github.com/hanjinliu/himena-image): image processing and analysis
 - [himena-stats](https://github.com/hanjinliu/himena-stats): statistical testing and modeling.
 - [himena-seaborn](https://github.com/hanjinliu/himena-seaborn): [seaborn](https://github.com/mwaskom/seaborn) plotting.
+- [himena-lmfit](https://github.com/hanjinliu/himena-lmfit): Curve fitting and parameter optimization using [lmfit](https://lmfit.github.io/lmfit-py/model.html).
 - [himena-bio](https://github.com/hanjinliu/himena-bio): widgets and commands for basic bioinformatics analysis using [biopython](https://github.com/biopython/biopython).
+- [napari-himena](https://github.com/hanjinliu/napari-himena): Sending data between `napari` and `himena`.
