@@ -273,7 +273,7 @@ class ImageMeta(ArrayMeta):
     def _is_rgb_and_channels_exclusive(cls, v, values: "ValidationInfo"):
         if values.data.get("is_rgb") and v is not None:
             raise ValueError("Channel axis must be None for RGB images.")
-        if v is None and len(values.data["channels"]) > 1:
+        if v is None and len(values.data.get("channels", [])) > 1:
             raise ValueError("Channel axis is required for multi-channel images.")
         return v
 

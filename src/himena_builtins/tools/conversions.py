@@ -9,8 +9,14 @@ import numpy as np
 from himena.plugins import configure_gui, register_conversion_rule
 from himena.types import Parametric, WidgetDataModel
 from himena.consts import StandardType
-from himena.core import create_model
-from himena.standards.model_meta import TextMeta, TableMeta, DataFrameMeta
+from himena.core import (
+    create_dataframe_model,
+    create_model,
+    create_text_model,
+    create_array_model,
+    create_table_model,
+)
+from himena.standards.model_meta import TableMeta
 from himena.standards.roi import (
     Roi2D,
     RectangleRoi,
@@ -34,10 +40,10 @@ def text_to_table(model: WidgetDataModel[str]) -> WidgetDataModel["np.ndarray"]:
     sep = dialect.delimiter
     buf.seek(0)
     table = np.array(list(csv.reader(buf, delimiter=sep)))
-    return create_model(
+    return create_table_model(
         table,
-        type=StandardType.TABLE,
         title=model.title,
+        separator=sep,
         extension_default=".csv",
     )
 
@@ -51,9 +57,8 @@ def text_to_array(model: WidgetDataModel[str]) -> WidgetDataModel["np.ndarray"]:
     """Convert text to an array-type widget using numpy."""
     text = model.value
     arr = np.loadtxt(StringIO(text), delimiter=",")
-    return create_model(
+    return create_array_model(
         arr,
-        type=StandardType.ARRAY,
         title=model.title,
         extension_default=".npy",
     )
@@ -70,10 +75,9 @@ def text_to_dataframe(model: WidgetDataModel[str]) -> WidgetDataModel:
 
     buf = StringIO(model.value)
     df = read_csv("dict", buf)
-    return create_model(
+    return create_dataframe_model(
         df,
         title=model.title,
-        type=StandardType.DATAFRAME,
         extension_default=".csv",
     )
 
@@ -108,11 +112,11 @@ def dataframe_to_table(model: WidgetDataModel) -> WidgetDataModel["np.ndarray"]:
     if isinstance(meta := model.metadata, TableMeta):
         # TODO: do we need to inherit current_position and selections?
         separator = meta.separator
-    return create_model(
+    return create_table_model(
         [df.column_names()] + df.to_list(),
         title=model.title,
         extension_default=".csv",
-        metadata=TableMeta(separator=separator),
+        separator=separator,
     )
 
 
@@ -133,11 +137,11 @@ def dataframe_to_text(model: WidgetDataModel) -> Parametric:
         table_input.insert(0, df.column_names())
         end_of_text = "\n" if end_of_text == "\\n" else ""
         value, ext_default, language = _table_to_text(table_input, format, end_of_text)
-        return create_model(
+        return create_text_model(
             value,
             title=model.title,
             extension_default=ext_default,
-            metadata=TextMeta(language=language),
+            language=language,
         )
 
     return convert_dataframe_to_text
@@ -159,11 +163,11 @@ def table_to_text(model: WidgetDataModel) -> Parametric:
         end_of_text: Literal["", "\n"] = "\n",
     ) -> WidgetDataModel[str]:
         value, ext_default, language = _table_to_text(model.value, format, end_of_text)
-        return create_model(
+        return create_text_model(
             value,
             title=model.title,
             extension_default=ext_default,
-            metadata=TextMeta(language=language),
+            language=language,
         )
 
     return convert_table_to_text
@@ -183,11 +187,11 @@ def table_to_dataframe(model: WidgetDataModel["np.ndarray"]) -> WidgetDataModel:
     np.savetxt(buf, model.value, fmt="%s", delimiter=",")
     buf.seek(0)
     df = read_csv("dict", buf)
-    return create_model(
+    return create_dataframe_model(
         df,
         title=model.title,
         extension_default=".csv",
-        metadata=DataFrameMeta(separator=separator),
+        separator=separator,
     )
 
 
@@ -217,9 +221,8 @@ def table_to_array(model: WidgetDataModel["np.ndarray"]) -> WidgetDataModel:
     if not ok:
         pass
 
-    return create_model(
+    return create_array_model(
         arr,
-        type=StandardType.ARRAY,
         title=model.title,
         extension_default=".npy",
     )
@@ -323,9 +326,8 @@ def array_to_table(model: WidgetDataModel) -> WidgetDataModel:
     value = arr.get_slice(()).astype(np.dtypes.StringDType())
     if value.ndim < 2:
         value = np.atleast_2d(value)
-    return create_model(
+    return create_table_model(
         value,
         title=model.title,
-        type=StandardType.TABLE,
         extension_default=".csv",
     )

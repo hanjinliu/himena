@@ -7,7 +7,7 @@ from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QApplication
 from himena.standards.model_meta import ArrayAxis, ImageMeta
 from pytestqt.qtbot import QtBot
-from himena import MainWindow, StandardType
+from himena import MainWindow, StandardType, create_image_model
 from himena.standards.roi import RoiListModel, LineRoi, PointRoi2D, PointsRoi2D
 from himena.standards.roi.core import RectangleRoi
 from himena.testing import WidgetTester, image, file_dialog_response
@@ -422,13 +422,10 @@ def _get_tester():
     return WidgetTester(QImageView())
 
 def test_crop_image(himena_ui: MainWindow, tmpdir):
-    model = WidgetDataModel(
-        value=np.zeros((4, 4, 10, 10)),
-        type=StandardType.IMAGE,
-        metadata=ImageMeta(
-            axes=["t", "z", "y", "x"],
-            current_roi=RectangleRoi(indices=(0, 0), x=1, y=1, width=6, height=4),
-        ),
+    model = create_image_model(
+        np.zeros((4, 4, 10, 10)),
+        axes=["t", "z", "y", "x"],
+        current_roi=RectangleRoi(indices=(0, 0), x=1, y=1, width=6, height=4),
     )
     win = himena_ui.add_data_model(model)
     himena_ui.exec_action("builtins:image-crop:crop-image")
@@ -447,14 +444,11 @@ def test_crop_image(himena_ui: MainWindow, tmpdir):
     )
 
     # multi-channel image
-    model = WidgetDataModel(
-        value=np.zeros((4, 3, 10, 10)),
-        type=StandardType.IMAGE,
-        metadata=ImageMeta(
-            axes=["t", "c", "y", "x"],
-            current_roi=RectangleRoi(indices=(0, 0), x=1, y=1, width=6, height=4),
-            channel_axis=1,
-        ),
+    model = create_image_model(
+        np.zeros((4, 3, 10, 10)),
+        axes=["t", "c", "y", "x"],
+        current_roi=RectangleRoi(indices=(0, 0), x=1, y=1, width=6, height=4),
+        channel_axis=1,
     )
     win = himena_ui.add_data_model(model)
     himena_ui.exec_action("builtins:image-crop:crop-image")
@@ -487,19 +481,16 @@ def test_image_view_commands(himena_ui: MainWindow, tmpdir):
 
 
 def test_roi_commands(himena_ui: MainWindow):
-    model = WidgetDataModel(
-        value=np.zeros((4, 4, 10, 10)),
-        type=StandardType.IMAGE,
-        metadata=ImageMeta(
-            axes=["t", "z", "y", "x"],
-            rois=RoiListModel(
-                items=[
-                    LineRoi(name="ROI-0", start=(1, 1), end=(4, 5)),
-                    PointRoi2D(name="ROI-1", x=1, y=5),
-                ],
-                indices=np.array([[0, 0], [0, 0]], dtype=np.int32),
-                axis_names=["t", "z"],
-            ),
+    model = create_image_model(
+        np.zeros((4, 4, 10, 10)),
+        axes=["t", "z", "y", "x"],
+        rois=RoiListModel(
+            items=[
+                LineRoi(name="ROI-0", start=(1, 1), end=(4, 5)),
+                PointRoi2D(name="ROI-1", x=1, y=5),
+            ],
+            indices=np.array([[0, 0], [0, 0]], dtype=np.int32),
+            axis_names=["t", "z"],
         ),
     )
     win = himena_ui.add_data_model(model)
@@ -543,13 +534,10 @@ def test_roi_commands(himena_ui: MainWindow):
     assert himena_ui.current_model.type == StandardType.DATAFRAME
 
     # colormap
-    model = WidgetDataModel(
-        value=np.zeros((4, 2, 10, 10)),
-        type=StandardType.IMAGE,
-        metadata=ImageMeta(
-            axes=["t", "c", "y", "x"],
-            channel_axis=1,
-        ),
+    model = create_image_model(
+        np.zeros((4, 2, 10, 10)),
+        axes=["t", "c", "y", "x"],
+        channel_axis=1,
     )
 
     win = himena_ui.add_data_model(model)
@@ -571,15 +559,12 @@ def test_roi_commands(himena_ui: MainWindow):
 
 def test_scale_bar(himena_ui: MainWindow):
     win = himena_ui.add_data_model(
-        WidgetDataModel(
-            value=np.zeros((100, 100)),
-            type=StandardType.IMAGE,
-            metadata=ImageMeta(
-                axes=[
-                    ArrayAxis(name="y", scale=0.42, unit="um"),
-                    ArrayAxis(name="x", scale=0.28, unit="um")
-                ]
-            )
+        create_image_model(
+            np.zeros((100, 100)),
+            axes=[
+                ArrayAxis(name="y", scale=0.42, unit="um"),
+                ArrayAxis(name="x", scale=0.28, unit="um")
+            ]
         )
     )
     himena_ui.exec_action("builtins:image:setup-image-scale-bar", with_params={})
@@ -608,19 +593,16 @@ def test_flat_roi_always_selected(qtbot: QtBot):
     qtbot.addWidget(view)
     cur_roi = LineRoi(start=(2, 4), end=(5, 5))
     view.update_model(
-        WidgetDataModel(
-            value=np.zeros((5, 10, 10)),
-            type=StandardType.IMAGE,
-            metadata=ImageMeta(
-                axes=[
-                    ArrayAxis(name="t"),
-                    ArrayAxis(name="y"),
-                    ArrayAxis(name="x"),
-                ],
-                current_roi=cur_roi,
-                rois=RoiListModel(
-                    items=[cur_roi], indices=np.array([[-1, -1]]), axis_names=["t"],
-                ),
+        create_image_model(
+        np.zeros((5, 10, 10)),
+            axes=[
+                ArrayAxis(name="t"),
+                ArrayAxis(name="y"),
+                ArrayAxis(name="x"),
+            ],
+            current_roi=cur_roi,
+            rois=RoiListModel(
+                items=[cur_roi], indices=np.array([[-1, -1]]), axis_names=["t"],
             ),
         )
     )
@@ -629,19 +611,16 @@ def test_flat_roi_always_selected(qtbot: QtBot):
     assert view._img_view._current_roi_item is not None
 
 def test_select_rois(himena_ui: MainWindow):
-    model = WidgetDataModel(
-        value=np.zeros((4, 4, 10, 10)),
-        type=StandardType.IMAGE,
-        metadata=ImageMeta(
-            axes=["t", "z", "y", "x"],
-            rois=RoiListModel(
-                items=[
-                    LineRoi(name="ROI-0", start=(1, 1), end=(4, 5)),
-                    PointRoi2D(name="ROI-1", x=1, y=5),
-                ],
-                indices=np.array([[0, 0], [0, 0]], dtype=np.int32),
-            ),
-        ),
+    model = create_image_model(
+        np.zeros((4, 4, 10, 10)),
+        axes=["t", "z", "y", "x"],
+        rois=RoiListModel(
+            items=[
+                LineRoi(name="ROI-0", start=(1, 1), end=(4, 5)),
+                PointRoi2D(name="ROI-1", x=1, y=5),
+            ],
+            indices=np.array([[0, 0], [0, 0]], dtype=np.int32),
+        )
     )
     himena_ui.add_data_model(model)
     himena_ui.exec_action("builtins:select-image-rois", with_params={"selections": [0]})
