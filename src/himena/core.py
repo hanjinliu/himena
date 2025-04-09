@@ -230,6 +230,7 @@ def create_image_model(
     *,
     axes: list[str | dict | ArrayAxis] | None = None,
     channels: list[str | dict | ImageChannel] | None = None,
+    channel_axis: int | None = None,
     current_roi: RoiModel | None = None,
     rois: RoiListModel | None = None,
     contrast_limits: tuple[float, float] | None = None,
@@ -242,6 +243,7 @@ def create_image_model(
 ) -> WidgetDataModel[_T]:
     """Helper function to create a WidgetDataModel for images."""
     from himena.standards.model_meta import ImageMeta
+    from himena.standards.roi import RoiListModel
 
     return create_model(
         value,
@@ -251,8 +253,9 @@ def create_image_model(
             channels=_norm_channels(channels),
             is_rgb=is_rgb,
             current_roi=current_roi,
-            rois=rois,
+            rois=rois or RoiListModel(),
             contrast_limits=contrast_limits,
+            channel_axis=channel_axis,
         ),
         extension_default=extension_default,
         extensions=extensions or [],
@@ -275,6 +278,7 @@ def _get_main_window(backend: str, *args, **kwargs) -> MainWindow:
 
 def _norm_axes(axes, value) -> list[ArrayAxis]:
     from himena.data_wrappers import wrap_array
+    from himena.standards.model_meta import ArrayAxis
 
     if axes is None:
         arr = wrap_array(value)
@@ -290,13 +294,14 @@ def _norm_axes(axes, value) -> list[ArrayAxis]:
                 _axes.append(axis)
             else:
                 raise TypeError(f"Invalid axis type: {type(axis)}")
+    return _axes
 
 
 def _norm_channels(channels) -> list[ImageChannel] | None:
     from himena.standards.model_meta import ImageChannel
 
     if channels is None:
-        _channels = None
+        _channels = [ImageChannel.default()]
     else:
         _channels = []
         for ch in channels:
