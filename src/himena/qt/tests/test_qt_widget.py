@@ -5,7 +5,7 @@ from qtpy import QtWidgets as QtW
 from qtpy.QtCore import Qt
 from pytestqt.qtbot import QtBot
 
-from himena.types import WidgetDataModel
+from himena.qt._qmodeldrop import QModelDrop, QModelDropList
 
 def test_qt_traceback(qtbot: QtBot):
     from himena.qt._qtraceback import format_exc_info_py310, format_exc_info_py311
@@ -205,9 +205,7 @@ def test_float_line_edit_range(qtbot: QtBot):
     line.stepUp()
     assert line.text() == "1.0"
 
-def test_model_drop(qtbot: QtBot, himena_ui: MainWindowQt):
-    from himena.qt._qmodeldrop import QModelDrop, QModelDropList
-
+def test_model_drop(himena_ui: MainWindowQt):
     himena_ui.add_object("abc", type="text")
     himena_ui.add_object([[0, 1], [2, 3]], type="table")
     qdrop = QModelDrop(["text"])
@@ -224,3 +222,4 @@ def test_model_drop(qtbot: QtBot, himena_ui: MainWindowQt):
     assert len(qdroplist.models()) == 1
     assert qdroplist.models()[0].type == "text"
     qdroplist.set_models(None)
+    qdroplist.itemWidget(qdroplist.item(0))._update_btn_pos()
