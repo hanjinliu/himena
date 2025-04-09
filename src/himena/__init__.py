@@ -1,4 +1,4 @@
-__version__ = "0.0.8"
+__version__ = "0.0.9.dev0"
 __author__ = "Hanjin Liu"
 
 from himena.core import new_window, create_model

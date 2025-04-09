@@ -454,7 +454,7 @@ ACTIONS.append(
 
 @ACTIONS.append_from_fn(
     id="window-layout-horizontal",
-    title="Horizontal ...",
+    title="Horizontal layout ...",
     enablement=(_ctx.num_sub_windows > 1) & (_ctx.num_tabs > 0),
     menus=[MenuId.WINDOW_LAYOUT],
     need_function_callback=True,
@@ -474,7 +474,7 @@ def window_layout_horizontal(ui: MainWindow) -> Parametric:
 
 @ACTIONS.append_from_fn(
     id="window-layout-vertical",
-    title="Vertical ...",
+    title="Vertical  layout ...",
     enablement=(_ctx.num_sub_windows > 1) & (_ctx.num_tabs > 0),
     menus=[MenuId.WINDOW_LAYOUT],
     need_function_callback=True,

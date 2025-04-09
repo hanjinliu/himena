@@ -6,6 +6,7 @@ import uuid
 import weakref
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt
+from superqt import QElidingLabel
 from himena.types import WidgetDataModel
 from himena.utils.misc import is_subtype
 from himena.qt._qsub_window import QSubWindow, QSubWindowArea, get_subwindow
@@ -26,16 +27,26 @@ class QModelDropBase(QtW.QGroupBox):
         self._thumbnail = _QImageLabel()
         self._target_id: int | None = None
         self._main_window_ref = lambda: None
-        self._label = QtW.QLabel()
+        self._label = QElidingLabel()
         self._label.setAlignment(
             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
         )
         if layout == "horizontal":
             self._label.setFixedHeight(THUMBNAIL_SIZE.height() + 2)
             _layout = QtW.QHBoxLayout(self)
+            _layout.setAlignment(
+                Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop
+            )
+            self._label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         else:
-            self._label.setFixedWidth(THUMBNAIL_SIZE.width() + 6)
+            self._label.setMinimumWidth(150)
             _layout = QtW.QVBoxLayout(self)
+            _layout.setAlignment(
+                Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft
+            )
+            self._label.setAlignment(
+                Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+            )
         self._label.setToolTip("Drop a subwindow here by Ctrl+dragging the title bar.")
         _layout.setContentsMargins(1, 1, 1, 1)
         _layout.addWidget(self._thumbnail)
@@ -173,12 +184,13 @@ class QModelDropList(QtW.QListWidget):
             self.setFlow(QtW.QListView.Flow.LeftToRight)
         else:
             self.setFlow(QtW.QListView.Flow.TopToBottom)
+        self.setResizeMode(QtW.QListView.ResizeMode.Adjust)
         self.setAcceptDrops(True)
         self._allowed_types = types  # the model type
         self._layout = layout
 
     def sizeHint(self) -> QtCore.QSize:
-        return QtCore.QSize(150, 100)
+        return QtCore.QSize(250, 200)
 
     def dragEnterEvent(self, event: QtGui.QDragEnterEvent):
         if isinstance(src := event.source(), QSubWindow):
@@ -228,6 +240,13 @@ class QModelDropList(QtW.QListWidget):
         event.setDropAction(Qt.DropAction.IgnoreAction)
         return None
 
+    def leaveEvent(self, a0):
+        for i in range(self.count()):
+            item = self.item(i)
+            widget = self.itemWidget(item)
+            widget.leaveEvent(a0)
+        return super().leaveEvent(a0)
+
     def _is_type_maches(self, model_type: str) -> bool:
         if self._allowed_types is None:
             return True
@@ -246,11 +265,13 @@ class QModelDropList(QtW.QListWidget):
     def _append_item(self) -> QModelListItem:
         item = QtW.QListWidgetItem()
         self.addItem(item)
-        item.setSizeHint(QtCore.QSize(100, THUMBNAIL_SIZE.height() + 2))
+        item.setFlags(Qt.ItemFlag.ItemIsEnabled)
         if self.flow() == QtW.QListView.Flow.LeftToRight:
             item_widget = QModelListItem(layout="vertical")
+            item.setSizeHint(QtCore.QSize(100, 200))
         else:
             item_widget = QModelListItem(layout="horizontal")
+            item.setSizeHint(QtCore.QSize(100, THUMBNAIL_SIZE.height() + 2))
         self.setItemWidget(item, item_widget)
         item_widget.close_requested.connect(self._remove_item)
         return item_widget
@@ -269,6 +290,7 @@ class QModelDropList(QtW.QListWidget):
         raise ValueError(f"Item {item} not found")
 
     def models(self) -> list[WidgetDataModel]:
+        """List of models."""
         return [self.itemWidget(self.item(i)).to_model() for i in range(self.count())]
 
     def set_models(self, value):
@@ -278,6 +300,7 @@ class QModelDropList(QtW.QListWidget):
             raise ValueError("Cannot set list of WidgetDataModel directly.")
 
     def windows(self) -> list[SubWindow]:
+        """List of subwindows."""
         return [self.itemWidget(self.item(i)).subwindow() for i in range(self.count())]
 
     def set_windows(self, value: Iterable[SubWindow] | None):
@@ -306,17 +329,31 @@ class QModelListItem(QModelDropBase):
         )
         self._close_btn.hide()
 
-    def enterEvent(self, a0):
-        self._close_btn.show()
+    def _update_btn_pos(self):
         pos_loc = self.rect().topRight() - QtCore.QPoint(
             self._close_btn.width() + 5, -5
         )
         self._close_btn.move(self.mapToGlobal(pos_loc))
+
+    def enterEvent(self, a0):
+        self._close_btn.show()
+        self._update_btn_pos()
         return super().enterEvent(a0)
 
     def leaveEvent(self, a0):
-        self._close_btn.hide()
+        rect = self.rect().adjusted(1, 1, -1, -1)
+        rect.setHeight(self._close_btn.height())
+        if not rect.contains(self.mapFromGlobal(QtGui.QCursor.pos())):
+            self._close_btn.hide()
         return super().leaveEvent(a0)
+
+    def moveEvent(self, a0):
+        self._update_btn_pos()
+        return super().moveEvent(a0)
+
+    def resizeEvent(self, a0):
+        self._update_btn_pos()
+        return super().resizeEvent(a0)
 
 
 THUMBNAIL_SIZE = QtCore.QSize(36, 36)

@@ -135,6 +135,10 @@ class QTableBase(QtW.QTableView):
     def is_editable(self) -> bool:
         return self.editTriggers() != QtW.QAbstractItemView.EditTrigger.NoEditTriggers
 
+    @validate_protocol
+    def set_editable(self, editable: bool):
+        self.setEditTriggers(Editability.TRUE if editable else Editability.FALSE)
+
     def _find_string(self):
         if self._finder_widget is None:
             self._finder_widget = QTableFinderWidget(self)
