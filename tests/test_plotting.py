@@ -33,6 +33,8 @@ def test_plot_model():
     fig.bar(x, np.sin(x) / 2)
     fig.errorbar(x, np.cos(x), x_error=np.full(5, 0.2), y_error=np.full(5, 0.1))
     fig.hist(np.sqrt(np.arange(100)), bins=10)
+    fig.hist(np.sqrt(np.arange(100)), bins=19, orient="horizontal", stat="density")
+    fig.hist(np.sqrt(np.arange(100)), bins=12, stat="probability")
     fig.band(x, np.sin(x) / 2, np.cos(x) / 2)
     fig.text([0, 1], [4, 3], ["A", "B"])
     fig.axes.title = "Title"
