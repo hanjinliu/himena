@@ -299,7 +299,7 @@ class QCommandLabel(QtW.QLabel):
 
         output_texts.append(text[last_end:])
         output_text = "".join(output_texts)
-        self.setText(output_text)
+        self.setText(output_text.replace("\n", " "))
         return
 
     def disabled(self) -> bool:

@@ -67,10 +67,10 @@ class QSvgPreview(QtW.QWidget):
         painter.end()
 
 
-class QMarkdowPreview(QtW.QWidget):
+class QMarkdownPreview(QtW.QWidget):
     """The previewer for a text editor with markdown content."""
 
-    __himena_widget_id__ = "builtins:QMarkdowPreview"
+    __himena_widget_id__ = "builtins:QMarkdownPreview"
     __himena_display_name__ = "Built-in Markdown Preview"
 
     def __init__(self):

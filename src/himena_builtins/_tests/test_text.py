@@ -4,7 +4,7 @@ from qtpy.QtCore import Qt
 from himena import MainWindow, StandardType
 from himena.standards.model_meta import TextMeta
 from himena.types import WidgetDataModel
-from himena_builtins.qt.text import QTextEdit, QRichTextEdit, QSvgPreview, QMarkdowPreview
+from himena_builtins.qt.text import QTextEdit, QRichTextEdit, QSvgPreview, QMarkdownPreview
 from pytestqt.qtbot import QtBot
 from himena.testing import WidgetTester
 
@@ -83,7 +83,7 @@ def test_svg_preview(sample_dir: Path, qtbot):
         tester.to_model()
 
 def test_markdow_preview(sample_dir: Path, qtbot):
-    with WidgetTester(QMarkdowPreview()) as tester:
+    with WidgetTester(QMarkdownPreview()) as tester:
         md_path = sample_dir / "markdown.md"
         tester.update_model(value=md_path.read_text(), type=StandardType.MARKDOWN)
         tester.to_model()

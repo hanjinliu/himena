@@ -103,7 +103,7 @@ def _add_band(model: hplt.Band, ax: plt.Axes):
     func(
         model.x, model.y0, model.y1, color=model.face.color, hatch=model.face.hatch,
         edgecolor=model.edge.color, linewidth=model.edge.width,
-        linestyle=model.edge.style, label=model.name,
+        linestyle=model.edge.style or "-", label=model.name,
     )  # fmt: skip
 
 
