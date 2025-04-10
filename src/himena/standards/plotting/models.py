@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Any, Literal
 
+import numpy as np
 from pydantic_compat import Field
 from himena.standards.plotting.components import BasePlotModel, Face, Edge
 
@@ -144,16 +145,10 @@ class Span(BasePlotModel):
 class Histogram(BasePlotModel):
     """Plot model for a histogram."""
 
-    data: Any = Field(..., description="Data values.")
-    bins: int = Field(10, description="Number of bins.")
-    range: tuple[float, float] | None = Field(
-        None, description="Range of the histogram."
-    )
+    height: Any = Field(..., description="Count or frequency values.")
+    bins: Any = Field(..., description="Bin edges.")
     orient: Literal["vertical", "horizontal"] = Field(
         "vertical", description="Orientation of the histogram."
-    )
-    stat: Literal["count", "density", "probability"] = Field(
-        "count", description="Statistic of the histogram."
     )
     face: Face = Field(
         default_factory=Face, description="Properties of the histogram face."
@@ -163,28 +158,29 @@ class Histogram(BasePlotModel):
     )
 
     def plot_option_dict(self) -> dict[str, Any]:
-        from himena.qt.magicgui import (
-            EdgePropertyEdit,
-            FacePropertyEdit,
-            FloatListEdit,
-        )
+        from himena.qt.magicgui import EdgePropertyEdit, FacePropertyEdit
 
         return {
             "name": {"widget_type": "LineEdit", "value": self.name},
-            "bins": {"annotation": int, "value": self.bins},
-            "range": {
-                "widget_type": FloatListEdit,
-                "value": self.range,
-                "nullable": True,
-            },
             "orient": {"choices": ["vertical", "horizontal"], "value": self.orient},
-            "stat": {
-                "choices": ["count", "density", "probability"],
-                "value": self.stat,
-            },
             "face": {"widget_type": FacePropertyEdit, "value": self.face.model_dump()},
             "edge": {"widget_type": EdgePropertyEdit, "value": self.edge.model_dump()},
         }
+
+    def to_band(self) -> Band:
+        """Convert the histogram to a band plot."""
+        x = np.repeat(self.bins, 3)[1:-1]
+        y = np.zeros_like(x)
+        y[1::3] = self.height
+        y[2::3] = self.height
+        return Band(
+            x=x,
+            y0=y,
+            y1=np.zeros_like(y),
+            orient=self.orient,
+            face=self.face,
+            edge=self.edge,
+        )
 
 
 ANCHOR_STRINGS = Literal[

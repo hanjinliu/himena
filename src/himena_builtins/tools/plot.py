@@ -482,7 +482,11 @@ def plot_to_dataframe(model: WidgetDataModel) -> Parametric:
         """Convert the selected plot component to a DataFrame."""
         plot_model = plot_models[component]
         if isinstance(plot_model, hplt.Histogram):
-            df = {"data": plot_model.data}
+            df = {
+                "height": plot_model.height,
+                "bin_start": plot_model.bins[:-1],
+                "bin_end": plot_model.bins[1:],
+            }
         elif isinstance(plot_model, hplt.Texts):
             df = {"x": plot_model.x, "y": plot_model.y, "text": plot_model.texts}
         elif isinstance(plot_model, hplt.ErrorBar):

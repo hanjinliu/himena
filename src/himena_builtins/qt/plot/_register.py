@@ -82,23 +82,7 @@ def _add_bar(model: hplt.Bar, ax: plt.Axes):
 
 @register_plot_model(hplt.Histogram)
 def _add_hist(model: hplt.Histogram, ax: plt.Axes):
-    if model.stat == "count":
-        data = model.data
-        density = False
-    elif model.stat == "density":
-        data = model.data
-        density = True
-    elif model.stat == "probability":
-        data = model.data / len(model.data)
-        density = False
-    else:
-        raise ValueError(f"Unsupported histogram stat: {model.stat}")
-    ax.hist(
-        data, bins=model.bins, range=model.range, color=Color(model.face.color).hex,
-        hatch=model.face.hatch, orientation=model.orient, edgecolor=Color(model.edge.color).hex,
-        linewidth=model.edge.width, linestyle=model.edge.style, label=model.name,
-        density=density,
-    )  # fmt: skip
+    _add_band(model.to_band(), ax)
 
 
 @register_plot_model(hplt.ErrorBar)
