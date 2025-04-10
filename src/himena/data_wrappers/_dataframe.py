@@ -19,6 +19,7 @@ from typing import (
 import numpy as np
 from himena.consts import ExcelFileTypes
 from himena.utils.misc import lru_cache
+from himena.types import WidgetDataModel
 
 if TYPE_CHECKING:
     from typing import TypeGuard, Self
@@ -56,10 +57,11 @@ def _as_array(ar: list[str]) -> np.ndarray:
     try:
         return np.array(ar, dtype=int)
     except Exception:
+        ar_str = np.array(ar, dtype=np.dtypes.StringDType())
         try:
-            return np.array(ar, dtype=float)
+            return np.array(np.where(ar_str == "", "nan", ar_str), dtype=float)
         except Exception:
-            return np.array(ar, dtype=np.dtypes.StringDType())
+            return ar_str
 
 
 def read_csv(mod: str, file) -> Any:
@@ -660,6 +662,8 @@ def wrap_dataframe(df) -> DataFrameWrapper:
         return PyarrowWrapper(df)
     if is_narwhals_dataframe(df):
         return wrap_dataframe(df.to_native())
+    if isinstance(df, WidgetDataModel):
+        return wrap_dataframe(df.value)
     if isinstance(df, DataFrameWrapper):
         return df
     raise TypeError(f"Unsupported dataframe type: {type(df)}")

@@ -34,6 +34,20 @@ def test_convert_text(make_himena_ui: Callable[..., MainWindow]):
     # assert himena_ui.current_model.type == StandardType.TEXT
     # assert himena_ui.current_model.value == "a\n3"
 
+def test_convert_table_to_dataframe(make_himena_ui: Callable[..., MainWindow]):
+    himena_ui = make_himena_ui("mock")
+    himena_ui.add_object([["xx", "yyy"], ["e", -0.33], ["f", 2.3]], type=StandardType.TABLE)
+    himena_ui.exec_action("builtins:table-to-dataframe")
+    assert himena_ui.current_model.type == StandardType.DATAFRAME
+    assert isinstance(himena_ui.current_model.value["xx"].dtype, np.dtypes.StringDType)
+    assert himena_ui.current_model.value["yyy"].dtype == np.float64
+
+    himena_ui.add_object([["p", "q"], ["4", ""], ["", "-0.3"]], type=StandardType.TABLE)
+    himena_ui.exec_action("builtins:table-to-dataframe")
+    assert himena_ui.current_model.type == StandardType.DATAFRAME
+    assert himena_ui.current_model.value["p"].dtype == np.float64
+    assert himena_ui.current_model.value["q"].dtype == np.float64
+
 def test_convert_others(make_himena_ui: Callable[..., MainWindow]):
     himena_ui = make_himena_ui("mock")
     win = himena_ui.add_object(
@@ -56,8 +70,6 @@ def test_convert_others(make_himena_ui: Callable[..., MainWindow]):
     himena_ui.current_window = win
     himena_ui.exec_action("builtins:dataframe-to-text", with_params={"format": "HTML"})
 
-    himena_ui.add_object([["xx", "yyy"], [False, -0.33], [True, 2.3]], type=StandardType.TABLE)
-    himena_ui.exec_action("builtins:table-to-dataframe")
     himena_ui.add_object([[1, 2], [-1, 2], [3, 2]], type=StandardType.TABLE)
     himena_ui.exec_action("builtins:table-to-array")
 
