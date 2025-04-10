@@ -36,10 +36,14 @@ from himena.utils.misc import table_to_text as _table_to_text
 def text_to_table(model: WidgetDataModel[str]) -> WidgetDataModel["np.ndarray"]:
     """Convert text to a table-type widget."""
     buf = StringIO(model.value)
-    dialect = csv.Sniffer().sniff(buf.read(1024))
+    try:
+        dialect = csv.Sniffer().sniff(buf.read(1024), delimiters=(",", "\t", ";", " "))
+    except csv.Error:
+        # this error is raised when there is no delimiters.
+        dialect = csv.get_dialect("unix")
     sep = dialect.delimiter
     buf.seek(0)
-    table = np.array(list(csv.reader(buf, delimiter=sep)))
+    table = np.array(list(csv.reader(buf, delimiter=sep, quotechar=dialect.quotechar)))
     return create_table_model(
         table,
         title=model.title,
