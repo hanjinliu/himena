@@ -36,10 +36,14 @@ from himena.utils.misc import table_to_text as _table_to_text
 def text_to_table(model: WidgetDataModel[str]) -> WidgetDataModel["np.ndarray"]:
     """Convert text to a table-type widget."""
     buf = StringIO(model.value)
-    dialect = csv.Sniffer().sniff(buf.read(1024))
+    try:
+        dialect = csv.Sniffer().sniff(buf.read(1024), delimiters=(",", "\t", ";", " "))
+    except csv.Error:
+        # this error is raised when there is no delimiters.
+        dialect = csv.get_dialect("unix")
     sep = dialect.delimiter
     buf.seek(0)
-    table = np.array(list(csv.reader(buf, delimiter=sep)))
+    table = np.array(list(csv.reader(buf, delimiter=sep, quotechar=dialect.quotechar)))
     return create_table_model(
         table,
         title=model.title,
@@ -112,8 +116,10 @@ def dataframe_to_table(model: WidgetDataModel) -> WidgetDataModel["np.ndarray"]:
     if isinstance(meta := model.metadata, TableMeta):
         # TODO: do we need to inherit current_position and selections?
         separator = meta.separator
+    else:
+        separator = ","
     return create_table_model(
-        [df.column_names()] + df.to_list(),
+        np.array([df.column_names()] + df.to_list(), dtype=np.dtypes.StringDType),
         title=model.title,
         extension_default=".csv",
         separator=separator,
@@ -183,6 +189,8 @@ def table_to_dataframe(model: WidgetDataModel["np.ndarray"]) -> WidgetDataModel:
     # TODO: Choose pandas, dict etc.
     if isinstance(meta := model.metadata, TableMeta):
         separator = meta.separator
+    else:
+        separator = ","
     buf = StringIO()
     np.savetxt(buf, model.value, fmt="%s", delimiter=",")
     buf.seek(0)
@@ -200,11 +208,13 @@ def table_to_dataframe(model: WidgetDataModel["np.ndarray"]) -> WidgetDataModel:
     type_to=StandardType.ARRAY,
     command_id="builtins:table-to-array",
 )
-def table_to_array(model: WidgetDataModel["np.ndarray"]) -> WidgetDataModel:
+def table_to_array(model: WidgetDataModel) -> WidgetDataModel:
     """Convert a table data into an array."""
     arr_str = model.value
 
-    def _try_astype(arr_str: "np.ndarray", dtype) -> tuple["np.ndarray", bool]:
+    def _try_astype(arr_str, dtype) -> tuple["np.ndarray", bool]:
+        if not isinstance(arr_str, np.ndarray):
+            arr_str = np.array(arr_str, dtype=np.dtypes.StringDType())
         try:
             arr = arr_str.astype(dtype)
             ok = True
