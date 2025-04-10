@@ -165,9 +165,21 @@ class Axes(AxesBase):
         **kwargs,
     ) -> _m.Histogram:
         """Add a histogram plot model to the axes."""
+        match stat:
+            case "count":
+                data = data
+                density = False
+            case "density":
+                data = data
+                density = True
+            case "probability":
+                data = data / len(data)
+                density = False
+            case _:
+                raise ValueError(f"Unsupported histogram stat: {stat}")
+        height, bins = np.histogram(data, bins=bins, range=range, density=density)
         model = _m.Histogram(
-            data=data, bins=bins, range=range, orient=orient, stat=stat,
-            **parse_face_edge(kwargs),
+            height=height, bins=bins, orient=orient, **parse_face_edge(kwargs),
         )  # fmt: skip
         self.models.append(model)
         return model
