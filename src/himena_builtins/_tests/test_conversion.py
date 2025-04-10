@@ -1,12 +1,25 @@
+from typing import Callable
 import numpy as np
 from numpy.testing import assert_array_equal
 from himena import MainWindow, StandardType
 
-def test_convert(himena_ui: MainWindow):
+def test_convert_text(make_himena_ui: Callable[..., MainWindow]):
+    himena_ui = make_himena_ui("mock")
     win = himena_ui.add_object("a,b,c\n1,2,3", type=StandardType.TEXT)
     himena_ui.exec_action("builtins:text-to-table")
     assert himena_ui.current_model.type == StandardType.TABLE
     assert himena_ui.current_model.value.tolist() == [["a", "b", "c"], ["1", "2", "3"]]
+
+    himena_ui.add_object("1.2\n4.2\n", type=StandardType.TEXT)
+    himena_ui.exec_action("builtins:text-to-table")
+    assert himena_ui.current_model.type == StandardType.TABLE
+    assert himena_ui.current_model.value.tolist() == [["1.2"], ["4.2"]]
+
+    himena_ui.add_object("1\t5\n4\t2\n", type=StandardType.TEXT)
+    himena_ui.exec_action("builtins:text-to-table")
+    assert himena_ui.current_model.type == StandardType.TABLE
+    assert himena_ui.current_model.value.tolist() == [["1", "5"], ["4", "2"]]
+
     himena_ui.current_window = win
     himena_ui.exec_action("builtins:text-to-dataframe")
     assert himena_ui.current_model.type == StandardType.DATAFRAME
@@ -21,6 +34,8 @@ def test_convert(himena_ui: MainWindow):
     # assert himena_ui.current_model.type == StandardType.TEXT
     # assert himena_ui.current_model.value == "a\n3"
 
+def test_convert_others(make_himena_ui: Callable[..., MainWindow]):
+    himena_ui = make_himena_ui("mock")
     win = himena_ui.add_object(
         {"a": [1, 2], "value": ["p", "q"]}, type=StandardType.DATAFRAME,
     )
