@@ -74,6 +74,7 @@ class StandardType(SimpleNamespace):
 
     ### plotting ###
     PLOT = "plot"  # objects that satisfy the plotting standard
+    PLOT_STACK = "plot-stack"  # stack of plot objects
     MPL_FIGURE = "matplotlib-figure"  # matplotlib figure object
 
     ### 3D ###

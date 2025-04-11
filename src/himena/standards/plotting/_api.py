@@ -34,6 +34,12 @@ def figure_3d(background_color: Any = "white") -> layout3d.SingleAxes3D:
     return lo
 
 
+def figure_stack(*shape, background_color: Any = "white") -> layout.SingleStackedAxes:
+    lo = layout.SingleStackedAxes.fill(*shape)
+    lo.background_color = background_color
+    return lo
+
+
 def row(num: int = 1, *, background_color: Any = "white") -> layout.Row:
     """Make a row layout model.
 

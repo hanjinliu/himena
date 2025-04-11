@@ -32,6 +32,12 @@ def register_mpl_widget():
         priority=0,
         plugin_configs=MatplotlibCanvasConfigs(),
     )
+    register_widget_class(
+        StandardType.PLOT_STACK,
+        model_mpl_canvas_stack,
+        priority=0,
+        plugin_configs=MatplotlibCanvasConfigs(),
+    )
     register_widget_class(StandardType.MPL_FIGURE, matplotlib_canvas, priority=0)
 
 
@@ -43,6 +49,16 @@ def model_matplotlib_canvas():
 
 model_matplotlib_canvas.__himena_widget_id__ = "builtins:QModelMatplotlibCanvas"
 model_matplotlib_canvas.__himena_display_name__ = "Built-in Plot Canvas"
+
+
+def model_mpl_canvas_stack():
+    from himena_builtins.qt.plot._canvas import QModelMatplotlibCanvasStack
+
+    return QModelMatplotlibCanvasStack()
+
+
+model_mpl_canvas_stack.__himena_widget_id__ = "builtins:QModelMatplotlibCanvasStack"
+model_mpl_canvas_stack.__himena_display_name__ = "Built-in Plot Canvas Stack"
 
 
 def matplotlib_canvas():

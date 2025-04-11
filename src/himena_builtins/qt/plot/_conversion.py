@@ -47,7 +47,7 @@ def _refer_title(ax: hplt.Axes, ax_mpl: plt.Axes):
     ax_mpl.set_title(title, **style)
 
 
-def _convert_axes(ax: hplt.Axes, ax_mpl: plt.Axes):
+def update_mpl_axes_by_model(ax: hplt.Axes, ax_mpl: plt.Axes):
     ax_mpl.spines["top"].set_visible(False)
     ax_mpl.spines["right"].set_visible(False)
     ax_mpl.spines["left"].set_edgecolor(ax.axis_color)
@@ -91,7 +91,7 @@ def _fill_axis_props(axes: hplt.Axes, axes_mpl: plt.Axes):
     return axes
 
 
-def update_axis_props(axes: hplt.Axes, axes_mpl: plt.Axes):
+def update_model_axis_by_mpl(axes: hplt.Axes, axes_mpl: plt.Axes):
     """Update model axis from the matplotlib axis."""
     axes.title = axes_mpl.get_title()
     axes.x.lim = axes_mpl.get_xlim()
@@ -104,13 +104,8 @@ def update_axis_props(axes: hplt.Axes, axes_mpl: plt.Axes):
 def convert_plot_layout(lo: hplt.BaseLayoutModel, fig: plt.Figure):
     fig.patch.set_facecolor(lo.background_color)
     if isinstance(lo, hplt.SingleAxes):
-        if len(fig.axes) != 1:
-            fig.clear()
-            ax_mpl = fig.add_subplot(111)
-        else:
-            ax_mpl = fig.axes[0]
-            ax_mpl.clear()
-        _convert_axes(lo.axes, ax_mpl)
+        ax_mpl = _get_single_mpl_axes(fig)
+        update_mpl_axes_by_model(lo.axes, ax_mpl)
         ax_mpl.patch.set_color(lo.background_color)
         lo.axes = _fill_axis_props(lo.axes, ax_mpl)
     elif isinstance(lo, hplt.layout.Layout1D):
@@ -121,24 +116,32 @@ def convert_plot_layout(lo: hplt.BaseLayoutModel, fig: plt.Figure):
         else:
             axes = fig.axes
         for ax, ax_mpl in zip(lo.axes, axes):
-            _convert_axes(ax, ax_mpl)
+            update_mpl_axes_by_model(ax, ax_mpl)
             ax_mpl.patch.set_color(lo.background_color)
         lo.axes = [_fill_axis_props(ax, ax_mpl) for ax, ax_mpl in zip(lo.axes, axes)]
     elif isinstance(lo, hplt.Grid):
         raise NotImplementedError("Grid layout is not supported yet")
     elif isinstance(lo, hplt.SingleAxes3D):
-        if len(fig.axes) != 1:
-            fig.clear()
-            ax_mpl = fig.add_subplot(111, projection="3d")
-        else:
-            ax_mpl = fig.axes[0]
-            ax_mpl.clear()
+        ax_mpl = _get_single_mpl_axes(fig, projection="3d")
         _convert_axes_3d(lo.axes, ax_mpl)
         ax_mpl.patch.set_color(lo.background_color)
         lo.axes = _fill_axis_props(lo.axes, ax_mpl)
+    elif isinstance(lo, hplt.SingleStackedAxes):
+        ax_mpl = _get_single_mpl_axes(fig)
+        ax_mpl.patch.set_color(lo.background_color)
     else:
         raise ValueError(f"Unsupported layout model: {lo}")
     return lo
+
+
+def _get_single_mpl_axes(fig: plt.Figure, **kwargs) -> plt.Axes:
+    if len(fig.axes) != 1:
+        fig.clear()
+        ax_mpl = fig.add_subplot(111, **kwargs)
+    else:
+        ax_mpl = fig.axes[0]
+        ax_mpl.clear()
+    return ax_mpl
 
 
 def _parse_styled_text(text: hplt.StyledText | str) -> tuple[str, dict]:

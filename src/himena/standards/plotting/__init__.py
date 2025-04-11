@@ -4,6 +4,7 @@ from himena.standards.plotting import layout, models
 from himena.standards.plotting.layout import (
     BaseLayoutModel,
     SingleAxes,
+    SingleStackedAxes,
     Row,
     Column,
     Grid,
@@ -34,18 +35,27 @@ from himena.standards.plotting.models3d import (
 )
 
 from himena.standards.plotting.components import StyledText, Axis, BasePlotModel
-from himena.standards.plotting._api import figure, row, column, grid, figure_3d
+from himena.standards.plotting._api import (
+    figure,
+    row,
+    column,
+    grid,
+    figure_3d,
+    figure_stack,
+)
 
 __all__ = [
     "models",
     "layout",
     "figure",
     "figure_3d",
+    "figure_stack",
     "row",
     "column",
     "grid",
     "BaseLayoutModel",
     "SingleAxes",
+    "SingleStackedAxes",
     "Row",
     "Column",
     "Grid",

@@ -1,4 +1,4 @@
-from typing import Literal, Sequence, TYPE_CHECKING, SupportsIndex
+from typing import ClassVar, Literal, Sequence, TYPE_CHECKING, SupportsIndex
 
 import numpy as np
 from pydantic_compat import BaseModel, Field
@@ -6,6 +6,7 @@ from himena.standards.plotting import models as _m
 from himena.standards.plotting.components import (
     Axis,
     AxesBase,
+    StackedAxesBase,
     parse_edge,
     parse_face_edge,
 )
@@ -18,6 +19,7 @@ if TYPE_CHECKING:
 
 class BaseLayoutModel(BaseModel):
     model_config = PYDANTIC_CONFIG_STRICT
+    model_type: ClassVar[str] = StandardType.PLOT
 
     hpad: float | None = Field(None, description="Horizontal padding.")
     vpad: float | None = Field(None, description="Vertical padding.")
@@ -52,16 +54,17 @@ class BaseLayoutModel(BaseModel):
         from himena.widgets import current_instance
 
         ui = current_instance()
-        ui.add_object(self, type=StandardType.PLOT, title="Plot")
+        ui.add_object(self, type=self.__class__.model_type, title="Plot")
         return None
 
 
-class Axes(AxesBase):
-    """Layout model for 2D axes."""
+# NOTE: ModelsRef should not be a BaseModel because BaseModel copies lists on each
+# construction, thus cannot be used as a reference for the internal plot models.
+class ModelsRef:
+    models: list[_m.BasePlotModel]
 
-    x: Axis = Field(default_factory=Axis, description="X-axis settings.")
-    y: Axis = Field(default_factory=Axis, description="Y-axis settings.")
-    axis_color: str = Field("#000000", description="Axis color.")
+    def __init__(self, models):
+        self.models = models
 
     def scatter(
         self,
@@ -215,6 +218,14 @@ class Axes(AxesBase):
         return model
 
 
+class Axes(AxesBase, ModelsRef):
+    """Layout model for 2D axes."""
+
+    x: Axis = Field(default_factory=Axis, description="X-axis settings.")
+    y: Axis = Field(default_factory=Axis, description="Y-axis settings.")
+    axis_color: str = Field("#000000", description="Axis color.")
+
+
 class SingleAxes(BaseLayoutModel):
     axes: Axes = Field(default_factory=Axes, description="Child axes.")
 
@@ -323,10 +334,51 @@ class SingleAxes(BaseLayoutModel):
         )  # fmt: skip
 
 
-class SingleAxesStack(BaseLayoutModel):
-    axes: dict[tuple[int, ...], Axes] = Field(
-        default_factory=dict, description="Child axes."
-    )
+class StackedAxes(StackedAxesBase):
+    """Layout model for stacked axes."""
+
+    x: Axis = Field(default_factory=Axis, description="X-axis settings.")
+    y: Axis = Field(default_factory=Axis, description="Y-axis settings.")
+    axis_color: str = Field("#000000", description="Axis color.")
+
+    def __getitem__(self, key) -> ModelsRef:
+        if not isinstance(key, tuple):
+            key = (key,)
+        if len(key) != len(self.shape):
+            raise ValueError(
+                f"Key must be a tuple of length {len(self.shape)} but got: {key!r}"
+            )
+        if any(a >= b for a, b in zip(key, self.shape)):
+            raise IndexError(
+                f"Index {key!r} is out of bounds for shape {self.shape!r}."
+            )
+        if key not in self.models:
+            models = self.models[key] = []
+        else:
+            models = self.models[key]
+        return ModelsRef(models=models)
+
+
+class SingleStackedAxes(BaseLayoutModel):
+    model_type: ClassVar[str] = StandardType.PLOT_STACK
+
+    axes: StackedAxes = Field(default_factory=StackedAxes, description="Child axes.")
+    background_color: str = Field("#FFFFFF", description="Background color.")
+
+    @classmethod
+    def fill(cls, *shape: int):
+        models = {}
+        for index in np.ndindex(*shape):
+            models[index] = []
+        return SingleStackedAxes(axes=StackedAxes(shape=shape, models=models))
+
+    @property
+    def shape(self) -> tuple[int, ...]:
+        """Shape of the stack dimensions."""
+        return self.axes.shape
+
+    def __getitem__(self, key) -> ModelsRef:
+        return self.axes[key]
 
 
 class Layout1D(BaseLayoutModel):
@@ -340,7 +392,7 @@ class Layout1D(BaseLayoutModel):
         return self.axes[key]
 
     @classmethod
-    def fill(cls, num: int) -> "Self":
+    def fill(cls, num: int):
         layout = cls()
         for _ in range(num):
             layout.axes.append(Axes())
