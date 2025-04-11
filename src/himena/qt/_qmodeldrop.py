@@ -20,6 +20,8 @@ _LOGGER = getLogger(__name__)
 
 
 class QModelDropBase(QtW.QGroupBox):
+    close_requested = QtCore.Signal(object)  # emit self
+
     def __init__(
         self, layout: Literal["horizontal", "vertical"] = "horizontal", parent=None
     ):
@@ -52,6 +54,41 @@ class QModelDropBase(QtW.QGroupBox):
         _layout.addWidget(self._thumbnail)
         _layout.addWidget(self._label)
 
+        self._close_btn = QtW.QToolButton()
+        self._close_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._close_btn.setText("✕")
+        self._close_btn.setFixedSize(15, 15)
+        self._close_btn.clicked.connect(lambda: self.close_requested.emit(self))
+        self._close_btn.setParent(
+            self, Qt.WindowType.Window | Qt.WindowType.FramelessWindowHint
+        )
+        self._close_btn.hide()
+
+    def _update_btn_pos(self):
+        pos_loc = self.rect().topRight() - QtCore.QPoint(
+            self._close_btn.width() + 5, -5
+        )
+        self._close_btn.move(self.mapToGlobal(pos_loc))
+
+    def enterEvent(self, a0):
+        self._close_btn.show()
+        self._update_btn_pos()
+        return super().enterEvent(a0)
+
+    def leaveEvent(self, a0):
+        rect = self.rect().adjusted(1, 1, -1, -1)
+        if not rect.contains(self.mapFromGlobal(QtGui.QCursor.pos())):
+            self._close_btn.hide()
+        return super().leaveEvent(a0)
+
+    def moveEvent(self, a0):
+        self._update_btn_pos()
+        return super().moveEvent(a0)
+
+    def resizeEvent(self, a0):
+        self._update_btn_pos()
+        return super().resizeEvent(a0)
+
     def subwindow(self) -> SubWindow | None:
         """The dropped subwindow."""
         if self._target_id is None:
@@ -72,18 +109,6 @@ class QModelDropBase(QtW.QGroupBox):
 
     def set_subwindow(self, src: SubWindow):
         self.set_qsubwindow(get_subwindow(src.widget))
-
-    def to_model(self) -> WidgetDataModel | None:
-        if widget := self.subwindow():
-            return widget.to_model()
-        return None
-
-    def set_model(self, value: WidgetDataModel | None):
-        if value is None:
-            self._label.setText("Drop here")
-            self._thumbnail.unset_pixmap()
-        else:
-            raise ValueError("Cannot set WidgetDataModel directly.")
 
 
 class QModelDrop(QModelDropBase):
@@ -107,9 +132,15 @@ class QModelDrop(QModelDropBase):
         self._allowed_types = types  # the model type
         self._target_id: uuid.UUID | None = None
         self._data_model: WidgetDataModel | None = None
+        self.close_requested.connect(lambda: self.set_model(None))
 
     def sizeHint(self) -> QtCore.QSize:
         return QtCore.QSize(150, 50)
+
+    def enterEvent(self, a0):
+        if self._data_model is None and self._target_id is None:
+            return None
+        return super().enterEvent(a0)
 
     def dragEnterEvent(self, event: QtGui.QDragEnterEvent):
         if isinstance(src := event.source(), QSubWindow):
@@ -145,6 +176,23 @@ class QModelDrop(QModelDropBase):
             subwindows = area.subWindowList()
             if len(subwindows) == 1:
                 self._drop_qsubwindow(subwindows[0])
+        elif model := _drag.get_dragging_model():
+            self.set_model(model.data_model())
+
+    def to_model(self):
+        if self._data_model is not None:
+            return self._data_model
+        if widget := self.subwindow():
+            return widget.to_model()
+        return None
+
+    def set_model(self, value: WidgetDataModel | None):
+        if value is None:
+            self._label.setText("Drop here")
+            self._thumbnail.unset_pixmap()
+        else:
+            self._data_model = value
+            self._label.setText(repr(value))
 
     def _drop_qsubwindow(self, win: QSubWindow):
         widget = win._widget
@@ -159,9 +207,6 @@ class QModelDrop(QModelDropBase):
         self.windowChanged.emit(win)
         if win.supports_to_model:
             self.valueChanged.emit(win.to_model())
-
-    def _on_source_closed(self):
-        self._target_id = None
 
     def _is_type_maches(self, model_type: str) -> bool:
         if self._allowed_types is None:
@@ -316,44 +361,7 @@ class QModelDropList(QtW.QListWidget):
 
 
 class QModelListItem(QModelDropBase):
-    close_requested = QtCore.Signal(object)  # emit self
-
-    def __init__(self, layout: Literal["horizontal", "vertical"] = "horizontal"):
-        super().__init__(layout)
-        self._close_btn = QtW.QToolButton()
-        self._close_btn.setText("✕")
-        self._close_btn.setFixedSize(15, 15)
-        self._close_btn.clicked.connect(lambda: self.close_requested.emit(self))
-        self._close_btn.setParent(
-            self, self._close_btn.windowFlags() | Qt.WindowType.FramelessWindowHint
-        )
-        self._close_btn.hide()
-
-    def _update_btn_pos(self):
-        pos_loc = self.rect().topRight() - QtCore.QPoint(
-            self._close_btn.width() + 5, -5
-        )
-        self._close_btn.move(self.mapToGlobal(pos_loc))
-
-    def enterEvent(self, a0):
-        self._close_btn.show()
-        self._update_btn_pos()
-        return super().enterEvent(a0)
-
-    def leaveEvent(self, a0):
-        rect = self.rect().adjusted(1, 1, -1, -1)
-        rect.setHeight(self._close_btn.height())
-        if not rect.contains(self.mapFromGlobal(QtGui.QCursor.pos())):
-            self._close_btn.hide()
-        return super().leaveEvent(a0)
-
-    def moveEvent(self, a0):
-        self._update_btn_pos()
-        return super().moveEvent(a0)
-
-    def resizeEvent(self, a0):
-        self._update_btn_pos()
-        return super().resizeEvent(a0)
+    pass
 
 
 THUMBNAIL_SIZE = QtCore.QSize(36, 36)
