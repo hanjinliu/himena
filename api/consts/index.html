@@ -1483,8 +1483,7 @@
 
               <details class="quote">
                 <summary>Source code in <code>src\himena\consts.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">104</span>
-<span class="normal">105</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">105</span>
 <span class="normal">106</span>
 <span class="normal">107</span>
 <span class="normal">108</span>
@@ -1536,7 +1535,8 @@
 <span class="normal">154</span>
 <span class="normal">155</span>
 <span class="normal">156</span>
-<span class="normal">157</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MenuId</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="normal">157</span>
+<span class="normal">158</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MenuId</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Preset of menu IDs.&quot;&quot;&quot;</span>
 
     <span class="n">FILE</span> <span class="o">=</span> <span class="s2">&quot;file&quot;</span>
@@ -2026,7 +2026,8 @@ other plugins.</p>
 <span class="normal"> 98</span>
 <span class="normal"> 99</span>
 <span class="normal">100</span>
-<span class="normal">101</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">StandardType</span><span class="p">(</span><span class="n">SimpleNamespace</span><span class="p">):</span>
+<span class="normal">101</span>
+<span class="normal">102</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">StandardType</span><span class="p">(</span><span class="n">SimpleNamespace</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Conventions for standard model types.</span>
 
 <span class="sd">    Developers should use these types as much as possible to ensure compatibility with</span>
@@ -2067,6 +2068,7 @@ other plugins.</p>
 
     <span class="c1">### plotting ###</span>
     <span class="n">PLOT</span> <span class="o">=</span> <span class="s2">&quot;plot&quot;</span>  <span class="c1"># objects that satisfy the plotting standard</span>
+    <span class="n">PLOT_STACK</span> <span class="o">=</span> <span class="s2">&quot;plot-stack&quot;</span>  <span class="c1"># stack of plot objects</span>
     <span class="n">MPL_FIGURE</span> <span class="o">=</span> <span class="s2">&quot;matplotlib-figure&quot;</span>  <span class="c1"># matplotlib figure object</span>
 
     <span class="c1">### 3D ###</span>
