@@ -27,7 +27,8 @@ class QModelDropBase(QtW.QGroupBox):
     ):
         super().__init__(parent)
         self._thumbnail = _QImageLabel()
-        self._target_id: int | None = None
+        self._target_id: uuid.UUID | None = None
+        self._data_model: WidgetDataModel | None = None
         self._main_window_ref = lambda: None
         self._label = QElidingLabel()
         self._label.setAlignment(
@@ -98,6 +99,13 @@ class QModelDropBase(QtW.QGroupBox):
             return None
         return ui.window_for_id(self._target_id)
 
+    def to_model(self):
+        if self._data_model is not None:
+            return self._data_model
+        if widget := self.subwindow():
+            return widget.to_model()
+        return None
+
     def set_qsubwindow(self, src: QSubWindow):
         src_wrapper = src._my_wrapper()
         self._thumbnail.set_pixmap(
@@ -130,8 +138,6 @@ class QModelDrop(QModelDropBase):
             Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignVCenter
         )
         self._allowed_types = types  # the model type
-        self._target_id: uuid.UUID | None = None
-        self._data_model: WidgetDataModel | None = None
         self.close_requested.connect(lambda: self.set_model(None))
 
     def sizeHint(self) -> QtCore.QSize:
@@ -178,13 +184,6 @@ class QModelDrop(QModelDropBase):
                 self._drop_qsubwindow(subwindows[0])
         elif model := _drag.get_dragging_model():
             self.set_model(model.data_model())
-
-    def to_model(self):
-        if self._data_model is not None:
-            return self._data_model
-        if widget := self.subwindow():
-            return widget.to_model()
-        return None
 
     def set_model(self, value: WidgetDataModel | None):
         if value is None:
