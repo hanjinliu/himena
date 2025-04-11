@@ -33,7 +33,7 @@ class QDimsSlider(QtW.QWidget):
     def set_dimensions(
         self,
         shape: tuple[int, ...],
-        axes: list[model_meta.ArrayAxis],
+        axes: list[model_meta.ArrayAxis] | None = None,
         is_rgb: bool = False,
     ):
         ndim = len(shape)
@@ -48,6 +48,8 @@ class QDimsSlider(QtW.QWidget):
             for i in range(nsliders, ndim_rem):
                 self._make_slider(shape[i])
         # update axis names
+        if axes is None:
+            axes = [model_meta.ArrayAxis(name=f"axis {i}") for i in range(ndim_rem)]
         _axis_width_max = 0
         _index_width_max = 0
         for axis, slider in zip(axes, self._sliders):
@@ -71,7 +73,7 @@ class QDimsSlider(QtW.QWidget):
         else:
             self._xy_axes = axes[-2:]
 
-    def _to_image_axes(self) -> list[model_meta.ArrayAxis]:
+    def _to_array_axes(self) -> list[model_meta.ArrayAxis]:
         axes = [slider.to_axis() for slider in self._sliders]
         axes.extend(self._xy_axes)
         return axes

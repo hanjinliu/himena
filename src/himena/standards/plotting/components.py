@@ -93,6 +93,45 @@ class AxesBase(BaseModel):
         return out
 
 
+class StackedAxesBase(BaseModel):
+    """Layout model for stacked axes."""
+
+    shape: tuple[int, ...]
+    models: dict[tuple[int, ...], list[BasePlotModel]] = Field(
+        default_factory=list, description="Dict of child plot models."
+    )
+    title: str | StyledText | None = Field(None, description="Title of the axes.")
+
+    @field_serializer("models")
+    def _serialize_models(
+        self,
+        models: dict[tuple[int, ...], list[BasePlotModel]],
+    ) -> dict[tuple[int, ...], list[dict]]:
+        return {
+            k: [model.model_dump_typed() for model in models]
+            for k, models in models.items()
+        }
+
+    # NOTE: The `mode` argument must be "plain" to avoid models falling back to
+    # BasePlotModel instances.
+    @field_validator("models", mode="plain")
+    def _validate_models(cls, models: dict[tuple[int, ...], list]):
+        out = {}
+        for k, models in models.items():
+            _list = out[k] = []
+            for model in models:
+                if isinstance(model, dict):
+                    model = model.copy()
+                    model_type = model.pop("type")
+                    model = BasePlotModel.construct(model_type, model)
+                elif not isinstance(model, BasePlotModel):
+                    raise ValueError(
+                        f"Must be a dict or BasePlotModel but got: {model!r}"
+                    )
+                _list.append(model)
+        return out
+
+
 class HasColor(BaseModel):
     color: Any | None = Field(None, description="Color property.")
 
@@ -130,9 +169,12 @@ def parse_edge(kwargs: dict[str, Any]) -> dict:
     color = kwargs.pop("color", kwargs.pop("edge_color", None))
     width = kwargs.pop("width", kwargs.pop("edge_width", None))
     style = kwargs.pop("style", kwargs.pop("edge_style", None))
+    alpha = kwargs.pop("alpha", kwargs.pop("edge_alpha", None))
     name = kwargs.pop("name", None)
     if kwargs:
         raise ValueError(f"Extra keyword arguments: {list(kwargs.keys())!r}")
+    if alpha is not None:
+        color = Color([*Color(color).rgba[:3], alpha])
     edge = Edge(color=color, width=width, style=style)
     return {"edge": edge, "name": name}
 
@@ -140,8 +182,11 @@ def parse_edge(kwargs: dict[str, Any]) -> dict:
 def parse_face_edge(kwargs: dict[str, Any]) -> dict:
     color = kwargs.pop("color", kwargs.pop("face_color", None))
     hatch = kwargs.pop("hatch", kwargs.pop("face_hatch", None))
+    alpha = kwargs.pop("alpha", kwargs.pop("face_alpha", None))
     kwargs = parse_edge(kwargs)
     if kwargs.get("color") is None:
         kwargs["color"] = color
+    if alpha is not None:
+        color = Color([*Color(color).rgba[:3], alpha])
     face = Face(color=color, hatch=hatch)
     return {"face": face, **kwargs}

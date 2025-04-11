@@ -566,6 +566,8 @@ def merge_channels() -> Parametric:
     command_id="builtins:stack-images",
 )
 def stack_images() -> Parametric:
+    """Stack N-D images along a new axis to make a (N+1)-D image."""
+
     @configure_gui(images={"types": [StandardType.IMAGE]})
     def run_stack_images(
         images: list[WidgetDataModel],

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from matplotlib.figure import Figure
 from matplotlib.backends import backend_qtagg
+import matplotlib.pyplot as plt
 from qtpy import QtWidgets as QtW, QtGui
 
 from himena.plugins import validate_protocol
@@ -9,8 +10,13 @@ from himena.types import DropResult, Size, WidgetDataModel
 from himena.consts import StandardType
 from himena.style import Theme
 from himena.standards import plotting as hplt
-from himena_builtins.qt.plot._conversion import convert_plot_layout, update_axis_props
+from himena_builtins.qt.plot._conversion import (
+    convert_plot_layout,
+    update_model_axis_by_mpl,
+    convert_plot_model,
+)
 from himena_builtins.qt.plot._config import MatplotlibCanvasConfigs
+from himena_builtins.qt.widgets._dim_sliders import QDimsSlider
 
 
 class QMatplotlibCanvasBase(QtW.QWidget):
@@ -72,6 +78,11 @@ class QMatplotlibCanvasBase(QtW.QWidget):
             # revert the icon to the original color
             toolbtn.actions()[0].setIcon(icon_new)
 
+    def _init_canvas_and_toolbar(self):
+        self._canvas = FigureCanvasQTAgg()
+        self.layout().addWidget(self._canvas)
+        self._toolbar = self._prep_toolbar(QNavigationToolBar)
+
 
 class QMatplotlibCanvas(QMatplotlibCanvasBase):
     """A widget that displays a Matplotlib figure itself."""
@@ -125,19 +136,13 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
 
     @validate_protocol
     def update_model(self, model: WidgetDataModel):
-        import matplotlib.pyplot as plt
-
         was_none = self._canvas is None
+        _assert_plot_model(model.value)
         if was_none:
-            self._canvas = FigureCanvasQTAgg()
-            self.layout().addWidget(self._canvas)
-            self._toolbar = self._prep_toolbar(QNavigationToolBar)
-        if isinstance(model.value, hplt.BaseLayoutModel):
-            with plt.style.context(self._cfg.to_dict()):
-                self._plot_models = convert_plot_layout(model.value, self.figure)
-            self._canvas.draw()
-        else:
-            raise ValueError(f"Unsupported model: {model.value}")
+            self._init_canvas_and_toolbar()
+        with plt.style.context(self._cfg.to_dict()):
+            self._plot_models = convert_plot_layout(model.value, self.figure)
+        self._canvas.draw()
         if was_none and not isinstance(self._plot_models, hplt.SingleAxes3D):
             self._toolbar.pan()
 
@@ -157,7 +162,7 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
             model_axes_ref = []  # Not implemented
         mpl_axes_ref = self.figure.axes
         for model_axes, mpl_axes in zip(model_axes_ref, mpl_axes_ref):
-            update_axis_props(model_axes, mpl_axes)
+            update_model_axis_by_mpl(model_axes, mpl_axes)
         return WidgetDataModel(
             value=value,
             type=self.model_type(),
@@ -212,6 +217,75 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
         self._modified = value
 
 
+class QModelMatplotlibCanvasStack(QMatplotlibCanvasBase):
+    __himena_widget_id__ = "builtins:QModelMatplotlibCanvasStack"
+    __himena_display_name__ = "Built-in Plot Canvas Stack"
+    _plot_models: hplt.SingleStackedAxes | None
+
+    def __init__(self):
+        super().__init__()
+        self._dims_slider = QDimsSlider()
+        self._dims_slider.valueChanged.connect(self._slider_changed)
+
+    @validate_protocol
+    def update_model(self, model: WidgetDataModel):
+        was_none = self._canvas is None
+        if not isinstance(model.value, hplt.SingleStackedAxes):
+            raise ValueError(
+                f"Expected a SingleStackedAxes model, got {type(model.value)}"
+            )
+        if was_none:
+            self._init_canvas_and_toolbar()
+            self.layout().addWidget(self._dims_slider)
+        self._dims_slider.set_dimensions(model.value.shape + (0, 0))
+        with plt.style.context(self._cfg.to_dict()):
+            self._plot_models = convert_plot_layout(model.value, self.figure)
+        self._slider_changed(self._dims_slider.value())
+        if was_none:
+            self._toolbar.pan()
+
+    @validate_protocol
+    def to_model(self) -> WidgetDataModel:
+        value = self._plot_models.model_copy()
+        if not isinstance(value, hplt.SingleStackedAxes):
+            raise ValueError("The model is not a SingleAxesStack")
+        mpl_axes_ref = self.figure.axes
+        model_axes_ref = [value.axes]
+        for model_axes, mpl_axes in zip(model_axes_ref, mpl_axes_ref):
+            update_model_axis_by_mpl(model_axes, mpl_axes)
+        return WidgetDataModel(
+            value=value,
+            type=self.model_type(),
+            extension_default=".plot.json",
+        )
+
+    @validate_protocol
+    def model_type(self) -> str:
+        return StandardType.PLOT_STACK
+
+    @validate_protocol
+    def update_configs(self, cfg: MatplotlibCanvasConfigs):
+        self._cfg = cfg
+
+    def _slider_changed(self, value: int):
+        if self._plot_models is None:
+            return
+        if not isinstance(self._plot_models, hplt.SingleStackedAxes):
+            raise ValueError("The model is not a SingleAxesStack")
+        axes_component = self._plot_models.axes[value]
+        ax_mpl = self.figure.axes[0]
+        ax_mpl.clear()
+        for model in axes_component.models:
+            convert_plot_model(model, ax_mpl)
+        self._canvas.draw()
+
+
+def _assert_plot_model(val):
+    """Check if the value is a plot model."""
+    if not isinstance(val, hplt.BaseLayoutModel):
+        raise TypeError(f"Expected a plot model, got {type(val)}")
+
+
 # remove some of the tool buttons
 class QNavigationToolBar(backend_qtagg.NavigationToolbar2QT):
     toolitems = (
@@ -245,7 +319,6 @@ FigureCanvas = FigureCanvasQTAgg
 # Modified from matplotlib_inline (BSD 3-Clause "New" or "Revised" License)
 # https://github.com/ipython/matplotlib-inline
 def show(close=True, block=None):
-    import matplotlib.pyplot as plt
     from matplotlib._pylab_helpers import Gcf
     from himena.widgets import current_instance
 

@@ -21,7 +21,6 @@ from himena.data_wrappers import ArrayWrapper, wrap_array
 from himena_builtins.qt.widgets._image_components import (
     QImageGraphicsView,
     QRoi,
-    QDimsSlider,
     QRoiButtons,
     QImageViewControl,
     QImageLabelViewControl,
@@ -30,6 +29,7 @@ from himena_builtins.qt.widgets._image_components import (
     from_standard_roi,
     MouseMode,
 )
+from himena_builtins.qt.widgets._dim_sliders import QDimsSlider
 from himena_builtins.qt.widgets._splitter import QSplitterHandle
 from himena_builtins.qt.widgets._shared import quick_min_max
 
@@ -335,7 +335,7 @@ class QImageViewBase(QtW.QSplitter):
         ]
         current_indices = self._dims_slider.value()
         current_slices = current_indices + (None, None)
-        axes = self._dims_slider._to_image_axes()
+        axes = self._dims_slider._to_array_axes()
         if self._is_rgb:
             axes.append(model_meta.ArrayAxis(name="RGB"))
         return WidgetDataModel(

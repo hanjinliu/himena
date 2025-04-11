@@ -48,15 +48,17 @@ def convert_plot_model(model: hplt.BasePlotModel, ax: plt.Axes):
 
 @register_plot_model(hplt.Scatter)
 def _add_scatter(model: hplt.Scatter, ax: plt.Axes):
+    kwargs = {}
     if model.size is not None:
-        s = model.size**2
-    else:
-        s = None
+        kwargs["s"] = model.size**2
+    if model.face.color is not None:
+        kwargs["c"] = Color(model.face.color).hex
+    if model.edge.color is not None:
+        kwargs["edgecolors"] = model.edge.color
     ax.scatter(
-        model.x, model.y, s=s, c=Color(model.face.color).hex,
-        marker=model.symbol, linewidths=model.edge.width, hatch=model.face.hatch,
-        edgecolors=model.edge.color, linestyle=model.edge.style or "-",
-        label=model.name,
+        model.x, model.y, marker=model.symbol, linewidths=model.edge.width,
+        hatch=model.face.hatch, linestyle=model.edge.style or "-", label=model.name,
+        **kwargs,
     )  # fmt: skip
 
 
