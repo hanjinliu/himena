@@ -86,7 +86,6 @@ class QTabBar(QtW.QTabBar):
         if self.tab_widget()._is_startup_only():
             self._plus_btn.hide()
             return None
-        self._plus_btn.show()
         size = self.width()
         self._plus_btn.move(size + 4, 1)
         self._plus_btn.show()
