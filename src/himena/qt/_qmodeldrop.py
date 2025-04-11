@@ -60,16 +60,14 @@ class QModelDropBase(QtW.QGroupBox):
         self._close_btn.setText("✕")
         self._close_btn.setFixedSize(15, 15)
         self._close_btn.clicked.connect(lambda: self.close_requested.emit(self))
-        self._close_btn.setParent(
-            self, Qt.WindowType.Window | Qt.WindowType.FramelessWindowHint
-        )
+        self._close_btn.setParent(self)
         self._close_btn.hide()
 
     def _update_btn_pos(self):
         pos_loc = self.rect().topRight() - QtCore.QPoint(
             self._close_btn.width() + 5, -5
         )
-        self._close_btn.move(self.mapToGlobal(pos_loc))
+        self._close_btn.move(pos_loc)
 
     def enterEvent(self, a0):
         self._close_btn.show()
