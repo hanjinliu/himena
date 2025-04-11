@@ -130,9 +130,12 @@ def parse_edge(kwargs: dict[str, Any]) -> dict:
     color = kwargs.pop("color", kwargs.pop("edge_color", None))
     width = kwargs.pop("width", kwargs.pop("edge_width", None))
     style = kwargs.pop("style", kwargs.pop("edge_style", None))
+    alpha = kwargs.pop("alpha", kwargs.pop("edge_alpha", None))
     name = kwargs.pop("name", None)
     if kwargs:
         raise ValueError(f"Extra keyword arguments: {list(kwargs.keys())!r}")
+    if alpha is not None:
+        color = Color([*Color(color).rgba[:3], alpha])
     edge = Edge(color=color, width=width, style=style)
     return {"edge": edge, "name": name}
 
@@ -140,8 +143,11 @@ def parse_edge(kwargs: dict[str, Any]) -> dict:
 def parse_face_edge(kwargs: dict[str, Any]) -> dict:
     color = kwargs.pop("color", kwargs.pop("face_color", None))
     hatch = kwargs.pop("hatch", kwargs.pop("face_hatch", None))
+    alpha = kwargs.pop("alpha", kwargs.pop("face_alpha", None))
     kwargs = parse_edge(kwargs)
     if kwargs.get("color") is None:
         kwargs["color"] = color
+    if alpha is not None:
+        color = Color([*Color(color).rgba[:3], alpha])
     face = Face(color=color, hatch=hatch)
     return {"face": face, **kwargs}

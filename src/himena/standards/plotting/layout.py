@@ -66,21 +66,25 @@ class Axes(AxesBase):
     def scatter(
         self,
         x: Sequence[float],
-        y: Sequence[float],
+        y: Sequence[float] | None = None,
         *,
         symbol: str = "o",
         size: float | None = None,
         **kwargs,
     ) -> _m.Scatter:
         """Add a scatter plot model to the axes."""
+        x, y = _norm_xy(x, y)
         model = _m.Scatter(
             x=x, y=y, symbol=symbol, size=size, **parse_face_edge(kwargs)
         )
         self.models.append(model)
         return model
 
-    def plot(self, x: Sequence[float], y: Sequence[float], **kwargs) -> _m.Line:
+    def plot(
+        self, x: Sequence[float], y: Sequence[float] | None = None, **kwargs
+    ) -> _m.Line:
         """Add a line plot model to the axes."""
+        x, y = _norm_xy(x, y)
         model = _m.Line(x=x, y=y, **parse_edge(kwargs))
         self.models.append(model)
         return model
@@ -88,7 +92,7 @@ class Axes(AxesBase):
     def bar(
         self,
         x: Sequence[float],
-        y: Sequence[float],
+        y: Sequence[float] | None = None,
         *,
         bottom: "float | Sequence[float] | NDArray[np.number] | None" = None,
         bar_width: float | None = None,
@@ -96,6 +100,7 @@ class Axes(AxesBase):
         **kwargs,
     ) -> _m.Bar:
         """Add a bar plot model to the axes."""
+        x, y = _norm_xy(x, y)
         if bottom is None:
             bottom = 0
         model = _m.Bar(
@@ -108,7 +113,7 @@ class Axes(AxesBase):
     def errorbar(
         self,
         x: Sequence[float],
-        y: Sequence[float],
+        y: Sequence[float] | None = None,
         *,
         x_error: "float | Sequence[float] | NDArray[np.number] | None" = None,
         y_error: "float | Sequence[float] | NDArray[np.number] | None" = None,
@@ -116,6 +121,7 @@ class Axes(AxesBase):
         **kwargs,
     ) -> _m.ErrorBar:
         """Add an error bar plot model to the axes."""
+        x, y = _norm_xy(x, y)
         model = _m.ErrorBar(
             x=x,
             y=y,
@@ -131,12 +137,16 @@ class Axes(AxesBase):
         self,
         x: Sequence[float],
         y0: Sequence[float],
-        y1: Sequence[float],
+        y1: Sequence[float] | None = None,
         *,
         orient: Literal["vertical", "horizontal"] = "vertical",
         **kwargs,
     ) -> _m.Band:
         """Add a band plot model to the axes."""
+        x = np.asarray(x)
+        y0 = np.asarray(y0)
+        if y1 is None:
+            y1 = np.zeros_like(y0)
         model = _m.Band(x=x, y0=y0, y1=y1, orient=orient, **parse_face_edge(kwargs))
         self.models.append(model)
         return model
@@ -219,7 +229,7 @@ class SingleAxes(BaseLayoutModel):
     def scatter(
         self,
         x: Sequence[float],
-        y: Sequence[float],
+        y: Sequence[float] | None = None,
         *,
         symbol: str = "o",
         size: float | None = None,
@@ -228,14 +238,19 @@ class SingleAxes(BaseLayoutModel):
         """Add a scatter plot model to the axes."""
         return self.axes.scatter(x=x, y=y, symbol=symbol, size=size, **kwargs)
 
-    def plot(self, x: Sequence[float], y: Sequence[float], **kwargs) -> _m.Line:
+    def plot(
+        self,
+        x: Sequence[float],
+        y: Sequence[float] | None = None,
+        **kwargs,
+    ) -> _m.Line:
         """Add a line plot model to the axes."""
         return self.axes.plot(x=x, y=y, **kwargs)
 
     def bar(
         self,
         x: Sequence[float],
-        y: Sequence[float],
+        y: Sequence[float] | None = None,
         *,
         bottom: "float | Sequence[float] | NDArray[np.number] | None" = None,
         bar_width: float | None = None,
@@ -250,7 +265,7 @@ class SingleAxes(BaseLayoutModel):
     def errorbar(
         self,
         x: Sequence[float],
-        y: Sequence[float],
+        y: Sequence[float] | None = None,
         *,
         x_error: "float | Sequence[float] | NDArray[np.number] | None" = None,
         y_error: "float | Sequence[float] | NDArray[np.number] | None" = None,
@@ -266,7 +281,7 @@ class SingleAxes(BaseLayoutModel):
         self,
         x: Sequence[float],
         y0: Sequence[float],
-        y1: Sequence[float],
+        y1: Sequence[float] | None = None,
         *,
         orient: Literal["vertical", "horizontal"] = "vertical",
         **kwargs,
@@ -306,6 +321,12 @@ class SingleAxes(BaseLayoutModel):
             x=x, y=y, text=text, size=size, color=color, family=family, anchor=anchor,
             rotation=rotation,
         )  # fmt: skip
+
+
+class SingleAxesStack(BaseLayoutModel):
+    axes: dict[tuple[int, ...], Axes] = Field(
+        default_factory=dict, description="Child axes."
+    )
 
 
 class Layout1D(BaseLayoutModel):
@@ -369,3 +390,19 @@ class Grid(BaseLayoutModel):
             for row_a, row_b in zip(self.axes, other.axes)
         ]
         return type(self)(axes=new_axes)
+
+
+def _norm_xy(x, y) -> "tuple[NDArray[np.number], NDArray[np.number]]":
+    if y is None:
+        y = np.asarray(x)
+        x = np.arange(len(y))
+    else:
+        x = np.asarray(x)
+        y = np.asarray(y)
+    if x.ndim != 1 or y.ndim != 1:
+        raise ValueError(f"x and y must be 1D arrays, got {x.ndim}D and {y.ndim}D.")
+    if x.shape != y.shape:
+        raise ValueError(
+            f"x and y must have the same shape, got {x.shape} and {y.shape}."
+        )
+    return x, y
