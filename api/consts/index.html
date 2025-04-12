@@ -1483,8 +1483,7 @@
 
               <details class="quote">
                 <summary>Source code in <code>src\himena\consts.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">105</span>
-<span class="normal">106</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">106</span>
 <span class="normal">107</span>
 <span class="normal">108</span>
 <span class="normal">109</span>
@@ -1536,7 +1535,8 @@
 <span class="normal">155</span>
 <span class="normal">156</span>
 <span class="normal">157</span>
-<span class="normal">158</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MenuId</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="normal">158</span>
+<span class="normal">159</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MenuId</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Preset of menu IDs.&quot;&quot;&quot;</span>
 
     <span class="n">FILE</span> <span class="o">=</span> <span class="s2">&quot;file&quot;</span>
@@ -2027,7 +2027,8 @@ other plugins.</p>
 <span class="normal"> 99</span>
 <span class="normal">100</span>
 <span class="normal">101</span>
-<span class="normal">102</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">StandardType</span><span class="p">(</span><span class="n">SimpleNamespace</span><span class="p">):</span>
+<span class="normal">102</span>
+<span class="normal">103</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">StandardType</span><span class="p">(</span><span class="n">SimpleNamespace</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Conventions for standard model types.</span>
 
 <span class="sd">    Developers should use these types as much as possible to ensure compatibility with</span>
@@ -2080,6 +2081,7 @@ other plugins.</p>
 
     <span class="c1">### Other types ###</span>
     <span class="n">WORKFLOW</span> <span class="o">=</span> <span class="s2">&quot;workflow&quot;</span>  <span class="c1"># himena workflow object</span>
+    <span class="n">WORKFLOW_PARAMETRIC</span> <span class="o">=</span> <span class="s2">&quot;workflow.parametric&quot;</span>  <span class="c1"># parametric workflow object</span>
     <span class="n">GROUPBY</span> <span class="o">=</span> <span class="s2">&quot;groupby&quot;</span>  <span class="c1"># DataFrame GroupBy object</span>
     <span class="n">ROIS</span> <span class="o">=</span> <span class="s2">&quot;rois&quot;</span>  <span class="c1"># regions of interest</span>
     <span class="n">FUNCTION</span> <span class="o">=</span> <span class="s2">&quot;function&quot;</span>  <span class="c1"># callable object</span>
