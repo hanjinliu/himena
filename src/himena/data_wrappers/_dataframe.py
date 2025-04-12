@@ -214,6 +214,10 @@ class DataFrameWrapper(ABC):
     def to_dict(self) -> dict[str, np.ndarray]:
         return {k: self.column_to_array(k) for k in self.column_names()}
 
+    def copy(self) -> Self:
+        """Return a shallow copy of the dataframe."""
+        return self.from_dict(self.to_dict())
+
     def type_name(self) -> str:
         mod = type(self._df).__module__.split(".")[0]
         return f"{mod}.{type(self._df).__name__}"

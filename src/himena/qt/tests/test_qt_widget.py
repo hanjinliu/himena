@@ -1,10 +1,11 @@
 import sys
-from himena.qt._qtraceback import QtErrorMessageBox, QtTracebackDialog
-from himena.qt import MainWindowQt
 from qtpy import QtWidgets as QtW
 from qtpy.QtCore import Qt
 from pytestqt.qtbot import QtBot
 
+from himena import create_model, StandardType
+from himena.qt._qtraceback import QtErrorMessageBox, QtTracebackDialog
+from himena.qt import MainWindowQt
 from himena.qt._qmodeldrop import QModelDrop, QModelDropList
 
 def test_qt_traceback(qtbot: QtBot):
@@ -206,20 +207,24 @@ def test_float_line_edit_range(qtbot: QtBot):
     assert line.text() == "1.0"
 
 def test_model_drop(himena_ui: MainWindowQt):
-    himena_ui.add_object("abc", type="text")
+    himena_ui.add_object("abc", type=StandardType.TEXT)
     himena_ui.add_object([[0, 1], [2, 3]], type="table")
-    qdrop = QModelDrop(["text"])
-    qdroplist = QModelDropList(["text"])
+    qdrop = QModelDrop([StandardType.TEXT])
+    qdroplist = QModelDropList([StandardType.TEXT])
     drop_win = himena_ui.add_widget(qdrop)
     drop_list = himena_ui.add_widget(qdroplist)
     qwins = himena_ui._backend_main_window._tab_widget.widget_area(0).subWindowList()
     qdrop._drop_qsubwindow(qwins[0])
+    assert qdrop.to_model().value == "abc"
+    assert qdrop.to_model().type == StandardType.TEXT
     qdrop._drop_qsubwindow(qwins[1])
-    assert qdrop.to_model().type == "text"
-    qdrop.set_model(None)
+    assert qdrop.to_model().value == "abc"  # type not accepted, so not changed
+    assert qdrop.to_model().type == StandardType.TEXT
+    qdrop.set_model(create_model("pqr", type=StandardType.TEXT))
+    assert qdrop.to_model().value == "pqr"
     qdroplist._drop_qsubwindow(qwins[0])
     qdroplist._drop_qsubwindow(qwins[1])
     assert len(qdroplist.models()) == 1
-    assert qdroplist.models()[0].type == "text"
+    assert qdroplist.models()[0].type == StandardType.TEXT
     qdroplist.itemWidget(qdroplist.item(0))._update_btn_pos()
     qdroplist.set_models(None)

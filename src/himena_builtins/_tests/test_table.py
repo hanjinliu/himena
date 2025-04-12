@@ -1,6 +1,8 @@
+import numpy as np
 from numpy.testing import assert_equal
 from pytestqt.qtbot import QtBot
 from himena import MainWindow
+from himena.consts import StandardType
 from himena.standards.model_meta import TableMeta
 from himena.testing import WidgetTester, table
 from himena.types import WidgetDataModel
@@ -98,7 +100,7 @@ def test_table_view_current_position(qtbot):
 def test_table_view_selections(qtbot):
     table.test_selections(_get_tester())
 
-def test_copy_and_paste(qtbot):
+def test_copy_and_paste(qtbot: QtBot):
     tester = _get_tester()
     qtbot.addWidget(tester.widget)
     tester.update_model(value=[["a", "b"], ["c", "bc"]])
@@ -129,14 +131,14 @@ def _get_tester():
 def test_commands(himena_ui: MainWindow):
     model = WidgetDataModel(
         value=[["a", "b", "c"], ["d", "e", "f"]],
-        type="table",
+        type=StandardType.TABLE,
         metadata=TableMeta(selections=[], separator="\t")
     )
     himena_ui.add_data_model(model)
     himena_ui.exec_action("builtins:table:copy-as-csv")
     model = WidgetDataModel(
         value=[["a", "b", "c"], ["d", "e", "f"]],
-        type="table",
+        type=StandardType.TABLE,
         metadata=TableMeta(selections=[((0, 1), (1, 2))], separator=",")
     )
     himena_ui.add_data_model(model)
@@ -164,7 +166,7 @@ def test_large_data(qtbot: QtBot):
     ss.update_model(
         WidgetDataModel(
             value=[["a"] * 100] * 1000,
-            type="table",
+            type=StandardType.TABLE,
         )
     )
     assert ss.model().rowCount() == 1001
@@ -173,7 +175,7 @@ def test_large_data(qtbot: QtBot):
     # paste a large data
     ss = QSpreadsheet()
     qtbot.addWidget(ss)
-    ss.update_model(WidgetDataModel(value=[["a"]], type="table"))
+    ss.update_model(WidgetDataModel(value=[["a"]], type=StandardType.TABLE))
     ss.setCurrentIndex(ss.model().index(0, 0))
     row_count_old = ss.model().rowCount()
     col_count_old = ss.model().columnCount()
@@ -197,14 +199,14 @@ def test_table_deletion_at_edges(qtbot: QtBot):
     qtbot.addWidget(ss)
     # "a" "b" ""
     # "c" [d] "e" <- delete this cell
-    ss.update_model(WidgetDataModel(value=[["a", "b", ""], ["c", "d", "e"]], type="table"))
+    ss.update_model(WidgetDataModel(value=[["a", "b", ""], ["c", "d", "e"]], type=StandardType.TABLE))
     ss._selection_model.set_ranges([(slice(1, 2), slice(1, 2))])
     ss._delete_selection()
     assert_equal(ss.to_model().value, [["a", "b", ""], ["c", "", "e"]])
 
     # "a" "b" ""
     # "c" "d" [e] <- delete this cell
-    ss.update_model(WidgetDataModel(value=[["a", "b", ""], ["c", "d", "e"]], type="table"))
+    ss.update_model(WidgetDataModel(value=[["a", "b", ""], ["c", "d", "e"]], type=StandardType.TABLE))
     ss._selection_model.set_ranges([(slice(1, 2), slice(2, 3))])
     ss._delete_selection()
     assert_equal(ss.to_model().value, [["a", "b"], ["c", "d"]])
@@ -215,7 +217,7 @@ def test_table_deletion_at_edges(qtbot: QtBot):
     ss.update_model(
         WidgetDataModel(
             value=[["a", "b", ""], ["c", "d", "e"], ["", "f", ""]],
-            type="table",
+            type=StandardType.TABLE,
         )
     )
     ss._selection_model.set_ranges([(slice(2, 3), slice(1, 2))])
@@ -228,9 +230,28 @@ def test_table_deletion_at_edges(qtbot: QtBot):
     ss.update_model(
         WidgetDataModel(
             value=[["a", "b", ""], ["", "", ""], ["", "", "c"]],
-            type="table",
+            type=StandardType.TABLE,
         )
     )
     ss._selection_model.set_ranges([(slice(2, 3), slice(2, 3))])
     ss._delete_selection()
     assert_equal(ss.to_model().value, [["a", "b"]])
+
+def test_copy_on_write(qtbot: QtBot):
+    # test copy on write
+    ss = QSpreadsheet()
+    qtbot.addWidget(ss)
+    with WidgetTester(ss) as tester:
+        array_orig = np.array([["a", "b"], ["c", "d"]], dtype=np.dtypes.StringDType())
+        tester.update_model(value=array_orig, type=StandardType.TABLE)
+        ss._selection_model.set_ranges([(slice(0, 1), slice(1, 2))])
+        ss._delete_selection()
+        assert_equal(ss.to_model().value, [["a", ""], ["c", "d"]])
+        assert_equal(array_orig, [["a", "b"], ["c", "d"]])
+
+        ss_other = QSpreadsheet()
+        ss_other.update_model(ss.to_model())
+        ss._selection_model.set_ranges([(slice(0, 1), slice(0, 1))])
+        ss._delete_selection()
+        assert_equal(ss.to_model().value, [["", ""], ["c", "d"]])
+        assert_equal(ss_other.to_model().value, [["a", ""], ["c", "d"]])

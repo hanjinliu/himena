@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from himena.widgets import SubWindow
 
 _LOGGER = getLogger(__name__)
+_NONE_TOOLTIP = "Drop a subwindow here by Ctrl+dragging the title bar."
 
 
 class QModelDropBase(QtW.QGroupBox):
@@ -50,7 +51,7 @@ class QModelDropBase(QtW.QGroupBox):
             self._label.setAlignment(
                 Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
             )
-        self._label.setToolTip("Drop a subwindow here by Ctrl+dragging the title bar.")
+        self._label.setToolTip(_NONE_TOOLTIP)
         _layout.setContentsMargins(1, 1, 1, 1)
         _layout.addWidget(self._thumbnail)
         _layout.addWidget(self._label)
@@ -186,10 +187,12 @@ class QModelDrop(QModelDropBase):
     def set_model(self, value: WidgetDataModel | None):
         if value is None:
             self._label.setText("Drop here")
+            self._label.setToolTip(_NONE_TOOLTIP)
             self._thumbnail.unset_pixmap()
         else:
             self._data_model = value
-            self._label.setText(repr(value))
+            self._label.setText(repr(value.value))
+            self._label.setToolTip(repr(value))
 
     def _drop_qsubwindow(self, win: QSubWindow):
         widget = win._widget

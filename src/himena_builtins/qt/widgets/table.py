@@ -132,6 +132,7 @@ class QStringArrayModel(QtCore.QAbstractTableModel):
         if not isinstance(arr.dtype, np.dtypes.StringDType):
             raise ValueError("Only string array is supported.")
         self._nrows, self._ncols = arr.shape
+        self._is_original_array = True
         self._header_format = HeaderFormat.NumberZeroIndexed
 
     @classmethod
@@ -148,7 +149,7 @@ class QStringArrayModel(QtCore.QAbstractTableModel):
     def columnCount(self, parent=None):
         return max(self._ncols + 1, self.MIN_COLUMN_COUNT)
 
-    def set_array(self, arr: np.ndarray) -> None:
+    def set_array(self, arr: np.ndarray, is_original: bool = True) -> None:
         if arr.ndim != 2:
             raise ValueError("Only 2D array is supported.")
         nr, nc = arr.shape
@@ -176,6 +177,9 @@ class QStringArrayModel(QtCore.QAbstractTableModel):
             self.beginRemoveColumns(_index, nc_next, nc0 - 1)
             self.removeColumns(nc_next, nc0 - nc_next - 2, _index)
             self.endRemoveColumns()
+        if not (is_original and self._is_original_array):
+            # no need for further copy-on-write
+            self._is_original_array = False
 
     def flags(self, index: QtCore.QModelIndex) -> Qt.ItemFlag:
         return FLAGS
@@ -331,6 +335,10 @@ class QSpreadsheet(QTableBase):
         meta = self._prep_table_meta()
         if sep := self._control._separator:
             meta.separator = sep
+        # NOTE: if this model is passed to another widget and modified in this widget,
+        # the other array will be modified as well. To avoid this, we need to reset the
+        # copy-on-write state of this array.
+        self.model()._is_original_array = True
         return WidgetDataModel(
             value=self.model()._arr,
             type=self.model_type(),
@@ -395,8 +403,13 @@ class QSpreadsheet(QTableBase):
             _action_reshape = ReshapeAction(_ud_old_shape, _ud_new_shape)
             arr = self.model()._arr
         else:
-            _ud_old_data = arr[r, c]
+            if isinstance(r, slice) or isinstance(c, slice):
+                _ud_old_data = arr[r, c].copy()
+            else:
+                _ud_old_data = arr[r, c]
             _action_reshape = None
+        if self.model()._is_original_array:
+            self.model()._arr = arr = arr.copy()
         arr[r, c] = value
         _ud_new_data = arr[r, c]
         _action = EditAction(_ud_old_data, _ud_new_data, (r, c))
@@ -416,13 +429,14 @@ class QSpreadsheet(QTableBase):
             mode="constant",
             constant_values="",
         )
-        self.model().set_array(new_arr)
+        self.model().set_array(new_arr, is_original=False)
         self._control.update_for_table(self)
         self.update()
 
     def array_shrink(self, nr: int, nc: int):
         """Shrink the array to the given shape."""
-        self.model().set_array(self.model()._arr[:nr, :nc])
+        # slicing returns the view of the array, so it should be marked as original.
+        self.model().set_array(self.model()._arr[:nr, :nc], is_original=True)
         self._control.update_for_table(self)
         self.update()
 
@@ -441,7 +455,8 @@ class QSpreadsheet(QTableBase):
                 index,
                 "" if values is None else values,
                 axis=axis,
-            )
+            ),
+            is_original=False,
         )
         if record_undo:
             self._undo_stack.push(InsertAction(index, axis, values))
@@ -467,7 +482,9 @@ class QSpreadsheet(QTableBase):
             ]
         )
         # Update the underlying array data and redraw the table.
-        self.model().set_array(np.delete(self.model()._arr, list(indices), axis=axis))
+        self.model().set_array(
+            np.delete(self.model()._arr, list(indices), axis=axis), is_original=False
+        )
         self.update()
         # Record the action if necessary.
         if record_undo:
@@ -566,6 +583,7 @@ class QSpreadsheet(QTableBase):
         lc = max(arr_paste.shape[1], rng[1].stop - rng[1].start)
 
         # expand the table if necessary
+        expanded = False
         if (row0 + lr) > arr.shape[0]:
             arr = np.pad(
                 arr,
@@ -573,6 +591,7 @@ class QSpreadsheet(QTableBase):
                 mode="constant",
                 constant_values="",
             )
+            expanded = True
         if (col0 + lc) > arr.shape[1]:
             arr = np.pad(
                 arr,
@@ -580,12 +599,14 @@ class QSpreadsheet(QTableBase):
                 mode="constant",
                 constant_values="",
             )
-
+            expanded = True
+        if not expanded:
+            arr = arr.copy()
         # paste the data
         target_slice = (slice(row0, row0 + lr), slice(col0, col0 + lc))
         old_data = arr[target_slice].copy()
         arr[target_slice] = arr_paste
-        self.model().set_array(arr)
+        self.model().set_array(arr, is_original=False)
 
         # select what was just pasted
         self._selection_model.set_ranges([target_slice])

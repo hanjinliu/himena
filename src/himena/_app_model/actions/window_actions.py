@@ -121,6 +121,7 @@ def open_last_closed_window(ui: MainWindow) -> WidgetDataModel:
 )
 def duplicate_window(win: SubWindow) -> WidgetDataModel:
     """Duplicate the selected sub-window."""
+    # NOTE: whether this copies the internal data depends on the widget.
     model = win.to_model()
     update = {
         "save_behavior_override": NoNeedToSave(),

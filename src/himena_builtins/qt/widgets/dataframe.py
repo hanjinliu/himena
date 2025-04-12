@@ -41,6 +41,8 @@ class QDataFrameModel(QtCore.QAbstractTableModel):
         self._df = df
         self._transpose = transpose
         self._cfg = DataFrameConfigs()
+        # this set records all the updated column indices for copy-on-write behavior
+        self._updated_columns: set[int] = set()
 
     @property
     def df(self) -> DataFrameWrapper:
@@ -79,10 +81,14 @@ class QDataFrameModel(QtCore.QAbstractTableModel):
 
     def setData(self, index: QtCore.QModelIndex, value: Any, role: int = ...) -> bool:
         if role == Qt.ItemDataRole.EditRole:
-            val = parse_string(value, self.df.get_dtype(index.column()).kind)
-            name = self.df.column_names()[index.column()]
+            i_row, i_col = index.row(), index.column()
+            val = parse_string(value, self.df.get_dtype(i_col).kind)
+            name = self.df.column_names()[i_col]
             col = self.df.column_to_array(name)
-            col[index.row()] = val
+            if i_col not in self._updated_columns:
+                col = col.copy()
+                self._updated_columns.add(i_col)
+            col[i_row] = val
             self._df = self.df.with_columns({name: col})
             return True
         return False
