@@ -39,6 +39,7 @@ from himena.types import (
     BackendInstructions,
     WindowRect,
 )
+from himena.utils.misc import is_subtype
 from himena.widgets._backend import BackendMainWindow
 from himena.widgets._hist import HistoryContainer, FileDialogHistoryDict
 from himena.widgets._initialize import remove_instance
@@ -66,7 +67,7 @@ class MainWindowEvents(SignalGroup, Generic[_W]):
 
 
 class MainWindow(Generic[_W]):
-    """The main window object."""
+    """The main window handler object."""
 
     def __init__(
         self,
@@ -147,7 +148,15 @@ class MainWindow(Generic[_W]):
         progress_description: str | None = None,
         **kwargs,
     ) -> Future:
-        """Submit a task to the thread pool."""
+        """Submit a task to the thread pool.
+
+        Parameters
+        ----------
+        func : callable
+            Function to run in the background.
+        progress_description : str, optional
+            Description of the task in the progress bar.
+        """
         future = self._executor.submit(func, *args, **kwargs)
         if progress_description is None:
             progress_description = f"Running {func!r}"
@@ -161,6 +170,17 @@ class MainWindow(Generic[_W]):
     def tabs(self) -> TabList[_W]:
         """Tab list object."""
         return self._tab_list
+
+    def windows_for_type(self, types: str | list[str]) -> list[SubWindow[_W]]:
+        """Get all sub-windows for the given types."""
+        windows = []
+        if isinstance(types, str):
+            types = [types]
+        for win in self.iter_windows():
+            mtype = win.model_type()
+            if any(is_subtype(mtype, t) for t in types):
+                windows.append(win)
+        return windows
 
     @property
     def dock_widgets(self) -> DockWidgetList[_W]:
@@ -227,6 +247,7 @@ class MainWindow(Generic[_W]):
         files: list[str | Path] | None = None,
         internal_data: Any | None = None,
     ) -> None:
+        """Set clipboard data."""
         self.clipboard = ClipboardDataModel(
             text=text,
             html=html,
@@ -270,9 +291,16 @@ class MainWindow(Generic[_W]):
     ) -> SubWindow[_W]:
         """Add a widget to the sub window.
 
+        Any widget that can be interpreted by the backend can be added. For example, for
+        Qt application, you can add any QWidget instance:
+
+        ```python
+        ui.add_widget(QtW.QLabel("Hello world!"), title="my widget!")
+        ```
+
         Parameters
         ----------
-        widget : QtW.QWidget
+        widget : Any
             Widget to add.
         title : str, optional
             Title of the sub-window. If not given, its name will be automatically
