@@ -234,18 +234,10 @@ class SingleAxes(BaseLayoutModel):
         """X-axis settings."""
         return self.axes.x
 
-    @x.setter
-    def x(self, value):
-        self.axes.x = value
-
     @property
     def y(self) -> Axis:
         """Y-axis settings."""
         return self.axes.y
-
-    @y.setter
-    def y(self, value):
-        self.axes.y = value
 
     @property
     def axis_color(self) -> str:
@@ -406,18 +398,10 @@ class SingleStackedAxes(BaseLayoutModel):
         """X-axis settings."""
         return self.axes.x
 
-    @x.setter
-    def x(self, value):
-        self.axes.x = value
-
     @property
     def y(self) -> Axis:
         """Y-axis settings."""
         return self.axes.y
-
-    @y.setter
-    def y(self, value):
-        self.axes.y = value
 
     @property
     def axis_color(self) -> str:

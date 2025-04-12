@@ -21,6 +21,7 @@ def test_new_window(make_himena_ui, backend: str):
     himena_ui: MainWindow = make_himena_ui(backend)
     himena_ui.show()
     assert len(himena_ui.tabs) == 0
+    assert len(himena_ui.windows_for_type(StandardType.TEXT)) == 0
     with TemporaryDirectory() as tmp:
         path = Path(tmp) / "test.txt"
         path.write_text("Hello, World!")
@@ -36,6 +37,10 @@ def test_new_window(make_himena_ui, backend: str):
         himena_ui.read_file(path)
     assert len(himena_ui.tabs) == 1
     assert len(himena_ui.tabs[0]) == 2
+
+    assert len(himena_ui.windows_for_type(StandardType.TEXT)) == 2
+    assert himena_ui.windows_for_type((StandardType.TABLE, StandardType.ARRAY)) == []
+
     himena_ui.add_tab("New tab")
     assert len(himena_ui.tabs) == 2
     assert len(himena_ui.tabs.current()) == 0

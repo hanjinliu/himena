@@ -176,10 +176,11 @@ class MainWindow(Generic[_W]):
         windows = []
         if isinstance(types, str):
             types = [types]
-        for win in self.iter_windows():
-            mtype = win.model_type()
-            if any(is_subtype(mtype, t) for t in types):
-                windows.append(win)
+        if tab := self.tabs.current():
+            for win in tab:
+                mtype = win.model_type()
+                if mtype and any(is_subtype(mtype, t) for t in types):
+                    windows.append(win)
         return windows
 
     @property

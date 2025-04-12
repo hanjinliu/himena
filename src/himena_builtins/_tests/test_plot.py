@@ -48,8 +48,12 @@ def test_model_matplotlib_canvas_stack(qtbot: QtBot):
     assert fig.shape == (2, 2)
     fig.axes[0, 0].plot([1, 2, 3])
     fig.axes[0, 1].plot([4, 5, 6])
-    fig.axes[1, 0].plot([7, 8, 9])
-    fig.axes[1, 1].plot([10, 11, 12])
+    fig[1, 0].plot([7, 8, 9])
+    fig[1, 1].plot([10, 11, 12])
+    fig.x.label = "x"
+    fig.y.label = "y"
+    fig.title = "title"
+    fig.axis_color = "pink"
     canvas = QModelMatplotlibCanvasStack()
     canvas.update_model(create_model(fig, type=StandardType.PLOT_STACK))
     qtbot.addWidget(canvas)
