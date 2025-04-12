@@ -511,7 +511,7 @@ class PolarsWrapper(DataFrameWrapper):
         return self._df[name].to_numpy()
 
     def with_columns(self, data: dict[str, np.ndarray]) -> PolarsWrapper:
-        df_new = self._df.with_columns(data)
+        df_new = self._df.with_columns(**data)
         return PolarsWrapper(df_new)
 
     @classmethod

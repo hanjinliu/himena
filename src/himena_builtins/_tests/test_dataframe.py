@@ -1,12 +1,13 @@
 import numpy as np
+from numpy.testing import assert_equal
 import pytest
+from pytestqt.qtbot import QtBot
 from qtpy.QtCore import Qt
+import pandas as pd
+import polars as pl
 from himena import MainWindow
 from himena.testing.subwindow import WidgetTester
 from himena_builtins.qt.dataframe import QDataFrameView, QDataFramePlotView
-import pandas as pd
-import polars as pl
-from pytestqt.qtbot import QtBot
 
 _Ctrl = Qt.KeyboardModifier.ControlModifier
 
@@ -62,6 +63,30 @@ def test_dataframe_command(himena_ui: MainWindow):
     himena_ui.current_window = win
     himena_ui.exec_action("builtins:dataframe:sort", with_params={"column": "b", "descending": True})
     assert _data_frame_equal(himena_ui.current_model.value, {"a": [2, 1], "b": ["q", "p"]})
+
+@pytest.mark.parametrize(
+    "df",
+    [
+        {"a": np.array([1, -2]), "b": np.array([3.0, -4.0]), "str": np.array(["a", "b"])},
+        pd.DataFrame({"a": [1, -2], "b": [3.0, -4.0], "str": ["a", "b"]}),
+        pl.DataFrame({"a": [1, -2], "b": [3.0, -4.0], "str": ["a", "b"]}),
+    ],
+)
+def test_copy_on_write(qtbot: QtBot, df):
+    view = QDataFrameView()
+    qtbot.addWidget(view)
+    with WidgetTester(view) as tester:
+        tester.update_model(value=df, type="dataframe")
+        view.edit_item(0, 0, "100")
+        assert_equal(np.array(tester.to_model().value["a"]), [100, -2])
+        assert_equal(np.array(df["a"]), [1, -2])
+        view2 = QDataFrameView()
+        qtbot.addWidget(view2)
+        view2.update_model(view.to_model())
+        view.edit_item(1, 1, "0.1")
+        assert_equal(np.array(tester.to_model().value["b"]), [3.0, 0.1])
+        assert_equal(np.array(df["b"]), [3.0, -4.0])
+        assert_equal(np.array(view2.to_model().value["b"]), [3.0, -4.0])
 
 def _data_frame_equal(a: dict, b: dict):
     for k in a.keys():
