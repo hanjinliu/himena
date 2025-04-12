@@ -2,9 +2,9 @@ from cmap import Colormap
 import numpy as np
 from numpy.testing import assert_array_equal
 import pytest
+from pytestqt.qtbot import QtBot
 from qtpy.QtCore import Qt
 from qtpy import QtWidgets as QtW
-from pytestqt.qtbot import QtBot
 from himena import MainWindow, StandardType
 from himena.standards.model_meta import ArrayMeta, ArrayAxis, ImageChannel, ImageMeta
 from himena.testing import WidgetTester
@@ -73,7 +73,10 @@ def test_copy_and_paste(qtbot: QtBot):
         tester.widget.selection_model.set_ranges([(slice(0, 2), slice(1, 3))])
         tester.widget._table._paste_from_clipboard()
         assert_array_equal(tester.to_model().value[1, 2, 0:2, 1:3], 4)
-
+        QtW.QApplication.clipboard().setText("1\t2\n3\t4")
+        tester.widget.selection_model.set_ranges([(slice(0, 1), slice(0, 1))])
+        tester.widget._table._paste_from_clipboard()
+        assert_array_equal(tester.to_model().value[1, 2, 0:2, 0:2], [[1, 2], [3, 4]])
 
 def test_binary_operations(himena_ui: MainWindow):
     win = himena_ui.add_object(np.arange(24).reshape(2, 3, 4), type=StandardType.ARRAY)
@@ -147,3 +150,21 @@ def test_array_commands(himena_ui: MainWindow):
     meta_new.axes[1].unit == "um"
     meta_new.axes[2].scale == pytest.approx(1.4)
     meta_new.axes[2].unit == ""
+
+def test_copy_on_write(qtbot: QtBot):
+    view = QArrayView()
+    qtbot.addWidget(view)
+    with WidgetTester(view) as tester:
+        tester.update_model(value=np.zeros((3, 4)), type="array")
+
+        array_orig = np.array([[1, 2], [3, 4]])
+        tester.update_model(value=array_orig, type=StandardType.ARRAY)
+        view.array_update((slice(0, 1), slice(1, 2)), 10)
+        assert_array_equal(view.to_model().value, [[1, 10], [3, 4]])
+        assert_array_equal(array_orig, [[1, 2], [3, 4]])
+
+        view_other = QArrayView()
+        view_other.update_model(view.to_model())
+        view.array_update((slice(0, 1), slice(0, 1)), 20)
+        assert_array_equal(view.to_model().value, [[20, 10], [3, 4]])
+        assert_array_equal(view_other.to_model().value, [[1, 10], [3, 4]])

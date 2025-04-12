@@ -72,6 +72,10 @@ class ArrayWrapper(Generic[ArrayT]):
     def shape(self) -> tuple[int, ...]:
         """Return the shape of the array."""
 
+    def copy(self) -> Self:
+        """Return a copy of the array."""
+        return self.__class__(self._arr.copy())
+
     @property
     def size(self) -> int:
         return np.prod(self.shape)

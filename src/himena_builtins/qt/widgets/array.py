@@ -55,6 +55,7 @@ class QArrayModel(QtCore.QAbstractTableModel):
             self._nrows, self._ncols = arr.shape[0], len(arr.dtype.names)
             self._get_dtype = self._get_dtype_structured
             self._get_item = self._get_item_structured
+        self._is_original_array = True
 
     def _get_dtype_nonstructured(self, r: int, c: int) -> np.dtype:
         return self._dtype
@@ -212,6 +213,12 @@ class QArraySliceView(QTableBase):
         )
         # undo info
         rng = self._selection_model.get_single_range()
+        if rng[0].stop - rng[0].start == 1 and rng[1].stop - rng[1].start == 1:
+            # 1x1 selection can be pasted to any size
+            rng = (
+                slice(rng[0].start, rng[0].start + arr_paste.shape[0]),
+                slice(rng[1].start, rng[1].start + arr_paste.shape[1]),
+            )
         sl = self.parent()._get_indices() + rng
         _ud_old_data = self.parent()._arr.get_slice(sl).copy()
 
@@ -399,6 +406,10 @@ class QArrayView(QtW.QWidget):
 
     @validate_protocol
     def to_model(self) -> WidgetDataModel[list[list[Any]]]:
+        # NOTE: if this model is passed to another widget and modified in this widget,
+        # the other dataframe will be modified as well. To avoid this, we need to reset
+        # the copy-on-write state of this array.
+        self._table.model()._is_original_array = True
         current_indices = tuple(
             None if isinstance(sl, slice) else sl for sl in self._get_slice()
         )
@@ -456,6 +467,12 @@ class QArrayView(QtW.QWidget):
     ) -> None:
         """Update the data at the given index."""
         _ud_old_data = self._arr[sl]
+        if isinstance(_ud_old_data, ArrayWrapper):
+            _ud_old_data = _ud_old_data.copy()
+        if self._table.model()._is_original_array:
+            self._arr = self._arr.copy()
+            self._table.model()._is_original_array = False
+            self._spinbox_changed()  # update slice
         if isinstance(value, str):
             self._arr[sl] = parse_string(value, self._arr.dtype.kind)
         else:
@@ -488,6 +505,8 @@ class QArrayView(QtW.QWidget):
             return
         if _mod & _Ctrl and _key == QtCore.Qt.Key.Key_C:
             return self._table._copy_data()
+        if _mod & _Ctrl and _key == QtCore.Qt.Key.Key_V:
+            return self._table._paste_from_clipboard()
         if _mod & _Ctrl and _key == QtCore.Qt.Key.Key_F:
             self._table._find_string()
             return
