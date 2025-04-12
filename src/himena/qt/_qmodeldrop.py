@@ -191,7 +191,7 @@ class QModelDrop(QModelDropBase):
             self._thumbnail.unset_pixmap()
         else:
             self._data_model = value
-            self._label.setText(repr(value.value))
+            self._label.setText(f"✓ {value.value!r}")
             self._label.setToolTip(repr(value))
 
     def _drop_qsubwindow(self, win: QSubWindow):

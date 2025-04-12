@@ -5,6 +5,11 @@ from scipy import optimize
 from himena import new_window, StandardType, WidgetDataModel, Parametric
 from himena.plugins import register_function, configure_gui
 
+# A "Curve fit ..." command will be added to the "Plugins" menu.
+# This command will return a partialized function with the optimized parameters.
+# You can plot the optimized function by "Plot f = f(x) ..." command in the model menu
+# or from the command palette.
+
 @register_function(title="Curve fit ...")
 def curve_fit() -> Parametric:
     @configure_gui(

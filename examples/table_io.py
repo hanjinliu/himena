@@ -2,13 +2,14 @@ from pathlib import Path
 
 import pandas as pd
 from qtpy import QtWidgets as QtW
-from himena import (
-    new_window,
-    WidgetDataModel,
+from himena import new_window, WidgetDataModel
+from himena.plugins import (
+    register_reader_plugin,
+    register_writer_plugin,
+    register_widget_class,
 )
-from himena.plugins import register_reader_plugin, register_writer_plugin, register_widget_class
 
-PANDAS_TABLE_TYPE = "table.pandas"
+PANDAS_TABLE_TYPE = "pandas"
 
 # `@register_widget` is a decorator that registers a widget class as a frontend
 # widget for the given file type. The class must have an `update_model` method to update

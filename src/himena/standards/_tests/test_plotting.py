@@ -36,3 +36,18 @@ def test_plot_model():
     fig.axes.y.lim = (-1, 1)
     fig.axes.x.label = "X-axis"
     fig.axes.y.label = "Y-axis"
+    fig.axes.axis_color = "red"
+
+    # use figure properties
+    fig.title = "Title"
+    assert fig.title == "Title"
+    fig.x.lim = (0, 5)
+    assert fig.x.lim == (0, 5)
+    fig.y.lim = (-1, 2)
+    assert fig.y.lim == (-1, 2)
+    fig.x.label = "X"
+    assert fig.x.label == "X"
+    fig.y.label = "Y"
+    assert fig.y.label == "Y"
+    fig.axis_color = "blue"
+    assert fig.axis_color == "blue"

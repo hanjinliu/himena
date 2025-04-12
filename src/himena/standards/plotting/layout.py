@@ -206,7 +206,7 @@ class ModelsRef:
         size: int = 12,
         color: str = "black",
         family: str = "Arial",
-        anchor: _m.ANCHOR_STRINGS,
+        anchor: _m.ANCHOR_STRINGS = "center",
         rotation: float = 0,
     ) -> _m.Texts:
         """Add a text plot model to the axes."""
@@ -228,6 +228,34 @@ class Axes(AxesBase, ModelsRef):
 
 class SingleAxes(BaseLayoutModel):
     axes: Axes = Field(default_factory=Axes, description="Child axes.")
+
+    @property
+    def x(self) -> Axis:
+        """X-axis settings."""
+        return self.axes.x
+
+    @property
+    def y(self) -> Axis:
+        """Y-axis settings."""
+        return self.axes.y
+
+    @property
+    def axis_color(self) -> str:
+        """Axis color."""
+        return self.axes.axis_color
+
+    @axis_color.setter
+    def axis_color(self, value):
+        self.axes.axis_color = value
+
+    @property
+    def title(self) -> str:
+        """Title of the central axes."""
+        return self.axes.title
+
+    @title.setter
+    def title(self, value):
+        self.axes.title = value
 
     def merge_with(self, other: "SingleAxes") -> "SingleAxes":
         """Merge with another SingleAxes layout."""
@@ -364,6 +392,34 @@ class SingleStackedAxes(BaseLayoutModel):
 
     axes: StackedAxes = Field(default_factory=StackedAxes, description="Child axes.")
     background_color: str = Field("#FFFFFF", description="Background color.")
+
+    @property
+    def x(self) -> Axis:
+        """X-axis settings."""
+        return self.axes.x
+
+    @property
+    def y(self) -> Axis:
+        """Y-axis settings."""
+        return self.axes.y
+
+    @property
+    def axis_color(self) -> str:
+        """Axis color."""
+        return self.axes.axis_color
+
+    @axis_color.setter
+    def axis_color(self, value):
+        self.axes.axis_color = value
+
+    @property
+    def title(self) -> str:
+        """Title of the central axes."""
+        return self.axes.title
+
+    @title.setter
+    def title(self, value):
+        self.axes.title = value
 
     @classmethod
     def fill(cls, *shape: int):
