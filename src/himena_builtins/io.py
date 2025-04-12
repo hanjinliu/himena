@@ -23,14 +23,14 @@ def read_text(file_path: Path) -> WidgetDataModel:
     elif suffix in {".png", ".jpg", ".jpeg"}:
         return _io.default_image_reader(file_path)
     elif suffix == ".json":
-        if file_path.suffixes == [".plot", ".json"]:
-            return _io.default_plot_reader(file_path)
-        elif file_path.suffixes == [".roi", ".json"]:
-            return _io.default_roi_reader(file_path)
-        elif file_path.suffixes == [".workflow", ".json"]:
-            return _io.default_workflow_reader(file_path)
-        else:
-            return _io.default_text_reader(file_path)
+        if len(suffixes := file_path.suffixes) > 1:
+            if suffixes[-2:] == [".plot", ".json"]:
+                return _io.default_plot_reader(file_path)
+            elif suffixes[-2:] == [".roi", ".json"]:
+                return _io.default_roi_reader(file_path)
+            elif suffixes[-2:] == [".workflow", ".json"]:
+                return _io.default_workflow_reader(file_path)
+        return _io.default_text_reader(file_path)
     elif suffix in BasicTextFileTypes:
         return _io.default_text_reader(file_path)
     elif file_path.name.rstrip("~") in ConventionalTextFileNames:
@@ -48,14 +48,14 @@ def _(file_path: Path) -> str | None:
     elif suffix in {".png", ".jpg", ".jpeg"}:
         return StandardType.IMAGE
     elif suffix == ".json":
-        if file_path.suffixes == [".plot", ".json"]:
-            return StandardType.PLOT
-        elif file_path.suffixes == [".roi", ".json"]:
-            return StandardType.ROIS
-        elif file_path.suffixes == [".workflow", ".json"]:
-            return StandardType.WORKFLOW
-        else:
-            return StandardType.TEXT
+        if len(suffixes := file_path.suffixes) > 1:
+            if suffixes[-2:] == [".plot", ".json"]:
+                return StandardType.PLOT
+            elif suffixes[-2:] == [".roi", ".json"]:
+                return StandardType.ROIS
+            elif suffixes[-2:] == [".workflow", ".json"]:
+                return StandardType.WORKFLOW
+        return StandardType.TEXT
     elif suffix in BasicTextFileTypes:
         return StandardType.TEXT
     elif file_path.name.rstrip("~") in ConventionalTextFileNames:
