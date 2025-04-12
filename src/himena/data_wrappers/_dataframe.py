@@ -214,6 +214,10 @@ class DataFrameWrapper(ABC):
     def to_dict(self) -> dict[str, np.ndarray]:
         return {k: self.column_to_array(k) for k in self.column_names()}
 
+    def copy(self) -> Self:
+        """Return a shallow copy of the dataframe."""
+        return self.from_dict(self.to_dict())
+
     def type_name(self) -> str:
         mod = type(self._df).__module__.split(".")[0]
         return f"{mod}.{type(self._df).__name__}"
@@ -507,7 +511,7 @@ class PolarsWrapper(DataFrameWrapper):
         return self._df[name].to_numpy()
 
     def with_columns(self, data: dict[str, np.ndarray]) -> PolarsWrapper:
-        df_new = self._df.with_columns(data)
+        df_new = self._df.with_columns(**data)
         return PolarsWrapper(df_new)
 
     @classmethod

@@ -41,6 +41,8 @@ class QDataFrameModel(QtCore.QAbstractTableModel):
         self._df = df
         self._transpose = transpose
         self._cfg = DataFrameConfigs()
+        # this set records all the updated column indices for copy-on-write behavior
+        self._updated_columns: set[int] = set()
 
     @property
     def df(self) -> DataFrameWrapper:
@@ -79,10 +81,14 @@ class QDataFrameModel(QtCore.QAbstractTableModel):
 
     def setData(self, index: QtCore.QModelIndex, value: Any, role: int = ...) -> bool:
         if role == Qt.ItemDataRole.EditRole:
-            val = parse_string(value, self.df.get_dtype(index.column()).kind)
-            name = self.df.column_names()[index.column()]
+            i_row, i_col = index.row(), index.column()
+            val = parse_string(value, self.df.get_dtype(i_col).kind)
+            name = self.df.column_names()[i_col]
             col = self.df.column_to_array(name)
-            col[index.row()] = val
+            if i_col not in self._updated_columns:
+                col = col.copy()
+                self._updated_columns.add(i_col)
+            col[i_row] = val
             self._df = self.df.with_columns({name: col})
             return True
         return False
@@ -196,10 +202,12 @@ class QDataFrameView(QTableBase):
 
     ## Basic Usage
 
-    - This widget is a read-only table widget for viewing a dataframe. Supported data
-      types includes `dict[str, numpy.ndarray]`, `pandas.DataFrame`, `polars.DataFrame`,
+    - This widget is a table widget for viewing a dataframe. Supported data types
+      includes `dict[str, numpy.ndarray]`, `pandas.DataFrame`, `polars.DataFrame`,
       `pyarrow.Table` and `narwhals.DataFrame`.
     - `Ctrl+F` to search a string in the table.
+    - Each item can be edited by double-clicking it, but only the standard scalar types
+      are supported.
 
     ## Drag and Drop
 
@@ -252,7 +260,11 @@ class QDataFrameView(QTableBase):
         return None
 
     @validate_protocol
-    def to_model(self) -> WidgetDataModel[list[list[Any]]]:
+    def to_model(self) -> WidgetDataModel:
+        # NOTE: if this model is passed to another widget and modified in this widget,
+        # the other dataframe will be modified as well. To avoid this, we need to reset
+        # the copy-on-write state of this array.
+        self.model()._updated_columns.clear()
         return WidgetDataModel(
             value=self.model().df.unwrap(),
             type=self.model_type(),
@@ -315,6 +327,15 @@ class QDataFrameView(QTableBase):
         csv_text = self.model().df.get_subset(r0, r1, c0, c1).to_csv_string("\t")
         clipboard = QtGui.QGuiApplication.clipboard()
         clipboard.setText(csv_text)
+
+    def edit_item(self, r: int, c: int, value: str):
+        self.model().setData(self.model().index(r, c), value, Qt.ItemDataRole.EditRole)
+        # datChanged needs to be emitted manually
+        self.model().dataChanged.emit(
+            self.model().index(r, c),
+            self.model().index(r, c),
+            [Qt.ItemDataRole.EditRole],
+        )
 
     def _make_context_menu(self):
         menu = QtW.QMenu(self)
