@@ -3,6 +3,7 @@ from __future__ import annotations
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from functools import singledispatch
 from datetime import timedelta
+from magicgui.widgets import request_values
 from himena.consts import StandardType, MonospaceFontFamily
 from himena.plugins import validate_protocol
 from himena import workflow as _wf
@@ -31,6 +32,8 @@ class QWorkflowView(QtW.QWidget):
         self._tree_widget.setHeaderHidden(True)
         layout.addWidget(self._tree_widget)
         self._tree_widget.setFont(QtGui.QFont(MonospaceFontFamily))
+        self._tree_widget.right_clicked.connect(self._on_right_clicked)
+        self._modified = False
 
     @validate_protocol
     def update_model(self, model: WidgetDataModel):
@@ -38,10 +41,6 @@ class QWorkflowView(QtW.QWidget):
         if not isinstance(wf, _wf.Workflow):
             raise ValueError(f"Expected Workflow, got {type(wf)}")
         self._tree_widget.set_workflow(wf)
-        for each in wf:
-            item = _step_to_item(each)
-            _add_common_child(item, each)
-            self._tree_widget.addTopLevelItem(item)
 
     @validate_protocol
     def to_model(self) -> WidgetDataModel:
@@ -53,14 +52,104 @@ class QWorkflowView(QtW.QWidget):
 
     @validate_protocol
     def model_type(self) -> str:
+        if any(
+            isinstance(step, _wf.UserInput)
+            for step in self._tree_widget._workflow.steps
+        ):
+            return StandardType.WORKFLOW_PARAMETRIC
         return StandardType.WORKFLOW
 
     @validate_protocol
     def size_hint(self) -> tuple[int, int]:
         return 400, 320
 
+    @validate_protocol
+    def is_modified(self) -> bool:
+        return self._modified
+
+    @validate_protocol
+    def set_modified(self, modified: bool) -> None:
+        self._modified = modified
+
+    def set_workflow(self, workflow: _wf.Workflow) -> None:
+        """Set the workflow."""
+        self._tree_widget.set_workflow(workflow)
+
+    def _replace_with_file_reader(self, item: QtW.QTreeWidgetItem, how: str) -> None:
+        row = self._tree_widget.indexOfTopLevelItem(item)
+        step = self._tree_widget._workflow[row]
+        wf_new = self._tree_widget._workflow.replace_with_input(step.id, how=how)
+        self.set_workflow(wf_new)
+        self._modified = True
+
+    def _mark_to_be_added(self, item: QtW.QTreeWidgetItem) -> None:
+        row = self._tree_widget.indexOfTopLevelItem(item)
+        wf = self._tree_widget._workflow
+        step = wf[row]
+        param = _wf.ModelParameter(name="mode", value=step.id, model_type="any")
+        cexec = _wf.CommandExecution(command_id="add-window", contexts=[param])
+        wf_new = self._tree_widget._workflow.with_step(cexec)
+        self.set_workflow(wf_new)
+        self._modified = True
+
+    def _execute_upto(self, item: QtW.QTreeWidgetItem) -> None:
+        row = self._tree_widget.indexOfTopLevelItem(item)
+        wf = self._tree_widget._workflow
+        step = wf[row]
+        wf.filter(step.id).compute(process_output=True)
+
+    def _edit_user_input(self, item: QtW.QTreeWidgetItem) -> None:
+        row = self._tree_widget.indexOfTopLevelItem(item)
+        wf = self._tree_widget._workflow
+        step = wf[row]
+        if not isinstance(step, _wf.UserInput):
+            raise ValueError(f"Expected UserInput, got {type(step)}")
+        resp = request_values(
+            label={"value": step.label, "label": "Label"},
+            doc={"value": step.doc, "label": "Docstring"},
+            title="Edit User Input",
+            parent=self,
+        )
+        if resp:
+            step.label = resp["label"]
+            step.doc = resp["doc"]
+            self.set_workflow(wf)  # update
+            self._modified = True
+
+    def _on_right_clicked(self, item: QtW.QTreeWidgetItem, pos: QtCore.QPoint) -> None:
+        self._make_context_menu(item).exec(pos)
+
+    def _make_context_menu(self, item: QtW.QTreeWidgetItem) -> QtW.QMenu:
+        menu = QtW.QMenu(self)
+        a0 = menu.addAction(
+            "Replace with file reader",
+            lambda: self._replace_with_file_reader(item, "file"),
+        )
+        a0.setToolTip("Replace the selected item with a file reader")
+        a1 = menu.addAction(
+            "Replace with model input",
+            lambda: self._replace_with_file_reader(item, "model"),
+        )
+        a1.setToolTip("Replace the selected item with a model input")
+        a2 = menu.addAction("Mark as to-be-added", lambda: self._mark_to_be_added(item))
+        a2.setToolTip(
+            "Mark the selected item so that it will be added to the main window after the workflow execution (even if it's an intermediate step)"
+        )
+        menu.addSeparator()
+        a3 = menu.addAction("Execute upto here", lambda: self._execute_upto(item))
+        a3.setToolTip("Execute the workflow up to the selected item")
+        a4 = menu.addAction("Edit ...", lambda: self._edit_user_input(item))
+        a4.setToolTip("Edit the selected user input item")
+        if isinstance(item.data(0, _STEP_ROLE), _wf.UserInput):
+            a3.setEnabled(False)
+        else:
+            a4.setEnabled(False)
+        return menu
+
 
 class QWorkflowTree(QtW.QTreeWidget):
+    right_clicked = QtCore.Signal(QtW.QTreeWidgetItem, QtCore.QPoint)
+
     def __init__(self, workflow: _wf.Workflow):
         super().__init__()
         self._workflow = workflow
@@ -78,6 +167,10 @@ class QWorkflowTree(QtW.QTreeWidget):
         self.clear()
         self._workflow = workflow
         self._id_to_index_map = workflow.id_to_index_map()
+        for each in workflow:
+            item = _step_to_item(each)
+            _add_common_child(item, each)
+            self.addTopLevelItem(item)
 
     @QtCore.Property(QtGui.QColor)
     def selectionColor(self):
@@ -166,25 +259,29 @@ class QWorkflowTree(QtW.QTreeWidget):
     def mousePressEvent(self, e: QtGui.QMouseEvent):
         index = self.indexAt(e.pos())
         item = self.ancestor_item(index)
-        if item is not None:
-            row = self.indexOfTopLevelItem(item)
-            self._selection_model.jump_to(row, 0)
+        if e.buttons() & QtCore.Qt.MouseButton.LeftButton:
+            if item is not None:
+                row = self.indexOfTopLevelItem(item)
+                self._selection_model.jump_to(row, 0)
+        if e.buttons() & QtCore.Qt.MouseButton.RightButton:
+            self.right_clicked.emit(item, self.mapToGlobal(e.pos()))
         return super().mousePressEvent(e)
 
     # drag-and-drop
     def mouseMoveEvent(self, e: QtGui.QMouseEvent):
         if e.buttons() & QtCore.Qt.MouseButton.LeftButton:
-            self._start_drag(e.pos())
+            if drag := self._make_drag(e.pos()):
+                drag.exec()
             return None
         return super().mouseMoveEvent(e)
 
-    def _start_drag(self, pos: QtCore.QPoint):
+    def _make_drag(self, pos: QtCore.QPoint):
         if not self.indexAt(pos).isValid():
             return
         row = self._selection_model.current_index.row
         if 0 <= row < len(self._workflow):
             wf_filt = self._workflow.filter(self._workflow[row].id)
-            drag_model(
+            return drag_model(
                 WidgetDataModel(
                     value=wf_filt,
                     type=StandardType.WORKFLOW,
@@ -193,6 +290,7 @@ class QWorkflowTree(QtW.QTreeWidget):
                 desc="workflow node",
                 source=self.parent(),
                 text_data=str(wf_filt),
+                exec=False,
             )
 
 
@@ -231,6 +329,22 @@ def _(step: _wf.RemoteReaderMethod) -> QtW.QTreeWidgetItem:
 @_step_to_item.register
 def _(step: _wf.UserModification) -> QtW.QTreeWidgetItem:
     item = QtW.QTreeWidgetItem(["[User Modification]"])
+    item.setData(0, _STEP_ROLE, step)
+    return item
+
+
+@_step_to_item.register
+def _(step: _wf.UserInput) -> QtW.QTreeWidgetItem:
+    if step.how == "file":
+        text = "[File Input]"
+    elif step.how == "model":
+        text = "[Model Input]"
+    else:
+        text = "[User Input]"
+    item = QtW.QTreeWidgetItem([text])
+    item.addChild(QtW.QTreeWidgetItem([f"label = {step.label!r}"]))
+    item.addChild(QtW.QTreeWidgetItem([f"doc = {step.doc!r}"]))
+    item.setToolTip(0, f"{text}\nlabel = {step.label}\ndoc = {step.doc}")
     item.setData(0, _STEP_ROLE, step)
     return item
 

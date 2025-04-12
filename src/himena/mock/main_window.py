@@ -88,7 +88,14 @@ class MockBackend(BackendMainWindow):
 
         If there is no sub window, or the tab area itself is selected, return None.
         """
-        return self._tabs[i_tab].current_index
+        # Unlike GUI-based backend, this index will not be automatically updated.
+        idx = self._tabs[i_tab].current_index
+        if idx is None:
+            return None
+        nwindows = len(self._tabs[i_tab].sub_windows)
+        if nwindows == 0:
+            return None
+        return min(idx, nwindows - 1)
 
     def _set_current_sub_window_index(self, i_tab: int, i_window: int | None) -> None:
         """Update the current sub window index in the given tab.

@@ -4,6 +4,7 @@ from pathlib import Path
 import subprocess
 
 from pydantic_compat import Field
+from himena.exceptions import NotExecutable
 from himena.utils.misc import PluginInfo
 from himena.utils.cli import remote_to_local
 from himena.workflow._base import WorkflowStep
@@ -28,7 +29,26 @@ class ProgrammaticMethod(NoParentWorkflow):
     type: Literal["programmatic"] = "programmatic"
 
     def _get_model_impl(self, wf):
-        raise ValueError("Data was added programmatically, thus cannot be re-executed.")
+        raise NotExecutable("Data was added programmatically, thus cannot be executed.")
+
+
+class UserInput(NoParentWorkflow):
+    """Describes that one will be provided as a runtime user input."""
+
+    type: Literal["input"] = "input"
+    label: str = Field(default="")
+    doc: str = Field(default="")
+    how: Literal["file", "model"] = "model"
+
+    def _get_model_impl(self, wf: "Workflow") -> "WidgetDataModel":
+        raise NotExecutable("No user input bound to this workflow step.")
+
+
+class RuntimInputBound(UserInput):
+    bound_value: Any
+
+    def _get_model_impl(self, wf: "Workflow") -> "WidgetDataModel":
+        return self.bound_value
 
 
 class ReaderMethod(NoParentWorkflow):

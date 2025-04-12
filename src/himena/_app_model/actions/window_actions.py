@@ -475,7 +475,7 @@ def window_layout_horizontal(ui: MainWindow) -> Parametric:
 
 @ACTIONS.append_from_fn(
     id="window-layout-vertical",
-    title="Vertical  layout ...",
+    title="Vertical layout ...",
     enablement=(_ctx.num_sub_windows > 1) & (_ctx.num_tabs > 0),
     menus=[MenuId.WINDOW_LAYOUT],
     need_function_callback=True,
@@ -491,6 +491,18 @@ def window_layout_vertical(ui: MainWindow) -> Parametric:
         layout.extend(wins)
 
     return run_layout_vertical
+
+
+@ACTIONS.append_from_fn(
+    id="add-window",
+    enablement=(_ctx.num_sub_windows > 1) & (_ctx.num_tabs > 0),
+    menus=[],
+    need_function_callback=False,
+)
+def add_window(ui: MainWindow, model: WidgetDataModel) -> None:
+    """Just add the model to the main window"""
+    # This action is needed to show the intermediate model of a workflow.
+    ui.add_data_model(model)
 
 
 # Jump to the nth window

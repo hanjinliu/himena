@@ -86,6 +86,7 @@ class StandardType(SimpleNamespace):
 
     ### Other types ###
     WORKFLOW = "workflow"  # himena workflow object
+    WORKFLOW_PARAMETRIC = "workflow.parametric"  # parametric workflow object
     GROUPBY = "groupby"  # DataFrame GroupBy object
     ROIS = "rois"  # regions of interest
     FUNCTION = "function"  # callable object

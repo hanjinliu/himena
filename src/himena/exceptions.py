@@ -17,6 +17,10 @@ class DeadSubwindowError(RuntimeError):
     """Exception raised when a subwindow is not alive in the main window."""
 
 
+class NotExecutable(RuntimeError):
+    """Exception raised when the workflow cannot be executed."""
+
+
 class ExceptionHandler:
     """Handle exceptions in the GUI thread."""
 
