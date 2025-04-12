@@ -435,8 +435,12 @@ def copy_screenshot_window(ui: MainWindow) -> ClipboardDataModel:
 @ACTIONS.append_from_fn(
     id="settings",
     title="Settings ...",
-    menus=[{"id": MenuId.FILE, "group": SETTINGS_GROUP}],
+    menus=[
+        {"id": MenuId.FILE, "group": SETTINGS_GROUP},
+        {"id": MenuId.CORNER, "group": SETTINGS_GROUP},
+    ],
     keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.Comma)],
+    icon="weui:setting-filled",
 )
 def show_setting_dialog(ui: MainWindow):
     """Open a dialog to edit the application profile."""

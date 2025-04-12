@@ -57,6 +57,19 @@ QPushButton:disabled {
     border: 0px;
 }
 
+QPushButton#profileButton {
+    background-color: #[background];
+    color:: #[foreground_dim];
+    margin: 1px;
+}
+QPushButton#profileButton:hover {
+    background-color: #[highlight_dim];
+}
+
+QPushButton#profileButton:pressed {
+    background-color: #[highlight_strong];
+}
+
 
 QCollapsible > QPushButton {
     color: #[foreground];
@@ -218,6 +231,14 @@ QToolBar {
     color: #[foreground];
     margin: 1px;
     padding: 1px;
+}
+
+QMenuBar > QToolBar {
+    border: 0px;
+    background-color: #[background];
+    color: #[foreground];
+    margin: 0px;
+    padding: 0px;
 }
 
 QToolButton {

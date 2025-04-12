@@ -54,9 +54,13 @@ def show_whats_this(ui: MainWindow) -> None:
 @ACTIONS.append_from_fn(
     id="show-workflow-graph",
     title="Show workflow graph",
-    menus=[{"id": MenuId.WINDOW, "group": EXIT_GROUP}],
+    menus=[
+        {"id": MenuId.WINDOW, "group": EXIT_GROUP},
+        {"id": MenuId.CORNER, "group": EXIT_GROUP},
+    ],
     enablement=_ctx.num_sub_windows > 0,
     need_function_callback=True,
+    icon="hugeicons:workflow-circle-05",
 )
 def show_workflow_graph(model: WidgetDataModel) -> WidgetDataModel:
     """Show the workflow graph of the current window."""
@@ -69,6 +73,23 @@ def show_workflow_graph(model: WidgetDataModel) -> WidgetDataModel:
         extension_default=".workflow.json",
         workflow=workflow,
     )
+
+
+@ACTIONS.append_from_fn(
+    id="open-last-closed-window",
+    title="Open last closed window",
+    menus=[{"id": MenuId.WINDOW, "group": EXIT_GROUP}],
+    keybindings=[{"primary": _CtrlShift | KeyCode.KeyT}],
+)
+def open_last_closed_window(ui: MainWindow) -> WidgetDataModel:
+    """Open the last closed window."""
+    if last := ui._history_closed.pop_last():
+        path, plugin = last
+        store = _providers.ReaderStore().instance()
+        model = store.run(path=path, plugin=plugin)
+        return model
+    warnings.warn("No window to reopen", UserWarning, stacklevel=2)
+    raise Cancelled
 
 
 @ACTIONS.append_from_fn(
@@ -92,23 +113,6 @@ def close_current_window(ui: MainWindow) -> None:
         raise Cancelled
     _LOGGER.info(f"Closing window {i_window} in tab {i_tab}")
     tab[i_window]._close_me(ui, ui._instructions.confirm)
-
-
-@ACTIONS.append_from_fn(
-    id="open-last-closed-window",
-    title="Open last closed window",
-    menus=[{"id": MenuId.WINDOW, "group": EXIT_GROUP}],
-    keybindings=[{"primary": _CtrlShift | KeyCode.KeyT}],
-)
-def open_last_closed_window(ui: MainWindow) -> WidgetDataModel:
-    """Open the last closed window."""
-    if last := ui._history_closed.pop_last():
-        path, plugin = last
-        store = _providers.ReaderStore().instance()
-        model = store.run(path=path, plugin=plugin)
-        return model
-    warnings.warn("No window to reopen", UserWarning, stacklevel=2)
-    raise Cancelled
 
 
 @ACTIONS.append_from_fn(
