@@ -13,7 +13,7 @@ class ActionList(list[Action]):
     def append_from_fn(
         self,
         id: str,
-        title: str,
+        title: str | None = None,
         icon: str | None = None,
         menus=None,
         enablement=None,
@@ -33,7 +33,7 @@ class ActionList(list[Action]):
                 setattr(callback, NO_RECORDING_FIELD, True)
             action = Action(
                 id=id,
-                title=title,
+                title=title or id,
                 icon=icon,
                 callback=callback,
                 tooltip=fn.__doc__,

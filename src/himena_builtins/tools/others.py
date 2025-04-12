@@ -15,7 +15,7 @@ from himena.types import Parametric, WidgetDataModel
 from himena.consts import StandardType, MonospaceFontFamily, MenuId
 from himena.utils.collections import OrderedSet
 from himena.widgets import SubWindow, MainWindow, ParametricWindow
-from himena.workflow import Workflow
+from himena.workflow import Workflow, as_function
 from himena import AppContext as ctx
 from himena._utils import get_display_name, get_widget_class_id, unwrap_lazy_model
 
@@ -225,16 +225,33 @@ def _norm_model_list(models) -> Iterable[WidgetDataModel]:
     types=[StandardType.WORKFLOW],
     menus=[],
     command_id="builtins:exec-workflow",
+    enablement=ctx.active_window_model_subtype_1 != "parametric",
 )
 def exec_workflow(model: WidgetDataModel) -> None:
     """Execute the workflow."""
-    if not isinstance(workflow := model.value, Workflow):
-        raise TypeError(f"Expected a Workflow object but got {type(workflow)}")
     # NOTE: this function should not return the model and let the application process
     # it. The workflow of the output model should not be updated. Using workflow to
     # compute a new model is a special case in himena.
-    workflow.compute(process_output=True)
-    return None
+    _cast_workflow(model).compute(process_output=True)
+
+
+@register_function(
+    title="Execute workflow",
+    types=[StandardType.WORKFLOW_PARAMETRIC],
+    menus=[],
+    command_id="builtins:exec-parametric-workflow",
+)
+def exec_parametric_workflow(model: WidgetDataModel, ui: MainWindow) -> Parametric:
+    """Execute the workflow."""
+    wf = _cast_workflow(model)
+    return as_function(wf)(ui)
+
+
+def _cast_workflow(model: WidgetDataModel) -> Workflow:
+    """Cast the model to a Workflow object."""
+    if not isinstance(model.value, Workflow):
+        raise TypeError(f"Expected a Workflow object but got {type(model.value)}")
+    return model.value
 
 
 @register_function(

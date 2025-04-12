@@ -10,6 +10,7 @@ from himena.workflow._reader import (
     ProgrammaticMethod,
     LocalReaderMethod,
     RemoteReaderMethod,
+    UserInput,
 )
 from himena.workflow._command import CommandExecution, UserModification
 
@@ -25,6 +26,7 @@ WorkflowStepType = Union[
     RemoteReaderMethod,
     CommandExecution,
     UserModification,
+    UserInput,
 ]
 
 
@@ -56,20 +58,28 @@ class Workflow(BaseModel):
         return {step.id: i for i, step in enumerate(self.steps)}
 
     def filter(self, step: uuid.UUID) -> "Workflow":
-        """Return another list that only contains the ancestors of the given ID."""
-        id_to_index_map = self.id_to_index_map()
-        index = id_to_index_map[step]
-        indices = {index}
-        all_descendant = [self.steps[index]]
-        while all_descendant:
-            current = all_descendant.pop()
-            for id_ in current.iter_parents():
-                idx = id_to_index_map[id_]
-                if idx in indices:
-                    continue
-                indices.add(idx)
-                all_descendant.append(self.steps[idx])
-        indices = sorted(indices)
+        """Return another workflow that only contains the ancestors of the given ID.
+
+        For example, if the workflow is:
+
+        ```
+        W0 -> W1 -> W2 -> W3
+              ^
+              |
+        W2 ---+
+        ```
+
+        and the given ID is W1, then the returned workflow will be:
+
+        ```
+        W0 -> W1
+              ^
+              |
+        W2 ---+
+        ```
+
+        """
+        indices = sorted(self._get_ancestors(step)[0])
         out = Workflow(steps=[self.steps[i] for i in indices])
         out._cache_enabled = self._cache_enabled
         out._mock_main_window = (
@@ -82,17 +92,19 @@ class Workflow(BaseModel):
         return self.steps[index]
 
     def last(self) -> WorkflowStep | None:
+        """Get the last step if exists."""
         if len(self.steps) == 0:
             return None
         return self.steps[-1]
 
     def last_id(self) -> uuid.UUID:
+        """Get the ID of the last step."""
         if step := self.last():
             return step.id
         raise ValueError("Workflow is empty.")
 
     def deep_copy(self) -> "Workflow":
-        return Workflow(steps=[step.copy() for step in self.steps])
+        return Workflow(steps=[step.model_copy() for step in self.steps])
 
     def step_for_id(self, id: uuid.UUID) -> WorkflowStep:
         for step in self.steps:
@@ -130,6 +142,7 @@ class Workflow(BaseModel):
         return len(self.steps)
 
     def with_step(self, step: WorkflowStep) -> "Workflow":
+        """Return a new workflow with the given step added."""
         if not isinstance(step, WorkflowStep):
             raise ValueError("Expected a Workflow instance.")
         # The added step is always a unique node.
@@ -172,6 +185,60 @@ class Workflow(BaseModel):
                 id_found.add(node.id)
                 nodes.append(node)
         return Workflow(steps=nodes)
+
+    def replace(
+        self,
+        step: uuid.UUID,
+        new: "WorkflowStep | Workflow",
+    ) -> "Workflow":
+        """Replace the step of the given ID with the new step."""
+        indices, index = self._get_ancestors(step, exclude_me=True)
+        new_steps = self.steps.copy()
+        indices_to_remove = sorted(indices, reverse=True)
+        for i in indices_to_remove:
+            new_steps.pop(i)
+        index_shifted = index - len([i for i in indices_to_remove if i < index])
+        if isinstance(new, WorkflowStep):
+            new_steps[index_shifted] = new
+            new.id = step
+        else:
+            insert = new.steps.copy()
+            insert[-1] = insert[-1].model_copy(update={"id": step})
+            new_steps = (
+                new_steps[:index_shifted] + insert + new_steps[index_shifted + 1 :]
+            )
+        return Workflow(steps=new_steps)
+
+    def replace_with_input(
+        self,
+        step: uuid.UUID,
+        how: str = "model",
+    ) -> "Workflow":
+        """Replace the step of the given ID with a runtime input."""
+        new_step = UserInput(how=how)  # TODO: restrict input type
+        return self.replace(step, new_step)
+
+    def _get_ancestors(
+        self,
+        step: uuid.UUID,
+        exclude_me: bool = False,
+    ) -> tuple[set[int], int]:
+        id_to_index_map = self.id_to_index_map()
+        index = id_to_index_map[step]
+
+        indices = {index}
+        ancestors = [self.steps[index]]
+        while ancestors:
+            current = ancestors.pop()
+            for id_ in current.iter_parents():
+                idx = id_to_index_map[id_]
+                if idx in indices:
+                    continue
+                indices.add(idx)
+                ancestors.append(self.steps[idx])
+        if exclude_me:
+            indices.remove(index)
+        return indices, index
 
 
 def compute(workflows: list[Workflow]) -> list["WidgetDataModel | Exception"]:
