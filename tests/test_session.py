@@ -110,6 +110,7 @@ def test_session_stand_alone(tmpdir, himena_ui: MainWindow, sample_dir):
 
 def test_session_window_input(himena_ui: MainWindow):
     from himena_builtins.tools.others import exec_workflow
+
     himena_ui.exec_action("builtins:seaborn-sample:iris")
     win = himena_ui.current_window
     assert isinstance(win.widget, QSpreadsheet)

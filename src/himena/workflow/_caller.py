@@ -43,12 +43,9 @@ def as_function(wf: Workflow):
             for k, v in kwargs.items():
                 step_id = key_to_id[k]
                 if isinstance(v, Path):
-                    wf_compute = wf_compute.replace(
-                        step_id, LocalReaderMethod(id=step_id, path=v)
-                    )
-                    wf_out = wf_out.replace(
-                        step_id, LocalReaderMethod(id=step_id, path=v)
-                    )
+                    meth = LocalReaderMethod(id=step_id, path=v)
+                    wf_compute = wf_compute.replace(step_id, meth)
+                    wf_out = wf_out.replace(step_id, meth)
                 elif isinstance(v, WidgetDataModel):
                     wf_compute = wf_compute.replace(
                         step_id, RuntimInputBound(id=step_id, bound_value=v)

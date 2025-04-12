@@ -201,12 +201,16 @@ class Workflow(BaseModel):
         if isinstance(new, WorkflowStep):
             new_steps[index_shifted] = new
             new.id = step
-        else:
+        elif isinstance(new, Workflow):
             insert = new.steps.copy()
+            if len(insert) == 0:
+                raise ValueError("Input workflow is empty.")
             insert[-1] = insert[-1].model_copy(update={"id": step})
             new_steps = (
                 new_steps[:index_shifted] + insert + new_steps[index_shifted + 1 :]
             )
+        else:
+            raise TypeError(f"Expected a WorkflowStep or Workflow, got {type(new)}.")
         return Workflow(steps=new_steps)
 
     def replace_with_input(
