@@ -152,8 +152,7 @@ class RecentFileManager:
             all_info.pop(i)
         if len(all_info) > self._n_history:
             all_info = all_info[-self._n_history :]
-        with open(_path, "w") as f:
-            json.dump(all_info, f, indent=2)
+        _path.write_text(json.dumps(all_info, indent=2))
 
         # TODO: Don't use Qt!
         from superqt.utils import ensure_main_thread

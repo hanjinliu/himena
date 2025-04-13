@@ -1,8 +1,12 @@
 """Builtin File explorer plugin."""
 
 import sys
-from dataclasses import dataclass, field
-from himena.plugins import register_dock_widget_action, add_default_status_tip
+from dataclasses import dataclass
+from himena.plugins import (
+    register_dock_widget_action,
+    add_default_status_tip,
+    config_field,
+)
 
 add_default_status_tip(
     short="File Explorer",
@@ -12,34 +16,30 @@ add_default_status_tip(
 
 @dataclass
 class FileExplorerConfig:
-    allow_drop_data_to_save: bool = field(
+    allow_drop_data_to_save: bool = config_field(
         default=True,
-        metadata={"tooltip": "Allow dropping data opened in the main window to save."},
+        tooltip="Allow dropping data opened in the main window to save.",
     )
-    allow_drop_file_to_move: bool = field(
-        default=True, metadata={"tooltip": "Allow dropping files to move."}
+    allow_drop_file_to_move: bool = config_field(
+        default=True, tooltip="Allow dropping files to move."
     )
 
 
 @dataclass
 class FileExplorerSSHConfig:
-    default_host: str = field(
-        default="", metadata={"tooltip": "The default host name or IP address"}
+    default_host: str = config_field(
+        default="", tooltip="The default host name or IP address"
     )
-    default_user: str = field(default="", metadata={"tooltip": "The default user name"})
-    default_port: int = field(
-        default=22, metadata={"tooltip": "The default port number"}
-    )
-    default_use_wsl: bool = field(
+    default_user: str = config_field(default="", tooltip="The default user name")
+    default_port: int = config_field(default=22, tooltip="The default port number")
+    default_use_wsl: bool = config_field(
         default=False,
-        metadata={
-            "tooltip": "Use WSL to connect to the host in Windows",
-            "enabled": sys.platform == "win32",
-        },
+        tooltip="Use WSL to connect to the host in Windows",
+        enabled=sys.platform == "win32",
     )
-    default_protocol: str = field(
+    default_protocol: str = config_field(
         default="rsync",
-        metadata={"tooltip": "The default protocol to use (rsync or scp)"},
+        tooltip="The default protocol to use (rsync or scp)",
     )
 
 

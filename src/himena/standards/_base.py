@@ -58,6 +58,5 @@ def read_metadata(dir_path: Path) -> BaseMetadata:
 def write_metadata(meta: BaseMetadata, dir_path: Path) -> None:
     """Write the metadata to a directory."""
     meta.write_metadata(dir_path)
-    with dir_path.joinpath(_CLASS_JSON).open("w") as f:
-        json.dump(meta._class_info(), f)
+    dir_path.joinpath(_CLASS_JSON).write_text(json.dumps(meta._class_info(), indent=4))
     return None

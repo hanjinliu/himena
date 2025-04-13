@@ -70,6 +70,12 @@ class QPluginConfigs(QtW.QWidget):
                             options=_opt,
                             name=param,
                         )
+                        if isinstance(widget, mgw.EmptyWidget):
+                            warnings.warn(
+                                f"Plugin config of {plugin_id!r} returned an empty widget.",
+                                UserWarning,
+                                stacklevel=2,
+                            )
                         widgets.append(widget)
                     container = mgw.Container(widgets=widgets, name=plugin_id)
                     self._plugin_id_to_containers[plugin_id] = container

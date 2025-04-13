@@ -122,8 +122,9 @@ class DataFramePlotMeta(DataFrameMeta):
         dir_path.joinpath(_META_NAME).write_text(self.model_dump_json(exclude={"rois"}))
         rois = self.unwrap_rois()
         if len(rois) > 0:
-            with dir_path.joinpath("rois.roi.json").open("w") as f:
-                json.dump(rois.model_dump_typed(), f)
+            dir_path.joinpath("rois.roi.json").write_text(
+                json.dumps(rois.model_dump_typed())
+            )
         return None
 
     def expected_type(self):
@@ -308,12 +309,12 @@ class ImageMeta(ArrayMeta):
     @classmethod
     def from_metadata(cls, dir_path: Path) -> "ImageMeta":
         self = cls.model_validate_json(dir_path.joinpath(_META_NAME).read_text())
-        if (rois_path := dir_path.joinpath("rois.roi.json")).exists():
+        if (rois_path := dir_path.joinpath(_ROIS)).exists():
             self.rois = roi.RoiListModel.model_validate_json(rois_path.read_text())
-        if (cur_roi_path := dir_path.joinpath("current_roi.json")).exists():
+        if (cur_roi_path := dir_path.joinpath(_CURRENT_ROI)).exists():
             roi_js = json.loads(cur_roi_path.read_text())
             self.current_roi = roi.RoiModel.construct(roi_js.pop("type"), roi_js)
-        if (more_meta_path := dir_path.joinpath("more_meta.json")).exists():
+        if (more_meta_path := dir_path.joinpath(_MORE_META)).exists():
             with more_meta_path.open() as f:
                 self.more_metadata = json.load(f)
         return self
@@ -326,15 +327,14 @@ class ImageMeta(ArrayMeta):
         )
         rois = self.unwrap_rois()
         if cur_roi := self.current_roi:
-            with dir_path.joinpath("current_roi.json").open("w") as f:
-                json.dump(cur_roi.model_dump_typed(), f)
+            dir_path.joinpath(_CURRENT_ROI).write_text(
+                json.dumps(cur_roi.model_dump_typed())
+            )
         if len(rois) > 0:
-            with dir_path.joinpath("rois.roi.json").open("w") as f:
-                json.dump(rois.model_dump_typed(), f)
+            dir_path.joinpath(_ROIS).write_text(json.dumps(rois.model_dump_typed()))
         if (more_metadata := self.more_metadata) is not None:
             try:
-                with dir_path.joinpath("more_meta.json").open("w") as f:
-                    json.dump(more_metadata, f)
+                dir_path.joinpath(_MORE_META).write_text(json.dumps(more_metadata))
             except Exception as e:
                 warnings.warn(
                     f"Failed to save `more_metadata`: {e}",
@@ -345,6 +345,11 @@ class ImageMeta(ArrayMeta):
 
     def expected_type(self):
         return StandardType.IMAGE
+
+
+_CURRENT_ROI = "current_roi.json"
+_ROIS = "rois.roi.json"
+_MORE_META = "more_meta.json"
 
 
 class ListMeta(BaseMetadata):

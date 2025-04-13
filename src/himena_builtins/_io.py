@@ -343,8 +343,7 @@ def default_image_writer(model: WidgetDataModel[np.ndarray], path: Path) -> None
 
 def default_dict_writer(model: WidgetDataModel[dict[str, Any]], path: Path) -> None:
     """Write parameters to a json file."""
-    with path.open("w") as f:
-        json.dump(model.value, f, default=_json_default)
+    path.write_text(json.dumps(model.value, default=_json_default))
     return None
 
 
@@ -353,8 +352,7 @@ def default_plot_writer(
 ) -> None:
     """Write plot layout to a json file."""
     js = model.value.model_dump_typed()
-    with path.open("w") as f:
-        json.dump(js, f, default=_json_default)
+    path.write_text(json.dumps(js, default=_json_default))
     return None
 
 
@@ -451,8 +449,7 @@ def default_pickle_writer(model: WidgetDataModel[Any], path: Path) -> None:
 
 def default_roi_writer(model: WidgetDataModel[RoiListModel], path: Path) -> None:
     """Write image ROIs to a json file."""
-    with path.open("w") as f:
-        json.dump(model.value.model_dump_typed(), f, default=_json_default)
+    path.write_text(json.dumps(model.value.model_dump_typed(), default=_json_default))
     return None
 
 
