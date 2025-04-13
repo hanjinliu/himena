@@ -57,6 +57,7 @@ class QSubWindowArea(QtW.QMdiArea):
         return self.subWindowList().index(sub_window)
 
     def relabel_widgets(self):
+        """Update the 0, 1, 2... labels in the sub-windows."""
         for i, sub_window in enumerate(self.subWindowList()):
             sub_window._title_bar._index_label.setText(str(i))
 
@@ -893,9 +894,12 @@ class QSubWindowTitleBar(QtW.QFrame):
         model_subtypes = model_type.split(".")
         supertype_menus: list[QtW.QMenu] = []
         _id = f"/model_menu:{model_type}"
+
         context_menu = build_qmodel_menu(_id, app=ui.model_app.name, parent=self)
+        ctx = ui._ctx_keys
+        ctx._update(ui)
+        ctx_dict = ctx.dict()
         open_in_actions: list[QCommandRuleAction] = []
-        _ctx = ui._ctx_keys.dict()
         _n_enabled = 0
         for i in range(1, len(model_subtypes) + 1):
             _typ = ".".join(model_subtypes[:i])
@@ -906,7 +910,7 @@ class QSubWindowTitleBar(QtW.QFrame):
                         action = QCommandRuleAction(
                             menu_or_submenu.command, ui.model_app.name, self
                         )
-                        is_enabled = menu_or_submenu.command.enablement.eval(_ctx)
+                        is_enabled = menu_or_submenu.command.enablement.eval(ctx_dict)
                         _n_enabled += int(is_enabled)
                         action.setEnabled(is_enabled)
                         open_in_actions.append(action)
@@ -934,6 +938,7 @@ class QSubWindowTitleBar(QtW.QFrame):
             for menu in supertype_menus:
                 if not menu.isEmpty():
                     context_menu.addMenu(menu)
+        context_menu.update_from_context(ctx_dict)
         return context_menu
 
     def _show_window_menu(self):

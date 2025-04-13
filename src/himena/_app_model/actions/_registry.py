@@ -20,7 +20,7 @@ class ActionList(list[Action]):
         keybindings=None,
         need_function_callback: bool = False,
         run_async: bool = False,
-        recording: bool = True,
+        recording: bool = True,  # whether to add the the command history
     ) -> Callable[[_F], _F]:
         def inner(fn: _F) -> _F:
             if need_function_callback or run_async:
