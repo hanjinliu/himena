@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from contextlib import suppress
 from dataclasses import dataclass, field, is_dataclass, fields
 from functools import partial
 import random
@@ -119,8 +118,10 @@ class AppActionRegistry:
         return cls._global_instance
 
     def _try_load_app_tips(self) -> None:
-        with suppress(Exception):
-            out = json.load(Path(__file__).parent.parent / "tips.json")
+        tip_path = Path(__file__).parent.parent / "resources" / "tips.json"
+        try:
+            with tip_path.open("r") as f:
+                out = json.load(f)
             for each in out:
                 self._app_tips.append(
                     AppTip(
@@ -128,6 +129,8 @@ class AppActionRegistry:
                         long=each.get("long", ""),
                     )
                 )
+        except Exception as e:
+            _LOGGER.error("Failed to load app tips: %s", e)
 
     def pick_a_tip(self) -> AppTip | None:
         """Pick a random tip."""
