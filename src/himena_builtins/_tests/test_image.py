@@ -15,6 +15,7 @@ from himena.types import WidgetDataModel
 from himena_builtins.qt.widgets.image import QImageView, QImageLabelView
 from himena_builtins.qt.widgets._image_components import _roi_items as _rois
 from himena_builtins.qt.widgets._image_components._control import ComplexMode
+from himena_builtins.tools.image import _make_roi_limits_getter, _bbox_list_getter
 
 _Ctrl = Qt.KeyboardModifier.ControlModifier
 
@@ -466,6 +467,12 @@ def test_crop_image(himena_ui: MainWindow, tmpdir):
         with_params={"axis_0": (2, 4), "axis_1": (0, 1), "axis_2": (1, 5), "axis_3": (2, 8)},
     )
 
+    # test limit getters
+    model = win.to_model()
+    _bbox_list_getter(model.metadata, model.value)()
+    _make_roi_limits_getter(win, "x")()
+    _make_roi_limits_getter(win, "y")()
+
 def test_image_view_commands(himena_ui: MainWindow, tmpdir):
     himena_ui.add_data_model(
         WidgetDataModel(
@@ -556,6 +563,18 @@ def test_roi_commands(himena_ui: MainWindow):
         "builtins:stack-images",
         with_params={"images": [mod_g, mod_r], "axis_name": "p"}
     )
+
+def test_rgb(himena_ui: MainWindow):
+    model = create_image_model(
+        np.zeros((10, 10, 3)),
+        axes=["y", "x", "c"],
+        is_rgb=True,
+    )
+    win = himena_ui.add_data_model(model)
+    assert isinstance(view := win.widget, QImageView)
+    assert view._is_rgb
+    himena_ui.exec_action("builtins:split-channels")
+    assert len(himena_ui.tabs.current()) == 4
 
 def test_scale_bar(himena_ui: MainWindow):
     win = himena_ui.add_data_model(

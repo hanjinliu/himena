@@ -2,7 +2,12 @@
 
 import sys
 from dataclasses import dataclass, field
-from himena.plugins import register_dock_widget_action
+from himena.plugins import register_dock_widget_action, add_default_status_tip
+
+add_default_status_tip(
+    short="File Explorer",
+    long="Ctrl+Shift+E to open a file explorer widget on the left.",
+)
 
 
 @dataclass

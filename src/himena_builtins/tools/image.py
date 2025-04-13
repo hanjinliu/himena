@@ -1,4 +1,4 @@
-from typing import Any, Literal, SupportsIndex
+from typing import Any, Callable, Literal, SupportsIndex
 import numpy as np
 from cmap import Colormap
 from himena.data_wrappers._array import wrap_array
@@ -65,17 +65,7 @@ def crop_image_multi(model: WidgetDataModel) -> Parametric:
     meta = _cast_meta(model, ImageMeta)
     arr = wrap_array(model.value)
 
-    def _get_bbox_list(*_):
-        rois = meta.unwrap_rois()
-        bbox_list: list[tuple[int, int, int, int]] = []
-        for roi in rois:
-            if not isinstance(roi, _roi.Roi2D):
-                continue
-            bbox = image_utils.roi_2d_to_bbox(roi, arr, meta.is_rgb)
-            bbox_list.append(tuple(bbox))
-        return bbox_list
-
-    @configure_gui(bbox_list={"bind": _get_bbox_list})
+    @configure_gui(bbox_list={"bind": _bbox_list_getter(meta, arr)})
     def run_crop_image_multi(bbox_list: list[tuple[int, int, int, int]]):
         meta_out = meta.without_rois()
         cropped_models: list[WidgetDataModel] = []
@@ -93,6 +83,23 @@ def crop_image_multi(model: WidgetDataModel) -> Parametric:
         ).with_title_numbering()
 
     return run_crop_image_multi
+
+
+def _bbox_list_getter(
+    meta: ImageMeta,
+    arr: np.ndarray,
+) -> Callable[..., list[tuple[int, int, int, int]]]:
+    def _get_bbox_list(*_):
+        rois = meta.unwrap_rois()
+        bbox_list: list[tuple[int, int, int, int]] = []
+        for roi in rois:
+            if not isinstance(roi, _roi.Roi2D):
+                continue
+            bbox = image_utils.roi_2d_to_bbox(roi, arr, meta.is_rgb)
+            bbox_list.append(tuple(bbox))
+        return bbox_list
+
+    return _get_bbox_list
 
 
 @register_function(

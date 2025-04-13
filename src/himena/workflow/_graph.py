@@ -146,19 +146,12 @@ class Workflow(BaseModel):
     def with_step(
         self,
         step: WorkflowStepType,
-        *,
-        after: uuid.UUID | None = None,
     ) -> "Workflow":
         """Return a new workflow with the given step added."""
         if not isinstance(step, WorkflowStep):
             raise ValueError("Expected a Workflow instance.")
         # The added step is always a unique node.
-        if after is None:
-            steps_new = self.steps + [step]
-        else:
-            steps_new = self.steps.copy()
-            steps_new.insert(self.index_for_id(after) + 1, step)
-        return Workflow(steps=steps_new)
+        return Workflow(steps=self.steps + [step])
 
     def compute(self, process_output: bool = True) -> "WidgetDataModel":
         """Compute the last node in the workflow."""

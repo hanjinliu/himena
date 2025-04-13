@@ -37,7 +37,7 @@ _CtrlShift = KeyMod.CtrlCmd | KeyMod.Shift
 
 @ACTIONS.append_from_fn(
     id="show-whats-this",
-    title="What is this widget?",
+    title="What Is This Widget?",
     menus=[{"id": MenuId.WINDOW, "group": EXIT_GROUP}],
     enablement=_ctx.num_sub_windows > 0,
 )

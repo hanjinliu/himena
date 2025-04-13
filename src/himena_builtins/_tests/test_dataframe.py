@@ -6,6 +6,8 @@ from qtpy.QtCore import Qt
 import pandas as pd
 import polars as pl
 from himena import MainWindow
+from himena.consts import StandardType
+from himena.core import create_model
 from himena.testing.subwindow import WidgetTester
 from himena_builtins.qt.dataframe import QDataFrameView, QDataFramePlotView
 
@@ -50,7 +52,10 @@ def test_dataframe_plot(qtbot: QtBot):
         qtbot.addWidget(tester.widget)
 
 def test_dataframe_command(himena_ui: MainWindow):
-    win = himena_ui.add_object({"a": [1, 2], "b": ["p", "q"]}, type="dataframe")
+    win = himena_ui.add_object(
+        {"a": [1, 2], "b": ["p", "q"]},
+        type=StandardType.DATAFRAME,
+    )
     himena_ui.exec_action("builtins:dataframe:header-to-row")
     himena_ui.current_window = win
     himena_ui.exec_action("builtins:dataframe:series-as-array", with_params={"column": "a"})
@@ -63,6 +68,22 @@ def test_dataframe_command(himena_ui: MainWindow):
     himena_ui.current_window = win
     himena_ui.exec_action("builtins:dataframe:sort", with_params={"column": "b", "descending": True})
     assert _data_frame_equal(himena_ui.current_model.value, {"a": [2, 1], "b": ["q", "p"]})
+
+    win = himena_ui.current_window
+    fn = create_model(
+        lambda x: x + 1,
+        type=StandardType.FUNCTION,
+        add_empty_workflow=True,
+    )
+    himena_ui.exec_action(
+        "builtins:dataframe:new-column-using-function",
+        with_params={
+            "input_column_name": "a",
+            "function": fn,
+            "output_column_name": "a2",
+        },
+        window_context=win,
+    )
 
 @pytest.mark.parametrize(
     "df",

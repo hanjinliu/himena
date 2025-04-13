@@ -2,7 +2,12 @@
 
 from dataclasses import dataclass, field
 from typing import Literal
-from himena.plugins import register_dock_widget_action
+from himena.plugins import register_dock_widget_action, add_default_status_tip
+
+add_default_status_tip(
+    short="command palette",
+    long="Ctrl+Shift+P to search for all the registered commands",
+)
 
 
 @dataclass

@@ -6,6 +6,7 @@ from himena.consts import StandardType
 from himena.types import WidgetDataModel
 from himena.standards import BaseMetadata
 from himena.profile import AppProfile, load_app_profile
+from himena.workflow import ProgrammaticMethod
 
 if TYPE_CHECKING:
     import numpy as np
@@ -76,6 +77,7 @@ def create_model(
     metadata: object | None = None,
     force_open_with: str | None = None,
     editable: bool = True,
+    add_empty_workflow: bool = False,
 ) -> WidgetDataModel[_T]:
     """Helper function to create a WidgetDataModel."""
     if type is None:
@@ -83,7 +85,7 @@ def create_model(
             type = metadata.expected_type()
     if type is None:
         type = StandardType.ANY
-    return WidgetDataModel(
+    out = WidgetDataModel(
         value=value,
         type=type,
         title=title,
@@ -93,6 +95,9 @@ def create_model(
         force_open_with=force_open_with,
         editable=editable,
     )
+    if add_empty_workflow:
+        out.workflow = ProgrammaticMethod().construct_workflow()
+    return out
 
 
 def create_text_model(

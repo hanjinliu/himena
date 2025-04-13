@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+from contextlib import suppress
 from dataclasses import dataclass, field, is_dataclass, fields
 from functools import partial
+import random
+import json
 import logging
 from copy import deepcopy
 from pathlib import Path
@@ -30,7 +33,6 @@ from himena import _utils
 from himena.types import WidgetDataModel
 from himena.utils.collections import OrderedSet
 from himena.plugins import _utils as _plugins_utils
-from himena.workflow import Workflow, as_function
 
 if TYPE_CHECKING:
     from himena._app_model import HimenaApplication
@@ -83,6 +85,12 @@ class ReproduceArgs:
     )  # values must be serializable
 
 
+@dataclass
+class AppTip:
+    short: str
+    long: str
+
+
 class AppActionRegistry:
     _global_instance: AppActionRegistry | None = None
 
@@ -100,6 +108,8 @@ class AppActionRegistry:
         self._installed_plugins: list[str] = []
         self._plugin_default_configs: dict[str, PluginConfigTuple] = {}
         self._modification_trackers: dict[str, Callable[[_T, _T], ReproduceArgs]] = {}
+        self._app_tips: list[AppTip] = []
+        self._try_load_app_tips()
 
     @classmethod
     def instance(cls) -> AppActionRegistry:
@@ -107,6 +117,24 @@ class AppActionRegistry:
         if cls._global_instance is None:
             cls._global_instance = cls()
         return cls._global_instance
+
+    def _try_load_app_tips(self) -> None:
+        with suppress(Exception):
+            out = json.load(Path(__file__).parent.parent / "tips.json")
+            for each in out:
+                self._app_tips.append(
+                    AppTip(
+                        short=each.get("short", ""),
+                        long=each.get("long", ""),
+                    )
+                )
+
+    def pick_a_tip(self) -> AppTip | None:
+        """Pick a random tip."""
+        if len(self._app_tips) == 0:
+            return None
+        tip = random.choice(self._app_tips)
+        return AppTip(short=tip.short, long=tip.long)
 
     def add_action(self, action: Action, is_dynamic: bool = False) -> None:
         """Add an action to the registry."""
@@ -512,33 +540,6 @@ def register_conversion_rule(*args, **kwargs):
     return inner if no_func else inner(args[0])
 
 
-def register_workflow(
-    path,
-    menus="plugins",
-    title: str | None = None,
-    keybindings: KeyBindingsType | None = None,
-    command_id: str | None = None,
-):
-    """Register a workflow as a plugin.
-
-    Parameters
-    ----------
-    path : path-like
-        Path to the workflow json file.
-    """
-    wf = Workflow.model_validate_json(Path(path).read_text())
-    fn = as_function(wf)
-    if command_id is None:
-        command_id = f"workflow-{path}"
-    return register_function(
-        fn,
-        menus=menus,
-        title=title,
-        keybindings=keybindings,
-        command_id=command_id,
-    )
-
-
 def _make_conversion_rule(
     func: Callable,
     type_from: str,
@@ -574,3 +575,12 @@ def register_modification_tracker(
         return fn
 
     return inner
+
+
+def add_default_status_tip(
+    short: str,
+    long: str,
+) -> None:
+    """Add a status tip that will be randomly shown in the status bar."""
+    reg = AppActionRegistry.instance()
+    reg._app_tips.append(AppTip(short=str(short), long=str(long)))

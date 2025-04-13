@@ -20,12 +20,13 @@ from himena.plugins.actions import (
     AppActionRegistry,
     ReproduceArgs,
     register_modification_tracker,
-    register_workflow,
+    add_default_status_tip,
 )
 from himena.plugins.widget_plugins import register_dock_widget_action
 from himena.plugins.install import install_plugins, override_keybindings
 
 __all__ = [
+    "add_default_status_tip",
     "get_widget_class",
     "register_previewer_class",
     "widget_classes",
@@ -42,7 +43,6 @@ __all__ = [
     "register_widget_class",
     "register_conversion_rule",
     "register_modification_tracker",
-    "register_workflow",
     "configure_submenu",
     "AppActionRegistry",
     "ReproduceArgs",

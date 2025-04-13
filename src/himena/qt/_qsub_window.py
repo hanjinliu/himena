@@ -130,7 +130,7 @@ class QSubWindowArea(QtW.QMdiArea):
         if a0.type() == QtCore.QEvent.Type.FocusIn:
             with suppress(RuntimeError):
                 if obj is not self:
-                    if isinstance(obj, (QtW.QStyle, QtW.QAbstractButton)):
+                    if isinstance(obj, (QtW.QStyle, QtW.QAbstractButton, QtW.QMenuBar)):
                         return False
                     else:
                         if (

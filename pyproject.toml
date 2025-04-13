@@ -116,7 +116,7 @@ himena = ["src/himena", "*/himena/src/himena"]
 
 [tool.coverage.exclude]
 path = [
-    "himena_builtins/_pytest_fixtures.py",
+    "src/himena_builtins/_pytest_fixtures.py",
 ]
 
 [tool.coverage.report]
