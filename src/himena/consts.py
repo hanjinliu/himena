@@ -152,6 +152,7 @@ class MenuId(StrEnum):
 
     # Others
     TOOLBAR = "toolbar"
+    CORNER = "corner"
     HELP = "help"
 
     RECENT_ALL = "file/.recent-all"

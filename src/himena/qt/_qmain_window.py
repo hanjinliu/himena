@@ -10,7 +10,12 @@ import weakref
 import numpy as np
 
 from qtpy import QtWidgets as QtW, QtGui, QtCore
-from app_model.backends.qt import QModelMainWindow, QModelMenu, QMenuItemAction
+from app_model.backends.qt import (
+    QModelMainWindow,
+    QModelMenu,
+    QMenuItemAction,
+    QModelToolBar,
+)
 from superqt import QIconifyIcon
 from superqt.utils import ensure_main_thread
 from himena.consts import MenuId
@@ -88,13 +93,13 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         )
         # Menubar
         self._menubar = self.setModelMenuBar(default_menu_ids)
+        self._menubar.setContextMenuPolicy(
+            QtCore.Qt.ContextMenuPolicy.PreventContextMenu
+        )
 
         # Toolbar
         self._toolbar = self.addModelToolBar(menu_id=MenuId.TOOLBAR)
-        self._toolbar.setContextMenuPolicy(
-            QtCore.Qt.ContextMenuPolicy.PreventContextMenu
-        )
-        self._toolbar.setMovable(False)
+        _init_tool_bar(self._toolbar)
         self._toolbar.setFixedHeight(32)
         self._toolbar.addSeparator()
         self._control_stack = QControlStack(self._toolbar)
@@ -102,7 +107,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
         self.setCentralWidget(self._tab_widget)
 
-        self._status_bar = QStatusBar()
+        self._status_bar = QStatusBar(self)
         self.setStatusBar(self._status_bar)
 
         self._command_palette_general = QCommandPalette(
@@ -143,20 +148,21 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self._job_stack = QJobStack(self)
         self._job_stack.setAnchor("bottom_left")
 
+        # top right buttons to menu
+        self._corner_toolbar = QModelToolBar(MenuId.CORNER, app, parent=self)
+        _init_tool_bar(self._corner_toolbar)
+        self._corner_toolbar.setIconSize(QtCore.QSize(16, 16))
+        self._corner_toolbar.setContentsMargins(0, 0, 0, 0)
+        self._menubar.setCornerWidget(self._corner_toolbar)
+
     def _update_widget_theme(self, style: Theme):
         self.setStyleSheet(style.format_text(get_stylesheet_path().read_text()))
         if style.is_light_background():
             icon_color = "#333333"
         else:
             icon_color = "#CCCCCC"
-        for action in self._toolbar.actions():
-            if isinstance(action, QMenuItemAction):
-                btn = self._toolbar.widgetForAction(action)
-                icon = self._app._registered_actions[action._command_id].icon
-                if icon is not None:
-                    qicon = QIconifyIcon(icon.light, color=icon_color)
-                    btn.setIcon(qicon)
-                    btn.actions()[0].setIcon(qicon)
+        _update_toolbtn_color(self._toolbar, icon_color)
+        _update_toolbtn_color(self._corner_toolbar, icon_color)
         for i in range(self._tab_widget.count()):
             if area := self._tab_widget.widget_area(i):
                 for sub in area.subWindowList():
@@ -626,16 +632,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _emit_resized(self):
         self._himena_main_window._main_window_resized(Size(*self._area_size()))
 
-    def _add_model_menu(
-        self,
-        id_: str,
-        title: str | None = None,
-    ) -> None:
-        if title is None:
-            title = id_.title()
-        menu = self._menubar
-        menu.addMenu(QModelMenu(id_, self._app, title, self))
-
     def _screenshot(self, target: str):
         if target == "main":
             qwidget = self
@@ -816,7 +812,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
 
 def _is_root_menu_id(app: HimenaApplication, menu_id: str) -> bool:
-    if menu_id in (MenuId.TOOLBAR, app.menus.COMMAND_PALETTE_ID):
+    if menu_id in (MenuId.TOOLBAR, MenuId.CORNER, app.menus.COMMAND_PALETTE_ID):
         return False
     return "/" not in menu_id.replace("//", "")
 
@@ -905,3 +901,22 @@ class QChoicesDialog(QtW.QDialog):
         label = QtW.QLabel(message)
         self._layout.addWidget(label)
         return None
+
+
+def _init_tool_bar(tbar: QModelToolBar):
+    tbar.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.PreventContextMenu)
+    tbar.setMovable(False)
+
+
+def _update_toolbtn_color(toolbar: QModelToolBar, icon_color: str):
+    assert isinstance(toolbar._app, HimenaApplication)
+    for action in toolbar.actions():
+        if isinstance(action, QMenuItemAction):
+            btn = toolbar.widgetForAction(action)
+            if not isinstance(btn, QtW.QToolButton):
+                continue
+            icon = toolbar._app._registered_actions[action._command_id].icon
+            if icon is not None:
+                qicon = QIconifyIcon(icon.light, color=icon_color)
+                btn.setIcon(qicon)
+                btn.actions()[0].setIcon(qicon)
