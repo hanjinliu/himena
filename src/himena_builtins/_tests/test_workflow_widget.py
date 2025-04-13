@@ -32,6 +32,6 @@ def test_edit_workflow_view(qtbot: QtBot, sample_dir: Path):
     qtbot.addWidget(widget)
     with WidgetTester(widget) as tester:
         tester.update_model(default_workflow_reader(sample_dir / "test.workflow.json"))
-        widget._mark_to_be_added(widget._tree_widget.topLevelItem(0))
+        widget._toggle_to_be_added(widget._tree_widget.topLevelItem(0))
         widget._replace_with_file_reader(widget._tree_widget.topLevelItem(0), "file")
         widget._replace_with_file_reader(widget._tree_widget.topLevelItem(0), "model")

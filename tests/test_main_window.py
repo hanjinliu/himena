@@ -49,6 +49,10 @@ def test_goto_widget(himena_ui: MainWindowQt, qtbot: QtBot):
     himena_ui.exec_action("go-to-window")
     qtbot.keyClick(qmain._goto_widget, Qt.Key.Key_Escape)
 
+    himena_ui.exec_action("jump-to-window-1")
+    himena_ui.exec_action("go-to-previous-window")
+    himena_ui.exec_action("go-to-next-window")
+
 def test_register_function_in_runtime(himena_ui: MainWindowQt, qtbot: QtBot):
     qmain = himena_ui._backend_main_window
     assert qmain._menubar.actions()[-2].menu().title() != "Plugins"

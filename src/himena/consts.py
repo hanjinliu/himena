@@ -116,8 +116,8 @@ class MenuId(StrEnum):
     WINDOW_ALIGN = "window/align"
     WINDOW_ANCHOR = "window/anchor"
     WINDOW_NTH = "window/nth"
-    WINDOW_LAYOUT = "window/layout"
     VIEW = "view"
+    VIEW_LAYOUT = "view/layout"
 
     # "Tools" menu
     TOOLS = "tools"
@@ -149,6 +149,9 @@ class MenuId(StrEnum):
     """Menu ID for the commands related to "function"-type data."""
     TOOLS_OTHERS = "tools/others"
     """Menu ID for the commands related to other data."""
+
+    # "Go" menu
+    GO = "go"
 
     # Others
     TOOLBAR = "toolbar"

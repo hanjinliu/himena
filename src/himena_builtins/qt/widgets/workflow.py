@@ -34,6 +34,7 @@ class QWorkflowView(QtW.QWidget):
         self._tree_widget.setFont(QtGui.QFont(MonospaceFontFamily))
         self._tree_widget.right_clicked.connect(self._on_right_clicked)
         self._modified = False
+        self._editable = True
 
     @validate_protocol
     def update_model(self, model: WidgetDataModel):
@@ -71,6 +72,14 @@ class QWorkflowView(QtW.QWidget):
     def set_modified(self, modified: bool) -> None:
         self._modified = modified
 
+    @validate_protocol
+    def is_editable(self) -> bool:
+        return self._editable
+
+    @validate_protocol
+    def set_editable(self, editable: bool) -> None:
+        self._editable = editable
+
     def set_workflow(self, workflow: _wf.Workflow) -> None:
         """Set the workflow."""
         self._tree_widget.set_workflow(workflow)
@@ -82,14 +91,12 @@ class QWorkflowView(QtW.QWidget):
         self.set_workflow(wf_new)
         self._modified = True
 
-    def _mark_to_be_added(self, item: QtW.QTreeWidgetItem) -> None:
+    def _toggle_to_be_added(self, item: QtW.QTreeWidgetItem) -> None:
         row = self._tree_widget.indexOfTopLevelItem(item)
         wf = self._tree_widget._workflow
         step = wf[row]
-        param = _wf.ModelParameter(name="mode", value=step.id, model_type="any")
-        cexec = _wf.CommandExecution(command_id="add-window", contexts=[param])
-        wf_new = self._tree_widget._workflow.with_step(cexec)
-        self.set_workflow(wf_new)
+        step.process_output = not step.process_output
+        self.set_workflow(wf)
         self._modified = True
 
     def _execute_upto(self, item: QtW.QTreeWidgetItem) -> None:
@@ -121,6 +128,7 @@ class QWorkflowView(QtW.QWidget):
 
     def _make_context_menu(self, item: QtW.QTreeWidgetItem) -> QtW.QMenu:
         menu = QtW.QMenu(self)
+        step = _step_for_item(item)
         a0 = menu.addAction(
             "Replace with file reader",
             lambda: self._replace_with_file_reader(item, "file"),
@@ -131,19 +139,33 @@ class QWorkflowView(QtW.QWidget):
             lambda: self._replace_with_file_reader(item, "model"),
         )
         a1.setToolTip("Replace the selected item with a model input")
-        a2 = menu.addAction("Mark as to-be-added", lambda: self._mark_to_be_added(item))
+        a2 = menu.addAction("To be added", lambda: self._toggle_to_be_added(item))
+        a2.setCheckable(True)
+        a2.setChecked(step.process_output)
         a2.setToolTip(
-            "Mark the selected item so that it will be added to the main window after the workflow execution (even if it's an intermediate step)"
+            "Mark the selected item to add the output to the main window after the "
+            "workflow execution (even if it's an intermediate step)"
         )
         menu.addSeparator()
         a3 = menu.addAction("Execute upto here", lambda: self._execute_upto(item))
         a3.setToolTip("Execute the workflow up to the selected item")
         a4 = menu.addAction("Edit ...", lambda: self._edit_user_input(item))
         a4.setToolTip("Edit the selected user input item")
-        if isinstance(item.data(0, _STEP_ROLE), _wf.UserInput):
+
+        # update enabled state
+        a0.setEnabled(self.is_editable())
+        a1.setEnabled(self.is_editable())
+        a2.setEnabled(self.is_editable())
+        a4.setEnabled(self.is_editable())
+        if isinstance(step, _wf.UserInput):
             a3.setEnabled(False)
         else:
             a4.setEnabled(False)
+        if (
+            self._tree_widget.indexOfTopLevelItem(item)
+            == self._tree_widget.topLevelItemCount() - 1
+        ):
+            a2.setEnabled(False)
         return menu
 
 
@@ -304,7 +326,8 @@ def _step_to_item(step: _wf.WorkflowStep) -> QtW.QTreeWidgetItem:
 
 @_step_to_item.register
 def _(step: _wf.LocalReaderMethod) -> QtW.QTreeWidgetItem:
-    item = QtW.QTreeWidgetItem([f"[Local Path] (type={step.output_model_type!r})"])
+    o = _mark_for_to_be_added(step)
+    item = QtW.QTreeWidgetItem([f"[{o}Local Path] (type={step.output_model_type!r})"])
     if isinstance(step.path, list):
         for i, path in enumerate(step.path):
             item.addChild(QtW.QTreeWidgetItem([f"({i}) {path.as_posix()}"]))
@@ -318,7 +341,8 @@ def _(step: _wf.LocalReaderMethod) -> QtW.QTreeWidgetItem:
 
 @_step_to_item.register
 def _(step: _wf.RemoteReaderMethod) -> QtW.QTreeWidgetItem:
-    item = QtW.QTreeWidgetItem([f"[Remote Path] (type={step.output_model_type!r})"])
+    o = _mark_for_to_be_added(step)
+    item = QtW.QTreeWidgetItem([f"[{o}Remote Path] (type={step.output_model_type!r})"])
     item.addChild(QtW.QTreeWidgetItem([f"{step.to_str()}"]))
     item.addChild(QtW.QTreeWidgetItem([f"plugin = {step.plugin!r}"]))
     item.setToolTip(0, str(step.path))
@@ -335,13 +359,14 @@ def _(step: _wf.UserModification) -> QtW.QTreeWidgetItem:
 
 @_step_to_item.register
 def _(step: _wf.UserInput) -> QtW.QTreeWidgetItem:
+    o = _mark_for_to_be_added(step)
     if step.how == "file":
-        text = "[File Input]"
+        text = "File Input"
     elif step.how == "model":
-        text = "[Model Input]"
+        text = "Model Input"
     else:
-        text = "[User Input]"
-    item = QtW.QTreeWidgetItem([text])
+        text = "User Input"
+    item = QtW.QTreeWidgetItem([f"[{o}{text}]"])
     item.addChild(QtW.QTreeWidgetItem([f"label = {step.label!r}"]))
     item.addChild(QtW.QTreeWidgetItem([f"doc = {step.doc!r}"]))
     item.setToolTip(0, f"{text}\nlabel = {step.label}\ndoc = {step.doc}")
@@ -351,7 +376,8 @@ def _(step: _wf.UserInput) -> QtW.QTreeWidgetItem:
 
 @_step_to_item.register
 def _(step: _wf.CommandExecution) -> QtW.QTreeWidgetItem:
-    item = QtW.QTreeWidgetItem([f"[Command] {step.command_id}"])
+    o = _mark_for_to_be_added(step)
+    item = QtW.QTreeWidgetItem([f"[{o}Command] {step.command_id}"])
     item.setToolTip(0, step.command_id)
     for param in step.parameters or []:
         if isinstance(param, _wf.UserParameter):
@@ -403,3 +429,12 @@ def _add_common_child(item: QtW.QTreeWidgetItem, step: _wf.WorkflowStep):
         QtW.QTreeWidgetItem([f"datetime = {step.datetime:%Y-%m-%d %H:%M:%S}"])
     )
     return item
+
+
+def _mark_for_to_be_added(step: _wf.WorkflowStep) -> str:
+    return "● " if step.process_output else ""
+
+
+def _step_for_item(item: QtW.QTreeWidgetItem) -> _wf.WorkflowStep:
+    step = item.data(0, _STEP_ROLE)
+    return step

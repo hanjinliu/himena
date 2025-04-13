@@ -28,6 +28,7 @@ def workflow_to_input_fields(wf: Workflow) -> dict[uuid.UUID, Any]:
 
 
 def as_function(wf: Workflow):
+    """Convert a workflow to a function that is ready to be registered as an action."""
     from himena.types import Parametric, WidgetDataModel
     from himena.plugins import configure_gui
 
@@ -61,3 +62,9 @@ def as_function(wf: Workflow):
         return inner
 
     return func
+
+
+def as_function_from_path(path):
+    """Convert a workflow file to a function ready to be registered as an action."""
+    wf = Workflow.model_validate_json(Path(path).read_text())
+    return as_function(wf)

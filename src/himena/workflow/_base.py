@@ -23,24 +23,27 @@ class WorkflowStep(BaseModel):
     id: uuid.UUID = Field(default_factory=lambda: uuid.uuid4())
     """The unique identifier of the workflow step across runtime."""
 
+    process_output: bool = Field(default=False)
+    """Whether the output of this step should be processed by application."""
+
     def iter_parents(self) -> Iterator[uuid.UUID]:
         raise NotImplementedError("This method must be implemented in a subclass.")
 
     def _get_model_impl(self, wf: "Workflow") -> "WidgetDataModel":
         raise NotImplementedError("This method must be implemented in a subclass.")
 
-    def get_model(self, wf: "Workflow") -> "WidgetDataModel":
+    def get_model(
+        self,
+        wf: "Workflow",
+        *,
+        force_process_output: bool = False,
+    ) -> "WidgetDataModel":
         if win := wf._mock_main_window.window_for_id(self.id):
             return win.to_model()
         model = self._get_model_impl(wf)
         model.workflow = wf
-        return model
-
-    def get_and_process_model(self, wf: "Workflow") -> "WidgetDataModel":
-        from himena.types import WidgetDataModel
-
-        model = self.get_model(wf)
-        self._current_store().process(model, type_hint=WidgetDataModel)
+        if self.process_output or force_process_output:
+            self._current_store().process(model)
         return model
 
     def __repr_args__(self):  # simplify the repr output

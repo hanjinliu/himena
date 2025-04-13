@@ -48,7 +48,6 @@ class Workflow(BaseModel):
     """
 
     steps: list[WorkflowStepType] = Field(default_factory=list)
-    # _model_cache: dict[uuid.UUID, "WidgetDataModel"] = PrivateAttr(default_factory=dict)
     _mock_main_window: "MainWindowMock" = PrivateAttr(
         default_factory=_make_mock_main_window
     )
@@ -106,11 +105,14 @@ class Workflow(BaseModel):
     def deep_copy(self) -> "Workflow":
         return Workflow(steps=[step.model_copy() for step in self.steps])
 
-    def step_for_id(self, id: uuid.UUID) -> WorkflowStep:
-        for step in self.steps:
+    def index_for_id(self, id: uuid.UUID) -> int:
+        for index, step in enumerate(self.steps):
             if step.id == id:
-                return step
+                return index
         raise ValueError(f"Workflow with id {id} not found.")
+
+    def step_for_id(self, id: uuid.UUID) -> WorkflowStep:
+        return self.steps[self.index_for_id(id)]
 
     def window_for_id(self, id: uuid.UUID) -> "SubWindow[MockWidget]":
         """Get the sub-window for the given ID."""
@@ -141,20 +143,27 @@ class Workflow(BaseModel):
     def __len__(self) -> int:
         return len(self.steps)
 
-    def with_step(self, step: WorkflowStep) -> "Workflow":
+    def with_step(
+        self,
+        step: WorkflowStepType,
+        *,
+        after: uuid.UUID | None = None,
+    ) -> "Workflow":
         """Return a new workflow with the given step added."""
         if not isinstance(step, WorkflowStep):
             raise ValueError("Expected a Workflow instance.")
         # The added step is always a unique node.
-        return Workflow(steps=self.steps + [step])
+        if after is None:
+            steps_new = self.steps + [step]
+        else:
+            steps_new = self.steps.copy()
+            steps_new.insert(self.index_for_id(after) + 1, step)
+        return Workflow(steps=steps_new)
 
     def compute(self, process_output: bool = True) -> "WidgetDataModel":
         """Compute the last node in the workflow."""
         with self._cache_context():
-            if process_output:
-                out = self[-1].get_and_process_model(self)
-            else:
-                out = self[-1].get_model(self)
+            out = self[-1].get_model(self, force_process_output=process_output)
         return out
 
     @contextmanager

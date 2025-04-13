@@ -243,10 +243,14 @@ def save_as_using_from_dialog(ui: MainWindow, sub_win: SubWindow) -> Future:
 @ACTIONS.append_from_fn(
     id="open-recent",
     title="Open Recent ...",
-    menus=[{"id": MenuId.FILE_RECENT, "group": "02_more", "order": 99}],
+    menus=[
+        {"id": MenuId.FILE_RECENT, "group": READ_GROUP},
+        {"id": MenuId.TOOLBAR, "group": READ_GROUP},
+    ],
     keybindings=[
         KeyBindingRule(primary=KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.KeyR))
     ],
+    icon="mdi:recent",
     recording=False,
 )
 def open_recent(ui: MainWindow) -> WidgetDataModel:
@@ -382,6 +386,24 @@ def save_tab_session_from_dialog(ui: MainWindow) -> None:
     ):
         if tab := ui.tabs.current():
             return tab.save_session(path)
+    raise Cancelled
+
+
+@ACTIONS.append_from_fn(
+    id="builtins:exec-workflow-file",
+    title="Execute Workflow File ...",
+    menus=[{"id": MenuId.FILE, "group": READ_GROUP}],
+    need_function_callback=True,
+)
+def exec_workflow_file(ui: MainWindow) -> Parametric:
+    """Execute a workflow from a workflow file."""
+    if path := ui.exec_file_dialog(
+        extension_default=".workflow.json",
+        allowed_extensions=[".txt", ".json", ".workflow.json"],
+        caption="Select a workflow file",
+        group="workflows",
+    ):
+        return _wf.as_function_from_path(path)(ui)
     raise Cancelled
 
 

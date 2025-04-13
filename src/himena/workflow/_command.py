@@ -130,7 +130,9 @@ class CommandExecution(WorkflowStep):
                 window_context = wf.window_for_id(_ctx.value)
                 model_context = window_context.to_model()
             else:
-                raise ValueError(f"Context parameter must be a model: {_ctx}")
+                raise ValueError(
+                    f"Context parameter must be a model: {_ctx} (command ID: {self.command_id})"
+                )
 
         if self.parameters is None:
             params = None
@@ -148,7 +150,9 @@ class CommandExecution(WorkflowStep):
                         wf.filter(each).model_for_id(each) for each in _p.value
                     ]
                 else:  # pragma: no cover
-                    raise ValueError(f"Unknown parameter type: {_p}")
+                    raise ValueError(
+                        f"Unknown parameter type: {_p} (command ID: {self.command_id})"
+                    )
         result = ui.exec_action(
             self.command_id,
             window_context=window_context,
@@ -159,7 +163,9 @@ class CommandExecution(WorkflowStep):
         if isinstance(result, Future):
             result = result.result()
         if not isinstance(result, WidgetDataModel):
-            raise ValueError(f"Expected to return a WidgetDataModel but got {result}")
+            raise ValueError(
+                f"Expected to return a WidgetDataModel but got {result} (command ID: {self.command_id})"
+            )
         return result
 
 

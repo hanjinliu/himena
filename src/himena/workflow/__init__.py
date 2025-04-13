@@ -1,6 +1,6 @@
 from himena.workflow._base import WorkflowStep
 from himena.workflow._graph import Workflow, compute, WorkflowStepType
-from himena.workflow._caller import as_function
+from himena.workflow._caller import as_function, as_function_from_path
 from himena.workflow._command import (
     CommandExecution,
     ListOfModelParameter,
@@ -23,6 +23,7 @@ __all__ = [
     "Workflow",
     "compute",
     "as_function",
+    "as_function_from_path",
     "WorkflowStepType",
     "ProgrammaticMethod",
     "ReaderMethod",

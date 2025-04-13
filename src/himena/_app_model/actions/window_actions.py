@@ -12,13 +12,11 @@ from app_model.types import (
 )
 from himena._descriptors import SaveToPath, NoNeedToSave
 from himena.consts import MenuId, StandardType
-from himena.plugins import configure_gui
 from himena.widgets import MainWindow, SubWindow
 from himena.types import (
     ClipboardDataModel,
     WindowState,
     WidgetDataModel,
-    Parametric,
 )
 from himena._app_model._context import AppContext as _ctx
 from himena._app_model.actions._registry import ACTIONS, SUBMENUS
@@ -28,10 +26,10 @@ from himena.exceptions import Cancelled
 _LOGGER = logging.getLogger(__name__)
 
 EDIT_GROUP = "00_edit"
-STATE_GROUP = "01_state"
-MOVE_GROUP = "02_move"
-LAYOUT_GROUP = "03_layout"
-ZOOM_GROUP = "10_zoom"
+PROPERTY_GROUP = "01_property"
+STATE_GROUP = "21_state"
+MOVE_GROUP = "22_move"
+ZOOM_GROUP = "40_zoom"
 EXIT_GROUP = "99_exit"
 _CtrlK = KeyMod.CtrlCmd | KeyCode.KeyK
 _CtrlShift = KeyMod.CtrlCmd | KeyMod.Shift
@@ -53,10 +51,10 @@ def show_whats_this(ui: MainWindow) -> None:
 
 @ACTIONS.append_from_fn(
     id="show-workflow-graph",
-    title="Show workflow graph",
+    title="Show Workflow Graph",
     menus=[
         {"id": MenuId.WINDOW, "group": EXIT_GROUP},
-        {"id": MenuId.CORNER, "group": EXIT_GROUP},
+        {"id": MenuId.TOOLBAR, "group": EXIT_GROUP},
     ],
     enablement=_ctx.num_sub_windows > 0,
     need_function_callback=True,
@@ -77,7 +75,7 @@ def show_workflow_graph(model: WidgetDataModel) -> WidgetDataModel:
 
 @ACTIONS.append_from_fn(
     id="open-last-closed-window",
-    title="Open last closed window",
+    title="Open Last Closed Window",
     menus=[{"id": MenuId.WINDOW, "group": EXIT_GROUP}],
     keybindings=[{"primary": _CtrlShift | KeyCode.KeyT}],
 )
@@ -94,7 +92,7 @@ def open_last_closed_window(ui: MainWindow) -> WidgetDataModel:
 
 @ACTIONS.append_from_fn(
     id="close-window",
-    title="Close window",
+    title="Close Window",
     icon="material-symbols:tab-close-outline",
     menus=[
         {"id": MenuId.WINDOW, "group": EXIT_GROUP},
@@ -117,7 +115,7 @@ def close_current_window(ui: MainWindow) -> None:
 
 @ACTIONS.append_from_fn(
     id="duplicate-window",
-    title="Duplicate window",
+    title="Duplicate Window",
     enablement=_ctx.is_active_window_supports_to_model,
     menus=[{"id": MenuId.WINDOW, "group": EDIT_GROUP}],
     keybindings=[{"primary": KeyChord(_CtrlK, _CtrlShift | KeyCode.KeyD)}],
@@ -138,7 +136,7 @@ def duplicate_window(win: SubWindow) -> WidgetDataModel:
 
 @ACTIONS.append_from_fn(
     id="rename-window",
-    title="Rename window",
+    title="Rename Window",
     menus=[
         {"id": MenuId.WINDOW, "group": EDIT_GROUP},
     ],
@@ -157,7 +155,7 @@ def rename_window(ui: MainWindow) -> None:
 
 @ACTIONS.append_from_fn(
     id="copy-path-to-clipboard",
-    title="Copy path to clipboard",
+    title="Copy Path To Clipboard",
     menus=[{"id": MenuId.WINDOW, "group": EDIT_GROUP}],
     enablement=_ctx.num_sub_windows > 0,
     keybindings=[{"primary": KeyChord(_CtrlK, _CtrlShift | KeyCode.KeyC)}],
@@ -178,7 +176,7 @@ def copy_path_to_clipboard(ui: MainWindow) -> ClipboardDataModel:
 
 @ACTIONS.append_from_fn(
     id="copy-data-to-clipboard",
-    title="Copy data to clipboard",
+    title="Copy Data To Clipboard",
     menus=[
         {"id": MenuId.WINDOW, "group": EDIT_GROUP},
     ],
@@ -199,7 +197,7 @@ def copy_data_to_clipboard(model: WidgetDataModel) -> ClipboardDataModel:
 
 @ACTIONS.append_from_fn(
     id="minimize-window",
-    title="Minimize window",
+    title="Minimize Window",
     menus=[{"id": MenuId.WINDOW_RESIZE, "group": STATE_GROUP}],
     keybindings=[{"primary": KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.DownArrow)}],
     enablement=_ctx.num_sub_windows > 0,
@@ -211,7 +209,7 @@ def minimize_current_window(win: SubWindow) -> None:
 
 @ACTIONS.append_from_fn(
     id="maximize-window",
-    title="Maximize window",
+    title="Maximize Window",
     menus=[{"id": MenuId.WINDOW_RESIZE, "group": STATE_GROUP}],
     enablement=_ctx.num_sub_windows > 0,
     keybindings=[{"primary": KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.UpArrow)}],
@@ -222,7 +220,7 @@ def maximize_current_window(win: SubWindow) -> None:
 
 @ACTIONS.append_from_fn(
     id="toggle-full-screen",
-    title="Toggle full screen",
+    title="Toggle Full Screen",
     menus=[{"id": MenuId.WINDOW_RESIZE, "group": STATE_GROUP}],
     keybindings=[{"primary": KeyCode.F11}],
     enablement=_ctx.num_sub_windows > 0,
@@ -236,7 +234,7 @@ def toggle_full_screen(win: SubWindow) -> None:
 
 @ACTIONS.append_from_fn(
     id="unset-anchor",
-    title="Unanchor window",
+    title="Unanchor Window",
     menus=[MenuId.WINDOW_ANCHOR],
     enablement=_ctx.num_sub_windows > 0,
 )
@@ -247,7 +245,7 @@ def unset_anchor(win: SubWindow) -> None:
 
 @ACTIONS.append_from_fn(
     id="anchor-window-top-left",
-    title="Anchor window to top-left corner",
+    title="Anchor Window To Top-Left Corner",
     menus=[MenuId.WINDOW_ANCHOR],
     enablement=_ctx.num_sub_windows > 0,
 )
@@ -258,7 +256,7 @@ def anchor_at_top_left(win: SubWindow) -> None:
 
 @ACTIONS.append_from_fn(
     id="anchor-window-top-right",
-    title="Anchor window to top-right corner",
+    title="Anchor Window To Top-Right Corner",
     menus=[MenuId.WINDOW_ANCHOR],
     enablement=_ctx.num_sub_windows > 0,
 )
@@ -269,7 +267,7 @@ def anchor_at_top_right(win: SubWindow) -> None:
 
 @ACTIONS.append_from_fn(
     id="anchor-window-bottom-left",
-    title="Anchor window to bottom-left corner",
+    title="Anchor Window To Bottom-Left Corner",
     menus=[MenuId.WINDOW_ANCHOR],
     enablement=_ctx.num_sub_windows > 0,
 )
@@ -280,7 +278,7 @@ def anchor_at_bottom_left(win: SubWindow) -> None:
 
 @ACTIONS.append_from_fn(
     id="anchor-window-bottom-right",
-    title="Anchor window to bottom-right corner",
+    title="Anchor Window To Bottom-Right Corner",
     menus=[MenuId.WINDOW_ANCHOR],
     enablement=_ctx.num_sub_windows > 0,
 )
@@ -315,7 +313,7 @@ def window_shrink(win: SubWindow) -> None:
 
 @ACTIONS.append_from_fn(
     id="full-screen-in-new-tab",
-    title="Full screen in new tab",
+    title="Full Screen In New Tab",
     enablement=_ctx.num_sub_windows > 0,
     menus=[{"id": MenuId.WINDOW, "group": EDIT_GROUP}],
 )
@@ -331,7 +329,7 @@ def full_screen_in_new_tab(ui: MainWindow) -> None:
 
 @ACTIONS.append_from_fn(
     id="reveal-in-explorer",
-    title="Reveal in explorer",
+    title="Reveal In Explorer",
     enablement=_ctx.num_sub_windows > 0,
     menus=[{"id": MenuId.WINDOW, "group": EDIT_GROUP}],
 )
@@ -363,7 +361,7 @@ _CtrlAlt = KeyMod.CtrlCmd | KeyMod.Alt
 
 @ACTIONS.append_from_fn(
     id="align-window-left",
-    title="Align window to left",
+    title="Align Window To Left",
     enablement=_ctx.num_sub_windows > 0,
     menus=[MenuId.WINDOW_ALIGN],
     keybindings=[{"primary": _CtrlAlt | KeyCode.LeftArrow}],
@@ -376,7 +374,7 @@ def align_window_left(ui: MainWindow) -> None:
 
 @ACTIONS.append_from_fn(
     id="align-window-right",
-    title="Align window to right",
+    title="Align Window To Right",
     enablement=_ctx.num_sub_windows > 0,
     menus=[MenuId.WINDOW_ALIGN],
     keybindings=[{"primary": _CtrlAlt | KeyCode.RightArrow}],
@@ -389,7 +387,7 @@ def align_window_right(ui: MainWindow) -> None:
 
 @ACTIONS.append_from_fn(
     id="align-window-top",
-    title="Align window to top",
+    title="Align Window To Top",
     enablement=_ctx.num_sub_windows > 0,
     menus=[MenuId.WINDOW_ALIGN],
     keybindings=[{"primary": _CtrlAlt | KeyCode.UpArrow}],
@@ -402,7 +400,7 @@ def align_window_top(ui: MainWindow) -> None:
 
 @ACTIONS.append_from_fn(
     id="align-window-bottom",
-    title="Align window to bottom",
+    title="Align Window To Bottom",
     enablement=_ctx.num_sub_windows > 0,
     menus=[MenuId.WINDOW_ALIGN],
     keybindings=[{"primary": _CtrlAlt | KeyCode.DownArrow}],
@@ -415,7 +413,7 @@ def align_window_bottom(ui: MainWindow) -> None:
 
 @ACTIONS.append_from_fn(
     id="align-window-center",
-    title="Align window to center",
+    title="Align Window To Center",
     enablement=_ctx.num_sub_windows > 0,
     menus=[MenuId.WINDOW_ALIGN],
     keybindings=[{"primary": _CtrlAlt | KeyCode.Space}],
@@ -440,7 +438,7 @@ ACTIONS.append(
         title="Window Editable",
         callback=toggle_editable,
         enablement=_ctx.is_subwindow_focused,
-        menus=[{"id": MenuId.WINDOW, "group": EDIT_GROUP}],
+        menus=[{"id": MenuId.WINDOW, "group": PROPERTY_GROUP}],
         toggled=ToggleRule(condition=_ctx.is_active_window_editable),
     )
 )
@@ -451,87 +449,11 @@ ACTIONS.append(
         title="Track User Modifications",
         callback=toggle_editable,
         enablement=_ctx.is_subwindow_focused,
-        menus=[{"id": MenuId.WINDOW, "group": EDIT_GROUP}],
+        menus=[{"id": MenuId.WINDOW, "group": PROPERTY_GROUP}],
         toggled=ToggleRule(condition=_ctx.is_active_window_track_modification),
     )
 )
 
-
-@ACTIONS.append_from_fn(
-    id="window-layout-horizontal",
-    title="Horizontal layout ...",
-    enablement=(_ctx.num_sub_windows > 1) & (_ctx.num_tabs > 0),
-    menus=[MenuId.WINDOW_LAYOUT],
-    need_function_callback=True,
-)
-def window_layout_horizontal(ui: MainWindow) -> Parametric:
-    windows = [win for win in ui.tabs.current()]
-
-    @configure_gui(
-        show_parameter_labels=False, wins={"layout": "horizontal", "value": windows[:4]}
-    )
-    def run_layout_horizontal(wins: list[SubWindow]) -> None:
-        layout = ui.tabs.current().add_hbox_layout()
-        layout.extend(wins)
-
-    return run_layout_horizontal
-
-
-@ACTIONS.append_from_fn(
-    id="window-layout-vertical",
-    title="Vertical layout ...",
-    enablement=(_ctx.num_sub_windows > 1) & (_ctx.num_tabs > 0),
-    menus=[MenuId.WINDOW_LAYOUT],
-    need_function_callback=True,
-)
-def window_layout_vertical(ui: MainWindow) -> Parametric:
-    windows = [win for win in ui.tabs.current()]
-
-    @configure_gui(
-        show_parameter_labels=False, wins={"layout": "vertical", "value": windows[:4]}
-    )
-    def run_layout_vertical(wins: list[SubWindow]) -> None:
-        layout = ui.tabs.current().add_vbox_layout()
-        layout.extend(wins)
-
-    return run_layout_vertical
-
-
-@ACTIONS.append_from_fn(
-    id="add-window",
-    enablement=(_ctx.num_sub_windows > 1) & (_ctx.num_tabs > 0),
-    menus=[],
-    need_function_callback=False,
-)
-def add_window(ui: MainWindow, model: WidgetDataModel) -> None:
-    """Just add the model to the main window"""
-    # This action is needed to show the intermediate model of a workflow.
-    ui.add_data_model(model)
-
-
-# Jump to the nth window
-def make_func(n: int):
-    def jump_to_nth_window(ui: MainWindow) -> None:
-        if (area := ui.tabs.current()) and len(area) > n:
-            area.current_index = n
-
-    jump_to_nth_window.__name__ = f"jump_to_window_{n}"
-    jump_to_nth_window.__doc__ = f"Jump to the {n}-th window in the current tab."
-    jump_to_nth_window.__qualname__ = f"jump_to_window_{n}"
-    jump_to_nth_window.__module__ = make_func.__module__
-    return jump_to_nth_window
-
-
-for n in range(10):
-    th: str = "st" if n == 1 else "nd" if n == 2 else "rd" if n == 3 else "th"
-    keycode = getattr(KeyCode, f"Digit{n}")
-    ACTIONS.append_from_fn(
-        id=f"jump-to-window-{n}",
-        title=f"Jump to {n}{th} window",
-        enablement=_ctx.num_sub_windows > n,
-        menus=[MenuId.WINDOW_NTH],
-        keybindings=[{"primary": KeyMod.Alt | keycode}],
-    )(make_func(n))
 
 SUBMENUS.append_from(
     id=MenuId.WINDOW,
@@ -553,17 +475,4 @@ SUBMENUS.append_from(
     title="Anchor",
     enablement=_ctx.num_sub_windows > 0,
     group=MOVE_GROUP,
-)
-SUBMENUS.append_from(
-    id=MenuId.WINDOW,
-    submenu=MenuId.WINDOW_NTH,
-    title="Jump to",
-    enablement=_ctx.num_sub_windows > 0,
-    group=MOVE_GROUP,
-)
-SUBMENUS.append_from(
-    id=MenuId.WINDOW,
-    submenu=MenuId.WINDOW_LAYOUT,
-    title="Layout",
-    group=LAYOUT_GROUP,
 )

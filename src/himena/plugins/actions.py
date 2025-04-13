@@ -4,6 +4,7 @@ from dataclasses import dataclass, field, is_dataclass, fields
 from functools import partial
 import logging
 from copy import deepcopy
+from pathlib import Path
 from typing import (
     Any,
     Callable,
@@ -29,6 +30,7 @@ from himena import _utils
 from himena.types import WidgetDataModel
 from himena.utils.collections import OrderedSet
 from himena.plugins import _utils as _plugins_utils
+from himena.workflow import Workflow, as_function
 
 if TYPE_CHECKING:
     from himena._app_model import HimenaApplication
@@ -477,7 +479,21 @@ def register_conversion_rule(
 
 
 def register_conversion_rule(*args, **kwargs):
-    """Register a function as a conversion rule."""
+    """Register a function as a conversion rule.
+
+    A conversion rule will be added to the model menu under "Convert > ..." submenu.
+    Essentially, this method does nothing more than `register_function`, but using this
+    registration method is recommended for the sake of clarity and following the
+    conventions.
+
+    ```python
+    from himena.plugins import register_conversion_rule
+
+    @register_conversion_rule("text", "table")
+    def convert_text_to_table(model: WidgetDataModel) -> WidgetDataModel:
+        ...  # convert the data type
+    ```
+    """
     if len(args) == 0:
         no_func = True
     else:
@@ -494,6 +510,33 @@ def register_conversion_rule(*args, **kwargs):
         return func
 
     return inner if no_func else inner(args[0])
+
+
+def register_workflow(
+    path,
+    menus="plugins",
+    title: str | None = None,
+    keybindings: KeyBindingsType | None = None,
+    command_id: str | None = None,
+):
+    """Register a workflow as a plugin.
+
+    Parameters
+    ----------
+    path : path-like
+        Path to the workflow json file.
+    """
+    wf = Workflow.model_validate_json(Path(path).read_text())
+    fn = as_function(wf)
+    if command_id is None:
+        command_id = f"workflow-{path}"
+    return register_function(
+        fn,
+        menus=menus,
+        title=title,
+        keybindings=keybindings,
+        command_id=command_id,
+    )
 
 
 def _make_conversion_rule(
