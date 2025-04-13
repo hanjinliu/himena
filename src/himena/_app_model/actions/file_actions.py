@@ -260,7 +260,7 @@ def open_recent(ui: MainWindow) -> WidgetDataModel:
 
 @ACTIONS.append_from_fn(
     id="new",
-    title="New data...",
+    title="New Data...",
     menus=[
         {"id": MenuId.FILE_NEW, "group": "02_more", "order": 99},
         {"id": MenuId.STARTUP, "group": READ_GROUP},

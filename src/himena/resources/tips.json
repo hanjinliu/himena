@@ -1,0 +1,34 @@
+[
+    {
+        "short": "command palette",
+        "long": "Ctrl+Shift+P to search for all the registered commands"
+    },
+    {
+        "short": "workflow",
+        "long": "Execute 'Show workflow graph' to visualize, edit and run the workflow."
+    },
+    {
+        "short": "window menu",
+        "long": "Each sub-window has a window menu tool button in the top-left corner."
+    },
+    {
+        "short": "model menu",
+        "long": "Some sub-windows have a model menu tool button in the top-left corner."
+    },
+    {
+        "short": "resize",
+        "long": "Sub-windows can be resized by wheeling the mouse over the title bar."
+    },
+    {
+        "short": "drag and drop",
+        "long": "Ctrl+Drag to move the internal data of the sub-windows."
+    },
+    {
+        "short": "session",
+        "long": "Save the application state as a session so you can restore it later."
+    },
+    {
+        "short": "settings",
+        "long": "Ctrl+, to customize the application settings in the settings window."
+    }
+]

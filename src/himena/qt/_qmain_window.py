@@ -22,6 +22,7 @@ from himena.consts import MenuId
 from himena.consts import ParametricWidgetProtocolNames as PWPN
 from himena.utils.window_rect import prevent_window_overlap
 from himena._app_model import _formatter, HimenaApplication
+from himena.plugins import AppActionRegistry
 from himena._utils import doc_to_whats_this
 from himena.qt._qnotification import QJobStack, QNotificationWidget, QWhatsThisWidget
 from himena.qt._qtab_widget import QTabWidget
@@ -295,6 +296,8 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def showEvent(self, event: QtGui.QShowEvent) -> None:
         super().showEvent(event)
         self._himena_main_window._main_window_resized(Size(*self._area_size()))
+        if self.statusTip() == "":
+            self._try_show_default_status_tip()
         return None
 
     def show(self, run: bool = False):
@@ -306,6 +309,10 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         if run:
             get_event_loop_handler("qt", self._app_name).run_app()
         return None
+
+    def _try_show_default_status_tip(self) -> None:
+        if tip := AppActionRegistry.instance().pick_a_tip():
+            self._set_status_tip(f"Tip: {tip.short} │ {tip.long}", 8.0)
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
         if event.spontaneous() and self._confirm_close and not self._ok_to_exit():
@@ -529,6 +536,8 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _del_tab_at(self, i_tab: int) -> None:
         _LOGGER.info("Deleting tab at index %r", i_tab)
         self._tab_widget.remove_tab_area(i_tab)
+        if self._tab_widget._is_startup_only():
+            self._try_show_default_status_tip()
         return None
 
     def _rename_window_at(self, i_tab: int, i_window: int) -> None:
