@@ -30,7 +30,7 @@ for n in range(10):
     keycode = getattr(KeyCode, f"Digit{n}")
     ACTIONS.append_from_fn(
         id=f"jump-to-window-{n}",
-        title=f"Jump to {n}{th} window",
+        title=f"Jump To {n}{th} Window",
         enablement=_ctx.num_sub_windows > n,
         menus=[{"id": MenuId.GO, "group": JUMP_TO_GROUP}],
         keybindings=[{"primary": KeyMod.Alt | keycode}],
@@ -39,7 +39,7 @@ for n in range(10):
 
 @ACTIONS.append_from_fn(
     id="go-to-previous-window",
-    title="Go to previous window",
+    title="Go To Previous Window",
     menus=[MenuId.GO],
     enablement=(_ctx.num_tabs > 0) & (_ctx.num_sub_windows > 1),
     keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.Home)],
@@ -53,7 +53,7 @@ def go_to_previous_window(ui: MainWindow) -> None:
 
 @ACTIONS.append_from_fn(
     id="go-to-next-window",
-    title="Go to next window",
+    title="Go To Next Window",
     menus=[MenuId.GO],
     enablement=(_ctx.num_tabs > 0) & (_ctx.num_sub_windows > 1),
     keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.End)],
@@ -67,7 +67,7 @@ def go_to_next_window(ui: MainWindow) -> None:
 
 @ACTIONS.append_from_fn(
     id="go-to-window",
-    title="Go to window ...",
+    title="Go To Window ...",
     menus=[MenuId.GO],
     enablement=_ctx.num_tabs > 0,
     keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.KeyG)],

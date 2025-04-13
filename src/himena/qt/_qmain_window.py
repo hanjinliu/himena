@@ -78,21 +78,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self.setWindowTitle("himena")
         self.setWindowIcon(QtGui.QIcon(_ICON_PATH.as_posix()))
         self._tab_widget = QTabWidget()
-        default_menu_ids = {
-            MenuId.FILE: MenuId.FILE.capitalize(),
-            MenuId.WINDOW: MenuId.WINDOW.capitalize(),
-            MenuId.VIEW: MenuId.VIEW.capitalize(),
-            MenuId.TOOLS: MenuId.TOOLS.capitalize(),
-        }
-        default_menu_ids.update(
-            {
-                menu_id: menu_id.replace("_", " ").title()
-                for menu_id, _ in app.menus
-                if _is_root_menu_id(app, menu_id)
-            }
-        )
-        # Menubar
-        self._menubar = self.setModelMenuBar(default_menu_ids)
+        self._menubar = self.setModelMenuBar(_prep_menubar_map(app))
         self._menubar.setContextMenuPolicy(
             QtCore.Qt.ContextMenuPolicy.PreventContextMenu
         )
@@ -901,6 +887,21 @@ class QChoicesDialog(QtW.QDialog):
         label = QtW.QLabel(message)
         self._layout.addWidget(label)
         return None
+
+
+def _prep_menubar_map(app: HimenaApplication) -> dict[str, str]:
+    default_menu_ids = {
+        MenuId.FILE: "&" + MenuId.FILE.capitalize(),
+        MenuId.WINDOW: "&" + MenuId.WINDOW.capitalize(),
+        MenuId.VIEW: "&" + MenuId.VIEW.capitalize(),
+        MenuId.TOOLS: "&" + MenuId.TOOLS.capitalize(),
+        MenuId.GO: "&" + MenuId.GO.capitalize(),
+        MenuId.HELP: "&" + MenuId.HELP.capitalize(),
+    }
+    for menu_id, _ in app.menus:
+        if menu_id not in default_menu_ids and _is_root_menu_id(app, menu_id):
+            default_menu_ids[menu_id] = menu_id.replace("_", " ").title()
+    return default_menu_ids
 
 
 def _init_tool_bar(tbar: QModelToolBar):

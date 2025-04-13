@@ -59,7 +59,7 @@ def close_current_tab(ui: MainWindow) -> None:
 
 @ACTIONS.append_from_fn(
     id="goto-last-tab",
-    title="Go to Last Tab",
+    title="Go To Last Tab",
     enablement=_ctx.num_tabs > 1,
     menus=[MenuId.VIEW],
     keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyCode.Tab)],
@@ -99,7 +99,7 @@ def merge_tabs(ui: MainWindow) -> Parametric:
 
 @ACTIONS.append_from_fn(
     id="minimize-other-windows",
-    title="Minimize other windows",
+    title="Minimize Other Windows",
     menus=[
         {"id": MenuId.VIEW, "group": WINDOW_GROUP},
     ],
@@ -119,7 +119,7 @@ def minimize_others(ui: MainWindow):
 
 @ACTIONS.append_from_fn(
     id="show-all-windows",
-    title="Show all windows",
+    title="Show All Windows",
     menus=[{"id": MenuId.VIEW, "group": WINDOW_GROUP}],
     enablement=_ctx.num_sub_windows > 0,
 )
@@ -133,7 +133,7 @@ def show_all_windows(ui: MainWindow):
 
 @ACTIONS.append_from_fn(
     id="tile-windows",
-    title="Tile windows",
+    title="Tile Windows",
     enablement=_ctx.num_sub_windows > 1,
     menus=[{"id": MenuId.VIEW, "group": WINDOW_GROUP}],
 )
@@ -145,7 +145,7 @@ def tile_windows(ui: MainWindow) -> None:
 
 @ACTIONS.append_from_fn(
     id="collect-windows",
-    title="Collect windows from other tabs",
+    title="Collect Windows From Other Tabs",
     menus=[{"id": MenuId.VIEW, "group": WINDOW_GROUP}],
     enablement=_ctx.num_tabs > 1,
     need_function_callback=True,
@@ -183,7 +183,7 @@ def collect_windows(ui: MainWindow) -> Parametric:
 
 @ACTIONS.append_from_fn(
     id="close-all-windows",
-    title="Close all windows in tab",
+    title="Close All Windows In Tab",
     menus=[{"id": MenuId.VIEW, "group": WINDOW_GROUP}],
     enablement=_ctx.num_sub_windows > 0,
 )
@@ -207,7 +207,7 @@ def close_all_windows_in_tab(ui: MainWindow) -> None:
 
 @ACTIONS.append_from_fn(
     id="window-layout-horizontal",
-    title="Horizontal layout ...",
+    title="Horizontal Layout ...",
     enablement=(_ctx.num_sub_windows > 1) & (_ctx.num_tabs > 0),
     menus=[MenuId.VIEW_LAYOUT],
     need_function_callback=True,
@@ -228,7 +228,7 @@ def window_layout_horizontal(ui: MainWindow) -> Parametric:
 
 @ACTIONS.append_from_fn(
     id="window-layout-vertical",
-    title="Vertical layout ...",
+    title="Vertical Layout ...",
     enablement=(_ctx.num_sub_windows > 1) & (_ctx.num_tabs > 0),
     menus=[MenuId.VIEW_LAYOUT],
     need_function_callback=True,

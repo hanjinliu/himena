@@ -390,6 +390,24 @@ def save_tab_session_from_dialog(ui: MainWindow) -> None:
 
 
 @ACTIONS.append_from_fn(
+    id="builtins:exec-workflow-file",
+    title="Execute Workflow File ...",
+    menus=[{"id": MenuId.FILE, "group": READ_GROUP}],
+    need_function_callback=True,
+)
+def exec_workflow_file(ui: MainWindow) -> Parametric:
+    """Execute a workflow from a workflow file."""
+    if path := ui.exec_file_dialog(
+        extension_default=".workflow.json",
+        allowed_extensions=[".txt", ".json", ".workflow.json"],
+        caption="Select a workflow file",
+        group="workflows",
+    ):
+        return _wf.as_function_from_path(path)(ui)
+    raise Cancelled
+
+
+@ACTIONS.append_from_fn(
     id="quit",
     title="Quit",
     menus=[{"id": MenuId.FILE, "group": EXIT_GROUP}],
