@@ -103,7 +103,7 @@ class AppProfile(BaseModel):
     )
     version: str = Field(
         default_factory=_current_version,
-        description="Version of this profile saved.",
+        description="Version of this profile created.",
         frozen=True,
     )
     plugins: list[str] = Field(

@@ -14,9 +14,10 @@ from himena.types import (
     WindowState,
 )
 from himena._app_model._context import AppContext as _ctx
-from himena._app_model.actions._registry import ACTIONS
+from himena._app_model.actions._registry import ACTIONS, SUBMENUS
 
 WINDOW_GROUP = "00_window"
+LAYOUT_GROUP = "03_layout"
 
 
 @ACTIONS.append_from_fn(
@@ -202,3 +203,53 @@ def close_all_windows_in_tab(ui: MainWindow) -> None:
                 raise Cancelled
         area.clear()
     return None
+
+
+@ACTIONS.append_from_fn(
+    id="window-layout-horizontal",
+    title="Horizontal layout ...",
+    enablement=(_ctx.num_sub_windows > 1) & (_ctx.num_tabs > 0),
+    menus=[MenuId.VIEW_LAYOUT],
+    need_function_callback=True,
+)
+def window_layout_horizontal(ui: MainWindow) -> Parametric:
+    """Create a horizontal layout"""
+    windows = [win for win in ui.tabs.current()]
+
+    @configure_gui(
+        show_parameter_labels=False, wins={"layout": "horizontal", "value": windows[:4]}
+    )
+    def run_layout_horizontal(wins: list[SubWindow]) -> None:
+        layout = ui.tabs.current().add_hbox_layout()
+        layout.extend(wins)
+
+    return run_layout_horizontal
+
+
+@ACTIONS.append_from_fn(
+    id="window-layout-vertical",
+    title="Vertical layout ...",
+    enablement=(_ctx.num_sub_windows > 1) & (_ctx.num_tabs > 0),
+    menus=[MenuId.VIEW_LAYOUT],
+    need_function_callback=True,
+)
+def window_layout_vertical(ui: MainWindow) -> Parametric:
+    """Create a vertical layout"""
+    windows = [win for win in ui.tabs.current()]
+
+    @configure_gui(
+        show_parameter_labels=False, wins={"layout": "vertical", "value": windows[:4]}
+    )
+    def run_layout_vertical(wins: list[SubWindow]) -> None:
+        layout = ui.tabs.current().add_vbox_layout()
+        layout.extend(wins)
+
+    return run_layout_vertical
+
+
+SUBMENUS.append_from(
+    id=MenuId.VIEW,
+    submenu=MenuId.VIEW_LAYOUT,
+    title="Layout",
+    group=LAYOUT_GROUP,
+)

@@ -12,13 +12,11 @@ from app_model.types import (
 )
 from himena._descriptors import SaveToPath, NoNeedToSave
 from himena.consts import MenuId, StandardType
-from himena.plugins import configure_gui
 from himena.widgets import MainWindow, SubWindow
 from himena.types import (
     ClipboardDataModel,
     WindowState,
     WidgetDataModel,
-    Parametric,
 )
 from himena._app_model._context import AppContext as _ctx
 from himena._app_model.actions._registry import ACTIONS, SUBMENUS
@@ -28,10 +26,10 @@ from himena.exceptions import Cancelled
 _LOGGER = logging.getLogger(__name__)
 
 EDIT_GROUP = "00_edit"
-STATE_GROUP = "01_state"
-MOVE_GROUP = "02_move"
-LAYOUT_GROUP = "03_layout"
-ZOOM_GROUP = "10_zoom"
+PROPERTY_GROUP = "01_property"
+STATE_GROUP = "21_state"
+MOVE_GROUP = "22_move"
+ZOOM_GROUP = "40_zoom"
 EXIT_GROUP = "99_exit"
 _CtrlK = KeyMod.CtrlCmd | KeyCode.KeyK
 _CtrlShift = KeyMod.CtrlCmd | KeyMod.Shift
@@ -56,7 +54,7 @@ def show_whats_this(ui: MainWindow) -> None:
     title="Show workflow graph",
     menus=[
         {"id": MenuId.WINDOW, "group": EXIT_GROUP},
-        {"id": MenuId.CORNER, "group": EXIT_GROUP},
+        {"id": MenuId.TOOLBAR, "group": EXIT_GROUP},
     ],
     enablement=_ctx.num_sub_windows > 0,
     need_function_callback=True,
@@ -440,7 +438,7 @@ ACTIONS.append(
         title="Window Editable",
         callback=toggle_editable,
         enablement=_ctx.is_subwindow_focused,
-        menus=[{"id": MenuId.WINDOW, "group": EDIT_GROUP}],
+        menus=[{"id": MenuId.WINDOW, "group": PROPERTY_GROUP}],
         toggled=ToggleRule(condition=_ctx.is_active_window_editable),
     )
 )
@@ -451,75 +449,11 @@ ACTIONS.append(
         title="Track User Modifications",
         callback=toggle_editable,
         enablement=_ctx.is_subwindow_focused,
-        menus=[{"id": MenuId.WINDOW, "group": EDIT_GROUP}],
+        menus=[{"id": MenuId.WINDOW, "group": PROPERTY_GROUP}],
         toggled=ToggleRule(condition=_ctx.is_active_window_track_modification),
     )
 )
 
-
-@ACTIONS.append_from_fn(
-    id="window-layout-horizontal",
-    title="Horizontal layout ...",
-    enablement=(_ctx.num_sub_windows > 1) & (_ctx.num_tabs > 0),
-    menus=[MenuId.WINDOW_LAYOUT],
-    need_function_callback=True,
-)
-def window_layout_horizontal(ui: MainWindow) -> Parametric:
-    windows = [win for win in ui.tabs.current()]
-
-    @configure_gui(
-        show_parameter_labels=False, wins={"layout": "horizontal", "value": windows[:4]}
-    )
-    def run_layout_horizontal(wins: list[SubWindow]) -> None:
-        layout = ui.tabs.current().add_hbox_layout()
-        layout.extend(wins)
-
-    return run_layout_horizontal
-
-
-@ACTIONS.append_from_fn(
-    id="window-layout-vertical",
-    title="Vertical layout ...",
-    enablement=(_ctx.num_sub_windows > 1) & (_ctx.num_tabs > 0),
-    menus=[MenuId.WINDOW_LAYOUT],
-    need_function_callback=True,
-)
-def window_layout_vertical(ui: MainWindow) -> Parametric:
-    windows = [win for win in ui.tabs.current()]
-
-    @configure_gui(
-        show_parameter_labels=False, wins={"layout": "vertical", "value": windows[:4]}
-    )
-    def run_layout_vertical(wins: list[SubWindow]) -> None:
-        layout = ui.tabs.current().add_vbox_layout()
-        layout.extend(wins)
-
-    return run_layout_vertical
-
-
-# Jump to the nth window
-def make_func(n: int):
-    def jump_to_nth_window(ui: MainWindow) -> None:
-        if (area := ui.tabs.current()) and len(area) > n:
-            area.current_index = n
-
-    jump_to_nth_window.__name__ = f"jump_to_window_{n}"
-    jump_to_nth_window.__doc__ = f"Jump to the {n}-th window in the current tab."
-    jump_to_nth_window.__qualname__ = f"jump_to_window_{n}"
-    jump_to_nth_window.__module__ = make_func.__module__
-    return jump_to_nth_window
-
-
-for n in range(10):
-    th: str = "st" if n == 1 else "nd" if n == 2 else "rd" if n == 3 else "th"
-    keycode = getattr(KeyCode, f"Digit{n}")
-    ACTIONS.append_from_fn(
-        id=f"jump-to-window-{n}",
-        title=f"Jump to {n}{th} window",
-        enablement=_ctx.num_sub_windows > n,
-        menus=[MenuId.WINDOW_NTH],
-        keybindings=[{"primary": KeyMod.Alt | keycode}],
-    )(make_func(n))
 
 SUBMENUS.append_from(
     id=MenuId.WINDOW,
@@ -541,17 +475,4 @@ SUBMENUS.append_from(
     title="Anchor",
     enablement=_ctx.num_sub_windows > 0,
     group=MOVE_GROUP,
-)
-SUBMENUS.append_from(
-    id=MenuId.WINDOW,
-    submenu=MenuId.WINDOW_NTH,
-    title="Jump to",
-    enablement=_ctx.num_sub_windows > 0,
-    group=MOVE_GROUP,
-)
-SUBMENUS.append_from(
-    id=MenuId.WINDOW,
-    submenu=MenuId.WINDOW_LAYOUT,
-    title="Layout",
-    group=LAYOUT_GROUP,
 )

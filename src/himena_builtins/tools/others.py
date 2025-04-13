@@ -9,13 +9,14 @@ from datetime import datetime
 import numpy as np
 from himena.data_wrappers._dataframe import wrap_dataframe
 from himena._descriptors import NoNeedToSave
+from himena.exceptions import Cancelled
 from himena.plugins import register_function, configure_gui, widget_classes
 from himena.standards.model_meta import ListMeta
 from himena.types import Parametric, WidgetDataModel
 from himena.consts import StandardType, MonospaceFontFamily, MenuId
 from himena.utils.collections import OrderedSet
 from himena.widgets import SubWindow, MainWindow, ParametricWindow
-from himena.workflow import Workflow, as_function
+from himena.workflow import Workflow, as_function, as_function_from_path
 from himena import AppContext as ctx
 from himena._utils import get_display_name, get_widget_class_id, unwrap_lazy_model
 
@@ -245,6 +246,23 @@ def exec_parametric_workflow(model: WidgetDataModel, ui: MainWindow) -> Parametr
     """Execute the workflow."""
     wf = _cast_workflow(model)
     return as_function(wf)(ui)
+
+
+@register_function(
+    title="Execute workflow file",
+    menus=[""],
+    command_id="builtins:exec-workflow-file",
+)
+def exec_workflow_file(ui: MainWindow) -> Parametric:
+    """Execute a workflow from a workflow file."""
+    if path := ui.exec_file_dialog(
+        extension_default=".workflow.json",
+        allowed_extensions=[".txt", ".json", ".workflow.json"],
+        caption="Select a workflow file",
+        group="workflows",
+    ):
+        return as_function_from_path(path)(ui)
+    raise Cancelled
 
 
 def _cast_workflow(model: WidgetDataModel) -> Workflow:

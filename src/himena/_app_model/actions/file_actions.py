@@ -243,10 +243,14 @@ def save_as_using_from_dialog(ui: MainWindow, sub_win: SubWindow) -> Future:
 @ACTIONS.append_from_fn(
     id="open-recent",
     title="Open Recent ...",
-    menus=[{"id": MenuId.FILE_RECENT, "group": "02_more", "order": 99}],
+    menus=[
+        {"id": MenuId.FILE_RECENT, "group": READ_GROUP},
+        {"id": MenuId.TOOLBAR, "group": READ_GROUP},
+    ],
     keybindings=[
         KeyBindingRule(primary=KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.KeyR))
     ],
+    icon="mdi:recent",
     recording=False,
 )
 def open_recent(ui: MainWindow) -> WidgetDataModel:
