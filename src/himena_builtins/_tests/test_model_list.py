@@ -50,3 +50,4 @@ def test_commands(himena_ui: MainWindow):
     himena_ui.exec_action("builtins:models:sort-model-list", with_params={"sort_by": "time"})
     himena_ui.exec_action("builtins:models:filter-model-list", with_params={"model_type": "text"})
     himena_ui.exec_action("builtins:models:filter-model-list", with_params={"title_contains": "X"})
+    himena_ui.exec_action("builtins:models:compute-lazy-items")
