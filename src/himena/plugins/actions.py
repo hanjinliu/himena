@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from contextlib import suppress
 from dataclasses import dataclass, field, is_dataclass, fields
 from functools import partial
 import random
@@ -59,6 +58,8 @@ class PluginConfigTuple(NamedTuple):
             out = {}
             for _f in fields(config):
                 out[_f.name] = {"value": getattr(config, _f.name), **_f.metadata}
+                # NOTE: "annotation" is not always serializable so it is not allowed
+                # here.
         elif isinstance(config, BaseModel):
             out = {}
             for _fname, _finfo in config.model_fields.items():
@@ -119,8 +120,10 @@ class AppActionRegistry:
         return cls._global_instance
 
     def _try_load_app_tips(self) -> None:
-        with suppress(Exception):
-            out = json.load(Path(__file__).parent.parent / "tips.json")
+        tip_path = Path(__file__).parent.parent / "resources" / "tips.json"
+        try:
+            with tip_path.open("r") as f:
+                out = json.load(f)
             for each in out:
                 self._app_tips.append(
                     AppTip(
@@ -128,6 +131,8 @@ class AppActionRegistry:
                         long=each.get("long", ""),
                     )
                 )
+        except Exception as e:
+            _LOGGER.error("Failed to load app tips: %s", e)
 
     def pick_a_tip(self) -> AppTip | None:
         """Pick a random tip."""
@@ -266,6 +271,7 @@ def register_function(
     keybindings: Sequence[KeyBindingRule] | None = None,
     run_async: bool = False,
     command_id: str | None = None,
+    icon: str | None = None,
 ) -> None: ...
 
 
@@ -280,6 +286,7 @@ def register_function(
     keybindings: Sequence[KeyBindingRule] | None = None,
     run_async: bool = False,
     command_id: str | None = None,
+    icon: str | None = None,
 ) -> _F: ...
 
 
@@ -293,6 +300,7 @@ def register_function(
     keybindings=None,
     run_async=False,
     command_id=None,
+    icon: str | None = None,
 ):
     """Register a function as a callback of a plugin action.
 
@@ -318,6 +326,8 @@ def register_function(
         updates the GUI, running it asynchronously may cause issues.
     command_id : str, optional
         Command ID. If not given, the function qualname will be used.
+    icon : str, optional
+        Iconify icon key to use for the action.
     """
 
     def _inner(f: _F) -> _F:
@@ -330,6 +340,7 @@ def register_function(
             keybindings=keybindings,
             run_async=run_async,
             command_id=command_id,
+            icon=icon,
         )
         AppActionRegistry.instance().add_action(action)
         return f
@@ -351,6 +362,7 @@ def make_action_for_function(
     keybindings=None,
     run_async: bool = False,
     command_id: str | None = None,
+    icon: str | None = None,
 ):
     types, enablement, menus = _norm_register_function_args(types, enablement, menus)
     kbs = normalize_keybindings(keybindings)
@@ -387,6 +399,8 @@ def make_action_for_function(
         menus=menus_normed,
         enablement=_enablement,
         keybindings=kbs,
+        icon=icon,
+        icon_visible_in_menu=False,
     )
 
 

@@ -40,13 +40,15 @@ def profile_dir() -> Path:
 
 
 # Plugin place and the version added.
-# NOTE: The version added DEFAULT_PLUGINS is 0.0.8.
+# NOTE: The version that added this `DEFAULT_PLUGINS` variable is 0.0.8.
 DEFAULT_PLUGINS: list[tuple[str, Version]] = [
     # Dock widgets
     ("himena_builtins.qt.console", Version("0.0.0")),
     ("himena_builtins.qt.explorer", Version("0.0.0")),
+    ("himena_builtins.qt.favorites", Version("0.0.9")),
     ("himena_builtins.qt.history", Version("0.0.0")),
     ("himena_builtins.qt.output", Version("0.0.0")),
+    # Matplotlib
     ("himena_builtins.qt.plot", Version("0.0.0")),
     # Widgets
     ("himena_builtins.qt.array", Version("0.0.8")),
@@ -144,8 +146,9 @@ class AppProfile(BaseModel):
         """Save profile as a json file."""
         if path is None:
             path = self.profile_path()
+        json_string = json.dumps(self.model_dump(), indent=4)
         with open(path, "w") as f:
-            json.dump(self.model_dump(), f, indent=4)
+            f.write(json_string)
         return None
 
     def profile_path(self) -> Path:

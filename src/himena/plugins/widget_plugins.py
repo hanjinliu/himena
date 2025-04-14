@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 from functools import wraps
 import uuid
 from typing import (
     Callable,
     Generic,
+    Iterator,
     Sequence,
     TypeVar,
     overload,
@@ -47,6 +49,7 @@ def register_dock_widget_action(
     singleton: bool = False,
     plugin_configs: PluginConfigType | None = None,
     command_id: str | None = None,
+    icon: str | None = None,
 ) -> _F: ...
 
 
@@ -62,6 +65,7 @@ def register_dock_widget_action(
     singleton: bool = False,
     plugin_configs: PluginConfigType | None = None,
     command_id: str | None = None,
+    icon: str | None = None,
 ) -> Callable[[_F], _F]: ...
 
 
@@ -76,6 +80,7 @@ def register_dock_widget_action(
     singleton: bool = False,
     plugin_configs: PluginConfigType | None = None,
     command_id: str | None = None,
+    icon: str | None = None,
 ):
     """Register a widget factory as a dock widget function.
 
@@ -120,6 +125,8 @@ def register_dock_widget_action(
         ```
     command_id : str, optional
         Command ID. If not given, the function name will be used.
+    icon : str, optional
+        Iconify icon key.
     """
     kbs = normalize_keybindings(keybindings)
     if menus is None:
@@ -148,6 +155,8 @@ def register_dock_widget_action(
             menus=norm_menus(menus),
             keybindings=kbs,
             toggled=toggle_rule,
+            icon=icon,
+            icon_visible_in_menu=False,
         )
         reg = AppActionRegistry.instance()
         reg.add_action(action)
@@ -252,3 +261,77 @@ def _normalize_title(title: str | None, func: Callable) -> str:
     if title is None:
         return func.__name__.replace("_", " ").title()
     return title
+
+
+@overload
+@contextmanager
+def update_config_context(
+    plugin_id: str,
+    *,
+    update_widget: bool = False,
+) -> Iterator[PluginConfigType]: ...
+
+
+_C = TypeVar("_C", bound="PluginConfigType")
+
+
+@overload
+@contextmanager
+def update_config_context(
+    config_class: type[_C],
+    plugin_id: str | None = None,
+    *,
+    update_widget: bool = False,
+) -> Iterator[_C]: ...
+
+
+@contextmanager
+def update_config_context(
+    config_class: type | str,
+    plugin_id: str | None = None,
+    *,
+    update_widget: bool = False,
+):
+    """Context manager for updating plugin config."""
+    from himena.widgets import current_instance
+
+    ui = current_instance()
+    if isinstance(config_class, str):
+        if plugin_id is not None:
+            raise TypeError("No overload matches the input.")
+        _config_class, _plugin_id = None, config_class
+    else:
+        _config_class = config_class
+        _plugin_id = plugin_id
+
+    reg = AppActionRegistry.instance()
+    if _plugin_id is None:
+        for _id, _config in reg._plugin_default_configs.items():
+            if isinstance(_config.config, _config_class):
+                _plugin_id = _id
+                break
+        else:
+            raise ValueError(
+                f"Cannot find plugin ID for the config class: {config_class}."
+            )
+    plugin_config = reg._plugin_default_configs[_plugin_id]
+    if not isinstance(plugin_config.config, _config_class):
+        raise TypeError(
+            f"Plugin ID {_plugin_id} does not match the config class {config_class}."
+        )
+    cur_config = plugin_config.config
+    yield cur_config
+    prof = ui.app_profile
+    all_configs = prof.plugin_configs.copy()
+
+    cfg_dict = all_configs[_plugin_id] = plugin_config.as_dict()
+    prof.with_plugin_configs(all_configs).save()
+
+    # update existing dock widgets with the new config
+    if update_widget and (cb := WidgetCallbackBase.instance_for_command_id(_plugin_id)):
+        params = {}
+        for key, opt in cfg_dict.items():
+            params[key] = opt["value"]
+        for widget in cb._all_widgets:
+            # the internal widget should always has the method "update_configs"
+            widget.update_configs(params)

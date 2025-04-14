@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 import weakref
 
@@ -14,7 +14,7 @@ from himena.types import Size, WidgetDataModel, Parametric
 from himena.standards import plotting as hplt, roi as _roi
 from himena.standards.model_meta import DataFrameMeta, TableMeta, DataFramePlotMeta
 from himena.utils.collections import UndoRedoStack
-from himena.plugins import validate_protocol, register_function
+from himena.plugins import validate_protocol, register_function, config_field
 from himena.qt import drag_command
 from himena.data_wrappers import wrap_dataframe, DataFrameWrapper
 from himena_builtins.qt.widgets._table_components import (
@@ -571,12 +571,10 @@ class QDataFramePlotView(QtW.QSplitter):
 
 @dataclass
 class DataFrameConfigs:
-    column_drag_enabled: bool = field(default=True)
-    separator_on_copy: str = field(
+    column_drag_enabled: bool = config_field(default=True)
+    separator_on_copy: str = config_field(
         default="\\t",
-        metadata={
-            "tooltip": "Separator used when the content of table is copied to the clipboard."
-        },
+        tooltip="Separator used when the content of table is copied to the clipboard.",
     )
 
 

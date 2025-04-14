@@ -22,8 +22,12 @@ from himena.plugins.actions import (
     register_modification_tracker,
     add_default_status_tip,
 )
-from himena.plugins.widget_plugins import register_dock_widget_action
+from himena.plugins.widget_plugins import (
+    register_dock_widget_action,
+    update_config_context,
+)
 from himena.plugins.install import install_plugins, override_keybindings
+from himena.plugins.config import config_field
 
 __all__ = [
     "add_default_status_tip",
@@ -34,7 +38,9 @@ __all__ = [
     "configure_gui",
     "get_plugin_interface",
     "install_plugins",
+    "config_field",
     "override_keybindings",
+    "update_config_context",
     "register_reader_plugin",
     "register_writer_plugin",
     "register_function",

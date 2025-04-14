@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import Enum, auto
 from io import StringIO
 from typing import TYPE_CHECKING, Any, Iterable, Literal, Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import numpy as np
 from numpy.typing import NDArray
 
@@ -14,7 +14,7 @@ from qtpy.QtCore import Qt
 from himena.consts import StandardType
 from himena.types import WidgetDataModel
 from himena.standards.model_meta import TableMeta
-from himena.plugins import validate_protocol
+from himena.plugins import validate_protocol, config_field
 from himena_builtins.qt.widgets._table_components import (
     QTableBase,
     QSelectionRangeEdit,
@@ -840,15 +840,15 @@ def _size_to_shrink(proj: NDArray[np.intp]) -> int:
 
 @dataclass
 class SpreadsheetConfigs:
-    default_cell_width: int = field(
-        default=75, metadata={"tooltip": "Default width (pixel) of cells."}
+    default_cell_width: int = config_field(
+        default=75,
+        tooltip="Default width (pixel) of cells.",
     )
-    default_cell_height: int = field(
-        default=22, metadata={"tooltip": "Default height (pixel) of cells."}
+    default_cell_height: int = config_field(
+        default=22,
+        tooltip="Default height (pixel) of cells.",
     )
-    separator_on_copy: str = field(
+    separator_on_copy: str = config_field(
         default="\\t",
-        metadata={
-            "tooltip": "Separator used when the content of table is copied to the clipboard."
-        },
+        tooltip="Separator used when the content of table is copied to the clipboard.",
     )

@@ -1,6 +1,6 @@
 from __future__ import annotations
 from contextlib import contextmanager
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator, TYPE_CHECKING
 
@@ -11,7 +11,7 @@ from superqt import QSearchableComboBox
 from himena.consts import StandardType, MonospaceFontFamily
 from himena.types import WidgetDataModel
 from himena.standards.model_meta import TextMeta
-from himena.plugins import validate_protocol
+from himena.plugins import validate_protocol, config_field
 
 from himena.utils.collections import OrderedSet
 from himena.utils.misc import lru_cache
@@ -453,17 +453,13 @@ class QRichTextEditControl(QtW.QWidget):
 
 @dataclass
 class TextEditConfigs:
-    default_font_size: int = field(
+    default_font_size: int = config_field(
         default=10,
-        metadata={
-            "label": "Default font size (pt).",
-            "choices": POINT_SIZES,
-        },
+        label="Default font size (pt).",
+        choices=POINT_SIZES,
     )
-    default_tab_size: int = field(
+    default_tab_size: int = config_field(
         default=4,
-        metadata={
-            "label": "Default tab size.",
-            "choices": TAB_SIZES,
-        },
+        label="Default tab size.",
+        choices=TAB_SIZES,
     )

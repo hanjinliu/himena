@@ -11,6 +11,10 @@ def test_command_added(himena_ui: MainWindow):
     himena_ui.exec_action("new-tab")
     assert history_widget._command_list.model().rowCount() == 1
     himena_ui.exec_action("builtins:new-text")
+    widget = history_widget._command_list.indexWidget(
+        history_widget._command_list.model().index(0, 0)
+    )
+    widget._make_drag()
 
 def test_table_selection(himena_ui: MainWindow):
     from himena.qt.magicgui import SelectionEdit

@@ -1,8 +1,9 @@
 """Builtin standard output plugin."""
 
 from typing import TYPE_CHECKING
-from dataclasses import dataclass, field
-from himena.plugins import register_dock_widget_action
+from dataclasses import dataclass
+from himena.plugins import register_dock_widget_action, config_field
+from himena.consts import MenuId
 
 if TYPE_CHECKING:
     from himena.widgets import MainWindow
@@ -12,23 +13,25 @@ if TYPE_CHECKING:
 class OutputConfig:
     """Configuration for the output widget."""
 
-    format: str = field(
+    format: str = config_field(
         default="%(levelname)s:%(message)s",
-        metadata={"tooltip": "The logger format"},
+        tooltip="The logger format",
     )
-    date_format: str = field(
+    date_format: str = config_field(
         default="%Y-%m-%d %H:%M:%S",
-        metadata={"tooltip": "The logger date format"},
+        tooltip="The logger date format",
     )
 
 
 @register_dock_widget_action(
     title="Output",
     area="right",
+    menus=[MenuId.TOOLS_DOCK, MenuId.CORNER],
     keybindings=["Ctrl+Shift+U"],
     singleton=True,
     command_id="builtins:output",
     plugin_configs=OutputConfig(),
+    icon="icon-park-outline:log",
 )
 def install_output_widget(ui: "MainWindow"):
     """Standard output widget."""

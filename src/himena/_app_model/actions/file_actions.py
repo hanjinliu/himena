@@ -251,7 +251,6 @@ def save_as_using_from_dialog(ui: MainWindow, sub_win: SubWindow) -> Future:
         KeyBindingRule(primary=KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.KeyR))
     ],
     icon="mdi:recent",
-    recording=False,
 )
 def open_recent(ui: MainWindow) -> WidgetDataModel:
     """Open a recent file as a sub-window."""

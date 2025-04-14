@@ -10,8 +10,6 @@ if TYPE_CHECKING:
 
 class QStatusBar(QtW.QStatusBar):
     def __init__(self, parent: QMainWindow):
-        from himena import __version__
-
         super().__init__(parent)
         self._corner_widget = QtW.QWidget(self)
         layout = QtW.QHBoxLayout(self._corner_widget)
@@ -23,9 +21,6 @@ class QStatusBar(QtW.QStatusBar):
         self._profile_btn.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
         self._profile_btn.clicked.connect(self._open_profile_info)
         layout.addWidget(self._profile_btn)
-        version_label = QtW.QLabel(f"v{__version__}")
-        version_label.setToolTip("Himena version")
-        layout.addWidget(version_label)
 
         self.layout().setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         self.layout().addWidget(self._corner_widget)

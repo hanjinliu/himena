@@ -7,31 +7,14 @@ from typing import TYPE_CHECKING, Any, Iterable, cast, Callable
 
 from app_model import Application
 from app_model.types import CommandRule, MenuItem, Action
+from himena._app_model.utils import collect_commands
 from qtpy import QtCore, QtGui, QtWidgets as QtW
 from qtpy.QtCore import Qt, Signal
 
 if TYPE_CHECKING:
     from himena.qt.main_window import QMainWindow
-    from app_model.types import MenuOrSubmenu
 
 _LOGGER = logging.getLogger(__name__)
-
-
-def _collect_command(
-    app: Application,
-    menu_items: list[MenuOrSubmenu],
-    exclude: Iterable[str],
-) -> list[Action]:
-    commands = []
-    for item in menu_items:
-        if isinstance(item, MenuItem):
-            if item.command.id not in exclude:
-                commands.append(item.command)
-        else:
-            commands.extend(
-                _collect_command(app, app.menus.get_menu(item.submenu), exclude)
-            )
-    return commands
 
 
 class QCommandPalette(QtW.QWidget):
@@ -79,7 +62,7 @@ class QCommandPalette(QtW.QWidget):
         app = self._model_app
         try:
             menu_items = app.menus.get_menu(self._menu_id)
-            commands = _collect_command(app, menu_items, self._exclude)
+            commands = collect_commands(app, menu_items, self._exclude)
             self.extend_command(commands)
         except KeyError:
             pass

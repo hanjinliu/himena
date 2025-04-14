@@ -1,8 +1,12 @@
 """Builtin QtConsole plugin."""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Literal
-from himena.plugins import register_dock_widget_action, add_default_status_tip
+from himena.plugins import (
+    register_dock_widget_action,
+    add_default_status_tip,
+    config_field,
+)
 
 add_default_status_tip(
     short="command palette",
@@ -14,19 +18,17 @@ add_default_status_tip(
 class ConsoleConfig:
     """Configuration for the console."""
 
-    main_window_symbol: str = field(
+    main_window_symbol: str = config_field(
         default="ui",
-        metadata={"tooltip": "Variable name used for the main window instance."},
+        tooltip="Variable name used for the main window instance",
     )
-    exit_app_from_console: bool = field(
+    exit_app_from_console: bool = config_field(
         default=True,
-        metadata={"tooltip": "Use the `exit` IPython magic to exit the application."},
+        tooltip="Use the `exit` IPython magic to exit the application.",
     )
-    matplotlib_backend: Literal["inline", "himena_builtins"] = field(
+    matplotlib_backend: Literal["inline", "himena_builtins"] = config_field(
         default="inline",
-        metadata={
-            "tooltip": "Plot backend when the script is executed in the console."
-        },
+        tooltip="Plot backend when the script is executed in the console.",
     )
 
     @property
