@@ -16,6 +16,7 @@ from himena_builtins.qt.widgets.image import QImageView, QImageLabelView
 from himena_builtins.qt.widgets._image_components import _roi_items as _rois
 from himena_builtins.qt.widgets._image_components._control import ComplexMode
 from himena_builtins.tools.image import _make_roi_limits_getter, _bbox_list_getter
+from himena_builtins.qt.widgets._image_components._handles import RoiSelectionHandles
 
 _Ctrl = Qt.KeyboardModifier.ControlModifier
 
@@ -646,3 +647,46 @@ def test_select_rois(himena_ui: MainWindow):
     assert isinstance(lmodel := himena_ui.current_model.value, RoiListModel)
     assert len(lmodel) == 1
     assert lmodel.items[0].name == "ROI-0"
+
+def test_handle_events(qtbot: QtBot):
+    view = QImageView()
+    qtbot.addWidget(view)
+    handles = RoiSelectionHandles(view._img_view)
+    # line
+    line_roi = _rois.QLineRoi(0, 0, 5, 5)
+    handles.connect_roi(line_roi)
+    for h in handles._handles:
+        h.moved_by_mouse.emit(QtCore.QPointF(1, 1), QtCore.QPointF(0, 0))
+    line_roi.setLine(0, 0, 6, 6)
+    # rect
+    rect_roi = _rois.QRectangleRoi(0, 0, 5, 8)
+    handles.connect_roi(rect_roi)
+    for h in handles._handles:
+        h.moved_by_mouse.emit(QtCore.QPointF(1, 1), QtCore.QPointF(0, 0))
+    rect_roi.setRect(0, 0, 6, 9)
+    # path
+    path_roi = _rois.QPolygonRoi([0, 1, 3, 0], [3, 5, 5, 3])
+    handles.connect_roi(path_roi)
+    for h in handles._handles:
+        h.moved_by_mouse.emit(QtCore.QPointF(1, 1), QtCore.QPointF(0, 0))
+    # point
+    point_roi = _rois.QPointRoi(0, 0)
+    handles.connect_roi(point_roi)
+    for h in handles._handles:
+        h.moved_by_mouse.emit(QtCore.QPointF(1, 1), QtCore.QPointF(0, 0))
+    point_roi.setPos(1, 1)
+    # points
+    points_roi = _rois.QPointsRoi([0, 1], [0, 1])
+    handles.connect_roi(points_roi)
+    for h in handles._handles:
+        h.moved_by_mouse.emit(QtCore.QPointF(1, 1), QtCore.QPointF(0, 0))
+    points_roi.setPos(1, 1)
+    # rotated rect
+    rotated_roi = _rois.QRotatedRectangleRoi(
+        QtCore.QPointF(0, 0),
+        QtCore.QPointF(10, 10),
+        6,
+    )
+    handles.connect_roi(rotated_roi)
+    for h in handles._handles:
+        h.moved_by_mouse.emit(QtCore.QPointF(1, 1), QtCore.QPointF(0, 0))
