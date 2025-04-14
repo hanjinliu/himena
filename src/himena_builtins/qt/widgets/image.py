@@ -41,6 +41,8 @@ if TYPE_CHECKING:
 class QImageViewBase(QtW.QSplitter):
     _executor = ThreadPoolExecutor(max_workers=1)
     images_changed = QtCore.Signal(list)
+    current_roi_updated = QtCore.Signal(object)
+    """Emit current QRoi or None if no ROI is active."""
 
     def __init__(self):
         super().__init__(QtCore.Qt.Orientation.Horizontal)
@@ -73,6 +75,7 @@ class QImageViewBase(QtW.QSplitter):
 
         self._img_view.roi_added.connect(self._on_roi_added)
         self._img_view.roi_removed.connect(self._on_roi_removed)
+        self._img_view.current_roi_updated.connect(self._emit_current_roi)
         self._dims_slider.valueChanged.connect(self._slider_changed)
 
         self.addWidget(self._roi_col)
@@ -97,6 +100,11 @@ class QImageViewBase(QtW.QSplitter):
 
     def createHandle(self):
         return QSplitterHandle(self)
+
+    @property
+    def dims_slider(self) -> QDimsSlider:
+        """Return the dimension slider widget."""
+        return self._dims_slider
 
     @validate_protocol
     def update_model(self, model: WidgetDataModel):
@@ -246,6 +254,9 @@ class QImageViewBase(QtW.QSplitter):
         self._channels = [
             ChannelInfo.from_channel(i, names[i], c) for i, c in enumerate(channels)
         ]
+
+    def _emit_current_roi(self):
+        self.current_roi_updated.emit(self._img_view._current_roi_item)
 
     def _make_control_widget(self) -> QImageViewControlBase:
         raise NotImplementedError

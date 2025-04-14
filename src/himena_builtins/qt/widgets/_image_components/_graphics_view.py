@@ -137,6 +137,8 @@ class QImageGraphicsView(QBaseGraphicsView):
     roi_added = QtCore.Signal(QRoi)
     roi_removed = QtCore.Signal(int)
     roi_visibility_changed = QtCore.Signal(bool)
+    current_roi_updated = QtCore.Signal()
+    """Emitted when the current ROI is added, removed or edited."""
     mode_changed = QtCore.Signal(MouseMode)
     hovered = QtCore.Signal(QtCore.QPointF)
     geometry_changed = QtCore.Signal(QtCore.QRectF)
@@ -404,6 +406,7 @@ class QImageGraphicsView(QBaseGraphicsView):
                     self.scene().removeItem(self._current_roi_item)
             self._selection_handles.clear_handles()
             self._current_roi_item = None
+            self.current_roi_updated.emit()
             _LOGGER.debug(
                 "remove_current_item(remove_from_list=%r, reason=%r)",
                 remove_from_list,
@@ -453,6 +456,7 @@ class QImageGraphicsView(QBaseGraphicsView):
             self._is_current_roi_item_not_registered = not is_registered_roi
         if isinstance(item, QRoi):
             self._current_roi_item = item
+            self.current_roi_updated.emit()
             item.setVisible(True)
             _LOGGER.debug("Item selected: %r", type(item).__name__)
 
@@ -556,6 +560,7 @@ class QImageGraphicsView(QBaseGraphicsView):
         rect = self.scene().sceneRect()
         self.scene().addItem(item)
         self.scene().setSceneRect(rect)
+        self.current_roi_updated.emit()
         _LOGGER.info(f"Set current ROI item to {item}")
 
     def add_current_roi(self):

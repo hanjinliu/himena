@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Mapping
 import weakref
 
 from cmap import Color, Colormap
@@ -252,9 +252,7 @@ class QDataFrameView(QTableBase):
             for (r0, r1), (c0, c1) in meta.selections:
                 self._selection_model.append((slice(r0, r1), slice(c0, c1)))
 
-        if self._control is None:
-            self._control = QDataFrameViewControl()
-        self._control.update_for_table(self)
+        self.control_widget().update_for_table(self)
         self._model_type = model.type
         self.update()
         return None
@@ -305,6 +303,8 @@ class QDataFrameView(QTableBase):
 
     @validate_protocol
     def control_widget(self):
+        if self._control is None:
+            self._control = QDataFrameViewControl()
         return self._control
 
     def keyPressEvent(self, e: QtGui.QKeyEvent) -> None:
@@ -361,6 +361,48 @@ def select_columns(model: WidgetDataModel) -> Parametric:
         return model.with_value(df.unwrap())
 
     return run
+
+
+class QDictView(QDataFrameView):
+    """A widget for viewing dictionary with scalar values."""
+
+    __himena_widget_id__ = "builtins:QDictView"
+    __himena_display_name__ = "Built-in Dictionary Viewer"
+
+    def __init__(self):
+        super().__init__()
+        self._extension_default = ".json"
+        self._model_type = StandardType.DICT
+        self.horizontalHeader().hide()
+
+    @validate_protocol
+    def update_model(self, model: WidgetDataModel[dict]):
+        if not isinstance(model.value, Mapping):
+            raise TypeError(f"Expected a mapping, got {type(model.value)}.")
+        was_empty = self.model() is None
+        df = wrap_dataframe({k: [v] for k, v in model.value.items()})
+        self.setModel(QDataFrameModel(df, transpose=True))
+        if was_empty:
+            self.resizeColumnsToContents()
+        if ext := model.extension_default:
+            self._extension_default = ext
+        self.control_widget().update_for_table(self)
+        self._model_type = model.type
+        self.update()
+        return None
+
+    @validate_protocol
+    def to_model(self) -> WidgetDataModel:
+        self.model()._updated_columns.clear()
+        return WidgetDataModel(
+            value={k: v[0] for k, v in self.model().df.to_dict().items()},
+            type=self.model_type(),
+            extension_default=self._extension_default,
+        )
+
+    @validate_protocol
+    def size_hint(self):
+        return 260, 260
 
 
 class QDataFrameViewControl(QtW.QWidget):

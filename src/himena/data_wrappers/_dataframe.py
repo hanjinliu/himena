@@ -342,7 +342,9 @@ class DictWrapper(DataFrameWrapper):
                         f"{length} but got {v_arr.size} for {k!r}."
                     )
             elif v_arr.ndim > 1:
-                raise ValueError("Only 1D arrays are supported.")
+                # this may happen when the series is a list of arrays
+                v_arr = np.empty(v_arr.shape[0], dtype=object)
+                v_arr[:] = list(v)
             content[k] = v_arr
         if length < 0:  # all arrays are scalar. Interpret as a single-row data frame.
             length = 1

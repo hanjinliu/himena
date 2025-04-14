@@ -126,14 +126,6 @@ class RoiSelectionHandles:
         for handle in self._handles:
             handle.setSize(self._handle_size)
 
-    def translate(self, dx: float, dy: float):
-        for handle in self._handles:
-            handle.setCenter(handle.rect().center() + QtCore.QPointF(dx, dy))
-
-    def moveBy(self, dx: float, dy: float):
-        for handle in self._handles:
-            handle.moveBy(dx, dy)
-
     def clear_handles(self):
         """Remove all handles from the view."""
         view = self.view()
@@ -156,12 +148,14 @@ class RoiSelectionHandles:
             qline = line.line()
             qline.setP1(ev.pos())
             line.setLine(qline)
+            self._view.current_roi_updated.emit()
 
         @h2.moved_by_mouse.connect
         def _2_moved(ev: QtW.QGraphicsSceneMouseEvent):
             qline = line.line()
             qline.setP2(ev.pos())
             line.setLine(qline)
+            self._view.current_roi_updated.emit()
 
         @hc.moved_by_mouse.connect
         def _c_moved(ev: QtW.QGraphicsSceneMouseEvent):
@@ -169,12 +163,14 @@ class RoiSelectionHandles:
             qline = line.line()
             qline.translate(delta.x(), delta.y())
             line.setLine(qline)
+            self._view.current_roi_updated.emit()
 
         @line.changed.connect
         def _line_changed(qline: QtCore.QLineF):
             h1.setCenter(qline.p1())
             h2.setCenter(qline.p2())
             hc.setCenter(qline.center())
+            self._view.current_roi_updated.emit()
 
     def connect_rect(self, rect: QRectangleRoi | QEllipseRoi):
         self.clear_handles()
@@ -204,6 +200,7 @@ class RoiSelectionHandles:
             x0, x1 = sorted([other.x(), ex])
             y0, y1 = sorted([other.y(), ey])
             rect.setRect(x0, y0, x1 - x0, y1 - y0)
+            self._view.current_roi_updated.emit()
 
         @h_br.moved_by_mouse.connect
         def _br_moved(ev: QtW.QGraphicsSceneMouseEvent):
@@ -212,6 +209,7 @@ class RoiSelectionHandles:
             x0, x1 = sorted([other.x(), ex])
             y0, y1 = sorted([other.y(), ev.pos().y()])
             rect.setRect(x0, y0, x1 - x0, y1 - y0)
+            self._view.current_roi_updated.emit()
 
         @h_tr.moved_by_mouse.connect
         def _tr_moved(ev: QtW.QGraphicsSceneMouseEvent):
@@ -220,6 +218,7 @@ class RoiSelectionHandles:
             x0, x1 = sorted([other.x(), ex])
             y0, y1 = sorted([other.y(), ey])
             rect.setRect(x0, y0, x1 - x0, y1 - y0)
+            self._view.current_roi_updated.emit()
 
         @h_bl.moved_by_mouse.connect
         def _bl_moved(ev: QtW.QGraphicsSceneMouseEvent):
@@ -228,6 +227,7 @@ class RoiSelectionHandles:
             x0, x1 = sorted([other.x(), ex])
             y0, y1 = sorted([other.y(), ey])
             rect.setRect(x0, y0, x1 - x0, y1 - y0)
+            self._view.current_roi_updated.emit()
 
         @h_t.moved_by_mouse.connect
         def _t_moved(ev: QtW.QGraphicsSceneMouseEvent):
@@ -235,6 +235,7 @@ class RoiSelectionHandles:
             _, ey = self.view()._pos_to_tuple(ev.pos())
             y0, y1 = sorted([r0.bottom(), ey])
             rect.setRect(r0.x(), y0, r0.width(), y1 - y0)
+            self._view.current_roi_updated.emit()
 
         @h_b.moved_by_mouse.connect
         def _b_moved(ev: QtW.QGraphicsSceneMouseEvent):
@@ -242,6 +243,7 @@ class RoiSelectionHandles:
             _, ey = self.view()._pos_to_tuple(ev.pos())
             y0, y1 = sorted([r0.top(), ey])
             rect.setRect(r0.x(), y0, r0.width(), y1 - y0)
+            self._view.current_roi_updated.emit()
 
         @h_l.moved_by_mouse.connect
         def _l_moved(ev: QtW.QGraphicsSceneMouseEvent):
@@ -249,6 +251,7 @@ class RoiSelectionHandles:
             ex, _ = self.view()._pos_to_tuple(ev.pos())
             x0, x1 = sorted([r0.right(), ex])
             rect.setRect(x0, r0.y(), x1 - x0, r0.height())
+            self._view.current_roi_updated.emit()
 
         @h_r.moved_by_mouse.connect
         def _r_moved(ev: QtW.QGraphicsSceneMouseEvent):
@@ -256,6 +259,7 @@ class RoiSelectionHandles:
             ex, _ = self.view()._pos_to_tuple(ev.pos())
             x0, x1 = sorted([r0.left(), ex])
             rect.setRect(x0, r0.y(), x1 - x0, r0.height())
+            self._view.current_roi_updated.emit()
 
         @rect.changed.connect
         def _rect_changed(r: QtCore.QRectF):
@@ -271,6 +275,7 @@ class RoiSelectionHandles:
             h_b.setCenter((bl + br) / 2)
             h_l.setCenter((tl + bl) / 2)
             h_r.setCenter((tr + br) / 2)
+            self._view.current_roi_updated.emit()
 
     def connect_path(self, path: QPolygonRoi | QSegmentedLineRoi):
         self.clear_handles()
@@ -291,6 +296,7 @@ class RoiSelectionHandles:
             for i, h in enumerate(self._handles):
                 element = p.elementAt(i)
                 h.setCenter(QtCore.QPointF(element.x, element.y))
+            self._view.current_roi_updated.emit()
 
         self.draw_finished.connect(lambda: self._finish_drawing_path(path))
 
@@ -302,6 +308,7 @@ class RoiSelectionHandles:
         @point.changed.connect
         def _point_changed(ps: QtCore.QPointF):
             h.setCenter(ps)
+            self._view.current_roi_updated.emit()
 
     def connect_points(self, points: QPointsRoi):
         self.clear_handles()
@@ -319,6 +326,7 @@ class RoiSelectionHandles:
                 )
             for i, h in enumerate(self._handles):
                 h.setCenter(ps[i])
+            self._view.current_roi_updated.emit()
 
     def connect_rotated_rect(self, rect: QRotatedRectangleRoi):
         self.clear_handles()
@@ -337,14 +345,17 @@ class RoiSelectionHandles:
             dist_vec = pos_rel - pos_proj
             dist = math.sqrt(dist_vec.x() ** 2 + dist_vec.y() ** 2)
             rect.set_width(dist * 2)
+            self._view.current_roi_updated.emit()
 
         @h_l.moved_by_mouse.connect
         def _l_moved(ev: QtW.QGraphicsSceneMouseEvent):
             rect.set_start(ev.pos())
+            self._view.current_roi_updated.emit()
 
         @h_r.moved_by_mouse.connect
         def _r_moved(ev: QtW.QGraphicsSceneMouseEvent):
             rect.set_end(ev.pos())
+            self._view.current_roi_updated.emit()
 
         @rect.changed.connect
         def _rect_changed():
@@ -352,6 +363,7 @@ class RoiSelectionHandles:
             h_r.setCenter(rect.end())
             h_t.setCenter(rect.top())
             h_b.setCenter(rect.bottom())
+            self._view.current_roi_updated.emit()
 
     def connect_roi(self, roi_item):
         if isinstance(roi_item, QLineRoi):

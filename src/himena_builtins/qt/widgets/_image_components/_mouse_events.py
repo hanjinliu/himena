@@ -97,6 +97,7 @@ class SelectMouseEvents(QtMouseEvent):
             x1, y1 = self._view._pos_to_tuple(pos)
             delta = QtCore.QPointF(x1 - x0, y1 - y0)
             item.translate(delta.x(), delta.y())
+            self._view.current_roi_updated.emit()
         else:
             # just forward to the pan-zoom mode
             self._mouse_move_pan_zoom(event.pos())
@@ -144,6 +145,7 @@ class _SingleDragRoiMouseEvents(RoiMouseEvents[_R]):
             if event.modifiers() & Qt.KeyboardModifier.ShiftModifier:
                 pos, pos0 = self._coerce_pos(pos, pos0)
             self._update_roi(pos0, pos)
+            self._view.current_roi_updated.emit()
 
     def released(self, event: QtGui.QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
@@ -215,6 +217,7 @@ class _MultiRoiMouseEvents(RoiMouseEvents[_R]):
                 )
                 item.add_point(p0)
             self.selection_handles._is_last_vertex_added = True
+            self._view.current_roi_updated.emit()
         return super().released(event)
 
     def double_clicked(self, event):
@@ -233,10 +236,12 @@ class _SegmentedTypeRoiMouseEvents(_MultiRoiMouseEvents[_R1]):
                 if self.selection_handles._is_last_vertex_added:
                     self.selection_handles._is_last_vertex_added = False
                     item.add_point(pos)
+                    self._view.current_roi_updated.emit()
                 else:
                     num = item.count()
                     if num > 1:
                         item.update_point(num - 1, pos)
+                        self._view.current_roi_updated.emit()
 
 
 class PointsRoiMouseEvents(_MultiRoiMouseEvents[QPointsRoi]):
