@@ -223,10 +223,14 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def _set_control_widget(self, widget: QtW.QWidget, control: QtW.QWidget) -> None:
         if not isinstance(control, QtW.QWidget):
-            raise TypeError(
-                f"`control_widget` did not return a QWidget (got {type(control)})."
+            warnings.warn(
+                f"`control_widget()` of widget class {type(widget)} did not return a "
+                f"QWidget (got {type(control)}).",
+                UserWarning,
+                stacklevel=2,
             )
-        self._control_stack.add_control_widget(widget, control)
+        else:
+            self._control_stack.add_control_widget(widget, control)
 
     def _update_control_widget(self, current: QtW.QWidget) -> None:
         self._control_stack.update_control_widget(current)

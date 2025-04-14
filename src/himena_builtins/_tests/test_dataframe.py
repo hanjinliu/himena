@@ -10,6 +10,7 @@ from himena.consts import StandardType
 from himena.core import create_model
 from himena.testing.subwindow import WidgetTester
 from himena_builtins.qt.dataframe import QDataFrameView, QDataFramePlotView
+from himena_builtins.qt.basic import QDictView
 
 _Ctrl = Qt.KeyboardModifier.ControlModifier
 
@@ -108,6 +109,20 @@ def test_copy_on_write(qtbot: QtBot, df):
         assert_equal(np.array(tester.to_model().value["b"]), [3.0, 0.1])
         assert_equal(np.array(df["b"]), [3.0, -4.0])
         assert_equal(np.array(view2.to_model().value["b"]), [3.0, -4.0])
+
+@pytest.mark.parametrize(
+    "input_value",
+    [
+        {"a": 2, "b": "string", "cc": -1.4, "nan": np.nan, "empty": None},
+        {"maybe_array": np.arange(5), "maybe_list": [1, 2, 3], "maybe_dict": {"a": 1}},
+    ],
+)
+def test_dict_view(qtbot: QtBot, input_value):
+    view = QDictView()
+    qtbot.addWidget(view)
+    with WidgetTester(view) as tester:
+        tester.update_model(value=input_value, type=StandardType.DICT)
+        tester.cycle_model()
 
 def _data_frame_equal(a: dict, b: dict):
     for k in a.keys():

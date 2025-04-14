@@ -57,6 +57,9 @@ class QItemDelegate(QtW.QStyledItemDelegate):
 class QTableBase(QtW.QTableView):
     """The base class for high-performance table widgets."""
 
+    selection_changed = QtCore.Signal(list)
+    current_index_changed = QtCore.Signal(tuple)
+
     def __init__(self, parent: QtW.QWidget | None = None) -> None:
         super().__init__(parent)
         self.setVerticalHeader(QVerticalHeaderView(self))
@@ -241,6 +244,8 @@ class QTableBase(QtW.QTableView):
         self._update_all(rect)
         if dst.row >= 0 and dst.column >= 0:
             self.setCurrentIndex(index_dst)
+        self.selection_changed.emit(self._get_selections())
+        self.current_index_changed.emit(dst.as_uint())
         return None
 
     def edit(self, index: QtCore.QModelIndex, *args) -> bool:
