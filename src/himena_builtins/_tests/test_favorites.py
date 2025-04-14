@@ -1,7 +1,9 @@
-from himena import MainWindow
-from himena_builtins.qt.favorites._widget import QFavoriteCommands, QCommandPushButton
 from qtpy import QtCore
 from pytestqt.qtbot import QtBot
+from himena import MainWindow
+from himena.plugins import update_config_context
+from himena_builtins.qt.favorites._widget import QFavoriteCommands, QCommandPushButton
+from himena_builtins.qt.favorites import FavoriteCommandsConfig
 
 def test_favorite_commands_widget(qtbot: QtBot, himena_ui: MainWindow):
     widget = QFavoriteCommands(himena_ui)
@@ -25,3 +27,6 @@ def test_favorite_commands_widget(qtbot: QtBot, himena_ui: MainWindow):
     btn._make_context_menu()
     cfg = himena_ui.app_profile.plugin_configs["builtins:favorite-commands"]
     assert cfg["commands"]["value"] == ["new-tab"]
+
+    with update_config_context(FavoriteCommandsConfig, update_widget=True) as cfg:
+        cfg.commands = ["close-tab"]

@@ -317,18 +317,18 @@ def update_config_context(
     plugin_config = reg._plugin_default_configs[_plugin_id]
     if not isinstance(plugin_config.config, _config_class):
         raise TypeError(
-            f"Plugin ID {plugin_id} does not match the config class {config_class}."
+            f"Plugin ID {_plugin_id} does not match the config class {config_class}."
         )
     cur_config = plugin_config.config
     yield cur_config
     prof = ui.app_profile
     all_configs = prof.plugin_configs.copy()
 
-    cfg_dict = all_configs[plugin_id] = plugin_config.as_dict()
+    cfg_dict = all_configs[_plugin_id] = plugin_config.as_dict()
     prof.with_plugin_configs(all_configs).save()
 
     # update existing dock widgets with the new config
-    if update_widget and (cb := WidgetCallbackBase.instance_for_command_id(plugin_id)):
+    if update_widget and (cb := WidgetCallbackBase.instance_for_command_id(_plugin_id)):
         params = {}
         for key, opt in cfg_dict.items():
             params[key] = opt["value"]
