@@ -14,7 +14,7 @@ add_default_status_tip(
     keybindings=["Ctrl+Shift+H"],
     singleton=True,
     command_id="builtins:command-history",
-    icon="foundation:list",
+    icon="mdi:view-list",
 )
 def install_command_history(ui):
     """A command history widget for viewing and executing commands."""

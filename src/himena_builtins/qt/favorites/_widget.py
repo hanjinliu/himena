@@ -12,6 +12,12 @@ if TYPE_CHECKING:
 
 
 class QFavoriteCommands(QtW.QWidget):
+    """List of favorite commands.
+
+    You can add commands to this list from plugin configuration in the setting dialog,
+    or directly drag-and-drop commands from the Command History dock widget.
+    """
+
     def __init__(self, ui: MainWindow):
         super().__init__()
         self._ui_ref = weakref.ref(ui)
@@ -52,6 +58,7 @@ class QCommandList(QtW.QListWidget):
         item.setSizeHint(btn.sizeHint())
         item.setData(_ID_ROLE, action.id)
         self.setItemWidget(item, btn)
+        btn.delete_requested.connect(lambda: self.delete_item(item))
 
     def has_action(self, action_id: str) -> bool:
         for i in range(self.count()):
@@ -59,6 +66,11 @@ class QCommandList(QtW.QListWidget):
             if item.data(_ID_ROLE) == action_id:
                 return True
         return False
+
+    def delete_item(self, item: QtW.QListWidgetItem):
+        """Delete the item from the list."""
+        self.takeItem(self.row(item))
+        self._update_plugin_config()
 
     def _update_plugin_config(self):
         with update_config_context(
@@ -79,13 +91,18 @@ class QCommandList(QtW.QListWidget):
     def dropEvent(self, e: QtGui.QDropEvent):
         if e.source() is self:
             return super().dropEvent(e)
-        mime = e.mimeData()
-        command_id = bytes(mime.data("text/command-id")).decode("utf-8")
-        if self.has_action(command_id):
-            return super().dropEvent(e)
-        if action := self._ui_ref().model_app._registered_actions.get(command_id):
-            self.add_action(action)
-            self._update_plugin_config()
+        self._drop_mime_data(e.mimeData())
+
+    def _drop_mime_data(self, mime: QtCore.QMimeData) -> None:
+        """Handle the drop event."""
+        if not (ui := self._ui_ref()):
+            return
+        if mime.hasFormat("text/command-id"):
+            command_id = bytes(mime.data("text/command-id")).decode("utf-8")
+            if not self.has_action(command_id):
+                if action := ui.model_app._registered_actions.get(command_id):
+                    self.add_action(action)
+                    self._update_plugin_config()
 
 
 class QCommandPushButton(QtW.QPushButton):
@@ -97,12 +114,16 @@ class QCommandPushButton(QtW.QPushButton):
         self.customContextMenuRequested.connect(self._show_context_menu)
         self._command_id = command
 
-    def _show_context_menu(self, pos: QtCore.QPoint):
-        """Show the context menu."""
+    def _make_context_menu(self) -> QtW.QMenu:
+        """Create the context menu."""
         menu = QtW.QMenu(self)
         action = menu.addAction("Delete")
         action.triggered.connect(lambda: self.delete_requested.emit(self))
-        menu.exec(self.mapToGlobal(pos))
+        return menu
+
+    def _show_context_menu(self, pos: QtCore.QPoint):
+        """Show the context menu."""
+        self._make_context_menu().exec(self.mapToGlobal(pos))
 
 
 def _make_callback(ui: MainWindow, cmd: str):
