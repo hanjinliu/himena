@@ -136,7 +136,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self._job_stack.setAnchor("bottom_left")
 
         # top right buttons to menu
-        self._corner_toolbar = QModelToolBar(MenuId.CORNER, app, parent=self)
+        self._corner_toolbar = QCornerToolBar(MenuId.CORNER, app, parent=self)
         _init_tool_bar(self._corner_toolbar)
         self._corner_toolbar.setIconSize(QtCore.QSize(16, 16))
         self._corner_toolbar.setContentsMargins(0, 0, 0, 0)
@@ -821,6 +821,11 @@ def _ext_to_filter(ext: str) -> str:
         return "*"
     else:
         return f"*.{ext}"
+
+
+class QCornerToolBar(QModelToolBar):
+    def addSeparator(self):
+        """No separator."""
 
 
 class QChoicesDialog(QtW.QDialog):

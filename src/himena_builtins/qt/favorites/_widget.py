@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 import weakref
-from qtpy import QtCore, QtWidgets as QtW
+from qtpy import QtCore, QtWidgets as QtW, QtGui
 from app_model.types import Action
-from himena.plugins import validate_protocol
+from himena.plugins import validate_protocol, update_config_context
+from himena_builtins.qt.favorites._config import FavoriteCommandsConfig
 
 if TYPE_CHECKING:
     from himena.widgets import MainWindow
-    from himena_builtins.qt.favorites import FavoriteCommandsConfig
 
 
 class QFavoriteCommands(QtW.QWidget):
@@ -26,11 +26,11 @@ class QFavoriteCommands(QtW.QWidget):
             return
         self._command_list.clear()
         for cmd_id in cfg.commands:
-            try:
-                action = ui.model_app.commands[cmd_id]
-            except KeyError:
-                continue
-            self._command_list.add_action(action)
+            if action := ui.model_app._registered_actions.get(cmd_id):
+                self._command_list.add_action(action)
+
+
+_ID_ROLE = QtCore.Qt.ItemDataRole.UserRole
 
 
 class QCommandList(QtW.QListWidget):
@@ -46,10 +46,46 @@ class QCommandList(QtW.QListWidget):
     def add_action(self, action: Action):
         btn = QCommandPushButton(action.title)
         btn.clicked.connect(_make_callback(self._ui_ref(), action.id))
-        btn.setToolTip(action.id)
+        tooltip = f"{action.tooltip}\n(command ID: {action.id})"
+        btn.setToolTip(tooltip)
         item = QtW.QListWidgetItem(self)
-        item.setData(QtCore.Qt.ItemDataRole.UserRole, action.id)
+        item.setSizeHint(btn.sizeHint())
+        item.setData(_ID_ROLE, action.id)
         self.setItemWidget(item, btn)
+
+    def has_action(self, action_id: str) -> bool:
+        for i in range(self.count()):
+            item = self.item(i)
+            if item.data(_ID_ROLE) == action_id:
+                return True
+        return False
+
+    def _update_plugin_config(self):
+        with update_config_context(
+            config_class=FavoriteCommandsConfig,
+            plugin_id="builtins:favorite-commands",
+            update_widget=False,
+        ) as cfg:
+            cfg.commands = [self.item(i).data(_ID_ROLE) for i in range(self.count())]
+
+    def dragEnterEvent(self, e):
+        e.accept()
+        return super().dragEnterEvent(e)
+
+    def dragMoveEvent(self, e):
+        e.accept()
+        return super().dragMoveEvent(e)
+
+    def dropEvent(self, e: QtGui.QDropEvent):
+        if e.source() is self:
+            return super().dropEvent(e)
+        mime = e.mimeData()
+        command_id = bytes(mime.data("text/command-id")).decode("utf-8")
+        if self.has_action(command_id):
+            return super().dropEvent(e)
+        if action := self._ui_ref().model_app._registered_actions.get(command_id):
+            self.add_action(action)
+            self._update_plugin_config()
 
 
 class QCommandPushButton(QtW.QPushButton):
@@ -57,7 +93,6 @@ class QCommandPushButton(QtW.QPushButton):
 
     def __init__(self, command: str, parent: QtW.QWidget | None = None):
         super().__init__(command, parent)
-        self.button = QtW.QPushButton(command, self)
         self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self._show_context_menu)
         self._command_id = command

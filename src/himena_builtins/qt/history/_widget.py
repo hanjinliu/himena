@@ -208,6 +208,28 @@ class QCommandIndexWidget(QtW.QWidget):
         self.set_button_visible(False)
         return super().leaveEvent(event)
 
+    def _make_drag(self) -> QtGui.QDrag:
+        qdrag = QtGui.QDrag(self)
+
+        # prepare mime data
+        mime = QtCore.QMimeData()
+        mime.setText(self._action_id)
+        mime.setData("text/plain", self._action_id.encode())
+        mime.setData("text/command-id", self._action_id.encode())
+        qdrag.setMimeData(mime)
+
+        # prepare pixmap
+        pixmap = QtGui.QPixmap(self.size())
+        self.render(pixmap)
+        qdrag.setPixmap(pixmap)
+        return qdrag
+
+    def mouseMoveEvent(self, a0):
+        super().mouseMoveEvent(a0)
+        if a0.buttons() == Qt.MouseButton.LeftButton:
+            qdrag = self._make_drag()
+            qdrag.exec(Qt.DropAction.MoveAction)
+
 
 class QCommandListModel(QtCore.QAbstractListModel):
     def __init__(self, ui: MainWindow, parent=None):
