@@ -356,6 +356,8 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         ctx._update(self._himena_main_window)
         _dict = ctx.dict()
         self._menubar.update_from_context(_dict)
+        self._toolbar.update_from_context(_dict)
+        self._corner_toolbar.update_from_context(_dict)
         _msec = (timer() - _time_0) * 1000
         _LOGGER.debug("Context update took %.3f msec", _msec)
 

@@ -76,7 +76,7 @@ def new_text_python(ui: MainWindow) -> WidgetDataModel:
 
 
 @register_function(
-    title="New constant array ...",
+    title="New Constant Array ...",
     menus=MenuId.FILE_NEW,
     command_id="builtins:constant-array",
 )

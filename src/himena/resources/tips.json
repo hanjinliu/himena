@@ -20,8 +20,12 @@
         "long": "Sub-windows can be resized by wheeling the mouse over the title bar."
     },
     {
-        "short": "drag and drop",
+        "short": "drag & drop",
         "long": "Ctrl+Drag to move the internal data of the sub-windows."
+    },
+    {
+        "short": "drag & drop",
+        "long": "Ctrl+Drag a sub-window and drop it to the tab bar will move it to the destination."
     },
     {
         "short": "session",
