@@ -173,7 +173,7 @@ class EllipseRoi(Roi2D):
 
     def to_mask(self, shape: tuple[int, ...]) -> NDArray[np.bool_]:
         _yy, _xx = np.indices(shape[-2:])
-        cx, cy = self.center()
+        cx, cy = (self.width - 1) / 2, (self.height - 1) / 2
         comp_a = (_yy - cy) / self.height * 2
         comp_b = (_xx - cx) / self.width * 2
         return comp_a**2 + comp_b**2 <= 1
@@ -230,6 +230,12 @@ class PointsRoi2D(Roi2D):
         out = np.asarray(v)
         if out.dtype.kind not in "if":
             raise ValueError("Must be a numerical array.")
+        return out
+
+    def model_dump_typed(self) -> dict[str, Any]:
+        out = super().model_dump_typed()
+        out["xs"] = self.xs.tolist()
+        out["ys"] = self.ys.tolist()
         return out
 
     def shifted(self, dx: float, dy: float) -> PointsRoi2D:
