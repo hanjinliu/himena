@@ -274,7 +274,7 @@ def open_new(ui: MainWindow) -> WidgetDataModel:
 
 @ACTIONS.append_from_fn(
     id="paste-as-window",
-    title="Paste as window",
+    title="Paste As Window",
     menus=[MenuId.FILE_NEW],
     enablement=~_ctx.is_subwindow_focused,
     keybindings=[StandardKeyBinding.Paste],

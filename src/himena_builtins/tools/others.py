@@ -9,7 +9,12 @@ from datetime import datetime
 import numpy as np
 from himena.data_wrappers._dataframe import wrap_dataframe
 from himena._descriptors import NoNeedToSave
-from himena.plugins import register_function, configure_gui, widget_classes
+from himena.plugins import (
+    register_function,
+    configure_gui,
+    widget_classes,
+    configure_submenu,
+)
 from himena.standards.model_meta import ListMeta
 from himena.types import Parametric, WidgetDataModel
 from himena.consts import StandardType, MonospaceFontFamily, MenuId
@@ -18,6 +23,8 @@ from himena.widgets import SubWindow, MainWindow, ParametricWindow
 from himena.workflow import Workflow, as_function
 from himena import AppContext as ctx
 from himena._utils import get_display_name, get_widget_class_id, unwrap_lazy_model
+
+configure_submenu(MenuId.TOOLS_OTHERS, group="20_builtins")
 
 
 @register_function(

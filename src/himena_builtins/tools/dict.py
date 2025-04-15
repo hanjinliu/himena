@@ -1,12 +1,14 @@
 from typing import TYPE_CHECKING
 from himena.standards.model_meta import DictMeta
-from himena.plugins import register_function
+from himena.plugins import register_function, configure_submenu
 from himena.types import WidgetDataModel
 from himena.consts import StandardType, MenuId
 from himena.core import create_model
 
 if TYPE_CHECKING:
     import numpy as np
+
+configure_submenu(MenuId.TOOLS_EXCEL, group="20_builtins")
 
 
 @register_function(

@@ -9,7 +9,7 @@ add_default_status_tip(
 
 @register_dock_widget_action(
     title="Command History",
-    menus=[MenuId.TOOLS_DOCK, MenuId.TOOLS, MenuId.CORNER],
+    menus=[MenuId.TOOLS_DOCK, MenuId.CORNER],
     area="right",
     keybindings=["Ctrl+Shift+H"],
     singleton=True,

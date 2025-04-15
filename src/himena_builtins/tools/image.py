@@ -17,6 +17,7 @@ from himena.utils import image_utils
 from himena_builtins.tools.array import _cast_meta, _make_index_getter
 
 configure_submenu(MenuId.TOOLS_IMAGE_ROI, "ROI")
+configure_submenu(MenuId.TOOLS_IMAGE, group="20_builtins")
 configure_submenu("/model_menu/roi", "ROI")
 
 

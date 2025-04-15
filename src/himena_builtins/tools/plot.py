@@ -5,7 +5,7 @@ from cmap import Color, Colormap
 import numpy as np
 
 from himena._utils import to_color_or_colormap
-from himena.plugins import register_function, configure_gui
+from himena.plugins import register_function, configure_gui, configure_submenu
 from himena.types import Parametric, WidgetDataModel
 from himena.utils.table_selection import (
     model_to_xy_arrays,
@@ -39,6 +39,8 @@ _NOT_AN_IMAGE = _ctx.active_window_model_subtype_1 != "image"
 # Single 2D selection in the form of ((row start, row stop), (col start, col stop))
 # We should avoid using slice because it is not serializable.
 SelectionType = tuple[tuple[int, int], tuple[int, int]]
+
+configure_submenu(MenuId.TOOLS_PLOT, group="20_builtins")
 
 
 @register_function(

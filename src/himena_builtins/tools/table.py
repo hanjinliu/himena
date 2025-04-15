@@ -1,7 +1,7 @@
 from io import StringIO
 from typing import TYPE_CHECKING
 import numpy as np
-from himena.plugins import register_function, configure_gui
+from himena.plugins import register_function, configure_gui, configure_submenu
 from himena.types import ClipboardDataModel, Parametric, WidgetDataModel
 from himena.standards.model_meta import TableMeta
 from himena.consts import StandardType, MenuId
@@ -10,6 +10,8 @@ from himena.widgets import SubWindow
 
 if TYPE_CHECKING:
     from himena_builtins.qt.widgets.table import QSpreadsheet
+
+configure_submenu(MenuId.TOOLS_TABLE, group="20_builtins")
 
 
 @register_function(
