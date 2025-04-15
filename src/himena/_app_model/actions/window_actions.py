@@ -12,6 +12,7 @@ from app_model.types import (
 )
 from himena._descriptors import SaveToPath, NoNeedToSave
 from himena.consts import MenuId, StandardType
+from himena.utils.html import html_to_plain_text
 from himena.widgets import MainWindow, SubWindow
 from himena.types import (
     ClipboardDataModel,
@@ -187,9 +188,12 @@ def copy_data_to_clipboard(model: WidgetDataModel) -> ClipboardDataModel:
     """Copy the data of the current window to the clipboard."""
 
     if model.is_subtype_of(StandardType.TEXT):
-        return ClipboardDataModel(text=model.value)
-    elif model.is_subtype_of(StandardType.HTML):
-        return ClipboardDataModel(html=model.value)
+        if model.is_subtype_of(StandardType.HTML):
+            return ClipboardDataModel(
+                text=html_to_plain_text(model.value), html=model.value
+            )
+        else:
+            return ClipboardDataModel(text=model.value)
     elif model.is_subtype_of(StandardType.IMAGE):
         return ClipboardDataModel(image=model.value)
     raise ValueError(f"Cannot convert {model.type} to a clipboard data.")

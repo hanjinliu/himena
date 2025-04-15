@@ -565,13 +565,21 @@ def _make_conversion_rule(
     kbs = normalize_keybindings(keybindings)
     _id = command_id_from_func(func, command_id)
     title = f"Convert {type_from} to {type_to}"
+    type_from_main, *type_from_subs = type_from.split(".")
+    enablement = ctx.active_window_model_type == type_from_main
+    if len(type_from_subs) > 0:
+        enablement &= ctx.active_window_model_subtype_1 == type_from_subs[0]
+    if len(type_from_subs) > 1:
+        enablement &= ctx.active_window_model_subtype_2 == type_from_subs[1]
+    if len(type_from_subs) > 2:
+        enablement &= ctx.active_window_model_subtype_3 == type_from_subs[2]
     return Action(
         id=_id,
         title=title,
         tooltip=tooltip_from_func(func),
         callback=_utils.make_function_callback(func, command_id=_id, title=title),
         menus=[{"id": f"/model_menu:{type_from}/convert", "group": "conversion"}],
-        enablement=ctx.active_window_model_type == type_from,
+        enablement=enablement,
         keybindings=kbs,
     )
 

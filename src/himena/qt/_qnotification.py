@@ -5,7 +5,7 @@ from enum import Enum
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt
 
-from himena.qt._qprogress import QCircularProgressBar, QLabeledCircularProgressBar
+from himena.qt._qprogress import QLabeledCircularProgressBar
 
 if TYPE_CHECKING:
     from himena.qt._qmain_window import QMainWindow
@@ -262,16 +262,15 @@ class QJobStack(_QOverlayBase):
         self.job_finished.connect(self._on_job_finished)
 
     def add_future(self, future: Future, desc: str, total: int = 0):
-        pbar = QCircularProgressBar()
+        item = QtW.QListWidgetItem()
+        labeled_pbar = QLabeledCircularProgressBar(desc)
+        pbar = labeled_pbar.pbar()
         pbar.setButtonState("square")
         pbar.setValue(-1)
 
         @pbar.abortRequested.connect
         def _aborting():
             pass  # TODO: not working yet
-
-        item = QtW.QListWidgetItem()
-        labeled_pbar = QLabeledCircularProgressBar(desc, pbar)
 
         if future.done():
             return None

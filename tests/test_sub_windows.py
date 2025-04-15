@@ -5,15 +5,18 @@ from pytestqt.qtbot import QtBot
 from tempfile import TemporaryDirectory
 from qtpy import QtWidgets as QtW
 import numpy as np
+from numpy.testing import assert_equal
 import polars as pl
 
 from himena import MainWindow, anchor
 from himena._descriptors import NoNeedToSave, SaveToNewPath, SaveToPath
 from himena.consts import StandardType
+from himena.core import create_model
 from himena.workflow import CommandExecution, LocalReaderMethod, ProgrammaticMethod
-from himena.types import ClipboardDataModel, WidgetDataModel, WindowRect
+from himena.types import ClipboardDataModel, DragDataModel, WidgetDataModel, WindowRect
 from himena.testing import file_dialog_response
 from himena.qt import register_widget_class, MainWindowQt
+from himena.testing import choose_one_dialog_response
 from himena_builtins.qt.text import QTextEdit
 import himena._providers
 
@@ -63,6 +66,8 @@ def test_builtin_commands(himena_ui: MainWindow):
     himena_ui.exec_action("builtins:new-table")
     himena_ui.exec_action("builtins:new-excel")
     himena_ui.exec_action("builtins:new-text-python")
+    with choose_one_dialog_response(himena_ui, "Copy"):
+        himena_ui.exec_action("show-about")
     himena_ui.exec_action("quit")
 
 
@@ -197,7 +202,7 @@ def test_screenshot_commands(himena_ui: MainWindow, sample_dir: Path, tmpdir):
         assert save_path.exists()
         save_path.unlink()
 
-def test_view_menu_commands(himena_ui: MainWindow, sample_dir: Path):
+def test_view_menu_commands(himena_ui: MainWindowQt, sample_dir: Path):
     himena_ui.exec_action("new-tab")
     himena_ui.exec_action("close-tab")
     himena_ui.exec_action("new-tab")
@@ -228,6 +233,13 @@ def test_view_menu_commands(himena_ui: MainWindow, sample_dir: Path):
     win1 = himena_ui.read_file(sample_dir / "table.csv")
     win1.widget.set_modified(True)
     himena_ui.read_file(sample_dir / "text.txt")
+    himena_ui.add_tab().add_data_model(create_model("a", type="text", title="ABC2"))
+    himena_ui.exec_action("merge-tabs", with_params={"names": himena_ui.tabs.names})
+    assert len(himena_ui.tabs) == 1
+    himena_ui.exec_action("tile-windows")
+    himena_ui.add_tab().add_data_model(create_model("a", type="text", title="ABC1"))
+    himena_ui.exec_action("collect-windows", with_params={"pattern": "ABC*"})
+    himena_ui._backend_main_window._tab_widget._tabbar._prep_drag(0)
     himena_ui.exec_action("close-tab")
 
 def test_custom_widget(himena_ui: MainWindow):
@@ -345,8 +357,22 @@ def test_clipboard(himena_ui: MainWindow, sample_dir: Path, qtbot: QtBot):
     himena_ui.exec_action("copy-path-to-clipboard")
     QtW.QApplication.processEvents()
     assert himena_ui.clipboard.text == str(sample_path)
+    QtW.QApplication.processEvents()
     himena_ui.exec_action("copy-data-to-clipboard")
+    QtW.QApplication.processEvents()
     assert himena_ui.clipboard.text == sample_path.read_text()
+    himena_ui.add_object(np.zeros((6, 5, 3)), type=StandardType.IMAGE)
+    QtW.QApplication.processEvents()
+    himena_ui.exec_action("copy-data-to-clipboard")
+    QtW.QApplication.processEvents()
+    img = np.zeros((6, 5, 4), dtype=np.uint8)
+    img[..., 3] = 255
+    assert_equal(himena_ui.clipboard.image, img)
+    himena_ui.add_object("<b>a</b>", type=StandardType.HTML)
+    QtW.QApplication.processEvents()
+    himena_ui.exec_action("copy-data-to-clipboard")
+    QtW.QApplication.processEvents()
+    assert himena_ui.clipboard.text == "a"
 
 def test_tile_window(make_himena_ui, backend: str):
     himena_ui: MainWindow = make_himena_ui(backend)
@@ -455,6 +481,10 @@ def test_open_and_save_files(himena_ui: MainWindow, tmpdir, sample_dir: Path):
         type="dataframe.plot",
     )
 
+    del himena_ui.tabs[0][0]
+    himena_ui.exec_action("open-last-closed-window")
+    assert himena_ui.tabs[0][-1].model_type() == StandardType.IPYNB
+
 def test_reading_file_group(himena_ui: MainWindow, sample_dir: Path):
     tab0 = himena_ui.add_tab()
     win = tab0.read_file(
@@ -483,3 +513,18 @@ def test_watch_file(himena_ui: MainWindow, tmpdir):
             QtW.QApplication.processEvents()
         if sys.platform != "darwin":  # this sometimes fails in mac
             assert win.to_model().value == "yy"
+
+def test_drop_event(himena_ui: MainWindow):
+    win = himena_ui.add_object(
+        {"A": [[1, 2], [3, 4]]}, type=StandardType.EXCEL
+    )
+    win._process_drop_event(
+        DragDataModel(
+            getter=create_model({"B": [[3, 2]]}, type=StandardType.EXCEL, add_empty_workflow=True),
+        )
+    )
+    win._ask_save_before_close = True
+    with choose_one_dialog_response(himena_ui, "Cancel"):
+        win._close_me(himena_ui, confirm=True)
+    with choose_one_dialog_response(himena_ui, "Don't save"):
+        win._close_me(himena_ui, confirm=True)

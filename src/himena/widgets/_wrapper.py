@@ -538,14 +538,14 @@ class SubWindow(WidgetWrapper[_W], Layout):
                 message = f"{title_short} is not saved yet. Save before closing?"
             else:
                 message = f"Save changes to {title_short}?"
-            request = main.exec_choose_one_dialog(
+            resp = main.exec_choose_one_dialog(
                 title="Closing window",
                 message=message,
                 choices=["Save", "Don't save", "Cancel"],
             )
-            if request is None or request == "Cancel":
+            if resp is None or resp == "Cancel":
                 return None
-            elif request == "Save":
+            elif resp == "Save":
                 if cb := self._save_from_dialog(main):
                     cb()
                 else:

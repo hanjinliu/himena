@@ -167,16 +167,19 @@ class QCircularProgressBar(QtW.QWidget):
 
 
 class QLabeledCircularProgressBar(QtW.QWidget):
-    def __init__(self, label: str, pbar: QCircularProgressBar):
+    def __init__(self, label: str):
         super().__init__()
+        self._pbar = QCircularProgressBar(self)
         _layout = QtW.QHBoxLayout(self)
         _layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(_layout)
         label_widget = QtW.QLabel(label)
         _layout.addWidget(label_widget, alignment=Qt.AlignmentFlag.AlignLeft)
-        _layout.addWidget(pbar, alignment=Qt.AlignmentFlag.AlignRight)
+        _layout.addWidget(self._pbar, alignment=Qt.AlignmentFlag.AlignRight)
         self._label = label_widget
-        self._pbar = pbar
-        pbar.setRadius(8)
-        pbar.setBarWidth(3)
-        pbar.setFixedSize(20, 20)
+        self._pbar.setRadius(8)
+        self._pbar.setBarWidth(3)
+        self._pbar.setFixedSize(20, 20)
+
+    def pbar(self) -> QCircularProgressBar:
+        return self._pbar
