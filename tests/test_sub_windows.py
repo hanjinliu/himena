@@ -10,10 +10,12 @@ import polars as pl
 from himena import MainWindow, anchor
 from himena._descriptors import NoNeedToSave, SaveToNewPath, SaveToPath
 from himena.consts import StandardType
+from himena.core import create_model
 from himena.workflow import CommandExecution, LocalReaderMethod, ProgrammaticMethod
-from himena.types import ClipboardDataModel, WidgetDataModel, WindowRect
+from himena.types import ClipboardDataModel, DragDataModel, WidgetDataModel, WindowRect
 from himena.testing import file_dialog_response
 from himena.qt import register_widget_class, MainWindowQt
+from himena.testing import choose_one_dialog_response
 from himena_builtins.qt.text import QTextEdit
 import himena._providers
 
@@ -483,3 +485,18 @@ def test_watch_file(himena_ui: MainWindow, tmpdir):
             QtW.QApplication.processEvents()
         if sys.platform != "darwin":  # this sometimes fails in mac
             assert win.to_model().value == "yy"
+
+def test_drop_event(himena_ui: MainWindow):
+    win = himena_ui.add_object(
+        {"A": [[1, 2], [3, 4]]}, type=StandardType.EXCEL
+    )
+    win._process_drop_event(
+        DragDataModel(
+            getter=create_model({"B": [[3, 2]]}, type=StandardType.EXCEL, add_empty_workflow=True),
+        )
+    )
+    win._ask_save_before_close = True
+    with choose_one_dialog_response(himena_ui, "Cancel"):
+        win._close_me(himena_ui, confirm=True)
+    with choose_one_dialog_response(himena_ui, "Don't save"):
+        win._close_me(himena_ui, confirm=True)

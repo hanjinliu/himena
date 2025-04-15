@@ -3,8 +3,22 @@ from numpy.testing import assert_equal
 import pytest
 from himena import WidgetDataModel, create_model
 from himena.consts import StandardType
+from himena.widgets._modifications import Modifications
+from himena.workflow import CommandExecution
 from himena_builtins import user_modifications as _um
 
+def test_update_workflow():
+    mod = Modifications(initial_value="abc\ndef", track_enabled=True)
+    model = create_model("def\ngh", type=StandardType.TEXT)
+    model.workflow = model.workflow.with_step(CommandExecution(command_id="X"))
+    mod.update_workflow(model)
+    assert isinstance(model.workflow.steps[-1], CommandExecution)
+
+    # unsupported type
+    fn = create_model(lambda: 0, type=StandardType.FUNCTION, add_empty_workflow=True)
+    fn.workflow = fn.workflow.with_step(CommandExecution(command_id="Y"))
+    with pytest.warns(UserWarning):
+        mod.update_workflow(fn)
 
 @pytest.mark.parametrize(
     "old, new, char_limit",

@@ -44,6 +44,7 @@ def new_window(
     else:
         raise TypeError("`profile` must be a str or an AppProfile object.")
     model_app = get_model_app(app_prof.name)
+    plugins = [p for p in plugins if p not in app_prof.plugins]  # filter duplicates
     plugins = app_prof.plugins + plugins
     if plugins:
         install_plugins(model_app, plugins)

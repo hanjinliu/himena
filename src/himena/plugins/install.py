@@ -1,13 +1,14 @@
 from __future__ import annotations
 
+import logging
+import traceback
+from importlib import import_module
 from typing import TYPE_CHECKING
 from pathlib import Path
 from timeit import default_timer as timer
 from app_model import Application
 from app_model.types import KeyBindingRule
 from dataclasses import dataclass, field
-import logging
-import traceback
 
 if TYPE_CHECKING:
     from himena.profile import AppProfile
@@ -17,7 +18,6 @@ _LOGGER = logging.getLogger(__name__)
 
 def install_plugins(app: Application, plugins: list[str]) -> list[PluginInstallResult]:
     """Install plugins to the application."""
-    from importlib import import_module
     from himena.plugins import AppActionRegistry
     from himena.profile import load_app_profile
 
@@ -31,7 +31,10 @@ def install_plugins(app: Application, plugins: list[str]) -> list[PluginInstallR
         if isinstance(name, str):
             if name.endswith(".py"):
                 if not Path(name).exists():
-                    _LOGGER.error(f"Plugin file {name} not found.")
+                    _LOGGER.error(
+                        f"Plugin file {name} does not exists but is listed in the "
+                        "application profile."
+                    )
                     continue
                 import runpy
 
@@ -40,7 +43,10 @@ def install_plugins(app: Application, plugins: list[str]) -> list[PluginInstallR
                 try:
                     import_module(name)
                 except ModuleNotFoundError:
-                    _LOGGER.error(f"Plugin {name} not found.")
+                    _LOGGER.error(
+                        f"Plugin module {name} is not installed but is listed in the "
+                        "application profile."
+                    )
                     continue
                 except Exception as e:
                     msg = "".join(

@@ -1,11 +1,15 @@
 import warnings
 
+from magicgui import magicgui
 import numpy as np
 import pytest
 from himena import MainWindow
+from himena.consts import StandardType
+from himena.core import create_model
+from himena.types import ClipboardDataModel, WidgetConstructor, WidgetType, ParametricWidgetProtocol
 from himena.qt import MainWindowQt
 from himena.qt._qmain_window import QMainWindow
-from himena.widgets import set_status_tip, notify, append_result
+from himena.widgets import set_status_tip, notify, append_result, TabArea
 from himena_builtins.qt.text import QTextEdit
 
 from qtpy import QtWidgets as QtW
@@ -199,3 +203,26 @@ def test_result_stack(himena_ui: MainWindowQt, qtbot: QtBot):
     win = himena_ui.current_window
     himena_ui.exec_action("builtins:results:results-to-table", window_context=win)
     himena_ui.exec_action("builtins:results:selected-results-to-table", window_context=win)
+
+def test_injections(himena_ui: MainWindow):
+    himena_ui.add_object("abc")
+    store = himena_ui.model_app.injection_store
+    store.provide(TabArea)
+    store.provide(ClipboardDataModel)
+    store.process(QtW.QLabel("test"), type_hint=WidgetType)
+    store.process(QtW.QPushButton, type_hint=WidgetConstructor)
+
+    @magicgui
+    def f(x: int):
+        pass
+
+    store.process(f, type_hint=ParametricWidgetProtocol)
+
+    class MyParams(QtW.QWidget):
+        def get_params(self):
+            return {"x": 1}
+
+        def get_output(self):
+            return create_model("a", type=StandardType.TEXT)
+
+    store.process(MyParams(), type_hint=ParametricWidgetProtocol)
