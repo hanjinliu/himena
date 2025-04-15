@@ -29,6 +29,6 @@
     },
     {
         "short": "settings",
-        "long": "Ctrl+, to customize the application settings in the settings window."
+        "long": "Ctrl+Comma to customize the application settings in the settings window."
     }
 ]

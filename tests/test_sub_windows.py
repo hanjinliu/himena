@@ -66,6 +66,8 @@ def test_builtin_commands(himena_ui: MainWindow):
     himena_ui.exec_action("builtins:new-table")
     himena_ui.exec_action("builtins:new-excel")
     himena_ui.exec_action("builtins:new-text-python")
+    with choose_one_dialog_response(himena_ui, "Copy"):
+        himena_ui.exec_action("show-about")
     himena_ui.exec_action("quit")
 
 
@@ -200,7 +202,7 @@ def test_screenshot_commands(himena_ui: MainWindow, sample_dir: Path, tmpdir):
         assert save_path.exists()
         save_path.unlink()
 
-def test_view_menu_commands(himena_ui: MainWindow, sample_dir: Path):
+def test_view_menu_commands(himena_ui: MainWindowQt, sample_dir: Path):
     himena_ui.exec_action("new-tab")
     himena_ui.exec_action("close-tab")
     himena_ui.exec_action("new-tab")
@@ -231,6 +233,13 @@ def test_view_menu_commands(himena_ui: MainWindow, sample_dir: Path):
     win1 = himena_ui.read_file(sample_dir / "table.csv")
     win1.widget.set_modified(True)
     himena_ui.read_file(sample_dir / "text.txt")
+    himena_ui.add_tab().add_data_model(create_model("a", type="text", title="ABC2"))
+    himena_ui.exec_action("merge-tabs", with_params={"names": himena_ui.tabs.names})
+    assert len(himena_ui.tabs) == 1
+    himena_ui.exec_action("tile-windows")
+    himena_ui.add_tab().add_data_model(create_model("a", type="text", title="ABC1"))
+    himena_ui.exec_action("collect-windows", with_params={"pattern": "ABC*"})
+    himena_ui._backend_main_window._tab_widget._tabbar._prep_drag(0)
     himena_ui.exec_action("close-tab")
 
 def test_custom_widget(himena_ui: MainWindow):

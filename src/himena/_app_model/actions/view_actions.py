@@ -100,9 +100,7 @@ def merge_tabs(ui: MainWindow) -> Parametric:
 @ACTIONS.append_from_fn(
     id="minimize-other-windows",
     title="Minimize Other Windows",
-    menus=[
-        {"id": MenuId.VIEW, "group": WINDOW_GROUP},
-    ],
+    menus=[{"id": MenuId.VIEW, "group": WINDOW_GROUP}],
     enablement=(_ctx.num_sub_windows > 1) & _ctx.is_subwindow_focused,
 )
 def minimize_others(ui: MainWindow):

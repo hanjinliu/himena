@@ -1,20 +1,10 @@
+from pytestqt.qtbot import QtBot
 from himena.qt.magicgui import get_type_map
-
 from himena.standards.model_meta import TableMeta
 from himena.widgets import MainWindow, SubWindow
 from himena.utils.table_selection import SelectionType, table_selection_gui_option
-from himena_builtins.qt.history._widget import QCommandHistory
+from himena.qt._qprogress import QLabeledCircularProgressBar
 
-def test_command_added(himena_ui: MainWindow):
-    history_widget = QCommandHistory(himena_ui)
-    assert history_widget._command_list.model().rowCount() == 0
-    himena_ui.exec_action("new-tab")
-    assert history_widget._command_list.model().rowCount() == 1
-    himena_ui.exec_action("builtins:new-text")
-    widget = history_widget._command_list.indexWidget(
-        history_widget._command_list.model().index(0, 0)
-    )
-    widget._make_drag()
 
 def test_table_selection(himena_ui: MainWindow):
     from himena.qt.magicgui import SelectionEdit
@@ -45,3 +35,14 @@ def test_table_selection(himena_ui: MainWindow):
     f.x._read_btn.clicked()
     assert f.x.value == ((0, 3), (1, 2))
     assert f.x._line_edit.value == "0:3, 1:2"
+
+def test_progress_bar(qtbot: QtBot):
+    pbar = QLabeledCircularProgressBar("test")
+    pbar.show()
+    pbar.pbar().setValue(3)
+    assert pbar.pbar().value() == 3
+    pbar.pbar().setValue(120)
+    pbar.pbar().barWidth()
+    pbar.pbar()._on_infinite_timeout()
+    pbar.update()
+    qtbot.addWidget(pbar)

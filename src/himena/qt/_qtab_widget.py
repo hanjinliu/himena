@@ -99,18 +99,23 @@ class QTabBar(QtW.QTabBar):
         main = get_main_window(self)
         main.move_window(main.tabs[i_tab][i_win], target_index)
 
+    def _prep_drag(self, i_tab: int) -> QtGui.QDrag | None:
+        if area := self.tab_widget().widget_area(i_tab):
+            drag = QtGui.QDrag(area)
+            mime_data = QtCore.QMimeData()
+            text = f"himena-tab:{i_tab}"
+            mime_data.setText(text)
+            drag.setMimeData(mime_data)
+            drag.setPixmap(area._pixmap_resized(QtCore.QSize(150, 150)))
+            return drag
+        return None
+
     def mousePressEvent(self, event: QtGui.QMouseEvent):
         self._pressed_pos = event.pos()
         if event.button() == Qt.MouseButton.LeftButton:
             i_tab = self.tabAt(self._pressed_pos)
             if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-                if area := self.tab_widget().widget_area(i_tab):
-                    drag = QtGui.QDrag(area)
-                    mime_data = QtCore.QMimeData()
-                    text = f"himena-tab:{i_tab}"
-                    mime_data.setText(text)
-                    drag.setMimeData(mime_data)
-                    drag.setPixmap(area._pixmap_resized(QtCore.QSize(150, 150)))
+                if drag := self._prep_drag(i_tab):
                     drag.exec()
         return None
 
