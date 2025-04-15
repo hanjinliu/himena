@@ -3,11 +3,13 @@ import csv
 import inspect
 from io import StringIO
 from types import FunctionType
-from himena.plugins import register_function, configure_gui
+from himena.plugins import register_function, configure_gui, configure_submenu
 from himena.types import Parametric, WidgetDataModel
 from himena.standards.model_meta import TextMeta, FunctionMeta
 from himena.consts import StandardType, MenuId
 from himena import create_model
+
+configure_submenu(MenuId.TOOLS_TEXT, group="20_builtins")
 
 
 @register_function(

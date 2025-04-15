@@ -1,9 +1,11 @@
 from himena.data_wrappers._dataframe import wrap_dataframe
 from himena.standards.model_meta import TableMeta
-from himena.plugins import register_function, configure_gui
+from himena.plugins import register_function, configure_gui, configure_submenu
 from himena.types import WidgetDataModel, Parametric
 from himena.consts import StandardType, MenuId
 from himena.core import create_model
+
+configure_submenu(MenuId.TOOLS_DATAFRAME, group="20_builtins")
 
 
 @register_function(

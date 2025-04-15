@@ -3,11 +3,13 @@ import operator as _op
 import numpy as np
 from himena.data_wrappers._array import wrap_array
 from himena._descriptors import NoNeedToSave
-from himena.plugins import register_function, configure_gui
+from himena.plugins import register_function, configure_gui, configure_submenu
 from himena.types import Parametric, WidgetDataModel
 from himena.consts import StandardType, MenuId
 from himena.standards.model_meta import ArrayMeta, ImageMeta
 from himena.widgets import set_status_tip, SubWindow
+
+configure_submenu(MenuId.TOOLS_ARRAY, group="20_builtins")
 
 
 @register_function(
