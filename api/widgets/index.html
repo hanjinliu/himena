@@ -9959,14 +9959,14 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
                 <span class="n">message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">title_short</span><span class="si">}</span><span class="s2"> is not saved yet. Save before closing?&quot;</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Save changes to </span><span class="si">{</span><span class="n">title_short</span><span class="si">}</span><span class="s2">?&quot;</span>
-            <span class="n">request</span> <span class="o">=</span> <span class="n">main</span><span class="o">.</span><span class="n">exec_choose_one_dialog</span><span class="p">(</span>
+            <span class="n">resp</span> <span class="o">=</span> <span class="n">main</span><span class="o">.</span><span class="n">exec_choose_one_dialog</span><span class="p">(</span>
                 <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Closing window&quot;</span><span class="p">,</span>
                 <span class="n">message</span><span class="o">=</span><span class="n">message</span><span class="p">,</span>
                 <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Save&quot;</span><span class="p">,</span> <span class="s2">&quot;Don&#39;t save&quot;</span><span class="p">,</span> <span class="s2">&quot;Cancel&quot;</span><span class="p">],</span>
             <span class="p">)</span>
-            <span class="k">if</span> <span class="n">request</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">request</span> <span class="o">==</span> <span class="s2">&quot;Cancel&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">resp</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">resp</span> <span class="o">==</span> <span class="s2">&quot;Cancel&quot;</span><span class="p">:</span>
                 <span class="k">return</span> <span class="kc">None</span>
-            <span class="k">elif</span> <span class="n">request</span> <span class="o">==</span> <span class="s2">&quot;Save&quot;</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="n">resp</span> <span class="o">==</span> <span class="s2">&quot;Save&quot;</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">cb</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_save_from_dialog</span><span class="p">(</span><span class="n">main</span><span class="p">):</span>
                     <span class="n">cb</span><span class="p">()</span>
                 <span class="k">else</span><span class="p">:</span>
