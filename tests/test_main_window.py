@@ -1,3 +1,4 @@
+from pathlib import Path
 import warnings
 
 from magicgui import magicgui
@@ -226,3 +227,14 @@ def test_injections(himena_ui: MainWindow):
             return create_model("a", type=StandardType.TEXT)
 
     store.process(MyParams(), type_hint=ParametricWidgetProtocol)
+
+def test_file_dialog_hist():
+    from himena.widgets._hist import HistoryContainer, FileDialogHistoryDict
+
+    d = FileDialogHistoryDict()
+    _dir = Path(__file__).parent
+    d.update("group-0", _dir)
+    assert d.get_path("group-0") == _dir
+
+    d.update("group-1", _dir / "XYZ"/ "PQR")
+    assert d.get_path("group-1") == _dir

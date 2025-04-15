@@ -1,16 +1,15 @@
 from typing import Callable
+from pathlib import Path
+
 from himena import MainWindow, anchor
 from himena.consts import StandardType
+from himena.types import WindowRect
 from himena.standards.model_meta import DataFrameMeta, ImageMeta
 from himena.standards.roi import RectangleRoi
 from himena_builtins.qt.text import QTextEdit, QRichTextEdit
 from himena_builtins.qt.image import QImageView
 from himena_builtins.qt.dataframe import QDataFrameView
 from himena_builtins.qt.table import QSpreadsheet
-
-from pathlib import Path
-
-from himena.types import WindowRect
 
 def test_type_map_and_session(tmpdir, himena_ui: MainWindow, sample_dir):
     tab0 = himena_ui.add_tab()

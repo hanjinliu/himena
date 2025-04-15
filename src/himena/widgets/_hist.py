@@ -43,6 +43,8 @@ class HistoryContainer(Generic[_T]):
 
 
 class FileDialogHistoryDict:
+    """List of starting directories for file dialogs."""
+
     def __init__(self):
         self._dict: dict[str, Path] = {}
 

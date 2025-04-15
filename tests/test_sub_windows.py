@@ -5,6 +5,7 @@ from pytestqt.qtbot import QtBot
 from tempfile import TemporaryDirectory
 from qtpy import QtWidgets as QtW
 import numpy as np
+from numpy.testing import assert_equal
 import polars as pl
 
 from himena import MainWindow, anchor
@@ -347,8 +348,22 @@ def test_clipboard(himena_ui: MainWindow, sample_dir: Path, qtbot: QtBot):
     himena_ui.exec_action("copy-path-to-clipboard")
     QtW.QApplication.processEvents()
     assert himena_ui.clipboard.text == str(sample_path)
+    QtW.QApplication.processEvents()
     himena_ui.exec_action("copy-data-to-clipboard")
+    QtW.QApplication.processEvents()
     assert himena_ui.clipboard.text == sample_path.read_text()
+    himena_ui.add_object(np.zeros((6, 5, 3)), type=StandardType.IMAGE)
+    QtW.QApplication.processEvents()
+    himena_ui.exec_action("copy-data-to-clipboard")
+    QtW.QApplication.processEvents()
+    img = np.zeros((6, 5, 4), dtype=np.uint8)
+    img[..., 3] = 255
+    assert_equal(himena_ui.clipboard.image, img)
+    himena_ui.add_object("<b>a</b>", type=StandardType.HTML)
+    QtW.QApplication.processEvents()
+    himena_ui.exec_action("copy-data-to-clipboard")
+    QtW.QApplication.processEvents()
+    assert himena_ui.clipboard.text == "a"
 
 def test_tile_window(make_himena_ui, backend: str):
     himena_ui: MainWindow = make_himena_ui(backend)
@@ -456,6 +471,10 @@ def test_open_and_save_files(himena_ui: MainWindow, tmpdir, sample_dir: Path):
         {"x": [1, 2, 3], "y": [4.2, 5.3, -1.5], "z": [2.2, 1.1, 2.2]},
         type="dataframe.plot",
     )
+
+    del himena_ui.tabs[0][0]
+    himena_ui.exec_action("open-last-closed-window")
+    assert himena_ui.tabs[0][-1].model_type() == StandardType.IPYNB
 
 def test_reading_file_group(himena_ui: MainWindow, sample_dir: Path):
     tab0 = himena_ui.add_tab()

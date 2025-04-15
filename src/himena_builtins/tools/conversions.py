@@ -2,9 +2,7 @@
 
 from typing import Literal
 from io import StringIO
-import re
 import csv
-import html
 import numpy as np
 from himena.plugins import configure_gui, register_conversion_rule
 from himena.types import Parametric, WidgetDataModel
@@ -26,6 +24,7 @@ from himena.standards.roi import (
 )
 from himena.data_wrappers import wrap_dataframe, read_csv, wrap_array
 from himena.utils.misc import table_to_text as _table_to_text
+from himena.utils.html import html_to_plain_text
 
 
 @register_conversion_rule(
@@ -91,18 +90,14 @@ def text_to_dataframe(model: WidgetDataModel[str]) -> WidgetDataModel:
     type_to=StandardType.TEXT,
     command_id="builtins:to-plain-text",
 )
-def to_plain_text(model: WidgetDataModel[str]) -> WidgetDataModel[str]:
+def to_plain_text(model: WidgetDataModel) -> WidgetDataModel:
     """Convert HTML to plain text."""
-    html_block_pattern = re.compile(r"<html>.*?</html>", re.DOTALL)
-    html_text = model.value
-    if html_block_match := html_block_pattern.search(model.value):
-        html_text = html_block_match.group(0)
-    html_pattern = re.compile(r"<.*?>")
-    header_pattern = re.compile(r"<head>.*?</head>", re.DOTALL)
-    newline_pattern = re.compile(r"<br\s*/?>", re.IGNORECASE)
-    html_text = newline_pattern.sub("\n", html_text)
-    value = html.unescape(html_pattern.sub("", header_pattern.sub("", html_text)))
-    return model.with_value(value, type=StandardType.TEXT)
+    return create_text_model(
+        html_to_plain_text(model.value),
+        title=model.title,
+        language="Plain Text",
+        extension_default=".txt",
+    )
 
 
 @register_conversion_rule(
