@@ -1,4 +1,5 @@
 from typing import Any, Callable, Literal, SupportsIndex
+from himena import MainWindow
 import numpy as np
 from cmap import Colormap
 from himena.data_wrappers._array import wrap_array
@@ -514,6 +515,7 @@ def _stack_and_insert_axis(
     meta: ImageMeta,
     axis: str,
     axis_index: int,
+    channel_axis: int | None = None,
 ) -> tuple[Any, ImageMeta]:
     arr_out = np.stack(arrs, axis=axis_index)
     if axes := meta.axes:
@@ -521,40 +523,41 @@ def _stack_and_insert_axis(
         axes.insert(axis_index, ArrayAxis(name=axis))
     else:
         axes = None
-    is_c_axis = axis.lower() in ("c", "channel")
     meta = meta.model_copy(
         update={
             "axes": axes,
-            "channel_axis": axis_index if is_c_axis else None,
+            "channel_axis": channel_axis,
             "current_indices": None,
         }
     )
     return arr_out, meta
 
 
-@configure_gui(images={"types": [StandardType.IMAGE]})
 def run_merge_channels(
-    images: list[WidgetDataModel],
+    images: list[SubWindow],
     axis: str = "c",
 ) -> WidgetDataModel:
     if len(images) < 2:
         raise ValueError("At least two images are required.")
-    meta = _cast_meta(images[0], ImageMeta)
+    img_values = [img.to_model() for img in images]
+    meta = _cast_meta(img_values[0], ImageMeta)
     if meta.is_rgb:
         raise ValueError("Cannot merge RGB image.")
     if meta.channel_axis is not None:
         raise ValueError("Image already has a channel axis.")
-    arrs = [m.value for m in images]
-    axes_consensus = _get_consensus_axes(images)
+    arrs = [m.value for m in img_values]
+    axes_consensus = _get_consensus_axes(img_values)
     c_axis = _find_index_to_insert_axis(axis, axes_consensus)
     axes_consensus.insert(c_axis, axis)
 
-    arr_out, meta = _stack_and_insert_axis(arrs, meta, axis, c_axis)
+    arr_out, meta = _stack_and_insert_axis(
+        arrs, meta, axis, c_axis, channel_axis=c_axis
+    )
     # TODO: should colormaps be inherited?
-    # colormaps = [_cast_meta(m, ImageMeta).channels[0].colormap for m in models]
+    # colormaps = [_cast_meta(m, ImageMeta).channels[0].colormap for m in img_values]
 
-    return images[0].with_value(
-        arr_out, metadata=meta, title=f"[Merge] {images[0].title}"
+    return img_values[0].with_value(
+        arr_out, metadata=meta, title=f"[Merge] {img_values[0].title}"
     )
 
 
@@ -563,9 +566,9 @@ def run_merge_channels(
     menus=[MenuId.TOOLS_IMAGE_CHANNELS, "/model_menu/channels"],
     command_id="builtins:merge-channels",
 )
-def merge_channels() -> Parametric:
+def merge_channels(ui: MainWindow) -> Parametric:
     """Stack images along the channel axis."""
-    return run_merge_channels
+    return configure_gui(run_merge_channels, images=_get_stack_options(ui))
 
 
 @register_function(
@@ -573,12 +576,12 @@ def merge_channels() -> Parametric:
     menus=[MenuId.TOOLS_IMAGE, "/model_menu/channels"],
     command_id="builtins:stack-images",
 )
-def stack_images() -> Parametric:
+def stack_images(ui: MainWindow) -> Parametric:
     """Stack N-D images along a new axis to make a (N+1)-D image."""
 
-    @configure_gui(images={"types": [StandardType.IMAGE]})
+    @configure_gui(images=_get_stack_options(ui))
     def run_stack_images(
-        images: list[WidgetDataModel],
+        images: list[SubWindow],
         axis_name: str,
         axis_index: int | None = None,
     ) -> WidgetDataModel:
@@ -586,20 +589,37 @@ def stack_images() -> Parametric:
             return run_merge_channels(images)
         if len(images) < 2:
             raise ValueError("At least two images are required.")
-        meta = _cast_meta(images[0], ImageMeta)
-        arrs = [m.value for m in images]
-        axes_consensus = _get_consensus_axes(images)
+        img_values = [img.to_model() for img in images]
+        meta = _cast_meta(img_values[0], ImageMeta)
+        arrs = [m.value for m in img_values]
+        axes_consensus = _get_consensus_axes(img_values)
         if axis_name == "":
             axis_name = _make_unique_axis_name(axes_consensus)
         if axis_index is None:
             axis_index = _find_index_to_insert_axis(axis_name, axes_consensus)
         axes_consensus.insert(axis_index, axis_name)
-        arr_out, meta = _stack_and_insert_axis(arrs, meta, axis_name, axis_index)
-        return images[0].with_value(
-            arr_out, metadata=meta, title=f"[Stack] {images[0].title}"
+        if meta.channel_axis is not None:
+            channel_axis = meta.channel_axis
+            if axis_index <= channel_axis:
+                channel_axis += 1
+        else:
+            channel_axis = None
+        arr_out, meta = _stack_and_insert_axis(
+            arrs, meta, axis_name, axis_index, channel_axis=channel_axis
+        )
+        return img_values[0].with_value(
+            arr_out, metadata=meta, title=f"[Stack] {img_values[0].title}"
         )
 
     return run_stack_images
+
+
+def _get_stack_options(ui: MainWindow) -> dict[str, Any]:
+    if tab := ui.tabs.current():
+        win_default = [win for win in tab if win.model_type() == StandardType.IMAGE]
+        return {"types": [StandardType.IMAGE], "value": win_default}
+    else:
+        return {"types": [StandardType.IMAGE]}
 
 
 def _get_current_roi_and_meta(

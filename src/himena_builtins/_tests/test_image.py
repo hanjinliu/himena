@@ -555,14 +555,14 @@ def test_roi_commands(himena_ui: MainWindow):
     assert meta.channels[0].colormap == "cmap:green"
     assert meta.channels[1].colormap == "cmap:red"
     himena_ui.exec_action("builtins:split-channels")
-    mod_g = himena_ui.tabs.current()[-2].to_model()
-    mod_r = himena_ui.tabs.current()[-1].to_model()
-    assert mod_g.metadata.colormap == "cmap:green"
-    assert mod_r.metadata.colormap == "cmap:red"
-    himena_ui.exec_action("builtins:merge-channels", with_params={"images": [mod_g, mod_r]})
+    win_g = himena_ui.tabs.current()[-2]
+    win_r = himena_ui.tabs.current()[-1]
+    assert win_g.to_model().metadata.colormap == "cmap:green"
+    assert win_r.to_model().metadata.colormap == "cmap:red"
+    himena_ui.exec_action("builtins:merge-channels", with_params={"images": [win_g, win_r]})
     himena_ui.exec_action(
         "builtins:stack-images",
-        with_params={"images": [mod_g, mod_r], "axis_name": "p"}
+        with_params={"images": [win_g, win_r], "axis_name": "p"}
     )
 
 def test_rgb(himena_ui: MainWindow):
@@ -690,3 +690,50 @@ def test_handle_events(qtbot: QtBot):
     handles.connect_roi(rotated_roi)
     for h in handles._handles:
         h.moved_by_mouse.emit(QtCore.QPointF(1, 1), QtCore.QPointF(0, 0))
+
+def test_play(qtbot: QtBot):
+    view = QImageView()
+    qtbot.addWidget(view)
+    view.update_model(
+        create_image_model(
+            np.zeros((4, 10, 10)),
+            axes=[
+                ArrayAxis(name="t"),
+                ArrayAxis(name="y"),
+                ArrayAxis(name="x"),
+            ],
+        )
+    )
+    tslider = view._dims_slider._sliders[0]
+    tslider._make_context_menu_for_play_btn()
+    tslider._on_play_timer_timeout()  # nothing happens because button is not checked
+    # test "once"
+    tslider._slider.setValue(0)
+    tslider._play_back_mode = "once"
+    tslider._play_btn.click()
+    for _ in range(4):
+        tslider._on_play_timer_timeout()
+    assert tslider._slider.value() == 3
+    assert not tslider._play_timer.isActive()
+    # test "loop"
+    tslider._slider.setValue(0)
+    tslider._play_back_mode = "loop"
+    tslider._play_btn.click()
+    for _ in range(4):
+        tslider._on_play_timer_timeout()
+    assert tslider._slider.value() == 0
+    assert tslider._play_timer.isActive()
+    tslider._stop_play()
+    # test "pingpong"
+    tslider._slider.setValue(0)
+    tslider._play_back_mode = "pingpong"
+    tslider._play_btn.click()
+    for _ in range(4):
+        tslider._on_play_timer_timeout()
+    assert tslider._slider.value() == 2
+    assert tslider._play_increment == -1
+    for _ in range(3):
+        tslider._on_play_timer_timeout()
+    assert tslider._play_increment == 1
+    assert tslider._slider.value() == 1
+    tslider._stop_play()
