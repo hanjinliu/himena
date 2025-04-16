@@ -13,7 +13,7 @@ from himena.standards.model_meta import (
     ImageRoisMeta,
     roi as _roi,
 )
-from himena.widgets._wrapper import SubWindow
+from himena.widgets import SubWindow, TabArea
 from himena.utils import image_utils
 from himena_builtins.tools.array import _cast_meta, _make_index_getter
 
@@ -313,7 +313,7 @@ def point_rois_to_dataframe(model: WidgetDataModel) -> WidgetDataModel:
     title="Set colormap ...",
     types=StandardType.IMAGE,
     menus=[MenuId.TOOLS_IMAGE_CHANNELS, "/model_menu/channels"],
-    command_id="builtins:set-colormaps",
+    command_id="builtins:colormap:set-colormaps",
 )
 def set_colormaps(win: SubWindow) -> Parametric:
     """Set the colormaps for each channel."""
@@ -349,10 +349,45 @@ def set_colormaps(win: SubWindow) -> Parametric:
             ch.with_colormap(Colormap(cmap).name)
             for ch, cmap in zip(meta.channels, kwargs.values())
         ]
-        win.update_model(model.model_copy(update={"metadata": meta}))
+        win.update_model(model.with_metadata(meta))
         return None
 
     return set_cmaps
+
+
+@register_function(
+    title="Propagate Colormaps",
+    types=StandardType.IMAGE,
+    menus=[MenuId.TOOLS_IMAGE_CHANNELS, "/model_menu/channels"],
+    command_id="builtins:colormap:propagate-colormaps",
+)
+def propagate_colormaps(win: SubWindow, tab: TabArea):
+    """Propagate the colormaps of current image to other images in this tab."""
+    model = win.to_model()
+    meta = _cast_meta(model, ImageMeta).model_copy()
+    if meta.channel_axis is None:
+        raise ValueError("Image does not have a channel axis.")
+    if meta.is_rgb:
+        raise ValueError("Image is RGB.")
+    current_channels = meta.channels.copy()
+    for each in tab:
+        if each is win or each.model_type() != StandardType.IMAGE:
+            continue
+        each_model = each.to_model()
+        if isinstance(each_meta := each_model.metadata, ImageMeta):
+            if (
+                each_meta.channel_axis is None
+                or each_meta.is_rgb
+                or len(each_meta.channels) != len(current_channels)
+            ):
+                continue
+            each_meta.channels = [
+                ch.with_colormap(current_channels[i].colormap)
+                for i, ch in enumerate(each_meta.channels)
+            ]
+
+            each.update_model(each_model.with_metadata(each_meta))
+    return None
 
 
 @register_function(
@@ -382,6 +417,33 @@ def split_channels(model: WidgetDataModel) -> list[WidgetDataModel]:
         title = f"[{channel_labels[idx]}] {model.title}"
         models.append(model.with_value(arr_i, metadata=meta_i, title=title))
     return models
+
+
+@register_function(
+    title="Set channel axis",
+    types=StandardType.IMAGE,
+    menus=[MenuId.TOOLS_IMAGE_CHANNELS, "/model_menu/channels"],
+    command_id="builtins:set-channel-axis",
+)
+def set_channel_axis(model: WidgetDataModel) -> Parametric:
+    """Set the channel axis of the image."""
+    meta = _cast_meta(model, ImageMeta)
+    if meta.channel_axis is not None:
+        raise ValueError("Image already has a channel axis.")
+    if meta.is_rgb:
+        raise ValueError("Image is RGB.")
+    arr = wrap_array(model.value)
+    if meta.axes is None:
+        choices = [(f"axis-{i}", i) for i in range(arr.ndim - 2)]
+    else:
+        choices = [(axis.name, i) for i, axis in enumerate(meta.axes[:-2])]
+
+    @configure_gui(axis={"choices": choices})
+    def run_set_channel_axis(axis: int):
+        meta_out = meta.model_copy(update={"channel_axis": axis})
+        return model.with_metadata(meta_out)
+
+    return run_set_channel_axis
 
 
 @register_function(

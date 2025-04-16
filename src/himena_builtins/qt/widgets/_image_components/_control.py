@@ -278,7 +278,6 @@ class QChannelToggleSwitches(QtW.QScrollArea):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedWidth(150)
         self.setWidgetResizable(True)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         central = QtW.QWidget()
@@ -296,7 +295,7 @@ class QChannelToggleSwitches(QtW.QScrollArea):
             sw.setChecked(True)
             sw.setFont(self._label_font)
             sw.toggled.connect(self._emit_state_changed)
-            row, col = divmod(ith, 2)
+            row, col = divmod(ith, 3)
             self._layout.addWidget(sw, row, col)
             self._toggle_switches.append(sw)
         while len(self._toggle_switches) > len(labels):
@@ -305,6 +304,7 @@ class QChannelToggleSwitches(QtW.QScrollArea):
         for i in range(len(channels)):
             sw = self._toggle_switches[i]
             sw.set_channel(channels[i])
+        self.setFixedWidth(70 * min(3, len(self._toggle_switches)) + 10)
 
     def _emit_state_changed(self):
         self.stateChanged.emit()

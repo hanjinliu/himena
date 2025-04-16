@@ -12,6 +12,7 @@ from himena.standards.roi import RoiListModel, LineRoi, PointRoi2D, PointsRoi2D
 from himena.standards.roi.core import RectangleRoi
 from himena.testing import WidgetTester, image, file_dialog_response
 from himena.types import WidgetDataModel
+from himena.widgets import SubWindow
 from himena_builtins.qt.widgets.image import QImageView, QImageLabelView
 from himena_builtins.qt.widgets._image_components import _roi_items as _rois
 from himena_builtins.qt.widgets._image_components._control import ComplexMode
@@ -549,7 +550,7 @@ def test_roi_commands(himena_ui: MainWindow):
     )
 
     win = himena_ui.add_data_model(model)
-    himena_ui.exec_action("builtins:set-colormaps", with_params={"ch_0": "green", "ch_1": "red"})
+    himena_ui.exec_action("builtins:colormap:set-colormaps", with_params={"ch_0": "green", "ch_1": "red"})
     assert isinstance(meta := win.to_model().metadata, ImageMeta)
     assert len(meta.channels) == 2
     assert meta.channels[0].colormap == "cmap:green"
@@ -737,3 +738,45 @@ def test_play(qtbot: QtBot):
     assert tslider._play_increment == 1
     assert tslider._slider.value() == 1
     tslider._stop_play()
+
+def test_propagate(himena_ui: MainWindow):
+    win0 = himena_ui.add_data_model(
+        create_image_model(
+            np.zeros((3, 10, 12), dtype=np.uint8),
+            axes=["c", "y", "x"],
+            channel_axis=0,
+            channels=["red", "green", "blue"],
+        )
+    )
+    win1 = himena_ui.add_data_model(
+        create_image_model(
+            np.zeros((3, 10, 14), dtype=np.uint8),
+            axes=["c", "y", "x"],
+            channel_axis=0,
+        )
+    )
+    win2 = himena_ui.add_data_model(
+        create_image_model(
+            np.zeros((3, 10, 12), dtype=np.uint8),
+            axes=["t", "y", "x"],
+        )
+    )
+    win3 = himena_ui.add_data_model(
+        create_image_model(
+            np.zeros((2, 3, 10, 12), dtype=np.uint8),
+            axes=["t", "c", "y", "x"],
+            channel_axis=1,
+        )
+    )
+
+    himena_ui.exec_action("builtins:colormap:propagate-colormaps", window_context=win0)
+
+    def get_colormap_names(win: SubWindow) -> list[str | None]:
+        return [c.colormap for c in win.to_model().metadata.channels]
+
+    assert get_colormap_names(win0) == ["cmap:red", "cmap:green", "cmap:blue"]
+    assert get_colormap_names(win1) == ["cmap:red", "cmap:green", "cmap:blue"]
+    assert get_colormap_names(win2) == ["matlab:gray"]
+    assert get_colormap_names(win3) == ["cmap:red", "cmap:green", "cmap:blue"]
+    himena_ui.current_window = win2
+    himena_ui.exec_action("builtins:set-channel-axis", with_params={"axis": 0})
