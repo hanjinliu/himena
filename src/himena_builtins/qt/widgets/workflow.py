@@ -391,7 +391,8 @@ def _(step: _wf.CommandExecution) -> QtW.QTreeWidgetItem:
                 [f"(parameter) {param.name} = <window, type={param.model_type!r}>"]
             )
         elif isinstance(param, _wf.ListOfModelParameter):
-            child = QtW.QTreeWidgetItem([f"(parameter) {param.name} = <models>"])
+            short_desc = "<subwindows>" if param.is_window else "<models>"
+            child = QtW.QTreeWidgetItem([f"(parameter) {param.name} = {short_desc}"])
         else:
             raise ValueError(f"Unknown parameter type {type(param)}")
         item.addChild(child)
