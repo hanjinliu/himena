@@ -157,10 +157,9 @@ def binary_operation() -> Parametric:
         y={"types": [StandardType.ARRAY]},
         clip_overflows={
             "tooltip": (
-                "If checked, underflow will be clipped to 0, and "
-                "overflow will be \n"
-                "clipped to the maximum value of the data type. Only applicable to \n"
-                "integer data types with +, -, *, ** operations."
+                "If checked, underflow and overflow will be clipped to the minimum \n"
+                "maximum value of the data type. Only applicable to the integer data\n"
+                "types with +, -, * operations."
             )
         },
     )
@@ -180,15 +179,17 @@ def binary_operation() -> Parametric:
             yval = y.value.astype(np.float64, copy=False)
         else:
             xval, yval = x.value, y.value
-        arr_out = operation_func(xval, yval)
-        if clip_overflows:
-            if operation in ("add", "mul", "pow"):
-                _replace_overflows(xval, yval, arr_out)
-            elif operation == "sub":
-                _replace_underflows(xval, yval, arr_out)
+        if clip_overflows and operation in ("add", "mul", "sub"):
+            arr_out = _safe_op(operation_func, xval, yval, np.dtype(xval.dtype))
+        else:
+            arr_out = operation_func(xval, yval)
         if result_dtype == "input":
             arr_out = arr_out.astype(xval.dtype, copy=False)
-        return x.with_value(arr_out, title=f"{operation} {x.title} and {y.title}")
+        out = x.with_value(arr_out, title=f"{operation} {x.title} and {y.title}")
+        if isinstance(meta := out.metadata, ImageMeta):
+            for ch in meta.channels:
+                ch.contrast_limits = None  # reset contrast limits
+        return out
 
     return run_calc
 
@@ -356,15 +357,33 @@ def _parse_float_and_unit(s: str) -> tuple[float, str | None]:
     return float(s[: unit_start - 1]), s[unit_start - 1 :]
 
 
-def _replace_overflows(a, b, result):
-    if result.dtype.kind not in "iu":
-        return
-    overflow_region = (result < a) | (result < b)
-    result[overflow_region] = np.iinfo(result.dtype).max
+_UPCAST_MAP = {
+    np.dtype(np.uint8): np.uint16,
+    np.dtype(np.uint16): np.int32,
+    np.dtype(np.uint32): np.int64,
+    np.dtype(np.int8): np.int16,
+    np.dtype(np.int16): np.int32,
+    np.dtype(np.int32): np.int64,
+}
 
 
-def _replace_underflows(a, b, result):
-    if result.dtype.kind not in "iu":
-        return
-    underflow_region = (result > a) | (result > b)
-    result[underflow_region] = np.iinfo(result.dtype).min
+def _upcast(a, dtype):
+    try:
+        out_dtype = _UPCAST_MAP[dtype]
+    except KeyError:
+        raise ValueError(f"Cannot upcast {dtype} to a larger type.")
+    return a.astype(out_dtype)
+
+
+def _safe_op(op, a, b, dtype):
+    """Add two arrays with overflow/underflow check."""
+    if dtype.kind in "iu":
+        result_up = op(_upcast(a, dtype), _upcast(b, dtype))
+        # NOTE: cannot use the `dtype` argument of `np.clip`.
+        return np.clip(
+            result_up,
+            np.iinfo(dtype).min,
+            np.iinfo(dtype).max,
+        ).astype(dtype)
+    else:
+        return a + b

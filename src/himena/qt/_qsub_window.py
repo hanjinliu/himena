@@ -702,6 +702,7 @@ class QSubWindowTitleBar(QtW.QFrame):
         return self._subwindow.close_requested.emit()
 
     def _make_tooltip(self):
+        """Make the tooltip for the title bar"""
         qwin = self._subwindow
         attrs: list[str] = [f"<b>Title</b>: {self._title_label.text()}"]
         if _model_type := self._get_model_type():
