@@ -414,6 +414,8 @@ class QRoiListView(QtW.QListView):
             _action.setToolTip(
                 f"Flatten the selected ROI along {_qroi_list.axis_names[i]!r} axis"
             )
+            if self.parent()._qroi_list.indices[index.row(), i] == -1:
+                _action.setEnabled(False)  # already flattened
         action_flatten.setToolTip("Flatten the selected ROI into 2D")
         action_move = menu.addAction(
             "Move To ...",

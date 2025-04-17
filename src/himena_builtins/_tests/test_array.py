@@ -81,7 +81,7 @@ def test_copy_and_paste(qtbot: QtBot):
         assert_array_equal(tester.to_model().value[1, 2, 0:2, 0:2], [[1, 2], [3, 4]])
 
 def test_binary_operations(himena_ui: MainWindow):
-    win = himena_ui.add_object(np.arange(24).reshape(2, 3, 4), type=StandardType.ARRAY)
+    win = himena_ui.add_object(np.arange(24, dtype=np.uint16).reshape(2, 3, 4), type=StandardType.ARRAY)
     model = win.to_model()
     himena_ui.exec_action(
         "builtins:binary-operation",

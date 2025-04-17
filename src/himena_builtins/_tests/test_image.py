@@ -359,6 +359,11 @@ def test_image_view_roi_actions(qtbot: QtBot):
         assert image_view._roi_col.count() == 3
         image_view._roi_col.flatten_roi(0)
         image_view._roi_col.flatten_roi_along(1, axis=1)
+        # check context menu on flattened ROI
+        list_view = image_view._roi_col._list_view
+
+        list_view._prep_context_menu(list_view.model().index(0, 0))
+        list_view._prep_context_menu(list_view.model().index(1, 0))
         image_view._roi_col.move_roi(2, (3, 0))
         meta = tester.to_model().metadata
         assert isinstance(meta, ImageMeta)
