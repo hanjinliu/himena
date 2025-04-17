@@ -305,6 +305,7 @@ class QCurrentIndexEdit(QtW.QLineEdit):
         self.parentWidget().setFocus()
 
     def _double_clicked(self, label: QtW.QLabel):
+        """Start editing the current index."""
         self.show()
         current, _max = label.text().split("/", 1)
         dx = self.fontMetrics().boundingRect(f"/{_max}").width() + 1
@@ -313,7 +314,8 @@ class QCurrentIndexEdit(QtW.QLineEdit):
         geo = label.geometry()
         self.move(self.parentWidget().mapToGlobal(geo.topLeft()))
         self.setText(current)
-        self.setSelection(0, len(self.text()))
+        self.setFocus()
+        self.selectAll()
 
     def focusOutEvent(self, a0):
         self._finish_edit()

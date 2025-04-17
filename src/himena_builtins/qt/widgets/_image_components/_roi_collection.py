@@ -3,6 +3,7 @@ import weakref
 from functools import singledispatch
 import numpy as np
 from qtpy import QtWidgets as QtW, QtCore, QtGui
+from qtpy.QtCore import Qt
 from typing import Iterator, TYPE_CHECKING, Sequence
 from superqt import QToggleSwitch
 from magicgui.widgets import Container
@@ -97,9 +98,7 @@ class QSimpleRoiCollection(QtW.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         self._list_view = QRoiListView(self)
 
-        layout.addWidget(
-            self._list_view, 100, alignment=QtCore.Qt.AlignmentFlag.AlignTop
-        )
+        layout.addWidget(self._list_view, 100, alignment=Qt.AlignmentFlag.AlignTop)
         self._list_view.drag_requested.connect(self.drag_requested.emit)
 
     def __repr__(self) -> str:
@@ -244,9 +243,7 @@ class QRoiCollection(QSimpleRoiCollection):
         self._list_view.key_pressed.connect(self.key_pressed)
         self._list_view.key_released.connect(self.key_released)
 
-        self.layout().addWidget(
-            self._list_view, 100, alignment=QtCore.Qt.AlignmentFlag.AlignTop
-        )
+        self.layout().addWidget(self._list_view, 100, Qt.AlignmentFlag.AlignTop)
         self._dragarea = QDraggableArea()
         self._dragarea.setToolTip("Drag the image ROIs")
         self._dragarea.setFixedSize(14, 14)
@@ -266,16 +263,10 @@ class QRoiCollection(QSimpleRoiCollection):
         _btn_layout = QtW.QHBoxLayout()
         _btn_layout.setContentsMargins(0, 0, 0, 0)
         _btn_layout.setSpacing(1)
-        _btn_layout.addWidget(
-            self._dragarea, alignment=QtCore.Qt.AlignmentFlag.AlignLeft
-        )
+        _btn_layout.addWidget(self._dragarea, alignment=Qt.AlignmentFlag.AlignLeft)
         _btn_layout.addWidget(QtW.QWidget(), 100)
-        _btn_layout.addWidget(
-            self._add_btn, alignment=QtCore.Qt.AlignmentFlag.AlignRight
-        )
-        _btn_layout.addWidget(
-            self._remove_btn, alignment=QtCore.Qt.AlignmentFlag.AlignRight
-        )
+        _btn_layout.addWidget(self._add_btn, alignment=Qt.AlignmentFlag.AlignRight)
+        _btn_layout.addWidget(self._remove_btn, alignment=Qt.AlignmentFlag.AlignRight)
         self.layout().addLayout(_btn_layout)
         self._dragarea.dragged.connect(self._on_dragged)
         self._roi_visible_btn = QToggleSwitch()
@@ -295,10 +286,10 @@ class QRoiCollection(QSimpleRoiCollection):
             )
         )
         self.layout().addWidget(
-            self._roi_visible_btn, alignment=QtCore.Qt.AlignmentFlag.AlignBottom
+            self._roi_visible_btn, alignment=Qt.AlignmentFlag.AlignBottom
         )
         self.layout().addWidget(
-            self._roi_labels_btn, alignment=QtCore.Qt.AlignmentFlag.AlignBottom
+            self._roi_labels_btn, alignment=Qt.AlignmentFlag.AlignBottom
         )
 
         self.show_rois_changed.connect(parent._img_view.set_show_rois)
@@ -371,17 +362,15 @@ class QRoiListView(QtW.QListView):
     def __init__(self, parent: QRoiCollection):
         super().__init__(parent)
         self.setModel(QRoiListModel(parent))
-        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setSelectionMode(QtW.QAbstractItemView.SelectionMode.ExtendedSelection)
         self.setEditTriggers(QtW.QAbstractItemView.EditTrigger.EditKeyPressed)
-        self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self._show_context_menu)
         self.setDragEnabled(True)
         self.setMouseTracking(True)
         self._hover_drag_indicator = QDraggableArea(self)
-        self._hover_drag_indicator.setWindowFlags(
-            QtCore.Qt.WindowType.FramelessWindowHint
-        )
+        self._hover_drag_indicator.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self._hover_drag_indicator.setFixedSize(14, 14)
         self._hover_drag_indicator.hide()
         self._hover_drag_indicator.dragged.connect(self._on_drag)
@@ -460,7 +449,7 @@ class QRoiListView(QtW.QListView):
         button_layout = QtW.QHBoxLayout()
         button_layout.setContentsMargins(0, 0, 0, 0)
         button_layout.setSpacing(2)
-        button_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        button_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
         ok_button = QtW.QPushButton("OK")
         cancel_button = QtW.QPushButton("Cancel")
         button_layout.addWidget(ok_button)
@@ -496,10 +485,10 @@ class QRoiListView(QtW.QListView):
             return None
 
     def keyPressEvent(self, a0: QtGui.QKeyEvent):
-        if a0.key() == QtCore.Qt.Key.Key_F2:
+        if a0.key() == Qt.Key.Key_F2:
             self.edit(self.currentIndex())
             return
-        elif a0.key() in (QtCore.Qt.Key.Key_Up, QtCore.Qt.Key.Key_Down):
+        elif a0.key() in (Qt.Key.Key_Up, Qt.Key.Key_Down):
             return super().keyPressEvent(a0)
         self.key_pressed.emit(a0)
 
@@ -508,11 +497,11 @@ class QRoiListView(QtW.QListView):
         return super().keyReleaseEvent(a0)
 
     def mouseMoveEvent(self, e):
-        if e.button() == QtCore.Qt.MouseButton.NoButton:
+        if e.button() == Qt.MouseButton.NoButton:
             # hover
             index = self.indexAt(e.pos())
             if index.isValid():
-                self.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+                self.setCursor(Qt.CursorShape.PointingHandCursor)
                 index_rect = self.rectForIndex(index)
                 top_right = index_rect.topRight()
                 top_right.setX(top_right.x() - 14)
@@ -520,7 +509,7 @@ class QRoiListView(QtW.QListView):
                 self._hover_drag_indicator.show()
                 self._indicator_index = index.row()
             else:
-                self.setCursor(QtCore.Qt.CursorShape.ArrowCursor)
+                self.setCursor(Qt.CursorShape.ArrowCursor)
                 self._hover_drag_indicator.hide()
         return super().mouseMoveEvent(e)
 
@@ -546,9 +535,9 @@ class QRoiListView(QtW.QListView):
 
 
 _FLAGS = (
-    QtCore.Qt.ItemFlag.ItemIsEnabled
-    | QtCore.Qt.ItemFlag.ItemIsSelectable
-    | QtCore.Qt.ItemFlag.ItemIsEditable
+    Qt.ItemFlag.ItemIsEnabled
+    | Qt.ItemFlag.ItemIsSelectable
+    | Qt.ItemFlag.ItemIsEditable
 )
 
 
@@ -563,29 +552,29 @@ class QRoiListModel(QtCore.QAbstractListModel):
         return len(self._col)
 
     def data(self, index: QtCore.QModelIndex, role: int):
-        if role == QtCore.Qt.ItemDataRole.DisplayRole:
+        if role in (Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.EditRole):
             r = index.row()
             if 0 <= r < len(self._col):
                 return self._col[r].label()
             return None
-        elif role == QtCore.Qt.ItemDataRole.DecorationRole:
+        elif role == Qt.ItemDataRole.DecorationRole:
             r = index.row()
             if 0 <= r < len(self._col):
                 pixmap = QtGui.QPixmap(24, 24)
-                pixmap.fill(QtCore.Qt.GlobalColor.black)
+                pixmap.fill(Qt.GlobalColor.black)
                 return self._col[r].makeThumbnail(pixmap).scaled(
-                    12, 12, QtCore.Qt.AspectRatioMode.KeepAspectRatio,
-                    QtCore.Qt.TransformationMode.SmoothTransformation
+                    12, 12, Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation
                 )  # fmt: skip
-        elif role == QtCore.Qt.ItemDataRole.FontRole:
+        elif role == Qt.ItemDataRole.FontRole:
             font = self._col.font()
             font.setPointSize(10)
             if index == self._col._list_view.currentIndex():
                 font.setBold(True)
             return font
-        elif role == QtCore.Qt.ItemDataRole.SizeHintRole:
+        elif role == Qt.ItemDataRole.SizeHintRole:
             return QtCore.QSize(80, 14)
-        elif role == QtCore.Qt.ItemDataRole.ToolTipRole:
+        elif role == Qt.ItemDataRole.ToolTipRole:
             r = index.row()
             if 0 <= r < len(self._col):
                 _indices = tuple(self._col._qroi_list.indices[r])
@@ -600,6 +589,6 @@ class QRoiListModel(QtCore.QAbstractListModel):
         return _FLAGS
 
     def setData(self, index, value, role):
-        if role == QtCore.Qt.ItemDataRole.EditRole:
+        if role == Qt.ItemDataRole.EditRole:
             self._col._qroi_list[index.row()].set_label(value)
             return True
