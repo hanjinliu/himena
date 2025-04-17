@@ -70,6 +70,11 @@ QPushButton#profileButton:pressed {
     background-color: #[highlight_strong];
 }
 
+_QSliderButton {
+    background-color: #[background];
+    padding: 1px;
+    margin: 0px;
+}
 
 QCollapsible > QPushButton {
     color: #[foreground];
@@ -136,13 +141,13 @@ QScrollBar {
 QScrollBar:horizontal {
     min-height: 6px;
     max-height: 10px;
-    margin: 0px 8px;
+    margin: 0px 2px;
 }
 
 QScrollBar:vertical {
     min-width: 6px;
     max-width: 10px;
-    margin: 8px 0px;
+    margin: 2px 0px;
 }
 
 QScrollBar::handle {

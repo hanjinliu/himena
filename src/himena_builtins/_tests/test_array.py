@@ -69,11 +69,13 @@ def test_copy_and_paste(qtbot: QtBot):
         # test copy and paste
         tester.widget.selection_model.set_ranges([(slice(2, 3), slice(0, 1))])
         tester.widget._table._copy_data()
+        QtW.QApplication.processEvents()
         assert QtW.QApplication.clipboard().text() == "4"
         tester.widget.selection_model.set_ranges([(slice(0, 2), slice(1, 3))])
         tester.widget._table._paste_from_clipboard()
         assert_array_equal(tester.to_model().value[1, 2, 0:2, 1:3], 4)
         QtW.QApplication.clipboard().setText("1\t2\n3\t4")
+        QtW.QApplication.processEvents()
         tester.widget.selection_model.set_ranges([(slice(0, 1), slice(0, 1))])
         tester.widget._table._paste_from_clipboard()
         assert_array_equal(tester.to_model().value[1, 2, 0:2, 0:2], [[1, 2], [3, 4]])

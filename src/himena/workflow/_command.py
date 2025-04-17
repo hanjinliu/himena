@@ -73,13 +73,20 @@ def parse_parameter(name: str, value: Any) -> "tuple[CommandParameterBase, Workf
         wf = model.workflow
         param = WindowParameter(name=name, value=wf.last_id(), model_type=model.type)
     elif isinstance(value, list) and all(
-        isinstance(each, (WidgetDataModel, SubWindow)) for each in value
+        isinstance(each, WidgetDataModel) for each in value
     ):
         value_ = cast(list[WidgetDataModel], value)
         param = ListOfModelParameter(
             name=name, value=[each.workflow.last_id() for each in value_]
         )
         wf = Workflow.concat([each.workflow for each in value_])
+    elif isinstance(value, list) and all(isinstance(each, SubWindow) for each in value):
+        value_ = cast(list[SubWindow], value)
+        windows = [each.to_model() for each in value_]
+        param = ListOfModelParameter(
+            name=name, value=[each.workflow.last_id() for each in windows]
+        )
+        wf = Workflow.concat([each.workflow for each in windows])
     else:
         param = UserParameter(name=name, value=value)
         wf = Workflow()
