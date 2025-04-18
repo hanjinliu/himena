@@ -28,6 +28,7 @@ def new_text(ui: MainWindow) -> WidgetDataModel:
         extension_default=".txt",
         title=f"Untitled-{nwin}",
         save_behavior_override=NoNeedToSave(),
+        metadata=TextMeta(),
     )
 
 

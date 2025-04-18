@@ -3,8 +3,8 @@ from pathlib import Path
 
 from himena import MainWindow, anchor
 from himena.consts import StandardType
-from himena.types import WindowRect
-from himena.standards.model_meta import DataFrameMeta, ImageMeta
+from himena.types import WidgetDataModel, WindowRect
+from himena.standards.model_meta import DataFrameMeta, ImageMeta, TextMeta
 from himena.standards.roi import RectangleRoi
 from himena_builtins.qt.text import QTextEdit, QRichTextEdit
 from himena_builtins.qt.image import QImageView
@@ -122,7 +122,7 @@ def test_session_window_input(himena_ui: MainWindow):
     exec_workflow(himena_ui.current_model)
     assert himena_ui.current_window.model_type() == StandardType.PLOT
 
-def test_session_with_no_param_command(make_himena_ui: Callable[..., MainWindow], tmpdir, sample_dir):
+def test_session_with_no_param_command(make_himena_ui: Callable[..., MainWindow], tmpdir):
     himena_ui = make_himena_ui("mock")
     himena_ui.exec_action("builtins:new-text")
     himena_ui.exec_action("builtins:general:show-statistics")
@@ -134,3 +134,29 @@ def test_session_with_no_param_command(make_himena_ui: Callable[..., MainWindow]
     himena_ui.load_session(Path(tmpdir) / "test.session.zip")
     assert len(himena_ui.tabs) == 1
     assert len(himena_ui.tabs[0]) == 2
+
+
+def test_session_calculate_non_savable(make_himena_ui: Callable[..., MainWindow], tmpdir):
+    himena_ui = make_himena_ui("mock")
+    _command_id = "test:temp-func"
+
+    @himena_ui.register_function(command_id=_command_id)
+    def _temp_func(model: WidgetDataModel) -> WidgetDataModel:
+        # convert a model to a non-savable object
+        return WidgetDataModel(value=object(), type="unknown-object", metadata=model.metadata)
+
+    himena_ui.exec_action("builtins:new-text")
+    assert himena_ui.current_model.metadata is not None
+    himena_ui.exec_action(_command_id)
+    # this session will be saved, because the non-savable object will be calculated.
+    himena_ui.save_session(
+        Path(tmpdir) / "test.session.zip",
+        allow_calculate=["test:temp-func"]
+    )
+
+    himena_ui.clear()
+    himena_ui.load_session(Path(tmpdir) / "test.session.zip")
+    assert len(himena_ui.tabs) == 1
+    assert len(himena_ui.tabs[0]) == 2
+    assert himena_ui.tabs[0][1].model_type() == "unknown-object"
+    assert isinstance(himena_ui.tabs[0][1].to_model().metadata, TextMeta)

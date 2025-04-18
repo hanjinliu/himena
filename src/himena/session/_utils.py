@@ -52,13 +52,11 @@ def write_metadata_by_title(
     win: SubWindow,
     dirname: str | Path,
     prefix: str = "",
-) -> Path:
+) -> None:
+    """Write model metadata to the default place."""
     model = win.to_model()
     dirname = Path(dirname)
-    save_path = _get_save_path(model, dirname, prefix)
-    i_win = int(save_path.name.split("_", 1)[0])
-    _save_metadata(model.metadata, dirname, f"{i_win}_{win.title}")
-    return save_path
+    return _save_metadata(model.metadata, dirname, f"{prefix}_{win.title}")
 
 
 def _save_metadata(metadata, dirname: Path, title: str):
