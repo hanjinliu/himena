@@ -3,7 +3,7 @@ from __future__ import annotations
 from matplotlib.figure import Figure
 from matplotlib.backends import backend_qtagg
 import matplotlib.pyplot as plt
-from qtpy import QtWidgets as QtW, QtGui
+from qtpy import QtWidgets as QtW, QtGui, QtCore
 
 from himena.plugins import validate_protocol
 from himena.types import DropResult, Size, WidgetDataModel
@@ -29,6 +29,8 @@ class QMatplotlibCanvasBase(QtW.QWidget):
         self._plot_models: hplt.BaseLayoutModel | None = None
         self._modified = False
         self._cfg = MatplotlibCanvasConfigs()
+        self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self._show_context_menu)
 
     @property
     def figure(self) -> Figure:
@@ -82,6 +84,30 @@ class QMatplotlibCanvasBase(QtW.QWidget):
         self._canvas = FigureCanvasQTAgg()
         self.layout().addWidget(self._canvas)
         self._toolbar = self._prep_toolbar(QNavigationToolBar)
+
+    def _make_context_menu(self) -> QtW.QMenu:
+        menu = QtW.QMenu(self)
+        menu.setTitle("Matplotlib Canvas")
+        action = menu.addAction("Reset original view")
+        action.triggered.connect(self._toolbar.home)
+        action = menu.addAction("Back to previous view")
+        action.triggered.connect(self._toolbar.back)
+        action = menu.addAction("Forward to next view")
+        action.triggered.connect(self._toolbar.forward)
+        menu.addSeparator()
+        action = menu.addAction("Copy to clipboard")
+        action.triggered.connect(self._copy_canvas)
+        action = menu.addAction("Save figure")
+        action.triggered.connect(self._toolbar.save_figure)
+        return menu
+
+    def _show_context_menu(self, pos: QtCore.QPoint):
+        self._make_context_menu().exec(self.mapToGlobal(pos))
+
+    def _copy_canvas(self):
+        clipboard = QtGui.QGuiApplication.clipboard()
+        image = self._canvas.grab()
+        clipboard.setPixmap(image, QtGui.QClipboard.Mode.Clipboard)
 
 
 class QMatplotlibCanvas(QMatplotlibCanvasBase):

@@ -12,6 +12,8 @@ def test_matplotlib_canvas(qtbot: QtBot):
     canvas.update_model(create_model(fig, type=StandardType.PLOT))
     with WidgetTester(canvas) as tester:
         tester.to_model()
+    canvas._make_context_menu()
+    canvas._copy_canvas()
     plt.close(fig)
 
 def test_model_matplotlib_canvas_single(qtbot: QtBot):
@@ -22,6 +24,8 @@ def test_model_matplotlib_canvas_single(qtbot: QtBot):
     with WidgetTester(canvas) as tester:
         tester.update_model(value=fig, type=StandardType.PLOT)
         tester.cycle_model()
+    canvas._make_context_menu()
+    canvas._copy_canvas()
 
 def test_model_matplotlib_canvas_row(qtbot: QtBot):
     fig = hplt.row(2)
