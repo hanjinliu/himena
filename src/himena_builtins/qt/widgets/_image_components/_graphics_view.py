@@ -171,6 +171,7 @@ class QImageGraphicsView(QBaseGraphicsView):
         self.geometry_changed.connect(self._scale_bar_widget.update_rect)
         self._stick_to_grid = False
         self.array_updated.connect(self._on_array_updated)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
 
     def add_image_layer(self, additive: bool = False):
         self._image_widgets.append(
@@ -526,6 +527,7 @@ class QImageGraphicsView(QBaseGraphicsView):
                 or self.scene().grabSource() is not self
             ):
                 return super().mouseMoveEvent(event)
+
         self._mouse_event_handler.moved(event)
         return super().mouseMoveEvent(event)
 
@@ -576,12 +578,12 @@ class QImageGraphicsView(QBaseGraphicsView):
             self._qroi_labels.update()
             self.roi_added.emit(item)
 
-    def standard_key_press(self, _key: Qt.Key):
+    def standard_key_press(self, _key: Qt.Key, shift: bool = False):
         if _key == Qt.Key.Key_Space:
             self._last_mode_before_key_hold = self.mode()
             self.set_mode(MouseMode.PAN_ZOOM)
         elif _key == Qt.Key.Key_R:
-            if self.mode() is MouseMode.ROI_RECTANGLE:
+            if shift:
                 self.switch_mode(MouseMode.ROI_ROTATED_RECTANGLE)
             else:
                 self.switch_mode(MouseMode.ROI_RECTANGLE)
@@ -589,12 +591,12 @@ class QImageGraphicsView(QBaseGraphicsView):
             self.switch_mode(MouseMode.ROI_ELLIPSE)
         elif _key == Qt.Key.Key_P:
             # switch similar modes in turn
-            if self.mode() is MouseMode.ROI_POINT:
+            if shift:
                 self.switch_mode(MouseMode.ROI_POINTS)
             else:
                 self.switch_mode(MouseMode.ROI_POINT)
         elif _key == Qt.Key.Key_L:
-            if self.mode() is MouseMode.ROI_LINE:
+            if shift:
                 self.switch_mode(MouseMode.ROI_SEGMENTED_LINE)
             else:
                 self.switch_mode(MouseMode.ROI_LINE)

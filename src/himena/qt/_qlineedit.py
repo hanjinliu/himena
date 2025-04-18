@@ -103,7 +103,7 @@ class QValuedLineEdit(QtW.QLineEdit):
             elif a0.angleDelta().y() < 0:
                 self.stepDown()
                 a0.accept()
-        return super().wheelEvent(a0)
+        # NOTE: should not call super().wheelEvent(a0), as it will scroll the parent.
 
     def keyPressEvent(self, a0: QtGui.QKeyEvent | None) -> None:
         if a0.modifiers() == Qt.KeyboardModifier.NoModifier:

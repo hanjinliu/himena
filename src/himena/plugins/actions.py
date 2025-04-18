@@ -272,6 +272,7 @@ def register_function(
     run_async: bool = False,
     command_id: str | None = None,
     icon: str | None = None,
+    palette: bool = True,
 ) -> None: ...
 
 
@@ -287,6 +288,7 @@ def register_function(
     run_async: bool = False,
     command_id: str | None = None,
     icon: str | None = None,
+    palette: bool = True,
 ) -> _F: ...
 
 
@@ -300,7 +302,8 @@ def register_function(
     keybindings=None,
     run_async=False,
     command_id=None,
-    icon: str | None = None,
+    icon=None,
+    palette=True,
 ):
     """Register a function as a callback of a plugin action.
 
@@ -328,6 +331,8 @@ def register_function(
         Command ID. If not given, the function qualname will be used.
     icon : str, optional
         Iconify icon key to use for the action.
+    palette : bool, default True
+        If true, the action will be added to the command palette.
     """
 
     def _inner(f: _F) -> _F:
@@ -341,6 +346,7 @@ def register_function(
             run_async=run_async,
             command_id=command_id,
             icon=icon,
+            palette=palette,
         )
         AppActionRegistry.instance().add_action(action)
         return f
@@ -348,8 +354,8 @@ def register_function(
     return _inner if func is None else _inner(func)
 
 
-register_hidden_function = partial(register_function, menus=[])
-"""A shorthand for `register_function(menus=[])`."""
+register_hidden_function = partial(register_function, menus=[], palette=False)
+"""A shorthand for `register_function(menus=[], palette=False)`."""
 
 
 def make_action_for_function(
@@ -363,6 +369,7 @@ def make_action_for_function(
     run_async: bool = False,
     command_id: str | None = None,
     icon: str | None = None,
+    palette: bool = True,
 ):
     types, enablement, menus = _norm_register_function_args(types, enablement, menus)
     kbs = normalize_keybindings(keybindings)
@@ -401,6 +408,7 @@ def make_action_for_function(
         keybindings=kbs,
         icon=icon,
         icon_visible_in_menu=False,
+        palette=palette,
     )
 
 

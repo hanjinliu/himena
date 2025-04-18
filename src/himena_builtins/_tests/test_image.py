@@ -48,16 +48,30 @@ def test_image_view(qtbot: QtBot):
         image_view._control._histogram._line_low._show_value_label()
 
         # switch modes
-        qtbot.keyClick(image_view._img_view, Qt.Key.Key_Z)
-        qtbot.keyPress(image_view._img_view, Qt.Key.Key_Space)
-        qtbot.keyRelease(image_view._img_view, Qt.Key.Key_Space)
-        qtbot.keyClick(image_view._img_view, Qt.Key.Key_L)
-        qtbot.keyClick(image_view._img_view, Qt.Key.Key_L)
-        qtbot.keyClick(image_view._img_view, Qt.Key.Key_P)
-        qtbot.keyClick(image_view._img_view, Qt.Key.Key_P)
-        qtbot.keyClick(image_view._img_view, Qt.Key.Key_R)
-        qtbot.keyClick(image_view._img_view, Qt.Key.Key_E)
-        qtbot.keyClick(image_view._img_view, Qt.Key.Key_G)
+        _shift = Qt.KeyboardModifier.ShiftModifier
+        _view = image_view._img_view
+        qtbot.keyClick(_view, Qt.Key.Key_Z)
+        assert _view._mode == _view.Mode.PAN_ZOOM
+        qtbot.keyClick(_view, Qt.Key.Key_L)
+        assert _view._mode == _view.Mode.ROI_LINE
+        qtbot.keyPress(_view, Qt.Key.Key_Space)
+        assert _view._mode == _view.Mode.PAN_ZOOM
+        qtbot.keyRelease(_view, Qt.Key.Key_Space)
+        assert _view._mode == _view.Mode.ROI_LINE
+        qtbot.keyClick(_view, Qt.Key.Key_L, modifier=_shift)
+        assert _view._mode == _view.Mode.ROI_SEGMENTED_LINE
+        qtbot.keyClick(_view, Qt.Key.Key_P)
+        assert _view._mode == _view.Mode.ROI_POINT
+        qtbot.keyClick(_view, Qt.Key.Key_P, modifier=_shift)
+        assert _view._mode == _view.Mode.ROI_POINTS
+        qtbot.keyClick(_view, Qt.Key.Key_R)
+        assert _view._mode == _view.Mode.ROI_RECTANGLE
+        qtbot.keyClick(_view, Qt.Key.Key_R, modifier=_shift)
+        assert _view._mode == _view.Mode.ROI_ROTATED_RECTANGLE
+        qtbot.keyClick(_view, Qt.Key.Key_E)
+        assert _view._mode == _view.Mode.ROI_ELLIPSE
+        qtbot.keyClick(_view, Qt.Key.Key_G)
+        assert _view._mode == _view.Mode.ROI_POLYGON
 
         # click sliders
         slider = image_view._dims_slider._sliders[0]
@@ -359,6 +373,11 @@ def test_image_view_roi_actions(qtbot: QtBot):
         assert image_view._roi_col.count() == 3
         image_view._roi_col.flatten_roi(0)
         image_view._roi_col.flatten_roi_along(1, axis=1)
+        # check context menu on flattened ROI
+        list_view = image_view._roi_col._list_view
+
+        list_view._prep_context_menu(list_view.model().index(0, 0))
+        list_view._prep_context_menu(list_view.model().index(1, 0))
         image_view._roi_col.move_roi(2, (3, 0))
         meta = tester.to_model().metadata
         assert isinstance(meta, ImageMeta)
@@ -369,6 +388,21 @@ def test_image_view_roi_actions(qtbot: QtBot):
         assert len(container) == 2
         assert container[0].label == "t"
         assert container[1].label == "c"
+
+        idx0 = list_view.model().index(0, 0)
+        idx_invalid = list_view.model().index(10, 0)
+        for idx in [idx0, idx_invalid]:
+            list_view.model().data(idx, Qt.ItemDataRole.DisplayRole)
+            list_view.model().data(idx, Qt.ItemDataRole.EditRole)
+            list_view.model().data(idx, Qt.ItemDataRole.DecorationRole)
+            list_view.model().data(idx, Qt.ItemDataRole.FontRole)
+            list_view.model().data(idx, Qt.ItemDataRole.SizeHintRole)
+            list_view.model().data(idx, Qt.ItemDataRole.ToolTipRole)
+        list_view.model().setData(idx0, "new name", Qt.ItemDataRole.EditRole)
+        assert list_view.indexAt(QtCore.QPoint(10, 10)).isValid()
+        list_view._hover_event(QtCore.QPoint(10, 10))
+        assert not list_view.indexAt(QtCore.QPoint(10, 1000)).isValid()
+        list_view._hover_event(QtCore.QPoint(10, 1000))
 
 def test_constrast_hist(qtbot: QtBot):
     image_view = QImageView()

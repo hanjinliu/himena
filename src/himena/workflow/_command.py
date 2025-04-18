@@ -55,6 +55,8 @@ class ListOfModelParameter(CommandParameterBase):
     type: Literal["list"] = "list"
     value: list[uuid.UUID]
     """workflow IDs"""
+    is_window: bool = False
+    """True if the parameter is a list of windows."""
 
 
 def parse_parameter(name: str, value: Any) -> "tuple[CommandParameterBase, Workflow]":
@@ -82,11 +84,13 @@ def parse_parameter(name: str, value: Any) -> "tuple[CommandParameterBase, Workf
         wf = Workflow.concat([each.workflow for each in value_])
     elif isinstance(value, list) and all(isinstance(each, SubWindow) for each in value):
         value_ = cast(list[SubWindow], value)
-        windows = [each.to_model() for each in value_]
+        models = [each.to_model() for each in value_]
         param = ListOfModelParameter(
-            name=name, value=[each.workflow.last_id() for each in windows]
+            name=name,
+            value=[each.workflow.last_id() for each in models],
+            is_window=True,
         )
-        wf = Workflow.concat([each.workflow for each in windows])
+        wf = Workflow.concat([each.workflow for each in models])
     else:
         param = UserParameter(name=name, value=value)
         wf = Workflow()
@@ -119,6 +123,7 @@ class CommandExecution(WorkflowStep):
 
         for param in self.parameters or []:
             if isinstance(param, ModelParameter):
+                # TODO: check if WindowParameter is needed here.
                 yield param.value
             elif isinstance(param, ListOfModelParameter):
                 yield from param.value
@@ -153,9 +158,14 @@ class CommandExecution(WorkflowStep):
                 elif isinstance(_p, WindowParameter):
                     params[_p.name] = wf.filter(_p.value).window_for_id(_p.value)
                 elif isinstance(_p, ListOfModelParameter):
-                    params[_p.name] = [
-                        wf.filter(each).model_for_id(each) for each in _p.value
-                    ]
+                    if _p.is_window:
+                        params[_p.name] = [
+                            wf.filter(each).window_for_id(each) for each in _p.value
+                        ]
+                    else:
+                        params[_p.name] = [
+                            wf.filter(each).model_for_id(each) for each in _p.value
+                        ]
                 else:  # pragma: no cover
                     raise ValueError(
                         f"Unknown parameter type: {_p} (command ID: {self.command_id})"

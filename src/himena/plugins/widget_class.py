@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from types import MappingProxyType
 from typing import Callable, overload, TypeVar, TYPE_CHECKING
+import warnings
 from app_model.types import Action
 from himena._descriptors import NoNeedToSave
 from himena._utils import get_display_name, get_widget_class_id
@@ -79,19 +80,32 @@ def register_widget_class(type_, widget_class=None, priority=100, plugin_configs
         import himena.qt
 
         widget_id = get_widget_class_id(wcls)
+        is_multi_registration = False
         if existing_class := _WIDGET_ID_TO_WIDGET_CLASS.get(widget_id):
-            raise ValueError(
-                f"Widget class with ID {widget_id!r} already exists ({existing_class})."
-            )
+            if existing_class is wcls:
+                is_multi_registration = True
+            else:
+                raise ValueError(
+                    f"Widget class with ID {widget_id!r} already assigned for "
+                    f"{existing_class}; you must assign a unique ID for each class."
+                )
         _WIDGET_ID_TO_WIDGET_CLASS[widget_id] = wcls
         himena.qt.register_widget_class(type_, wcls, priority=priority)
         fn = OpenDataInFunction(type_, wcls)
         reg = AppActionRegistry.instance()
         reg.add_action(fn.to_action(), is_dynamic=True)
-        wcls.__himena_model_type__ = type_
+        if not is_multi_registration:
+            wcls.__himena_model_type__ = type_
 
         if plugin_configs:
             cfg_type = type(plugin_configs)
+            if widget_id in reg._plugin_default_configs:
+                warnings.warn(
+                    f"Plugin config for {widget_id!r} already registered; "
+                    f"overwriting with new config {plugin_configs}.",
+                    UserWarning,
+                    stacklevel=2,
+                )
             reg._plugin_default_configs[widget_id] = PluginConfigTuple(
                 get_display_name(wcls, sep=" ", class_id=False),
                 plugin_configs,
@@ -141,7 +155,6 @@ class OpenDataInFunction:
     def __init__(self, type_: str, widget_class: type):
         self._display_name = get_display_name(widget_class)
         self._plugin_id = get_widget_class_id(widget_class)
-        self._action_id = "open-in:" + self._plugin_id
         self._type = type_
         self._enablement = (
             # disable action if the model data type is different
@@ -157,7 +170,7 @@ class OpenDataInFunction:
 
     def to_action(self) -> Action:
         return Action(
-            id=self._action_id,
+            id=f"open-in:{self._plugin_id}:{self._type}",
             title=self._display_name,
             tooltip=f"Open this data in {self._display_name}",
             callback=self,
@@ -172,7 +185,6 @@ class PreviewDataInFunction:
     def __init__(self, type_: str, widget_class: type):
         self._display_name = get_display_name(widget_class)
         self._plugin_id = get_widget_class_id(widget_class)
-        self._action_id = "preview-in:" + self._plugin_id
         self._type = type_
 
     def __call__(self, win: SubWindow, ui: MainWindow):
@@ -187,7 +199,7 @@ class PreviewDataInFunction:
     def to_action(self) -> Action:
         tooltip = f"Preview this data in {self._display_name}"
         return Action(
-            id=self._action_id,
+            id=f"preview-in:{self._plugin_id}:{self._type}",
             title=self._display_name,
             tooltip=tooltip,
             callback=self,

@@ -14,6 +14,7 @@ from typing import (
 )
 from collections.abc import Sequence
 import uuid
+import math
 import weakref
 
 from psygnal import Signal
@@ -609,12 +610,12 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
 def _norm_nrows_ncols(nrows: int | None, ncols: int | None, n: int) -> tuple[int, int]:
     if nrows is None:
         if ncols is None:
-            nrows = int(n**0.5)
-            ncols = int(n / nrows)
+            nrows = int(math.sqrt(n))
+            ncols = int(math.ceil(n / nrows))
         else:
-            nrows = int(n / ncols)
+            nrows = int(math.ceil(n / ncols))
     elif ncols is None:
-        ncols = int(n / nrows)
+        ncols = int(math.ceil(n / nrows))
     return nrows, ncols
 
 

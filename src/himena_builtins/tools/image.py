@@ -647,6 +647,18 @@ def stack_images(ui: MainWindow) -> Parametric:
         axis_name: str,
         axis_index: int | None = None,
     ) -> WidgetDataModel:
+        """Stack images.
+
+        Parameters
+        ----------
+        images : list[SubWindow]
+            List of images to stack.
+        axis_name : str
+            Name of the new axis.
+        axis_index : int, optional
+            If provided, the index of the new axis in the stacked image. If not, new
+            axis will be inserted to the most natural position.
+        """
         if axis_name.title() in ("C", "Channel"):
             return run_merge_channels(images)
         if len(images) < 2:
