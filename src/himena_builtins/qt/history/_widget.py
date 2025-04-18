@@ -193,14 +193,18 @@ class QCommandIndexWidget(QtW.QWidget):
             self._btn_copy.setCursor(Qt.CursorShape.ArrowCursor)
 
     def enterEvent(self, event: QtCore.QEvent) -> None:
+        self._enter_event()
+        return super().enterEvent(event)
+
+    def _enter_event(self):
         listwidget = self._listwidget_ref()
         if listwidget is None:
-            return super().enterEvent(event)
+            return
         ui = listwidget.model()._ui_ref()
         index = listwidget._find_index_widget(self)
         action = listwidget.model()._action_at(index.row())
         if ui is None or action is None:
-            return super().enterEvent(event)
+            return
         # check enablement
         if action.enablement is None:
             enabled = True
@@ -208,7 +212,7 @@ class QCommandIndexWidget(QtW.QWidget):
             ctx = ui._ctx_keys.dict()
             enabled = action.enablement.eval(ctx)
         self.set_button_visible(enabled)
-        return super().enterEvent(event)
+        return
 
     def leaveEvent(self, event: QtCore.QEvent) -> None:
         self.set_button_visible(False)
