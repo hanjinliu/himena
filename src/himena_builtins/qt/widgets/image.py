@@ -538,10 +538,10 @@ class QImageViewBase(QtW.QSplitter):
         _mods = event.modifiers()
         _key = event.key()
         view = self._img_view
-        if _mods == Qt.KeyboardModifier.NoModifier:
-            view.standard_key_press(_key)
-        elif _mods == Qt.KeyboardModifier.ControlModifier:
+        if _mods & Qt.KeyboardModifier.ControlModifier:
             view.standard_ctrl_key_press(_key)
+        else:
+            view.standard_key_press(_key, _mods & Qt.KeyboardModifier.ShiftModifier)
         return None
 
     def keyReleaseEvent(self, event: QtGui.QKeyEvent | None) -> None:

@@ -500,20 +500,22 @@ class QRoiListView(QtW.QListView):
 
     def mouseMoveEvent(self, e):
         if e.button() == Qt.MouseButton.NoButton:
-            # hover
-            index = self.indexAt(e.pos())
-            if index.isValid():
-                self.setCursor(Qt.CursorShape.PointingHandCursor)
-                index_rect = self.rectForIndex(index)
-                top_right = index_rect.topRight()
-                top_right.setX(top_right.x() - 14)
-                self._hover_drag_indicator.move(top_right)
-                self._hover_drag_indicator.show()
-                self._indicator_index = index.row()
-            else:
-                self.setCursor(Qt.CursorShape.ArrowCursor)
-                self._hover_drag_indicator.hide()
+            self._hover_event(e.pos())
         return super().mouseMoveEvent(e)
+
+    def _hover_event(self, pos: QtCore.QPoint):
+        index = self.indexAt(pos)
+        if index.isValid():
+            self.setCursor(Qt.CursorShape.PointingHandCursor)
+            index_rect = self.rectForIndex(index)
+            top_right = index_rect.topRight()
+            top_right.setX(top_right.x() - 14)
+            self._hover_drag_indicator.move(top_right)
+            self._hover_drag_indicator.show()
+            self._indicator_index = index.row()
+        else:
+            self.setCursor(Qt.CursorShape.ArrowCursor)
+            self._hover_drag_indicator.hide()
 
     def leaveEvent(self, a0):
         self._hover_drag_indicator.hide()

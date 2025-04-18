@@ -307,6 +307,9 @@ def test_register_widget(himena_ui: MainWindow):
     win2 = himena_ui.add_data_model(model)
     assert type(win2.widget) is QCustomTextView
 
+    # test multiple registration
+    register_widget_class("text.abcde", QCustomTextView)
+
 def test_register_folder(himena_ui: MainWindow, sample_dir: Path):
     from himena.plugins import register_reader_plugin
 
@@ -433,7 +436,7 @@ def test_save_behavior(himena_ui: MainWindow, tmpdir):
     assert isinstance(win3.save_behavior, SaveToPath)
 
     himena_ui.current_window = win3
-    himena_ui.exec_action("open-in:builtins:QTextEdit")
+    himena_ui.exec_action("open-in:builtins:QTextEdit:text")
     win3 = himena_ui.current_window
     assert isinstance(win3.save_behavior, NoNeedToSave)
 
