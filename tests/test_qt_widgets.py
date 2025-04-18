@@ -40,7 +40,11 @@ def test_subwindow_interactions(himena_ui: MainWindow, qtbot: QtBot):
         QtCore.Qt.MouseButton.LeftButton,
         pos=qtitlebar.rect().center(),
     )
-
+    qtbot.mouseClick(
+        qtitlebar,
+        QtCore.Qt.MouseButton.MiddleButton,
+        pos=qtitlebar.rect().center(),
+    )
     qwin._title_bar._make_tooltip()
     qwin._title_bar._prep_model_menu()
     qwin._title_bar._prep_window_menu()

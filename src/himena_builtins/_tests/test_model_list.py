@@ -1,7 +1,9 @@
+import numpy as np
 from qtpy.QtCore import Qt, QPoint
 from pytestqt.qtbot import QtBot
-from himena import MainWindow, StandardType, WidgetDataModel
+from himena import MainWindow, StandardType, WidgetDataModel, _drag
 from himena.testing import WidgetTester
+from himena.standards import roi
 from himena_builtins.qt.basic import QModelStack
 
 def test_model_stack_widget(himena_ui: MainWindow, qtbot: QtBot):
@@ -51,3 +53,19 @@ def test_commands(himena_ui: MainWindow):
     himena_ui.exec_action("builtins:models:filter-model-list", with_params={"model_type": "text"})
     himena_ui.exec_action("builtins:models:filter-model-list", with_params={"title_contains": "X"})
     himena_ui.exec_action("builtins:models:compute-lazy-items")
+
+def test_events(himena_ui: MainWindow, qtbot: QtBot):
+    stack = QModelStack(himena_ui)
+    qtbot.addWidget(stack)
+    with WidgetTester(stack) as tester:
+        tester.update_model(
+            {"model-0": WidgetDataModel(value=np.zeros((2, 2)), type=StandardType.IMAGE),
+             "model-1": WidgetDataModel(value="a", type=StandardType.TEXT)}
+        )
+        tester.widget._model_list.setCurrentRow(0)
+        rois = roi.RoiListModel(items=[roi.LineRoi(start=(0, 0), end=(1, 1))])
+        _drag.drag(WidgetDataModel(value=rois, type=StandardType.ROIS))
+        stack._widget_stack._drop_event()
+        stack._model_list._hover_event(stack._model_list.rect().center())
+        stack._model_list._hover_event(stack._model_list.visualItemRect(stack._model_list.item(0)).center())
+        stack._model_list._hover_event(QPoint(1000, 1000))
