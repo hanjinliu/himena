@@ -56,6 +56,7 @@ def test_commands(himena_ui: MainWindow):
 
 def test_events(himena_ui: MainWindow, qtbot: QtBot):
     stack = QModelStack(himena_ui)
+    himena_ui.add_widget(stack)
     qtbot.addWidget(stack)
     with WidgetTester(stack) as tester:
         tester.update_model(
