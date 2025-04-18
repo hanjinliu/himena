@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.11">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.12">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.4af4bdda.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.2afb09e1.min.css">
       
       
 
@@ -1811,7 +1811,7 @@
 
 
 <h4 id="himena.plugins.register_hidden_function" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">register_hidden_function</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">register_function</span><span class="p">,</span> <span class="n">menus</span><span class="o">=</span><span class="p">[])</span></code>
+            <code class="highlight language-python"><span class="n">register_hidden_function</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">register_function</span><span class="p">,</span> <span class="n">menus</span><span class="o">=</span><span class="p">[],</span> <span class="n">palette</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
@@ -1822,7 +1822,7 @@
 
     <div class="doc doc-contents ">
 
-        <p>A shorthand for <code>register_function(menus=[])</code>.</p>
+        <p>A shorthand for <code>register_function(menus=[], palette=False)</code>.</p>
 
     </div>
 
@@ -3168,13 +3168,13 @@ def _(model: WidgetDataModel, path: Path) -&gt; bool:
 
             <details class="quote">
               <summary>Source code in <code>src\himena\plugins\actions.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">602</span>
-<span class="normal">603</span>
-<span class="normal">604</span>
-<span class="normal">605</span>
-<span class="normal">606</span>
-<span class="normal">607</span>
-<span class="normal">608</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">add_default_status_tip</span><span class="p">(</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">610</span>
+<span class="normal">611</span>
+<span class="normal">612</span>
+<span class="normal">613</span>
+<span class="normal">614</span>
+<span class="normal">615</span>
+<span class="normal">616</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">add_default_status_tip</span><span class="p">(</span>
     <span class="n">short</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">long</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -3926,15 +3926,7 @@ conventions.</p>
 
             <details class="quote">
               <summary>Source code in <code>src\himena\plugins\actions.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">523</span>
-<span class="normal">524</span>
-<span class="normal">525</span>
-<span class="normal">526</span>
-<span class="normal">527</span>
-<span class="normal">528</span>
-<span class="normal">529</span>
-<span class="normal">530</span>
-<span class="normal">531</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">531</span>
 <span class="normal">532</span>
 <span class="normal">533</span>
 <span class="normal">534</span>
@@ -3957,7 +3949,15 @@ conventions.</p>
 <span class="normal">551</span>
 <span class="normal">552</span>
 <span class="normal">553</span>
-<span class="normal">554</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_conversion_rule</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="normal">554</span>
+<span class="normal">555</span>
+<span class="normal">556</span>
+<span class="normal">557</span>
+<span class="normal">558</span>
+<span class="normal">559</span>
+<span class="normal">560</span>
+<span class="normal">561</span>
+<span class="normal">562</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_conversion_rule</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a function as a conversion rule.</span>
 
 <span class="sd">    A conversion rule will be added to the model menu under &quot;Convert &gt; ...&quot; submenu.</span>
@@ -4417,12 +4417,12 @@ objects will be used instead of the dict.</p>
 
 
 <h4 id="himena.plugins.register_function" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">register_function</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">menus</span><span class="o">=</span><span class="s1">&#39;plugins&#39;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">enablement</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">keybindings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">run_async</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">command_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">register_function</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">menus</span><span class="o">=</span><span class="s1">&#39;plugins&#39;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">enablement</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">keybindings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">run_async</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">command_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 </h4>
           <div class="doc-overloads">
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">register_function</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">menus</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;plugins&#39;</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">types</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">enablement</span><span class="p">:</span> <span class="n">BoolOp</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">keybindings</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">KeyBindingRule</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">run_async</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">command_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">icon</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
-</code></pre></div><div class="doc-signature highlight"><pre><span></span><code><span class="nf">register_function</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">_F</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">menus</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;plugins&#39;</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">types</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">enablement</span><span class="p">:</span> <span class="n">BoolOp</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">keybindings</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">KeyBindingRule</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">run_async</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">command_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">icon</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_F</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">register_function</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">menus</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;plugins&#39;</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">types</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">enablement</span><span class="p">:</span> <span class="n">BoolOp</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">keybindings</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">KeyBindingRule</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">run_async</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">command_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">icon</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">palette</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div><div class="doc-signature highlight"><pre><span></span><code><span class="nf">register_function</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">_F</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">menus</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;plugins&#39;</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">types</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">enablement</span><span class="p">:</span> <span class="n">BoolOp</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">keybindings</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">KeyBindingRule</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">run_async</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">command_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">icon</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">palette</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_F</span>
 </code></pre></div>          </div>
 
 
@@ -4573,15 +4573,29 @@ updates the GUI, running it asynchronously may cause issues.</p>
                   <code>None</code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>palette</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If true, the action will be added to the command palette.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
 
             <details class="quote">
               <summary>Source code in <code>src\himena\plugins\actions.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">293</span>
-<span class="normal">294</span>
-<span class="normal">295</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">295</span>
 <span class="normal">296</span>
 <span class="normal">297</span>
 <span class="normal">298</span>
@@ -4634,7 +4648,13 @@ updates the GUI, running it asynchronously may cause issues.</p>
 <span class="normal">345</span>
 <span class="normal">346</span>
 <span class="normal">347</span>
-<span class="normal">348</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_function</span><span class="p">(</span>
+<span class="normal">348</span>
+<span class="normal">349</span>
+<span class="normal">350</span>
+<span class="normal">351</span>
+<span class="normal">352</span>
+<span class="normal">353</span>
+<span class="normal">354</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_function</span><span class="p">(</span>
     <span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">menus</span><span class="o">=</span><span class="s2">&quot;plugins&quot;</span><span class="p">,</span>
@@ -4644,7 +4664,8 @@ updates the GUI, running it asynchronously may cause issues.</p>
     <span class="n">keybindings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">run_async</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">command_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">icon</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">icon</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">palette</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a function as a callback of a plugin action.</span>
 
@@ -4672,6 +4693,8 @@ updates the GUI, running it asynchronously may cause issues.</p>
 <span class="sd">        Command ID. If not given, the function qualname will be used.</span>
 <span class="sd">    icon : str, optional</span>
 <span class="sd">        Iconify icon key to use for the action.</span>
+<span class="sd">    palette : bool, default True</span>
+<span class="sd">        If true, the action will be added to the command palette.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_inner</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">_F</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_F</span><span class="p">:</span>
@@ -4685,6 +4708,7 @@ updates the GUI, running it asynchronously may cause issues.</p>
             <span class="n">run_async</span><span class="o">=</span><span class="n">run_async</span><span class="p">,</span>
             <span class="n">command_id</span><span class="o">=</span><span class="n">command_id</span><span class="p">,</span>
             <span class="n">icon</span><span class="o">=</span><span class="n">icon</span><span class="p">,</span>
+            <span class="n">palette</span><span class="o">=</span><span class="n">palette</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">AppActionRegistry</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span><span class="o">.</span><span class="n">add_action</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">f</span>
@@ -4712,19 +4736,19 @@ updates the GUI, running it asynchronously may cause issues.</p>
 
             <details class="quote">
               <summary>Source code in <code>src\himena\plugins\actions.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">587</span>
-<span class="normal">588</span>
-<span class="normal">589</span>
-<span class="normal">590</span>
-<span class="normal">591</span>
-<span class="normal">592</span>
-<span class="normal">593</span>
-<span class="normal">594</span>
-<span class="normal">595</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">595</span>
 <span class="normal">596</span>
 <span class="normal">597</span>
 <span class="normal">598</span>
-<span class="normal">599</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_modification_tracker</span><span class="p">(</span>
+<span class="normal">599</span>
+<span class="normal">600</span>
+<span class="normal">601</span>
+<span class="normal">602</span>
+<span class="normal">603</span>
+<span class="normal">604</span>
+<span class="normal">605</span>
+<span class="normal">606</span>
+<span class="normal">607</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_modification_tracker</span><span class="p">(</span>
     <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">_T</span><span class="p">,</span> <span class="n">_T</span><span class="p">],</span> <span class="n">ReproduceArgs</span><span class="p">]],</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">_T</span><span class="p">,</span> <span class="n">_T</span><span class="p">],</span> <span class="n">ReproduceArgs</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a modification tracker.&quot;&quot;&quot;</span>
@@ -4759,26 +4783,26 @@ updates the GUI, running it asynchronously may cause issues.</p>
 
             <details class="quote">
               <summary>Source code in <code>src\himena\plugins\widget_class.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">116</span>
-<span class="normal">117</span>
-<span class="normal">118</span>
-<span class="normal">119</span>
-<span class="normal">120</span>
-<span class="normal">121</span>
-<span class="normal">122</span>
-<span class="normal">123</span>
-<span class="normal">124</span>
-<span class="normal">125</span>
-<span class="normal">126</span>
-<span class="normal">127</span>
-<span class="normal">128</span>
-<span class="normal">129</span>
-<span class="normal">130</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">130</span>
 <span class="normal">131</span>
 <span class="normal">132</span>
 <span class="normal">133</span>
 <span class="normal">134</span>
-<span class="normal">135</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_previewer_class</span><span class="p">(</span><span class="n">type_</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">widget_class</span><span class="p">:</span> <span class="nb">type</span><span class="p">):</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_previewer_class</span><span class="p">(</span><span class="n">type_</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">widget_class</span><span class="p">:</span> <span class="nb">type</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a widget class for previewing the given model type.&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">inner</span><span class="p">(</span><span class="n">wcls</span><span class="p">):</span>
@@ -5020,8 +5044,7 @@ functional.</p>
 
             <details class="quote">
               <summary>Source code in <code>src\himena\plugins\widget_class.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 44</span>
-<span class="normal"> 45</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 45</span>
 <span class="normal"> 46</span>
 <span class="normal"> 47</span>
 <span class="normal"> 48</span>
@@ -5078,7 +5101,21 @@ functional.</p>
 <span class="normal"> 99</span>
 <span class="normal">100</span>
 <span class="normal">101</span>
-<span class="normal">102</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_widget_class</span><span class="p">(</span><span class="n">type_</span><span class="p">,</span> <span class="n">widget_class</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">plugin_configs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_widget_class</span><span class="p">(</span><span class="n">type_</span><span class="p">,</span> <span class="n">widget_class</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">plugin_configs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a frontend widget class for the given model type.</span>
 
 <span class="sd">    The `__init__` method of the registered class must not take any argument. The class</span>
@@ -5116,19 +5153,32 @@ functional.</p>
         <span class="kn">import</span><span class="w"> </span><span class="nn">himena.qt</span>
 
         <span class="n">widget_id</span> <span class="o">=</span> <span class="n">get_widget_class_id</span><span class="p">(</span><span class="n">wcls</span><span class="p">)</span>
+        <span class="n">is_multi_registration</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">if</span> <span class="n">existing_class</span> <span class="o">:=</span> <span class="n">_WIDGET_ID_TO_WIDGET_CLASS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">widget_id</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Widget class with ID </span><span class="si">{</span><span class="n">widget_id</span><span class="si">!r}</span><span class="s2"> already exists (</span><span class="si">{</span><span class="n">existing_class</span><span class="si">}</span><span class="s2">).&quot;</span>
-            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">existing_class</span> <span class="ow">is</span> <span class="n">wcls</span><span class="p">:</span>
+                <span class="n">is_multi_registration</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Widget class with ID </span><span class="si">{</span><span class="n">widget_id</span><span class="si">!r}</span><span class="s2"> already assigned for &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">existing_class</span><span class="si">}</span><span class="s2">; you must assign a unique ID for each class.&quot;</span>
+                <span class="p">)</span>
         <span class="n">_WIDGET_ID_TO_WIDGET_CLASS</span><span class="p">[</span><span class="n">widget_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">wcls</span>
         <span class="n">himena</span><span class="o">.</span><span class="n">qt</span><span class="o">.</span><span class="n">register_widget_class</span><span class="p">(</span><span class="n">type_</span><span class="p">,</span> <span class="n">wcls</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="n">priority</span><span class="p">)</span>
         <span class="n">fn</span> <span class="o">=</span> <span class="n">OpenDataInFunction</span><span class="p">(</span><span class="n">type_</span><span class="p">,</span> <span class="n">wcls</span><span class="p">)</span>
         <span class="n">reg</span> <span class="o">=</span> <span class="n">AppActionRegistry</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span>
         <span class="n">reg</span><span class="o">.</span><span class="n">add_action</span><span class="p">(</span><span class="n">fn</span><span class="o">.</span><span class="n">to_action</span><span class="p">(),</span> <span class="n">is_dynamic</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">wcls</span><span class="o">.</span><span class="n">__himena_model_type__</span> <span class="o">=</span> <span class="n">type_</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_multi_registration</span><span class="p">:</span>
+            <span class="n">wcls</span><span class="o">.</span><span class="n">__himena_model_type__</span> <span class="o">=</span> <span class="n">type_</span>
 
         <span class="k">if</span> <span class="n">plugin_configs</span><span class="p">:</span>
             <span class="n">cfg_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">plugin_configs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">widget_id</span> <span class="ow">in</span> <span class="n">reg</span><span class="o">.</span><span class="n">_plugin_default_configs</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Plugin config for </span><span class="si">{</span><span class="n">widget_id</span><span class="si">!r}</span><span class="s2"> already registered; &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;overwriting with new config </span><span class="si">{</span><span class="n">plugin_configs</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
+                    <span class="ne">UserWarning</span><span class="p">,</span>
+                    <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                <span class="p">)</span>
             <span class="n">reg</span><span class="o">.</span><span class="n">_plugin_default_configs</span><span class="p">[</span><span class="n">widget_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">PluginConfigTuple</span><span class="p">(</span>
                 <span class="n">get_display_name</span><span class="p">(</span><span class="n">wcls</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">class_id</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
                 <span class="n">plugin_configs</span><span class="p">,</span>
@@ -5487,15 +5537,15 @@ be used unless users intentionally choose this plugin.</p>
 
             <details class="quote">
               <summary>Source code in <code>src\himena\plugins\widget_class.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">105</span>
-<span class="normal">106</span>
-<span class="normal">107</span>
-<span class="normal">108</span>
-<span class="normal">109</span>
-<span class="normal">110</span>
-<span class="normal">111</span>
-<span class="normal">112</span>
-<span class="normal">113</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">widget_classes</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">MappingProxyType</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">]:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">widget_classes</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">MappingProxyType</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the mapping of widget ID to widget class.&quot;&quot;&quot;</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">himena.qt.registry._api</span><span class="w"> </span><span class="kn">import</span> <span class="n">_APP_TYPE_TO_QWIDGET</span>
 
