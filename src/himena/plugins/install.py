@@ -6,17 +6,19 @@ from importlib import import_module
 from typing import TYPE_CHECKING
 from pathlib import Path
 from timeit import default_timer as timer
-from app_model import Application
 from app_model.types import KeyBindingRule
 from dataclasses import dataclass, field
 
 if TYPE_CHECKING:
     from himena.profile import AppProfile
+    from himena._app_model import HimenaApplication
 
 _LOGGER = logging.getLogger(__name__)
 
 
-def install_plugins(app: Application, plugins: list[str]) -> list[PluginInstallResult]:
+def install_plugins(
+    app: HimenaApplication, plugins: list[str]
+) -> list[PluginInstallResult]:
     """Install plugins to the application."""
     from himena.plugins import AppActionRegistry
     from himena.profile import load_app_profile
@@ -59,7 +61,10 @@ def install_plugins(app: Application, plugins: list[str]) -> list[PluginInstallR
         else:
             raise TypeError(f"Invalid plugin type: {type(name)}")
         _msec = (timer() - _time_0) * 1000
-        _LOGGER.info(f"Plugin {name} installed in {_msec:.3f} msec.")
+        if app.attributes.get("print_import_time"):
+            print(f"Plugin import time: {name}\t{_msec:.3f} msec")
+            if _msec > 750:
+                print("    !!! slow import !!!")
         results.append(PluginInstallResult(name, _msec, _exc))
     reg.install_to(app)
     reg._installed_plugins.extend(plugins)
@@ -72,7 +77,7 @@ def install_plugins(app: Application, plugins: list[str]) -> list[PluginInstallR
     return results
 
 
-def override_keybindings(app: Application, prof: AppProfile) -> None:
+def override_keybindings(app: HimenaApplication, prof: AppProfile) -> None:
     """Override keybindings in the application."""
     for ko in prof.keybinding_overrides:
         if kb := app.keybindings.get_keybinding(ko.command_id):

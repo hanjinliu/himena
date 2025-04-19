@@ -16,6 +16,7 @@ class HimenaCliNamespace(argparse.Namespace):
     uninstall_outdated: bool
     list_plugins: bool
     clear_plugin_configs: bool
+    import_time: bool
 
     def assert_args_not_given(self) -> None:
         if self.profile is not None or self.path is not None:
@@ -84,6 +85,10 @@ class HimenaArgumentParser(argparse.ArgumentParser):
         self.add_argument(
             "--clear-plugin-configs", action="store_true",
             help="Clear all the plugin configurations in the given profile."
+        )
+        self.add_argument(
+            "--import-time", action="store_true",
+            help="Print the import time of the plugins."
         )
         # fmt: on
 

@@ -23,6 +23,7 @@ def new_window(
     *,
     plugins: Sequence[str] | None = None,
     backend: str = "qt",
+    app_attributes: dict[str, Any] = {},
 ) -> MainWindow:
     """Create a new window with the specified profile and additional plugins."""
     from himena._app_model import get_model_app
@@ -44,6 +45,7 @@ def new_window(
     else:
         raise TypeError("`profile` must be a str or an AppProfile object.")
     model_app = get_model_app(app_prof.name)
+    model_app.attributes.update(dict(app_attributes))
     plugins = [p for p in plugins if p not in app_prof.plugins]  # filter duplicates
     plugins = app_prof.plugins + plugins
     if plugins:
