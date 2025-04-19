@@ -143,8 +143,8 @@ class RotatedRectangleRoi(RotatedRoi2D):
 class EllipseRoi(Roi2D):
     """ROI that represents an ellipse."""
 
-    x: Scalar = Field(..., description="X-coordinate of the center.")
-    y: Scalar = Field(..., description="Y-coordinate of the center.")
+    x: Scalar = Field(..., description="X-coordinate of the left boundary.")
+    y: Scalar = Field(..., description="Y-coordinate of the top boundary.")
     width: Scalar = Field(..., description="Diameter along the x-axis.")
     height: Scalar = Field(..., description="Diameter along the y-axis.")
 
@@ -173,8 +173,11 @@ class EllipseRoi(Roi2D):
 
     def to_mask(self, shape: tuple[int, ...]) -> NDArray[np.bool_]:
         _yy, _xx = np.indices(shape[-2:])
-        comp_a = (_yy - self.y) / self.height * 2
-        comp_b = (_xx - self.x) / self.width * 2
+        cx, cy = self.center()
+        if self.height == 0 or self.width == 0:
+            return np.zeros(shape, dtype=bool)
+        comp_a = (_yy - cy) / self.height * 2
+        comp_b = (_xx - cx) / self.width * 2
         return comp_a**2 + comp_b**2 <= 1
 
 

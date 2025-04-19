@@ -41,17 +41,18 @@ def test_rotated_rectangle():
     assert r0.to_mask((5, 5)).sum() < 3
 
 def test_ellipse():
-    r0 = roi.EllipseRoi(x=0, y=0, width=1, height=2)
+    r0 = roi.EllipseRoi(x=0, y=0, width=6, height=8)
     r1 = r0.shifted(2, 3)
     assert r1.x == 2
     assert r1.y == 3
-    assert r1.width == 1
-    assert r1.height == 2
-    assert r0.center() == pytest.approx((0.5, 1), rel=1e-5)
-    assert r1.area() == pytest.approx(math.pi / 2, rel=1e-5)
-    assert r1.to_mask((5, 5)).sum() < 3
-    assert r0.eccentricity() == pytest.approx(0.8660254037844387, rel=1e-5)
-    assert r0.to_mask((5, 5)).sum() < 3
+    assert r1.width == 6
+    assert r1.height == 8
+    assert r0.center() == pytest.approx((3, 4), rel=1e-5)
+    assert r1.area() == pytest.approx(math.pi * 3 * 4, rel=1e-5)
+    assert r1.to_mask((20, 20)).sum() <= math.pi * 3 * 4
+    assert r0.eccentricity() == pytest.approx(math.sqrt(7 / 16), rel=1e-5)
+    assert r0.to_mask((20, 20)).sum() <= math.pi * 3 * 4
+    assert r0.to_mask((20, 20)).sum() == r1.to_mask((20, 20)).sum()
 
 def test_rotated_ellipse():
     r0 = roi.RotatedEllipseRoi(start=(1, 1), end=(4, 4), width=2)

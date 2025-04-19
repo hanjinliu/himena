@@ -223,9 +223,13 @@ class QTableBase(QtW.QTableView):
             if self.hasFocus():
                 self.scrollTo(index_dst)
         elif dst.row < 0:
+            v_value = self.verticalScrollBar().value()
             self.scrollTo(model.index(0, dst.column))
+            self.verticalScrollBar().setValue(v_value)
         elif dst.column < 0:
+            h_value = self.horizontalScrollBar().value()
             self.scrollTo(model.index(dst.row, 0))
+            self.horizontalScrollBar().setValue(h_value)
 
         # rect is the region that needs to be updated
         rect: QtCore.QRect = self.visualRect(index_dst)
