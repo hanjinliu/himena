@@ -689,10 +689,11 @@ class QSpreadsheet(QTableBase):
         ):
             index = self._selection_model.current_index
             qindex = self.model().index(index.row, index.column)
-            self.edit(qindex)
-            if editor := self.itemDelegate()._current_editor:
-                editor.setText(e.text())
-            return
+            if qindex.isValid():
+                self.edit(qindex)
+                if editor := self.itemDelegate()._current_editor_ref():
+                    editor.setText(e.text())
+                return
         return super().keyPressEvent(e)
 
     if TYPE_CHECKING:

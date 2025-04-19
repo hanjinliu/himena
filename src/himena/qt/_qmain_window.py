@@ -49,7 +49,6 @@ from himena.qt.registry import list_widget_class
 from himena.qt._utils import get_stylesheet_path, ArrayQImage, ndarray_to_qimage
 
 if TYPE_CHECKING:
-    from PyQt6 import QtWidgets as QtW
     from himena.widgets._main_window import SubWindow, MainWindow
     from himena.style import Theme
 

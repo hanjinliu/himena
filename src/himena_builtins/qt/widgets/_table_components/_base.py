@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Iterable, Iterator, Literal
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Iterator, Literal
+import weakref
 from qtpy import QtWidgets as QtW
 from qtpy import QtCore, QtGui
 from qtpy.QtCore import Qt
@@ -10,14 +11,11 @@ from himena.qt._qfinderwidget import QTableFinderWidget
 from ._selection_model import SelectionModel, Index
 from ._header import QVerticalHeaderView, QHorizontalHeaderView
 
-if TYPE_CHECKING:
-    from PyQt6 import QtWidgets as QtW
-
 
 class QItemDelegate(QtW.QStyledItemDelegate):
     def __init__(self, parent: QtCore.QObject | None = None) -> None:
         super().__init__(parent)
-        self._current_editor: QTableEditor | None = None
+        self._current_editor_ref: Callable[[], QTableEditor | None] = lambda: None
 
     def createEditor(
         self,
@@ -26,7 +24,7 @@ class QItemDelegate(QtW.QStyledItemDelegate):
         index: QtCore.QModelIndex,
     ) -> QTableEditor:
         editor = QTableEditor(parent)
-        self._current_editor = editor
+        self._current_editor_ref = weakref.ref(editor)
         editor.setText(index.data())
         return editor
 
@@ -326,8 +324,7 @@ class QTableBase(QtW.QTableView):
                 r, c = index.row(), index.column()
                 self._selection_model.jump_to(r, c)
             else:
-                # TODO: if outside the table is clicked, close the editor
-                pass
+                self.closePersistentEditor(index)
             self._mouse_track.last_button = "left"
         elif e.button() == Qt.MouseButton.RightButton:
             self._mouse_track.was_right_dragging = False
