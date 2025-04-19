@@ -70,6 +70,10 @@ def test_image_view(qtbot: QtBot):
         assert _view._mode == _view.Mode.ROI_ROTATED_RECTANGLE
         qtbot.keyClick(_view, Qt.Key.Key_E)
         assert _view._mode == _view.Mode.ROI_ELLIPSE
+        qtbot.keyClick(_view, Qt.Key.Key_E, modifier=_shift)
+        assert _view._mode == _view.Mode.ROI_ROTATED_ELLIPSE
+        qtbot.keyClick(_view, Qt.Key.Key_C)
+        assert _view._mode == _view.Mode.ROI_CIRCLE
         qtbot.keyClick(_view, Qt.Key.Key_G)
         assert _view._mode == _view.Mode.ROI_POLYGON
 
@@ -308,6 +312,13 @@ def test_image_view_select_roi(qtbot: QtBot):
         view.select_item_at(QtCore.QPointF(4, 4))
         assert isinstance(view._current_roi_item, _rois.QRotatedEllipseRoi)
         view.select_item_at(QtCore.QPointF(10, 0))
+        assert view._current_roi_item is None
+
+        # circle
+        view._current_roi_item = _rois.QCircleRoi(0, 0, 5)
+        view.select_item_at(QtCore.QPointF(1, 2))
+        assert isinstance(view._current_roi_item, _rois.QCircleRoi)
+        view.select_item_at(QtCore.QPointF(1, 5))
         assert view._current_roi_item is None
 
         image_view._roi_col._roi_labels_btn.click()
@@ -713,6 +724,11 @@ def test_handle_events(qtbot: QtBot):
     # path
     path_roi = _rois.QPolygonRoi([0, 1, 3, 0], [3, 5, 5, 3])
     handles.connect_roi(path_roi)
+    for h in handles._handles:
+        h.moved_by_mouse.emit(QtCore.QPointF(1, 1), QtCore.QPointF(0, 0))
+    # circle
+    circle_roi = _rois.QCircleRoi(0, 0, 5)
+    handles.connect_roi(circle_roi)
     for h in handles._handles:
         h.moved_by_mouse.emit(QtCore.QPointF(1, 1), QtCore.QPointF(0, 0))
     # point

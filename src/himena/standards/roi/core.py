@@ -9,6 +9,8 @@ from himena.types import Rect
 from himena.standards.roi._base import Roi1D, Roi2D
 from himena.standards.roi import _utils
 
+Scalar = Union[int, float]
+
 
 class SpanRoi(Roi1D):
     """ROI that represents a span in 1D space."""
@@ -51,14 +53,10 @@ class PointsRoi1D(Roi1D):
 class RectangleRoi(Roi2D):
     """ROI that represents a rectangle."""
 
-    x: Union[int, float] = Field(
-        ..., description="X-coordinate of the top-left corner."
-    )
-    y: Union[int, float] = Field(
-        ..., description="Y-coordinate of the top-left corner."
-    )
-    width: Union[int, float] = Field(..., description="Width of the rectangle.")
-    height: Union[int, float] = Field(..., description="Height of the rectangle.")
+    x: Scalar = Field(..., description="X-coordinate of the top-left corner.")
+    y: Scalar = Field(..., description="Y-coordinate of the top-left corner.")
+    width: Scalar = Field(..., description="Width of the rectangle.")
+    height: Scalar = Field(..., description="Height of the rectangle.")
 
     def shifted(self, dx: float, dy: float) -> RectangleRoi:
         """Return a new rectangle shifted by the given amount."""
@@ -145,10 +143,10 @@ class RotatedRectangleRoi(RotatedRoi2D):
 class EllipseRoi(Roi2D):
     """ROI that represents an ellipse."""
 
-    x: Union[int, float] = Field(..., description="X-coordinate of the center.")
-    y: Union[int, float] = Field(..., description="Y-coordinate of the center.")
-    width: Union[int, float] = Field(..., description="Diameter along the x-axis.")
-    height: Union[int, float] = Field(..., description="Diameter along the y-axis.")
+    x: Scalar = Field(..., description="X-coordinate of the center.")
+    y: Scalar = Field(..., description="Y-coordinate of the center.")
+    width: Scalar = Field(..., description="Diameter along the x-axis.")
+    height: Scalar = Field(..., description="Diameter along the y-axis.")
 
     def center(self) -> tuple[float, float]:
         return self.x + self.width / 2, self.y + self.height / 2
@@ -252,6 +250,37 @@ class PointsRoi2D(Roi2D):
         ys = np.asarray(self.ys).round().astype(int)
         arr[..., ys, xs] = True
         return arr
+
+
+class CircleRoi(Roi2D):
+    """ROI that represents a circle."""
+
+    x: Scalar = Field(..., description="X-coordinate of the center.")
+    y: Scalar = Field(..., description="Y-coordinate of the center.")
+    radius: Scalar = Field(..., description="Radius of the circle.")
+
+    def shifted(self, dx: float, dy: float) -> CircleRoi:
+        return self.model_copy(update={"x": self.x + dx, "y": self.y + dy})
+
+    def area(self) -> float:
+        return math.pi * self.radius**2
+
+    def circumference(self) -> float:
+        return 2 * math.pi * self.radius
+
+    def bbox(self) -> Rect[float]:
+        return Rect(
+            self.x - self.radius,
+            self.y - self.radius,
+            2 * self.radius,
+            2 * self.radius,
+        )
+
+    def to_mask(self, shape: tuple[int, ...]) -> NDArray[np.bool_]:
+        _yy, _xx = np.indices(shape[-2:])
+        comp_a = (_yy - self.y) / self.radius
+        comp_b = (_xx - self.x) / self.radius
+        return comp_a**2 + comp_b**2 <= 1
 
 
 class LineRoi(Roi2D):

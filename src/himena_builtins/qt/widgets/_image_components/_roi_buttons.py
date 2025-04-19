@@ -67,6 +67,7 @@ _THUMBNAIL_ROIS: dict[MouseMode, _roi_items.QRoi] = {
     MouseMode.ROI_ROTATED_ELLIPSE: _roi_items.QRotatedEllipseRoi(
         QtCore.QPointF(0, -2), QtCore.QPointF(4, 2), 3.6
     ),
+    MouseMode.ROI_CIRCLE: _roi_items.QCircleRoi(0, 0, 5),
     MouseMode.ROI_LINE: _roi_items.QLineRoi(0, 0, 10, 8),
     MouseMode.ROI_SEGMENTED_LINE: _roi_items.QSegmentedLineRoi(
         [0, 4, 8, 12], [10, 4, 6, 0]
@@ -126,6 +127,10 @@ class QRoiButtons(QtW.QWidget):
                 _THUMBNAIL_ROIS[MouseMode.ROI_POLYGON],
                 tooltip="Add polygons (G)",
             ),
+            MouseMode.ROI_CIRCLE: QRoiToolButton(
+                _THUMBNAIL_ROIS[MouseMode.ROI_CIRCLE],
+                tooltip="Add circles (C)",
+            ),
             MouseMode.ROI_POINT: QRoiToolButton(
                 _THUMBNAIL_ROIS[MouseMode.ROI_POINT],
                 tooltip="Add points (P)",
@@ -151,10 +156,11 @@ class QRoiButtons(QtW.QWidget):
         layout.addWidget(self._btn_map[MouseMode.ROI_LINE], 2, 0)
         layout.addWidget(self._btn_map[MouseMode.ROI_SEGMENTED_LINE], 2, 1)
         layout.addWidget(self._btn_map[MouseMode.ROI_POLYGON], 2, 2)
+        layout.addWidget(self._btn_map[MouseMode.ROI_CIRCLE], 2, 3)
         layout.addWidget(self._btn_map[MouseMode.ROI_POINT], 3, 0)
         layout.addWidget(self._btn_map[MouseMode.ROI_POINTS], 3, 1)
 
-        self.setFixedHeight(70)
+        self.setFixedHeight(84)
         self._btn_map[MouseMode.PAN_ZOOM].setChecked(True)
         self._img_view.mode_changed.connect(self.set_mode)
 

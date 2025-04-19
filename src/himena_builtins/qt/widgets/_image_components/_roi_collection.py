@@ -57,9 +57,18 @@ def _(r: roi.PolygonRoi) -> _roi_items.QRoi:
 
 @_roi_to_qroi.register
 def _(r: roi.RotatedRectangleRoi) -> _roi_items.QRoi:
+    return _rotated_roi_to_qroi(r, _roi_items.QRotatedRectangleRoi)
+
+
+@_roi_to_qroi.register
+def _(r: roi.RotatedEllipseRoi) -> _roi_items.QRoi:
+    return _rotated_roi_to_qroi(r, _roi_items.QRotatedEllipseRoi)
+
+
+def _rotated_roi_to_qroi(r: roi.RotatedRectangleRoi | roi.RotatedEllipseRoi, cls):
     xstart, ystart = r.start
     xend, yend = r.end
-    return _roi_items.QRotatedRectangleRoi(
+    return cls(
         QtCore.QPointF(xstart + 0.5, ystart + 0.5),
         QtCore.QPointF(xend + 0.5, yend + 0.5),
         width=r.width,
@@ -74,6 +83,11 @@ def _(r: roi.PointRoi2D) -> _roi_items.QRoi:
 @_roi_to_qroi.register
 def _(r: roi.PointsRoi2D) -> _roi_items.QRoi:
     return _roi_items.QPointsRoi(r.xs + 0.5, r.ys + 0.5)
+
+
+@_roi_to_qroi.register
+def _(r: roi.CircleRoi) -> _roi_items.QRoi:
+    return _roi_items.QCircleRoi(r.x + 0.5, r.y + 0.5, r.radius)
 
 
 def from_standard_roi(r: roi.RoiModel, pen: QtGui.QPen) -> _roi_items.QRoi:

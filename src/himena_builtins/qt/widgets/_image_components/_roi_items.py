@@ -696,6 +696,85 @@ class QPointsRoi(QPointRoiBase):
         return [(0.2, 0.2), (0.5, 0.8), (0.8, 0.6)]
 
 
+class QCircleRoi(QtW.QGraphicsEllipseItem, QRoi):
+    changed = Signal(QtCore.QRectF)
+
+    def __init__(self, x: float, y: float, radius: float, parent=None):
+        super().__init__(parent)
+        self._radius = radius
+        self.setRect(x - radius, y - radius, radius * 2, radius * 2)
+
+    def toRoi(self) -> roi.CircleRoi:
+        rect = self.rect()
+        return roi.CircleRoi(
+            x=rect.x() + rect.width() / 2 - 0.5,
+            y=rect.y() + rect.height() / 2 - 0.5,
+            radius=self._radius,
+            name=self.label(),
+        )
+
+    def setRect(self, *args):
+        super().setRect(*args)
+        self.changed.emit(self.rect())
+
+    def radius(self) -> float:
+        """Return the radius of the circle."""
+        return self._radius
+
+    def center(self) -> QtCore.QPointF:
+        """Return the center of the circle."""
+        rect = self.rect()
+        return QtCore.QPointF(rect.x() + rect.width() / 2, rect.y() + rect.height() / 2)
+
+    def setCenterAndRadius(self, center: tuple[float, float], radius: float):
+        """Set the radius of the circle."""
+        self._radius = radius
+        self.setRect(center[0] - radius, center[1] - radius, radius * 2, radius * 2)
+
+    def translate(self, dx: float, dy: float):
+        new_rect = self.rect()
+        new_rect.translate(dx, dy)
+        self.setRect(new_rect)
+
+    def makeThumbnail(self, pixmap: QtGui.QPixmap) -> QtGui.QPixmap:
+        painter = QtGui.QPainter(pixmap)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        painter.setPen(self.pen())
+        painter.setTransform(self._thumbnail_transform(pixmap.width(), pixmap.height()))
+        painter.drawEllipse(self.rect())
+        painter.end()
+        return pixmap
+
+    def copy(self) -> QCircleRoi:
+        return QCircleRoi(
+            self.rect().x() + self._radius,
+            self.rect().y() + self._radius,
+            self._radius,
+        ).withPen(self.pen())
+
+    def _roi_type(self) -> str:
+        return "circle"
+
+    def contains(self, point: QtCore.QPointF) -> bool:
+        """Check if the point is inside the circle."""
+        center = self.center()
+        dx = point.x() - center.x()
+        dy = point.y() - center.y()
+        return dx**2 + dy**2 <= self._radius**2
+
+    def short_description(self, xscale: float, yscale: float, unit: str) -> str:
+        rect = self.rect()
+        cx = rect.x() + rect.width() / 2
+        cy = rect.y() + rect.height() / 2
+        radius_px = self._radius
+        radius = radius_px * xscale
+        if not unit:
+            return f"center=[{cx:.1f}, {cy:.1f}], radius={radius_px:.1f}"
+        return (
+            f"center=[{cx:.1f}, {cy:.1f}], radius={radius_px:.1f} ({radius:.1f} {unit})"
+        )
+
+
 class MouseMode(Enum):
     """Mouse interaction modes for the image graphics view."""
 
@@ -707,6 +786,7 @@ class MouseMode(Enum):
     ROI_ROTATED_ELLIPSE = auto()
     ROI_POINT = auto()
     ROI_POINTS = auto()
+    ROI_CIRCLE = auto()
     ROI_POLYGON = auto()
     ROI_SEGMENTED_LINE = auto()
     ROI_LINE = auto()
@@ -725,6 +805,8 @@ class MouseMode(Enum):
             return cls.ROI_POINT
         if isinstance(roi, QPointsRoi):
             return cls.ROI_POINTS
+        if isinstance(roi, QCircleRoi):
+            return cls.ROI_CIRCLE
         if isinstance(roi, QPolygonRoi):
             return cls.ROI_POLYGON
         if isinstance(roi, QSegmentedLineRoi):
@@ -739,6 +821,7 @@ SIMPLE_ROI_MODES = frozenset({
     MouseMode.ROI_ROTATED_RECTANGLE,
     MouseMode.ROI_ELLIPSE,
     MouseMode.ROI_ROTATED_ELLIPSE,
+    MouseMode.ROI_CIRCLE,
     MouseMode.ROI_POINT,
     MouseMode.ROI_LINE
 })  # fmt: skip

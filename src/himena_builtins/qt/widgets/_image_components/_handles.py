@@ -12,6 +12,7 @@ from ._roi_items import (
     QPolygonRoi,
     QRectangleRoi,
     QEllipseRoi,
+    QCircleRoi,
     QRotatedRectangleRoi,
     QSegmentedLineRoi,
 )
@@ -328,6 +329,27 @@ class RoiSelectionHandles:
                 h.setCenter(ps[i])
             self._view.current_roi_updated.emit()
 
+    def connect_circle(self, circle: QCircleRoi):
+        self.clear_handles()
+        h_c = self.make_handle_at(circle.center())
+        h_br = self.make_handle_at(circle.rect().bottomRight(), self._another_color)
+
+        @h_c.moved_by_mouse.connect
+        def _c_moved(pos: QtCore.QPointF, last_pos):
+            circle.setCenterAndRadius((pos.x(), pos.y()), circle.radius())
+
+        @h_br.moved_by_mouse.connect
+        def _br_moved(pos: QtCore.QPointF, last_pos):
+            radius = abs(pos.x() - circle.center().x())
+            center = circle.center()
+            circle.setCenterAndRadius((center.x(), center.y()), radius)
+
+        @circle.changed.connect
+        def _circle_changed(rect: QtCore.QRectF):
+            h_c.setCenter(circle.center())
+            h_br.setCenter(circle.rect().bottomRight())
+            self._view.current_roi_updated.emit()
+
     def connect_rotated_rect(self, rect: QRotatedRectangleRoi):
         self.clear_handles()
         h_l = self.make_handle_at(rect.start())
@@ -376,6 +398,8 @@ class RoiSelectionHandles:
             self.connect_point(roi_item)
         elif isinstance(roi_item, QPointsRoi):
             self.connect_points(roi_item)
+        elif isinstance(roi_item, QCircleRoi):
+            self.connect_circle(roi_item)
         elif isinstance(roi_item, QRotatedRectangleRoi):
             self.connect_rotated_rect(roi_item)
         else:

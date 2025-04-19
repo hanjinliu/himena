@@ -11,15 +11,8 @@ from himena.types import Size
 
 from ._base import QBaseGraphicsView, QBaseGraphicsScene
 from ._roi_items import (
-    QPointRoi,
-    QPointsRoi,
-    QPolygonRoi,
     QRoi,
-    QLineRoi,
     QRectangleRoi,
-    QEllipseRoi,
-    QRotatedRectangleRoi,
-    QSegmentedLineRoi,
     ROI_MODES,
     MouseMode,
 )
@@ -290,6 +283,8 @@ class QImageGraphicsView(QBaseGraphicsView):
                 self._mouse_event_handler = _me.EllipseRoiMouseEvents(self)
             elif mode is MouseMode.ROI_ROTATED_ELLIPSE:
                 self._mouse_event_handler = _me.RotatedEllipseRoiMouseEvents(self)
+            elif mode is MouseMode.ROI_CIRCLE:
+                self._mouse_event_handler = _me.CircleRoiMouseEvents(self)
             elif mode is MouseMode.ROI_POLYGON:
                 self._mouse_event_handler = _me.PolygonRoiMouseEvents(self)
             elif mode is MouseMode.ROI_SEGMENTED_LINE:
@@ -444,18 +439,7 @@ class QImageGraphicsView(QBaseGraphicsView):
         if item is not self._current_roi_item:
             self.remove_current_item(reason="deselect")
         if item is not None:
-            if isinstance(item, QLineRoi):
-                self._selection_handles.connect_line(item)
-            elif isinstance(item, (QRectangleRoi, QEllipseRoi)):
-                self._selection_handles.connect_rect(item)
-            elif isinstance(item, (QPolygonRoi, QSegmentedLineRoi)):
-                self._selection_handles.connect_path(item)
-            elif isinstance(item, QPointsRoi):
-                self._selection_handles.connect_points(item)
-            elif isinstance(item, QPointRoi):
-                self._selection_handles.connect_point(item)
-            elif isinstance(item, QRotatedRectangleRoi):
-                self._selection_handles.connect_rotated_rect(item)
+            self._selection_handles.connect_roi(item)
             self._is_current_roi_item_not_registered = not is_registered_roi
         if isinstance(item, QRoi):
             self._current_roi_item = item
@@ -605,6 +589,8 @@ class QImageGraphicsView(QBaseGraphicsView):
                 self.switch_mode(MouseMode.ROI_SEGMENTED_LINE)
             else:
                 self.switch_mode(MouseMode.ROI_LINE)
+        elif _key == Qt.Key.Key_C:
+            self.switch_mode(MouseMode.ROI_CIRCLE)
         elif _key == Qt.Key.Key_G:
             self.switch_mode(MouseMode.ROI_POLYGON)
         elif _key == Qt.Key.Key_S:

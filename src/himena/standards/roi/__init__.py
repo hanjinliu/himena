@@ -21,6 +21,7 @@ from himena.standards.roi.core import (
     PointRoi2D,
     SegmentedLineRoi,
     PolygonRoi,
+    CircleRoi,
     LineRoi,
     SplineRoi,
 )
@@ -42,6 +43,7 @@ __all__ = [
     "PointRoi2D",
     "SegmentedLineRoi",
     "PolygonRoi",
+    "CircleRoi",
     "LineRoi",
     "SplineRoi",
     "RoiListModel",
