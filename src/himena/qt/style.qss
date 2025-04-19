@@ -3,6 +3,16 @@ QMainWindow {
     background-color: #[background];
 }
 
+QMainWindow::separator {
+    background-color: #[background_dim];
+    width: 3px;
+}
+
+QMainWindow::separator:hover {
+    background-color: #[highlight_dim];
+    width: 3px;
+}
+
 QWidget {
     background-color: #[background];
     color: #[foreground];

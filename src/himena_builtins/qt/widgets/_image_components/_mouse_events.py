@@ -11,9 +11,11 @@ from himena_builtins.qt.widgets._image_components._roi_items import (
     QPolygonRoi,
     QRoi,
     QLineRoi,
+    QCircleRoi,
     QRectangleRoi,
     QEllipseRoi,
     QRotatedRectangleRoi,
+    QRotatedEllipseRoi,
     QSegmentedLineRoi,
 )
 from himena_builtins.qt.widgets._image_components._handles import RoiSelectionHandles
@@ -110,7 +112,6 @@ class RoiMouseEvents(QtMouseEvent, Generic[_R]):
         assert isinstance(out, self.roi_type())
         return out
 
-    @staticmethod
     def roi_type(self) -> type[_R]:
         raise NotImplementedError
 
@@ -304,15 +305,30 @@ class RotatedRectangleRoiMouseEvents(_LineTypeRoiMouseEvents[QRotatedRectangleRo
         return QRotatedRectangleRoi
 
     def make_roi(self, x: float, y: float, pen: QtGui.QPen) -> QRotatedRectangleRoi:
-        roi = QRotatedRectangleRoi(QtCore.QPointF(x, y), QtCore.QPointF(x, y)).withPen(
-            pen
-        )
+        p0 = QtCore.QPointF(x, y)
+        roi = QRotatedRectangleRoi(p0, p0).withPen(pen)
         self._view.set_current_roi(roi)
         self.selection_handles.connect_rotated_rect(roi)
         return roi
 
     def _update_roi(self, start, current):
         if isinstance(item := self._view._current_roi_item, QRotatedRectangleRoi):
+            item.set_end(current)
+
+
+class RotatedEllipseRoiMouseEvents(_LineTypeRoiMouseEvents[QRotatedEllipseRoi]):
+    def roi_type(self) -> type[QRotatedEllipseRoi]:
+        return QRotatedEllipseRoi
+
+    def make_roi(self, x: float, y: float, pen: QtGui.QPen) -> QRotatedEllipseRoi:
+        p0 = QtCore.QPointF(x, y)
+        roi = QRotatedEllipseRoi(p0, p0).withPen(pen)
+        self._view.set_current_roi(roi)
+        self.selection_handles.connect_rotated_rect(roi)
+        return roi
+
+    def _update_roi(self, start, current):
+        if isinstance(item := self._view._current_roi_item, QRotatedEllipseRoi):
             item.set_end(current)
 
 
@@ -333,6 +349,24 @@ class RectangleRoiMouseEvents(_RectangleTypeRoiMouseEvents[QRectangleRoi]):
             width = abs(x1 - x0)
             height = abs(y1 - y0)
             item.setRect(min(x0, x1), min(y0, y1), width, height)
+
+
+class CircleRoiMouseEvents(_SingleDragRoiMouseEvents[QCircleRoi]):
+    def roi_type(self) -> type[QCircleRoi]:
+        return QCircleRoi
+
+    def make_roi(self, x: float, y: float, pen: QtGui.QPen) -> QCircleRoi:
+        roi = QCircleRoi(x, y, 0).withPen(pen)
+        self._view.set_current_roi(roi)
+        self.selection_handles.connect_circle(roi)
+        return roi
+
+    def _update_roi(self, start: QtCore.QPointF, current: QtCore.QPointF):
+        if isinstance(item := self._view._current_roi_item, QCircleRoi):
+            x0, y0 = self._view._pos_to_tuple(start)
+            x1, y1 = self._view._pos_to_tuple(current)
+            radius = min(abs(x1 - x0), abs(y1 - y0))
+            item.setCenterAndRadius((x0, y0), radius)
 
 
 class EllipseRoiMouseEvents(_RectangleTypeRoiMouseEvents[QEllipseRoi]):

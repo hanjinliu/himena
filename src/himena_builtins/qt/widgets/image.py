@@ -540,6 +540,8 @@ class QImageViewBase(QtW.QSplitter):
         view = self._img_view
         if _mods & Qt.KeyboardModifier.ControlModifier:
             view.standard_ctrl_key_press(_key)
+        elif _mods == Qt.KeyboardModifier.NoModifier and _key == Qt.Key.Key_AsciiTilde:
+            self.handle(0).toggle()
         else:
             view.standard_key_press(_key, _mods & Qt.KeyboardModifier.ShiftModifier)
         return None
@@ -587,7 +589,7 @@ def _select_image_rois(model: WidgetDataModel) -> Parametric:
 
 
 class QImageView(QImageViewBase):
-    """The default nD image viewer widget.
+    """The built-in n-D image viewer widget.
 
     ## Basic Usage
 
@@ -606,11 +608,15 @@ class QImageView(QImageViewBase):
 
     ## Keyboard Shortcuts
 
-    - `L`: Switch between Line ROI and Segmented Line ROI.
-    - `R`: Switch between Rectangle ROI and Rotated Rectangle ROI.
+    - `L`: Switch between Line ROI.
+    - `Shift+L`: Switch to Segmented Line ROI.
+    - `R`: Switch to Rectangle ROI.
+    - `Shift+R`: Switch to Rotated Rectangle ROI.
     - `E`: Switch to Ellipse ROI.
+    - `Shift+E`: Switch to Rotated Ellipse ROI.
+    - `P`: Switch between Point ROI.
+    - `Shift+P`: Switch to Multi-Point ROI.
     - `G`: Switch to Polygon ROI.
-    - `P`: Switch between Point ROI and Multi-Point ROI.
     - `Z`: Switch to Pan/Zoom Mode.
     - `Space`: Hold this key to temporarily switch to Pan/Zoom Mode.
     - `S`: Switch to Select Mode.
@@ -625,11 +631,11 @@ class QImageView(QImageViewBase):
 
     ## Drag and Drop
 
-    - This widget accepts dropping models with `StandardType.ROIS` ("image-rois").
+    - This widget accepts dropping models with `StandardType.ROIS` ("rois").
       Dropped ROIs will be added to the ROI list.
     - ROIs can be dragged out from the ROI manager. The type of the dragged model is
-      `StandardType.ROIS` ("image-rois"). Use the drag indicator in the corner of
-      the ROI list.
+      `StandardType.ROIS` ("rois"). Use the drag indicator in the corner of the ROI
+      list.
     """
 
     __himena_widget_id__ = "builtins:QImageView"

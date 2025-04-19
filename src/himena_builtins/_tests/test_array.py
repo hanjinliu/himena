@@ -60,6 +60,7 @@ def test_structured(qtbot: QtBot):
 
 def test_copy_and_paste(qtbot: QtBot):
     with WidgetTester(QArrayView()) as tester:
+        qtbot.addWidget(tester.widget)
         tester.update_model(value=np.zeros((3, 5, 3, 4), dtype=np.int32))
         tester.widget.set_indices(1, 2)
         tester.widget.selection_model.current_index = (2, 0)

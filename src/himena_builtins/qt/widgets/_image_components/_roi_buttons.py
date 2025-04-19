@@ -64,6 +64,10 @@ _THUMBNAIL_ROIS: dict[MouseMode, _roi_items.QRoi] = {
         QtCore.QPointF(0, -2), QtCore.QPointF(4, 2), 3.6
     ),
     MouseMode.ROI_ELLIPSE: _roi_items.QEllipseRoi(0, 0, 10, 8),
+    MouseMode.ROI_ROTATED_ELLIPSE: _roi_items.QRotatedEllipseRoi(
+        QtCore.QPointF(0, -2), QtCore.QPointF(4, 2), 3.6
+    ),
+    MouseMode.ROI_CIRCLE: _roi_items.QCircleRoi(0, 0, 5),
     MouseMode.ROI_LINE: _roi_items.QLineRoi(0, 0, 10, 8),
     MouseMode.ROI_SEGMENTED_LINE: _roi_items.QSegmentedLineRoi(
         [0, 4, 8, 12], [10, 4, 6, 0]
@@ -86,86 +90,78 @@ class QRoiButtons(QtW.QWidget):
         layout.setAlignment(
             QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignTop
         )
-        self._btn_panzoom = _tool_btn(
-            icon_name=ICON_ZOOM,
-            tooltip="Pan/zoom mode (Z, Space)",
-        )
-        self._btn_select = _tool_btn(
-            icon_name=ICON_SELECT,
-            tooltip="Select mode (S)",
-        )
-        self._btn_rect = QRoiToolButton(
-            _THUMBNAIL_ROIS[MouseMode.ROI_RECTANGLE],
-            tooltip="Add rectangles (R)",
-        )
-        self._btn_rot_rect = QRoiToolButton(
-            _THUMBNAIL_ROIS[MouseMode.ROI_ROTATED_RECTANGLE],
-            tooltip="Add rotated rectangles (R x 2)",
-        )
-        self._btn_ellipse = QRoiToolButton(
-            _THUMBNAIL_ROIS[MouseMode.ROI_ELLIPSE],
-            tooltip="Add ellipses (E)",
-        )
-        self._btn_line = QRoiToolButton(
-            _THUMBNAIL_ROIS[MouseMode.ROI_LINE],
-            tooltip="Add lines (L)",
-        )
-        self._btn_segmented_line = QRoiToolButton(
-            _THUMBNAIL_ROIS[MouseMode.ROI_SEGMENTED_LINE],
-            tooltip="Add segmented lines (L x 2)",
-        )
-        self._btn_polygon = QRoiToolButton(
-            _THUMBNAIL_ROIS[MouseMode.ROI_POLYGON],
-            tooltip="Add polygons (G)",
-        )
-        self._btn_point = QRoiToolButton(
-            _THUMBNAIL_ROIS[MouseMode.ROI_POINT],
-            tooltip="Add points (P)",
-        )
-        self._btn_points = QRoiToolButton(
-            _THUMBNAIL_ROIS[MouseMode.ROI_POINTS],
-            tooltip="Add multiple points (P x 2)",
-        )
+        self._btn_map: dict[MouseMode, QtW.QToolButton] = {
+            MouseMode.PAN_ZOOM: _tool_btn(
+                icon_name=ICON_ZOOM,
+                tooltip="Pan/zoom mode (Z, Space)",
+            ),
+            MouseMode.SELECT: _tool_btn(
+                icon_name=ICON_SELECT,
+                tooltip="Select mode (S)",
+            ),
+            MouseMode.ROI_RECTANGLE: QRoiToolButton(
+                _THUMBNAIL_ROIS[MouseMode.ROI_RECTANGLE],
+                tooltip="Add rectangles (R)",
+            ),
+            MouseMode.ROI_ROTATED_RECTANGLE: QRoiToolButton(
+                _THUMBNAIL_ROIS[MouseMode.ROI_ROTATED_RECTANGLE],
+                tooltip="Add rotated rectangles (Shift+R)",
+            ),
+            MouseMode.ROI_ELLIPSE: QRoiToolButton(
+                _THUMBNAIL_ROIS[MouseMode.ROI_ELLIPSE],
+                tooltip="Add ellipses (E)",
+            ),
+            MouseMode.ROI_ROTATED_ELLIPSE: QRoiToolButton(
+                _THUMBNAIL_ROIS[MouseMode.ROI_ROTATED_ELLIPSE],
+                tooltip="Add rotated ellipses (Shift+E)",
+            ),
+            MouseMode.ROI_LINE: QRoiToolButton(
+                _THUMBNAIL_ROIS[MouseMode.ROI_LINE],
+                tooltip="Add lines (L)",
+            ),
+            MouseMode.ROI_SEGMENTED_LINE: QRoiToolButton(
+                _THUMBNAIL_ROIS[MouseMode.ROI_SEGMENTED_LINE],
+                tooltip="Add segmented lines (Shift+L)",
+            ),
+            MouseMode.ROI_POLYGON: QRoiToolButton(
+                _THUMBNAIL_ROIS[MouseMode.ROI_POLYGON],
+                tooltip="Add polygons (G)",
+            ),
+            MouseMode.ROI_CIRCLE: QRoiToolButton(
+                _THUMBNAIL_ROIS[MouseMode.ROI_CIRCLE],
+                tooltip="Add circles (C)",
+            ),
+            MouseMode.ROI_POINT: QRoiToolButton(
+                _THUMBNAIL_ROIS[MouseMode.ROI_POINT],
+                tooltip="Add points (P)",
+            ),
+            MouseMode.ROI_POINTS: QRoiToolButton(
+                _THUMBNAIL_ROIS[MouseMode.ROI_POINTS],
+                tooltip="Add multiple points (Shift+P)",
+            ),
+        }
+        self._btn_map_inv = {v: k for k, v in self._btn_map.items()}
         self._button_group = QtW.QButtonGroup()
-        self._button_group.addButton(self._btn_panzoom)
-        self._button_group.addButton(self._btn_select)
-        self._button_group.addButton(self._btn_rect)
-        self._button_group.addButton(self._btn_rot_rect)
-        self._button_group.addButton(self._btn_ellipse)
-        self._button_group.addButton(self._btn_line)
-        self._button_group.addButton(self._btn_segmented_line)
-        self._button_group.addButton(self._btn_polygon)
-        self._button_group.addButton(self._btn_point)
-        self._button_group.addButton(self._btn_points)
+        for btn in self._btn_map.values():
+            self._button_group.addButton(btn)
         self._button_group.setExclusive(True)
         self._button_group.buttonReleased.connect(self.btn_released)
 
-        layout.addWidget(self._btn_panzoom, 0, 0)
-        layout.addWidget(self._btn_select, 0, 1)
-        layout.addWidget(self._btn_rect, 1, 0)
-        layout.addWidget(self._btn_rot_rect, 1, 1)
-        layout.addWidget(self._btn_ellipse, 1, 2)
-        layout.addWidget(self._btn_line, 1, 3)
-        layout.addWidget(self._btn_segmented_line, 2, 0)
-        layout.addWidget(self._btn_polygon, 2, 1)
-        layout.addWidget(self._btn_point, 2, 2)
-        layout.addWidget(self._btn_points, 2, 3)
+        layout.addWidget(self._btn_map[MouseMode.PAN_ZOOM], 0, 0)
+        layout.addWidget(self._btn_map[MouseMode.SELECT], 0, 1)
+        layout.addWidget(self._btn_map[MouseMode.ROI_RECTANGLE], 1, 0)
+        layout.addWidget(self._btn_map[MouseMode.ROI_ROTATED_RECTANGLE], 1, 1)
+        layout.addWidget(self._btn_map[MouseMode.ROI_ELLIPSE], 1, 2)
+        layout.addWidget(self._btn_map[MouseMode.ROI_ROTATED_ELLIPSE], 1, 3)
+        layout.addWidget(self._btn_map[MouseMode.ROI_LINE], 2, 0)
+        layout.addWidget(self._btn_map[MouseMode.ROI_SEGMENTED_LINE], 2, 1)
+        layout.addWidget(self._btn_map[MouseMode.ROI_POLYGON], 2, 2)
+        layout.addWidget(self._btn_map[MouseMode.ROI_CIRCLE], 2, 3)
+        layout.addWidget(self._btn_map[MouseMode.ROI_POINT], 3, 0)
+        layout.addWidget(self._btn_map[MouseMode.ROI_POINTS], 3, 1)
 
-        self._btn_map: dict[MouseMode, QtW.QToolButton] = {
-            MouseMode.PAN_ZOOM: self._btn_panzoom,
-            MouseMode.SELECT: self._btn_select,
-            MouseMode.ROI_RECTANGLE: self._btn_rect,
-            MouseMode.ROI_ROTATED_RECTANGLE: self._btn_rot_rect,
-            MouseMode.ROI_ELLIPSE: self._btn_ellipse,
-            MouseMode.ROI_LINE: self._btn_line,
-            MouseMode.ROI_SEGMENTED_LINE: self._btn_segmented_line,
-            MouseMode.ROI_POLYGON: self._btn_polygon,
-            MouseMode.ROI_POINT: self._btn_point,
-            MouseMode.ROI_POINTS: self._btn_points,
-        }
-        self._btn_map_inv = {v: k for k, v in self._btn_map.items()}
-        self.setFixedHeight(70)
-        self._btn_panzoom.setChecked(True)
+        self.setFixedHeight(84)
+        self._btn_map[MouseMode.PAN_ZOOM].setChecked(True)
         self._img_view.mode_changed.connect(self.set_mode)
 
     def set_mode(self, mode: MouseMode):
@@ -189,5 +185,9 @@ class QRoiButtons(QtW.QWidget):
         for mode, btn in self._btn_map.items():
             if roi := _THUMBNAIL_ROIS.get(mode):
                 btn.setIcon(_roi_tool_btn_icon(roi, color))
-        self._btn_panzoom.setIcon(_tool_btn_icon(ICON_ZOOM, color=color.name()))
-        self._btn_select.setIcon(_tool_btn_icon(ICON_SELECT, color=color.name()))
+        self._btn_map[MouseMode.PAN_ZOOM].setIcon(
+            _tool_btn_icon(ICON_ZOOM, color=color.name())
+        )
+        self._btn_map[MouseMode.SELECT].setIcon(
+            _tool_btn_icon(ICON_SELECT, color=color.name())
+        )
