@@ -48,6 +48,7 @@ def new_window(
     model_app.attributes.update(dict(app_attributes))
     plugins = [p for p in plugins if p not in app_prof.plugins]  # filter duplicates
     plugins = app_prof.plugins + plugins
+    _init_backend(backend)
     if plugins:
         install_plugins(model_app, plugins)
 
@@ -68,6 +69,12 @@ def new_window(
         for cmd, kwargs, exc in exceptions:
             _LOGGER.error("  %r (parameters=%r): %s", cmd, kwargs, exc)
     return main_window
+
+
+def _init_backend(backend: str):
+    # This function needed for proper import time calculation
+    if backend == "qt":
+        import himena.qt  # noqa: F401
 
 
 def create_model(

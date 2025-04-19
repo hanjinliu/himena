@@ -10,6 +10,12 @@ def install_and_uninstall(
     plugins_updated = app_profile.plugins.copy()
     infos_installed: list[HimenaPluginInfo] = []
     infos_uninstalled: list[HimenaPluginInfo] = []
+
+    def _install(plugin_info: HimenaPluginInfo) -> None:
+        if plugin_info not in infos_installed:
+            plugins_updated.append(plugin_info.place)
+            infos_installed.append(plugin_info)
+
     # first, resolve local plugins
     for plugin_name in install:
         if _is_path_like(plugin_name):
@@ -36,11 +42,9 @@ def install_and_uninstall(
             if plugin_name in app_profile.plugins:
                 print(f"Plugin {plugin_name!r} is already installed.")
             elif is_submodule(info.place, plugin_name):
-                plugins_updated.append(info.place)
-                infos_installed.append(info)
+                _install(info)
             elif info.distribution == plugin_name:
-                plugins_updated.append(info.place)
-                infos_installed.append(info)
+                _install(info)
 
         for plugin_name in uninstall:
             if is_submodule(info.place, plugin_name) and info.place in plugins_updated:

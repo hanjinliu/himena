@@ -25,6 +25,11 @@ def install_plugins(
 
     reg = AppActionRegistry.instance()
     results = []
+    show_import_time = app.attributes.get("print_import_time", False)
+    if show_import_time:
+        print("==================")
+        print("Plugin import time")
+        print("==================")
     for name in plugins:
         if name in reg._installed_plugins:
             continue
@@ -61,10 +66,9 @@ def install_plugins(
         else:
             raise TypeError(f"Invalid plugin type: {type(name)}")
         _msec = (timer() - _time_0) * 1000
-        if app.attributes.get("print_import_time"):
-            print(f"Plugin import time: {name}\t{_msec:.3f} msec")
-            if _msec > 750:
-                print("    !!! slow import !!!")
+        if show_import_time and _exc is None:
+            color = _color_for_time(_msec)
+            print(f"{color}{name}\t{_msec:.3f} msec\033[0m")
         results.append(PluginInstallResult(name, _msec, _exc))
     reg.install_to(app)
     reg._installed_plugins.extend(plugins)
@@ -93,3 +97,13 @@ class PluginInstallResult:
     plugin: str
     time: float = field(default=0.0)
     error: Exception | None = None
+
+
+def _color_for_time(msec: float) -> str:
+    """Return a color code for the given time in milliseconds."""
+    if msec < 80:
+        return "\033[92m"  # green
+    elif msec < 700:
+        return "\033[93m"  # yellow
+    else:
+        return "\033[91m"  # red
