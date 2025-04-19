@@ -3797,13 +3797,29 @@ be passed as variable keyword arguments **kwargs.</p>
 <span class="normal">69</span>
 <span class="normal">70</span>
 <span class="normal">71</span>
-<span class="normal">72</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">install_plugins</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">Application</span><span class="p">,</span> <span class="n">plugins</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">PluginInstallResult</span><span class="p">]:</span>
+<span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span>
+<span class="normal">81</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">install_plugins</span><span class="p">(</span>
+    <span class="n">app</span><span class="p">:</span> <span class="n">HimenaApplication</span><span class="p">,</span> <span class="n">plugins</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">PluginInstallResult</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Install plugins to the application.&quot;&quot;&quot;</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">himena.plugins</span><span class="w"> </span><span class="kn">import</span> <span class="n">AppActionRegistry</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">himena.profile</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_app_profile</span>
 
     <span class="n">reg</span> <span class="o">=</span> <span class="n">AppActionRegistry</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span>
     <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">show_import_time</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;print_import_time&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">show_import_time</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;==================&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Plugin import time&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;==================&quot;</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">plugins</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">reg</span><span class="o">.</span><span class="n">_installed_plugins</span><span class="p">:</span>
             <span class="k">continue</span>
@@ -3840,7 +3856,9 @@ be passed as variable keyword arguments **kwargs.</p>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid plugin type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="n">_msec</span> <span class="o">=</span> <span class="p">(</span><span class="n">timer</span><span class="p">()</span> <span class="o">-</span> <span class="n">_time_0</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>
-        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Plugin </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> installed in </span><span class="si">{</span><span class="n">_msec</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> msec.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">show_import_time</span> <span class="ow">and</span> <span class="n">_exc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">color</span> <span class="o">=</span> <span class="n">_color_for_time</span><span class="p">(</span><span class="n">_msec</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">color</span><span class="si">}{</span><span class="n">name</span><span class="si">}</span><span class="se">\t</span><span class="si">{</span><span class="n">_msec</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> msec</span><span class="se">\033</span><span class="s2">[0m&quot;</span><span class="p">)</span>
         <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">PluginInstallResult</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">_msec</span><span class="p">,</span> <span class="n">_exc</span><span class="p">))</span>
     <span class="n">reg</span><span class="o">.</span><span class="n">install_to</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
     <span class="n">reg</span><span class="o">.</span><span class="n">_installed_plugins</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">plugins</span><span class="p">)</span>
@@ -3873,15 +3891,15 @@ be passed as variable keyword arguments **kwargs.</p>
 
             <details class="quote">
               <summary>Source code in <code>src\himena\plugins\install.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">75</span>
-<span class="normal">76</span>
-<span class="normal">77</span>
-<span class="normal">78</span>
-<span class="normal">79</span>
-<span class="normal">80</span>
-<span class="normal">81</span>
-<span class="normal">82</span>
-<span class="normal">83</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">override_keybindings</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">Application</span><span class="p">,</span> <span class="n">prof</span><span class="p">:</span> <span class="n">AppProfile</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">84</span>
+<span class="normal">85</span>
+<span class="normal">86</span>
+<span class="normal">87</span>
+<span class="normal">88</span>
+<span class="normal">89</span>
+<span class="normal">90</span>
+<span class="normal">91</span>
+<span class="normal">92</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">override_keybindings</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">HimenaApplication</span><span class="p">,</span> <span class="n">prof</span><span class="p">:</span> <span class="n">AppProfile</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Override keybindings in the application.&quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">ko</span> <span class="ow">in</span> <span class="n">prof</span><span class="o">.</span><span class="n">keybinding_overrides</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">kb</span> <span class="o">:=</span> <span class="n">app</span><span class="o">.</span><span class="n">keybindings</span><span class="o">.</span><span class="n">get_keybinding</span><span class="p">(</span><span class="n">ko</span><span class="o">.</span><span class="n">command_id</span><span class="p">):</span>
