@@ -372,21 +372,23 @@ class QModelListWidget(QtW.QListWidget):
 
     def mouseMoveEvent(self, e):
         if e.button() == QtCore.Qt.MouseButton.NoButton:
-            # hover
-            index = self.indexAt(e.pos())
-            if index.isValid():
-                self.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
-                index_rect = self.visualRect(index)
-                top_right = index_rect.topRight()
-                top_right.setX(top_right.x() - 14)
-                top_right.setY(top_right.y() + int(index_rect.height() / 2) - 7)
-                self._hover_drag_indicator.move(top_right)
-                self._hover_drag_indicator.show()
-                self._indicator_index = index.row()
-            else:
-                self.setCursor(QtCore.Qt.CursorShape.ArrowCursor)
-                self._hover_drag_indicator.hide()
+            self._hover_event(e.pos())
         return super().mouseMoveEvent(e)
+
+    def _hover_event(self, pos: QtCore.QPoint):
+        index = self.indexAt(pos)
+        if index.isValid():
+            self.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+            index_rect = self.visualRect(index)
+            top_right = index_rect.topRight()
+            top_right.setX(top_right.x() - 14)
+            top_right.setY(top_right.y() + int(index_rect.height() / 2) - 7)
+            self._hover_drag_indicator.move(top_right)
+            self._hover_drag_indicator.show()
+            self._indicator_index = index.row()
+        else:
+            self.setCursor(QtCore.Qt.CursorShape.ArrowCursor)
+            self._hover_drag_indicator.hide()
 
     def leaveEvent(self, a0):
         self._hover_drag_indicator.hide()
@@ -480,6 +482,9 @@ class QStackedModelWidget(QtW.QStackedWidget):
         e.acceptProposedAction()
 
     def dropEvent(self, e):
+        self._drop_event()
+
+    def _drop_event(self):
         if (
             (drag_model := _drag.drop())
             and (widget := self.current_interface())

@@ -137,6 +137,7 @@ class _QAxisSlider(QtW.QWidget):
         self._name_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
 
         self._play_btn = _QSliderButton("▶")
+        self._play_btn.setToolTip("Play along this axis (right click to configure)")
         self._play_btn.setCheckable(True)
         self._play_btn.setAutoRepeat(False)
         self._play_btn.setContextMenuPolicy(
@@ -150,7 +151,7 @@ class _QAxisSlider(QtW.QWidget):
         self._play_timer = QtCore.QTimer(self)
         self._play_timer.setInterval(100)
         self._play_timer.timeout.connect(self._on_play_timer_timeout)
-        self._play_back_mode: Literal["once", "loop", "pingpong"] = "once"
+        self._play_back_mode: Literal["once", "loop", "pingpong"] = "loop"
         self._play_increment = 1
         self._play_btn.clicked.connect(self._on_play_clicked)
 

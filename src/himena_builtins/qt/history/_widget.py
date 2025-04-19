@@ -30,17 +30,23 @@ class QCommandHistory(QtW.QWidget):
         layout.addWidget(self._command_list)
         ui.model_app.commands.executed.connect(self._command_executed)
         self._ui_ref = weakref.ref(ui)
-        self._command_list._update_index_widgets()
 
     def _command_executed(self, command_id: str) -> None:
         _LOGGER.info("Command executed: %s", command_id)
-        num = len(self._ui_ref()._history_command)
-        self._command_list.model().beginInsertRows(
-            QtCore.QModelIndex(), num - 1, num - 1
-        )
-        self._command_list.model().insertRow(num - 1, QtCore.QModelIndex())
+        num = len(self._ui_ref()._history_command) - 1
+        self._command_list.model().beginInsertRows(QtCore.QModelIndex(), num, num)
+        self._command_list.model().insertRow(num, QtCore.QModelIndex())
         self._command_list._update_index_widgets()
         self._command_list.model().endInsertRows()
+
+    def deleteLater(self):
+        self._command_list.model().beginRemoveRows(
+            QtCore.QModelIndex(), 0, self._command_list.model().rowCount() - 1
+        )
+        self._ui_ref = lambda: None
+        self._command_list.model().removeRows(0, self._command_list.model().rowCount())
+        self._command_list.model().endRemoveRows()
+        return super().deleteLater()
 
 
 class QCommandList(QtW.QListView):
@@ -187,14 +193,18 @@ class QCommandIndexWidget(QtW.QWidget):
             self._btn_copy.setCursor(Qt.CursorShape.ArrowCursor)
 
     def enterEvent(self, event: QtCore.QEvent) -> None:
+        self._enter_event()
+        return super().enterEvent(event)
+
+    def _enter_event(self):
         listwidget = self._listwidget_ref()
         if listwidget is None:
-            return super().enterEvent(event)
+            return
         ui = listwidget.model()._ui_ref()
         index = listwidget._find_index_widget(self)
         action = listwidget.model()._action_at(index.row())
         if ui is None or action is None:
-            return super().enterEvent(event)
+            return
         # check enablement
         if action.enablement is None:
             enabled = True
@@ -202,7 +212,7 @@ class QCommandIndexWidget(QtW.QWidget):
             ctx = ui._ctx_keys.dict()
             enabled = action.enablement.eval(ctx)
         self.set_button_visible(enabled)
-        return super().enterEvent(event)
+        return
 
     def leaveEvent(self, event: QtCore.QEvent) -> None:
         self.set_button_visible(False)

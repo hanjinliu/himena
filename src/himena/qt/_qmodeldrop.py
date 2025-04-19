@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import partial
 from logging import getLogger
 from typing import TYPE_CHECKING, Iterable, Literal
 import uuid
@@ -325,11 +326,16 @@ class QModelDropList(QtW.QListWidget):
         item_widget = self._append_item()
         item_widget.set_qsubwindow(src)
         win = src._my_wrapper()
-        win.closed.connect(lambda: self._remove_item(item_widget))
+        win.closed.connect(partial(self._remove_item, item_widget))
 
     def _remove_item(self, item: QModelListItem):
         for i in range(self.count()):
             if self.itemWidget(self.item(i)) is item:
+                if (win := item.subwindow()) and partial(
+                    self._remove_item, item
+                ) in win.closed:
+                    # disconnect the signal to avoid memory leak
+                    win.closed.disconnect(partial(self._remove_item, item))
                 self.takeItem(i)
                 return
         raise ValueError(f"Item {item} not found")

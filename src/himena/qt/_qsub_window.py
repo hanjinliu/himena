@@ -530,10 +530,12 @@ class QDummyToolButton(QtW.QWidget):
 
 
 class QSubWindowTitleBar(QtW.QFrame):
+    """The subwindow title bar widget."""
+
     def __init__(self, subwindow: QSubWindow, title: str):
         super().__init__()
         self._drag_position: QtCore.QPoint | None = None
-        self._is_ctrl_drag: bool = False
+        self._is_window_drag_mode: bool = False
         self._is_double_clicking: bool = False
         self._resize_position: QtCore.QPoint | None = None
         self._subwindow = subwindow
@@ -718,56 +720,37 @@ class QSubWindowTitleBar(QtW.QFrame):
     def event(self, a0: QtCore.QEvent) -> bool:
         if a0.type() == QtCore.QEvent.Type.ToolTip:
             a0 = cast(QtGui.QHelpEvent, a0)
-            QtW.QToolTip.showText(a0.globalPos(), self._make_tooltip())
+            QtW.QToolTip.showText(a0.globalPos(), self._make_tooltip(), self)
             return True
         return super().event(a0)
 
     # drag events for moving the window
     def mousePressEvent(self, event: QtGui.QMouseEvent):
-        self._is_ctrl_drag = False
+        self._is_window_drag_mode = False
         if self._is_double_clicking:
             return super().mousePressEvent(event)
-        if event.buttons() & Qt.MouseButton.LeftButton:
-            _subwin = self._subwindow
-            if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-                # start dragging subwindow
-                self._is_ctrl_drag = True
-                drag = QtGui.QDrag(_subwin)
-                drag.destroyed.connect(_drag.clear)
-                mime_data = QtCore.QMimeData()
-                _wrapper = self._subwindow._my_wrapper()
-                if isinstance(
-                    _meth := _wrapper._widget_workflow.last(),
-                    LocalReaderMethod,
-                ):
-                    if isinstance(_meth.path, Path):
-                        mime_data.setUrls([QtCore.QUrl(_meth.path.as_uri())])
-                    elif isinstance(_meth.path, list):
-                        mime_data.setUrls(
-                            [QtCore.QUrl(fp.as_uri()) for fp in _meth.path]
-                        )
-                drag.setMimeData(mime_data)
-                if _wrapper.supports_to_model:
-                    model = DragDataModel(
-                        getter=_wrapper.to_model,
-                        type=_wrapper.model_type(),
-                    )
-                    _drag.drag(model)
-                drag.setPixmap(_subwin._pixmap_resized(QtCore.QSize(150, 150)))
-                self._subwindow.hide()
-                try:
-                    drag.exec()
-                finally:
-                    # NOTE: if subwindow is dropped to another tab, the old one will be
-                    # removed from the MdiArea. In this case, the subwindow should not
-                    # be shown again.
-                    if self._subwindow.parent():
-                        self._subwindow.show()
-            else:
-                if _subwin._window_state == WindowState.MIN:
-                    # cannot move minimized window
-                    return
-            self._store_drag_position(event.globalPos())
+        _subwin = self._subwindow
+        _left_btn = event.buttons() & Qt.MouseButton.LeftButton
+        _middle_btn = event.buttons() & Qt.MouseButton.MiddleButton
+        _ctrl_mod = event.modifiers() & Qt.KeyboardModifier.ControlModifier
+        if (_left_btn and _ctrl_mod) or _middle_btn:
+            # start dragging subwindow
+            self._is_window_drag_mode = True
+            drag = self._make_subwindow_drag()
+            self._subwindow.hide()
+            try:
+                drag.exec()
+            finally:
+                # NOTE: if subwindow is dropped to another tab, the old one will be
+                # removed from the MdiArea. In this case, the subwindow should not
+                # be shown again.
+                if self._subwindow.parent():
+                    self._subwindow.show()
+        else:
+            if _subwin._window_state == WindowState.MIN:
+                # cannot move minimized window
+                return
+        self._store_drag_position(event.globalPos())
         return super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent):
@@ -778,7 +761,7 @@ class QSubWindowTitleBar(QtW.QFrame):
             event.buttons() == Qt.MouseButton.LeftButton
             and self._drag_position is not None
             and _subwin._resize_state is ResizeState.NONE
-            and not self._is_ctrl_drag
+            and not self._is_window_drag_mode
         ):
             g = _subwin.geometry()
             main_qsize = _subwin._qt_mdiarea().size()
@@ -816,15 +799,16 @@ class QSubWindowTitleBar(QtW.QFrame):
         return super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
-        self._is_ctrl_drag = False
+        self._is_window_drag_mode = False
         self._is_double_clicking = False
         if event.button() == Qt.MouseButton.LeftButton:
             self._drag_position = None
             self._fix_position()
         elif event.button() == Qt.MouseButton.RightButton:
             # context menu
-            context_menu = self._prep_window_menu()
-            context_menu.exec(event.globalPos())
+            if (event.pos() - self._drag_position).manhattanLength() < 10:
+                context_menu = self._prep_window_menu()
+                context_menu.exec(event.globalPos())
         return super().mouseReleaseEvent(event)
 
     def mouseDoubleClickEvent(self, event: QtGui.QMouseEvent):
@@ -855,11 +839,44 @@ class QSubWindowTitleBar(QtW.QFrame):
             subwin._my_wrapper().widget, size_old, size_new
         )
 
+    def _make_subwindow_drag(self):
+        _subwin = self._subwindow
+        drag = QtGui.QDrag(_subwin)
+        drag.destroyed.connect(_drag.clear)
+        mime_data = QtCore.QMimeData()
+        _wrapper = self._subwindow._my_wrapper()
+        if isinstance(
+            _meth := _wrapper._widget_workflow.last(),
+            LocalReaderMethod,
+        ):
+            if isinstance(_meth.path, Path):
+                mime_data.setUrls([QtCore.QUrl(_meth.path.as_uri())])
+            elif isinstance(_meth.path, list):
+                mime_data.setUrls([QtCore.QUrl(fp.as_uri()) for fp in _meth.path])
+        drag.setMimeData(mime_data)
+        if _wrapper.supports_to_model:
+            model = DragDataModel(
+                getter=_wrapper.to_model,
+                type=_wrapper.model_type(),
+            )
+            _drag.drag(model)
+        drag.setPixmap(_subwin._pixmap_resized(QtCore.QSize(150, 150)))
+        return drag
+
     def dragEnterEvent(self, a0: QtGui.QDragEnterEvent | None) -> None:
         return self._subwindow.dragEnterEvent(a0)
 
     def dropEvent(self, a0: QtGui.QDropEvent | None) -> None:
         return self._subwindow.dropEvent(a0)
+
+    def enterEvent(self, event):
+        ui = get_main_window(self)
+        ui.set_status_tip("`Ctrl+LeftButton` or `MiddleButton` to drag the window")
+        return super().enterEvent(event)
+
+    def leaveEvent(self, a0):
+        get_main_window(self).set_status_tip("")
+        return super().leaveEvent(a0)
 
     def _store_drag_position(self, global_pos: QtCore.QPoint):
         subwin = self._subwindow

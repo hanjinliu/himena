@@ -10,6 +10,7 @@ from himena.consts import StandardType
 from himena.core import create_model
 from himena.testing.subwindow import WidgetTester
 from himena_builtins.qt.dataframe import QDataFrameView, QDataFramePlotView
+from himena_builtins.qt.widgets.dataframe import select_columns
 from himena_builtins.qt.basic import QDictView
 
 _Ctrl = Qt.KeyboardModifier.ControlModifier
@@ -42,7 +43,10 @@ def test_dataframe(qtbot: QtBot, df):
         assert type(tester.to_model().value) is type(df)
         tester.is_modified()
         assert tester.widget._hor_header._data_model_for_drag() is not None
+        table.selection_model.append((slice(0, 3), slice(0, 1)), column=True)
         tester.widget._hor_header._process_move_event(0)
+        tester.widget._hor_header._process_move_event(1)
+        select_columns(tester.to_model())([0])
 
 def test_dataframe_plot(qtbot: QtBot):
     x = np.linspace(0, 3, 20)
@@ -51,6 +55,8 @@ def test_dataframe_plot(qtbot: QtBot):
         tester.update_model(value=df)
         tester.cycle_model()
         qtbot.addWidget(tester.widget)
+        tester.widget._table_widget.selection_model.move_to(0, 1)
+        tester.widget._table_widget.selection_model.set_ranges([(slice(0, 20), slice(1, 2))])
 
 def test_dataframe_command(himena_ui: MainWindow):
     win = himena_ui.add_object(
