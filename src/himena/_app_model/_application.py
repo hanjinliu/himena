@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from concurrent.futures import Future
 
 
-def get_model_app(name: str) -> Application:
+def get_model_app(name: str) -> HimenaApplication:
     if name in HimenaApplication._instances:
         return HimenaApplication._instances[name]
     return HimenaApplication(name)
@@ -29,6 +29,12 @@ class HimenaApplication(Application):
         self._registered_actions: dict[str, Action] = {}
         self._dynamic_command_ids: set[str] = set()
         self._futures: set[Future] = set()
+        self._attributes: dict[str, object] = {}
+
+    @property
+    def attributes(self) -> dict[str, object]:
+        """A dictionary of attributes for this application."""
+        return self._attributes
 
     def register_actions(self, actions: list[Action]) -> Callable[[], None]:
         actions = list(actions)

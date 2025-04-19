@@ -67,7 +67,11 @@ def _main(args: HimenaCliNamespace):
     # now it's ready to start the GUI
     from himena import new_window
 
-    ui = new_window(args.profile)
+    attrs = {}
+    if args.import_time:
+        attrs["print_import_time"] = True
+
+    ui = new_window(args.profile, app_attributes=attrs)
     if args.path is not None:
         ui.read_file(args.path)
     ui.show(run=not _is_testing())

@@ -6,23 +6,30 @@ from importlib import import_module
 from typing import TYPE_CHECKING
 from pathlib import Path
 from timeit import default_timer as timer
-from app_model import Application
 from app_model.types import KeyBindingRule
 from dataclasses import dataclass, field
 
 if TYPE_CHECKING:
     from himena.profile import AppProfile
+    from himena._app_model import HimenaApplication
 
 _LOGGER = logging.getLogger(__name__)
 
 
-def install_plugins(app: Application, plugins: list[str]) -> list[PluginInstallResult]:
+def install_plugins(
+    app: HimenaApplication, plugins: list[str]
+) -> list[PluginInstallResult]:
     """Install plugins to the application."""
     from himena.plugins import AppActionRegistry
     from himena.profile import load_app_profile
 
     reg = AppActionRegistry.instance()
     results = []
+    show_import_time = app.attributes.get("print_import_time", False)
+    if show_import_time:
+        print("==================")
+        print("Plugin import time")
+        print("==================")
     for name in plugins:
         if name in reg._installed_plugins:
             continue
@@ -59,7 +66,9 @@ def install_plugins(app: Application, plugins: list[str]) -> list[PluginInstallR
         else:
             raise TypeError(f"Invalid plugin type: {type(name)}")
         _msec = (timer() - _time_0) * 1000
-        _LOGGER.info(f"Plugin {name} installed in {_msec:.3f} msec.")
+        if show_import_time and _exc is None:
+            color = _color_for_time(_msec)
+            print(f"{color}{name}\t{_msec:.3f} msec\033[0m")
         results.append(PluginInstallResult(name, _msec, _exc))
     reg.install_to(app)
     reg._installed_plugins.extend(plugins)
@@ -72,7 +81,7 @@ def install_plugins(app: Application, plugins: list[str]) -> list[PluginInstallR
     return results
 
 
-def override_keybindings(app: Application, prof: AppProfile) -> None:
+def override_keybindings(app: HimenaApplication, prof: AppProfile) -> None:
     """Override keybindings in the application."""
     for ko in prof.keybinding_overrides:
         if kb := app.keybindings.get_keybinding(ko.command_id):
@@ -88,3 +97,13 @@ class PluginInstallResult:
     plugin: str
     time: float = field(default=0.0)
     error: Exception | None = None
+
+
+def _color_for_time(msec: float) -> str:
+    """Return a color code for the given time in milliseconds."""
+    if msec < 80:
+        return "\033[92m"  # green
+    elif msec < 700:
+        return "\033[93m"  # yellow
+    else:
+        return "\033[91m"  # red

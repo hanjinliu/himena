@@ -6,7 +6,7 @@ from himena.profile import load_app_profile
 from himena._cli.install import uninstall_outdated
 
 def test_simple():
-    sys.argv = ["himena"]
+    sys.argv = ["himena", "--import-time"]
     main()
 
 PROF_NAME = "test"
