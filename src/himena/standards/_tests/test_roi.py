@@ -60,6 +60,15 @@ def test_rotated_ellipse():
     assert r0.area() == pytest.approx(r1.area(), rel=1e-5)
     assert r0.area() == pytest.approx(math.pi * 3 * math.sqrt(2) / 2, rel=1e-5)
 
+def test_circle():
+    r0 = roi.CircleRoi(x=0, y=0, radius=5)
+    r1 = r0.shifted(10, 8)
+    assert r1.x == 10
+    assert r1.y == 8
+    assert r1.radius == 5
+    assert r0.area() == pytest.approx(math.pi * 25, rel=1e-5)
+    assert r0.to_mask((20, 20)).sum() < math.pi * 25
+
 def test_point_roi_2d():
     r0 = roi.PointRoi2D(x=0.6, y=1.2)
     r1 = r0.shifted(2, 3)

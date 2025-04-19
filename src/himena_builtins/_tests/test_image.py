@@ -168,6 +168,16 @@ def test_image_view_draw_roi(qtbot: QtBot):
         # line should be removed by clicking somewhere else
         assert image_view._img_view._current_roi_item is None
 
+        # circle
+        image_view._img_view.switch_mode(image_view._img_view.Mode.ROI_CIRCLE)
+        qtbot.mousePress(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(10, 10))
+        qtbot.mouseMove(vp, pos=QtCore.QPoint(50, 50))
+        qtbot.mouseRelease(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(50, 50))
+        assert isinstance(image_view._img_view._current_roi_item, _rois.QCircleRoi)
+        qtbot.mouseClick(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(50, 60))
+        # circle should be removed by clicking somewhere else
+        assert image_view._img_view._current_roi_item is None
+
         # polygon
         image_view._img_view.switch_mode(image_view._img_view.Mode.ROI_POLYGON)
         qtbot.mouseClick(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(10, 10))
