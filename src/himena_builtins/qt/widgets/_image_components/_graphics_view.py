@@ -284,14 +284,16 @@ class QImageGraphicsView(QBaseGraphicsView):
                 self._mouse_event_handler = _me.LineRoiMouseEvents(self)
             elif mode is MouseMode.ROI_RECTANGLE:
                 self._mouse_event_handler = _me.RectangleRoiMouseEvents(self)
+            elif mode is MouseMode.ROI_ROTATED_RECTANGLE:
+                self._mouse_event_handler = _me.RotatedRectangleRoiMouseEvents(self)
             elif mode is MouseMode.ROI_ELLIPSE:
                 self._mouse_event_handler = _me.EllipseRoiMouseEvents(self)
+            elif mode is MouseMode.ROI_ROTATED_ELLIPSE:
+                self._mouse_event_handler = _me.RotatedEllipseRoiMouseEvents(self)
             elif mode is MouseMode.ROI_POLYGON:
                 self._mouse_event_handler = _me.PolygonRoiMouseEvents(self)
             elif mode is MouseMode.ROI_SEGMENTED_LINE:
                 self._mouse_event_handler = _me.SegmentedLineRoiMouseEvents(self)
-            elif mode is MouseMode.ROI_ROTATED_RECTANGLE:
-                self._mouse_event_handler = _me.RotatedRectangleRoiMouseEvents(self)
 
         elif mode is MouseMode.SELECT:
             self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
@@ -588,7 +590,10 @@ class QImageGraphicsView(QBaseGraphicsView):
             else:
                 self.switch_mode(MouseMode.ROI_RECTANGLE)
         elif _key == Qt.Key.Key_E:
-            self.switch_mode(MouseMode.ROI_ELLIPSE)
+            if shift:
+                self.switch_mode(MouseMode.ROI_ROTATED_ELLIPSE)
+            else:
+                self.switch_mode(MouseMode.ROI_ELLIPSE)
         elif _key == Qt.Key.Key_P:
             # switch similar modes in turn
             if shift:

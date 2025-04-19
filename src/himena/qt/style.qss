@@ -696,3 +696,7 @@ QChannelToggleSwitch {
     qproperty-handleSize: 14;
     qproperty-offColor: #[background_dim];
 }
+
+QSplitterHandle:hover {
+    background-color: #[highlight_dim];
+}

@@ -14,6 +14,7 @@ from himena_builtins.qt.widgets._image_components._roi_items import (
     QRectangleRoi,
     QEllipseRoi,
     QRotatedRectangleRoi,
+    QRotatedEllipseRoi,
     QSegmentedLineRoi,
 )
 from himena_builtins.qt.widgets._image_components._handles import RoiSelectionHandles
@@ -304,15 +305,30 @@ class RotatedRectangleRoiMouseEvents(_LineTypeRoiMouseEvents[QRotatedRectangleRo
         return QRotatedRectangleRoi
 
     def make_roi(self, x: float, y: float, pen: QtGui.QPen) -> QRotatedRectangleRoi:
-        roi = QRotatedRectangleRoi(QtCore.QPointF(x, y), QtCore.QPointF(x, y)).withPen(
-            pen
-        )
+        p0 = QtCore.QPointF(x, y)
+        roi = QRotatedRectangleRoi(p0, p0).withPen(pen)
         self._view.set_current_roi(roi)
         self.selection_handles.connect_rotated_rect(roi)
         return roi
 
     def _update_roi(self, start, current):
         if isinstance(item := self._view._current_roi_item, QRotatedRectangleRoi):
+            item.set_end(current)
+
+
+class RotatedEllipseRoiMouseEvents(_LineTypeRoiMouseEvents[QRotatedEllipseRoi]):
+    def roi_type(self) -> type[QRotatedEllipseRoi]:
+        return QRotatedEllipseRoi
+
+    def make_roi(self, x: float, y: float, pen: QtGui.QPen) -> QRotatedEllipseRoi:
+        p0 = QtCore.QPointF(x, y)
+        roi = QRotatedEllipseRoi(p0, p0).withPen(pen)
+        self._view.set_current_roi(roi)
+        self.selection_handles.connect_rotated_rect(roi)
+        return roi
+
+    def _update_roi(self, start, current):
+        if isinstance(item := self._view._current_roi_item, QRotatedEllipseRoi):
             item.set_end(current)
 
 

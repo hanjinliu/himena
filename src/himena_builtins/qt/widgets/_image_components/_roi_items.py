@@ -220,7 +220,21 @@ class QEllipseRoi(QtW.QGraphicsEllipseItem, QRectRoiBase):
         return f"center=[{cx:.1f}, {cy:.1f}], width={w:.1f} ({width:.1f} {unit}), height={h:.1f} ({height:.1f} {unit}), eccentricity={eccentricity}"
 
 
-class QRotatedRectangleRoi(QRoi):
+class QRotatedRoiBase(QRoi):
+    """Rotated ROI base class.
+
+    A rotated ROI looks like this:
+
+    ```
+           2             1: start
+      +----o----+        2: top
+    1 o         o 4      3: bottom
+      +----o----+        4: end
+           3             Drawn in the 1 -> 4 direction.
+    ```
+
+    """
+
     changed = Signal(object)
 
     def __init__(self, start: QtCore.QPointF, end: QtCore.QPointF, width: float = 50):
@@ -287,14 +301,6 @@ class QRotatedRectangleRoi(QRoi):
         with self._update_and_emit():
             self._width = width
 
-    def toRoi(self) -> roi.RotatedRectangleRoi:
-        return roi.RotatedRectangleRoi(
-            start=(self.start().x() - 0.5, self.start().y() - 0.5),
-            end=(self.end().x() - 0.5, self.end().y() - 0.5),
-            width=self._width,
-            name=self.label(),
-        )
-
     def pen(self) -> QtGui.QPen:
         return self._pen
 
@@ -306,10 +312,9 @@ class QRotatedRectangleRoi(QRoi):
         with self._update_and_emit():
             self._center += QtCore.QPointF(dx, dy)
 
-    def copy(self) -> QRotatedRectangleRoi:
-        return QRotatedRectangleRoi(self.start(), self.end(), self._width).withPen(
-            self.pen()
-        )
+    def copy(self) -> Self:
+        cls = type(self)
+        return cls(self.start(), self.end(), self._width).withPen(self.pen())
 
     @contextmanager
     def _update_and_emit(self):
@@ -320,6 +325,25 @@ class QRotatedRectangleRoi(QRoi):
         self.update()
         if scene := self.scene():
             scene.update(self.mapRectToScene(old_bbox.united(new_bbox)))
+
+    def short_description(self, xscale: float, yscale: float, unit: str) -> str:
+        start = self.start()
+        end = self.end()
+        length_px = self._length
+        length = length_px * xscale
+        if not unit:
+            return f"start=[{start.x():.1f}, {start.y():.1f}], end=[{end.x():.1f}, {end.y():.1f}], length={length_px:.1f}"
+        return f"start=[{start.x():.1f}, {start.y():.1f}], end=[{end.x():.1f}, {end.y():.1f}], length={length_px:.1f} ({length:.1f} {unit})"
+
+
+class QRotatedRectangleRoi(QRotatedRoiBase):
+    def toRoi(self) -> roi.RotatedRectangleRoi:
+        return roi.RotatedRectangleRoi(
+            start=(self.start().x() - 0.5, self.start().y() - 0.5),
+            end=(self.end().x() - 0.5, self.end().y() - 0.5),
+            width=self._width,
+            name=self.label(),
+        )
 
     def _corner_points(self) -> list[QtCore.QPointF]:
         center = self.center()
@@ -359,14 +383,58 @@ class QRotatedRectangleRoi(QRoi):
     def _roi_type(self) -> str:
         return "rotated rectangle"
 
-    def short_description(self, xscale: float, yscale: float, unit: str) -> str:
-        start = self.start()
-        end = self.end()
-        length_px = self._length
-        length = length_px * xscale
-        if not unit:
-            return f"start=[{start.x():.1f}, {start.y():.1f}], end=[{end.x():.1f}, {end.y():.1f}], length={length_px:.1f}"
-        return f"start=[{start.x():.1f}, {start.y():.1f}], end=[{end.x():.1f}, {end.y():.1f}], length={length_px:.1f} ({length:.1f} {unit})"
+
+class QRotatedEllipseRoi(QRotatedRoiBase):
+    def toRoi(self) -> roi.RotatedEllipseRoi:
+        return roi.RotatedEllipseRoi(
+            start=(self.start().x() - 0.5, self.start().y() - 0.5),
+            end=(self.end().x() - 0.5, self.end().y() - 0.5),
+            width=self._width,
+            name=self.label(),
+        )
+
+    def _point_array(self) -> np.ndarray:
+        """(N, 2) array of points that represent the ellipse."""
+        a = self._length / 2
+        b = self._width / 2
+        rad_ellipse = math.radians(self.angle())
+        cos = math.cos(rad_ellipse)
+        sin = math.sin(rad_ellipse)
+        rads = np.linspace(0, 2 * np.pi, 60, endpoint=False)
+        x = self._center.x() + a * np.cos(rads) * cos - b * np.sin(rads) * sin
+        y = self._center.y() + a * np.cos(rads) * sin + b * np.sin(rads) * cos
+        return np.stack([x, y], axis=1)
+
+    def _dense_points(self) -> list[QtCore.QPointF]:
+        """Return a list of points that represent the ellipse."""
+        points = self._point_array()
+        return [QtCore.QPointF(x, y) for x, y in points]
+
+    def paint(self, painter, option, widget):
+        painter.setPen(self.pen())
+        painter.drawPolygon(*self._dense_points())
+
+    def boundingRect(self):
+        points = self._point_array()
+        xmin, ymin = points.min(axis=0)
+        xmax, ymax = points.max(axis=0)
+        return QtCore.QRectF(xmin, ymin, xmax - xmin, ymax - ymin)
+
+    def contains(self, point: QtCore.QPointF) -> bool:
+        polygon = QtGui.QPolygonF(self._dense_points())
+        return polygon.containsPoint(point, QtCore.Qt.FillRule.WindingFill)
+
+    def makeThumbnail(self, pixmap: QtGui.QPixmap) -> QtGui.QPixmap:
+        painter = QtGui.QPainter(pixmap)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        painter.setPen(self.pen())
+        painter.setTransform(self._thumbnail_transform(pixmap.width(), pixmap.height()))
+        painter.drawPolygon(*self._dense_points())
+        painter.end()
+        return pixmap
+
+    def _roi_type(self) -> str:
+        return "rotated ellipse"
 
 
 class QSegmentedLineRoi(QtW.QGraphicsPathItem, QRoi):
@@ -636,6 +704,7 @@ class MouseMode(Enum):
     ROI_RECTANGLE = auto()
     ROI_ROTATED_RECTANGLE = auto()
     ROI_ELLIPSE = auto()
+    ROI_ROTATED_ELLIPSE = auto()
     ROI_POINT = auto()
     ROI_POINTS = auto()
     ROI_POLYGON = auto()
@@ -650,6 +719,8 @@ class MouseMode(Enum):
             return cls.ROI_ROTATED_RECTANGLE
         if isinstance(roi, QEllipseRoi):
             return cls.ROI_ELLIPSE
+        if isinstance(roi, QRotatedEllipseRoi):
+            return cls.ROI_ROTATED_ELLIPSE
         if isinstance(roi, QPointRoi):
             return cls.ROI_POINT
         if isinstance(roi, QPointsRoi):
@@ -667,6 +738,7 @@ SIMPLE_ROI_MODES = frozenset({
     MouseMode.ROI_RECTANGLE,
     MouseMode.ROI_ROTATED_RECTANGLE,
     MouseMode.ROI_ELLIPSE,
+    MouseMode.ROI_ROTATED_ELLIPSE,
     MouseMode.ROI_POINT,
     MouseMode.ROI_LINE
 })  # fmt: skip
