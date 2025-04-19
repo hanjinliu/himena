@@ -941,6 +941,8 @@ class ParametricWindow(SubWindow[_W]):
 
 
 class DockWidget(WidgetWrapper[_W]):
+    """Dock widget wrapper."""
+
     def __init__(
         self,
         widget: _W,

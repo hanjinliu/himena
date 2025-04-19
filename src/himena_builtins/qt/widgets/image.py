@@ -540,7 +540,7 @@ class QImageViewBase(QtW.QSplitter):
         view = self._img_view
         if _mods & Qt.KeyboardModifier.ControlModifier:
             view.standard_ctrl_key_press(_key)
-        elif _mods == Qt.KeyboardModifier.NoModifier and _key == Qt.Key.Key_AsciiTilde:
+        elif event.text() == "^":
             self.handle(0).toggle()
         else:
             view.standard_key_press(_key, _mods & Qt.KeyboardModifier.ShiftModifier)
@@ -608,13 +608,14 @@ class QImageView(QImageViewBase):
 
     ## Keyboard Shortcuts
 
-    - `L`: Switch between Line ROI.
+    - `L`: Switch to Line ROI.
     - `Shift+L`: Switch to Segmented Line ROI.
     - `R`: Switch to Rectangle ROI.
     - `Shift+R`: Switch to Rotated Rectangle ROI.
     - `E`: Switch to Ellipse ROI.
     - `Shift+E`: Switch to Rotated Ellipse ROI.
-    - `P`: Switch between Point ROI.
+    - `C`: Switch to Circle ROI.
+    - `P`: Switch to Point ROI.
     - `Shift+P`: Switch to Multi-Point ROI.
     - `G`: Switch to Polygon ROI.
     - `Z`: Switch to Pan/Zoom Mode.
@@ -784,11 +785,16 @@ class QImageLabelView(QImageViewBase):
 
     ## Keyboard Shortcuts
 
-    - `L`: Switch between Line ROI and Segmented Line ROI.
-    - `R`: Switch between Rectangle ROI and Rotated Rectangle ROI.
+    - `L`: Switch to Line ROI.
+    - `Shift+L`: Switch to Segmented Line ROI.
+    - `R`: Switch to Rectangle ROI.
+    - `Shift+R`: Switch to Rotated Rectangle ROI.
     - `E`: Switch to Ellipse ROI.
+    - `Shift+E`: Switch to Rotated Ellipse ROI.
+    - `C`: Switch to Circle ROI.
+    - `P`: Switch to Point ROI.
+    - `Shift+P`: Switch to Multi-Point ROI.
     - `G`: Switch to Polygon ROI.
-    - `P`: Switch between Point ROI and Multi-Point ROI.
     - `Z`: Switch to Pan/Zoom Mode.
     - `Space`: Hold this key to temporarily switch to Pan/Zoom Mode.
     - `S`: Switch to Select Mode.

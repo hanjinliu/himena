@@ -25,6 +25,7 @@ from himena import AppContext as ctx
 from himena._utils import get_display_name, get_widget_class_id, unwrap_lazy_model
 
 configure_submenu(MenuId.TOOLS_OTHERS, group="20_builtins")
+configure_submenu(MenuId.TOOLS_FUNCTION, group="20_builtins")
 
 
 @register_function(

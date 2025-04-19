@@ -23,6 +23,7 @@ from himena._app_model._context import AppContext as _ctx
 from himena._app_model.actions._registry import ACTIONS, SUBMENUS
 from himena import _utils, _providers
 from himena.exceptions import Cancelled
+from himena.workflow import LocalReaderMethod
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -86,6 +87,9 @@ def open_last_closed_window(ui: MainWindow) -> WidgetDataModel:
         path, plugin = last
         store = _providers.ReaderStore().instance()
         model = store.run(path=path, plugin=plugin)
+        model.workflow = LocalReaderMethod(
+            output_model_type=model.type, plugin=plugin, path=path
+        ).construct_workflow()
         return model
     warnings.warn("No window to reopen", UserWarning, stacklevel=2)
     raise Cancelled

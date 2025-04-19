@@ -86,11 +86,9 @@ class QSubWindowArea(QtW.QMdiArea):
             and event.modifiers() & Qt.KeyboardModifier.ControlModifier
         ):
             self.setCursor(Qt.CursorShape.ClosedHandCursor)
-        return None
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent):
         self._mouse_move_event(event)
-        return None
 
     def _mouse_move_event(self, event: QtGui.QMouseEvent):
         if event.buttons() & Qt.MouseButton.LeftButton:
@@ -103,7 +101,6 @@ class QSubWindowArea(QtW.QMdiArea):
                     sub_window.move(sub_window.pos() + dpos)
                 self.setCursor(Qt.CursorShape.ClosedHandCursor)
         self._last_drag_pos = event.pos()
-        return None
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
         # reset cursor state
@@ -123,8 +120,6 @@ class QSubWindowArea(QtW.QMdiArea):
                 app = get_main_window(self).model_app
                 menu = build_qmodel_menu(MenuId.FILE_NEW, app, self)
                 menu.exec(event.globalPos())
-
-        return None
 
     def eventFilter(self, obj, a0: QtCore.QEvent) -> bool:
         if a0.type() == QtCore.QEvent.Type.FocusIn:
@@ -227,7 +222,6 @@ class QSubWindow(QtW.QMdiSubWindow):
 
         self._window_state = WindowState.NORMAL
         self._resize_state = ResizeState.NONE
-        self._current_button: int = Qt.MouseButton.NoButton
         self._widget = widget
         self._current_icon_color = icon_color
 
@@ -351,7 +345,6 @@ class QSubWindow(QtW.QMdiSubWindow):
         self._title_bar._minimize_btn.setVisible(state is not WindowState.MIN)
         self._widget.setVisible(state is not WindowState.MIN)
         self._window_state = state
-        self._current_button: int = Qt.MouseButton.NoButton
         return None
 
     def _store_current_geometry(self):
@@ -379,10 +372,7 @@ class QSubWindow(QtW.QMdiSubWindow):
             self._mouse_hover_event(a0.pos())
         elif a0.type() == QtCore.QEvent.Type.MouseButtonPress:
             assert isinstance(a0, QtGui.QMouseEvent)
-            self._current_button = a0.buttons()
             self._resize_state = self._check_resize_state(a0.pos())
-        elif a0.type() == QtCore.QEvent.Type.MouseButtonRelease:
-            self._current_button = Qt.MouseButton.NoButton
         return super().event(a0)
 
     def _check_resize_state(
@@ -400,9 +390,10 @@ class QSubWindow(QtW.QMdiSubWindow):
         if self._window_state is not WindowState.NORMAL:
             return None
         resize_state = self._check_resize_state(event_pos)
-        if self._current_button == Qt.MouseButton.NoButton:
+        current_button = QtW.QApplication.mouseButtons()
+        if current_button == Qt.MouseButton.NoButton:
             self.setCursor(CURSOR_SHAPE_MAP[resize_state])
-        elif self._current_button & Qt.MouseButton.LeftButton:
+        elif current_button & Qt.MouseButton.LeftButton:
             # NOTE: Method "minimusSizeHint" represents the minimum size of the widget
             # as a window
             rect = self.geometry()
