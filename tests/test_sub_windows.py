@@ -487,6 +487,7 @@ def test_open_and_save_files(himena_ui: MainWindow, tmpdir, sample_dir: Path):
     del himena_ui.tabs[0][0]
     himena_ui.exec_action("open-last-closed-window")
     assert himena_ui.tabs[0][-1].model_type() == StandardType.IPYNB
+    assert isinstance(himena_ui.tabs[0][-1].to_model().workflow.last(), LocalReaderMethod)
 
 def test_reading_file_group(himena_ui: MainWindow, sample_dir: Path):
     tab0 = himena_ui.add_tab()

@@ -119,12 +119,15 @@ class QtErrorMessageBox(QtW.QWidget):
 
         traceback_button = QtW.QPushButton("Trackback", self)
         enter_debugger_button = QtW.QPushButton("Debug", self)
+        traceback_button.setFixedHeight(20)
+        enter_debugger_button.setFixedHeight(20)
 
         traceback_button.clicked.connect(self._traceback_button_clicked)
         enter_debugger_button.clicked.connect(self._enter_debugger_button_clicked)
 
         layout.addWidget(traceback_button)
         layout.addWidget(enter_debugger_button)
+        layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         self.layout().addWidget(footer)
         return self
 

@@ -164,6 +164,8 @@ class EllipseRoi(Roi2D):
     def eccentricity(self) -> float:
         """Eccentricity of the ellipse."""
         a, b = sorted([self.width / 2, self.height / 2])
+        if b == 0:
+            return 0.0
         return math.sqrt(1 - a**2 / b**2)
 
     def bbox(self) -> Rect[float]:
@@ -171,9 +173,8 @@ class EllipseRoi(Roi2D):
 
     def to_mask(self, shape: tuple[int, ...]) -> NDArray[np.bool_]:
         _yy, _xx = np.indices(shape[-2:])
-        cx, cy = (self.width - 1) / 2, (self.height - 1) / 2
-        comp_a = (_yy - cy) / self.height * 2
-        comp_b = (_xx - cx) / self.width * 2
+        comp_a = (_yy - self.y) / self.height * 2
+        comp_b = (_xx - self.x) / self.width * 2
         return comp_a**2 + comp_b**2 <= 1
 
 
