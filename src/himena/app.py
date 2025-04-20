@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 import sys
+import socket
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Generic, TypeVar
 from psygnal import Signal
 from himena.exceptions import ExceptionHandler
+from himena.widgets import current_instance
+from himena.core import new_window
+from himena._socket import InterProcessData
 
 if TYPE_CHECKING:
     from IPython import InteractiveShell
@@ -17,11 +21,14 @@ _A = TypeVar("_A")  # the backend application type
 class EventLoopHandler(ABC, Generic[_A]):
     errored = Signal(Exception)
     warned = Signal(object)
+    socket_activated = Signal(bytes)
     _instances: dict[str, QtEventLoopHandler] = {}
 
     def __init__(self, name: str):
         self._name = name
         self._instances[name] = self
+        self._server_socket: socket.socket | None = None
+        self._port: int = 49200
 
     @classmethod
     def create(cls, name: str):
@@ -36,6 +43,13 @@ class EventLoopHandler(ABC, Generic[_A]):
     @abstractmethod
     def run_app(self):
         """Start the event loop."""
+
+    def close_socket(self):
+        """Close the socket."""
+        if self._server_socket:
+            self._server_socket.shutdown(socket.SHUT_RDWR)
+            self._server_socket.close()
+            self._server_socket = None
 
 
 def gui_is_active(event_loop: str) -> bool:
@@ -72,10 +86,53 @@ class QtEventLoopHandler(EventLoopHandler["QApplication"]):
                 hook=self._except_hook,
                 warning_hook=self._warn_hook,
             ) as _:
-                self.get_app().exec()
-            return None
+                qapp = self.get_app()
+                self._setup_socket(qapp)
+                qapp.exec()
+                return None
 
+        self._setup_socket()
         return self.get_app().exec()
+
+    def _setup_socket(self, app):
+        """Set up a socket for inter-process communication."""
+        from qtpy.QtCore import QSocketNotifier
+
+        self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self._server_socket.bind(("localhost", self._port))
+        self._server_socket.listen(1)
+        self._qnotifier = QSocketNotifier(
+            self._server_socket.fileno(),
+            QSocketNotifier.Type.Read,
+            parent=app,
+        )
+        self._qnotifier.activated.connect(self._on_socket_activated)
+
+    def _on_socket_activated(self, socket: int):
+        """Handle socket activation."""
+
+        client_socket, _ = self._server_socket.accept()
+        with client_socket:
+            chunks = []
+            while True:
+                chunk = client_socket.recv(1024)
+                if not chunk:
+                    break
+                chunks.append(chunk)
+            incoming = b"".join(chunks)
+        try:
+            data = InterProcessData.from_bytes(incoming)
+        except Exception as e:
+            print("Failed to parse socket data: %s", e)
+            return None
+        try:
+            ins = current_instance(data.profile_name)
+        except KeyError:
+            ins = new_window(data.profile_name)
+        ins.show()
+        for file in data.files:
+            ins.read_file(file)
 
     def instance(self) -> QApplication | None:
         """Get QApplication instance or None if it does not exist."""

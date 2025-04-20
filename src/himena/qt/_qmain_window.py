@@ -305,6 +305,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def show(self, run: bool = False):
         super().show()
+        self.activateWindow()
         size = self.size()
         minw, minh = 600, 400
         if size.width() < minw or size.height() < minh:
@@ -321,6 +322,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         if event.spontaneous() and self._confirm_close and not self._ok_to_exit():
             event.ignore()
             return
+        self._event_loop_handler.close_socket()
         return super().closeEvent(event)
 
     def event(self, e: QtCore.QEvent) -> bool:
