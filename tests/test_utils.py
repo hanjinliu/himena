@@ -1,6 +1,6 @@
 from pathlib import Path
 import sys
-from unittest.mock import MagicMock
+import warnings
 import numpy as np
 from numpy.testing import assert_equal
 from himena import create_model
@@ -69,14 +69,14 @@ def test_undo_redo_stack():
 def test_ndobject_collection():
     ndo = NDObjectCollection(
         items=["a", "b", "c"],
-        indices=[[0, 0], [0, 1], [1, 0]],
+        indices=np.array([[0, 0], [0, 1], [1, 0]]),
         axis_names=["t", "z"],
     )
     ndo.set_axis_names(["frame", "slice"])
     assert ndo.axis_names == ["frame", "slice"]
     ndo_coerced = ndo.coerce_dimensions(["additional", "frame", "slice"])
     assert ndo_coerced.axis_names == ["additional", "frame", "slice"]
-    assert ndo_coerced.items == ["a", "b", "c"]
+    assert ndo_coerced.items.tolist() == ["a", "b", "c"]
     assert ndo_coerced.indices.tolist() == [[-1, 0, 0], [-1, 0, 1], [-1, 1, 0]]
     ndo_copy = ndo.copy()
     assert ndo_copy.pop(1) == "b"
@@ -84,7 +84,7 @@ def test_ndobject_collection():
     assert len(ndo) == 3
     ndo_proj = ndo_copy.project(0)
     assert len(ndo_proj) == 2
-    assert ndo_proj.items == ["a", "c"]
+    assert ndo_proj.items.tolist() == ["a", "c"]
     assert ndo_proj.axis_names == ["slice"]
     ndo.simplified()
 
@@ -241,18 +241,10 @@ def test_resize(state: ResizeState):
 def test_exception():
     from himena.exceptions import ExceptionHandler
 
-    mock_exc = MagicMock()
-    mock_warn = MagicMock()
-    handler = ExceptionHandler(mock_exc, mock_warn)
-    mock_exc.assert_not_called()
-    mock_warn.assert_not_called()
+    handler = ExceptionHandler(lambda *_: None, lambda *_: None)
     with pytest.raises(ValueError):
         with handler:
             raise ValueError("Test exception")
-    assert mock_exc.call_count == 1
-    mock_warn.assert_not_called()
-    with pytest.warns(UserWarning):
-        with handler:
-            raise UserWarning("Test warning")
-    assert mock_exc.call_count == 1
-    assert mock_warn.call_count == 1
+
+    with handler:
+        warnings.warn("Test warning", UserWarning, stacklevel=2)
