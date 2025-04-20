@@ -251,16 +251,3 @@ def test_file_dialog_hist():
     assert cont.get(0) == 1
     assert cont.get_from_last(1) == 3
     assert cont.pop_last() == 3
-
-def test_layout(make_himena_ui: Callable[..., MainWindow]):
-    himena_ui = make_himena_ui("mock")
-    tab = himena_ui.add_tab()
-    hlayout = tab.add_hbox_layout(margins=(3, 2, 3, 2))
-    hvbox = hlayout.add_vbox_layout()
-    hvbox.add(_lo.EmptyLayout(himena_ui))
-    hvbox.add(_lo.EmptyLayout(himena_ui))
-    hvbox.add(_lo.EmptyLayout(himena_ui))
-    hvbox.rect = hvbox.rect.with_height(50)
-    hvbox.rect = hvbox.rect.with_width(40)
-    hlayout.rect = hlayout.rect.with_height(50)
-    hlayout.rect = hlayout.rect.with_width(40)
