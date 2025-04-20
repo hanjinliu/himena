@@ -1,3 +1,4 @@
+from typing import Callable
 from himena import MainWindow
 from himena.types import Margins
 from himena.layout import EmptyLayout
@@ -37,3 +38,16 @@ def test_layout_1d(himena_ui: MainWindow):
     QApplication.processEvents()
     win2.size = win2.size.with_height(win0.rect.width - 5)
     QApplication.processEvents()
+
+def test_layout_mock(make_himena_ui: Callable[..., MainWindow]):
+    himena_ui = make_himena_ui("mock")
+    tab = himena_ui.add_tab()
+    hlayout = tab.add_hbox_layout(margins=(3, 2, 3, 2))
+    hvbox = hlayout.add_vbox_layout()
+    hvbox.add(EmptyLayout(himena_ui))
+    hvbox.add(EmptyLayout(himena_ui))
+    hvbox.add(EmptyLayout(himena_ui))
+    hvbox.rect = hvbox.rect.with_height(50)
+    hvbox.rect = hvbox.rect.with_width(40)
+    hlayout.rect = hlayout.rect.with_height(50)
+    hlayout.rect = hlayout.rect.with_width(40)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import suppress
 import sys
 import socket
 from abc import ABC, abstractmethod
@@ -47,7 +48,8 @@ class EventLoopHandler(ABC, Generic[_A]):
     def close_socket(self):
         """Close the socket."""
         if self._server_socket:
-            self._server_socket.shutdown(socket.SHUT_RDWR)
+            with suppress(OSError):
+                self._server_socket.shutdown(socket.SHUT_RDWR)
             self._server_socket.close()
             self._server_socket = None
 
@@ -91,7 +93,6 @@ class QtEventLoopHandler(EventLoopHandler["QApplication"]):
                 qapp.exec()
                 return None
 
-        self._setup_socket()
         return self.get_app().exec()
 
     def _setup_socket(self, app):

@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Callable
 import warnings
 
 from magicgui import magicgui
@@ -7,6 +8,7 @@ import pytest
 from himena import MainWindow
 from himena.consts import StandardType
 from himena.core import create_model
+from himena import layout as _lo
 from himena.types import ClipboardDataModel, WidgetConstructor, WidgetType, ParametricWidgetProtocol
 from himena.qt import MainWindowQt
 from himena.qt._qmain_window import QMainWindow
@@ -238,3 +240,27 @@ def test_file_dialog_hist():
 
     d.update("group-1", _dir / "XYZ"/ "PQR")
     assert d.get_path("group-1") == _dir
+
+    cont = HistoryContainer(3)
+    cont.add(0)
+    cont.add(1)
+    cont.add(2)
+    assert len(cont) == 3
+    cont.add(3)
+    assert len(cont) == 3
+    assert cont.get(0) == 1
+    assert cont.get_from_last(1) == 3
+    assert cont.pop_last() == 3
+
+def test_layout(make_himena_ui: Callable[..., MainWindow]):
+    himena_ui = make_himena_ui("mock")
+    tab = himena_ui.add_tab()
+    hlayout = tab.add_hbox_layout(margins=(3, 2, 3, 2))
+    hvbox = hlayout.add_vbox_layout()
+    hvbox.add(_lo.EmptyLayout(himena_ui))
+    hvbox.add(_lo.EmptyLayout(himena_ui))
+    hvbox.add(_lo.EmptyLayout(himena_ui))
+    hvbox.rect = hvbox.rect.with_height(50)
+    hvbox.rect = hvbox.rect.with_width(40)
+    hlayout.rect = hlayout.rect.with_height(50)
+    hlayout.rect = hlayout.rect.with_width(40)
