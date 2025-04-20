@@ -150,8 +150,8 @@ def model_to_col_val_arrays(
         i_col = _to_single_column_slice(col)
         i_val = _to_single_column_slice(val)
         column_names = df.column_names()
-        x_out = df[column_names[i_col]]
-        y_out = df[column_names[i_val]]
+        x_out = NamedArray(column_names[i_col], df[column_names[i_col]])
+        y_out = NamedArray(column_names[i_val], df[column_names[i_val]])
     elif model.is_subtype_of(StandardType.EXCEL):
         if not isinstance(meta := model.metadata, DictMeta):
             raise ValueError("Must be a DictMeta")
@@ -411,7 +411,7 @@ def _to_single_column_slice(val: SelectionType) -> int:
     _, csl = val
     if csl[1] - csl[0] != 1:
         raise ValueError("Only single column selection is allowed")
-    return csl[1] - csl[0]
+    return csl[0]
 
 
 def as_f64(arr: np.ndarray):

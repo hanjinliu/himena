@@ -1,9 +1,11 @@
 from pathlib import Path
 import sys
+import warnings
 import numpy as np
 from numpy.testing import assert_equal
 from himena import create_model
 from himena.standards.model_meta import ArrayMeta, DataFrameMeta, DictMeta, TableMeta
+from himena.types import Size, WindowRect
 from himena.utils.misc import is_subtype
 from himena.utils.table_selection import (
     auto_select,
@@ -11,7 +13,80 @@ from himena.utils.table_selection import (
     model_to_vals_arrays,
     model_to_col_val_arrays
 )
+from himena.utils.collections import OrderedSet, FrozenList, UndoRedoStack
+from himena.utils.ndobject import NDObjectCollection
+from himena.utils.window_rect import ResizeState
 import pytest
+
+def test_ordered_set():
+    oset = OrderedSet()
+    oset.add(1)
+    oset.add(2)
+    assert len(oset) == 2
+    assert list(oset) == [1, 2]
+    assert 1 in oset
+    assert 3 not in oset
+    repr(oset)
+
+def test_frozen_list():
+    flist = FrozenList([1, 2, 3])
+    assert len(flist) == 3
+    assert flist[0] == 1
+    assert flist[1] == 2
+    assert flist[2] == 3
+    assert flist.index(2) == 1
+    assert flist.count(2) == 1
+    repr(flist)
+
+def test_undo_redo_stack():
+    stack = UndoRedoStack(size=3)
+    stack.push(1)
+    stack.push(2)
+    stack.push(3)
+    assert len(stack._stack_undo) == 3
+    assert len(stack._stack_redo) == 0
+    stack.push(4)
+    assert len(stack._stack_undo) == 3
+    assert len(stack._stack_redo) == 0
+    assert stack.undoable()
+    assert not stack.redoable()
+    assert stack.undo() == 4
+    assert len(stack._stack_undo) == 2
+    assert len(stack._stack_redo) == 1
+    assert stack.redoable()
+    assert stack.redo() == 4
+    assert len(stack._stack_undo) == 3
+    assert len(stack._stack_redo) == 0
+    assert stack.undo() == 4
+    assert stack.undo() == 3
+    assert stack.undo() == 2
+    assert stack.undo() is None
+    stack.clear()
+    assert len(stack._stack_undo) == 0
+    assert len(stack._stack_redo) == 0
+    assert stack.redo() is None
+
+def test_ndobject_collection():
+    ndo = NDObjectCollection(
+        items=["a", "b", "c"],
+        indices=np.array([[0, 0], [0, 1], [1, 0]]),
+        axis_names=["t", "z"],
+    )
+    ndo.set_axis_names(["frame", "slice"])
+    assert ndo.axis_names == ["frame", "slice"]
+    ndo_coerced = ndo.coerce_dimensions(["additional", "frame", "slice"])
+    assert ndo_coerced.axis_names == ["additional", "frame", "slice"]
+    assert ndo_coerced.items.tolist() == ["a", "b", "c"]
+    assert ndo_coerced.indices.tolist() == [[-1, 0, 0], [-1, 0, 1], [-1, 1, 0]]
+    ndo_copy = ndo.copy()
+    assert ndo_copy.pop(1) == "b"
+    assert len(ndo_copy) == 2
+    assert len(ndo) == 3
+    ndo_proj = ndo_copy.project(0)
+    assert len(ndo_proj) == 2
+    assert ndo_proj.items.tolist() == ["a", "c"]
+    assert ndo_proj.axis_names == ["slice"]
+    ndo.simplified()
 
 @pytest.mark.parametrize(
     "input_type, super_type, expected",
@@ -146,3 +221,30 @@ def test_model_to_col_val_arrays():
     assert_equal(col.array, ["a", "a", "b"])
     assert val.name is None
     assert_equal(val.array, [1, 2, 3])
+
+    model = create_model(
+        {"c0": [1, 2, 3], "c1": ["t", "s", "t"]}, metadata=DataFrameMeta()
+    )
+    col, val = model_to_col_val_arrays(model, ((0, 3), (1, 2)), ((0, 3), (0, 1)))
+    assert col.name == "c1"
+    assert_equal(col.array, ["t", "s", "t"])
+    assert val.name == "c0"
+    assert_equal(val.array, [1, 2, 3])
+
+@pytest.mark.parametrize(
+    "state",
+    [state for state in ResizeState]
+)
+def test_resize(state: ResizeState):
+    state.resize_widget(WindowRect(10, 20, 40, 33), (30, 38), Size(3, 3), Size(100, 100))
+
+def test_exception():
+    from himena.exceptions import ExceptionHandler
+
+    handler = ExceptionHandler(lambda *_: None, lambda *_: None)
+    with pytest.raises(ValueError):
+        with handler:
+            raise ValueError("Test exception")
+
+    with handler:
+        warnings.warn("Test warning", UserWarning, stacklevel=2)

@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Callable
 import warnings
 
 from magicgui import magicgui
@@ -7,6 +8,7 @@ import pytest
 from himena import MainWindow
 from himena.consts import StandardType
 from himena.core import create_model
+from himena import layout as _lo
 from himena.types import ClipboardDataModel, WidgetConstructor, WidgetType, ParametricWidgetProtocol
 from himena.qt import MainWindowQt
 from himena.qt._qmain_window import QMainWindow
@@ -238,3 +240,14 @@ def test_file_dialog_hist():
 
     d.update("group-1", _dir / "XYZ"/ "PQR")
     assert d.get_path("group-1") == _dir
+
+    cont = HistoryContainer(3)
+    cont.add(0)
+    cont.add(1)
+    cont.add(2)
+    assert len(cont) == 3
+    cont.add(3)
+    assert len(cont) == 3
+    assert cont.get(0) == 1
+    assert cont.get_from_last(1) == 3
+    assert cont.pop_last() == 3

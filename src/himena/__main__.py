@@ -12,6 +12,7 @@ $ himena myprof path/to/file.txt  # open the file with the profile named "myprof
 import logging
 import sys
 from himena._cli import HimenaArgumentParser, HimenaCliNamespace
+from himena._socket import is_socket_used, send_to_window
 
 
 def _is_testing() -> bool:
@@ -65,11 +66,19 @@ def _main(args: HimenaCliNamespace):
     logging.basicConfig(level=args.log_level)
 
     # now it's ready to start the GUI
-    from himena import new_window
+    if is_socket_used():
+        if args.path:
+            files = args.path.split(";")
+        else:
+            files = []
+        send_to_window(args.profile or "default", files)
+        return
 
     attrs = {}
     if args.import_time:
         attrs["print_import_time"] = True
+
+    from himena.core import new_window
 
     ui = new_window(args.profile, app_attributes=attrs)
     if args.path is not None:

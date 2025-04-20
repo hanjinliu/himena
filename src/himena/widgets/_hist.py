@@ -39,7 +39,7 @@ class HistoryContainer(Generic[_T]):
         return len(self._hist)
 
     def __len__(self) -> int:
-        return len(self._hist)
+        return self.len()
 
 
 class FileDialogHistoryDict:

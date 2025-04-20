@@ -317,11 +317,6 @@ class DictWrapper(DataFrameWrapper):
     def column_to_array(self, name: str) -> np.ndarray:
         return np.asarray(self._df[name])
 
-    def set_column_by_array(self, name: str, array: np.ndarray):
-        if name not in self._df:
-            self._columns.append(name)
-        self._df[name] = array
-
     def with_columns(self, data: dict[str, np.ndarray]) -> DictWrapper:
         new_df = dict(self._df)
         new_df.update(data)
@@ -617,8 +612,11 @@ class PyarrowWrapper(DataFrameWrapper):
         return self._df[name].to_numpy()
 
     def with_columns(self, data: dict[str, np.ndarray]) -> PyarrowWrapper:
-        new_columns = {name: pa.array(data[name]) for name in data}
-        new_table = self._df.append_columns(new_columns)
+        import pyarrow as pa
+
+        new_table = self._df
+        for name in data:
+            new_table = new_table.append_column(name, pa.array(data[name]))
         return PyarrowWrapper(new_table)
 
     @classmethod
