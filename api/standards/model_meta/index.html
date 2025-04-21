@@ -1171,6 +1171,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#himena.standards.model_meta.ImageMeta.with_current_roi" class="md-nav__link">
+    <span class="md-ellipsis">
+      with_current_roi
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1505,6 +1514,15 @@
   <a href="#himena.standards.model_meta.ImageMeta.unwrap_rois" class="md-nav__link">
     <span class="md-ellipsis">
       unwrap_rois
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#himena.standards.model_meta.ImageMeta.with_current_roi" class="md-nav__link">
+    <span class="md-ellipsis">
+      with_current_roi
     </span>
   </a>
   
@@ -3024,11 +3042,27 @@
                 <code>current_roi</code>
             </td>
             <td>
-                  <code><span title="RoiModel">RoiModel</span> | None</code>
+                  <code><span title="RoiModel">RoiModel</span> | <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a> | None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Current region of interest.</p>
+                <p>Current region of interest</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>current_roi_index</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Current index of the ROI in the <code>rois</code>, if applicable.</p>
               </div>
             </td>
             <td>
@@ -3251,7 +3285,19 @@
 <span class="normal">344</span>
 <span class="normal">345</span>
 <span class="normal">346</span>
-<span class="normal">347</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ImageMeta</span><span class="p">(</span><span class="n">ArrayMeta</span><span class="p">):</span>
+<span class="normal">347</span>
+<span class="normal">348</span>
+<span class="normal">349</span>
+<span class="normal">350</span>
+<span class="normal">351</span>
+<span class="normal">352</span>
+<span class="normal">353</span>
+<span class="normal">354</span>
+<span class="normal">355</span>
+<span class="normal">356</span>
+<span class="normal">357</span>
+<span class="normal">358</span>
+<span class="normal">359</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ImageMeta</span><span class="p">(</span><span class="n">ArrayMeta</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Preset for describing an image file metadata.&quot;&quot;&quot;</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;arbitrary_types_allowed&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
@@ -3262,8 +3308,11 @@
     <span class="p">)</span>
     <span class="n">channel_axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Channel axis of the image.&quot;</span><span class="p">)</span>
     <span class="n">is_rgb</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether the image is RGB.&quot;</span><span class="p">)</span>
-    <span class="n">current_roi</span><span class="p">:</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiModel</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Current region of interest.&quot;</span>
+    <span class="n">current_roi</span><span class="p">:</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiModel</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Current region of interest&quot;</span>
+    <span class="p">)</span>
+    <span class="n">current_roi_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Current index of the ROI in the `rois`, if applicable.&quot;</span>
     <span class="p">)</span>
     <span class="n">rois</span><span class="p">:</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiListModel</span> <span class="o">|</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiListModel</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="n">roi</span><span class="o">.</span><span class="n">RoiListModel</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Regions of interest.&quot;</span>
@@ -3296,6 +3345,15 @@
             <span class="n">update</span><span class="p">[</span><span class="s2">&quot;is_rgb&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">elif</span> <span class="n">caxis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">update</span><span class="p">[</span><span class="s2">&quot;channel_axis&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">caxis</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">caxis</span> <span class="o">&gt;</span> <span class="n">index</span> <span class="k">else</span> <span class="n">caxis</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_current_roi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">roi</span><span class="p">:</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ImageMeta&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the current ROI.&quot;&quot;&quot;</span>
+        <span class="n">update</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;current_roi&quot;</span><span class="p">:</span> <span class="n">roi</span><span class="p">}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_roi_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">rois</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unwrap_rois</span><span class="p">()</span>
+            <span class="n">rois</span><span class="o">.</span><span class="n">items</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">current_roi_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">roi</span>
+            <span class="n">update</span><span class="p">[</span><span class="s2">&quot;rois&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rois</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">unwrap_rois</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiListModel</span><span class="p">:</span>
@@ -3374,7 +3432,7 @@
             <span class="p">)</span>
         <span class="p">)</span>
         <span class="n">rois</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unwrap_rois</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">cur_roi</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_roi</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cur_roi</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_roi</span><span class="p">,</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiModel</span><span class="p">):</span>
             <span class="n">dir_path</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">_CURRENT_ROI</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
                 <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">cur_roi</span><span class="o">.</span><span class="n">model_dump_typed</span><span class="p">())</span>
             <span class="p">)</span>
@@ -3470,10 +3528,7 @@
 
             <details class="quote">
               <summary>Source code in <code>src\himena\standards\model_meta.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">236</span>
-<span class="normal">237</span>
-<span class="normal">238</span>
-<span class="normal">239</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">239</span>
 <span class="normal">240</span>
 <span class="normal">241</span>
 <span class="normal">242</span>
@@ -3485,7 +3540,10 @@
 <span class="normal">248</span>
 <span class="normal">249</span>
 <span class="normal">250</span>
-<span class="normal">251</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_one_axis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ImageMeta&quot;</span><span class="p">:</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_one_axis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ImageMeta&quot;</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Drop an axis by index for the array slicing arr[..., value, ...].&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">index</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="p">)</span>
@@ -3523,17 +3581,54 @@
 
             <details class="quote">
               <summary>Source code in <code>src\himena\standards\model_meta.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">253</span>
-<span class="normal">254</span>
-<span class="normal">255</span>
-<span class="normal">256</span>
-<span class="normal">257</span>
-<span class="normal">258</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">unwrap_rois</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiListModel</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">unwrap_rois</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiListModel</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Unwrap the lazy-evaluation of the ROIs.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rois</span><span class="p">,</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiListModel</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rois</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">rois</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rois</span><span class="p">()</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rois</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="himena.standards.model_meta.ImageMeta.with_current_roi" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">with_current_roi</span><span class="p">(</span><span class="n">roi</span><span class="p">)</span></code>
+
+</h5>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Set the current ROI.</p>
+
+
+            <details class="quote">
+              <summary>Source code in <code>src\himena\standards\model_meta.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">with_current_roi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">roi</span><span class="p">:</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ImageMeta&quot;</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Set the current ROI.&quot;&quot;&quot;</span>
+    <span class="n">update</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;current_roi&quot;</span><span class="p">:</span> <span class="n">roi</span><span class="p">}</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_roi_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">rois</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unwrap_rois</span><span class="p">()</span>
+        <span class="n">rois</span><span class="o">.</span><span class="n">items</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">current_roi_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">roi</span>
+        <span class="n">update</span><span class="p">[</span><span class="s2">&quot;rois&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rois</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3621,13 +3716,13 @@ The argument must be an iterable if specified.</p>
 
               <details class="quote">
                 <summary>Source code in <code>src\himena\standards\model_meta.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">361</span>
-<span class="normal">362</span>
-<span class="normal">363</span>
-<span class="normal">364</span>
-<span class="normal">365</span>
-<span class="normal">366</span>
-<span class="normal">367</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ImageRoisMeta</span><span class="p">(</span><span class="n">ListMeta</span><span class="p">):</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">373</span>
+<span class="normal">374</span>
+<span class="normal">375</span>
+<span class="normal">376</span>
+<span class="normal">377</span>
+<span class="normal">378</span>
+<span class="normal">379</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ImageRoisMeta</span><span class="p">(</span><span class="n">ListMeta</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Preset for describing an image-rois metadata.&quot;&quot;&quot;</span>
 
     <span class="n">axes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ArrayAxis</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Axes of the ROIs.&quot;</span><span class="p">)</span>
@@ -3714,10 +3809,10 @@ The argument must be an iterable if specified.</p>
 
               <details class="quote">
                 <summary>Source code in <code>src\himena\standards\model_meta.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">355</span>
-<span class="normal">356</span>
-<span class="normal">357</span>
-<span class="normal">358</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ListMeta</span><span class="p">(</span><span class="n">BaseMetadata</span><span class="p">):</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">367</span>
+<span class="normal">368</span>
+<span class="normal">369</span>
+<span class="normal">370</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ListMeta</span><span class="p">(</span><span class="n">BaseMetadata</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Preset for describing a metadata for a list-like object.&quot;&quot;&quot;</span>
 
     <span class="n">selections</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
