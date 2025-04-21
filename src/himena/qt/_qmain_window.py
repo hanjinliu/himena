@@ -852,13 +852,13 @@ class QChoicesDialog(QtW.QDialog):
         return _set_result
 
     @classmethod
-    def request(
+    def make_request(
         cls,
         title: str,
         message: str,
         choices: list[tuple[str, _V]],
         parent: QtW.QWidget | None = None,
-    ) -> _V | None:
+    ) -> QChoicesDialog:
         self = cls(parent)
         self.init_message(title, message)
         button_group = QtW.QDialogButtonBox(self)
@@ -872,18 +872,29 @@ class QChoicesDialog(QtW.QDialog):
                 button.setShortcut(shortcut)
                 shortcut_registered.add(shortcut)
         self._layout.addWidget(button_group)
-        if self.exec() == QtW.QDialog.DialogCode.Accepted:
-            return self._result
-        return None
+        return self
 
     @classmethod
-    def request_radiobuttons(
+    def request(
         cls,
         title: str,
         message: str,
         choices: list[tuple[str, _V]],
         parent: QtW.QWidget | None = None,
     ) -> _V | None:
+        self = cls.make_request(title, message, choices, parent)
+        if self.exec() == QtW.QDialog.DialogCode.Accepted:
+            return self._result
+        return None
+
+    @classmethod
+    def make_request_radiobuttons(
+        cls,
+        title: str,
+        message: str,
+        choices: list[tuple[str, _V]],
+        parent: QtW.QWidget | None = None,
+    ) -> QChoicesDialog:
         self = cls(parent)
         self.init_message(title, message)
         button_group = QtW.QButtonGroup(self)
@@ -893,7 +904,6 @@ class QChoicesDialog(QtW.QDialog):
             button_group.addButton(button)
             button.clicked.connect(self.set_result_callback(value, accept=False))
             self._layout.addWidget(button)
-            button.setChecked(choice == choices[0][0])
 
         ok_cancel = QtW.QDialogButtonBox()
         ok_cancel.addButton(QtW.QDialogButtonBox.StandardButton.Ok)
@@ -901,6 +911,17 @@ class QChoicesDialog(QtW.QDialog):
         ok_cancel.accepted.connect(self.accept)
         ok_cancel.rejected.connect(self.reject)
         self._layout.addWidget(ok_cancel)
+        return self
+
+    @classmethod
+    def request_radiobuttons(
+        cls,
+        title: str,
+        message: str,
+        choices: list[tuple[str, _V]],
+        parent: QtW.QWidget | None = None,
+    ) -> _V | None:
+        self = cls.make_request_radiobuttons(title, message, choices, parent)
         if self.exec() == QtW.QDialog.DialogCode.Accepted:
             return self._result
         return None
