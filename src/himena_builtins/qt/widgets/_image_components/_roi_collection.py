@@ -200,13 +200,18 @@ class QSimpleRoiCollection(QtW.QWidget):
         out = self._qroi_list.filter_by_indices(indices).items
         return out
 
-    def pop_roi_in_slice(self, indices: Indices, ith: int) -> _roi_items.QRoi:
-        """Pop the `index`-th ROI in the slice `indices`."""
+    def index_in_slice(self, indices: Indices, ith: int) -> int:
+        """Return the `index`-th ROI in the slice `indices`."""
         mask = self._qroi_list.mask_by_indices(indices)
         if mask is None:
             index_total = ith
         else:
             index_total = np.where(mask)[0][ith]
+        return index_total
+
+    def pop_roi_in_slice(self, indices: Indices, ith: int) -> _roi_items.QRoi:
+        """Pop the `index`-th ROI in the slice `indices`."""
+        index_total = self.index_in_slice(indices, ith)
         qindex = self._list_view.model().index(index_total)
         self._list_view.model().beginRemoveRows(qindex, index_total, index_total)
         roi = self._qroi_list.pop(index_total)

@@ -93,14 +93,16 @@ class QDictOfWidgetEdit(QtW.QTabWidget):
         if index < 0:  # Clicked on the empty space
             return
         else:  # Clicked on an existing tab
-            menu = QtW.QMenu(self)
-            rename_action = menu.addAction("Rename Tab")
-            delete_action = menu.addAction("Delete Tab")
-            action = menu.exec(QtGui.QCursor.pos())
-            if action == rename_action:
-                self._line_edit.start_edit(index)
-            elif action == delete_action:
-                self.removeTab(index)
+            menu = self._menu_for_tabbar_right_clicked(index)
+            menu.exec()
+
+    def _menu_for_tabbar_right_clicked(self, index: int) -> QtW.QMenu:
+        menu = QtW.QMenu(self)
+        rename_action = menu.addAction("Rename Tab")
+        rename_action.triggered.connect(lambda: self._line_edit.start_edit(index))
+        delete_action = menu.addAction("Delete Tab")
+        delete_action.triggered.connect(lambda: self.removeTab(index))
+        return menu
 
     def add_new_tab(self):
         table = self._default_widget()

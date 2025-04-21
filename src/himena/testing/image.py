@@ -4,7 +4,7 @@ from cmap import Colormap
 import numpy as np
 from numpy.testing import assert_allclose
 import pytest
-from himena import WidgetDataModel, StandardType
+from himena import WidgetDataModel, create_image_model
 from himena.standards.model_meta import ImageChannel, ImageMeta, ArrayAxis
 from himena.standards import roi as _roi
 from himena.testing.subwindow import WidgetTester
@@ -123,31 +123,56 @@ def test_current_roi(tester: WidgetTester):
 
 def test_change_dimensionality(tester: WidgetTester):
     """Check changing the dimensionality of the image works."""
-    tester.update_model(immodel(np.arange(15).reshape(3, 5)))
+    tester.update_model(create_image_model(np.arange(15).reshape(3, 5)))
     assert tester.to_model().value.shape == (3, 5)
     assert not tester.to_model().metadata.is_rgb
-    tester.update_model(immodel(np.arange(24).reshape(4, 6)))
+    tester.update_model(create_image_model(np.arange(24).reshape(4, 6)))
     assert tester.to_model().value.shape == (4, 6)
     assert not tester.to_model().metadata.is_rgb
-    tester.update_model(immodel(np.arange(96).reshape(4, 4, 6)))
+    tester.update_model(create_image_model(np.arange(96).reshape(4, 4, 6)))
     assert tester.to_model().value.shape == (4, 4, 6)
     assert not tester.to_model().metadata.is_rgb
 
 
 def test_rgb_images(tester: WidgetTester):
     """Check that RGB images are handled correctly."""
-    meta = ImageMeta(is_rgb=True)
     tester.update_model(
-        immodel(np.full((5, 5, 3), 200, dtype=np.uint8), metadata=meta),
+        create_image_model(np.full((5, 5, 3), 200, dtype=np.uint8), is_rgb=True),
     )
     assert tester.to_model().value.shape == (5, 5, 3)
     assert tester.to_model().metadata.is_rgb
-    tester.update_model(immodel(np.full((4, 6, 3), 200, dtype=np.uint8), metadata=meta))
+    tester.update_model(
+        create_image_model(np.full((4, 6, 3), 200, dtype=np.uint8), is_rgb=True)
+    )
     assert tester.to_model().value.shape == (4, 6, 3)
     assert tester.to_model().metadata.is_rgb
-    tester.update_model(immodel(np.full((4, 6), 100, dtype=np.uint8)))
+    tester.update_model(create_image_model(np.full((4, 6), 100, dtype=np.uint8)))
     assert tester.to_model().value.shape == (4, 6)
     assert not tester.to_model().metadata.is_rgb
+
+
+def test_current_roi_and_its_index(tester: WidgetTester):
+    """Check that current ROI and its index are handled correctly."""
+    roi0 = _roi.RectangleRoi(x=2.9, y=0, width=2, height=2.5)
+    roi1 = _roi.RectangleRoi(x=1.5, y=0, width=2, height=2.5)
+    roi2 = _roi.RectangleRoi(x=0.5, y=0, width=2, height=2.5)
+    rois = _roi.RoiListModel(items=[roi0, roi1, roi2])
+    for i in range(3):
+        tester.update_model(
+            create_image_model(
+                np.arange(15).reshape(3, 5),
+                current_roi=rois[i],
+                current_roi_index=i,
+                rois=rois,
+            )
+        )
+        cur_roi = tester.to_model().metadata.current_roi
+        assert cur_roi is not None
+        assert tester.to_model().metadata.current_roi_index == i
+        assert cur_roi.x == rois[i].x
+        assert cur_roi.y == rois[i].y
+        assert cur_roi.width == rois[i].width
+        assert cur_roi.height == rois[i].height
 
 
 def _cast_meta(meta) -> ImageMeta:
@@ -169,19 +194,12 @@ def _zyx_image_model(
         for name, scale in zip(axis_names, pixel_scale)
     ]
     channels = [ImageChannel(colormap=colormap)]
-    return WidgetDataModel(
-        value=np.arange(48).reshape(3, 4, 4),
-        type=StandardType.IMAGE,
-        metadata=ImageMeta(
-            axes=axes,
-            unit=unit,
-            channels=channels,
-            current_indices=current_indices,
-            current_roi=current_roi,
-            is_rgb=False,
-        ),
+    return create_image_model(
+        np.arange(48).reshape(3, 4, 4),
+        axes=axes,
+        unit=unit,
+        channels=channels,
+        current_indices=current_indices,
+        current_roi=current_roi,
+        is_rgb=False,
     )
-
-
-def immodel(value, metadata=None) -> WidgetDataModel[np.ndarray]:
-    return WidgetDataModel(value=value, type=StandardType.IMAGE, metadata=metadata)

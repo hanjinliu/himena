@@ -129,6 +129,7 @@ class QRoiLabels(QtW.QGraphicsItem):
 class QImageGraphicsView(QBaseGraphicsView):
     roi_added = QtCore.Signal(QRoi)
     roi_removed = QtCore.Signal(int)
+    """Emitted when a i-th ROI *in this slice* is removed from the view."""
     roi_visibility_changed = QtCore.Signal(bool)
     current_roi_updated = QtCore.Signal()
     """Emitted when the current ROI is added, removed or edited."""
@@ -412,6 +413,7 @@ class QImageGraphicsView(QBaseGraphicsView):
             )
 
     def remove_item(self, item: QRoi):
+        """Remove selected ROI item from the view."""
         self.scene().removeItem(item)
         if not (
             item is self._current_roi_item and self._is_current_roi_item_not_registered

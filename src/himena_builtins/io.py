@@ -189,7 +189,7 @@ def read_as_polars_dataframe(file_path: Path) -> WidgetDataModel:
     if suffix in {".csv", ".txt"}:
         return _io.DataFrameReader("polars", "read_csv", {})(file_path)
     elif suffix == ".tsv":
-        return _io.DataFrameReader("polars", "read_csv", {"sep": "\t"})(file_path)
+        return _io.DataFrameReader("polars", "read_csv", {"separator": "\t"})(file_path)
     elif suffix == ".feather":
         return _io.DataFrameReader("polars", "read_ipc", {})(file_path)
     elif suffix == ".json":

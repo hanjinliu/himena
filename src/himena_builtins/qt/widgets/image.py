@@ -189,12 +189,17 @@ class QImageViewBase(QtW.QSplitter):
                 roi_list.coerce_dimensions(axis_names)
             )
             self._update_rois()
-        if meta0.current_roi:
+        if cur_roi := meta0.current_roi:
             self._img_view.remove_current_item(reason="update_model")
-            qroi = from_standard_roi(meta0.current_roi, self._img_view._roi_pen)
+            if meta0.current_roi_index is None:
+                qroi = from_standard_roi(cur_roi, self._img_view._roi_pen)
+                self._img_view.set_current_roi(qroi)
+            else:
+                qroi = self._roi_col._qroi_list[meta0.current_roi_index]
+                self._img_view.select_item(qroi, is_registered_roi=True)
             self._img_view.set_mode(MouseMode.from_roi(qroi))
-            self._img_view.set_current_roi(qroi)
             self._img_view._selection_handles.connect_roi(qroi)
+
         self._control._interp_check_box.setChecked(meta0.interpolation == "linear")
         self._pixel_unit = meta0.unit or ""
         if ext_default := model.extension_default:
@@ -257,6 +262,14 @@ class QImageViewBase(QtW.QSplitter):
 
     def _emit_current_roi(self):
         self.current_roi_updated.emit(self._img_view._current_roi_item)
+        try:
+            idx = self._img_view._roi_items.index(self._img_view._current_roi_item)
+        except ValueError:
+            pass
+        else:
+            indices = self._dims_slider.value()
+            idx_total = self._roi_col.index_in_slice(indices, idx)
+            self._roi_col.set_selections([idx_total])
 
     def _make_control_widget(self) -> QImageViewControlBase:
         raise NotImplementedError
@@ -349,6 +362,17 @@ class QImageViewBase(QtW.QSplitter):
         axes = self._dims_slider._to_array_axes()
         if self._is_rgb:
             axes.append(model_meta.ArrayAxis(name="RGB"))
+        current_roi = self.current_roi()
+        if (
+            current_roi is not None
+            and not self._img_view._is_current_roi_item_not_registered
+            and (sels := self._roi_col.selections())
+        ):
+            # is the current ROI is already registered, use the index (see the
+            # ImageMeta standard)
+            current_roi_index = sels[-1]
+        else:
+            current_roi_index = None
         return WidgetDataModel(
             value=self._arr.arr,
             type=self.model_type(),
@@ -358,7 +382,8 @@ class QImageViewBase(QtW.QSplitter):
                 axes=axes,
                 channels=channels,
                 channel_axis=self._channel_axis,
-                current_roi=self.current_roi(),
+                current_roi=current_roi,
+                current_roi_index=current_roi_index,
                 rois=self._roi_col.to_standard_roi_list,
                 is_rgb=self._is_rgb,
                 interpolation=interp,
@@ -1042,6 +1067,7 @@ def _update_meta(meta0: model_meta.ImageMeta, meta: model_meta.ImageMeta):
         meta0.unit = meta.unit
     if meta.interpolation:
         meta0.interpolation = meta.interpolation
+    meta0.current_roi_index = meta.current_roi_index
     meta0.skip_image_rerendering = meta.skip_image_rerendering
     return None
 

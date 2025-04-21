@@ -5,6 +5,7 @@ from himena.testing import WidgetTester
 from himena_builtins.qt.stack import QExcelEdit, QDataFrameStack, QArrayStack
 
 def test_excel_widget(qtbot: QtBot, himena_ui: MainWindow):
+    # himena_ui is needed because drop_model needs current instance
     excel_edit = QExcelEdit()
     with WidgetTester(excel_edit) as tester:
         qtbot.addWidget(excel_edit)
@@ -43,6 +44,10 @@ def test_excel_widget(qtbot: QtBot, himena_ui: MainWindow):
         control._insert_column_left()
         control._remove_selected_rows()
         control._remove_selected_columns()
+
+    tabbar = excel_edit.tabBar()
+    excel_edit.setCurrentIndex(0)
+    tabbar._make_drag()
 
 def test_dataframe_dict(qtbot: QtBot):
     widget = QDataFrameStack()
