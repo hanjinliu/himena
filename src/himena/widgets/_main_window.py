@@ -47,6 +47,7 @@ from himena.widgets._typemap import ObjectTypeMap, register_defaults
 from himena.widgets._widget_list import TabList, TabArea, DockWidgetList
 from himena.widgets._wrapper import ParametricWindow, SubWindow, DockWidget
 from himena.workflow import ProgrammaticMethod
+from himena._socket import SocketInfo
 
 if TYPE_CHECKING:
     from app_model.types import KeyBindingRule
@@ -115,6 +116,12 @@ class MainWindow(Generic[_W]):
     def object_type_map(self) -> ObjectTypeMap:
         """Mapping object to string that describes the type."""
         return self._object_type_map
+
+    @property
+    def socket_info(self) -> SocketInfo:
+        """Socket information."""
+        eh = self._backend_main_window._event_loop_handler
+        return SocketInfo(host=eh._host, port=eh._port)
 
     @property
     def theme(self) -> Theme:

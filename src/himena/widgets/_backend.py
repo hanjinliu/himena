@@ -23,12 +23,13 @@ from himena.types import (
 )
 
 if TYPE_CHECKING:
+    import numpy as np
+    from numpy.typing import NDArray
     from concurrent.futures import Future
+    from himena.app import EventLoopHandler
     from himena.style import Theme
     from himena.widgets._main_window import MainWindow
     from himena.widgets._wrapper import SubWindow, ParametricWindow
-    import numpy as np
-    from numpy.typing import NDArray
 
 _W = TypeVar("_W")  # backend widget type
 _T = TypeVar("_T")
@@ -36,6 +37,7 @@ _T = TypeVar("_T")
 
 class BackendMainWindow(Generic[_W]):  # pragma: no cover
     _himena_main_window: MainWindow[_W]
+    _event_loop_handler: EventLoopHandler
 
     def __init_subclass__(cls) -> None:
         for name in dir(BackendMainWindow):

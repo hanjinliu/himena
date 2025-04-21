@@ -10,9 +10,15 @@ $ himena myprof path/to/file.txt  # open the file with the profile named "myprof
 """
 
 import logging
+from pathlib import Path
 import sys
 from himena._cli import HimenaArgumentParser, HimenaCliNamespace
-from himena._socket import is_socket_used, send_to_window
+from himena._socket import (
+    get_socket_info_from_lock_file,
+    get_unique_lock_file,
+    send_to_window,
+)
+import yaml
 
 
 def _is_testing() -> bool:
@@ -33,8 +39,10 @@ def _main(args: HimenaCliNamespace):
 
     from himena.profile import load_app_profile
 
+    prof_name = args.profile or "default"
+
     if args.clear_plugin_configs:
-        prof = load_app_profile(args.profile or "default")
+        prof = load_app_profile(prof_name)
         if prof.plugin_configs:
             prof.plugin_configs.clear()
             prof.save()
@@ -50,8 +58,8 @@ def _main(args: HimenaCliNamespace):
     if args.list_plugins:
         from himena.utils.entries import iter_plugin_info
 
-        app_profile = load_app_profile(args.profile or "default")
-        print("Profile:", args.profile or "default")
+        app_profile = load_app_profile(prof_name)
+        print("Profile:", prof_name)
         print("Plugins:")
         for info in iter_plugin_info():
             if info.place in app_profile.plugins:
@@ -66,12 +74,13 @@ def _main(args: HimenaCliNamespace):
     logging.basicConfig(level=args.log_level)
 
     # now it's ready to start the GUI
-    if is_socket_used():
+    if (lock := get_unique_lock_file(prof_name)) is None:
+        socket_info = get_socket_info_from_lock_file(prof_name)
         if args.path:
             files = args.path.split(";")
         else:
             files = []
-        send_to_window(args.profile or "default", files)
+        send_to_window(prof_name, files, **socket_info.asdict())
         return
 
     attrs = {}
@@ -81,9 +90,13 @@ def _main(args: HimenaCliNamespace):
     from himena.core import new_window
 
     ui = new_window(args.profile, app_attributes=attrs)
+
+    yaml.dump(ui.socket_info.asdict(), lock)
     if args.path is not None:
         ui.read_file(args.path)
     ui.show(run=not _is_testing())
+    lock.close()
+    Path(lock.name).unlink(missing_ok=True)
 
 
 def main():

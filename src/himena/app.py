@@ -29,6 +29,7 @@ class EventLoopHandler(ABC, Generic[_A]):
         self._name = name
         self._instances[name] = self
         self._server_socket: socket.socket | None = None
+        self._host: str = "localhost"
         self._port: int = 49200
 
     @classmethod
@@ -101,7 +102,7 @@ class QtEventLoopHandler(EventLoopHandler["QApplication"]):
 
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self._server_socket.bind(("localhost", self._port))
+        self._server_socket.bind((self._host, self._port))
         self._server_socket.listen(1)
         self._qnotifier = QSocketNotifier(
             self._server_socket.fileno(),
