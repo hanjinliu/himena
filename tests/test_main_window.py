@@ -1,5 +1,6 @@
+from concurrent.futures import Future
 from pathlib import Path
-from typing import Callable
+from unittest.mock import MagicMock
 import warnings
 
 from magicgui import magicgui
@@ -8,10 +9,9 @@ import pytest
 from himena import MainWindow
 from himena.consts import StandardType
 from himena.core import create_model
-from himena import layout as _lo
 from himena.types import ClipboardDataModel, WidgetConstructor, WidgetType, ParametricWidgetProtocol
 from himena.qt import MainWindowQt
-from himena.qt._qmain_window import QMainWindow
+from himena.qt._qmain_window import QMainWindow, _ext_to_filter, QChoicesDialog
 from himena.widgets import set_status_tip, notify, append_result, TabArea
 from himena_builtins.qt.text import QTextEdit
 
@@ -251,3 +251,35 @@ def test_file_dialog_hist():
     assert cont.get(0) == 1
     assert cont.get_from_last(1) == 3
     assert cont.pop_last() == 3
+
+def test_qt_main_window(himena_ui: MainWindowQt, qtbot: QtBot):
+    qui = himena_ui._backend_main_window
+    cb = MagicMock()
+    cb_errored = MagicMock()
+    # check success
+    future = Future()
+    future.set_result(2)
+    qui._process_future_done_callback(cb, cb_errored)(future)
+    cb.assert_called_once_with(future)
+    cb_errored.assert_not_called()
+    cb.reset_mock()
+
+    # check error
+    future = Future()
+    future.set_exception(ValueError("error"))
+    qui._process_future_done_callback(cb, cb_errored)(future)
+    cb.assert_not_called()
+    assert cb_errored.call_count == 1
+    cb.reset_mock()
+
+    qui._process_parametric_widget
+
+def test_ext_filter():
+    assert _ext_to_filter(".txt") == "*.txt"
+    assert _ext_to_filter("") == "*"
+    assert _ext_to_filter("txt") == "*.txt"
+
+def test_qchoices_dialog(qtbot: QtBot):
+    choices = [("a", 0), ("b", 1), ("c", 2)]
+    qtbot.addWidget(QChoicesDialog.make_request("title", "message", choices))
+    qtbot.addWidget(QChoicesDialog.make_request_radiobuttons("title", "message", choices))
