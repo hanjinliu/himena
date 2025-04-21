@@ -487,6 +487,9 @@ def test_image_view_setting_current_indices(qtbot: QtBot):
 def test_image_view_current_roi(qtbot: QtBot):
     image.test_current_roi(_get_tester())
 
+def test_image_view_current_roi_index(qtbot: QtBot):
+    image.test_current_roi_and_its_index(_get_tester())
+
 def _get_tester():
     return WidgetTester(QImageView())
 

@@ -214,8 +214,11 @@ class ImageMeta(ArrayMeta):
     )
     channel_axis: int | None = Field(None, description="Channel axis of the image.")
     is_rgb: bool = Field(False, description="Whether the image is RGB.")
-    current_roi: roi.RoiModel | None = Field(
-        None, description="Current region of interest."
+    current_roi: roi.RoiModel | int | None = Field(
+        None, description="Current region of interest"
+    )
+    current_roi_index: int | None = Field(
+        None, description="Current index of the ROI in the `rois`, if applicable."
     )
     rois: roi.RoiListModel | Callable[[], roi.RoiListModel] = Field(
         default_factory=roi.RoiListModel, description="Regions of interest."
@@ -248,6 +251,15 @@ class ImageMeta(ArrayMeta):
             update["is_rgb"] = False
         elif caxis is not None:
             update["channel_axis"] = caxis - 1 if caxis > index else caxis
+        return self.model_copy(update=update)
+
+    def with_current_roi(self, roi: roi.RoiModel) -> "ImageMeta":
+        """Set the current ROI."""
+        update = {"current_roi": roi}
+        if self.current_roi_index is not None:
+            rois = self.unwrap_rois()
+            rois.items[self.current_roi_index] = roi
+            update["rois"] = rois
         return self.model_copy(update=update)
 
     def unwrap_rois(self) -> roi.RoiListModel:
@@ -326,7 +338,7 @@ class ImageMeta(ArrayMeta):
             )
         )
         rois = self.unwrap_rois()
-        if cur_roi := self.current_roi:
+        if isinstance(cur_roi := self.current_roi, roi.RoiModel):
             dir_path.joinpath(_CURRENT_ROI).write_text(
                 json.dumps(cur_roi.model_dump_typed())
             )
