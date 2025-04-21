@@ -3,12 +3,13 @@ from numpy.testing import assert_equal
 from pytestqt.qtbot import QtBot
 from himena import MainWindow
 from himena.consts import StandardType
+from himena.core import create_table_model
 from himena.standards.model_meta import TableMeta
 from himena.testing import WidgetTester, table
 from himena.types import WidgetDataModel
 from himena_builtins.qt.table import QSpreadsheet
 from qtpy.QtWidgets import QApplication
-from qtpy.QtCore import Qt
+from qtpy.QtCore import Qt, QPoint
 
 _Ctrl = Qt.KeyboardModifier.ControlModifier
 
@@ -55,6 +56,7 @@ def test_table_edit(qtbot: QtBot):
         tester.widget.redo()
         qtbot.keyClick(tester.widget, Qt.Key.Key_Z, modifier=_Ctrl)
         qtbot.keyClick(tester.widget, Qt.Key.Key_Y, modifier=_Ctrl)
+        qtbot.keyClick(tester.widget, Qt.Key.Key_E)
 
 def test_moving_in_table(qtbot: QtBot):
     with _get_tester() as tester:
@@ -111,6 +113,7 @@ def test_copy_and_paste(qtbot: QtBot):
     tester.widget._copy_as_html()
     tester.widget._copy_as_rst()
     tester.widget._copy_to_clipboard()
+    QApplication.processEvents()
     tester.widget.selection_model.current_index = (1, 1)
     tester.widget.selection_model.set_ranges([(slice(1, 2), slice(1, 2))])
     tester.widget._paste_from_clipboard()
@@ -121,6 +124,7 @@ def test_copy_and_paste(qtbot: QtBot):
     tester.update_model(value=[["a", "b"], ["c", "bc"]])
     tester.widget.selection_model.set_ranges([(slice(0, 2), slice(0, 1))])
     tester.widget._copy_to_clipboard()
+    QApplication.processEvents()
     tester.widget.selection_model.set_ranges([(slice(0, 2), slice(1, 2))])
     tester.widget._paste_from_clipboard()
     assert_equal(tester.widget.to_model().value, [["a", "a"], ["c", "c"]])
@@ -255,3 +259,39 @@ def test_copy_on_write(qtbot: QtBot):
         ss._delete_selection()
         assert_equal(ss.to_model().value, [["", ""], ["c", "d"]])
         assert_equal(ss_other.to_model().value, [["a", ""], ["c", "d"]])
+
+def test_header_view(qtbot: QtBot):
+    from himena_builtins.qt.widgets._table_components._header import (
+        QHorizontalHeaderView,
+        QVerticalHeaderView,
+    )
+    header = QHorizontalHeaderView(QSpreadsheet())
+    qtbot.addWidget(header)
+    header._on_section_clicked(0)
+    header._on_section_pressed(0)
+    header._on_section_entered(1)
+    header.visualRectAtIndex(0)
+
+    header = QVerticalHeaderView(QSpreadsheet())
+    qtbot.addWidget(header)
+    header._on_section_clicked(0)
+    header._on_section_pressed(0)
+    header._on_section_entered(1)
+    header.visualRectAtIndex(0)
+
+def test_table_view_mouse_interaction(qtbot: QtBot):
+
+    ss = QSpreadsheet()
+    qtbot.addWidget(ss)
+    ss.show()
+    ss.update_model(create_table_model(value=["a", "b"]))
+    ss.update_model(create_table_model(value=np.zeros((10, 10))))
+
+    qtbot.mouseClick(ss, Qt.MouseButton.LeftButton, pos=QPoint(5, 5))
+    qtbot.mousePress(ss, Qt.MouseButton.LeftButton, pos=QPoint(5, 5))
+    qtbot.mouseMove(ss, pos=QPoint(35, 55))
+    qtbot.mouseRelease(ss, Qt.MouseButton.LeftButton, pos=QPoint(35, 55))
+
+    qtbot.mousePress(ss, Qt.MouseButton.RightButton, pos=QPoint(5, 5))
+    qtbot.mouseMove(ss, pos=QPoint(35, 55))
+    qtbot.mouseRelease(ss, Qt.MouseButton.RightButton, pos=QPoint(35, 55))
