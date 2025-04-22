@@ -326,10 +326,10 @@ def histogram(win: SubWindow) -> Parametric:
     types=[StandardType.PLOT],
     menus=[MenuId.TOOLS_PLOT],
     command_id="builtins:edit-plot",
+    keybindings="E",
 )
-def edit_plot(win: SubWindow) -> Parametric:
+def edit_plot(model: WidgetDataModel) -> Parametric:
     """Edit the appearance of the plot."""
-    model = win.to_model()
     lo = _get_single_axes(model)
     plot_models = lo.axes.models
     gui_options = {
@@ -352,7 +352,7 @@ def edit_plot(win: SubWindow) -> Parametric:
         x: dict,
         y: dict,
         **kwargs: dict,
-    ):
+    ) -> WidgetDataModel:
         lo.axes.title = title
         lo.axes.x = hplt.Axis.model_validate(x)
         lo.axes.y = hplt.Axis.model_validate(y)
@@ -362,8 +362,8 @@ def edit_plot(win: SubWindow) -> Parametric:
             dumped.update(value)
             new_models.append(plot_model.model_validate(dumped))
         lo.axes.models = new_models
-        win.update_model(model)
-        return None
+        model.update_inplace = True
+        return model
 
     return run_edit_plot
 

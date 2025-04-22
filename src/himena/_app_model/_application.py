@@ -49,6 +49,8 @@ class HimenaApplication(Application):
         return super().commands
 
     def _future_done_callback(self, f: Future) -> None:
+        from himena.widgets import current_instance
+
         self._futures.discard(f)
         if f.cancelled():
             return
@@ -60,9 +62,13 @@ class HimenaApplication(Application):
         if isinstance(result, WidgetDataModel) and info is not None:
             if info.track is not None and len(result.workflow) == 0:
                 result.workflow = info.track.to_workflow(info.kwargs)
-            # this clause is used to move the output window to the geometry of preview
-            # window or the parametric window.
-            if (top_left := info.top_left) is not None:
+            if result.update_inplace and info.track and info.track.contexts:
+                ui = current_instance()
+                input_window = ui._window_for_workflow_id(info.track.contexts[0].value)
+                input_window.update_model(result)
+            elif (top_left := info.top_left) is not None:
+                # this clause is used to move the output window to the geometry of
+                # preview window or the parametric window.
                 _left, _top = top_left
                 if info.size is not None:
                     result.window_rect_override = lambda _: WindowRect(

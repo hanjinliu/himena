@@ -144,7 +144,7 @@ def make_function_callback(
     title: str | None = None,
     run_async: bool = False,
 ) -> _F:
-    from himena.widgets._wrapper import SubWindow
+    from himena.widgets import SubWindow, current_instance
 
     try:
         sig = inspect.signature(f)
@@ -182,7 +182,7 @@ def make_function_callback(
         bound = sig.bind(*args, **kwargs)
         _time_before = timeit.default_timer()
         out = f(*args, **kwargs)
-        contexts = []
+        contexts: list[ModelParameter | WindowParameter] = []
         workflows = []
         for key, input_ in bound.arguments.items():
             input_param, wf = parse_parameter(key, input_)
@@ -199,6 +199,12 @@ def make_function_callback(
                     execution_time=timeit.default_timer() - _time_before,
                 )
             )
+            if out.update_inplace and contexts:
+                ui = current_instance()
+                input_window = ui._window_for_workflow_id(contexts[0].value)
+                input_window.update_model(out)
+                input_window._update_model_workflow(out.workflow)
+                return None
         elif is_parametric:
             ModelTrack(
                 contexts=contexts,

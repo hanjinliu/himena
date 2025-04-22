@@ -21,6 +21,8 @@ from himena.workflow import (
     LocalReaderMethod,
     CommandExecution,
     parse_parameter,
+    ModelParameter,
+    WindowParameter,
 )
 from himena.utils.enum import StrEnum
 from himena.utils.misc import is_subtype
@@ -82,8 +84,7 @@ _void = _Void()
 
 
 class WidgetDataModel(GenericModel[_T]):
-    """
-    A data model that represents a widget containing an internal data.
+    """A data model that represents a widget containing an internal data.
 
     Attributes
     ----------
@@ -140,6 +141,10 @@ class WidgetDataModel(GenericModel[_T]):
         description="Override the default save behavior.",
     )
     editable: bool = Field(True, description="Whether the widget is editable.")
+    update_inplace: bool = Field(
+        False,
+        description="Whether to update the input data instead of creating a new window.",
+    )
     window_rect_override: Callable[["Size"], "WindowRect"] | None = Field(None)
 
     def with_value(
@@ -150,6 +155,7 @@ class WidgetDataModel(GenericModel[_T]):
         title: str | None = None,
         metadata: object | None = _void,
         save_behavior_override: SaveBehavior | _Void | None = _void,
+        update_inplace: bool = False,
     ) -> "WidgetDataModel[_U]":
         """Return a model with the new value."""
         update = {"value": value}
@@ -164,6 +170,7 @@ class WidgetDataModel(GenericModel[_T]):
         update.update(
             workflow=Workflow(),
             force_open_with=None,
+            update_inplace=update_inplace,
         )  # these parameters must be reset
         return self.model_copy(update=update)
 
@@ -213,9 +220,10 @@ class WidgetDataModel(GenericModel[_T]):
     def with_metadata(
         self,
         metadata: Any,
+        update_inplace: bool = False,
     ) -> "WidgetDataModel[_T]":
         """Return a new instance with the given metadata."""
-        update = {"metadata": metadata}
+        update = {"metadata": metadata, "update_inplace": update_inplace}
         return self.model_copy(update=update)
 
     def write_to_directory(
@@ -587,7 +595,7 @@ class ModelTrack(_HasDynamicAttribute):
     _ATTR_NAME: ClassVar[str] = "__himena_model_track__"
 
     command_id: str
-    contexts: list = field(default_factory=list)
+    contexts: list[ModelParameter | WindowParameter] = field(default_factory=list)
     workflow: Workflow = field(default_factory=Workflow)
     time_start: float = field(default=0.0)
 

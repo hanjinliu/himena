@@ -315,11 +315,10 @@ def point_rois_to_dataframe(model: WidgetDataModel) -> WidgetDataModel:
     menus=[MenuId.TOOLS_IMAGE_CHANNELS, "/model_menu/channels"],
     command_id="builtins:colormap:set-colormaps",
 )
-def set_colormaps(win: SubWindow) -> Parametric:
+def set_colormaps(model: WidgetDataModel) -> Parametric:
     """Set the colormaps for each channel."""
     from himena.qt.magicgui import ColormapEdit
 
-    model = win.to_model()
     arr = wrap_array(model.value)
     meta = _cast_meta(model, ImageMeta).model_copy()
     if meta.channel_axis is None:
@@ -349,8 +348,7 @@ def set_colormaps(win: SubWindow) -> Parametric:
             ch.with_colormap(Colormap(cmap).name)
             for ch, cmap in zip(meta.channels, kwargs.values())
         ]
-        win.update_model(model.with_metadata(meta))
-        return None
+        return model.with_metadata(meta, update_inplace=True)
 
     return set_cmaps
 
@@ -439,9 +437,9 @@ def set_channel_axis(model: WidgetDataModel) -> Parametric:
         choices = [(axis.name, i) for i, axis in enumerate(meta.axes[:-2])]
 
     @configure_gui(axis={"choices": choices})
-    def run_set_channel_axis(axis: int):
+    def run_set_channel_axis(axis: int, inplace: bool = False):
         meta_out = meta.model_copy(update={"channel_axis": axis})
-        return model.with_metadata(meta_out)
+        return model.with_metadata(meta_out, update_inplace=inplace)
 
     return run_set_channel_axis
 

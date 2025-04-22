@@ -278,6 +278,17 @@ class MainWindow(Generic[_W]):
                 return win
         return None
 
+    def _window_for_workflow_id(self, identifier: uuid.UUID) -> SubWindow[_W] | None:
+        """Retrieve a sub-window by its workflow identifier."""
+        for win in self.iter_windows():
+            try:
+                last_id = win._widget_workflow.last_id()
+            except Exception:
+                return None
+            if last_id == identifier:
+                return win
+        return None
+
     def _current_or_new_tab(self) -> tuple[int, TabArea[_W]]:
         if self._new_widget_behavior is NewWidgetBehavior.WINDOW:
             if len(self.tabs) == 0:

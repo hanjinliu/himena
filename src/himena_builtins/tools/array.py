@@ -231,8 +231,8 @@ def array_astype(model: WidgetDataModel) -> Parametric:
     _dtype = str(np.dtype(wrap_array(model.value).dtype))
 
     @configure_gui(dtype={"widget_type": NumericDTypeEdit, "value": _dtype})
-    def run_astype(dtype) -> WidgetDataModel:
-        return model.with_value(model.value.astype(dtype))
+    def run_astype(dtype, inplace: bool = False) -> WidgetDataModel:
+        return model.with_value(model.value.astype(dtype), update_inplace=inplace)
 
     return run_astype
 
@@ -243,8 +243,8 @@ def array_astype(model: WidgetDataModel) -> Parametric:
     menus=[MenuId.TOOLS_ARRAY],
     command_id="builtins:set-array-scale",
 )
-def set_scale(win: SubWindow) -> Parametric:
-    model = win.to_model()
+def set_scale(model: WidgetDataModel) -> Parametric:
+    """Set the axis scales of the array."""
     meta = _cast_meta(model, ArrayMeta)
     if (axes := meta.axes) is None:
         raise ValueError("The axes attribute must be set to use this function.")
@@ -263,7 +263,6 @@ def set_scale(win: SubWindow) -> Parametric:
 
     @configure_gui(gui_options=gui_options)
     def run_set_scale(**kwargs: str):
-        model = win.to_model()
         meta = _cast_meta(model, ArrayMeta)
         updated_info = []
         for k, v in kwargs.items():
@@ -279,10 +278,9 @@ def set_scale(win: SubWindow) -> Parametric:
                     updated_info.append(f"{k}: {scale:.3g} [{unit}]")
                 else:
                     updated_info.append(f"{k}: {scale:.3g}")
-        win.update_model(model.model_copy(update={"metadata": meta}))
         updated_info_str = ", ".join(updated_info)
         set_status_tip(f"Scale updated ... {updated_info_str}")
-        return
+        return model.with_metadata(meta, update_inplace=True)
 
     return run_set_scale
 

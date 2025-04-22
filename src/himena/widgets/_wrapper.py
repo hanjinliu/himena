@@ -808,12 +808,14 @@ class ParametricWindow(SubWindow[_W]):
                 if self._auto_close:
                     self._close_me(ui)
             else:
-                result_widget = self._process_model_output(return_value)
+                result_widget = self._process_model_output(return_value, tracker)
                 if result_widget is None:
                     if tracker is not None:
                         new_workflow = tracker.to_workflow(kwargs)
                         return_value.workflow = new_workflow  # needs inheritance
                     return None
+                elif return_value.update_inplace:
+                    result_widget._widget_workflow = tracker.to_workflow(kwargs)
             _LOGGER.info("Got subwindow: %r", result_widget)
             if tracker is not None:
                 new_workflow = tracker.to_workflow(kwargs)
@@ -902,13 +904,21 @@ class ParametricWindow(SubWindow[_W]):
     def _emit_param_changed(self) -> None:
         return self.params_changed.emit(self)
 
-    def _process_model_output(self, model: WidgetDataModel) -> SubWindow[_W] | None:
+    def _process_model_output(
+        self,
+        model: WidgetDataModel,
+        tracker: ModelTrack | None = None,
+    ) -> SubWindow[_W] | None:
         """Process the returned WidgetDataModel."""
         ui = self._main_window()._himena_main_window
         i_tab, i_win = self._find_me(ui)
         rect = self.rect
         if self._auto_close:
             del ui.tabs[i_tab][i_win]
+        if model.update_inplace and tracker and tracker.contexts:
+            if win := ui._window_for_workflow_id(tracker.contexts[0].value):
+                win.update_model(model)
+                return win
         if ui._instructions.process_model_output:
             widget = self._model_to_new_window(model)
             result_widget = ui.tabs[i_tab].add_widget(
