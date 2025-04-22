@@ -149,7 +149,7 @@ class Workflow(BaseModel):
     ) -> "Workflow":
         """Return a new workflow with the given step added."""
         if not isinstance(step, WorkflowStep):
-            raise ValueError("Expected a Workflow instance.")
+            raise ValueError("Expected a WorkflowStep instance.")
         # The added step is always a unique node.
         return Workflow(steps=self.steps + [step])
 

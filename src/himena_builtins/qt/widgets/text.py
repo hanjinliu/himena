@@ -6,7 +6,7 @@ from typing import Iterator, TYPE_CHECKING
 
 from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
-from superqt import QSearchableComboBox
+from superqt import QSearchableComboBox, QToggleSwitch
 
 from himena.consts import StandardType, MonospaceFontFamily
 from himena.types import WidgetDataModel
@@ -84,6 +84,11 @@ class QTextControl(QtW.QWidget):
         self._line_num = QtW.QLabel()
         self._line_num.setFixedWidth(50)
 
+        self._wordwrap = QToggleSwitch("Word Wrap")
+        self._wordwrap.setChecked(False)
+        self._wordwrap.toggled.connect(self._wordwrap_changed)
+        self._wordwrap.setToolTip("Enable word wrap")
+
         self._encoding = QtW.QLabel("utf-8")
 
         layout = QtW.QHBoxLayout(self)
@@ -92,6 +97,7 @@ class QTextControl(QtW.QWidget):
         layout.addWidget(QtW.QWidget())  # spacer
         layout.addWidget(labeled("Ln:", self._line_num))
         layout.addWidget(self._encoding)
+        layout.addWidget(self._wordwrap)
         layout.addWidget(labeled("Spaces:", self._tab_spaces_combobox))
         layout.addWidget(labeled("Language:", self._language_combobox))
 
@@ -101,6 +107,14 @@ class QTextControl(QtW.QWidget):
         font.setPointSize(8)
         for child in self.findChildren(QtW.QWidget):
             child.setFont(font)
+
+    def _wordwrap_changed(self, checked: bool):
+        """Enable or disable word wrap."""
+        if checked:
+            mode = QtGui.QTextOption.WrapMode.WordWrap
+        else:
+            mode = QtGui.QTextOption.WrapMode.NoWrap
+        self._text_edit.setWordWrapMode(mode)
 
     def _emit_language_changed(self):
         self.languageChanged.emit(self._language_combobox.currentText())

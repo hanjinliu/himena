@@ -9,6 +9,7 @@ from himena import MainWindow
 from himena.consts import StandardType
 from himena.core import create_model
 from himena.testing.subwindow import WidgetTester
+from himena.workflow import CommandExecution
 from himena_builtins.qt.dataframe import QDataFrameView, QDataFramePlotView
 from himena_builtins.qt.widgets.dataframe import select_columns
 from himena_builtins.qt.basic import QDictView
@@ -64,7 +65,12 @@ def test_dataframe_command(himena_ui: MainWindow):
         type=StandardType.DATAFRAME,
     )
     himena_ui.exec_action("builtins:dataframe:header-to-row")
-    himena_ui.current_window = win
+    assert isinstance(step := win.to_model().workflow.last(), CommandExecution)
+    assert step.command_id == "builtins:dataframe:header-to-row"
+    win = himena_ui.add_object(
+        {"a": [1, 2], "b": ["p", "q"]},
+        type=StandardType.DATAFRAME,
+    )
     himena_ui.exec_action("builtins:dataframe:series-as-array", with_params={"column": "a"})
     himena_ui.current_window = win
     himena_ui.exec_action("builtins:dataframe:select-columns-by-name", with_params={"columns": ["b"]})
@@ -73,8 +79,10 @@ def test_dataframe_command(himena_ui: MainWindow):
     himena_ui.exec_action("builtins:dataframe:filter", with_params={"column": "b", "operator": "eq", "value": "p"})
     assert _data_frame_equal(himena_ui.current_model.value, {"a": [1], "b": ["p"]})
     himena_ui.current_window = win
-    himena_ui.exec_action("builtins:dataframe:sort", with_params={"column": "b", "descending": True})
+    himena_ui.exec_action("builtins:dataframe:sort", with_params={"column": "b", "descending": True, "inplace": True})
     assert _data_frame_equal(himena_ui.current_model.value, {"a": [2, 1], "b": ["q", "p"]})
+    assert _data_frame_equal(win.to_model().value, {"a": [2, 1], "b": ["q", "p"]})
+    assert win.to_model().workflow.last().command_id == "builtins:dataframe:sort"
 
     win = himena_ui.current_window
     fn = create_model(

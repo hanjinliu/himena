@@ -24,7 +24,7 @@ def header_to_row(model: WidgetDataModel) -> WidgetDataModel:
     new_columns = [f"column_{i}" for i in range(df.num_columns())]
     input_string = f"{sep.join(new_columns)}\n{csv_string}"
     new_value = df.from_csv_string(input_string, sep)
-    return model.with_value(new_value)
+    return model.with_value(new_value, update_inplace=True)
 
 
 @register_function(
@@ -61,6 +61,7 @@ def series_as_array(model: WidgetDataModel) -> Parametric:
     command_id="builtins:dataframe:select-columns-by-name",
 )
 def select_columns_by_name(model: WidgetDataModel) -> Parametric:
+    """Select a subset of columns by name and return a new DataFrame."""
     df = wrap_dataframe(model.value)
 
     @configure_gui(
@@ -78,6 +79,7 @@ def select_columns_by_name(model: WidgetDataModel) -> Parametric:
     types=StandardType.DATAFRAME,
     menus=[MenuId.TOOLS_DATAFRAME],
     command_id="builtins:dataframe:filter",
+    run_async=True,
 )
 def filter_dataframe(model: WidgetDataModel) -> Parametric:
     import operator as _op
@@ -121,18 +123,17 @@ def filter_dataframe(model: WidgetDataModel) -> Parametric:
     types=StandardType.DATAFRAME,
     menus=[MenuId.TOOLS_DATAFRAME],
     command_id="builtins:dataframe:sort",
+    run_async=True,
 )
 def sort_dataframe(model: WidgetDataModel) -> Parametric:
     """Sort the DataFrame by a column."""
     df = wrap_dataframe(model.value)
     column_names = df.column_names()
 
-    @configure_gui(
-        column={"choices": column_names},
-    )
-    def run(column: str, descending: bool = False):
+    @configure_gui(column={"choices": column_names})
+    def run(column: str, descending: bool = False, inplace: bool = False):
         df_new = df.sort(column, descending=descending).unwrap()
-        return model.with_value(df_new).with_title_numbering()
+        return model.with_value(df_new, update_inplace=inplace).with_title_numbering()
 
     return run
 
@@ -151,14 +152,32 @@ def new_column_using_function(model: WidgetDataModel) -> Parametric:
         input_column_name={"choices": df.column_names()},
         function={"types": [StandardType.FUNCTION]},
     )
-    def run(input_column_name: str, function: WidgetDataModel, output_column_name: str):
+    def run(
+        input_column_name: str,
+        function: WidgetDataModel,
+        output_column_name: str,
+        inplace: bool = False,
+    ):
+        """Run function and add the result as a new column.
+
+        Parameters
+        ----------
+        input_column_name : str
+            The name of the input column.
+        function : WidgetDataModel
+            The function to apply to the input column.
+        output_column_name : str
+            The name of the output column.
+        inplace : bool
+            If True, update the widget in place, otherwise create a new widget.
+        """
         df = wrap_dataframe(model.value)
         col = df[input_column_name]
         out = function.value(col)
         dict_ = df.to_dict()
         dict_[output_column_name] = out
         df_new = df.from_dict(dict_)
-        return model.with_value(df_new).with_title_numbering()
+        return model.with_value(df_new, update_inplace=inplace).with_title_numbering()
 
     return run
 

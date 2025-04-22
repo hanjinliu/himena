@@ -44,9 +44,8 @@ def crop_selection(model: WidgetDataModel["np.ndarray"]) -> Parametric:
     menus=[MenuId.TOOLS_TABLE],
     command_id="builtins:table:change-separator",
 )
-def change_separator(win: SubWindow) -> Parametric:
+def change_separator(model: WidgetDataModel) -> Parametric:
     """Change the separator of the table data."""
-    model = win.to_model()
     arr_str = model.value
     meta = _cast_meta(model.metadata)
     sep = meta.separator
@@ -54,7 +53,6 @@ def change_separator(win: SubWindow) -> Parametric:
         raise ValueError("Current separator of the table is unknown.")
 
     def change_separator(separator: str = ",") -> None:
-        model = win.to_model()
         buf = _arr_to_buf(arr_str, sep)
         arr_new = np.loadtxt(
             buf,
@@ -63,7 +61,7 @@ def change_separator(win: SubWindow) -> Parametric:
         )
         meta = _cast_meta(model.metadata)
         meta.separator = separator
-        return win.update_model(model.with_value(arr_new, metadata=meta))
+        return model.with_value(arr_new, metadata=meta, update_inplace=True)
 
     return change_separator
 

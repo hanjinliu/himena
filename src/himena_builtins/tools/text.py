@@ -69,7 +69,9 @@ def run_main_function(model: WidgetDataModel[str]) -> Parametric:
 def change_separator(model: WidgetDataModel[str]) -> Parametric:
     """Change the separator (in the sense of CSV or TSV) of a text."""
 
-    def change_separator_data(old: str = ",", new: str = r"\t") -> WidgetDataModel[str]:
+    def change_separator_data(
+        old: str = ",", new: str = r"\t", inplace: bool = False
+    ) -> WidgetDataModel[str]:
         if old == "" or new == "":
             raise ValueError("Old and new separators must not be empty.")
         # decode unicode escape. e.g., "\\t" -> "\t"
@@ -83,6 +85,7 @@ def change_separator(model: WidgetDataModel[str]) -> Parametric:
             type=model.type,
             extensions=model.extensions,
             metadata=model.metadata,
+            update_inplace=inplace,
         ).with_title_numbering()
 
     return change_separator_data
@@ -98,7 +101,7 @@ def change_encoding(model: WidgetDataModel[str]) -> Parametric:
 
     def change_encoding_data(encoding: str = "utf-8") -> WidgetDataModel[str]:
         new_text = model.value.encode(encoding).decode(encoding)
-        out = model.with_value(new_text)
+        out = model.with_value(new_text, update_inplace=True)
         if isinstance(meta := model.metadata, TextMeta):
             meta.encoding = encoding
         return out
