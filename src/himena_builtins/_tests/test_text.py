@@ -17,6 +17,8 @@ def test_text_edit(qtbot: QtBot):
         tester.update_model(model)
         qtbot.addWidget(tester.widget)
         main = tester.widget._main_text_edit
+        tester.widget._control._wordwrap.setChecked(True)
+        tester.widget._control._wordwrap.setChecked(False)
 
         assert tester.to_model().value == "a\nb"
         assert main.toPlainText() == "a\nb"
@@ -76,20 +78,23 @@ def test_find_text(qtbot: QtBot):
     finder._btn_next.click()
     finder._btn_prev.click()
 
-def test_svg_preview(sample_dir: Path, qtbot):
+def test_svg_preview(sample_dir: Path, qtbot: QtBot):
     with WidgetTester(QSvgPreview()) as tester:
+        qtbot.addWidget(tester.widget)
         svg_path = sample_dir / "svg.svg"
         tester.update_model(value=svg_path.read_text(), type=StandardType.SVG)
         tester.to_model()
 
-def test_markdow_preview(sample_dir: Path, qtbot):
+def test_markdow_preview(sample_dir: Path, qtbot: QtBot):
     with WidgetTester(QMarkdownPreview()) as tester:
+        qtbot.addWidget(tester.widget)
         md_path = sample_dir / "markdown.md"
         tester.update_model(value=md_path.read_text(), type=StandardType.MARKDOWN)
         tester.to_model()
 
-def test_rich_text(sample_dir: Path, qtbot):
+def test_rich_text(sample_dir: Path, qtbot: QtBot):
     with WidgetTester(QRichTextEdit()) as tester:
+        qtbot.addWidget(tester.widget)
         md_path = sample_dir / "html.html"
         tester.update_model(value=md_path.read_text(), type=StandardType.HTML)
         tester.to_model()

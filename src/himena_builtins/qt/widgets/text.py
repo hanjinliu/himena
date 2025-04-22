@@ -85,6 +85,7 @@ class QTextControl(QtW.QWidget):
         self._line_num.setFixedWidth(50)
 
         self._wordwrap = QToggleSwitch("Word Wrap")
+        self._wordwrap.setChecked(False)
         self._wordwrap.toggled.connect(self._wordwrap_changed)
         self._wordwrap.setToolTip("Enable word wrap")
 

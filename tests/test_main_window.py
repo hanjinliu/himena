@@ -9,7 +9,7 @@ import pytest
 from himena import MainWindow
 from himena.consts import StandardType
 from himena.core import create_model
-from himena.types import ClipboardDataModel, WidgetConstructor, WidgetType, ParametricWidgetProtocol
+from himena.types import ClipboardDataModel, FutureInfo, WidgetConstructor, WidgetType, ParametricWidgetProtocol
 from himena.qt import MainWindowQt
 from himena.qt._qmain_window import QMainWindow, _ext_to_filter, QChoicesDialog
 from himena.widgets import set_status_tip, notify, append_result, TabArea
@@ -92,6 +92,7 @@ def test_notification_and_status_tip(himena_ui: MainWindowQt):
     himena_ui._backend_main_window._on_error(ValueError("msg 1", "msg 2"))
     himena_ui._backend_main_window._on_warning(warnings.WarningMessage("msg", UserWarning, "file", 1))
     himena_ui._backend_main_window._status_bar._profile_btn.click()
+    himena_ui._backend_main_window.setFocus()
 
 def test_dock_widget(himena_ui: MainWindow):
     assert len(himena_ui.dock_widgets) == 0
@@ -259,6 +260,7 @@ def test_qt_main_window(himena_ui: MainWindowQt, qtbot: QtBot):
     # check success
     future = Future()
     future.set_result(2)
+    FutureInfo(type_hint=int, top_left=(10, 10)).set(future)
     qui._process_future_done_callback(cb, cb_errored)(future)
     cb.assert_called_once_with(future)
     cb_errored.assert_not_called()
@@ -267,12 +269,13 @@ def test_qt_main_window(himena_ui: MainWindowQt, qtbot: QtBot):
     # check error
     future = Future()
     future.set_exception(ValueError("error"))
+    FutureInfo(type_hint=int, top_left=(10, 10)).set(future)
     qui._process_future_done_callback(cb, cb_errored)(future)
     cb.assert_not_called()
     assert cb_errored.call_count == 1
     cb.reset_mock()
 
-    qui._process_parametric_widget
+    # qui._process_parametric_widget
 
 def test_ext_filter():
     assert _ext_to_filter(".txt") == "*.txt"
