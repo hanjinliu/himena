@@ -96,6 +96,7 @@ class QTextControl(QtW.QWidget):
         layout.addWidget(QtW.QWidget())  # spacer
         layout.addWidget(labeled("Ln:", self._line_num))
         layout.addWidget(self._encoding)
+        layout.addWidget(self._wordwrap)
         layout.addWidget(labeled("Spaces:", self._tab_spaces_combobox))
         layout.addWidget(labeled("Language:", self._language_combobox))
 

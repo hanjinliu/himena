@@ -66,6 +66,8 @@ class HimenaApplication(Application):
                 ui = current_instance()
                 input_window = ui._window_for_workflow_id(info.track.contexts[0].value)
                 input_window.update_model(result)
+                input_window._update_model_workflow(result.workflow)
+                return None  # no need to process
             elif (top_left := info.top_left) is not None:
                 # this clause is used to move the output window to the geometry of
                 # preview window or the parametric window.

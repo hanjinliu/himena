@@ -79,8 +79,10 @@ def test_dataframe_command(himena_ui: MainWindow):
     himena_ui.exec_action("builtins:dataframe:filter", with_params={"column": "b", "operator": "eq", "value": "p"})
     assert _data_frame_equal(himena_ui.current_model.value, {"a": [1], "b": ["p"]})
     himena_ui.current_window = win
-    himena_ui.exec_action("builtins:dataframe:sort", with_params={"column": "b", "descending": True})
+    himena_ui.exec_action("builtins:dataframe:sort", with_params={"column": "b", "descending": True, "inplace": True})
     assert _data_frame_equal(himena_ui.current_model.value, {"a": [2, 1], "b": ["q", "p"]})
+    assert _data_frame_equal(win.to_model().value, {"a": [2, 1], "b": ["q", "p"]})
+    assert win.to_model().workflow.last().command_id == "builtins:dataframe:sort"
 
     win = himena_ui.current_window
     fn = create_model(

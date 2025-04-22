@@ -61,6 +61,7 @@ def series_as_array(model: WidgetDataModel) -> Parametric:
     command_id="builtins:dataframe:select-columns-by-name",
 )
 def select_columns_by_name(model: WidgetDataModel) -> Parametric:
+    """Select a subset of columns by name and return a new DataFrame."""
     df = wrap_dataframe(model.value)
 
     @configure_gui(
@@ -78,6 +79,7 @@ def select_columns_by_name(model: WidgetDataModel) -> Parametric:
     types=StandardType.DATAFRAME,
     menus=[MenuId.TOOLS_DATAFRAME],
     command_id="builtins:dataframe:filter",
+    run_async=True,
 )
 def filter_dataframe(model: WidgetDataModel) -> Parametric:
     import operator as _op
@@ -121,15 +123,14 @@ def filter_dataframe(model: WidgetDataModel) -> Parametric:
     types=StandardType.DATAFRAME,
     menus=[MenuId.TOOLS_DATAFRAME],
     command_id="builtins:dataframe:sort",
+    run_async=True,
 )
 def sort_dataframe(model: WidgetDataModel) -> Parametric:
     """Sort the DataFrame by a column."""
     df = wrap_dataframe(model.value)
     column_names = df.column_names()
 
-    @configure_gui(
-        column={"choices": column_names},
-    )
+    @configure_gui(column={"choices": column_names})
     def run(column: str, descending: bool = False, inplace: bool = False):
         df_new = df.sort(column, descending=descending).unwrap()
         return model.with_value(df_new, update_inplace=inplace).with_title_numbering()
