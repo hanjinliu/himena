@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 from qtpy import QtWidgets as QtW
 from qtpy import QtCore, QtGui
-from superqt import QLabeledDoubleSlider, QToggleSwitch
+from superqt import QLabeledDoubleSlider, QToggleSwitch, QElidingLabel
 from superqt.utils import qthrottled
 
 from himena.qt._utils import qsignal_blocker
@@ -49,20 +49,20 @@ class QImageViewControlBase(QtW.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
 
-        spacer = QtW.QWidget()
-        spacer.setSizePolicy(
-            QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Expanding
-        )
-
         self._interp_check_box = QToggleSwitch()
         self._interp_check_box.setText("smooth")
         self._interp_check_box.setChecked(False)
         self._interp_check_box.setMaximumHeight(36)
         self._interp_check_box.toggled.connect(self._interpolation_changed)
 
-        self._hover_info = QtW.QLabel()
+        self._hover_info = QElidingLabel()
+        self._hover_info.setAlignment(
+            QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter
+        )
+        self._hover_info.setSizePolicy(
+            QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Expanding
+        )
 
-        layout.addWidget(spacer, stretch=10)
         for wdt in self._widgets_to_add():
             layout.addWidget(wdt)
 
