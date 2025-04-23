@@ -6,7 +6,7 @@ from pytestqt.qtbot import QtBot
 from qtpy.QtCore import Qt
 from qtpy import QtWidgets as QtW
 from himena import MainWindow, StandardType
-from himena.standards.model_meta import ArrayMeta, ArrayAxis, ImageChannel, ImageMeta
+from himena.standards.model_meta import ArrayMeta, DimAxis, ImageChannel, ImageMeta
 from himena.testing import WidgetTester
 from himena_builtins.qt.array import QArrayView
 
@@ -122,7 +122,7 @@ def test_array_commands(himena_ui: MainWindow):
     win.update_model(
         win.to_model().with_metadata(
             ArrayMeta(
-                axes=[ArrayAxis(name=name) for name in ("t", "y", "x")],
+                axes=[DimAxis(name=name) for name in ("t", "y", "x")],
                 selections=[((1, 2), (1, 3))],
             )
         )

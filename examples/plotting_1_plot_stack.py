@@ -8,11 +8,12 @@ from himena import plotting as hplt
 if __name__ == "__main__":
     ui = new_window()
     n_time = 10
-    fig = hplt.figure_stack(n_time)
-    x = np.linspace(0, 10, 100)
+    fig = hplt.figure_stack(n_time, multi_dims=["time"])
+    x = np.linspace(0, 30, 256)
+    v = 1.6
     for t in range(n_time):
-        y = np.sin(x + t)
-        fig[t].plot(x, y, color="blue")
+        y = np.sin(x + v * t)
+        fig[t].plot(x, y * np.exp(-t / 10), color="blue")
         fig[t].text([1], [0.9], [f"t={t}"], color="black")
     fig.x.label = "X-axis"
     fig.y.label = "Y-axis"

@@ -5,7 +5,7 @@ from pathlib import Path
 from qtpy import QtCore
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QApplication
-from himena.standards.model_meta import ArrayAxis, ImageMeta
+from himena.standards.model_meta import DimAxis, ImageMeta
 from pytestqt.qtbot import QtBot
 from himena import MainWindow, StandardType, create_image_model
 from himena.standards.roi import RoiListModel, LineRoi, PointRoi2D, PointsRoi2D
@@ -449,7 +449,7 @@ def test_image_view_roi_actions(qtbot: QtBot):
         tester.update_model(
             value=np.zeros((5, 2, 30, 30), dtype=np.uint8),
             metadata=ImageMeta(
-                axes=[ArrayAxis(name=name) for name in ["t", "c", "y", "x"]],
+                axes=[DimAxis(name=name) for name in ["t", "c", "y", "x"]],
                 rois=RoiListModel(
                     items=[
                         LineRoi(name="ROI-0", start=(1, 1), end=(4, 5)),
@@ -712,8 +712,8 @@ def test_scale_bar(himena_ui: MainWindow):
         create_image_model(
             np.zeros((100, 100)),
             axes=[
-                ArrayAxis(name="y", scale=0.42, unit="um"),
-                ArrayAxis(name="x", scale=0.28, unit="um")
+                DimAxis(name="y", scale=0.42, unit="um"),
+                DimAxis(name="x", scale=0.28, unit="um")
             ]
         )
     )
@@ -746,9 +746,9 @@ def test_flat_roi_always_selected(qtbot: QtBot):
         create_image_model(
         np.zeros((5, 10, 10)),
             axes=[
-                ArrayAxis(name="t"),
-                ArrayAxis(name="y"),
-                ArrayAxis(name="x"),
+                DimAxis(name="t"),
+                DimAxis(name="y"),
+                DimAxis(name="x"),
             ],
             current_roi=cur_roi,
             rois=RoiListModel(
@@ -833,9 +833,9 @@ def test_play(qtbot: QtBot):
         create_image_model(
             np.zeros((4, 10, 10)),
             axes=[
-                ArrayAxis(name="t"),
-                ArrayAxis(name="y"),
-                ArrayAxis(name="x"),
+                DimAxis(name="t"),
+                DimAxis(name="y"),
+                DimAxis(name="x"),
             ],
         )
     )
@@ -927,8 +927,8 @@ def test_image_widget_hover_info(qtbot: QtBot):
             create_image_model(
                 rng.random((20, 20)),
                 axes=[
-                    ArrayAxis(name="y", scale=0.1, unit="mm"),
-                    ArrayAxis(name="x", scale=0.1, unit="mm"),
+                    DimAxis(name="y", scale=0.1, unit="mm"),
+                    DimAxis(name="x", scale=0.1, unit="mm"),
                 ]
             )
         )
@@ -947,8 +947,8 @@ def test_image_widget_hover_info(qtbot: QtBot):
             create_image_model(
                 np.fft.fftn(rng.random((20, 20))),
                 axes=[
-                    ArrayAxis(name="y", scale=0.1, unit="mm"),
-                    ArrayAxis(name="x", scale=0.1, unit="mm"),
+                    DimAxis(name="y", scale=0.1, unit="mm"),
+                    DimAxis(name="x", scale=0.1, unit="mm"),
                 ]
             ).astype(StandardType.IMAGE_FOURIER)
         )

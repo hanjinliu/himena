@@ -11,7 +11,7 @@ from himena.workflow import ProgrammaticMethod
 if TYPE_CHECKING:
     import numpy as np
     from himena.widgets import MainWindow
-    from himena.standards.model_meta import ImageChannel, ArrayAxis
+    from himena.standards.model_meta import ImageChannel, DimAxis
     from himena.standards.roi import RoiModel, RoiListModel
 
 _LOGGER = getLogger(__name__)
@@ -211,7 +211,7 @@ def create_dataframe_model(
 def create_array_model(
     value: _T,
     *,
-    axes: list[str | dict | ArrayAxis] | None = None,
+    axes: list[str | dict | DimAxis] | None = None,
     current_indices: list[int] | None = None,
     selections: list[tuple[tuple[int, int], tuple[int, int]]] | None = None,
     unit: str | None = None,
@@ -243,7 +243,7 @@ def create_array_model(
 def create_image_model(
     value: _T,
     *,
-    axes: list[str | dict | ArrayAxis] | None = None,
+    axes: list[str | dict | DimAxis] | None = None,
     channels: list[str | dict | ImageChannel] | None = None,
     channel_axis: int | None = None,
     current_roi: RoiModel | None = None,
@@ -297,21 +297,21 @@ def _get_main_window(backend: str, *args, **kwargs) -> MainWindow:
     raise ValueError(f"Invalid backend: {backend}")
 
 
-def _norm_axes(axes, value) -> list[ArrayAxis]:
+def _norm_axes(axes, value) -> list[DimAxis]:
     from himena.data_wrappers import wrap_array
-    from himena.standards.model_meta import ArrayAxis
+    from himena.standards.model_meta import DimAxis
 
     if axes is None:
         arr = wrap_array(value)
         _axes = arr.infer_axes()
     else:
-        _axes: list[ArrayAxis] = []
+        _axes: list[DimAxis] = []
         for axis in axes:
             if isinstance(axis, str):
-                _axes.append(ArrayAxis(name=axis))
+                _axes.append(DimAxis(name=axis))
             elif isinstance(axis, dict):
-                _axes.append(ArrayAxis(**axis))
-            elif isinstance(axis, ArrayAxis):
+                _axes.append(DimAxis(**axis))
+            elif isinstance(axis, DimAxis):
                 _axes.append(axis)
             else:
                 raise TypeError(f"Invalid axis type: {type(axis)}")

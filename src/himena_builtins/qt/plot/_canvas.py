@@ -10,6 +10,7 @@ from himena.types import DropResult, Size, WidgetDataModel
 from himena.consts import StandardType
 from himena.style import Theme
 from himena.standards import plotting as hplt
+from himena.standards.model_meta import DimAxis
 from himena_builtins.qt.plot._conversion import (
     convert_plot_layout,
     update_model_axis_by_mpl,
@@ -263,10 +264,14 @@ class QModelMatplotlibCanvasStack(QMatplotlibCanvasBase):
         if was_none:
             self._init_canvas_and_toolbar()
             self.layout().addWidget(self._dims_slider)
-        self._dims_slider.set_dimensions(model.value.shape + (0, 0))
+
+        self._dims_slider.set_dimensions(
+            model.value.shape + (0, 0),
+            axes=model.value.axes.multi_dims + [DimAxis(name=""), DimAxis(name="")],
+        )
         with plt.style.context(self._cfg.to_dict()):
             self._plot_models = convert_plot_layout(model.value, self.figure)
-        self._slider_changed(self._dims_slider.value())
+        self._slider_changed(self._dims_slider.value(), auto_scale=False)
         if was_none:
             self._toolbar.pan()
 
@@ -293,16 +298,21 @@ class QModelMatplotlibCanvasStack(QMatplotlibCanvasBase):
     def update_configs(self, cfg: MatplotlibCanvasConfigs):
         self._cfg = cfg
 
-    def _slider_changed(self, value: int):
+    def _slider_changed(self, value: int, *, auto_scale: bool = True):
         if self._plot_models is None:
             return
         if not isinstance(self._plot_models, hplt.SingleStackedAxes):
             raise ValueError("The model is not a SingleAxesStack")
         axes_component = self._plot_models.axes[value]
         ax_mpl = self.figure.axes[0]
+        xlim = ax_mpl.get_xlim()
+        ylim = ax_mpl.get_ylim()
         ax_mpl.clear()
         for model in axes_component.models:
             convert_plot_model(model, ax_mpl)
+        if auto_scale:
+            ax_mpl.set_xlim(xlim)
+            ax_mpl.set_ylim(ylim)
         self._canvas.draw()
 
 

@@ -19,9 +19,9 @@ class QDimsSlider(QtW.QWidget):
         layout = QtW.QVBoxLayout(self)
         layout.setContentsMargins(2, 2, 2, 2)
         layout.setSpacing(2)
-        self._yx_axes: list[model_meta.ArrayAxis] = [
-            model_meta.ArrayAxis(name="y"),
-            model_meta.ArrayAxis(name="x"),
+        self._yx_axes: list[model_meta.DimAxis] = [
+            model_meta.DimAxis(name="y"),
+            model_meta.DimAxis(name="x"),
         ]
 
     def count(self) -> int:
@@ -35,7 +35,7 @@ class QDimsSlider(QtW.QWidget):
     def set_dimensions(
         self,
         shape: tuple[int, ...],
-        axes: list[model_meta.ArrayAxis] | None = None,
+        axes: list[model_meta.DimAxis] | None = None,
         is_rgb: bool = False,
     ):
         ndim = len(shape)
@@ -51,7 +51,7 @@ class QDimsSlider(QtW.QWidget):
                 self._make_slider(shape[i])
         # update axis names
         if axes is None:
-            axes = [model_meta.ArrayAxis(name=f"axis {i}") for i in range(ndim_rem)]
+            axes = [model_meta.DimAxis(name=f"axis {i}") for i in range(ndim_rem)]
         _axis_width_max = 0
         _index_width_max = 0
         for axis, slider in zip(axes, self._sliders):
@@ -75,7 +75,7 @@ class QDimsSlider(QtW.QWidget):
         else:
             self._yx_axes = axes[-2:]
 
-    def _to_array_axes(self) -> list[model_meta.ArrayAxis]:
+    def _to_array_axes(self) -> list[model_meta.DimAxis]:
         axes = [slider.to_axis() for slider in self._sliders]
         axes.extend(self._yx_axes)
         return axes
@@ -180,16 +180,16 @@ class _QAxisSlider(QtW.QWidget):
         layout.addWidget(
             self._index_label, alignment=QtCore.Qt.AlignmentFlag.AlignRight
         )
-        self._axis = model_meta.ArrayAxis(name="")
+        self._axis = model_meta.DimAxis(name="")
         self._edit_value_line = QCurrentIndexEdit(self)
         self._edit_value_line.setFont(self._index_label.font())
         self._edit_value_line.edited.connect(self._on_edit_finished)
 
-    def update_from_axis(self, axis: model_meta.ArrayAxis):
+    def update_from_axis(self, axis: model_meta.DimAxis):
         self._name_label.setText(axis.name)
         self._axis = axis.model_copy()
 
-    def to_axis(self) -> model_meta.ArrayAxis:
+    def to_axis(self) -> model_meta.DimAxis:
         return self._axis
 
     def text(self) -> str:

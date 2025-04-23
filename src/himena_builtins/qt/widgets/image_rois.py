@@ -4,7 +4,7 @@ from qtpy import QtWidgets as QtW
 from himena.plugins import validate_protocol
 from himena.qt._utils import drag_command
 from himena.standards import roi
-from himena.standards.model_meta import ImageRoisMeta, ArrayAxis
+from himena.standards.model_meta import ImageRoisMeta, DimAxis
 from himena.consts import StandardType
 from himena.types import WidgetDataModel
 from ._image_components import QSimpleRoiCollection
@@ -25,7 +25,7 @@ class QImageRoiView(QtW.QWidget):
         layout.addWidget(self._roi_collection)
         self._is_modified = False
         self._model_type = StandardType.ROIS
-        self._axes: list[ArrayAxis] | None = None
+        self._axes: list[DimAxis] | None = None
         self._roi_collection.drag_requested.connect(self._on_drag_requested)
 
     @validate_protocol

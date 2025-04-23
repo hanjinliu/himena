@@ -1,7 +1,9 @@
 from typing import Any, Literal
 from cmap import Color
 from pydantic_compat import BaseModel, Field, field_validator
-from pydantic import field_serializer
+from pydantic import field_serializer, ValidationInfo
+
+from himena.standards.model_meta import DimAxis
 from himena.consts import PYDANTIC_CONFIG_STRICT
 from himena.utils.misc import iter_subclasses
 
@@ -97,6 +99,9 @@ class StackedAxesBase(BaseModel):
     """Layout model for stacked axes."""
 
     shape: tuple[int, ...]
+    multi_dims: list[DimAxis] = Field(
+        ..., description="Multi-dimensional axes of the plot stack."
+    )
     models: dict[tuple[int, ...], list[BasePlotModel]] = Field(
         default_factory=list, description="Dict of child plot models."
     )
@@ -130,6 +135,18 @@ class StackedAxesBase(BaseModel):
                     )
                 _list.append(model)
         return out
+
+    @field_validator("multi_dims", mode="plain")
+    def _validate_axes(cls, multi_dims, values: ValidationInfo) -> list[DimAxis]:
+        shape = values.data["shape"]
+        if multi_dims is None:
+            return [DimAxis(name=f"axis-{i}") for i in range(len(shape))]
+        if len(multi_dims) != len(shape):
+            raise ValueError(
+                f"Number of axes ({len(multi_dims)}) must match the number of dimensions "
+                f"({len(shape)})"
+            )
+        return [DimAxis.parse(axis) for axis in multi_dims]
 
 
 class HasColor(BaseModel):

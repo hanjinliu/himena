@@ -5,7 +5,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 import pytest
 from himena import WidgetDataModel, create_image_model
-from himena.standards.model_meta import ImageChannel, ImageMeta, ArrayAxis
+from himena.standards.model_meta import ImageChannel, ImageMeta, DimAxis
 from himena.standards import roi as _roi
 from himena.testing.subwindow import WidgetTester
 
@@ -190,7 +190,7 @@ def _zyx_image_model(
     current_roi: _roi.RoiModel | None = None,
 ) -> WidgetDataModel:
     axes = [
-        ArrayAxis(name=name, scale=scale, unit=pixel_unit)
+        DimAxis(name=name, scale=scale, unit=pixel_unit)
         for name, scale in zip(axis_names, pixel_scale)
     ]
     channels = [ImageChannel(colormap=colormap)]

@@ -1023,7 +1023,7 @@ class MainWindow(Generic[_W]):
                 break
         else:
             raise ValueError(
-                f"Failed to create a widget for {model}. Errors:\n"
+                f"Failed to create a widget for {_short_repr(model)}. Errors:\n"
                 f"{_format_exceptions(exceptions)}"
             ) from exceptions[-1][1]
         if exceptions:
@@ -1039,6 +1039,13 @@ class MainWindow(Generic[_W]):
             if getattr(action.callback, NO_RECORDING_FIELD, False):
                 return None
             self._history_command.add(id)
+
+
+def _short_repr(obj: Any) -> str:
+    obj_repr = repr(obj)
+    if len(obj_repr) > 50:
+        obj_repr = obj_repr[:50] + "..."
+    return obj_repr
 
 
 def _format_exceptions(exceptions: list[tuple[Any, Exception]]) -> str:

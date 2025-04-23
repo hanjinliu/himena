@@ -7,7 +7,7 @@ from himena.plugins import register_function, configure_gui, configure_submenu
 from himena.types import Parametric, WidgetDataModel, Rect
 from himena.consts import StandardType, MenuId
 from himena.standards.model_meta import (
-    ArrayAxis,
+    DimAxis,
     ArrayMeta,
     ImageMeta,
     ImageRoisMeta,
@@ -122,7 +122,7 @@ def crop_image_nd(win: SubWindow) -> Parametric:
     axes_kwarg_names = [f"axis_{i}" for i in range(ndim)]
     image_axes = meta.axes
     if image_axes is None:
-        image_axes = [ArrayAxis(name=f"axis-{i}") for i in range(ndim)]
+        image_axes = [DimAxis(name=f"axis-{i}") for i in range(ndim)]
     index_yx_rgb = 2 + int(meta.is_rgb)
     if ndim < index_yx_rgb + 1:
         raise ValueError("Image only has 2D data.")
@@ -256,7 +256,7 @@ def select_rois(model: WidgetDataModel) -> Parametric:
     return run_select
 
 
-def _axes_from_metadata(model: WidgetDataModel) -> list[ArrayAxis] | None:
+def _axes_from_metadata(model: WidgetDataModel) -> list[DimAxis] | None:
     if isinstance(meta := model.metadata, (ImageRoisMeta, ImageMeta)):
         axes = meta.axes
     else:
@@ -300,7 +300,7 @@ def point_rois_to_dataframe(model: WidgetDataModel) -> WidgetDataModel:
     if isinstance(meta := model.metadata, (ArrayMeta, ImageRoisMeta)):
         axes = meta.axes
     if axes is None:
-        axes = [ArrayAxis(name=f"axis-{i}") for i in range(ndim)]
+        axes = [DimAxis(name=f"axis-{i}") for i in range(ndim)]
     out = {axis.name: arr_all[:, i] for i, axis in enumerate(axes)}
     return WidgetDataModel(
         value=out,
@@ -580,7 +580,7 @@ def _stack_and_insert_axis(
     arr_out = np.stack(arrs, axis=axis_index)
     if axes := meta.axes:
         axes = axes.copy()
-        axes.insert(axis_index, ArrayAxis(name=axis))
+        axes.insert(axis_index, DimAxis(name=axis))
     else:
         axes = None
     meta = meta.model_copy(
