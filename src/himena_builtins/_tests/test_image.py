@@ -914,3 +914,43 @@ def test_propagate(himena_ui: MainWindow):
     assert get_colormap_names(win3) == ["cmap:red", "cmap:green", "cmap:blue"]
     himena_ui.current_window = win2
     himena_ui.exec_action("builtins:set-channel-axis", with_params={"axis": 0})
+
+def test_image_widget_hover_info(qtbot: QtBot):
+    image_view = QImageView()
+    qtbot.addWidget(image_view)
+    rng = np.random.default_rng(0)
+    with WidgetTester(image_view) as tester:
+        tester.update_model(value=rng.random((20, 20)))
+        tester.widget._on_hovered(QtCore.QPointF(2.1, 2.5))
+        tester.widget._on_hovered(QtCore.QPointF(30, 40))  # out of range
+        tester.update_model(
+            create_image_model(
+                rng.random((20, 20)),
+                axes=[
+                    ArrayAxis(name="y", scale=0.1, unit="mm"),
+                    ArrayAxis(name="x", scale=0.1, unit="mm"),
+                ]
+            )
+        )
+        tester.widget._on_hovered(QtCore.QPointF(2.1, 2.5))
+        tester.widget._on_hovered(QtCore.QPointF(30, 40))  # out of range
+
+        # FFT
+        tester.update_model(
+            create_image_model(
+                np.fft.fftn(rng.random((20, 20))),
+            ).astype(StandardType.IMAGE_FOURIER)
+        )
+        tester.widget._on_hovered(QtCore.QPointF(2.1, 2.5))
+        tester.widget._on_hovered(QtCore.QPointF(30, 40))  # out of range
+        tester.update_model(
+            create_image_model(
+                np.fft.fftn(rng.random((20, 20))),
+                axes=[
+                    ArrayAxis(name="y", scale=0.1, unit="mm"),
+                    ArrayAxis(name="x", scale=0.1, unit="mm"),
+                ]
+            ).astype(StandardType.IMAGE_FOURIER)
+        )
+        tester.widget._on_hovered(QtCore.QPointF(2.1, 2.5))
+        tester.widget._on_hovered(QtCore.QPointF(30, 40))  # out of range

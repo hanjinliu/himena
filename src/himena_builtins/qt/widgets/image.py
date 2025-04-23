@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from concurrent.futures import Future, ThreadPoolExecutor
+import math
 from typing import TYPE_CHECKING, Any, Callable, NamedTuple
 import warnings
 import dataclasses
@@ -521,6 +522,7 @@ class QImageViewBase(QtW.QSplitter):
         self._set_image_slices(imgs)
 
     def _on_hovered(self, pos: QtCore.QPointF):
+        """Update hover info by the pixel position and value."""
         x, y = pos.x(), pos.y()
         if self._current_image_slices is None:
             return
@@ -544,7 +546,20 @@ class QImageViewBase(QtW.QSplitter):
                 _int = format(intensity, fmt)
             if self._pixel_unit:
                 _int += f" [{self._pixel_unit}]"
-            self.set_hover_info(f"x={x:.1f}, y={y:.1f}, value={_int}")
+            yaxis, xaxis = self.dims_slider._yx_axes
+            if self._model_type == StandardType.IMAGE_FOURIER:
+                kx = (ix - nx // 2) / nx
+                ky = (iy - ny // 2) / ny
+                xinfo = _fourier_info(kx, xaxis)
+                yinfo = _fourier_info(ky, yaxis)
+                angle = math.degrees(math.atan2(ky, kx))
+                self.set_hover_info(
+                    f"kx={xinfo}, ky={yinfo}, theta={angle:.1f} value={_int}"
+                )
+            else:
+                xinfo = _physical_info(ix, xaxis)
+                yinfo = _physical_info(iy, yaxis)
+                self.set_hover_info(f"x={xinfo}, y={yinfo}, value={_int}")
         else:
             self.set_hover_info(self._default_hover_info())
 
@@ -1080,6 +1095,34 @@ def _channel_names(meta: model_meta.ImageMeta, nchannels: int) -> list[str]:
     else:
         names = [meta.axes[meta.channel_axis].get_label(i) for i in range(nchannels)]
     return names
+
+
+def _physical_info(xpix: float, axis: model_meta.ArrayAxis) -> str:
+    xpos = xpix * axis.scale + axis.origin
+    digit = _digits_for_scale(axis.scale)
+    if axis.unit:
+        return f"{int(xpix)} ({xpos:.{digit}f} {axis.unit})"
+    else:
+        return f"{int(xpix)} ({xpos:.{digit}f})"
+
+
+def _fourier_info(kx: float, axis: model_meta.ArrayAxis) -> str:
+    if kx == 0:
+        wlen = float("inf")
+    else:
+        wlen = axis.scale / kx
+    digit = _digits_for_scale(axis.scale)
+    if axis.unit:
+        return f"{kx:.2f} ({wlen:.{digit}f} /c)"
+    else:
+        return f"{kx:.2f} ({wlen:.{digit}f} {axis.unit}/c)"
+
+
+def _digits_for_scale(scale: float) -> int:
+    if scale < 10:
+        return -math.floor(math.log10(scale)) + 1
+    else:
+        return 0
 
 
 @dataclasses.dataclass

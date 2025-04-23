@@ -65,6 +65,9 @@ class StandardType(SimpleNamespace):
     IMAGE = "array.image"
     # uint image data that will be interpreted as labels
     IMAGE_LABELS = "array.image.labels"
+    # Complex image data that should be interpreted as a Fourier transform. C0 must
+    # be shifted to the image center (using np.fft.fftshift)
+    IMAGE_FOURIER = "array.image.fourier"
 
     # (N, D) numerical array, such as D-dimensional point cloud
     COORDINATES = "array.coordinates"

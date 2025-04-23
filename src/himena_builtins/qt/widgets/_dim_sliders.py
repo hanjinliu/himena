@@ -19,7 +19,7 @@ class QDimsSlider(QtW.QWidget):
         layout = QtW.QVBoxLayout(self)
         layout.setContentsMargins(2, 2, 2, 2)
         layout.setSpacing(2)
-        self._xy_axes: list[model_meta.ArrayAxis] = [
+        self._yx_axes: list[model_meta.ArrayAxis] = [
             model_meta.ArrayAxis(name="y"),
             model_meta.ArrayAxis(name="x"),
         ]
@@ -71,13 +71,13 @@ class QDimsSlider(QtW.QWidget):
             slider._name_label.setFixedWidth(_axis_width_max + 6)
             slider._index_label.setFixedWidth(_index_width_max + 6)
         if is_rgb:
-            self._xy_axes = axes[-3:-1]
+            self._yx_axes = axes[-3:-1]
         else:
-            self._xy_axes = axes[-2:]
+            self._yx_axes = axes[-2:]
 
     def _to_array_axes(self) -> list[model_meta.ArrayAxis]:
         axes = [slider.to_axis() for slider in self._sliders]
-        axes.extend(self._xy_axes)
+        axes.extend(self._yx_axes)
         return axes
 
     def _make_slider(self, size: int) -> _QAxisSlider:
