@@ -17,6 +17,7 @@ class HimenaCliNamespace(argparse.Namespace):
     list_plugins: bool
     clear_plugin_configs: bool
     import_time: bool
+    port: int | None = None
 
     def assert_args_not_given(self) -> None:
         if self.profile is not None or self.path is not None:
@@ -89,6 +90,10 @@ class HimenaArgumentParser(argparse.ArgumentParser):
         self.add_argument(
             "--import-time", action="store_true",
             help="Print the import time of the plugins."
+        )
+        self.add_argument(
+            "--port", type=int, default=None,
+            help="Socket port number to use for the GUI.",
         )
         # fmt: on
 

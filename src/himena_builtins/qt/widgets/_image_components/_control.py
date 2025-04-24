@@ -215,14 +215,19 @@ class QImageViewControl(QImageViewControlBase):
         # TODO: auto contrast and update colormap
 
     def _auto_contrast(self):
-        view = self._image_view
-        if view._arr is None:
+        min_ = float("inf")
+        max_ = -float("inf")
+        for item in self._histogram._hist_items:
+            min_ = min(item._edges[0], min_)
+            max_ = max(item._edges[-1], max_)
+        if np.isinf(min_) or np.isinf(max_):
             return
+
+        view = self._image_view
         sl = view._dims_slider.value()
         img_slice = view._get_image_slice_for_channel(sl)
         if img_slice.dtype.kind == "c":
             img_slice = self.complex_transform(img_slice)
-        min_, max_ = img_slice.min(), img_slice.max()
         ch = view.current_channel(sl)
         ch.clim = (min_, max_)
         self._histogram.set_view_range(min_, max_)
