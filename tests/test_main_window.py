@@ -286,3 +286,10 @@ def test_qchoices_dialog(qtbot: QtBot):
     choices = [("a", 0), ("b", 1), ("c", 2)]
     qtbot.addWidget(QChoicesDialog.make_request("title", "message", choices))
     qtbot.addWidget(QChoicesDialog.make_request_radiobuttons("title", "message", choices))
+
+def test_private_functions():
+    from himena.widgets._main_window import _short_repr, _format_exceptions
+
+    _short_repr(14.3)
+    _short_repr(np.zeros((10, 30, 30)))
+    _format_exceptions([(object(), ValueError("a")), (3, ValueError())])

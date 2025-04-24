@@ -89,7 +89,7 @@ class ArrayWrapper(Generic[ArrayT]):
         return f"{typ.__module__}.{typ.__name__}"
 
     def infer_axes(self) -> list[DimAxis]:
-        """Infer ArrayAxis objects for this array."""
+        """Infer DimAxis objects for this array."""
         return [DimAxis(name=f"axis_{i}") for i in range(self.ndim)]
 
 
@@ -108,7 +108,7 @@ class XarrayWrapper(ArrayWrapper["xr.DataArray"]):
         return self._arr.shape
 
     def infer_axes(self) -> list[DimAxis]:
-        """Infer ArrayAxis objects for this array."""
+        """Infer DimAxis objects for this array."""
 
         axes = []
         for name, coord in self._arr.coords.items():

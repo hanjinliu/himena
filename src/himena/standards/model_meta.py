@@ -190,7 +190,15 @@ class DimAxis(BaseModel):
             return self.default_label_format.format(str(index))
 
 
-ArrayAxis = DimAxis  # Alias for backward compatibility
+def __getattr__(name: str):  # pragma: no cover
+    if name == "ArrayAxis":
+        warnings.warn(
+            "ArrayAxis is deprecated. Use DimAxis instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return DimAxis
+    raise AttributeError(f"module {__name__} has no attribute {name}")
 
 
 class ArrayMeta(BaseMetadata):
