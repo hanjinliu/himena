@@ -322,6 +322,8 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         if event.spontaneous() and self._confirm_close and not self._ok_to_exit():
             event.ignore()
             return
+        if info := self._status_bar._profile_info:
+            info.close()
         self._event_loop_handler.close_socket()
         return super().closeEvent(event)
 

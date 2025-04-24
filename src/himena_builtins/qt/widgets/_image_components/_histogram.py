@@ -421,12 +421,16 @@ class QHistogramItem(QtW.QGraphicsPathItem):
 
 
 def _linear_scale(hist: NDArray[np.number]) -> NDArray[np.number]:
-    return hist / hist.max()
+    if hist.size > 0 and (hmax := hist.max()) > 0:
+        return hist / hmax
+    return hist
 
 
 def _log_scale(hist: NDArray[np.number]) -> NDArray[np.number]:
     hist_log = np.log(hist + 1)
-    return hist_log / hist_log.max()
+    if hist_log.size > 0 and (hmax := hist_log.max()) > 0:
+        return hist_log / hmax
+    return hist_log
 
 
 class QClimMenu(QtW.QMenu):
