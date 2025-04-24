@@ -30,8 +30,7 @@ class QMatplotlibCanvasBase(QtW.QWidget):
         self._plot_models: hplt.BaseLayoutModel | None = None
         self._modified = False
         self._cfg = MatplotlibCanvasConfigs()
-        self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
-        self.customContextMenuRequested.connect(self._show_context_menu)
+        self._last_mouse_pos = QtCore.QPoint()
 
     @property
     def figure(self) -> Figure:
@@ -83,6 +82,7 @@ class QMatplotlibCanvasBase(QtW.QWidget):
 
     def _init_canvas_and_toolbar(self):
         self._canvas = FigureCanvasQTAgg()
+        self._canvas.contextmenu_requested.connect(self._show_context_menu)
         self.layout().addWidget(self._canvas)
         self._toolbar = self._prep_toolbar(QNavigationToolBar)
 
@@ -103,7 +103,7 @@ class QMatplotlibCanvasBase(QtW.QWidget):
         return menu
 
     def _show_context_menu(self, pos: QtCore.QPoint):
-        self._make_context_menu().exec(self.mapToGlobal(pos))
+        self._make_context_menu().exec(pos)
 
     def _copy_canvas(self):
         clipboard = QtGui.QGuiApplication.clipboard()
@@ -122,6 +122,7 @@ class QMatplotlibCanvas(QMatplotlibCanvasBase):
         was_none = self._canvas is None
         if was_none:
             self._canvas = FigureCanvasQTAgg(model.value)
+            self._canvas.contextmenu_requested.connect(self._show_context_menu)
             self.layout().addWidget(self._canvas)
             self._toolbar = self._prep_toolbar()
         if isinstance(model.value, Figure):
@@ -342,10 +343,24 @@ class QNavigationToolBar(backend_qtagg.NavigationToolbar2QT):
 
 
 class FigureCanvasQTAgg(backend_qtagg.FigureCanvasQTAgg):
+    contextmenu_requested = QtCore.Signal(QtCore.QPoint)
+    _last_mouse_pos = QtCore.QPoint()
+
     def mouseDoubleClickEvent(self, event):
         self.figure.tight_layout()
         self.draw()
         return super().mouseDoubleClickEvent(event)
+
+    def mousePressEvent(self, a0):
+        self._last_mouse_pos = a0.pos()
+        return super().mousePressEvent(a0)
+
+    def mouseReleaseEvent(self, a0: QtGui.QMouseEvent):
+        if (self._last_mouse_pos - a0.pos()).manhattanLength() < 8:
+            if a0.button() == QtCore.Qt.MouseButton.RightButton:
+                self.contextmenu_requested.emit(self.mapToGlobal(a0.pos()))
+        self._last_mouse_pos = QtCore.QPoint()
+        return super().mouseReleaseEvent(a0)
 
 
 FigureCanvas = FigureCanvasQTAgg

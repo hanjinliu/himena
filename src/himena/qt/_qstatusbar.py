@@ -24,10 +24,11 @@ class QStatusBar(QtW.QStatusBar):
 
         self.layout().setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         self.layout().addWidget(self._corner_widget)
+        self._profile_info: QProfileInfo | None = None
 
     def _open_profile_info(self) -> None:
         """Open the profile info."""
-        info = QProfileInfo(self._profile_btn.text())
+        self._profile_info = info = QProfileInfo(self._profile_btn.text())
         info.setParent(self, QtCore.Qt.WindowType.Popup)
         info.show()
         info.move(

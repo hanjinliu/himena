@@ -1,4 +1,5 @@
 from matplotlib import pyplot as plt
+from qtpy.QtCore import Qt, QPoint
 from pytestqt.qtbot import QtBot
 from himena import plotting as hplt, create_model, StandardType
 from himena.standards.model_meta import DimAxis
@@ -15,6 +16,10 @@ def test_matplotlib_canvas(qtbot: QtBot):
         tester.to_model()
     canvas._make_context_menu()
     canvas._copy_canvas()
+    qtbot.mouseDClick(canvas, Qt.MouseButton.LeftButton, pos=QPoint(10, 10))
+    qtbot.mousePress(canvas, Qt.MouseButton.LeftButton, pos=QPoint(10, 10))
+    qtbot.mouseMove(canvas, pos=QPoint(20, 20))
+    qtbot.mouseRelease(canvas, Qt.MouseButton.LeftButton, pos=QPoint(20, 20))
     plt.close(fig)
 
 def test_model_matplotlib_canvas_single(qtbot: QtBot):

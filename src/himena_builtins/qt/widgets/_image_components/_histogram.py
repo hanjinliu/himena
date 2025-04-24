@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 import numpy as np
 from psygnal import Signal
 from qtpy import QtCore, QtGui, QtWidgets as QtW
@@ -27,6 +27,7 @@ class QHistogramView(QBaseGraphicsView):
         self._view_range: tuple[float, float] = (0.0, 1.0)
         self._minmax = (0.0, 1.0)  # limits of the movable range
         self._pos_drag_start: QtCore.QPoint | None = None
+        self._default_hist_scale = "linear"
 
     def _on_clim_changed(self):
         clim = self.clim()
@@ -63,7 +64,8 @@ class QHistogramView(QBaseGraphicsView):
             self.scene().removeItem(self._hist_items[-1])
             self._hist_items.pop()
         for _ in range(len(self._hist_items), n_hist):
-            self._hist_items.append(self.addItem(QHistogramItem()))
+            hist_item = QHistogramItem().with_hist_scale_func(self._default_hist_scale)
+            self._hist_items.append(self.addItem(hist_item))
 
         if is_rgb:
             brushes = [
@@ -118,6 +120,9 @@ class QHistogramView(QBaseGraphicsView):
         self._line_high.setValue(self._line_high.value())
 
     def mouseDoubleClickEvent(self, event: QtGui.QMouseEvent):
+        self._reset_view()
+
+    def _reset_view(self):
         rect = self._line_low.boundingRect().united(self._line_high.boundingRect())
         for hist in self._hist_items:
             rect = rect.united(hist.boundingRect())
@@ -140,9 +145,8 @@ class QHistogramView(QBaseGraphicsView):
         self.set_view_range(x0, x1)
 
     def mousePressEvent(self, event: QtGui.QMouseEvent):
-        if event.button() == QtCore.Qt.MouseButton.LeftButton:
-            self._pos_drag_start = event.pos()
-            self._pos_drag_prev = self._pos_drag_start
+        self._pos_drag_start = event.pos()
+        self._pos_drag_prev = self._pos_drag_start
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent):
@@ -161,10 +165,42 @@ class QHistogramView(QBaseGraphicsView):
         return super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
+        if (
+            event.button() == QtCore.Qt.MouseButton.RightButton
+            and self._pos_drag_start is not None
+            and (self._pos_drag_start - event.pos()).manhattanLength() < 8
+        ):
+            # right clicked
+            menu = self._make_context_menu()
+            menu.exec(self.mapToGlobal(event.pos()))
+
         self._pos_drag_start = None
         self._pos_drag_prev = None
         self.scene().setGrabSource(None)
         return super().mouseReleaseEvent(event)
+
+    def _make_context_menu(self) -> QtW.QMenu:
+        menu = QtW.QMenu(self)
+        menu.addAction("Reset view", self._reset_view)
+        menu_scale = menu.addMenu("Scale")
+        for scale in ["linear", "log"]:
+            ac = menu_scale.addAction(
+                scale.title(), lambda s=scale: self._set_hist_scale_func(s)
+            )
+            ac.setCheckable(True)
+            ac.setChecked(scale == self._default_hist_scale)
+        menu.addSeparator()
+        menu.addAction("Copy Histogram Image to Clipboard", self._img_to_clipboard)
+        return menu
+
+    def _set_hist_scale_func(self, scale: Literal["linear", "log"]):
+        for hist in self._hist_items:
+            hist.with_hist_scale_func(scale)
+        self._default_hist_scale = scale
+
+    def _img_to_clipboard(self):
+        img = self.grab().toImage()
+        QtW.QApplication.clipboard().setImage(img)
 
 
 class QClimLineItem(QtW.QGraphicsRectItem):
@@ -321,14 +357,27 @@ class QHistogramItem(QtW.QGraphicsPathItem):
         self._hist_path = QtGui.QPainterPath()
         self._hist_brush = QtGui.QBrush(QtGui.QColor(100, 100, 100))
         self.setPen(QtGui.QPen(QtGui.QColor(0, 0, 0, 0)))
+        self._edges = np.array([0.0, 1.0])
+        self._hist_values = np.zeros(0)
+        self._hist_scale_func = _linear_scale
 
     def with_brush(self, brush: QtGui.QBrush) -> QHistogramItem:
         self._hist_brush = brush
         return self
 
-    def set_hist_for_array(self, arr: NDArray[np.number]) -> tuple[float, float]:
+    def with_hist_scale_func(self, scale: Literal["linear", "log"]) -> QHistogramItem:
+        if scale == "linear":
+            self._hist_scale_func = _linear_scale
+        elif scale == "log":
+            self._hist_scale_func = _log_scale
+        else:
+            raise ValueError(f"Unknown histogram scale: {scale}")
+        self._update_histogram_path()
+        return self
+
+    def set_hist_for_array(self, arr: NDArray[np.number]) -> None:
         _min, _max = quick_min_max(arr)
-        if arr.dtype in ("uint8", "uint8"):
+        if arr.dtype in ("int8", "uint8"):
             _nbin = 64
         else:
             _nbin = 256
@@ -347,21 +396,41 @@ class QHistogramItem(QtW.QGraphicsPathItem):
             else:
                 normed = ((arr - _min) / (_max - _min) * _nbin).astype(np.uint8)
             hist = np.bincount(normed.ravel(), minlength=_nbin)
-            hist = hist / hist.max()
             edges = np.linspace(_min, _max, _nbin + 1)
         else:
             edges = np.array([_min, _max])
             hist = np.zeros(1)
+        self._edges = edges
+        self._hist_values = hist
+
+        self._update_histogram_path()
+
+    def _update_histogram_path(self):
         _path = QtGui.QPainterPath()
+        edges = self._edges
+        hist = self._hist_values
         self.setBrush(self._hist_brush)
         _path.moveTo(edges[0], 1)
-        for e0, e1, h in zip(edges[:-1], edges[1:], hist):
+        for e0, e1, h in zip(edges[:-1], edges[1:], self._hist_scale_func(hist)):
             _path.lineTo(e0, 1 - h)
             _path.lineTo(e1, 1 - h)
         _path.lineTo(edges[-1], 1)
         _path.closeSubpath()
         self.setPath(_path)
         self.update()
+
+
+def _linear_scale(hist: NDArray[np.number]) -> NDArray[np.number]:
+    if hist.size > 0 and (hmax := hist.max()) > 0:
+        return hist / hmax
+    return hist
+
+
+def _log_scale(hist: NDArray[np.number]) -> NDArray[np.number]:
+    hist_log = np.log(hist + 1)
+    if hist_log.size > 0 and (hmax := hist_log.max()) > 0:
+        return hist_log / hmax
+    return hist_log
 
 
 class QClimMenu(QtW.QMenu):

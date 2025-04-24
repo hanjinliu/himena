@@ -506,6 +506,11 @@ def test_constrast_hist(qtbot: QtBot):
         qtbot.addWidget(control)
         control._auto_cont_btn.click()
         control._histogram.set_clim((1, 2))
+        control._histogram._make_context_menu()
+        control._histogram._set_hist_scale_func("linear")
+        control._histogram._set_hist_scale_func("log")
+        control._histogram._img_to_clipboard()
+        control._histogram._reset_view()
 
 def test_complex_image(qtbot: QtBot):
     image_view = QImageView()
