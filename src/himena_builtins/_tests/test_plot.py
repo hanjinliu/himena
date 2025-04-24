@@ -1,6 +1,7 @@
 from matplotlib import pyplot as plt
 from pytestqt.qtbot import QtBot
 from himena import plotting as hplt, create_model, StandardType
+from himena.standards.model_meta import DimAxis
 from himena.testing import WidgetTester
 from himena_builtins.qt.plot._canvas import QMatplotlibCanvas, QModelMatplotlibCanvas, QModelMatplotlibCanvasStack
 
@@ -63,3 +64,14 @@ def test_model_matplotlib_canvas_stack(qtbot: QtBot):
     qtbot.addWidget(canvas)
     with WidgetTester(canvas) as tester:
         tester.cycle_model()
+
+    fig = hplt.figure_stack(4, multi_dims="time")
+    assert fig.shape == (4,)
+    fig = hplt.figure_stack(
+        2, 2,
+        multi_dims=[
+            "time",
+            DimAxis(name="slice", scale=0.5, unit="mm", labels=["S0", "S1"]),
+        ]
+    )
+    assert fig.shape == (2, 2)

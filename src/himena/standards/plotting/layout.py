@@ -390,7 +390,7 @@ class StackedAxes(StackedAxesBase):
 class SingleStackedAxes(BaseLayoutModel):
     model_type: ClassVar[str] = StandardType.PLOT_STACK
 
-    axes: StackedAxes = Field(default_factory=StackedAxes, description="Child axes.")
+    axes: StackedAxes = Field(..., description="Child axes.")
     background_color: str = Field("#FFFFFF", description="Background color.")
 
     @property
@@ -422,11 +422,13 @@ class SingleStackedAxes(BaseLayoutModel):
         self.axes.title = value
 
     @classmethod
-    def fill(cls, *shape: int):
+    def fill(cls, *shape: int, multi_dims=None):
         models = {}
         for index in np.ndindex(*shape):
             models[index] = []
-        return SingleStackedAxes(axes=StackedAxes(shape=shape, models=models))
+        return SingleStackedAxes(
+            axes=StackedAxes(shape=shape, models=models, multi_dims=multi_dims)
+        )
 
     @property
     def shape(self) -> tuple[int, ...]:

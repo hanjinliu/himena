@@ -362,7 +362,7 @@ class QImageViewBase(QtW.QSplitter):
         current_slices = current_indices + (None, None)
         axes = self._dims_slider._to_array_axes()
         if self._is_rgb:
-            axes.append(model_meta.ArrayAxis(name="RGB"))
+            axes.append(model_meta.DimAxis(name="RGB"))
         current_roi = self.current_roi()
         if (
             current_roi is not None
@@ -1097,7 +1097,7 @@ def _channel_names(meta: model_meta.ImageMeta, nchannels: int) -> list[str]:
     return names
 
 
-def _physical_info(xpix: float, axis: model_meta.ArrayAxis) -> str:
+def _physical_info(xpix: float, axis: model_meta.DimAxis) -> str:
     xpos = xpix * axis.scale + axis.origin
     digit = _digits_for_scale(axis.scale)
     if axis.unit:
@@ -1106,7 +1106,7 @@ def _physical_info(xpix: float, axis: model_meta.ArrayAxis) -> str:
         return f"{int(xpix)} ({xpos:.{digit}f})"
 
 
-def _fourier_info(kx: float, axis: model_meta.ArrayAxis) -> str:
+def _fourier_info(kx: float, axis: model_meta.DimAxis) -> str:
     if kx == 0:
         wlen = float("inf")
     else:

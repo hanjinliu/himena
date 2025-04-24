@@ -34,8 +34,14 @@ def figure_3d(background_color: Any = "white") -> layout3d.SingleAxes3D:
     return lo
 
 
-def figure_stack(*shape, background_color: Any = "white") -> layout.SingleStackedAxes:
-    lo = layout.SingleStackedAxes.fill(*shape)
+def figure_stack(
+    *shape,
+    background_color: Any = "white",
+    multi_dims=None,
+) -> layout.SingleStackedAxes:
+    if len(shape) == 1 and isinstance(multi_dims, str):
+        multi_dims = [multi_dims]
+    lo = layout.SingleStackedAxes.fill(*shape, multi_dims=multi_dims)
     lo.background_color = background_color
     return lo
 

@@ -18,7 +18,7 @@ __all__ = [
     "FunctionMeta",
     "DataFramePlotMeta",
     "ImageChannel",
-    "ArrayAxis",
+    "DimAxis",
     "ArrayMeta",
     "ImageMeta",
     "ImageRoisMeta",
@@ -150,8 +150,8 @@ class ImageChannel(BaseModel):
         return self.model_copy(update={"colormap": colormap})
 
 
-class ArrayAxis(BaseModel):
-    """An axis in an array."""
+class DimAxis(BaseModel):
+    """A dimension axis."""
 
     name: str = Field(..., description="Name of the axis.")
     scale: float = Field(default=1.0, description="Pixel scale of the axis.")
@@ -168,6 +168,18 @@ class ArrayAxis(BaseModel):
     def _name_to_str(cls, v):
         return str(v)
 
+    @classmethod
+    def parse(cls, obj) -> "DimAxis":
+        if isinstance(obj, str):
+            axis = DimAxis(name=obj)
+        elif isinstance(obj, dict):
+            axis = DimAxis(**obj)
+        elif isinstance(obj, DimAxis):
+            axis = obj
+        else:
+            raise TypeError(f"Cannot convert {type(obj)} to DimAxis.")
+        return axis
+
     def get_label(self, index: int) -> str:
         """Return the label of the axis at the given index."""
         if index < 0:
@@ -178,10 +190,21 @@ class ArrayAxis(BaseModel):
             return self.default_label_format.format(str(index))
 
 
+def __getattr__(name: str):  # pragma: no cover
+    if name == "ArrayAxis":
+        warnings.warn(
+            "ArrayAxis is deprecated. Use DimAxis instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return DimAxis
+    raise AttributeError(f"module {__name__} has no attribute {name}")
+
+
 class ArrayMeta(BaseMetadata):
     """Preset for describing an array metadata."""
 
-    axes: list[ArrayAxis] | None = Field(None, description="Axes of the array.")
+    axes: list[DimAxis] | None = Field(None, description="Axes of the array.")
     current_indices: tuple[int | None, ...] | None = Field(
         None, description="Current slice indices to render the array in GUI."
     )
@@ -270,17 +293,10 @@ class ImageMeta(ArrayMeta):
         return self.rois
 
     @field_validator("axes", mode="before")
-    def _strings_to_axes(cls, v, values: "ValidationInfo"):
+    def _strings_to_axes(cls, v):
         if v is None:
             return None
-        out: list[ArrayAxis] = []
-        for axis in v:
-            if isinstance(axis, str):
-                axis = ArrayAxis(name=axis)
-            elif isinstance(axis, dict):
-                axis = ArrayAxis(**axis)
-            out.append(axis)
-        return out
+        return [DimAxis.parse(axis) for axis in v]
 
     @field_validator("channel_axis")
     def _is_rgb_and_channels_exclusive(cls, v, values: "ValidationInfo"):
@@ -373,7 +389,7 @@ class ListMeta(BaseMetadata):
 class ImageRoisMeta(ListMeta):
     """Preset for describing an image-rois metadata."""
 
-    axes: list[ArrayAxis] | None = Field(None, description="Axes of the ROIs.")
+    axes: list[DimAxis] | None = Field(None, description="Axes of the ROIs.")
 
     def expected_type(self):
         return StandardType.ROIS

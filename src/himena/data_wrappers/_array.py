@@ -7,7 +7,7 @@ from __future__ import annotations
 import sys
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Generic, TypeVar
-from himena.standards.model_meta import ArrayAxis
+from himena.standards.model_meta import DimAxis
 
 import numpy as np
 
@@ -88,9 +88,9 @@ class ArrayWrapper(Generic[ArrayT]):
         typ = type(self._arr)
         return f"{typ.__module__}.{typ.__name__}"
 
-    def infer_axes(self) -> list[ArrayAxis]:
-        """Infer ArrayAxis objects for this array."""
-        return [ArrayAxis(name=f"axis_{i}") for i in range(self.ndim)]
+    def infer_axes(self) -> list[DimAxis]:
+        """Infer DimAxis objects for this array."""
+        return [DimAxis(name=f"axis_{i}") for i in range(self.ndim)]
 
 
 class XarrayWrapper(ArrayWrapper["xr.DataArray"]):
@@ -107,8 +107,8 @@ class XarrayWrapper(ArrayWrapper["xr.DataArray"]):
     def shape(self) -> tuple[int, ...]:
         return self._arr.shape
 
-    def infer_axes(self) -> list[ArrayAxis]:
-        """Infer ArrayAxis objects for this array."""
+    def infer_axes(self) -> list[DimAxis]:
+        """Infer DimAxis objects for this array."""
 
         axes = []
         for name, coord in self._arr.coords.items():
@@ -116,7 +116,7 @@ class XarrayWrapper(ArrayWrapper["xr.DataArray"]):
                 unit = coord.attrs.get("units", None)
             else:
                 unit = None
-            axes.append(ArrayAxis(name=str(name), unit=unit))
+            axes.append(DimAxis(name=str(name), unit=unit))
         return axes
 
 
