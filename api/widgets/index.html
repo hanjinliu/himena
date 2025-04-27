@@ -3736,9 +3736,7 @@
 
               <details class="quote">
                 <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 953</span>
-<span class="normal"> 954</span>
-<span class="normal"> 955</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 955</span>
 <span class="normal"> 956</span>
 <span class="normal"> 957</span>
 <span class="normal"> 958</span>
@@ -3799,7 +3797,9 @@
 <span class="normal">1013</span>
 <span class="normal">1014</span>
 <span class="normal">1015</span>
-<span class="normal">1016</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">DockWidget</span><span class="p">(</span><span class="n">WidgetWrapper</span><span class="p">[</span><span class="n">_W</span><span class="p">]):</span>
+<span class="normal">1016</span>
+<span class="normal">1017</span>
+<span class="normal">1018</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">DockWidget</span><span class="p">(</span><span class="n">WidgetWrapper</span><span class="p">[</span><span class="n">_W</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Dock widget wrapper.&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -3940,9 +3940,9 @@
 
             <details class="quote">
               <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">987</span>
-<span class="normal">988</span>
-<span class="normal">989</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">hide</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">989</span>
+<span class="normal">990</span>
+<span class="normal">991</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">hide</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Hide the dock widget.&quot;&quot;&quot;</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">visible</span> <span class="o">=</span> <span class="kc">False</span>
 </code></pre></div></td></tr></table></div>
@@ -3967,9 +3967,9 @@
 
             <details class="quote">
               <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">983</span>
-<span class="normal">984</span>
-<span class="normal">985</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">985</span>
+<span class="normal">986</span>
+<span class="normal">987</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Show the dock widget.&quot;&quot;&quot;</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">visible</span> <span class="o">=</span> <span class="kc">True</span>
 </code></pre></div></td></tr></table></div>
@@ -3994,13 +3994,13 @@
 
             <details class="quote">
               <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1010</span>
-<span class="normal">1011</span>
-<span class="normal">1012</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1012</span>
 <span class="normal">1013</span>
 <span class="normal">1014</span>
 <span class="normal">1015</span>
-<span class="normal">1016</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">update_configs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+<span class="normal">1016</span>
+<span class="normal">1017</span>
+<span class="normal">1018</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">update_configs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Update the configuration of the dock widget.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_update_configs</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
@@ -8690,9 +8690,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 
               <details class="quote">
                 <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">633</span>
-<span class="normal">634</span>
-<span class="normal">635</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">635</span>
 <span class="normal">636</span>
 <span class="normal">637</span>
 <span class="normal">638</span>
@@ -9007,7 +9005,9 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 <span class="normal">947</span>
 <span class="normal">948</span>
 <span class="normal">949</span>
-<span class="normal">950</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ParametricWindow</span><span class="p">(</span><span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">]):</span>
+<span class="normal">950</span>
+<span class="normal">951</span>
+<span class="normal">952</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ParametricWindow</span><span class="p">(</span><span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Subwindow with a parametric widget inside.&quot;&quot;&quot;</span>
 
     <span class="n">_IS_PREVIEWING</span> <span class="o">=</span> <span class="s2">&quot;is_previewing&quot;</span>  <span class="c1"># keyword argument used for preview flag</span>
@@ -9356,9 +9356,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 
             <details class="quote">
               <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">661</span>
-<span class="normal">662</span>
-<span class="normal">663</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">663</span>
 <span class="normal">664</span>
 <span class="normal">665</span>
 <span class="normal">666</span>
@@ -9367,7 +9365,9 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 <span class="normal">669</span>
 <span class="normal">670</span>
 <span class="normal">671</span>
-<span class="normal">672</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="normal">672</span>
+<span class="normal">673</span>
+<span class="normal">674</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the parameters of the widget.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">widget</span><span class="p">,</span> <span class="n">PWPN</span><span class="o">.</span><span class="n">GET_PARAMS</span><span class="p">):</span>
         <span class="n">params</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">widget</span><span class="p">,</span> <span class="n">PWPN</span><span class="o">.</span><span class="n">GET_PARAMS</span><span class="p">)()</span>
@@ -9401,10 +9401,10 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 
             <details class="quote">
               <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">896</span>
-<span class="normal">897</span>
-<span class="normal">898</span>
-<span class="normal">899</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">is_preview_enabled</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">898</span>
+<span class="normal">899</span>
+<span class="normal">900</span>
+<span class="normal">901</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">is_preview_enabled</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether the widget supports preview.&quot;&quot;&quot;</span>
     <span class="n">isfunc</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">widget</span><span class="p">,</span> <span class="n">PWPN</span><span class="o">.</span><span class="n">IS_PREVIEW_ENABLED</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">callable</span><span class="p">(</span><span class="n">isfunc</span><span class="p">)</span> <span class="ow">and</span> <span class="n">isfunc</span><span class="p">()</span>
@@ -9797,7 +9797,9 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 <span class="normal">627</span>
 <span class="normal">628</span>
 <span class="normal">629</span>
-<span class="normal">630</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SubWindow</span><span class="p">(</span><span class="n">WidgetWrapper</span><span class="p">[</span><span class="n">_W</span><span class="p">],</span> <span class="n">Layout</span><span class="p">):</span>
+<span class="normal">630</span>
+<span class="normal">631</span>
+<span class="normal">632</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SubWindow</span><span class="p">(</span><span class="n">WidgetWrapper</span><span class="p">[</span><span class="n">_W</span><span class="p">],</span> <span class="n">Layout</span><span class="p">):</span>
     <span class="n">state_changed</span> <span class="o">=</span> <span class="n">Signal</span><span class="p">(</span><span class="n">WindowState</span><span class="p">)</span>
     <span class="n">renamed</span> <span class="o">=</span> <span class="n">Signal</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
     <span class="n">closed</span> <span class="o">=</span> <span class="n">Signal</span><span class="p">()</span>
@@ -10124,14 +10126,16 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_update_from_returned_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">WidgetDataModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Update the sub-window based on the returned model.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">wf</span> <span class="o">:=</span> <span class="n">model</span><span class="o">.</span><span class="n">workflow</span><span class="o">.</span><span class="n">last</span><span class="p">(),</span> <span class="n">LocalReaderMethod</span><span class="p">):</span>
-            <span class="c1"># file is directly read from the local path</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">save_path</span> <span class="o">:=</span> <span class="n">wf</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">Path</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">update_default_save_path</span><span class="p">(</span><span class="n">save_path</span><span class="p">,</span> <span class="n">plugin</span><span class="o">=</span><span class="n">wf</span><span class="o">.</span><span class="n">plugin</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">wf</span> <span class="o">:=</span> <span class="n">model</span><span class="o">.</span><span class="n">workflow</span><span class="o">.</span><span class="n">last</span><span class="p">(),</span> <span class="n">CommandExecution</span><span class="p">):</span>
-            <span class="c1"># model is created by some command</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">save_behavior_override</span><span class="p">,</span> <span class="n">NoNeedToSave</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_set_ask_save_before_close</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">wf</span> <span class="o">:=</span> <span class="n">model</span><span class="o">.</span><span class="n">workflow</span><span class="o">.</span><span class="n">last</span><span class="p">())</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="n">LocalReaderMethod</span><span class="p">):</span>
+                <span class="c1"># file is directly read from the local path</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">save_path</span> <span class="o">:=</span> <span class="n">wf</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">Path</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">update_default_save_path</span><span class="p">(</span><span class="n">save_path</span><span class="p">,</span> <span class="n">plugin</span><span class="o">=</span><span class="n">wf</span><span class="o">.</span><span class="n">plugin</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="n">CommandExecution</span><span class="p">):</span>
+                <span class="c1"># model is created by some command</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">save_behavior_override</span><span class="p">,</span> <span class="n">NoNeedToSave</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_set_ask_save_before_close</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_identifier</span> <span class="o">=</span> <span class="n">wf</span><span class="o">.</span><span class="n">id</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">wlist</span> <span class="o">:=</span> <span class="n">model</span><span class="o">.</span><span class="n">workflow</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_update_model_workflow</span><span class="p">(</span><span class="n">wlist</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">save_behavior_override</span> <span class="o">:=</span> <span class="n">model</span><span class="o">.</span><span class="n">save_behavior_override</span><span class="p">:</span>
