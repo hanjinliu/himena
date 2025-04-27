@@ -2,6 +2,7 @@ from dataclasses import asdict, dataclass, field
 import math
 from pathlib import Path
 import timeit
+import uuid
 from typing import (
     Any,
     Callable,
@@ -182,6 +183,7 @@ class WidgetDataModel(GenericModel[_T]):
         self,
         source: str | Path | list[str | Path],
         plugin: "PluginInfo | None" = None,
+        id: uuid.UUID | None = None,
     ) -> "WidgetDataModel[_T]":
         """Return a new instance with the source path."""
         if plugin is None:
@@ -193,7 +195,10 @@ class WidgetDataModel(GenericModel[_T]):
         else:
             path = Path(source).resolve()
         wf = LocalReaderMethod(
-            path=path, plugin=plugin_name, output_model_type=self.type
+            path=path,
+            plugin=plugin_name,
+            output_model_type=self.type,
+            id=id or uuid.uuid4(),
         ).construct_workflow()
         to_update = {"workflow": wf}
         if self.title is None:

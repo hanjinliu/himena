@@ -100,7 +100,9 @@ class WindowDescription(BaseModel):
         window._identifier = self.id
         return window
 
-    def prep_workflow(self, workflow_override: Mapping[str, Workflow]) -> Workflow:
+    def prep_workflow(
+        self, workflow_override: Mapping[uuid.UUID, Workflow]
+    ) -> Workflow:
         """Prepare the most efficient workflow to get the window."""
         if wf := workflow_override.get(self.id):
             pass
@@ -271,6 +273,7 @@ class AppSession(BaseModel):
                 wf = window_session.prep_workflow(workflow_override)
                 _pending_workflows.append(wf)
                 _target_areas.append((i_tab, _new_tab))
+
         models = compute(_pending_workflows)
         _failed_sessions: list[tuple[WindowDescription, Exception]] = []
         _id_to_win: dict[uuid.UUID, "SubWindow"] = {}

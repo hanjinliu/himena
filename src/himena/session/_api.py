@@ -25,6 +25,7 @@ _SESSION_YAML = "session.yaml"
 
 
 def update_from_directory(ui: MainWindow, path: str | Path) -> None:
+    """Update GUI from a session directory."""
     dirpath = Path(path)
     with dirpath.joinpath(_SESSION_YAML).open("r") as f:
         yml = yaml.load(f, Loader=yaml.Loader)
@@ -68,7 +69,7 @@ def _iter_reader_method(
                     RuntimeWarning,
                     stacklevel=2,
                 )
-        meth = LocalReaderMethod(path=file, metadata_override=metadata)
+        meth = LocalReaderMethod(path=file, metadata_override=metadata, id=uuid)
         yield uuid, meth.construct_workflow()
 
 

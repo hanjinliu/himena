@@ -183,14 +183,17 @@ def test_screenshot_commands(himena_ui: MainWindow, sample_dir: Path, tmpdir):
     himena_ui.clipboard = ClipboardDataModel(text="")  # just for initialization
     QtW.QApplication.processEvents()
     himena_ui.exec_action("copy-screenshot")
+    QtW.QApplication.processEvents()
     assert himena_ui.clipboard.image is not None
     himena_ui.clipboard = ClipboardDataModel(text="")  # just for initialization
     QtW.QApplication.processEvents()
     himena_ui.exec_action("copy-screenshot-area")
+    QtW.QApplication.processEvents()
     assert himena_ui.clipboard.image is not None
     himena_ui.clipboard = ClipboardDataModel(text="")  # just for initialization
     QtW.QApplication.processEvents()
     himena_ui.exec_action("copy-screenshot-window")
+    QtW.QApplication.processEvents()
     assert himena_ui.clipboard.image is not None
 
     # save

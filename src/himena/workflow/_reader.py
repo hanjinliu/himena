@@ -44,7 +44,7 @@ class UserInput(NoParentWorkflow):
         raise NotExecutable("No user input bound to this workflow step.")
 
 
-class RuntimInputBound(UserInput):
+class RuntimeInputBound(UserInput):
     bound_value: Any
 
     def _get_model_impl(self, wf: "Workflow") -> "WidgetDataModel":
@@ -68,7 +68,10 @@ class LocalReaderMethod(ReaderMethod):
     path: Path | list[Path]
 
     def _get_model_impl(self, wf: "Workflow") -> "WidgetDataModel[Any]":
-        return self.run()
+        out = self.run()
+        if main := wf._mock_main_window:
+            main.add_data_model(out)
+        return out
 
     def run(self) -> "WidgetDataModel[Any]":
         """Get model by importing the reader plugin and actually read the file(s)."""
@@ -83,6 +86,7 @@ class LocalReaderMethod(ReaderMethod):
             model = model._with_source(
                 source=self.path,
                 plugin=PluginInfo.from_str(self.plugin) if self.plugin else None,
+                id=self.id,
             )
         if self.metadata_override is not None:
             model.metadata = self.metadata_override
@@ -128,8 +132,10 @@ class RemoteReaderMethod(ReaderMethod):
         return f"{self.username}@{self.host}:{self.path.as_posix()}"
 
     def _get_model_impl(self, wf: "Workflow") -> "WidgetDataModel":
-        model = self.run()
-        return model
+        out = self.run()
+        if main := wf._mock_main_window:
+            main.add_data_model(out)
+        return out
 
     def run(self):
         from himena._providers import ReaderStore
