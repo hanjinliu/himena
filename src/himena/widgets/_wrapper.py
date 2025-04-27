@@ -601,14 +601,16 @@ class SubWindow(WidgetWrapper[_W], Layout):
 
     def _update_from_returned_model(self, model: WidgetDataModel) -> SubWindow[_W]:
         """Update the sub-window based on the returned model."""
-        if isinstance(wf := model.workflow.last(), LocalReaderMethod):
-            # file is directly read from the local path
-            if isinstance(save_path := wf.path, Path):
-                self.update_default_save_path(save_path, plugin=wf.plugin)
-        elif isinstance(wf := model.workflow.last(), CommandExecution):
-            # model is created by some command
-            if not isinstance(model.save_behavior_override, NoNeedToSave):
-                self._set_ask_save_before_close(True)
+        if (wf := model.workflow.last()) is not None:
+            if isinstance(wf, LocalReaderMethod):
+                # file is directly read from the local path
+                if isinstance(save_path := wf.path, Path):
+                    self.update_default_save_path(save_path, plugin=wf.plugin)
+            elif isinstance(wf, CommandExecution):
+                # model is created by some command
+                if not isinstance(model.save_behavior_override, NoNeedToSave):
+                    self._set_ask_save_before_close(True)
+            self._identifier = wf.id
         if len(wlist := model.workflow) > 0:
             self._update_model_workflow(wlist)
         if save_behavior_override := model.save_behavior_override:

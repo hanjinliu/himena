@@ -1,11 +1,14 @@
 from typing import Callable
 from pathlib import Path
+from unittest.mock import MagicMock
 
 from himena import MainWindow, anchor
 from himena.consts import StandardType
+from himena.plugins import register_reader_plugin
 from himena.types import WidgetDataModel, WindowRect
 from himena.standards.model_meta import DataFrameMeta, ImageMeta, TextMeta
 from himena.standards.roi import RectangleRoi
+from himena_builtins.io import read_text
 from himena_builtins.qt.text import QTextEdit, QRichTextEdit
 from himena_builtins.qt.image import QImageView
 from himena_builtins.qt.dataframe import QDataFrameView
@@ -160,3 +163,60 @@ def test_session_calculate_non_savable(make_himena_ui: Callable[..., MainWindow]
     assert len(himena_ui.tabs[0]) == 2
     assert himena_ui.tabs[0][1].model_type() == "unknown-object"
     assert isinstance(himena_ui.tabs[0][1].to_model().metadata, TextMeta)
+
+def test_session_calculate_call_count(
+    make_himena_ui: Callable[..., MainWindow],
+    tmpdir,
+    sample_dir: Path,
+):
+    himena_ui = make_himena_ui("qt")
+    mock0 = MagicMock()
+    mock1 = MagicMock()
+    mock2 = MagicMock()
+
+    @register_reader_plugin
+    def _test_reader(path: Path) -> WidgetDataModel:
+        mock0(0)
+        return read_text(path)
+
+    @_test_reader.define_matcher
+    def _matcher(path: Path):
+        if path.suffix == ".csv":
+            return StandardType.TABLE
+        return None
+
+    _command_id_1 = "test:temp-func-1"
+
+    @himena_ui.register_function(command_id=_command_id_1)
+    def _temp_func_1(model: WidgetDataModel) -> WidgetDataModel:
+        mock1(0)
+        return model.with_title_numbering()
+
+    _command_id_2 = "test:temp-func-2"
+
+    @himena_ui.register_function(command_id=_command_id_2)
+    def _temp_func_2(model: WidgetDataModel) -> WidgetDataModel:
+        mock2(0)
+        return model.with_title_numbering()
+
+    himena_ui.read_file(sample_dir / "table.csv")
+    himena_ui.exec_action(_command_id_1)
+    himena_ui.exec_action(_command_id_2)
+    assert mock0.call_count == 1
+    assert mock1.call_count == 1
+    assert mock2.call_count == 1
+
+    mock0.reset_mock()
+    mock1.reset_mock()
+    mock2.reset_mock()
+
+    # save and load session
+    session_path = Path(tmpdir) / "test.session.zip"
+    himena_ui.save_session(session_path, allow_calculate=[_command_id_2])
+    himena_ui.clear()
+    mock0.assert_not_called()
+    mock1.assert_not_called()
+    mock2.assert_not_called()
+
+    himena_ui.load_session(session_path)
+    assert (mock0.call_count, mock1.call_count, mock2.call_count,) == (0, 0, 1)

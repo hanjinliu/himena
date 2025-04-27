@@ -48,10 +48,7 @@ class Workflow(BaseModel):
     """
 
     steps: list[WorkflowStepType] = Field(default_factory=list)
-    _mock_main_window: "MainWindowMock" = PrivateAttr(
-        default_factory=_make_mock_main_window
-    )
-    _cache_enabled: bool = PrivateAttr(default=False)
+    _mock_main_window: "MainWindowMock | None" = PrivateAttr(default=None)
 
     def id_to_index_map(self) -> dict[uuid.UUID, int]:
         return {step.id: i for i, step in enumerate(self.steps)}
@@ -80,11 +77,8 @@ class Workflow(BaseModel):
         """
         indices = sorted(self._get_ancestors(step)[0])
         out = Workflow(steps=[self.steps[i] for i in indices])
-        out._cache_enabled = self._cache_enabled
-        out._mock_main_window = (
-            self._mock_main_window
-        )  # NOTE: do not update, share the reference
-        # out._model_cache = self._model_cache  # NOTE: do not update, share the reference
+        # NOTE: do not update, share the reference
+        out._mock_main_window = self._mock_main_window
         return out
 
     def __getitem__(self, index: int) -> WorkflowStep:
@@ -116,24 +110,24 @@ class Workflow(BaseModel):
 
     def window_for_id(self, id: uuid.UUID) -> "SubWindow[MockWidget]":
         """Get the sub-window for the given ID."""
-        if win := self._mock_main_window.window_for_id(id):
+        if (main := self._mock_main_window) and (win := main.window_for_id(id)):
             return win
         step = self.step_for_id(id)
         model = step.get_model(self)
-        if self._cache_enabled:
-            win = self._mock_main_window.add_data_model(model)
+        if main := self._mock_main_window:
+            win = main.add_data_model(model)
             win._identifier = id
             return win
         raise ValueError("Window input cannot be resolved in this context.")
 
     def model_for_id(self, id: uuid.UUID) -> "WidgetDataModel":
         """Get the widget data model for the given ID."""
-        if win := self._mock_main_window.window_for_id(id):
+        if (main := self._mock_main_window) and (win := main.window_for_id(id)):
             return win.to_model()
         step = self.step_for_id(id)
         model = step.get_model(self)
-        if self._cache_enabled:
-            win = self._mock_main_window.add_data_model(model)
+        if main := self._mock_main_window:
+            win = main.add_data_model(model)
             win._identifier = id
         return model
 
@@ -166,14 +160,15 @@ class Workflow(BaseModel):
         For example, if the workflow is `A -> B0`, `A -> B1`, `B0, B1 -> C`, then
         the result of `A` will be cached and reused when computing `B0` and `B1`.
         """
-        was_enabled = self._cache_enabled
-        self._cache_enabled = True
+        was_none = self._mock_main_window is None
+        if was_none:
+            self._mock_main_window = _make_mock_main_window()
         try:
             yield
         finally:
-            self._cache_enabled = was_enabled
-            if not was_enabled:
+            if was_none:
                 self._mock_main_window.clear()
+                self._mock_main_window = None
 
     @classmethod
     def concat(cls, workflows: Iterable["Workflow"]) -> "Workflow":
@@ -266,7 +261,7 @@ def compute(workflows: list[Workflow]) -> list["WidgetDataModel | Exception"]:
             results.append(result)
     _global_ui.clear()
     for workflow in workflows:
-        workflow._mock_main_window = _make_mock_main_window()
+        workflow._mock_main_window = None
     return results
 
 

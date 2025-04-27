@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Any, TYPE_CHECKING
 import uuid
 from himena.workflow._graph import Workflow
-from himena.workflow._reader import LocalReaderMethod, UserInput, RuntimInputBound
+from himena.workflow._reader import LocalReaderMethod, UserInput, RuntimeInputBound
 
 if TYPE_CHECKING:
     from himena.widgets import MainWindow
@@ -49,7 +49,7 @@ def as_function(wf: Workflow):
                     wf_out = wf_out.replace(step_id, meth)
                 elif isinstance(v, WidgetDataModel):
                     wf_compute = wf_compute.replace(
-                        step_id, RuntimInputBound(id=step_id, bound_value=v)
+                        step_id, RuntimeInputBound(id=step_id, bound_value=v)
                     )
                     wf_out = wf_out.replace(step_id, v.workflow)
                 else:
