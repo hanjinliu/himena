@@ -565,13 +565,13 @@ def test_crop_image(himena_ui: MainWindow, tmpdir):
         current_roi=RectangleRoi(indices=(0, 0), x=1, y=1, width=6, height=4),
     )
     win = himena_ui.add_data_model(model)
-    himena_ui.exec_action("builtins:image-crop:crop-image")
+    himena_ui.exec_action("builtins:image:crop-image")
     himena_ui.exec_action("builtins:image-capture:copy-slice-to-clipboard")
     with file_dialog_response(himena_ui, Path(tmpdir) / "tmp.png"):
         himena_ui.exec_action("builtins:image-capture:save-slice")
     himena_ui.current_window = win
     himena_ui.exec_action(
-        "builtins:image-crop:crop-image-multi",
+        "builtins:image:crop-image-multi",
         with_params={"bbox_list": [(1, 1, 4, 5), (1, 5, 2, 2)]}
     )
     himena_ui.current_window = win
@@ -588,13 +588,13 @@ def test_crop_image(himena_ui: MainWindow, tmpdir):
         channel_axis=1,
     )
     win = himena_ui.add_data_model(model)
-    himena_ui.exec_action("builtins:image-crop:crop-image")
+    himena_ui.exec_action("builtins:image:crop-image")
     himena_ui.exec_action("builtins:image-capture:copy-slice-to-clipboard")
     with file_dialog_response(himena_ui, Path(tmpdir) / "tmp.png"):
         himena_ui.exec_action("builtins:image-capture:save-slice")
     himena_ui.current_window = win
     himena_ui.exec_action(
-        "builtins:image-crop:crop-image-multi",
+        "builtins:image:crop-image-multi",
         with_params={"bbox_list": [(1, 1, 4, 5), (1, 5, 2, 2)]}
     )
     himena_ui.current_window = win
@@ -654,15 +654,15 @@ def test_roi_commands(himena_ui: MainWindow):
     # specify
     himena_ui.current_window = win
     himena_ui.exec_action(
-        "builtins:image-specify:roi-specify-rectangle",
+        "builtins:image:roi-specify-rectangle",
         with_params={"x": 3, "y": 2, "width": 3.0, "height": 3.0}
     )
     himena_ui.exec_action(
-        "builtins:image-specify:roi-specify-ellipse",
+        "builtins:image:roi-specify-ellipse",
         with_params={"x": 3, "y": 2, "width": 3.0, "height": 3.0}
     )
     himena_ui.exec_action(
-        "builtins:image-specify:roi-specify-line",
+        "builtins:image:roi-specify-line",
         with_params={"x1": 3, "y1": 2, "x2": 3.0, "y2": 3.0}
     )
 
@@ -684,19 +684,19 @@ def test_roi_commands(himena_ui: MainWindow):
     )
 
     win = himena_ui.add_data_model(model)
-    himena_ui.exec_action("builtins:colormap:set-colormaps", with_params={"ch_0": "green", "ch_1": "red"})
+    himena_ui.exec_action("builtins:image:set-colormaps", with_params={"ch_0": "green", "ch_1": "red"})
     assert isinstance(meta := win.to_model().metadata, ImageMeta)
     assert len(meta.channels) == 2
     assert meta.channels[0].colormap == "cmap:green"
     assert meta.channels[1].colormap == "cmap:red"
-    himena_ui.exec_action("builtins:split-channels")
+    himena_ui.exec_action("builtins:image:split-channels")
     win_g = himena_ui.tabs.current()[-2]
     win_r = himena_ui.tabs.current()[-1]
     assert win_g.to_model().metadata.colormap == "cmap:green"
     assert win_r.to_model().metadata.colormap == "cmap:red"
-    himena_ui.exec_action("builtins:merge-channels", with_params={"images": [win_g, win_r]})
+    himena_ui.exec_action("builtins:image:merge-channels", with_params={"images": [win_g, win_r]})
     himena_ui.exec_action(
-        "builtins:stack-images",
+        "builtins:image:stack-images",
         with_params={"images": [win_g, win_r], "axis_name": "p"}
     )
 
@@ -709,7 +709,7 @@ def test_rgb(himena_ui: MainWindow):
     win = himena_ui.add_data_model(model)
     assert isinstance(view := win.widget, QImageView)
     assert view._is_rgb
-    himena_ui.exec_action("builtins:split-channels")
+    himena_ui.exec_action("builtins:image:split-channels")
     assert len(himena_ui.tabs.current()) == 4
 
 def test_scale_bar(himena_ui: MainWindow):
@@ -908,7 +908,7 @@ def test_propagate(himena_ui: MainWindow):
         )
     )
 
-    himena_ui.exec_action("builtins:colormap:propagate-colormaps", window_context=win0)
+    himena_ui.exec_action("builtins:image:propagate-colormaps", window_context=win0)
 
     def get_colormap_names(win: SubWindow) -> list[str | None]:
         return [c.colormap for c in win.to_model().metadata.channels]
@@ -918,7 +918,7 @@ def test_propagate(himena_ui: MainWindow):
     assert get_colormap_names(win2) == ["matlab:gray"]
     assert get_colormap_names(win3) == ["cmap:red", "cmap:green", "cmap:blue"]
     himena_ui.current_window = win2
-    himena_ui.exec_action("builtins:set-channel-axis", with_params={"axis": 0})
+    himena_ui.exec_action("builtins:image:set-channel-axis", with_params={"axis": 0})
 
 def test_image_widget_hover_info(qtbot: QtBot):
     image_view = QImageView()

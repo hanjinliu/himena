@@ -25,7 +25,8 @@ configure_submenu("/model_menu/roi", "ROI")
 @register_function(
     types=StandardType.IMAGE,
     menus=[MenuId.TOOLS_IMAGE_ROI, "/model_menu/roi"],
-    command_id="builtins:image-crop:crop-image",
+    command_id="builtins:image:crop-image",
+    group="image-crop",
     keybindings=["Ctrl+Shift+X"],
 )
 def crop_image(model: WidgetDataModel) -> Parametric:
@@ -60,7 +61,8 @@ def crop_image(model: WidgetDataModel) -> Parametric:
 @register_function(
     types=StandardType.IMAGE,
     menus=[MenuId.TOOLS_IMAGE_ROI, "/model_menu/roi"],
-    command_id="builtins:image-crop:crop-image-multi",
+    command_id="builtins:image:crop-image-multi",
+    group="image-crop",
 )
 def crop_image_multi(model: WidgetDataModel) -> Parametric:
     """Crop the image around the registered ROIs and return as a model stack."""
@@ -108,7 +110,8 @@ def _bbox_list_getter(
     title="Crop Image (nD) ...",
     types=StandardType.IMAGE,
     menus=[MenuId.TOOLS_IMAGE_ROI, "/model_menu/roi"],
-    command_id="builtins:image-crop:crop-image-nd",
+    command_id="builtins:image:crop-image-nd",
+    group="image-crop",
 )
 def crop_image_nd(win: SubWindow) -> Parametric:
     """Crop the image in nD, by drawing a 2D ROI and reading slider values."""
@@ -310,10 +313,11 @@ def point_rois_to_dataframe(model: WidgetDataModel) -> WidgetDataModel:
 
 
 @register_function(
-    title="Set colormap ...",
+    title="Set Colormap ...",
     types=StandardType.IMAGE,
     menus=[MenuId.TOOLS_IMAGE_CHANNELS, "/model_menu/channels"],
-    command_id="builtins:colormap:set-colormaps",
+    command_id="builtins:image:set-colormaps",
+    group="image-colormap",
 )
 def set_colormaps(model: WidgetDataModel) -> Parametric:
     """Set the colormaps for each channel."""
@@ -357,7 +361,8 @@ def set_colormaps(model: WidgetDataModel) -> Parametric:
     title="Propagate Colormaps",
     types=StandardType.IMAGE,
     menus=[MenuId.TOOLS_IMAGE_CHANNELS, "/model_menu/channels"],
-    command_id="builtins:colormap:propagate-colormaps",
+    command_id="builtins:image:propagate-colormaps",
+    group="image-colormap",
 )
 def propagate_colormaps(win: SubWindow, tab: TabArea):
     """Propagate the colormaps of current image to other images in this tab."""
@@ -389,10 +394,10 @@ def propagate_colormaps(win: SubWindow, tab: TabArea):
 
 
 @register_function(
-    title="Split channels",
+    title="Split Channels",
     types=StandardType.IMAGE,
     menus=[MenuId.TOOLS_IMAGE_CHANNELS, "/model_menu/channels"],
-    command_id="builtins:split-channels",
+    command_id="builtins:image:split-channels",
 )
 def split_channels(model: WidgetDataModel) -> list[WidgetDataModel]:
     """Split the image by the channel axis into separate images."""
@@ -418,10 +423,10 @@ def split_channels(model: WidgetDataModel) -> list[WidgetDataModel]:
 
 
 @register_function(
-    title="Set channel axis",
+    title="Set Channel Axis",
     types=StandardType.IMAGE,
     menus=[MenuId.TOOLS_IMAGE_CHANNELS, "/model_menu/channels"],
-    command_id="builtins:set-channel-axis",
+    command_id="builtins:image:set-channel-axis",
 )
 def set_channel_axis(model: WidgetDataModel) -> Parametric:
     """Set the channel axis of the image."""
@@ -445,10 +450,11 @@ def set_channel_axis(model: WidgetDataModel) -> Parametric:
 
 
 @register_function(
-    title="Specify rectangle ...",
+    title="Specify Rectangle ...",
     types=StandardType.IMAGE,
     menus=[MenuId.TOOLS_IMAGE_ROI, "/model_menu/roi"],
-    command_id="builtins:image-specify:roi-specify-rectangle",
+    command_id="builtins:image:roi-specify-rectangle",
+    group="image-spacify",
 )
 def roi_specify_rectangle(win: SubWindow) -> Parametric:
     """Specify the coordinates of a rectangle ROI."""
@@ -483,10 +489,11 @@ def roi_specify_rectangle(win: SubWindow) -> Parametric:
 
 
 @register_function(
-    title="Specify ellipse ...",
+    title="Specify Ellipse ...",
     types=StandardType.IMAGE,
     menus=[MenuId.TOOLS_IMAGE_ROI, "/model_menu/roi"],
-    command_id="builtins:image-specify:roi-specify-ellipse",
+    command_id="builtins:image:roi-specify-ellipse",
+    group="image-specify",
 )
 def roi_specify_ellipse(win: SubWindow) -> Parametric:
     """Specify the coordinates of an ellipse ROI."""
@@ -521,10 +528,11 @@ def roi_specify_ellipse(win: SubWindow) -> Parametric:
 
 
 @register_function(
-    title="Specify line ...",
+    title="Specify Line ...",
     types=StandardType.IMAGE,
     menus=[MenuId.TOOLS_IMAGE_ROI, "/model_menu/roi"],
-    command_id="builtins:image-specify:roi-specify-line",
+    command_id="builtins:image:roi-specify-line",
+    group="image-specify",
 )
 def roi_specify_line(win: SubWindow) -> Parametric:
     """Specify the coordinates of a line ROI."""
@@ -622,9 +630,9 @@ def run_merge_channels(
 
 
 @register_function(
-    title="Merge channels ...",
+    title="Merge Channels ...",
     menus=[MenuId.TOOLS_IMAGE_CHANNELS, "/model_menu/channels"],
-    command_id="builtins:merge-channels",
+    command_id="builtins:image:merge-channels",
 )
 def merge_channels(ui: MainWindow) -> Parametric:
     """Stack images along the channel axis."""
@@ -632,9 +640,9 @@ def merge_channels(ui: MainWindow) -> Parametric:
 
 
 @register_function(
-    title="Stack images ...",
+    title="Stack Images ...",
     menus=[MenuId.TOOLS_IMAGE, "/model_menu/channels"],
-    command_id="builtins:stack-images",
+    command_id="builtins:image:stack-images",
 )
 def stack_images(ui: MainWindow) -> Parametric:
     """Stack N-D images along a new axis to make a (N+1)-D image."""

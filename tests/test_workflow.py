@@ -95,7 +95,7 @@ def test_list_of_subwindows_input(make_himena_ui: Callable[..., MainWindow]):
     win0 = himena_ui.current_window
     himena_ui.exec_action("builtins:constant-array", with_params={"interpret_as_image": True, "shape": (3, 3), "value": 2})
     win1 = himena_ui.current_window
-    himena_ui.exec_action("builtins:stack-images", with_params={"images": [win0, win1], "axis_name": "p"})
+    himena_ui.exec_action("builtins:image:stack-images", with_params={"images": [win0, win1], "axis_name": "p"})
     win2 = himena_ui.current_window
     # TODO: fix this in the future
     # win2.to_model().workflow.compute(True)

@@ -281,6 +281,7 @@ def register_function(
     keybindings: Sequence[KeyBindingRule] | None = None,
     run_async: bool = False,
     command_id: str | None = None,
+    group: str | None = None,
     icon: str | None = None,
     palette: bool = True,
 ) -> None: ...
@@ -297,6 +298,7 @@ def register_function(
     keybindings: Sequence[KeyBindingRule] | None = None,
     run_async: bool = False,
     command_id: str | None = None,
+    group: str | None = None,
     icon: str | None = None,
     palette: bool = True,
 ) -> _F: ...
@@ -312,6 +314,7 @@ def register_function(
     keybindings=None,
     run_async=False,
     command_id=None,
+    group=None,
     icon=None,
     palette=True,
 ):
@@ -339,6 +342,9 @@ def register_function(
         updates the GUI, running it asynchronously may cause issues.
     command_id : str, optional
         Command ID. If not given, the function qualname will be used.
+    group : str, optional
+        Group name to which this command belongs. This parameter follows the app-model
+        rule.
     icon : str, optional
         Iconify icon key to use for the action.
     palette : bool, default True
@@ -355,6 +361,7 @@ def register_function(
             keybindings=keybindings,
             run_async=run_async,
             command_id=command_id,
+            group=group,
             icon=icon,
             palette=palette,
         )
@@ -378,6 +385,7 @@ def make_action_for_function(
     keybindings=None,
     run_async: bool = False,
     command_id: str | None = None,
+    group: str | None = None,
     icon: str | None = None,
     palette: bool = True,
 ):
@@ -401,7 +409,9 @@ def make_action_for_function(
         )
 
     _id = command_id_from_func(f, command_id)
-    if isinstance(command_id, str) and ":" in command_id:
+    if group is not None:
+        menus_normed = _norm_menus_with_group(menus, group)
+    elif isinstance(command_id, str) and ":" in command_id:
         group = command_id.rsplit(":", maxsplit=1)[0]
         menus_normed = _norm_menus_with_group(menus, group)
     else:

@@ -52,7 +52,7 @@ def test_session_with_calculation(
     himena_ui = make_himena_ui("mock")
     tab0 = himena_ui.add_tab()
     tab0.read_file(sample_dir / "image.png").update(rect=(30, 40, 160, 130), title="Im")
-    himena_ui.exec_action("builtins:image-crop:crop-image", with_params={"y": (1, 3), "x": (1, 3)})
+    himena_ui.exec_action("builtins:image:crop-image", with_params={"y": (1, 3), "x": (1, 3)})
     assert len(tab0) == 2
     shape_cropped = tab0[1].to_model().value.shape
     tab0[1].update(rect=(70, 20, 160, 130))
@@ -66,7 +66,7 @@ def test_session_with_calculation(
         "save-session",
         with_params={
             "save_path": session_path,
-            "allow_calculate": ["builtins:image-crop:crop-image"]
+            "allow_calculate": ["builtins:image:crop-image"]
         },
     )
     himena_ui.clear()
@@ -89,7 +89,7 @@ def test_session_with_calculation(
 def test_session_stand_alone(tmpdir, himena_ui: MainWindow, sample_dir):
     tab0 = himena_ui.add_tab()
     tab0.read_file(sample_dir / "image.png").update(rect=(30, 40, 160, 130), title="Im")
-    himena_ui.exec_action("builtins:image-crop:crop-image", with_params={"y": (1, 3), "x": (1, 3)})
+    himena_ui.exec_action("builtins:image:crop-image", with_params={"y": (1, 3), "x": (1, 3)})
     shape_cropped = tab0[1].to_model().value.shape
     tab0[1].update(rect=(70, 20, 160, 130))
 
