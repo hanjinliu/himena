@@ -70,7 +70,7 @@ def test_scatter_plot_via_command(make_himena_ui, tmpdir):
         type="table",
     )
     himena_ui.exec_action(
-        "builtins:plot-3d:scatter-plot-3d",
+        "builtins:plot:scatter-plot-3d",
         with_params={
             "x": ((0, 99), (0, 1)),
             "y": ((0, 99), (1, 2)),
@@ -146,7 +146,7 @@ def test_line_plot_via_command(make_himena_ui, tmpdir):
         type="table",
     )
     himena_ui.exec_action(
-        "builtins:plot-3d:line-plot-3d",
+        "builtins:plot:line-plot-3d",
         with_params={
             "x": ((0, 99), (0, 1)),
             "y": ((0, 99), (1, 2)),

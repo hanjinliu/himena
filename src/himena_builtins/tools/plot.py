@@ -372,7 +372,8 @@ def edit_plot(model: WidgetDataModel) -> Parametric:
     title="3D Scatter Plot ...",
     types=_TABLE_LIKE,
     menus=_MENU,
-    command_id="builtins:plot-3d:scatter-plot-3d",
+    command_id="builtins:plot:scatter-plot-3d",
+    group="plot-3d",
     enablement=_NOT_AN_IMAGE,
 )
 def scatter_plot_3d(win: SubWindow) -> Parametric:
@@ -426,7 +427,8 @@ def scatter_plot_3d(win: SubWindow) -> Parametric:
     title="3D Line Plot ...",
     types=_TABLE_LIKE,
     menus=_MENU,
-    command_id="builtins:plot-3d:line-plot-3d",
+    command_id="builtins:plot:line-plot-3d",
+    group="plot-3d",
     enablement=_NOT_AN_IMAGE,
 )
 def line_plot_3d(win: SubWindow) -> Parametric:
