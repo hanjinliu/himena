@@ -60,8 +60,10 @@ class QTableBase(QtW.QTableView):
 
     def __init__(self, parent: QtW.QWidget | None = None) -> None:
         super().__init__(parent)
-        self.setVerticalHeader(QVerticalHeaderView(self))
-        self.setHorizontalHeader(QHorizontalHeaderView(self))
+        self._vertical_header = QVerticalHeaderView(self)
+        self._horizontal_header = QHorizontalHeaderView(self)
+        self.setVerticalHeader(self._vertical_header)
+        self.setHorizontalHeader(self._horizontal_header)
 
         self.horizontalHeader().setFixedHeight(18)
         self.verticalHeader().setDefaultSectionSize(22)
@@ -258,8 +260,11 @@ class QTableBase(QtW.QTableView):
     def keyPressEvent(self, e):
         _mod = e.modifiers()
         _key = e.key()
-        self._selection_model.set_shift(_mod & Qt.KeyboardModifier.ShiftModifier)
-        if _mod & Qt.KeyboardModifier.ControlModifier:
+        has_ctrl = _mod & Qt.KeyboardModifier.ControlModifier
+        has_shift = _mod & Qt.KeyboardModifier.ShiftModifier
+        self._selection_model.set_shift(has_shift)
+        self._selection_model.set_ctrl(has_ctrl)
+        if has_ctrl:
             nr, nc = self.data_shape()
             if _key == Qt.Key.Key_Up:
                 dr, dc = -99999999, 0
@@ -276,10 +281,7 @@ class QTableBase(QtW.QTableView):
                 return super().keyPressEvent(e)
             self._selection_model.move_limited(dr, dc, nr, nc)
             return None
-        elif (
-            _mod == Qt.KeyboardModifier.NoModifier
-            or _mod & Qt.KeyboardModifier.ShiftModifier
-        ):
+        elif _mod == Qt.KeyboardModifier.NoModifier or has_shift:
             if _key == Qt.Key.Key_Up:
                 dr, dc = -1, 0
             elif _key == Qt.Key.Key_Down:
@@ -313,8 +315,6 @@ class QTableBase(QtW.QTableView):
 
     def mousePressEvent(self, e: QtGui.QMouseEvent) -> None:
         """Register clicked position"""
-        # initialize just in case
-
         _selection_model = self._selection_model
         _selection_model.set_ctrl(e.modifiers() & Qt.KeyboardModifier.ControlModifier)
         self._mouse_track.last_rightclick_pos = e.pos()

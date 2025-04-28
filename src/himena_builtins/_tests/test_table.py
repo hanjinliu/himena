@@ -57,6 +57,7 @@ def test_table_edit(qtbot: QtBot):
         qtbot.keyClick(tester.widget, Qt.Key.Key_Z, modifier=_Ctrl)
         qtbot.keyClick(tester.widget, Qt.Key.Key_Y, modifier=_Ctrl)
         qtbot.keyClick(tester.widget, Qt.Key.Key_E)
+        tester.widget._horizontal_header._update_press_release(Qt.KeyboardModifier.ControlModifier)
 
 def test_moving_in_table(qtbot: QtBot):
     with _get_tester() as tester:

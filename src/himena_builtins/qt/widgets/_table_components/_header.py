@@ -80,6 +80,24 @@ class QHeaderViewBase(QtW.QHeaderView):
         self.drawCurrent(painter)
         return None
 
+    def mouseReleaseEvent(self, e: QtGui.QMouseEvent) -> None:
+        self.selection_model.set_shift(False)
+        return super().mouseReleaseEvent(e)
+
+    def keyPressEvent(self, e):
+        self._update_press_release(e.modifiers())
+        return super().keyPressEvent(e)
+
+    def keyReleaseEvent(self, a0):
+        self._update_press_release(a0.modifiers())
+        return super().keyReleaseEvent(a0)
+
+    def _update_press_release(self, mod: Qt.KeyboardModifier):
+        has_ctrl = mod & Qt.KeyboardModifier.ControlModifier
+        has_shift = mod & Qt.KeyboardModifier.ShiftModifier
+        self.selection_model.set_shift(has_shift)
+        self.selection_model.set_ctrl(has_ctrl)
+
 
 class QHorizontalHeaderView(QHeaderViewBase):
     _Orientation = Qt.Orientation.Horizontal
