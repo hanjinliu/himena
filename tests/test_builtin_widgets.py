@@ -1,4 +1,5 @@
 from pytestqt.qtbot import QtBot
+from qtpy import QtWidgets as QtW
 from himena.qt.magicgui import get_type_map
 from himena.standards.model_meta import TableMeta
 from himena.widgets import MainWindow, SubWindow
@@ -38,6 +39,7 @@ def test_table_selection(himena_ui: MainWindow):
 
 def test_progress_bar(qtbot: QtBot):
     pbar = QLabeledCircularProgressBar("test")
+    qtbot.addWidget(pbar)
     pbar.show()
     pbar.pbar().setValue(3)
     assert pbar.pbar().value() == 3
@@ -45,4 +47,16 @@ def test_progress_bar(qtbot: QtBot):
     pbar.pbar().barWidth()
     pbar.pbar()._on_infinite_timeout()
     pbar.update()
-    qtbot.addWidget(pbar)
+    QtW.QApplication.processEvents()
+    pbar._pbar.setInfinite(False)
+    pbar.update()
+    QtW.QApplication.processEvents()
+    pbar._pbar.setInfinite(False)
+    pbar.update()
+    QtW.QApplication.processEvents()
+    pbar._pbar.setInfinite(True)
+    pbar.update()
+    QtW.QApplication.processEvents()
+    pbar._pbar.setInfinite(False)
+    pbar.update()
+    QtW.QApplication.processEvents()

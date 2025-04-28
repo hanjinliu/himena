@@ -52,6 +52,16 @@ def test_subwindow_interactions(himena_ui: MainWindow, qtbot: QtBot):
     qwin._title_bar._wheel_event(-1)
     qtitlebar._make_subwindow_drag()
 
+def test_subwindow_model_menu(himena_ui: MainWindow):
+    win = himena_ui.add_object("<b>xxx</b>", type="text.html")
+    qwin = win.widget.parentWidget().parentWidget().parentWidget()
+    assert type(qwin) is QSubWindow
+    qwin._title_bar._make_tooltip()
+    qwin._title_bar._prep_model_menu()
+    qwin._title_bar._maximize()
+    qwin._title_bar._toggle_full_screen()
+    qwin._title_bar._toggle_full_screen()
+
 def test_subwindow_drag(himena_ui: MainWindow, qtbot: QtBot):
     himena_ui.show()
     win = himena_ui.add_object("xxx", type="text")
