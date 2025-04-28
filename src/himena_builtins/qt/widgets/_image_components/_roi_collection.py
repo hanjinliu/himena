@@ -366,7 +366,7 @@ class QRoiCollection(QSimpleRoiCollection):
         _s = "" if len(self._qroi_list) == 1 else "s"
         return drag_command(
             self._image_view_ref(),
-            command_id="builtins:duplicate-rois",
+            command_id="builtins:rois:duplicate",
             type=StandardType.ROIS,
             desc=f"{len(self._qroi_list)} ROI{_s}",
         )

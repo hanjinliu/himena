@@ -106,6 +106,7 @@ class AppActionRegistry:
             MenuId.FILE_NEW: "00_new",
             MenuId.TOOLS_DOCK: "00_dock",
         }
+        self._submenu_order: dict[str, int] = {}
         self._installed_plugins: list[str] = []
         self._plugin_default_configs: dict[str, PluginConfigTuple] = {}
         self._modification_trackers: dict[str, Callable[[_T, _T], ReproduceArgs]] = {}
@@ -170,6 +171,9 @@ class AppActionRegistry:
         """Get the group of a submenu."""
         return self._submenu_groups.get(id, None)
 
+    def submenu_order(self, id: str) -> str | None:
+        return self._submenu_order.get(id, None)
+
     @property
     def submenu_titles(self) -> dict[str, str]:
         return self._submenu_titles
@@ -216,7 +220,10 @@ class AppActionRegistry:
                     continue
                 title = self.submenu_title(submenu)
                 group = self.submenu_group(submenu)
-                item = SubmenuItem(title=title, submenu=submenu, group=group)
+                order = self.submenu_order(submenu)
+                item = SubmenuItem(
+                    title=title, submenu=submenu, group=group, order=order
+                )
                 to_add.append((menu_id, item))
 
         app.register_actions(actions)
@@ -240,6 +247,7 @@ def configure_submenu(
     title: str | None = None,
     *,
     group: str | None = None,
+    order: int | None = None,
 ) -> None:
     """Register a configuration for submenu(s).
 
@@ -259,6 +267,8 @@ def configure_submenu(
             AppActionRegistry.instance()._submenu_titles[sid] = title
         if group is not None:
             AppActionRegistry.instance()._submenu_groups[sid] = group
+        if order is not None:
+            AppActionRegistry.instance()._submenu_order[sid] = order
 
 
 @overload
@@ -271,6 +281,7 @@ def register_function(
     keybindings: Sequence[KeyBindingRule] | None = None,
     run_async: bool = False,
     command_id: str | None = None,
+    group: str | None = None,
     icon: str | None = None,
     palette: bool = True,
 ) -> None: ...
@@ -287,6 +298,7 @@ def register_function(
     keybindings: Sequence[KeyBindingRule] | None = None,
     run_async: bool = False,
     command_id: str | None = None,
+    group: str | None = None,
     icon: str | None = None,
     palette: bool = True,
 ) -> _F: ...
@@ -302,6 +314,7 @@ def register_function(
     keybindings=None,
     run_async=False,
     command_id=None,
+    group=None,
     icon=None,
     palette=True,
 ):
@@ -329,6 +342,9 @@ def register_function(
         updates the GUI, running it asynchronously may cause issues.
     command_id : str, optional
         Command ID. If not given, the function qualname will be used.
+    group : str, optional
+        Group name to which this command belongs. This parameter follows the app-model
+        rule.
     icon : str, optional
         Iconify icon key to use for the action.
     palette : bool, default True
@@ -345,6 +361,7 @@ def register_function(
             keybindings=keybindings,
             run_async=run_async,
             command_id=command_id,
+            group=group,
             icon=icon,
             palette=palette,
         )
@@ -368,6 +385,7 @@ def make_action_for_function(
     keybindings=None,
     run_async: bool = False,
     command_id: str | None = None,
+    group: str | None = None,
     icon: str | None = None,
     palette: bool = True,
 ):
@@ -391,7 +409,9 @@ def make_action_for_function(
         )
 
     _id = command_id_from_func(f, command_id)
-    if isinstance(command_id, str) and ":" in command_id:
+    if group is not None:
+        menus_normed = _norm_menus_with_group(menus, group)
+    elif isinstance(command_id, str) and ":" in command_id:
         group = command_id.rsplit(":", maxsplit=1)[0]
         menus_normed = _norm_menus_with_group(menus, group)
     else:

@@ -77,7 +77,7 @@ class QImageRoiView(QtW.QWidget):
         _s = "" if nrois == 1 else "s"
         return drag_command(
             self,
-            "builtins:select-rois",
+            "builtins:rois:select",
             StandardType.ROIS,
             with_params={"selections": indices},
             desc=f"{nrois} ROI{_s}",

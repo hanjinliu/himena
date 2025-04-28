@@ -4,7 +4,7 @@ from himena.widgets import MainWindow
 from himena._app_model.actions._registry import ACTIONS
 
 
-CMD_GROUP = "00_command"
+CMD_GROUP = "command@00"
 
 
 @ACTIONS.append_from_fn(

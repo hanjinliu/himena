@@ -126,6 +126,12 @@ def test_io_commands(himena_ui: MainWindow, tmpdir, sample_dir: Path):
     himena_ui.add_object(np.arange(4))
     himena_ui.add_object(np.array([[1, 2], [3, 4]], dtype=np.dtypes.StringDType()))
     himena_ui.add_object(pl.DataFrame({"x": [1, 2, 3], "y": [4.2, 5.3, -1.5]}))
+    himena_ui.current_model.write_to_directory(tmpdir)
+    with file_dialog_response(
+        himena_ui,
+        [sample_dir / "text.txt", sample_dir / "text.txt~"]
+    ) as open_path:
+        himena_ui.exec_action("open-file-group")
 
 def test_window_commands(himena_ui: MainWindowQt, sample_dir: Path):
     himena_ui.exec_action("show-command-palette")

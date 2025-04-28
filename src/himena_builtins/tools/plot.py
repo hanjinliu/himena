@@ -40,14 +40,14 @@ _NOT_AN_IMAGE = _ctx.active_window_model_subtype_1 != "image"
 # We should avoid using slice because it is not serializable.
 SelectionType = tuple[tuple[int, int], tuple[int, int]]
 
-configure_submenu(MenuId.TOOLS_PLOT, group="20_builtins")
+configure_submenu(MenuId.TOOLS_PLOT, group="20_builtins", order=32)
 
 
 @register_function(
     title="Scatter Plot ...",
     types=_TABLE_LIKE,
     menus=_MENU,
-    command_id="builtins:scatter-plot",
+    command_id="builtins:plot:scatter",
     enablement=_NOT_AN_IMAGE,
 )
 def scatter_plot(win: SubWindow) -> Parametric:
@@ -93,7 +93,7 @@ def scatter_plot(win: SubWindow) -> Parametric:
     title="Line Plot ...",
     types=_TABLE_LIKE,
     menus=_MENU,
-    command_id="builtins:line-plot",
+    command_id="builtins:plot:line",
     enablement=_NOT_AN_IMAGE,
 )
 def line_plot(win: SubWindow) -> Parametric:
@@ -131,7 +131,7 @@ def line_plot(win: SubWindow) -> Parametric:
     title="Bar Plot ...",
     types=_TABLE_LIKE,
     menus=_MENU,
-    command_id="builtins:bar-plot",
+    command_id="builtins:plot:bar",
     enablement=_NOT_AN_IMAGE,
 )
 def bar_plot(win: SubWindow) -> Parametric:
@@ -182,7 +182,7 @@ def bar_plot(win: SubWindow) -> Parametric:
     title="Errorbar Plot ...",
     types=_TABLE_LIKE,
     menus=_MENU,
-    command_id="builtins:errorbar-plot",
+    command_id="builtins:plot:errorbar",
     enablement=_NOT_AN_IMAGE,
 )
 def errorbar_plot(win: SubWindow) -> Parametric:
@@ -234,7 +234,7 @@ def errorbar_plot(win: SubWindow) -> Parametric:
     title="Band Plot ...",
     types=_TABLE_LIKE,
     menus=_MENU,
-    command_id="builtins:band-plot",
+    command_id="builtins:plot:band",
     enablement=_NOT_AN_IMAGE,
 )
 def band_plot(win: SubWindow) -> Parametric:
@@ -281,7 +281,7 @@ def band_plot(win: SubWindow) -> Parametric:
     title="Histogram ...",
     types=_TABLE_LIKE,
     menus=_MENU,
-    command_id="builtins:histogram",
+    command_id="builtins:plot:histogram",
     enablement=_NOT_AN_IMAGE,
 )
 def histogram(win: SubWindow) -> Parametric:
@@ -325,7 +325,7 @@ def histogram(win: SubWindow) -> Parametric:
     title="Edit Plot ...",
     types=[StandardType.PLOT],
     menus=[MenuId.TOOLS_PLOT],
-    command_id="builtins:edit-plot",
+    command_id="builtins:plot:edit",
     keybindings="E",
 )
 def edit_plot(model: WidgetDataModel) -> Parametric:
@@ -372,7 +372,8 @@ def edit_plot(model: WidgetDataModel) -> Parametric:
     title="3D Scatter Plot ...",
     types=_TABLE_LIKE,
     menus=_MENU,
-    command_id="builtins:plot-3d:scatter-plot-3d",
+    command_id="builtins:plot:scatter-plot-3d",
+    group="plot-3d",
     enablement=_NOT_AN_IMAGE,
 )
 def scatter_plot_3d(win: SubWindow) -> Parametric:
@@ -426,7 +427,8 @@ def scatter_plot_3d(win: SubWindow) -> Parametric:
     title="3D Line Plot ...",
     types=_TABLE_LIKE,
     menus=_MENU,
-    command_id="builtins:plot-3d:line-plot-3d",
+    command_id="builtins:plot:line-plot-3d",
+    group="plot-3d",
     enablement=_NOT_AN_IMAGE,
 )
 def line_plot_3d(win: SubWindow) -> Parametric:

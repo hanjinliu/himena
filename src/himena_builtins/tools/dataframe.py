@@ -5,7 +5,7 @@ from himena.types import WidgetDataModel, Parametric
 from himena.consts import StandardType, MenuId
 from himena.core import create_model
 
-configure_submenu(MenuId.TOOLS_DATAFRAME, group="20_builtins")
+configure_submenu(MenuId.TOOLS_DATAFRAME, group="20_builtins", order=2)
 
 
 @register_function(

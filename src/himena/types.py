@@ -362,15 +362,6 @@ class DragDataModel(BaseModel):
     )
     type: str | None = Field(None, description="Type of the internal data.")
 
-    def inferred_type(self) -> str:
-        if self.type is not None:
-            return self.type
-        if callable(self.getter):
-            model = self.getter()
-        else:
-            model = self.getter
-        return model.type
-
     def data_model(self) -> WidgetDataModel:
         if isinstance(self.getter, WidgetDataModel):
             model = self.getter

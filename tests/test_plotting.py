@@ -38,7 +38,7 @@ def test_scatter_plot_via_command(make_himena_ui, tmpdir):
     )
     himena_ui.current_window  = win
     himena_ui.exec_action(
-        "builtins:scatter-plot",
+        "builtins:plot:scatter",
         with_params={
             "x": ((0, 99), (0, 1)),
             "y": ((0, 99), (1, 2)),
@@ -48,7 +48,7 @@ def test_scatter_plot_via_command(make_himena_ui, tmpdir):
     )
     himena_ui.current_window  = win
     himena_ui.exec_action(
-        "builtins:scatter-plot",
+        "builtins:plot:scatter",
         with_params={
             "x": ((0, 99), (0, 1)),
             "y": ((0, 99), (1, 3)),
@@ -70,7 +70,7 @@ def test_scatter_plot_via_command(make_himena_ui, tmpdir):
         type="table",
     )
     himena_ui.exec_action(
-        "builtins:plot-3d:scatter-plot-3d",
+        "builtins:plot:scatter-plot-3d",
         with_params={
             "x": ((0, 99), (0, 1)),
             "y": ((0, 99), (1, 2)),
@@ -94,12 +94,12 @@ def test_scatter_plot_many_data_types(make_himena_ui):
         )
     )
     himena_ui.exec_action(
-        "builtins:scatter-plot",
+        "builtins:plot:scatter",
         with_params={"x": ((0, 3), (0, 1)), "y": ((0, 3), (1, 2))},
     )
     himena_ui.add_object({"x": [1, 2, 3], "y": [2, 3, 2]}, type="dataframe")
     himena_ui.exec_action(
-        "builtins:scatter-plot",
+        "builtins:plot:scatter",
         with_params={"x": ((0, 3), (0, 1)), "y": ((0, 3), (1, 2))},
     )
 
@@ -116,7 +116,7 @@ def test_line_plot_via_command(make_himena_ui, tmpdir):
     )
     himena_ui.current_window  = win
     himena_ui.exec_action(
-        "builtins:line-plot",
+        "builtins:plot:line",
         with_params={
             "x": ((0, 99), (0, 1)),
             "y": ((0, 99), (1, 2)),
@@ -125,7 +125,7 @@ def test_line_plot_via_command(make_himena_ui, tmpdir):
     )
     himena_ui.current_window  = win
     himena_ui.exec_action(
-        "builtins:line-plot",
+        "builtins:plot:line",
         with_params={
             "x": ((0, 99), (0, 1)),
             "y": ((0, 99), (1, 3)),
@@ -146,7 +146,7 @@ def test_line_plot_via_command(make_himena_ui, tmpdir):
         type="table",
     )
     himena_ui.exec_action(
-        "builtins:plot-3d:line-plot-3d",
+        "builtins:plot:line-plot-3d",
         with_params={
             "x": ((0, 99), (0, 1)),
             "y": ((0, 99), (1, 2)),
@@ -173,7 +173,7 @@ def test_bar_plot_via_command(make_himena_ui, tmpdir):
     )
     himena_ui.current_window  = win
     himena_ui.exec_action(
-        "builtins:bar-plot",
+        "builtins:plot:bar",
         with_params={
             "x": ((0, 99), (0, 1)),
             "y": ((0, 99), (1, 2)),
@@ -184,7 +184,7 @@ def test_bar_plot_via_command(make_himena_ui, tmpdir):
     )
     himena_ui.current_window  = win
     himena_ui.exec_action(
-        "builtins:bar-plot",
+        "builtins:plot:bar",
         with_params={
             "x": ((0, 99), (0, 1)),
             "y": ((0, 99), (1, 3)),
@@ -195,7 +195,7 @@ def test_bar_plot_via_command(make_himena_ui, tmpdir):
     )
     himena_ui.current_window  = win
     himena_ui.exec_action(
-        "builtins:bar-plot",
+        "builtins:plot:bar",
         with_params={
             "x": ((0, 99), (0, 1)),
             "y": ((0, 99), (2, 3)),
@@ -222,7 +222,7 @@ def test_errorbar_plot_via_command(make_himena_ui, tmpdir):
     )
     himena_ui.current_window  = win
     himena_ui.exec_action(
-        "builtins:errorbar-plot",
+        "builtins:plot:errorbar",
         with_params={
             "x": ((0, 99), (0, 1)),
             "y": ((0, 99), (1, 2)),
@@ -234,7 +234,7 @@ def test_errorbar_plot_via_command(make_himena_ui, tmpdir):
     )
     himena_ui.current_window  = win
     himena_ui.exec_action(
-        "builtins:errorbar-plot",
+        "builtins:plot:errorbar",
         with_params={
             "x": ((0, 99), (0, 1)),
             "y": ((0, 99), (1, 2)),
@@ -246,7 +246,7 @@ def test_errorbar_plot_via_command(make_himena_ui, tmpdir):
     )
     himena_ui.current_window  = win
     himena_ui.exec_action(
-        "builtins:errorbar-plot",
+        "builtins:plot:errorbar",
         with_params={
             "x": ((0, 99), (0, 1)),
             "y": ((0, 99), (1, 2)),
@@ -274,7 +274,7 @@ def test_band_plot_via_command(make_himena_ui, tmpdir):
     )
     himena_ui.current_window  = win
     himena_ui.exec_action(
-        "builtins:band-plot",
+        "builtins:plot:band",
         with_params={
             "x": ((0, 99), (0, 1)),
             "y0": ((0, 99), (1, 2)),
@@ -295,13 +295,13 @@ def test_histogram(make_himena_ui):
         type="table",
     )
     himena_ui.exec_action(
-        "builtins:histogram",
+        "builtins:plot:histogram",
         with_params={"x": ((0, 99), (0, 1)), "bins": 2}
     )
     win_hist = himena_ui.current_window
     himena_ui.exec_action("builtins:plot:plot-to-dataframe", with_params={"component": 0}, window_context=win_hist)
     himena_ui.exec_action(
-        "builtins:edit-plot",
+        "builtins:plot:edit",
         with_params={
             "x": {"label": "X value"},
             "y": {"label": "Y value", "lim": (0, 1)},
@@ -342,7 +342,7 @@ def test_plot_model_processing(make_himena_ui):
         type="table",
     )
     himena_ui.exec_action(
-        "builtins:scatter-plot",
+        "builtins:plot:scatter",
         with_params={
             "x": ((0, 3), (0, 1)),
             "y": ((0, 3), (1, 3)),

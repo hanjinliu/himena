@@ -8,14 +8,14 @@ from himena.core import create_model
 if TYPE_CHECKING:
     import numpy as np
 
-configure_submenu(MenuId.TOOLS_EXCEL, group="20_builtins")
+configure_submenu(MenuId.TOOLS_EXCEL, group="20_builtins", order=20)
 
 
 @register_function(
     title="Duplicate this tab",
     types=StandardType.DICT,
     menus=[MenuId.TOOLS_EXCEL],
-    command_id="builtins:duplicate-dict-tab",
+    command_id="builtins:dict:duplicate-tab",
 )
 def duplicate_this_tab(
     model: WidgetDataModel[dict[str, "np.ndarray"]],

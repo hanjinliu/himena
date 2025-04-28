@@ -29,13 +29,13 @@ from himena.exceptions import Cancelled
 _CtrlK = KeyMod.CtrlCmd | KeyCode.KeyK
 _LOGGER = getLogger(__name__)
 
-READ_GROUP = "00_io_read"
-WRITE_GROUP = "01_io_write"
-SCR_SHOT_GROUP = "21_screenshot"
-SETTINGS_GROUP = "31_settings"
-COPY_SCR_SHOT = "00_copy-screenshot"
-SAVE_SCR_SHOT = "01_save-screenshot"
-EXIT_GROUP = "99_exit"
+READ_GROUP = "0000_io_read"
+WRITE_GROUP = "0001_io_write"
+SCR_SHOT_GROUP = "2001_screenshot"
+SETTINGS_GROUP = "3001_settings"
+COPY_SCR_SHOT = "0000_copy-screenshot"
+SAVE_SCR_SHOT = "0001_save-screenshot"
+EXIT_GROUP = "9900_exit"
 
 
 @ACTIONS.append_from_fn(
