@@ -576,7 +576,7 @@ def test_crop_image(himena_ui: MainWindow, tmpdir):
     )
     himena_ui.current_window = win
     himena_ui.exec_action(
-        "builtins:crop-array-nd",
+        "builtins:array:crop-nd",
         with_params={"axis_0": (2, 4), "axis_1": (0, 1), "axis_2": (1, 5), "axis_3": (2, 8)},
     )
 
@@ -599,7 +599,7 @@ def test_crop_image(himena_ui: MainWindow, tmpdir):
     )
     himena_ui.current_window = win
     himena_ui.exec_action(
-        "builtins:crop-array-nd",
+        "builtins:array:crop-nd",
         with_params={"axis_0": (2, 4), "axis_1": (0, 1), "axis_2": (1, 5), "axis_3": (2, 8)},
     )
 
@@ -637,17 +637,17 @@ def test_roi_commands(himena_ui: MainWindow):
         ),
     )
     win = himena_ui.add_data_model(model)
-    himena_ui.exec_action("builtins:duplicate-rois")
+    himena_ui.exec_action("builtins:rois:duplicate")
     assert isinstance(lmodel := himena_ui.current_model.value, RoiListModel)
     assert len(lmodel) == 2
     win_roi = himena_ui.current_window
     himena_ui.exec_action(
-        "builtins:filter-image-rois",
+        "builtins:rois:filter",
         with_params={"types": ["Line"]},
     )
     himena_ui.current_window = win_roi
     himena_ui.exec_action(
-        "builtins:select-rois",
+        "builtins:rois:select",
         with_params={"selections": [1]},
     )
 

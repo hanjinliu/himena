@@ -9,7 +9,7 @@ from himena.standards.model_meta import TextMeta, FunctionMeta
 from himena.consts import StandardType, MenuId
 from himena import create_model
 
-configure_submenu(MenuId.TOOLS_TEXT, group="20_builtins")
+configure_submenu(MenuId.TOOLS_TEXT, group="20_builtins", order=0)
 
 
 @register_function(

@@ -106,6 +106,7 @@ class AppActionRegistry:
             MenuId.FILE_NEW: "00_new",
             MenuId.TOOLS_DOCK: "00_dock",
         }
+        self._submenu_order: dict[str, int] = {}
         self._installed_plugins: list[str] = []
         self._plugin_default_configs: dict[str, PluginConfigTuple] = {}
         self._modification_trackers: dict[str, Callable[[_T, _T], ReproduceArgs]] = {}
@@ -170,6 +171,9 @@ class AppActionRegistry:
         """Get the group of a submenu."""
         return self._submenu_groups.get(id, None)
 
+    def submenu_order(self, id: str) -> str | None:
+        return self._submenu_order.get(id, None)
+
     @property
     def submenu_titles(self) -> dict[str, str]:
         return self._submenu_titles
@@ -216,7 +220,10 @@ class AppActionRegistry:
                     continue
                 title = self.submenu_title(submenu)
                 group = self.submenu_group(submenu)
-                item = SubmenuItem(title=title, submenu=submenu, group=group)
+                order = self.submenu_order(submenu)
+                item = SubmenuItem(
+                    title=title, submenu=submenu, group=group, order=order
+                )
                 to_add.append((menu_id, item))
 
         app.register_actions(actions)
@@ -240,6 +247,7 @@ def configure_submenu(
     title: str | None = None,
     *,
     group: str | None = None,
+    order: int | None = None,
 ) -> None:
     """Register a configuration for submenu(s).
 
@@ -259,6 +267,8 @@ def configure_submenu(
             AppActionRegistry.instance()._submenu_titles[sid] = title
         if group is not None:
             AppActionRegistry.instance()._submenu_groups[sid] = group
+        if order is not None:
+            AppActionRegistry.instance()._submenu_order[sid] = order
 
 
 @overload

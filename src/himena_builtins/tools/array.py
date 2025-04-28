@@ -9,13 +9,13 @@ from himena.consts import StandardType, MenuId
 from himena.standards.model_meta import ArrayMeta, ImageMeta
 from himena.widgets import set_status_tip, SubWindow
 
-configure_submenu(MenuId.TOOLS_ARRAY, group="20_builtins")
+configure_submenu(MenuId.TOOLS_ARRAY, group="20_builtins", order=5)
 
 
 @register_function(
     types=StandardType.ARRAY,
     menus=[MenuId.TOOLS_ARRAY],
-    command_id="builtins:array-duplicate-slice",
+    command_id="builtins:array:duplicate-slice",
     keybindings=["Ctrl+Shift+D"],
 )
 def duplicate_this_slice(model: WidgetDataModel) -> Parametric:
@@ -61,7 +61,7 @@ def duplicate_this_slice(model: WidgetDataModel) -> Parametric:
 @register_function(
     types=StandardType.ARRAY,
     menus=[MenuId.TOOLS_ARRAY],
-    command_id="builtins:crop-array",
+    command_id="builtins:array:crop",
 )
 def crop_array(model: WidgetDataModel) -> Parametric:
     """Crop the array."""
@@ -89,7 +89,7 @@ def crop_array(model: WidgetDataModel) -> Parametric:
     title="Crop Array (nD)",
     types=StandardType.ARRAY,
     menus=[MenuId.TOOLS_ARRAY],
-    command_id="builtins:crop-array-nd",
+    command_id="builtins:array:crop-nd",
 )
 def crop_array_nd(win: SubWindow) -> Parametric:
     """Crop the array in nD."""
@@ -142,7 +142,7 @@ _OPERATOR_CHOICES = [
 @register_function(
     title="Binary operation ...",
     menus=[MenuId.TOOLS_ARRAY],
-    command_id="builtins:binary-operation",
+    command_id="builtins:array:binary-operation",
 )
 def binary_operation() -> Parametric:
     """Calculate +, -, *, /, etc. of two arrays.
@@ -197,7 +197,7 @@ def binary_operation() -> Parametric:
 @register_function(
     title="Simple calculation ...",
     menus=[MenuId.TOOLS_ARRAY],
-    command_id="builtins:simple-calculation",
+    command_id="builtins:array:simple-calculation",
 )
 def simple_calculation(model: WidgetDataModel) -> Parametric:
     @configure_gui(show_parameter_labels=False)
@@ -222,7 +222,7 @@ def simple_calculation(model: WidgetDataModel) -> Parametric:
     title="Convert data type (astype) ...",
     menus=[MenuId.TOOLS_ARRAY],
     types=StandardType.ARRAY,
-    command_id="builtins:array-astype",
+    command_id="builtins:array:astype",
 )
 def array_astype(model: WidgetDataModel) -> Parametric:
     """Convert the data type of the array using `astype` method."""
@@ -241,7 +241,7 @@ def array_astype(model: WidgetDataModel) -> Parametric:
     title="Set scale ...",
     types=StandardType.ARRAY,
     menus=[MenuId.TOOLS_ARRAY],
-    command_id="builtins:set-array-scale",
+    command_id="builtins:array:set-scale",
 )
 def set_scale(model: WidgetDataModel) -> Parametric:
     """Set the axis scales of the array."""

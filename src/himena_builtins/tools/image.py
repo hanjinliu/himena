@@ -18,7 +18,7 @@ from himena.utils import image_utils
 from himena_builtins.tools.array import _cast_meta, _make_index_getter
 
 configure_submenu(MenuId.TOOLS_IMAGE_ROI, "ROI")
-configure_submenu(MenuId.TOOLS_IMAGE, group="20_builtins")
+configure_submenu(MenuId.TOOLS_IMAGE, group="20_builtins", order=6)
 configure_submenu("/model_menu/roi", "ROI")
 
 
@@ -175,7 +175,7 @@ def _make_roi_limits_getter(win: SubWindow, dim: Literal["x", "y"]):
     title="Duplicate ROIs",
     types=StandardType.IMAGE,
     menus=[MenuId.TOOLS_IMAGE_ROI, "/model_menu/roi"],
-    command_id="builtins:duplicate-rois",
+    command_id="builtins:rois:duplicate",
 )
 def duplicate_rois(model: WidgetDataModel) -> WidgetDataModel:
     """Duplicate the ROIs as a new window with the ROI data."""
@@ -196,13 +196,13 @@ def duplicate_rois(model: WidgetDataModel) -> WidgetDataModel:
     title="Filter ROIs",
     types=StandardType.ROIS,
     menus=["/model_menu"],
-    command_id="builtins:filter-rois",
+    command_id="builtins:rois:filter",
 )
 @register_function(
     title="Filter ROIs",
     types=StandardType.IMAGE,
     menus=[MenuId.TOOLS_IMAGE_ROI, "/model_menu/roi"],
-    command_id="builtins:filter-image-rois",
+    command_id="builtins:image:filter-rois",
 )
 def filter_rois(model: WidgetDataModel) -> Parametric:
     """Filter ROIs by their types."""
@@ -232,7 +232,7 @@ def filter_rois(model: WidgetDataModel) -> Parametric:
     title="Select ROIs",
     types=StandardType.ROIS,
     menus=["/model_menu"],
-    command_id="builtins:select-rois",
+    command_id="builtins:rois:select",
 )
 def select_rois(model: WidgetDataModel) -> Parametric:
     """Make a new ROI list with the selected ROIs."""
@@ -268,7 +268,7 @@ def _axes_from_metadata(model: WidgetDataModel) -> list[DimAxis] | None:
     title="Point ROIs to DataFrame",
     types=StandardType.ROIS,
     menus=["/model_menu"],
-    command_id="builtins:point-rois-to-dataframe",
+    command_id="builtins:rois:point-rois-to-dataframe",
 )
 @register_function(
     title="Point ROIs to DataFrame",

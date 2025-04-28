@@ -85,22 +85,22 @@ def test_binary_operations(himena_ui: MainWindow):
     win = himena_ui.add_object(np.arange(24, dtype=np.uint16).reshape(2, 3, 4), type=StandardType.ARRAY)
     model = win.to_model()
     himena_ui.exec_action(
-        "builtins:binary-operation",
+        "builtins:array:binary-operation",
         with_params={"x": model, "y": model, "operation": "sub", "result_dtype": "input"},
     )
     himena_ui.exec_action(
-        "builtins:binary-operation",
+        "builtins:array:binary-operation",
         with_params={"x": model, "y": model, "operation": "sub", "result_dtype": "float32"}
     )
     himena_ui.exec_action(
-        "builtins:binary-operation",
+        "builtins:array:binary-operation",
         with_params={"x": model, "y": model, "operation": "sub", "result_dtype": "float64"}
     )
 
 
 def test_array_commands(himena_ui: MainWindow):
     win = himena_ui.add_object(np.arange(24).reshape(2, 3, 4), type=StandardType.ARRAY)
-    himena_ui.exec_action("builtins:array-duplicate-slice")
+    himena_ui.exec_action("builtins:array:duplicate-slice")
     assert himena_ui.current_model.value.shape == (3, 4)
     assert_array_equal(himena_ui.current_model.value, np.arange(12).reshape(3, 4))
 
@@ -112,7 +112,7 @@ def test_array_commands(himena_ui: MainWindow):
             channels=[ImageChannel(colormap="red"), ImageChannel(colormap="green")],
         )
     )
-    himena_ui.exec_action("builtins:array-duplicate-slice")
+    himena_ui.exec_action("builtins:array:duplicate-slice")
     assert himena_ui.current_model.value.shape == (3, 4)
     assert himena_ui.current_model.metadata.channel_axis is None
     assert himena_ui.current_model.metadata.channels[0].colormap == Colormap("red")
@@ -127,11 +127,11 @@ def test_array_commands(himena_ui: MainWindow):
             )
         )
     )
-    himena_ui.exec_action("builtins:crop-array")
+    himena_ui.exec_action("builtins:array:crop")
     assert himena_ui.current_model.value.shape == (2, 1, 2)
     himena_ui.current_window = win
     himena_ui.exec_action(
-        "builtins:crop-array-nd", with_params={
+        "builtins:array:crop-nd", with_params={
             "axis_0": (0, 1),
             "axis_1": (1, 2),
             "axis_2": (0, 2),
@@ -139,10 +139,10 @@ def test_array_commands(himena_ui: MainWindow):
     )
     assert himena_ui.current_model.value.shape == (1, 1, 2)
 
-    himena_ui.exec_action("builtins:array-astype", with_params={"dtype": "float32"})
+    himena_ui.exec_action("builtins:array:astype", with_params={"dtype": "float32"})
     himena_ui.current_window = win
     himena_ui.exec_action(
-        "builtins:set-array-scale",
+        "builtins:array:set-scale",
         with_params={"axis_2": "1.4", "axis_1": "1.0 um", "axis_0": "0.5um"}
     )
     meta_new = win.to_model().metadata

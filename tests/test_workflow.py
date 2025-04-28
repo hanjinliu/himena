@@ -29,9 +29,9 @@ def test_compute_workflow_binary(make_himena_ui: Callable[..., MainWindow], tmpd
     tab = himena_ui.add_tab()
     himena_ui.exec_action("builtins:constant-array", with_params={"shape": (3, 3), "value": 1})
     himena_ui.exec_action("builtins:constant-array", with_params={"shape": (3, 3), "value": 2})
-    himena_ui.exec_action("builtins:simple-calculation", with_params={"expr": "x / 2 + 1"})
+    himena_ui.exec_action("builtins:array:simple-calculation", with_params={"expr": "x / 2 + 1"})
     himena_ui.exec_action(
-        "builtins:binary-operation",
+        "builtins:array:binary-operation",
         with_params={
             "x": tab[0].to_model(),
             "operation": "add",
@@ -77,7 +77,7 @@ def test_workflow_parametric(make_himena_ui: Callable[..., MainWindow], sample_d
     himena_ui.read_file(sample_dir / "table.csv")
     win_first = himena_ui.current_window
     himena_ui.exec_action("builtins:table-to-dataframe")
-    himena_ui.exec_action("builtins:line-plot", with_params={
+    himena_ui.exec_action("builtins:plot:line", with_params={
         "x": ((0, 5), (0, 1)),
         "y": ((0, 5), (1, 2)),
     })

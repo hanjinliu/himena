@@ -11,7 +11,7 @@ from himena.widgets import SubWindow
 if TYPE_CHECKING:
     from himena_builtins.qt.widgets.table import QSpreadsheet
 
-configure_submenu(MenuId.TOOLS_TABLE, group="20_builtins")
+configure_submenu(MenuId.TOOLS_TABLE, group="20_builtins", order=1)
 
 
 @register_function(
