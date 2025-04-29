@@ -11,14 +11,19 @@ $ himena myprof path/to/file.txt  # open the file with the profile named "myprof
 
 import logging
 from pathlib import Path
+from typing import TYPE_CHECKING
 import sys
 from himena._cli import HimenaArgumentParser, HimenaCliNamespace
 from himena._socket import (
-    get_socket_info_from_lock_file,
+    SocketInfo,
     get_unique_lock_file,
-    send_to_window,
+    lock_file_path,
 )
-import yaml
+
+if TYPE_CHECKING:
+    from himena.profile import AppProfile
+    from himena.widgets import MainWindow
+    from io import TextIOWrapper
 
 
 def _is_testing() -> bool:
@@ -46,14 +51,12 @@ def _main(args: HimenaCliNamespace):
         if prof.plugin_configs:
             prof.plugin_configs.clear()
             prof.save()
-            print(
-                f"Plugin configurations are cleared for the profile {args.profile!r}."
-            )
+            print(f"Plugin configurations are cleared for the profile {prof_name!r}.")
 
     if args.uninstall_outdated:
         from himena._cli.install import uninstall_outdated
 
-        return uninstall_outdated(args.profile)
+        return uninstall_outdated(prof_name)
 
     if args.list_plugins:
         from himena.utils.entries import iter_plugin_info
@@ -69,34 +72,47 @@ def _main(args: HimenaCliNamespace):
     if args.install or args.uninstall:
         from himena._cli.install import install_and_uninstall
 
-        return install_and_uninstall(args.install, args.uninstall, args.profile)
+        return install_and_uninstall(args.install, args.uninstall, prof_name)
 
     logging.basicConfig(level=args.log_level)
 
     # now it's ready to start the GUI
-    if (lock := get_unique_lock_file(prof_name)) is None:
-        socket_info = get_socket_info_from_lock_file(prof_name)
-        if args.path:
-            files = args.path.split(";")
-        else:
-            files = []
-        send_to_window(prof_name, files, **socket_info.asdict())
-        return
+    app_prof = load_app_profile(prof_name, create_default=args.profile is None)
+    attrs = {
+        "print_import_time": args.import_time,
+        "host": args.host,
+        "port": args.port,
+    }
 
-    attrs = {}
-    if args.import_time:
-        attrs["print_import_time"] = True
-
-    from himena.core import new_window
-
-    ui = new_window(args.profile, app_attributes=attrs)
-
-    yaml.dump(ui.socket_info.asdict(), lock)
-    if args.path is not None:
-        ui.read_file(args.path)
+    ui, lock = _send_or_create_window(app_prof, args.path, attrs)
     ui.show(run=not _is_testing())
     lock.close()
     Path(lock.name).unlink(missing_ok=True)
+
+
+def _send_or_create_window(
+    prof: "AppProfile",
+    path: str | None = None,
+    attrs: dict = {},
+) -> "tuple[MainWindow, TextIOWrapper] | None":
+    from himena.core import new_window
+
+    if (lock := get_unique_lock_file(prof.name)) is None:
+        socket_info = SocketInfo.from_lock(prof.name)
+        if path:
+            files = path.split(";")
+        else:
+            files = []
+        succeeded = socket_info.send_to_window(prof.name, files)
+        if succeeded:
+            return
+        lock = lock_file_path(prof.name).open("w")
+
+    ui = new_window(prof, app_attributes=attrs)
+    ui.socket_info.dump(lock)
+    if path is not None:
+        ui.read_file(path)
+    return ui, lock
 
 
 def main():

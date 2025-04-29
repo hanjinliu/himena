@@ -108,6 +108,18 @@ class QtOutputWidget(QtW.QTabWidget):
         self.addTab(logger_container, "log")
 
 
+class _io_handler:
+    def __init__(self, logger: QLogger):
+        self._logger = logger
+
+    def write(self, msg) -> None:
+        """Handle the print event."""
+        self._logger.appendText(msg)
+
+    def flush(self):
+        """Do nothing."""
+
+
 class OutputInterface(logging.Handler):
     """A widget for displaying the standard output and logs.
 
@@ -122,18 +134,11 @@ class OutputInterface(logging.Handler):
         super().__init__()
         self._widget = QtOutputWidget()
         self._logger = logging.getLogger()
+        self._stdout_handler = _io_handler(self._widget._stdout)
         self._default_handlers = self._logger.handlers.copy()
         self._logger.setLevel(logging.INFO)
         self._widget.log_level_changed.connect(self.set_log_level)
         self._widget.log_filter_changed.connect(self.set_log_filter)
-
-    def write(self, msg) -> None:
-        """Handle the print event."""
-        self._widget._stdout.appendText(msg)
-        return None
-
-    def flush(self):
-        """Do nothing."""
 
     def emit(self, record: logging.LogRecord):
         """Handle the logging event."""
@@ -154,7 +159,7 @@ class OutputInterface(logging.Handler):
                 hnd.addFilter(logging.Filter(text))
 
     def connect_stdout(self):
-        sys.stdout = self
+        sys.stdout = self._stdout_handler
 
     def disconnect_stdout(self):
         sys.stdout = sys.__stdout__

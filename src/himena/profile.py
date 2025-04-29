@@ -221,9 +221,12 @@ class AppProfile(BaseModel):
         return value
 
 
-def load_app_profile(name: str) -> AppProfile:
+def load_app_profile(name: str, *, create_default: bool = False) -> AppProfile:
     path = profile_dir() / f"{name}.json"
     if path.exists():
+        return AppProfile.from_json(path)
+    if create_default:
+        AppProfile.default().with_name(name).save(path)
         return AppProfile.from_json(path)
     raise ValueError(
         f"Profile {name!r} does not exist. Please create a new profile with:\n"
@@ -239,13 +242,14 @@ def iter_app_profiles() -> Iterable[AppProfile]:
             warnings.warn(f"Could not load profile {path}.")
 
 
-def new_app_profile(name: str) -> None:
+def new_app_profile(name: str) -> AppProfile:
     """Create a new profile."""
     path = profile_dir() / f"{name}.json"
     if path.exists():
         raise ValueError(f"Profile {name!r} already exists.")
     profile = AppProfile.default().with_name(name)
-    return profile.save(path)
+    profile.save(path)
+    return profile
 
 
 def remove_app_profile(name: str) -> None:

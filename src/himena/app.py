@@ -25,17 +25,17 @@ class EventLoopHandler(ABC, Generic[_A]):
     socket_activated = Signal(bytes)
     _instances: dict[str, QtEventLoopHandler] = {}
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, host: str = "localhost", port: int = 49200):
         self._name = name
         self._instances[name] = self
         self._server_socket: socket.socket | None = None
-        self._host: str = "localhost"
-        self._port: int = 49200
+        self._host: str = host
+        self._port: int = port
 
     @classmethod
-    def create(cls, name: str):
+    def create(cls, name: str, host: str = "localhost", port: int = 49200):
         if name not in cls._instances:
-            cls._instances[name] = QtEventLoopHandler(name)
+            cls._instances[name] = QtEventLoopHandler(name, host, port)
         return cls._instances[name]
 
     @abstractmethod
@@ -167,11 +167,16 @@ class EmptyEventLoopHandler(EventLoopHandler):
         return None
 
 
-def get_event_loop_handler(backend: str, app_name: str) -> EventLoopHandler:
+def get_event_loop_handler(
+    backend: str,
+    app_name: str,
+    host: str = "localhost",
+    port: int = 49200,
+) -> EventLoopHandler:
     if backend == "qt":
-        return QtEventLoopHandler.create(app_name)
+        return QtEventLoopHandler.create(app_name, host, port)
     else:
-        return EmptyEventLoopHandler.create(app_name)
+        return EmptyEventLoopHandler.create(app_name, host, port)
 
 
 def get_ipython_shell() -> InteractiveShell | None:

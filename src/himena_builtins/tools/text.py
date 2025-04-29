@@ -16,7 +16,8 @@ configure_submenu(MenuId.TOOLS_TEXT, group="20_builtins", order=0)
     types=StandardType.TEXT,
     menus=[MenuId.TOOLS_TEXT],
     keybindings="Ctrl+F5",
-    command_id="builtins:text-run:run-script",
+    command_id="builtins:text:run-script",
+    group="text-run",
 )
 def run_script(model: WidgetDataModel[str]):
     """Run a Python script."""
@@ -32,7 +33,8 @@ def run_script(model: WidgetDataModel[str]):
     title="Run Main Function ...",
     menus=[MenuId.TOOLS_TEXT],
     types=StandardType.TEXT,
-    command_id="builtins:text-run:run-script-main",
+    command_id="builtins:text:run-script-main",
+    group="text-run",
 )
 def run_main_function(model: WidgetDataModel[str]) -> Parametric:
     """Run the main function of a Python script with parameters."""
@@ -113,7 +115,8 @@ def change_encoding(model: WidgetDataModel[str]) -> Parametric:
     title="Compile As a Function",
     types=StandardType.TEXT,
     menus=[MenuId.TOOLS_TEXT],
-    command_id="builtins:text-run:compile-as-function",
+    command_id="builtins:text:compile-as-function",
+    group="text-run",
 )
 def compile_as_function(model: WidgetDataModel[str]) -> WidgetDataModel:
     """Compile a Python script as a function data."""
