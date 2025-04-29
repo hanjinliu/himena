@@ -18,7 +18,6 @@ from himena._socket import (
     SocketInfo,
     get_unique_lock_file,
     lock_file_path,
-    send_to_window,
 )
 
 if TYPE_CHECKING:
@@ -79,9 +78,11 @@ def _main(args: HimenaCliNamespace):
 
     # now it's ready to start the GUI
     app_prof = load_app_profile(prof_name, create_default=args.profile is None)
-    attrs = {}
-    if args.import_time:
-        attrs["print_import_time"] = True
+    attrs = {
+        "print_import_time": args.import_time,
+        "host": args.host,
+        "port": args.port,
+    }
 
     ui, lock = _send_or_create_window(app_prof, args.path, attrs)
     ui.show(run=not _is_testing())
@@ -102,7 +103,7 @@ def _send_or_create_window(
             files = path.split(";")
         else:
             files = []
-        succeeded = send_to_window(prof.name, files, **socket_info.asdict())
+        succeeded = socket_info.send_to_window(prof.name, files)
         if succeeded:
             return
         lock = lock_file_path(prof.name).open("w")

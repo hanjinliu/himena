@@ -68,7 +68,12 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def __init__(self, app: HimenaApplication):
         # app must be initialized
-        _event_loop_handler = get_event_loop_handler("qt", app.name)
+        _event_loop_handler = get_event_loop_handler(
+            backend="qt",
+            app_name=app.name,
+            host=app.attributes.get("host", "localhost"),
+            port=app.attributes.get("port", 49200),
+        )
         self._qt_app = cast(QtW.QApplication, _event_loop_handler.get_app())
         self._app_name = app.name
         self._event_loop_handler = _event_loop_handler

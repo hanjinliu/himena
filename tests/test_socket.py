@@ -1,7 +1,7 @@
 from typing import Callable
 from qtpy import QtWidgets as QtW
 from himena.__main__ import _send_or_create_window
-from himena._socket import send_to_window, lock_file_path, SocketInfo
+from himena._socket import lock_file_path, SocketInfo
 from himena.profile import new_app_profile
 from himena.app import QtEventLoopHandler
 from himena.widgets._main_window import MainWindow
@@ -11,7 +11,7 @@ def test_event_loop_hander(make_himena_ui: Callable[..., MainWindow]):
     eh = QtEventLoopHandler(himena_ui.app_profile.name)
     qapp = eh.get_app()
     eh._setup_socket(qapp)
-    send_to_window(himena_ui.app_profile.name, [])
+    SocketInfo().send_to_window(himena_ui.app_profile.name, [])
     QtW.QApplication.processEvents()
     QtW.QApplication.processEvents()
 

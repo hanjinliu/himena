@@ -45,6 +45,21 @@ class SocketInfo:
     def dump(self, path):
         yaml.dump(self.asdict(), path)
 
+    def send_to_window(self, profile: str, files: list[str] | None = None) -> bool:
+        """Send data to the window."""
+        data = InterProcessData(
+            profile_name=profile,
+            files=files or [],
+        )
+        try:
+            data.send(self.host, self.port)
+        except Exception as e:
+            print(f"Socket is not available: {e}")
+            return False
+        else:
+            print(f"Sent data to {profile} window at {self.host}:{self.port}.")
+            return True
+
 
 class InterProcessData(BaseModel):
     """Data to be sent over the socket."""
@@ -65,23 +80,3 @@ class InterProcessData(BaseModel):
         """Send the data to the specified host and port using a socket."""
         with socket.create_connection((host, port)) as sock:
             sock.sendall(self.to_bytes())
-
-
-def send_to_window(
-    profile: str = "default",
-    files: list[str] | None = None,
-    host: str = "localhost",
-    port: int = 49200,
-) -> bool:
-    data = InterProcessData(
-        profile_name=profile,
-        files=files or [],
-    )
-    try:
-        data.send(host, port)
-    except Exception as e:
-        print(f"Socket is not available: {e}")
-        return False
-    else:
-        print(f"Sent data to {profile} window at {host}:{port}.")
-        return True
