@@ -670,7 +670,8 @@ def stack_images(ui: MainWindow) -> Parametric:
         if len(images) < 2:
             raise ValueError("At least two images are required.")
         img_values = [img.to_model() for img in images]
-        meta = _cast_meta(img_values[0], ImageMeta)
+        if not isinstance(meta := img_values[0].metadata, ImageMeta):
+            meta = ImageMeta()
         arrs = [m.value for m in img_values]
         axes_consensus = _get_consensus_axes(img_values)
         if axis_name == "":

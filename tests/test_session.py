@@ -226,3 +226,39 @@ def test_session_calculate_call_count(
 
     himena_ui.load_session(session_path)
     assert (mock0.call_count, mock1.call_count, mock2.call_count,) == (0, 0, 1)
+
+
+def test_list_of_subwindows_input(
+    make_himena_ui: Callable[..., MainWindow],
+    tmpdir,
+):
+    tmpdir = Path(tmpdir)
+    himena_ui = make_himena_ui("qt")
+    himena_ui.exec_action("builtins:constant-array", with_params={"interpret_as_image": True, "shape": (3, 3), "value": 1})
+    win0 = himena_ui.current_window
+    himena_ui.exec_action("builtins:constant-array", with_params={"interpret_as_image": True, "shape": (3, 3), "value": 2})
+    win1 = himena_ui.current_window
+    himena_ui.exec_action("builtins:image:stack-images", with_params={"images": [win0, win1], "axis_name": "p"})
+    himena_ui.exec_action(
+        "save-session",
+        with_params={
+            "save_path": str(tmpdir / "test.session.zip"),
+            "allow_calculate": ["builtins:image:stack-images"],
+        }
+    )
+    himena_ui.clear()
+    himena_ui.load_session(tmpdir / "test.session.zip")
+    assert len(himena_ui.tabs) == 1
+    assert len(himena_ui.tabs.current()) == 3
+
+    himena_ui.exec_action(
+        "save-session",
+        with_params={
+            "save_path": str(tmpdir / "test.session.zip"),
+            "allow_calculate": ["builtins:constant-array", "builtins:image:stack-images"],
+        }
+    )
+    himena_ui.clear()
+    himena_ui.load_session(tmpdir / "test.session.zip")
+    assert len(himena_ui.tabs) == 1
+    assert len(himena_ui.tabs.current()) == 3

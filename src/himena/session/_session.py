@@ -274,7 +274,27 @@ class AppSession(BaseModel):
                 _pending_workflows.append(wf)
                 _target_areas.append((i_tab, _new_tab))
 
-        models = compute(_pending_workflows)
+        # read all the metadata
+        all_metadata = []
+        for (i_win, _win_sess), (i_tab, _tab_area) in zip(_win_sessions, _target_areas):
+            # look for the metadata
+            meta = None
+            meta_path = (
+                dirpath
+                / f"{i_tab}_{_tab_area.title}"
+                / f"{i_win}_{_win_sess.title}.himena-meta"
+            )
+            if meta_path.exists():
+                try:
+                    meta = read_metadata(meta_path)
+                except Exception as e:
+                    warnings.warn(
+                        f"Failed to read metadata from {meta_path}: {e}",
+                        RuntimeWarning,
+                        stacklevel=2,
+                    )
+            all_metadata.append(meta)
+        models = compute(_pending_workflows, all_metadata)
         _failed_sessions: list[tuple[WindowDescription, Exception]] = []
         _id_to_win: dict[uuid.UUID, "SubWindow"] = {}
         for (i_win, _win_sess), (i_tab, _tab_area), model_or_exc in zip(
@@ -283,24 +303,7 @@ class AppSession(BaseModel):
             if isinstance(model_or_exc, Exception):
                 _failed_sessions.append((_win_sess, model_or_exc))
                 continue
-            # look for the metadata
-            meta_path = (
-                dirpath
-                / f"{i_tab}_{_tab_area.title}"
-                / f"{i_win}_{_win_sess.title}.himena-meta"
-            )
-            if meta_path.exists():
-                try:
-                    model_or_exc.metadata = read_metadata(meta_path)
-                except Exception as e:
-                    warnings.warn(
-                        f"Failed to read metadata from {meta_path}: {e}",
-                        RuntimeWarning,
-                        stacklevel=2,
-                    )
-
-            _win = _win_sess.process_model(_tab_area, model_or_exc)
-            _id_to_win[_win_sess.id] = _win
+            _id_to_win[_win_sess.id] = _win_sess.process_model(_tab_area, model_or_exc)
 
         # Update current active window for each tab
         for (_, tab_session), (_, area) in zip(_tab_sessions, _target_areas):

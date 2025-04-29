@@ -1,4 +1,4 @@
-from typing import Iterator, TYPE_CHECKING
+from typing import Any, Iterator, TYPE_CHECKING
 from datetime import datetime as _datetime
 import uuid
 
@@ -37,11 +37,15 @@ class WorkflowStep(BaseModel):
         wf: "Workflow",
         *,
         force_process_output: bool = False,
+        metadata: Any | None = None,
     ) -> "WidgetDataModel":
         if win := wf._mock_main_window.window_for_id(self.id):
-            return win.to_model()
+            out = win.to_model()
+            return out
         model = self._get_model_impl(wf)
         model.workflow = wf
+        if metadata is not None:
+            model.metadata = metadata
         if self.process_output or force_process_output:
             self._current_store().process(model)
         return model
