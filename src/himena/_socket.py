@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from platformdirs import user_data_dir
 from pathlib import Path
 from io import TextIOWrapper
 import socket
@@ -8,12 +7,15 @@ from dataclasses import dataclass, asdict
 import yaml
 from pydantic import BaseModel, Field
 
-USER_DATA_DIR = Path(user_data_dir("himena"))
-
 
 def lock_file_path(name: str) -> Path:
     """Get the lock file path."""
-    return USER_DATA_DIR / "lock" / f"{name}.lock"
+    from himena.profile import data_dir
+
+    dir_path = data_dir() / "lock"
+    if not dir_path.exists():
+        dir_path.mkdir(parents=True)
+    return dir_path / f"{name}.lock"
 
 
 def get_unique_lock_file(name: str) -> TextIOWrapper | None:
@@ -21,16 +23,7 @@ def get_unique_lock_file(name: str) -> TextIOWrapper | None:
     lock_file = lock_file_path(name)
     if lock_file.exists():
         return None
-    if not lock_file.parent.exists():
-        lock_file.parent.mkdir(parents=True)
-    return lock_file_path(name).open("w")
-
-
-def get_socket_info_from_lock_file(name: str) -> SocketInfo:
-    """Get the socket info from the lock file."""
-    with lock_file_path(name).open("r") as f:
-        yml = yaml.load(f, Loader=yaml.Loader)
-    return SocketInfo(host=yml["host"], port=yml["port"])
+    return lock_file.open("w")
 
 
 @dataclass
@@ -41,6 +34,16 @@ class SocketInfo:
     def asdict(self) -> dict[str, int | str]:
         """Convert to a dictionary."""
         return asdict(self)
+
+    @classmethod
+    def from_lock(cls, name: str) -> SocketInfo:
+        """Get the socket info from the lock file."""
+        with lock_file_path(name).open("r") as f:
+            yml = yaml.load(f, Loader=yaml.Loader)
+        return SocketInfo(host=yml["host"], port=yml["port"])
+
+    def dump(self, path):
+        yaml.dump(self.asdict(), path)
 
 
 class InterProcessData(BaseModel):
@@ -69,7 +72,7 @@ def send_to_window(
     files: list[str] | None = None,
     host: str = "localhost",
     port: int = 49200,
-):
+) -> bool:
     data = InterProcessData(
         profile_name=profile,
         files=files or [],
@@ -77,8 +80,8 @@ def send_to_window(
     try:
         data.send(host, port)
     except Exception as e:
-        raise RuntimeError(
-            "Socket is not available. Make sure the application is running."
-        ) from e
+        print(f"Socket is not available: {e}")
+        return False
     else:
         print(f"Sent data to {profile} window at {host}:{port}.")
+        return True
