@@ -183,6 +183,9 @@ class CommandExecution(WorkflowStep):
             raise ValueError(
                 f"Expected to return a WidgetDataModel but got {result} (command ID: {self.command_id})"
             )
+        if main := wf._mock_main_window:
+            win = main.add_data_model(result)
+            win._identifier = self.id
         return result
 
 

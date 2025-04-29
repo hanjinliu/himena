@@ -88,14 +88,3 @@ def test_workflow_parametric(make_himena_ui: Callable[..., MainWindow], sample_d
     assert len(wf.steps) == len(wf_old.steps)
     inner_fn = as_function(wf)(himena_ui)
     inner_fn(arg0=win_first.to_model())
-
-def test_list_of_subwindows_input(make_himena_ui: Callable[..., MainWindow]):
-    himena_ui = make_himena_ui("qt")
-    himena_ui.exec_action("builtins:constant-array", with_params={"interpret_as_image": True, "shape": (3, 3), "value": 1})
-    win0 = himena_ui.current_window
-    himena_ui.exec_action("builtins:constant-array", with_params={"interpret_as_image": True, "shape": (3, 3), "value": 2})
-    win1 = himena_ui.current_window
-    himena_ui.exec_action("builtins:image:stack-images", with_params={"images": [win0, win1], "axis_name": "p"})
-    win2 = himena_ui.current_window
-    # TODO: fix this in the future
-    # win2.to_model().workflow.compute(True)

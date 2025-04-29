@@ -73,12 +73,9 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         self,
         widget: _W,
         main_window: BackendMainWindow[_W],
-        identifier: uuid.UUID | None = None,
     ):
         super().__init__(main_window)
-        if identifier is None:
-            identifier = uuid.uuid4()
-        self._identifier = identifier
+        self._identifier = uuid.uuid4()
         self._save_behavior: SaveBehavior = SaveToNewPath()
         self._widget_workflow: Workflow = Workflow()
         self._ask_save_before_close = False
@@ -139,6 +136,8 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         """Update the method descriptor of the widget."""
         if len(self._widget_workflow) == 0 or overwrite:
             self._widget_workflow = workflow or Workflow()
+            if last_step := workflow.last():
+                self._identifier = last_step.id
             _LOGGER.info("Workflow of %r updated to %r", self, workflow)
         else:
             _LOGGER.info(
@@ -283,9 +282,8 @@ class SubWindow(WidgetWrapper[_W], Layout):
         self,
         widget: _W,
         main_window: BackendMainWindow[_W],
-        identifier: uuid.UUID | None = None,
     ):
-        super().__init__(widget, main_window=main_window, identifier=identifier)
+        super().__init__(widget, main_window=main_window)
         Layout.__init__(self, main_window)
         self._child_windows: weakref.WeakSet[SubWindow[_W]] = weakref.WeakSet()
         self._alive = False
@@ -644,9 +642,8 @@ class ParametricWindow(SubWindow[_W]):
         widget: _W,
         callback: Callable,
         main_window: BackendMainWindow[_W],
-        identifier: uuid.UUID | None = None,
     ):
-        super().__init__(widget, main_window, identifier)
+        super().__init__(widget, main_window)
         self._callback = callback
         self.btn_clicked.connect(self._widget_callback)
         self._preview_window_ref: Callable[[], WidgetWrapper[_W] | None] = _do_nothing
@@ -961,7 +958,9 @@ class DockWidget(WidgetWrapper[_W]):
         main_window: BackendMainWindow[_W],
         identifier: uuid.UUID | None = None,
     ):
-        super().__init__(widget, main_window, identifier)
+        super().__init__(widget, main_window)
+        if identifier is not None:
+            self._identifier = identifier
         self._has_update_configs = hasattr(widget, "update_configs")
         self._parse_config_cache: Callable[[dict], Any] | None = None
         self._command_id: str | None = None

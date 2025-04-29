@@ -70,7 +70,8 @@ class LocalReaderMethod(ReaderMethod):
     def _get_model_impl(self, wf: "Workflow") -> "WidgetDataModel[Any]":
         out = self.run()
         if main := wf._mock_main_window:
-            main.add_data_model(out)
+            win = main.add_data_model(out)
+            win._identifier = self.id
         return out
 
     def run(self) -> "WidgetDataModel[Any]":
@@ -134,7 +135,8 @@ class RemoteReaderMethod(ReaderMethod):
     def _get_model_impl(self, wf: "Workflow") -> "WidgetDataModel":
         out = self.run()
         if main := wf._mock_main_window:
-            main.add_data_model(out)
+            win = main.add_data_model(out)
+            win._identifier = self.id
         return out
 
     def run(self):

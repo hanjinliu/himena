@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import Iterable, TYPE_CHECKING, Union
+from typing import Any, Iterable, TYPE_CHECKING, Union
 import uuid
 
 from pydantic import PrivateAttr
@@ -147,10 +147,26 @@ class Workflow(BaseModel):
         # The added step is always a unique node.
         return Workflow(steps=self.steps + [step])
 
-    def compute(self, process_output: bool = True) -> "WidgetDataModel":
-        """Compute the last node in the workflow."""
+    def compute(
+        self,
+        process_output: bool = True,
+        metadata: Any | None = None,
+    ) -> "WidgetDataModel":
+        """Compute the last node in the workflow.
+
+        Parameters
+        ----------
+        process_output : bool, optional
+            Whether to process the output.
+        metadata : Any, optional
+            If given, metadata of the output will be overridden by this value.
+        """
         with self._cache_context():
-            out = self[-1].get_model(self, force_process_output=process_output)
+            out = self[-1].get_model(
+                self,
+                force_process_output=process_output,
+                metadata=metadata,
+            )
         return out
 
     @contextmanager
@@ -242,7 +258,10 @@ class Workflow(BaseModel):
         return indices, index
 
 
-def compute(workflows: list[Workflow]) -> list["WidgetDataModel | Exception"]:
+def compute(
+    workflows: list[Workflow],
+    metadata_overrides: list | None = None,
+) -> list["WidgetDataModel | Exception"]:
     """Compute all the workflow with the shared cache."""
     if len(workflows) == 0:
         return []
@@ -252,10 +271,13 @@ def compute(workflows: list[Workflow]) -> list["WidgetDataModel | Exception"]:
     # share the cache
     for workflow in workflows:
         workflow._mock_main_window = _global_ui
+    # normalize metadata
+    if metadata_overrides is None:
+        metadata_overrides = [None] * len(workflows)
     with all_workflows._cache_context():
-        for workflow in workflows:
+        for workflow, meta in zip(workflows, metadata_overrides, strict=True):
             try:
-                result = workflow.compute(process_output=False)
+                result = workflow.compute(process_output=False, metadata=meta)
             except Exception as e:
                 result = e
             results.append(result)
