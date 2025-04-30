@@ -21,6 +21,8 @@ def test_qt_traceback(qtbot: QtBot):
     qtbot.addWidget(tb_dlg)
     tb_dlg.setText(tb)
 
+    msgbox._traceback_button_clicked(runtime=False)
+
     if sys.version_info < (3, 11):
         format_exc_info_py310(msgbox._exc_info(), as_html=True)
     else:

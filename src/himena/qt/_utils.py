@@ -160,7 +160,7 @@ def drag_model(
 def drag_command(
     source: QtW.QWidget,
     command_id: str,
-    type: str,
+    type: str | None = None,
     *,
     with_params: dict[str, object] | None = None,
     desc: str | None = None,

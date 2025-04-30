@@ -6,16 +6,17 @@ import warnings
 from magicgui import magicgui
 import numpy as np
 import pytest
-from himena import MainWindow
+from himena import MainWindow, _drag
 from himena.consts import StandardType
 from himena.core import create_model
-from himena.types import ClipboardDataModel, FutureInfo, WidgetConstructor, WidgetType, ParametricWidgetProtocol
-from himena.qt import MainWindowQt
+from himena.types import ClipboardDataModel, DragDataModel, FutureInfo, WidgetConstructor, WidgetType, ParametricWidgetProtocol
+from himena.qt import MainWindowQt, drag_command
 from himena.qt._qmain_window import QMainWindow, _ext_to_filter, QChoicesDialog
+from himena.qt._qsub_window import get_subwindow
 from himena.widgets import set_status_tip, notify, append_result, TabArea
 from himena_builtins.qt.text import QTextEdit
 
-from qtpy import QtWidgets as QtW
+from qtpy import QtWidgets as QtW, QtCore
 from qtpy.QtCore import Qt, QPoint
 from pytestqt.qtbot import QtBot
 
@@ -293,3 +294,49 @@ def test_private_functions():
     _short_repr(14.3)
     _short_repr(np.zeros((10, 30, 30)))
     _format_exceptions([(object(), ValueError("a")), (3, ValueError())])
+
+def test_tab_drop_event(himena_ui: MainWindowQt, sample_dir: Path):
+    qtab = himena_ui._backend_main_window._tab_widget
+    qtabbar = qtab._tabbar
+    win = himena_ui.add_object("abc")
+    himena_ui.add_tab("Tab (2)")
+    source_subwindow = get_subwindow(win.widget)
+    qtabbar._drop_event(0, source_subwindow)
+    assert len(himena_ui.tabs[0]) == 1
+    assert len(himena_ui.tabs[1]) == 0
+    source_subwindow = get_subwindow(himena_ui.tabs[0][0].widget)
+    qtabbar._drop_event(1, source_subwindow)
+    assert len(himena_ui.tabs[0]) == 0
+    assert len(himena_ui.tabs[1]) == 1
+    source_subwindow = get_subwindow(himena_ui.tabs[1][0].widget)
+    qtabbar._drop_event(-1, source_subwindow)
+    assert len(himena_ui.tabs) == 3
+    assert len(himena_ui.tabs[0]) == 0
+    assert len(himena_ui.tabs[1]) == 0
+    assert len(himena_ui.tabs[2]) == 1
+
+    qtab._process_file_url_drop([QtCore.QUrl(str(sample_dir / "table.csv"))])
+    qtab._process_subwindow_drop(
+        DragDataModel(
+            getter=WidgetDataModel(value="a", type=StandardType.TEXT),
+            type=StandardType.TEXT,
+        ),
+        QtCore.QPoint(10, 10),
+    )
+    QtW.QApplication.processEvents()
+    QtW.QApplication.processEvents()
+    QtW.QApplication.processEvents()
+
+    mock = MagicMock()
+    @himena_ui.register_function(command_id="test:drag-command", menus=[])
+    def f():
+        mock()
+
+    win = himena_ui.add_object("a")
+    drag_command(
+        win.widget, "test:drag-command", exec=False, text_data="txt", desc="desc ..."
+    )
+    drag = _drag.drop()
+    mock.assert_not_called()
+    drag.getter()
+    mock.assert_called_once()
