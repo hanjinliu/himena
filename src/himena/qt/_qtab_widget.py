@@ -13,7 +13,7 @@ from himena.qt._qrename import QTabRenameLineEdit
 from himena.qt._utils import get_main_window
 from himena.consts import ActionGroup, MenuId, MonospaceFontFamily
 from himena import _drag
-from himena.types import WindowRect
+from himena.types import DragDataModel, WindowRect
 from himena.workflow._reader import ReaderMethod
 
 
@@ -60,14 +60,17 @@ class QTabBar(QtW.QTabBar):
         e.accept()
 
     def dropEvent(self, e: QtGui.QDropEvent) -> None:
-        target_index = self.tabAt(e.pos())
-        if isinstance(sub := e.source(), QSubWindow):
-            self._process_drop_event(sub, target_index)
+        self._drop_event(self.tabAt(e.pos()), e.source())
+        return super().dropEvent(e)
+
+    def _drop_event(self, index: int, source):
+        if isinstance(source, QSubWindow):
+            self._process_drop_event(source, index)
         elif model := _drag.drop():
             model = model.data_model()
             main = get_main_window(self)
-            main.tabs[target_index].add_data_model(model)
-        return super().dropEvent(e)
+            main.tabs[index].add_data_model(model)
+        return None
 
     def resizeEvent(self, a0):
         super().resizeEvent(a0)
@@ -250,20 +253,14 @@ class QTabWidget(QtW.QTabWidget):
                 # subwindow dropped in the same tab
                 pass
             else:
-                model = model.data_model()
-                model.window_rect_override = lambda s: _center_title_bar_on(s, drop_pos)
-                ui.add_data_model(model)
+                self._process_subwindow_drop(model, drop_pos)
         elif mime_data.hasUrls():
             if isinstance(win := event.source(), QSubWindow):
                 # subwindow dragged and dropped without changing tabs
                 if win in self.current_widget_area().subWindowList():
                     event.ignore()
                 return super().dropEvent(event)
-            urls = mime_data.urls()
-            paths = [url.toLocalFile() for url in urls if url.isLocalFile()]
-            future = ui.read_files_async(paths)
-            ui._backend_main_window._add_job_progress(future, "Reading files")
-            ui.model_app.injection_store.process(future)
+            self._process_file_url_drop(mime_data.urls())
         elif callable(rft := getattr(mime_data.parent(), "readers_from_text", None)):
             readers = rft(mime_data.text())
             worker = self._read_one_by_one(readers)
@@ -271,6 +268,21 @@ class QTabWidget(QtW.QTabWidget):
             worker.start()
             ui.set_status_tip("Opening files from remote sources ...", duration=2)
         return super().dropEvent(event)
+
+    def _process_subwindow_drop(
+        self, drag_model: DragDataModel, drop_pos: QtCore.QPoint
+    ) -> None:
+        ui = get_main_window(self)
+        model = drag_model.data_model()
+        model.window_rect_override = lambda s: _center_title_bar_on(s, drop_pos)
+        ui.add_data_model(model)
+
+    def _process_file_url_drop(self, urls: list[QtCore.QUrl]) -> None:
+        ui = get_main_window(self)
+        paths = [url.toLocalFile() for url in urls if url.isLocalFile()]
+        future = ui.read_files_async(paths)
+        ui._backend_main_window._add_job_progress(future, "Reading files")
+        ui.model_app.injection_store.process(future)
 
     def widget_area(self, index: int) -> QSubWindowArea | None:
         """Get the QSubWindowArea widget at index."""

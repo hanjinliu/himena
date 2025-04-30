@@ -79,12 +79,13 @@ class QtErrorMessageBox(QtW.QWidget):
         layout = QtW.QVBoxLayout(self)
         layout.addWidget(self.text_edit, stretch=100)
 
-    def _traceback_button_clicked(self):
+    def _traceback_button_clicked(self, *, runtime: bool = True):
         tb = self._get_traceback()
         dlg = QtTracebackDialog(self)
         dlg.setText(tb)
         focus = QtW.QApplication.focusWidget()
-        dlg.exec()
+        if runtime:
+            dlg.exec()
         if focus:
             focus.setFocus()
 
@@ -189,7 +190,7 @@ def get_tb_formatter() -> Callable[[ExcInfo, bool, bool], str]:
 
         format_exc_info = format_exc_info_ipython
 
-    except ModuleNotFoundError:
+    except ModuleNotFoundError:  # pragma: no cover
         if sys.version_info < (3, 11):
             format_exc_info = format_exc_info_py310
         else:
