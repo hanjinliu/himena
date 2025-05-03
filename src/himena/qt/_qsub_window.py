@@ -203,10 +203,9 @@ def _icon_for_id(icon_id: TitleIconId, color: str) -> QtGui.QIcon:
 class QCentralWidget(QtW.QWidget):
     def __init__(self, parent):
         super().__init__(parent)
-        layout = QtW.QVBoxLayout()
+        layout = QtW.QVBoxLayout(self)
         layout.setContentsMargins(1, 0, 1, 1)
         layout.setSpacing(0)
-        self.setLayout(layout)
 
 
 class QSubWindow(QtW.QMdiSubWindow):
@@ -373,6 +372,8 @@ class QSubWindow(QtW.QMdiSubWindow):
         elif a0.type() == QtCore.QEvent.Type.MouseButtonPress:
             assert isinstance(a0, QtGui.QMouseEvent)
             self._resize_state = self._check_resize_state(a0.pos())
+        elif a0.type() == QtCore.QEvent.Type.MouseButtonRelease:
+            self._resize_state = ResizeState.NONE
         return super().event(a0)
 
     def _check_resize_state(
