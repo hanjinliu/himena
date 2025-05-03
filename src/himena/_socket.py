@@ -40,7 +40,11 @@ class SocketInfo:
         """Get the socket info from the lock file."""
         with lock_file_path(name).open("r") as f:
             yml = yaml.load(f, Loader=yaml.Loader)
-        return SocketInfo(host=yml["host"], port=yml["port"])
+        if yml is None:
+            yml = {}
+        return SocketInfo(
+            host=yml.get("host", "localhost"), port=yml.get("port", 49200)
+        )
 
     def dump(self, path):
         yaml.dump(self.asdict(), path)

@@ -160,12 +160,12 @@ def prevent_window_overlap(
     elif size_orig.height < margins.bottom:
         out = rect_orig.move_top_left(
             min(win.rect.left, max(asize.width - size_orig.width - offset, 0)),
-            win.rect.bottom + offset,
+            max(win.rect.bottom + offset, 0),
         )
     elif size_orig.height < margins.top:
         out = rect_orig.move_bottom_left(
             min(win.rect.left, max(asize.width - size_orig.width - offset, 0)),
-            win.rect.top - offset,
+            max(win.rect.top - offset, rect_orig.height),
         )
     elif margins.bottom < margins.right:
         out = rect_orig.move_top_left(win.rect.right + offset, win.rect.top)

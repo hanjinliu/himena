@@ -261,8 +261,8 @@ class QTabWidget(QtW.QTabWidget):
                     event.ignore()
                 return super().dropEvent(event)
             self._process_file_url_drop(mime_data.urls())
-        elif callable(rft := getattr(mime_data.parent(), "readers_from_text", None)):
-            readers = rft(mime_data.text())
+        elif callable(rfm := getattr(mime_data.parent(), "readers_from_mime", None)):
+            readers = rfm(mime_data)
             worker = self._read_one_by_one(readers)
             worker.yielded.connect(ui.add_data_model)
             worker.start()

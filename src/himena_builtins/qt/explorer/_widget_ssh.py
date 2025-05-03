@@ -258,11 +258,12 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
             force_directory=is_dir,
         )
 
-    def readers_from_meme(self, meme: QtCore.QMimeData) -> list[RemoteReaderMethod]:
+    def readers_from_mime(self, mime: QtCore.QMimeData) -> list[RemoteReaderMethod]:
+        """Construct readers from the mime data."""
         is_wsl = self._is_wsl_switch.isChecked()
         prot = self._protocol_choice.currentText()
         out: list[RemoteReaderMethod] = []
-        for line in meme.html().split("<br>"):
+        for line in mime.html().split("<br>"):
             if not line:
                 continue
             if m := re.compile(r"<span ftype=\"(d|f)\">(.+)</span>").match(line):
@@ -295,7 +296,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
                 for meth in self._make_reader_methods_for_items(items)
             )
         )
-        mime.setParent(self)
+        mime.setParent(self)  # this is needed to trace where the MIME data comes from
         return mime
 
     def _make_reader_methods_for_items(
@@ -403,6 +404,7 @@ class QRemoteTreeWidget(QtW.QTreeWidget):
         self.setHeaderLabels(
             ["Name", "Datetime", "Size", "Group", "Owner", "Link", "Permission"]
         )
+        self.setSelectionMode(QtW.QAbstractItemView.SelectionMode.ExtendedSelection)
         self.header().setDefaultAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.header().setFixedHeight(20)
         self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
