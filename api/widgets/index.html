@@ -3736,9 +3736,7 @@
 
               <details class="quote">
                 <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 952</span>
-<span class="normal"> 953</span>
-<span class="normal"> 954</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 954</span>
 <span class="normal"> 955</span>
 <span class="normal"> 956</span>
 <span class="normal"> 957</span>
@@ -3801,7 +3799,9 @@
 <span class="normal">1014</span>
 <span class="normal">1015</span>
 <span class="normal">1016</span>
-<span class="normal">1017</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">DockWidget</span><span class="p">(</span><span class="n">WidgetWrapper</span><span class="p">[</span><span class="n">_W</span><span class="p">]):</span>
+<span class="normal">1017</span>
+<span class="normal">1018</span>
+<span class="normal">1019</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">DockWidget</span><span class="p">(</span><span class="n">WidgetWrapper</span><span class="p">[</span><span class="n">_W</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Dock widget wrapper.&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -3944,9 +3944,9 @@
 
             <details class="quote">
               <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">988</span>
-<span class="normal">989</span>
-<span class="normal">990</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">hide</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">990</span>
+<span class="normal">991</span>
+<span class="normal">992</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">hide</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Hide the dock widget.&quot;&quot;&quot;</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">visible</span> <span class="o">=</span> <span class="kc">False</span>
 </code></pre></div></td></tr></table></div>
@@ -3971,9 +3971,9 @@
 
             <details class="quote">
               <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">984</span>
-<span class="normal">985</span>
-<span class="normal">986</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">986</span>
+<span class="normal">987</span>
+<span class="normal">988</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Show the dock widget.&quot;&quot;&quot;</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">visible</span> <span class="o">=</span> <span class="kc">True</span>
 </code></pre></div></td></tr></table></div>
@@ -3998,13 +3998,13 @@
 
             <details class="quote">
               <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1011</span>
-<span class="normal">1012</span>
-<span class="normal">1013</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1013</span>
 <span class="normal">1014</span>
 <span class="normal">1015</span>
 <span class="normal">1016</span>
-<span class="normal">1017</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">update_configs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+<span class="normal">1017</span>
+<span class="normal">1018</span>
+<span class="normal">1019</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">update_configs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Update the configuration of the dock widget.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_update_configs</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
@@ -5020,7 +5020,9 @@
 <span class="normal">1038</span>
 <span class="normal">1039</span>
 <span class="normal">1040</span>
-<span class="normal">1041</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MainWindow</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">_W</span><span class="p">]):</span>
+<span class="normal">1041</span>
+<span class="normal">1042</span>
+<span class="normal">1043</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MainWindow</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">_W</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The main window handler object.&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -5656,7 +5658,9 @@
                     <span class="p">)</span>
                 <span class="c1"># run the callback with the given parameters synchronously</span>
                 <span class="n">result</span> <span class="o">=</span> <span class="n">param_widget</span><span class="o">.</span><span class="n">_callback_with_params</span><span class="p">(</span>
-                    <span class="n">with_params</span><span class="p">,</span> <span class="n">force_sync</span><span class="o">=</span><span class="kc">True</span>
+                    <span class="n">with_params</span><span class="p">,</span>
+                    <span class="n">force_sync</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">force_close</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                 <span class="p">)</span>
         <span class="k">return</span> <span class="n">result</span>
 
@@ -7129,11 +7133,11 @@ generated.</p>
 
             <details class="quote">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">833</span>
-<span class="normal">834</span>
-<span class="normal">835</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">835</span>
 <span class="normal">836</span>
-<span class="normal">837</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">837</span>
+<span class="normal">838</span>
+<span class="normal">839</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Close the main window.&quot;&quot;&quot;</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_backend_main_window</span><span class="o">.</span><span class="n">_exit_main_window</span><span class="p">(</span><span class="n">confirm</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">remove_instance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_app</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
@@ -7327,7 +7331,9 @@ sub-window.</p>
 <span class="normal">705</span>
 <span class="normal">706</span>
 <span class="normal">707</span>
-<span class="normal">708</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">exec_action</span><span class="p">(</span>
+<span class="normal">708</span>
+<span class="normal">709</span>
+<span class="normal">710</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">exec_action</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -7392,7 +7398,9 @@ sub-window.</p>
                 <span class="p">)</span>
             <span class="c1"># run the callback with the given parameters synchronously</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">param_widget</span><span class="o">.</span><span class="n">_callback_with_params</span><span class="p">(</span>
-                <span class="n">with_params</span><span class="p">,</span> <span class="n">force_sync</span><span class="o">=</span><span class="kc">True</span>
+                <span class="n">with_params</span><span class="p">,</span>
+                <span class="n">force_sync</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">force_close</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="p">)</span>
     <span class="k">return</span> <span class="n">result</span>
 </code></pre></div></td></tr></table></div>
@@ -7502,9 +7510,7 @@ for vertically arranged radio buttons.</p>
 
             <details class="quote">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">727</span>
-<span class="normal">728</span>
-<span class="normal">729</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">729</span>
 <span class="normal">730</span>
 <span class="normal">731</span>
 <span class="normal">732</span>
@@ -7529,7 +7535,9 @@ for vertically arranged radio buttons.</p>
 <span class="normal">751</span>
 <span class="normal">752</span>
 <span class="normal">753</span>
-<span class="normal">754</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">exec_choose_one_dialog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">choices</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;buttons&quot;</span><span class="p">):</span>
+<span class="normal">754</span>
+<span class="normal">755</span>
+<span class="normal">756</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">exec_choose_one_dialog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">choices</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;buttons&quot;</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute a dialog to choose one from the given choices.</span>
 
 <span class="sd">    Parameters</span>
@@ -7583,9 +7591,7 @@ for vertically arranged radio buttons.</p>
 
             <details class="quote">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">779</span>
-<span class="normal">780</span>
-<span class="normal">781</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">781</span>
 <span class="normal">782</span>
 <span class="normal">783</span>
 <span class="normal">784</span>
@@ -7623,7 +7629,9 @@ for vertically arranged radio buttons.</p>
 <span class="normal">816</span>
 <span class="normal">817</span>
 <span class="normal">818</span>
-<span class="normal">819</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">exec_file_dialog</span><span class="p">(</span>
+<span class="normal">819</span>
+<span class="normal">820</span>
+<span class="normal">821</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">exec_file_dialog</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="s2">&quot;rm&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -7686,10 +7694,10 @@ for vertically arranged radio buttons.</p>
 
             <details class="quote">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">875</span>
-<span class="normal">876</span>
-<span class="normal">877</span>
-<span class="normal">878</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">iter_windows</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">]]:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">877</span>
+<span class="normal">878</span>
+<span class="normal">879</span>
+<span class="normal">880</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">iter_windows</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Iterate over all the sub-windows in this main window.&quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">tab</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="p">:</span>
         <span class="k">yield from</span> <span class="n">tab</span>
@@ -7766,9 +7774,7 @@ for vertically arranged radio buttons.</p>
 
             <details class="quote">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">898</span>
-<span class="normal">899</span>
-<span class="normal">900</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">900</span>
 <span class="normal">901</span>
 <span class="normal">902</span>
 <span class="normal">903</span>
@@ -7788,7 +7794,9 @@ for vertically arranged radio buttons.</p>
 <span class="normal">917</span>
 <span class="normal">918</span>
 <span class="normal">919</span>
-<span class="normal">920</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">move_window</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sub</span><span class="p">:</span> <span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">],</span> <span class="n">target_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">920</span>
+<span class="normal">921</span>
+<span class="normal">922</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">move_window</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sub</span><span class="p">:</span> <span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">],</span> <span class="n">target_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Move the sub-window to the target tab index.&quot;&quot;&quot;</span>
     <span class="n">i_tab</span> <span class="o">=</span> <span class="n">i_win</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">for</span> <span class="n">_i_tab</span><span class="p">,</span> <span class="n">tab</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">enumerate</span><span class="p">():</span>
@@ -8439,9 +8447,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 
             <details class="quote">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">821</span>
-<span class="normal">822</span>
-<span class="normal">823</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">823</span>
 <span class="normal">824</span>
 <span class="normal">825</span>
 <span class="normal">826</span>
@@ -8449,7 +8455,9 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 <span class="normal">828</span>
 <span class="normal">829</span>
 <span class="normal">830</span>
-<span class="normal">831</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">831</span>
+<span class="normal">832</span>
+<span class="normal">833</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Show the main window.</span>
 
@@ -9010,7 +9018,9 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 <span class="normal">946</span>
 <span class="normal">947</span>
 <span class="normal">948</span>
-<span class="normal">949</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ParametricWindow</span><span class="p">(</span><span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">]):</span>
+<span class="normal">949</span>
+<span class="normal">950</span>
+<span class="normal">951</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ParametricWindow</span><span class="p">(</span><span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Subwindow with a parametric widget inside.&quot;&quot;&quot;</span>
 
     <span class="n">_IS_PREVIEWING</span> <span class="o">=</span> <span class="s2">&quot;is_previewing&quot;</span>  <span class="c1"># keyword argument used for preview flag</span>
@@ -9243,6 +9253,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
         <span class="n">force_sync</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">force_close</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_is_previewing</span><span class="p">:</span>
             <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">kwargs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_IS_PREVIEWING</span><span class="p">:</span> <span class="kc">False</span><span class="p">}</span>
@@ -9266,11 +9277,12 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
                     <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span>
-            <span class="k">return</span> <span class="n">return_value</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">main</span><span class="o">.</span><span class="n">_set_parametric_widget_busy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_process_return_value</span><span class="p">(</span><span class="n">return_value</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">return_value</span>
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_auto_close</span><span class="p">)</span> <span class="ow">and</span> <span class="n">force_close</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_close_me</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">_himena_main_window</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">return_value</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">is_preview_enabled</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether the widget supports preview.&quot;&quot;&quot;</span>
@@ -9403,10 +9415,10 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 
             <details class="quote">
               <summary>Source code in <code>src\himena\widgets\_wrapper.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">895</span>
-<span class="normal">896</span>
-<span class="normal">897</span>
-<span class="normal">898</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">is_preview_enabled</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">897</span>
+<span class="normal">898</span>
+<span class="normal">899</span>
+<span class="normal">900</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">is_preview_enabled</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether the widget supports preview.&quot;&quot;&quot;</span>
     <span class="n">isfunc</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">widget</span><span class="p">,</span> <span class="n">PWPN</span><span class="o">.</span><span class="n">IS_PREVIEW_ENABLED</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">callable</span><span class="p">(</span><span class="n">isfunc</span><span class="p">)</span> <span class="ow">and</span> <span class="n">isfunc</span><span class="p">()</span>
