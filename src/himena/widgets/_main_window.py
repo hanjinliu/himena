@@ -703,7 +703,9 @@ class MainWindow(Generic[_W]):
                     )
                 # run the callback with the given parameters synchronously
                 result = param_widget._callback_with_params(
-                    with_params, force_sync=True
+                    with_params,
+                    force_sync=True,
+                    force_close=True,
                 )
         return result
 

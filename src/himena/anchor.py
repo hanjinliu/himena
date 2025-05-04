@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from himena.types import WindowRect
 
 if TYPE_CHECKING:
-    from typing_extensions import Self
+    from typing import Self
 
 
 class WindowAnchor:
@@ -152,13 +152,27 @@ def anchor_to_dict(anchor: WindowAnchor) -> dict:
 
 def dict_to_anchor(data: dict) -> WindowAnchor:
     if data["type"] == "top-left-const":
-        return TopLeftConstAnchor(data["left"], data["top"])
+        return type_to_anchor_class(data["type"])(data["left"], data["top"])
     if data["type"] == "top-right-const":
-        return TopRightConstAnchor(data["right"], data["top"])
+        return type_to_anchor_class(data["type"])(data["right"], data["top"])
     if data["type"] == "bottom-left-const":
-        return BottomLeftConstAnchor(data["left"], data["bottom"])
+        return type_to_anchor_class(data["type"])(data["left"], data["bottom"])
     if data["type"] == "bottom-right-const":
-        return BottomRightConstAnchor(data["right"], data["bottom"])
+        return type_to_anchor_class(data["type"])(data["right"], data["bottom"])
     if data["type"] == "no-anchor":
         return NoAnchor
     raise ValueError(f"Unknown anchor type: {data['type']}")
+
+
+def type_to_anchor_class(typ: str) -> type[WindowAnchor]:
+    if typ == "top-left-const":
+        return TopLeftConstAnchor
+    if typ == "top-right-const":
+        return TopRightConstAnchor
+    if typ == "bottom-left-const":
+        return BottomLeftConstAnchor
+    if typ == "bottom-right-const":
+        return BottomRightConstAnchor
+    if typ == "no-anchor":
+        return NoAnchor
+    raise ValueError(f"Unknown anchor type: {typ}")
