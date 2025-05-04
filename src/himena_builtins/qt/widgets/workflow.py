@@ -7,7 +7,7 @@ from magicgui.widgets import request_values
 from himena.consts import StandardType, MonospaceFontFamily
 from himena.plugins import validate_protocol
 from himena import workflow as _wf
-from himena.qt._utils import drag_model
+from himena.qt._utils import drag_model, get_main_window
 from himena_builtins.qt.widgets._table_components._selection_model import (
     SelectionModel,
     Index,
@@ -99,6 +99,18 @@ class QWorkflowView(QtW.QWidget):
         self.set_workflow(wf)
         self._modified = True
 
+    def _find_window(self, item: QtW.QTreeWidgetItem) -> None:
+        row = self._tree_widget.indexOfTopLevelItem(item)
+        step = self._tree_widget._workflow[row]
+        main = get_main_window(self)
+        for i_tab, tab in main.tabs.enumerate():
+            for i_win, win in tab.enumerate():
+                if win._identifier == step.id:
+                    main.tabs.current_index = i_tab
+                    main.tabs[i_tab].current_index = i_win
+                    return None
+        raise ValueError("No window in the main window matches the workflow step.")
+
     def _execute_upto(self, item: QtW.QTreeWidgetItem) -> None:
         row = self._tree_widget.indexOfTopLevelItem(item)
         wf = self._tree_widget._workflow
@@ -149,22 +161,22 @@ class QWorkflowView(QtW.QWidget):
         menu.addSeparator()
         a3 = menu.addAction("Execute upto here", lambda: self._execute_upto(item))
         a3.setToolTip("Execute the workflow up to the selected item")
-        a4 = menu.addAction("Edit ...", lambda: self._edit_user_input(item))
-        a4.setToolTip("Edit the selected user input item")
+        a4 = menu.addAction("Find window", lambda: self._find_window(item))
+        a4.setToolTip("Find the window that corresponds to the selected item")
+        a5 = menu.addAction("Edit ...", lambda: self._edit_user_input(item))
+        a5.setToolTip("Edit the selected user input item")
 
         # update enabled state
         a0.setEnabled(self.is_editable())
         a1.setEnabled(self.is_editable())
         a2.setEnabled(self.is_editable())
-        a4.setEnabled(self.is_editable())
+        a5.setEnabled(self.is_editable())
         if isinstance(step, _wf.UserInput):
             a3.setEnabled(False)
         else:
-            a4.setEnabled(False)
-        if (
-            self._tree_widget.indexOfTopLevelItem(item)
-            == self._tree_widget.topLevelItemCount() - 1
-        ):
+            a5.setEnabled(False)
+        tree = self._tree_widget
+        if tree.indexOfTopLevelItem(item) == tree.topLevelItemCount() - 1:
             a2.setEnabled(False)
         return menu
 
@@ -280,13 +292,12 @@ class QWorkflowTree(QtW.QTreeWidget):
 
     def mousePressEvent(self, e: QtGui.QMouseEvent):
         index = self.indexAt(e.pos())
-        item = self.ancestor_item(index)
-        if e.buttons() & QtCore.Qt.MouseButton.LeftButton:
-            if item is not None:
+        if item := self.ancestor_item(index):
+            if e.buttons() & QtCore.Qt.MouseButton.LeftButton:
                 row = self.indexOfTopLevelItem(item)
                 self._selection_model.jump_to(row, 0)
-        if e.buttons() & QtCore.Qt.MouseButton.RightButton:
-            self.right_clicked.emit(item, self.mapToGlobal(e.pos()))
+            elif e.buttons() & QtCore.Qt.MouseButton.RightButton:
+                self.right_clicked.emit(item, self.mapToGlobal(e.pos()))
         return super().mousePressEvent(e)
 
     # drag-and-drop
