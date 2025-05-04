@@ -968,3 +968,18 @@ def test_image_widget_hover_info(qtbot: QtBot):
         )
         tester.widget._on_hovered(QtCore.QPointF(2.1, 2.5))
         tester.widget._on_hovered(QtCore.QPointF(30, 40))  # out of range
+
+def test_scale_bar_widget():
+    from himena_builtins.qt.widgets._image_commands import ScaleBarSpecWidget
+
+    widget = ScaleBarSpecWidget()
+    widget.get_value()
+    widget.set_value(
+        {
+            "shape": (3.0, 1.0),
+            "color": "#FF0000",
+            "anchor_pos": "bottom-left",
+            "offset": (2, 2),
+        }
+    )
+    widget.get_value()
