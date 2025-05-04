@@ -863,6 +863,7 @@ class ParametricWindow(SubWindow[_W]):
         self,
         kwargs: dict[str, Any],
         force_sync: bool = False,
+        force_close: bool = False,
     ) -> Any:
         if self._has_is_previewing:
             kwargs = {**kwargs, self._IS_PREVIEWING: False}
@@ -886,11 +887,12 @@ class ParametricWindow(SubWindow[_W]):
                     kwargs=kwargs,
                 )
             )
-            return return_value
         else:
             main._set_parametric_widget_busy(self, False)
             self._process_return_value(return_value, kwargs)
-            return return_value
+        if (not self._auto_close) and force_close:
+            self._close_me(main._himena_main_window)
+        return return_value
 
     def is_preview_enabled(self) -> bool:
         """Whether the widget supports preview."""

@@ -75,7 +75,7 @@ class QDimsSlider(QtW.QWidget):
         else:
             self._yx_axes = axes[-2:]
 
-    def _to_array_axes(self) -> list[model_meta.DimAxis]:
+    def to_dim_axes(self) -> list[model_meta.DimAxis]:
         axes = [slider.to_axis() for slider in self._sliders]
         axes.extend(self._yx_axes)
         return axes

@@ -360,7 +360,7 @@ class QImageViewBase(QtW.QSplitter):
         ]
         current_indices = self._dims_slider.value()
         current_slices = current_indices + (None, None)
-        axes = self._dims_slider._to_array_axes()
+        axes = self._dims_slider.to_dim_axes()
         if self._is_rgb:
             axes.append(model_meta.DimAxis(name="RGB"))
         current_roi = self.current_roi()

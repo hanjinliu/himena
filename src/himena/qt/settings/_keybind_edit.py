@@ -147,6 +147,7 @@ class QKeybindTable(QtW.QTableWidget):
         self.setRowCount(nrows)
         with self.block_context():
             self.clearContents()
+            self.setRowCount(len(commands))
             for i, cmd in enumerate(commands):
                 self.setRowHeight(i, self._default_row_height)
                 cmd_id = cmd.id

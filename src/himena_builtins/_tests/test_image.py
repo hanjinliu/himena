@@ -566,9 +566,9 @@ def test_crop_image(himena_ui: MainWindow, tmpdir):
     )
     win = himena_ui.add_data_model(model)
     himena_ui.exec_action("builtins:image:crop-image")
-    himena_ui.exec_action("builtins:image-capture:copy-slice-to-clipboard")
+    himena_ui.exec_action("builtins:image:copy-slice-to-clipboard")
     with file_dialog_response(himena_ui, Path(tmpdir) / "tmp.png"):
-        himena_ui.exec_action("builtins:image-capture:save-slice")
+        himena_ui.exec_action("builtins:image:save-slice")
     himena_ui.current_window = win
     himena_ui.exec_action(
         "builtins:image:crop-image-multi",
@@ -588,10 +588,19 @@ def test_crop_image(himena_ui: MainWindow, tmpdir):
         channel_axis=1,
     )
     win = himena_ui.add_data_model(model)
+    himena_ui.exec_action(
+        "builtins:image:capture-setting",
+        with_params={
+            "scale_bars": [
+                {"shape": (10, 1.5), "color": "red", "anchor_pos": "top-left", "offset": (2, 2)}
+            ],
+        }
+    )
+
     himena_ui.exec_action("builtins:image:crop-image")
-    himena_ui.exec_action("builtins:image-capture:copy-slice-to-clipboard")
+    himena_ui.exec_action("builtins:image:copy-slice-to-clipboard")
     with file_dialog_response(himena_ui, Path(tmpdir) / "tmp.png"):
-        himena_ui.exec_action("builtins:image-capture:save-slice")
+        himena_ui.exec_action("builtins:image:save-slice")
     himena_ui.current_window = win
     himena_ui.exec_action(
         "builtins:image:crop-image-multi",
@@ -617,9 +626,9 @@ def test_image_view_commands(himena_ui: MainWindow, tmpdir):
         )
     )
     himena_ui.exec_action("builtins:image:set-zoom-factor", with_params={"scale": 100.0})
-    himena_ui.exec_action("builtins:image-screenshot:copy-viewer-screenshot")
+    himena_ui.exec_action("builtins:image:copy-viewer-screenshot")
     with file_dialog_response(himena_ui, Path(tmpdir) / "tmp.png") as save_path:
-        himena_ui.exec_action("builtins:image-screenshot:save-viewer-screenshot")
+        himena_ui.exec_action("builtins:image:save-viewer-screenshot")
         assert save_path.exists()
 
 
@@ -959,3 +968,18 @@ def test_image_widget_hover_info(qtbot: QtBot):
         )
         tester.widget._on_hovered(QtCore.QPointF(2.1, 2.5))
         tester.widget._on_hovered(QtCore.QPointF(30, 40))  # out of range
+
+def test_scale_bar_widget():
+    from himena_builtins.qt.widgets._image_commands import ScaleBarSpecWidget
+
+    widget = ScaleBarSpecWidget()
+    widget.get_value()
+    widget.set_value(
+        {
+            "shape": (3.0, 1.0),
+            "color": "#FF0000",
+            "anchor_pos": "bottom-left",
+            "offset": (2, 2),
+        }
+    )
+    widget.get_value()
