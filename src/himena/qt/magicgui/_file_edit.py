@@ -21,7 +21,9 @@ class QFileEdit(QtW.QWidget):
         self._line_edit = QtW.QLineEdit(self)
         self._btn = QtW.QPushButton("...", self)
         self._btn.setToolTip("Browse file(s) ...")
-        self._line_edit.setFixedHeight(self._btn.height())
+        self._line_edit.setSizePolicy(
+            QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Preferred
+        )
         self._mode = FileDialogMode(mode)
         self._filter = filter
         self._line_edit.setPlaceholderText("Enter, select or drop file(s)")
