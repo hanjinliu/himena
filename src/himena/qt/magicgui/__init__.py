@@ -13,6 +13,7 @@ from himena.qt.magicgui._basic_widgets import (
     IntListEdit,
     FloatListEdit,
 )
+from himena.qt.magicgui._file_edit import FileEdit
 from himena.qt.magicgui._selection import SelectionEdit
 from himena.qt.magicgui._modeldrop import (
     ModelDrop,
@@ -31,6 +32,7 @@ __all__ = [
     "ToggleSwitch",
     "FacePropertyEdit",
     "EdgePropertyEdit",
+    "FileEdit",
     "AxisPropertyEdit",
     "IntEdit",
     "FloatEdit",
