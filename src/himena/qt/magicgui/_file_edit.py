@@ -79,6 +79,8 @@ class QFileEdit(QtW.QWidget):
             filter=self._filter,
             parent=self,
         ):
+            if isinstance(file_path, list):
+                file_path = _MULTI_FILE_SEPARATOR.join(file_path)
             self._line_edit.setText(file_path)
 
     def _accept_urls(self, urls: list[QtCore.QUrl]) -> bool:
@@ -117,8 +119,10 @@ class QFileEdit(QtW.QWidget):
 
 
 class QBaseFileEdit(QBaseValueWidget):
-    def __init__(self, **kwargs) -> None:
-        super().__init__(QFileEdit, "value", "set_value", "valueChanged", **kwargs)
+    def __init__(self, mode: FileDialogMode, filter: str, parent=None) -> None:
+        super().__init__(QFileEdit, "value", "set_value", "valueChanged", parent=parent)
+        self._qwidget._mode = FileDialogMode(mode)
+        self._qwidget._filter = filter
 
 
 class FileEdit(ValueWidget["Path | list[Path]"]):
