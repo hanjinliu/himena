@@ -381,13 +381,13 @@ QLineEdit {
     color: #[foreground];
     min-height: 16px;
     padding: 1px;
-    border-radius: 1px;
+    border-radius: 2px;
     selection-color: #[foreground];
     selection-background-color: #[highlight_strong];
 }
 
 QLineEdit:hover {
-    border-bottom: 1px solid #[highlight_dim];
+    border-bottom: 2px solid #[highlight_dim];
 }
 
 QKeySequenceEdit {
