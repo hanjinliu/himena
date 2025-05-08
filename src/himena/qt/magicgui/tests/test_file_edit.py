@@ -8,11 +8,13 @@ from himena.qt.magicgui._file_edit import FileEdit, QFileEdit
 
 _directory = str(Path(__file__).parent)
 
-def test_file_edit(monkeypatch):
+def test_file_edit():
     fe = FileEdit()
     assert isinstance(fe.native, QFileEdit)
     fe.set_value(__file__)
     assert fe.value == Path(__file__)
+    fe.set_value(None)
+    assert fe.value is None
     with pytest.raises(ValueError):
         fe.set_value([__file__, Path(__file__).parent])
     fe.native._mode = FileDialogMode.EXISTING_FILES
@@ -27,8 +29,8 @@ def test_open_file_dialog(monkeypatch):
     fe.native._open_file_dialog()
     fe.native._mode = FileDialogMode.EXISTING_FILES
     monkeypatch.setattr(_file_edit, "show_file_dialog", lambda *_, **__: [__file__, _directory])
-    fe.native._mode = FileDialogMode.EXISTING_DIRECTORY
     fe.native._open_file_dialog()
+    fe.native._mode = FileDialogMode.EXISTING_DIRECTORY
     monkeypatch.setattr(_file_edit, "show_file_dialog", lambda *_, **__: _directory)
     fe.native._open_file_dialog()
     fe.native._mode = FileDialogMode.OPTIONAL_FILE
