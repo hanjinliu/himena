@@ -102,6 +102,9 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         self._pwd = Path("~")
         self._last_dir = Path("~")
 
+        self._filter_widget = QFilterLineEdit(self)
+        self._filter_widget.textChanged.connect(self._apply_filter)
+
         layout = QtW.QVBoxLayout(self)
 
         hlayout0 = QtW.QHBoxLayout()
@@ -129,6 +132,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         hlayout2.addWidget(self._show_hidden_files_switch)
         hlayout2.addWidget(self._refresh_btn, 0, QtCore.Qt.AlignmentFlag.AlignRight)
         layout.addLayout(hlayout2)
+        layout.addWidget(self._filter_widget)
         layout.addWidget(self._file_list_widget)
 
         self._conn_btn.clicked.connect(lambda: self._set_current_path(Path("~")))
@@ -391,6 +395,39 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         )
         subprocess.run(args)
         notify(f"Sent {src.as_posix()} to {dst_remote.as_posix()}", duration=2.8)
+
+    def _apply_filter(self, text: str):
+        for i in range(self._file_list_widget.topLevelItemCount()):
+            item = self._file_list_widget.topLevelItem(i)
+            item.setHidden(text.lower() not in item.text(0).lower())
+
+    def keyPressEvent(self, a0):
+        if (
+            a0.key() == QtCore.Qt.Key.Key_F
+            and a0.modifiers() == QtCore.Qt.KeyboardModifier.ControlModifier
+        ):
+            self._filter_widget.setVisible(not self._filter_widget.isVisible())
+            if self._filter_widget.isVisible():
+                self._filter_widget.setFocus()
+            else:
+                self._filter_widget.clear()
+                self._filter_widget.setVisible(False)
+            return
+        return super().keyPressEvent(a0)
+
+
+class QFilterLineEdit(QtW.QLineEdit):
+    def __init__(self, parent: QSSHRemoteExplorerWidget):
+        super().__init__(parent)
+        self.setPlaceholderText("Filter files...")
+        self.setVisible(False)
+
+    def keyPressEvent(self, a0):
+        if a0.key() == QtCore.Qt.Key.Key_Escape:
+            self.clear()
+            self.setVisible(False)
+            return
+        return super().keyPressEvent(a0)
 
 
 class QRemoteTreeWidget(QtW.QTreeWidget):
