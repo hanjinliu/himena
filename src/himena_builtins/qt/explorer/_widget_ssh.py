@@ -104,6 +104,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
 
         self._filter_widget = QFilterLineEdit(self)
         self._filter_widget.textChanged.connect(self._apply_filter)
+        self._filter_widget.setVisible(False)
 
         layout = QtW.QVBoxLayout(self)
 
@@ -399,7 +400,8 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
     def _apply_filter(self, text: str):
         for i in range(self._file_list_widget.topLevelItemCount()):
             item = self._file_list_widget.topLevelItem(i)
-            item.setHidden(text.lower() not in item.text(0).lower())
+            ok = all(part in item.text(0).lower() for part in text.lower().split(" "))
+            item.setHidden(not ok)
 
     def keyPressEvent(self, a0):
         if (
@@ -407,11 +409,8 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
             and a0.modifiers() == QtCore.Qt.KeyboardModifier.ControlModifier
         ):
             self._filter_widget.setVisible(not self._filter_widget.isVisible())
-            if self._filter_widget.isVisible():
-                self._filter_widget.setFocus()
-            else:
-                self._filter_widget.clear()
-                self._filter_widget.setVisible(False)
+            self._filter_widget.setVisible(True)
+            self._filter_widget.setFocus()
             return
         return super().keyPressEvent(a0)
 
@@ -420,7 +419,6 @@ class QFilterLineEdit(QtW.QLineEdit):
     def __init__(self, parent: QSSHRemoteExplorerWidget):
         super().__init__(parent)
         self.setPlaceholderText("Filter files...")
-        self.setVisible(False)
 
     def keyPressEvent(self, a0):
         if a0.key() == QtCore.Qt.Key.Key_Escape:

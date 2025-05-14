@@ -1,4 +1,5 @@
 from pathlib import Path
+from qtpy.QtCore import Qt
 from unittest.mock import MagicMock
 from himena.testing import choose_one_dialog_response
 from himena_builtins.qt.explorer._widget import QExplorerWidget
@@ -48,4 +49,11 @@ def test_ssh_args():
 def test_ssh_widget(qtbot: QtBot, himena_ui):
     widget = QSSHRemoteExplorerWidget(himena_ui)
     qtbot.add_widget(widget)
+    widget.show()
     widget._file_list_widget._make_context_menu()
+    widget._apply_filter("a")
+    assert widget._filter_widget.isHidden()
+    qtbot.keyClick(widget, Qt.Key.Key_F, Qt.KeyboardModifier.ControlModifier)
+    assert widget._filter_widget.isVisible()
+    qtbot.keyClick(widget._filter_widget, Qt.Key.Key_Escape)
+    assert widget._filter_widget.isHidden()
