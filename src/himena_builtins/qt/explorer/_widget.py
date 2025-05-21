@@ -1,4 +1,5 @@
 from __future__ import annotations
+from datetime import datetime
 from pathlib import Path
 import warnings
 import shutil
@@ -85,6 +86,29 @@ class QExplorerWidget(QtW.QWidget):
         self._file_tree._config = cfg
 
 
+class QExtendedFileSystemModel(QFileSystemModel):
+    def data(self, index, role):
+        if role == QtCore.Qt.ItemDataRole.ToolTipRole:
+            return self._tooltip_for_index(index)
+        return super().data(index, role)
+
+    def _tooltip_for_index(self, index: QtCore.QModelIndex) -> str:
+        if not index.isValid():
+            return ""
+        path = Path(self.filePath(index))
+        if path.exists():
+            stat = path.stat()
+            size_human_readable = QtCore.QLocale().formattedDataSize(stat.st_size, 2)
+            time_last_modified = datetime.fromtimestamp(stat.st_mtime)
+            return (
+                f"{path.as_posix()}\n"
+                f"Size: {size_human_readable}\n"
+                f"Last modified: {time_last_modified:%Y-%m-%d %H:%M:%S}"
+            )
+        else:
+            return "<Deleted>"
+
+
 class QFileTree(QtW.QTreeView):
     fileDoubleClicked = QtCore.Signal(Path)
 
@@ -93,7 +117,7 @@ class QFileTree(QtW.QTreeView):
 
         super().__init__()
         self._ui = ui
-        self._model = QFileSystemModel()
+        self._model = QExtendedFileSystemModel()
         self.setHeaderHidden(True)
         self.setEditTriggers(QtW.QAbstractItemView.EditTrigger.EditKeyPressed)
         self.setTextElideMode(QtCore.Qt.TextElideMode.ElideNone)
@@ -120,10 +144,12 @@ class QFileTree(QtW.QTreeView):
         menu.addAction("Open", lambda: self._ui.read_file(path))
         menu.addSeparator()
         menu.addAction("Copy", lambda: self._ui.set_clipboard(files=[path]))
-        menu.addAction("Copy path", lambda: self._ui.set_clipboard(text=str(path)))
+        menu.addAction("Copy Path", lambda: self._ui.set_clipboard(text=str(path)))
         menu.addAction("Paste", self._paste_from_clipboard)
         menu.addSeparator()
         menu.addAction("Rename", lambda: self.edit(index))
+        selected_indices = self.selectedIndexes()
+        menu.addAction("Delete", lambda: self._move_to_trash(selected_indices))
         return menu
 
     def _show_context_menu(self, pos: QtCore.QPoint):
@@ -225,6 +251,16 @@ class QFileTree(QtW.QTreeView):
             elif event.key() == QtCore.Qt.Key.Key_V:
                 return self._paste_from_clipboard()
         return super().keyPressEvent(event)
+
+    def _move_to_trash(self, indices: list[QtCore.QModelIndex]):
+        ans = self._ui.exec_choose_one_dialog(
+            "Move to Trash",
+            "Are you sure you want to move the selected files to trash?",
+            choices=["Delete", "Cancel"],
+        )
+        if ans == "Delete":
+            for index in indices:
+                QtCore.QFile.moveToTrash(self._model.filePath(index))
 
     def _paste_from_clipboard(self):
         if clipboard := QtW.QApplication.clipboard():
