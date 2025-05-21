@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import numpy as np
 from numpy.typing import NDArray
 
@@ -75,3 +76,10 @@ def points_in_poly(points: NDArray[np.number], vertices: NDArray[np.number]):
     # if the number of crossings is odd then the point is inside the polygon
 
     return inside
+
+
+def eccentricity(a: float, b: float) -> float:
+    a, b = sorted([a, b])
+    if b == 0:
+        return 0.0
+    return math.sqrt(1 - a**2 / b**2)

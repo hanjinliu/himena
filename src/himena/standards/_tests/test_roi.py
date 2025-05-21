@@ -60,6 +60,7 @@ def test_rotated_ellipse():
     assert r0.length() == pytest.approx(3 * math.sqrt(2), rel=1e-5)
     assert r0.area() == pytest.approx(r1.area(), rel=1e-5)
     assert r0.area() == pytest.approx(math.pi * 3 * math.sqrt(2) / 2, rel=1e-5)
+    assert r0.eccentricity() == pytest.approx(math.sqrt(7 / 9), rel=1e-5)
 
 def test_circle():
     r0 = roi.CircleRoi(x=0, y=0, radius=5)
