@@ -80,6 +80,10 @@ def points_in_poly(points: NDArray[np.number], vertices: NDArray[np.number]):
 
 def eccentricity(a: float, b: float) -> float:
     a, b = sorted([a, b])
+    if a == 0:
+        if b == 0:
+            return 1.0
+        return 0.0
     if b == 0:
         return 0.0
     return math.sqrt(1 - a**2 / b**2)

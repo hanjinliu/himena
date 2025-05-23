@@ -78,11 +78,24 @@ class QValuedLineEdit(QtW.QLineEdit):
         super().__init__(*args, **kwargs)
         self.setValidator(self._validator_class(self))
         self.textChanged.connect(self._on_text_changed)
+        self.editingFinished.connect(self._on_editing_finished)
+        self._empty_allowed = True
+        self._last_acceptable_value = ""
 
     def _on_text_changed(self, text: str):
         validate_result = self.validator().validate(text, 0)
         if validate_result[0] == QtGui.QValidator.State.Acceptable:
+            if text == "" and not self._empty_allowed:
+                return
+            self._last_acceptable_value = text
             self.valueChanged.emit(validate_result[1])
+
+    def _on_editing_finished(self):
+        text = self.text()
+        validate_result = self.validator().validate(text, 0)
+        if validate_result[0] == QtGui.QValidator.State.Acceptable:
+            if text == "" and not self._empty_allowed:
+                self.setText(self._last_acceptable_value)
 
     def sizeHint(self) -> QtCore.QSize:
         hint = super().sizeHint()

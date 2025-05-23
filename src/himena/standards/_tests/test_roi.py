@@ -54,6 +54,22 @@ def test_ellipse():
     assert r0.to_mask((20, 20)).sum() <= math.pi * 3 * 4
     assert r0.to_mask((20, 20)).sum() == r1.to_mask((20, 20)).sum()
 
+    # flat ellipse
+    rflat = roi.EllipseRoi(x=0, y=4, width=6, height=0)
+    assert rflat.area() == 0
+    assert rflat.to_mask((20, 20)).sum() == 0
+    assert rflat.eccentricity() == 0.0
+
+    rflat = roi.EllipseRoi(x=0, y=4, width=0, height=4)
+    assert rflat.area() == 0
+    assert rflat.to_mask((20, 20)).sum() == 0
+    assert rflat.eccentricity() == 0.0
+
+    rflat = roi.EllipseRoi(x=0, y=4, width=0, height=0)
+    assert rflat.area() == 0
+    assert rflat.to_mask((20, 20)).sum() == 0
+    assert rflat.eccentricity() == 1.0
+
 def test_rotated_ellipse():
     r0 = roi.RotatedEllipseRoi(start=(1, 1), end=(4, 4), width=2)
     r1 = r0.shifted(2, 3)
