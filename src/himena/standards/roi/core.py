@@ -157,16 +157,9 @@ class EllipseRoi(Roi2D):
     def area(self) -> float:
         return math.pi * self.width * self.height / 4
 
-    def circumference(self) -> float:
-        a, b = self.width / 2, self.height / 2
-        return math.pi * (3 * (a + b) - math.sqrt((3 * a + b) * (a + 3 * b)))
-
     def eccentricity(self) -> float:
         """Eccentricity of the ellipse."""
-        a, b = sorted([self.width / 2, self.height / 2])
-        if b == 0:
-            return 0.0
-        return math.sqrt(1 - a**2 / b**2)
+        return _utils.eccentricity(self.width / 2, self.height / 2)
 
     def bbox(self) -> Rect[float]:
         return Rect(self.x, self.y, self.width, self.height)
@@ -201,6 +194,10 @@ class RotatedEllipseRoi(RotatedRoi2D):
             comp_a * math.sin(angle) + comp_b * math.cos(angle),
         )
         return comp_a**2 + comp_b**2 <= 1
+
+    def eccentricity(self) -> float:
+        """Eccentricity of the ellipse."""
+        return _utils.eccentricity(self.length() / 2, self.width / 2)
 
 
 class PointRoi2D(Roi2D):

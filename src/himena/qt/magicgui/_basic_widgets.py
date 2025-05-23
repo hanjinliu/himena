@@ -59,6 +59,7 @@ class RangedLineEdit(LineEdit, Generic[_T]):
             self.min = min
         if max is not Undefined:
             self.max = max
+        self._set_nullable(self._nullable)
 
     @property
     def min(self) -> _T:
@@ -75,6 +76,9 @@ class RangedLineEdit(LineEdit, Generic[_T]):
     @max.setter
     def max(self, value: _T):
         self._widget._mgui_set_max(value)
+
+    def _set_nullable(self, nullable: bool):
+        self._widget._qwidget._empty_allowed = nullable
 
 
 class QIntEdit(QBaseRangedStringWidget):
@@ -114,13 +118,12 @@ class IntEdit(RangedLineEdit):
             raise ValueError(f"Must specify a value for {self.label!r}")
         return val
 
-    @LineEdit.value.setter
-    def value(self, value):
+    def set_value(self, value):
         if value is None:
             if not self._nullable:
                 raise ValueError(f"Value for {self.label} cannot be None")
             value = ""
-        LineEdit.value.fset(self, value)
+        super().set_value(value)
 
 
 class QFloatEdit(QBaseRangedStringWidget):
@@ -160,15 +163,14 @@ class FloatEdit(RangedLineEdit):
             raise ValueError(f"Must specify a value for {self.label}")
         return val
 
-    @LineEdit.value.setter
-    def value(self, value):
+    def set_value(self, value):
         if value is None:
             if not self._nullable:
                 raise ValueError(f"Value for {self.label} cannot be None")
             value_str = ""
         else:
             value_str = float_to_str(value)
-        LineEdit.value.fset(self, value_str)
+        super().set_value(value_str)
 
 
 class QIntListEdit(QBaseStringWidget):
@@ -199,13 +201,12 @@ class IntListEdit(LineEdit):
             return []
         return [int(part) for part in val.split(",")]
 
-    @LineEdit.value.setter
-    def value(self, value):
+    def set_value(self, value):
         if value is None:
             value_str = ""
         else:
             value_str = ", ".join(str(part) for part in value)
-        LineEdit.value.fset(self, value_str)
+        super().set_value(value_str)
 
 
 class QFloatListEdit(QBaseStringWidget):
@@ -236,13 +237,12 @@ class FloatListEdit(LineEdit):
             return []
         return [float(part) for part in val.split(",")]
 
-    @LineEdit.value.setter
-    def value(self, value):
+    def set_value(self, value):
         if value is None:
             value_str = ""
         else:
             value_str = ",".join(float_to_str(part) for part in value)
-        LineEdit.value.fset(self, value_str)
+        super().set_value(value_str)
 
 
 def float_to_str(value: int | float):

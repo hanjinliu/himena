@@ -68,6 +68,10 @@ def test_int_line_edit(qtbot: QtBot):
     assert line.text() == "105"
     qtbot.keyClick(line, Qt.Key.Key_PageDown)
     assert line.text() == "5"
+    line.setText("")
+    line._on_editing_finished()
+    line._on_text_changed("")
+    line._on_text_changed("0")
 
 def test_double_line_edit(qtbot: QtBot):
     from himena.qt._qlineedit import QDoubleLineEdit
@@ -96,6 +100,10 @@ def test_double_line_edit(qtbot: QtBot):
     assert line.text() == "13.1"
     qtbot.keyClick(line, Qt.Key.Key_PageDown)
     assert line.text() == "3.1"
+    line.setText("")
+    line._on_editing_finished()
+    line._on_text_changed("")
+    line._on_text_changed("0")
 
 def test_double_line_edit_exponential(qtbot: QtBot):
     from himena.qt._qlineedit import QDoubleLineEdit

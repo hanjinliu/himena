@@ -107,11 +107,14 @@ class QLineRoi(QtW.QGraphicsLineItem, QRoi):
         x1, y1, x2, y2 = self._coordinates()
         start = f"{x1:.1f}, {y1:.1f}"
         end = f"{x2:.1f}, {y2:.1f}"
-        length_px = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
-        length = math.sqrt(((x2 - x1) * xscale) ** 2 + ((y2 - y1) * yscale) ** 2)
+        dx, dy = x2 - x1, y2 - y1
+        length_px = math.sqrt(dx**2 + dy**2)
+        ang_px = self.toRoi().angle()
         if not unit:
-            return f"start=({start}), end=({end}), length={length_px:.1f}"
-        return f"start=({start}), end=({end}), length={length_px:.1f} px ({length:.1f} {unit})"
+            return f"start=({start}), end=({end}), length={length_px:.1f}, angle={ang_px:.1f}°"
+        length = math.sqrt((dx * xscale) ** 2 + (dy * yscale) ** 2)
+        ang = math.degrees(math.atan2(dy * yscale, dx * xscale))
+        return f"start=({start}), end=({end}), length={length_px:.1f} px ({length:.1f} {unit}), angle={ang_px:.1f}° (scaled: {ang:.1f}°)"
 
 
 class QRectRoiBase(QRoi):
@@ -158,10 +161,10 @@ class QRectangleRoi(QtW.QGraphicsRectItem, QRectRoiBase):
         x, y, w, h = rect.x(), rect.y(), rect.width(), rect.height()
         width_px = w
         height_px = h
-        width = w * xscale
-        height = h * yscale
         if not unit:
             return f"left={x:.1f}, top={y:.1f}, width={width_px:.1f}, height={height_px:.1f}"
+        width = w * xscale
+        height = h * yscale
         return f"left={x:.1f}, top={y:.1f}, width={width_px:.1f} ({width:.1f} {unit}), height={height_px:.1f} ({height:.1f} {unit})"
 
 
@@ -330,10 +333,10 @@ class QRotatedRoiBase(QRoi):
         start = self.start()
         end = self.end()
         length_px = self._length
-        length = length_px * xscale
         if not unit:
-            return f"start=[{start.x():.1f}, {start.y():.1f}], end=[{end.x():.1f}, {end.y():.1f}], length={length_px:.1f}"
-        return f"start=[{start.x():.1f}, {start.y():.1f}], end=[{end.x():.1f}, {end.y():.1f}], length={length_px:.1f} ({length:.1f} {unit})"
+            return f"start=[{start.x():.1f}, {start.y():.1f}], end=[{end.x():.1f}, {end.y():.1f}], length={length_px:.1f}, angle={self.angle():.1f}°"
+        length = length_px * xscale
+        return f"start=[{start.x():.1f}, {start.y():.1f}], end=[{end.x():.1f}, {end.y():.1f}], length={length_px:.1f} ({length:.1f} {unit}), angle={self.angle():.1f}°"
 
 
 class QRotatedRectangleRoi(QRotatedRoiBase):
