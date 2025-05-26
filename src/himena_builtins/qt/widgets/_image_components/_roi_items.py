@@ -113,7 +113,7 @@ class QLineRoi(QtW.QGraphicsLineItem, QRoi):
         if not unit:
             return f"start=({start}), end=({end}), length={length_px:.1f}, angle={ang_px:.1f}°"
         length = math.sqrt((dx * xscale) ** 2 + (dy * yscale) ** 2)
-        ang = math.degrees(math.atan2(dy * yscale, dx * xscale))
+        ang = -math.degrees(math.atan2(dy * yscale, dx * xscale))
         return f"start=({start}), end=({end}), length={length_px:.1f} px ({length:.1f} {unit}), angle={ang_px:.1f}° (scaled: {ang:.1f}°)"
 
 
@@ -124,11 +124,14 @@ class QRectRoiBase(QRoi):
 class QRectangleRoi(QtW.QGraphicsRectItem, QRectRoiBase):
     def toRoi(self) -> roi.RectangleRoi:
         rect = self.rect()
+        x, y, width, height = _may_be_ints(
+            rect.x(), rect.y(), rect.width(), rect.height()
+        )
         return roi.RectangleRoi(
-            x=rect.x(),
-            y=rect.y(),
-            width=rect.width(),
-            height=rect.height(),
+            x=x,
+            y=y,
+            width=width,
+            height=height,
             name=self.label(),
         )
 
@@ -173,11 +176,14 @@ class QEllipseRoi(QtW.QGraphicsEllipseItem, QRectRoiBase):
 
     def toRoi(self) -> roi.EllipseRoi:
         rect = self.rect()
+        x, y, width, height = _may_be_ints(
+            rect.x(), rect.y(), rect.width(), rect.height()
+        )
         return roi.EllipseRoi(
-            x=rect.x(),
-            y=rect.y(),
-            width=rect.width(),
-            height=rect.height(),
+            x=x,
+            y=y,
+            width=width,
+            height=height,
             name=self.label(),
         )
 
@@ -776,6 +782,11 @@ class QCircleRoi(QtW.QGraphicsEllipseItem, QRoi):
         return (
             f"center=[{cx:.1f}, {cy:.1f}], radius={radius_px:.1f} ({radius:.1f} {unit})"
         )
+
+
+def _may_be_ints(*values: float) -> list[int | float]:
+    """Convert values to int if they are close to an integer."""
+    return [int(v) if abs(v - round(v)) < 1e-6 else v for v in values]
 
 
 class MouseMode(Enum):

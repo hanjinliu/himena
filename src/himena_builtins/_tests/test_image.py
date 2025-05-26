@@ -2,6 +2,7 @@ import warnings
 import numpy as np
 from numpy.testing import assert_equal
 from pathlib import Path
+import pytest
 from qtpy import QtCore
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QApplication
@@ -132,11 +133,17 @@ def test_image_view_rgb(qtbot: QtBot):
         image_view._control._chn_mode_combo.setCurrentText("Color")
         QApplication.processEvents()
 
-def test_image_view_draw_roi(qtbot: QtBot):
+@pytest.mark.parametrize("unit", ["", "nm"])
+def test_image_view_draw_roi(qtbot: QtBot, unit: str):
     image_view = QImageView()
     image_view.show()
     with WidgetTester(image_view) as tester:
-        tester.update_model(value=np.zeros((100, 100), dtype=np.uint8))
+        tester.update_model(
+            value=np.zeros((100, 100), dtype=np.uint8),
+            metadata=ImageMeta(
+                axes=[DimAxis(name="y", unit=unit), DimAxis(name="x", unit=unit)]
+            ),
+        )
         qtbot.addWidget(image_view)
 
         # test ROI drawing
