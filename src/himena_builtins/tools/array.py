@@ -186,9 +186,29 @@ def binary_operation() -> Parametric:
         if result_dtype == "input":
             arr_out = arr_out.astype(xval.dtype, copy=False)
         out = x.with_value(arr_out, title=f"{operation} {x.title} and {y.title}")
+
         if isinstance(meta := out.metadata, ImageMeta):
             for ch in meta.channels:
                 ch.contrast_limits = None  # reset contrast limits
+        if isinstance(meta_x := x.metadata, ImageMeta):
+            axes_x = meta_x.axes
+        else:
+            axes_x = None
+        if isinstance(meta_y := y.metadata, ImageMeta):
+            axes_y = meta_y.axes
+        else:
+            axes_y = None
+        # inherit axes from the first input
+        if axes_x is not None and axes_y is not None:
+            axes = axes_x if len(axes_x) >= len(axes_y) else axes_y
+        elif axes_x is not None:
+            axes = axes_x
+        elif axes_y is not None:
+            axes = axes_y
+        else:
+            axes = None
+        if axes is not None and isinstance(meta_out := out.metadata, ArrayMeta):
+            meta_out.axes = axes
         return out
 
     return run_calc

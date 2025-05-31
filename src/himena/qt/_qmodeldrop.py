@@ -203,6 +203,13 @@ class QModelDrop(QModelDropBase):
             _LOGGER.info("Dropped model %s", win.windowTitle())
             self.set_qsubwindow(win)
             self._emit_window(win._my_wrapper())
+            # move this window to the top
+            this = self
+            while this := this.parent():
+                if isinstance(this, QSubWindow):
+                    main = get_main_window(this)
+                    main.current_window = this._my_wrapper()
+                    break
 
     def _emit_window(self, win: SubWindow):
         self.windowChanged.emit(win)
