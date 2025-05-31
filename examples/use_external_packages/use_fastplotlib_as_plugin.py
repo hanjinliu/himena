@@ -6,7 +6,7 @@ from himena import WidgetDataModel, StandardType, new_window
 from himena.standards.model_meta import ImageMeta
 
 @register_widget_class(StandardType.IMAGE)
-class FastplotlibImageView(fpl.Figure):
+class FastplotlibImageViewFigure(fpl.Figure):
     def __init__(self):
         super().__init__()
         self._image_graphic: fpl.ImageGraphic | None = None

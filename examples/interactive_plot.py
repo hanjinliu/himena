@@ -29,4 +29,7 @@ if __name__ == "__main__":
         result_as="below",
         title="Plot below the parameters",
     )
+    ui.show_notification(
+        "Check 'preview' in the function widgets to show interactively plot"
+    )
     ui.show(run=True)

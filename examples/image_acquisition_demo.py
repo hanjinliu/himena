@@ -73,4 +73,7 @@ def install_image_acquisition(ui: MainWindow):
 
 if __name__ == "__main__":
     ui = new_window()
+    ui.show_notification(
+        "Open the test widget in Tools > Dock widgets > Image Acquisition"
+    )
     ui.show(run=True)

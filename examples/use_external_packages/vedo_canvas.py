@@ -62,6 +62,7 @@ def load_man() -> WidgetDataModel:
 
 def main():
     ui = new_window()
+    ui.add_object("Click File > New > Vedo > load man.vtk to see how it works.")
     ui.show(run=True)
 
 if __name__ == "__main__":
