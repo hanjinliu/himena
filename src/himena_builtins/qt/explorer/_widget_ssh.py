@@ -457,6 +457,11 @@ class QRemoteTreeWidget(QtW.QTreeWidget):
         )
         paste_action = menu.addAction("Paste")
         paste_action.triggered.connect(self._paste_from_clipboard)
+        menu.addSeparator()
+        download_action = menu.addAction("Download")
+        download_action.triggered.connect(
+            lambda: self._save_items(self.selectedItems())
+        )
         return menu
 
     def _show_context_menu(self, pos: QtCore.QPoint):
@@ -497,6 +502,27 @@ class QRemoteTreeWidget(QtW.QTreeWidget):
         drag = QtGui.QDrag(self)
         drag.setMimeData(mime)
         drag.exec(QtCore.Qt.DropAction.CopyAction)
+
+    def _save_items(self, items: list[QtW.QTreeWidgetItem]):
+        """Save the selected items to local files."""
+        download_dir = Path.home() / "Downloads"
+        src_paths: list[Path] = []
+        dst_paths: list[Path] = []
+        for item in items:
+            item_type = _item_type(item)
+            if item_type == "l":
+                _, real_path = item.text(0).split(" -> ")
+                remote_path = self.parent()._pwd / real_path
+            else:
+                remote_path = self.parent()._pwd / item.text(0)
+            src_paths.append(remote_path)
+            dst_paths.append(download_dir / item.text(0))
+
+        for reader, dst_path in zip(
+            self.parent()._make_reader_methods_for_items(items), dst_paths
+        ):
+            reader.run_command(dst_path)
+            dst_path.touch()
 
     if TYPE_CHECKING:
 

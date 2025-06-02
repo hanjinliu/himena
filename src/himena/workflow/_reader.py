@@ -152,7 +152,7 @@ class RemoteReaderMethod(ReaderMethod):
         model.workflow = self.construct_workflow()
         return model
 
-    def run_command(self, dst_path: Path, stdout=None):
+    def run_command(self, dst_path: Path, stdout=None, new_process: bool = False):
         """Run scp/rsync command to move the file from remote to local `dst_path`."""
         args = remote_to_local(
             self.protocol,
@@ -162,7 +162,9 @@ class RemoteReaderMethod(ReaderMethod):
             is_dir=self.force_directory,
             port=self.port,
         )
-        result = subprocess.run(args, stdout=stdout)
-        if result.returncode != 0:
-            raise ValueError(f"Failed to run command {args}: {result!r}")
-        return None
+        if new_process:
+            subprocess.Popen(args, stdout=stdout, stderr=subprocess.PIPE)
+        else:
+            result = subprocess.run(args, stdout=stdout)
+            if result.returncode != 0:
+                raise ValueError(f"Failed to run command {args}: {result!r}")
