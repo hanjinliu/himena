@@ -867,7 +867,12 @@ class QSubWindowTitleBar(QtW.QFrame):
         return super().enterEvent(event)
 
     def leaveEvent(self, a0):
-        get_main_window(self).set_status_tip("")
+        try:
+            main = get_main_window(self)
+        except ValueError:
+            pass
+        else:
+            main.set_status_tip("")
         return super().leaveEvent(a0)
 
     def _store_drag_position(self, global_pos: QtCore.QPoint):
