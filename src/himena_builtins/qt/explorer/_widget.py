@@ -5,12 +5,14 @@ import warnings
 import shutil
 from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW, QtCore, QtGui
-
 from himena import _drag
-from himena.widgets import MainWindow
-from himena_builtins.qt.explorer._widget_ssh import QSSHRemoteExplorerWidget
+from himena_builtins.qt.explorer._widget_ssh import (
+    QSSHRemoteExplorerWidget,
+    make_paste_remote_files_worker,
+)
 
 if TYPE_CHECKING:
+    from himena.qt import MainWindowQt
     from himena_builtins.qt.explorer import FileExplorerConfig
 
 
@@ -69,7 +71,7 @@ class QExplorerWidget(QtW.QWidget):
 
     open_file_requested = QtCore.Signal(Path)
 
-    def __init__(self, ui: MainWindow) -> None:
+    def __init__(self, ui: MainWindowQt) -> None:
         super().__init__()
         self._ui = ui
         self._root = QRootPathEdit()
@@ -112,7 +114,7 @@ class QExtendedFileSystemModel(QFileSystemModel):
 class QFileTree(QtW.QTreeView):
     fileDoubleClicked = QtCore.Signal(Path)
 
-    def __init__(self, ui: MainWindow) -> None:
+    def __init__(self, ui: MainWindowQt) -> None:
         from himena_builtins.qt.explorer import FileExplorerConfig
 
         super().__init__()
@@ -268,9 +270,12 @@ class QFileTree(QtW.QTreeView):
             self._paste_mime_data(clipboard.mimeData(), dirpath)
 
     def _paste_mime_data(self, mime: QtCore.QMimeData, dirpath: Path):
+        ui = self._ui._backend_main_window
         if isinstance(par := mime.parent(), QSSHRemoteExplorerWidget):
-            for reader in par.readers_from_mime(mime):
-                reader.run_command(dirpath, new_process=True)
+            readers = par.readers_from_mime(mime)
+            worker = make_paste_remote_files_worker(readers, dirpath)
+            ui._job_stack.add_worker(worker, "Pasting remote files", total=len(readers))
+            worker.start()
         else:
             self._paste_file(
                 self._ui.clipboard.files,

@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from enum import Enum
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt
+from superqt.utils import FunctionWorker, GeneratorWorker, WorkerBase
 
 from himena.qt._qprogress import QLabeledCircularProgressBar
 
@@ -276,6 +277,39 @@ class QJobStack(_QOverlayBase):
             return None
         future.add_done_callback(lambda _: self.job_finished.emit(item))
         self._add_item_for_future(item, labeled_pbar)
+
+    def add_worker(self, worker: WorkerBase, desc: str, total: int = 0):
+        labeled_pbar = QLabeledCircularProgressBar(desc)
+        pbar = labeled_pbar.pbar()
+        pbar.setButtonState("square")
+        if isinstance(worker, FunctionWorker):
+            pbar.setValue(-1)
+
+        elif isinstance(worker, GeneratorWorker):
+            _nyield = 0
+
+            @worker.yielded.connect
+            def _increment(*_):
+                nonlocal _nyield
+                _nyield += 1
+                if _nyield > total:
+                    value = -1
+                else:
+                    value = _nyield / total * 100
+                return pbar.setValue(value)
+
+        else:
+            raise TypeError(f"Unsupported worker type: {type(worker)}")
+
+        @pbar.abortRequested.connect
+        def _aborting():
+            if not worker.abort_requested:
+                pbar.infiniteRequested.emit(True)
+                worker.quit()
+
+        item = QtW.QListWidgetItem()
+        worker.started.connect(lambda: self._add_item_for_future(item, labeled_pbar))
+        worker.finished.connect(lambda: self._on_job_finished(item))
 
     def _add_item_for_future(self, item: QtW.QListWidgetItem, widget: QtW.QWidget):
         lw = self._list_widget

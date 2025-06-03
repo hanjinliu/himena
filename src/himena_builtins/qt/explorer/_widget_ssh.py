@@ -16,13 +16,14 @@ from himena.consts import MonospaceFontFamily
 from himena.types import DragDataModel, WidgetDataModel
 from himena.utils.misc import lru_cache
 from himena.utils.cli import local_to_remote
-from himena.widgets import MainWindow, set_status_tip, notify
+from himena.widgets import set_status_tip, notify
 from himena.plugins import validate_protocol
 from himena_builtins.qt.widgets._shared import labeled
 
 if TYPE_CHECKING:
     from himena.style import Theme
     from himena_builtins.qt.explorer import FileExplorerSSHConfig
+    from himena.qt import MainWindowQt
 
 
 class QSSHRemoteExplorerWidget(QtW.QWidget):
@@ -38,7 +39,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
 
     on_ls = QtCore.Signal(object)
 
-    def __init__(self, ui: MainWindow) -> None:
+    def __init__(self, ui: MainWindowQt) -> None:
         super().__init__()
         self.setAcceptDrops(True)
         font = QtGui.QFont(MonospaceFontFamily)
@@ -507,7 +508,6 @@ class QRemoteTreeWidget(QtW.QTreeWidget):
         """Save the selected items to local files."""
         download_dir = Path.home() / "Downloads"
         src_paths: list[Path] = []
-        dst_paths: list[Path] = []
         for item in items:
             item_type = _item_type(item)
             if item_type == "l":
@@ -516,13 +516,12 @@ class QRemoteTreeWidget(QtW.QTreeWidget):
             else:
                 remote_path = self.parent()._pwd / item.text(0)
             src_paths.append(remote_path)
-            dst_paths.append(download_dir / item.text(0))
 
-        for reader, dst_path in zip(
-            self.parent()._make_reader_methods_for_items(items), dst_paths
-        ):
-            reader.run_command(dst_path)
-            dst_path.touch()
+        readers = self.parent()._make_reader_methods_for_items(items)
+        worker = make_paste_remote_files_worker(readers, download_dir)
+        qui = self.parent()._ui._backend_main_window
+        qui._job_stack.add_worker(worker, "Downloading files", total=len(src_paths))
+        worker.start()
 
     if TYPE_CHECKING:
 
@@ -565,3 +564,16 @@ class QSeparator(QtW.QFrame):
         self.setSizePolicy(
             QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Fixed
         )
+
+
+@thread_worker
+def make_paste_remote_files_worker(
+    readers: list[RemoteReaderMethod],
+    dirpath: Path,
+):
+    for reader in readers:
+        dst = dirpath / reader.path.name
+        reader.run_command(dst)
+        if dst.exists():
+            dst.touch()
+        yield
