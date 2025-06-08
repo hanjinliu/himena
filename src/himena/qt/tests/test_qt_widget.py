@@ -2,7 +2,7 @@ import sys
 from qtpy import QtWidgets as QtW
 from qtpy.QtCore import Qt
 from pytestqt.qtbot import QtBot
-
+from superqt.utils import thread_worker
 from himena import create_model, StandardType
 from himena.qt._qtraceback import QtErrorMessageBox, QtTracebackDialog
 from himena.qt import MainWindowQt
@@ -238,3 +238,15 @@ def test_model_drop(himena_ui: MainWindowQt):
     assert qdroplist.models()[0].type == StandardType.TEXT
     qdroplist.itemWidget(qdroplist.item(0))._update_btn_pos()
     qdroplist.set_models(None)
+
+def test_notification(himena_ui: MainWindowQt):
+    himena_ui.add_object("abc", type=StandardType.TEXT)
+
+    @thread_worker
+    def func():
+        yield
+
+    worker = func()
+    himena_ui._backend_main_window._job_stack.add_worker(worker, "Test Job")
+    worker.start()
+    worker.await_workers(100)
