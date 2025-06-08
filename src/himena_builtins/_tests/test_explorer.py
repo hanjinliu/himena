@@ -57,3 +57,4 @@ def test_ssh_widget(qtbot: QtBot, himena_ui):
     assert widget._filter_widget.isVisible()
     qtbot.keyClick(widget._filter_widget, Qt.Key.Key_Escape)
     assert widget._filter_widget.isHidden()
+    widget._file_list_widget._save_items([])

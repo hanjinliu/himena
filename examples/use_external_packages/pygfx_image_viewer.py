@@ -4,6 +4,7 @@ from himena.consts import StandardType
 from himena.plugins import (
     register_function,
     register_widget_class,
+    validate_protocol,
 )
 from wgpu.gui.qt import WgpuWidget
 import imageio.v3 as iio
@@ -19,15 +20,14 @@ class WgpuImageWidget(WgpuWidget):
         self._arr = None
         self._current_image = None
         self._camera = gfx.OrthographicCamera()
-        self._camera.show_object(self._scene, view_dir=(0, 0, -1))
+        self._controller = gfx.PanZoomController(self._camera, register_events=self._renderer)
         self._camera.local.scale_y = -1
 
         self.request_draw(self._animate)
-        return self
 
     def _animate(self):
         self._renderer.render(self._scene, self._camera)
-        self.request_draw()
+        self.request_draw(self._animate)
 
     def set_image(self, arr):
         if self._current_image is not None:
@@ -40,14 +40,23 @@ class WgpuImageWidget(WgpuWidget):
         self._current_image = image
         self._arr = arr
 
+    @validate_protocol
     def update_model(self, model: WidgetDataModel[np.ndarray]):
         self._camera.width = model.value.shape[1]
         self._camera.height = model.value.shape[0]
         return self.set_image(model.value)
 
+    @validate_protocol
     def to_model(self) -> WidgetDataModel:
         return WidgetDataModel(value=self._arr, type=StandardType.IMAGE)
 
+    @validate_protocol
+    def size_hint(self) -> tuple[int, int]:
+        return 400, 320
+
+    @validate_protocol
+    def widget_added_callback(self):
+        self._camera.show_object(self._current_image)
 
 @register_function(title="Gaussian Filter", types=StandardType.IMAGE, menus="tools/image_processing")
 def gaussian_filter(model: WidgetDataModel[np.ndarray]) -> WidgetDataModel[np.ndarray]:

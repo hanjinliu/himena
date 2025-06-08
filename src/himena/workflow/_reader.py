@@ -165,4 +165,3 @@ class RemoteReaderMethod(ReaderMethod):
         result = subprocess.run(args, stdout=stdout)
         if result.returncode != 0:
             raise ValueError(f"Failed to run command {args}: {result!r}")
-        return None

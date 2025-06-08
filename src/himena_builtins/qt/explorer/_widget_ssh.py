@@ -16,13 +16,14 @@ from himena.consts import MonospaceFontFamily
 from himena.types import DragDataModel, WidgetDataModel
 from himena.utils.misc import lru_cache
 from himena.utils.cli import local_to_remote
-from himena.widgets import MainWindow, set_status_tip, notify
+from himena.widgets import set_status_tip, notify
 from himena.plugins import validate_protocol
 from himena_builtins.qt.widgets._shared import labeled
 
 if TYPE_CHECKING:
     from himena.style import Theme
     from himena_builtins.qt.explorer import FileExplorerSSHConfig
+    from himena.qt import MainWindowQt
 
 
 class QSSHRemoteExplorerWidget(QtW.QWidget):
@@ -38,7 +39,7 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
 
     on_ls = QtCore.Signal(object)
 
-    def __init__(self, ui: MainWindow) -> None:
+    def __init__(self, ui: MainWindowQt) -> None:
         super().__init__()
         self.setAcceptDrops(True)
         font = QtGui.QFont(MonospaceFontFamily)
@@ -457,6 +458,11 @@ class QRemoteTreeWidget(QtW.QTreeWidget):
         )
         paste_action = menu.addAction("Paste")
         paste_action.triggered.connect(self._paste_from_clipboard)
+        menu.addSeparator()
+        download_action = menu.addAction("Download")
+        download_action.triggered.connect(
+            lambda: self._save_items(self.selectedItems())
+        )
         return menu
 
     def _show_context_menu(self, pos: QtCore.QPoint):
@@ -497,6 +503,25 @@ class QRemoteTreeWidget(QtW.QTreeWidget):
         drag = QtGui.QDrag(self)
         drag.setMimeData(mime)
         drag.exec(QtCore.Qt.DropAction.CopyAction)
+
+    def _save_items(self, items: list[QtW.QTreeWidgetItem]):
+        """Save the selected items to local files."""
+        download_dir = Path.home() / "Downloads"
+        src_paths: list[Path] = []
+        for item in items:
+            item_type = _item_type(item)
+            if item_type == "l":
+                _, real_path = item.text(0).split(" -> ")
+                remote_path = self.parent()._pwd / real_path
+            else:
+                remote_path = self.parent()._pwd / item.text(0)
+            src_paths.append(remote_path)
+
+        readers = self.parent()._make_reader_methods_for_items(items)
+        worker = make_paste_remote_files_worker(readers, download_dir)
+        qui = self.parent()._ui._backend_main_window
+        qui._job_stack.add_worker(worker, "Downloading files", total=len(src_paths))
+        worker.start()
 
     if TYPE_CHECKING:
 
@@ -539,3 +564,16 @@ class QSeparator(QtW.QFrame):
         self.setSizePolicy(
             QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Fixed
         )
+
+
+@thread_worker
+def make_paste_remote_files_worker(
+    readers: list[RemoteReaderMethod],
+    dirpath: Path,
+):
+    for reader in readers:
+        dst = dirpath / reader.path.name
+        reader.run_command(dst)
+        if dst.exists():
+            dst.touch()
+        yield
