@@ -533,6 +533,8 @@
       
         
       
+        
+      
     
     
     
@@ -706,6 +708,29 @@
   
   <span class="md-ellipsis">
     Register Dock Widgets
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev/drag_and_drop/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Drag and Drop
     
   </span>
   
@@ -5633,7 +5658,7 @@
                     <span class="sa">f</span><span class="s2">&quot;`window_context` must be SubWindow or UUID, got </span><span class="si">{</span><span class="n">window_context</span><span class="si">}</span><span class="s2">&quot;</span>
                 <span class="p">)</span>
             <span class="n">providers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">_window_context</span><span class="p">,</span> <span class="n">SubWindow</span><span class="p">,</span> <span class="mi">1000</span><span class="p">))</span>
-            <span class="k">if</span> <span class="n">model_context</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">model_context</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">_window_context</span><span class="o">.</span><span class="n">supports_to_model</span><span class="p">:</span>
                 <span class="n">providers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">_window_context</span><span class="o">.</span><span class="n">to_model</span><span class="p">(),</span> <span class="n">WidgetDataModel</span><span class="p">,</span> <span class="mi">100</span><span class="p">))</span>
         <span class="c1"># execute the command under the given context</span>
         <span class="k">with</span> <span class="p">(</span>
@@ -7373,7 +7398,7 @@ sub-window.</p>
                 <span class="sa">f</span><span class="s2">&quot;`window_context` must be SubWindow or UUID, got </span><span class="si">{</span><span class="n">window_context</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span>
         <span class="n">providers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">_window_context</span><span class="p">,</span> <span class="n">SubWindow</span><span class="p">,</span> <span class="mi">1000</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">model_context</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">model_context</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">_window_context</span><span class="o">.</span><span class="n">supports_to_model</span><span class="p">:</span>
             <span class="n">providers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">_window_context</span><span class="o">.</span><span class="n">to_model</span><span class="p">(),</span> <span class="n">WidgetDataModel</span><span class="p">,</span> <span class="mi">100</span><span class="p">))</span>
     <span class="c1"># execute the command under the given context</span>
     <span class="k">with</span> <span class="p">(</span>
