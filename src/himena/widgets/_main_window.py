@@ -678,7 +678,7 @@ class MainWindow(Generic[_W]):
                     f"`window_context` must be SubWindow or UUID, got {window_context}"
                 )
             providers.append((_window_context, SubWindow, 1000))
-            if model_context is None:
+            if model_context is None and _window_context.supports_to_model:
                 providers.append((_window_context.to_model(), WidgetDataModel, 100))
         # execute the command under the given context
         with (

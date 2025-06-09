@@ -208,7 +208,6 @@ class QFileTree(QtW.QTreeView):
             a0.accept()
         else:
             a0.ignore()
-        return None
 
     def dragMoveEvent(self, a0: QtGui.QDragMoveEvent):
         mime = a0.mimeData()
@@ -226,7 +225,6 @@ class QFileTree(QtW.QTreeView):
             index, QtCore.QItemSelectionModel.SelectionFlag.ClearAndSelect
         )
         a0.acceptProposedAction()
-        return None
 
     def dropEvent(self, a0: QtGui.QDropEvent):
         dirpath = self._directory_for_index(self.indexAt(a0.pos()))

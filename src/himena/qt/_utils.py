@@ -200,7 +200,10 @@ def drag_command(
                 break
         if win is None:
             raise ValueError("No subwindow found for the dragging widget.")
-        model = win.to_model()
+        if win.supports_to_model:
+            model = win.to_model()
+        else:
+            model = None
         out = ui.exec_action(
             command_id,
             window_context=win,
