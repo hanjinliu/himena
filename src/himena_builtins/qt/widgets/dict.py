@@ -10,6 +10,9 @@ from himena.types import DropResult, Parametric, WidgetDataModel
 from himena.consts import StandardType
 from himena.plugins import validate_protocol, register_hidden_function
 
+_CMD_MERGE_TAB = "builtins:QDictOfWidgetEdit:merge-tab"
+_CMD_SELECT_TAB = "builtins:QDictOfWidgetEdit:select-tab"
+
 
 class QRightClickableTabBar(QtW.QTabBar):
     right_clicked = QtCore.Signal(int)
@@ -51,7 +54,7 @@ class QRightClickableTabBar(QtW.QTabBar):
             return drag_command(
                 source=qexcel,
                 type=qexcel._model_type_component,
-                command_id="builtins:QDictOfWidgetEdit:select-tab",
+                command_id=_CMD_SELECT_TAB,
                 with_params={
                     "index": qexcel.currentIndex(),
                     "model_type": qexcel._model_type_component,
@@ -59,7 +62,6 @@ class QRightClickableTabBar(QtW.QTabBar):
                 exec=False,
                 desc=qexcel.tabText(index),
             )
-        return None
 
 
 class QDictOfWidgetEdit(QtW.QTabWidget):
@@ -186,7 +188,7 @@ class QDictOfWidgetEdit(QtW.QTabWidget):
     def dropped_callback(self, model: WidgetDataModel) -> DropResult:
         return DropResult(
             delete_input=True,
-            command_id="builtins:QDictOfWidgetEdit:merge-tab",
+            command_id=_CMD_MERGE_TAB,
             with_params={"incoming": model},
         )
 
@@ -200,7 +202,7 @@ class QTabControl(QtW.QWidget):
         raise NotImplementedError
 
 
-@register_hidden_function(command_id="builtins:QDictOfWidgetEdit:select-tab")
+@register_hidden_function(command_id=_CMD_SELECT_TAB)
 def select_tab(model: WidgetDataModel) -> Parametric:
     def run(index: int, model_type: str) -> WidgetDataModel:
         d = dict(model.value)
@@ -215,7 +217,7 @@ def select_tab(model: WidgetDataModel) -> Parametric:
     return run
 
 
-@register_hidden_function(command_id="builtins:QDictOfWidgetEdit:merge-tab")
+@register_hidden_function(command_id=_CMD_MERGE_TAB)
 def merge_tab(model: WidgetDataModel) -> Parametric:
     def run(incoming: WidgetDataModel) -> WidgetDataModel:
         out = dict(model.value)

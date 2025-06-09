@@ -39,6 +39,7 @@ nav:
     - Register Functions: dev/register_functions.md
     - Register Widgets: dev/register_widgets.md
     - Register Dock Widgets: dev/register_dock_widgets.md
+    - Drag and Drop: dev/drag_and_drop.md
     - Plotting in Himena: dev/plotting.md
   - API Reference:
     - api/consts.md
