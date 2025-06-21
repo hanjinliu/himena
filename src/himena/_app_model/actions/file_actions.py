@@ -341,7 +341,7 @@ def save_session(ui: MainWindow) -> Parametric:
         if isinstance(step := win._widget_workflow.last(), _wf.CommandExecution):
             if step.command_id in command_ids:
                 continue
-            if cmd := ui.model_app._registered_actions.get(step.command_id):
+            if cmd := ui.model_app.registered_actions.get(step.command_id):
                 command_ids.add(cmd.id)
                 choices.append((f"{cmd.title} ({cmd.id})", cmd.id))
 
@@ -420,7 +420,7 @@ def quit_main_window(ui: MainWindow) -> None:
 
 @ACTIONS.append_from_fn(
     id="copy-screenshot",
-    title="Copy screenshot of entire main window",
+    title="Copy Screenshot of Entire Main Window",
     menus=[{"id": MenuId.FILE_SCREENSHOT, "group": COPY_SCR_SHOT}],
 )
 def copy_screenshot(ui: MainWindow) -> ClipboardDataModel:
@@ -431,7 +431,7 @@ def copy_screenshot(ui: MainWindow) -> ClipboardDataModel:
 
 @ACTIONS.append_from_fn(
     id="copy-screenshot-area",
-    title="Copy screenshot of tab area",
+    title="Copy Screenshot of Tab Area",
     menus=[{"id": MenuId.FILE_SCREENSHOT, "group": COPY_SCR_SHOT}],
     enablement=_ctx.num_tabs > 0,
 )
@@ -443,7 +443,7 @@ def copy_screenshot_area(ui: MainWindow) -> ClipboardDataModel:
 
 @ACTIONS.append_from_fn(
     id="copy-screenshot-window",
-    title="Copy Screenshot of sub-window",
+    title="Copy Screenshot of Sub-Window",
     menus=[{"id": MenuId.FILE_SCREENSHOT, "group": COPY_SCR_SHOT}],
     enablement=_ctx.num_sub_windows > 0,
 )
@@ -489,7 +489,7 @@ def _save_screenshot(ui: MainWindow, target: str) -> None:
 
 @ACTIONS.append_from_fn(
     id="save-screenshot",
-    title="Save screenshot of entire main window",
+    title="Save Screenshot of Entire Main Window",
     menus=[{"id": MenuId.FILE_SCREENSHOT, "group": SAVE_SCR_SHOT}],
 )
 def save_screenshot(ui: MainWindow) -> None:
@@ -498,7 +498,7 @@ def save_screenshot(ui: MainWindow) -> None:
 
 @ACTIONS.append_from_fn(
     id="save-screenshot-area",
-    title="Save screenshot of tab area",
+    title="Save Screenshot of Tab Area",
     menus=[{"id": MenuId.FILE_SCREENSHOT, "group": SAVE_SCR_SHOT}],
     enablement=_ctx.num_tabs > 0,
 )
@@ -508,7 +508,7 @@ def save_screenshot_area(ui: MainWindow) -> None:
 
 @ACTIONS.append_from_fn(
     id="save-screenshot-window",
-    title="Save screenshot of sub-window",
+    title="Save Screenshot of Sub-Window",
     menus=[{"id": MenuId.FILE_SCREENSHOT, "group": SAVE_SCR_SHOT}],
     enablement=_ctx.num_sub_windows > 0,
 )

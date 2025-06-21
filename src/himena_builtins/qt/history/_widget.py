@@ -257,7 +257,7 @@ class QCommandListModel(QtCore.QAbstractListModel):
             command_id = ui._history_command.get(row)
             if command_id is None:
                 return None
-            return ui.model_app._registered_actions.get(command_id)
+            return ui.model_app.registered_actions.get(command_id)
         return None
 
     def data(self, index, role):

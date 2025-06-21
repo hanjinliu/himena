@@ -72,11 +72,11 @@ class QKeybindEdit(QtW.QWidget):
         for ko in self._ui.app_profile.keybinding_overrides:
             keybind = app.keybindings.get_keybinding(ko.command_id)
             if keybind:
-                app.keybindings._keybindings.remove(keybind)
+                app.keybindings._keymap.pop(keybind.keybinding.to_int(), -1)
         self._ui.app_profile.keybinding_overrides.clear()
         self._ui.app_profile.save()
         for qa in _iter_command_action(qui._menubar.actions() + qui._toolbar.actions()):
-            if action := self._ui.model_app._registered_actions.get(qa._command_id):
+            if action := self._ui.model_app.registered_actions.get(qa._command_id):
                 if action.keybindings:
                     for kb in action.keybindings:
                         if kb.primary:
@@ -252,7 +252,7 @@ class QKeybindTable(QtW.QTableWidget):
                     stacklevel=2,
                 )
             if kbd_current is not None:
-                self._app.keybindings._keybindings.remove(kbd_current)
+                self._app.keybindings._keymap.pop(kbd_current.keybinding.to_int(), -1)
             if new_shortcut:
                 self._app.keybindings.register_keybinding_rule(
                     command_id, KeyBindingRule(primary=new_shortcut)
@@ -285,15 +285,17 @@ def _item_basic(text: str, monospace: bool = False) -> QtW.QTableWidgetItem:
 class QKeybindDelegate(QtW.QItemDelegate):
     """Delegate that handles when user types in new shortcut."""
 
-    def createEditor(self, widget, style_option, model_index):
-        self._editor = QKeybindingLineEdit(widget)
-        return self._editor
+    def createEditor(self, widget, style_option, model_index: QtCore.QModelIndex):
+        if model_index.isValid():
+            self._editor = QKeybindingLineEdit(widget)
+            return self._editor
 
     def setEditorData(
         self, widget: QKeybindingLineEdit, model_index: QtCore.QModelIndex
     ):
-        text = widget.keySequence().toString()
-        widget.setKeySequence(text)
+        if model_index.isValid():
+            text = widget.keySequence().toString()
+            widget.setKeySequence(text)
 
     def updateEditorGeometry(
         self,
@@ -301,7 +303,8 @@ class QKeybindDelegate(QtW.QItemDelegate):
         style_option: QtW.QStyleOptionViewItem,
         model_index: QtCore.QModelIndex,
     ):
-        widget.setGeometry(style_option.rect)
+        if model_index.isValid():
+            widget.setGeometry(style_option.rect)
 
     def setModelData(
         self,
@@ -309,8 +312,9 @@ class QKeybindDelegate(QtW.QItemDelegate):
         abstract_item_model: QtCore.QAbstractItemModel,
         model_index: QtCore.QModelIndex,
     ):
-        text = widget.keySequence().toString()
-        abstract_item_model.setData(model_index, text, Qt.ItemDataRole.EditRole)
+        if model_index.isValid():
+            text = widget.keySequence().toString()
+            abstract_item_model.setData(model_index, text, Qt.ItemDataRole.EditRole)
 
 
 class QKeybindingLineEdit(QtW.QKeySequenceEdit):

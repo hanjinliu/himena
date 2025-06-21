@@ -115,7 +115,7 @@ def copy_slice_to_clipboard(win: SubWindow[QImageView], ui: MainWindow):
     """Copy the current slice to the clipboard as is."""
     qimage = ImageViewCapture.get_instance(ui).to_qimage(win.widget)
     QtGui.QGuiApplication.clipboard().setImage(qimage)
-    return None
+    ui.show_notification("Image slice copied to the clipboard.", duration=2)
 
 
 @register_function(
@@ -145,10 +145,11 @@ def save_slice(win: SubWindow[QImageView], ui: MainWindow):
     command_id="builtins:image:copy-viewer-screenshot",
     group="10-screenshot",
 )
-def copy_image_view_screenshot(win: SubWindow[QImageView]):
+def copy_image_view_screenshot(win: SubWindow[QImageView], ui: MainWindow):
     """Copy the screenshot of the image view to the clipboard."""
     qimage = win.widget._img_view.grab().toImage()
     QtGui.QGuiApplication.clipboard().setImage(qimage)
+    ui.show_notification("Image view screenshot copied to the clipboard.", duration=2)
 
 
 @register_function(
