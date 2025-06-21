@@ -971,7 +971,7 @@ def _update_toolbtn_color(toolbar: QModelToolBar, icon_color: str):
             btn = toolbar.widgetForAction(action)
             if not isinstance(btn, QtW.QToolButton):
                 continue
-            icon = toolbar._app._registered_actions[action._command_id].icon
+            icon = toolbar._app.registered_actions[action._command_id].icon
             if icon is not None:
                 qicon = QIconifyIcon(icon.light, color=icon_color)
                 btn.setIcon(qicon)

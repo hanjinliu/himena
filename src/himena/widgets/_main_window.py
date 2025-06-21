@@ -1028,7 +1028,7 @@ class MainWindow(Generic[_W]):
         if exc := result.exception():
             _LOGGER.exception("Command %r failed: %r", id, exc)
             return
-        if action := self.model_app._registered_actions.get(id):
+        if action := self.model_app.registered_actions.get(id):
             if getattr(action.callback, NO_RECORDING_FIELD, False):
                 return None
             self._history_command.add(id)

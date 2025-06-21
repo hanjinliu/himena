@@ -29,7 +29,7 @@ def show_command_palette(ui: MainWindow) -> None:
 def repeat_last_command(ui: MainWindow) -> None:
     """Repeat the command that was executed last."""
     if id := ui._history_command.get_from_last(1):
-        if action := ui.model_app._registered_actions.get(id):
+        if action := ui.model_app.registered_actions.get(id):
             ctx = ui._ctx_keys.dict()
             if action.enablement is None or action.enablement.eval(ctx):
                 ui.exec_action(id)

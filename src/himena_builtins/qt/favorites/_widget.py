@@ -32,7 +32,7 @@ class QFavoriteCommands(QtW.QWidget):
             return
         self._command_list.clear()
         for cmd_id in cfg.commands:
-            if action := ui.model_app._registered_actions.get(cmd_id):
+            if action := ui.model_app.registered_actions.get(cmd_id):
                 self._command_list.add_action(action)
 
 
@@ -100,7 +100,7 @@ class QCommandList(QtW.QListWidget):
         if mime.hasFormat("text/command-id"):
             command_id = bytes(mime.data("text/command-id")).decode("utf-8")
             if not self.has_action(command_id):
-                if action := ui.model_app._registered_actions.get(command_id):
+                if action := ui.model_app.registered_actions.get(command_id):
                     self.add_action(action)
                     self._update_plugin_config()
 
