@@ -209,6 +209,7 @@ class QTabWidget(QtW.QTabWidget):
         return self.count() == 1 and self.widget(0) == self._startup_widget
 
     def _on_current_changed(self, index: int) -> None:
+        """When the current tab index changed."""
         if widget := self.widget_area(index):
             has_active_subwindow = any(
                 win.is_current() for win in widget.subWindowList()
