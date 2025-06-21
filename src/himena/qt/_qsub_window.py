@@ -42,7 +42,7 @@ class QSubWindowArea(QtW.QMdiArea):
         self._last_press_pos: QtCore.QPoint | None = None
         self._last_drag_pos: QtCore.QPoint | None = None
         self.setActivationOrder(QtW.QMdiArea.WindowOrder.ActivationHistoryOrder)
-        self._last_active_window: QSubWindow | None = None
+        self._last_active_window_id: QSubWindow | None = None
 
     def addSubWindow(self, sub_window: QSubWindow):
         super().addSubWindow(sub_window)
@@ -128,11 +128,11 @@ class QSubWindowArea(QtW.QMdiArea):
                     if isinstance(obj, (QtW.QStyle, QtW.QAbstractButton, QtW.QMenuBar)):
                         return False
                     else:
-                        if (
+                        if self._last_active_window_id is None and (
                             win := self.currentSubWindow()
-                        ) is not self._last_active_window:
+                        ):
                             self.subWindowActivated.emit(win)
-                            self._last_active_window = win
+                            self._last_active_window_id = win._my_wrapper()._identifier
                             _LOGGER.debug("QSubWindowArea.eventFilter: Window focused.")
                 else:
                     self._set_area_focused()
@@ -144,7 +144,7 @@ class QSubWindowArea(QtW.QMdiArea):
 
     def _set_area_focused(self):
         self.area_focused.emit()
-        self._last_active_window = None
+        self._last_active_window_id = None
 
     def hideEvent(self, a0: QtGui.QHideEvent | None) -> None:
         self._last_drag_pos = self._last_press_pos = None

@@ -225,7 +225,6 @@ class MainWindow(Generic[_W]):
         r0 = self.rect
         s0 = Size(*size)
         self.rect = WindowRect(r0.left, r0.top, s0.width, s0.height)
-        return None
 
     @property
     def clipboard(self) -> ClipboardDataModel | None:
@@ -244,7 +243,6 @@ class MainWindow(Generic[_W]):
         _LOGGER.info("Setting clipboard data: %r", data)
         self._backend_main_window._set_clipboard_data(data)
         self._internal_clipboard_data = data.internal_data
-        return None
 
     def set_clipboard(
         self,
@@ -263,7 +261,6 @@ class MainWindow(Generic[_W]):
             files=files or [],
             internal_data=internal_data,
         )
-        return None
 
     def add_tab(self, title: str | None = None) -> TabArea[_W]:
         """Add a new tab of given name."""
@@ -276,7 +273,6 @@ class MainWindow(Generic[_W]):
         for win in self.iter_windows():
             if win._identifier == identifier:
                 return win
-        return None
 
     def _window_for_workflow_id(self, identifier: uuid.UUID) -> SubWindow[_W] | None:
         """Retrieve a sub-window by its workflow identifier."""
@@ -287,7 +283,6 @@ class MainWindow(Generic[_W]):
                 return None
             if last_id == identifier:
                 return win
-        return None
 
     def _current_or_new_tab(self) -> tuple[int, TabArea[_W]]:
         if self._new_widget_behavior is NewWidgetBehavior.WINDOW:
@@ -504,7 +499,6 @@ class MainWindow(Generic[_W]):
         # always plugin=None for reading a session file as a session
         self._recent_session_manager.append_recent_files([(fp, None)])
         self.set_status_tip(f"Session loaded: {fp}", duration=5)
-        return None
 
     def save_session(
         self,
@@ -527,13 +521,11 @@ class MainWindow(Generic[_W]):
             )
         self.set_status_tip(f"Session saved to {path}")
         self._recent_session_manager.append_recent_files([(path, None)])
-        return None
 
     def clear(self) -> None:
         """Clear all widgets in the main window."""
         self.tabs.clear()
         self.dock_widgets.clear()
-        return None
 
     def set_status_tip(self, text: str, duration: float = 10.0) -> None:
         """Set the status tip of the main window.
@@ -551,8 +543,8 @@ class MainWindow(Generic[_W]):
         return None
 
     def show_notification(self, text: str, duration: float = 5.0) -> None:
+        """Show a temporary notification in the main window."""
         self._backend_main_window._show_notification(text, duration)
-        return None
 
     @overload
     def register_function(
@@ -937,7 +929,6 @@ class MainWindow(Generic[_W]):
         back._update_control_widget(win.widget)
         _checker.call_widget_activated_callback(win.widget)
         self.events.window_activated.emit(win)
-        return None
 
     def _main_window_resized(self, size: Size):
         if tab := self.tabs.current():
