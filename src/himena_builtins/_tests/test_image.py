@@ -618,6 +618,21 @@ def test_crop_image(himena_ui: MainWindow, tmpdir):
         "builtins:array:crop-nd",
         with_params={"axis_0": (2, 4), "axis_1": (0, 1), "axis_2": (1, 5), "axis_3": (2, 8)},
     )
+    himena_ui.exec_action(
+        "builtins:array:crop-nd",
+        window_context=win,
+        with_params={"squeeze": False, "axis_0": (2, 3)},
+    )
+    himena_ui.exec_action(
+        "builtins:array:crop-nd",
+        window_context=win,
+        with_params={"squeeze": True, "axis_0": (2, 3)},
+    )
+    himena_ui.exec_action(
+        "builtins:array:crop-nd",
+        window_context=win,
+        with_params={"squeeze": True, "axis_1": (0, 1), "axis_2": (1, 2)},
+    )
 
     # test limit getters
     model = win.to_model()
