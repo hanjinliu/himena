@@ -111,6 +111,7 @@ def _bbox_list_getter(
     types=StandardType.IMAGE,
     menus=[MenuId.TOOLS_IMAGE_ROI, "/model_menu/roi"],
     command_id="builtins:image:crop-image-nd",
+    keybindings=["Ctrl+Alt+X"],
     group="image-crop",
 )
 def crop_image_nd(win: SubWindow) -> Parametric:
@@ -142,14 +143,33 @@ def crop_image_nd(win: SubWindow) -> Parametric:
     conf_kwargs[axis_x] = {"bind": _make_roi_limits_getter(win, "x")}
 
     @configure_gui(**conf_kwargs)
-    def run_crop_image(**kwargs: tuple[int | None, int | None]):
+    def run_crop_image(squeeze: bool = True, **kwargs: tuple[int | None, int | None]):
+        """Run the crop image command.
+
+        Parameters
+        ----------
+        squeeze : bool
+            If True, the output array will be squeezed to remove axes of size 1.
+        """
         model = win.to_model()  # NOTE: need to re-fetch the model
         arr = wrap_array(model.value)
         sl_nd = tuple(slice(x0, x1) for x0, x1 in kwargs.values())
         arr_cropped = arr[sl_nd]
         meta_out = meta.without_rois()
         meta_out.current_indices = None  # shape changed, need to reset
-        return model.with_value(arr_cropped.arr, metadata=meta_out)
+        if squeeze:
+            arr_out = np.squeeze(arr_cropped.arr)
+            if meta_out.channel_axis is not None:
+                for ith in reversed(range(arr_cropped.ndim)):
+                    size = arr_cropped.shape[ith]
+                    if size == 1 and ith == meta_out.channel_axis:
+                        meta_out.channel_axis = None
+                        break
+                    elif size == 1 and ith < meta_out.channel_axis:
+                        meta_out.channel_axis -= 1
+        else:
+            arr_out = arr_cropped.arr
+        return model.with_value(arr_out, metadata=meta_out)
 
     return run_crop_image
 

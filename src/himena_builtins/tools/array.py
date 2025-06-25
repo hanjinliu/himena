@@ -6,7 +6,7 @@ from himena._descriptors import NoNeedToSave
 from himena.plugins import register_function, configure_gui, configure_submenu
 from himena.types import Parametric, WidgetDataModel
 from himena.consts import StandardType, MenuId
-from himena.standards.model_meta import ArrayMeta, ImageMeta
+from himena.standards.model_meta import ArrayMeta, ImageMeta, DimAxis
 from himena.widgets import set_status_tip, SubWindow
 
 configure_submenu(MenuId.TOOLS_ARRAY, group="20_builtins", order=5)
@@ -179,6 +179,19 @@ def binary_operation() -> Parametric:
             yval = y.value.astype(np.float64, copy=False)
         else:
             xval, yval = x.value, y.value
+        # get axes from metadata
+        if isinstance(meta_x := x.metadata, ImageMeta):
+            axes_x = meta_x.axes
+        else:
+            axes_x = None
+        if isinstance(meta_y := y.metadata, ImageMeta):
+            axes_y = meta_y.axes
+        else:
+            axes_y = None
+        # broadcast arrays and prepare output axes
+        xval, yval, new_axes = _broadcast_arrays(xval, yval, axes_x, axes_y)
+
+        # calculate the operation
         if clip_overflows and operation in ("add", "mul", "sub"):
             arr_out = _safe_op(operation_func, xval, yval, np.dtype(xval.dtype))
         else:
@@ -190,25 +203,9 @@ def binary_operation() -> Parametric:
         if isinstance(meta := out.metadata, ImageMeta):
             for ch in meta.channels:
                 ch.contrast_limits = None  # reset contrast limits
-        if isinstance(meta_x := x.metadata, ImageMeta):
-            axes_x = meta_x.axes
-        else:
-            axes_x = None
-        if isinstance(meta_y := y.metadata, ImageMeta):
-            axes_y = meta_y.axes
-        else:
-            axes_y = None
-        # inherit axes from the first input
-        if axes_x is not None and axes_y is not None:
-            axes = axes_x if len(axes_x) >= len(axes_y) else axes_y
-        elif axes_x is not None:
-            axes = axes_x
-        elif axes_y is not None:
-            axes = axes_y
-        else:
-            axes = None
-        if axes is not None and isinstance(meta_out := out.metadata, ArrayMeta):
-            meta_out.axes = axes
+        # inherit axes
+        if new_axes is not None and isinstance(meta_out := out.metadata, ArrayMeta):
+            meta_out.axes = new_axes
         return out
 
     return run_calc
@@ -405,3 +402,62 @@ def _safe_op(op, a, b, dtype):
         ).astype(dtype)
     else:
         return a + b
+
+
+def _broadcast_arrays(
+    a: Any,
+    b: Any,
+    a_axes: list[DimAxis] | None = None,
+    b_axes: list[DimAxis] | None = None,
+) -> tuple[Any, Any, list[DimAxis] | None]:
+    """Broadcast input arrays to the same shape and axes"""
+    if a_axes is None or b_axes is None:
+        return np.broadcast_arrays(a, b) + (None,)
+
+    # first, make a consensus axes
+    arg_idx: list[int] = []
+    for ax in b_axes:
+        idx_for_ax = _find_axis(a_axes, ax)
+        arg_idx.append(idx_for_ax)
+
+    stack: list[int] = []
+    n_insert = 0
+    axes_consensus = list(a_axes)
+    iter = enumerate(arg_idx.copy())
+    for i, idx in iter:
+        if idx < 0:
+            stack.append(i)
+        else:
+            # flush the stack
+            for j in stack:
+                axes_consensus.insert(idx + n_insert, b_axes[j])
+                n_insert += 1
+            stack.clear()
+    # flush the stack
+    for j in stack:
+        axes_consensus.append(b_axes[j])
+
+    # now, broadcast the arrays
+    a_slice = []
+    b_slice = []
+    for ax in axes_consensus:
+        if _find_axis(a_axes, ax) < 0:
+            a_slice.append(np.newaxis)
+        else:
+            a_slice.append(slice(None))
+        if _find_axis(b_axes, ax) < 0:
+            b_slice.append(np.newaxis)
+        else:
+            b_slice.append(slice(None))
+    a_broadcasted = a[tuple(a_slice)]
+    b_broadcasted = b[tuple(b_slice)]
+    return a_broadcasted, b_broadcasted, axes_consensus
+
+
+def _find_axis(axes: list[DimAxis], axis: DimAxis) -> int:
+    """Find an axis by its name."""
+    name = axis.name
+    for idx, ax in enumerate(axes):
+        if ax.name == name:
+            return idx
+    return -1

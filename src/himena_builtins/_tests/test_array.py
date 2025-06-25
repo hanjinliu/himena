@@ -1,3 +1,4 @@
+from typing import Sequence
 from cmap import Colormap
 import numpy as np
 from numpy.testing import assert_array_equal
@@ -9,6 +10,7 @@ from himena import MainWindow, StandardType
 from himena.standards.model_meta import ArrayMeta, DimAxis, ImageChannel, ImageMeta
 from himena.testing import WidgetTester
 from himena_builtins.qt.array import QArrayView
+from himena_builtins.tools.array import _broadcast_arrays
 
 _Ctrl = Qt.KeyboardModifier.ControlModifier
 
@@ -122,7 +124,7 @@ def test_array_commands(himena_ui: MainWindow):
     win.update_model(
         win.to_model().with_metadata(
             ArrayMeta(
-                axes=[DimAxis(name=name) for name in ("t", "y", "x")],
+                axes=_make_axes("tyx"),
                 selections=[((1, 2), (1, 3))],
             )
         )
@@ -171,3 +173,39 @@ def test_copy_on_write(qtbot: QtBot):
         view.array_update((slice(0, 1), slice(0, 1)), 20)
         assert_array_equal(view.to_model().value, [[20, 10], [3, 4]])
         assert_array_equal(view_other.to_model().value, [[1, 10], [3, 4]])
+
+@pytest.mark.parametrize(
+    "shape0, shape1, axes0, axes1, expected_shape, expected_axes",
+    [
+        ((2, 3), (2, 3), "yx", "yx", (2, 3), "yx"),
+        ((2, 3), (3,), "yx", "x", (2, 3), "yx"),
+        ((2,), (2, 3), "y", "yx", (2, 3), "yx"),
+        ((2, 5, 4, 3), (2, 4, 3), "tzyx", "tyx", (2, 5, 4, 3), "tzyx"),
+        ((5,), (2, 5), "t", None, (2, 5), None),
+    ]
+)
+def test_broadcast_array(
+    shape0: tuple[int, ...],
+    shape1: tuple[int, ...],
+    axes0: Sequence[str],
+    axes1: Sequence[str],
+    expected_shape: tuple[int, ...],
+    expected_axes: Sequence[str],
+):
+    a_out, b_out, axes = _broadcast_arrays(
+        np.zeros(shape0),
+        np.zeros(shape1),
+        _make_axes(axes0),
+        _make_axes(axes1),
+    )
+    out = a_out + b_out
+    assert out.shape == expected_shape
+    if expected_axes is None:
+        assert axes is None
+    else:
+        assert [a.name for a in axes] == list(expected_axes)
+
+def _make_axes(names: Sequence[str] | None) -> list[DimAxis] | None:
+    if names is None:
+        return None
+    return [DimAxis(name=name) for name in names]
