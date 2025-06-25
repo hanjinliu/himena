@@ -33,7 +33,8 @@ class QDockWidget(QtW.QDockWidget):
         areas = QtCore.Qt.DockWidgetArea.NoDockWidgetArea
         for allowed_area in allowed_areas:
             areas |= _DOCK_AREA_MAP[allowed_area]
-        return self.setAllowedAreas(areas)
+        self.setAllowedAreas(areas)
+        self._is_closing = False
 
     @staticmethod
     def area_normed(area) -> QtCore.Qt.DockWidgetArea:
@@ -41,9 +42,19 @@ class QDockWidget(QtW.QDockWidget):
             area = DockArea(area)
         return _DOCK_AREA_MAP[area]
 
+    def showEvent(self, a0):
+        super().showEvent(a0)
+        self._is_closing = False
+
     def closeEvent(self, event):
+        self._is_closing = True
         self.closed.emit()
         super().closeEvent(event)
+
+    def isVisible(self) -> bool:
+        if self._is_closing:
+            return False
+        return super().isVisible()
 
 
 _DOCK_AREA_MAP = {
