@@ -140,6 +140,7 @@ class QWorkflowView(QtW.QWidget):
 
     def _make_context_menu(self, item: QtW.QTreeWidgetItem) -> QtW.QMenu:
         menu = QtW.QMenu(self)
+        menu.setToolTipsVisible(True)
         step = _step_for_item(item)
         a0 = menu.addAction(
             "Replace with file reader",
@@ -155,7 +156,7 @@ class QWorkflowView(QtW.QWidget):
         a2.setCheckable(True)
         a2.setChecked(step.process_output)
         a2.setToolTip(
-            "Mark the selected item to add the output to the main window after the "
+            "Mark the selected item to add the output to the main window after the \n"
             "workflow execution (even if it's an intermediate step)"
         )
         menu.addSeparator()
