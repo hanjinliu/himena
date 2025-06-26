@@ -92,6 +92,13 @@ class ArrayWrapper(Generic[ArrayT]):
         """Infer DimAxis objects for this array."""
         return [DimAxis(name=f"axis_{i}") for i in range(self.ndim)]
 
+    @property
+    def nbytes(self) -> int:
+        """Return the number of bytes used by the array."""
+        if hasattr(self._arr, "nbytes"):
+            return self._arr.nbytes
+        return self.size * self.dtype.itemsize
+
 
 class XarrayWrapper(ArrayWrapper["xr.DataArray"]):
     """Wrapper for xarray DataArray objects."""
