@@ -15,6 +15,7 @@ from app_model.backends.qt import (
     QModelMenu,
     QMenuItemAction,
     QModelToolBar,
+    QCommandRuleAction,
 )
 from superqt import QIconifyIcon
 from superqt.utils import ensure_main_thread
@@ -805,6 +806,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     @ensure_main_thread
     def _append_result(self, item):
+        """Add item to the result stack."""
         ui = self._himena_main_window
         tab = ui.tabs.current()
         if tab is None:
@@ -838,8 +840,16 @@ def _ext_to_filter(ext: str) -> str:
 
 
 class QCornerToolBar(QModelToolBar):
+    # Managed by MenuId.CORNER
     def addSeparator(self):
         """No separator."""
+
+    def update_from_context(self, ctx):
+        super().update_from_context(ctx)
+        # immediately update the check state of all actions
+        for action in self.actions():
+            if isinstance(action, QCommandRuleAction):
+                action._refresh()
 
 
 class QChoicesDialog(QtW.QDialog):

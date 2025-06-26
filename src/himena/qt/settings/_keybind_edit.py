@@ -165,7 +165,13 @@ class QKeybindTable(QtW.QTableWidget):
                     key_seq = ""
                     when = ""
                     weight = ""
-                self.setItem(i, H.TITLE, _item_basic(title))
+                if action := app.registered_actions.get(cmd_id):
+                    tooltip = action.tooltip
+                else:
+                    tooltip = None
+                if tooltip:
+                    tooltip = title + "\n" + tooltip
+                self.setItem(i, H.TITLE, _item_basic(title, tooltip=tooltip))
                 self.setItem(i, H.KEYBINDING, QtW.QTableWidgetItem(key_seq))
                 self.setItem(i, H.WHEN, _item_basic(when, monospace=True))
                 self.setItem(i, H.WEIGHT, _item_basic(weight))
@@ -273,9 +279,15 @@ class QKeybindTable(QtW.QTableWidget):
         return conflictions
 
 
-def _item_basic(text: str, monospace: bool = False) -> QtW.QTableWidgetItem:
+def _item_basic(
+    text: str,
+    monospace: bool = False,
+    tooltip: str | None = None,
+) -> QtW.QTableWidgetItem:
     item = QtW.QTableWidgetItem(text)
-    item.setToolTip(text)
+    if tooltip is None:
+        tooltip = text
+    item.setToolTip(tooltip)
     item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
     if monospace:
         item.setFont(QtGui.QFont(MonospaceFontFamily))

@@ -190,7 +190,7 @@ class QHistogramView(QBaseGraphicsView):
             ac.setCheckable(True)
             ac.setChecked(scale == self._default_hist_scale)
         menu.addSeparator()
-        menu.addAction("Copy Histogram Image to Clipboard", self._img_to_clipboard)
+        menu.addAction("Copy Histogram", self._img_to_clipboard)
         return menu
 
     def _set_hist_scale_func(self, scale: Literal["linear", "log"]):

@@ -267,7 +267,7 @@ QToolButton {
 QToolButton:hover {
     border: 2px solid lightgray;
     border-radius: 4px;
-    padding: 2px;
+    padding: 0px;
     background-color: #[highlight_dim];
     color: #[foreground];
 }
@@ -275,7 +275,7 @@ QToolButton:hover {
 QToolButton:checked {
     border: 1px solid lightgray;
     border-radius: 4px;
-    padding: 2px;
+    padding: 0px;
     background-color: #[highlight_dim];
     color: #[foreground];
 }

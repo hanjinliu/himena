@@ -82,6 +82,7 @@ class QResultStack(QtW.QTableWidget):
 
     def _make_context_menu(self) -> QtW.QMenu:
         menu = QtW.QMenu(self)
+        menu.setToolTipsVisible(True)
         copy_action = menu.addAction(
             "Copy", lambda: self._copy_items(self.selections())
         )
