@@ -501,6 +501,8 @@ class QImageGraphicsView(QBaseGraphicsView):
         if event.button() == Qt.MouseButton.RightButton:
             pass
         else:
+            if event.button() == Qt.MouseButton.MiddleButton:
+                self._set_pan_zoom_temporary()
             self._mouse_event_handler.pressed(event)
         return super().mousePressEvent(event)
 
@@ -520,20 +522,23 @@ class QImageGraphicsView(QBaseGraphicsView):
         return super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
-        if event.button() == Qt.MouseButton.LeftButton:
-            self._mouse_event_handler.released(event)
-        elif event.button() == Qt.MouseButton.RightButton:
+        if event.button() == Qt.MouseButton.RightButton:
             if item := self.select_item_at(self.mapToScene(event.pos())):
                 menu = self._make_menu_for_roi(item)
                 menu.exec(event.globalPos())
             else:
                 menu = self._make_menu_for_view()
                 menu.exec(event.globalPos())
+        else:
+            if event.button() == Qt.MouseButton.MiddleButton:
+                self.set_mode(self._last_mode_before_key_hold)
+            self._mouse_event_handler.released(event)
         self.scene().setGrabSource(None)
         return super().mouseReleaseEvent(event)
 
     def mouseDoubleClickEvent(self, event: QtGui.QMouseEvent):
-        self._mouse_event_handler.double_clicked(event)
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._mouse_event_handler.double_clicked(event)
         return super().mouseDoubleClickEvent(event)
 
     def move_items_by(self, dx: int, dy: int):
@@ -568,8 +573,7 @@ class QImageGraphicsView(QBaseGraphicsView):
 
     def standard_key_press(self, _key: Qt.Key, shift: bool = False):
         if _key == Qt.Key.Key_Space:
-            self._last_mode_before_key_hold = self.mode()
-            self.set_mode(MouseMode.PAN_ZOOM)
+            self._set_pan_zoom_temporary()
         elif _key == Qt.Key.Key_R:
             if shift:
                 self.switch_mode(MouseMode.ROI_ROTATED_RECTANGLE)
@@ -662,3 +666,8 @@ class QImageGraphicsView(QBaseGraphicsView):
             lambda: QtW.QApplication.clipboard().setImage(self.grab().toImage())
         )
         return menu
+
+    def _set_pan_zoom_temporary(self):
+        if (mode := self.mode()) is not MouseMode.PAN_ZOOM:
+            self._last_mode_before_key_hold = mode
+        self.set_mode(MouseMode.PAN_ZOOM)

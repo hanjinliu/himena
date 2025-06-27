@@ -383,6 +383,7 @@ class QHistogramItem(QtW.QGraphicsPathItem):
             _nbin = 64
         else:
             _nbin = 256
+        # nbin should not be more than half of the number of pixels
         _nbin = min(_nbin, int(np.prod(arr.shape[-2:])) // 2)
         # draw histogram
         if arr.dtype.kind == "b":
@@ -391,12 +392,9 @@ class QHistogramItem(QtW.QGraphicsPathItem):
             hist = np.array([1 - frac_true, frac_true])
         elif _max > _min:
             arr = arr.clip(_min, _max)
-            if arr.dtype.kind in "ui" and _max - _min < _nbin:
-                # bin number is excessive
-                _nbin = int(_max - _min)
-                normed = (arr - _min).astype(np.uint8)
-            else:
-                normed = ((arr - _min) / (_max - _min) * _nbin).astype(np.uint8)
+            if arr.dtype.kind in "ui":
+                _nbin = int(_max - _min) // max(int(np.ceil((_max - _min) / _nbin)), 1)
+            normed = ((arr - _min) / (_max - _min) * _nbin).astype(np.uint8)
             hist = np.bincount(normed.ravel(), minlength=_nbin)
             edges = np.linspace(_min, _max, _nbin + 1)
         else:
