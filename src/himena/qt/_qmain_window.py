@@ -512,6 +512,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             self._command_palette_recent.show()
         elif kind == "goto":
             self._goto_widget.show()
+            self._goto_widget.setFocus()
         elif kind == "new":
             self._command_palette_new.update_context(self)
             self._command_palette_new.show()

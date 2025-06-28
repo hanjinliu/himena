@@ -7,7 +7,7 @@ from qtpy import QtCore, QtGui
 from superqt import QLabeledDoubleSlider, QToggleSwitch, QElidingLabel
 from superqt.utils import qthrottled
 
-from himena.qt._utils import qsignal_blocker
+from himena.qt._utils import qsignal_blocker, ndarray_to_qimage
 from himena_builtins.qt.widgets._image_components import QHistogramView
 from himena.utils.enum import StrEnum
 
@@ -49,10 +49,7 @@ class QImageViewControlBase(QtW.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
 
-        self._interp_check_box = QToggleSwitch()
-        self._interp_check_box.setText("smooth")
-        self._interp_check_box.setChecked(False)
-        self._interp_check_box.setMaximumHeight(36)
+        self._interp_check_box = QInterpolationSwitch(self)
         self._interp_check_box.toggled.connect(self._interpolation_changed)
 
         self._hover_info = QElidingLabel()
@@ -247,6 +244,43 @@ class QImageLabelViewControl(QImageViewControlBase):
 
     def _widgets_to_add(self):
         return [self._hover_info, self._opacity_slider, self._interp_check_box]
+
+
+class QInterpolationSwitch(QtW.QAbstractButton):
+    """Button for the interpolation mode."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setCheckable(True)
+        self.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+        self.setToolTip("Toggle interpolation mode")
+
+    def paintEvent(self, a0: QtGui.QPaintEvent | None) -> None:
+        p = QtGui.QPainter(self)
+        p.drawPixmap(0, 0, self._make_pixmap(self.isChecked()))
+        p.end()
+
+    def minimumSizeHint(self) -> QtCore.QSize:
+        return self.sizeHint()
+
+    def sizeHint(self) -> QtCore.QSize:
+        return QtCore.QSize(20, 20)
+
+    def _make_pixmap(self, state: bool) -> QtGui.QPixmap:
+        img = np.array(
+            [[1, 0, 1, 0], [0, 1, 0, 1], [1, 0, 1, 0], [0, 1, 0, 1]],
+            dtype=np.uint8,
+        )
+        img = img * 188 + 34
+        qimg = ndarray_to_qimage(img)
+        qpixmap = QtGui.QPixmap.fromImage(qimg)
+        if state:
+            tr = QtCore.Qt.TransformationMode.SmoothTransformation
+        else:
+            tr = QtCore.Qt.TransformationMode.FastTransformation
+        return qpixmap.scaled(
+            self.width(), self.height(), QtCore.Qt.AspectRatioMode.KeepAspectRatio, tr
+        )
 
 
 class QChannelToggleSwitch(QToggleSwitch):
