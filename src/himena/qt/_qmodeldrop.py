@@ -115,7 +115,9 @@ class QModelDropBase(QtW.QGroupBox):
         self._main_window_ref = weakref.ref(get_main_window(src))
         self._label.setText(src.windowTitle())
 
-    def set_subwindow(self, src: SubWindow):
+    def set_subwindow(self, src: SubWindow | uuid.UUID):
+        if isinstance(src, uuid.UUID):
+            src = get_main_window(self).window_for_id(src)
         self.set_qsubwindow(get_subwindow(src.widget))
 
 
@@ -185,12 +187,14 @@ class QModelDrop(QModelDropBase):
         elif model := _drag.get_dragging_model():
             self.set_model(model.data_model())
 
-    def set_model(self, value: WidgetDataModel | None):
+    def set_model(self, value: WidgetDataModel | uuid.UUID | None):
         if value is None:
             self._label.setText("Drop here")
             self._label.setToolTip(_NONE_TOOLTIP)
             self._thumbnail.unset_pixmap()
         else:
+            if isinstance(value, uuid.UUID):
+                return self.set_subwindow(value)
             self._data_model = value
             self._label.setText(f"✓ {value.value!r}")
             self._label.setToolTip(repr(value))

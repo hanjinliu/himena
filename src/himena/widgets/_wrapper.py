@@ -670,6 +670,16 @@ class ParametricWindow(SubWindow[_W]):
             params = {}
         return params
 
+    def update_params(self, params: dict[str, Any], **kwargs) -> None:
+        """Update the parameters of the widget."""
+        if hasattr(self.widget, PWPN.UPDATE_PARAMS):
+            getattr(self.widget, PWPN.UPDATE_PARAMS)({**params, **kwargs})
+        else:
+            raise NotImplementedError(
+                f"{self.widget!r} does not support setting parameters."
+            )
+        self._emit_param_changed()
+
     def _get_preview_window(self) -> SubWindow[_W] | None:
         """Return the preview window if it is alive."""
         if (prev := self._preview_window_ref()) and prev.is_alive:

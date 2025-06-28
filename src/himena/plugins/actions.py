@@ -32,6 +32,7 @@ from himena import _utils
 from himena.types import WidgetDataModel
 from himena.utils.collections import OrderedSet
 from himena.plugins import _utils as _plugins_utils
+from himena.workflow import ActionHintRegistry
 
 if TYPE_CHECKING:
     from himena._app_model import HimenaApplication
@@ -81,13 +82,14 @@ class ReproduceArgs:
     """Command and its arguments to reproduce a user modification."""
 
     command_id: str
-    with_params: dict[str, Any] = field(
-        default_factory=dict
-    )  # values must be serializable
+    with_params: dict[str, Any] = field(default_factory=dict)
+    # `with_params` values must be serializable
 
 
 @dataclass
 class AppTip:
+    """Tip to be shown in the status bar on startup etc."""
+
     short: str
     long: str
 
@@ -111,6 +113,7 @@ class AppActionRegistry:
         self._plugin_default_configs: dict[str, PluginConfigTuple] = {}
         self._modification_trackers: dict[str, Callable[[_T, _T], ReproduceArgs]] = {}
         self._app_tips: list[AppTip] = []
+        self._action_hint_reg = ActionHintRegistry()
         self._try_load_app_tips()
 
     @classmethod
@@ -634,3 +637,21 @@ def add_default_status_tip(
     """Add a status tip that will be randomly shown in the status bar."""
     reg = AppActionRegistry.instance()
     reg._app_tips.append(AppTip(short=str(short), long=str(long)))
+
+
+def when_command_executed(
+    model_type: str,
+    command_id: str,
+):
+    """Create an interface for adding command suggestions.
+
+    Examples
+    --------
+    >>> (
+    ...     reg.when_command_executed("table", "sort-table")
+    ...        .add_command_suggestion("scatter-plot")
+    ...        .add_command_suggestion("line-plot")
+    ... )
+    """
+    reg = AppActionRegistry.instance()._action_hint_reg
+    return reg.when_command_executed(model_type, command_id)

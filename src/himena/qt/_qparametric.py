@@ -78,6 +78,10 @@ class QParametricWidget(QtW.QWidget):
     def get_params(self) -> dict[str, Any]:
         return getattr(self._central_widget, PWPN.GET_PARAMS)()
 
+    def update_params(self, params: dict[str, Any]) -> None:
+        """Update the parameters of the central widget."""
+        getattr(self._central_widget, PWPN.UPDATE_PARAMS)(**params)
+
     @validate_protocol
     def to_model(self) -> WidgetDataModel[dict[str, Any]]:
         params = self.get_params()

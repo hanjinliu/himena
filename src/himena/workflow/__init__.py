@@ -17,6 +17,7 @@ from himena.workflow._reader import (
     RemoteReaderMethod,
     UserInput,
 )
+from himena.workflow._action_hint import ActionHintRegistry
 
 __all__ = [
     "WorkflowStep",
@@ -37,4 +38,5 @@ __all__ = [
     "WindowParameter",
     "UserParameter",
     "ListOfModelParameter",
+    "ActionHintRegistry",
 ]

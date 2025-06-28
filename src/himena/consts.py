@@ -179,6 +179,7 @@ class ActionGroup(StrEnum):
 class ParametricWidgetProtocolNames:
     GET_PARAMS = "get_params"
     GET_OUTPUT = "get_output"
+    UPDATE_PARAMS = "update_params"
     IS_PREVIEW_ENABLED = "is_preview_enabled"
     CONNECT_CHANGED_SIGNAL = "connect_changed_signal"
     GET_TITLE = "get_title"
