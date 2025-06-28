@@ -4,7 +4,7 @@ import math
 from typing import Any, Union
 import numpy as np
 from numpy.typing import NDArray
-from pydantic_compat import Field, field_validator
+from pydantic import Field, field_validator
 from himena.types import Rect
 from himena.standards.roi._base import Roi1D, Roi2D
 from himena.standards.roi import _utils

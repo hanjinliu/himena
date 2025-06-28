@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Iterable
 import warnings
 from platformdirs import user_data_dir
-from pydantic_compat import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator
 import importlib.metadata
 from packaging.version import Version
 from himena.consts import ALLOWED_LETTERS

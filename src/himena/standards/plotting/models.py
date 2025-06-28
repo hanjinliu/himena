@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Any, Literal
 
 import numpy as np
-from pydantic_compat import Field
+from pydantic import Field
 from himena.standards.plotting.components import BasePlotModel, Face, Edge
 
 

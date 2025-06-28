@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import cache
 from typing import TYPE_CHECKING
-from pydantic_compat import BaseModel, Field
+from pydantic import BaseModel, Field
 from himena.types import Rect
 from himena.utils.misc import iter_subclasses
 

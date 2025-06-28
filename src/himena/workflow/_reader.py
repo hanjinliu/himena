@@ -3,7 +3,7 @@ from typing import Iterator, Literal, Any, TYPE_CHECKING
 from pathlib import Path
 import subprocess
 
-from pydantic_compat import Field
+from pydantic import Field
 from himena.exceptions import NotExecutable
 from himena.utils.misc import PluginInfo
 from himena.utils.cli import remote_to_local

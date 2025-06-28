@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 from pathlib import Path
-from pydantic_compat import BaseModel, Field
+from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:
     from himena.widgets import MainWindow

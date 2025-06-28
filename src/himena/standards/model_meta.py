@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from typing import Any, TYPE_CHECKING, Callable, Literal
 import warnings
-from pydantic_compat import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator
 from himena.consts import StandardType
 from himena.standards import roi
 from himena.standards._base import BaseMetadata, _META_NAME

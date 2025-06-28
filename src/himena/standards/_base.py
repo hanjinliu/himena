@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 from typing import TYPE_CHECKING
-from pydantic_compat import BaseModel
+from pydantic import BaseModel
 from himena.utils.misc import iter_subclasses
 
 if TYPE_CHECKING:

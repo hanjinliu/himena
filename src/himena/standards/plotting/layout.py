@@ -1,7 +1,7 @@
 from typing import ClassVar, Literal, Sequence, TYPE_CHECKING, SupportsIndex
 
 import numpy as np
-from pydantic_compat import BaseModel, Field
+from pydantic import BaseModel, Field
 from himena.standards.plotting import models as _m
 from himena.standards.plotting.components import (
     Axis,
