@@ -646,6 +646,7 @@ class MainWindow(Generic[_W]):
         model_context: WidgetDataModel | None = None,
         window_context: SubWindow | None = None,
         with_params: dict[str, Any] | None = None,
+        with_defaults: dict[str, Any] | None = None,
         process_model_output: bool = True,
     ) -> Any:
         """Execute an action by its ID.
@@ -663,11 +664,17 @@ class MainWindow(Generic[_W]):
         with_params : dict, optional
             Parameters to pass to the parametric action. These parameters will directly
             be passed to the parametric window created after the action is executed.
+        with_defaults : dict, optional
+            If given, the resulting parametric window will be updated with these values.
         process_model_output : bool, default True
             If True, the output result will be processed by the application context. If
             the command return a `WidgetDataModel` instance, it will be converted to a
             sub-window.
         """
+        if with_params is not None and with_defaults is not None:
+            raise TypeError(
+                "Cannot use both `with_params` and `with_defaults` at the same time."
+            )
         providers: list[tuple[Any, type]] = []
         if model_context is not None:
             providers.append((model_context, WidgetDataModel, 1000))
@@ -708,6 +715,18 @@ class MainWindow(Generic[_W]):
                     force_sync=True,
                     force_close=True,
                 )
+            elif with_defaults is not None:
+                if (tab := self.tabs.current()) is not None and len(tab) > 0:
+                    param_widget = tab[-1]
+                else:  # pragma: no cover
+                    raise ValueError(
+                        f"Command {id!r} did not create a parametric window."
+                    )
+                if not isinstance(param_widget, ParametricWindow):
+                    raise ValueError(
+                        f"Parametric widget expected but got {param_widget}."
+                    )
+                param_widget.update_params(with_defaults)
         return result
 
     @overload

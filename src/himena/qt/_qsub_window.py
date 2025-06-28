@@ -984,14 +984,15 @@ class QSubWindowTitleBar(QtW.QFrame):
         ui = get_main_window(self)
         model_type = self._get_model_type()
         if model_type is None:
-            return QtW.QMenu(self)
+            return QtW.QMenu()
         subwin = self._subwindow._my_wrapper()
         last_step = subwin._widget_workflow.last()
         if last_step is None:
-            return QtW.QMenu(self)
+            return QtW.QMenu()
         menu = QtW.QMenu()
         for sug in ui.action_hint_registry.iter_suggestion(model_type, last_step):
-            menu.addAction(sug.get_title(ui), sug.make_executor(ui))
+            menu.addAction(sug.get_title(ui), sug.make_executor(ui, last_step))
+        menu.setParent(self, menu.windowFlags())
         return menu
 
     def _show_window_menu(self):

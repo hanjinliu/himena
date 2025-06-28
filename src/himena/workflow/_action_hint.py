@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, Callable, Iterator
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any, Callable, Iterator
+import uuid
+from himena.utils.misc import is_subtype
 from himena.workflow._base import WorkflowStep
+from himena.workflow._reader import ReaderMethod
 from himena.workflow._command import CommandExecution
 
 if TYPE_CHECKING:
@@ -24,6 +27,18 @@ class ActionMatcher(ABC):
 
 
 @dataclass
+class ReaderMatcher(ActionMatcher):
+    """Matches workflow steps that are data loaders."""
+
+    plugins: list[str] = field(default_factory=list)
+
+    def match(self, model_type: str, step: WorkflowStep) -> bool:
+        if is_subtype(model_type, self.model_type) and isinstance(step, ReaderMethod):
+            return step.plugin is None or step.plugin in self.plugins
+        return False
+
+
+@dataclass
 class CommandMatcher(ActionMatcher):
     """Matches workflow steps that are command-line based."""
 
@@ -31,10 +46,11 @@ class CommandMatcher(ActionMatcher):
 
     def match(self, model_type: str, step: WorkflowStep) -> bool:
         if (
-            model_type == self.model_type
+            is_subtype(model_type, self.model_type)
             and isinstance(step, CommandExecution)
             and step.command_id == self.command_id
         ):
+            # TODO: match parameters and contexts
             return True
         return False
 
@@ -42,7 +58,7 @@ class CommandMatcher(ActionMatcher):
 @dataclass
 class Suggestion(ABC):
     @abstractmethod
-    def execute(self, main_window: MainWindow) -> None:
+    def execute(self, main_window: MainWindow, step: WorkflowStep) -> None:
         """Execute the suggestion in the given main window."""
 
     @abstractmethod
@@ -53,9 +69,11 @@ class Suggestion(ABC):
     def get_tooltip(self, main_window: MainWindow) -> str:
         """Get the tooltip for the suggestion."""
 
-    def make_executor(self, main_window: MainWindow) -> Callable[[], None]:
+    def make_executor(
+        self, main_window: MainWindow, step: WorkflowStep
+    ) -> Callable[[], None]:
         """Create an executor for the suggestion."""
-        return lambda: self.execute(main_window)
+        return lambda: self.execute(main_window, step)
 
 
 @dataclass
@@ -64,9 +82,24 @@ class CommandSuggestion(Suggestion):
 
     command_id: str
     """The ID of the command to execute."""
+    window_id: Callable[[WorkflowStep], uuid.UUID] | None = None
+    """The model context to use for the command execution, if any."""
+    defaults: dict[str, Callable[[WorkflowStep], Any]] = field(default_factory=dict)
+    """Default parameter overrides."""
 
-    def execute(self, main_window: MainWindow) -> None:
-        main_window.exec_action(self.command_id)
+    def execute(self, main_window: MainWindow, step: WorkflowStep) -> None:
+        """Execute the suggestion in the given main window."""
+        params = {}
+        for key, factory in self.defaults.items():
+            value = factory(step)
+            params[key] = value
+        if self.window_id is not None:
+            window_context = main_window.window_for_id(self.window_id(step))
+        else:
+            window_context = None
+        main_window.exec_action(
+            self.command_id, window_context=window_context, with_defaults=params
+        )
 
     def get_title(self, main_window: MainWindow) -> str:
         """Get the title of the command suggestion."""
@@ -128,6 +161,23 @@ class ActionHintRegistry:
         matcher = CommandMatcher(model_type=model_type, command_id=command_id)
         return ActionMatcherInterface(self, matcher)
 
+    def when_reader_used(
+        self,
+        model_type: str,
+        plugins: list[str] | None = None,
+    ) -> ActionMatcherInterface:
+        """Create an interface for adding reader suggestions.
+
+        Examples
+        --------
+        >>> (
+        ...     reg.when_reader_used("table")
+        ...        .add_command_suggestion("load-csv")
+        ... )
+        """
+        matcher = ReaderMatcher(model_type=model_type, plugins=plugins or [])
+        return ActionMatcherInterface(self, matcher)
+
     def iter_suggestion(
         self, model_type: str, step: WorkflowStep
     ) -> Iterator[Suggestion]:
@@ -147,8 +197,12 @@ class ActionMatcherInterface:
     def add_command_suggestion(
         self,
         command_id: str,
+        window_id: Callable[[WorkflowStep], uuid.UUID] | None = None,
+        defaults: dict[str, Callable[[WorkflowStep], Any]] | None = None,
     ) -> Self:
         """Add a suggestion to the registry."""
-        suggestion = CommandSuggestion(command_id=command_id)
+        suggestion = CommandSuggestion(
+            command_id=command_id, window_id=window_id, defaults=defaults or {}
+        )
         self._registry.add_hint(self._matcher, suggestion)
         return self

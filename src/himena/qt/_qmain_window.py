@@ -688,6 +688,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         )
         container.margins = (0, 0, 0, 0)
         setattr(container, PWPN.GET_PARAMS, container.asdict)
+        setattr(container, PWPN.UPDATE_PARAMS, container.update)
         setattr(container, PWPN.CONNECT_CHANGED_SIGNAL, container.changed.connect)
         if preview:
             checkbox = ToggleSwitch(value=False, text="Preview")

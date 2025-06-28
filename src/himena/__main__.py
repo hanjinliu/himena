@@ -85,9 +85,10 @@ def _main(args: HimenaCliNamespace):
     }
 
     ui, lock = _send_or_create_window(app_prof, args.path, attrs)
-    ui.show(run=not _is_testing())
-    lock.close()
-    Path(lock.name).unlink(missing_ok=True)
+    if ui is not None:
+        ui.show(run=not _is_testing())
+        lock.close()
+        Path(lock.name).unlink(missing_ok=True)
 
 
 def _send_or_create_window(
@@ -105,7 +106,7 @@ def _send_or_create_window(
             files = []
         succeeded = socket_info.send_to_window(prof.name, files)
         if succeeded:
-            return
+            return None, None
         lock = lock_file_path(prof.name).open("w")
 
     ui = new_window(prof, app_attributes=attrs)
