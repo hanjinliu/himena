@@ -1,7 +1,6 @@
 from typing import Any, Literal
 from cmap import Color
-from pydantic_compat import BaseModel, Field, field_validator
-from pydantic import field_serializer, ValidationInfo
+from pydantic import BaseModel, Field, field_validator, field_serializer, ValidationInfo
 
 from himena.standards.model_meta import DimAxis
 from himena.consts import PYDANTIC_CONFIG_STRICT

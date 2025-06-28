@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Mapping, TypeVar, TYPE_CHECKING
 import uuid
 import warnings
-from pydantic_compat import BaseModel, Field
+from pydantic import BaseModel, Field
 
 from himena._descriptors import NoNeedToSave, SaveToPath
 from himena._utils import get_widget_class_id

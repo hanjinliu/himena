@@ -2,7 +2,7 @@ from typing import Any, Iterator, TYPE_CHECKING
 from datetime import datetime as _datetime
 import uuid
 
-from pydantic_compat import BaseModel, Field
+from pydantic import BaseModel, Field
 
 
 if TYPE_CHECKING:

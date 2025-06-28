@@ -1,5 +1,5 @@
 from typing import Literal, Union
-from pydantic_compat import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator
 import numpy as np
 from numpy.typing import NDArray
 

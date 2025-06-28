@@ -20,7 +20,7 @@ from typing import (
     TYPE_CHECKING,
 )
 
-from pydantic_compat import BaseModel
+from pydantic import BaseModel
 
 from app_model import Action
 from app_model.types import SubmenuItem, KeyBindingRule

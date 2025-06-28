@@ -15,7 +15,7 @@ from typing import (
     Generic,
     TYPE_CHECKING,
 )
-from pydantic_compat import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator
 from himena._descriptors import SaveBehavior
 from himena.workflow import (
     Workflow,

@@ -2,8 +2,7 @@ from contextlib import contextmanager
 from typing import Any, Iterable, TYPE_CHECKING, Union
 import uuid
 
-from pydantic import PrivateAttr
-from pydantic_compat import BaseModel, Field
+from pydantic import PrivateAttr, BaseModel, Field
 
 from himena.workflow._base import WorkflowStep
 from himena.workflow._reader import (

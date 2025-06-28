@@ -1,7 +1,7 @@
 from concurrent.futures import Future
 from typing import Iterator, Literal, Any, cast, Union, TYPE_CHECKING
 import uuid
-from pydantic_compat import BaseModel, Field
+from pydantic import BaseModel, Field
 from himena.workflow._base import WorkflowStep
 
 if TYPE_CHECKING:
