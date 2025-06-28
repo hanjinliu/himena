@@ -67,6 +67,7 @@ class QHistogramView(QBaseGraphicsView):
             hist_item = QHistogramItem().with_hist_scale_func(self._default_hist_scale)
             self._hist_items.append(self.addItem(hist_item))
 
+        minmax_fallback = clim
         if is_rgb:
             brushes = [
                 QtGui.QBrush(QtGui.QColor(255, 0, 0, 128)),
@@ -79,14 +80,15 @@ class QHistogramView(QBaseGraphicsView):
         else:
             brushes = [QtGui.QBrush(color)]
             self._hist_items[0].with_brush(brushes[0])
-            self._hist_items[0].set_hist_for_array(arr)
+            # this fallback is needed when slider is changed.
+            minmax_fallback = self._hist_items[0].set_hist_for_array(arr)
 
         if arr.dtype.kind in "ui":
             self.set_minmax((np.iinfo(arr.dtype).min, np.iinfo(arr.dtype).max))
         elif arr.dtype.kind == "b":
             self.set_minmax((0, 1))
         else:
-            self.set_minmax(clim)
+            self.set_minmax(minmax_fallback)
         self.set_clim(clim)
         if self._view_range is None:
             self._view_range = clim
@@ -375,12 +377,13 @@ class QHistogramItem(QtW.QGraphicsPathItem):
         self._update_histogram_path()
         return self
 
-    def set_hist_for_array(self, arr: NDArray[np.number]) -> None:
+    def set_hist_for_array(self, arr: NDArray[np.number]) -> tuple[float, float]:
         _min, _max = quick_min_max(arr)
         if arr.dtype in ("int8", "uint8"):
             _nbin = 64
         else:
             _nbin = 256
+        # nbin should not be more than half of the number of pixels
         _nbin = min(_nbin, int(np.prod(arr.shape[-2:])) // 2)
         # draw histogram
         if arr.dtype.kind == "b":
@@ -389,12 +392,9 @@ class QHistogramItem(QtW.QGraphicsPathItem):
             hist = np.array([1 - frac_true, frac_true])
         elif _max > _min:
             arr = arr.clip(_min, _max)
-            if arr.dtype.kind in "ui" and _max - _min < _nbin:
-                # bin number is excessive
-                _nbin = int(_max - _min)
-                normed = (arr - _min).astype(np.uint8)
-            else:
-                normed = ((arr - _min) / (_max - _min) * _nbin).astype(np.uint8)
+            if arr.dtype.kind in "ui":
+                _nbin = int(_max - _min) // max(int(np.ceil((_max - _min) / _nbin)), 1)
+            normed = ((arr - _min) / (_max - _min) * _nbin).astype(np.uint8)
             hist = np.bincount(normed.ravel(), minlength=_nbin)
             edges = np.linspace(_min, _max, _nbin + 1)
         else:
@@ -404,6 +404,7 @@ class QHistogramItem(QtW.QGraphicsPathItem):
         self._hist_values = hist
 
         self._update_histogram_path()
+        return _min, _max
 
     def _update_histogram_path(self):
         _path = QtGui.QPainterPath()

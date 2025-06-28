@@ -39,6 +39,7 @@ class QGotoWidget(QtW.QWidget):
         self._stack = QtW.QStackedWidget()
         layout = QtW.QVBoxLayout(self)
         layout.addWidget(self._stack)
+        self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
         self.close()
 
     def update_ui(self):
@@ -55,7 +56,8 @@ class QGotoWidget(QtW.QWidget):
             layout.addWidget(line_edit(f"({i_tab}) {tab.name}"))
             list_widget = QWindowListWidget()
             for i_win, win in tab.enumerate():
-                list_widget.addItem(win.title)
+                item = QtW.QListWidgetItem(f"({i_win}) {win.title}")
+                list_widget.addItem(item)
             layout.addWidget(list_widget)
             self._stack.addWidget(area)
             list_widget.itemClicked.connect(self.activate_window_for_item)

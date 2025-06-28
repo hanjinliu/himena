@@ -115,8 +115,10 @@ def get_main_window(widget: QtW.QWidget) -> MainWindowQt:
 
 
 def build_qmodel_menu(menu_id: str, app: str, parent: QtW.QWidget) -> QModelMenu:
+    """Build a QModelMenu of the given ID."""
     menu = QModelMenu(menu_id=menu_id, app=app)
     menu.setParent(parent, menu.windowFlags())
+    menu.setToolTipsVisible(True)
     return menu
 
 

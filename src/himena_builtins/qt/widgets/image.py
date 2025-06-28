@@ -571,7 +571,8 @@ class QImageViewBase(QtW.QSplitter):
     def _default_hover_info(self) -> str:
         if self._arr is None:
             return
-        return f"{self._arr.shape}, {self._arr.dtype}"
+        nbytes = self._arr.nbytes
+        return f"{self._arr.shape}, {self._arr.dtype}, {_human_readable_size(nbytes)}"
 
     def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
         if event is None or event.isAutoRepeat():
@@ -1127,6 +1128,16 @@ def _digits_for_scale(scale: float) -> int:
         return -math.floor(math.log10(scale)) + 1
     else:
         return 0
+
+
+# copied from `ndv`
+def _human_readable_size(nbytes: float) -> str:
+    units = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
+    for unit in units:
+        if nbytes < 1024:
+            return f"{nbytes:.2f}".rstrip("0").rstrip(".") + unit
+        nbytes /= 1024.0
+    return f"{nbytes:.2f}YB"  # In case nbytes is extremely large
 
 
 @dataclasses.dataclass
