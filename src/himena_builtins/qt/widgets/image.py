@@ -120,6 +120,7 @@ class QImageViewBase(QtW.QSplitter):
         # override widget state if metadata is available
         meta0 = model_meta.ImageMeta(
             axes=arr.infer_axes(),
+            channels=[model_meta.ImageChannel(colormap=self._default_colormap().name)],
             interpolation="nearest",
             is_rgb=False,
             unit="a.u.",
@@ -276,7 +277,7 @@ class QImageViewBase(QtW.QSplitter):
         raise NotImplementedError
 
     def _default_colormap(self) -> Colormap:
-        return Colormap("gray")
+        raise NotImplementedError
 
     def _update_channels(
         self,
@@ -701,6 +702,9 @@ class QImageView(QImageViewBase):
 
     def _make_control_widget(self) -> QImageViewControl:
         return QImageViewControl(self)
+
+    def _default_colormap(self) -> Colormap:
+        return Colormap("gray")
 
     def _update_channels(self, meta, img_slices, nchannels):
         super()._update_channels(meta, img_slices, nchannels)
