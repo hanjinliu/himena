@@ -46,7 +46,7 @@ from himena.widgets._initialize import remove_instance
 from himena.widgets._typemap import ObjectTypeMap, register_defaults
 from himena.widgets._widget_list import TabList, TabArea, DockWidgetList
 from himena.widgets._wrapper import ParametricWindow, SubWindow, DockWidget
-from himena.workflow import ProgrammaticMethod
+from himena.workflow import ProgrammaticMethod, ActionHintRegistry
 from himena._socket import SocketInfo
 
 if TYPE_CHECKING:
@@ -116,6 +116,11 @@ class MainWindow(Generic[_W]):
     def object_type_map(self) -> ObjectTypeMap:
         """Mapping object to string that describes the type."""
         return self._object_type_map
+
+    @property
+    def action_hint_registry(self) -> ActionHintRegistry:
+        """Action hint registry."""
+        return _actions.AppActionRegistry.instance()._action_hint_reg
 
     @property
     def socket_info(self) -> SocketInfo:
@@ -376,6 +381,10 @@ class MainWindow(Generic[_W]):
         metadata: Any | None = None,
     ) -> SubWindow[_W]:
         """Add any data as a widget data model.
+
+        CAUTION: result of this method may not be stable between different sessions. If
+        type is not given, the application will look for the proper widget data type in
+        the type map. If this type map was modified, the result will be different.
 
         Parameters
         ----------
