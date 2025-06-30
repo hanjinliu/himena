@@ -1003,7 +1003,6 @@ class QSubWindowTitleBar(QtW.QFrame):
         pos_local = btn.rect().bottomLeft()
         pos_global = btn.mapToGlobal(pos_local)
         menu.exec(pos_global)
-        return None
 
 
 def pixmap_resized(

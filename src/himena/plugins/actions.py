@@ -655,3 +655,12 @@ def when_command_executed(
     """
     reg = AppActionRegistry.instance()._action_hint_reg
     return reg.when_command_executed(model_type, command_id)
+
+
+def when_reader_used(
+    model_type: str,
+    plugins: list[str] | None = None,
+):
+    """Create an interface for adding command suggestions when a reader is used."""
+    reg = AppActionRegistry.instance()._action_hint_reg
+    return reg.when_reader_used(model_type, plugins=plugins)

@@ -341,12 +341,18 @@ def test_tab_drop_event(himena_ui: MainWindowQt, sample_dir: Path):
     drag.getter()
     mock.assert_called_once()
 
-def test_action_hint(himena_ui: MainWindowQt):
-    from himena.plugins import when_command_executed
+def test_action_hint(himena_ui: MainWindowQt, sample_dir: Path):
+    from himena.plugins import when_command_executed, when_reader_used
 
     (
         when_command_executed("table", "builtins:seaborn-sample:iris")
         .add_command_suggestion("builtins:table:copy-as-csv")
+        .add_command_suggestion("builtins:table:change-separator")
+    )
+    (
+        when_reader_used("table")
+        .add_command_suggestion("builtins:table:copy-as-csv")
+        .add_command_suggestion("builtins:table:copy-as-tsv")
         .add_command_suggestion("builtins:table:change-separator")
     )
     himena_ui.exec_action("builtins:seaborn-sample:iris")
@@ -356,3 +362,10 @@ def test_action_hint(himena_ui: MainWindowQt):
     qwin._title_bar._make_tooltip()
     menu = qwin._title_bar._prep_action_hints_menu()
     assert len(menu.actions()) == 2
+
+    himena_ui.read_file(sample_dir / "table.csv")
+    qwin = win.widget.parentWidget().parentWidget().parentWidget()
+    assert type(qwin) is QSubWindow
+    qwin._title_bar._make_tooltip()
+    menu = qwin._title_bar._prep_action_hints_menu()
+    assert len(menu.actions()) == 3

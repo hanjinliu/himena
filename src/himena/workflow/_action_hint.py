@@ -34,7 +34,11 @@ class ReaderMatcher(ActionMatcher):
 
     def match(self, model_type: str, step: WorkflowStep) -> bool:
         if is_subtype(model_type, self.model_type) and isinstance(step, ReaderMethod):
-            return step.plugin is None or step.plugin in self.plugins
+            return (
+                step.plugin is None
+                or len(self.plugins) == 0
+                or step.plugin in self.plugins
+            )
         return False
 
 
