@@ -174,6 +174,7 @@ def _get_icon(name: str, rotate=None, color=None):
 class TitleIconId(Enum):
     WINDOW_MENU = auto()
     MODEL_MENU = auto()
+    ACTION_HINT = auto()
     MIN = auto()
     MAX = auto()
     CLOSE = auto()
@@ -186,6 +187,8 @@ def _icon_for_id(icon_id: TitleIconId, color: str) -> QtGui.QIcon:
         return _get_icon("material-symbols:menu", color=color)
     elif icon_id is TitleIconId.MODEL_MENU:
         return _get_icon("octicon:ai-model-16", color=color)
+    elif icon_id is TitleIconId.ACTION_HINT:
+        return _get_icon("ant-design:bulb-outlined", color=color)
     elif icon_id is TitleIconId.MIN:
         return _get_icon("material-symbols:minimize-rounded", color=color)
     elif icon_id is TitleIconId.MAX:
@@ -514,11 +517,15 @@ class QTitleBarToolButton(QtW.QToolButton):
 class QDummyToolButton(QtW.QWidget):
     """Invisible widget just for API compatibility."""
 
+    def __init__(self):
+        super().__init__()
+        self.setVisible(False)
+
     def _set_size(self, size: int):
         self.setFixedSize(size, size)
 
     def _update_icon_color(self, color: str):
-        pass
+        """Do nothing."""
 
 
 class QSubWindowTitleBar(QtW.QFrame):
@@ -550,9 +557,16 @@ class QSubWindowTitleBar(QtW.QFrame):
                 tooltip="Menu specific to the model",
                 callback=self._show_model_menu,
             )
+            # action hint button
+            self._action_hint_btn = QTitleBarToolButton(
+                icon_id=TitleIconId.ACTION_HINT,
+                color="black",
+                tooltip="Click to see available action hints",
+                callback=self._show_action_hints,
+            )
         else:
             self._model_menu_btn = QDummyToolButton()
-            self._model_menu_btn.setVisible(False)
+            self._action_hint_btn = QDummyToolButton()
 
         self._index_label = QtW.QLabel()
         self._index_label.setObjectName("indexLabel")
@@ -606,6 +620,7 @@ class QSubWindowTitleBar(QtW.QFrame):
         layout.setSpacing(1)
         layout.addWidget(self._window_menu_btn)
         layout.addWidget(self._model_menu_btn)
+        layout.addWidget(self._action_hint_btn)
         layout.addWidget(self._index_label)
         layout.addWidget(self._title_label)
         layout.addWidget(self._minimize_btn, alignment=Qt.AlignmentFlag.AlignRight)
@@ -641,6 +656,7 @@ class QSubWindowTitleBar(QtW.QFrame):
         if height > 1:
             self._window_menu_btn._set_size(height - 1)
             self._model_menu_btn._set_size(height - 1)
+            self._action_hint_btn._set_size(height - 1)
             self._minimize_btn._set_size(height - 1)
             self._toggle_size_btn._set_size(height - 1)
             self._close_btn._set_size(height - 1)
@@ -649,6 +665,7 @@ class QSubWindowTitleBar(QtW.QFrame):
         for toolbtn in (
             self._window_menu_btn,
             self._model_menu_btn,
+            self._action_hint_btn,
             self._minimize_btn,
             self._toggle_size_btn,
             self._close_btn,
@@ -891,6 +908,13 @@ class QSubWindowTitleBar(QtW.QFrame):
         context_menu = self._prep_model_menu()
         return self._exec_menu_at_button(context_menu, self._model_menu_btn)
 
+    def _show_action_hints(self):
+        context_menu = self._prep_action_hints_menu()
+        if len(context_menu.actions()) == 0:
+            action = context_menu.addAction("No action hints available", lambda: None)
+            action.setEnabled(False)
+        return self._exec_menu_at_button(context_menu, self._action_hint_btn)
+
     def _prep_window_menu(self) -> QtW.QMenu:
         main = get_main_window(self)
         app = main._model_app
@@ -956,6 +980,21 @@ class QSubWindowTitleBar(QtW.QFrame):
         context_menu.update_from_context(ctx_dict)
         return context_menu
 
+    def _prep_action_hints_menu(self) -> QtW.QMenu:
+        ui = get_main_window(self)
+        model_type = self._get_model_type()
+        if model_type is None:
+            return QtW.QMenu()
+        subwin = self._subwindow._my_wrapper()
+        last_step = subwin._widget_workflow.last()
+        if last_step is None:
+            return QtW.QMenu()
+        menu = QtW.QMenu()
+        for sug in ui.action_hint_registry.iter_suggestion(model_type, last_step):
+            menu.addAction(sug.get_title(ui), sug.make_executor(ui, last_step))
+        menu.setParent(self, menu.windowFlags())
+        return menu
+
     def _show_window_menu(self):
         context_menu = self._prep_window_menu()
         return self._exec_menu_at_button(context_menu, self._window_menu_btn)
@@ -964,7 +1003,6 @@ class QSubWindowTitleBar(QtW.QFrame):
         pos_local = btn.rect().bottomLeft()
         pos_global = btn.mapToGlobal(pos_local)
         menu.exec(pos_global)
-        return None
 
 
 def pixmap_resized(

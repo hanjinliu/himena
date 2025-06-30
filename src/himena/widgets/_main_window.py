@@ -46,7 +46,7 @@ from himena.widgets._initialize import remove_instance
 from himena.widgets._typemap import ObjectTypeMap, register_defaults
 from himena.widgets._widget_list import TabList, TabArea, DockWidgetList
 from himena.widgets._wrapper import ParametricWindow, SubWindow, DockWidget
-from himena.workflow import ProgrammaticMethod
+from himena.workflow import ProgrammaticMethod, ActionHintRegistry
 from himena._socket import SocketInfo
 
 if TYPE_CHECKING:
@@ -116,6 +116,11 @@ class MainWindow(Generic[_W]):
     def object_type_map(self) -> ObjectTypeMap:
         """Mapping object to string that describes the type."""
         return self._object_type_map
+
+    @property
+    def action_hint_registry(self) -> ActionHintRegistry:
+        """Action hint registry."""
+        return _actions.AppActionRegistry.instance()._action_hint_reg
 
     @property
     def socket_info(self) -> SocketInfo:
@@ -377,6 +382,10 @@ class MainWindow(Generic[_W]):
     ) -> SubWindow[_W]:
         """Add any data as a widget data model.
 
+        CAUTION: result of this method may not be stable between different sessions. If
+        type is not given, the application will look for the proper widget data type in
+        the type map. If this type map was modified, the result will be different.
+
         Parameters
         ----------
         value : Any
@@ -637,6 +646,7 @@ class MainWindow(Generic[_W]):
         model_context: WidgetDataModel | None = None,
         window_context: SubWindow | None = None,
         with_params: dict[str, Any] | None = None,
+        with_defaults: dict[str, Any] | None = None,
         process_model_output: bool = True,
     ) -> Any:
         """Execute an action by its ID.
@@ -654,11 +664,17 @@ class MainWindow(Generic[_W]):
         with_params : dict, optional
             Parameters to pass to the parametric action. These parameters will directly
             be passed to the parametric window created after the action is executed.
+        with_defaults : dict, optional
+            If given, the resulting parametric window will be updated with these values.
         process_model_output : bool, default True
             If True, the output result will be processed by the application context. If
             the command return a `WidgetDataModel` instance, it will be converted to a
             sub-window.
         """
+        if with_params is not None and with_defaults is not None:
+            raise TypeError(
+                "Cannot use both `with_params` and `with_defaults` at the same time."
+            )
         providers: list[tuple[Any, type]] = []
         if model_context is not None:
             providers.append((model_context, WidgetDataModel, 1000))
@@ -699,6 +715,20 @@ class MainWindow(Generic[_W]):
                     force_sync=True,
                     force_close=True,
                 )
+            elif with_defaults is not None:
+                if (tab := self.tabs.current()) is not None and len(tab) > 0:
+                    param_widget = tab[-1]
+                else:  # pragma: no cover
+                    raise ValueError(
+                        f"Command {id!r} did not create a parametric window."
+                    )
+                if not isinstance(param_widget, ParametricWindow):
+                    if with_defaults:
+                        raise ValueError(
+                            f"Parametric widget expected but got {param_widget}."
+                        )
+                else:
+                    param_widget.update_params(with_defaults)
         return result
 
     @overload

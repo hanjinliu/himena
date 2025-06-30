@@ -21,6 +21,8 @@ from himena.plugins.actions import (
     ReproduceArgs,
     register_modification_tracker,
     add_default_status_tip,
+    when_command_executed,
+    when_reader_used,
 )
 from himena.plugins.widget_plugins import (
     register_dock_widget_action,
@@ -54,4 +56,6 @@ __all__ = [
     "ReproduceArgs",
     "ReaderPlugin",
     "WriterPlugin",
+    "when_command_executed",
+    "when_reader_used",
 ]

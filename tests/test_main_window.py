@@ -12,7 +12,7 @@ from himena.core import create_model
 from himena.types import ClipboardDataModel, DragDataModel, FutureInfo, WidgetConstructor, WidgetType, ParametricWidgetProtocol
 from himena.qt import MainWindowQt, drag_command
 from himena.qt._qmain_window import QMainWindow, _ext_to_filter, QChoicesDialog
-from himena.qt._qsub_window import get_subwindow
+from himena.qt._qsub_window import QSubWindow, get_subwindow
 from himena.widgets import set_status_tip, notify, append_result, TabArea
 from himena_builtins.qt.text import QTextEdit
 
@@ -340,3 +340,40 @@ def test_tab_drop_event(himena_ui: MainWindowQt, sample_dir: Path):
     mock.assert_not_called()
     drag.getter()
     mock.assert_called_once()
+
+def test_action_hint(himena_ui: MainWindowQt, sample_dir: Path):
+    from himena.plugins import when_command_executed, when_reader_used
+
+    (
+        when_command_executed("table", "builtins:seaborn-sample:iris")
+        .add_command_suggestion("builtins:table:copy-as-csv")
+        .add_command_suggestion("builtins:table:change-separator")
+    )
+    (
+        when_reader_used("table")
+        .add_command_suggestion("builtins:table:copy-as-csv")
+        .add_command_suggestion("builtins:table:copy-as-html")
+        .add_command_suggestion("builtins:table:change-separator")
+    )
+    himena_ui.exec_action("builtins:seaborn-sample:iris")
+    win = himena_ui.current_window
+    qwin = win.widget.parentWidget().parentWidget().parentWidget()
+    assert type(qwin) is QSubWindow
+    qwin._title_bar._make_tooltip()
+    menu = qwin._title_bar._prep_action_hints_menu()
+    assert len(menu.actions()) == 2
+
+    himena_ui.read_file(sample_dir / "table.csv")
+    win = himena_ui.current_window
+    qwin = win.widget.parentWidget().parentWidget().parentWidget()
+    assert type(qwin) is QSubWindow
+    qwin._title_bar._make_tooltip()
+    menu = qwin._title_bar._prep_action_hints_menu()
+    assert len(menu.actions()) == 3
+
+    repr(himena_ui.action_hint_registry)
+    for hint in himena_ui.action_hint_registry.iter_all():
+        himena_ui.current_window = win
+        hint.suggestion.get_title(himena_ui)
+        hint.suggestion.get_tooltip(himena_ui)
+        hint.suggestion.execute(himena_ui, win.to_model().workflow.last())
