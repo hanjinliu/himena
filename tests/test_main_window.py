@@ -364,6 +364,7 @@ def test_action_hint(himena_ui: MainWindowQt, sample_dir: Path):
     assert len(menu.actions()) == 2
 
     himena_ui.read_file(sample_dir / "table.csv")
+    win = himena_ui.current_window
     qwin = win.widget.parentWidget().parentWidget().parentWidget()
     assert type(qwin) is QSubWindow
     qwin._title_bar._make_tooltip()
