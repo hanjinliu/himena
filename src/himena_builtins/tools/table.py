@@ -153,7 +153,9 @@ def insert_incrementing_numbers(win: SubWindow["QSpreadsheet"]) -> Parametric:
 
 def _cast_meta(meta) -> TableMeta:
     if not isinstance(meta, TableMeta):
-        raise ValueError("Table must have a TableMeta as the metadata")
+        raise ValueError(
+            f"Table must have a TableMeta as the metadata, got {type(meta)}."
+        )
     return meta
 
 

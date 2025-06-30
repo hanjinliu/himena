@@ -723,10 +723,12 @@ class MainWindow(Generic[_W]):
                         f"Command {id!r} did not create a parametric window."
                     )
                 if not isinstance(param_widget, ParametricWindow):
-                    raise ValueError(
-                        f"Parametric widget expected but got {param_widget}."
-                    )
-                param_widget.update_params(with_defaults)
+                    if with_defaults:
+                        raise ValueError(
+                            f"Parametric widget expected but got {param_widget}."
+                        )
+                else:
+                    param_widget.update_params(with_defaults)
         return result
 
     @overload

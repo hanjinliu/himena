@@ -352,7 +352,7 @@ def test_action_hint(himena_ui: MainWindowQt, sample_dir: Path):
     (
         when_reader_used("table")
         .add_command_suggestion("builtins:table:copy-as-csv")
-        .add_command_suggestion("builtins:table:copy-as-tsv")
+        .add_command_suggestion("builtins:table:copy-as-html")
         .add_command_suggestion("builtins:table:change-separator")
     )
     himena_ui.exec_action("builtins:seaborn-sample:iris")
@@ -370,3 +370,10 @@ def test_action_hint(himena_ui: MainWindowQt, sample_dir: Path):
     qwin._title_bar._make_tooltip()
     menu = qwin._title_bar._prep_action_hints_menu()
     assert len(menu.actions()) == 3
+
+    repr(himena_ui.action_hint_registry)
+    for hint in himena_ui.action_hint_registry.iter_all():
+        himena_ui.current_window = win
+        hint.suggestion.get_title(himena_ui)
+        hint.suggestion.get_tooltip(himena_ui)
+        hint.suggestion.execute(himena_ui, win.to_model().workflow.last())
