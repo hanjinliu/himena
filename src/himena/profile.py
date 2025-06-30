@@ -230,7 +230,7 @@ def load_app_profile(name: str, *, create_default: bool = False) -> AppProfile:
         return AppProfile.from_json(path)
     raise ValueError(
         f"Profile {name!r} does not exist. Please create a new profile with:\n"
-        f"$ himena {name} --new"
+        f"$ himena --new {name}"
     )
 
 

@@ -82,6 +82,7 @@ def select_columns_by_name(model: WidgetDataModel) -> Parametric:
     run_async=True,
 )
 def filter_dataframe(model: WidgetDataModel) -> Parametric:
+    """Filter the DataFrame by a column and an operator."""
     import operator as _op
 
     choices = [

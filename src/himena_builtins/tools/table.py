@@ -15,7 +15,7 @@ configure_submenu(MenuId.TOOLS_TABLE, group="20_builtins", order=1)
 
 
 @register_function(
-    title="Crop selection",
+    title="Crop Selection",
     types=StandardType.TABLE,
     menus=[MenuId.TOOLS_TABLE],
     command_id="builtins:table:crop",
@@ -39,7 +39,7 @@ def crop_selection(model: WidgetDataModel["np.ndarray"]) -> Parametric:
 
 
 @register_function(
-    title="Change separator ...",
+    title="Change Separator ...",
     types=StandardType.TABLE,
     menus=[MenuId.TOOLS_TABLE],
     command_id="builtins:table:change-separator",
@@ -111,7 +111,7 @@ def copy_as_rst(model: WidgetDataModel) -> ClipboardDataModel:
 
 
 @register_function(
-    title="Insert incrementing numbers",
+    title="Insert Incrementing Numbers",
     types=StandardType.TABLE,
     menus=[MenuId.TOOLS_TABLE],
     command_id="builtins:table:insert-incrementing-numbers",

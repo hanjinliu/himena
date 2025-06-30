@@ -39,7 +39,7 @@ def duplicate_this_slice(model: WidgetDataModel) -> Parametric:
             tuple(slice(None) if i is None else i for i in indices)
         )
         if isinstance(meta := model.metadata, ArrayMeta):
-            update = {"current_indices": ()}
+            update: dict[str, Any] = {"current_indices": ()}
             if isinstance(meta, ImageMeta):
                 update["axes"] = meta.axes[-2:] if meta.axes is not None else None
                 update["channel_axis"] = None
