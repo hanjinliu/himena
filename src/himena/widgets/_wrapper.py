@@ -191,8 +191,9 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
             # If the backend widget cannot be converted to a model, there's no need
             # to inform the user "save changes?".
             return None
-        # if hasattr(self.widget, "set_modified") and not value:
-        #     self.widget.set_modified(False)
+        if hasattr(self.widget, "set_modified") and not value:
+            # this clause is needed after user chose "Overwrite" in the dialog
+            self.widget.set_modified(False)
         self._ask_save_before_close = value
         return None
 
