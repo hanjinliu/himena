@@ -11,6 +11,7 @@ from himena.utils.table_selection import (
     model_to_xy_arrays,
     table_selection_gui_option,
     auto_select,
+    get_table_shape_and_selections,
 )
 from himena.consts import StandardType, MenuId
 from himena.widgets import SubWindow
@@ -286,14 +287,14 @@ def band_plot(win: SubWindow) -> Parametric:
 )
 def histogram(win: SubWindow) -> Parametric:
     """Make a histogram from a table-like data."""
-    x0 = auto_select(win.to_model(), 1)[0]
+    model = win.to_model()
+    shape, selections = get_table_shape_and_selections(model)
+    x0 = auto_select(model, 1)[0]
     assert x0 is not None  # when num == 1, it must be a tuple.
-    row_sel = x0[0]
-    ndata = row_sel[1] - row_sel[0]
 
     @configure_gui(
         x=table_selection_gui_option(win, default=x0),
-        bins={"min": 1, "value": max(int(np.sqrt(ndata)), 2)},
+        bins={"min": 1, "value": max(int(np.sqrt(shape[0])), 2)},
         face={"widget_type": FacePropertyEdit},
         edge={"widget_type": EdgePropertyEdit},
     )

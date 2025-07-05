@@ -355,12 +355,9 @@ def table_selection_gui_option(
     return {"widget_type": SelectionEdit, "getter": range_getter(ref), "value": default}
 
 
-def auto_select(model: WidgetDataModel, num: int) -> list[None | SelectionType]:
-    """Automatically select a number of columns from a table-like model.
-
-    This function will select the columns from left to right by default, but will first
-    select the already selected columns if any.
-    """
+def get_table_shape_and_selections(
+    model: WidgetDataModel,
+) -> tuple[tuple[int, int], list[SelectionType]]:
     from himena.data_wrappers import wrap_dataframe
     from himena.standards.model_meta import TableMeta, ArrayMeta, DictMeta
 
@@ -393,6 +390,16 @@ def auto_select(model: WidgetDataModel, num: int) -> list[None | SelectionType]:
         shape = val.shape
     else:
         raise ValueError(f"Table-like data expected, but got model type {model.type!r}")
+    return shape, selections
+
+
+def auto_select(model: WidgetDataModel, num: int) -> list[None | SelectionType]:
+    """Automatically select a number of columns from a table-like model.
+
+    This function will select the columns from left to right by default, but will first
+    select the already selected columns if any.
+    """
+    shape, selections = get_table_shape_and_selections(model)
     ncols = shape[1]
     if num == len(selections):
         return selections
@@ -401,10 +408,10 @@ def auto_select(model: WidgetDataModel, num: int) -> list[None | SelectionType]:
     elif ncols < num:
         out = [None] * num
         for i in range(ncols):
-            out[i + num - ncols] = ((0, shape[0]), (i, i + 1))
+            out[i + num - ncols] = ((0, None), (i, i + 1))
         return out
     else:
-        return [((0, shape[0]), (i, i + 1)) for i in range(num)]
+        return [((0, None), (i, i + 1)) for i in range(num)]
 
 
 def _to_single_column_slice(val: SelectionType) -> int:

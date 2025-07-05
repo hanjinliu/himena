@@ -76,6 +76,19 @@ def show_workflow_graph(model: WidgetDataModel) -> WidgetDataModel:
 
 
 @ACTIONS.append_from_fn(
+    id="refresh-by-workflow",
+    title="Refresh By Workflow",
+    menus=[{"id": MenuId.WINDOW, "group": EXIT_GROUP}],
+    enablement=_ctx.num_sub_windows > 0,
+)
+def refresh_by_workflow(win: SubWindow) -> None:
+    """Refresh the current window by re-calculating its workflow."""
+    model = win.to_model()
+    model_out = model.workflow.compute(process_output=False)
+    win.update_model(model_out)
+
+
+@ACTIONS.append_from_fn(
     id="open-last-closed-window",
     title="Open Last Closed Window",
     menus=[{"id": MenuId.WINDOW, "group": EXIT_GROUP}],

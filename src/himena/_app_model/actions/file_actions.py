@@ -202,7 +202,9 @@ def save_from_dialog(ui: MainWindow, sub_win: SubWindow) -> Future:
 def save_as_from_dialog(ui: MainWindow, sub_win: SubWindow) -> Future:
     """Save the current sub-window as a new file."""
     if cb := sub_win._save_from_dialog(ui, behavior=SaveToNewPath()):
-        return ui._executor.submit(cb)
+        future = ui._executor.submit(cb)
+        future.add_done_callback(lambda f: _update_window_title(sub_win, f))
+        return future
     raise Cancelled
 
 
@@ -235,7 +237,9 @@ def save_as_using_from_dialog(ui: MainWindow, sub_win: SubWindow) -> Future:
     if cb := sub_win._save_from_dialog(
         ui, behavior=SaveToNewPath(), plugin=writer.plugin
     ):
-        return ui._executor.submit(cb)
+        future = ui._executor.submit(cb)
+        future.add_done_callback(lambda f: _update_window_title(sub_win, f))
+        return future
     else:
         raise Cancelled
 
@@ -534,3 +538,7 @@ SUBMENUS.append_from(
     title="Screenshot",
     group=SCR_SHOT_GROUP,
 )
+
+
+def _update_window_title(sub_win: SubWindow, future: Future[Path]) -> None:
+    sub_win.title = future.result().name
