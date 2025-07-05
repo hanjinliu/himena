@@ -557,7 +557,7 @@ class SubWindow(WidgetWrapper[_W], Layout):
         main: MainWindow,
         behavior: SaveBehavior | None = None,
         plugin: str | None = None,
-    ) -> Callable[[], None] | None:
+    ) -> Callable[[], Path] | None:
         """Save this window to a new path, return if saved."""
         if behavior is None:
             behavior = self.save_behavior
@@ -568,7 +568,7 @@ class SubWindow(WidgetWrapper[_W], Layout):
                 main.set_status_tip(f"Saving {self.title!r} to {save_path}", duration=2)
                 self._write_model(save_path, plugin=plugin, model=model)
                 main.set_status_tip(f"Saved {self.title!r} to {save_path}", duration=2)
-                return None
+                return save_path
 
             return _save
         return None
