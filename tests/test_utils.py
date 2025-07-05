@@ -159,9 +159,9 @@ def _str_array(x):
 )
 def test_table_selection_auto_select(value, meta):
     model = create_model(value, metadata=meta)
-    assert auto_select(model, 1) == [((0, 3), (0, 1))]
-    assert auto_select(model, 2) == [((0, 3), (0, 1)), ((0, 3), (1, 2))]
-    assert auto_select(model, 3) == [None, ((0, 3), (0, 1)), ((0, 3), (1, 2))]
+    assert auto_select(model, 1) == [((0, None), (0, 1))]
+    assert auto_select(model, 2) == [((0, None), (0, 1)), ((0, None), (1, 2))]
+    assert auto_select(model, 3) == [None, ((0, None), (0, 1)), ((0, None), (1, 2))]
 
 def test_model_to_arrays():
     model = create_model(
