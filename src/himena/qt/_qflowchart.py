@@ -36,26 +36,6 @@ class BaseNodeItem(ABC):
         return self.text()
 
 
-class NodeItem(BaseNodeItem):
-    def __init__(self, text: str, color: Color | None = None, tooltip: str = ""):
-        self._text = text
-        self._color = color if color is not None else Color((173, 216, 230))
-        self._tooltip = tooltip
-        self._id = id(self)
-
-    def text(self) -> str:
-        return self._text
-
-    def color(self) -> Color:
-        return self._color
-
-    def tooltip(self) -> str:
-        return self._tooltip
-
-    def id(self) -> Hashable:
-        return self._id
-
-
 class ZOrder(IntEnum):
     UNDERLAY = -100
     OVERLAY = 100
@@ -68,9 +48,8 @@ class QFlowChartNode(QtW.QGraphicsRectItem):
     def __init__(self, item: BaseNodeItem, x: float = 0.0, y: float = 0.0):
         super().__init__(0, 0, 1, 1)
         self._item = item  # Store the item associated with this node
-        self._connected_arrows: list[
-            QFlowChartArrow
-        ] = []  # List of arrows connected to this node
+        # List of arrows connected to this node
+        self._connected_arrows: list[QFlowChartArrow] = []
         self._last_press_pos = QtCore.QPointF()
 
         # Add text and adjust size
@@ -272,13 +251,7 @@ class QFlowChartArrow(QtW.QGraphicsLineItem):
 
         # Update arrowhead
         self.arrowhead.setPolygon(
-            QtGui.QPolygonF(
-                [
-                    QPointF(end_point.x(), end_point.y()),
-                    QPointF(x1, y1),
-                    QPointF(x2, y2),
-                ]
-            )
+            QtGui.QPolygonF([end_point, QPointF(x1, y1), QPointF(x2, y2)])
         )
 
 

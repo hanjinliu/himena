@@ -1,10 +1,11 @@
+from pathlib import Path
 from qtpy.QtWidgets import QApplication
+from qtpy.QtCore import Qt, QPoint
 from pytestqt.qtbot import QtBot
 from himena import MainWindow
 from himena.testing import WidgetTester
 from himena_builtins.qt.basic import QWorkflowView
 from himena_builtins._io import default_workflow_reader
-from pathlib import Path
 
 
 def test_workflow_view(qtbot: QtBot, sample_dir: Path):
@@ -18,6 +19,11 @@ def test_workflow_view(qtbot: QtBot, sample_dir: Path):
         item0 = widget.view.item(widget.view.list_ids()[0])
         assert item0 is not None
         widget._make_context_menu(item0)
+        qtbot.mouseClick(widget.view.viewport(), Qt.MouseButton.LeftButton, pos=QPoint(3, 3))
+        qtbot.mouseClick(widget.view.viewport(), Qt.MouseButton.RightButton, pos=QPoint(3, 3))
+        qtbot.mousePress(widget.view.viewport(), Qt.MouseButton.LeftButton, pos=QPoint(3, 3))
+        qtbot.mouseMove(widget.view.viewport(), QPoint(10, 10))
+        qtbot.mouseRelease(widget.view.viewport(), Qt.MouseButton.LeftButton, pos=QPoint(10, 10))
 
 def test_edit_workflow_view(qtbot: QtBot, sample_dir: Path):
     widget = QWorkflowView()
