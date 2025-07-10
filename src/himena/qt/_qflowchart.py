@@ -357,6 +357,16 @@ class QFlowChartView(QtW.QGraphicsView):
         self.scene().addItem(arrow)
         return arrow
 
+    def list_ids(self) -> list[Hashable]:
+        """List all node IDs in the flow chart"""
+        return list(self._node_map.keys())
+
+    def item(self, item_id: Hashable) -> BaseNodeItem | None:
+        """Get the associated item by its ID"""
+        if node := self._node_map.get(item_id):
+            return node.item()
+        return None
+
     def _arrow_color(self) -> QtGui.QColor:
         if self.scene().backgroundBrush().color().lightness() < 128:
             arrow_color = QtGui.QColor(194, 194, 194)

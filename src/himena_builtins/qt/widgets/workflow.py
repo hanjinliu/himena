@@ -15,6 +15,7 @@ from himena.qt._qflowchart import QFlowChartWidget, BaseNodeItem
 from himena.widgets import current_instance, MainWindow
 from himena.style import Theme
 from himena.types import WidgetDataModel
+from himena.workflow._graph import _make_mock_main_window
 
 
 class WorkflowNodeItem(BaseNodeItem):
@@ -108,7 +109,10 @@ class QWorkflowView(QFlowChartWidget):
         self.scene.clear()
         self.view._node_map.clear()
         self._workflow = workflow
-        main = current_instance()
+        try:
+            main = current_instance()
+        except StopIteration:
+            main = _make_mock_main_window()
         for step in workflow:
             if step.id not in self.view._node_map:
                 self._add_step(step, workflow, main)
