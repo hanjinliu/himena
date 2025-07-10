@@ -30,6 +30,12 @@ class WorkflowNodeItem(BaseNodeItem):
     def color(self) -> Color:
         if self._step.process_output:
             return Color("#A3F020")
+        if (
+            isinstance(self._step, _wf.CommandExecution)
+            and self._step.execution_time <= 0
+        ):
+            # parametric window
+            return Color("#FFA2A2")
         return Color("#A2A3F0")
 
     def tooltip(self) -> str:
@@ -51,13 +57,49 @@ class WorkflowNodeItem(BaseNodeItem):
         return self._step.id
 
 
-class QWorkflowView(QFlowChartWidget):
+class QWorkflowViewBase(QFlowChartWidget):
+    @validate_protocol
+    def theme_changed_callback(self, theme: Theme) -> None:
+        self.setBackgroundBrush(QtGui.QColor(Color(theme.background).hex))
+
+    def add_workflow(self, workflow: _wf.Workflow) -> None:
+        try:
+            main = current_instance()
+        except StopIteration:
+            main = _make_mock_main_window()
+        for step in workflow:
+            if step.id not in self.view._node_map:
+                self._add_step(step, workflow, main)
+
+    def clear_workflow(self) -> None:
+        """Clear the workflow view."""
+        self.scene.clear()
+        self.view._node_map.clear()
+
+    def _add_step(self, step: _wf.WorkflowStep, workflow: _wf.Workflow, main) -> None:
+        parents: list[UUID] = []
+        for _id in step.iter_parents():
+            if _id not in self.view._node_map:
+                parent_step = workflow.step_for_id(_id)
+                self._add_step(parent_step, workflow, main)
+            parents.append(_id)
+        item = WorkflowNodeItem(step, main)
+        self.view.add_child(item, parents=parents)
+
+
+class QWorkflowView(QWorkflowViewBase):
     def __init__(self):
         super().__init__()
         self.view.item_right_clicked.connect(self._on_right_clicked)
         self._modified = False
         self._editable = True
         self._workflow: _wf.Workflow = _wf.Workflow()
+
+    def set_workflow(self, workflow: _wf.Workflow) -> None:
+        """Set the workflow."""
+        self.clear_workflow()
+        self._workflow = workflow
+        self.add_workflow(workflow)
 
     @validate_protocol
     def update_model(self, model: WidgetDataModel):
@@ -99,33 +141,6 @@ class QWorkflowView(QFlowChartWidget):
     @validate_protocol
     def set_editable(self, editable: bool) -> None:
         self._editable = editable
-
-    @validate_protocol
-    def theme_changed_callback(self, theme: Theme) -> None:
-        self.setBackgroundBrush(QtGui.QColor(Color(theme.background).hex))
-
-    def set_workflow(self, workflow: _wf.Workflow) -> None:
-        """Set the workflow."""
-        self.scene.clear()
-        self.view._node_map.clear()
-        self._workflow = workflow
-        try:
-            main = current_instance()
-        except StopIteration:
-            main = _make_mock_main_window()
-        for step in workflow:
-            if step.id not in self.view._node_map:
-                self._add_step(step, workflow, main)
-
-    def _add_step(self, step: _wf.WorkflowStep, workflow: _wf.Workflow, main) -> None:
-        parents: list[UUID] = []
-        for _id in step.iter_parents():
-            if _id not in self.view._node_map:
-                parent_step = workflow.step_for_id(_id)
-                self._add_step(parent_step, workflow, main)
-            parents.append(_id)
-        item = WorkflowNodeItem(step, main)
-        self.view.add_child(item, parents=parents)
 
     def _replace_with_file_reader(self, item: WorkflowNodeItem, how: str) -> None:
         wf_new = self._workflow.replace_with_input(item.id(), how=how)

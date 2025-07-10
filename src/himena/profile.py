@@ -48,6 +48,7 @@ DEFAULT_PLUGINS: list[tuple[str, Version]] = [
     ("himena_builtins.qt.favorites", Version("0.0.9")),
     ("himena_builtins.qt.history", Version("0.0.0")),
     ("himena_builtins.qt.output", Version("0.0.0")),
+    ("himena_builtins.qt.full_workflow", Version("0.0.13")),
     # Matplotlib
     ("himena_builtins.qt.plot", Version("0.0.0")),
     # Widgets

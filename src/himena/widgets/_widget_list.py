@@ -449,6 +449,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
                     _, _, width, height = sub_window.rect
                 sub_window.rect = WindowRect(left, top, width, height)
         _checker.call_widget_added_callback(sub_window.widget)
+        main._himena_main_window.events.window_added.emit(sub_window)
         sub_window._alive = True
         return None
 

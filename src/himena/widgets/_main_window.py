@@ -65,6 +65,8 @@ class MainWindowEvents(SignalGroup, Generic[_W]):
 
     tab_activated = Signal(TabArea[_W])
     window_activated = Signal(SubWindow[_W])
+    window_added = Signal(SubWindow[_W])
+    window_closed = Signal(SubWindow[_W])
 
 
 class MainWindow(Generic[_W]):

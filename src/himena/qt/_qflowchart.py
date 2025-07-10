@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from contextlib import suppress
 from enum import IntEnum
 import math
-from typing import Hashable
+from typing import Hashable, Iterable
 import weakref
 import numpy as np
 from psygnal import Signal
@@ -330,6 +330,17 @@ class QFlowChartView(QtW.QGraphicsView):
         self.scene().addItem(arrow)
         return arrow
 
+    def remove_nodes(self, nodes: Iterable[QFlowChartNode]):
+        """Remove nodes and their associated arrows from the scene"""
+        for node in nodes:
+            # Remove all arrows connected to this node
+            for arrow in node._connected_arrows:
+                self.scene().removeItem(arrow)
+                node.remove_arrow(arrow)
+            # Remove the node itself
+            self.scene().removeItem(node)
+            self._node_map.pop(node.item().id(), None)
+
     def list_ids(self) -> list[Hashable]:
         """List all node IDs in the flow chart"""
         return list(self._node_map.keys())
@@ -372,6 +383,8 @@ class QFlowChartView(QtW.QGraphicsView):
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
         """Override mouse release event to stop dragging the scene"""
+        if self._last_drag_position.isNull():
+            return super().mouseReleaseEvent(event)
         with suppress(RuntimeError):
             is_click = (
                 self._last_drag_position - event.position()
