@@ -1523,7 +1523,7 @@
               </div>
             </td>
             <td>
-                  <code>&#39;0.0.12&#39;</code>
+                  <code>&#39;0.0.13&#39;</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -1539,7 +1539,7 @@
               </div>
             </td>
             <td>
-                  <code>[&#39;himena_builtins.qt.console&#39;, &#39;himena_builtins.qt.explorer&#39;, &#39;himena_builtins.qt.favorites&#39;, &#39;himena_builtins.qt.history&#39;, &#39;himena_builtins.qt.output&#39;, &#39;himena_builtins.qt.plot&#39;, &#39;himena_builtins.qt.array&#39;, &#39;himena_builtins.qt.basic&#39;, &#39;himena_builtins.qt.dataframe&#39;, &#39;himena_builtins.qt.image&#39;, &#39;himena_builtins.qt.ipynb&#39;, &#39;himena_builtins.qt.rois&#39;, &#39;himena_builtins.qt.stack&#39;, &#39;himena_builtins.qt.table&#39;, &#39;himena_builtins.qt.text&#39;, &#39;himena_builtins.tools.array&#39;, &#39;himena_builtins.tools.conversions&#39;, &#39;himena_builtins.tools.dataframe&#39;, &#39;himena_builtins.tools.dict&#39;, &#39;himena_builtins.tools.image&#39;, &#39;himena_builtins.tools.others&#39;, &#39;himena_builtins.tools.plot&#39;, &#39;himena_builtins.tools.table&#39;, &#39;himena_builtins.tools.text&#39;, &#39;himena_builtins.io&#39;, &#39;himena_builtins.new&#39;, &#39;himena_builtins.user_modifications&#39;]</code>
+                  <code>[&#39;himena_builtins.qt.console&#39;, &#39;himena_builtins.qt.explorer&#39;, &#39;himena_builtins.qt.favorites&#39;, &#39;himena_builtins.qt.history&#39;, &#39;himena_builtins.qt.output&#39;, &#39;himena_builtins.qt.full_workflow&#39;, &#39;himena_builtins.qt.plot&#39;, &#39;himena_builtins.qt.array&#39;, &#39;himena_builtins.qt.basic&#39;, &#39;himena_builtins.qt.dataframe&#39;, &#39;himena_builtins.qt.image&#39;, &#39;himena_builtins.qt.ipynb&#39;, &#39;himena_builtins.qt.rois&#39;, &#39;himena_builtins.qt.stack&#39;, &#39;himena_builtins.qt.table&#39;, &#39;himena_builtins.qt.text&#39;, &#39;himena_builtins.tools.array&#39;, &#39;himena_builtins.tools.conversions&#39;, &#39;himena_builtins.tools.dataframe&#39;, &#39;himena_builtins.tools.dict&#39;, &#39;himena_builtins.tools.image&#39;, &#39;himena_builtins.tools.others&#39;, &#39;himena_builtins.tools.plot&#39;, &#39;himena_builtins.tools.table&#39;, &#39;himena_builtins.tools.text&#39;, &#39;himena_builtins.io&#39;, &#39;himena_builtins.new&#39;, &#39;himena_builtins.user_modifications&#39;]</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -1603,8 +1603,7 @@ The argument must be an iterable if specified.</p>
 
               <details class="quote">
                 <summary>Source code in <code>src\himena\profile.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 98</span>
-<span class="normal"> 99</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 99</span>
 <span class="normal">100</span>
 <span class="normal">101</span>
 <span class="normal">102</span>
@@ -1726,7 +1725,8 @@ The argument must be an iterable if specified.</p>
 <span class="normal">218</span>
 <span class="normal">219</span>
 <span class="normal">220</span>
-<span class="normal">221</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">AppProfile</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="normal">221</span>
+<span class="normal">222</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">AppProfile</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Model of a profile.&quot;&quot;&quot;</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
@@ -1885,13 +1885,13 @@ The argument must be an iterable if specified.</p>
 
             <details class="quote">
               <summary>Source code in <code>src\himena\profile.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">137</span>
-<span class="normal">138</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">138</span>
 <span class="normal">139</span>
 <span class="normal">140</span>
 <span class="normal">141</span>
 <span class="normal">142</span>
-<span class="normal">143</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="normal">143</span>
+<span class="normal">144</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">default</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">save</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;AppProfile&quot;</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the default profile.&quot;&quot;&quot;</span>
     <span class="n">prof</span> <span class="o">=</span> <span class="n">AppProfile</span><span class="p">()</span>
@@ -1924,8 +1924,7 @@ The argument must be an iterable if specified.</p>
 
             <details class="quote">
               <summary>Source code in <code>src\himena\profile.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">122</span>
-<span class="normal">123</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">123</span>
 <span class="normal">124</span>
 <span class="normal">125</span>
 <span class="normal">126</span>
@@ -1937,7 +1936,8 @@ The argument must be an iterable if specified.</p>
 <span class="normal">132</span>
 <span class="normal">133</span>
 <span class="normal">134</span>
-<span class="normal">135</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="normal">135</span>
+<span class="normal">136</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">from_json</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;AppProfile&quot;</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct an AppProfile from a json file.&quot;&quot;&quot;</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
@@ -1973,9 +1973,9 @@ The argument must be an iterable if specified.</p>
 
             <details class="quote">
               <summary>Source code in <code>src\himena\profile.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">154</span>
-<span class="normal">155</span>
-<span class="normal">156</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">profile_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">profile_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Path to this profile.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">profile_dir</span><span class="p">()</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.json&quot;</span>
 </code></pre></div></td></tr></table></div>
@@ -2000,14 +2000,14 @@ The argument must be an iterable if specified.</p>
 
             <details class="quote">
               <summary>Source code in <code>src\himena\profile.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">145</span>
-<span class="normal">146</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">146</span>
 <span class="normal">147</span>
 <span class="normal">148</span>
 <span class="normal">149</span>
 <span class="normal">150</span>
 <span class="normal">151</span>
-<span class="normal">152</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">152</span>
+<span class="normal">153</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Save profile as a json file.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile_path</span><span class="p">()</span>
@@ -2037,8 +2037,7 @@ The argument must be an iterable if specified.</p>
 
             <details class="quote">
               <summary>Source code in <code>src\himena\profile.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">185</span>
-<span class="normal">186</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">186</span>
 <span class="normal">187</span>
 <span class="normal">188</span>
 <span class="normal">189</span>
@@ -2066,7 +2065,8 @@ The argument must be an iterable if specified.</p>
 <span class="normal">211</span>
 <span class="normal">212</span>
 <span class="normal">213</span>
-<span class="normal">214</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">update_plugin_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plugin_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">214</span>
+<span class="normal">215</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">update_plugin_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plugin_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Update the config of the plugin specified by `plugin_id`&quot;&quot;&quot;</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">himena.plugins</span><span class="w"> </span><span class="kn">import</span> <span class="n">AppActionRegistry</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">himena.plugins.widget_plugins</span><span class="w"> </span><span class="kn">import</span> <span class="n">WidgetCallbackBase</span>
@@ -2118,8 +2118,7 @@ The argument must be an iterable if specified.</p>
 
             <details class="quote">
               <summary>Source code in <code>src\himena\profile.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">170</span>
-<span class="normal">171</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">171</span>
 <span class="normal">172</span>
 <span class="normal">173</span>
 <span class="normal">174</span>
@@ -2131,7 +2130,8 @@ The argument must be an iterable if specified.</p>
 <span class="normal">180</span>
 <span class="normal">181</span>
 <span class="normal">182</span>
-<span class="normal">183</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">with_keybinding_override</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">command_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;AppProfile&quot;</span><span class="p">:</span>
+<span class="normal">183</span>
+<span class="normal">184</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">with_keybinding_override</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">command_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;AppProfile&quot;</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a new profile with new keybind overrides.&quot;&quot;&quot;</span>
     <span class="n">_overrides</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">keybinding_overrides</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">_overrides</span><span class="p">:</span>
@@ -2167,9 +2167,9 @@ The argument must be an iterable if specified.</p>
 
             <details class="quote">
               <summary>Source code in <code>src\himena\profile.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">158</span>
-<span class="normal">159</span>
-<span class="normal">160</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">with_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;AppProfile&quot;</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">with_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;AppProfile&quot;</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a new profile with a new name.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">})</span>
 </code></pre></div></td></tr></table></div>
@@ -2194,9 +2194,9 @@ The argument must be an iterable if specified.</p>
 
             <details class="quote">
               <summary>Source code in <code>src\himena\profile.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">166</span>
-<span class="normal">167</span>
-<span class="normal">168</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">with_plugin_configs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">configs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="s2">&quot;AppProfile&quot;</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">with_plugin_configs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">configs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="s2">&quot;AppProfile&quot;</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a new profile with new plugin configs.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;plugin_configs&quot;</span><span class="p">:</span> <span class="n">configs</span><span class="p">})</span>
 </code></pre></div></td></tr></table></div>
@@ -2221,9 +2221,9 @@ The argument must be an iterable if specified.</p>
 
             <details class="quote">
               <summary>Source code in <code>src\himena\profile.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">162</span>
-<span class="normal">163</span>
-<span class="normal">164</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">with_plugins</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plugins</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;AppProfile&quot;</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">with_plugins</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plugins</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;AppProfile&quot;</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a new profile with new plugins.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;plugins&quot;</span><span class="p">:</span> <span class="n">plugins</span><span class="p">})</span>
 </code></pre></div></td></tr></table></div>
@@ -2311,9 +2311,9 @@ The argument must be an iterable if specified.</p>
 
               <details class="quote">
                 <summary>Source code in <code>src\himena\profile.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">93</span>
-<span class="normal">94</span>
-<span class="normal">95</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">KeyBindingOverride</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">94</span>
+<span class="normal">95</span>
+<span class="normal">96</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">KeyBindingOverride</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
     <span class="n">key</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">command_id</span><span class="p">:</span> <span class="nb">str</span>
 </code></pre></div></td></tr></table></div>
@@ -2387,14 +2387,14 @@ The argument must be an iterable if specified.</p>
 
             <details class="quote">
               <summary>Source code in <code>src\himena\profile.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">245</span>
-<span class="normal">246</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">246</span>
 <span class="normal">247</span>
 <span class="normal">248</span>
 <span class="normal">249</span>
 <span class="normal">250</span>
 <span class="normal">251</span>
-<span class="normal">252</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">new_app_profile</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AppProfile</span><span class="p">:</span>
+<span class="normal">252</span>
+<span class="normal">253</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">new_app_profile</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AppProfile</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a new profile.&quot;&quot;&quot;</span>
     <span class="n">path</span> <span class="o">=</span> <span class="n">profile_dir</span><span class="p">()</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.json&quot;</span>
     <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
@@ -2465,10 +2465,10 @@ The argument must be an iterable if specified.</p>
 
             <details class="quote">
               <summary>Source code in <code>src\himena\profile.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">255</span>
-<span class="normal">256</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">256</span>
 <span class="normal">257</span>
-<span class="normal">258</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">remove_app_profile</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">258</span>
+<span class="normal">259</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">remove_app_profile</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Remove an existing profile.&quot;&quot;&quot;</span>
     <span class="n">path</span> <span class="o">=</span> <span class="n">profile_dir</span><span class="p">()</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.json&quot;</span>
     <span class="k">return</span> <span class="n">path</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
