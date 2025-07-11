@@ -734,9 +734,9 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _on_show_notification_requested(self, text: str, duration: float) -> None:
         text_edit = QtW.QPlainTextEdit(text)
         text_edit.setWordWrapMode(QtGui.QTextOption.WrapMode.WordWrap)
-        notification = QNotificationWidget(self, duration=int(duration * 1000))
+        notification = QNotificationWidget(self)
         notification.addWidget(text_edit)
-        return notification.show_and_hide_later()
+        notification.show_and_hide_later(duration)
 
     def _get_menu_action_by_id(self, name: str) -> QtW.QAction:
         # Find the help menu

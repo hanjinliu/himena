@@ -1,6 +1,6 @@
 from pathlib import Path
 from qtpy.QtWidgets import QApplication
-from qtpy.QtCore import Qt, QPoint
+from qtpy.QtCore import Qt, QPoint, QPointF
 from pytestqt.qtbot import QtBot
 from himena import MainWindow
 from himena.testing import WidgetTester
@@ -24,6 +24,23 @@ def test_workflow_view(qtbot: QtBot, sample_dir: Path):
         qtbot.mousePress(widget.view.viewport(), Qt.MouseButton.LeftButton, pos=QPoint(3, 3))
         qtbot.mouseMove(widget.view.viewport(), QPoint(10, 10))
         qtbot.mouseRelease(widget.view.viewport(), Qt.MouseButton.LeftButton, pos=QPoint(10, 10))
+        QApplication.processEvents()
+
+        first_id = widget.view.list_ids()[0]
+        node = widget.view._node_map.get(first_id)
+        assert node is not None
+        node._get_edge_point(node.rect().center() - QPointF(-40, -40))
+        node._get_edge_point(node.rect().center() - QPointF(-40, -0))
+        node._get_edge_point(node.rect().center() - QPointF(-40, 40))
+        node._get_edge_point(node.rect().center() - QPointF(40, -40))
+        node._get_edge_point(node.rect().center() - QPointF(40, -0))
+        node._get_edge_point(node.rect().center() - QPointF(40, 40))
+        node._get_edge_point(node.rect().center() - QPointF(0, -40))
+        node._get_edge_point(node.rect().center() - QPointF(0, 40))
+
+        pos = widget.view.mapFromScene(node.center())
+        qtbot.mouseClick(widget.view.viewport(), Qt.MouseButton.LeftButton, pos=pos)
+        QApplication.processEvents()
 
 def test_edit_workflow_view(qtbot: QtBot, sample_dir: Path):
     widget = QWorkflowView()

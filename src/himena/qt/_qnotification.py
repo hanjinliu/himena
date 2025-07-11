@@ -170,7 +170,6 @@ class QNotificationWidget(_QOverlayBase):
         if self.isVisible():
             self.setVisible(False)
             self._timer = None
-        return None
 
     def slide_in(self):
         """Run animation that fades in the dialog with a slight slide up."""
@@ -181,23 +180,16 @@ class QNotificationWidget(_QOverlayBase):
         self.geom_anim.setStartValue(geom.translated(0, 20))
         self.geom_anim.setEndValue(geom)
         self.geom_anim.setEasingCurve(QtCore.QEasingCurve.Type.OutQuad)
-        # fade in
-        self.opacity_anim.setDuration(self._duration)
-        self.opacity_anim.setStartValue(0)
-        self.opacity_anim.setEndValue(0.9)
         self.geom_anim.start()
-        self.opacity_anim.start()
 
     def moveEvent(self, a0):
         super().moveEvent(a0)
         self._align_close_btn()
-        return None
 
     def show(self):
         """Show the overlay widget with animation."""
         super().show()
         self.slide_in()
-        return None
 
     def hide(self) -> None:
         """Hide the overlay widget with animation."""
@@ -213,13 +205,10 @@ class QNotificationWidget(_QOverlayBase):
                 self.setVisible(False)
             self.opacity_anim.finished.disconnect()
 
-        return None
-
     def show_and_hide_later(self, sec: float = 5):
         """Show the overlay widget with animation and hide after a delay."""
         self.show()
         self.hideLater(sec)
-        return None
 
     def enterEvent(self, a0: QtCore.QEvent) -> None:
         self._enter_event()

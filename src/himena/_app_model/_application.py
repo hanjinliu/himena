@@ -67,11 +67,11 @@ class HimenaApplication(Application):
                 if info.size is not None:
 
                     def rov(size):
-                        WindowRect(_left, _top, *info.size)
+                        return WindowRect(_left, _top, *info.size)
                 else:
 
                     def rov(size):
-                        WindowRect(_left, _top, *size)
+                        return WindowRect(_left, _top, *size)
 
                 result.window_rect_override = rov
         self.injection_store.process(result, type_hint=type_hint)

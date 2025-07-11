@@ -31,9 +31,9 @@ class BaseNodeItem(ABC):
     def id(self) -> Hashable:
         """Return a unique identifier for the node"""
 
+    @abstractmethod
     def content(self) -> str:
         """Return the content of the node, default is the text"""
-        return self.text()
 
 
 class ZOrder(IntEnum):
