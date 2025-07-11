@@ -65,13 +65,15 @@ class HimenaApplication(Application):
                 # preview window or the parametric window.
                 _left, _top = top_left
                 if info.size is not None:
-                    result.window_rect_override = lambda _: WindowRect(
-                        _left, _top, *info.size
-                    )
+
+                    def rov(size):
+                        return WindowRect(_left, _top, *info.size)
                 else:
-                    result.window_rect_override = lambda size: WindowRect(
-                        _left, _top, *size
-                    )
+
+                    def rov(size):
+                        return WindowRect(_left, _top, *size)
+
+                result.window_rect_override = rov
         self.injection_store.process(result, type_hint=type_hint)
 
 

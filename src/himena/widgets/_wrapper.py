@@ -587,6 +587,7 @@ class SubWindow(WidgetWrapper[_W], Layout):
         if layout := self._parent_layout_ref():
             layout.remove(self)
         self._alive = False
+        main.events.window_closed.emit(self)
 
     def _determine_read_from(self) -> tuple[Path | list[Path], str | None] | None:
         """Determine how can the data be efficiently read."""
@@ -841,6 +842,7 @@ class ParametricWindow(SubWindow[_W]):
                         return_value.save_behavior_override, NoNeedToSave
                     ):
                         result_widget._set_ask_save_before_close(True)
+            ui.events.window_added.emit(result_widget)
         elif _return_annot in (Parametric, ParametricWidgetProtocol):
             raise NotImplementedError
         else:
