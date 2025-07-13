@@ -28,7 +28,11 @@ def new_window(
     """Create a new window with the specified profile and additional plugins."""
     from himena._app_model import get_model_app
     from himena.widgets._initialize import init_application
-    from himena.plugins import install_plugins, override_keybindings
+    from himena.plugins.install import (
+        install_plugins,
+        override_keybindings,
+        install_default_configs,
+    )
 
     plugins = list(plugins or [])
 
@@ -46,6 +50,7 @@ def new_window(
     plugins = [p for p in plugins if p not in app_prof.plugins]  # filter duplicates
     plugins = app_prof.plugins + plugins
     _init_backend(backend)
+    install_default_configs()
     if plugins:
         install_plugins(model_app, plugins)
 

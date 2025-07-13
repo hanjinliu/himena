@@ -36,6 +36,7 @@ from himena.workflow import ActionHintRegistry
 
 if TYPE_CHECKING:
     from himena._app_model import HimenaApplication
+    from typing import Self
 
     KeyBindingsType = str | KeyBindingRule | Sequence[str] | Sequence[KeyBindingRule]
     PluginConfigType = Any
@@ -75,6 +76,13 @@ class PluginConfigTuple(NamedTuple):
                 f"got {config!r}"
             )
         return out
+
+    def updated(self, data: dict[str, Any]) -> Self:
+        return PluginConfigTuple(
+            title=self.title,
+            config=self.config_class(**data),
+            config_class=self.config_class,
+        )
 
 
 @dataclass

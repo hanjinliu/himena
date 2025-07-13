@@ -75,6 +75,7 @@ _APP_INITIALIZED = weakref.WeakSet["HimenaApplication"]()
 
 
 def init_application(app: HimenaApplication) -> HimenaApplication:
+    """Register actions/menus and setup injection store."""
     from himena._app_model.actions import ACTIONS, SUBMENUS
     from himena.widgets._main_window import MainWindow
 
