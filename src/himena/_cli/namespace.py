@@ -15,6 +15,7 @@ class HimenaCliNamespace(argparse.Namespace):
     uninstall: list[str]
     uninstall_outdated: bool
     list_plugins: bool
+    list_profiles: bool
     clear_plugin_configs: bool
     import_time: bool
     host: str = "localhost"
@@ -83,6 +84,10 @@ class HimenaArgumentParser(argparse.ArgumentParser):
         )
         self.add_argument(
             "--list-plugins", action="store_true", help="List all the available plugins."
+        )
+        self.add_argument(
+            "--list-profiles", action="store_true",
+            help="List all the available profiles."
         )
         self.add_argument(
             "--clear-plugin-configs", action="store_true",

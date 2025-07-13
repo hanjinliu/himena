@@ -69,6 +69,13 @@ def _main(args: HimenaCliNamespace):
                 print(f"- {info.name} ({info.place}, v{info.version})")
         return
 
+    if args.list_profiles:
+        from himena.profile import profile_dir
+
+        for path in profile_dir().iterdir():
+            print(path.stem)
+        return
+
     if args.install or args.uninstall:
         from himena._cli.install import install_and_uninstall
 
