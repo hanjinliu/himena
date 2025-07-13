@@ -144,6 +144,7 @@ class QModelStack(QtW.QSplitter):
                 item = self._make_lazy_item(name, model)
             else:
                 item = self._make_eager_item(name, model)
+            print(name, model.value)
             self._model_list.addItem(item)
 
     @validate_protocol
