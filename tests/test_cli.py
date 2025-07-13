@@ -36,6 +36,10 @@ def test_list_plugins():
     sys.argv = ["himena", PROF_NAME, "--uninstall", "himena_builtins.qt.widgets"]
     main()
 
+def test_list_profiles():
+    sys.argv = ["himena", "--list-profiles"]
+    main()
+
 def test_install_uninstall():
     sys.argv = ["himena", "--uninstall", "himena-builtins"]
     main()
