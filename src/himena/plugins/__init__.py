@@ -27,8 +27,13 @@ from himena.plugins.actions import (
 from himena.plugins.widget_plugins import (
     register_dock_widget_action,
     update_config_context,
+    get_config,
 )
-from himena.plugins.install import install_plugins, override_keybindings
+from himena.plugins.install import (
+    install_plugins,
+    override_keybindings,
+    register_config,
+)
 from himena.plugins.config import config_field
 
 __all__ = [
@@ -43,6 +48,8 @@ __all__ = [
     "config_field",
     "override_keybindings",
     "update_config_context",
+    "get_config",
+    "register_config",
     "register_reader_plugin",
     "register_writer_plugin",
     "register_function",

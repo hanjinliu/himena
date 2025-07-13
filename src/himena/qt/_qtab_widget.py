@@ -370,6 +370,11 @@ class QStartupWidget(QtW.QWidget):
             btn.deleteLater()
         self._to_delete.clear()
 
+        # reset actions on the non-Qt side?
+        # main = get_main_window(self)
+        # main._recent_manager.update_menu()
+        # main._recent_session_manager.update_menu()
+
         btns_files = self._add_buttons(
             self._layout_bottom_left, MenuId.FILE_RECENT, self._is_recent_file
         )

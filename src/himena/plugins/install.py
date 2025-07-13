@@ -8,10 +8,12 @@ from pathlib import Path
 from timeit import default_timer as timer
 from app_model.types import KeyBindingRule
 from dataclasses import dataclass, field
+from himena.plugins.config import config_field
 
 if TYPE_CHECKING:
     from himena.profile import AppProfile
     from himena._app_model import HimenaApplication
+    from himena.plugins.widget_class import PluginConfigType
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -74,8 +76,14 @@ def install_plugins(
     reg._installed_plugins.extend(plugins)
     prof = load_app_profile(app.name)
 
-    for k, cfg in reg._plugin_default_configs.items():
-        prof.plugin_configs.setdefault(k, cfg.as_dict())
+    for cfg_key, cfg in reg._plugin_default_configs.items():
+        cfg_dict = cfg.as_dict()
+        cfg_dict_old = prof.plugin_configs.get(cfg_key, {})
+        # NOTE: if same config was updated during development, it may not have some keys
+        for k, v in cfg_dict.items():
+            if k not in cfg_dict_old:
+                cfg_dict_old[k] = v
+        prof.plugin_configs[cfg_key] = cfg_dict_old
 
     prof.save()
     return results
@@ -90,6 +98,33 @@ def override_keybindings(app: HimenaApplication, prof: AppProfile) -> None:
             ko.command_id,
             KeyBindingRule(primary=ko.key),
         )
+
+
+@dataclass
+class GlobalConfig:
+    num_recent_files_to_show: int = config_field(default=10)
+    num_recent_sessions_to_show: int = config_field(default=3)
+    subwindow_bar_height: int = config_field(default=18, min=10, max=45)
+
+
+def install_default_configs() -> None:
+    register_config("himena", "Global Settings", GlobalConfig)
+
+
+def register_config(plugin_id: str, title: str, cfg: PluginConfigType) -> None:
+    from himena.plugins.actions import AppActionRegistry, PluginConfigTuple
+
+    reg = AppActionRegistry.instance()
+    tup = PluginConfigTuple(title, cfg, type(cfg))
+    cfg_dict = tup.as_dict()
+    for key, value_dict in cfg_dict.items():
+        assert isinstance(value_dict, dict)
+        if value_dict.get("value") is None and "choices" not in value_dict:
+            raise ValueError(
+                f"Key {key!r} ofr config {cfg!r} must have a default value or choices. "
+                f"Equivalent dict was:\n{cfg_dict!r}"
+            )
+    reg._plugin_default_configs[plugin_id] = PluginConfigTuple(title, cfg, type(cfg))
 
 
 @dataclass

@@ -126,4 +126,3 @@ def main():
     from himena.widgets._initialize import cleanup
 
     cleanup()
-    return None

@@ -263,6 +263,56 @@ def _normalize_title(title: str | None, func: Callable) -> str:
     return title
 
 
+_C = TypeVar("_C", bound="PluginConfigType")
+
+
+def _get_plugin_config(
+    ui: MainWindow,
+    config_class: type[_C],
+    plugin_id: str | None = None,
+) -> tuple[str, PluginConfigTuple]:
+    if isinstance(config_class, str):
+        if plugin_id is not None:
+            raise TypeError("No overload matches the input.")
+        _config_class, _plugin_id = None, config_class
+    else:
+        _config_class = config_class
+        _plugin_id = plugin_id
+
+    reg = AppActionRegistry.instance()
+    if _plugin_id is None:
+        for _id, _config in reg._plugin_default_configs.items():
+            if isinstance(_config.config, _config_class):
+                _plugin_id = _id
+                break
+        else:
+            raise ValueError(
+                f"Cannot find plugin ID for the config class: {config_class}."
+            )
+    config_dict = {
+        k: v["value"] for k, v in ui.app_profile.plugin_configs[_plugin_id].items()
+    }
+    plugin_config = reg._plugin_default_configs[_plugin_id].updated(config_dict)
+    if not isinstance(plugin_config.config, _config_class):
+        raise TypeError(
+            f"Plugin ID {_plugin_id} does not match the config class {config_class}."
+        )
+    return _plugin_id, plugin_config
+
+
+def get_config(
+    config_class: type[_C],
+    plugin_id: str | None = None,
+) -> _C | None:
+    from himena.widgets import current_instance
+
+    ui = current_instance()
+    try:
+        return _get_plugin_config(ui, config_class, plugin_id)[1].config
+    except ValueError:
+        return None
+
+
 @overload
 @contextmanager
 def update_config_context(
@@ -270,9 +320,6 @@ def update_config_context(
     *,
     update_widget: bool = False,
 ) -> Iterator[PluginConfigType]: ...
-
-
-_C = TypeVar("_C", bound="PluginConfigType")
 
 
 @overload
@@ -292,43 +339,34 @@ def update_config_context(
     *,
     update_widget: bool = False,
 ):
-    """Context manager for updating plugin config."""
+    """Context manager for updating plugin config.
+
+    If a config object is updated within the context, it will be saved to the profile
+    and optionally trigger the update of the widget if `update_widget` is True.
+
+    Examples
+    --------
+
+    ``` python
+    with update_config_context(config_class=MyConfig) as cfg:
+        cfg.some_attr = ...
+    ```
+
+    """
     from himena.widgets import current_instance
 
     ui = current_instance()
-    if isinstance(config_class, str):
-        if plugin_id is not None:
-            raise TypeError("No overload matches the input.")
-        _config_class, _plugin_id = None, config_class
-    else:
-        _config_class = config_class
-        _plugin_id = plugin_id
-
-    reg = AppActionRegistry.instance()
-    if _plugin_id is None:
-        for _id, _config in reg._plugin_default_configs.items():
-            if isinstance(_config.config, _config_class):
-                _plugin_id = _id
-                break
-        else:
-            raise ValueError(
-                f"Cannot find plugin ID for the config class: {config_class}."
-            )
-    plugin_config = reg._plugin_default_configs[_plugin_id]
-    if not isinstance(plugin_config.config, _config_class):
-        raise TypeError(
-            f"Plugin ID {_plugin_id} does not match the config class {config_class}."
-        )
+    plugin_id, plugin_config = _get_plugin_config(ui, config_class, plugin_id)
     cur_config = plugin_config.config
     yield cur_config
     prof = ui.app_profile
     all_configs = prof.plugin_configs.copy()
 
-    cfg_dict = all_configs[_plugin_id] = plugin_config.as_dict()
+    cfg_dict = all_configs[plugin_id] = plugin_config.as_dict()
     prof.with_plugin_configs(all_configs).save()
 
     # update existing dock widgets with the new config
-    if update_widget and (cb := WidgetCallbackBase.instance_for_command_id(_plugin_id)):
+    if update_widget and (cb := WidgetCallbackBase.instance_for_command_id(plugin_id)):
         params = {}
         for key, opt in cfg_dict.items():
             params[key] = opt["value"]

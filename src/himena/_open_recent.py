@@ -7,6 +7,8 @@ from logging import getLogger
 import json
 from himena.consts import MenuId, ActionCategory, ActionGroup, NO_RECORDING_FIELD
 from himena.profile import data_dir
+from himena.plugins import get_config
+from himena.plugins.install import GlobalConfig
 from datetime import datetime
 
 if TYPE_CHECKING:
@@ -55,7 +57,6 @@ class RecentFileManager:
         file_name: str = "recent.json",
         group: str = ActionGroup.RECENT_FILE,
         n_history: int = 60,
-        n_history_menu: int = 8,
     ):
         self._disposer = lambda: None
         self._app = app
@@ -63,7 +64,6 @@ class RecentFileManager:
         self._file_name = file_name
         self._group = group
         self._n_history = n_history
-        self._n_history_menu = n_history_menu
 
     def update_menu(self):
         """Update the menu for the recent file list."""
@@ -72,8 +72,9 @@ class RecentFileManager:
         file_args = self._list_args_for_recent()[::-1]
         if len(file_args) == 0:
             return None
+        num_recent = self.num_recent_in_menu()
         actions = [
-            self.action_for_file(path, plugin, in_menu=i < self._n_history_menu)
+            self.action_for_file(path, plugin, in_menu=i < num_recent)
             for i, (path, plugin) in enumerate(file_args)
         ]
         self._disposer()
@@ -84,6 +85,10 @@ class RecentFileManager:
         self._app.menus.menus_changed.emit({self._menu_id})
         self.__class__._MENU_UPDATED.add(self._app.name)
         return None
+
+    def num_recent_in_menu(self) -> int:
+        cfg = get_config(GlobalConfig) or GlobalConfig()
+        return cfg.num_recent_files_to_show
 
     @classmethod
     def default(cls, app: HimenaApplication) -> RecentFileManager:
@@ -209,8 +214,11 @@ class RecentSessionManager(RecentFileManager):
             file_name="recent_sessions.json",
             group=ActionGroup.RECENT_SESSION,
             n_history=20,
-            n_history_menu=3,
         )
+
+    def num_recent_in_menu(self) -> int:
+        cfg = get_config(GlobalConfig) or GlobalConfig()
+        return cfg.num_recent_sessions_to_show
 
     def to_callback(self, file, plugin: str | None = None):
         return OpenSessionFunction(file)

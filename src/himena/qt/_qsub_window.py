@@ -19,7 +19,7 @@ from himena._utils import get_display_name
 from himena.utils.misc import lru_cache
 from himena.consts import MenuId
 from himena.types import DragDataModel, WindowState, WindowRect, Size
-from himena.plugins import _checker
+from himena.plugins import _checker, get_config
 from himena.utils.window_rect import ResizeState
 from himena.qt._utils import get_main_window, build_qmodel_menu
 from himena.qt._qrename import QRenameLineEdit
@@ -31,6 +31,8 @@ if TYPE_CHECKING:
     from himena.widgets import SubWindow
 
 _LOGGER = getLogger(__name__)
+
+PROP_IS_CURRENT = "isCurrent"
 
 
 class QSubWindowArea(QtW.QMdiArea):
@@ -361,11 +363,11 @@ class QSubWindow(QtW.QMdiSubWindow):
         self._widget.setVisible(False)
 
     def is_current(self) -> bool:
-        return self._title_bar.property("isCurrent")
+        return self._title_bar.property(PROP_IS_CURRENT)
 
     def set_is_current(self, is_current: bool):
         """Set the isCurrent state of the sub-window and update styles."""
-        self._title_bar.setProperty("isCurrent", is_current)
+        self._title_bar.setProperty(PROP_IS_CURRENT, is_current)
         self._title_bar.style().unpolish(self._title_bar)
         self._title_bar.style().polish(self._title_bar)
 
@@ -627,9 +629,13 @@ class QSubWindowTitleBar(QtW.QFrame):
         layout.addWidget(self._toggle_size_btn, alignment=Qt.AlignmentFlag.AlignRight)
         layout.addWidget(self._close_btn, alignment=Qt.AlignmentFlag.AlignRight)
 
-        self.setProperty("isCurrent", False)
+        self.setProperty(PROP_IS_CURRENT, False)
         self.setAcceptDrops(True)
-        self._bar_size = 18
+
+        from himena.plugins.install import GlobalConfig
+
+        cfg = get_config(GlobalConfig) or GlobalConfig()
+        self._bar_size = cfg.subwindow_bar_height
         self._set_bar_size(self._bar_size)
 
     def _get_model_type(self) -> str | None:

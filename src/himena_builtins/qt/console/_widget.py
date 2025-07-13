@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from contextlib import suppress
 
 from qtpy.QtCore import Signal
-from qtpy import QtWidgets as QtW, QtGui
+from qtpy import QtWidgets as QtW, QtGui, QtCore
 from qtconsole.rich_jupyter_widget import RichJupyterWidget
 from himena.utils.misc import lru_cache
 from himena.qt._utils import get_stylesheet_path
@@ -112,7 +112,7 @@ class QtConsole(RichJupyterWidget):
             self.shell: InProcessInteractiveShell = kernel_manager.kernel.shell
             self.push = self.shell.push
 
-        elif type(shell) == InProcessInteractiveShell:
+        elif type(shell) is InProcessInteractiveShell:
             # If there is an existing running InProcessInteractiveShell
             # it is likely because multiple viewers have been launched from
             # the same process. In that case create a new kernel.
@@ -224,6 +224,24 @@ class QtConsole(RichJupyterWidget):
             if (ui := self.shell.user_ns.get(old_symbol)) is self._ui:
                 self.shell.drop_by_id({old_symbol: ui})
             self.shell.push({self._main_window_symbol: self._ui})
+
+    def eventFilter(self, obj, event: QtCore.QEvent):
+        """Handle events."""
+        if event.type() == QtCore.QEvent.Type.KeyPress:
+            mod = event.modifiers()
+            key = event.key()
+            if (
+                mod & QtCore.Qt.KeyboardModifier.ControlModifier
+                and key == QtCore.Qt.Key.Key_Period
+            ):
+                return True  # prevent Ctrl+. from being processed
+            elif (
+                mod & QtCore.Qt.KeyboardModifier.ControlModifier
+                and mod & QtCore.Qt.KeyboardModifier.ShiftModifier
+                and key == QtCore.Qt.Key.Key_P
+            ):
+                return True
+        return super().eventFilter(obj, event)
 
 
 @lru_cache(maxsize=1)
