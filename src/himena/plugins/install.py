@@ -112,6 +112,37 @@ def install_default_configs() -> None:
 
 
 def register_config(plugin_id: str, title: str, cfg: PluginConfigType) -> None:
+    """Register a plugin-specific configuration.
+
+    Registered options can be accessed by the `get_config` function. Note that a plugin
+    configuration is not used as a global variable. If changing the config leads to a
+    different output, it is not what we expect. What a plugin config usually does is
+    "path to some-app executable", "cache directory", etc.
+
+    Parameters
+    ----------
+    plugin_id : str
+        The unique identifier for the plugin.
+    title : str
+        The title of the configuration shown in the setting dialog.
+    cfg : PluginConfigType
+        The configuration class (dict, dataclass or pydantic.BaseModel) that defines
+        the plugin's settings.
+
+    Examples
+    --------
+    ```python
+    from dataclasses import dataclass
+    from himena.plugins import register_config, config_field
+
+    @dataclass
+    class MyPluginConfig:
+        my_option: str = config_field(default="default_value")
+
+    register_config("my-plugin-id", "My Plugin Settings", MyPluginConfig)
+    ```
+
+    """
     from himena.plugins.actions import AppActionRegistry, PluginConfigTuple
 
     reg = AppActionRegistry.instance()
@@ -120,6 +151,8 @@ def register_config(plugin_id: str, title: str, cfg: PluginConfigType) -> None:
     for key, value_dict in cfg_dict.items():
         assert isinstance(value_dict, dict)
         if value_dict.get("value") is None and "choices" not in value_dict:
+            # Unlike using magicgui in runtime, no annotations can be saved to the
+            # config field.
             raise ValueError(
                 f"Key {key!r} ofr config {cfg!r} must have a default value or choices. "
                 f"Equivalent dict was:\n{cfg_dict!r}"
