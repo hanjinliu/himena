@@ -98,7 +98,7 @@ class QModelStack(QtW.QSplitter):
         self._last_index: int | None = None
         self.setSizes([160, 320])
 
-        self._control_widget = QtW.QStackedWidget()
+        self._control_widget = QStackedControlWidget()
         self._is_editable = True
 
     def createHandle(self):
@@ -144,7 +144,6 @@ class QModelStack(QtW.QSplitter):
                 item = self._make_lazy_item(name, model)
             else:
                 item = self._make_eager_item(name, model)
-            print(name, model.value)
             self._model_list.addItem(item)
 
     @validate_protocol
@@ -266,8 +265,7 @@ class QModelStack(QtW.QSplitter):
         idx = self._widget_stack.indexOf(native_widget)
         self._widget_stack.setCurrentIndex(idx)
         self._control_widget.setCurrentIndex(idx)
-        self._control_widget.currentWidget().setVisible(True)
-        self._control_widget.setVisible(True)
+        self._control_widget.show()
 
     def _current_changed(self):
         if self._last_index is not None:
@@ -506,6 +504,10 @@ class QStackedModelWidget(QtW.QStackedWidget):
                     process_model_output=False,
                 )
                 widget.update_model(out)
+
+
+class QStackedControlWidget(QtW.QStackedWidget):
+    pass
 
 
 @register_hidden_function(command_id="builtins:QModelStack:choose-one")

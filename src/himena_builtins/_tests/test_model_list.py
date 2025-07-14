@@ -1,12 +1,15 @@
+from pathlib import Path
 import numpy as np
+from qtpy import QtCore
 from qtpy.QtCore import Qt, QPoint
 from pytestqt.qtbot import QtBot
 from himena import MainWindow, StandardType, WidgetDataModel, _drag
-from himena.testing import WidgetTester
+from himena.testing import WidgetTester, file_dialog_response
 from himena.standards import roi
 from himena_builtins.qt.basic import QModelStack
 
-def test_model_stack_widget(himena_ui: MainWindow, qtbot: QtBot):
+def test_model_stack_widget(himena_ui: MainWindow, qtbot: QtBot, tmpdir):
+    tmpdir = Path(tmpdir)
     win = himena_ui.add_object(
         {"model-0": WidgetDataModel(value="a", type=StandardType.TEXT)},
         type=StandardType.MODELS,
@@ -40,6 +43,13 @@ def test_model_stack_widget(himena_ui: MainWindow, qtbot: QtBot):
         assert mlist.currentRow() == 1
         qtbot.mouseMove(mlist.viewport(), point_1 + QPoint(2, 2))
 
+        mlist.setCurrentIndex(row_1)
+        win.widget._current_changed()
+        win.widget._current_changed()
+        with file_dialog_response(himena_ui, tmpdir / "x.txt"):
+            win.widget._save_current()
+        win.widget._delete_current()
+
 def test_commands(himena_ui: MainWindow):
     win0 = himena_ui.add_object(value="abc", type=StandardType.TEXT)
     win1 = himena_ui.add_object(value=[[1, 2], [3, 2]], type=StandardType.TABLE)
@@ -70,3 +80,30 @@ def test_events(himena_ui: MainWindow, qtbot: QtBot):
         stack._model_list._hover_event(stack._model_list.rect().center())
         stack._model_list._hover_event(stack._model_list.visualItemRect(stack._model_list.item(0)).center())
         stack._model_list._hover_event(QPoint(1000, 1000))
+
+def test_make_drag(himena_ui: MainWindow, qtbot: QtBot):
+    stack = QModelStack(himena_ui)
+    himena_ui.add_widget(stack)
+    qtbot.addWidget(stack)
+    with WidgetTester(stack) as tester:
+        tester.update_model(
+            {"model-0": WidgetDataModel(value=np.zeros((2, 2)), type=StandardType.IMAGE),
+             "model-1": WidgetDataModel(value="a", type=StandardType.TEXT)}
+        )
+        stack._model_list._on_drag()
+        stack._model_list.selectionModel().select(
+            QtCore.QItemSelection(
+                stack._model_list.model().index(0, 0),
+                stack._model_list.model().index(0, 0)
+            ),
+            QtCore.QItemSelectionModel.SelectionFlag.Select,
+        )
+        stack._model_list._on_drag()
+        stack._model_list.selectionModel().select(
+            QtCore.QItemSelection(
+                stack._model_list.model().index(0, 0),
+                stack._model_list.model().index(1, 0)
+            ),
+            QtCore.QItemSelectionModel.SelectionFlag.Select,
+        )
+        stack._model_list._on_drag()
