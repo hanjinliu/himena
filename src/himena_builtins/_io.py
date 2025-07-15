@@ -272,15 +272,26 @@ class DataFramePlotReader(DataFrameReader):
     _type = StandardType.DATAFRAME_PLOT
 
 
+def _custom_key(fp: Path):
+    if fp.is_symlink():
+        group_type = "l"
+    elif fp.is_dir():
+        group_type = "d"
+    else:
+        group_type = "f"
+    return f"{group_type}{fp.name}"
+
+
 def default_file_list_reader(file_path: Path | list[Path]) -> WidgetDataModel:
     """Read list of files."""
     from himena._providers import ReaderStore
 
     value: list[WidgetDataModel] = []
     if isinstance(file_path, Path):
+        # sort by file name, directories first
         _iterator = sorted(
             file_path.glob("*"),
-            key=lambda fp: 1 if fp.is_file() else 0,
+            key=_custom_key,
         )
     else:
         _iterator = iter(file_path)
