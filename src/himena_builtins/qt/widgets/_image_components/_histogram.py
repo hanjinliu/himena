@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING, Literal
 import numpy as np
 from psygnal import Signal
 from qtpy import QtCore, QtGui, QtWidgets as QtW
+
+from himena.consts import DefaultFontFamily
 from ._base import QBaseGraphicsScene, QBaseGraphicsView
 from himena.qt._qlineedit import QDoubleLineEdit
 from himena_builtins.qt.widgets._shared import quick_min_max
@@ -233,7 +235,7 @@ class QClimLineItem(QtW.QGraphicsRectItem):
         self._value_label.setFlag(
             QtW.QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations
         )
-        self._value_label.setFont(QtGui.QFont("Arial", 8))
+        self._value_label.setFont(QtGui.QFont(DefaultFontFamily, 8))
         self.setAcceptHoverEvents(True)
 
     def mousePressEvent(self, event: QtW.QGraphicsSceneMouseEvent):

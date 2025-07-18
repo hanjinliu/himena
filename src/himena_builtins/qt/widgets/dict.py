@@ -7,7 +7,7 @@ from himena.standards.model_meta import DictMeta
 from himena.qt._qrename import QTabRenameLineEdit
 from himena.qt import drag_command
 from himena.types import DropResult, Parametric, WidgetDataModel
-from himena.consts import StandardType
+from himena.consts import DefaultFontFamily, StandardType
 from himena.plugins import validate_protocol, register_hidden_function
 
 _CMD_MERGE_TAB = "builtins:QDictOfWidgetEdit:merge-tab"
@@ -78,7 +78,7 @@ class QDictOfWidgetEdit(QtW.QTabWidget):
         # corner widget for adding new tab
         tb = QtW.QToolButton()
         tb.setText("+")
-        tb.setFont(QtGui.QFont("Arial", 12, weight=15))
+        tb.setFont(QtGui.QFont(DefaultFontFamily, 12, weight=15))
         tb.setToolTip("New Tab")
         tb.clicked.connect(self.add_new_tab)
         self.setCornerWidget(tb, QtCore.Qt.Corner.TopRightCorner)

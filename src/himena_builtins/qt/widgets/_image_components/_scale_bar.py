@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW, QtGui, QtCore
+from himena.consts import DefaultFontFamily
 from himena.utils.enum import StrEnum
 
 if TYPE_CHECKING:
@@ -18,7 +19,7 @@ class QScaleBarItem(QtW.QGraphicsItem):
         self._scale = 1.0
         self._unit = "px"
         self._point_size = 10
-        self._font = QtGui.QFont("Arial")
+        self._font = QtGui.QFont(DefaultFontFamily)
         self._color = QtGui.QColor(255, 255, 255)
         self._anchor_offset_px = QtCore.QPointF(8, 8)
         self._bar_size_px = QtCore.QPointF(20, 3)

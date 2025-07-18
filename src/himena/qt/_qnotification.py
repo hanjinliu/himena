@@ -6,6 +6,7 @@ from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt
 from superqt.utils import FunctionWorker, GeneratorWorker, WorkerBase
 
+from himena.consts import DefaultFontFamily
 from himena.qt._qprogress import QLabeledCircularProgressBar
 
 if TYPE_CHECKING:
@@ -341,7 +342,7 @@ class QWhatsThisWidget(_QOverlayBase):
 
     def set_text(self, text: str, style: str = "plain"):
         text_widget = QtW.QTextEdit()
-        text_widget.setFont(QtGui.QFont("Arial", 10))
+        text_widget.setFont(QtGui.QFont(DefaultFontFamily, 10))
         if style == "plain":
             text_widget.setText(text)
         elif style == "markdown":

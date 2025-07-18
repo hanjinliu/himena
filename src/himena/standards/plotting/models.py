@@ -3,6 +3,7 @@ from typing import Any, Literal
 
 import numpy as np
 from pydantic import Field
+from himena.consts import DefaultFontFamily
 from himena.standards.plotting.components import BasePlotModel, Face, Edge
 
 
@@ -195,7 +196,7 @@ class Texts(PlotModelXY):
     texts: Any = Field(..., description="Texts to be displayed.")
     size: int = Field(12, description="Font size of the texts.")
     color: str = Field("black", description="Font color of the texts.")
-    family: str = Field("Arial", description="Font family of the texts.")
+    family: str = Field(DefaultFontFamily, description="Font family of the texts.")
     anchor: ANCHOR_STRINGS = Field(
         "center",
         description="Anchor position of the texts. 'center' means the center of the text.",

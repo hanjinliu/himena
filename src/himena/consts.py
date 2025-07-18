@@ -24,10 +24,13 @@ ExcelFileTypes = frozenset(
 # Monospace font
 if sys.platform == "win32":
     MonospaceFontFamily = "Consolas"
+    DefaultFontFamily = "Arial"
 elif sys.platform == "darwin":
     MonospaceFontFamily = "Menlo"
+    DefaultFontFamily = "Helvetica"
 else:
     MonospaceFontFamily = "Monospace"
+    DefaultFontFamily = "Sans Serif"
 
 # Allowed for profile names
 ALLOWED_LETTERS = string.ascii_letters + string.digits + "_- "
