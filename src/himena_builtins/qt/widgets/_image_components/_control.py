@@ -7,6 +7,7 @@ from qtpy import QtCore, QtGui
 from superqt import QLabeledDoubleSlider, QToggleSwitch, QElidingLabel
 from superqt.utils import qthrottled
 
+from himena.consts import DefaultFontFamily
 from himena.qt._utils import qsignal_blocker, ndarray_to_qimage
 from himena_builtins.qt.widgets._image_components import QHistogramView
 from himena.utils.enum import StrEnum
@@ -325,7 +326,7 @@ class QChannelToggleSwitches(QtW.QScrollArea):
         self._layout = layout
         self._toggle_switches: list[QChannelToggleSwitch] = []
         self.setWidget(central)
-        self._label_font = QtGui.QFont("Arial", 8)
+        self._label_font = QtGui.QFont(DefaultFontFamily, 8)
 
     def set_channels(self, channels: list[ChannelInfo]):
         labels = [ch.name for ch in channels]

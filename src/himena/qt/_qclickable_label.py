@@ -1,6 +1,7 @@
 from __future__ import annotations
 from qtpy import QtWidgets as QtW, QtGui, QtCore
 from qtpy.QtCore import Qt, Signal
+from himena.consts import DefaultFontFamily
 
 
 class QClickableLabel(QtW.QLabel):
@@ -10,7 +11,7 @@ class QClickableLabel(QtW.QLabel):
 
     def __init__(self, text: str, parent=None):
         super().__init__(parent)
-        self.setFont(QtGui.QFont("Arial"))
+        self.setFont(QtGui.QFont(DefaultFontFamily))
         self.setFixedHeight(24)
 
         self.setSizePolicy(

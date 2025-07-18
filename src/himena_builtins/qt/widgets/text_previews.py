@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 
-from himena.consts import StandardType
+from himena.consts import DefaultFontFamily, StandardType
 from himena.plugins._checker import validate_protocol
 from himena.types import WidgetDataModel
 
@@ -60,7 +60,7 @@ class QSvgPreview(QtW.QWidget):
         self._svg_renderer.render(painter)
         if not self._is_valid:
             painter.setPen(QtGui.QPen(QtCore.Qt.GlobalColor.red, 1))
-            painter.setFont(QtGui.QFont("Arial", 12))
+            painter.setFont(QtGui.QFont(DefaultFontFamily, 12))
             painter.drawText(
                 self.rect().bottomLeft() + QtCore.QPoint(2, -2), "Invalid SVG"
             )
@@ -83,7 +83,7 @@ class QMarkdownPreview(QtW.QWidget):
         layout.addWidget(self._text_edit)
         self._text_edit.setReadOnly(True)
         self._model_type = StandardType.MARKDOWN
-        self._text_edit.setFont(QtGui.QFont("Arial", 10))
+        self._text_edit.setFont(QtGui.QFont(DefaultFontFamily, 10))
 
     @validate_protocol
     def update_model(self, model: WidgetDataModel):

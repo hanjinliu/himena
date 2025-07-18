@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW, QtGui, QtCore
 from qtpy.QtCore import Qt, Signal
 
+from himena.consts import DefaultFontFamily
 from himena.style import Theme, get_global_styles
 
 if TYPE_CHECKING:
@@ -55,7 +56,7 @@ class QThemeSelectionLabel(QtW.QLabel):
         super().__init__()
         self._theme = theme
         self.setFixedSize(30, 30)
-        self.setFont(QtGui.QFont("Arial", 16))
+        self.setFont(QtGui.QFont(DefaultFontFamily, 16))
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self._checked = False
 

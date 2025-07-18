@@ -7,6 +7,7 @@ import numpy as np
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt
 
+from himena.consts import DefaultFontFamily
 from himena.types import Size
 
 from ._base import QBaseGraphicsView, QBaseGraphicsScene
@@ -86,7 +87,7 @@ class QRoiLabels(QtW.QGraphicsItem):
         super().__init__()
         self._view = view
         self._show_labels = False
-        self._font = QtGui.QFont("Arial", 10)
+        self._font = QtGui.QFont(DefaultFontFamily, 10)
         self._bounding_rect = QtCore.QRectF(0, 0, 0, 0)
 
     def paint(

@@ -10,7 +10,7 @@ from himena.standards.plotting.components import (
     parse_edge,
     parse_face_edge,
 )
-from himena.consts import PYDANTIC_CONFIG_STRICT, StandardType
+from himena.consts import PYDANTIC_CONFIG_STRICT, DefaultFontFamily, StandardType
 
 if TYPE_CHECKING:
     from typing import Self
@@ -205,14 +205,14 @@ class ModelsRef:
         *,
         size: int = 12,
         color: str = "black",
-        family: str = "Arial",
+        family: str | None = None,
         anchor: _m.ANCHOR_STRINGS = "center",
         rotation: float = 0,
     ) -> _m.Texts:
         """Add a text plot model to the axes."""
         model = _m.Texts(
-            x=x, y=y, texts=text, size=size, color=color, family=family, anchor=anchor,
-            rotation=rotation,
+            x=x, y=y, texts=text, size=size, color=color,
+            family=family or DefaultFontFamily, anchor=anchor, rotation=rotation,
         )  # fmt: skip
         self.models.append(model)
         return model
@@ -351,14 +351,14 @@ class SingleAxes(BaseLayoutModel):
         *,
         size: int = 12,
         color: str = "black",
-        family: str = "Arial",
+        family: str | None = None,
         rotation: float = 0,
         anchor: _m.ANCHOR_STRINGS = "center",
     ) -> _m.Texts:
         """Add a text plot model to the axes."""
         return self.axes.text(
-            x=x, y=y, text=text, size=size, color=color, family=family, anchor=anchor,
-            rotation=rotation,
+            x=x, y=y, text=text, size=size, color=color,
+            family=family or DefaultFontFamily, anchor=anchor, rotation=rotation,
         )  # fmt: skip
 
 

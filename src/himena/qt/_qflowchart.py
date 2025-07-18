@@ -11,7 +11,7 @@ from psygnal import Signal
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt, QPointF
 from cmap import Color
-from himena.consts import MonospaceFontFamily
+from himena.consts import MonospaceFontFamily, DefaultFontFamily
 
 
 class BaseNodeItem(ABC):
@@ -62,7 +62,7 @@ class QFlowChartNode(QtW.QGraphicsRectItem):
         self.setRect(left, top, width, height)
         self.setCursor(Qt.CursorShape.PointingHandCursor)  # Set cursor to hand pointer
         self._update_text_position()
-        font = QtGui.QFont("Arial", 9)
+        font = QtGui.QFont(DefaultFontFamily, 9)
         self.text_item.setFont(font)
 
         # Make it movable and selectable

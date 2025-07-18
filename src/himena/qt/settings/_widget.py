@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW, QtGui, QT6, QtCore
 from qtpy.QtCore import Qt
 
+from himena.consts import DefaultFontFamily
 from himena.qt.settings._theme import QThemePanel
 from himena.qt.settings._plugins import QPluginListEditor
 from himena.qt.settings._startup_commands import QStartupCommandsPanel
@@ -31,7 +32,7 @@ class QSettingsDialog(QtW.QDialog):
 
         self._list = QtW.QListWidget(self)
         self._list.setFixedWidth(150)
-        self._list.setFont(QtGui.QFont("Arial", 13))
+        self._list.setFont(QtGui.QFont(DefaultFontFamily, 13))
         self._open_json_btn = QtW.QPushButton("Open JSON")
         self._open_json_btn.clicked.connect(self._open_json)
         self._stack = QtW.QStackedWidget(self)
@@ -86,7 +87,7 @@ class QTitleLabel(QtW.QLabel):
     def __init__(self, text: str, size: int) -> None:
         super().__init__()
         self.setText(text)
-        self.setFont(QtGui.QFont("Arial", size))
+        self.setFont(QtGui.QFont(DefaultFontFamily, size))
 
     def paintEvent(self, a0: QtGui.QPaintEvent) -> None:
         painter = QtGui.QPainter(self)
