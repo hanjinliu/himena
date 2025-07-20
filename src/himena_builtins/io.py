@@ -12,6 +12,10 @@ from himena.consts import (
     ExcelFileTypes,
 )
 
+###########################################################################
+#    Built-in Reader Plugins
+###########################################################################
+
 
 @register_reader_plugin(priority=50)
 def read_text(file_path: Path) -> WidgetDataModel:
@@ -77,14 +81,14 @@ def _(file_path: Path | list[Path]) -> str | None:
 
 @register_reader_plugin(priority=50)
 def read_image(file_path: Path) -> WidgetDataModel:
-    if file_path.suffix.rstrip("~") in {".png", ".jpg", ".jpeg"}:
+    if file_path.suffix.rstrip("~") in {".png", ".jpg", ".jpeg", ".eps"}:
         return _io.default_image_reader(file_path)
     raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
 
 @read_image.define_matcher
 def _(file_path: Path) -> str | None:
-    if file_path.suffix.rstrip("~") in {".png", ".jpg", ".jpeg"}:
+    if file_path.suffix.rstrip("~") in {".png", ".jpg", ".jpeg", ".eps"}:
         return StandardType.IMAGE
     return None
 
@@ -235,6 +239,11 @@ def _(file_path: Path) -> str | None:
     }:  # fmt: skip
         return StandardType.DATAFRAME
     return None
+
+
+###########################################################################
+#    Built-in Writer Plugins
+###########################################################################
 
 
 @register_writer_plugin(priority=50)

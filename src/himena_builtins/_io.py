@@ -349,13 +349,11 @@ def default_image_writer(model: WidgetDataModel[np.ndarray], path: Path) -> None
     from PIL import Image
 
     Image.fromarray(model.value).save(path)
-    return None
 
 
 def default_dict_writer(model: WidgetDataModel[dict[str, Any]], path: Path) -> None:
     """Write parameters to a json file."""
     path.write_text(json.dumps(model.value, default=_json_default))
-    return None
 
 
 def default_plot_writer(
@@ -364,7 +362,6 @@ def default_plot_writer(
     """Write plot layout to a json file."""
     js = model.value.model_dump_typed()
     path.write_text(json.dumps(js, default=_json_default))
-    return None
 
 
 def default_excel_writer(
@@ -393,7 +390,6 @@ def default_excel_writer(
                 ws.cell(r + 1, c + 1).value = cell_str
                 ws.cell(r + 1, c + 1).data_type = cell_data_type
     wb.save(path)
-    return None
 
 
 def default_array_writer(
@@ -402,7 +398,6 @@ def default_array_writer(
 ) -> None:
     """Write array file."""
     np.save(path, model.value)
-    return None
 
 
 def default_dataframe_writer(
@@ -446,7 +441,6 @@ def default_models_writer(
                 z.write(tmpdir / file_name, arcname=file_name)
     else:
         raise ValueError(f"Unsupported file type: {path.suffix}")
-    return None
 
 
 def default_pickle_writer(model: WidgetDataModel[Any], path: Path) -> None:
@@ -455,19 +449,16 @@ def default_pickle_writer(model: WidgetDataModel[Any], path: Path) -> None:
 
     with path.open("wb") as f:
         pickle.dump(model.value, f)
-    return None
 
 
 def default_roi_writer(model: WidgetDataModel[RoiListModel], path: Path) -> None:
     """Write image ROIs to a json file."""
     path.write_text(json.dumps(model.value.model_dump_typed(), default=_json_default))
-    return None
 
 
 def default_workflow_writer(model: WidgetDataModel[Workflow], path: Path) -> None:
     """Write workflow node."""
     path.write_text(model.value.model_dump_json())
-    return None
 
 
 def _json_default(obj):
