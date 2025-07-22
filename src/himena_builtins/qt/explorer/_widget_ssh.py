@@ -572,7 +572,13 @@ def make_paste_remote_files_worker(
     dirpath: Path,
 ):
     for reader in readers:
-        dst = dirpath / reader.path.name
+        stem = reader.path.stem
+        ext = reader.path.suffix
+        suffix = 0
+        dst = dirpath / f"{stem}{ext}"
+        while dst.exists():
+            dst = dirpath / f"{stem}_{suffix}{ext}"
+            suffix += 1
         reader.run_command(dst)
         if dst.exists():
             dst.touch()

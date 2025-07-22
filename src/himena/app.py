@@ -90,7 +90,10 @@ class QtEventLoopHandler(EventLoopHandler["QApplication"]):
                 warning_hook=self._warn_hook,
             ) as _:
                 qapp = self.get_app()
-                self._setup_socket(qapp)
+                try:
+                    self._setup_socket(qapp)
+                except PermissionError as e:
+                    print(e)
                 qapp.exec()
                 return None
 
