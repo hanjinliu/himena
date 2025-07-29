@@ -643,6 +643,8 @@ class TabList(SemiMutableSequence[TabArea[_W]], _HasMainWindowRef[_W], Generic[_
         area.clear()
         main = self._main_window()
         hash = main._tab_hash(index)
+        for win in self._tab_areas.get(hash, []):
+            _checker.call_widget_closed_callback(win)
         self._tab_areas.pop(hash)
         main._del_tab_at(index)
         self.changed.emit()

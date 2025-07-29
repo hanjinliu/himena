@@ -63,6 +63,7 @@ def remove_instance(name: str, instance: MainWindow[_W]) -> None:
             instance.model_app.destroy(instance.model_app.name)
         if not instances:
             _APP_INSTANCES.pop(name, None)
+        instance.tabs.clear()
     return None
 
 
