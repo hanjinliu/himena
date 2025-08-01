@@ -1,5 +1,6 @@
 from __future__ import annotations
 import argparse
+from pathlib import Path
 from himena.consts import ALLOWED_LETTERS
 
 
@@ -33,6 +34,15 @@ class HimenaCliNamespace(argparse.Namespace):
             self.profile = None
 
         return self
+
+    def abs_path(self) -> str | None:
+        """Return the absolute path of the file to open."""
+        if self.path is None:
+            return None
+        fp = Path(self.path).expanduser()
+        if fp.exists():
+            fp = fp.resolve()
+        return str(fp)
 
 
 def _is_profile_name(arg: str) -> bool:

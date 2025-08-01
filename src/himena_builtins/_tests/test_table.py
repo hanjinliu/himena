@@ -164,6 +164,17 @@ def test_commands(himena_ui: MainWindow):
     )
     assert_equal(himena_ui.current_model.value[0:10, 1], [str(i) for i in range(1, 11)])
 
+    model = WidgetDataModel(
+        value=[["a", "3", "-2"], ["d", "4", "1.1"]],
+        type=StandardType.TABLE,
+        metadata=TableMeta(selections=[], separator="\t")
+    )
+    himena_ui.add_data_model(model)
+    widget = himena_ui.current_window.widget
+    assert isinstance(widget, QSpreadsheet)
+    widget._selection_model.set_ranges([(slice(1, 3), slice(1, 2))])
+    widget._measure()
+
 def test_large_data(qtbot: QtBot):
     # initialize with a large data
     ss = QSpreadsheet()

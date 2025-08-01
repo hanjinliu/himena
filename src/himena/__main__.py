@@ -91,7 +91,7 @@ def _main(args: HimenaCliNamespace):
         "port": args.port,
     }
 
-    ui, lock = _send_or_create_window(app_prof, args.path, attrs)
+    ui, lock = _send_or_create_window(app_prof, args.abs_path(), attrs)
     if ui is not None:
         ui.show(run=not _is_testing())
         lock.close()

@@ -12,6 +12,7 @@ from qtpy import QtGui, QtCore
 from qtpy.QtCore import Qt
 
 from himena.consts import StandardType
+from himena.qt._utils import get_main_window
 from himena.types import WidgetDataModel
 from himena.standards.model_meta import TableMeta
 from himena.plugins import validate_protocol, config_field
@@ -520,6 +521,8 @@ class QSpreadsheet(QTableBase):
         menu.addSeparator()
         menu.addAction("Remove selected rows", self._remove_selected_rows)
         menu.addAction("Remove selected columns", self._remove_selected_columns)
+        menu.addSeparator()
+        menu.addAction("Measure at selection", self._measure)
         return menu
 
     def _cut_and_copy_to_clipboard(self):
@@ -659,6 +662,10 @@ class QSpreadsheet(QTableBase):
         for sel in self._selection_model.ranges:
             selected_cols.update(range(sel[1].start, sel[1].stop))
         self.array_delete(selected_cols, axis=1)
+
+    def _measure(self):
+        ui = get_main_window(self)
+        ui.exec_action("builtins:table:measure-selection")
 
     def keyPressEvent(self, e: QtGui.QKeyEvent):
         _Ctrl = QtCore.Qt.KeyboardModifier.ControlModifier
