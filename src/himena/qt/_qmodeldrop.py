@@ -342,14 +342,13 @@ class QModelDropList(QtW.QListWidget):
     def _remove_item(self, item: QModelListItem):
         for i in range(self.count()):
             if self.itemWidget(self.item(i)) is item:
-                if (win := item.subwindow()) and partial(
-                    self._remove_item, item
+                if (win := item.subwindow()) and (
+                    cb := partial(self._remove_item, item)
                 ) in win.closed:
                     # disconnect the signal to avoid memory leak
-                    win.closed.disconnect(partial(self._remove_item, item))
+                    win.closed.disconnect(cb)
                 self.takeItem(i)
                 return
-        raise ValueError(f"Item {item} not found")
 
     def models(self) -> list[WidgetDataModel]:
         """List of models."""
