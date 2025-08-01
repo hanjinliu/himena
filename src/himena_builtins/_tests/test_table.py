@@ -163,6 +163,9 @@ def test_commands(himena_ui: MainWindow):
         with_params={"selection": ((0, 10), (1, 2)), "start": 1, "step": 1}
     )
     assert_equal(himena_ui.current_model.value[0:10, 1], [str(i) for i in range(1, 11)])
+    widget = himena_ui.current_window.widget
+    assert isinstance(widget, QSpreadsheet)
+    widget._measure()
 
 def test_large_data(qtbot: QtBot):
     # initialize with a large data
