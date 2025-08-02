@@ -11,10 +11,10 @@
       
       
       
-        <link rel="prev" href="../tutorial.html">
+        <link rel="prev" href="workflows.html">
       
       
-        <link rel="next" href="basics.html">
+        <link rel="next" href="customization.html">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -22,7 +22,7 @@
     
     
       
-        <title>Index - himena</title>
+        <title>Sessions - himena</title>
       
     
     
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#usage" class="md-skip">
+        <a href="#sessions" class="md-skip">
           Skip to content
         </a>
       
@@ -104,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Index
+              Sessions
             
           </span>
         </div>
@@ -314,7 +314,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="index.html" class="md-nav__link md-nav__link--active">
+            <a href="index.html" class="md-nav__link ">
               
   
   
@@ -327,7 +327,7 @@
             </a>
             
               
-              <label class="md-nav__link md-nav__link--active" for="__nav_3" id="__nav_3_label" tabindex="">
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
@@ -415,10 +415,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="sessions.html" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Sessions
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="sessions.html" class="md-nav__link md-nav__link--active">
         
   
   
@@ -429,6 +451,53 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      How it Works
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#make-the-session-portable" class="md-nav__link">
+    <span class="md-ellipsis">
+      Make the Session Portable
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#restore-subset-of-the-data-by-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      Restore Subset of the Data by Workflows
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1072,6 +1141,41 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      How it Works
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#make-the-session-portable" class="md-nav__link">
+    <span class="md-ellipsis">
+      Make the Session Portable
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#restore-subset-of-the-data-by-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      Restore Subset of the Data by Workflows
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1089,15 +1193,43 @@
   
 
 
-<h1 id="usage">Usage</h1>
-<p>In this section, you will learn the more details of the <code>himena</code> application.</p>
-<ul>
-<li><a href="basics.html">Basics</a></li>
-<li><a href="tab_and_window.html">Tab/Window Manipluation</a></li>
-<li><a href="workflows.html">Workflows</a></li>
-<li><a href="sessions.html">Sessions</a></li>
-<li><a href="builtin_widgets.html">Built-in Widgets</a></li>
-</ul>
+<h1 id="sessions">Sessions</h1>
+<p>A "session" is a collection of tabs and sub-windows that can be saved and restored
+later. Sessions are useful for saving your work halfway through. To save a session,
+click the "File &gt; Session &gt; Save Session ..." menu.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The session feature is still experimental. The saved session may not be restored
+in some special cases. Please make sure you will not lose your important data.</p>
+</div>
+<h2 id="how-it-works">How it Works</h2>
+<p>A session is saved as a zip file suffixed with <code>.session.zip</code>. The zip file contains:</p>
+<ol>
+<li>Files created by writing all the sub-windows in the application.</li>
+<li>Directories that store the metadata of each data model.</li>
+<li><code>session.yaml</code> that describes many other states of the application.</li>
+</ol>
+<p>During saving the session, <code>himena</code> tries to find the best writer plugin to write every
+sub-window. Therefore, if any of the windows cannot be written to files, saving the
+session will lose the data (or <a href="#restore-subset-of-the-data-by-workflows">use workflows</a>
+to avoid this).</p>
+<h2 id="make-the-session-portable">Make the Session Portable</h2>
+<p>By default, sub-windows directly read from the local disk will not be saved again in the
+session. However, this session will not work on another computer, or if the file is
+moved. To make the session portable, you have to check the "save copies" option.</p>
+<h2 id="restore-subset-of-the-data-by-workflows">Restore Subset of the Data by Workflows</h2>
+<p>Instead of saving a sub-window as a file, you can restore the data by re-running all the
+commands needed to generate the data. As each sub-window has its workflow to track its
+history, this workflow can be used to restore the data.</p>
+<p>In the "Save Session ..." dialog, you can select which command you will allow to be
+executed. All the sub-windows that are directly generated by the command will not be
+saved as files, but will be restored by the workflow when the session is loaded.</p>
+<p>For example, if you have the following workflow:</p>
+<div class="highlight"><pre><span></span><code>        Command A         Command B
+Data X0 --------&gt; Data X1 --------&gt; Data X2
+</code></pre></div>
+<p>and allowed Command A to be executed, the session will save Data X2 if "Save copies" is
+not checked, or will save Data X0 and Data X2 if "Save copies" is checked.</p>
 
 
 
@@ -1127,7 +1259,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../tutorial.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: Tutorial">
+          <a href="workflows.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: Workflows">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1137,20 +1269,20 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                Tutorial
+                Workflows
               </div>
             </div>
           </a>
         
         
           
-          <a href="basics.html" class="md-footer__link md-footer__link--next" aria-label="Next: Basics">
+          <a href="customization.html" class="md-footer__link md-footer__link--next" aria-label="Next: Customization">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Basics
+                Customization
               </div>
             </div>
             <div class="md-footer__button md-icon">

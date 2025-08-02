@@ -11,10 +11,10 @@
       
       
       
-        <link rel="prev" href="../tutorial.html">
+        <link rel="prev" href="sessions.html">
       
       
-        <link rel="next" href="basics.html">
+        <link rel="next" href="builtin_widgets.html">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -22,7 +22,7 @@
     
     
       
-        <title>Index - himena</title>
+        <title>Customization - himena</title>
       
     
     
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#usage" class="md-skip">
+        <a href="#customization" class="md-skip">
           Skip to content
         </a>
       
@@ -104,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Index
+              Customization
             
           </span>
         </div>
@@ -314,7 +314,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="index.html" class="md-nav__link md-nav__link--active">
+            <a href="index.html" class="md-nav__link ">
               
   
   
@@ -327,7 +327,7 @@
             </a>
             
               
-              <label class="md-nav__link md-nav__link--active" for="__nav_3" id="__nav_3_label" tabindex="">
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
@@ -438,10 +438,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="customization.html" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Customization
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="customization.html" class="md-nav__link md-nav__link--active">
         
   
   
@@ -452,6 +474,53 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#application-color-theme" class="md-nav__link">
+    <span class="md-ellipsis">
+      Application Color Theme
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#keyboard-shortcuts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Keyboard Shortcuts
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#plugin-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      Plugin Settings
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1072,6 +1141,41 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#application-color-theme" class="md-nav__link">
+    <span class="md-ellipsis">
+      Application Color Theme
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#keyboard-shortcuts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Keyboard Shortcuts
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#plugin-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      Plugin Settings
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1089,15 +1193,22 @@
   
 
 
-<h1 id="usage">Usage</h1>
-<p>In this section, you will learn the more details of the <code>himena</code> application.</p>
-<ul>
-<li><a href="basics.html">Basics</a></li>
-<li><a href="tab_and_window.html">Tab/Window Manipluation</a></li>
-<li><a href="workflows.html">Workflows</a></li>
-<li><a href="sessions.html">Sessions</a></li>
-<li><a href="builtin_widgets.html">Built-in Widgets</a></li>
-</ul>
+<h1 id="customization">Customization</h1>
+<p>You can customize your application profile from the setting dialog.</p>
+<h2 id="application-color-theme">Application Color Theme</h2>
+<p>There are several color themes available. You can select your favorite one from the
+appearance tab in the setting dialog.</p>
+<p><img alt="" loading="lazy" src="../images/02_color_theme.gif" width="600px" /></p>
+<p>Alternatively, you can programmatically change it by setting the <code>theme</code> property.</p>
+<div class="highlight"><pre><span></span><code><span class="n">ui</span><span class="o">.</span><span class="n">theme</span> <span class="o">=</span> <span class="s2">&quot;dark-green&quot;</span>
+</code></pre></div>
+<h2 id="keyboard-shortcuts">Keyboard Shortcuts</h2>
+<p>You can customize keyboard shortcuts for various actions registered in the application.</p>
+<p><img alt="" loading="lazy" src="../images/02_keyboard_shortcuts.gif" width="600px" /></p>
+<h2 id="plugin-settings">Plugin Settings</h2>
+<p>Many settings that are not directly relevant to the data itself (such as the table cell
+size, default SSH host name, etc.) can be configured from the plugin settings tab.</p>
+<p><img alt="" loading="lazy" src="../images/02_plugin_config.png" width="600px" /></p>
 
 
 
@@ -1127,7 +1238,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../tutorial.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: Tutorial">
+          <a href="sessions.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: Sessions">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1137,20 +1248,20 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                Tutorial
+                Sessions
               </div>
             </div>
           </a>
         
         
           
-          <a href="basics.html" class="md-footer__link md-footer__link--next" aria-label="Next: Basics">
+          <a href="builtin_widgets.html" class="md-footer__link md-footer__link--next" aria-label="Next: Built-in Widgets">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Basics
+                Built-in Widgets
               </div>
             </div>
             <div class="md-footer__button md-icon">

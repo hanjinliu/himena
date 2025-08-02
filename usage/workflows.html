@@ -11,10 +11,10 @@
       
       
       
-        <link rel="prev" href="../tutorial.html">
+        <link rel="prev" href="tab_and_window.html">
       
       
-        <link rel="next" href="basics.html">
+        <link rel="next" href="sessions.html">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -22,7 +22,7 @@
     
     
       
-        <title>Index - himena</title>
+        <title>Workflows - himena</title>
       
     
     
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#usage" class="md-skip">
+        <a href="#workflows" class="md-skip">
           Skip to content
         </a>
       
@@ -104,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Index
+              Workflows
             
           </span>
         </div>
@@ -314,7 +314,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="index.html" class="md-nav__link md-nav__link--active">
+            <a href="index.html" class="md-nav__link ">
               
   
   
@@ -327,7 +327,7 @@
             </a>
             
               
-              <label class="md-nav__link md-nav__link--active" for="__nav_3" id="__nav_3_label" tabindex="">
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
@@ -392,10 +392,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="workflows.html" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Workflows
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="workflows.html" class="md-nav__link md-nav__link--active">
         
   
   
@@ -406,6 +428,44 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#built-in-workflow-viewer" class="md-nav__link">
+    <span class="md-ellipsis">
+      Built-in Workflow Viewer
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#execute-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Execute workflow
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1072,6 +1132,32 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#built-in-workflow-viewer" class="md-nav__link">
+    <span class="md-ellipsis">
+      Built-in Workflow Viewer
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#execute-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Execute workflow
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1089,15 +1175,18 @@
   
 
 
-<h1 id="usage">Usage</h1>
-<p>In this section, you will learn the more details of the <code>himena</code> application.</p>
-<ul>
-<li><a href="basics.html">Basics</a></li>
-<li><a href="tab_and_window.html">Tab/Window Manipluation</a></li>
-<li><a href="workflows.html">Workflows</a></li>
-<li><a href="sessions.html">Sessions</a></li>
-<li><a href="builtin_widgets.html">Built-in Widgets</a></li>
-</ul>
+<h1 id="workflows">Workflows</h1>
+<p>A "workflow" is a record of the commands and parameters you used to create a data model.
+For complicated data analysis tasks, looking at the workflow will help you remember what
+you did.</p>
+<h2 id="built-in-workflow-viewer">Built-in Workflow Viewer</h2>
+<p><code>himena-builtins</code> subpackage provides a built-in workflow viewer. You can view the
+workflow of a sub-window.</p>
+<p>A workflow viewer is not a special widget. It is also a standard widget using the
+<code>WidgetDataModel</code> standard.</p>
+<h2 id="execute-workflow">Execute workflow</h2>
+<p>A workflow is a full record to regenerate the data model. Therefore, you can execute the workflow to get the result.</p>
+<p><img alt="" src="../images/01_workflow_demo.gif" /></p>
 
 
 
@@ -1127,7 +1216,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../tutorial.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: Tutorial">
+          <a href="tab_and_window.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: Tab/Window Manipulation">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1137,20 +1226,20 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                Tutorial
+                Tab/Window Manipulation
               </div>
             </div>
           </a>
         
         
           
-          <a href="basics.html" class="md-footer__link md-footer__link--next" aria-label="Next: Basics">
+          <a href="sessions.html" class="md-footer__link md-footer__link--next" aria-label="Next: Sessions">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Basics
+                Sessions
               </div>
             </div>
             <div class="md-footer__button md-icon">
