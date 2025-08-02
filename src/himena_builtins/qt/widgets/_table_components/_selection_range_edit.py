@@ -16,6 +16,7 @@ class QSelectionRangeEdit(QtW.QGroupBox):
         parent: QtW.QWidget | None = None,
     ):
         super().__init__(parent)
+        self.setStyleSheet("QSelectionRangeEdit {margin: 0px;}")
         self._qtable: QTableBase | None = None
         self.setLayout(QtW.QHBoxLayout())
         self.setContentsMargins(0, 0, 0, 0)
