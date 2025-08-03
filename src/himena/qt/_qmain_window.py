@@ -554,7 +554,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self._tab_widget.remove_tab_area(i_tab)
         if self._tab_widget._is_startup_only():
             self._try_show_default_status_tip()
-        return None
+        QtW.QApplication.processEvents()
 
     def _rename_window_at(self, i_tab: int, i_window: int) -> None:
         tab = self._tab_widget.widget_area(i_tab)

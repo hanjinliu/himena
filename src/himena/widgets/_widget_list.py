@@ -648,7 +648,6 @@ class TabList(SemiMutableSequence[TabArea[_W]], _HasMainWindowRef[_W], Generic[_
         self._tab_areas.pop(hash)
         main._del_tab_at(index)
         self.changed.emit()
-        return None
 
     def add(self, name: str) -> TabArea[_W]:
         """Add a new tab area with the given name."""

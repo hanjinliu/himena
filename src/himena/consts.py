@@ -9,7 +9,7 @@ BasicTextFileTypes = frozenset(
      ".pyx", ".c", ".cpp", ".h", ".hpp", ".java", ".js", ".ts", ".html", ".htm", ".css",
      ".scss", ".sass", ".php", ".rb", ".sh", ".bash", ".zsh", ".ps1", ".psm1", ".bat",
      ".cmd", ".m", ".vbs", ".vba", ".r", ".rs", ".go", ".svg", ".tex", ".rst", ".ipynb",
-     ".lock", ".cs"]
+     ".lock", ".cs", ".qss"]
 )  # fmt: skip
 
 ConventionalTextFileNames = frozenset(
