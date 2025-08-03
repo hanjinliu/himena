@@ -23,7 +23,9 @@ class QResultStack(QtW.QTableWidget):
         self.setVerticalScrollMode(QtW.QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.setHorizontalScrollMode(QtW.QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.horizontalHeader().hide()
+        self.horizontalHeader().setDefaultSectionSize(56)
         self._items: list[dict[str, Any]] = []  # the actual python objects
+        self._roi_height = 40  # default row height
 
     def append_result(self, item: dict[str, Any]) -> None:
         """Append a new result to the stack."""
@@ -35,14 +37,19 @@ class QResultStack(QtW.QTableWidget):
         else:
             item = dict(item)
         self.insertRow(self.rowCount())
-        self.setRowHeight(self.rowCount(), 18)
+        self.setRowHeight(self.rowCount(), self._roi_height)
         add_new_column = len(item) > self.columnCount()
         if add_new_column:
             self.setColumnCount(len(item))
         flags = QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsSelectable
         for column, (key, value) in enumerate(item.items()):
-            label = QtW.QLabel(f"<b><font color='#808080'>{key}:</font></b> {value!r}")
-            label.setContentsMargins(5, 2, 5, 2)
+            label = QtW.QLabel(
+                f"<b><font color='#808080' style='font-size:8px'>{key}:</font></b><br>{value!r}"
+            )
+            label.setContentsMargins(4, 0, 4, 1)
+            label.setAlignment(
+                QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignTop
+            )
             table_item = QtW.QTableWidgetItem()
             table_item.setToolTip(f"{key}: {value!r}")
             table_item.setFlags(flags)

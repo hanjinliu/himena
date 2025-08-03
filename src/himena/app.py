@@ -89,15 +89,19 @@ class QtEventLoopHandler(EventLoopHandler["QApplication"]):
                 hook=self._except_hook,
                 warning_hook=self._warn_hook,
             ) as _:
-                qapp = self.get_app()
-                try:
-                    self._setup_socket(qapp)
-                except PermissionError as e:
-                    print(e)
-                qapp.exec()
-                return None
+                return self._run_app_routine()
+        return self._run_app_routine()
 
-        return self.get_app().exec()
+    def _run_app_routine(self):
+        qapp = self.get_app()
+        try:
+            try:
+                self._setup_socket(qapp)
+            except PermissionError as e:
+                print(e)
+            qapp.exec()
+        finally:
+            self.close_socket()
 
     def _setup_socket(self, app):
         """Set up a socket for inter-process communication."""

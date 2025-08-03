@@ -6,7 +6,7 @@ from himena.types import ClipboardDataModel, Parametric, WidgetDataModel
 from himena.standards.model_meta import TableMeta
 from himena.consts import StandardType, MenuId
 from himena.utils.misc import table_to_text
-from himena.widgets import SubWindow
+from himena.widgets import SubWindow, append_result
 
 if TYPE_CHECKING:
     from himena_builtins.qt.widgets.table import QSpreadsheet
@@ -151,6 +151,37 @@ def insert_incrementing_numbers(win: SubWindow["QSpreadsheet"]) -> Parametric:
     return run_insert
 
 
+@register_function(
+    title="Measure Selection",
+    types=StandardType.TABLE,
+    menus=[MenuId.TOOLS_TABLE],
+    command_id="builtins:table:measure-selection",
+)
+def measure_selection(model: WidgetDataModel["np.ndarray"]) -> Parametric:
+    """Measure the selection in the table."""
+
+    @configure_gui(selections={"bind": lambda *_: _get_selections(model)})
+    def run_measure_selection(
+        selections: list[tuple[tuple[int, int], tuple[int, int]]],
+    ):
+        arr_str = model.value
+        for selection in selections:
+            (r0, r1), (c0, c1) = selection
+            arr = arr_str[r0:r1, c0:c1].astype(np.float64)
+            append_result(
+                {
+                    "mean": float(np.mean(arr)),
+                    "std": float(np.std(arr)),
+                    "min": float(np.min(arr)),
+                    "max": float(np.max(arr)),
+                    "sum": float(np.sum(arr)),
+                    "count": arr.size,
+                }
+            )
+
+    return run_measure_selection
+
+
 def _cast_meta(meta) -> TableMeta:
     if not isinstance(meta, TableMeta):
         raise ValueError(
@@ -166,13 +197,24 @@ def _arr_to_buf(arr: "np.ndarray", sep: str = ",") -> StringIO:
     return buf
 
 
+def _get_selections(
+    model: WidgetDataModel["np.ndarray"],
+) -> list[tuple[tuple[int, int], tuple[int, int]]]:
+    meta = _cast_meta(model.metadata)
+    sels = meta.selections
+    if sels is None:
+        return []
+    if not isinstance(sels, list):
+        raise ValueError("Table selections must be a list of tuples.")
+    return sels
+
+
 def _get_selection(
     model: WidgetDataModel["np.ndarray"],
     allow_no_selection: bool = False,
 ) -> tuple[tuple[int, int], tuple[int, int]]:
-    meta = _cast_meta(model.metadata)
-    sels = meta.selections
-    if sels is None or len(sels) == 0:
+    sels = _get_selections(model)
+    if len(sels) == 0:
         if allow_no_selection:
             nr, nc = model.value.shape
             return (0, nr), (0, nc)

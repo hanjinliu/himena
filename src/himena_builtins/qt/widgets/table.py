@@ -11,7 +11,10 @@ from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
 from qtpy.QtCore import Qt
 
+from superqt import QIconifyIcon
+
 from himena.consts import StandardType
+from himena.qt._utils import get_main_window
 from himena.types import WidgetDataModel
 from himena.standards.model_meta import TableMeta
 from himena.plugins import validate_protocol, config_field
@@ -228,6 +231,9 @@ class QStringArrayModel(QtCore.QAbstractTableModel):
                 return str(section + 1)
 
 
+SEP_NAMES = {"\t": "Tab", " ": "Space", ",": "Comma", ";": "Semicolon"}
+
+
 class QSpreadsheet(QTableBase):
     """Table widget for editing a 2D string array.
 
@@ -319,7 +325,7 @@ class QSpreadsheet(QTableBase):
             self._control = QTableControl(self)
         self._control.update_for_table(self)
         if sep is not None:
-            self._control._separator_label.setText(f"Sep: {sep!r}")
+            self._control._separator_label.setText(f"Sep: {SEP_NAMES.get(sep, sep)}")
             self._control._separator = sep
             self._control._separator_label.show()
         else:
@@ -506,20 +512,22 @@ class QSpreadsheet(QTableBase):
         menu = QtW.QMenu(self)
         menu.addAction("Cut", self._cut_and_copy_to_clipboard)
         menu.addAction("Copy", self._copy_to_clipboard)
-        copy_as_menu = menu.addMenu("Copy as ...")
+        copy_as_menu = menu.addMenu("Copy As ...")
         copy_as_menu.addAction("CSV", self._copy_as_csv)
         copy_as_menu.addAction("Markdown", self._copy_as_markdown)
         copy_as_menu.addAction("HTML", self._copy_as_html)
         copy_as_menu.addAction("rST", self._copy_as_rst)
         menu.addAction("Paste", self._paste_from_clipboard)
         menu.addSeparator()
-        menu.addAction("Insert row above", self._insert_row_above)
-        menu.addAction("Insert row below", self._insert_row_below)
-        menu.addAction("Insert column left", self._insert_column_left)
-        menu.addAction("Insert column right", self._insert_column_right)
+        menu.addAction("Insert Row Above", self._insert_row_above)
+        menu.addAction("Insert Row Below", self._insert_row_below)
+        menu.addAction("Insert Column Left", self._insert_column_left)
+        menu.addAction("Insert Column Right", self._insert_column_right)
         menu.addSeparator()
-        menu.addAction("Remove selected rows", self._remove_selected_rows)
-        menu.addAction("Remove selected columns", self._remove_selected_columns)
+        menu.addAction("Remove Selected Rows", self._remove_selected_rows)
+        menu.addAction("Remove Selected Columns", self._remove_selected_columns)
+        menu.addSeparator()
+        menu.addAction("Measure At Selection", self._measure)
         return menu
 
     def _cut_and_copy_to_clipboard(self):
@@ -637,28 +645,38 @@ class QSpreadsheet(QTableBase):
         self._undo_stack.push(ActionGroup(_actions))
 
     def _insert_row_below(self):
+        """Insert a row below the current selection."""
         self.array_insert(self._selection_model.current_index.row + 1, 0)
 
     def _insert_row_above(self):
+        """Insert a row above the current selection."""
         self.array_insert(self._selection_model.current_index.row, 0)
 
     def _insert_column_right(self):
+        """Insert a column to the right of the current selection."""
         self.array_insert(self._selection_model.current_index.column + 1, 1)
 
     def _insert_column_left(self):
+        """Insert a column to the left of the current selection."""
         self.array_insert(self._selection_model.current_index.column, 1)
 
     def _remove_selected_rows(self):
+        """Remove the selected rows."""
         selected_rows = set[int]()
         for sel in self._selection_model.ranges:
             selected_rows.update(range(sel[0].start, sel[0].stop))
         self.array_delete(selected_rows, axis=0)
 
     def _remove_selected_columns(self):
+        """Remove the selected columns."""
         selected_cols = set[int]()
         for sel in self._selection_model.ranges:
             selected_cols.update(range(sel[1].start, sel[1].stop))
         self.array_delete(selected_cols, axis=1)
+
+    def _measure(self):
+        ui = get_main_window(self)
+        ui.exec_action("builtins:table:measure-selection")
 
     def keyPressEvent(self, e: QtGui.QKeyEvent):
         _Ctrl = QtCore.Qt.KeyboardModifier.ControlModifier
@@ -705,21 +723,31 @@ _R_CENTER = QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVC
 
 
 class QTableControl(QtW.QWidget):
-    def __init__(self, table: QTableBase):
+    def __init__(self, table: QSpreadsheet):
         super().__init__()
         layout = QtW.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(_R_CENTER)
-        self._label = QtW.QLabel("")
-        self._label.setAlignment(_R_CENTER)
+        self._info_label = QtW.QLabel("")
+        self._info_label.setAlignment(_R_CENTER)
 
         # toolbuttons
-        self._insert_menu_button = QtW.QPushButton()
-        self._insert_menu_button.setText("Ins")  # or "icons8:plus"
-        self._insert_menu_button.setMenu(self._make_insert_menu(table))
-        self._remove_menu_button = QtW.QPushButton()
-        self._remove_menu_button.setText("Rem")
-        self._remove_menu_button.setMenu(self._make_delete_menu(table))
+        groupbox_ins = QToolButtonGroup(self)
+        groupbox_rem = QToolButtonGroup(self)
+        groupbox_ins.add_widgets(
+            _tool_btn(
+                table._insert_row_above, "tabler:row-insert-bottom", flip="vertical"
+            ),
+            _tool_btn(table._insert_row_below, "tabler:row-insert-bottom"),
+            _tool_btn(table._insert_column_left, "tabler:column-insert-left"),
+            _tool_btn(
+                table._insert_column_right, "tabler:column-insert-left", flip="vertical"
+            ),
+        )
+        groupbox_rem.add_widgets(
+            _tool_btn(table._remove_selected_rows, "tabler:row-remove"),
+            _tool_btn(table._remove_selected_columns, "tabler:column-remove"),
+        )
 
         self._separator_label = QtW.QLabel()
         self._separator: str | None = None
@@ -729,30 +757,15 @@ class QTableControl(QtW.QWidget):
             QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Preferred
         )
         layout.addWidget(empty)  # empty space
-        layout.addWidget(self._label)
-        layout.addWidget(self._insert_menu_button)
-        layout.addWidget(self._remove_menu_button)
+        layout.addWidget(self._info_label)
         layout.addWidget(self._separator_label)
+        layout.addWidget(groupbox_ins)
+        layout.addWidget(groupbox_rem)
         layout.addWidget(QSelectionRangeEdit(table))
 
     def update_for_table(self, table: QSpreadsheet):
         shape = table.model()._arr.shape
-        self._label.setText(f"Shape {shape!r}")
-        return None
-
-    def _make_insert_menu(self, table: QSpreadsheet):
-        menu = QtW.QMenu(self)
-        menu.addAction("Row above", table._insert_row_above)
-        menu.addAction("Row below", table._insert_row_below)
-        menu.addAction("Column left", table._insert_column_left)
-        menu.addAction("Column right", table._insert_column_right)
-        return menu
-
-    def _make_delete_menu(self, table: QSpreadsheet):
-        menu = QtW.QMenu(self)
-        menu.addAction("Rows", table._remove_selected_rows)
-        menu.addAction("Columns", table._remove_selected_columns)
-        return menu
+        self._info_label.setText(f"Shape: {shape!r}")
 
 
 def _sl(idx: int, axis: Literal[0, 1]) -> tuple:
@@ -760,6 +773,38 @@ def _sl(idx: int, axis: Literal[0, 1]) -> tuple:
         return idx, slice(None)
     else:
         return slice(None), idx
+
+
+def _tool_btn(callback, icon: str, flip: str | None = None) -> QtW.QToolButton:
+    """Create a tool button with the given icon and callback."""
+    btn = QtW.QToolButton()
+    btn.setIcon(QIconifyIcon(icon, flip=flip))
+    btn.setToolTip(callback.__doc__)
+    btn.clicked.connect(callback)
+    return btn
+
+
+class QToolButtonGroup(QtW.QGroupBox):
+    """A group of tool buttons with a horizontal layout."""
+
+    def __init__(self, parent: QtW.QWidget | None = None):
+        super().__init__(parent)
+        self.setStyleSheet("QToolButtonGroup {margin: 0px;}")
+        self.setLayout(QtW.QHBoxLayout(self))
+        self.layout().setContentsMargins(0, 0, 0, 0)
+
+        inner = QtW.QWidget()
+        inner_layout = QtW.QHBoxLayout(inner)
+        self.setContentsMargins(0, 0, 0, 0)
+        inner_layout.setContentsMargins(0, 0, 0, 0)
+        inner_layout.setSpacing(1)
+        self._inner_layout = inner_layout
+        self.layout().addWidget(inner)
+
+    def add_widgets(self, *widgets: QtW.QWidget):
+        """Add a widget to the group."""
+        for widget in widgets:
+            self._inner_layout.addWidget(widget)
 
 
 ORD_A = ord("A")
