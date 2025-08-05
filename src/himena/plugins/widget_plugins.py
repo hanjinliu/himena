@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from functools import wraps
 import uuid
 from typing import (
@@ -252,8 +252,9 @@ class DockWidgetCallback(WidgetCallbackBase["DockWidget"]):
 
     def widget_visible(self) -> bool:
         """Used for the toggle rule of the Action."""
-        if widget := self._widget_ref():
-            return widget.visible
+        with suppress(RuntimeError):
+            if widget := self._widget_ref():
+                return widget.visible
         return False
 
 
