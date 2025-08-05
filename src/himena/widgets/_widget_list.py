@@ -725,7 +725,7 @@ class DockWidgetList(
 
     def __delitem__(self, index: int) -> None:
         dock = self[index]
-        self._main_window()._del_dock_widget(dock.widget)
+        self._main_window()._del_dock_widget(dock._frontend_widget())
         self._dock_widget_set.pop(dock)
 
     def __len__(self) -> int:
