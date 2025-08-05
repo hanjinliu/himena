@@ -1,5 +1,6 @@
 from __future__ import annotations
 from concurrent.futures import Future
+from contextlib import suppress
 import inspect
 from timeit import default_timer as timer
 import logging
@@ -212,19 +213,21 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         raise ValueError(f"{widget!r} does not have a dock widget parent.")
 
     def _set_dock_widget_title(self, widget: QtW.QWidget, title: str) -> None:
-        if isinstance(dock := widget.parentWidget(), QtW.QDockWidget):
-            return dock.setWindowTitle(title)
-        raise ValueError(f"{widget!r} does not have a dock widget parent.")
+        with suppress(RuntimeError):
+            if isinstance(dock := widget.parentWidget(), QtW.QDockWidget):
+                return dock.setWindowTitle(title)
 
     def _dock_widget_visible(self, widget: QtW.QWidget) -> bool:
-        if isinstance(dock := widget.parentWidget(), QtW.QDockWidget):
-            return dock.isVisible()
-        raise ValueError(f"{widget!r} does not have a dock widget parent.")
+        with suppress(RuntimeError):
+            # RuntimeError: wrapped C/C++ object of type QDockWidget has been deleted
+            if isinstance(dock := widget.parentWidget(), QtW.QDockWidget):
+                return dock.isVisible()
+        return False
 
     def _set_dock_widget_visible(self, widget: QtW.QWidget, visible: bool) -> None:
-        if isinstance(dock := widget.parentWidget(), QtW.QDockWidget):
-            return dock.setVisible(visible)
-        raise ValueError(f"{widget!r} does not have a dock widget parent.")
+        with suppress(RuntimeError):
+            if isinstance(dock := widget.parentWidget(), QtW.QDockWidget):
+                return dock.setVisible(visible)
 
     def _set_control_widget(self, widget: QtW.QWidget, control: QtW.QWidget) -> None:
         if not isinstance(control, QtW.QWidget):
