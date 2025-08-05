@@ -6,7 +6,7 @@ from importlib import import_module
 from typing import TYPE_CHECKING
 from pathlib import Path
 from timeit import default_timer as timer
-from app_model.types import KeyBindingRule
+from app_model.types import KeyBindingRule, KeyBinding
 from dataclasses import dataclass, field
 from himena.plugins.config import config_field
 
@@ -92,8 +92,8 @@ def install_plugins(
 def override_keybindings(app: HimenaApplication, prof: AppProfile) -> None:
     """Override keybindings in the application."""
     for ko in prof.keybinding_overrides:
-        if kb := app.keybindings.get_keybinding(ko.command_id):
-            app.keybindings._keybindings.remove(kb)
+        kb_int = KeyBinding.from_str(ko.key).to_int()
+        app.keybindings._keymap.pop(kb_int, None)
         app.keybindings.register_keybinding_rule(
             ko.command_id,
             KeyBindingRule(primary=ko.key),
