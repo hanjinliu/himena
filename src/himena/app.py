@@ -93,9 +93,12 @@ class QtEventLoopHandler(EventLoopHandler["QApplication"]):
         return self._run_app_routine()
 
     def _run_app_routine(self):
+        qapp = self.get_app()
         try:
-            qapp = self.get_app()
-            self._setup_socket(qapp)
+            try:
+                self._setup_socket(qapp)
+            except PermissionError as e:
+                print(e)
             qapp.exec()
         finally:
             self.close_socket()

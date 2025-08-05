@@ -643,10 +643,11 @@ class TabList(SemiMutableSequence[TabArea[_W]], _HasMainWindowRef[_W], Generic[_
         area.clear()
         main = self._main_window()
         hash = main._tab_hash(index)
+        for win in self._tab_areas.get(hash, []):
+            _checker.call_widget_closed_callback(win)
         self._tab_areas.pop(hash)
         main._del_tab_at(index)
         self.changed.emit()
-        return None
 
     def add(self, name: str) -> TabArea[_W]:
         """Add a new tab area with the given name."""
@@ -724,7 +725,7 @@ class DockWidgetList(
 
     def __delitem__(self, index: int) -> None:
         dock = self[index]
-        self._main_window()._del_dock_widget(dock.widget)
+        self._main_window()._del_dock_widget(dock._frontend_widget())
         self._dock_widget_set.pop(dock)
 
     def __len__(self) -> int:

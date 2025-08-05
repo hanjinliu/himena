@@ -228,19 +228,31 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
             self._set_current_path(self._pwd / item.text(0))
         elif item_type == "l":
             _, real_path = item.text(0).split(" -> ")
+            # solve relative path
+            if real_path.startswith("../"):
+                real_path_abs = self._pwd.parent.joinpath(real_path[3:])
+            elif real_path.startswith("./"):
+                real_path_abs = self._pwd.joinpath(real_path[2:])
+            elif real_path.startswith(("/", "~")):
+                real_path_abs = Path(real_path)
+            else:
+                real_path_abs = self._pwd / real_path
             args_check_type = _make_get_type_args(
-                self._host_name(), real_path, port=int(self._port_edit.text())
+                self._host_name(),
+                real_path_abs.as_posix(),
+                port=int(self._port_edit.text()),
             )
             if self._is_wsl_switch.isChecked():
                 args_check_type = ["wsl", "-e"] + args_check_type
             result = subprocess.run(args_check_type, capture_output=True)
             if result.returncode != 0:
                 raise ValueError(f"Failed to get type: {result.stderr.decode()}")
+
             link_type = result.stdout.decode().strip()
             if link_type == "directory":
-                self._set_current_path(self._pwd / real_path)
+                self._set_current_path(real_path_abs)
             else:
-                self._read_and_add_model(self._pwd / real_path)
+                self._read_and_add_model(real_path_abs)
         else:
             self._read_and_add_model(self._pwd / item.text(0))
 
@@ -572,7 +584,13 @@ def make_paste_remote_files_worker(
     dirpath: Path,
 ):
     for reader in readers:
-        dst = dirpath / reader.path.name
+        stem = reader.path.stem
+        ext = reader.path.suffix
+        suffix = 0
+        dst = dirpath / f"{stem}{ext}"
+        while dst.exists():
+            dst = dirpath / f"{stem}_{suffix}{ext}"
+            suffix += 1
         reader.run_command(dst)
         if dst.exists():
             dst.touch()

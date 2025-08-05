@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import suppress
 import sys
 from typing import Callable
 from app_model import Application
@@ -397,11 +398,13 @@ class QStartupWidget(QtW.QWidget):
         filt: Callable[[MenuItem], bool] = lambda x: True,
     ) -> list[QClickableLabel]:
         added: list[QClickableLabel] = []
-        for menu in self._app.menus.get_menu(menu_id):
-            if isinstance(menu, MenuItem) and filt(menu):
-                btn = self._make_button(menu.command.id, self._app)
-                layout.addWidget(btn)
-                added.append(btn)
+        with suppress(KeyError):
+            # NOTE: after cleanup, this may raise KeyError
+            for menu in self._app.menus.get_menu(menu_id):
+                if isinstance(menu, MenuItem) and filt(menu):
+                    btn = self._make_button(menu.command.id, self._app)
+                    layout.addWidget(btn)
+                    added.append(btn)
         return added
 
 
