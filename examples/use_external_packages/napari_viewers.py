@@ -7,6 +7,7 @@ from napari._qt.qt_main_window import _QtMainWindow
 from napari.qt import QtViewer
 
 from himena import new_window, MainWindow
+from himena.plugins import register_function
 from himena.style import Theme
 
 class MyViewer(QtW.QSplitter):
@@ -71,6 +72,18 @@ class MyViewer(QtW.QSplitter):
 
     def size_hint(self):
         return 600, 400
+
+@register_function(
+    title="Open Napari Viewer",
+    types=[],
+    menus=["tools"],
+    command_id="use_external_packages:napari_viewers",
+)
+def open_napari_viewers(ui: MainWindow) -> None:
+    """Open a new napari viewer in the main window."""
+    viewer0 = MyViewer(ui)
+    tab = ui.add_tab("napari")
+    tab.add_widget(viewer0, title="Viewer-0")
 
 def main():
     ui = new_window()
