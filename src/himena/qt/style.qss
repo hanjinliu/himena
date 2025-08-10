@@ -194,6 +194,28 @@ QScrollBar::sub-page {
     background-color: #[background_dim];
 }
 
+QCheckBox::indicator:unchecked {
+    border-radius: 4px;
+    width: 16px;
+    height: 16px;
+    background-color: #[background_dim];
+}
+
+QCheckBox::indicator:checked {
+    border-radius: 4px;
+    width: 16px;
+    height: 16px;
+    image: url(himena-icons:/checkbox-#[theme].svg);
+    background-color: #[background_dim];
+}
+
+QCheckBox::indicator:hover {
+    border-radius: 4px;
+    width: 16px;
+    height: 16px;
+    background-color: #[highlight_dim];
+}
+
 
 /* ----------------- QSlider ------------------ */
 

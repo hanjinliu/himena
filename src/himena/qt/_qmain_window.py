@@ -54,7 +54,7 @@ if TYPE_CHECKING:
     from himena.widgets._main_window import SubWindow, MainWindow
     from himena.style import Theme
 
-_ICON_PATH = Path(__file__).parent.parent / "resources" / "icon.svg"
+_ICON_PATH = Path(__file__).parent.parent / "resources"
 _T = TypeVar("_T", bound=QtW.QWidget)
 _V = TypeVar("_V")
 _LOGGER = logging.getLogger(__name__)
@@ -70,6 +70,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def __init__(self, app: HimenaApplication):
         # app must be initialized
+        QtCore.QDir.addSearchPath("himena-icons", _ICON_PATH.as_posix())
         _event_loop_handler = get_event_loop_handler(
             backend="qt",
             app_name=app.name,
@@ -83,7 +84,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         super().__init__(app)
         self._qt_app.setApplicationName(app.name)
         self.setWindowTitle("himena")
-        self.setWindowIcon(QtGui.QIcon(_ICON_PATH.as_posix()))
+        self.setWindowIcon(QtGui.QIcon(_ICON_PATH.joinpath("icon.svg").as_posix()))
         self._tab_widget = QTabWidget()
         self._menubar = self.setModelMenuBar(_prep_menubar_map(app))
         self._menubar.setContextMenuPolicy(
