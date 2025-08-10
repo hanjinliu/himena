@@ -775,7 +775,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     ) -> Callable[[Future], None]:
         def _func(future: Future):
             if future.cancelled():
-                self._show_notification("Cancelled.", duration=2)
+                pass
             elif e := future.exception():
                 self._on_error(e)
                 cb_errored(e)

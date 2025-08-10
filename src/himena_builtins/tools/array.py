@@ -236,7 +236,7 @@ def simple_calculation(model: WidgetDataModel) -> Parametric:
 
 
 @register_function(
-    title="Convert data type (astype) ...",
+    title="Convert Data Type (astype) ...",
     menus=[MenuId.TOOLS_ARRAY],
     types=StandardType.ARRAY,
     command_id="builtins:array:astype",
@@ -252,6 +252,42 @@ def array_astype(model: WidgetDataModel) -> Parametric:
         return model.with_value(model.value.astype(dtype), update_inplace=inplace)
 
     return run_astype
+
+
+@register_function(
+    title="Convert Axis Names ...",
+    menus=[MenuId.TOOLS_ARRAY],
+    types=StandardType.ARRAY,
+    command_id="builtins:array:with-axes",
+)
+def array_with_axes(model: WidgetDataModel) -> Parametric:
+    """Convert the axes of the array."""
+    meta = _cast_meta(model, ArrayMeta)
+    if (axes := meta.axes) is None:
+        raise ValueError("The axes attribute must be set to use this function.")
+    gui_options = {}
+    for i, axis in enumerate(axes):
+        gui_options[f"axis_{i}"] = {
+            "widget_type": "LineEdit",
+            "value": axis.name,
+            "tooltip": "Enter the name of the axis.",
+            "label": f"{axis.name} ->",
+        }
+
+    @configure_gui(gui_options=gui_options)
+    def run_with_axes(**kwargs: str) -> WidgetDataModel:
+        meta = _cast_meta(model, ArrayMeta)
+        name_old: list[str] = []
+        name_new: list[str] = []
+        for k, v in kwargs.items():
+            axis = axes[int(k[5:])]
+            name_old.append(axis.name)
+            axis.name = v.strip()
+            name_new.append(axis.name)
+        set_status_tip(f"Axis names updated: {name_old} -> {name_new}")
+        return model.with_metadata(meta, update_inplace=True)
+
+    return run_with_axes
 
 
 @register_function(
@@ -302,7 +338,7 @@ def set_scale(model: WidgetDataModel) -> Parametric:
     return run_set_scale
 
 
-_C = TypeVar("_C", bound=type)
+_C = TypeVar("_C")
 
 
 def _cast_meta(model: WidgetDataModel, cls: type[_C]) -> _C:

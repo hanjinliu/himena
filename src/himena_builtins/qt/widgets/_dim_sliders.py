@@ -110,6 +110,10 @@ class QDimsSlider(QtW.QWidget):
     def axis_names(self) -> list[str]:
         return [slider._name_label.text() for slider in self._sliders]
 
+    def set_axis_names(self, names: list[str]) -> None:
+        for slider, name in zip(self._sliders, names):
+            slider._name_label.setText(name)
+
 
 class _QSliderButton(QtW.QPushButton):
     """A button for the slider."""
