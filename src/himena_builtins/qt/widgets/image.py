@@ -142,6 +142,8 @@ class QImageViewBase(QtW.QSplitter):
         # update sliders
         if not is_same_array:
             self._dims_slider.set_dimensions(arr.shape, meta0.axes, is_rgb=self._is_rgb)
+        elif meta0.axes:
+            self._dims_slider.set_axis_names([axis.name for axis in meta0.axes])
         with qsignal_blocker(self._dims_slider):
             self._dims_slider.setValue(sl_0)
         axis_names = [meta0.axes[i].name for i in range(self._dims_slider.count())]
