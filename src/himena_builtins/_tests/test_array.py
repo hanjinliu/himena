@@ -155,7 +155,7 @@ def test_array_commands(himena_ui: MainWindow):
     meta_new.axes[1].unit == "um"
     meta_new.axes[2].scale == pytest.approx(1.4)
     meta_new.axes[2].unit == ""
-    himena_ui.exec_action("array_with_axes", with_params={"axis_0": "t", "axis_1": "y", "axis_2": "x"})
+    himena_ui.exec_action("builtins:array:with-axes", with_params={"axis_0": "t", "axis_1": "y", "axis_2": "x"})
     meta_new = win.to_model().metadata
     assert isinstance(meta_new, ArrayMeta)
     assert meta_new.axes[0].name == "t"
