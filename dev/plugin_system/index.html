@@ -705,6 +705,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#plugin-startup" class="md-nav__link">
+    <span class="md-ellipsis">
+      Plugin Startup
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1204,6 +1213,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#plugin-startup" class="md-nav__link">
+    <span class="md-ellipsis">
+      Plugin Startup
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1281,6 +1299,13 @@ folders.</p>
 <div class="highlight"><pre><span></span><code>himena<span class="w"> </span>&lt;my-profile&gt;<span class="w"> </span>--install<span class="w"> </span>path/to/my_plugin.py
 </code></pre></div>
 <p>The installed files will be run as a script on the startup.</p>
+<h2 id="plugin-startup">Plugin Startup</h2>
+<p>When a plugin is loaded, <code>himena</code> will look for the "on_himena_startup" function in the
+plugin module. If the function is found, it will be called with the main window.</p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_himena_startup</span><span class="p">(</span><span class="n">ui</span><span class="p">):</span>
+    <span class="c1"># Your plugin initialization code here</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;My plugin loaded!&quot;</span><span class="p">)</span>
+</code></pre></div>
 
 
 
