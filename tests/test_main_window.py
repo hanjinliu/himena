@@ -1,4 +1,5 @@
 from concurrent.futures import Future
+from dataclasses import dataclass
 from pathlib import Path
 from unittest.mock import MagicMock
 import warnings
@@ -390,6 +391,7 @@ def test_action_hint(himena_ui: MainWindowQt, sample_dir: Path):
 def test_custom_object_type_map(make_himena_ui):
     himena_ui: MainWindow = make_himena_ui("mock")
 
+    @dataclass
     class MyType:
         value: str
 
