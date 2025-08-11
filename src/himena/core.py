@@ -51,8 +51,7 @@ def new_window(
     plugins = app_prof.plugins + plugins
     _init_backend(backend)
     install_default_configs()
-    if plugins:
-        install_plugins(model_app, plugins)
+    results = install_plugins(model_app, plugins)
 
     # create the main window
     init_application(model_app)
@@ -70,6 +69,10 @@ def new_window(
         _LOGGER.error("Exceptions occurred during startup commands:")
         for cmd, kwargs, exc in exceptions:
             _LOGGER.error("  %r (parameters=%r): %s", cmd, kwargs, exc)
+
+    # call plugin startup functions
+    for result in results:
+        result.call_startup(main_window)
     return main_window
 
 

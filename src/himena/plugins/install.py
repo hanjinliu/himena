@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import traceback
 from importlib import import_module
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 from pathlib import Path
 from timeit import default_timer as timer
 from app_model.types import KeyBindingRule, KeyBinding
@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from himena.plugins.config import config_field
 
 if TYPE_CHECKING:
+    from himena.widgets import MainWindow
     from himena.profile import AppProfile
     from himena._app_model import HimenaApplication
     from himena.plugins.widget_class import PluginConfigType
@@ -35,43 +36,8 @@ def install_plugins(
     for name in plugins:
         if name in reg._installed_plugins:
             continue
-        _time_0 = timer()
-        _exc = None
-        if isinstance(name, str):
-            if name.endswith(".py"):
-                if not Path(name).exists():
-                    _LOGGER.error(
-                        f"Plugin file {name} does not exists but is listed in the "
-                        "application profile."
-                    )
-                    continue
-                import runpy
-
-                runpy.run_path(name)
-            else:
-                try:
-                    import_module(name)
-                except ModuleNotFoundError:
-                    _LOGGER.error(
-                        f"Plugin module {name} is not installed but is listed in the "
-                        "application profile."
-                    )
-                    continue
-                except Exception as e:
-                    msg = "".join(
-                        traceback.format_exception(type(e), e, e.__traceback__)
-                    )
-                    _LOGGER.error(
-                        f"Error installing plugin {name}, traceback follows:\n{msg}"
-                    )
-                    _exc = e
-        else:
-            raise TypeError(f"Invalid plugin type: {type(name)}")
-        _msec = (timer() - _time_0) * 1000
-        if show_import_time and _exc is None:
-            color = _color_for_time(_msec)
-            print(f"{color}{name}\t{_msec:.3f} msec\033[0m")
-        results.append(PluginInstallResult(name, _msec, _exc))
+        if install_result := _install_one(name, show_import_time):
+            results.append(install_result)
     reg.install_to(app)
     reg._installed_plugins.extend(plugins)
     prof = load_app_profile(app.name)
@@ -87,6 +53,48 @@ def install_plugins(
 
     prof.save()
     return results
+
+
+def _install_one(name: str, show_import_time: bool) -> PluginInstallResult | None:
+    _time_0 = timer()
+    _exc = None
+    if isinstance(name, str):
+        if name.endswith(".py"):
+            if not Path(name).exists():
+                _LOGGER.error(
+                    f"Plugin file {name} does not exists but is listed in the "
+                    "application profile."
+                )
+                return None
+            import runpy
+
+            mod_namespace = runpy.run_path(name)
+        else:
+            try:
+                mod = import_module(name)
+            except ModuleNotFoundError:
+                _LOGGER.error(
+                    f"Plugin module {name} is not installed but is listed in the "
+                    "application profile."
+                )
+                return None
+            except Exception as e:
+                msg = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+                _LOGGER.error(
+                    f"Error installing plugin {name}, traceback follows:\n{msg}"
+                )
+                _exc = e
+            mod_namespace = vars(mod)
+    else:
+        raise TypeError(f"Invalid plugin type: {type(name)}")
+
+    startup_callback = mod_namespace.get("on_himena_startup", None)
+
+    _msec = (timer() - _time_0) * 1000
+    if show_import_time and _exc is None:
+        color = _color_for_time(_msec)
+        print(f"{color}{name}\t{_msec:.3f} msec\033[0m")
+    return PluginInstallResult(name, _msec, _exc, startup=startup_callback)
 
 
 def override_keybindings(app: HimenaApplication, prof: AppProfile) -> None:
@@ -165,6 +173,16 @@ class PluginInstallResult:
     plugin: str
     time: float = field(default=0.0)
     error: Exception | None = None
+    startup: Callable[[MainWindow], None] | None = None
+
+    def call_startup(self, ui: MainWindow):
+        if self.startup is not None:
+            try:
+                self.startup(ui)
+            except Exception as e:
+                _LOGGER.error(
+                    f"Error calling on_himena_startup of plugin {self.plugin}: {e!r}"
+                )
 
 
 def _color_for_time(msec: float) -> str:
