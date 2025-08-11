@@ -83,3 +83,15 @@ himena <my-profile> --install path/to/my_plugin.py
 ```
 
 The installed files will be run as a script on the startup.
+
+## Plugin Startup
+
+When a plugin is loaded, `himena` will look for the "on_himena_startup" function in the
+plugin module. If the function is found, it will be called with the main window.
+
+```python
+def on_himena_startup(ui):
+    # Your plugin initialization code here
+    print("My plugin loaded!")
+
+```

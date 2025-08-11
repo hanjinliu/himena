@@ -386,3 +386,19 @@ def test_action_hint(himena_ui: MainWindowQt, sample_dir: Path):
         hint.suggestion.get_title(himena_ui)
         hint.suggestion.get_tooltip(himena_ui)
         hint.suggestion.execute(himena_ui, win.to_model().workflow.last())
+
+def test_custom_object_type_map(make_himena_ui):
+    himena_ui: MainWindow = make_himena_ui("mock")
+
+    class MyType:
+        value: str
+
+    @himena_ui.object_type_map.register
+    def add_my_type(value):
+        if isinstance(value, MyType):
+            return "text", value.value, None
+        return None
+
+    himena_ui.add_object(MyType(value="Hello World"))
+    assert himena_ui.current_model.value == "Hello World"
+    assert himena_ui.current_model.type == "text"

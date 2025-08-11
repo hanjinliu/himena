@@ -8,11 +8,26 @@ class ObjectTypeMap:
     def __init__(self):
         self._functions = []
 
-    def pick_type(self, value: Any) -> str:
-        for func in self._functions:
+    def pick_type(self, value: Any) -> tuple[str, Any, Any]:
+        for func in reversed(self._functions):
             out = func(value)
-            if isinstance(out, str):
-                return out
+            if isinstance(out, tuple):
+                typ, value_processed, meta = out
+                if not isinstance(typ, str):
+                    raise TypeError(
+                        f"Object type map function {func} must return a str or a tuple "
+                        f"of (str, Any, Any), got {out!r}."
+                    )
+            elif isinstance(out, str):
+                typ, value_processed, meta = out, value, None
+            elif out is None:
+                continue
+            else:
+                raise TypeError(
+                    f"Object type map function {func} must return a str or a tuple "
+                    f"of (str, Any, Any), got {out!r}."
+                )
+            return typ, value_processed, meta
         raise ValueError(f"Could not determine the type of {value}.")
 
     def register(self, func):

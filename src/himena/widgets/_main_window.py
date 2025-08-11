@@ -408,7 +408,9 @@ class MainWindow(Generic[_W]):
             if isinstance(metadata, BaseMetadata):
                 type = metadata.expected_type()
         if type is None:
-            type = self._object_type_map.pick_type(value)
+            type, value, metadata_fallback = self._object_type_map.pick_type(value)
+            if metadata is None:
+                metadata = metadata_fallback
         wd = WidgetDataModel(
             value=value,
             type=type,
