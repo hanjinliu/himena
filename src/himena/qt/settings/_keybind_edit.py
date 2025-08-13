@@ -57,7 +57,7 @@ class QKeybindEdit(QtW.QWidget):
 
     def _on_keybinding_updated(self, command_id: str, new_shortcut: str):
         _LOGGER.info("Keybindings registered: %s -> %s", command_id, new_shortcut)
-        self._table.update_table_from_model_app(self._ui.model_app)
+        self._table.update_table_from_model_app(self._ui.model_app, skip=True)
         self._table.filter_by_text(self._search.text())  # re-filter
         self._ui.app_profile.with_keybinding_override(new_shortcut, command_id).save()
         _LOGGER.info("Keybinding override saved")
@@ -141,7 +141,7 @@ class QKeybindTable(QtW.QTableWidget):
         self._last_future: Future | None = None
         self.cellChanged.connect(self._update_keybinding)
 
-    def update_table_from_model_app(self, app: HimenaApplication):
+    def update_table_from_model_app(self, app: HimenaApplication, skip: bool = False):
         commands_to_skip = app._dynamic_command_ids
         commands = sorted(
             (cmd[1] for cmd in app.commands if cmd[1].id not in commands_to_skip),
@@ -162,11 +162,11 @@ class QKeybindTable(QtW.QTableWidget):
                 if kbd:
                     key_seq = kbd.keybinding.to_text()
                     when = str(kbd.when) if kbd.when is not None else ""
-                    weight = str(kbd.weight)
+                    # weight = str(kbd.weight)
                 else:
                     key_seq = ""
                     when = ""
-                    weight = ""
+                    # weight = ""
                 if action := app.registered_actions.get(cmd_id):
                     tooltip = action.tooltip
                 else:
@@ -176,7 +176,7 @@ class QKeybindTable(QtW.QTableWidget):
                 self.setItem(i, H.TITLE, _item_basic(title, tooltip=tooltip))
                 self.setItem(i, H.KEYBINDING, QtW.QTableWidgetItem(key_seq))
                 self.setItem(i, H.WHEN, _item_basic(when, monospace=True))
-                self.setItem(i, H.WEIGHT, _item_basic(weight))
+                # self.setItem(i, H.WEIGHT, _item_basic(weight))  # hide for now
                 self.setItem(i, H.SOURCE, _item_basic(source))
                 self.setItem(i, H.COMMAND_ID, _item_basic(cmd_id, monospace=True))
         return None
