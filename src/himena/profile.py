@@ -95,6 +95,9 @@ class KeyBindingOverride(BaseModel):
     key: str
     command_id: str
 
+    def to_normed_str(self) -> str:
+        return self.key.replace(", ", " ")
+
 
 class AppProfile(BaseModel):
     """Model of a profile."""

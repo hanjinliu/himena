@@ -7,7 +7,7 @@ from concurrent.futures import Future, ThreadPoolExecutor
 import warnings
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt
-from app_model.types import KeyBindingRule
+from app_model.types import KeyBindingRule, KeyBinding, SimpleKeyBinding
 from app_model.backends.qt import QCommandAction, QModelMenu, QKeyBindingSequence
 from superqt import ensure_main_thread
 
@@ -56,14 +56,18 @@ class QKeybindEdit(QtW.QWidget):
         self._table.filter_by_text_async(text)
 
     def _on_keybinding_updated(self, command_id: str, new_shortcut: str):
-        _LOGGER.info("Keybindings registered.")
-        self._table.update_table_from_model_app(self._ui.model_app)
+        _LOGGER.info("Keybindings registered: %s -> %s", command_id, new_shortcut)
+        self._table.update_table_from_model_app(self._ui.model_app, skip=True)
         self._table.filter_by_text(self._search.text())  # re-filter
         self._ui.app_profile.with_keybinding_override(new_shortcut, command_id).save()
+        _LOGGER.info("Keybinding override saved")
         qui = self._ui._backend_main_window
         for qa in _iter_command_action(qui._menubar.actions() + qui._toolbar.actions()):
             if qa._command_id == command_id:
-                qa.setShortcut(new_shortcut)
+                parts = [
+                    SimpleKeyBinding.from_str(part) for part in new_shortcut.split(", ")
+                ]
+                qa.setShortcut(QKeyBindingSequence(KeyBinding(parts=parts)))
 
     def _restore_default(self):
         _LOGGER.info("Restoring keybindings.")
@@ -137,14 +141,12 @@ class QKeybindTable(QtW.QTableWidget):
         self._last_future: Future | None = None
         self.cellChanged.connect(self._update_keybinding)
 
-    def update_table_from_model_app(self, app: HimenaApplication):
+    def update_table_from_model_app(self, app: HimenaApplication, skip: bool = False):
         commands_to_skip = app._dynamic_command_ids
         commands = sorted(
             (cmd[1] for cmd in app.commands if cmd[1].id not in commands_to_skip),
             key=lambda cmd: cmd.title,
         )
-        nrows = len(commands)
-        self.setRowCount(nrows)
         with self.block_context():
             self.clearContents()
             self.setRowCount(len(commands))
@@ -160,11 +162,11 @@ class QKeybindTable(QtW.QTableWidget):
                 if kbd:
                     key_seq = kbd.keybinding.to_text()
                     when = str(kbd.when) if kbd.when is not None else ""
-                    weight = str(kbd.weight)
+                    # weight = str(kbd.weight)
                 else:
                     key_seq = ""
                     when = ""
-                    weight = ""
+                    # weight = ""
                 if action := app.registered_actions.get(cmd_id):
                     tooltip = action.tooltip
                 else:
@@ -174,7 +176,7 @@ class QKeybindTable(QtW.QTableWidget):
                 self.setItem(i, H.TITLE, _item_basic(title, tooltip=tooltip))
                 self.setItem(i, H.KEYBINDING, QtW.QTableWidgetItem(key_seq))
                 self.setItem(i, H.WHEN, _item_basic(when, monospace=True))
-                self.setItem(i, H.WEIGHT, _item_basic(weight))
+                # self.setItem(i, H.WEIGHT, _item_basic(weight))  # hide for now
                 self.setItem(i, H.SOURCE, _item_basic(source))
                 self.setItem(i, H.COMMAND_ID, _item_basic(cmd_id, monospace=True))
         return None
@@ -239,7 +241,7 @@ class QKeybindTable(QtW.QTableWidget):
             self._update_blocked = was_blocked
 
     def _update_keybinding(self, row: int, col: int):
-        if col != H.KEYBINDING or self._update_blocked:
+        if col != H.KEYBINDING or self._update_blocked or row < 0:
             return
         self.setCurrentItem(self.item(row, col))
         current_item = self.currentItem()
@@ -260,9 +262,8 @@ class QKeybindTable(QtW.QTableWidget):
             if kbd_current is not None:
                 self._app.keybindings._keymap.pop(kbd_current.keybinding.to_int(), -1)
             if new_shortcut:
-                self._app.keybindings.register_keybinding_rule(
-                    command_id, KeyBindingRule(primary=new_shortcut)
-                )
+                kb = KeyBindingRule(primary=new_shortcut.replace(", ", " "))
+                self._app.keybindings.register_keybinding_rule(command_id, kb)
             self.keybinding_updated.emit(command_id, new_shortcut)
 
     def _get_confliction_command_ids(
