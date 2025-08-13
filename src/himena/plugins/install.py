@@ -100,11 +100,11 @@ def _install_one(name: str, show_import_time: bool) -> PluginInstallResult | Non
 def override_keybindings(app: HimenaApplication, prof: AppProfile) -> None:
     """Override keybindings in the application."""
     for ko in prof.keybinding_overrides:
-        kb_int = KeyBinding.from_str(ko.key).to_int()
+        kb_int = KeyBinding.from_str(ko.to_normed_str()).to_int()
         app.keybindings._keymap.pop(kb_int, None)
         app.keybindings.register_keybinding_rule(
             ko.command_id,
-            KeyBindingRule(primary=ko.key),
+            KeyBindingRule(primary=ko.to_normed_str()),
         )
 
 
