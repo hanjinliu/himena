@@ -57,7 +57,7 @@ class QKeybindEdit(QtW.QWidget):
 
     def _on_keybinding_updated(self, command_id: str, new_shortcut: str):
         _LOGGER.info("Keybindings registered: %s -> %s", command_id, new_shortcut)
-        self._table.update_table_from_model_app(self._ui.model_app, skip=True)
+        self._table.update_table_from_model_app(self._ui.model_app)
         self._table.filter_by_text(self._search.text())  # re-filter
         self._ui.app_profile.with_keybinding_override(new_shortcut, command_id).save()
         _LOGGER.info("Keybinding override saved")
@@ -141,7 +141,7 @@ class QKeybindTable(QtW.QTableWidget):
         self._last_future: Future | None = None
         self.cellChanged.connect(self._update_keybinding)
 
-    def update_table_from_model_app(self, app: HimenaApplication, skip: bool = False):
+    def update_table_from_model_app(self, app: HimenaApplication):
         commands_to_skip = app._dynamic_command_ids
         commands = sorted(
             (cmd[1] for cmd in app.commands if cmd[1].id not in commands_to_skip),

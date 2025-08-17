@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from typing import Literal
+from himena.widgets import MainWindow
 from himena.plugins import (
     register_dock_widget_action,
     add_default_status_tip,
@@ -48,8 +49,9 @@ class ConsoleConfig:
     command_id="builtins:console",
     plugin_configs=ConsoleConfig(),
 )
-def install_console(ui):
+def install_console(ui: MainWindow):
     """Python interpreter widget."""
     from himena_builtins.qt.console._widget import QtConsole
 
+    ui.set_status_tip("Opening Python console ...", 2, process_event=True)
     return QtConsole.get_or_create(ui)

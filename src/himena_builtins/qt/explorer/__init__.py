@@ -7,6 +7,7 @@ from himena.plugins import (
     add_default_status_tip,
     config_field,
 )
+from himena.widgets import MainWindow
 
 add_default_status_tip(
     short="File Explorer",
@@ -65,8 +66,9 @@ def make_file_explorer_widget(ui):
     singleton=True,
     plugin_configs=FileExplorerSSHConfig(),
 )
-def make_file_explorer_ssh_widget(ui):
+def make_file_explorer_ssh_widget(ui: MainWindow):
     """Open a remote file explorer widget as a dock widget."""
     from himena_builtins.qt.explorer._widget_ssh import QSSHRemoteExplorerWidget
 
+    ui.set_status_tip("Opening remote file explorer ...", 2, process_event=True)
     return QSSHRemoteExplorerWidget(ui)

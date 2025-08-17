@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from enum import Enum, auto
 from io import StringIO
-from pathlib import Path
 from typing import TYPE_CHECKING, Any, Iterable, Literal, Mapping
 from dataclasses import dataclass
 import numpy as np
@@ -19,6 +18,7 @@ from himena.types import WidgetDataModel
 from himena.standards.model_meta import TableMeta
 from himena.qt._qsvg import QColoredSVGIcon
 from himena.plugins import validate_protocol, config_field
+from himena_builtins._consts import ICON_PATH
 from himena_builtins.qt.widgets._table_components import (
     QTableBase,
     QSelectionRangeEdit,
@@ -784,13 +784,10 @@ def _sl(idx: int, axis: Literal[0, 1]) -> tuple:
         return slice(None), idx
 
 
-_ICON_PATH = Path(__file__).parent.parent.parent / "resources"
-
-
 def _tool_btn(callback, icon: str) -> QtW.QToolButton:
     """Create a tool button with the given icon and callback."""
     btn = QtW.QToolButton()
-    icon_path = _ICON_PATH / f"{icon}.svg"
+    icon_path = ICON_PATH / f"{icon}.svg"
     btn.setProperty("icon_path", icon_path)
     btn.setToolTip(callback.__doc__)
     btn.clicked.connect(callback)

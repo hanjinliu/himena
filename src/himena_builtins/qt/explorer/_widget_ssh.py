@@ -8,16 +8,18 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from superqt.utils import thread_worker
-from superqt import QIconifyIcon, QToggleSwitch
+from superqt import QToggleSwitch
 
 from himena.workflow import RemoteReaderMethod
 from himena import _drag
 from himena.consts import MonospaceFontFamily
 from himena.types import DragDataModel, WidgetDataModel
 from himena.utils.misc import lru_cache
+from himena.qt._qsvg import QColoredSVGIcon
 from himena.utils.cli import local_to_remote
 from himena.widgets import set_status_tip, notify
 from himena.plugins import validate_protocol
+from himena_builtins._consts import ICON_PATH
 from himena_builtins.qt.widgets._shared import labeled
 
 if TYPE_CHECKING:
@@ -153,6 +155,8 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
     @validate_protocol
     def theme_changed_callback(self, theme: Theme) -> None:
         self._light_background = theme.is_light_background()
+        count = self._file_list_widget.topLevelItemCount()
+        self._on_ls_done([self._file_list_widget.topLevelItem(i) for i in range(count)])
 
     def _set_current_path(self, path: Path):
         self._pwd_widget.setText(path.as_posix())
@@ -165,6 +169,9 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         set_status_tip("Obtaining the file content ...", duration=3.0)
 
     def _on_ls_done(self, items: list[QtW.QTreeWidgetItem]):
+        for item in items:
+            icon = _icon_for_file_type(_item_type(item), self._light_background)
+            item.setIcon(0, icon)
         self._file_list_widget.addTopLevelItems(items)
         for i in range(1, self._file_list_widget.columnCount()):
             self._file_list_widget.resizeColumnToContents(i)
@@ -209,8 +216,6 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
                 name = name[:-1]  # executable
             item = QtW.QTreeWidgetItem([name, datetime] + others[::-1])
             item.setToolTip(0, name)
-            icon = _icon_for_file_type(_item_type(item), self._light_background)
-            item.setIcon(0, icon)
             items.append(item)
 
         # sort directories first
@@ -556,15 +561,15 @@ def _item_type(item: QtW.QTreeWidgetItem) -> Literal["d", "l", "f"]:
 
 
 @lru_cache(maxsize=10)
-def _icon_for_file_type(file_type: str, light_background: bool) -> QIconifyIcon:
+def _icon_for_file_type(file_type: str, light_background: bool) -> QColoredSVGIcon:
     color = "#222222" if light_background else "#eeeeee"
     if file_type == "d":
-        icon = QIconifyIcon("material-symbols:folder-rounded", color=color)
+        svg_path = ICON_PATH / "explorer_folder.svg"
     elif file_type == "l":
-        icon = QIconifyIcon("octicon:file-directory-symlink-16", color=color)
+        svg_path = ICON_PATH / "explorer_symlink.svg"
     else:
-        icon = QIconifyIcon("mdi:file-outline", color=color)
-    return icon
+        svg_path = ICON_PATH / "explorer_file.svg"
+    return QColoredSVGIcon.fromfile(svg_path, color=color)
 
 
 class QSeparator(QtW.QFrame):
