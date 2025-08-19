@@ -6,7 +6,7 @@ import subprocess
 from pydantic import Field
 from himena.exceptions import NotExecutable
 from himena.utils.misc import PluginInfo
-from himena.utils.cli import remote_to_local
+from himena.utils.cli import remote_to_local, wsl_to_local
 from himena.workflow._base import WorkflowStep
 
 if TYPE_CHECKING:
@@ -60,6 +60,12 @@ class ReaderMethod(NoParentWorkflow):
     def run(self) -> "WidgetDataModel":
         raise NotImplementedError
 
+    def _run_store(self, path: Path | list[Path]) -> "WidgetDataModel[Any]":
+        from himena._providers import ReaderStore
+
+        store = ReaderStore.instance()
+        return store.run(path, plugin=self.plugin)
+
 
 class LocalReaderMethod(ReaderMethod):
     """Describes that one was read from a local source file."""
@@ -76,11 +82,9 @@ class LocalReaderMethod(ReaderMethod):
 
     def run(self) -> "WidgetDataModel[Any]":
         """Get model by importing the reader plugin and actually read the file(s)."""
-        from himena._providers import ReaderStore
         from himena.types import WidgetDataModel
 
-        store = ReaderStore.instance()
-        model = store.run(self.path, plugin=self.plugin)
+        model = self._run_store(self.path)
         if not isinstance(model, WidgetDataModel):
             raise ValueError(f"Expected to return a WidgetDataModel but got {model}")
         if len(model.workflow) == 0:
@@ -140,14 +144,10 @@ class RemoteReaderMethod(ReaderMethod):
         return out
 
     def run(self):
-        from himena._providers import ReaderStore
-
-        store = ReaderStore.instance()
-
         with tempfile.TemporaryDirectory() as tmpdir:
             dst_path = Path(tmpdir).joinpath(self.path.name)
             self.run_command(dst_path)
-            model = store.run(dst_path, plugin=self.plugin)
+            model = self._run_store(dst_path)
             model.title = self.path.name
         model.workflow = self.construct_workflow()
         return model
@@ -162,6 +162,31 @@ class RemoteReaderMethod(ReaderMethod):
             is_dir=self.force_directory,
             port=self.port,
         )
+        result = subprocess.run(args, stdout=stdout)
+        if result.returncode != 0:
+            raise ValueError(f"Failed to run command {args}: {result!r}")
+
+
+class WslReaderMethod(ReaderMethod):
+    """Describes that one was read from a WSL source file."""
+
+    type: Literal["wsl-reader"] = "wsl-reader"
+    path: Path
+    force_directory: bool = Field(default=False)
+
+    def run(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dst_path = Path(tmpdir).joinpath(self.path.name)
+            self.run_command(dst_path)
+            model = self._run_store(dst_path)
+            model.title = self.path.name
+        model.workflow = self.construct_workflow()
+        return model
+
+    def run_command(self, dst_path: Path, stdout=None):
+        """Run cp command to move the file from wsl to local `dst_path`."""
+
+        args = wsl_to_local(self.path, dst_path, is_dir=self.force_directory)
         result = subprocess.run(args, stdout=stdout)
         if result.returncode != 0:
             raise ValueError(f"Failed to run command {args}: {result!r}")
