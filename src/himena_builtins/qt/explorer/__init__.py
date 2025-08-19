@@ -9,6 +9,8 @@ from himena.plugins import (
 )
 from himena.widgets import MainWindow
 
+WINDOWS = sys.platform == "win32"
+
 add_default_status_tip(
     short="File Explorer",
     long="Ctrl+Shift+E to open a file explorer widget on the left.",
@@ -19,7 +21,7 @@ add_default_status_tip(
 class FileExplorerConfig:
     allow_drop_data_to_save: bool = config_field(
         default=True,
-        tooltip="Allow dropping data opened in the main window to save.",
+        tooltip="Allow saving to the destination by dropping data opened in the main window.",
     )
     allow_drop_file_to_move: bool = config_field(
         default=True, tooltip="Allow dropping files to move."
@@ -36,7 +38,7 @@ class FileExplorerSSHConfig:
     default_use_wsl: bool = config_field(
         default=False,
         tooltip="Use WSL to connect to the host in Windows",
-        enabled=sys.platform == "win32",
+        enabled=WINDOWS,
     )
     default_protocol: str = config_field(
         default="rsync",
@@ -70,5 +72,21 @@ def make_file_explorer_ssh_widget(ui: MainWindow):
     """Open a remote file explorer widget as a dock widget."""
     from himena_builtins.qt.explorer._widget_ssh import QSSHRemoteExplorerWidget
 
-    ui.set_status_tip("Opening remote file explorer ...", 2, process_event=True)
+    ui.set_status_tip("Opening remote file explorer ...", 1, process_event=True)
     return QSSHRemoteExplorerWidget(ui)
+
+
+if WINDOWS:
+
+    @register_dock_widget_action(
+        title="WSL File Explorer",
+        area="left",
+        command_id="builtins:file-explorer-wsl",
+        singleton=True,
+    )
+    def make_file_explorer_ssh_widget(ui: MainWindow):
+        """Open a remote file explorer widget as a dock widget."""
+        from himena_builtins.qt.explorer._widget_wsl import QWSLRemoteExplorerWidget
+
+        ui.set_status_tip("Opening WSL file explorer ...", 1, process_event=True)
+        return QWSLRemoteExplorerWidget(ui)
