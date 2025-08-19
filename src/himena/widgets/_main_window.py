@@ -540,7 +540,12 @@ class MainWindow(Generic[_W]):
         self.tabs.clear()
         self.dock_widgets.clear()
 
-    def set_status_tip(self, text: str, duration: float = 10.0) -> None:
+    def set_status_tip(
+        self,
+        text: str,
+        duration: float = 10.0,
+        process_event: bool = False,
+    ) -> None:
         """Set the status tip of the main window.
 
         This method can be safely called from any thread.
@@ -551,9 +556,12 @@ class MainWindow(Generic[_W]):
             Text to show in the status bar.
         duration : float, default 10.0
             Duration (seconds) to show the status tip.
+        process_event : bool, default False
+            If True, the application will process events after setting the status tip.
         """
         self._backend_main_window._set_status_tip(text, duration)
-        return None
+        if process_event:
+            self._backend_main_window._event_loop_handler.process_events()
 
     def show_notification(self, text: str, duration: float = 5.0) -> None:
         """Show a temporary notification in the main window."""

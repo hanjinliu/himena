@@ -54,6 +54,10 @@ class EventLoopHandler(ABC, Generic[_A]):
             self._server_socket.close()
             self._server_socket = None
 
+    def process_events(self):
+        """Process the GUI events."""
+        pass
+
 
 def gui_is_active(event_loop: str) -> bool:
     """True only if "%gui **" magic is called in ipython kernel."""
@@ -91,6 +95,11 @@ class QtEventLoopHandler(EventLoopHandler["QApplication"]):
             ) as _:
                 return self._run_app_routine()
         return self._run_app_routine()
+
+    def process_events(self):
+        """Process the Qt events in the main thread."""
+        if self._APP is not None:
+            self._APP.processEvents()
 
     def _run_app_routine(self):
         qapp = self.get_app()
