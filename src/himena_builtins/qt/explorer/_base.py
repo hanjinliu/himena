@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 from typing import TYPE_CHECKING, Literal
 from qtpy import QtWidgets as QtW, QtCore, QtGui
-from superqt.utils import thread_worker
+from superqt.utils import thread_worker, FunctionWorker
 
 from himena import _drag
 from himena.qt._qsvg import QColoredSVGIcon
@@ -34,6 +34,7 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
         self._pwd = Path("~")
         self._last_dir = self._pwd
         self._ui = ui
+        self._worker: FunctionWorker | None = None
         font = QtGui.QFont(MonospaceFontFamily)
 
         self._pwd_widget = QtW.QLineEdit()
@@ -181,7 +182,8 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
             items,
             key=lambda x: (not x.text(0).endswith("/"), x.text(0)),
         )
-        self._last_dir = self._pwd
+        if path != self._pwd:
+            self._last_dir = self._pwd
         self._pwd = path
         return items
 
@@ -239,9 +241,7 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
         mime = a0.mimeData()
         if (
             _drag.get_dragging_model() is not None
-            or mime
             and mime.urls()
-            or mime
             and isinstance(mime.parent(), QBaseRemoteExplorerWidget)
         ):
             a0.accept()
@@ -261,7 +261,7 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
                 path = Path(url.toLocalFile())
                 self._ui.submit_async_task(self._send_file, path, path.is_dir())
                 set_status_tip(f"Sent to {path.name}", duration=2.8)
-        elif type(a0.mimeData().parent()) is type(self):
+        elif type((mime := a0.mimeData()).parent()) is type(self):
             # this is a drag from another remote explorer widget
             item_under_cursor = self._file_list_widget.itemAt(
                 self._file_list_widget.viewport().mapFromGlobal(QtGui.QCursor.pos())
@@ -270,7 +270,7 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
                 return
             if item_type(item_under_cursor) == "d":
                 dst_dir = self._pwd / item_under_cursor.text(0)
-                methods = self.readers_from_mime(a0.mimeData())
+                methods = self.readers_from_mime(mime)
                 paths: list[Path] = []
                 for meth in methods:
                     if isinstance(meth.path, Path):
@@ -330,7 +330,6 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
         notify(f"Moved items to trash:\n- {item_str}", duration=2.8)
         self._refresh_pwd()
 
-    # widget methods
     @validate_protocol
     def theme_changed_callback(self, theme: Theme) -> None:
         self._light_background = theme.is_light_background()
@@ -339,21 +338,28 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
         self.themeChanged.emit(theme)
 
     def _set_current_path(self, path: Path):
-        if self._last_dir != self._pwd:
+        if path != self._pwd:
             self._last_dir = self._pwd
         self._pwd_widget.setText(path.as_posix())
-        self._file_list_widget.clear()
-        worker = self._run_ls_command(path)
+        if self._worker is not None:
+            self._worker.quit()
+            self._worker = None
+        self._worker = worker = self._run_ls_command(path)
         worker.returned.connect(self._on_ls_done)
         worker.started.connect(lambda: self._set_busy(True))
-        worker.finished.connect(lambda: self._set_busy(False))
+        worker.finished.connect(self._on_worker_finished)
         worker.start()
         set_status_tip("Obtaining the file content ...", duration=3.0)
+
+    def _on_worker_finished(self):
+        self._set_busy(False)
+        self._worker = None
 
     def _on_ls_done(self, items: list[QtW.QTreeWidgetItem]):
         for item in items:
             icon = icon_for_file_type(item_type(item), self._light_background)
             item.setIcon(0, icon)
+        self._file_list_widget.clear()
         self._file_list_widget.addTopLevelItems(items)
         for i in range(1, self._file_list_widget.columnCount()):
             self._file_list_widget.resizeColumnToContents(i)
