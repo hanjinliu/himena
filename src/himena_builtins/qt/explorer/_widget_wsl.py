@@ -27,8 +27,6 @@ class QWSLRemoteExplorerWidget(QBaseRemoteExplorerWidget):
     file system, including the normal explorer dock widget and the OS file explorer.
     """
 
-    on_ls = QtCore.Signal(object)
-
     def __init__(self, ui: MainWindowQt) -> None:
         super().__init__(ui)
         self._pwd = Path("/home", getpass.getuser())
@@ -78,7 +76,8 @@ class QWSLRemoteExplorerWidget(QBaseRemoteExplorerWidget):
         self._light_background = True
 
         # set the home directory
-        self._set_current_path(Path("~"))
+        self._set_current_path(self._pwd)
+        self.themeChanged.connect(self._on_theme_changed)
 
     def _on_theme_changed(self, theme) -> None:
         color = "#222222" if self._light_background else "#eeeeee"
@@ -118,10 +117,7 @@ class QWSLRemoteExplorerWidget(QBaseRemoteExplorerWidget):
         self._pwd_widget.setEnabled(not busy)
 
     def _make_reader_method(self, path: Path, is_dir: bool) -> WslReaderMethod:
-        return WslReaderMethod(
-            path=path,
-            force_directory=is_dir,
-        )
+        return WslReaderMethod(path=path, force_directory=is_dir)
 
     def readers_from_mime(self, mime: QtCore.QMimeData) -> list[WslReaderMethod]:
         """Construct readers from the mime data."""

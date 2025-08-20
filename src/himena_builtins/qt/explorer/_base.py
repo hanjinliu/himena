@@ -31,7 +31,7 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
         self.setAcceptDrops(True)
 
         self._pwd = Path("~")
-        self._last_dir = Path("~")
+        self._last_dir = self._pwd
         self._ui = ui
         font = QtGui.QFont(MonospaceFontFamily)
 
@@ -123,6 +123,10 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
         self, src: Path, dst_remote: str, is_dir: bool = False
     ) -> list[str]:
         """Make the command to send a local file to the remote host."""
+        raise NotImplementedError
+
+    def readers_from_mime(self, mime: QtCore.QMimeData) -> list[PathReaderMethod]:
+        """Construct readers from the mime data."""
         raise NotImplementedError
 
     #############################################

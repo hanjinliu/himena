@@ -6,9 +6,9 @@ import shutil
 from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from himena import _drag
-from himena_builtins.qt.explorer._widget_ssh import (
-    QSSHRemoteExplorerWidget,
+from himena_builtins.qt.explorer._base import (
     make_paste_remote_files_worker,
+    QBaseRemoteExplorerWidget,
 )
 
 if TYPE_CHECKING:
@@ -201,7 +201,7 @@ class QFileTree(QtW.QTreeView):
     def dragEnterEvent(self, a0: QtGui.QDragEnterEvent):
         mime = a0.mimeData()
         if mime and (
-            mime.hasUrls() or isinstance(mime.parent(), QSSHRemoteExplorerWidget)
+            mime.hasUrls() or isinstance(mime.parent(), QBaseRemoteExplorerWidget)
         ):
             a0.accept()
         elif _drag.get_dragging_model() is not None:
@@ -212,7 +212,7 @@ class QFileTree(QtW.QTreeView):
     def dragMoveEvent(self, a0: QtGui.QDragMoveEvent):
         mime = a0.mimeData()
         if mime and (
-            mime.hasUrls() or isinstance(mime.parent(), QSSHRemoteExplorerWidget)
+            mime.hasUrls() or isinstance(mime.parent(), QBaseRemoteExplorerWidget)
         ):
             a0.accept()
         elif _drag.get_dragging_model() is not None:
@@ -269,7 +269,7 @@ class QFileTree(QtW.QTreeView):
 
     def _paste_mime_data(self, mime: QtCore.QMimeData, dirpath: Path):
         ui = self._ui._backend_main_window
-        if isinstance(par := mime.parent(), QSSHRemoteExplorerWidget):
+        if isinstance(par := mime.parent(), QBaseRemoteExplorerWidget):
             readers = par.readers_from_mime(mime)
             worker = make_paste_remote_files_worker(readers, dirpath)
             ui._job_stack.add_worker(worker, "Pasting remote files", total=len(readers))

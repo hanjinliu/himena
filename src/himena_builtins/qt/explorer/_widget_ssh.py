@@ -31,8 +31,6 @@ class QSSHRemoteExplorerWidget(QBaseRemoteExplorerWidget):
     subprocess commands to WSL.
     """
 
-    on_ls = QtCore.Signal(object)
-
     def __init__(self, ui: MainWindowQt) -> None:
         super().__init__(ui)
         font = QtGui.QFont(MonospaceFontFamily)
