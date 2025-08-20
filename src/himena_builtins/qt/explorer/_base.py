@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
+import re
 import subprocess
 import tempfile
 from typing import TYPE_CHECKING, Literal
@@ -44,6 +45,8 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
         self._file_list_widget.setFont(font)
         self._file_list_widget.item_copied.connect(self._copy_item_paths)
         self._file_list_widget.item_pasted.connect(self._send_files)
+        self._file_list_widget.item_renamed.connect(self._rename_item)
+        self._file_list_widget.item_deleted.connect(self._trash_items)
 
         self._filter_widget = QFilterLineEdit(self)
         self._filter_widget.textChanged.connect(self._file_list_widget._apply_filter)
@@ -109,6 +112,9 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
     def _make_reader_method(self, path: Path, is_dir: bool) -> PathReaderMethod:
         raise NotImplementedError
 
+    def _make_reader_method_from_str(self, line: str, is_dir: bool) -> PathReaderMethod:
+        raise NotImplementedError
+
     def _set_current_path(self, path: Path):
         """Set the current path and update the UI accordingly."""
 
@@ -119,18 +125,37 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
         """Make the command to get the type of a file."""
         raise NotImplementedError
 
+    def _make_move_args(self, old_name: str, new_name: str) -> list[str]:
+        """Make the command to rename a file."""
+        raise NotImplementedError
+
+    def _make_trash_args(self, paths: list[str]) -> list[str]:
+        """Make the command to trash files."""
+        raise NotImplementedError
+
     def _make_local_to_remote_args(
         self, src: Path, dst_remote: str, is_dir: bool = False
     ) -> list[str]:
         """Make the command to send a local file to the remote host."""
         raise NotImplementedError
 
+    #############################################
+    #############################################
+
     def readers_from_mime(self, mime: QtCore.QMimeData) -> list[PathReaderMethod]:
         """Construct readers from the mime data."""
-        raise NotImplementedError
-
-    #############################################
-    #############################################
+        out: list[PathReaderMethod] = []
+        for line in mime.html().split("<br>"):
+            if not line:
+                continue
+            if m := re.compile(r"<span ftype=\"(d|f)\">(.+)</span>").match(line):
+                is_dir = m.group(1) == "d"
+                line = m.group(2)
+            else:
+                continue
+            meth = self._make_reader_method_from_str(line, is_dir)
+            out.append(meth)
+        return out
 
     @thread_worker
     def _run_ls_command(self, path: Path) -> list[QtW.QTreeWidgetItem]:
@@ -197,6 +222,12 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
 
     def _send_file(self, src: Path, is_dir: bool = False):
         """Send local file to the remote host."""
+        if src.name in self._file_list_widget.existing_names():
+            raise ValueError(
+                f"File {src.name!r} already exists in the remote directory."
+            )
+        if src.name in [".", ".."] or "/" in src.name:
+            raise ValueError(f"Invalid file name: {src.name!r}")
         dst_remote = self._pwd / src.name
         args = self._make_local_to_remote_args(
             src, dst_remote.as_posix(), is_dir=is_dir
@@ -205,7 +236,14 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
         notify(f"Sent {src.as_posix()} to {dst_remote.as_posix()}", duration=2.8)
 
     def dragEnterEvent(self, a0):
-        if _drag.get_dragging_model() is not None or a0.mimeData().urls():
+        mime = a0.mimeData()
+        if (
+            _drag.get_dragging_model() is not None
+            or mime
+            and mime.urls()
+            or mime
+            and isinstance(mime.parent(), QBaseRemoteExplorerWidget)
+        ):
             a0.accept()
         else:
             a0.ignore()
@@ -214,7 +252,7 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
         a0.acceptProposedAction()
         return super().dragMoveEvent(a0)
 
-    def dropEvent(self, a0):
+    def dropEvent(self, a0: QtGui.QDropEvent):
         if model := _drag.drop():
             self._ui.submit_async_task(self._send_model, model)
             set_status_tip("Start sending file ...")
@@ -223,6 +261,38 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
                 path = Path(url.toLocalFile())
                 self._ui.submit_async_task(self._send_file, path, path.is_dir())
                 set_status_tip(f"Sent to {path.name}", duration=2.8)
+        elif type(a0.mimeData().parent()) is type(self):
+            # this is a drag from another remote explorer widget
+            item_under_cursor = self._file_list_widget.itemAt(
+                self._file_list_widget.viewport().mapFromGlobal(QtGui.QCursor.pos())
+            )
+            if item_under_cursor is None:
+                return
+            if item_type(item_under_cursor) == "d":
+                dst_dir = self._pwd / item_under_cursor.text(0)
+                methods = self.readers_from_mime(a0.mimeData())
+                paths: list[Path] = []
+                for meth in methods:
+                    if isinstance(meth.path, Path):
+                        paths.append(meth.path)
+                    else:
+                        paths.extend(meth.path)
+
+                for path in paths:
+                    args = self._make_move_args(
+                        path.as_posix(), dst_dir.joinpath(path.name).as_posix()
+                    )
+                    result = subprocess.run(args, capture_output=True)
+                    if result.returncode != 0:
+                        raise ValueError(
+                            f"Failed to move file: {result.stderr.decode()}"
+                        )
+                if paths:
+                    self._refresh_pwd()
+
+    def _refresh_pwd(self):
+        """Refresh the current path."""
+        self._set_current_path(self._pwd)
 
     def _copy_item_paths(self, items: list[QtW.QTreeWidgetItem]):
         mime = self._make_mimedata_for_items(items)
@@ -230,8 +300,35 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
         clipboard.setMimeData(mime)
 
     def _send_files(self, paths: list[Path]):
+        """Send files from the local system to the remote host."""
         for path in paths:
             self._ui.submit_async_task(self._send_file, path, path.is_dir())
+
+    def _rename_item(self, item: QtW.QTreeWidgetItem, old_name: str, new_name: str):
+        """Rename the item in the remote directory."""
+        if old_name == new_name:
+            return
+        old_path = self._pwd / old_name
+        new_path = self._pwd / new_name
+        args = self._make_move_args(old_path.as_posix(), new_path.as_posix())
+        result = subprocess.run(args, capture_output=True)
+        if result.returncode != 0:
+            raise ValueError(f"Failed to rename file: {result.stderr.decode()}")
+        if item_type(item) == "f":
+            item.setText(0, new_name)
+        else:
+            self._refresh_pwd()
+
+    def _trash_items(self, items: list[QtW.QTreeWidgetItem]):
+        """Move the selected items to the trash."""
+        paths = [self._pwd.joinpath(item.text(0)).as_posix() for item in items]
+        args = self._make_trash_args(paths)
+        result = subprocess.run(args, capture_output=True)
+        if result.returncode != 0:
+            raise ValueError(f"Failed to move to trash: {result.stderr.decode()}")
+        item_str = "\n- ".join(item.text(0) for item in items)
+        notify(f"Moved items to trash:\n- {item_str}", duration=2.8)
+        self._refresh_pwd()
 
     # widget methods
     @validate_protocol
@@ -242,6 +339,8 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
         self.themeChanged.emit(theme)
 
     def _set_current_path(self, path: Path):
+        if self._last_dir != self._pwd:
+            self._last_dir = self._pwd
         self._pwd_widget.setText(path.as_posix())
         self._file_list_widget.clear()
         worker = self._run_ls_command(path)
@@ -281,6 +380,10 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
 class QRemoteTreeWidget(QtW.QTreeWidget):
     item_copied = QtCore.Signal(list)
     item_pasted = QtCore.Signal(list)  # list of local Path objects
+    item_renamed = QtCore.Signal(
+        QtW.QTreeWidgetItem, str, str
+    )  # item, old_name, new_name
+    item_deleted = QtCore.Signal(list)  # list of QtW.QTreeWidgetItem
 
     def __init__(self, parent: QBaseRemoteExplorerWidget):
         super().__init__(parent)
@@ -294,6 +397,24 @@ class QRemoteTreeWidget(QtW.QTreeWidget):
         self.header().setFixedHeight(20)
         self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self._show_context_menu)
+        self._line_edit = QEditFileNameLineEdit(self)
+        self._line_edit.text_edited.connect(self._line_edit_editing_finished)
+        self._line_edit.setHidden(True)
+
+    def existing_names(self) -> list[str]:
+        """Get the names of existing items in the tree."""
+        existing_names: list[str] = []
+        for i in range(self.topLevelItemCount()):
+            if item := self.topLevelItem(i):
+                existing_names.append(item.text(0))
+        return existing_names
+
+    def _line_edit_editing_finished(self, new_name: str):
+        """Handle the editing finished event of the line edit."""
+        if item := self.currentItem():
+            if new_name and new_name != item.text(0):
+                self.item_renamed.emit(item, item.text(0), new_name)
+            self.setFocus()
 
     def _make_context_menu(self):
         menu = QtW.QMenu(self)
@@ -312,6 +433,13 @@ class QRemoteTreeWidget(QtW.QTreeWidget):
         download_action.triggered.connect(
             lambda: self._save_items(self.selectedItems())
         )
+        menu.addSeparator()
+        rename_action = menu.addAction("Rename")
+        rename_action.triggered.connect(lambda: self._edit_item(self.currentItem()))
+        delete_action = menu.addAction("Move to Trash")
+        delete_action.triggered.connect(
+            lambda: self.item_deleted.emit(self.selectedItems())
+        )
         return menu
 
     def _show_context_menu(self, pos: QtCore.QPoint):
@@ -320,7 +448,21 @@ class QRemoteTreeWidget(QtW.QTreeWidget):
     def keyPressEvent(self, event):
         _mod = event.modifiers()
         _key = event.key()
-        if _mod == QtCore.Qt.KeyboardModifier.ControlModifier:
+        _ctrl = _mod & QtCore.Qt.KeyboardModifier.ControlModifier
+        _shift = _mod & QtCore.Qt.KeyboardModifier.ShiftModifier
+        _alt = _mod & QtCore.Qt.KeyboardModifier.AltModifier
+        _no_mod = not (_ctrl or _shift or _alt)
+        if _no_mod:
+            if _key == QtCore.Qt.Key.Key_Delete:
+                items = self.selectedItems()
+                if items:
+                    self.item_deleted.emit(items)
+                    return None
+            elif _key == QtCore.Qt.Key.Key_F2:
+                if item := self.currentItem():
+                    self._edit_item(item)
+
+        elif _ctrl and not _shift and not _alt:
             if _key == QtCore.Qt.Key.Key_C:
                 items = self.selectedItems()
                 self.item_copied.emit(items)
@@ -328,6 +470,20 @@ class QRemoteTreeWidget(QtW.QTreeWidget):
             elif _key == QtCore.Qt.Key.Key_V:
                 return self._paste_from_clipboard()
         return super().keyPressEvent(event)
+
+    def _edit_item(self, item: QtW.QTreeWidgetItem | None):
+        if item is None:
+            return
+        text = item.text(0)
+        if text.endswith("/"):
+            text = text[:-1]
+        self._line_edit.setText(text)
+        width = self.header().sectionSize(0)
+        rect = self.visualItemRect(item)
+        rect.setWidth(width)
+        self._line_edit.setGeometry(rect)
+        self._line_edit.setFocus()
+        self._line_edit.setVisible(True)
 
     def _paste_from_clipboard(self):
         clipboard = QtGui.QGuiApplication.clipboard()
@@ -402,6 +558,43 @@ class QFilterLineEdit(QtW.QLineEdit):
         self.setVisible(not visible)
         if not visible:
             self.setFocus()
+
+
+class QEditFileNameLineEdit(QtW.QLineEdit):
+    """Line edit for editing file names in the remote explorer."""
+
+    text_edited = QtCore.Signal(str)
+
+    def __init__(self, parent: QBaseRemoteExplorerWidget):
+        super().__init__(parent)
+        self.setPlaceholderText("Enter new file name...")
+        self.setFont(QtGui.QFont(MonospaceFontFamily))
+        self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
+
+    def keyPressEvent(self, a0):
+        if a0.key() == QtCore.Qt.Key.Key_Escape:
+            self.reset()
+            return
+        if a0.key() == QtCore.Qt.Key.Key_Return:
+            new_name = self.text()
+            if new_name:
+                self.text_edited.emit(new_name)
+            else:
+                raise ValueError("File name cannot be empty.")
+            self.reset()
+            return
+        return super().keyPressEvent(a0)
+
+    def focusOutEvent(self, a0: QtGui.QFocusEvent):
+        """Handle focus out event to hide the line edit."""
+        self.setVisible(False)
+        self.clear()
+        super().focusOutEvent(a0)
+
+    def reset(self):
+        """Reset the line edit to its initial state."""
+        self.clear()
+        self.setVisible(False)
 
 
 def item_type(item: QtW.QTreeWidgetItem) -> Literal["d", "l", "f"]:

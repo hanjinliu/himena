@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import getpass
-import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW, QtCore
@@ -63,7 +62,7 @@ class QWSLRemoteExplorerWidget(QBaseRemoteExplorerWidget):
         layout.addWidget(self._filter_widget)
         layout.addWidget(self._file_list_widget)
 
-        self._refresh_btn.clicked.connect(lambda: self._set_current_path(self._pwd))
+        self._refresh_btn.clicked.connect(self._refresh_pwd)
         self._last_dir_btn.clicked.connect(
             lambda: self._set_current_path(self._last_dir)
         )
@@ -92,6 +91,12 @@ class QWSLRemoteExplorerWidget(QBaseRemoteExplorerWidget):
     def _make_get_type_args(self, path: str) -> list[str]:
         return ["stat", path, "--format='%F'"]
 
+    def _make_move_args(self, src: str, dst: str) -> list[str]:
+        return ["wsl", "-e", "mv", src, dst]
+
+    def _make_trash_args(self, paths: list[str]) -> list[str]:
+        return ["wsl", "-e", "trash", *paths]
+
     def _make_local_to_remote_args(self, src, dst_remote, is_dir: bool = False):
         return local_to_wsl(src, dst_remote, is_dir=is_dir)
 
@@ -119,20 +124,5 @@ class QWSLRemoteExplorerWidget(QBaseRemoteExplorerWidget):
     def _make_reader_method(self, path: Path, is_dir: bool) -> WslReaderMethod:
         return WslReaderMethod(path=path, force_directory=is_dir)
 
-    def readers_from_mime(self, mime: QtCore.QMimeData) -> list[WslReaderMethod]:
-        """Construct readers from the mime data."""
-        out: list[WslReaderMethod] = []
-        for line in mime.html().split("<br>"):
-            if not line:
-                continue
-            if m := re.compile(r"<span ftype=\"(d|f)\">(.+)</span>").match(line):
-                is_dir = m.group(1) == "d"
-                line = m.group(2)
-            else:
-                continue
-            meth = WslReaderMethod.from_str(
-                line,
-                force_directory=is_dir,
-            )
-            out.append(meth)
-        return out
+    def _make_reader_method_from_str(self, line: str, is_dir: bool) -> WslReaderMethod:
+        return WslReaderMethod.from_str(line, force_directory=is_dir)

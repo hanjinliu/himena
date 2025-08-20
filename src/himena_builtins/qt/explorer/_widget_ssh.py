@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import sys
-import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW, QtCore, QtGui
@@ -110,16 +109,14 @@ class QSSHRemoteExplorerWidget(QBaseRemoteExplorerWidget):
         layout.addWidget(self._file_list_widget)
 
         self._conn_btn.clicked.connect(lambda: self._set_current_path(Path("~")))
-        self._refresh_btn.clicked.connect(lambda: self._set_current_path(self._pwd))
+        self._refresh_btn.clicked.connect(self._refresh_pwd)
         self._last_dir_btn.clicked.connect(
             lambda: self._set_current_path(self._last_dir)
         )
         self._up_one_btn.clicked.connect(
             lambda: self._set_current_path(self._pwd.parent)
         )
-        self._show_hidden_files_switch.toggled.connect(
-            lambda: self._set_current_path(self._pwd)
-        )
+        self._show_hidden_files_switch.toggled.connect(self._refresh_pwd)
         self._light_background = True
         self.themeChanged.connect(self._on_theme_changed)
 
@@ -156,43 +153,47 @@ class QSSHRemoteExplorerWidget(QBaseRemoteExplorerWidget):
 
     def _make_ls_args(self, path):
         opt = "-lhAF" if self._show_hidden_files_switch.isChecked() else "-lhF"
-        port = int(self._port_edit.text())
-        host = self._host_name()
-        args = ["ssh", "-p", str(port), host, "ls", path + "/", opt]
-
-        if self._is_wsl_switch.isChecked():
-            args = ["wsl", "-e"] + args
-        return args
+        host, port = self._host_and_port()
+        args = ["ssh", "-p", port, host, "ls", path + "/", opt]
+        return self._with_wsl_prefix(args)
 
     def _make_get_type_args(self, path: str) -> list[str]:
-        host = self._host_name()
-        port = int(self._port_edit.text())
-        args = ["ssh", "-p", str(port), host, "stat", path, "--format='%F'"]
-        if self._is_wsl_switch.isChecked():
-            args = ["wsl", "-e"] + args
+        host, port = self._host_and_port()
+        args = ["ssh", "-p", port, host, "stat", path, "--format='%F'"]
+        return self._with_wsl_prefix(args)
+
+    def _make_move_args(self, src: str, dst: str) -> list[str]:
+        host, port = self._host_and_port()
+        args = ["ssh", "-p", port, host, "mv", src, dst]
+        return self._with_wsl_prefix(args)
+
+    def _make_trash_args(self, paths: list[str]) -> list[str]:
+        host, port = self._host_and_port()
+        args = ["ssh", "-p", port, host, "trash", *paths]
+        return self._with_wsl_prefix(args)
+
+    def _host_and_port(self) -> tuple[str, str]:
+        """Return the host and port as a tuple."""
+        host = self._host_edit.text()
+        port = self._port_edit.text()
+        return host, str(int(port))
+
+    def _with_wsl_prefix(self, args: list[str]) -> list[str]:
+        """Prefix the command with 'wsl -e' if WSL is enabled."""
+        if self._is_wsl_switch.isChecked() and sys.platform == "win32":
+            return ["wsl", "-e"] + args
         return args
 
-    def readers_from_mime(self, mime: QtCore.QMimeData) -> list[RemoteReaderMethod]:
-        """Construct readers from the mime data."""
-        is_wsl = self._is_wsl_switch.isChecked()
-        prot = self._protocol_choice.currentText()
-        out: list[RemoteReaderMethod] = []
-        for line in mime.html().split("<br>"):
-            if not line:
-                continue
-            if m := re.compile(r"<span ftype=\"(d|f)\">(.+)</span>").match(line):
-                is_dir = m.group(1) == "d"
-                line = m.group(2)
-            else:
-                continue
-            meth = RemoteReaderMethod.from_str(
-                line,
-                wsl=is_wsl,
-                protocol=prot,
-                force_directory=is_dir,
-            )
-            out.append(meth)
-        return out
+    def _make_reader_method_from_str(
+        self, line: str, is_dir: bool
+    ) -> RemoteReaderMethod:
+        """Create a RemoteReaderMethod from a string path."""
+        return RemoteReaderMethod.from_str(
+            line,
+            wsl=self._is_wsl_switch.isChecked(),
+            protocol=self._protocol_choice.currentText(),
+            force_directory=is_dir,
+        )
 
     def update_configs(
         self,
