@@ -39,7 +39,7 @@ class QSSHRemoteExplorerWidget(QBaseRemoteExplorerWidget):
         self._user_name_edit = QtW.QLineEdit()
         self._user_name_edit.setFont(font)
         self._user_name_edit.setMaximumWidth(80)
-        self._port_edit = QtW.QLineEdit()
+        self._port_edit = QtW.QLineEdit("22")
         self._port_edit.setFont(font)
         self._port_edit.setValidator(QtGui.QIntValidator(0, 65535))
         self._port_edit.setMaximumWidth(40)
