@@ -134,7 +134,7 @@ class QDictOfWidgetEdit(QtW.QTabWidget):
             self.addTab(table, str(tab_name))
         if self.count() > 0:
             if (tname := metadata.current_tab) is not None:
-                _iter = [i for i in range(self.count()) if self.tabText(i) == tname]
+                _iter = (i for i in range(self.count()) if self.tabText(i) == tname)
                 idx = next(_iter, 0)
             else:
                 idx = 0
