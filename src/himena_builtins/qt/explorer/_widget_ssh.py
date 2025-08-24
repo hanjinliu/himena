@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterator, Literal
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from superqt import QToggleSwitch
 
@@ -11,7 +11,12 @@ from himena.workflow import RemoteReaderMethod
 from himena.consts import MonospaceFontFamily
 from himena.utils.cli import local_to_remote
 from himena_builtins._consts import ICON_PATH
-from himena_builtins.qt.explorer._base import QBaseRemoteExplorerWidget
+from himena_builtins.qt.explorer._base import (
+    QBaseRemoteExplorerWidget,
+    ls_args_to_items,
+    exec_command,
+    stat_args_to_type,
+)
 from himena_builtins.qt.widgets._shared import labeled
 
 if TYPE_CHECKING:
@@ -151,26 +156,26 @@ class QSSHRemoteExplorerWidget(QBaseRemoteExplorerWidget):
             force_directory=is_dir,
         )
 
-    def _make_ls_args(self, path):
+    def _iter_file_items(self, path) -> Iterator[QtW.QTreeWidgetItem]:
         opt = "-lhAF" if self._show_hidden_files_switch.isChecked() else "-lhF"
         host, port = self._host_and_port()
         args = ["ssh", "-p", port, host, "ls", path + "/", opt]
-        return self._with_wsl_prefix(args)
+        yield from ls_args_to_items(self._with_wsl_prefix(args))
 
-    def _make_get_type_args(self, path: str) -> list[str]:
+    def _get_file_type(self, path: str) -> Literal["d", "f"]:
         host, port = self._host_and_port()
         args = ["ssh", "-p", port, host, "stat", path, "--format='%F'"]
-        return self._with_wsl_prefix(args)
+        return stat_args_to_type(self._with_wsl_prefix(args))
 
-    def _make_move_args(self, src: str, dst: str) -> list[str]:
+    def _move_files(self, src: str, dst: str) -> None:
         host, port = self._host_and_port()
         args = ["ssh", "-p", port, host, "mv", src, dst]
-        return self._with_wsl_prefix(args)
+        exec_command(self._with_wsl_prefix(args))
 
-    def _make_trash_args(self, paths: list[str]) -> list[str]:
+    def _trash_files(self, paths: list[str]) -> None:
         host, port = self._host_and_port()
         args = ["ssh", "-p", port, host, "trash", *paths]
-        return self._with_wsl_prefix(args)
+        exec_command(self._with_wsl_prefix(args))
 
     def _host_and_port(self) -> tuple[str, str]:
         """Return the host and port as a tuple."""
@@ -207,9 +212,7 @@ class QSSHRemoteExplorerWidget(QBaseRemoteExplorerWidget):
         if cfg.default_host and cfg.default_user and self._pwd == Path("~"):
             self._set_current_path(Path("~"))
 
-    def _make_local_to_remote_args(
-        self, src: Path, dst_remote: str, is_dir: bool = False
-    ) -> list[str]:
+    def _send_file_args(self, src: Path, dst_remote: str, is_dir: bool = False):
         return local_to_remote(
             self._protocol_choice.currentText(),
             src,
@@ -218,6 +221,9 @@ class QSSHRemoteExplorerWidget(QBaseRemoteExplorerWidget):
             is_dir=is_dir,
             port=int(self._port_edit.text()),
         )
+
+    def _send_file(self, src: Path, dst_remote: str, is_dir: bool = False):
+        exec_command(self._send_file_args(src, dst_remote, is_dir=is_dir))
 
 
 class QSeparator(QtW.QFrame):

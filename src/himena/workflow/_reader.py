@@ -147,6 +147,17 @@ class LocalReaderMethod(ReaderMethod):
             win._identifier = self.id
         return out
 
+    @property
+    def force_directory(self) -> bool:
+        # just for compatibility with PathReaderMethod
+        return isinstance(self.path, Path) and self.path.is_dir()
+
+    def to_str(self) -> str:
+        """Return the local file path representation."""
+        if isinstance(self.path, Path):
+            return self.path.as_posix()
+        return ";".join(p.as_posix() for p in self.path)
+
     def run(self) -> "WidgetDataModel[Any]":
         """Get model by importing the reader plugin and actually read the file(s)."""
         from himena.types import WidgetDataModel
