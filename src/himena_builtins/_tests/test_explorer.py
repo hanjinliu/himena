@@ -51,7 +51,7 @@ def test_ssh_widget(qtbot: QtBot, himena_ui):
     assert widget._filter_widget.isVisible()
     qtbot.keyClick(widget._filter_widget, Qt.Key.Key_Escape)
     assert widget._filter_widget.isHidden()
-    widget._file_list_widget._save_items([])
+    widget._file_list_widget._download_items([])
     widget._make_ls_args("/tmp")
     widget._make_get_type_args("/tmp")
 
@@ -87,6 +87,6 @@ def test_remote_base_widget(qtbot: QtBot, himena_ui):
     assert widget._filter_widget.isVisible()
     qtbot.keyClick(widget._filter_widget, Qt.Key.Key_Escape)
     assert widget._filter_widget.isHidden()
-    widget._file_list_widget._save_items([])
+    widget._file_list_widget._download_items([])
     widget._make_ls_args("/tmp")
     widget._make_get_type_args("/tmp")

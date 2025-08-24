@@ -425,19 +425,34 @@ class QRemoteTreeWidget(QtW.QTreeWidget):
     def _make_context_menu(self):
         menu = QtW.QMenu(self)
         open_action = menu.addAction("Open")
+        open_action.setToolTip("Open this file to the main window")
         open_action.triggered.connect(
             lambda: self.itemActivated.emit(self.currentItem(), 0)
         )
         copy_action = menu.addAction("Copy Path")
+        copy_action.setToolTip("Copy the paths of the selected items")
         copy_action.triggered.connect(
             lambda: self.item_copied.emit(self.selectedItems())
         )
         paste_action = menu.addAction("Paste")
+        paste_action.setToolTip(
+            "Paste local files to the remote file system from the clipboard"
+        )
         paste_action.triggered.connect(self._paste_from_clipboard)
         menu.addSeparator()
         download_action = menu.addAction("Download")
+        download_action.setToolTip("Download the selected items to ~/Downloads")
         download_action.triggered.connect(
-            lambda: self._save_items(self.selectedItems())
+            lambda: self._download_items(
+                self.selectedItems(), Path.home() / "Downloads"
+            )
+        )
+        download_to_action = menu.addAction("Download To ...")
+        download_to_action.setToolTip(
+            "Download the selected items to a specified directory"
+        )
+        download_to_action.triggered.connect(
+            lambda: self._download_items(self.selectedItems())
         )
         menu.addSeparator()
         rename_action = menu.addAction("Rename")
@@ -515,9 +530,16 @@ class QRemoteTreeWidget(QtW.QTreeWidget):
         drag.setMimeData(mime)
         drag.exec(QtCore.Qt.DropAction.CopyAction)
 
-    def _save_items(self, items: list[QtW.QTreeWidgetItem]):
+    def _download_items(
+        self,
+        items: list[QtW.QTreeWidgetItem],
+        download_dir: Path | None = None,
+    ):
         """Save the selected items to local files."""
-        download_dir = Path.home() / "Downloads"
+        if download_dir is None:
+            download_dir = self.parent()._ui.exec_file_dialog(
+                "d", caption="Select the directory to download files to"
+            )
         src_paths: list[Path] = []
         for item in items:
             typ = item_type(item)

@@ -1,9 +1,11 @@
+from contextlib import contextmanager
 import tempfile
 from typing import Iterator, Literal, Any, TYPE_CHECKING
 from pathlib import Path
 import subprocess
 
 from pydantic import Field
+from himena.consts import StandardType
 from himena.exceptions import NotExecutable
 from himena.utils.misc import PluginInfo
 from himena.utils.cli import remote_to_local, wsl_to_local
@@ -82,6 +84,54 @@ class PathReaderMethod(ReaderMethod):
         if isinstance(self.path, Path):
             return self.path.as_posix()
         return ";".join(p.as_posix() for p in self.path)
+
+    def _list_dst_filenames(self) -> list[str]:
+        if isinstance(self.path, Path):
+            filenames = [self.path.name]
+        else:
+            filenames: list[Path] = []
+            for p in self.path:
+                filenames.append(p.name)
+        return filenames
+
+    @contextmanager
+    def run_context(
+        self, filenames: list[str] | None = None
+    ) -> Iterator[Path | list[Path]]:
+        if filenames is None:
+            filenames = self._list_dst_filenames()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            if isinstance(self.path, Path):
+                dst_path = Path(tmpdir, filenames[0])
+                self.run_command(dst_path)
+            else:
+                dst_path: list[Path] = []
+                for p in filenames:
+                    dst_p = Path(tmpdir, p)
+                    self.run_command(dst_p)
+                    dst_path.append(dst_p)
+            yield dst_path
+
+    def run(self) -> "WidgetDataModel":
+        from himena._providers import ReaderStore
+        from himena.types import WidgetDataModel
+
+        filenames = self._list_dst_filenames()
+        store = ReaderStore.instance()
+        matched = store.get(Path(filenames[0]), empty_ok=True, min_priority=1)
+        if len(filenames) > 1 or matched:
+            with self.run_context(filenames) as dst_path:
+                model = self._run_store(dst_path)
+        else:
+            # If the file type is not supported, no need to rsync it.
+            model = WidgetDataModel(
+                value=self.path,
+                type=StandardType.READER_NOT_FOUND,
+            )
+
+        model.title = self.path.name
+        model.workflow = self.construct_workflow()
+        return model
 
 
 class LocalReaderMethod(ReaderMethod):
@@ -166,22 +216,6 @@ class RemoteReaderMethod(PathReaderMethod):
             win._identifier = self.id
         return out
 
-    def run(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            if isinstance(self.path, Path):
-                dst_path = Path(tmpdir).joinpath(self.path.name)
-                self.run_command(dst_path)
-            else:
-                dst_path: list[Path] = []
-                for p in self.path:
-                    dst_p = Path(tmpdir).joinpath(p.name)
-                    self.run_command(dst_p)
-                    dst_path.append(dst_p)
-            model = self._run_store(dst_path)
-            model.title = self.path.name
-        model.workflow = self.construct_workflow()
-        return model
-
     def run_command(self, dst_path: Path, stdout=None):
         """Run scp/rsync command to move the file from remote to local `dst_path`."""
         if isinstance(self.path, Path):
@@ -218,22 +252,6 @@ class WslReaderMethod(PathReaderMethod):
             path=path,
             force_directory=force_directory,
         )
-
-    def run(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            if isinstance(self.path, Path):
-                dst_path = Path(tmpdir).joinpath(self.path.name)
-                self.run_command(dst_path)
-            else:
-                dst_path: list[Path] = []
-                for p in self.path:
-                    dst_p = Path(tmpdir).joinpath(p.name)
-                    self.run_command(dst_p)
-                    dst_path.append(dst_p)
-            model = self._run_store(dst_path)
-            model.title = self.path.name
-        model.workflow = self.construct_workflow()
-        return model
 
     def run_command(self, dst_path: Path, stdout=None):
         """Run cp command to move the file from wsl to local `dst_path`."""
