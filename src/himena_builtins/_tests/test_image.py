@@ -263,7 +263,6 @@ def test_image_view_copy_roi(himena_ui: MainWindow, qtbot: QtBot):
     himena_ui.show()
     with WidgetTester(image_view) as tester:
         tester.update_model(value=np.zeros((100, 100), dtype=np.uint8))
-        qtbot.addWidget(image_view)
 
         # draw rectangle
         vp = image_view._img_view.viewport()
@@ -272,7 +271,6 @@ def test_image_view_copy_roi(himena_ui: MainWindow, qtbot: QtBot):
         qtbot.mouseMove(vp, pos=QtCore.QPoint(50, 50))
         qtbot.mouseRelease(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(50, 50))
 
-        QApplication.processEvents()
         qtbot.keyClick(image_view, Qt.Key.Key_C, modifier=_Ctrl)
         image_view._img_view.standard_ctrl_key_press(Qt.Key.Key_V)
         assert len(image_view._img_view._roi_items) == 2
@@ -298,8 +296,6 @@ def test_image_view_copy_roi_from_window_to_window(himena_ui: MainWindow, qtbot:
             )
         )
         tester_1.update_model(value=np.zeros((100, 100), dtype=np.uint8))
-        qtbot.addWidget(image_view_0)
-        qtbot.addWidget(image_view_1)
         image_view_0._roi_col._list_view.set_selection([0])
         QApplication.processEvents()
         qtbot.keyClick(image_view_0, Qt.Key.Key_C, modifier=_Ctrl)
@@ -318,7 +314,6 @@ def test_image_view_select_roi(qtbot: QtBot):
     image_view.setSizes([300, 100])
     with WidgetTester(image_view) as tester:
         tester.update_model(value=np.zeros((100, 100), dtype=np.uint8))
-        qtbot.addWidget(image_view)
         view = image_view._img_view
         view._wheel_event(1)
         view._wheel_event(-1)
