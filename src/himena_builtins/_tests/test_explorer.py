@@ -7,7 +7,6 @@ from himena.workflow import LocalReaderMethod
 from himena_builtins.qt.explorer._base import QBaseRemoteExplorerWidget
 from himena_builtins.qt.explorer._widget import QExplorerWidget
 from himena_builtins.qt.explorer._widget_ssh import QSSHRemoteExplorerWidget
-from superqt.utils import WorkerBase
 from pytestqt.qtbot import QtBot
 
 
@@ -110,8 +109,6 @@ def test_remote_base_widget(qtbot: QtBot, himena_ui, tmpdir):
     widget._set_current_path(tmpdir)
     widget._refresh_pwd()
     widget._on_pwd_edited()
-    WorkerBase.await_workers(1000)
-    QtW.QApplication.processEvents()
     QtW.QApplication.processEvents()
     assert widget._file_list_widget.topLevelItemCount() == 3
     widget._copy_item_paths([widget._file_list_widget.topLevelItem(i) for i in range(3)])
