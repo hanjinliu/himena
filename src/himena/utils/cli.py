@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 
 def local_to_remote(
@@ -12,6 +12,8 @@ def local_to_remote(
     port: int = 22,
 ) -> list[str]:
     """Send local file to the remote host."""
+    if is_dir:
+        dst = PurePosixPath(dst).parent.as_posix()
     if is_wsl:
         src_wsl = to_wsl_path(src)
         args = ["wsl", "-e"] + to_command_args(
@@ -31,6 +33,9 @@ def remote_to_local(
     port: int = 22,
 ) -> list[str]:
     """Run scp/rsync command to move the file from remote to local `dst_path`."""
+    dst_path = dst_path.resolve()
+    if is_dir:
+        dst_path = dst_path.parent
     if is_wsl:
         dst_wsl = to_wsl_path(dst_path)
         args = ["wsl", "-e"] + to_command_args(
@@ -77,3 +82,27 @@ def to_wsl_path(src: Path) -> str:
     wsl_root = Path("mnt") / drive.lower().rstrip(":")
     src_pathobj_wsl = wsl_root / src.relative_to(drive_rel).as_posix()
     return "/" + src_pathobj_wsl.as_posix()
+
+
+def wsl_to_local(src: str, dst: Path, is_dir: bool = False) -> list[str]:
+    """Copy a file from WSL to local Windows filesystem."""
+    if is_dir:
+        dst = dst.parent
+    wsl_dst = to_wsl_path(dst)
+    if is_dir:
+        args = ["wsl", "-e", "cp", "-r", src, wsl_dst]
+    else:
+        args = ["wsl", "-e", "cp", src, wsl_dst]
+    return args
+
+
+def local_to_wsl(src: Path, dst: str, is_dir: bool = False) -> list[str]:
+    """Copy a file from local Windows filesystem to WSL."""
+    if is_dir:
+        dst = PurePosixPath(dst).parent.as_posix()
+    wsl_src = to_wsl_path(src)
+    if is_dir:
+        args = ["wsl", "-e", "cp", "-r", wsl_src, dst]
+    else:
+        args = ["wsl", "-e", "cp", wsl_src, dst]
+    return args

@@ -250,11 +250,9 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _del_dock_widget(self, widget: QtW.QWidget) -> None:
         if isinstance(dock := widget.parentWidget(), QtW.QDockWidget):
             dock.close()
-            return None
 
     def add_tab(self, tab_name: str) -> QSubWindowArea:
-        """
-        Add a new tab with a sub-window area.
+        """Add a new tab with a sub-window area.
 
         Parameters
         ----------
@@ -322,7 +320,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             self.resize(min(size.width(), minw), min(size.height(), minh))
         if run:
             get_event_loop_handler("qt", self._app_name).run_app()
-        return None
 
     def _try_show_default_status_tip(self) -> None:
         if tip := AppActionRegistry.instance().pick_a_tip():
@@ -413,7 +410,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             subwindows[i].set_is_current(i == i_window)
         if i_window is not None:
             area.setActiveSubWindow(subwindows[i_window])
-        return None
 
     def _tab_title(self, i_tab: int) -> str:
         return self._tab_widget.tabText(i_tab)
@@ -448,47 +444,47 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         else:
             filter_str = "All Files (*)"
 
-        if mode == "r":
-            path, _ = QtW.QFileDialog.getOpenFileName(
-                self,
-                caption=caption or "Open File",
-                directory=start_path.as_posix() if start_path else None,
-                filter=filter_str,
-            )
-            if path:
-                return Path(path)
-        elif mode == "w":
-            path, _ = QtW.QFileDialog.getSaveFileName(
-                self,
-                caption=caption or "Save File",
-                directory=start_path.as_posix() if start_path else None,
-                filter=filter_str,
-            )
-            if path:
-                output_path = Path(path)
-                if output_path.suffix == "" and extension_default is not None:
-                    output_path = output_path.with_suffix(extension_default)
-                return output_path
-        elif mode == "rm":
-            paths, _ = QtW.QFileDialog.getOpenFileNames(
-                self,
-                caption=caption or "Open Files",
-                directory=start_path.as_posix() if start_path else None,
-                filter=filter_str,
-            )
-            if paths:
-                return [Path(p) for p in paths]
-        elif mode == "d":
-            path = QtW.QFileDialog.getExistingDirectory(
-                self,
-                caption=caption or "Open Directory",
-                directory=start_path.as_posix() if start_path else None,
-            )
-            if path:
-                return Path(path)
-        else:
-            raise ValueError(f"Invalid file mode {mode!r}.")
-        return None
+        match mode:
+            case "r":
+                path, _ = QtW.QFileDialog.getOpenFileName(
+                    self,
+                    caption=caption or "Open File",
+                    directory=start_path.as_posix() if start_path else None,
+                    filter=filter_str,
+                )
+                if path:
+                    return Path(path)
+            case "w":
+                path, _ = QtW.QFileDialog.getSaveFileName(
+                    self,
+                    caption=caption or "Save File",
+                    directory=start_path.as_posix() if start_path else None,
+                    filter=filter_str,
+                )
+                if path:
+                    output_path = Path(path)
+                    if output_path.suffix == "" and extension_default is not None:
+                        output_path = output_path.with_suffix(extension_default)
+                    return output_path
+            case "rm":
+                paths, _ = QtW.QFileDialog.getOpenFileNames(
+                    self,
+                    caption=caption or "Open Files",
+                    directory=start_path.as_posix() if start_path else None,
+                    filter=filter_str,
+                )
+                if paths:
+                    return [Path(p) for p in paths]
+            case "d":
+                path = QtW.QFileDialog.getExistingDirectory(
+                    self,
+                    caption=caption or "Open Directory",
+                    directory=start_path.as_posix() if start_path else None,
+                )
+                if path:
+                    return Path(path)
+            case _:
+                raise ValueError(f"Invalid file mode {mode!r}.")
 
     def _request_choice_dialog(
         self,
@@ -508,20 +504,21 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self,
         kind: Literal["general", "recent", "goto", "new"],
     ) -> None:
-        if kind == "general":
-            self._command_palette_general.update_context(self)
-            self._command_palette_general.show()
-        elif kind == "recent":
-            self._command_palette_general.update_context(self)
-            self._command_palette_recent.show()
-        elif kind == "goto":
-            self._goto_widget.show()
-            self._goto_widget.setFocus()
-        elif kind == "new":
-            self._command_palette_new.update_context(self)
-            self._command_palette_new.show()
-        else:
-            raise NotImplementedError
+        match kind:
+            case "general":
+                self._command_palette_general.update_context(self)
+                self._command_palette_general.show()
+            case "recent":
+                self._command_palette_general.update_context(self)
+                self._command_palette_recent.show()
+            case "goto":
+                self._goto_widget.show()
+                self._goto_widget.setFocus()
+            case "new":
+                self._command_palette_new.update_context(self)
+                self._command_palette_new.show()
+            case _:
+                raise NotImplementedError
 
     def _exit_main_window(self, confirm: bool = False) -> None:
         if confirm and not self._ok_to_exit():
@@ -564,7 +561,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         tab = self._tab_widget.widget_area(i_tab)
         window = tab.subWindowList()[i_window]
         window._title_bar._start_renaming()
-        return None
 
     def _window_state(self, widget: QtW.QWidget) -> WindowState:
         return get_subwindow(widget).state
@@ -576,7 +572,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         inst: BackendInstructions,
     ) -> None:
         get_subwindow(widget)._update_window_state(state, animate=inst.animate)
-        return None
 
     def _window_rect(self, widget: QtW.QWidget) -> WindowRect:
         geo = get_subwindow(widget).geometry()
@@ -621,9 +616,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         return model
 
     def _set_clipboard_data(self, data: ClipboardDataModel) -> None:
-        clipboard = QtW.QApplication.clipboard()
-        if clipboard is None:
-            return
         mime = QtCore.QMimeData()
         if (html := data.html) is not None:
             mime.setHtml(html)
@@ -637,7 +629,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             mime.setImageData(qimg)
         if (files := data.files) is not None:
             mime.setUrls([QtCore.QUrl.fromLocalFile(str(f)) for f in files])
-        return clipboard.setMimeData(mime)
+        return _set_mime_data_in_main_thread(mime)
 
     def _connect_main_window_signals(self, main: MainWindow):
         self._tab_widget.currentChanged.connect(main._tab_activated)
@@ -648,20 +640,21 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self._himena_main_window._main_window_resized(Size(*self._area_size()))
 
     def _screenshot(self, target: str):
-        if target == "main":
-            qwidget = self
-        elif target == "area":
-            if widget := self._tab_widget.current_widget_area():
-                qwidget = widget
-            else:
-                raise ValueError("No active area.")
-        elif target == "window":
-            if sub := self._tab_widget.current_widget_area().currentSubWindow():
-                qwidget = sub._widget
-            else:
-                raise ValueError("No active window.")
-        else:
-            raise ValueError(f"Invalid target name {target!r}.")
+        match target:
+            case "main":
+                qwidget = self
+            case "area":
+                if widget := self._tab_widget.current_widget_area():
+                    qwidget = widget
+                else:
+                    raise ValueError("No active area.")
+            case "window":
+                if sub := self._tab_widget.current_widget_area().currentSubWindow():
+                    qwidget = sub._widget
+                else:
+                    raise ValueError("No active window.")
+            case tgt:
+                raise ValueError(f"Invalid target name {tgt!r}.")
         return ArrayQImage.from_qwidget(qwidget)
 
     def _process_parametric_widget(
@@ -707,12 +700,13 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         widget: QtW.QWidget,
         result_as: Literal["below", "right"],
     ):
-        if result_as == "below":
-            wrapper.widget.add_widget_below(widget)
-        elif result_as == "right":
-            wrapper.widget.add_widget_right(widget)
-        else:
-            raise ValueError(f"Invalid result_as value {result_as!r}.")
+        match result_as:
+            case "below":
+                wrapper.widget.add_widget_below(widget)
+            case "right":
+                wrapper.widget.add_widget_right(widget)
+            case _:
+                raise ValueError(f"Invalid result_as value {result_as!r}.")
         if wrapper.is_preview_enabled() and not wrapper._auto_close:
             wrapper.widget._call_btn.hide()
 
@@ -724,7 +718,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def _move_focus_to(self, win: QtW.QWidget) -> None:
         win.setFocus()
-        return None
 
     def _set_status_tip(self, tip: str, duration: float) -> None:
         self.status_tip_requested.emit(tip, duration)
@@ -765,7 +758,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         for action in self._menubar.actions():
             if isinstance(menu := action.menu(), QModelMenu):
                 menu.rebuild()
-        return None
 
     def _process_future_done_callback(
         self,
@@ -794,7 +786,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def _add_job_progress(self, future: Future, desc: str, total: int = 0) -> None:
         self._job_stack.add_future(future, desc, total)
-        return None
 
     def _add_whats_this(
         self,
@@ -804,7 +795,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         whatsthis = QWhatsThisWidget(self)
         whatsthis.set_text(text, style)
         whatsthis.show()
-        return None
 
     def _show_dock_whats_this(self, doc: str):
         doc_formatted = doc_to_whats_this(doc)
@@ -992,3 +982,11 @@ def _update_toolbtn_color(toolbar: QModelToolBar, icon_color: str):
                 qicon = QIconifyIcon(icon.light, color=icon_color)
                 btn.setIcon(qicon)
                 btn.actions()[0].setIcon(qicon)
+
+
+@ensure_main_thread
+def _set_mime_data_in_main_thread(mime: QtCore.QMimeData) -> None:
+    clipboard = QtW.QApplication.clipboard()
+    if clipboard is None:
+        return
+    clipboard.setMimeData(mime)

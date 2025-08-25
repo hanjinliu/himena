@@ -45,21 +45,18 @@ def set_clipboard(model=None, **kwargs) -> None:
         ins.clipboard = model
     else:
         ins.set_clipboard(**kwargs)
-    return None
 
 
 def notify(text: str, duration: float = 5.0) -> None:
     """Show a notification popup in the bottom right corner."""
     ins = current_instance()
     ins._backend_main_window._show_notification(text, duration)
-    return None
 
 
 def append_result(item: dict[str, Any], /) -> None:
     """Append a new result to the result stack."""
     ins = current_instance()
     ins._backend_main_window._append_result(item)
-    return None
 
 
 # def subprocess_run(command_args, /, *args, blocking: bool = True, **kwargs):

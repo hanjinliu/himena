@@ -70,10 +70,7 @@ class QDimsSlider(QtW.QWidget):
         for slider in self._sliders:
             slider._name_label.setFixedWidth(_axis_width_max + 6)
             slider._index_label.setFixedWidth(_index_width_max + 6)
-        if is_rgb:
-            self._yx_axes = axes[-3:-1]
-        else:
-            self._yx_axes = axes[-2:]
+        self._yx_axes = axes[-2:]
 
     def to_dim_axes(self) -> list[model_meta.DimAxis]:
         axes = [slider.to_axis() for slider in self._sliders]

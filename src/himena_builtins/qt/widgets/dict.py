@@ -117,15 +117,28 @@ class QDictOfWidgetEdit(QtW.QTabWidget):
     def update_model(self, model: WidgetDataModel):
         if not isinstance(value := model.value, Mapping):
             raise ValueError(f"Expected a dict, got {type(value)}")
+        metadata = DictMeta()
+        if isinstance(model.metadata, DictMeta):
+            metadata = model.metadata
         self.clear()
         for tab_name, each in value.items():
             table = self._default_widget()
+            child_meta = metadata.child_meta.get(tab_name, None)
             table.update_model(
-                WidgetDataModel(value=each, type=self._model_type_component)
+                WidgetDataModel(
+                    value=each,
+                    type=self._model_type_component,
+                    metadata=child_meta,
+                )
             )
             self.addTab(table, str(tab_name))
         if self.count() > 0:
-            self.setCurrentIndex(0)
+            if (tname := metadata.current_tab) is not None:
+                _iter = (i for i in range(self.count()) if self.tabText(i) == tname)
+                idx = next(_iter, 0)
+            else:
+                idx = 0
+            self.setCurrentIndex(idx)
             self.control_widget().update_for_component(self.widget(0))
         self._model_type = model.type
         self._extension_default = model.extension_default
