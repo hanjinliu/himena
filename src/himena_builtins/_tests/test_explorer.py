@@ -2,6 +2,7 @@ from pathlib import Path
 from qtpy import QtWidgets as QtW
 from qtpy.QtCore import Qt
 from unittest.mock import MagicMock
+from himena.style.core import Theme
 from himena.testing import choose_one_dialog_response, file_dialog_response
 from himena.workflow import LocalReaderMethod
 from himena_builtins.qt.explorer._base import QBaseRemoteExplorerWidget
@@ -128,3 +129,11 @@ def test_remote_base_widget(qtbot: QtBot, himena_ui, tmpdir):
     mime = widget._make_mimedata_for_items([widget._file_list_widget.topLevelItem(1)])
     widget._read_and_add_model(tmpdir / "a.txt")
     widget.readers_from_mime(mime)
+    widget._send_files([tmpdir / "a.txt"])
+    widget._rename_item(
+        widget._file_list_widget.topLevelItem(1),
+        widget._file_list_widget.topLevelItem(1).text(0),
+        "a2.txt"
+    )
+    widget.theme_changed_callback(Theme.from_global("light-blue"))
+    widget._trash_items([widget._file_list_widget.topLevelItem(1)])

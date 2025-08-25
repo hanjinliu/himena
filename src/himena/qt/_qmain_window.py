@@ -250,7 +250,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _del_dock_widget(self, widget: QtW.QWidget) -> None:
         if isinstance(dock := widget.parentWidget(), QtW.QDockWidget):
             dock.close()
-            return None
 
     def add_tab(self, tab_name: str) -> QSubWindowArea:
         """Add a new tab with a sub-window area.
@@ -321,7 +320,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             self.resize(min(size.width(), minw), min(size.height(), minh))
         if run:
             get_event_loop_handler("qt", self._app_name).run_app()
-        return None
 
     def _try_show_default_status_tip(self) -> None:
         if tip := AppActionRegistry.instance().pick_a_tip():
@@ -412,7 +410,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             subwindows[i].set_is_current(i == i_window)
         if i_window is not None:
             area.setActiveSubWindow(subwindows[i_window])
-        return None
 
     def _tab_title(self, i_tab: int) -> str:
         return self._tab_widget.tabText(i_tab)
@@ -564,7 +561,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         tab = self._tab_widget.widget_area(i_tab)
         window = tab.subWindowList()[i_window]
         window._title_bar._start_renaming()
-        return None
 
     def _window_state(self, widget: QtW.QWidget) -> WindowState:
         return get_subwindow(widget).state
@@ -576,7 +572,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         inst: BackendInstructions,
     ) -> None:
         get_subwindow(widget)._update_window_state(state, animate=inst.animate)
-        return None
 
     def _window_rect(self, widget: QtW.QWidget) -> WindowRect:
         geo = get_subwindow(widget).geometry()
@@ -620,11 +615,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             model.files = [Path(url.toLocalFile()) for url in md.urls()]
         return model
 
-    @ensure_main_thread
     def _set_clipboard_data(self, data: ClipboardDataModel) -> None:
-        clipboard = QtW.QApplication.clipboard()
-        if clipboard is None:
-            return
         mime = QtCore.QMimeData()
         if (html := data.html) is not None:
             mime.setHtml(html)
@@ -638,7 +629,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             mime.setImageData(qimg)
         if (files := data.files) is not None:
             mime.setUrls([QtCore.QUrl.fromLocalFile(str(f)) for f in files])
-        return clipboard.setMimeData(mime)
+        return _set_mime_data_in_main_thread(mime)
 
     def _connect_main_window_signals(self, main: MainWindow):
         self._tab_widget.currentChanged.connect(main._tab_activated)
@@ -727,7 +718,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def _move_focus_to(self, win: QtW.QWidget) -> None:
         win.setFocus()
-        return None
 
     def _set_status_tip(self, tip: str, duration: float) -> None:
         self.status_tip_requested.emit(tip, duration)
@@ -768,7 +758,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         for action in self._menubar.actions():
             if isinstance(menu := action.menu(), QModelMenu):
                 menu.rebuild()
-        return None
 
     def _process_future_done_callback(
         self,
@@ -797,7 +786,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def _add_job_progress(self, future: Future, desc: str, total: int = 0) -> None:
         self._job_stack.add_future(future, desc, total)
-        return None
 
     def _add_whats_this(
         self,
@@ -807,7 +795,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         whatsthis = QWhatsThisWidget(self)
         whatsthis.set_text(text, style)
         whatsthis.show()
-        return None
 
     def _show_dock_whats_this(self, doc: str):
         doc_formatted = doc_to_whats_this(doc)
@@ -995,3 +982,11 @@ def _update_toolbtn_color(toolbar: QModelToolBar, icon_color: str):
                 qicon = QIconifyIcon(icon.light, color=icon_color)
                 btn.setIcon(qicon)
                 btn.actions()[0].setIcon(qicon)
+
+
+@ensure_main_thread
+def _set_mime_data_in_main_thread(mime: QtCore.QMimeData) -> None:
+    clipboard = QtW.QApplication.clipboard()
+    if clipboard is None:
+        return
+    clipboard.setMimeData(mime)

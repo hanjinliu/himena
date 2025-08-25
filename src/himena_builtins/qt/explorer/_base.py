@@ -301,7 +301,9 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
     def theme_changed_callback(self, theme: Theme) -> None:
         self._light_background = theme.is_light_background()
         count = self._file_list_widget.topLevelItemCount()
-        self._on_ls_done([self._file_list_widget.topLevelItem(i) for i in range(count)])
+        self._on_ls_done(
+            [_copy_item(self._file_list_widget.topLevelItem(i)) for i in range(count)]
+        )
         self.themeChanged.emit(theme)
 
     def _set_current_path(self, path: Path):
@@ -326,11 +328,11 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
         self._worker = None
 
     def _on_ls_done(self, items: list[QtW.QTreeWidgetItem]):
+        self._file_list_widget.clear()
         for item in items:
             icon = icon_for_file_type(item_type(item), self._light_background)
             item.setIcon(0, icon)
-        self._file_list_widget.clear()
-        self._file_list_widget.addTopLevelItems(items)
+            self._file_list_widget.addTopLevelItem(item)
         for i in range(1, self._file_list_widget.columnCount()):
             self._file_list_widget.resizeColumnToContents(i)
         set_status_tip(f"Currently under {self._pwd.name}", duration=1.0)
@@ -672,3 +674,12 @@ def exec_command(args: list[str]) -> None:
     if result.returncode != 0:
         cmd = " ".join(args)
         raise ValueError(f"Failed to execute command {cmd}: {result.stderr.decode()}")
+
+
+def _copy_item(item: QtW.QTreeWidgetItem) -> QtW.QTreeWidgetItem:
+    """Make a copy of the item."""
+    new_item = QtW.QTreeWidgetItem()
+    for i in range(item.columnCount()):
+        new_item.setText(i, item.text(i))
+        new_item.setToolTip(i, item.toolTip(i))
+    return new_item
