@@ -55,6 +55,7 @@ recommended = [
   "pyqt6",
   "himena[all]",
 ]
+
 all = [
   "IPython",
   "qtconsole",
@@ -62,6 +63,7 @@ all = [
   "scipy",
   "matplotlib>=3.8.2",
 ]
+
 testing = [
   "pytest",
   "pytest-qt",
@@ -83,6 +85,12 @@ docs = [
   "mkdocs-gen-files",
   "griffe-fieldz",
   "himena[recommended]"
+]
+
+dev = [
+  "himena[testing]",
+  "himena[docs]",
+  "qtreload>=0.2.3",
 ]
 
 [tool.hatch.version]
@@ -220,5 +228,6 @@ exclude = ["**/tests/*.py"]
 "Dock Widget: Output Widget" = "himena_builtins.qt.output"
 "Dock Widget: File Explorers" = "himena_builtins.qt.explorer"
 "Dock Widget: Command History" = "himena_builtins.qt.history"
+"Dock Widget: Hot Reload" = "himena_builtins.qt.reload"
 
 "Debug" = "himena_builtins.debug"
