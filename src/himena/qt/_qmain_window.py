@@ -253,8 +253,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             return None
 
     def add_tab(self, tab_name: str) -> QSubWindowArea:
-        """
-        Add a new tab with a sub-window area.
+        """Add a new tab with a sub-window area.
 
         Parameters
         ----------
@@ -448,47 +447,47 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         else:
             filter_str = "All Files (*)"
 
-        if mode == "r":
-            path, _ = QtW.QFileDialog.getOpenFileName(
-                self,
-                caption=caption or "Open File",
-                directory=start_path.as_posix() if start_path else None,
-                filter=filter_str,
-            )
-            if path:
-                return Path(path)
-        elif mode == "w":
-            path, _ = QtW.QFileDialog.getSaveFileName(
-                self,
-                caption=caption or "Save File",
-                directory=start_path.as_posix() if start_path else None,
-                filter=filter_str,
-            )
-            if path:
-                output_path = Path(path)
-                if output_path.suffix == "" and extension_default is not None:
-                    output_path = output_path.with_suffix(extension_default)
-                return output_path
-        elif mode == "rm":
-            paths, _ = QtW.QFileDialog.getOpenFileNames(
-                self,
-                caption=caption or "Open Files",
-                directory=start_path.as_posix() if start_path else None,
-                filter=filter_str,
-            )
-            if paths:
-                return [Path(p) for p in paths]
-        elif mode == "d":
-            path = QtW.QFileDialog.getExistingDirectory(
-                self,
-                caption=caption or "Open Directory",
-                directory=start_path.as_posix() if start_path else None,
-            )
-            if path:
-                return Path(path)
-        else:
-            raise ValueError(f"Invalid file mode {mode!r}.")
-        return None
+        match mode:
+            case "r":
+                path, _ = QtW.QFileDialog.getOpenFileName(
+                    self,
+                    caption=caption or "Open File",
+                    directory=start_path.as_posix() if start_path else None,
+                    filter=filter_str,
+                )
+                if path:
+                    return Path(path)
+            case "w":
+                path, _ = QtW.QFileDialog.getSaveFileName(
+                    self,
+                    caption=caption or "Save File",
+                    directory=start_path.as_posix() if start_path else None,
+                    filter=filter_str,
+                )
+                if path:
+                    output_path = Path(path)
+                    if output_path.suffix == "" and extension_default is not None:
+                        output_path = output_path.with_suffix(extension_default)
+                    return output_path
+            case "rm":
+                paths, _ = QtW.QFileDialog.getOpenFileNames(
+                    self,
+                    caption=caption or "Open Files",
+                    directory=start_path.as_posix() if start_path else None,
+                    filter=filter_str,
+                )
+                if paths:
+                    return [Path(p) for p in paths]
+            case "d":
+                path = QtW.QFileDialog.getExistingDirectory(
+                    self,
+                    caption=caption or "Open Directory",
+                    directory=start_path.as_posix() if start_path else None,
+                )
+                if path:
+                    return Path(path)
+            case _:
+                raise ValueError(f"Invalid file mode {mode!r}.")
 
     def _request_choice_dialog(
         self,
@@ -508,20 +507,21 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self,
         kind: Literal["general", "recent", "goto", "new"],
     ) -> None:
-        if kind == "general":
-            self._command_palette_general.update_context(self)
-            self._command_palette_general.show()
-        elif kind == "recent":
-            self._command_palette_general.update_context(self)
-            self._command_palette_recent.show()
-        elif kind == "goto":
-            self._goto_widget.show()
-            self._goto_widget.setFocus()
-        elif kind == "new":
-            self._command_palette_new.update_context(self)
-            self._command_palette_new.show()
-        else:
-            raise NotImplementedError
+        match kind:
+            case "general":
+                self._command_palette_general.update_context(self)
+                self._command_palette_general.show()
+            case "recent":
+                self._command_palette_general.update_context(self)
+                self._command_palette_recent.show()
+            case "goto":
+                self._goto_widget.show()
+                self._goto_widget.setFocus()
+            case "new":
+                self._command_palette_new.update_context(self)
+                self._command_palette_new.show()
+            case _:
+                raise NotImplementedError
 
     def _exit_main_window(self, confirm: bool = False) -> None:
         if confirm and not self._ok_to_exit():
@@ -620,6 +620,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             model.files = [Path(url.toLocalFile()) for url in md.urls()]
         return model
 
+    @ensure_main_thread
     def _set_clipboard_data(self, data: ClipboardDataModel) -> None:
         clipboard = QtW.QApplication.clipboard()
         if clipboard is None:
@@ -648,20 +649,21 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self._himena_main_window._main_window_resized(Size(*self._area_size()))
 
     def _screenshot(self, target: str):
-        if target == "main":
-            qwidget = self
-        elif target == "area":
-            if widget := self._tab_widget.current_widget_area():
-                qwidget = widget
-            else:
-                raise ValueError("No active area.")
-        elif target == "window":
-            if sub := self._tab_widget.current_widget_area().currentSubWindow():
-                qwidget = sub._widget
-            else:
-                raise ValueError("No active window.")
-        else:
-            raise ValueError(f"Invalid target name {target!r}.")
+        match target:
+            case "main":
+                qwidget = self
+            case "area":
+                if widget := self._tab_widget.current_widget_area():
+                    qwidget = widget
+                else:
+                    raise ValueError("No active area.")
+            case "window":
+                if sub := self._tab_widget.current_widget_area().currentSubWindow():
+                    qwidget = sub._widget
+                else:
+                    raise ValueError("No active window.")
+            case tgt:
+                raise ValueError(f"Invalid target name {tgt!r}.")
         return ArrayQImage.from_qwidget(qwidget)
 
     def _process_parametric_widget(
@@ -707,12 +709,13 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         widget: QtW.QWidget,
         result_as: Literal["below", "right"],
     ):
-        if result_as == "below":
-            wrapper.widget.add_widget_below(widget)
-        elif result_as == "right":
-            wrapper.widget.add_widget_right(widget)
-        else:
-            raise ValueError(f"Invalid result_as value {result_as!r}.")
+        match result_as:
+            case "below":
+                wrapper.widget.add_widget_below(widget)
+            case "right":
+                wrapper.widget.add_widget_right(widget)
+            case _:
+                raise ValueError(f"Invalid result_as value {result_as!r}.")
         if wrapper.is_preview_enabled() and not wrapper._auto_close:
             wrapper.widget._call_btn.hide()
 
