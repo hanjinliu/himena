@@ -20,9 +20,10 @@ from himena.types import Parametric, WidgetDataModel
 from himena.consts import StandardType, MonospaceFontFamily, MenuId
 from himena.utils.collections import OrderedSet
 from himena.widgets import SubWindow, MainWindow, ParametricWindow
-from himena.workflow import Workflow, as_function
+from himena.workflow import Workflow, as_function, PathReaderMethod
 from himena import AppContext as ctx
 from himena._utils import get_display_name, get_widget_class_id, unwrap_lazy_model
+from himena_builtins._io import default_text_reader
 
 configure_submenu(MenuId.TOOLS_OTHERS, group="20_builtins", order=51)
 configure_submenu(MenuId.TOOLS_FUNCTION, group="20_builtins", order=50)
@@ -38,16 +39,26 @@ def open_as_text_anyway(ui: MainWindow, win: SubWindow) -> WidgetDataModel[str]:
     model = win.to_model()
     if model.type != StandardType.READER_NOT_FOUND:
         raise ValueError(f"Invalid model type: {model.type}")
-    if not isinstance(src := model.source, Path):
+    if isinstance(reader_meth := model.workflow.last(), PathReaderMethod):
+        if not isinstance(reader_meth.path, Path):
+            raise ValueError("Cannot open multiple files as text data.")
+        with reader_meth.run_context() as dst_path:
+            assert isinstance(dst_path, Path)
+            text = default_text_reader(dst_path).value
+            ext_default = reader_meth.path.suffix
+    elif isinstance(src := model.source, Path):
+        text = src.read_text()
+        ext_default = src.suffix
+    else:
         raise ValueError(
-            f"Model has multiple or no local source paths: {src}. Cannot open as a text data."
+            "Model has multiple or no source paths. Cannot open as a text data."
         )
     out = model.with_value(
-        src.read_text(),
+        text,
         type=StandardType.TEXT,
         save_behavior_override=NoNeedToSave(),
     )
-    out.extension_default = src.suffix
+    out.extension_default = ext_default
     win._close_me(ui)
     return out
 
