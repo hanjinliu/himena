@@ -2,6 +2,7 @@ from pathlib import Path
 from qtpy.QtCore import Qt
 from unittest.mock import MagicMock
 from himena.testing import choose_one_dialog_response
+from himena.testing.dialog import file_dialog_response
 from himena.workflow import LocalReaderMethod
 from himena_builtins.qt.explorer._base import QBaseRemoteExplorerWidget
 from himena_builtins.qt.explorer._widget import QExplorerWidget
@@ -40,7 +41,7 @@ def test_workspace_widget(qtbot: QtBot, himena_ui, tmpdir):
     # mock.assert_called_once()
     # assert isinstance(mock.call_args[0][0], Path)
 
-def test_ssh_widget(qtbot: QtBot, himena_ui):
+def test_ssh_widget(qtbot: QtBot, himena_ui, tmpdir):
     widget = QSSHRemoteExplorerWidget(himena_ui)
     qtbot.add_widget(widget)
     widget.show()
@@ -51,7 +52,8 @@ def test_ssh_widget(qtbot: QtBot, himena_ui):
     assert widget._filter_widget.isVisible()
     qtbot.keyClick(widget._filter_widget, Qt.Key.Key_Escape)
     assert widget._filter_widget.isHidden()
-    widget._file_list_widget._save_items([])
+    with file_dialog_response(himena_ui, tmpdir):
+        widget._file_list_widget._download_items([])
     widget._make_ls_args("/tmp")
     widget._make_get_type_args("/tmp")
 
@@ -76,7 +78,7 @@ class QTestRemoteExplorerWidget(QBaseRemoteExplorerWidget):
         """Make the command to send a local file to the remote host."""
         return ["cp", src.as_posix(), dst_remote]
 
-def test_remote_base_widget(qtbot: QtBot, himena_ui):
+def test_remote_base_widget(qtbot: QtBot, himena_ui, tmpdir):
     widget = QTestRemoteExplorerWidget(himena_ui)
     qtbot.add_widget(widget)
     widget.show()
@@ -87,6 +89,8 @@ def test_remote_base_widget(qtbot: QtBot, himena_ui):
     assert widget._filter_widget.isVisible()
     qtbot.keyClick(widget._filter_widget, Qt.Key.Key_Escape)
     assert widget._filter_widget.isHidden()
-    widget._file_list_widget._save_items([])
+    with file_dialog_response(himena_ui, tmpdir):
+        widget._file_list_widget._download_items([])
+    widget._file_list_widget._download_items([], tmpdir)
     widget._make_ls_args("/tmp")
     widget._make_get_type_args("/tmp")

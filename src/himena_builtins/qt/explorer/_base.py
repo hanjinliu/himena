@@ -52,6 +52,8 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
         self._filter_widget = QFilterLineEdit(self)
         self._filter_widget.textChanged.connect(self._file_list_widget._apply_filter)
         self._filter_widget.setVisible(False)
+        self._light_background = True
+        self._force_sync = False  # for testing
 
     def _make_mimedata_for_items(
         self,
@@ -101,7 +103,10 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
         worker.returned.connect(self._ui.add_data_model)
         worker.started.connect(lambda: self._set_busy(True))
         worker.finished.connect(lambda: self._set_busy(False))
-        worker.start()
+        if self._force_sync:
+            worker.run()
+        else:
+            worker.start()
         set_status_tip(f"Reading file: {path}", duration=2.0)
 
     def _set_busy(self, busy: bool):
@@ -348,7 +353,10 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
         worker.returned.connect(self._on_ls_done)
         worker.started.connect(lambda: self._set_busy(True))
         worker.finished.connect(self._on_worker_finished)
-        worker.start()
+        if self._force_sync:
+            worker.run()
+        else:
+            worker.start()
         set_status_tip("Obtaining the file content ...", duration=3.0)
 
     def _on_worker_finished(self):
@@ -425,19 +433,34 @@ class QRemoteTreeWidget(QtW.QTreeWidget):
     def _make_context_menu(self):
         menu = QtW.QMenu(self)
         open_action = menu.addAction("Open")
+        open_action.setToolTip("Open this file to the main window")
         open_action.triggered.connect(
             lambda: self.itemActivated.emit(self.currentItem(), 0)
         )
         copy_action = menu.addAction("Copy Path")
+        copy_action.setToolTip("Copy the paths of the selected items")
         copy_action.triggered.connect(
             lambda: self.item_copied.emit(self.selectedItems())
         )
         paste_action = menu.addAction("Paste")
+        paste_action.setToolTip(
+            "Paste local files to the remote file system from the clipboard"
+        )
         paste_action.triggered.connect(self._paste_from_clipboard)
         menu.addSeparator()
         download_action = menu.addAction("Download")
+        download_action.setToolTip("Download the selected items to ~/Downloads")
         download_action.triggered.connect(
-            lambda: self._save_items(self.selectedItems())
+            lambda: self._download_items(
+                self.selectedItems(), Path.home() / "Downloads"
+            ),
+        )
+        download_to_action = menu.addAction("Download To ...")
+        download_to_action.setToolTip(
+            "Download the selected items to a specified directory"
+        )
+        download_to_action.triggered.connect(
+            lambda: self._download_items(self.selectedItems())
         )
         menu.addSeparator()
         rename_action = menu.addAction("Rename")
@@ -515,9 +538,16 @@ class QRemoteTreeWidget(QtW.QTreeWidget):
         drag.setMimeData(mime)
         drag.exec(QtCore.Qt.DropAction.CopyAction)
 
-    def _save_items(self, items: list[QtW.QTreeWidgetItem]):
+    def _download_items(
+        self,
+        items: list[QtW.QTreeWidgetItem],
+        download_dir: Path | None = None,
+    ):
         """Save the selected items to local files."""
-        download_dir = Path.home() / "Downloads"
+        if download_dir is None:
+            download_dir = self.parent()._ui.exec_file_dialog(
+                "d", caption="Select the directory to download files to"
+            )
         src_paths: list[Path] = []
         for item in items:
             typ = item_type(item)
@@ -532,7 +562,10 @@ class QRemoteTreeWidget(QtW.QTreeWidget):
         worker = make_paste_remote_files_worker(readers, download_dir)
         qui = self.parent()._ui._backend_main_window
         qui._job_stack.add_worker(worker, "Downloading files", total=len(src_paths))
-        worker.start()
+        if self.parent()._force_sync:
+            worker.run()
+        else:
+            worker.start()
 
     def _apply_filter(self, text: str):
         for i in range(self.topLevelItemCount()):
