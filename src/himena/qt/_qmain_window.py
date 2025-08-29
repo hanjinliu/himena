@@ -251,8 +251,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             dock.close()
 
     def add_tab(self, tab_name: str) -> QSubWindowArea:
-        """
-        Add a new tab with a sub-window area.
+        """Add a new tab with a sub-window area.
 
         Parameters
         ----------
@@ -616,9 +615,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     @ensure_main_thread
     def _set_clipboard_data(self, data: ClipboardDataModel) -> None:
-        clipboard = QtW.QApplication.clipboard()
-        if clipboard is None:
-            return
         mime = QtCore.QMimeData()
         if (html := data.html) is not None:
             mime.setHtml(html)
@@ -632,7 +628,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             mime.setImageData(qimg)
         if (files := data.files) is not None:
             mime.setUrls([QtCore.QUrl.fromLocalFile(str(f)) for f in files])
-        return clipboard.setMimeData(mime)
+        return _set_mime_data_in_main_thread(mime)
 
     def _connect_main_window_signals(self, main: MainWindow):
         self._tab_widget.currentChanged.connect(main._tab_activated)
@@ -982,3 +978,11 @@ def _update_toolbtn_color(toolbar: QModelToolBar, icon_color: str):
                 qicon = QIconifyIcon(icon.light, color=icon_color)
                 btn.setIcon(qicon)
                 btn.actions()[0].setIcon(qicon)
+
+
+@ensure_main_thread
+def _set_mime_data_in_main_thread(mime: QtCore.QMimeData) -> None:
+    clipboard = QtW.QApplication.clipboard()
+    if clipboard is None:
+        return
+    clipboard.setMimeData(mime)
