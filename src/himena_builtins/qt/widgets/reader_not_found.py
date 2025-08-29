@@ -13,6 +13,11 @@ class QReaderNotFound(QtW.QWidget):
     """No reader function is defined for the file.
 
     The content of the file is not read yet. This widget only contains the file path.
+    "Open as text" button does not guarantee that the file can be opened as text and
+    does not check the file size. Please make sure the file is actually a text file by
+    yourself.
+
+    Remote files are also supported.
     """
 
     __himena_widget_id__ = "builtins:QReaderNotFound"
@@ -36,17 +41,19 @@ class QReaderNotFound(QtW.QWidget):
     def update_model(self, model: WidgetDataModel[Path]):
         self._file_path = model.value
         if not self._file_path.exists():
-            self._label.setText(f"File not found: {self._file_path}")
-            return
-        _byte = self._file_path.stat().st_size
-        if _byte < 1024:
+            _byte = -1
+        else:
+            _byte = self._file_path.stat().st_size
+        if _byte < 0:
+            _size = "???"
+        elif _byte < 1024:
             _size = f"{_byte} B"
         elif _byte < 1024**2:
             _size = f"{_byte / 1024:.2f} KB"
         elif _byte < 1024**3:
-            _size = f"{_byte / 1024 ** 2:.2f} MB"
+            _size = f"{_byte / 1024**2:.2f} MB"
         else:
-            _size = f"{_byte / 1024 ** 3:.2f} GB"
+            _size = f"{_byte / 1024**3:.2f} GB"
         self._label.setText(f"Reader not found for {model.value.name} ({_size})")
 
     @validate_protocol

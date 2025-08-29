@@ -241,8 +241,8 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
         mime = a0.mimeData()
         if (
             _drag.get_dragging_model() is not None
-            and mime.urls()
-            and isinstance(mime.parent(), QBaseRemoteExplorerWidget)
+            or mime.urls()
+            or isinstance(mime.parent(), QBaseRemoteExplorerWidget)
         ):
             a0.accept()
         else:
