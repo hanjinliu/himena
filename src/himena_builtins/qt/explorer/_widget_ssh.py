@@ -1,34 +1,25 @@
 from __future__ import annotations
 
 import sys
-import re
-import subprocess
-import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW, QtCore, QtGui
-from superqt.utils import thread_worker
 from superqt import QToggleSwitch
 
-from himena.workflow import RemoteReaderMethod
-from himena import _drag
-from himena.consts import MonospaceFontFamily
-from himena.types import DragDataModel, WidgetDataModel
-from himena.utils.misc import lru_cache
 from himena.qt._qsvg import QColoredSVGIcon
+from himena.workflow import RemoteReaderMethod
+from himena.consts import MonospaceFontFamily
 from himena.utils.cli import local_to_remote
-from himena.widgets import set_status_tip, notify
-from himena.plugins import validate_protocol
 from himena_builtins._consts import ICON_PATH
+from himena_builtins.qt.explorer._base import QBaseRemoteExplorerWidget
 from himena_builtins.qt.widgets._shared import labeled
 
 if TYPE_CHECKING:
-    from himena.style import Theme
     from himena_builtins.qt.explorer import FileExplorerSSHConfig
     from himena.qt import MainWindowQt
 
 
-class QSSHRemoteExplorerWidget(QtW.QWidget):
+class QSSHRemoteExplorerWidget(QBaseRemoteExplorerWidget):
     """A widget for exploring remote files via SSH.
 
     This widget will execute `ls`, `ssh` and `scp` commands to list, read and send
@@ -39,20 +30,16 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
     subprocess commands to WSL.
     """
 
-    on_ls = QtCore.Signal(object)
-
     def __init__(self, ui: MainWindowQt) -> None:
-        super().__init__()
-        self.setAcceptDrops(True)
+        super().__init__(ui)
         font = QtGui.QFont(MonospaceFontFamily)
-        self._ui = ui
         self._host_edit = QtW.QLineEdit()
         self._host_edit.setFont(font)
         self._host_edit.setMaximumWidth(100)
         self._user_name_edit = QtW.QLineEdit()
         self._user_name_edit.setFont(font)
         self._user_name_edit.setMaximumWidth(80)
-        self._port_edit = QtW.QLineEdit()
+        self._port_edit = QtW.QLineEdit("22")
         self._port_edit.setFont(font)
         self._port_edit.setValidator(QtGui.QIntValidator(0, 65535))
         self._port_edit.setMaximumWidth(40)
@@ -77,10 +64,6 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         self._show_hidden_files_switch.setFixedHeight(24)
         self._show_hidden_files_switch.setChecked(False)
 
-        self._pwd_widget = QtW.QLineEdit()
-        self._pwd_widget.setFont(font)
-        self._pwd_widget.editingFinished.connect(self._on_pwd_edited)
-
         self._last_dir_btn = QtW.QPushButton("←")
         self._last_dir_btn.setFixedWidth(20)
         self._last_dir_btn.setToolTip("Back to last directory")
@@ -88,26 +71,12 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         self._up_one_btn = QtW.QPushButton("↑")
         self._up_one_btn.setFixedWidth(20)
         self._up_one_btn.setToolTip("Up one directory")
-        self._refresh_btn = QtW.QPushButton("Refresh")
-        self._refresh_btn.setFixedWidth(60)
+        self._refresh_btn = QtW.QToolButton()
         self._refresh_btn.setToolTip("Refresh current directory")
 
         self._conn_btn = QtW.QPushButton("Connect")
         self._conn_btn.setFixedWidth(60)
         self._conn_btn.setToolTip("Connect to the remote host with the given user name")
-
-        self._file_list_widget = QRemoteTreeWidget(self)
-        self._file_list_widget.itemActivated.connect(self._read_item_to_gui)
-        self._file_list_widget.setFont(font)
-        self._file_list_widget.item_copied.connect(self._copy_item_paths)
-        self._file_list_widget.item_pasted.connect(self._send_files)
-
-        self._pwd = Path("~")
-        self._last_dir = Path("~")
-
-        self._filter_widget = QFilterLineEdit(self)
-        self._filter_widget.textChanged.connect(self._apply_filter)
-        self._filter_widget.setVisible(False)
 
         layout = QtW.QVBoxLayout(self)
 
@@ -140,42 +109,22 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         layout.addWidget(self._file_list_widget)
 
         self._conn_btn.clicked.connect(lambda: self._set_current_path(Path("~")))
-        self._refresh_btn.clicked.connect(lambda: self._set_current_path(self._pwd))
+        self._refresh_btn.clicked.connect(self._refresh_pwd)
         self._last_dir_btn.clicked.connect(
             lambda: self._set_current_path(self._last_dir)
         )
         self._up_one_btn.clicked.connect(
             lambda: self._set_current_path(self._pwd.parent)
         )
-        self._show_hidden_files_switch.toggled.connect(
-            lambda: self._set_current_path(self._pwd)
-        )
+        self._show_hidden_files_switch.toggled.connect(self._refresh_pwd)
         self._light_background = True
+        self.themeChanged.connect(self._on_theme_changed)
 
-    @validate_protocol
-    def theme_changed_callback(self, theme: Theme) -> None:
-        self._light_background = theme.is_light_background()
-        count = self._file_list_widget.topLevelItemCount()
-        self._on_ls_done([self._file_list_widget.topLevelItem(i) for i in range(count)])
-
-    def _set_current_path(self, path: Path):
-        self._pwd_widget.setText(path.as_posix())
-        self._file_list_widget.clear()
-        worker = self._run_ls_command(path)
-        worker.returned.connect(self._on_ls_done)
-        worker.started.connect(lambda: self._set_busy(True))
-        worker.finished.connect(lambda: self._set_busy(False))
-        worker.start()
-        set_status_tip("Obtaining the file content ...", duration=3.0)
-
-    def _on_ls_done(self, items: list[QtW.QTreeWidgetItem]):
-        for item in items:
-            icon = _icon_for_file_type(_item_type(item), self._light_background)
-            item.setIcon(0, icon)
-        self._file_list_widget.addTopLevelItems(items)
-        for i in range(1, self._file_list_widget.columnCount()):
-            self._file_list_widget.resizeColumnToContents(i)
-        set_status_tip(f"Currently under {self._pwd.name}", duration=1.0)
+    def _on_theme_changed(self, theme) -> None:
+        color = "#222222" if self._light_background else "#eeeeee"
+        self._refresh_btn.setIcon(
+            QColoredSVGIcon.fromfile(ICON_PATH / "refresh.svg", color)
+        )
 
     def _set_busy(self, busy: bool):
         self._conn_btn.setEnabled(not busy)
@@ -191,85 +140,6 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         host = self._host_edit.text()
         return f"{username}@{host}"
 
-    @thread_worker
-    def _run_ls_command(self, path: Path) -> list[QtW.QTreeWidgetItem]:
-        opt = "-lhAF" if self._show_hidden_files_switch.isChecked() else "-lhF"
-        args = _make_ls_args(
-            self._host_name(),
-            path.as_posix(),
-            options=opt,
-            port=int(self._port_edit.text()),
-        )
-        if self._is_wsl_switch.isChecked():
-            args = ["wsl", "-e"] + args
-        result = subprocess.run(args, capture_output=True)
-        if result.returncode != 0:
-            raise ValueError(f"Failed to list directory: {result.stderr.decode()}")
-        rows = result.stdout.decode().splitlines()
-        # format of `ls -l` is:
-        # <permission> <link> <owner> <group> <size> <month> <day> <time> <name>
-        items: list[QtW.QTreeWidgetItem] = []
-        for row in rows[1:]:  # the first line is total size
-            *others, month, day, time, name = row.split(maxsplit=8)
-            datetime = f"{month} {day} {time}"
-            if name.endswith("*"):
-                name = name[:-1]  # executable
-            item = QtW.QTreeWidgetItem([name, datetime] + others[::-1])
-            item.setToolTip(0, name)
-            items.append(item)
-
-        # sort directories first
-        items = sorted(
-            items,
-            key=lambda x: (not x.text(0).endswith("/"), x.text(0)),
-        )
-        self._last_dir = self._pwd
-        self._pwd = path
-        return items
-
-    def _read_item_to_gui(self, item: QtW.QTreeWidgetItem):
-        item_type = _item_type(item)
-        if item_type == "d":
-            self._set_current_path(self._pwd / item.text(0))
-        elif item_type == "l":
-            _, real_path = item.text(0).split(" -> ")
-            # solve relative path
-            if real_path.startswith("../"):
-                real_path_abs = self._pwd.parent.joinpath(real_path[3:])
-            elif real_path.startswith("./"):
-                real_path_abs = self._pwd.joinpath(real_path[2:])
-            elif real_path.startswith(("/", "~")):
-                real_path_abs = Path(real_path)
-            else:
-                real_path_abs = self._pwd / real_path
-            args_check_type = _make_get_type_args(
-                self._host_name(),
-                real_path_abs.as_posix(),
-                port=int(self._port_edit.text()),
-            )
-            if self._is_wsl_switch.isChecked():
-                args_check_type = ["wsl", "-e"] + args_check_type
-            result = subprocess.run(args_check_type, capture_output=True)
-            if result.returncode != 0:
-                raise ValueError(f"Failed to get type: {result.stderr.decode()}")
-
-            link_type = result.stdout.decode().strip()
-            if link_type == "directory":
-                self._set_current_path(real_path_abs)
-            else:
-                self._read_and_add_model(real_path_abs)
-        else:
-            self._read_and_add_model(self._pwd / item.text(0))
-
-    def _copy_item_paths(self, items: list[QtW.QTreeWidgetItem]):
-        mime = self._make_mimedata_for_items(items)
-        clipboard = QtGui.QGuiApplication.clipboard()
-        clipboard.setMimeData(mime)
-
-    def _send_files(self, paths: list[Path]):
-        for path in paths:
-            self._ui.submit_async_task(self._send_file, path, path.is_dir())
-
     def _make_reader_method(self, path: Path, is_dir: bool) -> RemoteReaderMethod:
         return RemoteReaderMethod(
             host=self._host_edit.text(),
@@ -281,106 +151,49 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
             force_directory=is_dir,
         )
 
-    def readers_from_mime(self, mime: QtCore.QMimeData) -> list[RemoteReaderMethod]:
-        """Construct readers from the mime data."""
-        is_wsl = self._is_wsl_switch.isChecked()
-        prot = self._protocol_choice.currentText()
-        out: list[RemoteReaderMethod] = []
-        for line in mime.html().split("<br>"):
-            if not line:
-                continue
-            if m := re.compile(r"<span ftype=\"(d|f)\">(.+)</span>").match(line):
-                is_dir = m.group(1) == "d"
-                line = m.group(2)
-            else:
-                continue
-            meth = RemoteReaderMethod.from_str(
-                line,
-                wsl=is_wsl,
-                protocol=prot,
-                force_directory=is_dir,
-            )
-            out.append(meth)
-        return out
+    def _make_ls_args(self, path):
+        opt = "-lhAF" if self._show_hidden_files_switch.isChecked() else "-lhF"
+        host, port = self._host_and_port()
+        args = ["ssh", "-p", port, host, "ls", path + "/", opt]
+        return self._with_wsl_prefix(args)
 
-    def _make_mimedata_for_items(
-        self,
-        items: list[QtW.QTreeWidgetItem],
-    ) -> QtCore.QMimeData:
-        mime = QtCore.QMimeData()
-        mime.setText(
-            "\n".join(
-                meth.to_str() for meth in self._make_reader_methods_for_items(items)
-            )
+    def _make_get_type_args(self, path: str) -> list[str]:
+        host, port = self._host_and_port()
+        args = ["ssh", "-p", port, host, "stat", path, "--format='%F'"]
+        return self._with_wsl_prefix(args)
+
+    def _make_move_args(self, src: str, dst: str) -> list[str]:
+        host, port = self._host_and_port()
+        args = ["ssh", "-p", port, host, "mv", src, dst]
+        return self._with_wsl_prefix(args)
+
+    def _make_trash_args(self, paths: list[str]) -> list[str]:
+        host, port = self._host_and_port()
+        args = ["ssh", "-p", port, host, "trash", *paths]
+        return self._with_wsl_prefix(args)
+
+    def _host_and_port(self) -> tuple[str, str]:
+        """Return the host and port as a tuple."""
+        host = self._host_edit.text()
+        port = self._port_edit.text()
+        return host, str(int(port))
+
+    def _with_wsl_prefix(self, args: list[str]) -> list[str]:
+        """Prefix the command with 'wsl -e' if WSL is enabled."""
+        if self._is_wsl_switch.isChecked() and sys.platform == "win32":
+            return ["wsl", "-e"] + args
+        return args
+
+    def _make_reader_method_from_str(
+        self, line: str, is_dir: bool
+    ) -> RemoteReaderMethod:
+        """Create a RemoteReaderMethod from a string path."""
+        return RemoteReaderMethod.from_str(
+            line,
+            wsl=self._is_wsl_switch.isChecked(),
+            protocol=self._protocol_choice.currentText(),
+            force_directory=is_dir,
         )
-        mime.setHtml(
-            "<br>".join(
-                f'<span ftype="{"d" if meth.force_directory else "f"}">{meth.to_str()}</span>'
-                for meth in self._make_reader_methods_for_items(items)
-            )
-        )
-        mime.setParent(self)  # this is needed to trace where the MIME data comes from
-        return mime
-
-    def _make_reader_methods_for_items(
-        self, items: list[QtW.QTreeWidgetItem]
-    ) -> list[RemoteReaderMethod]:
-        methods: list[RemoteReaderMethod] = []
-        for item in items:
-            item_type = _item_type(item)
-            if item_type == "l":
-                _, real_path = item.text(0).split(" -> ")
-                remote_path = self._pwd / real_path
-                is_dir = False
-            else:
-                remote_path = self._pwd / item.text(0)
-                is_dir = item_type == "d"
-            meth = self._make_reader_method(remote_path, is_dir)
-            methods.append(meth)
-        return methods
-
-    @thread_worker
-    def _read_remote_path_worker(
-        self, path: Path, is_dir: bool = False
-    ) -> WidgetDataModel:
-        return self._make_reader_method(path, is_dir).run()
-
-    def _read_and_add_model(self, path: Path, is_dir: bool = False):
-        """Read the remote file in another thread and add the model in the main."""
-        worker = self._read_remote_path_worker(path, is_dir)
-        worker.returned.connect(self._ui.add_data_model)
-        worker.started.connect(lambda: self._set_busy(True))
-        worker.finished.connect(lambda: self._set_busy(False))
-        worker.start()
-        set_status_tip(f"Reading file: {path}", duration=2.0)
-
-    def _on_pwd_edited(self):
-        pwd_text = self._pwd_widget.text()
-        if "*" in pwd_text or "?" in pwd_text:
-            self._pwd_widget.setSelection(0, len(pwd_text))
-            raise ValueError("Wildcards are not supported.")
-        if self._pwd != Path(pwd_text):
-            self._set_current_path(Path(pwd_text))
-
-    def dragEnterEvent(self, a0):
-        if _drag.get_dragging_model() is not None or a0.mimeData().urls():
-            a0.accept()
-        else:
-            a0.ignore()
-
-    def dragMoveEvent(self, a0):
-        a0.acceptProposedAction()
-        return super().dragMoveEvent(a0)
-
-    def dropEvent(self, a0):
-        if model := _drag.drop():
-            self._ui.submit_async_task(self._send_model, model)
-            set_status_tip("Start sending file ...")
-        elif urls := a0.mimeData().urls():
-            for url in urls:
-                path = Path(url.toLocalFile())
-                self._ui.submit_async_task(self._send_file, path, path.is_dir())
-                set_status_tip(f"Sent to {self._host_name()}:{path.name}", duration=2.8)
 
     def update_configs(
         self,
@@ -394,182 +207,17 @@ class QSSHRemoteExplorerWidget(QtW.QWidget):
         if cfg.default_host and cfg.default_user and self._pwd == Path("~"):
             self._set_current_path(Path("~"))
 
-    def _send_model(self, model: DragDataModel):
-        data_model = model.data_model()
-        with tempfile.TemporaryDirectory() as tmpdir:
-            tmpdir = Path(tmpdir)
-            src_pathobj = data_model.write_to_directory(tmpdir)
-            self._send_file(src_pathobj)
-
-    def _send_file(self, src: Path, is_dir: bool = False):
-        """Send local file to the remote host."""
-        dst_remote = self._pwd / src.name
-        args = local_to_remote(
+    def _make_local_to_remote_args(
+        self, src: Path, dst_remote: str, is_dir: bool = False
+    ) -> list[str]:
+        return local_to_remote(
             self._protocol_choice.currentText(),
             src,
-            f"{self._host_name()}:{dst_remote.as_posix()}",
+            f"{self._host_name()}:{dst_remote}",
             is_wsl=self._is_wsl_switch.isChecked(),
             is_dir=is_dir,
             port=int(self._port_edit.text()),
         )
-        subprocess.run(args)
-        notify(f"Sent {src.as_posix()} to {dst_remote.as_posix()}", duration=2.8)
-
-    def _apply_filter(self, text: str):
-        for i in range(self._file_list_widget.topLevelItemCount()):
-            item = self._file_list_widget.topLevelItem(i)
-            ok = all(part in item.text(0).lower() for part in text.lower().split(" "))
-            item.setHidden(not ok)
-
-    def keyPressEvent(self, a0):
-        if (
-            a0.key() == QtCore.Qt.Key.Key_F
-            and a0.modifiers() == QtCore.Qt.KeyboardModifier.ControlModifier
-        ):
-            self._filter_widget.setVisible(not self._filter_widget.isVisible())
-            self._filter_widget.setVisible(True)
-            self._filter_widget.setFocus()
-            return
-        return super().keyPressEvent(a0)
-
-
-class QFilterLineEdit(QtW.QLineEdit):
-    def __init__(self, parent: QSSHRemoteExplorerWidget):
-        super().__init__(parent)
-        self.setPlaceholderText("Filter files...")
-
-    def keyPressEvent(self, a0):
-        if a0.key() == QtCore.Qt.Key.Key_Escape:
-            self.clear()
-            self.setVisible(False)
-            return
-        return super().keyPressEvent(a0)
-
-
-class QRemoteTreeWidget(QtW.QTreeWidget):
-    item_copied = QtCore.Signal(list)
-    item_pasted = QtCore.Signal(list)  # list of local Path objects
-
-    def __init__(self, parent: QSSHRemoteExplorerWidget):
-        super().__init__(parent)
-        self.setIndentation(0)
-        self.setColumnWidth(0, 180)
-        self.setHeaderLabels(
-            ["Name", "Datetime", "Size", "Group", "Owner", "Link", "Permission"]
-        )
-        self.setSelectionMode(QtW.QAbstractItemView.SelectionMode.ExtendedSelection)
-        self.header().setDefaultAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        self.header().setFixedHeight(20)
-        self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
-        self.customContextMenuRequested.connect(self._show_context_menu)
-
-    def _make_context_menu(self):
-        menu = QtW.QMenu(self)
-        open_action = menu.addAction("Open")
-        open_action.triggered.connect(
-            lambda: self.itemActivated.emit(self.currentItem(), 0)
-        )
-        copy_action = menu.addAction("Copy")
-        copy_action.triggered.connect(
-            lambda: self.item_copied.emit(self.selectedItems())
-        )
-        paste_action = menu.addAction("Paste")
-        paste_action.triggered.connect(self._paste_from_clipboard)
-        menu.addSeparator()
-        download_action = menu.addAction("Download")
-        download_action.triggered.connect(
-            lambda: self._save_items(self.selectedItems())
-        )
-        return menu
-
-    def _show_context_menu(self, pos: QtCore.QPoint):
-        self._make_context_menu().exec(self.viewport().mapToGlobal(pos))
-
-    def keyPressEvent(self, event):
-        _mod = event.modifiers()
-        _key = event.key()
-        if _mod == QtCore.Qt.KeyboardModifier.ControlModifier:
-            if _key == QtCore.Qt.Key.Key_C:
-                items = self.selectedItems()
-                self.item_copied.emit(items)
-                return None
-            elif _key == QtCore.Qt.Key.Key_V:
-                return self._paste_from_clipboard()
-        return super().keyPressEvent(event)
-
-    def _paste_from_clipboard(self):
-        clipboard = QtGui.QGuiApplication.clipboard()
-        mime = clipboard.mimeData()
-        if mime.hasUrls():
-            urls = mime.urls()
-            paths = [Path(url.toLocalFile()) for url in urls]
-            self.item_pasted.emit(paths)
-        else:
-            notify("No valid file paths in the clipboard.")
-
-    # drag-and-drop
-    def mouseMoveEvent(self, e: QtGui.QMouseEvent):
-        if e.buttons() & QtCore.Qt.MouseButton.LeftButton:
-            self._start_drag(e.pos())
-            return None
-        return super().mouseMoveEvent(e)
-
-    def _start_drag(self, pos: QtCore.QPoint):
-        items = self.selectedItems()
-        mime = self.parent()._make_mimedata_for_items(items)
-        drag = QtGui.QDrag(self)
-        drag.setMimeData(mime)
-        drag.exec(QtCore.Qt.DropAction.CopyAction)
-
-    def _save_items(self, items: list[QtW.QTreeWidgetItem]):
-        """Save the selected items to local files."""
-        download_dir = Path.home() / "Downloads"
-        src_paths: list[Path] = []
-        for item in items:
-            item_type = _item_type(item)
-            if item_type == "l":
-                _, real_path = item.text(0).split(" -> ")
-                remote_path = self.parent()._pwd / real_path
-            else:
-                remote_path = self.parent()._pwd / item.text(0)
-            src_paths.append(remote_path)
-
-        readers = self.parent()._make_reader_methods_for_items(items)
-        worker = make_paste_remote_files_worker(readers, download_dir)
-        qui = self.parent()._ui._backend_main_window
-        qui._job_stack.add_worker(worker, "Downloading files", total=len(src_paths))
-        worker.start()
-
-    if TYPE_CHECKING:
-
-        def parent(self) -> QSSHRemoteExplorerWidget: ...
-
-
-def _make_ls_args(
-    host: str, path: str, port: int = 22, options: str = "-AF"
-) -> list[str]:
-    return ["ssh", "-p", str(port), host, "ls", path + "/", options]
-
-
-def _make_get_type_args(host: str, path: str, port: int = 22) -> list[str]:
-    return ["ssh", "-p", str(port), host, "stat", path, "--format='%F'"]
-
-
-def _item_type(item: QtW.QTreeWidgetItem) -> Literal["d", "l", "f"]:
-    """First character of the permission string."""
-    return item.text(6)[0]
-
-
-@lru_cache(maxsize=10)
-def _icon_for_file_type(file_type: str, light_background: bool) -> QColoredSVGIcon:
-    color = "#222222" if light_background else "#eeeeee"
-    if file_type == "d":
-        svg_path = ICON_PATH / "explorer_folder.svg"
-    elif file_type == "l":
-        svg_path = ICON_PATH / "explorer_symlink.svg"
-    else:
-        svg_path = ICON_PATH / "explorer_file.svg"
-    return QColoredSVGIcon.fromfile(svg_path, color=color)
 
 
 class QSeparator(QtW.QFrame):
@@ -581,22 +229,3 @@ class QSeparator(QtW.QFrame):
         self.setSizePolicy(
             QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Fixed
         )
-
-
-@thread_worker
-def make_paste_remote_files_worker(
-    readers: list[RemoteReaderMethod],
-    dirpath: Path,
-):
-    for reader in readers:
-        stem = reader.path.stem
-        ext = reader.path.suffix
-        suffix = 0
-        dst = dirpath / f"{stem}{ext}"
-        while dst.exists():
-            dst = dirpath / f"{stem}_{suffix}{ext}"
-            suffix += 1
-        reader.run_command(dst)
-        if dst.exists():
-            dst.touch()
-        yield
