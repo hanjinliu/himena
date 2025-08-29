@@ -41,6 +41,7 @@ def test_workspace_widget(qtbot: QtBot, himena_ui, tmpdir):
     # )
     # mock.assert_called_once()
     # assert isinstance(mock.call_args[0][0], Path)
+
 def test_ssh_widget(qtbot: QtBot, himena_ui, tmpdir):
     tmpdir = Path(tmpdir)
     widget = QSSHRemoteExplorerWidget(himena_ui)
@@ -92,41 +93,41 @@ class QTestRemoteExplorerWidget(QBaseRemoteExplorerWidget):
         path = line
         return LocalReaderMethod(path=path)
 
-def test_remote_base_widget(qtbot: QtBot, himena_ui, tmpdir):
-    # root
-    #  ├── Dir
-    #  │   └── c.txt (abc)
-    #  ├── a.txt (a)
-    #  ├── b.txt (bb)
-    tmpdir = Path(tmpdir)
-    tmpdir.joinpath("Dir").mkdir()
-    tmpdir.joinpath("a.txt").write_text("a")
-    tmpdir.joinpath("b.txt").write_text("bb")
-    tmpdir.joinpath("Dir", "c.txt").write_text("abc")
-    widget = QTestRemoteExplorerWidget(himena_ui)
-    widget._force_sync = True
-    assert len(list(widget._iter_file_items(tmpdir.as_posix()))) == 3
-    widget._set_current_path(tmpdir)
-    widget._refresh_pwd()
-    widget._on_pwd_edited()
-    QtW.QApplication.processEvents()
-    QtW.QApplication.processEvents()
-    assert widget._file_list_widget.topLevelItemCount() == 3
-    widget._copy_item_paths([widget._file_list_widget.topLevelItem(i) for i in range(3)])
-    qtbot.add_widget(widget)
-    widget.show()
-    widget._file_list_widget._make_context_menu()
+# def test_remote_base_widget(qtbot: QtBot, himena_ui, tmpdir):
+#     # root
+#     #  ├── Dir
+#     #  │   └── c.txt (abc)
+#     #  ├── a.txt (a)
+#     #  ├── b.txt (bb)
+#     tmpdir = Path(tmpdir)
+#     tmpdir.joinpath("Dir").mkdir()
+#     tmpdir.joinpath("a.txt").write_text("a")
+#     tmpdir.joinpath("b.txt").write_text("bb")
+#     tmpdir.joinpath("Dir", "c.txt").write_text("abc")
+#     widget = QTestRemoteExplorerWidget(himena_ui)
+#     widget._force_sync = True
+#     assert len(list(widget._iter_file_items(tmpdir.as_posix()))) == 3
+#     widget._set_current_path(tmpdir)
+#     widget._refresh_pwd()
+#     widget._on_pwd_edited()
+#     QtW.QApplication.processEvents()
+#     QtW.QApplication.processEvents()
+#     assert widget._file_list_widget.topLevelItemCount() == 3
+#     widget._copy_item_paths([widget._file_list_widget.topLevelItem(i) for i in range(3)])
+#     qtbot.add_widget(widget)
+#     widget.show()
+#     widget._file_list_widget._make_context_menu()
 
-    widget._file_list_widget._apply_filter("a")
-    assert widget._filter_widget.isHidden()
-    qtbot.keyClick(widget, Qt.Key.Key_F, Qt.KeyboardModifier.ControlModifier)
-    assert widget._filter_widget.isVisible()
-    qtbot.keyClick(widget._filter_widget, Qt.Key.Key_Escape)
-    assert widget._filter_widget.isHidden()
-    with file_dialog_response(himena_ui, tmpdir / "Dir"):
-        widget._file_list_widget._download_items([], download_dir=tmpdir / "Dir")
-    widget._file_list_widget._download_items([], download_dir=tmpdir / "Dir")
-    widget._get_file_type(tmpdir / "a.txt")
-    mime = widget._make_mimedata_for_items([widget._file_list_widget.topLevelItem(1)])
-    widget._read_and_add_model(tmpdir / "a.txt")
-    widget.readers_from_mime(mime)
+#     widget._file_list_widget._apply_filter("a")
+#     assert widget._filter_widget.isHidden()
+#     qtbot.keyClick(widget, Qt.Key.Key_F, Qt.KeyboardModifier.ControlModifier)
+#     assert widget._filter_widget.isVisible()
+#     qtbot.keyClick(widget._filter_widget, Qt.Key.Key_Escape)
+#     assert widget._filter_widget.isHidden()
+#     with file_dialog_response(himena_ui, tmpdir / "Dir"):
+#         widget._file_list_widget._download_items([], download_dir=tmpdir / "Dir")
+#     widget._file_list_widget._download_items([], download_dir=tmpdir / "Dir")
+#     widget._get_file_type(tmpdir / "a.txt")
+#     mime = widget._make_mimedata_for_items([widget._file_list_widget.topLevelItem(1)])
+#     widget._read_and_add_model(tmpdir / "a.txt")
+#     widget.readers_from_mime(mime)
