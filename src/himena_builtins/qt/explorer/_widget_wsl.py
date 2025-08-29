@@ -2,16 +2,20 @@ from __future__ import annotations
 
 import getpass
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterator, Literal
 from qtpy import QtWidgets as QtW, QtCore
 from superqt import QToggleSwitch
 
 from himena.qt._qsvg import QColoredSVGIcon
 from himena.workflow import WslReaderMethod
 from himena.utils.cli import local_to_wsl
-from himena.widgets import set_status_tip
 from himena_builtins._consts import ICON_PATH
-from himena_builtins.qt.explorer._base import QBaseRemoteExplorerWidget
+from himena_builtins.qt.explorer._base import (
+    QBaseRemoteExplorerWidget,
+    ls_args_to_items,
+    exec_command,
+    stat_args_to_type,
+)
 from himena_builtins.qt.widgets._shared import labeled
 
 if TYPE_CHECKING:
@@ -84,34 +88,31 @@ class QWSLRemoteExplorerWidget(QBaseRemoteExplorerWidget):
             QColoredSVGIcon.fromfile(ICON_PATH / "refresh.svg", color)
         )
 
-    def _make_ls_args(self, path: str):
+    def _iter_file_items(self, path) -> Iterator[QtW.QTreeWidgetItem]:
         opt = "-lhAF" if self._show_hidden_files_switch.isChecked() else "-lhF"
-        return ["wsl", "-e", "ls", path + "/", opt]
+        args = ["wsl", "-e", "ls", path + "/", opt]
+        yield from ls_args_to_items(args)
 
-    def _make_get_type_args(self, path: str) -> list[str]:
-        return ["stat", path, "--format='%F'"]
+    def _get_file_type(self, path: str) -> Literal["d", "f"]:
+        return stat_args_to_type(["stat", path, "--format='%F'"])
 
-    def _make_move_args(self, src: str, dst: str) -> list[str]:
-        return ["wsl", "-e", "mv", src, dst]
+    def _move_files(self, src: str, dst: str) -> None:
+        exec_command(["wsl", "-e", "mv", src, dst])
 
-    def _make_trash_args(self, paths: list[str]) -> list[str]:
-        return ["wsl", "-e", "trash", *paths]
+    def _trash_files(self, paths: list[str]) -> None:
+        exec_command(["wsl", "-e", "trash", *paths])
 
-    def _make_local_to_remote_args(self, src, dst_remote, is_dir: bool = False):
+    def _send_file_args(self, src, dst_remote, is_dir: bool = False):
         return local_to_wsl(src, dst_remote, is_dir=is_dir)
 
+    def _send_file(self, src, dst_remote, is_dir: bool = False):
+        exec_command(self._send_file_args(src, dst_remote, is_dir=is_dir))
+
     def _set_current_path(self, path: Path):
-        fp = path.as_posix()
-        if fp.startswith("~"):
-            fp = f"/home/{getpass.getuser()}/{fp[1:]}"
-        self._pwd_widget.setText(fp)
-        self._file_list_widget.clear()
-        worker = self._run_ls_command(path)
-        worker.returned.connect(self._on_ls_done)
-        worker.started.connect(lambda: self._set_busy(True))
-        worker.finished.connect(lambda: self._set_busy(False))
-        worker.start()
-        set_status_tip("Obtaining the file content ...", duration=3.0)
+        if (fp := path.as_posix()).startswith("~"):
+            # The ~ in WSL is expanded to the Windows home directory.
+            path = Path(f"/home/{getpass.getuser()}/{fp[1:]}")
+        return super()._set_current_path(path)
 
     def _set_busy(self, busy: bool):
         self._refresh_btn.setEnabled(not busy)
