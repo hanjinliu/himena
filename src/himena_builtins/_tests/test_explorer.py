@@ -138,3 +138,4 @@ def test_remote_base_widget(qtbot: QtBot, himena_ui, tmpdir):
 
     # cleanup
     shutil.rmtree(tmpdir, ignore_errors=True)
+    qtbot.wait(300)
