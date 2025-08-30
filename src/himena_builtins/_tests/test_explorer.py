@@ -2,6 +2,7 @@ from pathlib import Path
 from qtpy import QtWidgets as QtW
 from qtpy.QtCore import Qt
 from unittest.mock import MagicMock
+import shutil
 from himena.testing import choose_one_dialog_response
 from himena.testing.dialog import file_dialog_response
 from himena.workflow import LocalReaderMethod
@@ -107,16 +108,15 @@ def test_remote_base_widget(qtbot: QtBot, himena_ui, tmpdir):
     widget = QTestRemoteExplorerWidget(himena_ui)
     qtbot.add_widget(widget)
     widget.show()
+    QtW.QApplication.processEvents()
     widget._force_sync = True
     assert len(list(widget._iter_file_items(tmpdir.as_posix()))) == 3
     widget._set_current_path(tmpdir)
     widget._refresh_pwd()
     widget._on_pwd_edited()
     QtW.QApplication.processEvents()
-    QtW.QApplication.processEvents()
     assert widget._file_list_widget.topLevelItemCount() == 3
     widget._copy_item_paths([widget._file_list_widget.topLevelItem(i) for i in range(3)])
-    QtW.QApplication.processEvents()
     widget._file_list_widget._make_context_menu()
 
     widget._file_list_widget._apply_filter("a")
@@ -135,3 +135,6 @@ def test_remote_base_widget(qtbot: QtBot, himena_ui, tmpdir):
     widget._read_and_add_model(tmpdir / "a.txt")
     QtW.QApplication.processEvents()
     widget.readers_from_mime(mime)
+
+    # cleanup
+    shutil.rmtree(tmpdir, ignore_errors=True)
