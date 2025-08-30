@@ -5,7 +5,7 @@ from pathlib import Path
 import re
 import subprocess
 import tempfile
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Iterator, Literal
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from superqt.utils import thread_worker, FunctionWorker
 
@@ -121,28 +121,19 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
     def _make_reader_method_from_str(self, line: str, is_dir: bool) -> PathReaderMethod:
         raise NotImplementedError
 
-    def _set_current_path(self, path: Path):
-        """Set the current path and update the UI accordingly."""
-
-    def _make_ls_args(self, path: str) -> list[str]:
+    def _iter_file_items(self, path: str) -> list[QtW.QTreeWidgetItem]:
         raise NotImplementedError
 
-    def _make_get_type_args(self, path: str) -> list[str]:
-        """Make the command to get the type of a file."""
+    def _get_file_type(self, path: str) -> Literal["d", "f"]:
         raise NotImplementedError
 
-    def _make_move_args(self, old_name: str, new_name: str) -> list[str]:
-        """Make the command to rename a file."""
+    def _move_files(self, old_name: str, new_name: str) -> None:
         raise NotImplementedError
 
-    def _make_trash_args(self, paths: list[str]) -> list[str]:
-        """Make the command to trash files."""
+    def _trash_files(self, paths: list[str]):
         raise NotImplementedError
 
-    def _make_local_to_remote_args(
-        self, src: Path, dst_remote: str, is_dir: bool = False
-    ) -> list[str]:
-        """Make the command to send a local file to the remote host."""
+    def _send_file(self, src: Path, dst_remote: str, is_dir: bool = False):
         raise NotImplementedError
 
     #############################################
@@ -165,21 +156,9 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
 
     @thread_worker
     def _run_ls_command(self, path: Path) -> list[QtW.QTreeWidgetItem]:
-        args = self._make_ls_args(path.as_posix())
-        result = subprocess.run(args, capture_output=True)
-        if result.returncode != 0:
-            raise ValueError(f"Failed to list directory: {result.stderr.decode()}")
-        rows = result.stdout.decode().splitlines()
-        # format of `ls -l` is:
-        # <permission> <link> <owner> <group> <size> <month> <day> <time> <name>
         items: list[QtW.QTreeWidgetItem] = []
-        for row in rows[1:]:  # the first line is total size
-            *others, month, day, time, name = row.split(maxsplit=8)
-            datetime = f"{month} {day} {time}"
-            if name.endswith("*"):
-                name = name[:-1]  # executable
-            item = QtW.QTreeWidgetItem([name, datetime] + others[::-1])
-            item.setToolTip(0, name)
+        for item in self._iter_file_items(path.as_posix()):
+            item.setToolTip(0, item.text(0))
             items.append(item)
 
         # sort directories first
@@ -212,8 +191,8 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
             if result.returncode != 0:
                 raise ValueError(f"Failed to get type: {result.stderr.decode()}")
 
-            link_type = result.stdout.decode().strip()
-            if link_type == "directory":
+            link_type = self._get_file_type(real_path_abs.as_posix())
+            if link_type == "d":
                 self._set_current_path(real_path_abs)
             else:
                 self._read_and_add_model(real_path_abs)
@@ -225,9 +204,9 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir = Path(tmpdir)
             src_pathobj = data_model.write_to_directory(tmpdir)
-            self._send_file(src_pathobj)
+            self._send_file_to_remote(src_pathobj)
 
-    def _send_file(self, src: Path, is_dir: bool = False):
+    def _send_file_to_remote(self, src: Path, is_dir: bool = False):
         """Send local file to the remote host."""
         if src.name in self._file_list_widget.existing_names():
             raise ValueError(
@@ -236,10 +215,7 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
         if src.name in [".", ".."] or "/" in src.name:
             raise ValueError(f"Invalid file name: {src.name!r}")
         dst_remote = self._pwd / src.name
-        args = self._make_local_to_remote_args(
-            src, dst_remote.as_posix(), is_dir=is_dir
-        )
-        subprocess.run(args)
+        self._send_file(src, dst_remote.as_posix(), is_dir=is_dir)
         notify(f"Sent {src.as_posix()} to {dst_remote.as_posix()}", duration=2.8)
 
     def dragEnterEvent(self, a0):
@@ -264,7 +240,9 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
         elif urls := a0.mimeData().urls():
             for url in urls:
                 path = Path(url.toLocalFile())
-                self._ui.submit_async_task(self._send_file, path, path.is_dir())
+                self._ui.submit_async_task(
+                    self._send_file_to_remote, path, path.is_dir()
+                )
                 set_status_tip(f"Sent to {path.name}", duration=2.8)
         elif type((mime := a0.mimeData()).parent()) is type(self):
             # this is a drag from another remote explorer widget
@@ -284,14 +262,9 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
                         paths.extend(meth.path)
 
                 for path in paths:
-                    args = self._make_move_args(
+                    self._move_files(
                         path.as_posix(), dst_dir.joinpath(path.name).as_posix()
                     )
-                    result = subprocess.run(args, capture_output=True)
-                    if result.returncode != 0:
-                        raise ValueError(
-                            f"Failed to move file: {result.stderr.decode()}"
-                        )
                 if paths:
                     self._refresh_pwd()
 
@@ -307,7 +280,7 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
     def _send_files(self, paths: list[Path]):
         """Send files from the local system to the remote host."""
         for path in paths:
-            self._ui.submit_async_task(self._send_file, path, path.is_dir())
+            self._ui.submit_async_task(self._send_file_to_remote, path, path.is_dir())
 
     def _rename_item(self, item: QtW.QTreeWidgetItem, old_name: str, new_name: str):
         """Rename the item in the remote directory."""
@@ -315,10 +288,7 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
             return
         old_path = self._pwd / old_name
         new_path = self._pwd / new_name
-        args = self._make_move_args(old_path.as_posix(), new_path.as_posix())
-        result = subprocess.run(args, capture_output=True)
-        if result.returncode != 0:
-            raise ValueError(f"Failed to rename file: {result.stderr.decode()}")
+        self._move_files(old_path.as_posix(), new_path.as_posix())
         if item_type(item) == "f":
             item.setText(0, new_name)
         else:
@@ -327,10 +297,7 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
     def _trash_items(self, items: list[QtW.QTreeWidgetItem]):
         """Move the selected items to the trash."""
         paths = [self._pwd.joinpath(item.text(0)).as_posix() for item in items]
-        args = self._make_trash_args(paths)
-        result = subprocess.run(args, capture_output=True)
-        if result.returncode != 0:
-            raise ValueError(f"Failed to move to trash: {result.stderr.decode()}")
+        self._trash_files(paths)
         item_str = "\n- ".join(item.text(0) for item in items)
         notify(f"Moved items to trash:\n- {item_str}", duration=2.8)
         self._refresh_pwd()
@@ -675,3 +642,38 @@ def make_paste_remote_files_worker(
             if dst.exists():
                 dst.touch()
             yield
+
+
+def ls_args_to_items(args: list[str]) -> Iterator[QtW.QTreeWidgetItem]:
+    result = subprocess.run(args, capture_output=True)
+    if result.returncode != 0:
+        raise ValueError(f"Failed to list directory: {result.stderr.decode()}")
+    rows = result.stdout.decode().splitlines()
+
+    # format of `ls -l` is:
+    # <permission> <link> <owner> <group> <size> <month> <day> <time> <name>
+    for row in rows[1:]:  # the first line is total size
+        *others, month, day, time, name = row.split(maxsplit=8)
+        datetime = f"{month} {day} {time}"
+        if name.endswith("*"):
+            name = name[:-1]  # executable
+        item = QtW.QTreeWidgetItem([name, datetime] + others[::-1])
+        yield item
+
+
+def stat_args_to_type(args: list[str]) -> Literal["d", "f"]:
+    result = subprocess.run(args, capture_output=True)
+    if result.returncode != 0:
+        raise ValueError(f"Failed to get type: {result.stderr.decode()}")
+    typ = result.stdout.decode().strip()
+    if typ == "directory":
+        return "d"
+    else:
+        return "f"
+
+
+def exec_command(args: list[str]) -> None:
+    result = subprocess.run(args, capture_output=True)
+    if result.returncode != 0:
+        cmd = " ".join(args)
+        raise ValueError(f"Failed to execute command {cmd}: {result.stderr.decode()}")
