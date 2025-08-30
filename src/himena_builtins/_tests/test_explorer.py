@@ -44,7 +44,6 @@ def test_workspace_widget(qtbot: QtBot, himena_ui, tmpdir):
     # mock.assert_called_once()
     # assert isinstance(mock.call_args[0][0], Path)
 
-@pytest.mark.skipif(sys.platform == "ubuntu", reason="segfault for some reason")
 def test_ssh_widget(qtbot: QtBot, himena_ui, tmpdir):
     tmpdir = Path(tmpdir)
     widget = QSSHRemoteExplorerWidget(himena_ui)
@@ -96,7 +95,7 @@ class QTestRemoteExplorerWidget(QBaseRemoteExplorerWidget):
         path = line
         return LocalReaderMethod(path=path)
 
-@pytest.mark.skipif(sys.platform == "ubuntu", reason="segfault for some reason")
+@pytest.mark.skipif(sys.platform == "linux", reason="segfault for some reason")
 def test_remote_base_widget(qtbot: QtBot, himena_ui, tmpdir):
     # root
     #  ├── Dir
