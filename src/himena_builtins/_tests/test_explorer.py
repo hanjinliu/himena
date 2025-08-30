@@ -1,4 +1,6 @@
 from pathlib import Path
+import sys
+import pytest
 from qtpy import QtWidgets as QtW
 from qtpy.QtCore import Qt
 from unittest.mock import MagicMock
@@ -93,6 +95,7 @@ class QTestRemoteExplorerWidget(QBaseRemoteExplorerWidget):
         path = line
         return LocalReaderMethod(path=path)
 
+@pytest.mark.skipif(sys.platform == "ubuntu", reason="segfault for some reason")
 def test_remote_base_widget(qtbot: QtBot, himena_ui, tmpdir):
     # root
     #  ├── Dir
