@@ -25,7 +25,7 @@ class QResultStack(QtW.QTableWidget):
         self.horizontalHeader().hide()
         self.horizontalHeader().setDefaultSectionSize(56)
         self._items: list[dict[str, Any]] = []  # the actual python objects
-        self._roi_height = 40  # default row height
+        self._roi_height = 48  # default row height
 
     def append_result(self, item: dict[str, Any]) -> None:
         """Append a new result to the stack."""

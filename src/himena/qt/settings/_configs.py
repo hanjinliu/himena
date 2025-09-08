@@ -48,6 +48,13 @@ class QPluginConfigs(QtW.QWidget):
         reg = AppActionRegistry.instance()
         with type_map.type_registered(bool, widget_type=LabeledToggleSwitch):
             for plugin_id, plugin_config in self._ui.app_profile.plugin_configs.items():
+                if plugin_id not in reg._plugin_default_configs:
+                    warnings.warn(
+                        f"Plugin {plugin_id!r} registered in AppProfile but not found in AppActionRegistry.",
+                        UserWarning,
+                        stacklevel=2,
+                    )
+                    continue
                 try:
                     widgets: list[mgw.Widget] = []
                     plugin_title = reg._plugin_default_configs[plugin_id].title
