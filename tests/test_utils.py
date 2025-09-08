@@ -253,3 +253,27 @@ def test_exception():
 
     with handler:
         warnings.warn("Test warning", UserWarning, stacklevel=2)
+
+def test_anchor():
+    from himena.anchor import (
+        dict_to_anchor,
+        anchor_to_dict,
+        TopLeftConstAnchor,
+        TopRightConstAnchor,
+        BottomLeftConstAnchor,
+        BottomRightConstAnchor,
+        WindowAnchor,
+    )
+
+    for anchor in [
+        TopLeftConstAnchor(5, 7),
+        TopRightConstAnchor(5, 7),
+        BottomLeftConstAnchor(5, 7),
+        BottomRightConstAnchor(5, 7),
+    ]:
+        assert isinstance(anchor, WindowAnchor)
+        rect = anchor.apply_anchor((600, 700), (320, 220))
+        assert rect is not None
+        anchor.update_for_window_rect((600, 700), rect)
+        d = anchor_to_dict(anchor)
+        dict_to_anchor(d)

@@ -57,7 +57,6 @@ class QSettingsDialog(QtW.QDialog):
         self._stack.addWidget(widget)
         layout.addWidget(QTitleLabel(title, 18))
         layout.addWidget(panel)
-        return None
 
     def keyPressEvent(self, a0: QtGui.QKeyEvent) -> None:
         if (
