@@ -206,6 +206,9 @@ def colored(text: str, color: str) -> str:
     return f"<font color={color!r}>{text}</font>"
 
 
+_QCOMMAND_PALETTE_FLAGS = Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
+
+
 class QCommandMatchModel(QtCore.QAbstractListModel):
     """A list model for the command palette."""
 
@@ -221,7 +224,7 @@ class QCommandMatchModel(QtCore.QAbstractListModel):
         return QtCore.QVariant()
 
     def flags(self, index: QtCore.QModelIndex) -> Qt.ItemFlag:
-        return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
+        return _QCOMMAND_PALETTE_FLAGS
 
 
 class QCommandLabel(QtW.QLabel):

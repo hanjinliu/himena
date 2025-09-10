@@ -15,6 +15,7 @@ class HimenaCliNamespace(argparse.Namespace):
     install: list[str]
     uninstall: list[str]
     uninstall_outdated: bool
+    get: list[str]
     list_plugins: bool
     list_profiles: bool
     clear_plugin_configs: bool
@@ -91,6 +92,10 @@ class HimenaArgumentParser(argparse.ArgumentParser):
                 "Uninstall all the outdated plugins (plugins that are listed in the) "
                 "profile but cannot be found in the Python environment."
             )
+        )
+        self.add_argument(
+            "--get", "-g", nargs="+", default=[],
+            help="Install packages from PyPI and add them as plugins."
         )
         self.add_argument(
             "--list-plugins", action="store_true", help="List all the available plugins."

@@ -1,6 +1,5 @@
 """Builtin File explorer plugin."""
 
-import sys
 from dataclasses import dataclass
 from himena.plugins import (
     register_dock_widget_action,
@@ -8,8 +7,8 @@ from himena.plugins import (
     config_field,
 )
 from himena.widgets import MainWindow
+from himena.consts import IS_WINDOWS
 
-WINDOWS = sys.platform == "win32"
 
 add_default_status_tip(
     short="File Explorer",
@@ -38,7 +37,7 @@ class FileExplorerSSHConfig:
     default_use_wsl: bool = config_field(
         default=False,
         tooltip="Use WSL to connect to the host in Windows",
-        enabled=WINDOWS,
+        enabled=IS_WINDOWS,
     )
     default_protocol: str = config_field(
         default="rsync",
@@ -76,7 +75,7 @@ def make_file_explorer_ssh_widget(ui: MainWindow):
     return QSSHRemoteExplorerWidget(ui)
 
 
-if WINDOWS:
+if IS_WINDOWS:
 
     @register_dock_widget_action(
         title="WSL File Explorer",

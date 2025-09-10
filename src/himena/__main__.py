@@ -76,6 +76,11 @@ def _main(args: HimenaCliNamespace):
             print(path.stem)
         return
 
+    if args.get:
+        from himena._cli.install import get_and_install
+
+        return get_and_install(args.get, prof_name)
+
     if args.install or args.uninstall:
         from himena._cli.install import install_and_uninstall
 

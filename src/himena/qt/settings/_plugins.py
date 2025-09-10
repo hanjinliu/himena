@@ -89,6 +89,7 @@ class QAvaliablePluginsTree(QtW.QTreeWidget):
 
         reg = AppActionRegistry.instance()
         installed_plugins = reg.installed_plugins
+        _flags = Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled
 
         for info in iter_plugin_info():
             if info.distribution != last_distribution:
@@ -96,13 +97,11 @@ class QAvaliablePluginsTree(QtW.QTreeWidget):
                 if current_toplevel_item is not None:
                     current_toplevel_item.setExpanded(True)
                 current_toplevel_item = QtW.QTreeWidgetItem([info.distribution])
-                current_toplevel_item.setFlags(
-                    Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled
-                )
+                current_toplevel_item.setFlags(_flags)
                 current_toplevel_item.setCheckState(0, Qt.CheckState.Checked)
                 self.addTopLevelItem(current_toplevel_item)
             item = QtW.QTreeWidgetItem([f"{info.name} ({info.place})", info.place])
-            item.setFlags(Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled)
+            item.setFlags(_flags)
             if info.place in installed_plugins:
                 item.setCheckState(0, Qt.CheckState.Checked)
             else:
@@ -114,7 +113,8 @@ class QAvaliablePluginsTree(QtW.QTreeWidget):
         self.itemChanged.connect(self._on_item_changed)
 
     def get_plugin_list(self) -> list[str]:
-        plugins = []
+        """Return the list of plugin IDs."""
+        plugins: list[str] = []
         for i in range(self.topLevelItemCount()):
             dist_item = self.topLevelItem(i)
             for j in range(dist_item.childCount()):

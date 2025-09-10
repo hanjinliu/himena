@@ -1,11 +1,15 @@
 from pathlib import Path
 from himena.profile import load_app_profile
 from himena.utils.entries import iter_plugin_info, is_submodule, HimenaPluginInfo
+from himena.utils.install_plugin import get_install_tool
+from configparser import ConfigParser, NoOptionError
+import re
 
 
 def install_and_uninstall(
     install: list[str], uninstall: list[str], profile: str | None
 ):
+    """Process the --install and --uninstall commands."""
     app_profile = load_app_profile(profile or "default")
     plugins_updated = app_profile.plugins.copy()
     infos_installed: list[HimenaPluginInfo] = []
@@ -70,10 +74,37 @@ def install_and_uninstall(
     new_prof.save()
 
 
+def get_and_install(packages: list[str], profile: str | None):
+    """Get the packages from PyPI, git, local file etc. and install them."""
+    result = get_install_tool().install(packages)
+    if result.returncode != 0:
+        raise RuntimeError(f"Failed to get: {packages}")
+    packages_normed: list[str] = []
+    for package in packages:
+        if package.endswith(".git") or package.startswith(("http://", "https://")):
+            print(
+                "Cannot determine the package name from URL yet. Please manually run\n"
+                f"  himena {profile or 'default'} --install <package>"
+            )
+            continue
+        elif Path(package).exists():
+            if module_name := _extract_module_name(Path(package).resolve()):
+                packages_normed.append(module_name)
+            else:
+                print(
+                    f"Cannot determine the package name from the directory {package}. "
+                    "Please manually run\n"
+                    f"  himena {profile or 'default'} --install <package>"
+                )
+        else:
+            packages_normed.append(package)
+    install_and_uninstall(packages_normed, [], profile)
+
+
 def uninstall_outdated(profile: str | None):
     app_profile = load_app_profile(profile or "default")
     plugins_updated = app_profile.plugins.copy()
-    plugins_outdated = []
+    plugins_outdated: list[str] = []
 
     for plugin_name in plugins_updated:
         for info in iter_plugin_info():
@@ -101,3 +132,20 @@ def uninstall_outdated(profile: str | None):
 
 def _is_path_like(name: str) -> bool:
     return "/" in name or "\\" in name
+
+
+def _extract_module_name(directory: Path) -> str | None:
+    """Exctract the module name from a python project directory."""
+    if (pyproject_toml := directory.joinpath("pyproject.toml")).exists():
+        content = pyproject_toml.read_text()
+        match = re.search(r'name\s*=\s*["\']([^"\']+)["\']', content)
+        if match:
+            return match.group(1)
+    if (setup_cfg := directory.joinpath("setup.cfg")).exists():
+        cfg = ConfigParser()
+        cfg.read(setup_cfg)
+        try:
+            return cfg.get("metadata", "name")
+        except NoOptionError:
+            return None
+    return None
