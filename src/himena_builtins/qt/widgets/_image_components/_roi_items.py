@@ -60,7 +60,7 @@ class QRoi(QtW.QGraphicsItem):
         return self.__class__.__name__
 
     def short_description(self, xscale: float, yscale: float, unit: str) -> str:
-        """Description that will be shown in the status bar when the ROI is drawn."""
+        """Description that will be shown in the tooltip when the ROI is drawn."""
         return ""
 
 
@@ -114,7 +114,7 @@ class QLineRoi(QtW.QGraphicsLineItem, QRoi):
             return f"start=({start}), end=({end}), length={length_px:.1f}, angle={ang_px:.1f}°"
         length = math.sqrt((dx * xscale) ** 2 + (dy * yscale) ** 2)
         ang = -math.degrees(math.atan2(dy * yscale, dx * xscale))
-        return f"start=({start}), end=({end}), length={length_px:.1f} px ({length:.1f} {unit}), angle={ang_px:.1f}° (scaled: {ang:.1f}°)"
+        return f"start=({start})<br>end=({end})<br>length={length_px:.1f} px ({length:.1f} {unit})<br>angle={ang_px:.1f}° (scaled: {ang:.1f}°)"
 
 
 class QRectRoiBase(QRoi):
@@ -165,10 +165,10 @@ class QRectangleRoi(QtW.QGraphicsRectItem, QRectRoiBase):
         width_px = w
         height_px = h
         if not unit:
-            return f"left={x:.1f}, top={y:.1f}, width={width_px:.1f}, height={height_px:.1f}"
+            return f"left={x:.1f}<br>top={y:.1f}<br>width={width_px:.1f}<br>height={height_px:.1f}"
         width = w * xscale
         height = h * yscale
-        return f"left={x:.1f}, top={y:.1f}, width={width_px:.1f} ({width:.1f} {unit}), height={height_px:.1f} ({height:.1f} {unit})"
+        return f"left={x:.1f}<br>top={y:.1f}<br>width={width_px:.1f} ({width:.1f} {unit})<br>height={height_px:.1f} ({height:.1f} {unit})"
 
 
 class QEllipseRoi(QtW.QGraphicsEllipseItem, QRectRoiBase):
@@ -225,8 +225,8 @@ class QEllipseRoi(QtW.QGraphicsEllipseItem, QRectRoiBase):
         else:
             eccentricity = format(math.sqrt(1 - (height / width) ** 2), ".2f")
         if not unit:
-            return f"center=[{cx:.1f}, {cy:.1f}], width={w:.1f}, height={h:.1f}, eccentricity={eccentricity}"
-        return f"center=[{cx:.1f}, {cy:.1f}], width={w:.1f} ({width:.1f} {unit}), height={h:.1f} ({height:.1f} {unit}), eccentricity={eccentricity}"
+            return f"center=[{cx:.1f}, {cy:.1f}]<br>width={w:.1f}<br>height={h:.1f}<br>eccentricity={eccentricity}"
+        return f"center=[{cx:.1f}, {cy:.1f}]<br>width={w:.1f} ({width:.1f} {unit})<br>height={h:.1f} ({height:.1f} {unit})<br>eccentricity={eccentricity}"
 
 
 class QRotatedRoiBase(QRoi):
@@ -340,9 +340,9 @@ class QRotatedRoiBase(QRoi):
         end = self.end()
         length_px = self._length
         if not unit:
-            return f"start=[{start.x():.1f}, {start.y():.1f}], end=[{end.x():.1f}, {end.y():.1f}], length={length_px:.1f}, angle={self.angle():.1f}°"
+            return f"start=[{start.x():.1f}, {start.y():.1f}]<br>end=[{end.x():.1f}, {end.y():.1f}]<br>length={length_px:.1f}<br>angle={self.angle():.1f}°"
         length = length_px * xscale
-        return f"start=[{start.x():.1f}, {start.y():.1f}], end=[{end.x():.1f}, {end.y():.1f}], length={length_px:.1f} ({length:.1f} {unit}), angle={self.angle():.1f}°"
+        return f"start=[{start.x():.1f}, {start.y():.1f}]<br>end=[{end.x():.1f}, {end.y():.1f}]<br>length={length_px:.1f} ({length:.1f} {unit})<br>angle={self.angle():.1f}°"
 
 
 class QRotatedRectangleRoi(QRotatedRoiBase):
@@ -778,10 +778,8 @@ class QCircleRoi(QtW.QGraphicsEllipseItem, QRoi):
         radius_px = self._radius
         radius = radius_px * xscale
         if not unit:
-            return f"center=[{cx:.1f}, {cy:.1f}], radius={radius_px:.1f}"
-        return (
-            f"center=[{cx:.1f}, {cy:.1f}], radius={radius_px:.1f} ({radius:.1f} {unit})"
-        )
+            return f"center=[{cx:.1f}, {cy:.1f}]<br>radius={radius_px:.1f}"
+        return f"center=[{cx:.1f}, {cy:.1f}]<br>radius={radius_px:.1f} ({radius:.1f} {unit})"
 
 
 def _may_be_ints(*values: float) -> list[int | float]:

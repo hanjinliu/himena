@@ -1,6 +1,6 @@
 from __future__ import annotations
 from pathlib import Path
-from typing import Any, overload
+from typing import Any, Literal, overload
 
 from himena.types import ClipboardDataModel
 from himena.widgets import current_instance
@@ -13,7 +13,6 @@ def set_status_tip(text: str, duration: float = 10.0) -> None:
     with suppress(Exception):
         ins = current_instance()
         ins.set_status_tip(text, duration=duration)
-    return None
 
 
 def get_clipboard() -> ClipboardDataModel:
@@ -52,14 +51,23 @@ def notify(text: str, duration: float = 5.0) -> None:
     """Show a notification popup in the bottom right corner."""
     ins = current_instance()
     ins._backend_main_window._show_notification(text, duration)
-    return None
+
+
+def show_tooltip(
+    text: str,
+    duration: float = 3.0,
+    behavior: Literal["stay", "follow", "until_move"] = "follow",
+) -> None:
+    """Show a tooltip next to the cursor for a duration (sec)."""
+    with suppress(Exception):
+        ins = current_instance()
+        ins.show_tooltip(text, duration=duration, behavior=behavior)
 
 
 def append_result(item: dict[str, Any], /) -> None:
     """Append a new result to the result stack."""
     ins = current_instance()
     ins._backend_main_window._append_result(item)
-    return None
 
 
 # def subprocess_run(command_args, /, *args, blocking: bool = True, **kwargs):

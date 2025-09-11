@@ -567,6 +567,15 @@ class MainWindow(Generic[_W]):
         """Show a temporary notification in the main window."""
         self._backend_main_window._show_notification(text, duration)
 
+    def show_tooltip(
+        self,
+        text: str,
+        duration: float = 3.0,
+        behavior: Literal["stay", "follow", "until_move"] = "follow",
+    ) -> None:
+        """Show a temporary tooltip next to the cursor in the main window."""
+        self._backend_main_window._show_tooltip(text, duration, behavior)
+
     @overload
     def register_function(
         self,
