@@ -501,11 +501,13 @@ def test_open_and_save_files(himena_ui: MainWindow, tmpdir, sample_dir: Path):
     assert himena_ui.tabs[0][-1].model_type() == StandardType.IPYNB
     assert isinstance(himena_ui.tabs[0][-1].to_model().workflow.last(), LocalReaderMethod)
 
-    himena_ui.add_object(np.arange(5 * 20 * 15 * 3).reshape(5, 20, 15, 3), type="array.image")
+    image_value = np.arange(5 * 20 * 15 * 3, dtype=np.uint8).reshape(5, 20, 15, 3)
+    himena_ui.add_object(image_value, type="array.image")
     save_path = tmpdir / "array_image.gif"
     with file_dialog_response(himena_ui, save_path):
         himena_ui.exec_action("save-as")
         himena_ui.exec_action("open-file")
+        assert_equal(himena_ui.current_window.to_model().value, image_value)
 
 
 def test_reading_file_group(himena_ui: MainWindow, sample_dir: Path):
