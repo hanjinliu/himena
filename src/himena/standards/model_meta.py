@@ -226,6 +226,15 @@ class ArrayMeta(BaseMetadata):
         return StandardType.ARRAY
 
 
+class ImagePlaySetting(BaseModel):
+    """Settings for playing image sequences."""
+
+    interval: float = Field(0.1, description="Interval between frames in seconds.")
+    mode: Literal["once", "loop", "pingpong"] = Field(
+        "loop", description="Playback mode."
+    )
+
+
 class ImageMeta(ArrayMeta):
     """Preset for describing an image file metadata."""
 
@@ -249,6 +258,10 @@ class ImageMeta(ArrayMeta):
     interpolation: str | None = Field(
         default=None,
         description="Interpolation method.",
+    )
+    play_setting: ImagePlaySetting | None = Field(
+        default=None,
+        description="Settings for playing image sequences.",
     )
     skip_image_rerendering: bool = Field(
         default=False,
