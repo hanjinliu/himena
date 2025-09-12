@@ -1,4 +1,5 @@
 from concurrent.futures import Future
+from dataclasses import dataclass
 from pathlib import Path
 from unittest.mock import MagicMock
 import warnings
@@ -14,6 +15,7 @@ from himena.qt import MainWindowQt, drag_command
 from himena.qt._qmain_window import QMainWindow, _ext_to_filter, QChoicesDialog
 from himena.qt._qsub_window import QSubWindow, get_subwindow
 from himena.widgets import set_status_tip, notify, append_result, TabArea
+from himena.workflow._reader import LocalReaderMethod
 from himena_builtins.qt.text import QTextEdit
 
 from qtpy import QtWidgets as QtW, QtCore
@@ -344,6 +346,14 @@ def test_tab_drop_event(himena_ui: MainWindowQt, sample_dir: Path):
 def test_action_hint(himena_ui: MainWindowQt, sample_dir: Path):
     from himena.plugins import when_command_executed, when_reader_used
 
+    # list the existing action hints
+    suggestions = list(
+        himena_ui.action_hint_registry.iter_suggestion(
+            "table",
+            LocalReaderMethod(output_model_type="table", path=Path("table.csv"))
+        )
+    )
+
     (
         when_command_executed("table", "builtins:seaborn-sample:iris")
         .add_command_suggestion("builtins:table:copy-as-csv")
@@ -369,7 +379,7 @@ def test_action_hint(himena_ui: MainWindowQt, sample_dir: Path):
     assert type(qwin) is QSubWindow
     qwin._title_bar._make_tooltip()
     menu = qwin._title_bar._prep_action_hints_menu()
-    assert len(menu.actions()) == 3
+    assert len(menu.actions()) == 3 + len(suggestions)
 
     repr(himena_ui.action_hint_registry)
     for hint in himena_ui.action_hint_registry.iter_all():
@@ -377,3 +387,20 @@ def test_action_hint(himena_ui: MainWindowQt, sample_dir: Path):
         hint.suggestion.get_title(himena_ui)
         hint.suggestion.get_tooltip(himena_ui)
         hint.suggestion.execute(himena_ui, win.to_model().workflow.last())
+
+def test_custom_object_type_map(make_himena_ui):
+    himena_ui: MainWindow = make_himena_ui("mock")
+
+    @dataclass
+    class MyType:
+        value: str
+
+    @himena_ui.object_type_map.register
+    def add_my_type(value):
+        if isinstance(value, MyType):
+            return "text", value.value, None
+        return None
+
+    himena_ui.add_object(MyType(value="Hello World"))
+    assert himena_ui.current_model.value == "Hello World"
+    assert himena_ui.current_model.type == "text"

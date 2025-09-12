@@ -39,6 +39,10 @@ class Theme:
     def format_text(self, text: str) -> str:
         for name, value in asdict(self).items():
             text = text.replace(f"#[{name}]", f"{value}")
+        # replace with "light" or "dark"
+        text = text.replace(
+            "#[theme]", "light" if self.is_light_background() else "dark"
+        )
         return text
 
     def is_light_background(self) -> bool:

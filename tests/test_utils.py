@@ -117,23 +117,28 @@ def test_cli_args():
         assert cli.to_wsl_path(Path("C:/Program Files/")) == "/mnt/c/Program Files"
         assert cli.to_wsl_path(Path("D:/")) == "/mnt/d"
 
-    assert cli.local_to_remote("rsync", Path("C:/src"), "dst") == ["rsync", "-a", "--progress", "C:/src", "dst"]
-    assert cli.local_to_remote("rsync", Path("C:/src"), "dst", is_dir=True) == ["rsync", "-ar", "--progress", "C:/src", "dst"]
+        assert cli.wsl_to_local("/d/file.txt", Path("C:/Users/username/file.txt")) == ["wsl", "-e", "cp", "/d/file.txt", "/mnt/c/Users/username/file.txt"]
+        assert cli.wsl_to_local("/d/dir", Path("C:/Users/username/dir"), is_dir=True) == ["wsl", "-e", "cp", "-r", "/d/dir", "/mnt/c/Users/username"]
+        assert cli.local_to_wsl(Path("C:/Users/username/file.txt"), "/d/file.txt") == ["wsl", "-e", "cp", "/mnt/c/Users/username/file.txt", "/d/file.txt"]
+        assert cli.local_to_wsl(Path("C:/Users/username/dir"), "/d/dir", is_dir=True) == ["wsl", "-e", "cp", "-r", "/mnt/c/Users/username/dir", "/d"]
+
+    assert cli.local_to_remote("rsync", Path("C:/src"), "/dst") == ["rsync", "-a", "--progress", "C:/src", "/dst"]
+    assert cli.local_to_remote("rsync", Path("C:/src"), "/dst", is_dir=True) == ["rsync", "-ar", "--progress", "C:/src", "/"]
     if sys.platform == "win32":
         assert cli.local_to_remote("rsync", Path("C:/src"), "~/dst", is_wsl=True) == ["wsl", "-e", "rsync", "-a", "--progress", "/mnt/c/src", "~/dst"]
 
-    assert cli.local_to_remote("scp", Path("C:/src"), "dst", port=11) == ["scp", "-P", "11", "C:/src", "dst"]
-    assert cli.local_to_remote("scp", Path("C:/src"), "dst", is_dir=True) == ["scp", "-P", "22", "-r", "C:/src", "dst"]
+    assert cli.local_to_remote("scp", Path("C:/src"), "/dst", port=11) == ["scp", "-P", "11", "C:/src", "/dst"]
+    assert cli.local_to_remote("scp", Path("C:/src"), "/dst", is_dir=True) == ["scp", "-P", "22", "-r", "C:/src", "/"]
     if sys.platform == "win32":
         assert cli.local_to_remote("scp", Path("C:/src"), "~/dst", is_wsl=True) == ["wsl", "-e", "scp", "-P", "22", "/mnt/c/src", "~/dst"]
 
-    assert cli.remote_to_local("rsync", "src", Path("dst")) == ["rsync", "-a", "--progress", "src", "dst"]
-    assert cli.remote_to_local("rsync", "src", Path("dst"), is_dir=True) == ["rsync", "-ar", "--progress", "src", "dst"]
+    assert cli.remote_to_local("rsync", "src", Path("d/dst")) == ["rsync", "-a", "--progress", "src", Path("d/dst").resolve().as_posix()]
+    assert cli.remote_to_local("rsync", "src", Path("d/dst"), is_dir=True) == ["rsync", "-ar", "--progress", "src", Path("d").resolve().as_posix()]
     if sys.platform == "win32":
         assert cli.remote_to_local("rsync", "~/src", Path("C:/dst"), is_wsl=True) == ["wsl", "-e", "rsync", "-a", "--progress", "~/src", "/mnt/c/dst"]
 
-    assert cli.remote_to_local("scp", "src", Path("dst")) == ["scp", "-P", "22", "src", "dst"]
-    assert cli.remote_to_local("scp", "src", Path("dst"), is_dir=True) == ["scp", "-P", "22", "-r", "src", "dst"]
+    assert cli.remote_to_local("scp", "src", Path("dst")) == ["scp", "-P", "22", "src", Path("dst").resolve().as_posix()]
+    assert cli.remote_to_local("scp", "src", Path("d/dst"), is_dir=True) == ["scp", "-P", "22", "-r", "src", Path("d").resolve().as_posix()]
     if sys.platform == "win32":
         assert cli.remote_to_local("scp", "~/src", Path("C:/dst"), is_wsl=True) == ["wsl", "-e", "scp", "-P", "22", "~/src", "/mnt/c/dst"]
 
@@ -248,3 +253,27 @@ def test_exception():
 
     with handler:
         warnings.warn("Test warning", UserWarning, stacklevel=2)
+
+def test_anchor():
+    from himena.anchor import (
+        dict_to_anchor,
+        anchor_to_dict,
+        TopLeftConstAnchor,
+        TopRightConstAnchor,
+        BottomLeftConstAnchor,
+        BottomRightConstAnchor,
+        WindowAnchor,
+    )
+
+    for anchor in [
+        TopLeftConstAnchor(5, 7),
+        TopRightConstAnchor(5, 7),
+        BottomLeftConstAnchor(5, 7),
+        BottomRightConstAnchor(5, 7),
+    ]:
+        assert isinstance(anchor, WindowAnchor)
+        rect = anchor.apply_anchor((600, 700), (320, 220))
+        assert rect is not None
+        anchor.update_for_window_rect((600, 700), rect)
+        d = anchor_to_dict(anchor)
+        dict_to_anchor(d)

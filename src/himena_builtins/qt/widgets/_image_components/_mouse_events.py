@@ -20,7 +20,7 @@ from himena_builtins.qt.widgets._image_components._roi_items import (
 )
 from himena_builtins.qt.widgets._image_components._handles import RoiSelectionHandles
 from himena.standards.mouse import MouseEventHandler
-from himena.widgets import set_status_tip
+from himena.widgets import show_tooltip
 
 if TYPE_CHECKING:
     from ._graphics_view import QImageGraphicsView
@@ -141,12 +141,15 @@ class _SingleDragRoiMouseEvents(RoiMouseEvents[_R]):
         if self._pos_drag_start is None or self._pos_drag_prev is None:
             return
         pos = self._view.mapToScene(event.pos())
-        if isinstance(self._view._current_roi_item, self.roi_type()):
+        if isinstance(cur_item := self._view._current_roi_item, self.roi_type()):
             pos0 = self._view.mapToScene(self._pos_drag_start)
             if event.modifiers() & Qt.KeyboardModifier.ShiftModifier:
                 pos, pos0 = self._coerce_pos(pos, pos0)
             self._update_roi(pos0, pos)
             self._view.current_roi_updated.emit()
+            xscale = yscale = self._view._scale_bar_widget._scale
+            unit = self._view._scale_bar_widget._unit
+            show_tooltip(cur_item.short_description(xscale, yscale, unit))
 
     def released(self, event: QtGui.QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
@@ -154,11 +157,7 @@ class _SingleDragRoiMouseEvents(RoiMouseEvents[_R]):
                 self._view.remove_current_item(
                     reason=f"stop drawing {self._view.mode()}"
                 )
-            else:
-                if cur_item := self._view._current_roi_item:
-                    xscale = yscale = self._view._scale_bar_widget._scale
-                    unit = self._view._scale_bar_widget._unit
-                    set_status_tip(cur_item.short_description(xscale, yscale, unit))
+        show_tooltip("")
         return super().released(event)
 
     def double_clicked(self, event):

@@ -48,8 +48,6 @@ def _refer_title(ax: hplt.Axes, ax_mpl: plt.Axes):
 
 
 def update_mpl_axes_by_model(ax: hplt.Axes, ax_mpl: plt.Axes):
-    ax_mpl.spines["top"].set_visible(False)
-    ax_mpl.spines["right"].set_visible(False)
     ax_mpl.spines["left"].set_edgecolor(ax.axis_color)
     ax_mpl.spines["bottom"].set_edgecolor(ax.axis_color)
     if ax.title is not None:

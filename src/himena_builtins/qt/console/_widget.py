@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import sys
 from pathlib import Path
 import weakref
 from typing import TYPE_CHECKING
@@ -13,6 +12,7 @@ from qtconsole.rich_jupyter_widget import RichJupyterWidget
 from himena.utils.misc import lru_cache
 from himena.qt._utils import get_stylesheet_path
 from himena.plugins import validate_protocol
+from himena.consts import IS_WINDOWS
 
 if TYPE_CHECKING:
     from himena.style import Theme
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 # Modified from napari_console https://github.com/napari/napari-console
 
-if sys.platform.startswith("win"):
+if IS_WINDOWS:
     import asyncio
 
     try:

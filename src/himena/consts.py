@@ -9,23 +9,30 @@ BasicTextFileTypes = frozenset(
      ".pyx", ".c", ".cpp", ".h", ".hpp", ".java", ".js", ".ts", ".html", ".htm", ".css",
      ".scss", ".sass", ".php", ".rb", ".sh", ".bash", ".zsh", ".ps1", ".psm1", ".bat",
      ".cmd", ".m", ".vbs", ".vba", ".r", ".rs", ".go", ".svg", ".tex", ".rst", ".ipynb",
-     ".lock", ".cs"]
+     ".lock", ".cs", ".qss", ".bib", ".ris", ".cfg", ".ini"]
 )  # fmt: skip
-
+BasicImageFileTypes = frozenset(
+    [".png", ".jpg", ".jpeg", "ico", ".icns", ".gif"]
+)  # fmt: skip
 ConventionalTextFileNames = frozenset(
     ["LICENSE", "Makefile", "dockerfile", ".gitignore", ".gitattributes", ".vimrc",
-     ".viminfo", ".pypirc", "MANIFEST.in",]
+     ".viminfo", ".pypirc", "MANIFEST.in", ".bashrc", ".bash_profile", ".zshrc",]
 )  # fmt: skip
 
 ExcelFileTypes = frozenset(
     [".xls", ".xlsx", ".xlsm", ".xlsb", ".xltx", ".xltm", ".xlam"]
 )  # fmt: skip
 
+
+IS_WINDOWS = sys.platform == "win32"
+IS_MACOS = sys.platform == "darwin"
+IS_LINUX = sys.platform.startswith("linux")
+
 # Monospace font
-if sys.platform == "win32":
+if IS_WINDOWS:
     MonospaceFontFamily = "Consolas"
     DefaultFontFamily = "Arial"
-elif sys.platform == "darwin":
+elif IS_MACOS:
     MonospaceFontFamily = "Menlo"
     DefaultFontFamily = "Helvetica"
 else:

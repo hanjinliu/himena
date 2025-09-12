@@ -15,6 +15,8 @@ from himena.workflow._reader import (
     ProgrammaticMethod,
     ReaderMethod,
     RemoteReaderMethod,
+    WslReaderMethod,
+    PathReaderMethod,
     UserInput,
 )
 from himena.workflow._action_hint import ActionHintRegistry
@@ -30,6 +32,8 @@ __all__ = [
     "ReaderMethod",
     "LocalReaderMethod",
     "RemoteReaderMethod",
+    "WslReaderMethod",
+    "PathReaderMethod",
     "UserInput",
     "CommandExecution",
     "parse_parameter",

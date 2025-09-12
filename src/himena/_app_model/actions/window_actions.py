@@ -11,7 +11,7 @@ from app_model.types import (
     StandardKeyBinding,
 )
 from himena._descriptors import SaveToPath, NoNeedToSave
-from himena.consts import MenuId, StandardType
+from himena.consts import MenuId, StandardType, IS_WINDOWS, IS_MACOS, IS_LINUX
 from himena.utils.html import html_to_plain_text
 from himena.widgets import MainWindow, SubWindow
 from himena.types import (
@@ -364,14 +364,14 @@ def reveal_in_explorer(win: SubWindow):
     else:
         raise ValueError("Could not determine the source file of the window.")
 
-    if sys.platform == "darwin":
+    if IS_MACOS:
         if path.is_dir():
             Popen(["open", "-R", str(path)])
         else:
             Popen(["open", "-R", str(path.parent)])
-    elif sys.platform == "win32":
+    elif IS_WINDOWS:
         Popen(["explorer", "/select,", str(path)])
-    elif sys.platform == "linux":
+    elif IS_LINUX:
         Popen(["xdg-open", str(path.parent)])
     else:
         raise NotImplementedError(f"Platform {sys.platform} is not supported")

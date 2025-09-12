@@ -4,7 +4,7 @@ from typing import Literal
 from io import StringIO
 import csv
 import numpy as np
-from himena.plugins import configure_gui, register_conversion_rule
+from himena.plugins import configure_gui, register_conversion_rule, when_reader_used
 from himena.types import Parametric, WidgetDataModel
 from himena.consts import StandardType
 from himena.core import (
@@ -336,3 +336,8 @@ def array_to_table(model: WidgetDataModel) -> WidgetDataModel:
         title=model.title,
         extension_default=".csv",
     )
+
+
+when_reader_used(StandardType.TABLE).add_command_suggestion(
+    "builtins:table-to-dataframe"
+)

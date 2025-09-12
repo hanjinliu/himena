@@ -11,13 +11,14 @@ from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
 from qtpy.QtCore import Qt
 
-from superqt import QIconifyIcon
-
 from himena.consts import StandardType
 from himena.qt._utils import get_main_window
+from himena.style import Theme
 from himena.types import WidgetDataModel
 from himena.standards.model_meta import TableMeta
+from himena.qt._qsvg import QColoredSVGIcon
 from himena.plugins import validate_protocol, config_field
+from himena_builtins._consts import ICON_PATH
 from himena_builtins.qt.widgets._table_components import (
     QTableBase,
     QSelectionRangeEdit,
@@ -388,6 +389,11 @@ class QSpreadsheet(QTableBase):
     def control_widget(self) -> QTableControl:
         return self._control
 
+    @validate_protocol
+    def theme_changed_callback(self, theme: Theme) -> None:
+        if self._control:
+            self._control.update_theme(theme)
+
     def array_update(
         self,
         index: tuple[int | slice, int | slice],
@@ -734,21 +740,17 @@ class QTableControl(QtW.QWidget):
         # toolbuttons
         groupbox_ins = QToolButtonGroup(self)
         groupbox_rem = QToolButtonGroup(self)
-        groupbox_ins.add_widgets(
-            _tool_btn(
-                table._insert_row_above, "tabler:row-insert-bottom", flip="vertical"
-            ),
-            _tool_btn(table._insert_row_below, "tabler:row-insert-bottom"),
-            _tool_btn(table._insert_column_left, "tabler:column-insert-left"),
-            _tool_btn(
-                table._insert_column_right, "tabler:column-insert-left", flip="vertical"
-            ),
+        _btn_ins = groupbox_ins.add_widgets(
+            _tool_btn(table._insert_row_above, "row_insert_top"),
+            _tool_btn(table._insert_row_below, "row_insert_bottom"),
+            _tool_btn(table._insert_column_left, "col_insert_left"),
+            _tool_btn(table._insert_column_right, "col_insert_right"),
         )
-        groupbox_rem.add_widgets(
-            _tool_btn(table._remove_selected_rows, "tabler:row-remove"),
-            _tool_btn(table._remove_selected_columns, "tabler:column-remove"),
+        _btn_rem = groupbox_rem.add_widgets(
+            _tool_btn(table._remove_selected_rows, "row_remove"),
+            _tool_btn(table._remove_selected_columns, "col_remove"),
         )
-
+        self._tool_buttons: list[QtW.QToolButton] = _btn_ins + _btn_rem
         self._separator_label = QtW.QLabel()
         self._separator: str | None = None
 
@@ -767,6 +769,13 @@ class QTableControl(QtW.QWidget):
         shape = table.model()._arr.shape
         self._info_label.setText(f"Shape: {shape!r}")
 
+    def update_theme(self, theme: Theme):
+        """Update the theme of the control."""
+        color = theme.foreground
+        for btn in self._tool_buttons:
+            icon_path = btn.property("icon_path")
+            btn.setIcon(QColoredSVGIcon.fromfile(icon_path, color))
+
 
 def _sl(idx: int, axis: Literal[0, 1]) -> tuple:
     if axis == 0:
@@ -775,10 +784,11 @@ def _sl(idx: int, axis: Literal[0, 1]) -> tuple:
         return slice(None), idx
 
 
-def _tool_btn(callback, icon: str, flip: str | None = None) -> QtW.QToolButton:
+def _tool_btn(callback, icon: str) -> QtW.QToolButton:
     """Create a tool button with the given icon and callback."""
     btn = QtW.QToolButton()
-    btn.setIcon(QIconifyIcon(icon, flip=flip))
+    icon_path = ICON_PATH / f"{icon}.svg"
+    btn.setProperty("icon_path", icon_path)
     btn.setToolTip(callback.__doc__)
     btn.clicked.connect(callback)
     return btn
@@ -805,6 +815,7 @@ class QToolButtonGroup(QtW.QGroupBox):
         """Add a widget to the group."""
         for widget in widgets:
             self._inner_layout.addWidget(widget)
+        return widgets
 
 
 ORD_A = ord("A")

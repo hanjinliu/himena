@@ -8,6 +8,7 @@ from himena_builtins import _io
 from himena.consts import (
     StandardType,
     BasicTextFileTypes,
+    BasicImageFileTypes,
     ConventionalTextFileNames,
     ExcelFileTypes,
 )
@@ -20,7 +21,7 @@ def read_text(file_path: Path) -> WidgetDataModel:
         return _io.default_csv_reader(file_path)
     elif suffix == ".tsv":
         return _io.default_tsv_reader(file_path)
-    elif suffix in {".png", ".jpg", ".jpeg"}:
+    elif suffix in BasicImageFileTypes:
         return _io.default_image_reader(file_path)
     elif suffix == ".json":
         if len(suffixes := file_path.suffixes) > 1:
@@ -45,7 +46,7 @@ def _(file_path: Path) -> str | None:
         return StandardType.TABLE
     elif suffix == ".tsv":
         return StandardType.TABLE
-    elif suffix in {".png", ".jpg", ".jpeg"}:
+    elif suffix in BasicImageFileTypes:
         return StandardType.IMAGE
     elif suffix == ".json":
         if len(suffixes := file_path.suffixes) > 1:

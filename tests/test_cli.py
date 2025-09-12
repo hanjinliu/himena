@@ -50,6 +50,11 @@ def test_install_uninstall():
     sys.argv = ["himena", "--install", "himena_builtins.new"]
     main()
 
+def test_get():
+    # this does nothing. Just for coverage.
+    sys.argv = ["himena", "--get", "numpy"]
+    main()
+
 def test_install_uninstall_local(sample_dir):
     plugin_path = sample_dir / "local_plugin.py"
     sys.argv = ["himena", "--install", str(plugin_path)]

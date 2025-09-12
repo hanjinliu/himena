@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from himena.types import WidgetDataModel
-from himena.standards.model_meta import ImageMeta, TableMeta, TextMeta
+from himena.standards.model_meta import ImageMeta, TableMeta, TextMeta, ImagePlaySetting
 from himena.standards.roi import RoiListModel
 from himena.consts import StandardType
 from himena.workflow import Workflow
@@ -91,19 +91,35 @@ def default_plain_text_reader(file_path: Path) -> WidgetDataModel:
 
 def default_image_reader(file_path: Path) -> WidgetDataModel:
     """Read image file."""
-    from PIL import Image
+    from PIL import Image, ImageSequence
 
-    arr = np.array(Image.open(file_path))
-    is_rgb = arr.ndim == 3 and arr.shape[2] in (3, 4)
+    image = Image.open(file_path)
+    if file_path.suffix == ".gif":
+        arr = np.stack(
+            [np.array(frame.convert("RGB")) for frame in ImageSequence.Iterator(image)],
+            axis=0,
+        )
+        is_rgb = True
+        play_setting = ImagePlaySetting(
+            interval=image.info.get("duration", 100) / 1000,
+            mode="once" if image.info.get("loop", 1) == 0 else "loop",
+        )
+        axes = ["t", "y", "x", "c"]
+    else:
+        arr = np.array(image)
+        is_rgb = arr.ndim == 3 and arr.shape[2] in (3, 4)
+        play_setting = None
+        axes = ["y", "x", "c"] if is_rgb else ["y", "x"]
 
     return WidgetDataModel(
         value=arr,
         type=StandardType.IMAGE,
         extension_default=file_path.suffix,
         metadata=ImageMeta(
-            axes=["y", "x"],
+            axes=axes,
             is_rgb=is_rgb,
             interpolation="linear",
+            play_setting=play_setting,
         ),
     )
 
@@ -348,14 +364,36 @@ def default_image_writer(model: WidgetDataModel[np.ndarray], path: Path) -> None
     """Write image file."""
     from PIL import Image
 
-    Image.fromarray(model.value).save(path)
-    return None
+    if path.suffix == ".gif":
+        if model.value.ndim != 4 or model.value.shape[3] not in (3, 4):
+            raise ValueError("Only 4D array with 3 or 4 channels can be saved as GIF.")
+        frames = [
+            Image.fromarray(model.value[i].astype(np.uint8))
+            for i in range(model.value.shape[0])
+        ]
+        if (
+            isinstance(meta := model.metadata, ImageMeta)
+            and (ps := meta.play_setting) is not None
+        ):
+            duration = int(ps.interval * 1000)
+            loop = 1 if ps.mode == "loop" else 0
+        else:
+            duration = 100
+            loop = 1
+        frames[0].save(
+            path,
+            save_all=True,
+            append_images=frames[1:],
+            loop=loop,
+            duration=duration,
+        )
+    else:
+        Image.fromarray(model.value).save(path)
 
 
 def default_dict_writer(model: WidgetDataModel[dict[str, Any]], path: Path) -> None:
     """Write parameters to a json file."""
     path.write_text(json.dumps(model.value, default=_json_default))
-    return None
 
 
 def default_plot_writer(
@@ -364,7 +402,6 @@ def default_plot_writer(
     """Write plot layout to a json file."""
     js = model.value.model_dump_typed()
     path.write_text(json.dumps(js, default=_json_default))
-    return None
 
 
 def default_excel_writer(
@@ -393,7 +430,6 @@ def default_excel_writer(
                 ws.cell(r + 1, c + 1).value = cell_str
                 ws.cell(r + 1, c + 1).data_type = cell_data_type
     wb.save(path)
-    return None
 
 
 def default_array_writer(
@@ -402,7 +438,6 @@ def default_array_writer(
 ) -> None:
     """Write array file."""
     np.save(path, model.value)
-    return None
 
 
 def default_dataframe_writer(
@@ -446,7 +481,6 @@ def default_models_writer(
                 z.write(tmpdir / file_name, arcname=file_name)
     else:
         raise ValueError(f"Unsupported file type: {path.suffix}")
-    return None
 
 
 def default_pickle_writer(model: WidgetDataModel[Any], path: Path) -> None:
@@ -455,19 +489,16 @@ def default_pickle_writer(model: WidgetDataModel[Any], path: Path) -> None:
 
     with path.open("wb") as f:
         pickle.dump(model.value, f)
-    return None
 
 
 def default_roi_writer(model: WidgetDataModel[RoiListModel], path: Path) -> None:
     """Write image ROIs to a json file."""
     path.write_text(json.dumps(model.value.model_dump_typed(), default=_json_default))
-    return None
 
 
 def default_workflow_writer(model: WidgetDataModel[Workflow], path: Path) -> None:
     """Write workflow node."""
     path.write_text(model.value.model_dump_json())
-    return None
 
 
 def _json_default(obj):

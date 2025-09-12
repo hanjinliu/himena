@@ -5,7 +5,7 @@ from pathlib import Path
 
 from himena.consts import StandardType
 from himena.testing import file_dialog_response
-from himena.workflow import LocalReaderMethod, CommandExecution
+from himena.workflow import LocalReaderMethod, CommandExecution, RemoteReaderMethod, WslReaderMethod
 
 def test_compute_workflow(make_himena_ui: Callable[..., MainWindow], sample_dir: Path, tmpdir):
     himena_ui = make_himena_ui("mock")
@@ -88,3 +88,17 @@ def test_workflow_parametric(make_himena_ui: Callable[..., MainWindow], sample_d
     assert len(wf.steps) == len(wf_old.steps)
     inner_fn = as_function(wf)(himena_ui)
     inner_fn(arg0=win_first.to_model())
+
+def test_reader_methods():
+    meth = RemoteReaderMethod.from_str("USER@HOST:/path/to/file")
+    assert meth.username == "USER"
+    assert meth.host == "HOST"
+    assert meth.path == Path("/path/to/file")
+    assert meth.to_str() == "USER@HOST:/path/to/file"
+
+    meth = WslReaderMethod.from_str("/path/to/file")
+    assert meth.path == Path("/path/to/file")
+    assert meth.to_str() == "/path/to/file"
+    meth = WslReaderMethod.from_str("/path/to/file1;/path/to/file2")
+    assert meth.path == [Path("/path/to/file1"), Path("/path/to/file2")]
+    assert meth.to_str() == "/path/to/file1;/path/to/file2"

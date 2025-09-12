@@ -142,6 +142,8 @@ class QImageViewBase(QtW.QSplitter):
         # update sliders
         if not is_same_array:
             self._dims_slider.set_dimensions(arr.shape, meta0.axes, is_rgb=self._is_rgb)
+        elif meta0.axes:
+            self._dims_slider.set_axis_names([axis.name for axis in meta0.axes])
         with qsignal_blocker(self._dims_slider):
             self._dims_slider.setValue(sl_0)
         axis_names = [meta0.axes[i].name for i in range(self._dims_slider.count())]
@@ -184,6 +186,8 @@ class QImageViewBase(QtW.QSplitter):
         self._update_channels(meta0, img_slices, nchannels)
         if not meta0.skip_image_rerendering:
             self._set_image_slices(img_slices)
+
+        # ROIs
         roi_list = meta0.unwrap_rois()
         if len(roi_list) > 0:
             self._roi_col.clear()
@@ -202,10 +206,13 @@ class QImageViewBase(QtW.QSplitter):
             self._img_view.set_mode(MouseMode.from_roi(qroi))
             self._img_view._selection_handles.connect_roi(qroi)
 
+        # other settings
         self._control._interp_check_box.setChecked(meta0.interpolation == "linear")
         self._pixel_unit = meta0.unit or ""
         if ext_default := model.extension_default:
             self._extension_default = ext_default
+        if meta0.play_setting is not None:
+            self._dims_slider.set_play_setting(meta0.play_setting)
         self.set_hover_info(self._default_hover_info())
         return None
 
@@ -389,6 +396,7 @@ class QImageViewBase(QtW.QSplitter):
                 rois=self._roi_col.to_standard_roi_list,
                 is_rgb=self._is_rgb,
                 interpolation=interp,
+                play_setting=self._dims_slider.to_play_setting(),
                 unit=self._pixel_unit,
             ),
         )
@@ -1087,6 +1095,8 @@ def _update_meta(meta0: model_meta.ImageMeta, meta: model_meta.ImageMeta):
         meta0.unit = meta.unit
     if meta.interpolation:
         meta0.interpolation = meta.interpolation
+    if meta.play_setting is not None:
+        meta0.play_setting = meta.play_setting
     meta0.current_roi_index = meta.current_roi_index
     meta0.skip_image_rerendering = meta.skip_image_rerendering
     return None

@@ -95,6 +95,9 @@ class KeyBindingOverride(BaseModel):
     key: str
     command_id: str
 
+    def to_normed_str(self) -> str:
+        return self.key.replace(", ", " ")
+
 
 class AppProfile(BaseModel):
     """Model of a profile."""
@@ -225,7 +228,15 @@ class AppProfile(BaseModel):
 def load_app_profile(name: str, *, create_default: bool = False) -> AppProfile:
     path = profile_dir() / f"{name}.json"
     if path.exists():
-        return AppProfile.from_json(path)
+        try:
+            prof = AppProfile.from_json(path)
+        except json.JSONDecodeError as e:
+            raise ValueError(
+                f"Could not load profile {name!r}. Probably the file is corrupted. "
+                f"Please manually fix {path}.\nOriginal error ... \n\n"
+                f"{type(e).__name__}: {e}",
+            ) from None
+        return prof
     if create_default:
         AppProfile.default().with_name(name).save(path)
         return AppProfile.from_json(path)

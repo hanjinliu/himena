@@ -408,7 +408,9 @@ class MainWindow(Generic[_W]):
             if isinstance(metadata, BaseMetadata):
                 type = metadata.expected_type()
         if type is None:
-            type = self._object_type_map.pick_type(value)
+            type, value, metadata_fallback = self._object_type_map.pick_type(value)
+            if metadata is None:
+                metadata = metadata_fallback
         wd = WidgetDataModel(
             value=value,
             type=type,
@@ -538,7 +540,12 @@ class MainWindow(Generic[_W]):
         self.tabs.clear()
         self.dock_widgets.clear()
 
-    def set_status_tip(self, text: str, duration: float = 10.0) -> None:
+    def set_status_tip(
+        self,
+        text: str,
+        duration: float = 10.0,
+        process_event: bool = False,
+    ) -> None:
         """Set the status tip of the main window.
 
         This method can be safely called from any thread.
@@ -549,13 +556,44 @@ class MainWindow(Generic[_W]):
             Text to show in the status bar.
         duration : float, default 10.0
             Duration (seconds) to show the status tip.
+        process_event : bool, default False
+            If True, the application will process events after setting the status tip.
         """
         self._backend_main_window._set_status_tip(text, duration)
-        return None
+        if process_event:
+            self._backend_main_window._event_loop_handler.process_events()
 
     def show_notification(self, text: str, duration: float = 5.0) -> None:
-        """Show a temporary notification in the main window."""
+        """Show a temporary notification in the main window.
+
+        Parameters
+        ----------
+        text : str
+            Text to show in the notification.
+        duration : float, default 5.0
+            Duration (seconds) to show the notification.
+        """
         self._backend_main_window._show_notification(text, duration)
+
+    def show_tooltip(
+        self,
+        text: str,
+        duration: float = 3.0,
+        behavior: Literal["stay", "follow", "until_move"] = "follow",
+    ) -> None:
+        """Show a temporary tooltip next to the cursor in the main window.
+
+        Parameters
+        ----------
+        text : str
+            HTML text to show in the tooltip.
+        duration : float, default 3.0
+            Duration (seconds) to show the tooltip.
+        behavior : str, default "follow"
+            Behavior of the tooltip. "stay" to show at the position where it is created,
+            "follow" to follow the cursor, "until_move" to show until the cursor moves.
+        """
+        self._backend_main_window._show_tooltip(text, duration, behavior)
 
     @overload
     def register_function(
