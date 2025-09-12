@@ -21,7 +21,7 @@ from ._handles import QHandleRect, RoiSelectionHandles
 from ._scale_bar import QScaleBarItem
 from himena_builtins.qt.widgets._image_components import _mouse_events as _me
 from himena.qt import ndarray_to_qimage
-from himena.widgets import set_status_tip, get_clipboard, set_clipboard
+from himena.widgets import show_tooltip, get_clipboard, set_clipboard
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -303,7 +303,13 @@ class QImageGraphicsView(QBaseGraphicsView):
     def switch_mode(self, mode: MouseMode):
         self.set_mode(mode)
         self._last_mode_before_key_hold = mode
-        set_status_tip(f"Mouse mode: {mode.name}", duration=1)
+        if self.isVisible():
+            mode_name = mode.name
+            if mode_name.startswith("ROI_"):
+                mode_name = mode_name[4:]
+            show_tooltip(
+                f"Mouse mode:<br>{mode_name}", duration=2, behavior="until_move"
+            )
 
     def setSmoothing(self, enabled: bool):
         """Enable/disable image smoothing."""
@@ -346,7 +352,9 @@ class QImageGraphicsView(QBaseGraphicsView):
         self._initialized = True
 
     def _inform_scale(self):
-        set_status_tip(f"Zoom factor: {self.transform().m11():.3%}", duration=0.7)
+        show_tooltip(
+            f"Zoom: {self.transform().m11():.3%}", duration=0.4, behavior="until_move"
+        )
 
     def wheelEvent(self, event: QtGui.QWheelEvent):
         dy = event.angleDelta().y()

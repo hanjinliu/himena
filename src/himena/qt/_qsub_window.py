@@ -14,6 +14,7 @@ from qtpy.QtCore import Qt
 from superqt import QIconifyIcon
 from superqt.utils import qthrottled
 
+from himena.qt._qtooltip_widget import QToolTipWidget
 from himena.workflow import LocalReaderMethod
 from himena._utils import get_display_name
 from himena.utils.misc import lru_cache
@@ -46,6 +47,7 @@ class QSubWindowArea(QtW.QMdiArea):
         self.setActivationOrder(QtW.QMdiArea.WindowOrder.ActivationHistoryOrder)
         self._last_active_window_id: QSubWindow | None = None
         self._space_key_down = False
+        self._tooltip_widget = QToolTipWidget(self)
 
     def addSubWindow(self, sub_window: QSubWindow):
         super().addSubWindow(sub_window)
@@ -106,6 +108,7 @@ class QSubWindowArea(QtW.QMdiArea):
             for sub_window in self.subWindowList():
                 sub_window.move(sub_window.pos() + dpos)
             self.setCursor(Qt.CursorShape.ClosedHandCursor)
+
         self._last_drag_pos = event.pos()
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
@@ -155,6 +158,13 @@ class QSubWindowArea(QtW.QMdiArea):
                     a0.key() == Qt.Key.Key_Space
                     and a0.type() == QtCore.QEvent.Type.KeyPress
                 )
+            elif a0.type() == QtCore.QEvent.Type.MouseMove:
+                a0 = cast(QtGui.QMouseEvent, a0)
+                if self._tooltip_widget.isVisible():
+                    if self._tooltip_widget._behavior == "follow":
+                        self._tooltip_widget.move_tooltip(QtGui.QCursor.pos())
+                    if self._tooltip_widget._behavior == "until_move":
+                        self._tooltip_widget.hide()
             return super().eventFilter(obj, a0)
         return False
 
@@ -479,7 +489,6 @@ class QSubWindow(QtW.QMdiSubWindow):
                 a0.accept()
                 return None
         a0.ignore()
-        return None
 
     def dropEvent(self, a0: QtGui.QDropEvent | None) -> None:
         if a0 is None:
@@ -501,7 +510,10 @@ class QSubWindow(QtW.QMdiSubWindow):
                 return None
         a0.ignore()
         a0.setDropAction(Qt.DropAction.IgnoreAction)
-        return None
+
+    def focusOutEvent(self, e):
+        self._qt_mdiarea()._tooltip_widget.hide()
+        return super().focusOutEvent(e)
 
 
 class QTitleBarToolButton(QtW.QToolButton):

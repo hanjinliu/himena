@@ -9,6 +9,7 @@ from himena.widgets._initialize import (
 )
 from himena.widgets._functions import (
     set_status_tip,
+    show_tooltip,
     get_clipboard,
     set_clipboard,
     notify,
@@ -29,6 +30,7 @@ __all__ = [
     "remove_instance",
     "init_application",
     "set_status_tip",
+    "show_tooltip",
     "get_clipboard",
     "set_clipboard",
     "notify",

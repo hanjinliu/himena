@@ -361,6 +361,9 @@ class MockBackend(BackendMainWindow):
     def _show_notification(self, text: str, duration: float) -> None:
         """Show notification for a duration (sec)."""
 
+    def _set_tooltip(self, tip: str, duration: float, behavior: str) -> None:
+        """Set the tooltip of the main window for a duration (sec)."""
+
     def _rebuild_for_runtime(self, new_menus: list[str]) -> None:
         """Register the actions at runtime."""
 
