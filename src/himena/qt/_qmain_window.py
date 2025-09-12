@@ -251,8 +251,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             dock.close()
 
     def add_tab(self, tab_name: str) -> QSubWindowArea:
-        """
-        Add a new tab with a sub-window area.
+        """Add a new tab with a sub-window area.
 
         Parameters
         ----------
@@ -331,6 +330,11 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             info.close()
         self._event_loop_handler.close_socket()
         return super().closeEvent(event)
+
+    def focusOutEvent(self, a0):
+        if area := self._tab_widget.current_widget_area():
+            area._tooltip_widget.hide()
+        return super().focusOutEvent(a0)
 
     def event(self, e: QtCore.QEvent) -> bool:
         if e.type() in {
@@ -728,8 +732,13 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _show_notification(self, text: str, duration: float) -> None:
         self.notification_requested.emit(text, duration)
 
+    def _show_tooltip(self, text: str, duration: float, behavior: str) -> None:
+        if area := self._tab_widget.current_widget_area():
+            area._tooltip_widget.set_behavior(behavior)
+            area._tooltip_widget.show_tooltip(text, duration)
+
     def _on_status_tip_requested(self, tip: str, duration: float) -> None:
-        return self._status_bar.showMessage(tip, int(duration * 1000))
+        self._status_bar.showMessage(tip, int(duration * 1000))
 
     def _on_show_notification_requested(self, text: str, duration: float) -> None:
         text_edit = QtW.QPlainTextEdit(text)

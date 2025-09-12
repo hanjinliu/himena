@@ -72,10 +72,26 @@ class QDimsSlider(QtW.QWidget):
             slider._index_label.setFixedWidth(_index_width_max + 6)
         self._yx_axes = axes[-2:]
 
+    def set_play_setting(self, setting: model_meta.ImagePlaySetting) -> None:
+        """Set play setting for the last slider (the first non-yx axis)."""
+        if not self._sliders:
+            return
+        slider = self._sliders[-1]
+        slider._play_timer.setInterval(int(setting.interval * 1000))
+        slider._play_back_mode = setting.mode
+
     def to_dim_axes(self) -> list[model_meta.DimAxis]:
         axes = [slider.to_axis() for slider in self._sliders]
         axes.extend(self._yx_axes)
         return axes
+
+    def to_play_setting(self) -> model_meta.ImagePlaySetting | None:
+        for slider in self._sliders:
+            if slider.to_axis().name in ("t", "time", "frame"):
+                return model_meta.ImagePlaySetting(
+                    interval=slider._play_timer.interval() / 1000,
+                    mode=slider._play_back_mode,
+                )
 
     def _make_slider(self, size: int) -> _QAxisSlider:
         slider = _QAxisSlider()
@@ -247,13 +263,21 @@ class _QAxisSlider(QtW.QWidget):
 
     def _stop_play(self):
         self._play_btn.setChecked(False)
+        self._play_btn.setText("▶")
         self._play_timer.stop()
 
     def _on_play_clicked(self):
         if self._play_btn.isChecked():
+            if (
+                self._play_back_mode == "once"
+                and self._slider.value() == self._slider.maximum()
+            ):
+                self._slider.setValue(0)
             self._play_timer.start()
+            self._play_btn.setText("■")
         else:
             self._play_timer.stop()
+            self._play_btn.setText("▶")
 
     def _make_context_menu_for_play_btn(self) -> QtW.QMenu:
         menu = QtW.QMenu(self)

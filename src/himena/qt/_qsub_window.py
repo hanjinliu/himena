@@ -14,6 +14,7 @@ from qtpy.QtCore import Qt
 from superqt import QIconifyIcon
 from superqt.utils import qthrottled
 
+from himena.qt._qtooltip_widget import QToolTipWidget
 from himena.workflow import LocalReaderMethod
 from himena._utils import get_display_name
 from himena.utils.misc import lru_cache
@@ -45,6 +46,8 @@ class QSubWindowArea(QtW.QMdiArea):
         self._last_drag_pos: QtCore.QPoint | None = None
         self.setActivationOrder(QtW.QMdiArea.WindowOrder.ActivationHistoryOrder)
         self._last_active_window_id: QSubWindow | None = None
+        self._space_key_down = False
+        self._tooltip_widget = QToolTipWidget(self)
 
     def addSubWindow(self, sub_window: QSubWindow):
         super().addSubWindow(sub_window)
@@ -93,19 +96,26 @@ class QSubWindowArea(QtW.QMdiArea):
         self._mouse_move_event(event)
 
     def _mouse_move_event(self, event: QtGui.QMouseEvent):
-        if event.buttons() & Qt.MouseButton.LeftButton:
+        if (
+            (event.buttons() & Qt.MouseButton.LeftButton)
+            and self._space_key_down
+            or (event.buttons() & Qt.MouseButton.MiddleButton)
+        ):
             if self._last_drag_pos is None:
                 return None
-            if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-                # move all the windows
-                dpos = event.pos() - self._last_drag_pos
-                for sub_window in self.subWindowList():
-                    sub_window.move(sub_window.pos() + dpos)
-                self.setCursor(Qt.CursorShape.ClosedHandCursor)
+            # move all the windows
+            dpos = event.pos() - self._last_drag_pos
+            for sub_window in self.subWindowList():
+                sub_window.move(sub_window.pos() + dpos)
+            self.setCursor(Qt.CursorShape.ClosedHandCursor)
+
         self._last_drag_pos = event.pos()
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
         # reset cursor state
+        is_click = self._last_press_pos is not None and (
+            (event.pos() - self._last_press_pos).manhattanLength() < 8
+        )
         self.setCursor(Qt.CursorShape.ArrowCursor)
         self._last_press_pos = self._last_drag_pos = None
 
@@ -117,15 +127,15 @@ class QSubWindowArea(QtW.QMdiArea):
                     self.subWindowActivated.emit(sub_window)
                 break
         else:
-            if event.button() == Qt.MouseButton.RightButton:
+            if event.button() == Qt.MouseButton.RightButton and is_click:
                 # context menu
                 app = get_main_window(self).model_app
                 menu = build_qmodel_menu(MenuId.FILE_NEW, app, self)
                 menu.exec(event.globalPos())
 
     def eventFilter(self, obj, a0: QtCore.QEvent) -> bool:
-        if a0.type() == QtCore.QEvent.Type.FocusIn:
-            with suppress(RuntimeError):
+        with suppress(RuntimeError):
+            if a0.type() == QtCore.QEvent.Type.FocusIn:
                 if obj is not self:
                     if isinstance(obj, (QtW.QStyle, QtW.QAbstractButton, QtW.QMenuBar)):
                         return False
@@ -139,10 +149,24 @@ class QSubWindowArea(QtW.QMdiArea):
                 else:
                     self._set_area_focused()
                     _LOGGER.debug("QSubWindowArea.eventFilter: TabArea focused.")
-        try:
+            elif a0.type() in (
+                QtCore.QEvent.Type.KeyPress,
+                QtCore.QEvent.Type.KeyRelease,
+            ):
+                a0 = cast(QtGui.QKeyEvent, a0)
+                self._space_key_down = (
+                    a0.key() == Qt.Key.Key_Space
+                    and a0.type() == QtCore.QEvent.Type.KeyPress
+                )
+            elif a0.type() == QtCore.QEvent.Type.MouseMove:
+                a0 = cast(QtGui.QMouseEvent, a0)
+                if self._tooltip_widget.isVisible():
+                    if self._tooltip_widget._behavior == "follow":
+                        self._tooltip_widget.move_tooltip(QtGui.QCursor.pos())
+                    if self._tooltip_widget._behavior == "until_move":
+                        self._tooltip_widget.hide()
             return super().eventFilter(obj, a0)
-        except RuntimeError:  # wrapped object deleted
-            return False
+        return False
 
     def _set_area_focused(self):
         self.area_focused.emit()
@@ -465,7 +489,6 @@ class QSubWindow(QtW.QMdiSubWindow):
                 a0.accept()
                 return None
         a0.ignore()
-        return None
 
     def dropEvent(self, a0: QtGui.QDropEvent | None) -> None:
         if a0 is None:
@@ -487,7 +510,10 @@ class QSubWindow(QtW.QMdiSubWindow):
                 return None
         a0.ignore()
         a0.setDropAction(Qt.DropAction.IgnoreAction)
-        return None
+
+    def focusOutEvent(self, e):
+        self._qt_mdiarea()._tooltip_widget.hide()
+        return super().focusOutEvent(e)
 
 
 class QTitleBarToolButton(QtW.QToolButton):

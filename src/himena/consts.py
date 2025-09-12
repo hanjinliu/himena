@@ -9,9 +9,11 @@ BasicTextFileTypes = frozenset(
      ".pyx", ".c", ".cpp", ".h", ".hpp", ".java", ".js", ".ts", ".html", ".htm", ".css",
      ".scss", ".sass", ".php", ".rb", ".sh", ".bash", ".zsh", ".ps1", ".psm1", ".bat",
      ".cmd", ".m", ".vbs", ".vba", ".r", ".rs", ".go", ".svg", ".tex", ".rst", ".ipynb",
-     ".lock", ".cs", ".qss", ".bib", ".ris"]
+     ".lock", ".cs", ".qss", ".bib", ".ris", ".cfg", ".ini"]
 )  # fmt: skip
-
+BasicImageFileTypes = frozenset(
+    [".png", ".jpg", ".jpeg", "ico", ".icns", ".gif"]
+)  # fmt: skip
 ConventionalTextFileNames = frozenset(
     ["LICENSE", "Makefile", "dockerfile", ".gitignore", ".gitattributes", ".vimrc",
      ".viminfo", ".pypirc", "MANIFEST.in", ".bashrc", ".bash_profile", ".zshrc",]
