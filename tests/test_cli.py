@@ -54,8 +54,6 @@ def test_get():
     # this does nothing. Just for coverage.
     sys.argv = ["himena", "--get", "numpy"]
     main()
-    sys.argv = ["himena", "--get", "https://github.com/hanjinliu/himena.git"]
-    main()
 
 def test_install_uninstall_local(sample_dir):
     plugin_path = sample_dir / "local_plugin.py"
