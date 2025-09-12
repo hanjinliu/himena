@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Iterator, Literal
 from qtpy import QtWidgets as QtW, QtCore, QtGui
@@ -8,7 +7,7 @@ from superqt import QToggleSwitch
 
 from himena.qt._qsvg import QColoredSVGIcon
 from himena.workflow import RemoteReaderMethod
-from himena.consts import MonospaceFontFamily
+from himena.consts import MonospaceFontFamily, IS_WINDOWS
 from himena.utils.cli import local_to_remote
 from himena_builtins._consts import ICON_PATH
 from himena_builtins.qt.explorer._base import (
@@ -52,7 +51,7 @@ class QSSHRemoteExplorerWidget(QBaseRemoteExplorerWidget):
         self._is_wsl_switch.setText("Use WSL")
         self._is_wsl_switch.setFixedHeight(24)
         self._is_wsl_switch.setChecked(False)
-        self._is_wsl_switch.setVisible(sys.platform == "win32")
+        self._is_wsl_switch.setVisible(IS_WINDOWS)
         self._is_wsl_switch.setToolTip(
             "Use WSL (Windows Subsystem for Linux) to access remote files. If \n "
             "checked, all the subprocess commands such as `ls` will be prefixed \n"
@@ -185,7 +184,7 @@ class QSSHRemoteExplorerWidget(QBaseRemoteExplorerWidget):
 
     def _with_wsl_prefix(self, args: list[str]) -> list[str]:
         """Prefix the command with 'wsl -e' if WSL is enabled."""
-        if self._is_wsl_switch.isChecked() and sys.platform == "win32":
+        if self._is_wsl_switch.isChecked() and IS_WINDOWS:
             return ["wsl", "-e"] + args
         return args
 

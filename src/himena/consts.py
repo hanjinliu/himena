@@ -23,11 +23,16 @@ ExcelFileTypes = frozenset(
     [".xls", ".xlsx", ".xlsm", ".xlsb", ".xltx", ".xltm", ".xlam"]
 )  # fmt: skip
 
+
+IS_WINDOWS = sys.platform == "win32"
+IS_MACOS = sys.platform == "darwin"
+IS_LINUX = sys.platform.startswith("linux")
+
 # Monospace font
-if sys.platform == "win32":
+if IS_WINDOWS:
     MonospaceFontFamily = "Consolas"
     DefaultFontFamily = "Arial"
-elif sys.platform == "darwin":
+elif IS_MACOS:
     MonospaceFontFamily = "Menlo"
     DefaultFontFamily = "Helvetica"
 else:
