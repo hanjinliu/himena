@@ -30,3 +30,12 @@ __all__ = [
     "Parametric",
     "AppContext",
 ]
+
+
+def __getattr__(name: str):
+    if name == "plotting":
+        # This is a shortcut, not deprecated
+        from himena.standards import plotting
+
+        return plotting
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
