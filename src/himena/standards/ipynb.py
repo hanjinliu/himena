@@ -93,11 +93,15 @@ class IpynbCell(BaseModel):
 
 
 class IpynbMetadata(BaseModel):
+    """Model for the metadata of a Jupyter Notebook."""
+
     kernel_info: dict = Field(default_factory=dict)
     language_info: dict = Field(default_factory=dict)
 
 
 class IpynbFile(BaseModel):
+    """Model for the content of a Jupyter Notebook file."""
+
     metadata: IpynbMetadata = Field(default_factory=IpynbMetadata)
     nbformat: int | None = Field(None)
     nbformat_minor: int | None = Field(None)

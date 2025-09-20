@@ -1,7 +1,6 @@
 __version__ = "0.0.14"
 __author__ = "Hanjin Liu"
 
-from typing import TYPE_CHECKING
 from himena.core import (
     new_window,
     create_model,
@@ -32,12 +31,10 @@ __all__ = [
     "AppContext",
 ]
 
-if TYPE_CHECKING:
-    from himena.standards import plotting  # noqa: F401
-
 
 def __getattr__(name: str):
     if name == "plotting":
+        # This is a shortcut, not deprecated
         from himena.standards import plotting
 
         return plotting
