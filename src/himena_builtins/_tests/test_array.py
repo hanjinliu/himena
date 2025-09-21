@@ -14,8 +14,8 @@ from himena_builtins.tools.array import _broadcast_arrays
 
 _Ctrl = Qt.KeyboardModifier.ControlModifier
 
-def test_array_view(qtbot: QtBot):
-    with WidgetTester(QArrayView()) as tester:
+def test_array_view(himena_ui: MainWindow, qtbot: QtBot):
+    with WidgetTester(QArrayView(himena_ui)) as tester:
         qtbot.addWidget(tester.widget)
         tester.widget.show()
         table = tester.widget._table
@@ -41,8 +41,8 @@ def test_array_view(qtbot: QtBot):
         assert new.metadata.selections == [((1, 2), (1, 3))]
         assert old.metadata.selections == new.metadata.selections
 
-def test_structured(qtbot: QtBot):
-    with WidgetTester(QArrayView()) as tester:
+def test_structured(himena_ui: MainWindow, qtbot: QtBot):
+    with WidgetTester(QArrayView(himena_ui)) as tester:
         qtbot.addWidget(tester.widget)
         tester.update_model(
             value=np.array(
@@ -60,8 +60,8 @@ def test_structured(qtbot: QtBot):
         assert new.metadata.selections == [((1, 2), (1, 3))]
         assert old.metadata.selections == new.metadata.selections
 
-def test_copy_and_paste(qtbot: QtBot):
-    with WidgetTester(QArrayView()) as tester:
+def test_copy_and_paste(himena_ui: MainWindow, qtbot: QtBot):
+    with WidgetTester(QArrayView(himena_ui)) as tester:
         qtbot.addWidget(tester.widget)
         tester.update_model(value=np.zeros((3, 5, 3, 4), dtype=np.int32))
         tester.widget.set_indices(1, 2)
@@ -162,8 +162,8 @@ def test_array_commands(himena_ui: MainWindow):
     assert meta_new.axes[1].name == "y"
     assert meta_new.axes[2].name == "x"
 
-def test_copy_on_write(qtbot: QtBot):
-    view = QArrayView()
+def test_copy_on_write(himena_ui: MainWindow, qtbot: QtBot):
+    view = QArrayView(himena_ui)
     qtbot.addWidget(view)
     with WidgetTester(view) as tester:
         tester.update_model(value=np.zeros((3, 4)), type="array")
@@ -174,7 +174,7 @@ def test_copy_on_write(qtbot: QtBot):
         assert_array_equal(view.to_model().value, [[1, 10], [3, 4]])
         assert_array_equal(array_orig, [[1, 2], [3, 4]])
 
-        view_other = QArrayView()
+        view_other = QArrayView(himena_ui)
         view_other.update_model(view.to_model())
         view.array_update((slice(0, 1), slice(0, 1)), 20)
         assert_array_equal(view.to_model().value, [[20, 10], [3, 4]])

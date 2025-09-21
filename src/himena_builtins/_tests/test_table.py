@@ -14,8 +14,8 @@ from qtpy.QtCore import Qt, QPoint
 _Ctrl = Qt.KeyboardModifier.ControlModifier
 
 
-def test_table_edit(qtbot: QtBot):
-    with _get_tester() as tester:
+def test_table_edit(himena_ui: MainWindow, qtbot: QtBot):
+    with _get_tester(himena_ui) as tester:
         tester.update_model(value=[["a", "b"], [0, 1]])
         tester.cycle_model()
         qtbot.addWidget(tester.widget)
@@ -59,8 +59,17 @@ def test_table_edit(qtbot: QtBot):
         qtbot.keyClick(tester.widget, Qt.Key.Key_E)
         tester.widget._horizontal_header._update_press_release(Qt.KeyboardModifier.ControlModifier)
 
-def test_moving_in_table(qtbot: QtBot):
-    with _get_tester() as tester:
+        tester.widget._set_status_tip_for_text("a", ctrl_down=False)
+        tester.widget._set_status_tip_for_text("b", ctrl_down=True)
+        tester.widget._set_status_tip_for_text("", ctrl_down=False)
+        tester.widget._set_status_tip_for_text("", ctrl_down=True)
+        tester.widget._mouse_track.last_click_pos = QPoint(20, 10)
+        tester.widget._process_table_drag(QPoint(10, 10))
+        tester.widget._process_table_drag(QPoint(10, 20))
+        tester.widget._process_table_drag(QPoint(20, 20))
+
+def test_moving_in_table(himena_ui: MainWindow, qtbot: QtBot):
+    with _get_tester(himena_ui) as tester:
         qtbot.addWidget(tester.widget)
         tester.widget.show()
         tester.update_model(value=[["a", "b"], ["c", "bc"]])
@@ -80,8 +89,8 @@ def test_moving_in_table(qtbot: QtBot):
         qtbot.keyClick(tester.widget, Qt.Key.Key_PageUp)
         qtbot.keyClick(tester.widget, Qt.Key.Key_PageDown)
 
-def test_find_table(qtbot: QtBot):
-    with _get_tester() as tester:
+def test_find_table(himena_ui: MainWindow, qtbot: QtBot):
+    with _get_tester(himena_ui) as tester:
         tester.update_model(value=[["a", "b"], ["c", "bc"]])
         tester.cycle_model()
         qtbot.addWidget(tester.widget)
@@ -94,17 +103,17 @@ def test_find_table(qtbot: QtBot):
         finder._btn_next.click()
         finder._btn_prev.click()
 
-def test_table_view_accepts_table_like(qtbot):
-    table.test_accepts_table_like(_get_tester())
+def test_table_view_accepts_table_like(himena_ui: MainWindow):
+    table.test_accepts_table_like(_get_tester(himena_ui))
 
-def test_table_view_current_position(qtbot):
-    table.test_current_position(_get_tester())
+def test_table_view_current_position(himena_ui: MainWindow):
+    table.test_current_position(_get_tester(himena_ui))
 
-def test_table_view_selections(qtbot):
-    table.test_selections(_get_tester())
+def test_table_view_selections(himena_ui: MainWindow):
+    table.test_selections(_get_tester(himena_ui))
 
-def test_copy_and_paste(qtbot: QtBot):
-    tester = _get_tester()
+def test_copy_and_paste(himena_ui: MainWindow, qtbot: QtBot):
+    tester = _get_tester(himena_ui)
     qtbot.addWidget(tester.widget)
     tester.update_model(value=[["a", "b"], ["c", "bc"]])
     tester.widget.selection_model.current_index = (0, 0)
@@ -130,8 +139,8 @@ def test_copy_and_paste(qtbot: QtBot):
     tester.widget._paste_from_clipboard()
     assert_equal(tester.widget.to_model().value, [["a", "a"], ["c", "c"]])
 
-def _get_tester():
-    return WidgetTester(QSpreadsheet())
+def _get_tester(himena_ui: MainWindow):
+    return WidgetTester(QSpreadsheet(himena_ui))
 
 def test_commands(himena_ui: MainWindow):
     model = WidgetDataModel(
@@ -175,9 +184,9 @@ def test_commands(himena_ui: MainWindow):
     widget._selection_model.set_ranges([(slice(1, 3), slice(1, 2))])
     widget._measure()
 
-def test_large_data(qtbot: QtBot):
+def test_large_data(himena_ui: MainWindow, qtbot: QtBot):
     # initialize with a large data
-    ss = QSpreadsheet()
+    ss = QSpreadsheet(himena_ui)
     qtbot.addWidget(ss)
     ss.update_model(
         WidgetDataModel(
@@ -189,7 +198,7 @@ def test_large_data(qtbot: QtBot):
     assert ss.model().columnCount() == 101
 
     # paste a large data
-    ss = QSpreadsheet()
+    ss = QSpreadsheet(himena_ui)
     qtbot.addWidget(ss)
     ss.update_model(WidgetDataModel(value=[["a"]], type=StandardType.TABLE))
     ss.setCurrentIndex(ss.model().index(0, 0))
@@ -209,9 +218,9 @@ def test_large_data(qtbot: QtBot):
     assert ss.model().rowCount() == 184
     assert ss.model().columnCount() == 195
 
-def test_table_deletion_at_edges(qtbot: QtBot):
+def test_table_deletion_at_edges(himena_ui: MainWindow, qtbot: QtBot):
     # test deleting at the edges of the table
-    ss = QSpreadsheet()
+    ss = QSpreadsheet(himena_ui)
     qtbot.addWidget(ss)
     # "a" "b" ""
     # "c" [d] "e" <- delete this cell
@@ -253,9 +262,9 @@ def test_table_deletion_at_edges(qtbot: QtBot):
     ss._delete_selection()
     assert_equal(ss.to_model().value, [["a", "b"]])
 
-def test_copy_on_write(qtbot: QtBot):
+def test_copy_on_write(himena_ui: MainWindow, qtbot: QtBot):
     # test copy on write
-    ss = QSpreadsheet()
+    ss = QSpreadsheet(himena_ui)
     qtbot.addWidget(ss)
     with WidgetTester(ss) as tester:
         array_orig = np.array([["a", "b"], ["c", "d"]], dtype=np.dtypes.StringDType())
@@ -265,35 +274,35 @@ def test_copy_on_write(qtbot: QtBot):
         assert_equal(ss.to_model().value, [["a", ""], ["c", "d"]])
         assert_equal(array_orig, [["a", "b"], ["c", "d"]])
 
-        ss_other = QSpreadsheet()
+        ss_other = QSpreadsheet(himena_ui)
         ss_other.update_model(ss.to_model())
         ss._selection_model.set_ranges([(slice(0, 1), slice(0, 1))])
         ss._delete_selection()
         assert_equal(ss.to_model().value, [["", ""], ["c", "d"]])
         assert_equal(ss_other.to_model().value, [["a", ""], ["c", "d"]])
 
-def test_header_view(qtbot: QtBot):
+def test_header_view(himena_ui: MainWindow, qtbot: QtBot):
     from himena_builtins.qt.widgets._table_components._header import (
         QHorizontalHeaderView,
         QVerticalHeaderView,
     )
-    header = QHorizontalHeaderView(QSpreadsheet())
+    header = QHorizontalHeaderView(QSpreadsheet(himena_ui))
     qtbot.addWidget(header)
     header._on_section_clicked(0)
     header._on_section_pressed(0)
     header._on_section_entered(1)
     header.visualRectAtIndex(0)
 
-    header = QVerticalHeaderView(QSpreadsheet())
+    header = QVerticalHeaderView(QSpreadsheet(himena_ui))
     qtbot.addWidget(header)
     header._on_section_clicked(0)
     header._on_section_pressed(0)
     header._on_section_entered(1)
     header.visualRectAtIndex(0)
 
-def test_table_view_mouse_interaction(qtbot: QtBot):
+def test_table_view_mouse_interaction(himena_ui: MainWindow, qtbot: QtBot):
 
-    ss = QSpreadsheet()
+    ss = QSpreadsheet(himena_ui)
     qtbot.addWidget(ss)
     ss.show()
     ss.update_model(create_table_model(value=["a", "b"]))

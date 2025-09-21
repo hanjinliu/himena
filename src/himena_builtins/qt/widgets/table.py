@@ -28,6 +28,9 @@ from himena_builtins.qt.widgets._table_components import (
 from himena.utils.collections import UndoRedoStack
 from himena.utils.misc import table_to_text
 
+if TYPE_CHECKING:
+    from himena.widgets import MainWindow
+
 
 class HeaderFormat(Enum):
     """Enum of how to index table header."""
@@ -271,8 +274,8 @@ class QSpreadsheet(QTableBase):
     __himena_display_name__ = "Built-in Spreadsheet Editor"
     HeaderFormat = HeaderFormat
 
-    def __init__(self):
-        QTableBase.__init__(self)
+    def __init__(self, ui: MainWindow):
+        QTableBase.__init__(self, ui)
         self.setEditTriggers(Editability.TRUE)
         self._control = None
         self._model_type = StandardType.TABLE

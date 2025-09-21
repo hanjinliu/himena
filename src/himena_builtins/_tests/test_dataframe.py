@@ -25,8 +25,8 @@ _Ctrl = Qt.KeyboardModifier.ControlModifier
         pl.DataFrame({"a": [1, -2], "b": [3.0, -4.0], "str": ["a", "b"]}),
     ],
 )
-def test_dataframe(qtbot: QtBot, df):
-    with WidgetTester(QDataFrameView()) as tester:
+def test_dataframe(himena_ui: MainWindow, qtbot: QtBot, df):
+    with WidgetTester(QDataFrameView(himena_ui)) as tester:
         tester.update_model(value=df)
         qtbot.addWidget(tester.widget)
         table = tester.widget
@@ -49,10 +49,10 @@ def test_dataframe(qtbot: QtBot, df):
         tester.widget._hor_header._process_move_event(1)
         select_columns(tester.to_model())([0])
 
-def test_dataframe_plot(qtbot: QtBot):
+def test_dataframe_plot(himena_ui: MainWindow, qtbot: QtBot):
     x = np.linspace(0, 3, 20)
     df = {"x": x, "y": np.sin(x * 2), "z": np.cos(x * 2)}
-    with WidgetTester(QDataFramePlotView()) as tester:
+    with WidgetTester(QDataFramePlotView(himena_ui)) as tester:
         tester.update_model(value=df)
         tester.cycle_model()
         qtbot.addWidget(tester.widget)
@@ -108,15 +108,15 @@ def test_dataframe_command(himena_ui: MainWindow):
         pl.DataFrame({"a": [1, -2], "b": [3.0, -4.0], "str": ["a", "b"]}),
     ],
 )
-def test_copy_on_write(qtbot: QtBot, df):
-    view = QDataFrameView()
+def test_copy_on_write(himena_ui: MainWindow, qtbot: QtBot, df):
+    view = QDataFrameView(himena_ui)
     qtbot.addWidget(view)
     with WidgetTester(view) as tester:
         tester.update_model(value=df, type="dataframe")
         view.edit_item(0, 0, "100")
         assert_equal(np.array(tester.to_model().value["a"]), [100, -2])
         assert_equal(np.array(df["a"]), [1, -2])
-        view2 = QDataFrameView()
+        view2 = QDataFrameView(himena_ui)
         qtbot.addWidget(view2)
         view2.update_model(view.to_model())
         view.edit_item(1, 1, "0.1")
@@ -131,8 +131,8 @@ def test_copy_on_write(qtbot: QtBot, df):
         {"maybe_array": np.arange(5), "maybe_list": [1, 2, 3], "maybe_dict": {"a": 1}},
     ],
 )
-def test_dict_view(qtbot: QtBot, input_value):
-    view = QDictView()
+def test_dict_view(himena_ui: MainWindow, qtbot: QtBot, input_value):
+    view = QDictView(himena_ui)
     qtbot.addWidget(view)
     with WidgetTester(view) as tester:
         tester.update_model(value=input_value, type=StandardType.DICT)

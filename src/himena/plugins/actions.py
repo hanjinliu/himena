@@ -101,6 +101,10 @@ class AppTip:
     short: str
     long: str
 
+    def clone(self) -> Self:
+        """Create a copy of the instance."""
+        return AppTip(short=self.short, long=self.long)
+
 
 class AppActionRegistry:
     _global_instance: AppActionRegistry | None = None
@@ -151,7 +155,7 @@ class AppActionRegistry:
         if len(self._app_tips) == 0:
             return None
         tip = random.choice(self._app_tips)
-        return AppTip(short=tip.short, long=tip.long)
+        return tip.clone()
 
     def add_action(self, action: Action, is_dynamic: bool = False) -> None:
         """Add an action to the registry."""

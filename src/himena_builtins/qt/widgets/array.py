@@ -25,6 +25,7 @@ from himena_builtins.qt.widgets._table_components import (
 )
 
 if TYPE_CHECKING:
+    from himena.widgets import MainWindow
     from himena_builtins.qt.widgets._table_components import SelectionModel
 
 
@@ -141,8 +142,8 @@ class QArrayModel(QtCore.QAbstractTableModel):
 
 
 class QArraySliceView(QTableBase):
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, ui, parent: QArrayView):
+        super().__init__(ui, parent)
         self.horizontalHeader().setFixedHeight(18)
         self.verticalHeader().setDefaultSectionSize(20)
         self.horizontalHeader().setDefaultSectionSize(55)
@@ -290,9 +291,9 @@ class QArrayView(QtW.QWidget):
     __himena_widget_id__ = "builtins:QArrayView"
     __himena_display_name__ = "Bulit-in Array Viewer"
 
-    def __init__(self):
+    def __init__(self, ui: MainWindow):
         super().__init__()
-        self._table = QArraySliceView(self)
+        self._table = QArraySliceView(ui, parent=self)
         layout = QtW.QVBoxLayout(self)
 
         self._spinbox_group = QtW.QWidget()
