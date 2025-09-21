@@ -9,6 +9,7 @@ import numpy as np
 from qtpy import QtGui, QtCore, QtWidgets as QtW
 from qtpy.QtCore import Qt
 
+from himena import MainWindow
 from himena.consts import StandardType
 from himena.types import Size, WidgetDataModel, Parametric
 from himena.standards import plotting as hplt, roi as _roi
@@ -218,8 +219,8 @@ class QDataFrameView(QTableBase):
     __himena_widget_id__ = "builtins:QDataFrameView"
     __himena_display_name__ = "Built-in DataFrame Viewer"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, ui):
+        super().__init__(ui)
         self._hor_header = QDraggableHorizontalHeader(self)
         self.setHorizontalHeader(self._hor_header)
         self.horizontalHeader().setFixedHeight(18)
@@ -369,8 +370,8 @@ class QDictView(QDataFrameView):
     __himena_widget_id__ = "builtins:QDictView"
     __himena_display_name__ = "Built-in Dictionary Viewer"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, ui: MainWindow):
+        super().__init__(ui)
         self._extension_default = ".json"
         self._model_type = StandardType.DICT
         self.horizontalHeader().hide()
@@ -446,11 +447,11 @@ class QDataFramePlotView(QtW.QSplitter):
     __himena_widget_id__ = "builtins:QDataFramePlotView"
     __himena_display_name__ = "Built-in DataFrame Plot View"
 
-    def __init__(self):
+    def __init__(self, ui: MainWindow):
         from himena_builtins.qt.plot._canvas import QModelMatplotlibCanvas
 
         super().__init__(QtCore.Qt.Orientation.Horizontal)
-        self._table_widget = QDataFrameView()
+        self._table_widget = QDataFrameView(ui)
         self._table_widget.setSizePolicy(
             QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Expanding
         )

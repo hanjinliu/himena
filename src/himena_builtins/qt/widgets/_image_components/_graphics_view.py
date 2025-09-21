@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import suppress
 import logging
 import math
 from typing import Iterable
@@ -21,7 +22,7 @@ from ._handles import QHandleRect, RoiSelectionHandles
 from ._scale_bar import QScaleBarItem
 from himena_builtins.qt.widgets._image_components import _mouse_events as _me
 from himena.qt import ndarray_to_qimage
-from himena.widgets import show_tooltip, get_clipboard, set_clipboard
+from himena.widgets import show_tooltip, get_clipboard, set_clipboard, current_instance
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -512,6 +513,11 @@ class QImageGraphicsView(QBaseGraphicsView):
         else:
             if event.button() == Qt.MouseButton.MiddleButton:
                 self._set_pan_zoom_temporary()
+            else:
+                with suppress(Exception):
+                    ins = current_instance()
+                    if ins.keys.contains("Space"):
+                        self._set_pan_zoom_temporary()
             self._mouse_event_handler.pressed(event)
         return super().mousePressEvent(event)
 

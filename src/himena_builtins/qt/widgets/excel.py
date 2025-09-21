@@ -6,6 +6,7 @@ from himena_builtins.qt.widgets._table_components._selection_model import Index
 from himena_builtins.qt.widgets.table import QSpreadsheet
 from himena_builtins.qt.widgets.dict import QDictOfWidgetEdit
 from himena_builtins.qt.widgets._table_components import QSelectionRangeEdit
+from himena import MainWindow
 from himena.types import WidgetDataModel
 from himena.consts import StandardType
 from himena.plugins import validate_protocol
@@ -30,15 +31,16 @@ class QExcelEdit(QDictOfWidgetEdit):
     __himena_widget_id__ = "builtins:QExcelEdit"
     __himena_display_name__ = "Built-in Excel File Editor"
 
-    def __init__(self):
+    def __init__(self, ui: MainWindow):
         super().__init__()
+        self._ui = ui
         self._model_type_component = StandardType.TABLE
         self._model_type = StandardType.EXCEL
         self._control = QExcelTableStackControl()
         self._extension_default = ".xlsx"
 
     def _default_widget(self) -> QSpreadsheet:
-        table = QSpreadsheet()
+        table = QSpreadsheet(self._ui)
         table.update_model(WidgetDataModel(value=None, type=StandardType.TABLE))
         table.setHeaderFormat(QSpreadsheet.HeaderFormat.Alphabetic)
         return table

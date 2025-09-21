@@ -41,6 +41,7 @@ from himena.types import (
 )
 from himena.utils.misc import is_subtype
 from himena.widgets._backend import BackendMainWindow
+from himena.widgets._keyset import KeySet
 from himena.widgets._hist import HistoryContainer, FileDialogHistoryDict
 from himena.widgets._initialize import remove_instance
 from himena.widgets._typemap import ObjectTypeMap, register_defaults
@@ -129,6 +130,11 @@ class MainWindow(Generic[_W]):
         """Socket information."""
         eh = self._backend_main_window._event_loop_handler
         return SocketInfo(host=eh._host, port=eh._port)
+
+    @property
+    def keys(self) -> KeySet:
+        """Get the set of currently pressed keys."""
+        return KeySet(self)
 
     @property
     def theme(self) -> Theme:

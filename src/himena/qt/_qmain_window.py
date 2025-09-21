@@ -11,12 +11,14 @@ import weakref
 import numpy as np
 
 from qtpy import QtWidgets as QtW, QtGui, QtCore
+from app_model.types import KeyCode
 from app_model.backends.qt import (
     QModelMainWindow,
     QModelMenu,
     QMenuItemAction,
     QModelToolBar,
     QCommandRuleAction,
+    qkey2modelkey,
 )
 from superqt import QIconifyIcon
 from superqt.utils import ensure_main_thread
@@ -79,6 +81,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         )
         self._qt_app = cast(QtW.QApplication, _event_loop_handler.get_app())
         self._app_name = app.name
+        self._keys_down: set[int] = set()
         self._event_loop_handler = _event_loop_handler
 
         super().__init__(app)
@@ -828,6 +831,16 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             if sub:
                 win.rect = prevent_window_overlap(sub, win, self._area_size())
         result_stack.append_result(item)
+
+    def _keys_as_set(self) -> set[int]:
+        out = set()
+        for k in self._keys_down:
+            model_key = qkey2modelkey(k)
+            if isinstance(model_key, KeyCode):
+                out.add(int(model_key))
+            else:
+                out.add(int(model_key._key))
+        return out
 
 
 def _is_root_menu_id(app: HimenaApplication, menu_id: str) -> bool:

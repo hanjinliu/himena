@@ -8,8 +8,12 @@ from qtpy.QtCore import Qt
 from himena.plugins._checker import validate_protocol
 from himena.standards.model_meta import TableMeta
 from himena.qt._qfinderwidget import QTableFinderWidget
+from himena.utils.misc import is_absolute_file_path_string, is_url_string
 from ._selection_model import SelectionModel, Index
 from ._header import QVerticalHeaderView, QHorizontalHeaderView
+
+if TYPE_CHECKING:
+    from himena.widgets import MainWindow
 
 
 class QItemDelegate(QtW.QStyledItemDelegate):
@@ -34,6 +38,12 @@ class QItemDelegate(QtW.QStyledItemDelegate):
         option: QtW.QStyleOptionViewItem,
         index: QtCore.QModelIndex,
     ):
+        if (
+            (option.state & QtW.QStyle.StateFlag.State_MouseOver)
+            and isinstance(text := index.data(), str)
+            and (is_absolute_file_path_string(text) or is_url_string(text))
+        ):
+            option.font.setUnderline(True)
         super().paint(painter, option, index)
         if option.state & QtW.QStyle.StateFlag.State_MouseOver:
             painter.setPen(QtGui.QPen(self.parent()._hover_color, 2))
@@ -58,12 +68,14 @@ class QTableBase(QtW.QTableView):
     selection_changed = QtCore.Signal(list)
     current_index_changed = QtCore.Signal(tuple)
 
-    def __init__(self, parent: QtW.QWidget | None = None) -> None:
+    def __init__(self, ui: MainWindow, parent: QtW.QWidget | None = None) -> None:
         super().__init__(parent)
+        self._ui = ui
         self._vertical_header = QVerticalHeaderView(self)
         self._horizontal_header = QHorizontalHeaderView(self)
         self.setVerticalHeader(self._vertical_header)
         self.setHorizontalHeader(self._horizontal_header)
+        self.setMouseTracking(True)
 
         self.horizontalHeader().setFixedHeight(18)
         self.verticalHeader().setDefaultSectionSize(22)
@@ -309,50 +321,50 @@ class QTableBase(QtW.QTableView):
         has_shift = a0.modifiers() & Qt.KeyboardModifier.ShiftModifier
         self._selection_model.set_ctrl(has_ctrl)
         self._selection_model.set_shift(
-            has_shift or self._mouse_track.last_rightclick_pos is not None
+            has_shift or self._mouse_track.last_click_pos is not None
         )
         return super().keyReleaseEvent(a0)
 
     def mousePressEvent(self, e: QtGui.QMouseEvent) -> None:
         """Register clicked position"""
+        self._mouse_press_event(e.pos(), e.button())
+        return super().mousePressEvent(e)
+
+    def _mouse_press_event(self, pos: QtCore.QPoint, button: int) -> None:
+        """Handle mouse press event."""
         _selection_model = self._selection_model
-        _selection_model.set_ctrl(e.modifiers() & Qt.KeyboardModifier.ControlModifier)
-        self._mouse_track.last_rightclick_pos = e.pos()
-        if e.button() == Qt.MouseButton.LeftButton:
-            index = self.indexAt(e.pos())
+        if button == Qt.MouseButton.LeftButton:
+            index = self.indexAt(pos)
             if index.isValid():
                 r, c = index.row(), index.column()
-                self._selection_model.jump_to(r, c)
+                _selection_model.jump_to(r, c)
             else:
                 self.closePersistentEditor(index)
             self._mouse_track.last_button = "left"
-        elif e.button() == Qt.MouseButton.RightButton:
+        elif button == Qt.MouseButton.RightButton:
             self._mouse_track.was_right_dragging = False
             self._mouse_track.last_button = "right"
             return
         _selection_model.set_shift(True)
-        return super().mousePressEvent(e)
 
     def mouseMoveEvent(self, e: QtGui.QMouseEvent) -> None:
         """Scroll table plane when mouse is moved with right click."""
-        if e.buttons() == Qt.MouseButton.NoButton:
-            return None
-        if self._mouse_track.last_button == "right":
-            pos = e.pos()
-            dy = pos.y() - self._mouse_track.last_rightclick_pos.y()
-            dx = pos.x() - self._mouse_track.last_rightclick_pos.x()
-            self.verticalScrollBar().setValue(self.verticalScrollBar().value() - dy)
-            self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() - dx)
-            self._mouse_track.last_rightclick_pos = pos
-            self._mouse_track.was_right_dragging = True
-        else:
-            index = self.indexAt(e.pos())
+        ctrl_down = bool(e.modifiers() & Qt.KeyboardModifier.ControlModifier)
+        self._mouse_move_event(e.pos(), ctrl_down)
+        return super().mouseMoveEvent(e)
+
+    def _mouse_move_event(self, pos: QtCore.QPoint, ctrl_down: bool) -> None:
+        """Handle mouse move event."""
+        if self._mouse_track.last_button is None:
+            self._set_status_tip_for_text(self._text_for_pos(pos), ctrl_down)
+        elif self._mouse_track.last_button == "right":
+            self._process_table_drag(pos)
+        elif self._mouse_track.last_button == "left":
+            index = self.indexAt(pos)
             if index.isValid():
                 r, c = index.row(), index.column()
                 if self._selection_model.current_index != (r, c):
                     self._selection_model.move_to(r, c)
-
-        return None
 
     def mouseReleaseEvent(self, e: QtGui.QMouseEvent) -> None:
         """Delete last position."""
@@ -360,12 +372,22 @@ class QTableBase(QtW.QTableView):
             index = self.indexAt(e.pos())
             if not self.selection_model.contains((index.row(), index.column())):
                 self._selection_model.jump_to(index.row(), index.column())
-            if self._mouse_track.last_rightclick_pos == e.pos():
-                # right click
+            if self._mouse_track.is_close_to(e.pos()):  # right click
                 menu = self._make_context_menu()
                 if menu is not None:
                     menu.exec(self.viewport().mapToGlobal(e.pos()))
-        self._mouse_track.last_rightclick_pos = None
+        elif self._mouse_track.last_button == "left":
+            if (
+                self._mouse_track.is_close_to(e.pos())
+                and (e.modifiers() & Qt.KeyboardModifier.ControlModifier)
+                and (text := self._text_for_pos(e.pos()))
+            ):
+                if is_absolute_file_path_string(text):
+                    self._ui.read_file(text)
+                elif is_url_string(text):
+                    QtGui.QDesktopServices.openUrl(QtCore.QUrl(text))  # open URL
+
+        self._mouse_track.last_click_pos = None
         self._mouse_track.last_button = None
         self._selection_model.set_shift(
             e.modifiers() & Qt.KeyboardModifier.ShiftModifier
@@ -373,7 +395,40 @@ class QTableBase(QtW.QTableView):
         self._mouse_track.was_right_dragging = False
         return super().mouseReleaseEvent(e)
 
+    def _set_status_tip_for_text(self, text_under_cursor: str | None, ctrl_down: bool):
+        if text_under_cursor:
+            if ctrl_down:
+                self.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+            if is_absolute_file_path_string(text_under_cursor):
+                status_tip = "Ctrl+Click to open file in this application"
+            elif is_url_string(text_under_cursor):
+                status_tip = "Ctrl+Click to open link in the default browser"
+            else:
+                status_tip = ""
+                self.setCursor(QtCore.Qt.CursorShape.ArrowCursor)
+            self._ui.set_status_tip(status_tip, 2.6)
+        else:
+            self.setCursor(QtCore.Qt.CursorShape.ArrowCursor)
+            self._ui.set_status_tip("")
+
+    def _process_table_drag(self, pos: QtCore.QPoint) -> None:
+        assert self._mouse_track.last_click_pos is not None
+        dy = pos.y() - self._mouse_track.last_click_pos.y()
+        dx = pos.x() - self._mouse_track.last_click_pos.x()
+        self.verticalScrollBar().setValue(self.verticalScrollBar().value() - dy)
+        self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() - dx)
+        self._mouse_track.last_click_pos = pos
+        self._mouse_track.was_right_dragging = True
+
+    def _text_for_pos(self, pos: QtCore.QPoint) -> str | None:
+        index = self.indexAt(pos)
+        if index.isValid():
+            text = index.data()
+            if isinstance(text, str):
+                return text
+
     def _make_context_menu(self) -> QtW.QMenu | None:
+        """Overwrite to provide a context menu."""
         return None
 
     def paintEvent(self, event: QtGui.QPaintEvent):
@@ -463,9 +518,14 @@ class MouseTrack:
     """Info about the mouse position and button state"""
 
     def __init__(self):
-        self.last_rightclick_pos: QtCore.QPoint | None = None
+        self.last_click_pos: QtCore.QPoint | None = None
         self.was_right_dragging: bool = False
         self.last_button: Literal["left", "right"] | None = None
+
+    def is_close_to(self, pos: QtCore.QPoint, tol=3) -> bool:
+        if self.last_click_pos is None:
+            return False
+        return (self.last_click_pos - pos).manhattanLength() <= tol
 
 
 class Editability:

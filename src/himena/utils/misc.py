@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 import re
 from typing import (
     TypeVar,
@@ -229,3 +230,26 @@ def _table_to_latex(table: np.ndarray) -> str:
     latex += "\\hline\n"
     latex += "\\end{tabular}"
     return latex
+
+
+def is_url_string(s: str) -> bool:
+    """Check if a string is a URL."""
+    url_pattern = re.compile(
+        r"^(https?|ftp)://"  # http:// or https:// or ftp://
+        r"(([A-Za-z0-9-]+\.)+[A-Za-z]{2,6}"  # domain...
+        r"|"
+        r"localhost"  # localhost...
+        r"|"
+        r"(\d{1,3}\.){3}\d{1,3})"  # ...or ipv4
+        r"(:\d+)?"  # optional port
+        r"(\/\S*)?$"  # optional path
+    )
+    return bool(url_pattern.match(s))
+
+
+def is_absolute_file_path_string(s: str) -> bool:
+    """Check if a string is an absolute file path."""
+    try:
+        return Path(s).is_absolute()
+    except Exception:
+        return False

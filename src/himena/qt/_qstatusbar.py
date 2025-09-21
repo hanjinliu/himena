@@ -9,6 +9,8 @@ if TYPE_CHECKING:
 
 
 class QStatusBar(QtW.QStatusBar):
+    """Custom status bar."""
+
     def __init__(self, parent: QMainWindow):
         super().__init__(parent)
         self._corner_widget = QtW.QWidget(self)
