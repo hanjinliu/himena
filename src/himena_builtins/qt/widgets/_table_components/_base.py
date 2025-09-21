@@ -327,35 +327,40 @@ class QTableBase(QtW.QTableView):
 
     def mousePressEvent(self, e: QtGui.QMouseEvent) -> None:
         """Register clicked position"""
+        self._mouse_press_event(e.pos(), e.button())
+        return super().mousePressEvent(e)
+
+    def _mouse_press_event(self, pos: QtCore.QPoint, button: int) -> None:
+        """Handle mouse press event."""
         _selection_model = self._selection_model
-        _selection_model.set_ctrl(e.modifiers() & Qt.KeyboardModifier.ControlModifier)
-        self._mouse_track.last_click_pos = e.pos()
-        if e.button() == Qt.MouseButton.LeftButton:
-            index = self.indexAt(e.pos())
+        if button == Qt.MouseButton.LeftButton:
+            index = self.indexAt(pos)
             if index.isValid():
                 r, c = index.row(), index.column()
-                self._selection_model.jump_to(r, c)
+                _selection_model.jump_to(r, c)
             else:
                 self.closePersistentEditor(index)
             self._mouse_track.last_button = "left"
-        elif e.button() == Qt.MouseButton.RightButton:
+        elif button == Qt.MouseButton.RightButton:
             self._mouse_track.was_right_dragging = False
             self._mouse_track.last_button = "right"
             return
         _selection_model.set_shift(True)
-        return super().mousePressEvent(e)
 
     def mouseMoveEvent(self, e: QtGui.QMouseEvent) -> None:
         """Scroll table plane when mouse is moved with right click."""
+        ctrl_down = bool(e.modifiers() & Qt.KeyboardModifier.ControlModifier)
+        self._mouse_move_event(e.pos(), ctrl_down)
+        return super().mouseMoveEvent(e)
+
+    def _mouse_move_event(self, pos: QtCore.QPoint, ctrl_down: bool) -> None:
+        """Handle mouse move event."""
         if self._mouse_track.last_button is None:
-            self._set_status_tip_for_text(
-                self._text_for_pos(e.pos()),
-                e.modifiers() & Qt.KeyboardModifier.ControlModifier,
-            )
+            self._set_status_tip_for_text(self._text_for_pos(pos), ctrl_down)
         elif self._mouse_track.last_button == "right":
-            self._process_table_drag(e.pos())
+            self._process_table_drag(pos)
         elif self._mouse_track.last_button == "left":
-            index = self.indexAt(e.pos())
+            index = self.indexAt(pos)
             if index.isValid():
                 r, c = index.row(), index.column()
                 if self._selection_model.current_index != (r, c):

@@ -64,9 +64,16 @@ def test_table_edit(himena_ui: MainWindow, qtbot: QtBot):
         tester.widget._set_status_tip_for_text("", ctrl_down=False)
         tester.widget._set_status_tip_for_text("", ctrl_down=True)
         tester.widget._mouse_track.last_click_pos = QPoint(20, 10)
-        tester.widget._process_table_drag(QPoint(10, 10))
-        tester.widget._process_table_drag(QPoint(10, 20))
-        tester.widget._process_table_drag(QPoint(20, 20))
+        assert tester.widget._mouse_track.is_close_to(QPoint(20, 11))
+        for last_btn in [None, "left", "right", "middle"]:
+            tester.widget._mouse_track.last_button = last_btn
+            tester.widget._mouse_move_event(QPoint(10, 10), ctrl_down=False)
+            tester.widget._mouse_move_event(QPoint(10, 20), ctrl_down=False)
+            tester.widget._mouse_move_event(QPoint(10, 10), ctrl_down=True)
+            tester.widget._mouse_move_event(QPoint(10, 20), ctrl_down=True)
+        tester.widget._mouse_press_event(QPoint(10, 10), Qt.MouseButton.LeftButton)
+        tester.widget._mouse_press_event(QPoint(10, 10), Qt.MouseButton.RightButton)
+        tester.widget._mouse_press_event(QPoint(10, 10), Qt.MouseButton.MiddleButton)
 
 def test_moving_in_table(himena_ui: MainWindow, qtbot: QtBot):
     with _get_tester(himena_ui) as tester:
