@@ -53,8 +53,11 @@ class QSubWindowArea(QtW.QMdiArea):
         super().addSubWindow(sub_window)
         sub_window.show()
 
-    def _qmain_window(self) -> QMainWindow:
-        return self.parentWidget().parentWidget().parentWidget()
+    def _qmain_window(self) -> QMainWindow | None:
+        try:
+            return get_main_window(self)._backend_main_window
+        except Exception:
+            return None
 
     def iter_widgets(self) -> Iterator[QtW.QWidget]:
         """Iterate over all widgets in the sub-window area."""
@@ -101,7 +104,8 @@ class QSubWindowArea(QtW.QMdiArea):
     def _mouse_move_event(self, event: QtGui.QMouseEvent):
         if (
             (event.buttons() & Qt.MouseButton.LeftButton)
-            and (Qt.Key.Key_Space in self._qmain_window()._keys_down)
+            and (main := self._qmain_window())
+            and (Qt.Key.Key_Space in main._keys_down)
             or (event.buttons() & Qt.MouseButton.MiddleButton)
         ):
             if self._last_drag_pos is None:
@@ -155,10 +159,12 @@ class QSubWindowArea(QtW.QMdiArea):
                     _LOGGER.debug("QSubWindowArea.eventFilter: TabArea focused.")
             elif tp == QtCore.QEvent.Type.KeyPress:
                 a0 = cast(QtGui.QKeyEvent, a0)
-                self._qmain_window()._keys_down.add(a0.key())
+                if main := self._qmain_window():
+                    main._keys_down.add(a0.key())
             elif tp == QtCore.QEvent.Type.KeyRelease:
                 a0 = cast(QtGui.QKeyEvent, a0)
-                self._qmain_window()._keys_down.discard(a0.key())
+                if main := self._qmain_window():
+                    main._keys_down.discard(a0.key())
             elif tp == QtCore.QEvent.Type.MouseMove:
                 a0 = cast(QtGui.QMouseEvent, a0)
                 if self._tooltip_widget.isVisible():
