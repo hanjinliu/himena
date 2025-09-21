@@ -354,3 +354,6 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
 
     def _append_result(self, item: dict[str, object]) -> None:
         """Append a new result to the result stack."""
+
+    def _keys_as_set(self) -> set[int]:
+        """Return the set of currently pressed key codes."""

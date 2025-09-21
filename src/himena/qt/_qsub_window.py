@@ -29,6 +29,7 @@ from himena import _drag
 if TYPE_CHECKING:
     from PyQt6 import QtWidgets as QtW
     from himena.qt.main_window import MainWindowQt
+    from himena.qt._qmain_window import QMainWindow
     from himena.widgets import SubWindow
 
 _LOGGER = getLogger(__name__)
@@ -46,12 +47,14 @@ class QSubWindowArea(QtW.QMdiArea):
         self._last_drag_pos: QtCore.QPoint | None = None
         self.setActivationOrder(QtW.QMdiArea.WindowOrder.ActivationHistoryOrder)
         self._last_active_window_id: QSubWindow | None = None
-        self._space_key_down = False
         self._tooltip_widget = QToolTipWidget(self)
 
     def addSubWindow(self, sub_window: QSubWindow):
         super().addSubWindow(sub_window)
         sub_window.show()
+
+    def _qmain_window(self) -> QMainWindow:
+        return self.parentWidget().parentWidget().parentWidget()
 
     def iter_widgets(self) -> Iterator[QtW.QWidget]:
         """Iterate over all widgets in the sub-window area."""
@@ -98,7 +101,7 @@ class QSubWindowArea(QtW.QMdiArea):
     def _mouse_move_event(self, event: QtGui.QMouseEvent):
         if (
             (event.buttons() & Qt.MouseButton.LeftButton)
-            and self._space_key_down
+            and (Qt.Key.Key_Space in self._qmain_window()._keys_down)
             or (event.buttons() & Qt.MouseButton.MiddleButton)
         ):
             if self._last_drag_pos is None:
@@ -135,7 +138,8 @@ class QSubWindowArea(QtW.QMdiArea):
 
     def eventFilter(self, obj, a0: QtCore.QEvent) -> bool:
         with suppress(RuntimeError):
-            if a0.type() == QtCore.QEvent.Type.FocusIn:
+            tp = a0.type()
+            if tp == QtCore.QEvent.Type.FocusIn:
                 if obj is not self:
                     if isinstance(obj, (QtW.QStyle, QtW.QAbstractButton, QtW.QMenuBar)):
                         return False
@@ -149,16 +153,13 @@ class QSubWindowArea(QtW.QMdiArea):
                 else:
                     self._set_area_focused()
                     _LOGGER.debug("QSubWindowArea.eventFilter: TabArea focused.")
-            elif a0.type() in (
-                QtCore.QEvent.Type.KeyPress,
-                QtCore.QEvent.Type.KeyRelease,
-            ):
+            elif tp == QtCore.QEvent.Type.KeyPress:
                 a0 = cast(QtGui.QKeyEvent, a0)
-                self._space_key_down = (
-                    a0.key() == Qt.Key.Key_Space
-                    and a0.type() == QtCore.QEvent.Type.KeyPress
-                )
-            elif a0.type() == QtCore.QEvent.Type.MouseMove:
+                self._qmain_window()._keys_down.add(a0.key())
+            elif tp == QtCore.QEvent.Type.KeyRelease:
+                a0 = cast(QtGui.QKeyEvent, a0)
+                self._qmain_window()._keys_down.discard(a0.key())
+            elif tp == QtCore.QEvent.Type.MouseMove:
                 a0 = cast(QtGui.QMouseEvent, a0)
                 if self._tooltip_widget.isVisible():
                     if self._tooltip_widget._behavior == "follow":
