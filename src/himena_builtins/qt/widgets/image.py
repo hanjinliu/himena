@@ -17,7 +17,7 @@ from himena.standards import roi, model_meta
 from himena.qt._utils import drag_command, qsignal_blocker
 from himena.types import DropResult, Parametric, Size, WidgetDataModel
 from himena.plugins import validate_protocol, register_function
-from himena.widgets import set_status_tip
+from himena.widgets import set_status_tip, current_instance
 from himena.data_wrappers import ArrayWrapper, wrap_array
 from himena_builtins.qt.widgets._image_components import (
     QImageGraphicsView,
@@ -583,25 +583,33 @@ class QImageViewBase(QtW.QSplitter):
         return f"{self._arr.shape}, {self._arr.dtype}, {_human_readable_size(nbytes)}"
 
     def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
-        if event is None or event.isAutoRepeat():
+        if event is None:
             return None
         _mods = event.modifiers()
         _key = event.key()
         view = self._img_view
         if _mods & Qt.KeyboardModifier.ControlModifier:
-            view.standard_ctrl_key_press(_key)
-        elif event.text() == "^":
-            self.handle(0).toggle()
+            if not event.isAutoRepeat():
+                view.standard_ctrl_key_press(_key)
         else:
-            view.standard_key_press(_key, _mods & Qt.KeyboardModifier.ShiftModifier)
-        return None
+            if _key in _INCREMENT_MAP:
+                ui = current_instance()
+                for ith, sl in enumerate(self._dims_slider._sliders):
+                    if ui.keys.contains(f"{ith + 1}"):
+                        sl.increment_value(_INCREMENT_MAP[_key])
+            elif event.text() == "^":
+                if not event.isAutoRepeat():
+                    self.handle(0).toggle()
+            else:
+                if not event.isAutoRepeat():
+                    shift = _mods & Qt.KeyboardModifier.ShiftModifier
+                    view.standard_key_press(_key, shift)
 
     def keyReleaseEvent(self, event: QtGui.QKeyEvent | None) -> None:
         if event is None or event.isAutoRepeat():
-            return None
+            return
         if event.key() == Qt.Key.Key_Space:
             self._img_view.set_mode(self._img_view._last_mode_before_key_hold)
-        return None
 
     def _on_drag_roi_requested(self, indices: list[int]):
         nrois = len(indices)
@@ -658,6 +666,8 @@ class QImageView(QImageViewBase):
 
     ## Keyboard Shortcuts
 
+    #### Switch ROI Modes
+
     - `L`: Switch to Line ROI.
     - `Shift+L`: Switch to Segmented Line ROI.
     - `R`: Switch to Rectangle ROI.
@@ -671,6 +681,9 @@ class QImageView(QImageViewBase):
     - `Z`: Switch to Pan/Zoom Mode.
     - `Space`: Hold this key to temporarily switch to Pan/Zoom Mode.
     - `S`: Switch to Select Mode.
+
+    #### ROI Actions
+
     - `T`: Add current ROI to the ROI list.
     - `V`: Toggle visibility of all the added ROIs.
     - `Delete` / `Backspace`: Remove the current ROI.
@@ -679,6 +692,17 @@ class QImageView(QImageViewBase):
     - `Ctrl+C`: Copy the selected ROI.
     - `Ctrl+V`: Paste the copied ROI.
     - `Ctrl+D`: Duplicate the selected ROI.
+
+    #### Dimension Sliders
+
+    - `1+←`/`1+→`: Decrement/Increment the first dimension slider.
+    - `2+←`/`2+→`: Decrement/Increment the second dimension slider.
+    and so on.
+
+    #### View
+
+    - `Ctrl+↑`: Zoom in.
+    - `Ctrl+↓`: Zoom out.
 
     ## Drag and Drop
 
@@ -1156,3 +1180,11 @@ class ImageViewConfigs:
     roi_handle_size: int = dataclasses.field(default=5, metadata={"min": 1, "max": 10})
     default_show_all: bool = dataclasses.field(default=True)
     default_show_labels: bool = dataclasses.field(default=True)
+
+
+_INCREMENT_MAP = {
+    Qt.Key.Key_Left: -1,
+    Qt.Key.Key_Right: 1,
+    Qt.Key.Key_Home: -10,
+    Qt.Key.Key_End: 10,
+}

@@ -232,13 +232,16 @@ class _QAxisSlider(QtW.QWidget):
         else:
             return super().mouseDoubleClickEvent(a0)
 
-    def _on_prev_clicked(self):
+    def increment_value(self, val: int):
         self._stop_play()
-        self._slider.setValue(max(self._slider.value() - 1, 0))
+        new_val = self._slider.value() + val
+        self._slider.setValue(min(max(new_val, 0), self._slider.maximum()))
+
+    def _on_prev_clicked(self):
+        self.increment_value(-1)
 
     def _on_next_clicked(self):
-        self._stop_play()
-        self._slider.setValue(min(self._slider.value() + 1, self._slider.maximum()))
+        self.increment_value(1)
 
     def _on_play_timer_timeout(self):
         if self._play_btn.isChecked():

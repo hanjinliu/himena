@@ -483,22 +483,22 @@ class QImageGraphicsView(QBaseGraphicsView):
     def keyPressEvent(self, event):
         _key = event.key()
         if event.modifiers() == Qt.KeyboardModifier.NoModifier:
-            if _key == Qt.Key.Key_Up:
-                if item := self._current_roi_item:
-                    item.translate(0, -1)
-                    return
-            elif _key == Qt.Key.Key_Down:
-                if item := self._current_roi_item:
-                    item.translate(0, 1)
-                    return
-            elif _key == Qt.Key.Key_Left:
-                if item := self._current_roi_item:
-                    item.translate(-1, 0)
-                    return
-            elif _key == Qt.Key.Key_Right:
-                if item := self._current_roi_item:
-                    item.translate(1, 0)
-                    return
+            if _key == Qt.Key.Key_Up and (item := self._current_roi_item):
+                item.translate(0, -1)
+                return
+            elif _key == Qt.Key.Key_Down and (item := self._current_roi_item):
+                item.translate(0, 1)
+                return
+            elif _key == Qt.Key.Key_Left and (item := self._current_roi_item):
+                item.translate(-1, 0)
+                return
+            elif _key == Qt.Key.Key_Right and (item := self._current_roi_item):
+                item.translate(1, 0)
+                return
+            # The super-class keyPressEvent does not forward the arrow keys. For this
+            # widget, they should be forwarded.
+        if _key in (Qt.Key.Key_Up, Qt.Key.Key_Down, Qt.Key.Key_Left, Qt.Key.Key_Right):
+            return QtW.QWidget.keyPressEvent(self, event)
         return super().keyPressEvent(event)
 
     def mousePressEvent(self, event: QtGui.QMouseEvent):
@@ -624,6 +624,7 @@ class QImageGraphicsView(QBaseGraphicsView):
             self.remove_current_item(remove_from_list=True, reason="delete key")
         elif _key == Qt.Key.Key_V:
             self.set_show_rois(not self._is_rois_visible)
+        # arrow keys -> translate the view
 
     def standard_ctrl_key_press(self, key: Qt.Key):
         if key == Qt.Key.Key_A:
@@ -641,6 +642,10 @@ class QImageGraphicsView(QBaseGraphicsView):
             if self._current_roi_item is not None:
                 self._copy_current_roi()
                 self._paste_roi()
+        elif key == Qt.Key.Key_Up:
+            self._wheel_event(120)
+        elif key == Qt.Key.Key_Down:
+            self._wheel_event(-120)
 
     def _copy_current_roi(self):
         if self._current_roi_item is not None:
