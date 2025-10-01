@@ -6,14 +6,15 @@ import pytest
 from qtpy import QtCore
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QApplication
-from himena.standards.model_meta import DimAxis, ImageMeta
 from pytestqt.qtbot import QtBot
+from himena.standards.model_meta import DimAxis, ImageMeta
 from himena import MainWindow, StandardType, create_image_model
 from himena.standards.roi import RoiListModel, LineRoi, PointRoi2D, PointsRoi2D
 from himena.standards.roi.core import RectangleRoi
 from himena.testing import WidgetTester, image, file_dialog_response
 from himena.types import WidgetDataModel
 from himena.widgets import SubWindow
+from himena.qt import MainWindowQt
 from himena_builtins.qt.widgets.image import QImageView, QImageLabelView
 from himena_builtins.qt.widgets._image_components import _roi_items as _rois
 from himena_builtins.qt.widgets._image_components._control import ComplexMode
@@ -307,6 +308,8 @@ def test_image_view_copy_roi_from_window_to_window(himena_ui: MainWindow, qtbot:
         qtbot.keyClick(image_view_1._roi_col._list_view, Qt.Key.Key_V, modifier=_Ctrl)
         assert len(image_view_0._img_view._roi_items) == 1
         assert len(image_view_1._img_view._roi_items) == 2
+        image_view_1._img_view.standard_ctrl_key_press(Qt.Key.Key_Up)
+        image_view_1._img_view.standard_ctrl_key_press(Qt.Key.Key_Down)
 
 
 def test_image_view_select_roi(qtbot: QtBot):
@@ -564,6 +567,38 @@ def test_image_view_current_roi_index(qtbot: QtBot):
 
 def _get_tester():
     return WidgetTester(QImageView())
+
+def test_dims_slider(himena_ui: MainWindowQt, qtbot: QtBot):
+    model = create_image_model(
+        np.zeros((4, 4, 10, 10)),
+        axes=["t", "z", "y", "x"],
+    )
+    win = himena_ui.add_data_model(model)
+    image_view: QImageView = win.widget
+
+    with WidgetTester(image_view) as tester:
+        area = himena_ui._backend_main_window._tab_widget.current_widget_area()
+        tester.update_model(model)
+        assert image_view._dims_slider._sliders[0]._slider.value() == 0
+        assert image_view._dims_slider._sliders[1]._slider.value() == 2
+
+        area._set_key_down(Qt.Key.Key_1)
+        qtbot.keyClick(image_view, Qt.Key.Key_Right)
+        area._set_key_up(Qt.Key.Key_1)
+        assert image_view._dims_slider._sliders[0]._slider.value() == 1
+        area._set_key_down(Qt.Key.Key_2)
+        qtbot.keyClick(image_view, Qt.Key.Key_Left)
+        area._set_key_up(Qt.Key.Key_2)
+        assert image_view._dims_slider._sliders[1]._slider.value() == 1
+        area._set_key_down(Qt.Key.Key_2)
+        qtbot.keyClick(image_view, Qt.Key.Key_End)
+        area._set_key_up(Qt.Key.Key_2)
+        assert image_view._dims_slider._sliders[1]._slider.value() == 3
+        area._set_key_down(Qt.Key.Key_2)
+        qtbot.keyClick(image_view, Qt.Key.Key_Home)
+        area._set_key_up(Qt.Key.Key_2)
+        assert image_view._dims_slider._sliders[1]._slider.value() == 0
+
 
 def test_crop_image(himena_ui: MainWindow, tmpdir):
     model = create_image_model(

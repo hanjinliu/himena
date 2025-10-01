@@ -19,6 +19,8 @@ class KeySet:
             _key = key
         elif isinstance(key, int):
             _key = KeyCode(key)
+        else:
+            raise TypeError(f"key must be int, str, or KeyCode, not {type(key)}")
         ui = self._ui_ref()
         if ui is None:
             return False
