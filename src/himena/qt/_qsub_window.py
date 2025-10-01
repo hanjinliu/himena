@@ -159,12 +159,10 @@ class QSubWindowArea(QtW.QMdiArea):
                     _LOGGER.debug("QSubWindowArea.eventFilter: TabArea focused.")
             elif tp == QtCore.QEvent.Type.KeyPress:
                 a0 = cast(QtGui.QKeyEvent, a0)
-                if main := self._qmain_window():
-                    main._keys_down.add(a0.key())
+                self._set_key_down(a0.key())
             elif tp == QtCore.QEvent.Type.KeyRelease:
                 a0 = cast(QtGui.QKeyEvent, a0)
-                if main := self._qmain_window():
-                    main._keys_down.discard(a0.key())
+                self._set_key_up(a0.key())
             elif tp == QtCore.QEvent.Type.MouseMove:
                 a0 = cast(QtGui.QMouseEvent, a0)
                 if self._tooltip_widget.isVisible():
@@ -174,6 +172,14 @@ class QSubWindowArea(QtW.QMdiArea):
                         self._tooltip_widget.hide()
             return super().eventFilter(obj, a0)
         return False
+
+    def _set_key_down(self, key: int):
+        if main := self._qmain_window():
+            main._keys_down.add(key)
+
+    def _set_key_up(self, key: int):
+        if main := self._qmain_window():
+            main._keys_down.discard(key)
 
     def _set_area_focused(self):
         self.area_focused.emit()
