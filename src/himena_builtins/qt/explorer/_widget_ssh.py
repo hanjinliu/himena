@@ -76,7 +76,7 @@ class QSSHRemoteExplorerWidget(QBaseRemoteExplorerWidget):
         self._up_one_btn.setFixedWidth(20)
         self._up_one_btn.setToolTip("Up one directory")
         self._refresh_btn = QtW.QToolButton()
-        self._refresh_btn.setToolTip("Refresh current directory")
+        self._refresh_btn.setToolTip("Refresh current directory (F5)")
 
         self._conn_btn = QtW.QPushButton("Connect")
         self._conn_btn.setFixedWidth(60)
