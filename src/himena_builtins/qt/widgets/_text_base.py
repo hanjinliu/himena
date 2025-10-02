@@ -28,7 +28,7 @@ class QMainTextEdit(QtW.QPlainTextEdit):
         self._highlight = None
         self._language = "Plain Text"
         self._code_theme = "default"
-        self._finder_widget = None
+        self._finder_widget: QFinderWidget | None = None
 
     def is_modified(self) -> bool:
         return self.document().isModified()
@@ -44,7 +44,6 @@ class QMainTextEdit(QtW.QPlainTextEdit):
 
         highlight = CodeSyntaxHighlight(self.document(), lang, theme=self._code_theme)
         self._highlight = highlight
-        return None
 
     def tab_size(self):
         return self._tab_size
