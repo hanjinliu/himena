@@ -7,6 +7,8 @@ from qtpy import QtGui, QtCore
 
 from himena.consts import MonospaceFontFamily
 from himena.qt._qfinderwidget import QFinderWidget
+from himena.widgets import current_instance
+from himena.utils.misc import is_absolute_file_path_string, is_url_string
 
 POINT_SIZES: list[int] = [5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72]  # fmt: skip
 TAB_SIZES: list[int] = [1, 2, 3, 4, 5, 6, 7, 8]
@@ -15,6 +17,7 @@ TAB_SIZES: list[int] = [1, 2, 3, 4, 5, 6, 7, 8]
 class QMainTextEdit(QtW.QPlainTextEdit):
     def __init__(self, parent: QtW.QWidget | None = None):
         super().__init__(parent)
+        self.setMouseTracking(True)
         self.setWordWrapMode(QtGui.QTextOption.WrapMode.NoWrap)
         font = QtGui.QFont(MonospaceFontFamily, 10)
         self._default_font = font
@@ -330,6 +333,51 @@ class QMainTextEdit(QtW.QPlainTextEdit):
                 fd.move(self.width() - fd.width() - vbar.width() - 3, 5)
             else:
                 fd.move(self.width() - fd.width() - 3, 5)
+
+    def mouseMoveEvent(self, e: QtGui.QMouseEvent):
+        """Change cursor to pointing hand when hovering over URLs"""
+        if (
+            e.modifiers() & QtCore.Qt.KeyboardModifier.ControlModifier
+        ) and self._url_under_pos(e.pos()):
+            self.viewport().setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+        else:
+            self.viewport().setCursor(QtCore.Qt.CursorShape.IBeamCursor)
+        return super().mouseMoveEvent(e)
+
+    def mouseReleaseEvent(self, e):
+        if (e.modifiers() & QtCore.Qt.KeyboardModifier.ControlModifier) and (
+            part := self._url_under_pos(e.pos())
+        ):
+            if is_url_string(part):
+                QtGui.QDesktopServices.openUrl(QtCore.QUrl(part))
+                return
+            elif is_absolute_file_path_string(part):
+                current_instance().read_file(part)  # open URL
+                return
+        return super().mouseReleaseEvent(e)
+
+    def _url_under_pos(self, pos: QtCore.QPoint) -> str | None:
+        cursor = self.cursorForPosition(pos)
+        cursor.select(QtGui.QTextCursor.SelectionType.WordUnderCursor)
+
+        # Get the full line to check for URLs
+        text_cursor = self.textCursor()
+        text_cursor.setPosition(cursor.selectionStart())
+        text_cursor.movePosition(QtGui.QTextCursor.MoveOperation.StartOfLine)
+        text_cursor.movePosition(
+            QtGui.QTextCursor.MoveOperation.EndOfLine,
+            QtGui.QTextCursor.MoveMode.KeepAnchor,
+        )
+        line = text_cursor.selectedText()
+
+        # Check if we're hovering over a URL
+        char_pos = cursor.positionInBlock()
+        for part in line.split():
+            if is_url_string(part) or is_absolute_file_path_string(part):
+                start = line.index(part)
+                end = start + len(part)
+                if start <= char_pos <= end:
+                    return part
 
 
 def _get_indents(text: str, tab_spaces: int = 4) -> str:
