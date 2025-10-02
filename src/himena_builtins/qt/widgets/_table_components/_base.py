@@ -343,8 +343,9 @@ class QTableBase(QtW.QTableView):
                 self.closePersistentEditor(index)
             self._mouse_track.press_at(pos, "left")
         elif button == Qt.MouseButton.RightButton:
-            self._mouse_track.press_at(pos, "right")
-            return
+            return self._mouse_track.press_at(pos, "right")
+        elif button == Qt.MouseButton.MiddleButton:
+            return self._mouse_track.press_at(pos, "middle")
         _selection_model.set_shift(True)
 
     def mouseMoveEvent(self, e: QtGui.QMouseEvent) -> None:
@@ -357,7 +358,7 @@ class QTableBase(QtW.QTableView):
         """Handle mouse move event."""
         if self._mouse_track.last_button is None:
             self._set_status_tip_for_text(self._text_for_pos(pos), ctrl_down)
-        elif self._mouse_track.last_button == "right":
+        elif self._mouse_track.last_button in ("right", "middle"):
             self._process_table_drag(pos)
         elif self._mouse_track.last_button == "left":
             index = self.indexAt(pos)
@@ -522,9 +523,9 @@ class MouseTrack:
         self.last_click_pos: QtCore.QPoint | None = None
         self.last_drag_pos: QtCore.QPoint | None = None
         self.was_right_dragging: bool = False
-        self.last_button: Literal["left", "right"] | None = None
+        self.last_button: Literal["left", "middle", "right"] | None = None
 
-    def press_at(self, pos: QtCore.QPoint, button: Literal["left", "right"]):
+    def press_at(self, pos: QtCore.QPoint, button: Literal["left", "middle", "right"]):
         self.last_click_pos = pos
         self.last_drag_pos = pos
         self.last_button = button
