@@ -333,6 +333,7 @@ class QTableBase(QtW.QTableView):
     def _mouse_press_event(self, pos: QtCore.QPoint, button: int) -> None:
         """Handle mouse press event."""
         _selection_model = self._selection_model
+        self._mouse_track.was_right_dragging = False
         if button == Qt.MouseButton.LeftButton:
             index = self.indexAt(pos)
             if index.isValid():
@@ -340,11 +341,11 @@ class QTableBase(QtW.QTableView):
                 _selection_model.jump_to(r, c)
             else:
                 self.closePersistentEditor(index)
-            self._mouse_track.last_button = "left"
+            self._mouse_track.press_at(pos, "left")
         elif button == Qt.MouseButton.RightButton:
-            self._mouse_track.was_right_dragging = False
-            self._mouse_track.last_button = "right"
-            return
+            return self._mouse_track.press_at(pos, "right")
+        elif button == Qt.MouseButton.MiddleButton:
+            return self._mouse_track.press_at(pos, "middle")
         _selection_model.set_shift(True)
 
     def mouseMoveEvent(self, e: QtGui.QMouseEvent) -> None:
@@ -357,7 +358,7 @@ class QTableBase(QtW.QTableView):
         """Handle mouse move event."""
         if self._mouse_track.last_button is None:
             self._set_status_tip_for_text(self._text_for_pos(pos), ctrl_down)
-        elif self._mouse_track.last_button == "right":
+        elif self._mouse_track.last_button in ("right", "middle"):
             self._process_table_drag(pos)
         elif self._mouse_track.last_button == "left":
             index = self.indexAt(pos)
@@ -388,6 +389,7 @@ class QTableBase(QtW.QTableView):
                     QtGui.QDesktopServices.openUrl(QtCore.QUrl(text))  # open URL
 
         self._mouse_track.last_click_pos = None
+        self._mouse_track.last_drag_pos = None
         self._mouse_track.last_button = None
         self._selection_model.set_shift(
             e.modifiers() & Qt.KeyboardModifier.ShiftModifier
@@ -412,12 +414,12 @@ class QTableBase(QtW.QTableView):
             self._ui.set_status_tip("")
 
     def _process_table_drag(self, pos: QtCore.QPoint) -> None:
-        assert self._mouse_track.last_click_pos is not None
-        dy = pos.y() - self._mouse_track.last_click_pos.y()
-        dx = pos.x() - self._mouse_track.last_click_pos.x()
+        assert self._mouse_track.last_drag_pos is not None
+        dy = pos.y() - self._mouse_track.last_drag_pos.y()
+        dx = pos.x() - self._mouse_track.last_drag_pos.x()
         self.verticalScrollBar().setValue(self.verticalScrollBar().value() - dy)
         self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() - dx)
-        self._mouse_track.last_click_pos = pos
+        self._mouse_track.last_drag_pos = pos
         self._mouse_track.was_right_dragging = True
 
     def _text_for_pos(self, pos: QtCore.QPoint) -> str | None:
@@ -519,8 +521,14 @@ class MouseTrack:
 
     def __init__(self):
         self.last_click_pos: QtCore.QPoint | None = None
+        self.last_drag_pos: QtCore.QPoint | None = None
         self.was_right_dragging: bool = False
-        self.last_button: Literal["left", "right"] | None = None
+        self.last_button: Literal["left", "middle", "right"] | None = None
+
+    def press_at(self, pos: QtCore.QPoint, button: Literal["left", "middle", "right"]):
+        self.last_click_pos = pos
+        self.last_drag_pos = pos
+        self.last_button = button
 
     def is_close_to(self, pos: QtCore.QPoint, tol=3) -> bool:
         if self.last_click_pos is None:
