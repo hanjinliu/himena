@@ -394,11 +394,14 @@ class QRemoteTreeWidget(QtW.QTreeWidget):
         """Handle the editing finished event of the line edit."""
         if item := self.currentItem():
             if new_name and new_name != item.text(0):
+                if new_name in self.existing_names():
+                    raise ValueError(f"File name {new_name!r} already exists.")
                 self.item_renamed.emit(item, item.text(0), new_name)
             self.setFocus()
 
     def _make_context_menu(self):
         menu = QtW.QMenu(self)
+        sels = self.selectedItems()
         open_action = menu.addAction("Open")
         open_action.setToolTip("Open this file to the main window")
         open_action.triggered.connect(
@@ -406,36 +409,36 @@ class QRemoteTreeWidget(QtW.QTreeWidget):
         )
         copy_action = menu.addAction("Copy Path")
         copy_action.setToolTip("Copy the paths of the selected items")
-        copy_action.triggered.connect(
-            lambda: self.item_copied.emit(self.selectedItems())
-        )
+        copy_action.triggered.connect(lambda: self.item_copied.emit(sels))
         paste_action = menu.addAction("Paste")
         paste_action.setToolTip(
             "Paste local files to the remote file system from the clipboard"
         )
         paste_action.triggered.connect(self._paste_from_clipboard)
+
         menu.addSeparator()
         download_action = menu.addAction("Download")
         download_action.setToolTip("Download the selected items to ~/Downloads")
         download_action.triggered.connect(
-            lambda: self._download_items(
-                self.selectedItems(), Path.home() / "Downloads"
-            ),
+            lambda: self._download_items(sels, Path.home() / "Downloads"),
         )
         download_to_action = menu.addAction("Download To ...")
         download_to_action.setToolTip(
             "Download the selected items to a specified directory"
         )
-        download_to_action.triggered.connect(
-            lambda: self._download_items(self.selectedItems())
-        )
+        download_to_action.triggered.connect(lambda: self._download_items(sels))
         menu.addSeparator()
         rename_action = menu.addAction("Rename")
         rename_action.triggered.connect(lambda: self._edit_item(self.currentItem()))
         delete_action = menu.addAction("Move to Trash")
-        delete_action.triggered.connect(
-            lambda: self.item_deleted.emit(self.selectedItems())
-        )
+        delete_action.triggered.connect(lambda: self.item_deleted.emit(sels))
+        if len(sels) == 0:
+            open_action.setEnabled(False)
+            copy_action.setEnabled(False)
+            download_action.setEnabled(False)
+            download_to_action.setEnabled(False)
+            rename_action.setEnabled(False)
+            delete_action.setEnabled(False)
         return menu
 
     def _show_context_menu(self, pos: QtCore.QPoint):
@@ -457,6 +460,8 @@ class QRemoteTreeWidget(QtW.QTreeWidget):
             elif _key == QtCore.Qt.Key.Key_F2:
                 if item := self.currentItem():
                     self._edit_item(item)
+            elif _key == QtCore.Qt.Key.Key_F5:
+                self.parent()._refresh_pwd()
 
         elif _ctrl and not _shift and not _alt:
             if _key == QtCore.Qt.Key.Key_C:
@@ -476,10 +481,12 @@ class QRemoteTreeWidget(QtW.QTreeWidget):
         self._line_edit.setText(text)
         width = self.header().sectionSize(0)
         rect = self.visualItemRect(item)
+        rect.translate(rect.height() + 2, self.header().height())
         rect.setWidth(width)
         self._line_edit.setGeometry(rect)
         self._line_edit.setFocus()
         self._line_edit.setVisible(True)
+        self._line_edit.setSelection(0, len(text))
 
     def _paste_from_clipboard(self):
         clipboard = QtGui.QGuiApplication.clipboard()
@@ -589,6 +596,9 @@ class QEditFileNameLineEdit(QtW.QLineEdit):
                 raise ValueError("File name cannot be empty.")
             self.reset()
             return
+        if a0.key() in (QtCore.Qt.Key.Key_Up, QtCore.Qt.Key.Key_Down):
+            self.reset()
+            return
         return super().keyPressEvent(a0)
 
     def focusOutEvent(self, a0: QtGui.QFocusEvent):
@@ -596,11 +606,16 @@ class QEditFileNameLineEdit(QtW.QLineEdit):
         self.setVisible(False)
         self.clear()
         super().focusOutEvent(a0)
+        self.parentWidget().setFocus()
 
     def reset(self):
         """Reset the line edit to its initial state."""
         self.clear()
         self.setVisible(False)
+
+    if TYPE_CHECKING:
+
+        def parent(self) -> QRemoteTreeWidget: ...
 
 
 def item_type(item: QtW.QTreeWidgetItem) -> Literal["d", "l", "f"]:
