@@ -30,108 +30,12 @@ _POPULAR_LANGUAGES = [
 ]  # fmt: skip
 
 
-@lru_cache(maxsize=1)
-def get_languages() -> OrderedSet[str]:
-    """Get all languages supported by pygments."""
-    from pygments.lexers import get_all_lexers
-
-    langs: OrderedSet[str] = OrderedSet()
-    for lang in _POPULAR_LANGUAGES:
-        langs.add(lang)
-    for lang, aliases, extensions, _ in get_all_lexers(plugins=False):
-        langs.add(lang)
-    return langs
-
-
-def find_language_from_path(path: str) -> str | None:
-    """Detect language from file path."""
-    from pygments.lexers import get_lexer_for_filename
-    from pygments.util import ClassNotFound
-
-    # pygment lexer for svg is not available
-    if path.endswith(".svg"):
-        return "XML"
-
-    try:
-        lexer = get_lexer_for_filename(path)
-        return lexer.name
-    except ClassNotFound:
-        return None
-
-
-class QTextControl(QtW.QWidget):
-    languageChanged = QtCore.Signal(str)
-    tabChanged = QtCore.Signal(int)
-
-    def __init__(self, text_edit: QMainTextEdit):
-        super().__init__()
-        self._text_edit = text_edit
-
-        self._language_combobox = QSearchableComboBox()
-        self._language_combobox.addItems(get_languages())
-        self._language_combobox.setToolTip("Language of the document")
-        self._language_combobox.setMaximumWidth(120)
-        self._language_combobox.currentIndexChanged.connect(self._emit_language_changed)
-
-        self._tab_spaces_combobox = QtW.QComboBox()
-        self._tab_spaces_combobox.addItems([str(x) for x in TAB_SIZES])
-        self._tab_spaces_combobox.setCurrentText("4")
-        self._tab_spaces_combobox.setToolTip("Tab size")
-        self._tab_spaces_combobox.currentTextChanged.connect(
-            lambda x: self.tabChanged.emit(int(x))
-        )
-
-        self._line_num = QtW.QLabel()
-        self._line_num.setFixedWidth(50)
-
-        self._wordwrap = QToggleSwitch("Word Wrap")
-        self._wordwrap.setChecked(False)
-        self._wordwrap.toggled.connect(self._wordwrap_changed)
-        self._wordwrap.setToolTip("Enable word wrap")
-
-        self._encoding = QtW.QLabel("utf-8")
-
-        layout = QtW.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        layout.addWidget(QtW.QWidget())  # spacer
-        layout.addWidget(labeled("Ln:", self._line_num))
-        layout.addWidget(self._encoding)
-        layout.addWidget(self._wordwrap)
-        layout.addWidget(labeled("Spaces:", self._tab_spaces_combobox))
-        layout.addWidget(labeled("Language:", self._language_combobox))
-
-        # make font smaller
-        font = QtGui.QFont()
-        font.setFamily(MonospaceFontFamily)
-        font.setPointSize(8)
-        for child in self.findChildren(QtW.QWidget):
-            child.setFont(font)
-
-    def _wordwrap_changed(self, checked: bool):
-        """Enable or disable word wrap."""
-        if checked:
-            mode = QtGui.QTextOption.WrapMode.WordWrap
-        else:
-            mode = QtGui.QTextOption.WrapMode.NoWrap
-        self._text_edit.setWordWrapMode(mode)
-
-    def _emit_language_changed(self):
-        self.languageChanged.emit(self._language_combobox.currentText())
-
-    def _move_cursor_to_line(self, line: int):
-        cursor = self._text_edit.textCursor()
-        cursor.setPosition(0)
-        cursor.movePosition(
-            QtGui.QTextCursor.MoveOperation.NextBlock,
-            QtGui.QTextCursor.MoveMode.KeepAnchor,
-            line - 1,
-        )
-        self._text_edit.setTextCursor(cursor)
-
-
 class QTextEdit(QtW.QWidget):
-    """Default text editor widget."""
+    """Default text editor widget.
+
+    This widget supports syntax highlighting for various programming languages.
+    Ctrl+Click to open the URL link or local file under the cursor.
+    """
 
     __himena_widget_id__ = "builtins:QTextEdit"
     __himena_display_name__ = "Built-in Text Editor"
@@ -192,7 +96,6 @@ class QTextEdit(QtW.QWidget):
         self._model_type = model.type
         if ext := model.extension_default:
             self._extension_default = ext
-        return None
 
     @validate_protocol
     def to_model(self) -> WidgetDataModel[str]:
@@ -477,3 +380,103 @@ class TextEditConfigs:
         label="Default tab size.",
         choices=TAB_SIZES,
     )
+
+
+@lru_cache(maxsize=1)
+def get_languages() -> OrderedSet[str]:
+    """Get all languages supported by pygments."""
+    from pygments.lexers import get_all_lexers
+
+    langs: OrderedSet[str] = OrderedSet()
+    for lang in _POPULAR_LANGUAGES:
+        langs.add(lang)
+    for lang, aliases, extensions, _ in get_all_lexers(plugins=False):
+        langs.add(lang)
+    return langs
+
+
+def find_language_from_path(path: str) -> str | None:
+    """Detect language from file path."""
+    from pygments.lexers import get_lexer_for_filename
+    from pygments.util import ClassNotFound
+
+    # pygment lexer for svg is not available
+    if path.endswith(".svg"):
+        return "XML"
+
+    try:
+        lexer = get_lexer_for_filename(path)
+        return lexer.name
+    except ClassNotFound:
+        return None
+
+
+class QTextControl(QtW.QWidget):
+    languageChanged = QtCore.Signal(str)
+    tabChanged = QtCore.Signal(int)
+
+    def __init__(self, text_edit: QMainTextEdit):
+        super().__init__()
+        self._text_edit = text_edit
+
+        self._language_combobox = QSearchableComboBox()
+        self._language_combobox.addItems(get_languages())
+        self._language_combobox.setToolTip("Language of the document")
+        self._language_combobox.setMaximumWidth(120)
+        self._language_combobox.currentIndexChanged.connect(self._emit_language_changed)
+
+        self._tab_spaces_combobox = QtW.QComboBox()
+        self._tab_spaces_combobox.addItems([str(x) for x in TAB_SIZES])
+        self._tab_spaces_combobox.setCurrentText("4")
+        self._tab_spaces_combobox.setToolTip("Tab size")
+        self._tab_spaces_combobox.currentTextChanged.connect(
+            lambda x: self.tabChanged.emit(int(x))
+        )
+
+        self._line_num = QtW.QLabel()
+        self._line_num.setFixedWidth(50)
+
+        self._wordwrap = QToggleSwitch("Word Wrap")
+        self._wordwrap.setChecked(False)
+        self._wordwrap.toggled.connect(self._wordwrap_changed)
+        self._wordwrap.setToolTip("Enable word wrap")
+
+        self._encoding = QtW.QLabel("utf-8")
+
+        layout = QtW.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        layout.addWidget(QtW.QWidget())  # spacer
+        layout.addWidget(labeled("Ln:", self._line_num))
+        layout.addWidget(self._encoding)
+        layout.addWidget(self._wordwrap)
+        layout.addWidget(labeled("Spaces:", self._tab_spaces_combobox))
+        layout.addWidget(labeled("Language:", self._language_combobox))
+
+        # make font smaller
+        font = QtGui.QFont()
+        font.setFamily(MonospaceFontFamily)
+        font.setPointSize(8)
+        for child in self.findChildren(QtW.QWidget):
+            child.setFont(font)
+
+    def _wordwrap_changed(self, checked: bool):
+        """Enable or disable word wrap."""
+        if checked:
+            mode = QtGui.QTextOption.WrapMode.WordWrap
+        else:
+            mode = QtGui.QTextOption.WrapMode.NoWrap
+        self._text_edit.setWordWrapMode(mode)
+
+    def _emit_language_changed(self):
+        self.languageChanged.emit(self._language_combobox.currentText())
+
+    def _move_cursor_to_line(self, line: int):
+        cursor = self._text_edit.textCursor()
+        cursor.setPosition(0)
+        cursor.movePosition(
+            QtGui.QTextCursor.MoveOperation.NextBlock,
+            QtGui.QTextCursor.MoveMode.KeepAnchor,
+            line - 1,
+        )
+        self._text_edit.setTextCursor(cursor)
