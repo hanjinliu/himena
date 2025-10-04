@@ -34,6 +34,10 @@ def test_dataframe(himena_ui: MainWindow, qtbot: QtBot, df):
         table.model().headerData(0, Qt.Orientation.Horizontal, Qt.ItemDataRole.ToolTipRole)
         table.model().headerData(0, Qt.Orientation.Vertical, Qt.ItemDataRole.ToolTipRole)
         qtbot.keyClick(tester.widget, Qt.Key.Key_F, modifier=_Ctrl)
+        qtbot.keyClick(tester.widget, Qt.Key.Key_C, modifier=_Ctrl)
+        qtbot.keyClick(tester.widget, Qt.Key.Key_V, modifier=_Ctrl)
+        qtbot.keyClick(tester.widget, Qt.Key.Key_Z, modifier=_Ctrl)
+        qtbot.keyClick(tester.widget, Qt.Key.Key_Y, modifier=_Ctrl)
         finder = tester.widget._finder_widget
         assert finder is not None
         finder._line_edit.setText("b")

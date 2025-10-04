@@ -307,8 +307,8 @@ class QDataFrameView(QTableBase):
         return self._control
 
     def keyPressEvent(self, e: QtGui.QKeyEvent) -> None:
-        _ctrl = e.modifiers() & Qt.KeyboardModifier.ControlModifier
-        _shift = e.modifiers() & Qt.KeyboardModifier.ShiftModifier
+        _ctrl = bool(e.modifiers() & Qt.KeyboardModifier.ControlModifier)
+        _shift = bool(e.modifiers() & Qt.KeyboardModifier.ShiftModifier)
         if _ctrl and e.key() == QtCore.Qt.Key.Key_C:
             return self.copy_data(header=_shift)
         elif _ctrl and e.key() == QtCore.Qt.Key.Key_V:
