@@ -245,6 +245,14 @@ class SelectionModel:
     def move_limited(self, dr: int, dc: int, nr: int, nc: int):
         """Move by (dr, dc) cells within the range of (nr, nc)."""
         r, c = self._current_index
+        r_new = _move_limited_one(r, dr, nr)
+        c_new = _move_limited_one(c, dc, nc)
+        return self.move_to(r_new, c_new)
+
+
+def _move_limited_one(r: int, dr: int, nr: int):
+    if r < nr:
         r = min(max(0, r + dr), nr - 1)
-        c = min(max(0, c + dc), nc - 1)
-        return self.move_to(r, c)
+    else:  # already out of range
+        r = max(0, r + dr)
+    return r
