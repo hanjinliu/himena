@@ -688,26 +688,26 @@ class QSpreadsheet(QTableBase):
         ui.exec_action("builtins:table:measure-selection")
 
     def keyPressEvent(self, e: QtGui.QKeyEvent):
-        _Ctrl = QtCore.Qt.KeyboardModifier.ControlModifier
-        if e.modifiers() & _Ctrl and e.key() == QtCore.Qt.Key.Key_C:
+        _ctrl = e.modifiers() & QtCore.Qt.KeyboardModifier.ControlModifier
+        if _ctrl and e.key() == QtCore.Qt.Key.Key_C:
             return self._copy_to_clipboard()
-        elif e.modifiers() & _Ctrl and e.key() == QtCore.Qt.Key.Key_V:
+        elif _ctrl and e.key() == QtCore.Qt.Key.Key_V:
             return self._paste_from_clipboard()
-        elif e.modifiers() & _Ctrl and e.key() == QtCore.Qt.Key.Key_X:
+        elif _ctrl and e.key() == QtCore.Qt.Key.Key_X:
             return self._cut_and_copy_to_clipboard()
         elif e.key() in (QtCore.Qt.Key.Key_Delete, QtCore.Qt.Key.Key_Backspace):
             return self._delete_selection()
-        elif e.modifiers() & _Ctrl and e.key() == QtCore.Qt.Key.Key_F:
+        elif _ctrl and e.key() == QtCore.Qt.Key.Key_F:
             self._find_string()
             return
-        elif e.modifiers() & _Ctrl and e.key() == QtCore.Qt.Key.Key_Z:
+        elif _ctrl and e.key() == QtCore.Qt.Key.Key_Z:
             self.undo()
             return
-        elif e.modifiers() & _Ctrl and e.key() == QtCore.Qt.Key.Key_Y:
+        elif _ctrl and e.key() == QtCore.Qt.Key.Key_Y:
             self.redo()
             return
         elif (
-            (not (e.modifiers() & _Ctrl))
+            (not _ctrl)
             and (
                 e.modifiers() == QtCore.Qt.KeyboardModifier.NoModifier
                 or e.modifiers() & QtCore.Qt.KeyboardModifier.ShiftModifier

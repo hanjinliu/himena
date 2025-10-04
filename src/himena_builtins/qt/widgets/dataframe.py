@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from io import StringIO
 from typing import TYPE_CHECKING, Any, Mapping
 import weakref
 
@@ -42,8 +43,6 @@ class QDataFrameModel(QtCore.QAbstractTableModel):
         self._df = df
         self._transpose = transpose
         self._cfg = DataFrameConfigs()
-        # this set records all the updated column indices for copy-on-write behavior
-        self._updated_columns: set[int] = set()
 
     @property
     def df(self) -> DataFrameWrapper:
@@ -82,15 +81,11 @@ class QDataFrameModel(QtCore.QAbstractTableModel):
 
     def setData(self, index: QtCore.QModelIndex, value: Any, role: int = ...) -> bool:
         if role == Qt.ItemDataRole.EditRole:
-            i_row, i_col = index.row(), index.column()
-            val = parse_string(value, self.df.get_dtype(i_col).kind)
-            name = self.df.column_names()[i_col]
-            col = self.df.column_to_array(name)
-            if i_col not in self._updated_columns:
-                col = col.copy()
-                self._updated_columns.add(i_col)
-            col[i_row] = val
-            self._df = self.df.with_columns({name: col})
+            r0, c0 = index.row(), index.column()
+            value_parsed = parse_string(value, self.df.get_dtype(c0).kind)
+            arr = np.array([value_parsed])
+            cname = self.df.column_names()[c0]
+            self.parent().dataframe_update((r0, c0), wrap_dataframe({cname: arr}))
             return True
         return False
 
@@ -125,6 +120,10 @@ class QDataFrameModel(QtCore.QAbstractTableModel):
         name = self.df.column_names()[section]
         dtype = self.df.get_dtype(section)
         return f"{name} (dtype: {dtype.name})"
+
+    if TYPE_CHECKING:
+
+        def parent(self) -> QDataFrameView: ...
 
 
 class QDraggableHorizontalHeader(QHorizontalHeaderView):
@@ -237,7 +236,7 @@ class QDataFrameView(QTableBase):
         transpose = False
         if isinstance(meta := model.metadata, DataFrameMeta):
             transpose = meta.transpose
-        self.setModel(QDataFrameModel(df, transpose=transpose))
+        self.setModel(QDataFrameModel(df, transpose=transpose, parent=self))
         if df.num_rows() == 1 and transpose:
             # single-row, row-orinted table should be expanded
             self.resizeColumnsToContents()
@@ -255,15 +254,14 @@ class QDataFrameView(QTableBase):
 
         self.control_widget().update_for_table(self)
         self._model_type = model.type
+        self._undo_stack.clear()
         self.update()
-        return None
 
     @validate_protocol
     def to_model(self) -> WidgetDataModel:
         # NOTE: if this model is passed to another widget and modified in this widget,
         # the other dataframe will be modified as well. To avoid this, we need to reset
         # the copy-on-write state of this array.
-        self.model()._updated_columns.clear()
         return WidgetDataModel(
             value=self.model().df.unwrap(),
             type=self.model_type(),
@@ -309,38 +307,113 @@ class QDataFrameView(QTableBase):
         return self._control
 
     def keyPressEvent(self, e: QtGui.QKeyEvent) -> None:
-        if e.matches(QtGui.QKeySequence.StandardKey.Copy):
-            return self.copy_data()
-        if (
-            e.modifiers() & Qt.KeyboardModifier.ControlModifier
-            and e.key() == QtCore.Qt.Key.Key_F
-        ):
-            self._find_string()
-            return
+        _ctrl = e.modifiers() & Qt.KeyboardModifier.ControlModifier
+        _shift = e.modifiers() & Qt.KeyboardModifier.ShiftModifier
+        if _ctrl and e.key() == QtCore.Qt.Key.Key_C:
+            return self.copy_data(header=_shift)
+        elif _ctrl and e.key() == QtCore.Qt.Key.Key_V:
+            if clipboard := QtGui.QGuiApplication.clipboard():
+                return self.paste_data(clipboard.text())
+        elif _ctrl and e.key() == QtCore.Qt.Key.Key_F:
+            return self._find_string()
+        elif _ctrl and e.key() == QtCore.Qt.Key.Key_Z:
+            return self.undo()
+        elif _ctrl and e.key() == QtCore.Qt.Key.Key_Y:
+            return self.redo()
         return super().keyPressEvent(e)
 
-    def copy_data(self):
+    def undo(self):
+        """Undo the last action."""
+        if action := self._undo_stack.undo():
+            action.invert().apply(self)
+            self.update()
+
+    def redo(self):
+        """Redo the last undone action."""
+        if action := self._undo_stack.redo():
+            action.apply(self)
+            self.update()
+
+    def copy_data(self, header: bool = False):
         rng = self._selection_model.get_single_range()
 
         rsl, csl = rng
         r0, r1 = rsl.start, rsl.stop
         c0, c1 = csl.start, csl.stop
-        csv_text = self.model().df.get_subset(r0, r1, c0, c1).to_csv_string("\t")
+        csv_text = (
+            self.model()
+            .df.get_subset(r0, r1, c0, c1)
+            .to_csv_string("\t", header=header)
+        )
         clipboard = QtGui.QGuiApplication.clipboard()
         clipboard.setText(csv_text)
 
-    def edit_item(self, r: int, c: int, value: str):
-        self.model().setData(self.model().index(r, c), value, Qt.ItemDataRole.EditRole)
-        # datChanged needs to be emitted manually
-        self.model().dataChanged.emit(
-            self.model().index(r, c),
-            self.model().index(r, c),
-            [Qt.ItemDataRole.EditRole],
+    def paste_data(self, text: str):
+        """Paste a text data to the selected cells."""
+        if not text:
+            return
+        buf = StringIO(text)
+        arr_paste = np.loadtxt(
+            buf, dtype=np.dtypes.StringDType(), delimiter="\t", ndmin=2
         )
+        rsl, csl = self._selection_model.current_range
+        r0, r1 = rsl.start, rsl.stop
+        c0, c1 = csl.start, csl.stop
+        if r1 - r0 == 1 and c1 - c0 == 1:
+            # single cell selected, expand to fit the pasted data
+            r1 = r0 + arr_paste.shape[0]
+            c1 = c0 + arr_paste.shape[1]
+            self._selection_model.clear()
+            self._selection_model.append((slice(r0, r1), slice(c0, c1)))
+        elif arr_paste.shape == (1, 1):
+            arr_paste = np.full(
+                (r1 - r0, c1 - c0), arr_paste[0, 0], dtype=arr_paste.dtype
+            )
+        elif arr_paste.shape != (r1 - r0, c1 - c0):
+            raise ValueError(
+                f"Pasted data shape {arr_paste.shape} does not match selection shape {(r1 - r0, c1 - c0)}."
+            )
+        columns = self.model().df.column_names()
+        df_paste = {}
+        for ci in range(c0, c1):
+            col_name = columns[ci]
+            dtype_kind = self.model().df.get_dtype(ci).kind
+            df_paste[col_name] = [
+                parse_string(each, dtype_kind) for each in arr_paste[:, ci - c0]
+            ]
+
+        self.dataframe_update((r0, c0), wrap_dataframe(df_paste))
+        self.update()
+
+    def dataframe_update(
+        self,
+        top_left: tuple[int, int],
+        df: DataFrameWrapper,
+        record_undo: bool = True,
+    ):
+        r0, c0 = top_left
+        r1, c1 = r0 + df.num_rows(), c0 + df.num_columns()
+        _model = self.model()
+        old = _model.df.get_subset(r0, r1, c0, c1).copy()
+        if r1 > _model.df.num_rows() or c1 > _model.df.num_columns():
+            raise ValueError("Pasting values exceed the table dimensions.")
+
+        column_names = _model.df.column_names()
+        _df_updated = _model.df
+        for i_col in range(c0, c1):
+            name = column_names[i_col]
+            target = _model.df.column_to_array(name).copy()
+            target[r0:r1] = df.column_to_array(name)
+            _df_updated = _df_updated.with_columns({name: target})
+        new = _df_updated.get_subset(r0, r1, c0, c1).copy()
+        _model._df = _df_updated
+        if record_undo:
+            self._undo_stack.push(EditAction(old, new, (r0, c0)))
 
     def _make_context_menu(self):
         menu = QtW.QMenu(self)
         menu.addAction("Copy", self.copy_data)
+        menu.addAction("Copy With Header", lambda: self.copy_data(header=True))
         return menu
 
     if TYPE_CHECKING:
@@ -394,7 +467,6 @@ class QDictView(QDataFrameView):
 
     @validate_protocol
     def to_model(self) -> WidgetDataModel:
-        self.model()._updated_columns.clear()
         return WidgetDataModel(
             value={k: v[0] for k, v in self.model().df.to_dict().items()},
             type=self.model_type(),
@@ -429,7 +501,6 @@ class QDataFrameViewControl(QtW.QWidget):
             f"{model.df.type_name()} ({model.rowCount()}, {model.columnCount()})"
         )
         self._selection_range.connect_table(table)
-        return None
 
 
 class QDataFramePlotView(QtW.QSplitter):
@@ -623,12 +694,12 @@ class DataFrameConfigs:
 
 @dataclass
 class EditAction:
-    old: Any
-    new: Any
-    index: Any
+    old: DataFrameWrapper
+    new: DataFrameWrapper
+    index: tuple[int, int]
 
     def invert(self) -> EditAction:
         return EditAction(self.new, self.old, self.index)
 
     def apply(self, table: QDataFrameView):
-        raise NotImplementedError
+        table.dataframe_update(self.index, self.new, record_undo=False)
