@@ -170,7 +170,7 @@ def test_edit_dataframe(himena_ui: MainWindow, qtbot: QtBot):
         assert np.array(tester.to_model().value["int"]).tolist() == [100, 10, -1, -1]
         assert np.array(tester.to_model().value["float"]).tolist() == [1.0, 20.0, 3.5, -4.2]
         assert np.array(tester.to_model().value["str"]).tolist() == ["a", "xxx", "c3", "ddd"]
-        view.selection_model.set_ranges([(slice(1, 3), slice(0, 3))])
+        view.selection_model.set_ranges([(slice(1, 2), slice(0, 1))])
         view.paste_data("10\t20\txxx\n10\t20\tyyy")
         assert np.array(tester.to_model().value["int"]).tolist() == [100, 10, 10, -1]
         assert np.array(tester.to_model().value["float"]).tolist() == [1.0, 20.0, 20.0, -4.2]
