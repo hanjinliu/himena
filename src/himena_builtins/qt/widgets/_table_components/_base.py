@@ -134,13 +134,11 @@ class QTableBase(QtW.QTableView):
         nr, nc = self.data_shape()
         if nr * nc > 0:
             self.set_selections([(slice(0, nr), slice(0, nc))])
-        return None
 
     def set_selections(self, selections: list[tuple[slice, slice]]) -> None:
         """Set current selections."""
         self._selection_model.set_ranges(selections)
         self._update_all()
-        return None
 
     @validate_protocol
     def size_hint(self) -> tuple[int, int]:
@@ -201,7 +199,6 @@ class QTableBase(QtW.QTableView):
             self.viewport().update(rect)
         self.horizontalHeader().viewport().update()
         self.verticalHeader().viewport().update()
-        return None
 
     def _range_rect(self, rng: tuple[slice, slice]) -> QtCore.QRect:
         rsel, csel = rng
@@ -223,8 +220,6 @@ class QTableBase(QtW.QTableView):
         if self._selection_model.is_moving_to_edge():
             if len(self._selection_model) > 0:
                 self._update_rect(self._range_rect(self._selection_model[-1]))
-
-        return None
 
     def _on_moved(self, src: Index, dst: Index) -> None:
         """Update the view."""
@@ -262,12 +257,6 @@ class QTableBase(QtW.QTableView):
             self.setCurrentIndex(index_dst)
         self.selection_changed.emit(self._get_selections())
         self.current_index_changed.emit(dst.as_uint())
-        return None
-
-    def edit(self, index: QtCore.QModelIndex, *args) -> bool:
-        """Edit at the current index of custom selection model."""
-        self._selection_model.current_index = (index.row(), index.column())
-        return super().edit(index, *args)
 
     def keyPressEvent(self, e):
         _mod = e.modifiers()
@@ -459,7 +448,6 @@ class QTableBase(QtW.QTableView):
             painter.setPen(pen)
             painter.drawRect(rect_cursor)
         painter.end()
-        return None
 
     def _rect_from_ranges(
         self,
