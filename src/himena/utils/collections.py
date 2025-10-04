@@ -66,6 +66,15 @@ class UndoRedoStack(Generic[_T]):
         self._stack_redo: list[_T] = []
         self._size = size
 
+    def __repr__(self):
+        undo_list = "\n".join(repr(v) for v in self._stack_undo)
+        redo_list = "\n".join(repr(v) for v in self._stack_redo)
+        return (
+            f"{self.__class__.__name__} with\n"
+            f"Undo stack:\n{undo_list}\n"
+            f"Redo stack:\n{redo_list}"
+        )
+
     def push(self, value: _T):
         """Push a new value."""
         self._stack_undo.append(value)

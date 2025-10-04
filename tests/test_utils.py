@@ -43,6 +43,7 @@ def test_undo_redo_stack():
     stack.push(1)
     stack.push(2)
     stack.push(3)
+    repr(stack)
     assert len(stack._stack_undo) == 3
     assert len(stack._stack_redo) == 0
     stack.push(4)

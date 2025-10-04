@@ -191,7 +191,7 @@ class DataFrameWrapper(ABC):
         """Create a dataframe from a CSV string."""
 
     @abstractmethod
-    def to_csv_string(self, separator: str = ",") -> str:
+    def to_csv_string(self, separator: str = ",", header: bool = True) -> str:
         """Convert the dataframe to a CSV string."""
 
     @abstractmethod
@@ -300,8 +300,11 @@ class DictWrapper(DataFrameWrapper):
                 data[k].append(v)
         return DictWrapper({k: _as_array(v) for k, v in data.items()})
 
-    def to_csv_string(self, separator: str = ",") -> str:
-        lines = [separator.join(self.column_names())]
+    def to_csv_string(self, separator: str = ",", header: bool = True) -> str:
+        if header:
+            lines = [separator.join(self.column_names())]
+        else:
+            lines = []
         for i in range(self.num_rows()):
             lines.append(
                 separator.join(str(self._df[k][i]) for k in self.column_names())
@@ -395,8 +398,8 @@ class PandasWrapper(DataFrameWrapper):
             str_or_buf = io.StringIO(str_or_buf)
         return PandasWrapper(pd.read_csv(str_or_buf, sep=separator))
 
-    def to_csv_string(self, separator: str = ",") -> str:
-        return self._df.to_csv(sep=separator, index=False)
+    def to_csv_string(self, separator: str = ",", header: bool = True) -> str:
+        return self._df.to_csv(sep=separator, index=False, header=header)
 
     def to_list(self) -> list[list[Any]]:
         return self._df.values.tolist()
@@ -498,8 +501,8 @@ class PolarsWrapper(DataFrameWrapper):
             str_or_buf = io.StringIO(str_or_buf)
         return PolarsWrapper(pl.read_csv(str_or_buf, separator=separator))
 
-    def to_csv_string(self, separator: str = ",") -> str:
-        return self._df.write_csv(separator=separator)
+    def to_csv_string(self, separator: str = ",", header: bool = True) -> str:
+        return self._df.write_csv(separator=separator, include_header=header)
 
     def to_list(self) -> list[list[Any]]:
         return [list(row) for row in self._df.iter_rows()]
@@ -598,8 +601,11 @@ class PyarrowWrapper(DataFrameWrapper):
             pa.csv.read_csv(buf, parse_options=pa.csv.ParseOptions(delimiter=separator))
         )
 
-    def to_csv_string(self, separator: str = ",") -> str:
-        lines = [separator.join(self.column_names())]
+    def to_csv_string(self, separator: str = ",", header: bool = True) -> str:
+        if header:
+            lines = [separator.join(self.column_names())]
+        else:
+            lines = []
         for a in self._df.to_pylist():
             a: dict[str, Any]
             lines.append(separator.join(str(cell) for cell in a.values()))
