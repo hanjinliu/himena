@@ -334,6 +334,15 @@ class QDataFrameView(QTableBase):
             action.apply(self)
             self.update()
 
+    def edit_item(self, r: int, c: int, value: str):
+        self.model().setData(self.model().index(r, c), value, Qt.ItemDataRole.EditRole)
+        # datChanged needs to be emitted manually
+        self.model().dataChanged.emit(
+            self.model().index(r, c),
+            self.model().index(r, c),
+            [Qt.ItemDataRole.EditRole],
+        )
+
     def copy_data(self, header: bool = False):
         rng = self._selection_model.get_single_range()
 

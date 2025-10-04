@@ -5,9 +5,7 @@ from pytestqt.qtbot import QtBot
 from qtpy.QtCore import Qt
 import pandas as pd
 import polars as pl
-from himena import MainWindow
-from himena.consts import StandardType
-from himena.core import create_model
+from himena import MainWindow, StandardType, create_model
 from himena.testing.subwindow import WidgetTester
 from himena.workflow import CommandExecution
 from himena_builtins.qt.dataframe import QDataFrameView, QDataFramePlotView
@@ -112,7 +110,7 @@ def test_copy_on_write(himena_ui: MainWindow, qtbot: QtBot, df):
     view = QDataFrameView(himena_ui)
     qtbot.addWidget(view)
     with WidgetTester(view) as tester:
-        tester.update_model(value=df, type="dataframe")
+        tester.update_model(value=df, type=StandardType.DATAFRAME)
         view.edit_item(0, 0, "100")
         assert_equal(np.array(tester.to_model().value["a"]), [100, -2])
         assert_equal(np.array(df["a"]), [1, -2])
@@ -123,6 +121,65 @@ def test_copy_on_write(himena_ui: MainWindow, qtbot: QtBot, df):
         assert_equal(np.array(tester.to_model().value["b"]), [3.0, 0.1])
         assert_equal(np.array(df["b"]), [3.0, -4.0])
         assert_equal(np.array(view2.to_model().value["b"]), [3.0, -4.0])
+
+def test_edit_dataframe(himena_ui: MainWindow, qtbot: QtBot):
+    df = {
+        "int": [1, 3, 5, 7],
+        "float": [1.0, -2.0, 3.5, -4.2],
+        "str": ["a", "b", "c3", "ddd"],
+    }
+    view = QDataFrameView(himena_ui)
+    qtbot.addWidget(view)
+    with WidgetTester(view) as tester:
+        tester.update_model(value=df, type=StandardType.DATAFRAME)
+        view.edit_item(0, 0, "100")
+        assert np.array(tester.to_model().value["int"]).tolist() == [100, 3, 5, 7]
+        view.undo()
+        assert np.array(tester.to_model().value["int"]).tolist() == [1, 3, 5, 7]
+        view.redo()
+        assert np.array(tester.to_model().value["int"]).tolist() == [100, 3, 5, 7]
+        view.copy_data()
+        view.selection_model.set_ranges([(slice(1, 4), slice(0, 1))])
+        view.paste_data("200\n300\n400")
+        assert np.array(tester.to_model().value["int"]).tolist() == [100, 200, 300, 400]
+        view.undo()
+        assert np.array(tester.to_model().value["int"]).tolist() == [100, 3, 5, 7]
+        view.redo()
+        assert np.array(tester.to_model().value["int"]).tolist() == [100, 200, 300, 400]
+        view.selection_model.set_ranges([(slice(1, 4), slice(0, 1))])
+        view.paste_data("-1")
+        assert np.array(tester.to_model().value["int"]).tolist() == [100, -1, -1, -1]
+        view.undo()
+        assert np.array(tester.to_model().value["int"]).tolist() == [100, 200, 300, 400]
+        view.redo()
+        assert np.array(tester.to_model().value["int"]).tolist() == [100, -1, -1, -1]
+        view.selection_model.set_ranges([(slice(1, 2), slice(0, 3))])
+        view.paste_data("10\t20\txxx")
+        assert np.array(tester.to_model().value["int"]).tolist() == [100, 10, -1, -1]
+        assert np.array(tester.to_model().value["float"]).tolist() == [1.0, 20.0, 3.5, -4.2]
+        assert np.array(tester.to_model().value["str"]).tolist() == ["a", "xxx", "c3", "ddd"]
+        view.undo()
+        assert np.array(tester.to_model().value["int"]).tolist() == [100, -1, -1, -1]
+        assert np.array(tester.to_model().value["float"]).tolist() == [1.0, -2.0, 3.5, -4.2]
+        assert np.array(tester.to_model().value["str"]).tolist() == ["a", "b", "c3", "ddd"]
+        view.redo()
+        assert np.array(tester.to_model().value["int"]).tolist() == [100, 10, -1, -1]
+        assert np.array(tester.to_model().value["float"]).tolist() == [1.0, 20.0, 3.5, -4.2]
+        assert np.array(tester.to_model().value["str"]).tolist() == ["a", "xxx", "c3", "ddd"]
+        view.selection_model.set_ranges([(slice(1, 3), slice(0, 3))])
+        view.paste_data("10\t20\txxx\n10\t20\tyyy")
+        assert np.array(tester.to_model().value["int"]).tolist() == [100, 10, 10, -1]
+        assert np.array(tester.to_model().value["float"]).tolist() == [1.0, 20.0, 20.0, -4.2]
+        assert np.array(tester.to_model().value["str"]).tolist() == ["a", "xxx", "yyy", "ddd"]
+        view.undo()
+        assert np.array(tester.to_model().value["int"]).tolist() == [100, 10, -1, -1]
+        assert np.array(tester.to_model().value["float"]).tolist() == [1.0, 20.0, 3.5, -4.2]
+        assert np.array(tester.to_model().value["str"]).tolist() == ["a", "xxx", "c3", "ddd"]
+        view.redo()
+        assert np.array(tester.to_model().value["int"]).tolist() == [100, 10, 10, -1]
+        assert np.array(tester.to_model().value["float"]).tolist() == [1.0, 20.0, 20.0, -4.2]
+        assert np.array(tester.to_model().value["str"]).tolist() == ["a", "xxx", "yyy", "ddd"]
+
 
 @pytest.mark.parametrize(
     "input_value",
