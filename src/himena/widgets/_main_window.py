@@ -39,7 +39,7 @@ from himena.types import (
     BackendInstructions,
     WindowRect,
 )
-from himena.utils.misc import is_subtype
+from himena.utils.misc import is_subtype, is_url_string, fetch_text_from_url
 from himena.widgets._backend import BackendMainWindow
 from himena.widgets._keyset import KeySet
 from himena.widgets._hist import HistoryContainer, FileDialogHistoryDict
@@ -503,6 +503,30 @@ class MainWindow(Generic[_W]):
         """Read multiple files asynchronously and open as new sub-windows."""
         _, tabarea = self._current_or_new_tab()
         return tabarea.read_files_async(file_paths, plugin=plugin)
+
+    def run_script(self, file: str | Path) -> Any:
+        reg = _actions.AppActionRegistry.instance()
+        num_actions_before = len(reg._actions)
+        if is_url_string(file):
+            code = fetch_text_from_url(file)
+            filename = "<remote>"
+        else:
+            filepath = Path(file).resolve()
+            code = filepath.read_text()
+            filename = str(filepath)
+        compiled = compile(code, filename, "exec")
+        glob = {}
+        loc = {}
+        exec(compiled, glob, loc)
+        if callable(main := loc.get("main", None)):
+            main.__globals__.update(loc)
+            out = main(self)
+        else:
+            out = None
+        num_actions_after = len(reg._actions)
+        if num_actions_after != num_actions_before:
+            pass  # need rebuild
+        return out
 
     def load_session(self, path: str | Path) -> None:
         """Read a session file and update the main window based on the content."""

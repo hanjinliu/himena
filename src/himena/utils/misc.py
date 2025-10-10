@@ -12,6 +12,7 @@ from typing import (
     Literal,
 )
 import numpy as np
+from urllib.parse import urlparse
 
 _C = TypeVar("_C", bound=type)
 
@@ -253,3 +254,71 @@ def is_absolute_file_path_string(s: str) -> bool:
         return Path(s).is_absolute()
     except Exception:
         return False
+
+
+def ext_to_filter(ext: str) -> str:
+    """Convert a file extension to a file filter string for dialogs."""
+    if ext.startswith("."):
+        return f"*{ext}"
+    elif ext == "":
+        return "*"
+    else:
+        return f"*.{ext}"
+
+
+def fetch_text_from_url(url: str) -> str:
+    """Fetch text content from a URL.
+
+    Parameters
+    ----------
+    url : str
+        The URL to fetch text content from.
+    """
+    import requests
+
+    url = _git_provider_url_to_raw_url(url)
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        return response.text
+    except requests.RequestException as e:
+        raise ValueError(f"Error fetching URL {url}: {e}") from e
+
+
+def _git_provider_url_to_raw_url(filename: str) -> str:
+    """Convert a git provider's URL to a raw file URL.
+
+    A git provider could be GitHub URL, GitHub Gist URL, or GitLab URL.
+
+    Parameters
+    ----------
+    filename : str
+        The git provider URL to convert.
+    """
+    parsed_url = urlparse(filename)
+    # For a GitLab file URL that contains `blob/` replace with `raw`
+    if "gitlab" in parsed_url.netloc:
+        return filename.replace("blob/", "raw/")
+    # For GitHub gists, we need to substitute `githubusercontent` and
+    # append `/raw` to get the raw content
+    if parsed_url.netloc == "gist.github.com":
+        base_url = filename.replace("gist.github.com", "gist.githubusercontent.com")
+        if not base_url.endswith("/raw"):
+            if "#" in base_url:
+                # Split at fragment and add /raw before it
+                parts = base_url.split("#")
+                base_url = f"{parts[0]}/raw" + (
+                    f"#{parts[1]}" if len(parts) > 1 else ""
+                )
+            else:
+                base_url += "/raw"
+        return base_url
+
+    # For GitHub repository URLs, substitute `raw.githubusercontent.com` and `r"/refs/heads/"`
+    if parsed_url.netloc == "github.com":
+        return filename.replace("github.com", "raw.githubusercontent.com").replace(
+            "/blob/", r"/refs/heads/"
+        )
+
+    # Return filename if no match is found for a git provider
+    return filename

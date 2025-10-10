@@ -12,6 +12,7 @@ class HimenaCliNamespace(argparse.Namespace):
     log_level: str
     new: str | None
     remove: str | None
+    run: str | None
     install: list[str]
     uninstall: list[str]
     uninstall_outdated: bool
@@ -79,6 +80,10 @@ class HimenaArgumentParser(argparse.ArgumentParser):
         self.add_argument(
             "--remove", default=None,
             help="Remove the profile of the given name."
+        )
+        self.add_argument(
+            "--run", default=None,
+            help="Run the main function of the given script file"
         )
         self.add_argument(
             "--install", nargs="+", default=[], help="Install the given plugins."
