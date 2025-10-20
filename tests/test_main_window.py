@@ -404,3 +404,7 @@ def test_custom_object_type_map(make_himena_ui):
     himena_ui.add_object(MyType(value="Hello World"))
     assert himena_ui.current_model.value == "Hello World"
     assert himena_ui.current_model.type == "text"
+
+def test_remote_file(make_himena_ui):
+    himena_ui: MainWindow = make_himena_ui("mock")
+    himena_ui.run_script("https://gist.github.com/hanjinliu/ba5e58edfe2f912899cb5e2b9dc404ec")

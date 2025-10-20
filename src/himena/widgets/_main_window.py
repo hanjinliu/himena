@@ -505,6 +505,7 @@ class MainWindow(Generic[_W]):
         return tabarea.read_files_async(file_paths, plugin=plugin)
 
     def run_script(self, file: str | Path) -> Any:
+        """Run the main function of the given script file with this UI instance."""
         reg = _actions.AppActionRegistry.instance()
         num_actions_before = len(reg._actions)
         if is_url_string(file):
@@ -525,7 +526,12 @@ class MainWindow(Generic[_W]):
             out = None
         num_actions_after = len(reg._actions)
         if num_actions_after != num_actions_before:
-            pass  # need rebuild
+            # need rebuild
+            warnings.warn(
+                "Registering plugins after application launch is not fully supported.",
+                UserWarning,
+                stacklevel=1,
+            )
         return out
 
     def load_session(self, path: str | Path) -> None:
