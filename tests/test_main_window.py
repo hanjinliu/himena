@@ -12,7 +12,7 @@ from himena.consts import StandardType
 from himena.core import create_model
 from himena.types import ClipboardDataModel, DragDataModel, FutureInfo, WidgetConstructor, WidgetType, ParametricWidgetProtocol
 from himena.qt import MainWindowQt, drag_command
-from himena.qt._qmain_window import QMainWindow, _ext_to_filter, QChoicesDialog
+from himena.qt._qmain_window import QMainWindow, QChoicesDialog
 from himena.qt._qsub_window import QSubWindow, get_subwindow
 from himena.widgets import set_status_tip, notify, append_result, TabArea
 from himena.workflow._reader import LocalReaderMethod
@@ -279,11 +279,6 @@ def test_qt_main_window(himena_ui: MainWindowQt, qtbot: QtBot):
     cb.reset_mock()
 
     # qui._process_parametric_widget
-
-def test_ext_filter():
-    assert _ext_to_filter(".txt") == "*.txt"
-    assert _ext_to_filter("") == "*"
-    assert _ext_to_filter("txt") == "*.txt"
 
 def test_qchoices_dialog(qtbot: QtBot):
     choices = [("a", 0), ("b", 1), ("c", 2)]
