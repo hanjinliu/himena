@@ -96,7 +96,7 @@ def _main(args: HimenaCliNamespace):
         "port": args.port,
     }
 
-    ui, lock = _send_or_create_window(app_prof, args.abs_path(), attrs)
+    ui, lock = _send_or_create_window(app_prof, args.abs_path(), attrs, run=args.run)
     if ui is not None:
         ui.show(run=not _is_testing())
         lock.close()
@@ -107,6 +107,7 @@ def _send_or_create_window(
     prof: "AppProfile",
     path: str | None = None,
     attrs: dict = {},
+    run: str | None = None,
 ) -> "tuple[MainWindow, TextIOWrapper] | None":
     from himena.core import new_window
 
@@ -125,6 +126,8 @@ def _send_or_create_window(
     ui.socket_info.dump(lock)
     if path is not None:
         ui.read_file(path)
+    if run is not None:
+        ui.run_script(run)
     return ui, lock
 
 

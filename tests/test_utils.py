@@ -6,7 +6,7 @@ from numpy.testing import assert_equal
 from himena import create_model
 from himena.standards.model_meta import ArrayMeta, DataFrameMeta, DictMeta, TableMeta
 from himena.types import Size, WindowRect
-from himena.utils.misc import is_subtype
+from himena.utils.misc import is_subtype, ext_to_filter
 from himena.utils.table_selection import (
     auto_select,
     model_to_xy_arrays,
@@ -243,6 +243,12 @@ def test_model_to_col_val_arrays():
 )
 def test_resize(state: ResizeState):
     state.resize_widget(WindowRect(10, 20, 40, 33), (30, 38), Size(3, 3), Size(100, 100))
+
+
+def test_ext_filter():
+    assert ext_to_filter(".txt") == "*.txt"
+    assert ext_to_filter("") == "*"
+    assert ext_to_filter("txt") == "*.txt"
 
 def test_exception():
     from himena.exceptions import ExceptionHandler

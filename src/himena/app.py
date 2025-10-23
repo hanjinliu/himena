@@ -56,7 +56,6 @@ class EventLoopHandler(ABC, Generic[_A]):
 
     def process_events(self):
         """Process the GUI events."""
-        pass
 
 
 def gui_is_active(event_loop: str) -> bool:
@@ -84,6 +83,7 @@ class QtEventLoopHandler(EventLoopHandler["QApplication"]):
 
         if not QT6:
             QApplication.setAttribute(Qt.ApplicationAttribute.AA_EnableHighDpiScaling)
+        QApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
         return QApplication([])
 
     def run_app(self):

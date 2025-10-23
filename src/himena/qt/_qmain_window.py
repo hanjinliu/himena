@@ -25,8 +25,10 @@ from superqt.utils import ensure_main_thread
 from himena.consts import MenuId
 from himena.consts import ParametricWidgetProtocolNames as PWPN
 from himena.utils.window_rect import prevent_window_overlap
+from himena.utils.app import iter_root_menu_ids
 from himena._app_model import _formatter, HimenaApplication
 from himena.plugins import AppActionRegistry
+from himena.utils.misc import ext_to_filter
 from himena._utils import doc_to_whats_this
 from himena.qt._qnotification import QJobStack, QNotificationWidget, QWhatsThisWidget
 from himena.qt._qtab_widget import QTabWidget
@@ -443,7 +445,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     ) -> Path | list[Path] | None:
         if allowed_extensions:
             filter_str = (
-                ";".join(_ext_to_filter(ext) for ext in allowed_extensions)
+                ";".join(ext_to_filter(ext) for ext in allowed_extensions)
                 + ";;All Files (*)"
             )
         else:
@@ -843,23 +845,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         return out
 
 
-def _is_root_menu_id(app: HimenaApplication, menu_id: str) -> bool:
-    if menu_id in (MenuId.TOOLBAR, MenuId.CORNER, app.menus.COMMAND_PALETTE_ID):
-        return False
-    if len(menu_id) == 0:
-        return False
-    return "/" not in menu_id.replace("//", "")
-
-
-def _ext_to_filter(ext: str) -> str:
-    if ext.startswith("."):
-        return f"*{ext}"
-    elif ext == "":
-        return "*"
-    else:
-        return f"*.{ext}"
-
-
 class QCornerToolBar(QModelToolBar):
     # Managed by MenuId.CORNER
     def addSeparator(self):
@@ -977,13 +962,12 @@ def _prep_menubar_map(app: HimenaApplication) -> dict[str, str]:
         MenuId.GO: "&" + MenuId.GO.capitalize(),
     }
     existing_chars = {"f", "w", "v", "t", "g"}
-    for menu_id, _ in app.menus:
-        if menu_id not in default_menu_ids and _is_root_menu_id(app, menu_id):
-            if menu_id and menu_id[0].lower() in existing_chars:
-                title = menu_id.replace("_", " ").title()
-            else:
-                title = "&" + menu_id.replace("_", " ").title()
-            default_menu_ids[menu_id] = title
+    for menu_id in iter_root_menu_ids(app):
+        if menu_id and menu_id[0].lower() in existing_chars:
+            title = menu_id.replace("_", " ").title()
+        else:
+            title = "&" + menu_id.replace("_", " ").title()
+        default_menu_ids[menu_id] = title
     return default_menu_ids
 
 
