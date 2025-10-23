@@ -176,6 +176,12 @@ class QSSHRemoteExplorerWidget(QBaseRemoteExplorerWidget):
         args = ["ssh", "-p", port, host, "trash", *paths]
         exec_command(self._with_wsl_prefix(args))
 
+    def _make_get_type_args(self, path: str) -> list[str]:
+        host = self._host_edit.text()
+        port = str(int(self._port_edit.text()))
+        args = ["ssh", "-p", port, host, "stat", path, "--format='%F'"]
+        return self._with_wsl_prefix(args)
+
     def _host_and_port(self) -> tuple[str, str]:
         """Return the host and port as a tuple."""
         host = self._host_edit.text()

@@ -127,6 +127,9 @@ class QWSLRemoteExplorerWidget(QBaseRemoteExplorerWidget):
     def _make_reader_method_from_str(self, line: str, is_dir: bool) -> WslReaderMethod:
         return WslReaderMethod.from_str(line, force_directory=is_dir)
 
+    def _make_get_type_args(self, path: str) -> list[str]:
+        return ["wsl", "-e", "stat", path, "--format='%F'"]
+
     def update_configs(self, cfg: FileExplorerWSLConfig) -> None:
         self._user = cfg.default_user
         if self._last_dir == Path("~"):
