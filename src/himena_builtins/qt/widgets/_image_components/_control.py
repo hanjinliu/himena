@@ -192,7 +192,7 @@ class QImageViewControl(QImageViewControlBase):
             return [True]  # No channels, always visible
         is_composite = self._chn_mode_combo.currentText() == ChannelMode.COMP
         if is_composite:
-            visibilities = self._chn_vis._check_states()
+            visibilities = self._chn_vis.check_states()
         else:
             visibilities = [False] * len(self._chn_vis._toggle_switches)
             sl = self._image_view._dims_slider.value()
@@ -349,5 +349,12 @@ class QChannelToggleSwitches(QtW.QScrollArea):
     def _emit_state_changed(self):
         self.stateChanged.emit()
 
-    def _check_states(self) -> list[bool]:
+    def check_states(self) -> list[bool]:
         return [sw.isChecked() for sw in self._toggle_switches]
+
+    def set_check_states(self, states: list[bool]):
+        for sw, st in zip(self._toggle_switches, states):
+            sw.setChecked(st)
+
+    def has_channels(self) -> bool:
+        return len(self._toggle_switches) > 0
