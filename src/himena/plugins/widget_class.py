@@ -1,3 +1,4 @@
+from functools import wraps
 from types import MappingProxyType
 from typing import Callable, overload, TypeVar, TYPE_CHECKING
 import warnings
@@ -166,14 +167,21 @@ class OpenDataInFunction:
             self._plugin_id, save_behavior_override=NoNeedToSave()
         )
 
+    def menu_id(self) -> str:
+        return f"/open-in/{self._type}"
+
     def to_action(self) -> Action:
+        @wraps(self)
+        def self_func(model: "WidgetDataModel") -> "WidgetDataModel":
+            return self(model)
+
         return Action(
             id=f"open-in:{self._plugin_id}:{self._type}",
             title=self._display_name,
             tooltip=f"Open this data in {self._display_name}",
-            callback=self,
+            callback=self_func,
             enablement=self._enablement,
-            menus=[{"id": f"/open-in/{self._type}", "group": "open-in"}],
+            menus=[{"id": self.menu_id(), "group": "open-in"}],
         )
 
 
@@ -195,11 +203,14 @@ class PreviewDataInFunction:
         return f"/model_menu:{self._type}/preview-in"
 
     def to_action(self) -> Action:
-        tooltip = f"Preview this data in {self._display_name}"
+        @wraps(self)
+        def self_func(win: "SubWindow", ui: "MainWindow"):
+            return self(win, ui)
+
         return Action(
             id=f"preview-in:{self._plugin_id}:{self._type}",
             title=self._display_name,
-            tooltip=tooltip,
-            callback=self,
+            tooltip=f"Preview this data in {self._display_name}",
+            callback=self_func,
             menus=[{"id": self.menu_id(), "group": "open-in"}],
         )
