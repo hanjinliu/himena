@@ -163,7 +163,7 @@ class OpenDataInFunction:
             & (ctx.active_window_widget_id != self._plugin_id)
         )
 
-    def __call__(self, model: "WidgetDataModel") -> "WidgetDataModel":
+    def __call__(self, model: WidgetDataModel) -> WidgetDataModel:
         return model.with_open_plugin(
             self._plugin_id, save_behavior_override=NoNeedToSave()
         )
@@ -173,7 +173,7 @@ class OpenDataInFunction:
 
     def to_action(self) -> Action:
         @wraps(self, assigned=_TO_ASSIGN)
-        def self_func(model: "WidgetDataModel") -> "WidgetDataModel":
+        def self_func(model: WidgetDataModel) -> WidgetDataModel:
             return self(model)
 
         return Action(
