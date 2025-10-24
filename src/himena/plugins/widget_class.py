@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from types import MappingProxyType
 from typing import Callable, overload, TypeVar, TYPE_CHECKING
 import warnings
@@ -29,7 +27,7 @@ def register_widget_class(
     type_: str,
     widget_class: _T,
     priority: int = 100,
-    plugin_configs: PluginConfigType | None = None,
+    plugin_configs: "PluginConfigType | None" = None,
 ) -> _T: ...
 
 
@@ -38,7 +36,7 @@ def register_widget_class(
     type_: str,
     widget_class: None,
     priority: int = 100,
-    plugin_configs: PluginConfigType | None = None,
+    plugin_configs: "PluginConfigType | None" = None,
 ) -> Callable[[_T], _T]: ...
 
 
@@ -163,7 +161,7 @@ class OpenDataInFunction:
             & (ctx.active_window_widget_id != self._plugin_id)
         )
 
-    def __call__(self, model: WidgetDataModel) -> WidgetDataModel:
+    def __call__(self, model: "WidgetDataModel") -> "WidgetDataModel":
         return model.with_open_plugin(
             self._plugin_id, save_behavior_override=NoNeedToSave()
         )
@@ -187,7 +185,7 @@ class PreviewDataInFunction:
         self._plugin_id = get_widget_class_id(widget_class)
         self._type = type_
 
-    def __call__(self, win: SubWindow, ui: MainWindow):
+    def __call__(self, win: "SubWindow", ui: "MainWindow"):
         model = win.to_model().with_open_plugin(self._plugin_id)
         previewer = ui.add_data_model(model)
         previewer._switch_to_file_watch_mode()
