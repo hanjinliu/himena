@@ -29,6 +29,7 @@ from himena_builtins.qt.widgets._image_components import (
     QRoiCollection,
     from_standard_roi,
     MouseMode,
+    ChannelMode,
 )
 from himena_builtins.qt.widgets._dim_sliders import QDimsSlider
 from himena_builtins.qt.widgets._splitter import QSplitterHandle
@@ -591,7 +592,23 @@ class QImageViewBase(QtW.QSplitter):
         view = self._img_view
         if _mods & Qt.KeyboardModifier.ControlModifier:
             if not event.isAutoRepeat():
-                view.standard_ctrl_key_press(_key)
+                if (
+                    event.text().isdigit()
+                    and isinstance(self._control, QImageViewControl)
+                    and self._control._chn_vis.has_channels()
+                    and self._control._chn_mode_combo.currentText() == ChannelMode.COMP
+                ):
+                    # toggle channel visibility
+                    _visible = self._control._chn_vis.check_states()
+                    ith = int(event.text()) - 1
+                    if 0 <= ith < len(_visible):
+                        _visible[ith] = not _visible[ith]
+                    elif ith == -1:
+                        _visible = [True] * len(_visible)
+                    self._control._chn_vis.set_check_states(_visible)
+                    self._update_image_visibility(_visible)
+                else:
+                    view.standard_ctrl_key_press(_key)
         else:
             if _key in _INCREMENT_MAP:
                 ui = current_instance()

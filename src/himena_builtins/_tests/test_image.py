@@ -569,10 +569,11 @@ def test_image_view_current_roi_index(qtbot: QtBot):
 def _get_tester():
     return WidgetTester(QImageView())
 
-def test_dims_slider(himena_ui: MainWindowQt, qtbot: QtBot):
+def test_number_key_click_events(himena_ui: MainWindowQt, qtbot: QtBot):
     model = create_image_model(
         np.zeros((4, 4, 10, 10)),
-        axes=["t", "z", "y", "x"],
+        axes=["c", "z", "y", "x"],
+        channel_axis=0,
     )
     win = himena_ui.add_data_model(model)
     image_view: QImageView = win.widget
@@ -599,6 +600,20 @@ def test_dims_slider(himena_ui: MainWindowQt, qtbot: QtBot):
         qtbot.keyClick(image_view, Qt.Key.Key_Home)
         area._set_key_up(Qt.Key.Key_2)
         assert image_view._dims_slider._sliders[1]._slider.value() == 0
+
+        assert image_view._control._chn_vis.check_states() == [True, True, True, True]
+        qtbot.keyClick(image_view, Qt.Key.Key_1, modifier=_Ctrl)
+        assert image_view._control._chn_vis.check_states() == [False, True, True, True]
+        qtbot.keyClick(image_view, Qt.Key.Key_1, modifier=_Ctrl)
+        assert image_view._control._chn_vis.check_states() == [True, True, True, True]
+        qtbot.keyClick(image_view, Qt.Key.Key_3, modifier=_Ctrl)
+        assert image_view._control._chn_vis.check_states() == [True, True, False, True]
+        qtbot.keyClick(image_view, Qt.Key.Key_6, modifier=_Ctrl)
+        assert image_view._control._chn_vis.check_states() == [True, True, False, True]
+        qtbot.keyClick(image_view, Qt.Key.Key_0, modifier=_Ctrl)
+        assert image_view._control._chn_vis.check_states() == [True, True, True, True]
+        qtbot.keyClick(image_view, Qt.Key.Key_0, modifier=_Ctrl)
+        assert image_view._control._chn_vis.check_states() == [True, True, True, True]
 
 
 def test_crop_image(himena_ui: MainWindow, tmpdir):

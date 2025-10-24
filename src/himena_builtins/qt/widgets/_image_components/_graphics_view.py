@@ -595,7 +595,6 @@ class QImageGraphicsView(QBaseGraphicsView):
             else:
                 self.switch_mode(MouseMode.ROI_ELLIPSE)
         elif _key == Qt.Key.Key_P:
-            # switch similar modes in turn
             if shift:
                 self.switch_mode(MouseMode.ROI_POINTS)
             else:
