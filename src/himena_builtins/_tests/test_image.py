@@ -312,7 +312,8 @@ def test_image_view_copy_roi_from_window_to_window(himena_ui: MainWindow, qtbot:
         image_view_1._img_view.standard_ctrl_key_press(Qt.Key.Key_Down)
 
 
-def test_image_view_select_roi(qtbot: QtBot):
+def test_image_view_select_roi(make_himena_ui, qtbot: QtBot):
+    ui = make_himena_ui("mock")  # noqa: F841
     image_view = QImageView()
     image_view.resize(150, 150)
     image_view.show()
