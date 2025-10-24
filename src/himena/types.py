@@ -294,7 +294,7 @@ class WidgetDataModel(GenericModel[_T]):
     def _validate_extension_default(cls, v: str, values):
         if v is None:
             return None
-        if not v.startswith("."):
+        if v and not v.startswith("."):
             return f".{v}"
         return v
 

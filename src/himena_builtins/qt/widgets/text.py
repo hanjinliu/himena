@@ -94,7 +94,7 @@ class QTextEdit(QtW.QWidget):
         if encoding:
             self._control._encoding.setText(encoding)
         self._model_type = model.type
-        if ext := model.extension_default:
+        if (ext := model.extension_default) is not None:
             self._extension_default = ext
 
     @validate_protocol
