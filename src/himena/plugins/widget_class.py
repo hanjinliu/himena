@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
 _T = TypeVar("_T")
 _WIDGET_ID_TO_WIDGET_CLASS: dict[str, type] = {}
+_TO_ASSIGN = ("__module__", "__name__", "__qualname__", "__doc__", "__type_params__")
 
 
 def get_widget_class(id: str) -> type | None:
@@ -171,7 +172,7 @@ class OpenDataInFunction:
         return f"/open-in/{self._type}"
 
     def to_action(self) -> Action:
-        @wraps(self)
+        @wraps(self, assigned=_TO_ASSIGN)
         def self_func(model: "WidgetDataModel") -> "WidgetDataModel":
             return self(model)
 
@@ -197,13 +198,12 @@ class PreviewDataInFunction:
         model = win.to_model().with_open_plugin(self._plugin_id)
         previewer = ui.add_data_model(model)
         previewer._switch_to_file_watch_mode()
-        return None
 
     def menu_id(self) -> str:
         return f"/model_menu:{self._type}/preview-in"
 
     def to_action(self) -> Action:
-        @wraps(self)
+        @wraps(self, assigned=_TO_ASSIGN)
         def self_func(win: "SubWindow", ui: "MainWindow"):
             return self(win, ui)
 
