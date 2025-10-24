@@ -1,6 +1,7 @@
 """Builtin File explorer plugin."""
 
 from dataclasses import dataclass
+import getpass
 from himena.plugins import (
     register_dock_widget_action,
     add_default_status_tip,
@@ -77,11 +78,18 @@ def make_file_explorer_ssh_widget(ui: MainWindow):
 
 if IS_WINDOWS:
 
+    @dataclass
+    class FileExplorerWSLConfig:
+        default_user: str = config_field(
+            default_factory=getpass.getuser, tooltip="The default WSL user name"
+        )
+
     @register_dock_widget_action(
         title="WSL File Explorer",
         area="left",
         command_id="builtins:file-explorer-wsl",
         singleton=True,
+        plugin_configs=FileExplorerWSLConfig(),
     )
     def make_file_explorer_ssh_widget(ui: MainWindow):
         """Open a remote file explorer widget as a dock widget."""

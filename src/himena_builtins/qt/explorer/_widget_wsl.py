@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import getpass
 from pathlib import Path
 from typing import TYPE_CHECKING, Iterator, Literal
 from qtpy import QtWidgets as QtW, QtCore
@@ -20,6 +19,7 @@ from himena_builtins.qt.widgets._shared import labeled
 
 if TYPE_CHECKING:
     from himena.qt import MainWindowQt
+    from himena_builtins.qt.explorer import FileExplorerWSLConfig
 
 
 class QWSLRemoteExplorerWidget(QBaseRemoteExplorerWidget):
@@ -32,7 +32,8 @@ class QWSLRemoteExplorerWidget(QBaseRemoteExplorerWidget):
 
     def __init__(self, ui: MainWindowQt) -> None:
         super().__init__(ui)
-        self._pwd = Path("/home", getpass.getuser())
+        self._user = ""
+        self._pwd = Path("~")
         self._last_dir = self._pwd
 
         self._show_hidden_files_switch = QToggleSwitch()
@@ -78,8 +79,6 @@ class QWSLRemoteExplorerWidget(QBaseRemoteExplorerWidget):
         )
         self._light_background = True
 
-        # set the home directory
-        self._set_current_path(self._pwd)
         self.themeChanged.connect(self._on_theme_changed)
 
     def _on_theme_changed(self, theme) -> None:
@@ -109,9 +108,9 @@ class QWSLRemoteExplorerWidget(QBaseRemoteExplorerWidget):
         exec_command(self._send_file_args(src, dst_remote, is_dir=is_dir))
 
     def _set_current_path(self, path: Path):
-        if (fp := path.as_posix()).startswith("~"):
+        if (fp := path.as_posix()).startswith("~") and self._user:
             # The ~ in WSL is expanded to the Windows home directory.
-            path = Path(f"/home/{getpass.getuser()}/{fp[1:]}")
+            path = Path(f"/home/{self._user}/{fp[1:]}")
         return super()._set_current_path(path)
 
     def _set_busy(self, busy: bool):
@@ -127,3 +126,14 @@ class QWSLRemoteExplorerWidget(QBaseRemoteExplorerWidget):
 
     def _make_reader_method_from_str(self, line: str, is_dir: bool) -> WslReaderMethod:
         return WslReaderMethod.from_str(line, force_directory=is_dir)
+
+    def _make_get_type_args(self, path: str) -> list[str]:
+        return ["wsl", "-e", "stat", path, "--format='%F'"]
+
+    def update_configs(self, cfg: FileExplorerWSLConfig) -> None:
+        self._user = cfg.default_user
+        if self._last_dir == Path("~"):
+            self._pwd = Path(f"/home/{self._user}")
+            self._last_dir = Path(f"/home/{self._user}")
+            # set the home directory
+            self._set_current_path(self._pwd)
