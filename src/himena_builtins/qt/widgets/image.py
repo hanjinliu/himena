@@ -17,7 +17,7 @@ from himena.standards import roi, model_meta
 from himena.qt._utils import drag_command, qsignal_blocker
 from himena.types import DropResult, Parametric, Size, WidgetDataModel
 from himena.plugins import validate_protocol, register_function
-from himena.widgets import set_status_tip, current_instance
+from himena.widgets import set_status_tip, current_instance, show_tooltip
 from himena.data_wrappers import ArrayWrapper, wrap_array
 from himena_builtins.qt.widgets._image_components import (
     QImageGraphicsView,
@@ -77,6 +77,7 @@ class QImageViewBase(QtW.QSplitter):
         self._img_view.roi_added.connect(self._on_roi_added)
         self._img_view.roi_removed.connect(self._on_roi_removed)
         self._img_view.current_roi_updated.connect(self._emit_current_roi)
+        self._img_view.wheel_moved.connect(self._wheel_event)
         self._dims_slider.valueChanged.connect(self._slider_changed)
 
         self.addWidget(self._roi_col)
@@ -621,6 +622,27 @@ class QImageViewBase(QtW.QSplitter):
             with_params={"selections": indices},
             desc=f"{nrois} ROI{_s}",
         )
+
+    def _wheel_event(self, dy):
+        ui = current_instance()
+
+        for ith, sl in enumerate(self._dims_slider._sliders):
+            if ui.keys.contains(f"{ith + 1}"):
+                sl.increment_value(1 if dy > 0 else -1)
+                axes = self._dims_slider.to_dim_axes()
+                values = self._dims_slider.value()
+                txt = "\n".join(f"{a.name} = {v}" for a, v in zip(axes, values))
+                show_tooltip(txt, duration=0.4, behavior="until_move")
+                break
+        else:
+            # zoom in/out
+            factor = 1.1
+            if dy > 0:
+                zoom_factor = factor
+            else:
+                zoom_factor = 1 / factor
+            self._img_view.scale_and_update_handles(zoom_factor)
+            self._img_view._inform_scale()
 
 
 _COMMAND_ID = "builtins:select-image-rois"

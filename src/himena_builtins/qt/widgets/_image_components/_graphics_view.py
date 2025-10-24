@@ -134,6 +134,7 @@ class QImageGraphicsView(QBaseGraphicsView):
     """Emitted when a i-th ROI *in this slice* is removed from the view."""
     roi_visibility_changed = QtCore.Signal(bool)
     current_roi_updated = QtCore.Signal()
+    wheel_moved = QtCore.Signal(int)
     """Emitted when the current ROI is added, removed or edited."""
     mode_changed = QtCore.Signal(MouseMode)
     hovered = QtCore.Signal(QtCore.QPointF)
@@ -362,14 +363,8 @@ class QImageGraphicsView(QBaseGraphicsView):
         self._wheel_event(dy)
         return None  # NOTE: don't call super().wheelEvent(event)
 
-    def _wheel_event(self, dy: int):
-        factor = 1.1
-        if dy > 0:
-            zoom_factor = factor
-        else:
-            zoom_factor = 1 / factor
-        self.scale_and_update_handles(zoom_factor)
-        self._inform_scale()
+    def _wheel_event(self, dy):
+        return self.wheel_moved.emit(dy)
 
     def scale_and_update_handles(self, factor: float):
         """Scale the view and update the selection handle sizes."""
