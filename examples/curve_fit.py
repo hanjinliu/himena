@@ -2,7 +2,7 @@ from functools import partial
 import inspect
 import numpy as np
 from scipy import optimize
-from himena import new_window, StandardType, WidgetDataModel, Parametric
+from himena import new_window, StandardType, WidgetDataModel, Parametric, MainWindow
 from himena.plugins import register_function, configure_gui
 
 # A "Curve fit ..." command will be added to the "Plugins" menu.
@@ -52,8 +52,11 @@ def make_sample_data() -> WidgetDataModel:
         title="Sample data"
     )
 
-if __name__ == "__main__":
-    ui = new_window()
+def main(ui: MainWindow):
     ui.add_data_model(make_sample_data())
     ui.add_object(exponential_decay_model, type=StandardType.FUNCTION, title="exp func")
+
+if __name__ == "__main__":
+    ui = new_window()
+    main(ui)
     ui.show(run=True)

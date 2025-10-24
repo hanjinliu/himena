@@ -136,6 +136,9 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
     def _send_file(self, src: Path, dst_remote: str, is_dir: bool = False):
         raise NotImplementedError
 
+    def _make_get_type_args(self, path: str) -> list[str]:
+        raise NotImplementedError
+
     #############################################
     #############################################
 

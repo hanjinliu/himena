@@ -96,6 +96,11 @@ def test_io_commands(himena_ui: MainWindow, tmpdir, sample_dir: Path):
         himena_ui.exec_action("save-as")
         assert save_path.exists()
 
+    # saving no extension
+    with file_dialog_response(himena_ui, Path(tmpdir) / "noext") as save_path:
+        himena_ui.exec_action("save-as")
+        assert save_path.exists()
+
     # session
     with file_dialog_response(himena_ui, Path(tmpdir) / "a.session.zip") as session_path:
         himena_ui.exec_action("save-session", with_params={"save_path": session_path})

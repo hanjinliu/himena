@@ -41,6 +41,8 @@ def read_text(file_path: Path) -> WidgetDataModel:
 
 @read_text.define_matcher
 def _(file_path: Path) -> str | None:
+    if file_path.is_dir():
+        return None
     suffix = file_path.suffix.rstrip("~")
     if suffix == ".csv":
         return StandardType.TABLE

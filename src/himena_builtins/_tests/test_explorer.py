@@ -59,6 +59,7 @@ def test_ssh_widget(qtbot: QtBot, himena_ui, tmpdir):
     with file_dialog_response(himena_ui, tmpdir):
         widget._file_list_widget._download_items([])
     widget._file_list_widget._download_items([], download_dir=tmpdir)
+    widget._make_get_type_args("path/to/file")
 
 class QTestRemoteExplorerWidget(QBaseRemoteExplorerWidget):
     def _make_reader_method(self, path: Path, is_dir: bool) -> LocalReaderMethod:
