@@ -16,9 +16,9 @@ BasicImageFileTypes = frozenset(
 )  # fmt: skip
 ConventionalTextFileNames = frozenset(
     ["LICENSE", "Makefile", "dockerfile", ".gitignore", ".gitattributes", ".vimrc",
-     ".viminfo", ".pypirc", "MANIFEST.in", ".bashrc", ".bash_profile", ".zshrc",]
+     ".viminfo", ".pypirc", "MANIFEST.in", ".bashrc", ".bash_profile", ".zshrc",
+     "config", "known_hosts"]
 )  # fmt: skip
-
 ExcelFileTypes = frozenset(
     [".xls", ".xlsx", ".xlsm", ".xlsb", ".xltx", ".xltm", ".xlam"]
 )  # fmt: skip
