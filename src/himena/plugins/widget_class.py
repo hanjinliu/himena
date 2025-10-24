@@ -1,5 +1,4 @@
-from __future__ import annotations
-
+from functools import wraps
 from types import MappingProxyType
 from typing import Callable, overload, TypeVar, TYPE_CHECKING
 import warnings
@@ -18,6 +17,7 @@ if TYPE_CHECKING:
 
 _T = TypeVar("_T")
 _WIDGET_ID_TO_WIDGET_CLASS: dict[str, type] = {}
+_TO_ASSIGN = ("__module__", "__name__", "__qualname__", "__doc__", "__type_params__")
 
 
 def get_widget_class(id: str) -> type | None:
@@ -29,7 +29,7 @@ def register_widget_class(
     type_: str,
     widget_class: _T,
     priority: int = 100,
-    plugin_configs: PluginConfigType | None = None,
+    plugin_configs: "PluginConfigType | None" = None,
 ) -> _T: ...
 
 
@@ -38,7 +38,7 @@ def register_widget_class(
     type_: str,
     widget_class: None,
     priority: int = 100,
-    plugin_configs: PluginConfigType | None = None,
+    plugin_configs: "PluginConfigType | None" = None,
 ) -> Callable[[_T], _T]: ...
 
 
@@ -168,14 +168,21 @@ class OpenDataInFunction:
             self._plugin_id, save_behavior_override=NoNeedToSave()
         )
 
+    def menu_id(self) -> str:
+        return f"/open-in/{self._type}"
+
     def to_action(self) -> Action:
+        @wraps(self, assigned=_TO_ASSIGN)
+        def self_func(model: WidgetDataModel) -> WidgetDataModel:
+            return self(model)
+
         return Action(
             id=f"open-in:{self._plugin_id}:{self._type}",
             title=self._display_name,
             tooltip=f"Open this data in {self._display_name}",
-            callback=self,
+            callback=self_func,
             enablement=self._enablement,
-            menus=[{"id": f"/open-in/{self._type}", "group": "open-in"}],
+            menus=[{"id": self.menu_id(), "group": "open-in"}],
         )
 
 
@@ -187,21 +194,23 @@ class PreviewDataInFunction:
         self._plugin_id = get_widget_class_id(widget_class)
         self._type = type_
 
-    def __call__(self, win: SubWindow, ui: MainWindow):
+    def __call__(self, win: "SubWindow", ui: "MainWindow"):
         model = win.to_model().with_open_plugin(self._plugin_id)
         previewer = ui.add_data_model(model)
         previewer._switch_to_file_watch_mode()
-        return None
 
     def menu_id(self) -> str:
         return f"/model_menu:{self._type}/preview-in"
 
     def to_action(self) -> Action:
-        tooltip = f"Preview this data in {self._display_name}"
+        @wraps(self, assigned=_TO_ASSIGN)
+        def self_func(win: "SubWindow", ui: "MainWindow"):
+            return self(win, ui)
+
         return Action(
             id=f"preview-in:{self._plugin_id}:{self._type}",
             title=self._display_name,
-            tooltip=tooltip,
-            callback=self,
+            tooltip=f"Preview this data in {self._display_name}",
+            callback=self_func,
             menus=[{"id": self.menu_id(), "group": "open-in"}],
         )
