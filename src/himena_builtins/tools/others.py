@@ -8,7 +8,7 @@ import warnings
 from datetime import datetime
 import numpy as np
 from himena.data_wrappers._dataframe import wrap_dataframe
-from himena._descriptors import NoNeedToSave
+from himena._descriptors import NoNeedToSave, SaveToPath
 from himena.plugins import (
     register_function,
     configure_gui,
@@ -20,7 +20,7 @@ from himena.types import Parametric, WidgetDataModel
 from himena.consts import StandardType, MonospaceFontFamily, MenuId
 from himena.utils.collections import OrderedSet
 from himena.widgets import SubWindow, MainWindow, ParametricWindow
-from himena.workflow import Workflow, as_function, PathReaderMethod
+from himena.workflow import Workflow, as_function, PathReaderMethod, LocalReaderMethod
 from himena import AppContext as ctx
 from himena._utils import get_display_name, get_widget_class_id, unwrap_lazy_model
 from himena_builtins._io import default_text_reader
@@ -39,24 +39,25 @@ def open_as_text_anyway(ui: MainWindow, win: SubWindow) -> WidgetDataModel[str]:
     model = win.to_model()
     if model.type != StandardType.READER_NOT_FOUND:
         raise ValueError(f"Invalid model type: {model.type}")
-    if isinstance(reader_meth := model.workflow.last(), PathReaderMethod):
-        if not isinstance(reader_meth.path, Path):
-            raise ValueError("Cannot open multiple files as text data.")
-        with reader_meth.run_context() as dst_path:
-            assert isinstance(dst_path, Path)
-            text = default_text_reader(dst_path).value
-            ext_default = reader_meth.path.suffix
-    elif isinstance(src := model.source, Path):
-        text = src.read_text()
-        ext_default = src.suffix
-    else:
+    if not isinstance(
+        reader_meth := model.workflow.last(), (LocalReaderMethod, PathReaderMethod)
+    ):
         raise ValueError(
             "Model has multiple or no source paths. Cannot open as a text data."
         )
+    if not isinstance(reader_meth.path, Path):
+        raise ValueError("Cannot open multiple files as text data.")
+    with reader_meth.run_context() as dst_path:
+        assert isinstance(dst_path, Path)
+        text = default_text_reader(dst_path).value
+        ext_default = reader_meth.path.suffix
     out = model.with_value(
         text,
         type=StandardType.TEXT,
-        save_behavior_override=NoNeedToSave(),
+        save_behavior_override=SaveToPath(
+            path=dst_path,
+            plugin="himena_builtins.io.read_as_text_anyway",
+        ),
     )
     out.extension_default = ext_default
     win._close_me(ui)

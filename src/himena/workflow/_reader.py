@@ -152,6 +152,13 @@ class LocalReaderMethod(ReaderMethod):
         # just for compatibility with PathReaderMethod
         return isinstance(self.path, Path) and self.path.is_dir()
 
+    @contextmanager
+    def run_context(
+        self, filenames: list[str] | None = None
+    ) -> Iterator[Path | list[Path]]:
+        assert filenames is None
+        yield self.path
+
     def to_str(self) -> str:
         """Return the local file path representation."""
         if isinstance(self.path, Path):
