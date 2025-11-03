@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from enum import Enum, auto
 from io import StringIO
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Iterable, Literal, Mapping
 from dataclasses import dataclass
 import numpy as np
@@ -307,6 +308,13 @@ class QSpreadsheet(QTableBase):
             self.setModel(QStringArrayModel(table, self))
         else:
             self.model().set_array(table)
+
+        # if the model has a source, set the relative path checker
+        if isinstance(model.source, Path):
+            self.set_relative_path_checker(model.source.parent)
+        elif model.source is None:
+            self.set_relative_path_checker(None)
+
         sep: str | None = None
         if isinstance(meta := model.metadata, TableMeta):
             if meta.separator is not None:
@@ -338,7 +346,6 @@ class QSpreadsheet(QTableBase):
         self._model_type = model.type
         if ext := model.extension_default:
             self._extension_default = ext
-        return None
 
     @validate_protocol
     def to_model(self) -> WidgetDataModel[np.ndarray]:

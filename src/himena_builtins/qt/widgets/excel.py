@@ -1,4 +1,5 @@
 from __future__ import annotations
+from pathlib import Path
 
 from qtpy import QtWidgets as QtW, QtCore
 
@@ -36,6 +37,7 @@ class QExcelEdit(QDictOfWidgetEdit):
         self._ui = ui
         self._model_type_component = StandardType.TABLE
         self._model_type = StandardType.EXCEL
+        self._model_source_path: Path | None = None
         self._control = QExcelTableStackControl()
         self._extension_default = ".xlsx"
 
@@ -43,7 +45,16 @@ class QExcelEdit(QDictOfWidgetEdit):
         table = QSpreadsheet(self._ui)
         table.update_model(WidgetDataModel(value=None, type=StandardType.TABLE))
         table.setHeaderFormat(QSpreadsheet.HeaderFormat.Alphabetic)
+        table.set_relative_path_checker(self._model_source_path)
         return table
+
+    @validate_protocol
+    def update_model(self, model: WidgetDataModel) -> None:
+        super().update_model(model)
+
+        # if the model has a source, set the relative path checker
+        if isinstance(model.source, Path) or model.source is None:
+            self._model_source_path = model.source
 
     @validate_protocol
     def control_widget(self) -> QExcelTableStackControl:
@@ -92,7 +103,6 @@ class QExcelTableStackControl(QtW.QWidget):
         self.update_for_current_index(
             table._selection_model.current_index, table._selection_model.current_index
         )
-        return None
 
     @property
     def _current_table(self) -> QSpreadsheet | None:
@@ -107,7 +117,6 @@ class QExcelTableStackControl(QtW.QWidget):
         if not isinstance(text, str):
             text = ""
         self._value_line_edit.setText(text)
-        return None
 
     def update_for_editing(self):
         qtable = self._current_table
@@ -118,7 +127,6 @@ class QExcelTableStackControl(QtW.QWidget):
         qindex = qtable.model().index(index.row, index.column)
         qtable.model().setData(qindex, text, QtCore.Qt.ItemDataRole.EditRole)
         qtable.setFocus()
-        return None
 
     def _make_insert_menu(self):
         menu = QtW.QMenu(self)
@@ -137,29 +145,23 @@ class QExcelTableStackControl(QtW.QWidget):
     def _insert_row_above(self):
         if qtable := self._current_table:
             qtable._insert_row_above()
-        return None
 
     def _insert_row_below(self):
         if qtable := self._current_table:
             qtable._insert_row_below()
-        return None
 
     def _insert_column_left(self):
         if qtable := self._current_table:
             qtable._insert_column_left()
-        return None
 
     def _insert_column_right(self):
         if qtable := self._current_table:
             qtable._insert_column_right()
-        return None
 
     def _remove_selected_rows(self):
         if qtable := self._current_table:
             qtable._remove_selected_rows()
-        return None
 
     def _remove_selected_columns(self):
         if qtable := self._current_table:
             qtable._remove_selected_columns()
-        return None
