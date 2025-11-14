@@ -201,9 +201,7 @@ def make_function_callback(
             )
             if out.update_inplace and contexts:
                 ui = current_instance()
-                input_window = ui._window_for_workflow_id(contexts[0].value)
-                input_window.update_model(out)
-                input_window._update_model_workflow(out.workflow)
+                ui._process_update_inplace(contexts, out)
                 return None
         elif is_parametric:
             ModelTrack(

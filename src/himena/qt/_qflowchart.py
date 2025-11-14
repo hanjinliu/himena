@@ -172,6 +172,7 @@ class QFlowChartNode(QtW.QGraphicsRectItem):
 
     def mouseReleaseEvent(self, event: QtW.QGraphicsSceneMouseEvent):
         """Handle mouse release events"""
+        super().mouseReleaseEvent(event)
         if (
             self._last_press_pos - self.mapFromScene(event.pos())
         ).manhattanLength() < 4:
@@ -180,7 +181,6 @@ class QFlowChartNode(QtW.QGraphicsRectItem):
             elif event.button() == Qt.MouseButton.RightButton:
                 self.right_clicked.emit(self._item)
         self._last_press_pos = QtCore.QPointF()
-        return super().mouseReleaseEvent(event)
 
 
 class QFlowChartArrow(QtW.QGraphicsLineItem):

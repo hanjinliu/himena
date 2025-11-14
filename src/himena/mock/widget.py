@@ -3,6 +3,7 @@ from __future__ import annotations
 import inspect
 import weakref
 from himena.types import WidgetDataModel, WindowState, WindowRect
+from himena.workflow import Workflow
 
 
 class MockWidget:
@@ -87,13 +88,16 @@ class MockModelWrapper(MockWidget):
         self._model: WidgetDataModel | None = None
         self._editable = True
 
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}(model_type={self._model.type!r} editable={self._editable})"
+
     def update_model(self, model: WidgetDataModel) -> None:
         self._model = model
 
     def to_model(self) -> WidgetDataModel:
         if self._model is None:
             raise ValueError("Model not set")
-        return self._model.model_copy()
+        return self._model.model_copy(update={"workflow": Workflow()})
 
     def is_editable(self) -> bool:
         return self._editable

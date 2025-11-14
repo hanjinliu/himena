@@ -40,7 +40,7 @@ def as_function(wf: Workflow):
         @configure_gui(**options)
         def inner(**kwargs):
             wf_compute = wf.model_copy()
-            wf_out = wf_compute.model_copy()
+            wf_out = wf.model_copy()
             for k, v in kwargs.items():
                 step_id = key_to_id[k]
                 if isinstance(v, Path):
@@ -51,13 +51,12 @@ def as_function(wf: Workflow):
                     wf_compute = wf_compute.replace(
                         step_id, RuntimeInputBound(id=step_id, bound_value=v)
                     )
-                    wf_out = wf_out.replace(step_id, v.workflow)
+                    wf_out = wf_out.replace(step_id, v.workflow.model_copy())
                 else:
                     raise NotImplementedError(f"Unsupported type: {type(v)}")
             out = wf_compute.compute(process_output=True)
             if isinstance(out, WidgetDataModel):
                 ui.current_window._update_model_workflow(wf_out)
-            return None
 
         return inner
 
