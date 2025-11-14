@@ -68,3 +68,10 @@ class WorkflowStep(BaseModel):
         from himena.workflow import Workflow
 
         return Workflow(steps=[self])
+
+    def with_new_id(self, old_id: uuid.UUID, new_id: uuid.UUID) -> "WorkflowStep":
+        if self.id == old_id:
+            update = {"id": new_id}
+        else:
+            update = None
+        return self.model_copy(update=update)

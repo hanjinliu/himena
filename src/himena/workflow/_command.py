@@ -128,6 +128,16 @@ class CommandExecution(WorkflowStep):
             elif isinstance(param, ListOfModelParameter):
                 yield from param.value
 
+    def with_new_id(self, old_id: uuid.UUID, new_id: uuid.UUID) -> "WorkflowStep":
+        update = {
+            "contexts": _replace_params(self.contexts, old_id, new_id),
+        }
+        if self.parameters is not None:
+            update["parameters"] = _replace_params(self.parameters, old_id, new_id)
+        if self.id == old_id:
+            update["id"] = new_id
+        return self.model_copy(update=update)
+
     def _get_model_impl(self, wf: "Workflow") -> "WidgetDataModel":
         from himena.types import WidgetDataModel
         from himena.widgets import current_instance
@@ -201,3 +211,28 @@ class UserModification(WorkflowStep):
 
     def iter_parents(self) -> Iterator[uuid.UUID]:
         yield self.original
+
+    def with_new_id(self, old_id: uuid.UUID, new_id: uuid.UUID) -> "WorkflowStep":
+        update = {}
+        if self.original == old_id:
+            update["original"] = new_id
+        if self.id == old_id:
+            update["id"] = new_id
+        return self.model_copy(update=update)
+
+
+def _replace_params(
+    params: list[CommandParameterType],
+    old_id: uuid.UUID,
+    new_id: uuid.UUID,
+) -> list[CommandParameterType]:
+    params_new = []
+    for p in params:
+        if isinstance(p, (ModelParameter, WindowParameter)) and p.value == old_id:
+            params_new.append(p.model_copy(update={"value": new_id}))
+        elif isinstance(p, ListOfModelParameter):
+            new_values = [new_id if v == old_id else v for v in p.value]
+            params_new.append(p.model_copy(update={"value": new_values}))
+        else:
+            params_new.append(p)
+    return params_new

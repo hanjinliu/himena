@@ -36,6 +36,8 @@ class WorkflowNodeItem(BaseNodeItem):
         ):
             # parametric window
             return Color("#FFA2A2")
+        if isinstance(self._step, _wf.UserInput):
+            return Color("#F082F0")
         return Color("#A2A3F0")
 
     def tooltip(self) -> str:

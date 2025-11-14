@@ -126,7 +126,6 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
             path=Path(path), ask_overwrite=ask_overwrite, plugin=plugin
         )
         self._set_ask_save_before_close(False)
-        return None
 
     def _update_model_workflow(
         self,
@@ -145,7 +144,6 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
                 self,
                 self._widget_workflow,
             )
-        return None
 
     @property
     def supports_update_model(self) -> bool:

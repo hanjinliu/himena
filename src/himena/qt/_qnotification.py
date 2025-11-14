@@ -239,7 +239,6 @@ class QNotificationWidget(_QOverlayBase):
     def resizeEvent(self, a0):
         super().resizeEvent(a0)
         self._align_close_btn()
-        return None
 
 
 class QJobStack(_QOverlayBase):

@@ -82,12 +82,22 @@ def test_workflow_parametric(make_himena_ui: Callable[..., MainWindow], sample_d
         "y": ((0, 5), (1, 2)),
     })
     model = himena_ui.current_model
-    wf_old = model.workflow
+    wf_old = model.workflow.model_copy()
     assert len(wf_old.steps) > 2
     wf = wf_old.replace_with_input(wf_old.steps[0].id)
     assert len(wf.steps) == len(wf_old.steps)
     inner_fn = as_function(wf)(himena_ui)
     inner_fn(arg0=win_first.to_model())
+    assert len(himena_ui.current_model.workflow.steps) == len(wf_old.steps)
+
+    himena_ui.exec_action("builtins:table:change-separator", with_params={"separator": ";"}, window_context=win_first)
+    inner_fn(arg0=himena_ui.current_model)
+    steps = himena_ui.current_model.workflow.steps
+    assert len(steps) == len(wf_old.steps) + 1
+    assert isinstance(steps[0], LocalReaderMethod)
+    assert isinstance(steps[1], CommandExecution) and steps[1].command_id == "builtins:table:change-separator"
+    assert isinstance(steps[2], CommandExecution) and steps[2].command_id == "builtins:table-to-dataframe"
+    assert isinstance(steps[3], CommandExecution) and steps[3].command_id == "builtins:plot:line"
 
 def test_reader_methods():
     meth = RemoteReaderMethod.from_str("USER@HOST:/path/to/file")

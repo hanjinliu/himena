@@ -56,7 +56,7 @@ def change_separator(model: WidgetDataModel) -> Parametric:
         buf = _arr_to_buf(arr_str, sep)
         arr_new = np.loadtxt(
             buf,
-            delimiter=separator.encode().decode("unicode_escape"),
+            delimiter=sep.encode().decode("unicode_escape"),
             dtype=np.dtypes.StringDType(),
         )
         meta = _cast_meta(model.metadata)

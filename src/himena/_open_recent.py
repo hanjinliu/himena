@@ -84,7 +84,6 @@ class RecentFileManager:
         _LOGGER.debug("Recent files updated: %r", [p for p, _ in file_args[:3]])
         self._app.menus.menus_changed.emit({self._menu_id})
         self.__class__._MENU_UPDATED.add(self._app.name)
-        return None
 
     def num_recent_in_menu(self) -> int:
         cfg = get_config(GlobalConfig) or GlobalConfig()
@@ -163,7 +162,6 @@ class RecentFileManager:
         from superqt.utils import ensure_main_thread
 
         ensure_main_thread(self.update_menu)()
-        return None
 
     def action_for_file(
         self,
