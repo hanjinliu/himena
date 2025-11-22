@@ -9,6 +9,7 @@ from superqt.utils import qthrottled
 
 from himena.consts import DefaultFontFamily
 from himena.qt import qsignal_blocker, ndarray_to_qimage, QColoredToolButton
+from himena.qt._qlineedit import QDoubleLineEdit
 from himena_builtins._consts import ICON_PATH
 from himena_builtins.qt.widgets._image_components import QHistogramView
 from himena.utils.enum import StrEnum
@@ -103,6 +104,8 @@ class QImageViewControl(QImageViewControlBase):
             self._exec_autocontrast_menu
         )
         self._auto_cont_live = False
+        self._auto_cont_quantile_min = 0.0
+        self._auto_cont_quantile_max = 1.0
 
         self._histogram = QHistogramView()
         self._histogram.setFixedWidth(120)
@@ -231,8 +234,24 @@ class QImageViewControl(QImageViewControlBase):
             return
         min_new, max_new = float("inf"), -float("inf")
         for item in self._histogram._hist_items:
-            min_new = min(item._edges[0], min_new)
-            max_new = max(item._edges[-1], max_new)
+            cum_value = np.cumsum(item._hist_values)
+            cum_value = cum_value / cum_value[-1]
+            qmin = max(self._auto_cont_quantile_min, 0.0)
+            qmax = min(self._auto_cont_quantile_max, 1.0)
+            imin = np.argmax(qmin <= cum_value)
+            imax = np.argmax(qmax <= cum_value)
+            min_new = min(
+                item._edges[imin]
+                + (item._edges[imin + 1] - item._edges[imin])
+                * (qmin - cum_value[imin]),
+                min_new,
+            )
+            max_new = max(
+                item._edges[imax]
+                + (item._edges[imax + 1] - item._edges[imax])
+                * (qmax - cum_value[imax]),
+                max_new,
+            )
         if np.isinf(min_new) or np.isinf(max_new):
             return
 
@@ -318,6 +337,40 @@ class QAutoContrastMenu(QtW.QMenu):
         action.setCheckable(True)
         action.setChecked(parent._auto_cont_live)
 
+        ac_min_widget = QDoubleLineEdit(
+            format(parent._auto_cont_quantile_min * 100, ".2f")
+        )
+        ac_min_widget.setMinimum(0.0)
+        ac_min_widget.setMaximum(100.0)
+        ac_min = QtW.QWidgetAction(self)
+        ac_min.setDefaultWidget(_labeled("Min %", ac_min_widget))
+        ac_max_widget = QDoubleLineEdit(
+            format(parent._auto_cont_quantile_max * 100, ".2f")
+        )
+        ac_max = QtW.QWidgetAction(self)
+        ac_max_widget.setMinimum(0.0)
+        ac_max_widget.setMaximum(100.0)
+        ac_max.setDefaultWidget(_labeled("Max %", ac_max_widget))
+
+        @ac_min_widget.valueChanged.connect
+        def _on_min_changed(txt: str):
+            val = float(txt) / 100
+            parent._auto_cont_quantile_min = val
+            if val > parent._auto_cont_quantile_max:
+                parent._auto_cont_quantile_max = val
+                ac_max_widget.setText(ac_min_widget.text())
+
+        @ac_max_widget.valueChanged.connect
+        def _on_max_changed(txt: str):
+            val = float(txt) / 100
+            parent._auto_cont_quantile_max = val
+            if val < parent._auto_cont_quantile_min:
+                parent._auto_cont_quantile_min = val
+                ac_min_widget.setText(ac_max_widget.text())
+
+        self.addAction(ac_min)
+        self.addAction(ac_max)
+
     def _toggle_auto_contrast(self):
         live = self._control._auto_cont_live = not self._control._auto_cont_live
         self._control._auto_cont_btn.setCheckable(live)
@@ -400,3 +453,14 @@ class QChannelToggleSwitches(QtW.QScrollArea):
 
     def has_channels(self) -> bool:
         return len(self._toggle_switches) > 0
+
+
+def _labeled(label: str, widget: QtW.QWidget) -> QtW.QWidget:
+    container = QtW.QWidget()
+    layout = QtW.QHBoxLayout(container)
+    layout.setContentsMargins(0, 0, 0, 0)
+    lbl = QtW.QLabel(label)
+    lbl.setFont(QtGui.QFont(DefaultFontFamily, 8))
+    layout.addWidget(lbl)
+    layout.addWidget(widget)
+    return container

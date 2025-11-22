@@ -396,7 +396,7 @@ class QHistogramItem(QtW.QGraphicsPathItem):
             arr = arr.clip(_min, _max)
             if arr.dtype.kind in "ui":
                 _nbin = int(_max - _min) // max(int(np.ceil((_max - _min) / _nbin)), 1)
-            normed = ((arr - _min) / (_max - _min) * _nbin).astype(np.uint8)
+            normed = ((arr - _min) / (_max - _min) * (_nbin - 1)).astype(np.uint8)
             hist = np.bincount(normed.ravel(), minlength=_nbin)
             edges = np.linspace(_min, _max, _nbin + 1)
         else:
