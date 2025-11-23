@@ -54,6 +54,8 @@ if TYPE_CHECKING:
     from app_model.types import KeyBindingRule
     from app_model.expressions import BoolOp
     from himena.widgets._widget_list import PathOrPaths
+    from himena.workflow import ModelParameter, WindowParameter
+    from IPython.lib.pretty import RepresentationPrinter
 
 _W = TypeVar("_W")  # backend widget type
 _T = TypeVar("_T")  # internal data type
@@ -109,6 +111,24 @@ class MainWindow(Generic[_W]):
         self._object_type_map = ObjectTypeMap()
         self.theme = theme
         register_defaults(self._object_type_map)
+
+    def __repr__(self) -> str:
+        return (
+            f"{type(self).__name__}(tabs={self.tabs}, dock_widgets={self.dock_widgets})"
+        )
+
+    def _repr_pretty_(self, p: RepresentationPrinter, cycle: bool):
+        if cycle:
+            p.text(f"{type(self).__name__}(...)")
+        else:
+            p.text(f"{type(self).__name__}(\n")
+            p.text("  tabs=")
+            p.pretty(self.tabs)
+            p.text(",\n")
+            p.text("  dock_widgets=")
+            p.pretty(self.dock_widgets)
+            p.text(",\n")
+            p.text(")")
 
     @property
     def events(self) -> MainWindowEvents[_W]:
@@ -805,6 +825,14 @@ class MainWindow(Generic[_W]):
                         )
                 else:
                     param_widget.update_params(with_defaults)
+        if (
+            isinstance(result, WidgetDataModel)
+            and result.update_inplace
+            and isinstance(window_context, SubWindow)
+        ):
+            # Need to update the current window if this method is called with a wrong
+            # window focus.
+            self.current_window = window_context
         return result
 
     @overload
@@ -1138,6 +1166,16 @@ class MainWindow(Generic[_W]):
             if getattr(action.callback, NO_RECORDING_FIELD, False):
                 return None
             self._history_command.add(id)
+
+    def _process_update_inplace(
+        self,
+        contexts: list[ModelParameter | WindowParameter],
+        model: WidgetDataModel,
+    ):
+        input_window = self._window_for_workflow_id(contexts[0].value)
+        input_window.update_model(model)
+        input_window._update_model_workflow(model.workflow)
+        self.current_window = input_window
 
 
 def _short_repr(obj: Any) -> str:

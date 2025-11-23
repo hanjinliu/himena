@@ -44,6 +44,7 @@ from himena.widgets._wrapper import (
 if TYPE_CHECKING:
     from himena.widgets import BackendMainWindow
     from concurrent.futures import Future
+    from IPython.lib.pretty import RepresentationPrinter
 
     PathOrPaths = str | Path | list[str | Path]
 
@@ -59,16 +60,19 @@ class SemiMutableSequence(Sequence[_T]):
     def __repr__(self) -> str:
         return f"{type(self).__name__}({list(self)})"
 
-    def _repr_pretty_(self, p, cycle):
-        if cycle:
+    def _repr_pretty_(self, p: RepresentationPrinter, cycle: bool):
+        if len(self) == 0:
+            p.text(f"{type(self).__name__}([])")
+        elif cycle:
             p.text(f"{type(self).__name__}(...)")
         else:
             p.text(f"{type(self).__name__}([\n")
+            num = len(p.stack)
             for item in self:
-                p.text("  ")
+                p.text("  " * num)
                 p.pretty(item)
                 p.text(",\n")
-            p.text("])")
+            p.text("  " * (num - 1) + "])")
 
     def clear(self):
         """Clear all the contents of the list."""

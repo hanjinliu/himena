@@ -17,7 +17,7 @@ from himena.standards import roi, model_meta
 from himena.qt._utils import drag_command, qsignal_blocker
 from himena.types import DropResult, Parametric, Size, WidgetDataModel
 from himena.plugins import validate_protocol, register_function
-from himena.widgets import set_status_tip, current_instance
+from himena.widgets import set_status_tip, current_instance, show_tooltip
 from himena.data_wrappers import ArrayWrapper, wrap_array
 from himena_builtins.qt.widgets._image_components import (
     QImageGraphicsView,
@@ -29,6 +29,7 @@ from himena_builtins.qt.widgets._image_components import (
     QRoiCollection,
     from_standard_roi,
     MouseMode,
+    ChannelMode,
 )
 from himena_builtins.qt.widgets._dim_sliders import QDimsSlider
 from himena_builtins.qt.widgets._splitter import QSplitterHandle
@@ -77,6 +78,7 @@ class QImageViewBase(QtW.QSplitter):
         self._img_view.roi_added.connect(self._on_roi_added)
         self._img_view.roi_removed.connect(self._on_roi_removed)
         self._img_view.current_roi_updated.connect(self._emit_current_roi)
+        self._img_view.wheel_moved.connect(self._wheel_event)
         self._dims_slider.valueChanged.connect(self._slider_changed)
 
         self.addWidget(self._roi_col)
@@ -101,6 +103,9 @@ class QImageViewBase(QtW.QSplitter):
 
     def createHandle(self):
         return QSplitterHandle(self)
+
+    def sizeHint(self) -> QtCore.QSize:
+        return QtCore.QSize(400, 400)
 
     @property
     def dims_slider(self) -> QDimsSlider:
@@ -407,7 +412,8 @@ class QImageViewBase(QtW.QSplitter):
 
     @validate_protocol
     def size_hint(self) -> tuple[int, int]:
-        return 400, 400
+        hint = self.sizeHint()
+        return hint.width(), hint.height()
 
     @validate_protocol
     def is_editable(self) -> bool:
@@ -590,7 +596,23 @@ class QImageViewBase(QtW.QSplitter):
         view = self._img_view
         if _mods & Qt.KeyboardModifier.ControlModifier:
             if not event.isAutoRepeat():
-                view.standard_ctrl_key_press(_key)
+                if (
+                    event.text().isdigit()
+                    and isinstance(self._control, QImageViewControl)
+                    and self._control._chn_vis.has_channels()
+                    and self._control._chn_mode_combo.currentText() == ChannelMode.COMP
+                ):
+                    # toggle channel visibility
+                    _visible = self._control._chn_vis.check_states()
+                    ith = int(event.text()) - 1
+                    if 0 <= ith < len(_visible):
+                        _visible[ith] = not _visible[ith]
+                    elif ith == -1:
+                        _visible = [True] * len(_visible)
+                    self._control._chn_vis.set_check_states(_visible)
+                    self._update_image_visibility(_visible)
+                else:
+                    view.standard_ctrl_key_press(_key)
         else:
             if _key in _INCREMENT_MAP:
                 ui = current_instance()
@@ -621,6 +643,27 @@ class QImageViewBase(QtW.QSplitter):
             with_params={"selections": indices},
             desc=f"{nrois} ROI{_s}",
         )
+
+    def _wheel_event(self, dy):
+        ui = current_instance()
+
+        for ith, sl in enumerate(self._dims_slider._sliders):
+            if ui.keys.contains(f"{ith + 1}"):
+                sl.increment_value(1 if dy > 0 else -1)
+                axes = self._dims_slider.to_dim_axes()
+                values = self._dims_slider.value()
+                txt = "\n".join(f"{a.name} = {v}" for a, v in zip(axes, values))
+                show_tooltip(txt, duration=0.4, behavior="until_move")
+                break
+        else:
+            # zoom in/out
+            factor = 1.1
+            if dy > 0:
+                zoom_factor = factor
+            else:
+                zoom_factor = 1 / factor
+            self._img_view.scale_and_update_handles(zoom_factor)
+            self._img_view._inform_scale()
 
 
 _COMMAND_ID = "builtins:select-image-rois"
@@ -724,6 +767,7 @@ class QImageView(QImageViewBase):
         else:
             color = QtGui.QColor(255, 255, 255)
         self._roi_buttons._update_colors(color)
+        self._control._auto_cont_btn.update_theme(theme)
 
     @validate_protocol
     def update_configs(self, cfg: ImageViewConfigs):
@@ -831,6 +875,10 @@ class QImageView(QImageViewBase):
             )
             self._update_rois()
             self._img_view.set_image_blending([im.visible for im in imgs])
+
+            # if in the live auto-contrast mode, update contrast limits
+            if self._control._auto_cont_live:
+                self._control._auto_contrast()
         self.images_changed.emit(images)
 
     def _clim_for_ith_channel(self, img_slices: list[ImageTuple], ith: int):

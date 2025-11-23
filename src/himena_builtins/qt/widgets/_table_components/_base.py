@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Iterable, Iterator, Literal
 import weakref
 from qtpy import QtWidgets as QtW
@@ -105,6 +106,19 @@ class QTableBase(QtW.QTableView):
         self._current_color = QtGui.QColor("#A7A7A7")
         self._mouse_track = MouseTrack()
         self._modified_override: bool | None = None
+        self._custom_path_checker: Callable[[str], bool] | None = None
+
+    def set_relative_path_checker(self, source: Path | None) -> None:
+        """Set a custom path checker for relative paths."""
+        if source is None:
+            _checker = None
+        else:
+
+            def _checker(text: str) -> bool:
+                path_to_check = source / text
+                return path_to_check.exists()
+
+        self._custom_path_checker = _checker
 
     @property
     def selection_model(self) -> SelectionModel:
@@ -372,7 +386,10 @@ class QTableBase(QtW.QTableView):
                 and (e.modifiers() & Qt.KeyboardModifier.ControlModifier)
                 and (text := self._text_for_pos(e.pos()))
             ):
+                # resolve link
                 if is_absolute_file_path_string(text):
+                    self._ui.read_file(text)
+                elif self._custom_path_checker and self._custom_path_checker(text):
                     self._ui.read_file(text)
                 elif is_url_string(text):
                     QtGui.QDesktopServices.openUrl(QtCore.QUrl(text))  # open URL

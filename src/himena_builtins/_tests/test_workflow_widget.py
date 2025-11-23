@@ -52,6 +52,8 @@ def test_edit_workflow_view(qtbot: QtBot, sample_dir: Path):
         assert item0 is not None
         widget._toggle_to_be_added(item0)
         widget._replace_with_file_reader(item0, "file")
+        item0 = widget.view.item(widget.view.list_ids()[0])
+        assert item0 is not None
         widget._replace_with_file_reader(item0, "model")
 
 def test_find_window(himena_ui: MainWindow):

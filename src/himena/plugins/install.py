@@ -84,6 +84,7 @@ def _install_one(name: str, show_import_time: bool) -> PluginInstallResult | Non
                     f"Error installing plugin {name}, traceback follows:\n{msg}"
                 )
                 _exc = e
+                return None
             mod_namespace = vars(mod)
     else:
         raise TypeError(f"Invalid plugin type: {type(name)}")

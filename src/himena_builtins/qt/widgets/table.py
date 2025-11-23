@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from enum import Enum, auto
 from io import StringIO
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Iterable, Literal, Mapping
 from dataclasses import dataclass
 import numpy as np
@@ -16,7 +17,7 @@ from himena.qt._utils import get_main_window
 from himena.style import Theme
 from himena.types import WidgetDataModel
 from himena.standards.model_meta import TableMeta
-from himena.qt._qsvg import QColoredSVGIcon
+from himena.qt import QColoredToolButton
 from himena.plugins import validate_protocol, config_field
 from himena_builtins._consts import ICON_PATH
 from himena_builtins.qt.widgets._table_components import (
@@ -307,6 +308,13 @@ class QSpreadsheet(QTableBase):
             self.setModel(QStringArrayModel(table, self))
         else:
             self.model().set_array(table)
+
+        # if the model has a source, set the relative path checker
+        if isinstance(model.source, Path):
+            self.set_relative_path_checker(model.source.parent)
+        elif model.source is None:
+            self.set_relative_path_checker(None)
+
         sep: str | None = None
         if isinstance(meta := model.metadata, TableMeta):
             if meta.separator is not None:
@@ -338,7 +346,6 @@ class QSpreadsheet(QTableBase):
         self._model_type = model.type
         if ext := model.extension_default:
             self._extension_default = ext
-        return None
 
     @validate_protocol
     def to_model(self) -> WidgetDataModel[np.ndarray]:
@@ -753,7 +760,7 @@ class QTableControl(QtW.QWidget):
             _tool_btn(table._remove_selected_rows, "row_remove"),
             _tool_btn(table._remove_selected_columns, "col_remove"),
         )
-        self._tool_buttons: list[QtW.QToolButton] = _btn_ins + _btn_rem
+        self._tool_buttons: list[QColoredToolButton] = _btn_ins + _btn_rem
         self._separator_label = QtW.QLabel()
         self._separator: str | None = None
 
@@ -774,10 +781,8 @@ class QTableControl(QtW.QWidget):
 
     def update_theme(self, theme: Theme):
         """Update the theme of the control."""
-        color = theme.foreground
         for btn in self._tool_buttons:
-            icon_path = btn.property("icon_path")
-            btn.setIcon(QColoredSVGIcon.fromfile(icon_path, color))
+            btn.update_theme(theme)
 
 
 def _sl(idx: int, axis: Literal[0, 1]) -> tuple:
@@ -787,14 +792,9 @@ def _sl(idx: int, axis: Literal[0, 1]) -> tuple:
         return slice(None), idx
 
 
-def _tool_btn(callback, icon: str) -> QtW.QToolButton:
+def _tool_btn(callback, icon: str) -> QColoredToolButton:
     """Create a tool button with the given icon and callback."""
-    btn = QtW.QToolButton()
-    icon_path = ICON_PATH / f"{icon}.svg"
-    btn.setProperty("icon_path", icon_path)
-    btn.setToolTip(callback.__doc__)
-    btn.clicked.connect(callback)
-    return btn
+    return QColoredToolButton(callback, ICON_PATH / f"{icon}.svg")
 
 
 class QToolButtonGroup(QtW.QGroupBox):

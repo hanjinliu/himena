@@ -1,4 +1,5 @@
 import warnings
+import time
 import numpy as np
 from numpy.testing import assert_equal
 from pathlib import Path
@@ -17,7 +18,7 @@ from himena.widgets import SubWindow
 from himena.qt import MainWindowQt
 from himena_builtins.qt.widgets.image import QImageView, QImageLabelView
 from himena_builtins.qt.widgets._image_components import _roi_items as _rois
-from himena_builtins.qt.widgets._image_components._control import ComplexMode
+from himena_builtins.qt.widgets._image_components._control import ComplexMode, QAutoContrastMenu
 from himena_builtins.tools.image import _make_roi_limits_getter, _bbox_list_getter
 from himena_builtins.qt.widgets._image_components._handles import RoiSelectionHandles
 
@@ -312,7 +313,8 @@ def test_image_view_copy_roi_from_window_to_window(himena_ui: MainWindow, qtbot:
         image_view_1._img_view.standard_ctrl_key_press(Qt.Key.Key_Down)
 
 
-def test_image_view_select_roi(qtbot: QtBot):
+def test_image_view_select_roi(make_himena_ui, qtbot: QtBot):
+    ui = make_himena_ui("mock")  # noqa: F841
     image_view = QImageView()
     image_view.resize(150, 150)
     image_view.show()
@@ -510,7 +512,12 @@ def test_constrast_hist(qtbot: QtBot):
     image_view = QImageView()
     image_view.show()
     with WidgetTester(image_view) as tester:
-        tester.update_model(value=np.zeros((100, 100), dtype=np.uint8))
+        xx, yy = np.meshgrid(np.linspace(-3, 3, 100), np.linspace(-3, 3, 100))
+        imgs = np.stack(
+            [np.sin(np.sqrt(xx**2 + yy**2) + i) + i / 5 for i in range(5)],
+            axis=0,
+        )
+        tester.update_model(value=imgs)
         qtbot.addWidget(image_view)
         control = image_view.control_widget()
         qtbot.addWidget(control)
@@ -521,6 +528,26 @@ def test_constrast_hist(qtbot: QtBot):
         control._histogram._set_hist_scale_func("log")
         control._histogram._img_to_clipboard()
         control._histogram._reset_view()
+
+        menu = QAutoContrastMenu(control)
+        image_view.dims_slider.setValue((1,))
+        assert control._histogram.clim() != (float(imgs[1].min()), float(imgs[1].max()))
+        menu._toggle_live_auto_contrast()
+        time.sleep(0.11)  # NOTE: callback is throttled
+        QApplication.processEvents()
+        assert control._histogram.clim() == (float(imgs[1].min()), float(imgs[1].max()))
+        image_view.dims_slider.setValue((2,))
+        time.sleep(0.11)  # NOTE: callback is throttled
+        QApplication.processEvents()
+        assert control._histogram.clim() == (float(imgs[2].min()), float(imgs[2].max()))
+        menu._max_edit.setText("50")
+        menu._min_edit.setText("60")
+        menu._max_edit.setText("40")
+        menu._min_edit.setText("0.1")
+        menu._max_edit.setText("99.9")
+        image_view.dims_slider.setValue((3,))
+        time.sleep(0.11)  # NOTE: callback is throttled
+        QApplication.processEvents()
 
 def test_complex_image(qtbot: QtBot):
     image_view = QImageView()
@@ -568,10 +595,11 @@ def test_image_view_current_roi_index(qtbot: QtBot):
 def _get_tester():
     return WidgetTester(QImageView())
 
-def test_dims_slider(himena_ui: MainWindowQt, qtbot: QtBot):
+def test_number_key_click_events(himena_ui: MainWindowQt, qtbot: QtBot):
     model = create_image_model(
         np.zeros((4, 4, 10, 10)),
-        axes=["t", "z", "y", "x"],
+        axes=["c", "z", "y", "x"],
+        channel_axis=0,
     )
     win = himena_ui.add_data_model(model)
     image_view: QImageView = win.widget
@@ -598,6 +626,20 @@ def test_dims_slider(himena_ui: MainWindowQt, qtbot: QtBot):
         qtbot.keyClick(image_view, Qt.Key.Key_Home)
         area._set_key_up(Qt.Key.Key_2)
         assert image_view._dims_slider._sliders[1]._slider.value() == 0
+
+        assert image_view._control._chn_vis.check_states() == [True, True, True, True]
+        qtbot.keyClick(image_view, Qt.Key.Key_1, modifier=_Ctrl)
+        assert image_view._control._chn_vis.check_states() == [False, True, True, True]
+        qtbot.keyClick(image_view, Qt.Key.Key_1, modifier=_Ctrl)
+        assert image_view._control._chn_vis.check_states() == [True, True, True, True]
+        qtbot.keyClick(image_view, Qt.Key.Key_3, modifier=_Ctrl)
+        assert image_view._control._chn_vis.check_states() == [True, True, False, True]
+        qtbot.keyClick(image_view, Qt.Key.Key_6, modifier=_Ctrl)
+        assert image_view._control._chn_vis.check_states() == [True, True, False, True]
+        qtbot.keyClick(image_view, Qt.Key.Key_0, modifier=_Ctrl)
+        assert image_view._control._chn_vis.check_states() == [True, True, True, True]
+        qtbot.keyClick(image_view, Qt.Key.Key_0, modifier=_Ctrl)
+        assert image_view._control._chn_vis.check_states() == [True, True, True, True]
 
 
 def test_crop_image(himena_ui: MainWindow, tmpdir):

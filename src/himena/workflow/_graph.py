@@ -202,11 +202,12 @@ class Workflow(BaseModel):
 
     def replace(
         self,
-        step: uuid.UUID,
+        step_id: uuid.UUID,
         new: "WorkflowStep | Workflow",
+        new_step_id: uuid.UUID | None = None,
     ) -> "Workflow":
         """Replace the step of the given ID with the new step."""
-        indices, index = self._get_ancestors(step, exclude_me=True)
+        indices, index = self._get_ancestors(step_id, exclude_me=True)
         new_steps = self.steps.copy()
         indices_to_remove = sorted(indices, reverse=True)
         for i in indices_to_remove:
@@ -214,17 +215,20 @@ class Workflow(BaseModel):
         index_shifted = index - len([i for i in indices_to_remove if i < index])
         if isinstance(new, WorkflowStep):
             new_steps[index_shifted] = new
-            new.id = step
+            new.id = step_id
         elif isinstance(new, Workflow):
             insert = new.steps.copy()
             if len(insert) == 0:
                 raise ValueError("Input workflow is empty.")
-            insert[-1] = insert[-1].model_copy(update={"id": step})
+            insert[-1] = insert[-1].model_copy(update={"id": step_id})
             new_steps = (
                 new_steps[:index_shifted] + insert + new_steps[index_shifted + 1 :]
             )
         else:
             raise TypeError(f"Expected a WorkflowStep or Workflow, got {type(new)}.")
+        if new_step_id is not None:
+            new_steps = [s.with_new_id(step_id, new_step_id) for s in new_steps]
+
         return Workflow(steps=new_steps)
 
     def replace_with_input(
@@ -234,7 +238,7 @@ class Workflow(BaseModel):
     ) -> "Workflow":
         """Replace the step of the given ID with a runtime input."""
         new_step = UserInput(how=how)  # TODO: restrict input type
-        return self.replace(step, new_step)
+        return self.replace(step, new_step, new_step_id=uuid.uuid4())
 
     def _get_ancestors(
         self,

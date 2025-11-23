@@ -39,6 +39,7 @@ class QToolTipWidget(QtW.QLabel):
             self.adjustSize()
             self.move_tooltip(QtGui.QCursor.pos())
             self.show()
+            self.raise_()
             self._timer.start(int(duration * 1000))
 
     # def show_image(self, image: QtGui.QImage, duration: float = 3.0) -> None:

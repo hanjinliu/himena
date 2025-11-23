@@ -21,8 +21,20 @@ from himena_builtins.qt.text import QTextEdit
 from qtpy import QtWidgets as QtW, QtCore
 from qtpy.QtCore import Qt, QPoint
 from pytestqt.qtbot import QtBot
-
+from IPython.lib.pretty import pretty
 from himena.types import WidgetDataModel
+
+def test_repr(make_himena_ui):
+    himena_ui = make_himena_ui("mock")
+    assert isinstance(himena_ui, MainWindow)
+    repr(himena_ui)
+    pretty(himena_ui)
+    tab = himena_ui.add_tab("My Tab")
+    repr(tab)
+    pretty(tab)
+    win = tab.add_data_model(create_model("a", type="text"))
+    repr(win)
+    pretty(win)
 
 def test_command_palette_events(himena_ui: MainWindowQt, qtbot: QtBot):
     himena_ui.show()

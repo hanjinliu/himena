@@ -9,7 +9,7 @@ BasicTextFileTypes = frozenset(
      ".pyx", ".c", ".cpp", ".h", ".hpp", ".java", ".js", ".ts", ".html", ".htm", ".css",
      ".scss", ".sass", ".php", ".rb", ".sh", ".bash", ".zsh", ".ps1", ".psm1", ".bat",
      ".cmd", ".m", ".vbs", ".vba", ".r", ".rs", ".go", ".svg", ".tex", ".rst", ".ipynb",
-     ".lock", ".cs", ".qss", ".bib", ".ris", ".cfg", ".ini"]
+     ".lock", ".cs", ".qss", ".bib", ".ris", ".cfg", ".ini", ".nu"]
 )  # fmt: skip
 BasicImageFileTypes = frozenset(
     [".png", ".jpg", ".jpeg", "ico", ".icns", ".gif"]

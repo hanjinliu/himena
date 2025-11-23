@@ -56,9 +56,7 @@ class HimenaApplication(Application):
                 result.workflow = info.track.to_workflow(info.kwargs)
             if result.update_inplace and info.track and info.track.contexts:
                 ui = current_instance()
-                input_window = ui._window_for_workflow_id(info.track.contexts[0].value)
-                input_window.update_model(result)
-                input_window._update_model_workflow(result.workflow)
+                ui._process_update_inplace(info.track.contexts, result)
                 return None  # no need to process
             elif (top_left := info.top_left) is not None:
                 # this clause is used to move the output window to the geometry of
