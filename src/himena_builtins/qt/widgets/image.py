@@ -104,6 +104,9 @@ class QImageViewBase(QtW.QSplitter):
     def createHandle(self):
         return QSplitterHandle(self)
 
+    def sizeHint(self) -> QtCore.QSize:
+        return QtCore.QSize(400, 400)
+
     @property
     def dims_slider(self) -> QDimsSlider:
         """Return the dimension slider widget."""
@@ -409,7 +412,8 @@ class QImageViewBase(QtW.QSplitter):
 
     @validate_protocol
     def size_hint(self) -> tuple[int, int]:
-        return 400, 400
+        hint = self.sizeHint()
+        return hint.width(), hint.height()
 
     @validate_protocol
     def is_editable(self) -> bool:

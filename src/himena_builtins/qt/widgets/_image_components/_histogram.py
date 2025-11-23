@@ -326,7 +326,7 @@ class QClimLineItem(QtW.QGraphicsRectItem):
         old_bbox = self.boundingRect()
         old_value = self._value
         new_value = min(max(x, self._range[0]), self._range[1])
-        self._value = new_value
+        self._value = float(new_value)
         new_bbox = self.boundingRect()
         self.setRect(new_bbox)
         if new_value != old_value:

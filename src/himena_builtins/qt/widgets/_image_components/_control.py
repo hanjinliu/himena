@@ -104,8 +104,8 @@ class QImageViewControl(QImageViewControlBase):
             self._exec_autocontrast_menu
         )
         self._auto_cont_live = False
-        self._auto_cont_quantile_min = 0.0
-        self._auto_cont_quantile_max = 1.0
+        self._auto_cont_qmin = 0.0
+        self._auto_cont_qmax = 1.0
 
         self._histogram = QHistogramView()
         self._histogram.setFixedWidth(120)
@@ -235,23 +235,11 @@ class QImageViewControl(QImageViewControlBase):
         min_new, max_new = float("inf"), -float("inf")
         for item in self._histogram._hist_items:
             cum_value = np.cumsum(item._hist_values)
-            cum_value = cum_value / cum_value[-1]
-            qmin = max(self._auto_cont_quantile_min, 0.0)
-            qmax = min(self._auto_cont_quantile_max, 1.0)
-            imin = np.argmax(qmin <= cum_value)
-            imax = np.argmax(qmax <= cum_value)
-            min_new = min(
-                item._edges[imin]
-                + (item._edges[imin + 1] - item._edges[imin])
-                * (qmin - cum_value[imin]),
-                min_new,
-            )
-            max_new = max(
-                item._edges[imax]
-                + (item._edges[imax + 1] - item._edges[imax])
-                * (qmax - cum_value[imax]),
-                max_new,
-            )
+            cum_value = np.concatenate([[0.0], cum_value / cum_value[-1]])
+            qmin = max(self._auto_cont_qmin, 0.0)
+            qmax = min(self._auto_cont_qmax, 1.0)
+            min_new = min(_interp_hist(qmin, item._edges, cum_value), min_new)
+            max_new = max(_interp_hist(qmax, item._edges, cum_value), max_new)
         if np.isinf(min_new) or np.isinf(max_new):
             return
 
@@ -333,45 +321,43 @@ class QAutoContrastMenu(QtW.QMenu):
     def __init__(self, parent: QImageViewControl):
         super().__init__(parent)
         self._control = parent
-        action = self.addAction("Live Auto Contrast", self._toggle_auto_contrast)
+        action = self.addAction("Live Auto Contrast", self._toggle_live_auto_contrast)
         action.setCheckable(True)
         action.setChecked(parent._auto_cont_live)
 
-        ac_min_widget = QDoubleLineEdit(
-            format(parent._auto_cont_quantile_min * 100, ".2f")
-        )
-        ac_min_widget.setMinimum(0.0)
-        ac_min_widget.setMaximum(100.0)
+        min_widget = QDoubleLineEdit(format(parent._auto_cont_qmin * 100, ".2f"))
+        min_widget.setMinimum(0.0)
+        min_widget.setMaximum(100.0)
         ac_min = QtW.QWidgetAction(self)
-        ac_min.setDefaultWidget(_labeled("Min %", ac_min_widget))
-        ac_max_widget = QDoubleLineEdit(
-            format(parent._auto_cont_quantile_max * 100, ".2f")
-        )
+        ac_min.setDefaultWidget(_labeled("Min %", min_widget))
+        max_widget = QDoubleLineEdit(format(parent._auto_cont_qmax * 100, ".2f"))
         ac_max = QtW.QWidgetAction(self)
-        ac_max_widget.setMinimum(0.0)
-        ac_max_widget.setMaximum(100.0)
-        ac_max.setDefaultWidget(_labeled("Max %", ac_max_widget))
+        max_widget.setMinimum(0.0)
+        max_widget.setMaximum(100.0)
+        ac_max.setDefaultWidget(_labeled("Max %", max_widget))
 
-        @ac_min_widget.valueChanged.connect
+        @min_widget.valueChanged.connect
         def _on_min_changed(txt: str):
             val = float(txt) / 100
-            parent._auto_cont_quantile_min = val
-            if val > parent._auto_cont_quantile_max:
-                parent._auto_cont_quantile_max = val
-                ac_max_widget.setText(ac_min_widget.text())
+            parent._auto_cont_qmin = val
+            if val > parent._auto_cont_qmax:
+                parent._auto_cont_qmax = val
+                max_widget.setText(min_widget.text())
 
-        @ac_max_widget.valueChanged.connect
+        @max_widget.valueChanged.connect
         def _on_max_changed(txt: str):
             val = float(txt) / 100
-            parent._auto_cont_quantile_max = val
-            if val < parent._auto_cont_quantile_min:
-                parent._auto_cont_quantile_min = val
-                ac_min_widget.setText(ac_max_widget.text())
+            parent._auto_cont_qmax = val
+            if val < parent._auto_cont_qmin:
+                parent._auto_cont_qmin = val
+                min_widget.setText(max_widget.text())
 
         self.addAction(ac_min)
         self.addAction(ac_max)
+        self._min_edit = min_widget
+        self._max_edit = max_widget
 
-    def _toggle_auto_contrast(self):
+    def _toggle_live_auto_contrast(self):
         live = self._control._auto_cont_live = not self._control._auto_cont_live
         self._control._auto_cont_btn.setCheckable(live)
         self._control._auto_cont_btn.setChecked(live)
@@ -464,3 +450,11 @@ def _labeled(label: str, widget: QtW.QWidget) -> QtW.QWidget:
     layout.addWidget(lbl)
     layout.addWidget(widget)
     return container
+
+
+def _interp_hist(qmin: float, edges: np.ndarray, cum_value: np.ndarray):
+    # len(edges) == len(cum_value)
+    i = np.argmax(qmin <= cum_value)
+    if i == len(edges) - 1:
+        return edges[-1]
+    return edges[i] + (edges[i + 1] - edges[i]) * (qmin - cum_value[i])

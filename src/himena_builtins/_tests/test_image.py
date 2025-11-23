@@ -1,4 +1,5 @@
 import warnings
+import time
 import numpy as np
 from numpy.testing import assert_equal
 from pathlib import Path
@@ -17,7 +18,7 @@ from himena.widgets import SubWindow
 from himena.qt import MainWindowQt
 from himena_builtins.qt.widgets.image import QImageView, QImageLabelView
 from himena_builtins.qt.widgets._image_components import _roi_items as _rois
-from himena_builtins.qt.widgets._image_components._control import ComplexMode
+from himena_builtins.qt.widgets._image_components._control import ComplexMode, QAutoContrastMenu
 from himena_builtins.tools.image import _make_roi_limits_getter, _bbox_list_getter
 from himena_builtins.qt.widgets._image_components._handles import RoiSelectionHandles
 
@@ -511,7 +512,12 @@ def test_constrast_hist(qtbot: QtBot):
     image_view = QImageView()
     image_view.show()
     with WidgetTester(image_view) as tester:
-        tester.update_model(value=np.zeros((100, 100), dtype=np.uint8))
+        xx, yy = np.meshgrid(np.linspace(-3, 3, 100), np.linspace(-3, 3, 100))
+        imgs = np.stack(
+            [np.sin(np.sqrt(xx**2 + yy**2) + i) + i / 5 for i in range(5)],
+            axis=0,
+        )
+        tester.update_model(value=imgs)
         qtbot.addWidget(image_view)
         control = image_view.control_widget()
         qtbot.addWidget(control)
@@ -522,6 +528,26 @@ def test_constrast_hist(qtbot: QtBot):
         control._histogram._set_hist_scale_func("log")
         control._histogram._img_to_clipboard()
         control._histogram._reset_view()
+
+        menu = QAutoContrastMenu(control)
+        image_view.dims_slider.setValue((1,))
+        assert control._histogram.clim() != (float(imgs[1].min()), float(imgs[1].max()))
+        menu._toggle_live_auto_contrast()
+        time.sleep(0.11)  # NOTE: callback is throttled
+        QApplication.processEvents()
+        assert control._histogram.clim() == (float(imgs[1].min()), float(imgs[1].max()))
+        image_view.dims_slider.setValue((2,))
+        time.sleep(0.11)  # NOTE: callback is throttled
+        QApplication.processEvents()
+        assert control._histogram.clim() == (float(imgs[2].min()), float(imgs[2].max()))
+        menu._max_edit.setText("50")
+        menu._min_edit.setText("60")
+        menu._max_edit.setText("40")
+        menu._min_edit.setText("0.1")
+        menu._max_edit.setText("99.9")
+        image_view.dims_slider.setValue((3,))
+        time.sleep(0.11)  # NOTE: callback is throttled
+        QApplication.processEvents()
 
 def test_complex_image(qtbot: QtBot):
     image_view = QImageView()
