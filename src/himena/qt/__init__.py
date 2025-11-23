@@ -7,7 +7,10 @@ from himena.qt._utils import (
     drag_command,
     ndarray_to_qimage,
     qimage_to_ndarray,
+    qsignal_blocker,
+    get_main_window,
 )
+from himena.qt._qtoolbutton import QColoredToolButton
 
 __all__ = [
     "MainWindowQt",
@@ -15,7 +18,10 @@ __all__ = [
     "drag_model",
     "drag_command",
     "ndarray_to_qimage",
+    "qsignal_blocker",
+    "get_main_window",
     "qimage_to_ndarray",
+    "QColoredToolButton",
 ]
 
 register_magicgui_types()

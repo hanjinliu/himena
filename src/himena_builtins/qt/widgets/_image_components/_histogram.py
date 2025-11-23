@@ -326,7 +326,7 @@ class QClimLineItem(QtW.QGraphicsRectItem):
         old_bbox = self.boundingRect()
         old_value = self._value
         new_value = min(max(x, self._range[0]), self._range[1])
-        self._value = new_value
+        self._value = float(new_value)
         new_bbox = self.boundingRect()
         self.setRect(new_bbox)
         if new_value != old_value:
@@ -396,7 +396,7 @@ class QHistogramItem(QtW.QGraphicsPathItem):
             arr = arr.clip(_min, _max)
             if arr.dtype.kind in "ui":
                 _nbin = int(_max - _min) // max(int(np.ceil((_max - _min) / _nbin)), 1)
-            normed = ((arr - _min) / (_max - _min) * _nbin).astype(np.uint8)
+            normed = ((arr - _min) / (_max - _min) * (_nbin - 1)).astype(np.uint8)
             hist = np.bincount(normed.ravel(), minlength=_nbin)
             edges = np.linspace(_min, _max, _nbin + 1)
         else:

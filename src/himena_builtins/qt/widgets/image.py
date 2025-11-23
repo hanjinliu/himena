@@ -104,6 +104,9 @@ class QImageViewBase(QtW.QSplitter):
     def createHandle(self):
         return QSplitterHandle(self)
 
+    def sizeHint(self) -> QtCore.QSize:
+        return QtCore.QSize(400, 400)
+
     @property
     def dims_slider(self) -> QDimsSlider:
         """Return the dimension slider widget."""
@@ -409,7 +412,8 @@ class QImageViewBase(QtW.QSplitter):
 
     @validate_protocol
     def size_hint(self) -> tuple[int, int]:
-        return 400, 400
+        hint = self.sizeHint()
+        return hint.width(), hint.height()
 
     @validate_protocol
     def is_editable(self) -> bool:
@@ -763,6 +767,7 @@ class QImageView(QImageViewBase):
         else:
             color = QtGui.QColor(255, 255, 255)
         self._roi_buttons._update_colors(color)
+        self._control._auto_cont_btn.update_theme(theme)
 
     @validate_protocol
     def update_configs(self, cfg: ImageViewConfigs):
@@ -870,6 +875,10 @@ class QImageView(QImageViewBase):
             )
             self._update_rois()
             self._img_view.set_image_blending([im.visible for im in imgs])
+
+            # if in the live auto-contrast mode, update contrast limits
+            if self._control._auto_cont_live:
+                self._control._auto_contrast()
         self.images_changed.emit(images)
 
     def _clim_for_ith_channel(self, img_slices: list[ImageTuple], ith: int):

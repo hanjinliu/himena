@@ -8,7 +8,9 @@ from superqt import QLabeledDoubleSlider, QToggleSwitch, QElidingLabel
 from superqt.utils import qthrottled
 
 from himena.consts import DefaultFontFamily
-from himena.qt._utils import qsignal_blocker, ndarray_to_qimage
+from himena.qt import qsignal_blocker, ndarray_to_qimage, QColoredToolButton
+from himena.qt._qlineedit import QDoubleLineEdit
+from himena_builtins._consts import ICON_PATH
 from himena_builtins.qt.widgets._image_components import QHistogramView
 from himena.utils.enum import StrEnum
 
@@ -92,8 +94,18 @@ class QImageViewControl(QImageViewControlBase):
         self._chn_mode_combo.setToolTip("Method to display multi-channel data")
         self._image_type = ImageType.OTHERS
 
-        self._auto_cont_btn = QtW.QPushButton("Auto")
-        self._auto_cont_btn.setToolTip("Auto contrast")
+        self._auto_cont_btn = QColoredToolButton(
+            self._auto_contrast, ICON_PATH / "auto_contrast_once.svg"
+        )
+        self._auto_cont_btn.setContextMenuPolicy(
+            QtCore.Qt.ContextMenuPolicy.CustomContextMenu
+        )
+        self._auto_cont_btn.customContextMenuRequested.connect(
+            self._exec_autocontrast_menu
+        )
+        self._auto_cont_live = False
+        self._auto_cont_qmin = 0.0
+        self._auto_cont_qmax = 1.0
 
         self._histogram = QHistogramView()
         self._histogram.setFixedWidth(120)
@@ -103,7 +115,6 @@ class QImageViewControl(QImageViewControlBase):
         self._cmp_mode_combo.currentTextChanged.connect(self._on_complex_mode_change)
         self._chn_vis.stateChanged.connect(self._on_channel_visibility_change)
         self._histogram.clim_changed.connect(self._clim_changed)
-        self._auto_cont_btn.clicked.connect(self._auto_contrast)
         self._chn_mode_combo.currentTextChanged.connect(self._on_channel_mode_change)
 
     def _widgets_to_add(self) -> list[QtW.QWidget]:
@@ -182,6 +193,10 @@ class QImageViewControl(QImageViewControlBase):
                 arr = None
             view._img_view.set_array(idx, arr)
 
+    def _exec_autocontrast_menu(self, *_):
+        menu = QAutoContrastMenu(self)
+        return menu.exec(QtGui.QCursor.pos())
+
     def _on_channel_mode_change(self, mode: str):
         self._chn_vis.setVisible(mode == ChannelMode.COMP)
         self._on_channel_visibility_change()
@@ -213,12 +228,19 @@ class QImageViewControl(QImageViewControlBase):
         # TODO: auto contrast and update colormap
 
     def _auto_contrast(self):
-        min_ = float("inf")
-        max_ = -float("inf")
+        """Auto contrast (right click to change settings)."""
+        range_min, range_max = self._histogram._view_range
+        if self._auto_cont_live and not self._auto_cont_btn.isChecked():
+            return
+        min_new, max_new = float("inf"), -float("inf")
         for item in self._histogram._hist_items:
-            min_ = min(item._edges[0], min_)
-            max_ = max(item._edges[-1], max_)
-        if np.isinf(min_) or np.isinf(max_):
+            cum_value = np.cumsum(item._hist_values)
+            cum_value = np.concatenate([[0.0], cum_value / cum_value[-1]])
+            qmin = max(self._auto_cont_qmin, 0.0)
+            qmax = min(self._auto_cont_qmax, 1.0)
+            min_new = min(_interp_hist(qmin, item._edges, cum_value), min_new)
+            max_new = max(_interp_hist(qmax, item._edges, cum_value), max_new)
+        if np.isinf(min_new) or np.isinf(max_new):
             return
 
         view = self._image_view
@@ -227,10 +249,21 @@ class QImageViewControl(QImageViewControlBase):
         if img_slice.dtype.kind == "c":
             img_slice = self.complex_transform(img_slice)
         ch = view.current_channel(sl)
-        ch.clim = (min_, max_)
-        self._histogram.set_view_range(min_, max_)
+        min_old, max_old = ch.clim
+        ch.clim = (min_new, max_new)
         view._set_image_slice(img_slice, ch)
-        self._histogram.set_clim((min_, max_))
+        self._histogram.set_clim((min_new, max_new))
+
+        # ensure both end is visible
+        changed = False
+        if min_new < min_old:
+            range_min = min_new
+            changed = True
+        if max_new > max_old:
+            range_max = max_new
+            changed = True
+        if changed:
+            self._histogram.set_view_range(range_min, range_max)
 
 
 class QImageLabelViewControl(QImageViewControlBase):
@@ -282,6 +315,54 @@ class QInterpolationSwitch(QtW.QAbstractButton):
         return qpixmap.scaled(
             self.width(), self.height(), QtCore.Qt.AspectRatioMode.KeepAspectRatio, tr
         )
+
+
+class QAutoContrastMenu(QtW.QMenu):
+    def __init__(self, parent: QImageViewControl):
+        super().__init__(parent)
+        self._control = parent
+        action = self.addAction("Live Auto Contrast", self._toggle_live_auto_contrast)
+        action.setCheckable(True)
+        action.setChecked(parent._auto_cont_live)
+
+        min_widget = QDoubleLineEdit(format(parent._auto_cont_qmin * 100, ".2f"))
+        min_widget.setMinimum(0.0)
+        min_widget.setMaximum(100.0)
+        ac_min = QtW.QWidgetAction(self)
+        ac_min.setDefaultWidget(_labeled("Min %", min_widget))
+        max_widget = QDoubleLineEdit(format(parent._auto_cont_qmax * 100, ".2f"))
+        ac_max = QtW.QWidgetAction(self)
+        max_widget.setMinimum(0.0)
+        max_widget.setMaximum(100.0)
+        ac_max.setDefaultWidget(_labeled("Max %", max_widget))
+
+        @min_widget.valueChanged.connect
+        def _on_min_changed(txt: str):
+            val = float(txt) / 100
+            parent._auto_cont_qmin = val
+            if val > parent._auto_cont_qmax:
+                parent._auto_cont_qmax = val
+                max_widget.setText(min_widget.text())
+
+        @max_widget.valueChanged.connect
+        def _on_max_changed(txt: str):
+            val = float(txt) / 100
+            parent._auto_cont_qmax = val
+            if val < parent._auto_cont_qmin:
+                parent._auto_cont_qmin = val
+                min_widget.setText(max_widget.text())
+
+        self.addAction(ac_min)
+        self.addAction(ac_max)
+        self._min_edit = min_widget
+        self._max_edit = max_widget
+
+    def _toggle_live_auto_contrast(self):
+        live = self._control._auto_cont_live = not self._control._auto_cont_live
+        self._control._auto_cont_btn.setCheckable(live)
+        self._control._auto_cont_btn.setChecked(live)
+        if live:
+            self._control._auto_contrast()
 
 
 class QChannelToggleSwitch(QToggleSwitch):
@@ -358,3 +439,22 @@ class QChannelToggleSwitches(QtW.QScrollArea):
 
     def has_channels(self) -> bool:
         return len(self._toggle_switches) > 0
+
+
+def _labeled(label: str, widget: QtW.QWidget) -> QtW.QWidget:
+    container = QtW.QWidget()
+    layout = QtW.QHBoxLayout(container)
+    layout.setContentsMargins(0, 0, 0, 0)
+    lbl = QtW.QLabel(label)
+    lbl.setFont(QtGui.QFont(DefaultFontFamily, 8))
+    layout.addWidget(lbl)
+    layout.addWidget(widget)
+    return container
+
+
+def _interp_hist(qmin: float, edges: np.ndarray, cum_value: np.ndarray):
+    # len(edges) == len(cum_value)
+    i = np.argmax(qmin <= cum_value)
+    if i == len(edges) - 1:
+        return edges[-1]
+    return edges[i] + (edges[i + 1] - edges[i]) * (qmin - cum_value[i])
