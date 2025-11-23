@@ -217,6 +217,9 @@ def make_function_callback(
                 cfg.set(out)
         return out
 
+    # for some reason, __annotations__ becomes empty after wraps in python 3.14
+    _new_f.__annotations__ = f_annot
+
     if run_async and not is_parametric:
         _new_f = _wrap_future(_new_f)
     return _new_f
