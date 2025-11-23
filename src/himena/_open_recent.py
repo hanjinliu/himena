@@ -12,8 +12,8 @@ from himena.plugins.install import GlobalConfig
 from datetime import datetime
 
 if TYPE_CHECKING:
-    from himena._app_model import HimenaApplication
     from himena.widgets._main_window import MainWindow
+    from himena._app_model import HimenaApplication
 
     _PathInput = Path | list[Path]
 
@@ -188,7 +188,7 @@ class RecentFileManager:
         )
 
     def to_callback(self, file, plugin: str | None = None):
-        return OpenRecentFunction(file, plugin)
+        return _update_annotation(OpenRecentFunction(file, plugin))
 
     def id_title_for_file(self, file: _PathInput) -> tuple[str, str]:
         """Return ID and title for the file."""
@@ -219,7 +219,7 @@ class RecentSessionManager(RecentFileManager):
         return cfg.num_recent_sessions_to_show
 
     def to_callback(self, file, plugin: str | None = None):
-        return OpenSessionFunction(file)
+        return _update_annotation(OpenSessionFunction(file))
 
     def id_title_for_file(self, file: Path) -> tuple[str, str]:
         """Return the ID for the file."""
@@ -243,3 +243,10 @@ def _title_for_file(file: Path) -> str:
     else:
         title = file.as_posix()
     return title
+
+
+def _update_annotation(obj):
+    from himena import MainWindow
+
+    obj.__annotations__ = {"ui": MainWindow}
+    return obj

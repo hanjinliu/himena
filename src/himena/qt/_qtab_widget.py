@@ -350,7 +350,6 @@ class QStartupWidget(QtW.QWidget):
         _layout.setStretch(1, 2)
 
         self._add_buttons(_layout_top, MenuId.STARTUP)
-        return None
 
     def _make_button(self, command_id: str, app: Application) -> QClickableLabel:
         def callback():
