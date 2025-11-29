@@ -407,6 +407,11 @@ class QSpreadsheet(QTableBase):
         if self._control:
             self._control.update_theme(theme)
 
+    def edit_cell(self, row: int, column: int, value: Any):
+        """Emulate editing a cell."""
+        mod = self.model()
+        mod.setData(mod.index(row, column), str(value), Qt.ItemDataRole.EditRole)
+
     def array_update(
         self,
         index: tuple[_Index, _Index],
@@ -441,9 +446,7 @@ class QSpreadsheet(QTableBase):
         if isinstance(prx := self._table_proxy(), proxy.SortProxy) and _index_contains(
             prx.index, c
         ):
-            self.model()._proxy = proxy.SortProxy.from_array(
-                prx.index, self.model()._arr, ascending=prx.ascending
-            )
+            self._recalculate_proxy()
         _ud_new_data = arr[r1, c]
         _action = EditAction(_ud_old_data, _ud_new_data, (r1, c))
         if _action_reshape is not None:
@@ -465,11 +468,8 @@ class QSpreadsheet(QTableBase):
         self.model().set_array(new_arr, is_original=False)
         self._control.update_for_table(self)
         # process sort proxy if row count changed
-        if isinstance(prx := self._table_proxy(), proxy.SortProxy) and nr0 != nr:
-            # recalculate mapping
-            self.model()._proxy = proxy.SortProxy.from_array(
-                prx.index, self.model()._arr, ascending=prx.ascending
-            )
+        if nr0 != nr:
+            self._recalculate_proxy()
         self.update()
 
     def array_shrink(self, nr: int, nc: int):
@@ -483,10 +483,7 @@ class QSpreadsheet(QTableBase):
                 # the column on which sorting is based is removed, reset proxy
                 self.model()._proxy = proxy.IdentityProxy()
             else:
-                # recalculate mapping
-                self.model()._proxy = proxy.SortProxy.from_array(
-                    prx.index, self.model()._arr, ascending=prx.ascending
-                )
+                self._recalculate_proxy()
         self.update()
 
     def array_insert(
@@ -499,12 +496,7 @@ class QSpreadsheet(QTableBase):
     ) -> None:
         """Insert an empty array at the given index."""
         if axis == 0:
-            self._assert_no_proxy("Row insertion is not supported when sorted.")
-        elif (
-            isinstance(prx := self._table_proxy(), proxy.SortProxy)
-            and index <= prx.index
-        ):
-            prx._index += 1
+            index = self._table_proxy().map(index)
         self.model().set_array(
             np.insert(
                 self.model()._arr,
@@ -514,6 +506,13 @@ class QSpreadsheet(QTableBase):
             ),
             is_original=False,
         )
+        if axis == 0:
+            self._recalculate_proxy()
+        elif (
+            isinstance(prx := self._table_proxy(), proxy.SortProxy)
+            and index <= prx.index
+        ):
+            prx._index += 1
         if record_undo:
             self._undo_stack.push(InsertAction(index, axis, values))
         self.update()
@@ -527,18 +526,12 @@ class QSpreadsheet(QTableBase):
     ):
         """Remove the array at the given index."""
         if axis == 0:
-            self._assert_no_proxy("Row deletion is not supported when sorted.")
-        elif isinstance(prx := self._table_proxy(), proxy.SortProxy):
-            if prx.index in indices:
-                # the column on which sorting is based is removed, reset proxy
-                self.model()._proxy = proxy.IdentityProxy()
-            else:
-                n_removed_before = sum(1 for i in indices if i < prx.index)
-                prx._index -= n_removed_before
+            indices = [self._table_proxy().map(idx) for idx in indices]
+        else:
+            indices = list(indices)
         # Make action group that remove the row/column one by one. Here, indices may be
         # out of range, as this widget is a spreadsheet.
         size_of_axis = self.model()._arr.shape[axis]
-        indices = list(indices)
         _action = ActionGroup(
             [
                 RemoveAction(idx, axis, self.model()._arr[_sl(idx, axis)].copy())
@@ -548,8 +541,17 @@ class QSpreadsheet(QTableBase):
         )
         # Update the underlying array data and redraw the table.
         self.model().set_array(
-            np.delete(self.model()._arr, list(indices), axis=axis), is_original=False
+            np.delete(self.model()._arr, indices, axis=axis), is_original=False
         )
+        if axis == 0:
+            self._recalculate_proxy()
+        if axis == 1 and isinstance(prx := self._table_proxy(), proxy.SortProxy):
+            if prx.index in indices:
+                # the column on which sorting is based is removed, reset proxy
+                self.model()._proxy = proxy.IdentityProxy()
+            else:
+                n_removed_before = sum(1 for i in indices if i < prx.index)
+                prx._index -= n_removed_before
         self.update()
         # Record the action if necessary.
         if record_undo:
@@ -720,6 +722,12 @@ class QSpreadsheet(QTableBase):
                 _actions.append(ReshapeAction(arr_nchars.shape, (size_0, size_1)))
         self.update()
         self._undo_stack.push(ActionGroup(_actions))
+
+    def _recalculate_proxy(self):
+        if isinstance(prx := self._table_proxy(), proxy.SortProxy):
+            self.model()._proxy = prx.from_array(
+                prx.index, self.model()._arr, ascending=prx.ascending
+            )
 
     def _map_row_index(self, r: _Index):
         if isinstance(prx := self._table_proxy(), proxy.SortProxy):
