@@ -443,6 +443,7 @@ class QSpreadsheet(QTableBase):
     def array_expand(self, nr: int, nc: int):
         """Expand the array to the given shape (nr, nc)."""
         # ReshapeAction must be recorded outside this function.
+        self._assert_no_proxy("Array expansion is not supported when sorted.")
         old_arr = self.model()._arr
         nr0, nc0 = old_arr.shape
         new_arr = np.pad(
@@ -471,6 +472,13 @@ class QSpreadsheet(QTableBase):
         record_undo: bool = True,
     ) -> None:
         """Insert an empty array at the given index."""
+        if axis == 0:
+            self._assert_no_proxy("Row insertion is not supported when sorted.")
+        elif (
+            isinstance(prx := self._table_proxy(), proxy.SortProxy)
+            and index <= prx.index
+        ):
+            prx._index += 1
         self.model().set_array(
             np.insert(
                 self.model()._arr,
@@ -492,6 +500,15 @@ class QSpreadsheet(QTableBase):
         record_undo: bool = True,
     ):
         """Remove the array at the given index."""
+        if axis == 0:
+            self._assert_no_proxy("Row deletion is not supported when sorted.")
+        elif isinstance(prx := self._table_proxy(), proxy.SortProxy):
+            if prx.index in indices:
+                # the column on which sorting is based is removed, reset proxy
+                self.model()._proxy = proxy.IdentityProxy()
+            else:
+                n_removed_before = sum(1 for i in indices if i < prx.index)
+                prx._index -= n_removed_before
         # Make action group that remove the row/column one by one. Here, indices may be
         # out of range, as this widget is a spreadsheet.
         size_of_axis = self.model()._arr.shape[axis]
@@ -723,6 +740,10 @@ class QSpreadsheet(QTableBase):
     def _measure(self):
         ui = get_main_window(self)
         ui.exec_action("builtins:table:measure-selection")
+
+    def _assert_no_proxy(self, msg: str):
+        if not isinstance(self.model()._proxy, proxy.IdentityProxy):
+            raise ValueError(msg)
 
     def keyPressEvent(self, e: QtGui.QKeyEvent):
         _ctrl = e.modifiers() & QtCore.Qt.KeyboardModifier.ControlModifier
