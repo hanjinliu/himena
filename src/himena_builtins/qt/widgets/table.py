@@ -689,9 +689,7 @@ class QSpreadsheet(QTableBase):
         if isinstance(prx := self._table_proxy(), proxy.SortProxy) and (
             r_expanded or _index_contains(prx.index, target_c)
         ):
-            self.model()._proxy = proxy.SortProxy.from_array(
-                prx.index, arr, ascending=prx.ascending
-            )
+            self._recalculate_proxy()
 
         # select what was just pasted
         self._selection_model.set_ranges([(target_r, target_c)])
@@ -799,10 +797,6 @@ class QSpreadsheet(QTableBase):
     def _measure(self):
         ui = get_main_window(self)
         ui.exec_action("builtins:table:measure-selection")
-
-    def _assert_no_proxy(self, msg: str):
-        if not isinstance(self.model()._proxy, proxy.IdentityProxy):
-            raise ValueError(msg)
 
     def keyPressEvent(self, e: QtGui.QKeyEvent):
         _ctrl = e.modifiers() & QtCore.Qt.KeyboardModifier.ControlModifier
