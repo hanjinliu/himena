@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterator
+import warnings
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt
 
@@ -70,14 +71,17 @@ class QHeaderViewBase(QtW.QHeaderView):
         pen = QtGui.QPen(color, 3)
         painter.setPen(pen)
         # paint selections
-        for _slice in self._iter_selections():
-            rect_start = self.visualRectAtIndex(_slice.start)
-            rect_stop = self.visualRectAtIndex(_slice.stop - 1)
-            rect = rect_start | rect_stop
-            self.drawBorder(painter, rect)
+        try:
+            for _slice in self._iter_selections():
+                rect_start = self.visualRectAtIndex(_slice.start)
+                rect_stop = self.visualRectAtIndex(_slice.stop - 1)
+                rect = rect_start | rect_stop
+                self.drawBorder(painter, rect)
 
-        # paint current
-        self.drawCurrent(painter)
+            # paint current
+            self.drawCurrent(painter)
+        except Exception as e:
+            warnings.warn(f"QHeaderViewBase.paintEvent failed {e}", RuntimeWarning)
 
     def mouseReleaseEvent(self, e: QtGui.QMouseEvent) -> None:
         self.selection_model.set_shift(False)
@@ -138,21 +142,26 @@ class QHorizontalHeaderView(QHeaderViewBase):
         ):
             # Draw sort indicator arrow
             size = 4
-            arrow_x = rect.right() - size * 2 - 2
-            center_y = rect.center().y() + 2
-            _a = 1 if _proxy.ascending else -1
-            # Draw down arrow
-            arrow = QtGui.QPolygon(
-                [
-                    QtCore.QPoint(arrow_x, center_y + _a * size),
-                    QtCore.QPoint(arrow_x - size, center_y - _a * size),
-                    QtCore.QPoint(arrow_x + size, center_y - _a * size),
-                ]
-            )
-            color = self.palette().color(QtGui.QPalette.ColorRole.WindowText)
-            painter.setPen(Qt.PenStyle.NoPen)
-            painter.setBrush(QtGui.QBrush(color))
-            painter.drawPolygon(arrow)
+            try:
+                arrow_x = rect.right() - size * 2 - 2
+                center_y = rect.center().y() + 2
+                _a = 1 if _proxy.ascending else -1
+                # Draw down arrow
+                arrow = QtGui.QPolygon(
+                    [
+                        QtCore.QPoint(arrow_x, center_y + _a * size),
+                        QtCore.QPoint(arrow_x - size, center_y - _a * size),
+                        QtCore.QPoint(arrow_x + size, center_y - _a * size),
+                    ]
+                )
+                color = self.palette().color(QtGui.QPalette.ColorRole.WindowText)
+                painter.setPen(Qt.PenStyle.NoPen)
+                painter.setBrush(QtGui.QBrush(color))
+                painter.drawPolygon(arrow)
+            except Exception as e:
+                warnings.warn(
+                    f"QHorizontalHeaderView.paintSection failed: {e}", RuntimeWarning
+                )
 
     def _iter_selections(self):
         yield from self.selection_model.iter_col_selections()

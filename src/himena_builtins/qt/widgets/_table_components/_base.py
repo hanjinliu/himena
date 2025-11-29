@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Iterable, Iterator, Literal
+import warnings
 import weakref
 from qtpy import QtWidgets as QtW
 from qtpy import QtCore, QtGui
@@ -452,23 +453,38 @@ class QTableBase(QtW.QTableView):
 
         # draw selections
         s_color = self._selection_color
-        for i, rect in enumerate(self._rect_from_ranges(self._selection_model._ranges)):
-            if nsel == i + 1:
-                pen = QtGui.QPen(s_color, 2 + focused)
-            else:
-                pen = QtGui.QPen(s_color, 2)
-            painter.setPen(pen)
-            painter.drawRect(rect)
+        try:
+            for i, rect in enumerate(
+                self._rect_from_ranges(self._selection_model._ranges)
+            ):
+                if nsel == i + 1:
+                    pen = QtGui.QPen(s_color, 2 + focused)
+                else:
+                    pen = QtGui.QPen(s_color, 2)
+                painter.setPen(pen)
+                painter.drawRect(rect)
+        except Exception as e:
+            warnings.warn(
+                f"QTableBase.paintEvent failed during drawing selections: {e}",
+                RuntimeWarning,
+            )
 
         # current index
         idx = self._selection_model.current_index
-        if idx >= (0, 0) and (_model := self.model()):
-            rect_cursor = self.visualRect(_model.index(*idx))
-            rect_cursor.adjust(1, 1, -1, -1)
-            pen = QtGui.QPen(self._current_color, 2)
-            painter.setPen(pen)
-            painter.drawRect(rect_cursor)
-        painter.end()
+        try:
+            if idx >= (0, 0) and (_model := self.model()):
+                rect_cursor = self.visualRect(_model.index(*idx))
+                rect_cursor.adjust(1, 1, -1, -1)
+                pen = QtGui.QPen(self._current_color, 2)
+                painter.setPen(pen)
+                painter.drawRect(rect_cursor)
+        except Exception as e:
+            warnings.warn(
+                f"QTableBase.paintEvent failed during drawing current index {e}",
+                RuntimeWarning,
+            )
+        finally:
+            painter.end()
 
     def _rect_from_ranges(
         self,

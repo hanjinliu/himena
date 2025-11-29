@@ -31,6 +31,8 @@ from himena.utils import misc, proxy
 if TYPE_CHECKING:
     from himena.widgets import MainWindow
 
+    _Index = int | slice | NDArray[np.integer]
+
 
 class HeaderFormat(Enum):
     """Enum of how to index table header."""
@@ -55,7 +57,7 @@ class TableAction:
 class EditAction(TableAction):
     old: str | np.ndarray
     new: str | np.ndarray
-    index: tuple[int | slice, int | slice]
+    index: tuple[_Index, _Index]
 
     def invert(self) -> TableAction:
         return EditAction(self.new, self.old, self.index)
@@ -407,7 +409,7 @@ class QSpreadsheet(QTableBase):
 
     def array_update(
         self,
-        index: tuple[int | slice, int | slice],
+        index: tuple[_Index, _Index],
         value: str,
         *,
         record_undo: bool = True,
@@ -416,8 +418,10 @@ class QSpreadsheet(QTableBase):
         r, c = index
         arr = self.model()._arr
         _ud_old_shape = arr.shape
-        r_max = r.stop - 1 if isinstance(r, slice) else r
-        c_max = c.stop - 1 if isinstance(c, slice) else c
+
+        r1 = self._map_row_index(r)
+        r_max = _index_max(r1)
+        c_max = _index_max(c)
         if r_max >= arr.shape[0] or c_max >= arr.shape[1]:  # need expansion
             _ud_old_data = ""
             _ud_old_shape = arr.shape
@@ -426,15 +430,22 @@ class QSpreadsheet(QTableBase):
             _action_reshape = ReshapeAction(_ud_old_shape, _ud_new_shape)
             arr = self.model()._arr
         else:
-            _ud_old_data = arr[r, c]
+            _ud_old_data = arr[r1, c]
             if isinstance(_ud_old_data, np.ndarray):
                 _ud_old_data = _ud_old_data.copy()
             _action_reshape = None
         if self.model()._is_original_array:
             self.model()._arr = arr = arr.copy()
-        arr[r, c] = value
-        _ud_new_data = arr[r, c]
-        _action = EditAction(_ud_old_data, _ud_new_data, (r, c))
+        arr[r1, c] = value
+        # recalculate order
+        if isinstance(prx := self._table_proxy(), proxy.SortProxy) and _index_contains(
+            prx.index, c
+        ):
+            self.model()._proxy = proxy.SortProxy.from_array(
+                prx.index, self.model()._arr, ascending=prx.ascending
+            )
+        _ud_new_data = arr[r1, c]
+        _action = EditAction(_ud_old_data, _ud_new_data, (r1, c))
         if _action_reshape is not None:
             _action = ActionGroup([_action_reshape, _action])
         if record_undo:
@@ -443,7 +454,6 @@ class QSpreadsheet(QTableBase):
     def array_expand(self, nr: int, nc: int):
         """Expand the array to the given shape (nr, nc)."""
         # ReshapeAction must be recorded outside this function.
-        self._assert_no_proxy("Array expansion is not supported when sorted.")
         old_arr = self.model()._arr
         nr0, nc0 = old_arr.shape
         new_arr = np.pad(
@@ -454,6 +464,12 @@ class QSpreadsheet(QTableBase):
         )
         self.model().set_array(new_arr, is_original=False)
         self._control.update_for_table(self)
+        # process sort proxy if row count changed
+        if isinstance(prx := self._table_proxy(), proxy.SortProxy) and nr0 != nr:
+            # recalculate mapping
+            self.model()._proxy = proxy.SortProxy.from_array(
+                prx.index, self.model()._arr, ascending=prx.ascending
+            )
         self.update()
 
     def array_shrink(self, nr: int, nc: int):
@@ -461,6 +477,16 @@ class QSpreadsheet(QTableBase):
         # slicing returns the view of the array, so it should be marked as original.
         self.model().set_array(self.model()._arr[:nr, :nc], is_original=True)
         self._control.update_for_table(self)
+        # process sort proxy
+        if isinstance(prx := self._table_proxy, proxy.SortProxy):
+            if prx.index >= nc:
+                # the column on which sorting is based is removed, reset proxy
+                self.model()._proxy = proxy.IdentityProxy()
+            else:
+                # recalculate mapping
+                self.model()._proxy = proxy.SortProxy.from_array(
+                    prx.index, self.model()._arr, ascending=prx.ascending
+                )
         self.update()
 
     def array_insert(
@@ -574,8 +600,9 @@ class QSpreadsheet(QTableBase):
         sels = self._selection_model.ranges
         if len(sels) != 1:
             return
-        sel = sels[0]
-        values = self.model()._arr[sel]
+        r, c = sels[0]
+        r1 = self._map_row_index(r)
+        values = self.model()._arr[r1, c]
         if values.size > 0:
             string = misc.table_to_text(values, format=format)[0]
             QtW.QApplication.clipboard().setText(string)
@@ -618,7 +645,7 @@ class QSpreadsheet(QTableBase):
         self._undo_stack.push(_action)
 
     def _paste_array(self, arr_paste: np.ndarray) -> tuple[slice, slice, np.ndarray]:
-        """Update the array and return the pasteed range and old data."""
+        """Update the array and return the pasted range and old data."""
         arr = self.model()._arr
         # paste in the text
         rng = self._selection_model.get_single_range()
@@ -627,7 +654,8 @@ class QSpreadsheet(QTableBase):
         lc = max(arr_paste.shape[1], rng[1].stop - rng[1].start)
 
         # expand the table if necessary
-        expanded = False
+        r_expanded = False
+        c_expanded = False
         if (row0 + lr) > arr.shape[0]:
             arr = np.pad(
                 arr,
@@ -635,7 +663,7 @@ class QSpreadsheet(QTableBase):
                 mode="constant",
                 constant_values="",
             )
-            expanded = True
+            r_expanded = True
         if (col0 + lc) > arr.shape[1]:
             arr = np.pad(
                 arr,
@@ -643,19 +671,30 @@ class QSpreadsheet(QTableBase):
                 mode="constant",
                 constant_values="",
             )
-            expanded = True
-        if not expanded:
+            c_expanded = True
+        if not r_expanded and not c_expanded:
             arr = arr.copy()
         # paste the data
-        target_slice = (slice(row0, row0 + lr), slice(col0, col0 + lc))
-        old_data = arr[target_slice].copy()
-        arr[target_slice] = arr_paste
+        target_r = slice(row0, row0 + lr)
+        target_r1 = self._map_row_index(target_r)
+        target_c = slice(col0, col0 + lc)
+
+        old_data = arr[target_r1, target_c].copy()
+        arr[target_r1, target_c] = arr_paste
         self.model().set_array(arr, is_original=False)
 
+        # update proxy length and/or recalculate order
+        if isinstance(prx := self._table_proxy(), proxy.SortProxy) and (
+            r_expanded or _index_contains(prx.index, target_c)
+        ):
+            self.model()._proxy = proxy.SortProxy.from_array(
+                prx.index, arr, ascending=prx.ascending
+            )
+
         # select what was just pasted
-        self._selection_model.set_ranges([target_slice])
+        self._selection_model.set_ranges([(target_r, target_c)])
         self.update()
-        return target_slice + (old_data,)
+        return target_r1, target_c, old_data
 
     def _delete_selection(self):
         _actions = []
@@ -663,11 +702,13 @@ class QSpreadsheet(QTableBase):
         arr = self.model()._arr
         # replace all the selected cells with empty strings.
         for sel in self._selection_model.ranges:
-            old_array = arr[sel].copy()
+            r, c = sel
+            r1 = self._map_row_index(r)
+            old_array = arr[r1, c].copy()
             new_array = np.zeros_like(old_array)
             _actions.append(EditAction(old_array, new_array, sel))
-            arr[sel] = ""
-            if sel[0].stop == arr.shape[0] or sel[1].stop == arr.shape[1]:
+            arr[r1, c] = ""
+            if _index_max(r1) + 1 == arr.shape[0] or c.stop == arr.shape[1]:
                 _maybe_empty_edges = True
         # if this deletion makes the array edges empty, array should be shrunk.
         if _maybe_empty_edges:
@@ -679,6 +720,16 @@ class QSpreadsheet(QTableBase):
                 _actions.append(ReshapeAction(arr_nchars.shape, (size_0, size_1)))
         self.update()
         self._undo_stack.push(ActionGroup(_actions))
+
+    def _map_row_index(self, r: _Index):
+        if isinstance(prx := self._table_proxy(), proxy.SortProxy):
+            if isinstance(r, slice):
+                r1 = prx.map(np.arange(r.start, r.stop))
+            else:
+                r1 = prx.map(r)
+        else:
+            r1 = r
+        return r1
 
     def _auto_resize_columns(self):
         """Only resize columns relevant to the array to fit their contents."""
@@ -849,6 +900,24 @@ def _sl(idx: int, axis: Literal[0, 1]) -> tuple:
         return idx, slice(None)
     else:
         return slice(None), idx
+
+
+def _index_max(r: _Index) -> int:
+    if isinstance(r, slice):
+        return r.stop - 1
+    elif isinstance(r, np.ndarray):
+        return r.max()
+    else:
+        return r
+
+
+def _index_contains(c: _Index, idx: int) -> bool:
+    if isinstance(c, slice):
+        return c.start <= idx < c.stop
+    elif isinstance(c, np.ndarray):
+        return idx in c
+    else:
+        return c == idx
 
 
 ORD_A = ord("A")
