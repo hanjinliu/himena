@@ -3,6 +3,7 @@ from ._base import QTableBase, Editability, FLAGS, parse_string
 from ._formatter import format_table_value
 from ._header import QHorizontalHeaderView, QVerticalHeaderView
 from ._selection_model import SelectionModel
+from ._toolbutton_group import QToolButtonGroup
 
 __all__ = [
     "QSelectionRangeEdit",
@@ -14,4 +15,5 @@ __all__ = [
     "QHorizontalHeaderView",
     "QVerticalHeaderView",
     "SelectionModel",
+    "QToolButtonGroup",
 ]

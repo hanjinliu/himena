@@ -6,7 +6,10 @@ from qtpy import QtWidgets as QtW, QtCore
 from himena_builtins.qt.widgets._table_components._selection_model import Index
 from himena_builtins.qt.widgets.table import QSpreadsheet
 from himena_builtins.qt.widgets.dict import QDictOfWidgetEdit
-from himena_builtins.qt.widgets._table_components import QSelectionRangeEdit
+from himena_builtins.qt.widgets._table_components import (
+    QSelectionRangeEdit,
+    QToolButtonGroup,
+)
 from himena import MainWindow
 from himena.types import WidgetDataModel
 from himena.consts import StandardType
@@ -60,11 +63,18 @@ class QExcelEdit(QDictOfWidgetEdit):
     def control_widget(self) -> QExcelTableStackControl:
         return self._control
 
+    @validate_protocol
+    def theme_changed_callback(self, theme) -> None:
+        if self._control:
+            self._control.update_theme(theme)
+
 
 _R_CENTER = QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter
 
 
 class QExcelTableStackControl(QtW.QWidget):
+    """The control widget for QExcelEdit."""
+
     def __init__(self):
         super().__init__()
         layout = QtW.QHBoxLayout(self)
@@ -79,16 +89,25 @@ class QExcelTableStackControl(QtW.QWidget):
         # layout.addWidget(self._header_format)
 
         # toolbuttons
-        self._insert_menu_button = QtW.QPushButton()
-        self._insert_menu_button.setText("Ins")  # or "icons8:plus"
-        self._insert_menu_button.setMenu(self._make_insert_menu())
-        self._remove_menu_button = QtW.QPushButton()
-        self._remove_menu_button.setText("Rem")
-        self._remove_menu_button.setMenu(self._make_delete_menu())
+        gbox_ins = QToolButtonGroup(self)
+        gbox_rem = QToolButtonGroup(self)
+        gbox_other = QToolButtonGroup(self)
+
+        self._tool_buttons = [
+            gbox_ins.add_tool_button(self._insert_row_above, "row_insert_top"),
+            gbox_ins.add_tool_button(self._insert_row_below, "row_insert_bottom"),
+            gbox_ins.add_tool_button(self._insert_column_left, "col_insert_left"),
+            gbox_ins.add_tool_button(self._insert_column_right, "col_insert_right"),
+            gbox_rem.add_tool_button(self._remove_selected_rows, "row_remove"),
+            gbox_rem.add_tool_button(self._remove_selected_columns, "col_remove"),
+            gbox_other.add_tool_button(self._auto_resize_columns, "resize_col"),
+            gbox_other.add_tool_button(self._sort_table_by_column, "sort_table"),
+        ]
 
         layout.addWidget(self._value_line_edit)
-        layout.addWidget(self._insert_menu_button)
-        layout.addWidget(self._remove_menu_button)
+        layout.addWidget(gbox_ins)
+        layout.addWidget(gbox_rem)
+        layout.addWidget(gbox_other)
         layout.addWidget(self._label)
         layout.addWidget(self._selection_range)
         self._value_line_edit.editingFinished.connect(self.update_for_editing)
@@ -128,19 +147,10 @@ class QExcelTableStackControl(QtW.QWidget):
         qtable.model().setData(qindex, text, QtCore.Qt.ItemDataRole.EditRole)
         qtable.setFocus()
 
-    def _make_insert_menu(self):
-        menu = QtW.QMenu(self)
-        menu.addAction("Row above", self._insert_row_above)
-        menu.addAction("Row below", self._insert_row_below)
-        menu.addAction("Column left", self._insert_column_left)
-        menu.addAction("Column right", self._insert_column_right)
-        return menu
-
-    def _make_delete_menu(self):
-        menu = QtW.QMenu(self)
-        menu.addAction("Rows", self._remove_selected_rows)
-        menu.addAction("Columns", self._remove_selected_columns)
-        return menu
+    def update_theme(self, theme):
+        """Update the theme of the control."""
+        for btn in self._tool_buttons:
+            btn.update_theme(theme)
 
     def _insert_row_above(self):
         if qtable := self._current_table:
@@ -165,3 +175,13 @@ class QExcelTableStackControl(QtW.QWidget):
     def _remove_selected_columns(self):
         if qtable := self._current_table:
             qtable._remove_selected_columns()
+
+    def _auto_resize_columns(self):
+        """Only resize columns relevant to the array to fit their contents."""
+        if qtable := self._current_table:
+            qtable._auto_resize_columns()
+
+    def _sort_table_by_column(self):
+        """Sort the table by the current column."""
+        if qtable := self._current_table:
+            qtable._sort_table_by_column()

@@ -84,7 +84,6 @@ class QSelectionRangeEdit(QtW.QGroupBox):
         self._qtable._selection_model.current_index = idx
         index = self._qtable.model().index(*idx)
         self._qtable.setCurrentIndex(index)
-        return None
 
     def slice(self) -> tuple[tuple[int, int], tuple[int, int]]:
         if self._qtable is None:

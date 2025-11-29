@@ -1,7 +1,10 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterator
+import warnings
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt
+
+from himena.utils import proxy
 
 
 if TYPE_CHECKING:
@@ -33,11 +36,9 @@ class QHeaderViewBase(QtW.QHeaderView):
     def _on_section_pressed(self, logicalIndex: int) -> None:
         self.selection_model.jump_to(*self._index_for_selection_model(logicalIndex))
         self.selection_model.set_shift(True)
-        return None
 
     def _on_section_entered(self, logicalIndex: int) -> None:
         self.selection_model.move_to(*self._index_for_selection_model(logicalIndex))
-        return None
 
     def _on_section_clicked(self, logicalIndex) -> None:
         self.selection_model.set_shift(False)
@@ -58,7 +59,7 @@ class QHeaderViewBase(QtW.QHeaderView):
         """Draw the opened border of a section."""
         raise NotImplementedError()
 
-    def drawCurrent(self, painter: QtGui.QPainter, rect: QtCore.QRect):
+    def drawCurrent(self, painter: QtGui.QPainter):
         """Draw the current index if exists."""
         raise NotImplementedError()
 
@@ -66,19 +67,21 @@ class QHeaderViewBase(QtW.QHeaderView):
         super().paintEvent(event)
         painter = QtGui.QPainter(self.viewport())
         color = self.parentWidget()._selection_color
+
         pen = QtGui.QPen(color, 3)
         painter.setPen(pen)
-
         # paint selections
-        for _slice in self._iter_selections():
-            rect_start = self.visualRectAtIndex(_slice.start)
-            rect_stop = self.visualRectAtIndex(_slice.stop - 1)
-            rect = rect_start | rect_stop
-            self.drawBorder(painter, rect)
+        try:
+            for _slice in self._iter_selections():
+                rect_start = self.visualRectAtIndex(_slice.start)
+                rect_stop = self.visualRectAtIndex(_slice.stop - 1)
+                rect = rect_start | rect_stop
+                self.drawBorder(painter, rect)
 
-        # paint current
-        self.drawCurrent(painter)
-        return None
+            # paint current
+            self.drawCurrent(painter)
+        except Exception as e:
+            warnings.warn(f"QHeaderViewBase.paintEvent failed {e}", RuntimeWarning)
 
     def mouseReleaseEvent(self, e: QtGui.QMouseEvent) -> None:
         self.selection_model.set_shift(False)
@@ -127,7 +130,38 @@ class QHorizontalHeaderView(QHeaderViewBase):
             pen = QtGui.QPen(color, 3)
             painter.setPen(pen)
             painter.drawRect(rect_current)
-        return None
+
+    def paintSection(self, painter, rect, logicalIndex):
+        painter.save()
+        super().paintSection(painter, rect, logicalIndex)
+        painter.restore()
+        # paint sort indicator
+        if (
+            isinstance(_proxy := self.parentWidget()._table_proxy(), proxy.SortProxy)
+            and logicalIndex == _proxy.index
+        ):
+            # Draw sort indicator arrow
+            size = 4
+            try:
+                arrow_x = rect.right() - size * 2 - 2
+                center_y = rect.center().y() + 2
+                _a = 1 if _proxy.ascending else -1
+                # Draw down arrow
+                arrow = QtGui.QPolygon(
+                    [
+                        QtCore.QPoint(arrow_x, center_y + _a * size),
+                        QtCore.QPoint(arrow_x - size, center_y - _a * size),
+                        QtCore.QPoint(arrow_x + size, center_y - _a * size),
+                    ]
+                )
+                color = self.palette().color(QtGui.QPalette.ColorRole.WindowText)
+                painter.setPen(Qt.PenStyle.NoPen)
+                painter.setBrush(QtGui.QBrush(color))
+                painter.drawPolygon(arrow)
+            except Exception as e:
+                warnings.warn(
+                    f"QHorizontalHeaderView.paintSection failed: {e}", RuntimeWarning
+                )
 
     def _iter_selections(self):
         yield from self.selection_model.iter_col_selections()
