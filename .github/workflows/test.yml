@@ -26,9 +26,6 @@ jobs:
             platform: ubuntu-latest
             backend: pyqt5
           - python-version: "3.13"
-            platform: macos-latest
-            backend: pyqt5
-          - python-version: "3.11"
             platform: windows-latest
             backend: pyqt5
 
