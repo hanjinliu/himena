@@ -146,7 +146,7 @@ class QHorizontalHeaderView(QHeaderViewBase):
                 arrow_x = rect.right() - size * 2 - 2
                 center_y = rect.center().y() + 2
                 _a = 1 if _proxy.ascending else -1
-                # Draw down arrow
+                # Draw up or down arrow
                 arrow = QtGui.QPolygon(
                     [
                         QtCore.QPoint(arrow_x, center_y + _a * size),
