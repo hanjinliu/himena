@@ -44,6 +44,8 @@ def test_excel_widget(qtbot: QtBot, himena_ui: MainWindow):
         control._insert_column_left()
         control._remove_selected_rows()
         control._remove_selected_columns()
+        control._auto_resize_columns()
+        control._sort_table_by_column()
 
     tabbar = excel_edit.tabBar()
     excel_edit.setCurrentIndex(0)

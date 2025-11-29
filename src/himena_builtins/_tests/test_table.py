@@ -34,6 +34,7 @@ def test_table_edit(himena_ui: MainWindow, qtbot: QtBot):
         qtbot.keyClick(tester.widget, Qt.Key.Key_Delete)
         qtbot.keyClick(tester.widget, Qt.Key.Key_F, modifier=_Ctrl)
         tester.widget.resize(100, 100)
+        tester.widget._auto_resize_columns()
         tester.widget._insert_row_above()
         tester.widget.undo()
         tester.widget.redo()
@@ -81,6 +82,9 @@ def test_moving_in_table(himena_ui: MainWindow, qtbot: QtBot):
         qtbot.addWidget(tester.widget)
         tester.widget.show()
         tester.update_model(value=[["a", "b"], ["c", "bc"]])
+        tester.widget.model().data(tester.widget.model().index(0, 0), Qt.ItemDataRole.ToolTipRole)
+        tester.widget.model().data(tester.widget.model().index(0, 0), Qt.ItemDataRole.StatusTipRole)
+        tester.widget.model().data(tester.widget.model().index(0, 0), Qt.ItemDataRole.DecorationRole)
         tester.cycle_model()
         qtbot.addWidget(tester.widget)
         tester.widget.selection_model.current_index = (0, 0)
@@ -324,3 +328,50 @@ def test_table_view_mouse_interaction(himena_ui: MainWindow, qtbot: QtBot):
     qtbot.mousePress(ss, Qt.MouseButton.RightButton, pos=QPoint(5, 5))
     qtbot.mouseMove(ss, pos=QPoint(35, 55))
     qtbot.mouseRelease(ss, Qt.MouseButton.RightButton, pos=QPoint(35, 55))
+
+def test_table_sort(himena_ui: MainWindow, qtbot: QtBot):
+    ss = QSpreadsheet(himena_ui)
+    qtbot.addWidget(ss)
+    ss.show()
+    ss.update_model(create_table_model(value=[["b", 2], ["a", 1], ["c", 3]]))
+    ss.selection_model.set_ranges([(slice(0, 1), slice(0, 1))])
+    ss._sort_table_by_column()
+    # value itself should not change
+    assert_equal(ss.to_model().value, [["b", 2], ["a", 1], ["c", 3]])
+    def _data_displayed():
+        _model = ss.model()
+        out = np.zeros_like(_model._arr)
+        for r in range(_model._arr.shape[0]):
+            for c in range(_model._arr.shape[1]):
+                out[r, c] = ss.model().data(ss.model().index(r, c))
+        return out
+
+    # but the displayed data should be sorted
+    assert_equal(_data_displayed(), [["a", "1"], ["b", "2"], ["c", "3"]])
+    # reverse sort
+    ss._sort_table_by_column()
+    assert_equal(_data_displayed(), [["c", "3"], ["b", "2"], ["a", "1"]])
+    ss._sort_table_by_column()
+    assert_equal(_data_displayed(), [["b", "2"], ["a", "1"], ["c", "3"]])
+
+    # update, expand etc
+    ss._sort_table_by_column()
+    assert_equal(_data_displayed(), [["a", "1"], ["b", "2"], ["c", "3"]])
+    ss.edit_cell(1, 1, "10")
+    assert_equal(_data_displayed(), [["a", "1"], ["b", "10"], ["c", "3"]])
+    ss.edit_cell(1, 0, "d")
+    assert_equal(_data_displayed(), [["a", "1"], ["c", "3"], ["d", "10"]])
+
+    ss.edit_cell(1, 2, "10")
+    ss.edit_cell(6, 1, "p")
+    ss.undo()
+    ss.undo()
+    ss.redo()
+    ss.redo()
+    ss._insert_column_left()
+    ss._insert_column_right()
+    ss._insert_row_above()
+    ss._insert_row_below()
+    ss._remove_selected_columns()
+    ss._remove_selected_rows()
+    ss._paste_array(np.array([["x", "y"], ["z", "w"]]))

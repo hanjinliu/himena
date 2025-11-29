@@ -17,20 +17,21 @@ from himena.qt._utils import get_main_window
 from himena.style import Theme
 from himena.types import WidgetDataModel
 from himena.standards.model_meta import TableMeta
-from himena.qt import QColoredToolButton
 from himena.plugins import validate_protocol, config_field
-from himena_builtins._consts import ICON_PATH
 from himena_builtins.qt.widgets._table_components import (
     QTableBase,
     QSelectionRangeEdit,
     FLAGS,
     Editability,
+    QToolButtonGroup,
 )
 from himena.utils.collections import UndoRedoStack
-from himena.utils.misc import table_to_text
+from himena.utils import misc, proxy
 
 if TYPE_CHECKING:
     from himena.widgets import MainWindow
+
+    _Index = int | slice | NDArray[np.integer]
 
 
 class HeaderFormat(Enum):
@@ -56,7 +57,7 @@ class TableAction:
 class EditAction(TableAction):
     old: str | np.ndarray
     new: str | np.ndarray
-    index: tuple[int | slice, int | slice]
+    index: tuple[_Index, _Index]
 
     def invert(self) -> TableAction:
         return EditAction(self.new, self.old, self.index)
@@ -142,6 +143,7 @@ class QStringArrayModel(QtCore.QAbstractTableModel):
         self._nrows, self._ncols = arr.shape
         self._is_original_array = True
         self._header_format = HeaderFormat.NumberZeroIndexed
+        self._proxy: proxy.TableProxy = proxy.IdentityProxy()
 
     @classmethod
     def empty(cls, parent: QSpreadsheet) -> QStringArrayModel:
@@ -202,12 +204,13 @@ class QStringArrayModel(QtCore.QAbstractTableModel):
         r, c = index.row(), index.column()
         if r >= self._arr.shape[0] or c >= self._arr.shape[1]:
             return QtCore.QVariant()
+        r1 = self._proxy.map(r)
         if role == Qt.ItemDataRole.TextAlignmentRole:
             return Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
         if role == Qt.ItemDataRole.ToolTipRole:
-            return f"A[{r}, {c}] = {self._arr[r, c]}"
+            return f"A[{r1}, {c}] = {self._arr[r1, c]}"
         if role in [Qt.ItemDataRole.EditRole, Qt.ItemDataRole.DisplayRole]:
-            return str(self._arr[r, c])
+            return str(self._arr[r1, c])
         return QtCore.QVariant()
 
     def setData(self, index: QtCore.QModelIndex, value: Any, role: int = ...) -> bool:
@@ -404,9 +407,14 @@ class QSpreadsheet(QTableBase):
         if self._control:
             self._control.update_theme(theme)
 
+    def edit_cell(self, row: int, column: int, value: Any):
+        """Emulate editing a cell."""
+        mod = self.model()
+        mod.setData(mod.index(row, column), str(value), Qt.ItemDataRole.EditRole)
+
     def array_update(
         self,
-        index: tuple[int | slice, int | slice],
+        index: tuple[_Index, _Index],
         value: str,
         *,
         record_undo: bool = True,
@@ -415,8 +423,10 @@ class QSpreadsheet(QTableBase):
         r, c = index
         arr = self.model()._arr
         _ud_old_shape = arr.shape
-        r_max = r.stop - 1 if isinstance(r, slice) else r
-        c_max = c.stop - 1 if isinstance(c, slice) else c
+
+        r1 = self._map_row_index(r)
+        r_max = _index_max(r1)
+        c_max = _index_max(c)
         if r_max >= arr.shape[0] or c_max >= arr.shape[1]:  # need expansion
             _ud_old_data = ""
             _ud_old_shape = arr.shape
@@ -425,16 +435,20 @@ class QSpreadsheet(QTableBase):
             _action_reshape = ReshapeAction(_ud_old_shape, _ud_new_shape)
             arr = self.model()._arr
         else:
-            if isinstance(r, slice) or isinstance(c, slice):
-                _ud_old_data = arr[r, c].copy()
-            else:
-                _ud_old_data = arr[r, c]
+            _ud_old_data = arr[r1, c]
+            if isinstance(_ud_old_data, np.ndarray):
+                _ud_old_data = _ud_old_data.copy()
             _action_reshape = None
         if self.model()._is_original_array:
             self.model()._arr = arr = arr.copy()
-        arr[r, c] = value
-        _ud_new_data = arr[r, c]
-        _action = EditAction(_ud_old_data, _ud_new_data, (r, c))
+        arr[r1, c] = value
+        # recalculate order
+        if isinstance(prx := self._table_proxy(), proxy.SortProxy) and _index_contains(
+            prx.index, c
+        ):
+            self._recalculate_proxy()
+        _ud_new_data = arr[r1, c]
+        _action = EditAction(_ud_old_data, _ud_new_data, (r1, c))
         if _action_reshape is not None:
             _action = ActionGroup([_action_reshape, _action])
         if record_undo:
@@ -453,6 +467,9 @@ class QSpreadsheet(QTableBase):
         )
         self.model().set_array(new_arr, is_original=False)
         self._control.update_for_table(self)
+        # process sort proxy if row count changed
+        if nr0 != nr:
+            self._recalculate_proxy()
         self.update()
 
     def array_shrink(self, nr: int, nc: int):
@@ -460,6 +477,13 @@ class QSpreadsheet(QTableBase):
         # slicing returns the view of the array, so it should be marked as original.
         self.model().set_array(self.model()._arr[:nr, :nc], is_original=True)
         self._control.update_for_table(self)
+        # process sort proxy
+        if isinstance(prx := self._table_proxy, proxy.SortProxy):
+            if prx.index >= nc:
+                # the column on which sorting is based is removed, reset proxy
+                self.model()._proxy = proxy.IdentityProxy()
+            else:
+                self._recalculate_proxy()
         self.update()
 
     def array_insert(
@@ -471,6 +495,8 @@ class QSpreadsheet(QTableBase):
         record_undo: bool = True,
     ) -> None:
         """Insert an empty array at the given index."""
+        if axis == 0:
+            index = self._table_proxy().map(index)
         self.model().set_array(
             np.insert(
                 self.model()._arr,
@@ -480,6 +506,13 @@ class QSpreadsheet(QTableBase):
             ),
             is_original=False,
         )
+        if axis == 0:
+            self._recalculate_proxy()
+        elif (
+            isinstance(prx := self._table_proxy(), proxy.SortProxy)
+            and index <= prx.index
+        ):
+            prx._index += 1
         if record_undo:
             self._undo_stack.push(InsertAction(index, axis, values))
         self.update()
@@ -492,10 +525,13 @@ class QSpreadsheet(QTableBase):
         record_undo: bool = True,
     ):
         """Remove the array at the given index."""
+        if axis == 0:
+            indices = [self._table_proxy().map(idx) for idx in indices]
+        else:
+            indices = list(indices)
         # Make action group that remove the row/column one by one. Here, indices may be
         # out of range, as this widget is a spreadsheet.
         size_of_axis = self.model()._arr.shape[axis]
-        indices = list(indices)
         _action = ActionGroup(
             [
                 RemoveAction(idx, axis, self.model()._arr[_sl(idx, axis)].copy())
@@ -505,8 +541,17 @@ class QSpreadsheet(QTableBase):
         )
         # Update the underlying array data and redraw the table.
         self.model().set_array(
-            np.delete(self.model()._arr, list(indices), axis=axis), is_original=False
+            np.delete(self.model()._arr, indices, axis=axis), is_original=False
         )
+        if axis == 0:
+            self._recalculate_proxy()
+        if axis == 1 and isinstance(prx := self._table_proxy(), proxy.SortProxy):
+            if prx.index in indices:
+                # the column on which sorting is based is removed, reset proxy
+                self.model()._proxy = proxy.IdentityProxy()
+            else:
+                n_removed_before = sum(1 for i in indices if i < prx.index)
+                prx._index -= n_removed_before
         self.update()
         # Record the action if necessary.
         if record_undo:
@@ -523,6 +568,9 @@ class QSpreadsheet(QTableBase):
         if action := self._undo_stack.redo():
             action.apply(self)
             self.update()
+
+    def _table_proxy(self) -> proxy.TableProxy:
+        return self.model()._proxy
 
     def _make_context_menu(self):
         menu = QtW.QMenu(self)
@@ -554,10 +602,11 @@ class QSpreadsheet(QTableBase):
         sels = self._selection_model.ranges
         if len(sels) != 1:
             return
-        sel = sels[0]
-        values = self.model()._arr[sel]
+        r, c = sels[0]
+        r1 = self._map_row_index(r)
+        values = self.model()._arr[r1, c]
         if values.size > 0:
-            string = table_to_text(values, format=format)[0]
+            string = misc.table_to_text(values, format=format)[0]
             QtW.QApplication.clipboard().setText(string)
 
     def _copy_as_csv(self):
@@ -598,7 +647,7 @@ class QSpreadsheet(QTableBase):
         self._undo_stack.push(_action)
 
     def _paste_array(self, arr_paste: np.ndarray) -> tuple[slice, slice, np.ndarray]:
-        """Update the array and return the pasteed range and old data."""
+        """Update the array and return the pasted range and old data."""
         arr = self.model()._arr
         # paste in the text
         rng = self._selection_model.get_single_range()
@@ -607,7 +656,8 @@ class QSpreadsheet(QTableBase):
         lc = max(arr_paste.shape[1], rng[1].stop - rng[1].start)
 
         # expand the table if necessary
-        expanded = False
+        r_expanded = False
+        c_expanded = False
         if (row0 + lr) > arr.shape[0]:
             arr = np.pad(
                 arr,
@@ -615,7 +665,7 @@ class QSpreadsheet(QTableBase):
                 mode="constant",
                 constant_values="",
             )
-            expanded = True
+            r_expanded = True
         if (col0 + lc) > arr.shape[1]:
             arr = np.pad(
                 arr,
@@ -623,19 +673,28 @@ class QSpreadsheet(QTableBase):
                 mode="constant",
                 constant_values="",
             )
-            expanded = True
-        if not expanded:
+            c_expanded = True
+        if not r_expanded and not c_expanded:
             arr = arr.copy()
         # paste the data
-        target_slice = (slice(row0, row0 + lr), slice(col0, col0 + lc))
-        old_data = arr[target_slice].copy()
-        arr[target_slice] = arr_paste
+        target_r = slice(row0, row0 + lr)
+        target_r1 = self._map_row_index(target_r)
+        target_c = slice(col0, col0 + lc)
+
+        old_data = arr[target_r1, target_c].copy()
+        arr[target_r1, target_c] = arr_paste
         self.model().set_array(arr, is_original=False)
 
+        # update proxy length and/or recalculate order
+        if isinstance(prx := self._table_proxy(), proxy.SortProxy) and (
+            r_expanded or _index_contains(prx.index, target_c)
+        ):
+            self._recalculate_proxy()
+
         # select what was just pasted
-        self._selection_model.set_ranges([target_slice])
+        self._selection_model.set_ranges([(target_r, target_c)])
         self.update()
-        return target_slice + (old_data,)
+        return target_r1, target_c, old_data
 
     def _delete_selection(self):
         _actions = []
@@ -643,11 +702,13 @@ class QSpreadsheet(QTableBase):
         arr = self.model()._arr
         # replace all the selected cells with empty strings.
         for sel in self._selection_model.ranges:
-            old_array = arr[sel].copy()
+            r, c = sel
+            r1 = self._map_row_index(r)
+            old_array = arr[r1, c].copy()
             new_array = np.zeros_like(old_array)
             _actions.append(EditAction(old_array, new_array, sel))
-            arr[sel] = ""
-            if sel[0].stop == arr.shape[0] or sel[1].stop == arr.shape[1]:
+            arr[r1, c] = ""
+            if _index_max(r1) + 1 == arr.shape[0] or c.stop == arr.shape[1]:
                 _maybe_empty_edges = True
         # if this deletion makes the array edges empty, array should be shrunk.
         if _maybe_empty_edges:
@@ -659,6 +720,45 @@ class QSpreadsheet(QTableBase):
                 _actions.append(ReshapeAction(arr_nchars.shape, (size_0, size_1)))
         self.update()
         self._undo_stack.push(ActionGroup(_actions))
+
+    def _recalculate_proxy(self):
+        if isinstance(prx := self._table_proxy(), proxy.SortProxy):
+            self.model()._proxy = prx.from_array(
+                prx.index, self.model()._arr, ascending=prx.ascending
+            )
+
+    def _map_row_index(self, r: _Index):
+        if isinstance(prx := self._table_proxy(), proxy.SortProxy):
+            if isinstance(r, slice):
+                r1 = prx.map(np.arange(r.start, r.stop))
+            else:
+                r1 = prx.map(r)
+        else:
+            r1 = r
+        return r1
+
+    def _auto_resize_columns(self):
+        """Only resize columns relevant to the array to fit their contents."""
+        for i in range(self.model()._arr.shape[1]):
+            self.resizeColumnToContents(i)
+
+    def _sort_table_by_column(self):
+        """Sort the table by the current column."""
+        if selected_cols := self._get_selected_cols():
+            c = min(selected_cols)
+            model = self.model()
+            if isinstance(model._proxy, proxy.IdentityProxy):
+                model._proxy = proxy.SortProxy.from_array(c, model._arr)
+            elif isinstance(pxy := model._proxy, proxy.SortProxy):
+                if c != pxy.index:
+                    model._proxy = proxy.SortProxy.from_array(c, model._arr)
+                elif pxy._ascending:
+                    model._proxy = pxy.switch_ascending()
+                else:
+                    model._proxy = proxy.IdentityProxy()
+            else:
+                model._proxy = proxy.IdentityProxy()
+            self.update()
 
     def _insert_row_below(self):
         """Insert a row below the current selection."""
@@ -685,10 +785,14 @@ class QSpreadsheet(QTableBase):
 
     def _remove_selected_columns(self):
         """Remove the selected columns."""
+        selected_cols = self._get_selected_cols()
+        self.array_delete(selected_cols, axis=1)
+
+    def _get_selected_cols(self) -> set[int]:
         selected_cols = set[int]()
         for sel in self._selection_model.ranges:
             selected_cols.update(range(sel[1].start, sel[1].stop))
-        self.array_delete(selected_cols, axis=1)
+        return selected_cols
 
     def _measure(self):
         ui = get_main_window(self)
@@ -739,28 +843,34 @@ _R_CENTER = QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVC
 
 
 class QTableControl(QtW.QWidget):
+    """Control widget for QSpreadsheet."""
+
     def __init__(self, table: QSpreadsheet):
         super().__init__()
         layout = QtW.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(_R_CENTER)
+        layout.setSpacing(2)
         self._info_label = QtW.QLabel("")
         self._info_label.setAlignment(_R_CENTER)
 
         # toolbuttons
         groupbox_ins = QToolButtonGroup(self)
         groupbox_rem = QToolButtonGroup(self)
-        _btn_ins = groupbox_ins.add_widgets(
-            _tool_btn(table._insert_row_above, "row_insert_top"),
-            _tool_btn(table._insert_row_below, "row_insert_bottom"),
-            _tool_btn(table._insert_column_left, "col_insert_left"),
-            _tool_btn(table._insert_column_right, "col_insert_right"),
-        )
-        _btn_rem = groupbox_rem.add_widgets(
-            _tool_btn(table._remove_selected_rows, "row_remove"),
-            _tool_btn(table._remove_selected_columns, "col_remove"),
-        )
-        self._tool_buttons: list[QColoredToolButton] = _btn_ins + _btn_rem
+        groupbox_other = QToolButtonGroup(self)
+
+        self._tool_buttons = [
+            groupbox_ins.add_tool_button(table._insert_row_above, "row_insert_top"),
+            groupbox_ins.add_tool_button(table._insert_row_below, "row_insert_bottom"),
+            groupbox_ins.add_tool_button(table._insert_column_left, "col_insert_left"),
+            groupbox_ins.add_tool_button(
+                table._insert_column_right, "col_insert_right"
+            ),
+            groupbox_rem.add_tool_button(table._remove_selected_rows, "row_remove"),
+            groupbox_rem.add_tool_button(table._remove_selected_columns, "col_remove"),
+            groupbox_other.add_tool_button(table._auto_resize_columns, "resize_col"),
+            groupbox_other.add_tool_button(table._sort_table_by_column, "sort_table"),
+        ]
         self._separator_label = QtW.QLabel()
         self._separator: str | None = None
 
@@ -770,9 +880,11 @@ class QTableControl(QtW.QWidget):
         )
         layout.addWidget(empty)  # empty space
         layout.addWidget(self._info_label)
+        layout.addWidget(QtW.QLabel("|"))
         layout.addWidget(self._separator_label)
         layout.addWidget(groupbox_ins)
         layout.addWidget(groupbox_rem)
+        layout.addWidget(groupbox_other)
         layout.addWidget(QSelectionRangeEdit(table))
 
     def update_for_table(self, table: QSpreadsheet):
@@ -792,33 +904,22 @@ def _sl(idx: int, axis: Literal[0, 1]) -> tuple:
         return slice(None), idx
 
 
-def _tool_btn(callback, icon: str) -> QColoredToolButton:
-    """Create a tool button with the given icon and callback."""
-    return QColoredToolButton(callback, ICON_PATH / f"{icon}.svg")
+def _index_max(r: _Index) -> int:
+    if isinstance(r, slice):
+        return r.stop - 1
+    elif isinstance(r, np.ndarray):
+        return r.max()
+    else:
+        return r
 
 
-class QToolButtonGroup(QtW.QGroupBox):
-    """A group of tool buttons with a horizontal layout."""
-
-    def __init__(self, parent: QtW.QWidget | None = None):
-        super().__init__(parent)
-        self.setStyleSheet("QToolButtonGroup {margin: 0px;}")
-        self.setLayout(QtW.QHBoxLayout(self))
-        self.layout().setContentsMargins(0, 0, 0, 0)
-
-        inner = QtW.QWidget()
-        inner_layout = QtW.QHBoxLayout(inner)
-        self.setContentsMargins(0, 0, 0, 0)
-        inner_layout.setContentsMargins(0, 0, 0, 0)
-        inner_layout.setSpacing(1)
-        self._inner_layout = inner_layout
-        self.layout().addWidget(inner)
-
-    def add_widgets(self, *widgets: QtW.QWidget):
-        """Add a widget to the group."""
-        for widget in widgets:
-            self._inner_layout.addWidget(widget)
-        return widgets
+def _index_contains(c: _Index, idx: int) -> bool:
+    if isinstance(c, slice):
+        return c.start <= idx < c.stop
+    elif isinstance(c, np.ndarray):
+        return idx in c
+    else:
+        return c == idx
 
 
 ORD_A = ord("A")
