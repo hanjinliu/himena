@@ -62,7 +62,6 @@ class SelectionModel:
     def current_range(self) -> tuple[slice, slice] | None:
         if len(self._ranges) > 0:
             return self._ranges[-1]
-        return None
 
     @property
     def start(self) -> Index | None:
@@ -154,7 +153,6 @@ class SelectionModel:
         self._ranges.clear()
         self._row_selection_indices.clear()
         self._col_selection_indices.clear()
-        return None
 
     def is_jumping(self) -> bool:
         """Whether the selection is jumping or not."""
@@ -167,14 +165,12 @@ class SelectionModel:
     def set_ctrl(self, on: bool) -> None:
         """Equivalent to pressing Ctrl."""
         self._ctrl_on = bool(on)
-        return None
 
     def set_shift(self, on: bool) -> None:
         """Equivalent to pressing Shift."""
         self._shift_on = bool(on)
         if on and self._selection_start is None:
             self._selection_start = self._current_index
-        return None
 
     def jump_to(self, r: int, c: int):
         """Emulate mouse click at cell (r, c)."""
@@ -223,7 +219,6 @@ class SelectionModel:
 
         self.update_last((rsl, csl), row=row, col=col)
         self.moved.emit(src, dst)
-        return None
 
     def move(self, dr: int, dc: int, allow_header: bool = False):
         """Move by (dr, dc) cells."""

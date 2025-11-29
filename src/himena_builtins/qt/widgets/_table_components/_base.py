@@ -9,6 +9,7 @@ from qtpy.QtCore import Qt
 from himena.plugins._checker import validate_protocol
 from himena.standards.model_meta import TableMeta
 from himena.qt._qfinderwidget import QTableFinderWidget
+from himena.utils import proxy
 from himena.utils.misc import is_absolute_file_path_string, is_url_string
 from ._selection_model import SelectionModel, Index
 from ._header import QVerticalHeaderView, QHorizontalHeaderView
@@ -171,6 +172,9 @@ class QTableBase(QtW.QTableView):
             self._finder_widget = QTableFinderWidget(self)
         self._finder_widget.show()
         self._align_finder()
+
+    def _table_proxy(self) -> proxy.TableProxy:
+        return proxy.IdentityProxy()
 
     def resizeEvent(self, event):
         if self._finder_widget is not None:

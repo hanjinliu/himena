@@ -17,17 +17,16 @@ from himena.qt._utils import get_main_window
 from himena.style import Theme
 from himena.types import WidgetDataModel
 from himena.standards.model_meta import TableMeta
-from himena.qt import QColoredToolButton
 from himena.plugins import validate_protocol, config_field
-from himena_builtins._consts import ICON_PATH
 from himena_builtins.qt.widgets._table_components import (
     QTableBase,
     QSelectionRangeEdit,
     FLAGS,
     Editability,
+    QToolButtonGroup,
 )
 from himena.utils.collections import UndoRedoStack
-from himena.utils.misc import table_to_text
+from himena.utils import misc, proxy
 
 if TYPE_CHECKING:
     from himena.widgets import MainWindow
@@ -142,6 +141,7 @@ class QStringArrayModel(QtCore.QAbstractTableModel):
         self._nrows, self._ncols = arr.shape
         self._is_original_array = True
         self._header_format = HeaderFormat.NumberZeroIndexed
+        self._proxy: proxy.TableProxy = proxy.IdentityProxy()
 
     @classmethod
     def empty(cls, parent: QSpreadsheet) -> QStringArrayModel:
@@ -202,12 +202,13 @@ class QStringArrayModel(QtCore.QAbstractTableModel):
         r, c = index.row(), index.column()
         if r >= self._arr.shape[0] or c >= self._arr.shape[1]:
             return QtCore.QVariant()
+        r1 = self._proxy.map(r)
         if role == Qt.ItemDataRole.TextAlignmentRole:
             return Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
         if role == Qt.ItemDataRole.ToolTipRole:
-            return f"A[{r}, {c}] = {self._arr[r, c]}"
+            return f"A[{r1}, {c}] = {self._arr[r1, c]}"
         if role in [Qt.ItemDataRole.EditRole, Qt.ItemDataRole.DisplayRole]:
-            return str(self._arr[r, c])
+            return str(self._arr[r1, c])
         return QtCore.QVariant()
 
     def setData(self, index: QtCore.QModelIndex, value: Any, role: int = ...) -> bool:
@@ -425,10 +426,9 @@ class QSpreadsheet(QTableBase):
             _action_reshape = ReshapeAction(_ud_old_shape, _ud_new_shape)
             arr = self.model()._arr
         else:
-            if isinstance(r, slice) or isinstance(c, slice):
-                _ud_old_data = arr[r, c].copy()
-            else:
-                _ud_old_data = arr[r, c]
+            _ud_old_data = arr[r, c]
+            if isinstance(_ud_old_data, np.ndarray):
+                _ud_old_data = _ud_old_data.copy()
             _action_reshape = None
         if self.model()._is_original_array:
             self.model()._arr = arr = arr.copy()
@@ -524,6 +524,9 @@ class QSpreadsheet(QTableBase):
             action.apply(self)
             self.update()
 
+    def _table_proxy(self) -> proxy.TableProxy:
+        return self.model()._proxy
+
     def _make_context_menu(self):
         menu = QtW.QMenu(self)
         menu.addAction("Cut", self._cut_and_copy_to_clipboard)
@@ -557,7 +560,7 @@ class QSpreadsheet(QTableBase):
         sel = sels[0]
         values = self.model()._arr[sel]
         if values.size > 0:
-            string = table_to_text(values, format=format)[0]
+            string = misc.table_to_text(values, format=format)[0]
             QtW.QApplication.clipboard().setText(string)
 
     def _copy_as_csv(self):
@@ -660,6 +663,29 @@ class QSpreadsheet(QTableBase):
         self.update()
         self._undo_stack.push(ActionGroup(_actions))
 
+    def _auto_resize_columns(self):
+        """Only resize columns relevant to the array to fit their contents."""
+        for i in range(self.model()._arr.shape[1]):
+            self.resizeColumnToContents(i)
+
+    def _sort_table_by_column(self):
+        """Sort the table by the current column."""
+        if selected_cols := self._get_selected_cols():
+            c = min(selected_cols)
+            model = self.model()
+            if isinstance(model._proxy, proxy.IdentityProxy):
+                model._proxy = proxy.SortProxy.from_array(c, model._arr)
+            elif isinstance(pxy := model._proxy, proxy.SortProxy):
+                if c != pxy.index:
+                    model._proxy = proxy.SortProxy.from_array(c, model._arr)
+                elif pxy._ascending:
+                    model._proxy = pxy.switch_ascending()
+                else:
+                    model._proxy = proxy.IdentityProxy()
+            else:
+                model._proxy = proxy.IdentityProxy()
+            self.update()
+
     def _insert_row_below(self):
         """Insert a row below the current selection."""
         self.array_insert(self._selection_model.current_index.row + 1, 0)
@@ -685,10 +711,14 @@ class QSpreadsheet(QTableBase):
 
     def _remove_selected_columns(self):
         """Remove the selected columns."""
+        selected_cols = self._get_selected_cols()
+        self.array_delete(selected_cols, axis=1)
+
+    def _get_selected_cols(self) -> set[int]:
         selected_cols = set[int]()
         for sel in self._selection_model.ranges:
             selected_cols.update(range(sel[1].start, sel[1].stop))
-        self.array_delete(selected_cols, axis=1)
+        return selected_cols
 
     def _measure(self):
         ui = get_main_window(self)
@@ -739,28 +769,34 @@ _R_CENTER = QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVC
 
 
 class QTableControl(QtW.QWidget):
+    """Control widget for QSpreadsheet."""
+
     def __init__(self, table: QSpreadsheet):
         super().__init__()
         layout = QtW.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(_R_CENTER)
+        layout.setSpacing(2)
         self._info_label = QtW.QLabel("")
         self._info_label.setAlignment(_R_CENTER)
 
         # toolbuttons
         groupbox_ins = QToolButtonGroup(self)
         groupbox_rem = QToolButtonGroup(self)
-        _btn_ins = groupbox_ins.add_widgets(
-            _tool_btn(table._insert_row_above, "row_insert_top"),
-            _tool_btn(table._insert_row_below, "row_insert_bottom"),
-            _tool_btn(table._insert_column_left, "col_insert_left"),
-            _tool_btn(table._insert_column_right, "col_insert_right"),
-        )
-        _btn_rem = groupbox_rem.add_widgets(
-            _tool_btn(table._remove_selected_rows, "row_remove"),
-            _tool_btn(table._remove_selected_columns, "col_remove"),
-        )
-        self._tool_buttons: list[QColoredToolButton] = _btn_ins + _btn_rem
+        groupbox_other = QToolButtonGroup(self)
+
+        self._tool_buttons = [
+            groupbox_ins.add_tool_button(table._insert_row_above, "row_insert_top"),
+            groupbox_ins.add_tool_button(table._insert_row_below, "row_insert_bottom"),
+            groupbox_ins.add_tool_button(table._insert_column_left, "col_insert_left"),
+            groupbox_ins.add_tool_button(
+                table._insert_column_right, "col_insert_right"
+            ),
+            groupbox_rem.add_tool_button(table._remove_selected_rows, "row_remove"),
+            groupbox_rem.add_tool_button(table._remove_selected_columns, "col_remove"),
+            groupbox_other.add_tool_button(table._auto_resize_columns, "resize_col"),
+            groupbox_other.add_tool_button(table._sort_table_by_column, "sort_table"),
+        ]
         self._separator_label = QtW.QLabel()
         self._separator: str | None = None
 
@@ -770,9 +806,11 @@ class QTableControl(QtW.QWidget):
         )
         layout.addWidget(empty)  # empty space
         layout.addWidget(self._info_label)
+        layout.addWidget(QtW.QLabel("|"))
         layout.addWidget(self._separator_label)
         layout.addWidget(groupbox_ins)
         layout.addWidget(groupbox_rem)
+        layout.addWidget(groupbox_other)
         layout.addWidget(QSelectionRangeEdit(table))
 
     def update_for_table(self, table: QSpreadsheet):
@@ -790,35 +828,6 @@ def _sl(idx: int, axis: Literal[0, 1]) -> tuple:
         return idx, slice(None)
     else:
         return slice(None), idx
-
-
-def _tool_btn(callback, icon: str) -> QColoredToolButton:
-    """Create a tool button with the given icon and callback."""
-    return QColoredToolButton(callback, ICON_PATH / f"{icon}.svg")
-
-
-class QToolButtonGroup(QtW.QGroupBox):
-    """A group of tool buttons with a horizontal layout."""
-
-    def __init__(self, parent: QtW.QWidget | None = None):
-        super().__init__(parent)
-        self.setStyleSheet("QToolButtonGroup {margin: 0px;}")
-        self.setLayout(QtW.QHBoxLayout(self))
-        self.layout().setContentsMargins(0, 0, 0, 0)
-
-        inner = QtW.QWidget()
-        inner_layout = QtW.QHBoxLayout(inner)
-        self.setContentsMargins(0, 0, 0, 0)
-        inner_layout.setContentsMargins(0, 0, 0, 0)
-        inner_layout.setSpacing(1)
-        self._inner_layout = inner_layout
-        self.layout().addWidget(inner)
-
-    def add_widgets(self, *widgets: QtW.QWidget):
-        """Add a widget to the group."""
-        for widget in widgets:
-            self._inner_layout.addWidget(widget)
-        return widgets
 
 
 ORD_A = ord("A")
