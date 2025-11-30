@@ -248,7 +248,8 @@ class QSpreadsheet(QTableBase):
     ## Basic Usage
 
     Moving, selecting, editing and copying/pasting cells are supported like many other
-    spreadsheet applications.
+    spreadsheet applications. Table can be sorted without changing the underlying data;
+    click the sort button in the control widget to enable sorting on the current column.
 
     ## Keyboard Shortcuts
 

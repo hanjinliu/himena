@@ -229,6 +229,7 @@ class QDataFrameView(QTableBase):
         self._undo_stack = UndoRedoStack[EditAction](size=20)
         self._sep_on_copy = "\t"
         self._extension_default = ".csv"
+        self.set_editable(False)
 
     @validate_protocol
     def update_model(self, model: WidgetDataModel):
@@ -638,6 +639,14 @@ class QDataFramePlotView(QtW.QSplitter):
     @validate_protocol
     def is_modified(self) -> bool:
         return self._table_widget.is_modified()
+
+    @validate_protocol
+    def is_editable(self) -> bool:
+        return self._table_widget.is_editable()
+
+    @validate_protocol
+    def set_editable(self, value: bool) -> None:
+        self._table_widget.set_editable(value)
 
     @validate_protocol
     def control_widget(self):

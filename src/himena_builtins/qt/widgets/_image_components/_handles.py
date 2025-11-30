@@ -5,6 +5,8 @@ from psygnal import Signal
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt
 
+from himena.widgets import show_tooltip
+
 from ._roi_items import (
     QLineRoi,
     QPointRoi,
@@ -78,6 +80,7 @@ class QHandleRect(QtW.QGraphicsRectItem):
     def mouseReleaseEvent(self, event: QtW.QGraphicsSceneMouseEvent | None) -> None:
         self.view().set_mode(self.view()._last_mode_before_key_hold)
         self.scene().setGrabSource(None)
+        show_tooltip("")
         return super().mouseReleaseEvent(event)
 
     def view(self) -> QImageGraphicsView:
@@ -149,14 +152,14 @@ class RoiSelectionHandles:
             qline = line.line()
             qline.setP1(pos)
             line.setLine(qline)
-            self._view.current_roi_updated.emit()
+            self._view._roi_moved_by_handle(line)
 
         @h2.moved_by_mouse.connect
         def _2_moved(pos, last_pos):
             qline = line.line()
             qline.setP2(pos)
             line.setLine(qline)
-            self._view.current_roi_updated.emit()
+            self._view._roi_moved_by_handle(line)
 
         @hc.moved_by_mouse.connect
         def _c_moved(pos, last_pos):
@@ -164,14 +167,14 @@ class RoiSelectionHandles:
             qline = line.line()
             qline.translate(delta.x(), delta.y())
             line.setLine(qline)
-            self._view.current_roi_updated.emit()
+            self._view._roi_moved_by_handle(line)
 
         @line.changed.connect
         def _line_changed(qline: QtCore.QLineF):
             h1.setCenter(qline.p1())
             h2.setCenter(qline.p2())
             hc.setCenter(qline.center())
-            self._view.current_roi_updated.emit()
+            self._view._roi_moved_by_handle(line)
 
     def connect_rect(self, rect: QRectangleRoi | QEllipseRoi):
         self.clear_handles()
@@ -201,7 +204,7 @@ class RoiSelectionHandles:
             x0, x1 = sorted([other.x(), ex])
             y0, y1 = sorted([other.y(), ey])
             rect.setRect(x0, y0, x1 - x0, y1 - y0)
-            self._view.current_roi_updated.emit()
+            self._view._roi_moved_by_handle(rect)
 
         @h_br.moved_by_mouse.connect
         def _br_moved(pos, last_pos):
@@ -210,7 +213,7 @@ class RoiSelectionHandles:
             x0, x1 = sorted([other.x(), ex])
             y0, y1 = sorted([other.y(), pos.y()])
             rect.setRect(x0, y0, x1 - x0, y1 - y0)
-            self._view.current_roi_updated.emit()
+            self._view._roi_moved_by_handle(rect)
 
         @h_tr.moved_by_mouse.connect
         def _tr_moved(pos, last_pos):
@@ -219,7 +222,7 @@ class RoiSelectionHandles:
             x0, x1 = sorted([other.x(), ex])
             y0, y1 = sorted([other.y(), ey])
             rect.setRect(x0, y0, x1 - x0, y1 - y0)
-            self._view.current_roi_updated.emit()
+            self._view._roi_moved_by_handle(rect)
 
         @h_bl.moved_by_mouse.connect
         def _bl_moved(pos, last_pos):
@@ -228,7 +231,7 @@ class RoiSelectionHandles:
             x0, x1 = sorted([other.x(), ex])
             y0, y1 = sorted([other.y(), ey])
             rect.setRect(x0, y0, x1 - x0, y1 - y0)
-            self._view.current_roi_updated.emit()
+            self._view._roi_moved_by_handle(rect)
 
         @h_t.moved_by_mouse.connect
         def _t_moved(pos, last_pos):
@@ -236,7 +239,7 @@ class RoiSelectionHandles:
             _, ey = self.view()._pos_to_tuple(pos)
             y0, y1 = sorted([r0.bottom(), ey])
             rect.setRect(r0.x(), y0, r0.width(), y1 - y0)
-            self._view.current_roi_updated.emit()
+            self._view._roi_moved_by_handle(rect)
 
         @h_b.moved_by_mouse.connect
         def _b_moved(pos, last_pos):
@@ -244,7 +247,7 @@ class RoiSelectionHandles:
             _, ey = self.view()._pos_to_tuple(pos)
             y0, y1 = sorted([r0.top(), ey])
             rect.setRect(r0.x(), y0, r0.width(), y1 - y0)
-            self._view.current_roi_updated.emit()
+            self._view._roi_moved_by_handle(rect)
 
         @h_l.moved_by_mouse.connect
         def _l_moved(pos, last_pos):
@@ -252,7 +255,7 @@ class RoiSelectionHandles:
             ex, _ = self.view()._pos_to_tuple(pos)
             x0, x1 = sorted([r0.right(), ex])
             rect.setRect(x0, r0.y(), x1 - x0, r0.height())
-            self._view.current_roi_updated.emit()
+            self._view._roi_moved_by_handle(rect)
 
         @h_r.moved_by_mouse.connect
         def _r_moved(pos, last_pos):
@@ -260,7 +263,7 @@ class RoiSelectionHandles:
             ex, _ = self.view()._pos_to_tuple(pos)
             x0, x1 = sorted([r0.left(), ex])
             rect.setRect(x0, r0.y(), x1 - x0, r0.height())
-            self._view.current_roi_updated.emit()
+            self._view._roi_moved_by_handle(rect)
 
         @rect.changed.connect
         def _rect_changed(r: QtCore.QRectF):
@@ -276,7 +279,7 @@ class RoiSelectionHandles:
             h_b.setCenter((bl + br) / 2)
             h_l.setCenter((tl + bl) / 2)
             h_r.setCenter((tr + br) / 2)
-            self._view.current_roi_updated.emit()
+            self._view._roi_moved_by_handle(rect)
 
     def connect_path(self, path: QPolygonRoi | QSegmentedLineRoi):
         self.clear_handles()
@@ -284,7 +287,9 @@ class RoiSelectionHandles:
         for i in range(_path.elementCount()):
             element = _path.elementAt(i)
             h = self.make_handle_at(QtCore.QPointF(element.x, element.y))
-            h.moved_by_mouse.connect(lambda pos, _, i=i: path.update_point(i, pos))
+            h.moved_by_mouse.connect(
+                lambda pos, _, i=i: path.update_point(i, pos, self.view())
+            )
 
         @path.changed.connect
         def _path_changed(p: QtGui.QPainterPath):
@@ -293,11 +298,13 @@ class RoiSelectionHandles:
             for i in range(len(self._handles), p.elementCount() - offset):
                 element = p.elementAt(i)
                 h = self.make_handle_at(QtCore.QPointF(element.x, element.y))
-                h.moved_by_mouse.connect(lambda pos, _, i=i: path.update_point(i, pos))
+                h.moved_by_mouse.connect(
+                    lambda pos, _, i=i: path.update_point(i, pos, self.view())
+                )
             for i, h in enumerate(self._handles):
                 element = p.elementAt(i)
                 h.setCenter(QtCore.QPointF(element.x, element.y))
-            self._view.current_roi_updated.emit()
+            self._view._roi_moved_by_handle(path)
 
         self.draw_finished.connect(lambda: self._finish_drawing_path(path))
 
@@ -309,13 +316,15 @@ class RoiSelectionHandles:
         @point.changed.connect
         def _point_changed(ps: QtCore.QPointF):
             h.setCenter(ps)
-            self._view.current_roi_updated.emit()
+            self._view._roi_moved_by_handle(point)
 
     def connect_points(self, points: QPointsRoi):
         self.clear_handles()
         for i in range(points.count()):
             h = self.make_handle_at(points.pointAt(i))
-            h.moved_by_mouse.connect(lambda pos, _, i=i: points.update_point(i, pos))
+            h.moved_by_mouse.connect(
+                lambda pos, _, i=i: points.update_point(i, pos, self.view())
+            )
 
         @points.changed.connect
         def _points_changed(ps: list[QtCore.QPointF]):
@@ -323,11 +332,11 @@ class RoiSelectionHandles:
             for i in range(len(self._handles), len(ps)):
                 h = self.make_handle_at(ps[i])
                 h.moved_by_mouse.connect(
-                    lambda pos, _, i=i: points.update_point(i, pos)
+                    lambda pos, _, i=i: points.update_point(i, pos, self.view())
                 )
             for i, h in enumerate(self._handles):
                 h.setCenter(ps[i])
-            self._view.current_roi_updated.emit()
+            self._view._roi_moved_by_handle(points)
 
     def connect_circle(self, circle: QCircleRoi):
         self.clear_handles()
@@ -337,18 +346,20 @@ class RoiSelectionHandles:
         @h_c.moved_by_mouse.connect
         def _c_moved(pos: QtCore.QPointF, last_pos):
             circle.setCenterAndRadius((pos.x(), pos.y()), circle.radius())
+            self._view._roi_moved_by_handle(circle)
 
         @h_br.moved_by_mouse.connect
         def _br_moved(pos: QtCore.QPointF, last_pos):
             radius = abs(pos.x() - circle.center().x())
             center = circle.center()
             circle.setCenterAndRadius((center.x(), center.y()), radius)
+            self._view._roi_moved_by_handle(circle)
 
         @circle.changed.connect
         def _circle_changed(rect: QtCore.QRectF):
             h_c.setCenter(circle.center())
             h_br.setCenter(circle.rect().bottomRight())
-            self._view.current_roi_updated.emit()
+            self._view._roi_moved_by_handle(circle)
 
     def connect_rotated_rect(self, rect: QRotatedRectangleRoi):
         self.clear_handles()
@@ -367,17 +378,17 @@ class RoiSelectionHandles:
             dist_vec = pos_rel - pos_proj
             dist = math.sqrt(dist_vec.x() ** 2 + dist_vec.y() ** 2)
             rect.set_width(dist * 2)
-            self._view.current_roi_updated.emit()
+            self._view._roi_moved_by_handle(rect)
 
         @h_l.moved_by_mouse.connect
         def _l_moved(pos, last_pos):
             rect.set_start(pos)
-            self._view.current_roi_updated.emit()
+            self._view._roi_moved_by_handle(rect)
 
         @h_r.moved_by_mouse.connect
         def _r_moved(pos, last_pos):
             rect.set_end(pos)
-            self._view.current_roi_updated.emit()
+            self._view._roi_moved_by_handle(rect)
 
         @rect.changed.connect
         def _rect_changed():
@@ -385,7 +396,7 @@ class RoiSelectionHandles:
             h_r.setCenter(rect.end())
             h_t.setCenter(rect.top())
             h_b.setCenter(rect.bottom())
-            self._view.current_roi_updated.emit()
+            self._view._roi_moved_by_handle(rect)
 
     def connect_roi(self, roi_item):
         if isinstance(roi_item, QLineRoi):

@@ -202,7 +202,7 @@ class _MultiRoiMouseEvents(RoiMouseEvents[_R]):
     def released(self, event: QtGui.QMouseEvent):
         if self._pos_drag_start is None:
             return
-        if self._pos_drag_start != event.pos():
+        if not self.is_click(event):
             return
         if self.selection_handles.is_drawing_polygon():
             p0 = self._view.mapToScene(self._pos_drag_start)
@@ -240,7 +240,7 @@ class _SegmentedTypeRoiMouseEvents(_MultiRoiMouseEvents[_R1]):
                 else:
                     num = item.count()
                     if num > 1:
-                        item.update_point(num - 1, pos)
+                        item.update_point(num - 1, pos, self._view)
                         self._view.current_roi_updated.emit()
 
 
@@ -403,10 +403,7 @@ class PointRoiMouseEvents(RoiMouseEvents[QPointRoi]):
             self._pos_drag_prev = event.pos()
 
     def released(self, event: QtGui.QMouseEvent):
-        if (
-            event.button() == Qt.MouseButton.LeftButton
-            and self._pos_drag_start == event.pos()  # clicked
-        ):
+        if event.button() == Qt.MouseButton.LeftButton and self.is_click(event):
             pos = self._view.mapToScene(event.pos())
             self._view.remove_current_item(reason=f"stop drawing {self._view.mode()}")
             self.make_roi(pos.x(), pos.y(), self._view._roi_pen)
