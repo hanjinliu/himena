@@ -313,6 +313,12 @@ class QImageGraphicsView(QBaseGraphicsView):
                 f"Mouse mode:<br>{mode_name}", duration=2, behavior="until_move"
             )
 
+    def _roi_moved_by_handle(self, roi: QRoi):
+        self.current_roi_updated.emit()
+        xscale = yscale = self._scale_bar_widget._scale
+        unit = self._scale_bar_widget._unit
+        show_tooltip(roi.short_description(xscale, yscale, unit))
+
     def setSmoothing(self, enabled: bool):
         """Enable/disable image smoothing."""
         for im in self._image_widgets:

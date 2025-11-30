@@ -8,9 +8,11 @@ import numpy as np
 from typing import Iterable, Iterator, TYPE_CHECKING
 
 from himena.standards import roi
+from himena.widgets import show_tooltip
 
 if TYPE_CHECKING:
     from typing import Self
+    from himena_builtins.qt.widgets._image_components import QImageGraphicsView
 
 
 class QRoi(QtW.QGraphicsItem):
@@ -487,10 +489,11 @@ class QSegmentedLineRoi(QtW.QGraphicsPathItem, QRoi):
         """Number of points in the line."""
         return self.path().elementCount()
 
-    def update_point(self, ith: int, pos: QtCore.QPointF):
+    def update_point(self, ith: int, pos: QtCore.QPointF, view: QImageGraphicsView):
         path = self.path()
         path.setElementPositionAt(ith, pos.x(), pos.y())
         self.setPath(path)
+        show_tooltip(_tooltip_for_point_from_view(view, ith, pos))
 
     def makeThumbnail(self, pixmap: QtGui.QPixmap) -> QtGui.QPixmap:
         painter = QtGui.QPainter(pixmap)
@@ -512,6 +515,10 @@ class QSegmentedLineRoi(QtW.QGraphicsPathItem, QRoi):
 
     def _roi_type(self) -> str:
         return "segmented line"
+
+    def short_description(self, xscale: float, yscale: float, unit: str) -> str:
+        npoints = self.count()
+        return f"{npoints} points"
 
 
 class QPolygonRoi(QSegmentedLineRoi):
@@ -570,6 +577,8 @@ class QPointRoiBase(QRoi):
         option: QtW.QStyleOptionGraphicsItem,
         widget: QtW.QWidget,
     ):
+        if (scene := self.scene()) is None:
+            return
         painter.setPen(self.pen())
         painter.setBrush(self.brush())
         tr = painter.transform()
@@ -579,7 +588,7 @@ class QPointRoiBase(QRoi):
             xy_transformed = tr.map(pt)
             painter.translate(xy_transformed)
             painter.drawPath(self._symbol)
-        self.scene().update()
+        scene.update()
 
     def makeThumbnail(self, pixmap: QtGui.QPixmap) -> QtGui.QPixmap:
         painter = QtGui.QPainter(pixmap)
@@ -620,6 +629,14 @@ class QPointRoi(QPointRoiBase):
     def translate(self, dx: float, dy: float):
         self.setPoint(QtCore.QPointF(self._point.x() + dx, self._point.y() + dy))
 
+    def short_description(self, xscale: float, yscale: float, unit: str) -> str:
+        x, y = self._point.x(), self._point.y()
+        if not unit:
+            return f"x={x:.1f}<br>y={y:.1f}"
+        x_scaled = x * xscale
+        y_scaled = y * yscale
+        return f"x={x:.1f} ({x_scaled:.1f} {unit})<br>y={y:.1f} ({y_scaled:.1f} {unit})"
+
     def boundingRect(self) -> QtCore.QRectF:
         return QtCore.QRectF(
             self._point.x() - self._size,
@@ -651,10 +668,11 @@ class QPointsRoi(QPointRoiBase):
     def pointAt(self, idx: int) -> QtCore.QPointF:
         return self._points[idx]
 
-    def update_point(self, idx: int, pos: QtCore.QPointF):
+    def update_point(self, idx: int, pos: QtCore.QPointF, view: QImageGraphicsView):
         self._points[idx] = pos
         self.changed.emit(self._points)
         self._bounding_rect_cache = None
+        show_tooltip(_tooltip_for_point_from_view(view, idx, pos))
 
     def toRoi(self) -> roi.PointsRoi2D:
         xs: list[float] = []
@@ -675,6 +693,10 @@ class QPointsRoi(QPointRoiBase):
         self._points.append(pos)
         self.changed.emit(self._points)
         self._bounding_rect_cache = None
+
+    def short_description(self, xscale: float, yscale: float, unit: str) -> str:
+        npoints = len(self._points)
+        return f"{npoints} points"
 
     def boundingRect(self) -> QtCore.QRectF:
         if self._bounding_rect_cache is None:
@@ -785,6 +807,25 @@ class QCircleRoi(QtW.QGraphicsEllipseItem, QRoi):
 def _may_be_ints(*values: float) -> list[int | float]:
     """Convert values to int if they are close to an integer."""
     return [int(v) if abs(v - round(v)) < 1e-6 else v for v in values]
+
+
+def _tooltip_for_point_from_view(
+    view: QImageGraphicsView, ith: int, pos: QtCore.QPointF
+):
+    xscale = yscale = view._scale_bar_widget._scale
+    unit = view._scale_bar_widget._unit
+    return _tooltip_for_point(xscale, yscale, unit, ith, pos)
+
+
+def _tooltip_for_point(
+    xscale: float, yscale: float, unit: str, ith: int, pos: QtCore.QPointF
+):
+    if unit:
+        x_scaled = pos.x() * xscale
+        y_scaled = pos.y() * yscale
+        return f"Point {ith}<br>x={pos.x():.1f} ({x_scaled:.1f} {unit})<br>y={pos.y():.1f} ({y_scaled:.1f} {unit})"
+    else:
+        return f"Point {ith}<br>x={pos.x():.1f}<br>y={pos.y():.1f})"
 
 
 class MouseMode(Enum):
