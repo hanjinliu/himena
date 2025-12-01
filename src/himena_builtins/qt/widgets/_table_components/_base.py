@@ -374,6 +374,15 @@ class QTableBase(QtW.QTableView):
                 r, c = index.row(), index.column()
                 if self._selection_model.current_index != (r, c):
                     self._selection_model.move_to(r, c)
+                if self._selection_model.ranges:
+                    rng = self._selection_model.ranges[-1]
+                    rr = rng[0].stop - rng[0].start
+                    cc = rng[1].stop - rng[1].start
+                    self._ui.show_tooltip(
+                        f"Row = {r}<br>Column = {c}<br>Selection = {rr} x {cc}"
+                    )
+                else:
+                    self._ui.show_tooltip(f"Row = {r}<br>Column = {c}")
 
     def mouseReleaseEvent(self, e: QtGui.QMouseEvent) -> None:
         """Delete last position."""
@@ -402,6 +411,7 @@ class QTableBase(QtW.QTableView):
         self._mouse_track.last_click_pos = None
         self._mouse_track.last_drag_pos = None
         self._mouse_track.last_button = None
+        self._ui.show_tooltip("")
         self._selection_model.set_shift(
             e.modifiers() & Qt.KeyboardModifier.ShiftModifier
         )
@@ -417,7 +427,7 @@ class QTableBase(QtW.QTableView):
             elif is_url_string(text_under_cursor):
                 status_tip = "Ctrl+Click to open link in the default browser"
             else:
-                status_tip = ""
+                status_tip = text_under_cursor
                 self.setCursor(QtCore.Qt.CursorShape.ArrowCursor)
             self._ui.set_status_tip(status_tip, 2.6)
         else:
