@@ -8,7 +8,7 @@ from himena.utils import proxy
 
 
 if TYPE_CHECKING:
-    from ._base import QTableBase
+    from himena_builtins.qt.widgets._table_components import QTableBase
 
 
 class QHeaderViewBase(QtW.QHeaderView):
@@ -16,7 +16,7 @@ class QHeaderViewBase(QtW.QHeaderView):
 
     _Orientation: Qt.Orientation
 
-    def __init__(self, parent: QtW.QWidget | None = None) -> None:
+    def __init__(self, parent: QTableBase | None = None) -> None:
         super().__init__(self._Orientation, parent)
         self.setSelectionMode(QtW.QHeaderView.SelectionMode.SingleSelection)
         self.setSectionsClickable(True)
@@ -85,6 +85,14 @@ class QHeaderViewBase(QtW.QHeaderView):
 
     def mouseReleaseEvent(self, e: QtGui.QMouseEvent) -> None:
         self.selection_model.set_shift(False)
+        if e.button() == Qt.MouseButton.RightButton:
+            # show context menu on header.
+            index = self.logicalIndexAt(e.pos())
+            r0, c0 = self._index_for_selection_model(index)
+            if not self.selection_model.contains((max(r0, 0), max(c0, 0))):
+                self._on_section_pressed(index)
+            if menu := self.parentWidget()._make_context_menu():
+                menu.exec(e.globalPos())
         return super().mouseReleaseEvent(e)
 
     def keyPressEvent(self, e):

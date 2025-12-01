@@ -804,7 +804,7 @@ class QSubWindowTitleBar(QtW.QFrame):
             if _subwin._window_state == WindowState.MIN:
                 # cannot move minimized window
                 return
-        self._store_drag_position(event.globalPos())
+        self._drag_position = self._calc_drag_position(event.globalPos())
         return super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent):
@@ -835,7 +835,7 @@ class QSubWindowTitleBar(QtW.QFrame):
                     _last_geo.width(),
                     _last_geo.height(),
                 )
-                self._store_drag_position(event.globalPos())
+                self._drag_position = self._calc_drag_position(event.globalPos())
             else:
                 # drag the subwindow
                 new_pos = event.globalPos() - self._drag_position
@@ -860,7 +860,8 @@ class QSubWindowTitleBar(QtW.QFrame):
             self._fix_position()
         elif event.button() == Qt.MouseButton.RightButton:
             # context menu
-            if (event.pos() - self._drag_position).manhattanLength() < 10:
+            pos1 = self._calc_drag_position(event.globalPos())
+            if (pos1 - self._drag_position).manhattanLength() < 10:
                 context_menu = self._prep_window_menu()
                 context_menu.exec(event.globalPos())
         return super().mouseReleaseEvent(event)
@@ -937,9 +938,9 @@ class QSubWindowTitleBar(QtW.QFrame):
             main.set_status_tip("")
         return super().leaveEvent(a0)
 
-    def _store_drag_position(self, global_pos: QtCore.QPoint):
+    def _calc_drag_position(self, global_pos: QtCore.QPoint) -> QtCore.QPoint:
         subwin = self._subwindow
-        self._drag_position = global_pos - subwin.frameGeometry().topLeft()
+        return global_pos - subwin.frameGeometry().topLeft()
 
     def _fix_position(self):
         self_pos = self.mapToGlobal(self._subwindow.rect().topRight())

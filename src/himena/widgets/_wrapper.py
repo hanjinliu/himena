@@ -340,6 +340,16 @@ class SubWindow(WidgetWrapper[_W], Layout):
         self._set_rect(value, inst)
 
     @property
+    def value(self):
+        """Get the value of the internal widget data model."""
+        return self.to_model().value
+
+    @value.setter
+    def value(self, value: Any) -> None:
+        """Set the value of the internal widget data model."""
+        self.update_value(value)
+
+    @property
     def is_alive(self) -> bool:
         """Whether the sub-window is present in a main window."""
         return self._alive
