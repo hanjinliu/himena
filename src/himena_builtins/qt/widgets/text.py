@@ -17,7 +17,7 @@ from himena.utils.collections import OrderedSet
 from himena.utils.misc import lru_cache
 from himena.qt._qcoloredit import QColorSwatch
 from himena_builtins.qt.widgets._text_base import QMainTextEdit, POINT_SIZES, TAB_SIZES
-from himena_builtins.qt.widgets._shared import labeled
+from himena_builtins.qt.widgets._shared import labeled, spacer_widget
 
 if TYPE_CHECKING:
     from himena.style import Theme
@@ -315,13 +315,9 @@ class QRichTextEditControl(QtW.QWidget):
         self._toggle_strike_button = _make_btn(
             "<s>S</s>", tooltip="Toggle Strike", callback=self._on_toggle_strike
         )
-        spacer = QtW.QWidget()
-        spacer.setSizePolicy(
-            QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Preferred
-        )
         layout = QtW.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(spacer)
+        layout.addWidget(spacer_widget())
         layout.addWidget(self._foreground_color_edit)
         layout.addWidget(self._background_color_edit)
         layout.addWidget(self._toggle_bold_button)
@@ -446,7 +442,7 @@ class QTextControl(QtW.QWidget):
         layout = QtW.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        layout.addWidget(QtW.QWidget())  # spacer
+        layout.addWidget(spacer_widget())
         layout.addWidget(labeled("Ln:", self._line_num))
         layout.addWidget(self._encoding)
         layout.addWidget(self._wordwrap)

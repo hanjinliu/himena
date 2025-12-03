@@ -115,13 +115,13 @@ def test_copy_on_write(himena_ui: MainWindow, qtbot: QtBot, df):
     qtbot.addWidget(view)
     with WidgetTester(view) as tester:
         tester.update_model(value=df, type=StandardType.DATAFRAME)
-        view.edit_item(0, 0, "100")
+        view.edit_cell(0, 0, "100")
         assert_equal(np.array(tester.to_model().value["a"]), [100, -2])
         assert_equal(np.array(df["a"]), [1, -2])
         view2 = QDataFrameView(himena_ui)
         qtbot.addWidget(view2)
         view2.update_model(view.to_model())
-        view.edit_item(1, 1, "0.1")
+        view.edit_cell(1, 1, "0.1")
         assert_equal(np.array(tester.to_model().value["b"]), [3.0, 0.1])
         assert_equal(np.array(df["b"]), [3.0, -4.0])
         assert_equal(np.array(view2.to_model().value["b"]), [3.0, -4.0])
@@ -136,7 +136,7 @@ def test_edit_dataframe(himena_ui: MainWindow, qtbot: QtBot):
     qtbot.addWidget(view)
     with WidgetTester(view) as tester:
         tester.update_model(value=df, type=StandardType.DATAFRAME)
-        view.edit_item(0, 0, "100")
+        view.edit_cell(0, 0, "100")
         assert np.array(tester.to_model().value["int"]).tolist() == [100, 3, 5, 7]
         view.undo()
         assert np.array(tester.to_model().value["int"]).tolist() == [1, 3, 5, 7]

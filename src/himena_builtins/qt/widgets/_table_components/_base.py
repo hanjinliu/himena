@@ -525,6 +525,12 @@ class QTableBase(QtW.QTableView):
             rect = self.visualRect(top_left) | self.visualRect(bottom_right)
             yield rect
 
+    def _get_selected_cols(self) -> set[int]:
+        selected_cols = set[int]()
+        for sel in self._selection_model.ranges:
+            selected_cols.update(range(sel[1].start, sel[1].stop))
+        return selected_cols
+
 
 class QTableEditor(QtW.QLineEdit):
     """Custom cell editor that can smoothly move the focus to the next cell."""

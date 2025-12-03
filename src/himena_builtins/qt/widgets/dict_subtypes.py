@@ -22,7 +22,7 @@ class QDataFrameStack(QDictOfWidgetEdit):
         self._ui = ui
         self._model_type_component = StandardType.DATAFRAME
         self._model_type = StandardType.DATAFRAMES
-        self._control = QDataFramesControl()
+        self._control = QDataFramesControl(self)
 
     def _default_widget(self) -> QDataFrameView:
         table = QDataFrameView(self._ui)
@@ -32,6 +32,21 @@ class QDataFrameStack(QDictOfWidgetEdit):
     @validate_protocol
     def control_widget(self) -> QDataFramesControl:
         return self._control
+
+    @validate_protocol
+    def theme_changed_callback(self, theme):
+        for i in range(self.count()):
+            if isinstance(widget := self.widget(i), QDataFrameView):
+                widget.theme_changed_callback(theme)
+        self._control.update_theme(theme)
+
+    def _auto_resize_columns(self):
+        if isinstance(widget := self.currentWidget(), QDataFrameView):
+            widget._auto_resize_columns()
+
+    def _sort_table_by_column(self):
+        if isinstance(widget := self.currentWidget(), QDataFrameView):
+            widget._sort_table_by_column()
 
 
 class QDataFramesControl(QDataFrameViewControl, QTabControl):

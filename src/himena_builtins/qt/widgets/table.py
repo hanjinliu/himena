@@ -25,6 +25,7 @@ from himena_builtins.qt.widgets._table_components import (
     Editability,
     QToolButtonGroup,
 )
+from himena_builtins.qt.widgets._shared import spacer_widget
 from himena.utils.collections import UndoRedoStack
 from himena.utils import misc, proxy
 
@@ -789,12 +790,6 @@ class QSpreadsheet(QTableBase):
         selected_cols = self._get_selected_cols()
         self.array_delete(selected_cols, axis=1)
 
-    def _get_selected_cols(self) -> set[int]:
-        selected_cols = set[int]()
-        for sel in self._selection_model.ranges:
-            selected_cols.update(range(sel[1].start, sel[1].stop))
-        return selected_cols
-
     def _measure(self):
         ui = get_main_window(self)
         ui.exec_action("builtins:table:measure-selection")
@@ -875,11 +870,7 @@ class QTableControl(QtW.QWidget):
         self._separator_label = QtW.QLabel()
         self._separator: str | None = None
 
-        empty = QtW.QWidget()
-        empty.setSizePolicy(
-            QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Preferred
-        )
-        layout.addWidget(empty)  # empty space
+        layout.addWidget(spacer_widget())
         layout.addWidget(self._info_label)
         layout.addWidget(QtW.QLabel("|"))
         layout.addWidget(self._separator_label)

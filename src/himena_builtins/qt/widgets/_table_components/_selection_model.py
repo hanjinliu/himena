@@ -59,7 +59,7 @@ class SelectionModel:
         self._current_index = Index(*index)
 
     @property
-    def current_range(self) -> tuple[slice, slice] | None:
+    def current_range(self) -> Range | None:
         if len(self._ranges) > 0:
             return self._ranges[-1]
 

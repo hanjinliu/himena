@@ -15,6 +15,7 @@ from himena.plugins import validate_protocol
 
 from himena_builtins.qt.widgets._text_base import QMainTextEdit
 from himena_builtins.qt.widgets._dragarea import QDraggableArea
+from himena_builtins.qt.widgets._shared import spacer_widget
 
 
 class QIpynbEdit(QtW.QScrollArea):
@@ -290,7 +291,7 @@ class QIpynbControl(QtW.QWidget):
         layout = QtW.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        layout.addWidget(QtW.QWidget())  # spacer
+        layout.addWidget(spacer_widget())  # spacer
         layout.addWidget(self._insert_cell_btn)
         layout.addWidget(self._insert_md_btn)
         layout.addWidget(self._delete_cell_btn)
