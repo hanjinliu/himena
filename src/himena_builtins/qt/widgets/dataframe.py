@@ -3,10 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from io import StringIO
 from typing import TYPE_CHECKING, Any, Mapping
-import weakref
 
 from cmap import Color, Colormap
 import numpy as np
+from numpy.typing import NDArray
 from qtpy import QtGui, QtCore, QtWidgets as QtW
 from qtpy.QtCore import Qt
 
@@ -16,23 +16,26 @@ from himena.types import Size, WidgetDataModel, Parametric
 from himena.standards import plotting as hplt, roi as _roi
 from himena.standards.model_meta import DataFrameMeta, TableMeta, DataFramePlotMeta
 from himena.utils.collections import UndoRedoStack
+from himena.utils import proxy
 from himena.plugins import validate_protocol, register_function, config_field
-from himena.qt import drag_command
 from himena.data_wrappers import wrap_dataframe, DataFrameWrapper
 from himena_builtins.qt.widgets._table_components import (
     QTableBase,
     QSelectionRangeEdit,
     format_table_value,
-    QHorizontalHeaderView,
+    QDraggableHorizontalHeader,
+    QToolButtonGroup,
     Editability,
     FLAGS,
     parse_string,
 )
 from himena_builtins.qt.widgets._splitter import QSplitterHandle
-from himena_builtins.qt.widgets._dragarea import QDraggableArea
+from himena_builtins.qt.widgets._shared import spacer_widget, index_contains
 
 if TYPE_CHECKING:
     from himena_builtins.qt.widgets._table_components._selection_model import Index
+
+    _Index = int | slice | NDArray[np.integer]
 
 
 class QDataFrameModel(QtCore.QAbstractTableModel):
@@ -43,6 +46,7 @@ class QDataFrameModel(QtCore.QAbstractTableModel):
         self._df = df
         self._transpose = transpose
         self._cfg = DataFrameConfigs()
+        self._proxy: proxy.TableProxy = proxy.IdentityProxy()
 
     @property
     def df(self) -> DataFrameWrapper:
@@ -70,7 +74,8 @@ class QDataFrameModel(QtCore.QAbstractTableModel):
         if role in (Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.EditRole):
             df = self.df
             if r < df.num_rows() and c < df.num_columns():
-                value = df[r, c]
+                r1 = self._proxy.map(r)
+                value = df[r1, c]
                 dtype = df.get_dtype(c)
                 if role == Qt.ItemDataRole.DisplayRole:
                     text = format_table_value(value, dtype.kind)
@@ -126,77 +131,6 @@ class QDataFrameModel(QtCore.QAbstractTableModel):
         def parent(self) -> QDataFrameView: ...
 
 
-class QDraggableHorizontalHeader(QHorizontalHeaderView):
-    """Header view for DataFrameView that supports drag and drop."""
-
-    def __init__(self, parent: QDataFrameView):
-        super().__init__(parent)
-        self._table_view_ref = weakref.ref(parent)
-        self.setMouseTracking(True)
-        self._hover_drag_indicator = QDraggableArea(self)
-        self._hover_drag_indicator.setWindowFlags(
-            QtCore.Qt.WindowType.FramelessWindowHint
-        )
-        self._hover_drag_indicator.setFixedSize(14, 14)
-        self._hover_drag_indicator.hide()
-        self._hover_drag_indicator.dragged.connect(self._drag_event)
-        self._drag_enabled = True
-
-    def mouseMoveEvent(self, e: QtGui.QMouseEvent):
-        view = self._table_view_ref()
-        if view is None or not self._drag_enabled:
-            return super().mouseMoveEvent(e)
-        if e.button() == QtCore.Qt.MouseButton.NoButton:
-            # hover
-            index = self.logicalIndexAt(e.pos())
-            self._process_move_event(index)
-        return super().mouseMoveEvent(e)
-
-    def _process_move_event(self, index: int):
-        view = self._table_view_ref()
-        hovered_column_selected = False
-        for sel in view.selection_model.iter_col_selections():
-            if sel.start <= index < sel.stop:
-                hovered_column_selected = True
-                break
-        if hovered_column_selected and index >= 0:
-            index_rect = self.visualRectAtIndex(index)
-            top_right = index_rect.topRight()
-            top_right.setX(top_right.x() - 14)
-            dy = (index_rect.height() - self._hover_drag_indicator.height()) / 2
-            top_right.setY(top_right.y() + int(dy))
-            self._hover_drag_indicator.move(top_right)
-            self._hover_drag_indicator.show()
-        else:
-            self._hover_drag_indicator.hide()
-
-    def leaveEvent(self, a0):
-        self._hover_drag_indicator.hide()
-        return super().leaveEvent(a0)
-
-    def _data_model_for_drag(self) -> QtGui.QDrag | None:
-        view = self._table_view_ref()
-        if view is None or not self._drag_enabled:
-            return
-        cols = [sel.start for sel in view.selection_model.iter_col_selections()]
-        model = view.to_model()
-        df = wrap_dataframe(model.value)
-        s = "" if len(cols) == 1 else "s"
-        return drag_command(
-            view,
-            "builtins:QDataFrameView:select-columns",
-            StandardType.DATAFRAME,
-            with_params={"columns": cols},
-            desc=f"{df.num_columns()} column{s}",
-            text_data=lambda: df.to_csv_string("\t"),
-            exec=False,
-        )
-
-    def _drag_event(self):
-        if drag := self._data_model_for_drag():
-            drag.exec()
-
-
 class QDataFrameView(QTableBase):
     """A table widget for viewing DataFrame.
 
@@ -218,7 +152,7 @@ class QDataFrameView(QTableBase):
     __himena_widget_id__ = "builtins:QDataFrameView"
     __himena_display_name__ = "Built-in DataFrame Viewer"
 
-    def __init__(self, ui):
+    def __init__(self, ui: MainWindow):
         super().__init__(ui)
         self._hor_header = QDraggableHorizontalHeader(self)
         self.setHorizontalHeader(self._hor_header)
@@ -275,6 +209,11 @@ class QDataFrameView(QTableBase):
         return self._model_type
 
     @validate_protocol
+    def theme_changed_callback(self, theme):
+        if self._control is not None:
+            self._control.update_theme(theme)
+
+    @validate_protocol
     def update_configs(self, cfg: DataFrameConfigs):
         self._sep_on_copy = cfg.separator_on_copy.encode().decode("unicode_escape")
         self._hor_header._drag_enabled = cfg.column_drag_enabled
@@ -304,7 +243,7 @@ class QDataFrameView(QTableBase):
     @validate_protocol
     def control_widget(self):
         if self._control is None:
-            self._control = QDataFrameViewControl()
+            self._control = QDataFrameViewControl(self)
         return self._control
 
     def keyPressEvent(self, e: QtGui.QKeyEvent) -> None:
@@ -335,28 +274,21 @@ class QDataFrameView(QTableBase):
             action.apply(self)
             self.update()
 
-    def edit_item(self, r: int, c: int, value: str):
-        self.model().setData(self.model().index(r, c), value, Qt.ItemDataRole.EditRole)
+    def edit_cell(self, r: int, c: int, value: str):
+        """Emulate editing an item at (r, c) with the given string value."""
+        idx = self.model().index(r, c)
+        self.model().setData(idx, value, Qt.ItemDataRole.EditRole)
         # datChanged needs to be emitted manually
-        self.model().dataChanged.emit(
-            self.model().index(r, c),
-            self.model().index(r, c),
-            [Qt.ItemDataRole.EditRole],
-        )
+        self.model().dataChanged.emit(idx, idx, [Qt.ItemDataRole.EditRole])
 
     def copy_data(self, header: bool = False):
         rng = self._selection_model.get_single_range()
 
-        rsl, csl = rng
-        r0, r1 = rsl.start, rsl.stop
-        c0, c1 = csl.start, csl.stop
-        csv_text = (
-            self.model()
-            .df.get_subset(r0, r1, c0, c1)
-            .to_csv_string("\t", header=header)
-        )
-        clipboard = QtGui.QGuiApplication.clipboard()
-        clipboard.setText(csv_text)
+        r, c = rng
+        r1 = self._map_row_index(r)
+        csv_text = self.model().df.get_subset(r1, c).to_csv_string("\t", header=header)
+        if clipboard := QtGui.QGuiApplication.clipboard():
+            clipboard.setText(csv_text)
 
     def paste_data(self, text: str):
         """Paste a text data to the selected cells."""
@@ -366,7 +298,10 @@ class QDataFrameView(QTableBase):
         arr_paste = np.loadtxt(
             buf, dtype=np.dtypes.StringDType(), delimiter="\t", ndmin=2
         )
-        rsl, csl = self._selection_model.current_range
+        if cur_range := self._selection_model.current_range:
+            rsl, csl = cur_range
+        else:
+            raise ValueError("No selection to paste data into.")
         r0, r1 = rsl.start, rsl.stop
         c0, c1 = csl.start, csl.stop
         if r1 - r0 == 1 and c1 - c0 == 1:
@@ -379,6 +314,8 @@ class QDataFrameView(QTableBase):
             arr_paste = np.full(
                 (r1 - r0, c1 - c0), arr_paste[0, 0], dtype=arr_paste.dtype
             )
+            r1 = r0 + arr_paste.shape[0]
+            c1 = c0 + arr_paste.shape[1]
         elif arr_paste.shape != (r1 - r0, c1 - c0):
             raise ValueError(
                 f"Pasted data shape {arr_paste.shape} does not match selection shape {(r1 - r0, c1 - c0)}."
@@ -392,39 +329,95 @@ class QDataFrameView(QTableBase):
                 parse_string(each, dtype_kind) for each in arr_paste[:, ci - c0]
             ]
 
-        self.dataframe_update((r0, c0), wrap_dataframe(df_paste))
+        self.dataframe_update((slice(r0, r1), slice(c0, c1)), wrap_dataframe(df_paste))
         self.update()
 
     def dataframe_update(
         self,
-        top_left: tuple[int, int],
+        index: tuple[_Index, _Index],
         df: DataFrameWrapper,
         record_undo: bool = True,
     ):
-        r0, c0 = top_left
-        r1, c1 = r0 + df.num_rows(), c0 + df.num_columns()
+        r, c = index
+        r1 = self._map_row_index(r)
         _model = self.model()
-        old = _model.df.get_subset(r0, r1, c0, c1).copy()
-        if r1 > _model.df.num_rows() or c1 > _model.df.num_columns():
-            raise ValueError("Pasting values exceed the table dimensions.")
+        if isinstance(r1, int | np.integer):
+            r1 = slice(r1, r1 + 1)
+        if isinstance(c, slice):
+            crange = range(c.start, c.stop)
+            csl = c
+        elif isinstance(c, np.ndarray):
+            crange = c
+            csl = c
+        else:
+            crange = [c]
+            csl = slice(c, c + 1)
+        old = _model.df.get_subset(r1, csl).copy()
 
         column_names = _model.df.column_names()
         _df_updated = _model.df
-        for i_col in range(c0, c1):
+        for i_col in crange:
             name = column_names[i_col]
             target = _model.df.column_to_array(name).copy()
-            target[r0:r1] = df.column_to_array(name)
+            target[r1] = df.column_to_array(name)
             _df_updated = _df_updated.with_columns({name: target})
-        new = _df_updated.get_subset(r0, r1, c0, c1).copy()
+        new = _df_updated.get_subset(r1, csl).copy()
         _model._df = _df_updated
+        if isinstance(prx := self._table_proxy(), proxy.SortProxy) and index_contains(
+            prx.index, c
+        ):
+            self._recalculate_proxy()
         if record_undo:
-            self._undo_stack.push(EditAction(old, new, (r0, c0)))
+            self._undo_stack.push(EditAction(old, new, index))
 
     def _make_context_menu(self):
         menu = QtW.QMenu(self)
         menu.addAction("Copy", self.copy_data)
         menu.addAction("Copy With Header", lambda: self.copy_data(header=True))
         return menu
+
+    def _auto_resize_columns(self):
+        """Resize all the columns."""
+        self.resizeColumnsToContents()
+
+    def _sort_table_by_column(self):
+        """Sort the table by the current column."""
+        if self.model()._transpose:
+            raise NotImplementedError("Sorting is not supported for transposed table.")
+        if selected_cols := self._get_selected_cols():
+            c = min(selected_cols)
+            model = self.model()
+            if isinstance(model._proxy, proxy.IdentityProxy):
+                model._proxy = proxy.SortProxy.from_dataframe(c, model.df)
+            elif isinstance(pxy := model._proxy, proxy.SortProxy):
+                if c != pxy.index:
+                    model._proxy = proxy.SortProxy.from_dataframe(c, model.df)
+                elif pxy._ascending:
+                    model._proxy = pxy.switch_ascending()
+                else:
+                    model._proxy = proxy.IdentityProxy()
+            else:
+                model._proxy = proxy.IdentityProxy()
+            self.update()
+
+    def _table_proxy(self) -> proxy.TableProxy:
+        return self.model()._proxy
+
+    def _recalculate_proxy(self):
+        if isinstance(prx := self._table_proxy(), proxy.SortProxy):
+            self.model()._proxy = prx.from_dataframe(
+                prx.index, self.model().df, ascending=prx.ascending
+            )
+
+    def _map_row_index(self, r: _Index) -> _Index:
+        if isinstance(prx := self._table_proxy(), proxy.SortProxy):
+            if isinstance(r, slice):
+                r1 = prx.map(np.arange(r.start, r.stop))
+            else:
+                r1 = prx.map(r)
+        else:
+            r1 = r
+        return r1
 
     if TYPE_CHECKING:
 
@@ -440,7 +433,9 @@ def select_columns(model: WidgetDataModel) -> Parametric:
         nrows = df.num_rows()
         dict_out = {}
         for icol in columns:
-            dict_out.update(df.get_subset(0, nrows, icol, icol + 1).to_dict())
+            dict_out.update(
+                df.get_subset(slice(0, nrows), slice(icol, icol + 1)).to_dict()
+            )
         df = df.from_dict(dict_out)
         return model.with_value(df.unwrap())
 
@@ -473,7 +468,6 @@ class QDictView(QDataFrameView):
         self.control_widget().update_for_table(self)
         self._model_type = model.type
         self.update()
-        return None
 
     @validate_protocol
     def to_model(self) -> WidgetDataModel:
@@ -489,7 +483,9 @@ class QDictView(QDataFrameView):
 
 
 class QDataFrameViewControl(QtW.QWidget):
-    def __init__(self):
+    """A control widget for QDataFrameView."""
+
+    def __init__(self, table: QDataFrameView):
         super().__init__()
         _R_CENTER = (
             QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter
@@ -499,8 +495,17 @@ class QDataFrameViewControl(QtW.QWidget):
         layout.setAlignment(_R_CENTER)
         self._label = QtW.QLabel("")
         self._label.setAlignment(_R_CENTER)
-        layout.addWidget(self._label)
         self._selection_range = QSelectionRangeEdit()
+
+        groupbox_other = QToolButtonGroup(self)
+        self._tool_buttons = [
+            groupbox_other.add_tool_button(table._auto_resize_columns, "resize_col"),
+            groupbox_other.add_tool_button(table._sort_table_by_column, "sort_table"),
+        ]
+
+        layout.addWidget(spacer_widget())
+        layout.addWidget(self._label)
+        layout.addWidget(groupbox_other)
         layout.addWidget(self._selection_range)
 
     def update_for_table(self, table: QDataFrameView | None):
@@ -511,6 +516,11 @@ class QDataFrameViewControl(QtW.QWidget):
             f"{model.df.type_name()} ({model.rowCount()}, {model.columnCount()})"
         )
         self._selection_range.connect_table(table)
+
+    def update_theme(self, theme):
+        """Update the theme of the control."""
+        for btn in self._tool_buttons:
+            btn.update_theme(theme)
 
 
 class QDataFramePlotView(QtW.QSplitter):
@@ -613,7 +623,6 @@ class QDataFramePlotView(QtW.QSplitter):
         self._plot_widget.update_model(model_plot)
         self._model_type = model.type
         self._color_cycle = [c.hex for c in colors]
-        return None
 
     @validate_protocol
     def to_model(self) -> WidgetDataModel:
@@ -698,7 +707,6 @@ class QDataFramePlotView(QtW.QSplitter):
         self._plot_widget.update_model(
             WidgetDataModel(value=axes_layout, type=StandardType.PLOT)
         )
-        return None
 
 
 @dataclass
@@ -714,7 +722,7 @@ class DataFrameConfigs:
 class EditAction:
     old: DataFrameWrapper
     new: DataFrameWrapper
-    index: tuple[int, int]
+    index: tuple[_Index, _Index]
 
     def invert(self) -> EditAction:
         return EditAction(self.new, self.old, self.index)

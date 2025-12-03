@@ -6,6 +6,7 @@ from qtpy.QtCore import Qt
 import pandas as pd
 import polars as pl
 from himena import MainWindow, StandardType, create_model
+from himena.core import create_dataframe_model
 from himena.testing.subwindow import WidgetTester
 from himena.workflow import CommandExecution
 from himena_builtins.qt.dataframe import QDataFrameView, QDataFramePlotView
@@ -115,13 +116,13 @@ def test_copy_on_write(himena_ui: MainWindow, qtbot: QtBot, df):
     qtbot.addWidget(view)
     with WidgetTester(view) as tester:
         tester.update_model(value=df, type=StandardType.DATAFRAME)
-        view.edit_item(0, 0, "100")
+        view.edit_cell(0, 0, "100")
         assert_equal(np.array(tester.to_model().value["a"]), [100, -2])
         assert_equal(np.array(df["a"]), [1, -2])
         view2 = QDataFrameView(himena_ui)
         qtbot.addWidget(view2)
         view2.update_model(view.to_model())
-        view.edit_item(1, 1, "0.1")
+        view.edit_cell(1, 1, "0.1")
         assert_equal(np.array(tester.to_model().value["b"]), [3.0, 0.1])
         assert_equal(np.array(df["b"]), [3.0, -4.0])
         assert_equal(np.array(view2.to_model().value["b"]), [3.0, -4.0])
@@ -136,7 +137,7 @@ def test_edit_dataframe(himena_ui: MainWindow, qtbot: QtBot):
     qtbot.addWidget(view)
     with WidgetTester(view) as tester:
         tester.update_model(value=df, type=StandardType.DATAFRAME)
-        view.edit_item(0, 0, "100")
+        view.edit_cell(0, 0, "100")
         assert np.array(tester.to_model().value["int"]).tolist() == [100, 3, 5, 7]
         view.undo()
         assert np.array(tester.to_model().value["int"]).tolist() == [1, 3, 5, 7]
@@ -198,6 +199,44 @@ def test_dict_view(himena_ui: MainWindow, qtbot: QtBot, input_value):
     with WidgetTester(view) as tester:
         tester.update_model(value=input_value, type=StandardType.DICT)
         tester.cycle_model()
+
+def test_dataframe_sort(himena_ui: MainWindow, qtbot: QtBot):
+    ss = QDataFrameView(himena_ui)
+    qtbot.addWidget(ss)
+    ss.show()
+    ss.update_model(create_dataframe_model({"col1": ["b", "a", "c"], "col2": [2, 1, 3]}))
+    ss.selection_model.set_ranges([(slice(0, 1), slice(0, 1))])
+    ss._sort_table_by_column()
+    # value itself should not change
+    _data_frame_equal(ss.to_model().value, {"col1": ["b", "a", "c"], "col2": [2, 1, 3]})
+    def _data_displayed():
+        _model = ss.model()
+        out = np.zeros((_model.rowCount(), _model.columnCount()), dtype=np.dtypes.StringDType())
+        for r in range(_model._df.num_rows()):
+            for c in range(_model._df.num_columns()):
+                out[r, c] = ss.model().data(ss.model().index(r, c))
+        return out
+
+    # but the displayed data should be sorted
+    assert_equal(_data_displayed(), [["a", "1"], ["b", "2"], ["c", "3"]])
+    # reverse sort
+    ss._sort_table_by_column()
+    assert_equal(_data_displayed(), [["c", "3"], ["b", "2"], ["a", "1"]])
+    ss._sort_table_by_column()
+    assert_equal(_data_displayed(), [["b", "2"], ["a", "1"], ["c", "3"]])
+
+    # update, expand etc
+    ss._sort_table_by_column()
+    assert_equal(_data_displayed(), [["a", "1"], ["b", "2"], ["c", "3"]])
+    ss.edit_cell(1, 1, "10")
+    assert_equal(_data_displayed(), [["a", "1"], ["b", "10"], ["c", "3"]])
+    ss.edit_cell(1, 0, "d")
+    assert_equal(_data_displayed(), [["a", "1"], ["c", "3"], ["d", "10"]])
+
+    ss.undo()
+    ss.undo()
+    ss.redo()
+    ss.redo()
 
 def _data_frame_equal(a: dict, b: dict):
     for k in a.keys():

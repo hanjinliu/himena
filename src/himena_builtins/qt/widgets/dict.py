@@ -89,7 +89,6 @@ class QDictOfWidgetEdit(QtW.QTabWidget):
 
     def _on_tab_changed(self, index: int):
         self.control_widget().update_for_component(self.widget(index))
-        return None
 
     def _tabbar_right_clicked(self, index: int):
         if index < 0:  # Clicked on the empty space

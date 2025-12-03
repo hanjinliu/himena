@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import overload
 import numpy as np
+from himena.data_wrappers import DataFrameWrapper
 
 
 class TableProxy(ABC):
@@ -44,6 +45,18 @@ class SortProxy(TableProxy):
     ) -> SortProxy:
         arr1d = arr[:, index]
         sorted_indices = np.argsort(arr1d)
+        return cls(index, sorted_indices, ascending=ascending)
+
+    @classmethod
+    def from_dataframe(
+        cls,
+        index: int,
+        df: DataFrameWrapper,
+        ascending: bool = True,
+    ) -> SortProxy:
+        column_name = df.column_names()[index]
+        ser = df.column_to_array(column_name)
+        sorted_indices = np.argsort(ser)
         return cls(index, sorted_indices, ascending=ascending)
 
     def map(self, index):

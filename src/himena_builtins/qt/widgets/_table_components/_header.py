@@ -1,14 +1,19 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Iterator
 import warnings
+import weakref
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt
 
+from himena import StandardType
 from himena.utils import proxy
-
+from himena.qt import drag_command
+from himena.data_wrappers import wrap_dataframe
+from himena_builtins.qt.widgets._dragarea import QDraggableArea
 
 if TYPE_CHECKING:
     from himena_builtins.qt.widgets._table_components import QTableBase
+    from himena_builtins.qt.widgets.dataframe import QDataFrameView
 
 
 class QHeaderViewBase(QtW.QHeaderView):
@@ -213,3 +218,74 @@ class QVerticalHeaderView(QHeaderViewBase):
 
     def _index_for_selection_model(self, logicalIndex):
         return logicalIndex, -1
+
+
+class QDraggableHorizontalHeader(QHorizontalHeaderView):
+    """Header view for DataFrameView that supports drag and drop."""
+
+    def __init__(self, parent: QDataFrameView):
+        super().__init__(parent)
+        self._table_view_ref = weakref.ref(parent)
+        self.setMouseTracking(True)
+        self._hover_drag_indicator = QDraggableArea(self)
+        self._hover_drag_indicator.setWindowFlags(
+            QtCore.Qt.WindowType.FramelessWindowHint
+        )
+        self._hover_drag_indicator.setFixedSize(14, 14)
+        self._hover_drag_indicator.hide()
+        self._hover_drag_indicator.dragged.connect(self._drag_event)
+        self._drag_enabled = True
+
+    def mouseMoveEvent(self, e: QtGui.QMouseEvent):
+        view = self._table_view_ref()
+        if view is None or not self._drag_enabled:
+            return super().mouseMoveEvent(e)
+        if e.button() == QtCore.Qt.MouseButton.NoButton:
+            # hover
+            index = self.logicalIndexAt(e.pos())
+            self._process_move_event(index)
+        return super().mouseMoveEvent(e)
+
+    def _process_move_event(self, index: int):
+        view = self._table_view_ref()
+        hovered_column_selected = False
+        for sel in view.selection_model.iter_col_selections():
+            if sel.start <= index < sel.stop:
+                hovered_column_selected = True
+                break
+        if hovered_column_selected and index >= 0:
+            index_rect = self.visualRectAtIndex(index)
+            top_right = index_rect.topRight()
+            top_right.setX(top_right.x() - 14)
+            dy = (index_rect.height() - self._hover_drag_indicator.height()) / 2
+            top_right.setY(top_right.y() + int(dy))
+            self._hover_drag_indicator.move(top_right)
+            self._hover_drag_indicator.show()
+        else:
+            self._hover_drag_indicator.hide()
+
+    def leaveEvent(self, a0):
+        self._hover_drag_indicator.hide()
+        return super().leaveEvent(a0)
+
+    def _data_model_for_drag(self) -> QtGui.QDrag | None:
+        view = self._table_view_ref()
+        if view is None or not self._drag_enabled:
+            return
+        cols = [sel.start for sel in view.selection_model.iter_col_selections()]
+        model = view.to_model()
+        df = wrap_dataframe(model.value)
+        s = "" if len(cols) == 1 else "s"
+        return drag_command(
+            view,
+            "builtins:QDataFrameView:select-columns",
+            StandardType.DATAFRAME,
+            with_params={"columns": cols},
+            desc=f"{df.num_columns()} column{s}",
+            text_data=lambda: df.to_csv_string("\t"),
+            exec=False,
+        )
+
+    def _drag_event(self):
+        if drag := self._data_model_for_drag():
+            drag.exec()

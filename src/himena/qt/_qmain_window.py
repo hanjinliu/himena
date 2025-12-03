@@ -21,7 +21,7 @@ from app_model.backends.qt import (
     qkey2modelkey,
 )
 from superqt import QIconifyIcon
-from superqt.utils import ensure_main_thread
+from superqt.utils import ensure_main_thread, WorkerBase
 from himena.consts import MenuId
 from himena.consts import ParametricWidgetProtocolNames as PWPN
 from himena.utils.window_rect import prevent_window_overlap
@@ -333,6 +333,10 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             return
         if info := self._status_bar._profile_info:
             info.close()
+        try:
+            WorkerBase.await_workers(500)
+        except RuntimeError:
+            _LOGGER.warning("Some background workers did not finish in time.")
         self._event_loop_handler.close_socket()
         return super().closeEvent(event)
 

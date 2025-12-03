@@ -338,12 +338,13 @@ def test_table_sort(himena_ui: MainWindow, qtbot: QtBot):
     ss._sort_table_by_column()
     # value itself should not change
     assert_equal(ss.to_model().value, [["b", 2], ["a", 1], ["c", 3]])
+
     def _data_displayed():
         _model = ss.model()
         out = np.zeros_like(_model._arr)
         for r in range(_model._arr.shape[0]):
             for c in range(_model._arr.shape[1]):
-                out[r, c] = ss.model().data(ss.model().index(r, c))
+                out[r, c] = _model.data(_model.index(r, c))
         return out
 
     # but the displayed data should be sorted
@@ -360,6 +361,7 @@ def test_table_sort(himena_ui: MainWindow, qtbot: QtBot):
     ss.edit_cell(1, 1, "10")
     assert_equal(_data_displayed(), [["a", "1"], ["b", "10"], ["c", "3"]])
     ss.edit_cell(1, 0, "d")
+    # NOTE: the sorting column is edited.
     assert_equal(_data_displayed(), [["a", "1"], ["c", "3"], ["d", "10"]])
 
     ss.edit_cell(1, 2, "10")

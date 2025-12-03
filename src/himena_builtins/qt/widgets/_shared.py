@@ -35,3 +35,20 @@ def quick_min_max(
     stride = int(np.ceil(down_sample_factor))
     arr_ref = arr[::stride]
     return arr_ref.min(), arr_ref.max()
+
+
+def spacer_widget() -> QtW.QWidget:
+    empty = QtW.QWidget()
+    empty.setSizePolicy(
+        QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Preferred
+    )
+    return empty
+
+
+def index_contains(c: int | slice | np.ndarray, idx: int) -> bool:
+    if isinstance(c, slice):
+        return c.start <= idx < c.stop
+    elif isinstance(c, np.ndarray):
+        return idx in c
+    else:
+        return c == idx

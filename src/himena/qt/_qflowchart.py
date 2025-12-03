@@ -43,7 +43,9 @@ class ZOrder(IntEnum):
 
 class QFlowChartNode(QtW.QGraphicsRectItem):
     left_clicked = Signal(object)
+    left_double_clicked = Signal(object)
     right_clicked = Signal(object)
+    right_double_clicked = Signal(object)
 
     def __init__(self, item: BaseNodeItem, x: float = 0.0, y: float = 0.0):
         super().__init__(0, 0, 1, 1)
@@ -182,6 +184,14 @@ class QFlowChartNode(QtW.QGraphicsRectItem):
                 self.right_clicked.emit(self._item)
         self._last_press_pos = QtCore.QPointF()
 
+    def mouseDoubleClickEvent(self, event):
+        """Handle mouse double click events"""
+        super().mouseDoubleClickEvent(event)
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.left_double_clicked.emit(self._item)
+        elif event.button() == Qt.MouseButton.RightButton:
+            self.right_double_clicked.emit(self._item)
+
 
 class QFlowChartArrow(QtW.QGraphicsLineItem):
     def __init__(
@@ -258,6 +268,8 @@ class QFlowChartArrow(QtW.QGraphicsLineItem):
 class QFlowChartView(QtW.QGraphicsView):
     item_left_clicked = QtCore.Signal(BaseNodeItem)
     item_right_clicked = QtCore.Signal(BaseNodeItem)
+    item_left_double_clicked = QtCore.Signal(BaseNodeItem)
+    item_right_double_clicked = QtCore.Signal(BaseNodeItem)
     background_left_clicked = QtCore.Signal(QtCore.QPointF)
     background_right_clicked = QtCore.Signal(QtCore.QPointF)
 
@@ -275,7 +287,7 @@ class QFlowChartView(QtW.QGraphicsView):
     def add_child(
         self,
         item: BaseNodeItem,
-        parents: list[QFlowChartNode] = [],
+        parents: list[Hashable | QFlowChartNode] = [],
     ) -> QFlowChartNode:
         """Add a child node to the parents in the list"""
         parents = [
@@ -321,6 +333,8 @@ class QFlowChartView(QtW.QGraphicsView):
         node.setPen(QtGui.QPen(Qt.GlobalColor.black, 1.5))
         node.left_clicked.connect(self.item_left_clicked.emit)
         node.right_clicked.connect(self.item_right_clicked.emit)
+        node.left_double_clicked.connect(self.item_left_double_clicked.emit)
+        node.right_double_clicked.connect(self.item_right_double_clicked.emit)
         return node
 
     def add_arrow(self, start_node: QFlowChartNode, end_node: QFlowChartNode):
@@ -440,14 +454,3 @@ class QFlowChartWidget(QtW.QSplitter):
     def _deactivate_item(self, pos: QtCore.QPointF):
         """Handle background click to clear the side view"""
         self.side.setPlainText("")
-
-
-if __name__ == "__main__":
-    import sys
-
-    app = QtW.QApplication(sys.argv)
-    flowchart_widget = QFlowChartWidget()
-    flowchart_widget.setWindowTitle("Flow Chart Example")
-    flowchart_widget.resize(600, 400)
-    flowchart_widget.show()
-    app.exec()

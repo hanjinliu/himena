@@ -164,8 +164,8 @@ class DataFrameWrapper(ABC):
         """Return the value at the given row and column indices"""
 
     @abstractmethod
-    def get_subset(self, r0, r1, c0, c1) -> DataFrameWrapper:
-        """Return a subset of the dataframe by slicing at df[r0:r1, c0:c1]."""
+    def get_subset(self, r: slice | np.ndarray, c: slice) -> DataFrameWrapper:
+        """Return a subset of the dataframe by slicing at df.iloc[r, c]."""
 
     @abstractmethod
     def num_rows(self) -> int:
@@ -268,9 +268,9 @@ class DictWrapper(DataFrameWrapper):
         col_name = self._columns[c]
         return self._df[col_name][r]
 
-    def get_subset(self, r0, r1, c0, c1) -> DictWrapper:
-        keys = self._columns[c0:c1]
-        return DictWrapper({k: self._df[k][r0:r1] for k in keys})
+    def get_subset(self, r, c) -> DictWrapper:
+        keys = self._columns[c]
+        return DictWrapper({k: self._df[k][r] for k in keys})
 
     def num_rows(self) -> int:
         return len(next(iter(self._df.values()), []))
@@ -370,8 +370,8 @@ class PandasWrapper(DataFrameWrapper):
     def get_item(self, key: tuple[int, int]) -> Any:
         return self._df.iloc[key]
 
-    def get_subset(self, r0, r1, c0, c1) -> PandasWrapper:
-        return PandasWrapper(self._df.iloc[r0:r1, c0:c1])
+    def get_subset(self, r, c) -> PandasWrapper:
+        return PandasWrapper(self._df.iloc[r, c])
 
     def num_rows(self) -> int:
         return self._df.shape[0]
@@ -451,8 +451,8 @@ class PolarsWrapper(DataFrameWrapper):
     def get_item(self, key: tuple[int, int]) -> Any:
         return self._df[key]
 
-    def get_subset(self, r0, r1, c0, c1) -> PolarsWrapper:
-        return PolarsWrapper(self._df[r0:r1, c0:c1])
+    def get_subset(self, r, c) -> PolarsWrapper:
+        return PolarsWrapper(self._df[r, c])
 
     def num_rows(self) -> int:
         return self._df.shape[0]
@@ -548,8 +548,13 @@ class PyarrowWrapper(DataFrameWrapper):
         col_name = self._df.column_names[c]
         return self._df[col_name][r].as_py()
 
-    def get_subset(self, r0, r1, c0, c1) -> PyarrowWrapper:
-        df_sub = self._df.slice(r0, r1 - r0).select(self._df.column_names[c0:c1])
+    def get_subset(self, r, c) -> PyarrowWrapper:
+        if isinstance(r, slice):
+            r0 = r.start or 0
+            dr = r.stop - r0 if r.stop is not None else self.num_rows() - r0
+            df_sub = self._df.slice(r0, dr).select(self._df.column_names[c])
+        else:
+            df_sub = self._df.select(self._df.column_names[c]).take(pa.array(r))
         return PyarrowWrapper(df_sub)
 
     def num_rows(self) -> int:
