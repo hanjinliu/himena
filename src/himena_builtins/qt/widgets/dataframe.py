@@ -30,7 +30,7 @@ from himena_builtins.qt.widgets._table_components import (
     parse_string,
 )
 from himena_builtins.qt.widgets._splitter import QSplitterHandle
-from himena_builtins.qt.widgets._shared import spacer_widget
+from himena_builtins.qt.widgets._shared import spacer_widget, index_contains
 
 if TYPE_CHECKING:
     from himena_builtins.qt.widgets._table_components._selection_model import Index
@@ -152,7 +152,7 @@ class QDataFrameView(QTableBase):
     __himena_widget_id__ = "builtins:QDataFrameView"
     __himena_display_name__ = "Built-in DataFrame Viewer"
 
-    def __init__(self, ui):
+    def __init__(self, ui: MainWindow):
         super().__init__(ui)
         self._hor_header = QDraggableHorizontalHeader(self)
         self.setHorizontalHeader(self._hor_header)
@@ -363,6 +363,10 @@ class QDataFrameView(QTableBase):
             _df_updated = _df_updated.with_columns({name: target})
         new = _df_updated.get_subset(r1, csl).copy()
         _model._df = _df_updated
+        if isinstance(prx := self._table_proxy(), proxy.SortProxy) and index_contains(
+            prx.index, c
+        ):
+            self._recalculate_proxy()
         if record_undo:
             self._undo_stack.push(EditAction(old, new, index))
 
@@ -378,6 +382,8 @@ class QDataFrameView(QTableBase):
 
     def _sort_table_by_column(self):
         """Sort the table by the current column."""
+        if self.model()._transpose:
+            raise NotImplementedError("Sorting is not supported for transposed table.")
         if selected_cols := self._get_selected_cols():
             c = min(selected_cols)
             model = self.model()
@@ -462,7 +468,6 @@ class QDictView(QDataFrameView):
         self.control_widget().update_for_table(self)
         self._model_type = model.type
         self.update()
-        return None
 
     @validate_protocol
     def to_model(self) -> WidgetDataModel:
@@ -618,7 +623,6 @@ class QDataFramePlotView(QtW.QSplitter):
         self._plot_widget.update_model(model_plot)
         self._model_type = model.type
         self._color_cycle = [c.hex for c in colors]
-        return None
 
     @validate_protocol
     def to_model(self) -> WidgetDataModel:
@@ -703,7 +707,6 @@ class QDataFramePlotView(QtW.QSplitter):
         self._plot_widget.update_model(
             WidgetDataModel(value=axes_layout, type=StandardType.PLOT)
         )
-        return None
 
 
 @dataclass

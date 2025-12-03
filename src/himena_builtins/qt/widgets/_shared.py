@@ -43,3 +43,12 @@ def spacer_widget() -> QtW.QWidget:
         QtW.QSizePolicy.Policy.Expanding, QtW.QSizePolicy.Policy.Preferred
     )
     return empty
+
+
+def index_contains(c: int | slice | np.ndarray, idx: int) -> bool:
+    if isinstance(c, slice):
+        return c.start <= idx < c.stop
+    elif isinstance(c, np.ndarray):
+        return idx in c
+    else:
+        return c == idx

@@ -25,7 +25,7 @@ from himena_builtins.qt.widgets._table_components import (
     Editability,
     QToolButtonGroup,
 )
-from himena_builtins.qt.widgets._shared import spacer_widget
+from himena_builtins.qt.widgets._shared import spacer_widget, index_contains
 from himena.utils.collections import UndoRedoStack
 from himena.utils import misc, proxy
 
@@ -412,7 +412,9 @@ class QSpreadsheet(QTableBase):
     def edit_cell(self, row: int, column: int, value: Any):
         """Emulate editing a cell."""
         mod = self.model()
-        mod.setData(mod.index(row, column), str(value), Qt.ItemDataRole.EditRole)
+        idx = mod.index(row, column)
+        mod.setData(idx, str(value), Qt.ItemDataRole.EditRole)
+        self.model().dataChanged.emit(idx, idx, [Qt.ItemDataRole.EditRole])
 
     def array_update(
         self,
@@ -445,7 +447,7 @@ class QSpreadsheet(QTableBase):
             self.model()._arr = arr = arr.copy()
         arr[r1, c] = value
         # recalculate order
-        if isinstance(prx := self._table_proxy(), proxy.SortProxy) and _index_contains(
+        if isinstance(prx := self._table_proxy(), proxy.SortProxy) and index_contains(
             prx.index, c
         ):
             self._recalculate_proxy()
@@ -689,7 +691,7 @@ class QSpreadsheet(QTableBase):
 
         # update proxy length and/or recalculate order
         if isinstance(prx := self._table_proxy(), proxy.SortProxy) and (
-            r_expanded or _index_contains(prx.index, target_c)
+            r_expanded or index_contains(prx.index, target_c)
         ):
             self._recalculate_proxy()
 
@@ -903,15 +905,6 @@ def _index_max(r: _Index) -> int:
         return r.max()
     else:
         return r
-
-
-def _index_contains(c: _Index, idx: int) -> bool:
-    if isinstance(c, slice):
-        return c.start <= idx < c.stop
-    elif isinstance(c, np.ndarray):
-        return idx in c
-    else:
-        return c == idx
 
 
 ORD_A = ord("A")
