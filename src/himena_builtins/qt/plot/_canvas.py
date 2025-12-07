@@ -63,7 +63,7 @@ class QMatplotlibCanvasBase(QtW.QWidget):
         spacer = QtW.QWidget()
         toolbar.insertWidget(toolbar.actions()[0], spacer)
         toolbar.pan()
-        self._update_toolbar_theme()
+        self._update_toolbar_theme(toolbar)
         return toolbar
 
     @validate_protocol
@@ -71,9 +71,9 @@ class QMatplotlibCanvasBase(QtW.QWidget):
         self._current_theme = theme
         if self._toolbar is None:
             return
-        self._update_toolbar_theme()
+        self._update_toolbar_theme(self._toolbar)
 
-    def _update_toolbar_theme(self):
+    def _update_toolbar_theme(self, toolbar: QtW.QWidget):
         if self._current_theme is None:
             return
         icon_color = (
@@ -81,7 +81,7 @@ class QMatplotlibCanvasBase(QtW.QWidget):
             if self._current_theme.is_light_background()
             else QtGui.QColor(255, 255, 255)
         )
-        for toolbtn in self._toolbar.findChildren(QtW.QToolButton):
+        for toolbtn in toolbar.findChildren(QtW.QToolButton):
             assert isinstance(toolbtn, QtW.QToolButton)
             icon = toolbtn.icon()
             pixmap = icon.pixmap(100, 100)
@@ -278,8 +278,6 @@ class QModelMatplotlibCanvasStack(QMatplotlibCanvasBase):
         with plt.style.context(self._cfg.to_dict()):
             self._plot_models = convert_plot_layout(model.value, self.figure)
         self._slider_changed(self._dims_slider.value(), auto_scale=False)
-        if was_none:
-            self._toolbar.pan()
 
     @validate_protocol
     def to_model(self) -> WidgetDataModel:
