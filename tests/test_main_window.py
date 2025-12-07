@@ -11,7 +11,7 @@ from himena import MainWindow, _drag
 from himena.consts import StandardType
 from himena.core import create_model
 from himena.types import ClipboardDataModel, DragDataModel, FutureInfo, WidgetConstructor, WidgetType, ParametricWidgetProtocol
-from himena.qt import MainWindowQt, drag_command
+from himena.qt import MainWindowQt, drag_command, drag_files
 from himena.qt._qmain_window import QMainWindow, QChoicesDialog
 from himena.qt._qsub_window import QSubWindow, get_subwindow
 from himena.widgets import set_status_tip, notify, append_result, TabArea
@@ -349,6 +349,14 @@ def test_tab_drop_event(himena_ui: MainWindowQt, sample_dir: Path):
     mock.assert_not_called()
     drag.getter()
     mock.assert_called_once()
+
+    drag_files([sample_dir / "table.csv"], source=win.widget, exec=False, desc="desc ...")
+    drag_files(
+        sample_dir / "table.csv",
+        source=win.widget,
+        exec=False,
+        plugin="himena_builtins.io.read_as_pandas_dataframe",
+    )
 
 def test_action_hint(himena_ui: MainWindowQt, sample_dir: Path):
     from himena.plugins import when_command_executed, when_reader_used

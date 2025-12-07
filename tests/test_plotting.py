@@ -4,6 +4,7 @@ from cmap import Color, Colormap
 import numpy as np
 import matplotlib.pyplot as plt
 
+from himena.consts import StandardType
 from himena.standards.model_meta import ArrayMeta
 from himena.types import WidgetDataModel
 from himena.widgets import MainWindow
@@ -353,3 +354,10 @@ def test_plot_model_processing(make_himena_ui):
         with_params={"components": [1]},
     )
     assert len(himena_ui.current_model.value.axes.models) == 1
+
+def test_plot_components(himena_ui: MainWindow):
+    fig = hplt.figure()
+    fig.plot(np.arange(10), np.sin(np.arange(10)), name="sin(x)")
+    fig.set_legend(title="Title")
+    fig.x.set_ticks([0, 5, 10], ["zero", "five", "ten"])
+    himena_ui.add_object(fig, type=StandardType.PLOT)
