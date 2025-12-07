@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field, field_validator, field_serializer, Valida
 from himena.standards.model_meta import DimAxis
 from himena.consts import PYDANTIC_CONFIG_STRICT
 from himena.utils.misc import iter_subclasses
-from enum import StrEnum
+from himena.utils.enum import StrEnum
 
 
 class StyledText(BaseModel):
