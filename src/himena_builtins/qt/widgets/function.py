@@ -45,7 +45,7 @@ class QFunctionEdit(QtW.QWidget):
         self._model_type = StandardType.FUNCTION
         self._func_orig: Callable | None = None
         self._has_source_code = False
-        self._control = QFunctionEditControl()
+        self._control: QFunctionEditControl | None = None
 
     @validate_protocol
     def update_model(self, model: WidgetDataModel):
@@ -91,8 +91,7 @@ class QFunctionEdit(QtW.QWidget):
             self._main_text_edit.setPlainText(repr(_func))
             self._main_text_edit.syntax_highlight(None)
             self._has_source_code = False
-        self._control._type_label.setText(_function_type_repr(_func_orig))
-        return None
+        self._update_control_repr()
 
     @validate_protocol
     def to_model(self) -> WidgetDataModel:
@@ -111,7 +110,10 @@ class QFunctionEdit(QtW.QWidget):
         return self._model_type
 
     @validate_protocol
-    def control_widget(self) -> QtW.QWidget:
+    def control_widget(self) -> QFunctionEditControl:
+        if self._control is None:
+            self._control = QFunctionEditControl()
+            self._update_control_repr()
         return self._control
 
     @validate_protocol
@@ -137,6 +139,10 @@ class QFunctionEdit(QtW.QWidget):
 
     def setFocus(self):
         self._main_text_edit.setFocus()
+
+    def _update_control_repr(self):
+        if self._control:
+            self._control._type_label.setText(_function_type_repr(self._func_orig))
 
 
 class QFunctionEditControl(QtW.QWidget):

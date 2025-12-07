@@ -388,9 +388,7 @@ class QArrayView(QtW.QWidget):
             sl = self._get_slice()
             self._table.setModel(QArrayModel(arr.get_slice(sl), self))
 
-        if self._control is None:
-            self._control = QArrayViewControl()
-        self._control.update_for_array(self)
+        self.control_widget().update_for_array(self)
         if was_none:
             self._table.update_width_by_dtype()
         if isinstance(meta := model.metadata, ArrayMeta):
@@ -456,7 +454,9 @@ class QArrayView(QtW.QWidget):
         self._table.setEditTriggers(trig)
 
     @validate_protocol
-    def control_widget(self):
+    def control_widget(self) -> QArrayViewControl:
+        if self._control is None:
+            self._control = QArrayViewControl()
         return self._control
 
     def array_update(

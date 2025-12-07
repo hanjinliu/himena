@@ -7,6 +7,9 @@ from himena.standards.plotting.components import (
     Axis,
     AxesBase,
     StackedAxesBase,
+    Legend,
+    LegendLocation,
+    StyledText,
     parse_edge,
     parse_face_edge,
 )
@@ -224,6 +227,24 @@ class Axes(AxesBase, ModelsRef):
     x: Axis = Field(default_factory=Axis, description="X-axis settings.")
     y: Axis = Field(default_factory=Axis, description="Y-axis settings.")
     axis_color: str = Field("#000000", description="Axis color.")
+    legend: Legend | None = Field(None, description="Legend settings for the axes.")
+
+    def set_legend(
+        self,
+        location="right_side_top",
+        title=None,
+        font_size: float = 10.0,
+    ) -> Legend:
+        """Set legend settings for the axes."""
+        if isinstance(title, dict):
+            title = StyledText(**title)
+        legend = Legend(
+            location=LegendLocation(location),
+            title=title,
+            font_size=font_size,
+        )
+        self.legend = legend
+        return legend
 
 
 class SingleAxes(BaseLayoutModel):
@@ -256,6 +277,17 @@ class SingleAxes(BaseLayoutModel):
     @title.setter
     def title(self, value):
         self.axes.title = value
+
+    def set_legend(
+        self,
+        location="right_side_top",
+        title=None,
+        font_size: float = 10.0,
+    ) -> Legend:
+        """Set legend settings for the axes."""
+        if isinstance(title, dict):
+            title = StyledText(**title)
+        return self.axes.set_legend(location=location, title=title, font_size=font_size)
 
     def merge_with(self, other: "SingleAxes") -> "SingleAxes":
         """Merge with another SingleAxes layout."""

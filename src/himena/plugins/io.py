@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 from functools import wraps
+import logging
 from pathlib import Path
 from typing import Any, Callable, ForwardRef, overload
 from himena.types import WidgetDataModel
 from himena.utils.misc import PluginInfo
 from himena._providers import ReaderStore, WriterStore
 from himena._utils import get_widget_data_model_type_arg
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def _plugin_info_from_func(func: Callable) -> PluginInfo | None:
@@ -86,6 +89,7 @@ class ReaderPlugin(_IOPluginBase):
 
     def read(self, path: Path | list[Path]) -> WidgetDataModel:
         """Read file(s) and return a data model."""
+        _LOGGER.info("Reading file(s) using reader plugin: %s", self)
         if isinstance(path, list):
             paths: list[Path] = []
             for p in path:
@@ -166,6 +170,7 @@ class WriterPlugin(_IOPluginBase):
             self._value_type_filter = None
 
     def write(self, model: WidgetDataModel, path: Path) -> None:
+        _LOGGER.info("Writing file using writer plugin: %s", self)
         return self._func(model, path)
 
     __call__ = write

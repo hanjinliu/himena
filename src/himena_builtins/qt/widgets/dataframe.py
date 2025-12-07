@@ -241,7 +241,7 @@ class QDataFrameView(QTableBase):
         self.setEditTriggers(trig)
 
     @validate_protocol
-    def control_widget(self):
+    def control_widget(self) -> QDataFrameViewControl:
         if self._control is None:
             self._control = QDataFrameViewControl(self)
         return self._control
@@ -252,8 +252,7 @@ class QDataFrameView(QTableBase):
         if _ctrl and e.key() == QtCore.Qt.Key.Key_C:
             return self.copy_data(header=_shift)
         elif _ctrl and e.key() == QtCore.Qt.Key.Key_V:
-            if clipboard := QtGui.QGuiApplication.clipboard():
-                return self.paste_data(clipboard.text())
+            return self._paste_from_clipboard()
         elif _ctrl and e.key() == QtCore.Qt.Key.Key_F:
             return self._find_string()
         elif _ctrl and e.key() == QtCore.Qt.Key.Key_Z:
@@ -289,6 +288,10 @@ class QDataFrameView(QTableBase):
         csv_text = self.model().df.get_subset(r1, c).to_csv_string("\t", header=header)
         if clipboard := QtGui.QGuiApplication.clipboard():
             clipboard.setText(csv_text)
+
+    def _paste_from_clipboard(self):
+        if clipboard := QtGui.QGuiApplication.clipboard():
+            self.paste_data(clipboard.text())
 
     def paste_data(self, text: str):
         """Paste a text data to the selected cells."""
@@ -374,6 +377,8 @@ class QDataFrameView(QTableBase):
         menu = QtW.QMenu(self)
         menu.addAction("Copy", self.copy_data)
         menu.addAction("Copy With Header", lambda: self.copy_data(header=True))
+        action = menu.addAction("Paste", self._paste_from_clipboard)
+        action.setEnabled(self.is_editable())
         return menu
 
     def _auto_resize_columns(self):

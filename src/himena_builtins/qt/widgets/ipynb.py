@@ -167,7 +167,7 @@ class QIpynbCellEdit(QtW.QGroupBox):
             QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter
         )
         self._draggable_area = QDraggableArea()
-        self._draggable_area.setFixedSize(14, 20)
+        self._draggable_area.setFixedSize(20, 20)
         self._draggable_area.dragged.connect(self._drag_event)
 
         _layout = QtW.QVBoxLayout(self)

@@ -34,7 +34,13 @@ from himena.standards.plotting.models3d import (
     Mesh3D,
 )
 
-from himena.standards.plotting.components import StyledText, Axis, BasePlotModel
+from himena.standards.plotting.components import (
+    StyledText,
+    Axis,
+    BasePlotModel,
+    LegendLocation,
+    Legend,
+)
 from himena.standards.plotting._api import (
     figure,
     row,
@@ -77,4 +83,6 @@ __all__ = [
     "Line3D",
     "Surface3D",
     "Mesh3D",
+    "LegendLocation",
+    "Legend",
 ]
