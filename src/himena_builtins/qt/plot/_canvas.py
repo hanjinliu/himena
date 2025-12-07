@@ -19,6 +19,8 @@ from himena_builtins.qt.plot._conversion import (
 from himena_builtins.qt.plot._config import MatplotlibCanvasConfigs
 from himena_builtins.qt.widgets._dim_sliders import QDimsSlider
 
+TIGHT_LAYOUT_PAD = 1.02
+
 
 class QMatplotlibCanvasBase(QtW.QWidget):
     def __init__(self):
@@ -31,13 +33,17 @@ class QMatplotlibCanvasBase(QtW.QWidget):
         self._modified = False
         self._cfg = MatplotlibCanvasConfigs()
         self._last_mouse_pos = QtCore.QPoint()
+        self._current_theme: Theme | None = None
 
     @property
     def figure(self) -> Figure:
+        """The internal Matplotlib figure object."""
         return self._canvas.figure
 
     @validate_protocol
     def control_widget(self) -> QtW.QWidget:
+        if self._toolbar is None:
+            self._toolbar = self._prep_toolbar()
         return self._toolbar
 
     @validate_protocol
@@ -45,26 +51,34 @@ class QMatplotlibCanvasBase(QtW.QWidget):
         return 300, 240
 
     @validate_protocol
-    def widget_resized_callback(self, size_old, size_new: tuple[int, int]):
-        if size_new[0] > 40 and size_new[1] > 40:
-            self._canvas.figure.tight_layout()
+    def widget_resized_callback(self, size_old: Size, size_new: Size):
+        if size_new.width > 40 and size_new.height > 40:
+            self._canvas.figure.tight_layout(pad=TIGHT_LAYOUT_PAD)
 
-    def _prep_toolbar(self, toolbar_class=backend_qtagg.NavigationToolbar2QT):
-        if self._toolbar is not None:
-            return self._toolbar
-        toolbar = toolbar_class(self._canvas, self)
+    def _construct_toolbar(self):
+        return QNavigationToolBar(self._canvas, self)
+
+    def _prep_toolbar(self):
+        toolbar = self._construct_toolbar()
         spacer = QtW.QWidget()
         toolbar.insertWidget(toolbar.actions()[0], spacer)
+        toolbar.pan()
+        self._update_toolbar_theme()
         return toolbar
 
     @validate_protocol
     def theme_changed_callback(self, theme: Theme):
+        self._current_theme = theme
         if self._toolbar is None:
             return
+        self._update_toolbar_theme()
 
+    def _update_toolbar_theme(self):
+        if self._current_theme is None:
+            return
         icon_color = (
             QtGui.QColor(0, 0, 0)
-            if theme.is_light_background()
+            if self._current_theme.is_light_background()
             else QtGui.QColor(255, 255, 255)
         )
         for toolbtn in self._toolbar.findChildren(QtW.QToolButton):
@@ -80,26 +94,30 @@ class QMatplotlibCanvasBase(QtW.QWidget):
             # revert the icon to the original color
             toolbtn.actions()[0].setIcon(icon_new)
 
-    def _init_canvas_and_toolbar(self):
-        self._canvas = FigureCanvasQTAgg()
+    def _init_canvas(self, figure: Figure | None = None):
+        self._canvas = FigureCanvasQTAgg(figure)
         self._canvas.contextmenu_requested.connect(self._show_context_menu)
         self.layout().addWidget(self._canvas)
-        self._toolbar = self._prep_toolbar(QNavigationToolBar)
+        self._canvas.figure.tight_layout(pad=TIGHT_LAYOUT_PAD)
 
     def _make_context_menu(self) -> QtW.QMenu:
         menu = QtW.QMenu(self)
         menu.setTitle("Matplotlib Canvas")
-        action = menu.addAction("Reset original view")
-        action.triggered.connect(self._toolbar.home)
-        action = menu.addAction("Back to previous view")
-        action.triggered.connect(self._toolbar.back)
-        action = menu.addAction("Forward to next view")
-        action.triggered.connect(self._toolbar.forward)
+        if self._toolbar is not None:
+            action = menu.addAction("Reset original view")
+            action.triggered.connect(self._toolbar.home)
+        if self._toolbar is not None:
+            action = menu.addAction("Back to previous view")
+            action.triggered.connect(self._toolbar.back)
+        if self._toolbar is not None:
+            action = menu.addAction("Forward to next view")
+            action.triggered.connect(self._toolbar.forward)
         menu.addSeparator()
         action = menu.addAction("Copy to clipboard")
         action.triggered.connect(self._copy_canvas)
-        action = menu.addAction("Save figure")
-        action.triggered.connect(self._toolbar.save_figure)
+        if self._toolbar is not None:
+            action = menu.addAction("Save figure")
+            action.triggered.connect(self._toolbar.save_figure)
         return menu
 
     def _show_context_menu(self, pos: QtCore.QPoint):
@@ -120,19 +138,17 @@ class QMatplotlibCanvas(QMatplotlibCanvasBase):
     @validate_protocol
     def update_model(self, model: WidgetDataModel):
         was_none = self._canvas is None
-        if was_none:
-            self._canvas = FigureCanvasQTAgg(model.value)
-            self._canvas.contextmenu_requested.connect(self._show_context_menu)
-            self.layout().addWidget(self._canvas)
-            self._toolbar = self._prep_toolbar()
         if isinstance(model.value, Figure):
-            if not was_none:
-                raise ValueError("Figure is already set")
+            if was_none:
+                self._init_canvas(model.value)
+            else:
+                raise ValueError("Cannot update the figure of an existing canvas")
         else:
             raise ValueError(f"Unsupported model: {model.value}")
-        if was_none:
-            self._toolbar.pan()
-            self._canvas.figure.tight_layout()
+
+    def _construct_toolbar(self):
+        """Use the native toolbar."""
+        return backend_qtagg.NavigationToolbar2QT(self._canvas, self)
 
     @validate_protocol
     def to_model(self) -> WidgetDataModel:
@@ -167,12 +183,10 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
         was_none = self._canvas is None
         _assert_plot_model(model.value)
         if was_none:
-            self._init_canvas_and_toolbar()
+            self._init_canvas()
         with plt.style.context(self._cfg.to_dict()):
             self._plot_models = convert_plot_layout(model.value, self.figure)
         self._canvas.draw()
-        if was_none and not isinstance(self._plot_models, hplt.SingleAxes3D):
-            self._toolbar.pan()
 
     @validate_protocol
     def to_model(self) -> WidgetDataModel:
@@ -224,17 +238,8 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
         return [StandardType.PLOT]
 
     @validate_protocol
-    def size_hint(self) -> tuple[int, int]:
-        return 300, 240
-
-    @validate_protocol
-    def widget_resized_callback(self, size_old: Size, size_new: Size):
-        if size_new.width > 40 and size_new.width > 40:
-            self._canvas.figure.tight_layout()
-
-    @validate_protocol
     def widget_added_callback(self):
-        self._canvas.figure.tight_layout()
+        self._canvas.figure.tight_layout(pad=TIGHT_LAYOUT_PAD)
 
     @validate_protocol
     def is_modified(self) -> bool:
@@ -263,7 +268,7 @@ class QModelMatplotlibCanvasStack(QMatplotlibCanvasBase):
                 f"Expected a SingleStackedAxes model, got {type(model.value)}"
             )
         if was_none:
-            self._init_canvas_and_toolbar()
+            self._init_canvas()
             self.layout().addWidget(self._dims_slider)
 
         self._dims_slider.set_dimensions(
@@ -347,7 +352,7 @@ class FigureCanvasQTAgg(backend_qtagg.FigureCanvasQTAgg):
     _last_mouse_pos = QtCore.QPoint()
 
     def mouseDoubleClickEvent(self, event):
-        self.figure.tight_layout()
+        self.figure.tight_layout(pad=TIGHT_LAYOUT_PAD)
         self.draw()
         return super().mouseDoubleClickEvent(event)
 

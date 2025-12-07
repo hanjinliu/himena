@@ -41,7 +41,7 @@ class QExcelEdit(QDictOfWidgetEdit):
         self._model_type_component = StandardType.TABLE
         self._model_type = StandardType.EXCEL
         self._model_source_path: Path | None = None
-        self._control = QExcelTableStackControl()
+        self._control: QExcelTableStackControl | None = None
         self._extension_default = ".xlsx"
 
     def _default_widget(self) -> QSpreadsheet:
@@ -61,6 +61,8 @@ class QExcelEdit(QDictOfWidgetEdit):
 
     @validate_protocol
     def control_widget(self) -> QExcelTableStackControl:
+        if self._control is None:
+            self._control = QExcelTableStackControl()
         return self._control
 
     @validate_protocol

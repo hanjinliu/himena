@@ -167,7 +167,6 @@ class QFileTree(QtW.QTreeView):
         if path.is_dir():
             return
         self.fileDoubleClicked.emit(path)
-        return None
 
     # drag-and-drop
     def mouseMoveEvent(self, e: QtGui.QMouseEvent):

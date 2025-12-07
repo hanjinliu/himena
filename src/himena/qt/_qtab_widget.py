@@ -262,7 +262,8 @@ class QTabWidget(QtW.QTabWidget):
                 if win in self.current_widget_area().subWindowList():
                     event.ignore()
                 return super().dropEvent(event)
-            self._process_file_url_drop(mime_data.urls())
+            plugin = mime_data.data("text/himena-open-plugin").data().decode() or None
+            self._process_file_url_drop(mime_data.urls(), plugin=plugin)
         elif callable(rfm := getattr(mime_data.parent(), "readers_from_mime", None)):
             readers = rfm(mime_data)
             worker = self._read_one_by_one(readers)
@@ -279,10 +280,12 @@ class QTabWidget(QtW.QTabWidget):
         model.window_rect_override = lambda s: _center_title_bar_on(s, drop_pos)
         ui.add_data_model(model)
 
-    def _process_file_url_drop(self, urls: list[QtCore.QUrl]) -> None:
+    def _process_file_url_drop(
+        self, urls: list[QtCore.QUrl], plugin: str | None = None
+    ) -> None:
         ui = get_main_window(self)
         paths = [url.toLocalFile() for url in urls if url.isLocalFile()]
-        future = ui.read_files_async(paths)
+        future = ui.read_files_async(paths, plugin=plugin)
         ui._backend_main_window._add_job_progress(future, "Reading files")
         ui.model_app.injection_store.process(future)
 

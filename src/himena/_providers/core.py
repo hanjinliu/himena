@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 from logging import getLogger
 from typing import Generic, Iterator, TypeVar, TYPE_CHECKING
-import warnings
 from himena.utils.misc import PluginInfo
 from himena.types import WidgetDataModel
 
@@ -190,11 +189,7 @@ def _pick_from_list(choices: list[_S], plugin: str | None) -> _S:
                 out = each
                 break
         else:
-            warnings.warn(
-                f"Plugin {plugin} not found, using the default one.",
-                UserWarning,
-                stacklevel=2,
-            )
+            _LOGGER.warning("Plugin %r not found, using the default one.", plugin)
             out = _pick_by_priority(choices)
     _LOGGER.debug("Picked: %r", out)
     return out

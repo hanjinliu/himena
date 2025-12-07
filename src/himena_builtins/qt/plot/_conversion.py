@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from himena.standards import plotting as hplt
 from himena_builtins.qt.plot._register import convert_plot_model
 
@@ -13,7 +13,7 @@ def _refer_x_axis(ax: hplt.Axis, ax_mpl: plt.Axes):
     if ax.label is not None:
         ax_mpl.set_xlabel(ax.label)
     if ax.ticks is not None:
-        ax_mpl.set_xticks(ax.ticks)
+        ax_mpl.set_xticks(ax.ticks.pos, ax.ticks.labels)
     if ax.lim is not None:
         ax_mpl.set_xlim(ax.lim)
     if ax.scale == "log":
@@ -24,7 +24,7 @@ def _refer_y_axis(ax: hplt.Axis, ax_mpl: plt.Axes):
     if ax.label is not None:
         ax_mpl.set_ylabel(ax.label)
     if ax.ticks is not None:
-        ax_mpl.set_yticks(ax.ticks)
+        ax_mpl.set_yticks(ax.ticks.pos, ax.ticks.labels)
     if ax.lim is not None:
         ax_mpl.set_ylim(ax.lim)
     if ax.scale == "log":
@@ -35,7 +35,7 @@ def _refer_z_axis(ax: hplt.Axis, ax_mpl: plt3d.Axes3D):
     if ax.label is not None:
         ax_mpl.set_zlabel(ax.label)
     if ax.ticks is not None:
-        ax_mpl.set_zticks(ax.ticks)
+        ax_mpl.set_zticks(ax.ticks.pos, ax.ticks.labels)
     if ax.lim is not None:
         ax_mpl.set_zlim(ax.lim)
     if ax.scale == "log":
@@ -58,6 +58,16 @@ def update_mpl_axes_by_model(ax: hplt.Axes, ax_mpl: plt.Axes):
         _refer_y_axis(ax.y, ax_mpl)
     for model in ax.models:
         convert_plot_model(model, ax_mpl)
+    if legend := ax.legend:
+        loc, bbox_to_anchor = _LEGEND_LOC_MAP[legend.location]
+        leg = ax_mpl.legend(
+            loc=loc, bbox_to_anchor=bbox_to_anchor, prop={"size": legend.font_size}
+        )
+        if isinstance(legend.title, hplt.StyledText):
+            title, style = _parse_styled_text(legend.title)
+            leg.set_title(title, **style)
+        elif isinstance(legend.title, str):
+            leg.set_title(legend.title)
 
 
 def _convert_axes_3d(ax: hplt.Axes3D, ax_mpl: plt3d.Axes3D):
@@ -160,3 +170,28 @@ def _parse_styled_text(text: hplt.StyledText | str) -> tuple[str, dict]:
         fontdict["color"] = text.color
     loc = text.alignment
     return text.text, {"fontdict": fontdict, "loc": loc}
+
+
+_LEGEND_LOC_MAP: dict[hplt.LegendLocation, tuple[str, Any]] = {
+    hplt.LegendLocation.TOP_RIGHT: ("upper right", None),
+    hplt.LegendLocation.TOP_CENTER: ("upper center", None),
+    hplt.LegendLocation.TOP_LEFT: ("upper left", None),
+    hplt.LegendLocation.BOTTOM_RIGHT: ("lower right", None),
+    hplt.LegendLocation.BOTTOM_CENTER: ("lower center", None),
+    hplt.LegendLocation.BOTTOM_LEFT: ("lower left", None),
+    hplt.LegendLocation.CENTER_RIGHT: ("center right", None),
+    hplt.LegendLocation.CENTER_LEFT: ("center left", None),
+    hplt.LegendLocation.CENTER: ("center", None),
+    hplt.LegendLocation.TOP_SIDE_LEFT: ("lower left", (0, 1.02)),
+    hplt.LegendLocation.TOP_SIDE_CENTER: ("lower center", (0.5, 1.02)),
+    hplt.LegendLocation.TOP_SIDE_RIGHT: ("lower right", (1, 1.02)),
+    hplt.LegendLocation.BOTTOM_SIDE_LEFT: ("upper left", (0, -0.02)),
+    hplt.LegendLocation.BOTTOM_SIDE_CENTER: ("upper center", (0.5, -0.02)),
+    hplt.LegendLocation.BOTTOM_SIDE_RIGHT: ("upper right", (1, -0.02)),
+    hplt.LegendLocation.LEFT_SIDE_TOP: ("upper right", (-0.02, 1)),
+    hplt.LegendLocation.LEFT_SIDE_CENTER: ("center right", (-0.02, 0.5)),
+    hplt.LegendLocation.LEFT_SIDE_BOTTOM: ("lower right", (-0.02, 0)),
+    hplt.LegendLocation.RIGHT_SIDE_TOP: ("upper left", (1.02, 1)),
+    hplt.LegendLocation.RIGHT_SIDE_CENTER: ("center left", (1.02, 0.5)),
+    hplt.LegendLocation.RIGHT_SIDE_BOTTOM: ("lower left", (1.02, 0)),
+}

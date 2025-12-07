@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field, field_validator, field_serializer, Valida
 from himena.standards.model_meta import DimAxis
 from himena.consts import PYDANTIC_CONFIG_STRICT
 from himena.utils.misc import iter_subclasses
+from enum import StrEnum
 
 
 class StyledText(BaseModel):
@@ -45,6 +46,16 @@ class BasePlotModel(BaseModel):
         return {"name": {"widget_type": "LineEdit", "value": self.name}}
 
 
+class AxisTicks(BaseModel):
+    """Model for axis ticks."""
+
+    pos: list[float] = Field(..., description="Positions of the ticks.")
+    labels: list[str] = Field(None, description="Labels of the ticks.")
+    rotation: float | None = Field(
+        None, description="Rotation angle of the tick labels."
+    )
+
+
 class Axis(BaseModel):
     """Model that represents a plot axis."""
 
@@ -53,7 +64,7 @@ class Axis(BaseModel):
     lim: tuple[float, float] | None = Field(None, description="Axis limits.")
     scale: Literal["linear", "log"] = Field("linear", description="Axis scale.")
     label: str | StyledText | None = Field(None, description="Axis label.")
-    ticks: Any | None = Field(None, description="Axis ticks.")
+    ticks: AxisTicks | None = Field(None, description="Axis ticks.")
     grid: bool = Field(False, description="Show grid or not.")
 
     @field_validator("lim", mode="before")
@@ -64,6 +75,16 @@ class Axis(BaseModel):
         if len(_lim) != 2:
             raise ValueError(f"Must be a tuple of 2 floats but got: {lim!r}")
         return _lim
+
+    def set_ticks(self, positions: list[float], labels: list[str] | None = None):
+        """Set the ticks of the axis."""
+        if labels is None:
+            labels = [
+                str(pos) if hasattr(pos, "__index__") else format(pos, ".2g")
+                for pos in positions
+            ]
+        self.ticks = AxisTicks(pos=positions, labels=labels)
+        return self.ticks
 
 
 class AxesBase(BaseModel):
@@ -206,3 +227,35 @@ def parse_face_edge(kwargs: dict[str, Any]) -> dict:
         color = Color([*Color(color).rgba[:3], alpha])
     face = Face(color=color, hatch=hatch)
     return {"face": face, **kwargs}
+
+
+class LegendLocation(StrEnum):
+    TOP_CENTER = "top_center"
+    BOTTOM_CENTER = "bottom_center"
+    CENTER_LEFT = "center_left"
+    CENTER_RIGHT = "center_right"
+    CENTER = "center"
+    TOP_LEFT = "top_left"
+    TOP_RIGHT = "top_right"
+    BOTTOM_LEFT = "bottom_left"
+    BOTTOM_RIGHT = "bottom_right"
+    LEFT_SIDE_TOP = "left_side_top"
+    LEFT_SIDE_CENTER = "left_side_center"
+    LEFT_SIDE_BOTTOM = "left_side_bottom"
+    RIGHT_SIDE_TOP = "right_side_top"
+    RIGHT_SIDE_CENTER = "right_side_center"
+    RIGHT_SIDE_BOTTOM = "right_side_bottom"
+    TOP_SIDE_LEFT = "top_side_left"
+    TOP_SIDE_CENTER = "top_side_center"
+    TOP_SIDE_RIGHT = "top_side_right"
+    BOTTOM_SIDE_LEFT = "bottom_side_left"
+    BOTTOM_SIDE_CENTER = "bottom_side_center"
+    BOTTOM_SIDE_RIGHT = "bottom_side_right"
+
+
+class Legend(BaseModel):
+    """Model for plot legend."""
+
+    location: LegendLocation = LegendLocation.RIGHT_SIDE_TOP
+    font_size: float = Field(10.0, description="Font size of the legend.")
+    title: str | StyledText | None = None

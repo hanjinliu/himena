@@ -122,6 +122,52 @@ def build_qmodel_menu(menu_id: str, app: str, parent: QtW.QWidget) -> QModelMenu
     return menu
 
 
+def drag_files(
+    path_or_paths: str | Path | list[str | Path],
+    /,
+    *,
+    desc: str | None = None,
+    source: QtW.QWidget | None = None,
+    exec: bool = True,
+    plugin: str | None = None,
+) -> QtGui.QDrag:
+    """Create a QDrag object for the given file path(s).
+
+    Mouse drag object constructed by this function is equivalent to dragging files from
+    the file explorer etc.
+
+    Parameters
+    ----------
+    path_or_paths : str | Path | list[str | Path]
+        The file path or list of file paths to drag.
+    desc : str, optional
+        The description of the drag. This will be shown in the drag image.
+    source : QWidget, optional
+        The widget that is the source of the drag.
+    exec : bool, default True
+        Whether to execute the drag immediately. Setting this to false is useful when
+        you want to test the QDrag object construction.
+    """
+    drag = QtGui.QDrag(source)
+    mime = QtCore.QMimeData()
+    if isinstance(path_or_paths, (str, Path)):
+        paths = [Path(path_or_paths)]
+    else:
+        paths = [Path(p) for p in path_or_paths]
+    url_list = [QtCore.QUrl.fromLocalFile(str(p.resolve())) for p in paths]
+    mime.setUrls(url_list)
+    if desc is None:
+        _s = "s" if len(paths) > 1 else ""
+        desc = f"{len(paths)} file{_s}"
+    if plugin is not None:
+        mime.setData("text/himena-open-plugin", plugin.encode())
+    drag.setPixmap(_text_to_pixmap(desc))
+    drag.setMimeData(mime)
+    if exec:
+        drag.exec()
+    return drag
+
+
 def drag_model(
     model: WidgetDataModel | DragDataModel,
     *,
@@ -130,7 +176,7 @@ def drag_model(
     text_data: str | Callable[[], str] | None = None,
     exec: bool = True,
 ) -> QtGui.QDrag:
-    """Create a QDrag object for the given model"""
+    """Create a QDrag object for the given model."""
     drag = QtGui.QDrag(source)
     _drag.drag(model)
     mime = QtCore.QMimeData()
@@ -148,12 +194,11 @@ def drag_model(
     mime.setText(text_data)
     if desc is None:
         desc = "model"
-    qlabel = QtW.QLabel(desc)
-    pixmap = QtGui.QPixmap(qlabel.size())
-    qlabel.render(pixmap)
-    drag.setPixmap(pixmap)
+    drag.setPixmap(_text_to_pixmap(desc))
     drag.setMimeData(mime)
     drag.destroyed.connect(_drag.clear)
+    cursor = QtGui.QCursor(QtCore.Qt.CursorShape.OpenHandCursor)
+    drag.setDragCursor(cursor.pixmap(), QtCore.Qt.DropAction.MoveAction)
     if exec:
         drag.exec()
     return drag
@@ -222,3 +267,10 @@ def drag_command(
         source=source,
         exec=exec,
     )
+
+
+def _text_to_pixmap(text: str) -> QtGui.QPixmap:
+    qlabel = QtW.QLabel(text)
+    pixmap = QtGui.QPixmap(qlabel.size())
+    qlabel.render(pixmap)
+    return pixmap
