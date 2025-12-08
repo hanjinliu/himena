@@ -121,6 +121,18 @@ def _(file_path: Path) -> str | None:
 
 
 @register_reader_plugin(priority=50)
+def read_pdf(file_path: Path) -> WidgetDataModel:
+    return WidgetDataModel(type=StandardType.PDF, value=file_path)
+
+
+@read_pdf.define_matcher
+def _(file_path: Path) -> str | None:
+    if file_path.suffix.rstrip("~") == ".pdf":
+        return StandardType.PDF
+    return None
+
+
+@register_reader_plugin(priority=50)
 def read_pickle(file_path: Path) -> WidgetDataModel:
     if file_path.suffix.rstrip("~") == ".pickle":
         return _io.default_pickle_reader(file_path)
