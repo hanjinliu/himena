@@ -3,11 +3,12 @@ from __future__ import annotations
 import math
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtPdfWidgets import QPdfView
-from qtpy.QtPdf import QPdfDocument
+from qtpy.QtPdf import QPdfDocument, QPdfSearchModel
 
 from himena import WidgetDataModel
 from himena.widgets import show_tooltip
 from himena.qt._qlineedit import QIntLineEdit
+from himena.qt._qfinderwidget import QFinderWidget
 from himena.plugins import validate_protocol
 from himena_builtins.qt.widgets._shared import spacer_widget
 
@@ -15,16 +16,21 @@ from himena_builtins.qt.widgets._shared import spacer_widget
 class QPdfViewer(QtW.QWidget):
     """A widget for displaying PDF files."""
 
-    def __init__(self, parent: QtW.QWidget | None = None):
-        super().__init__(parent)
+    __himena_widget_id__ = "builtins:QPdfViewer"
+    __himena_display_name__ = "Built-in PDF Viewer"
+
+    def __init__(self):
+        super().__init__()
         self._pdf_view = _QPdfView(self)
         self._pdf_document = QPdfDocument(self)
         self._pdf_view.setDocument(self._pdf_document)
+        self._pdf_view._search_model.setDocument(self._pdf_document)
         layout = QtW.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._pdf_view)
         self._drag_start_pos: QtCore.QPoint | None = None
         self._control: QPdfViewControl | None = None
+        self._finder: QFinderWidget | None = None
 
     @validate_protocol
     def update_model(self, model: WidgetDataModel):
@@ -47,6 +53,8 @@ class QPdfViewer(QtW.QWidget):
 
 
 class QPdfViewControl(QtW.QWidget):
+    """A control widget for QPdfViewer to navigate pages and adjust zoom."""
+
     def __init__(self, view: QPdfViewer):
         super().__init__()
         layout = QtW.QHBoxLayout(self)
@@ -118,6 +126,8 @@ class _QPdfView(QPdfView):
         self.setPageMode(QPdfView.PageMode.MultiPage)
         self.setPageSpacing(12)
         self.pageNavigator().currentPageChanged.connect(self.page_changed)
+        self._search_model = QPdfSearchModel(self)
+        self.setSearchModel(self._search_model)
 
     def wheelEvent(self, event: QtGui.QWheelEvent):
         """Handle mouse wheel events for zooming."""
