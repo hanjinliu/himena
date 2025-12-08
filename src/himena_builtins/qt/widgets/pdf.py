@@ -16,9 +16,6 @@ from himena_builtins.qt.widgets._shared import spacer_widget
 class QPdfViewer(QtW.QWidget):
     """A widget for displaying PDF files."""
 
-    __himena_widget_id__ = "builtins:QPdfViewer"
-    __himena_display_name__ = "Built-in PDF Viewer"
-
     def __init__(self):
         super().__init__()
         self._pdf_view = _QPdfView(self)
