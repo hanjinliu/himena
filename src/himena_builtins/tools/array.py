@@ -437,7 +437,7 @@ def _safe_op(op, a, b, dtype):
             np.iinfo(dtype).max,
         ).astype(dtype)
     else:
-        return a + b
+        return op(a, b)
 
 
 def _broadcast_arrays(

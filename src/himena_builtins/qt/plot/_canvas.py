@@ -62,7 +62,10 @@ class QMatplotlibCanvasBase(QtW.QWidget):
         toolbar = self._construct_toolbar()
         spacer = QtW.QWidget()
         toolbar.insertWidget(toolbar.actions()[0], spacer)
-        toolbar.pan()
+
+        # Don't switch to pan mode for 3D plots
+        if not any(ax.name == "3d" for ax in self._canvas.figure.axes):
+            toolbar.pan()
         self._update_toolbar_theme(toolbar)
         return toolbar
 

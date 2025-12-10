@@ -6,12 +6,13 @@ from himena.plugins import (
     register_widget_class,
     validate_protocol,
 )
-from wgpu.gui.qt import WgpuWidget
+import qtpy  # noqa: F401
+from rendercanvas.qt import QRenderWidget
 import imageio.v3 as iio
 import pygfx as gfx
 
 @register_widget_class(StandardType.IMAGE)
-class WgpuImageWidget(WgpuWidget):
+class WgpuImageWidget(QRenderWidget):
     def __init__(self):
         super().__init__()
         self._renderer = gfx.WgpuRenderer(self)
