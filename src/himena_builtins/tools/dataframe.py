@@ -190,4 +190,3 @@ def _get_column_selection_name(model: WidgetDataModel) -> str | None:
             (r0, r1), (c0, c1) = meta.selections[0]
             if r0 == 0 and r1 == df.num_rows() and c1 - c0 == 1:
                 return df.column_names()[c0]
-    return None

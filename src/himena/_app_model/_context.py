@@ -56,13 +56,11 @@ def _get_model_types(ui: "MainWindow") -> str | None:
             return out.split(".")
     except Exception:
         return None
-    return None
 
 
 def _active_window_model_type(ui: "MainWindow") -> str | None:
     if out := _get_model_types(ui):
         return out[0]
-    return None
 
 
 def _active_window_model_subtype_1(ui: "MainWindow") -> str | None:
@@ -70,7 +68,6 @@ def _active_window_model_subtype_1(ui: "MainWindow") -> str | None:
         if len(out) < 2:
             return None
         return out[1]
-    return None
 
 
 def _active_window_model_subtype_2(ui: "MainWindow") -> str | None:
@@ -78,7 +75,6 @@ def _active_window_model_subtype_2(ui: "MainWindow") -> str | None:
         if len(out) < 3:
             return None
         return out[2]
-    return None
 
 
 def _active_window_model_subtype_3(ui: "MainWindow") -> str | None:
@@ -86,13 +82,11 @@ def _active_window_model_subtype_3(ui: "MainWindow") -> str | None:
         if len(out) < 4:
             return None
         return out[3]
-    return None
 
 
 def _active_window_widget_id(ui: "MainWindow") -> str | None:
     if win := ui.current_window:
         return get_widget_class_id(type(win.widget))
-    return None
 
 
 def _get_user_context(ui: "MainWindow") -> dict | None:

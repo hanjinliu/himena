@@ -62,7 +62,6 @@ class _QOverlayBase(QtW.QDialog):
         """Show the overlay widget with animation."""
         super().show()
         self.alignToParent()
-        return None
 
     def alignToParent(self):
         """Position widget at the bottom right edge of the parent."""
@@ -164,7 +163,6 @@ class QNotificationWidget(_QOverlayBase):
         self._timer.setSingleShot(True)
         self._timer.timeout.connect(self._hide)
         self._timer.start()
-        return None
 
     def _hide(self):
         self._close_btn.hide()
@@ -337,7 +335,6 @@ class QWhatsThisWidget(_QOverlayBase):
     def _hide(self):
         self._close_btn.hide()
         self.hide()
-        return None
 
     def set_text(self, text: str, style: str = "plain"):
         text_widget = QtW.QTextEdit()

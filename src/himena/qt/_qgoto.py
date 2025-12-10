@@ -82,7 +82,6 @@ class QGotoWidget(QtW.QWidget):
         self.setGeometry(rect)
         super().show()
         self._force_list_item_selected()
-        return None
 
     def keyPressEvent(self, a0: QtGui.QKeyEvent | None) -> None:
         if a0 is None:
@@ -137,7 +136,6 @@ class QGotoWidget(QtW.QWidget):
         if (win := main.current_window) and win.state is WindowState.MIN:
             win.state = WindowState.NORMAL
         self.close()
-        return None
 
     def focusOutEvent(self, a0: QtGui.QFocusEvent) -> None:
         self.close()

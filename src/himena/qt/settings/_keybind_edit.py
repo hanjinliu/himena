@@ -179,7 +179,6 @@ class QKeybindTable(QtW.QTableWidget):
                 # self.setItem(i, H.WEIGHT, _item_basic(weight))  # hide for now
                 self.setItem(i, H.SOURCE, _item_basic(source))
                 self.setItem(i, H.COMMAND_ID, _item_basic(cmd_id, monospace=True))
-        return None
 
     def filter_by_text(self, text: str) -> list[bool] | None:
         text = text.lower().strip()
@@ -229,7 +228,6 @@ class QKeybindTable(QtW.QTableWidget):
             else:
                 for i in range(self.rowCount()):
                     self.setRowHidden(i, False)
-        return None
 
     @contextmanager
     def block_context(self):

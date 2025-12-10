@@ -148,4 +148,3 @@ def _extract_module_name(directory: Path) -> str | None:
             return cfg.get("metadata", "name")
         except NoOptionError:
             return None
-    return None

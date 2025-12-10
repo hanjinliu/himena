@@ -13,7 +13,7 @@ class WindowAnchor:
         main_window_size: tuple[int, int],
         sub_window_size: tuple[int, int],
     ) -> WindowRect | None:
-        return None
+        pass
 
     def update_for_window_rect(
         self,

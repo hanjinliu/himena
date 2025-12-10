@@ -414,7 +414,6 @@ def test_custom_object_type_map(make_himena_ui):
     def add_my_type(value):
         if isinstance(value, MyType):
             return "text", value.value, None
-        return None
 
     himena_ui.add_object(MyType(value="Hello World"))
     assert himena_ui.current_model.value == "Hello World"

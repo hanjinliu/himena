@@ -119,7 +119,6 @@ class QSelectionRangeEdit(QtW.QGroupBox):
         else:
             self._c_stop.show()
             self._c_colon.show()
-        return None
 
     def _rstart_changed(self, txt: str):
         rstop = self._r_stop.text()

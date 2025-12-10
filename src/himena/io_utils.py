@@ -40,4 +40,3 @@ def write(
         ins.run(model, path, plugin=plugin)
     else:
         ins.run(model, path, plugin=plugin, min_priority=0)
-    return None

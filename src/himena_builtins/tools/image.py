@@ -410,7 +410,6 @@ def propagate_colormaps(win: SubWindow, tab: TabArea):
             ]
 
             each.update_model(each_model.with_metadata(each_meta))
-    return None
 
 
 @register_function(

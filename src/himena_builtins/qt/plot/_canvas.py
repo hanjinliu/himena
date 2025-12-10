@@ -109,10 +109,8 @@ class QMatplotlibCanvasBase(QtW.QWidget):
         if self._toolbar is not None:
             action = menu.addAction("Reset original view")
             action.triggered.connect(self._toolbar.home)
-        if self._toolbar is not None:
             action = menu.addAction("Back to previous view")
             action.triggered.connect(self._toolbar.back)
-        if self._toolbar is not None:
             action = menu.addAction("Forward to next view")
             action.triggered.connect(self._toolbar.forward)
         menu.addSeparator()

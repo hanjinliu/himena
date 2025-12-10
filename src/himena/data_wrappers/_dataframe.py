@@ -360,7 +360,6 @@ class DictWrapper(DataFrameWrapper):
         else:
             raise ValueError(f"DictWrapper does not support writing as a {path.suffix}")
         path.write_text(self.to_csv_string(sep))
-        return None
 
 
 class PandasWrapper(DataFrameWrapper):

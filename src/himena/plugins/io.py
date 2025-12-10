@@ -25,7 +25,6 @@ def _plugin_info_from_func(func: Callable) -> PluginInfo | None:
             return PluginInfo(module, qual)
         if hasattr(func, "__name__"):
             return PluginInfo(module, func.__name__)
-    return None
 
 
 class _IOPluginBase:

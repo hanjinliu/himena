@@ -211,7 +211,6 @@ class QVerticalHeaderView(QHeaderViewBase):
             pen = QtGui.QPen(color, 4)
             painter.setPen(pen)
             painter.drawRect(rect_current)
-        return None
 
     def _iter_selections(self):
         yield from self.selection_model.iter_row_selections()

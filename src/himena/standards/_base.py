@@ -25,7 +25,6 @@ class BaseMetadata(BaseModel):
 
     def expected_type(self) -> str | None:
         """Return the expected type of the metadata. None if not applicable."""
-        return None
 
     def _class_info(self) -> dict:
         return {"name": self.__class__.__name__, "module": self.__class__.__module__}
@@ -59,4 +58,3 @@ def write_metadata(meta: BaseMetadata, dir_path: Path) -> None:
     """Write the metadata to a directory."""
     meta.write_metadata(dir_path)
     dir_path.joinpath(_CLASS_JSON).write_text(json.dumps(meta._class_info(), indent=4))
-    return None

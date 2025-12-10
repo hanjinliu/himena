@@ -19,7 +19,6 @@ class QClickableLabel(QtW.QLabel):
         )
         self.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.setText(text)
-        return None
 
     def setText(self, text: str):
         """Set the label text and resize the widget to fit the text."""

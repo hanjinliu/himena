@@ -104,7 +104,6 @@ class QModelDropBase(QtW.QGroupBox):
             return self._data_model
         if widget := self.subwindow():
             return widget.to_model()
-        return None
 
     def set_qsubwindow(self, src: QSubWindow):
         src_wrapper = src._my_wrapper()
@@ -295,7 +294,6 @@ class QModelDropList(QtW.QListWidget):
                 return
         event.ignore()
         event.setDropAction(Qt.DropAction.IgnoreAction)
-        return None
 
     def leaveEvent(self, a0):
         for i in range(self.count()):

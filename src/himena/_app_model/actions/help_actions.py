@@ -89,4 +89,3 @@ def show_about(ui: MainWindow) -> None:
         how="buttons",
     ):
         ui.clipboard = ClipboardDataModel(html=info)
-    return None
