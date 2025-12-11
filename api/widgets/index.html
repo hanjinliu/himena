@@ -5928,13 +5928,7 @@
 <span class="normal">1169</span>
 <span class="normal">1170</span>
 <span class="normal">1171</span>
-<span class="normal">1172</span>
-<span class="normal">1173</span>
-<span class="normal">1174</span>
-<span class="normal">1175</span>
-<span class="normal">1176</span>
-<span class="normal">1177</span>
-<span class="normal">1178</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MainWindow</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">_W</span><span class="p">]):</span>
+<span class="normal">1172</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MainWindow</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">_W</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The main window handler object.&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -6818,13 +6812,11 @@
 <span class="sd">            If True, run the application event loop.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_backend_main_window</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">run</span><span class="p">)</span>
-        <span class="k">return</span> <span class="kc">None</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Close the main window.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_backend_main_window</span><span class="o">.</span><span class="n">_exit_main_window</span><span class="p">(</span><span class="n">confirm</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="n">remove_instance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_app</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
-        <span class="k">return</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">current_window</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
@@ -6853,14 +6845,12 @@
                         <span class="n">_main</span><span class="o">.</span><span class="n">_set_current_tab_index</span><span class="p">(</span><span class="n">i_tab</span><span class="p">)</span>
                         <span class="n">_main</span><span class="o">.</span><span class="n">_set_current_sub_window_index</span><span class="p">(</span><span class="n">i_tab</span><span class="p">,</span> <span class="n">i_win</span><span class="p">)</span>
                         <span class="k">return</span> <span class="kc">None</span>
-        <span class="k">return</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">current_model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WidgetDataModel</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the current model of the active sub-window.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">sub</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_window</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">sub</span><span class="o">.</span><span class="n">to_model</span><span class="p">()</span>
-        <span class="k">return</span> <span class="kc">None</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">iter_windows</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Iterate over all the sub-windows in this main window.&quot;&quot;&quot;</span>
@@ -6883,7 +6873,6 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_main_window_resized</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">area_size</span><span class="p">)</span>  <span class="c1"># update layout and anchor</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_history_tab</span><span class="o">.</span><span class="n">get_from_last</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">!=</span> <span class="n">i</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_history_tab</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
-        <span class="k">return</span> <span class="kc">None</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">move_window</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sub</span><span class="p">:</span> <span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">],</span> <span class="n">target_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Move the sub-window to the target tab index.&quot;&quot;&quot;</span>
@@ -6907,7 +6896,6 @@
         <span class="k">if</span> <span class="n">layout</span> <span class="o">:=</span> <span class="n">win</span><span class="o">.</span><span class="n">_parent_layout_ref</span><span class="p">():</span>
             <span class="n">layout</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">win</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">current_index</span> <span class="o">=</span> <span class="n">i_tab</span>
-        <span class="k">return</span> <span class="kc">None</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_window_activated</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">back</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_backend_main_window</span>
@@ -8233,15 +8221,13 @@ generated.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">961</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">960</span>
+<span class="normal">961</span>
 <span class="normal">962</span>
-<span class="normal">963</span>
-<span class="normal">964</span>
-<span class="normal">965</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">963</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Close the main window.&quot;&quot;&quot;</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_backend_main_window</span><span class="o">.</span><span class="n">_exit_main_window</span><span class="p">(</span><span class="n">confirm</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">remove_instance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_app</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
-    <span class="k">return</span> <span class="kc">None</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -8868,10 +8854,10 @@ for vertically arranged radio buttons.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1003</span>
-<span class="normal">1004</span>
-<span class="normal">1005</span>
-<span class="normal">1006</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">iter_windows</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">]]:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 999</span>
+<span class="normal">1000</span>
+<span class="normal">1001</span>
+<span class="normal">1002</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">iter_windows</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Iterate over all the sub-windows in this main window.&quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">tab</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="p">:</span>
         <span class="k">yield from</span> <span class="n">tab</span>
@@ -8946,7 +8932,12 @@ for vertically arranged radio buttons.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1026</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1021</span>
+<span class="normal">1022</span>
+<span class="normal">1023</span>
+<span class="normal">1024</span>
+<span class="normal">1025</span>
+<span class="normal">1026</span>
 <span class="normal">1027</span>
 <span class="normal">1028</span>
 <span class="normal">1029</span>
@@ -8962,13 +8953,7 @@ for vertically arranged radio buttons.</p>
 <span class="normal">1039</span>
 <span class="normal">1040</span>
 <span class="normal">1041</span>
-<span class="normal">1042</span>
-<span class="normal">1043</span>
-<span class="normal">1044</span>
-<span class="normal">1045</span>
-<span class="normal">1046</span>
-<span class="normal">1047</span>
-<span class="normal">1048</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">move_window</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sub</span><span class="p">:</span> <span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">],</span> <span class="n">target_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">1042</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">move_window</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sub</span><span class="p">:</span> <span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">],</span> <span class="n">target_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Move the sub-window to the target tab index.&quot;&quot;&quot;</span>
     <span class="n">i_tab</span> <span class="o">=</span> <span class="n">i_win</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">for</span> <span class="n">_i_tab</span><span class="p">,</span> <span class="n">tab</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">enumerate</span><span class="p">():</span>
@@ -8990,7 +8975,6 @@ for vertically arranged radio buttons.</p>
     <span class="k">if</span> <span class="n">layout</span> <span class="o">:=</span> <span class="n">win</span><span class="o">.</span><span class="n">_parent_layout_ref</span><span class="p">():</span>
         <span class="n">layout</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">win</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">current_index</span> <span class="o">=</span> <span class="n">i_tab</span>
-    <span class="k">return</span> <span class="kc">None</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -9735,8 +9719,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 <span class="normal">955</span>
 <span class="normal">956</span>
 <span class="normal">957</span>
-<span class="normal">958</span>
-<span class="normal">959</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">958</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Show the main window.</span>
 
@@ -9746,7 +9729,6 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 <span class="sd">        If True, run the application event loop.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_backend_main_window</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">run</span><span class="p">)</span>
-    <span class="k">return</span> <span class="kc">None</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -14697,10 +14679,10 @@ the reader.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_functions.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">96</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">95</span>
+<span class="normal">96</span>
 <span class="normal">97</span>
-<span class="normal">98</span>
-<span class="normal">99</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">append_result</span><span class="p">(</span><span class="n">item</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">98</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">append_result</span><span class="p">(</span><span class="n">item</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Append a new result to the result stack.&quot;&quot;&quot;</span>
     <span class="n">ins</span> <span class="o">=</span> <span class="n">current_instance</span><span class="p">()</span>
     <span class="n">ins</span><span class="o">.</span><span class="n">_backend_main_window</span><span class="o">.</span><span class="n">_append_result</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
@@ -14784,7 +14766,9 @@ the reader.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_initialize.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 79</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 77</span>
+<span class="normal"> 78</span>
+<span class="normal"> 79</span>
 <span class="normal"> 80</span>
 <span class="normal"> 81</span>
 <span class="normal"> 82</span>
@@ -14930,17 +14914,7 @@ the reader.</p>
 <span class="normal">222</span>
 <span class="normal">223</span>
 <span class="normal">224</span>
-<span class="normal">225</span>
-<span class="normal">226</span>
-<span class="normal">227</span>
-<span class="normal">228</span>
-<span class="normal">229</span>
-<span class="normal">230</span>
-<span class="normal">231</span>
-<span class="normal">232</span>
-<span class="normal">233</span>
-<span class="normal">234</span>
-<span class="normal">235</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">init_application</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">HimenaApplication</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HimenaApplication</span><span class="p">:</span>
+<span class="normal">225</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">init_application</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">HimenaApplication</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HimenaApplication</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Register actions/menus and setup injection store.&quot;&quot;&quot;</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">himena._app_model.actions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ACTIONS</span><span class="p">,</span> <span class="n">SUBMENUS</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">himena.widgets._main_window</span><span class="w"> </span><span class="kn">import</span> <span class="n">MainWindow</span>
@@ -14978,7 +14952,6 @@ the reader.</p>
         <span class="n">ins</span> <span class="o">=</span> <span class="n">current_instance</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">area</span> <span class="o">:=</span> <span class="n">ins</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">current</span><span class="p">():</span>
             <span class="k">return</span> <span class="n">area</span><span class="o">.</span><span class="n">current</span><span class="p">()</span>
-        <span class="k">return</span> <span class="kc">None</span>
 
     <span class="nd">@app</span><span class="o">.</span><span class="n">injection_store</span><span class="o">.</span><span class="n">mark_provider</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_provide_data_model</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">WidgetDataModel</span><span class="p">:</span>
@@ -14999,7 +14972,6 @@ the reader.</p>
         <span class="k">if</span> <span class="n">ins</span><span class="o">.</span><span class="n">_instructions</span><span class="o">.</span><span class="n">process_model_output</span><span class="p">:</span>
             <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;processing </span><span class="si">%r</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
             <span class="n">ins</span><span class="o">.</span><span class="n">add_data_model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-        <span class="k">return</span> <span class="kc">None</span>
 
     <span class="nd">@app</span><span class="o">.</span><span class="n">injection_store</span><span class="o">.</span><span class="n">mark_processor</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_process_data_models</span><span class="p">(</span><span class="n">models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">WidgetDataModel</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -15015,7 +14987,6 @@ the reader.</p>
         <span class="c1"># set data to clipboard</span>
         <span class="n">ins</span> <span class="o">=</span> <span class="n">current_instance</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="n">ins</span><span class="o">.</span><span class="n">clipboard</span> <span class="o">=</span> <span class="n">clip_data</span>
-        <span class="k">return</span> <span class="kc">None</span>
 
     <span class="nd">@app</span><span class="o">.</span><span class="n">injection_store</span><span class="o">.</span><span class="n">mark_processor</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_process_parametric</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Parametric</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -15037,21 +15008,18 @@ the reader.</p>
                     <span class="n">command_id</span><span class="o">=</span><span class="n">tracker</span><span class="o">.</span><span class="n">command_id</span><span class="p">,</span>
                     <span class="n">contexts</span><span class="o">=</span><span class="n">tracker</span><span class="o">.</span><span class="n">contexts</span><span class="p">,</span>
                 <span class="p">)</span><span class="o">.</span><span class="n">construct_workflow</span><span class="p">()</span>
-        <span class="k">return</span> <span class="kc">None</span>
 
     <span class="nd">@app</span><span class="o">.</span><span class="n">injection_store</span><span class="o">.</span><span class="n">mark_processor</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_process_widget_type</span><span class="p">(</span><span class="n">widget</span><span class="p">:</span> <span class="n">WidgetType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;processing </span><span class="si">%r</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">widget</span><span class="p">)</span>
         <span class="n">ins</span> <span class="o">=</span> <span class="n">current_instance</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="n">ins</span><span class="o">.</span><span class="n">add_widget</span><span class="p">(</span><span class="n">widget</span><span class="p">)</span>
-        <span class="k">return</span> <span class="kc">None</span>
 
     <span class="nd">@app</span><span class="o">.</span><span class="n">injection_store</span><span class="o">.</span><span class="n">mark_processor</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_process_widget_constructor</span><span class="p">(</span><span class="n">con</span><span class="p">:</span> <span class="n">WidgetConstructor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;processing </span><span class="si">%r</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">con</span><span class="p">)</span>
         <span class="n">ins</span> <span class="o">=</span> <span class="n">current_instance</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="n">ins</span><span class="o">.</span><span class="n">add_widget</span><span class="p">(</span><span class="n">con</span><span class="p">())</span>
-        <span class="k">return</span> <span class="kc">None</span>
 
     <span class="nd">@app</span><span class="o">.</span><span class="n">injection_store</span><span class="o">.</span><span class="n">mark_processor</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_process_parametric_widget_protocol</span><span class="p">(</span><span class="n">widget</span><span class="p">:</span> <span class="n">ParametricWidgetProtocol</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -15080,7 +15048,6 @@ the reader.</p>
                 <span class="n">auto_close</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">widget</span><span class="p">,</span> <span class="n">PWPN</span><span class="o">.</span><span class="n">GET_AUTO_CLOSE</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="kc">True</span><span class="p">)(),</span>
                 <span class="n">auto_size</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">widget</span><span class="p">,</span> <span class="n">PWPN</span><span class="o">.</span><span class="n">GET_AUTO_SIZE</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="kc">True</span><span class="p">)(),</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="kc">None</span>
 
     <span class="nd">@app</span><span class="o">.</span><span class="n">injection_store</span><span class="o">.</span><span class="n">mark_processor</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_process_future</span><span class="p">(</span><span class="n">future</span><span class="p">:</span> <span class="n">Future</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -15093,7 +15060,6 @@ the reader.</p>
             <span class="p">)</span>
             <span class="n">future</span><span class="o">.</span><span class="n">add_done_callback</span><span class="p">(</span><span class="n">cb</span><span class="p">)</span>
             <span class="n">app</span><span class="o">.</span><span class="n">_futures</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">future</span><span class="p">)</span>
-        <span class="k">return</span> <span class="kc">None</span>
 
     <span class="n">_APP_INITIALIZED</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">app</span>
@@ -15166,7 +15132,8 @@ the reader.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_functions.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">60</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">59</span>
+<span class="normal">60</span>
 <span class="normal">61</span>
 <span class="normal">62</span>
 <span class="normal">63</span>
@@ -15176,8 +15143,7 @@ the reader.</p>
 <span class="normal">67</span>
 <span class="normal">68</span>
 <span class="normal">69</span>
-<span class="normal">70</span>
-<span class="normal">71</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">notify</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">70</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">notify</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Show a notification popup in the bottom right corner.</span>
 
 <span class="sd">    Parameters</span>
@@ -15211,7 +15177,8 @@ the reader.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_initialize.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">57</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">56</span>
+<span class="normal">57</span>
 <span class="normal">58</span>
 <span class="normal">59</span>
 <span class="normal">60</span>
@@ -15220,9 +15187,7 @@ the reader.</p>
 <span class="normal">63</span>
 <span class="normal">64</span>
 <span class="normal">65</span>
-<span class="normal">66</span>
-<span class="normal">67</span>
-<span class="normal">68</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">remove_instance</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">instance</span><span class="p">:</span> <span class="n">MainWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">66</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">remove_instance</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">instance</span><span class="p">:</span> <span class="n">MainWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Remove the instance from the list.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_APP_INSTANCES</span><span class="p">:</span>
         <span class="n">instances</span> <span class="o">=</span> <span class="n">_APP_INSTANCES</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
@@ -15233,7 +15198,6 @@ the reader.</p>
             <span class="n">_APP_INSTANCES</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">instance</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
         <span class="n">instance</span><span class="o">.</span><span class="n">dock_widgets</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-    <span class="k">return</span> <span class="kc">None</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -15268,8 +15232,7 @@ the reader.</p>
 <span class="normal">53</span>
 <span class="normal">54</span>
 <span class="normal">55</span>
-<span class="normal">56</span>
-<span class="normal">57</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">set_clipboard</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">56</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">set_clipboard</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Set data to clipboard.&quot;&quot;&quot;</span>
     <span class="n">ins</span> <span class="o">=</span> <span class="n">current_instance</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -15278,7 +15241,6 @@ the reader.</p>
         <span class="n">ins</span><span class="o">.</span><span class="n">clipboard</span> <span class="o">=</span> <span class="n">model</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">ins</span><span class="o">.</span><span class="n">set_clipboard</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">return</span> <span class="kc">None</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -15307,15 +15269,13 @@ the reader.</p>
 <span class="normal">42</span>
 <span class="normal">43</span>
 <span class="normal">44</span>
-<span class="normal">45</span>
-<span class="normal">46</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">set_current_instance</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">instance</span><span class="p">:</span> <span class="n">MainWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">45</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">set_current_instance</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">instance</span><span class="p">:</span> <span class="n">MainWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Set the instance as the current one.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_APP_INSTANCES</span><span class="p">:</span>
         <span class="n">_APP_INSTANCES</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">elif</span> <span class="n">instance</span> <span class="ow">in</span> <span class="n">_APP_INSTANCES</span><span class="p">[</span><span class="n">name</span><span class="p">]:</span>
         <span class="n">_APP_INSTANCES</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
     <span class="n">_APP_INSTANCES</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
-    <span class="k">return</span> <span class="kc">None</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -15503,7 +15463,8 @@ the reader.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_functions.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">74</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">73</span>
+<span class="normal">74</span>
 <span class="normal">75</span>
 <span class="normal">76</span>
 <span class="normal">77</span>
@@ -15521,8 +15482,7 @@ the reader.</p>
 <span class="normal">89</span>
 <span class="normal">90</span>
 <span class="normal">91</span>
-<span class="normal">92</span>
-<span class="normal">93</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">show_tooltip</span><span class="p">(</span>
+<span class="normal">92</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">show_tooltip</span><span class="p">(</span>
     <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">3.0</span><span class="p">,</span>
     <span class="n">behavior</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;stay&quot;</span><span class="p">,</span> <span class="s2">&quot;follow&quot;</span><span class="p">,</span> <span class="s2">&quot;until_move&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;follow&quot;</span><span class="p">,</span>
