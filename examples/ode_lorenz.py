@@ -23,7 +23,7 @@ def f() -> Parametric:
         initval= [0.1, 0.1, 0.1]
         result=scipy.integrate.odeint(lorenz, initval, t, args=(p, r, b))
         fig = hplt.figure_3d()
-        fig.axes.plot(result[:,0],result[:,1],result[:,2], width=0.6, color="red")
+        fig.axes.plot(result[:,0], result[:,1], result[:,2], width=0.6, color="red")
         return WidgetDataModel(value=fig, type="plot")
     return run
 

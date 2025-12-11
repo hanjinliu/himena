@@ -33,6 +33,24 @@ def test_model_matplotlib_canvas_single(qtbot: QtBot):
     canvas._make_context_menu()
     canvas._copy_canvas()
 
+def test_model_matplotlib_canvas_3d(qtbot: QtBot):
+    fig = hplt.figure_3d()
+    fig.axes.scatter([1, 2, 3], [4, 5, 6], [7, 8, 9])
+    fig.axes.plot([1, 2, 3], [4, 5, 6], [7, 8, 9])
+    fig.axes.x.label = "X Axis"
+    fig.axes.y.label = "Y Axis"
+    fig.axes.z.label = "Z Axis"
+    fig.axes.title = "3D Plot"
+    canvas = QModelMatplotlibCanvas()
+    canvas.update_model(create_model(fig, type=StandardType.PLOT))
+    qtbot.addWidget(canvas)
+    with WidgetTester(canvas) as tester:
+        tester.update_model(value=fig, type=StandardType.PLOT)
+        tester.cycle_model()
+    canvas._make_context_menu()
+    canvas._copy_canvas()
+
+
 def test_model_matplotlib_canvas_row(qtbot: QtBot):
     fig = hplt.row(2)
     fig[0].plot([1, 2, 3])

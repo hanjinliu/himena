@@ -92,7 +92,6 @@ def merge_tabs(ui: MainWindow) -> Parametric:
             for window in ui.tabs[name]:
                 ui.move_window(window, i_tab)
             del ui.tabs[name]
-        return None
 
     return choose_tabs_to_merge
 
@@ -174,7 +173,6 @@ def collect_windows(ui: MainWindow) -> Parametric:
             for win in windows_to_move:
                 ui.move_window(win, target_index)
         ui.tabs.current_index = target_index
-        return None
 
     return run_collect_windows
 
@@ -200,7 +198,6 @@ def close_all_windows_in_tab(ui: MainWindow) -> None:
             if ans == "No":
                 raise Cancelled
         area.clear()
-    return None
 
 
 @ACTIONS.append_from_fn(

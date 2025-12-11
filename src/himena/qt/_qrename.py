@@ -88,7 +88,6 @@ class QTabRenameLineEdit(QRenameLineEdit):
         rect = self._tab_rect(index)
         self._current_edit_index = index
         self._move_line_edit(rect, self.parent().tabText(index))
-        return None
 
     def _tab_rect(self, index: int) -> QtCore.QRect:
         """Get QRect of the tab at index."""

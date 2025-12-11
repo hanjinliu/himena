@@ -956,13 +956,11 @@ class MainWindow(Generic[_W]):
             If True, run the application event loop.
         """
         self._backend_main_window.show(run)
-        return None
 
     def close(self) -> None:
         """Close the main window."""
         self._backend_main_window._exit_main_window(confirm=False)
         remove_instance(self.model_app.name, self)
-        return None
 
     @property
     def current_window(self) -> SubWindow[_W] | None:
@@ -991,14 +989,12 @@ class MainWindow(Generic[_W]):
                         _main._set_current_tab_index(i_tab)
                         _main._set_current_sub_window_index(i_tab, i_win)
                         return None
-        return None
 
     @property
     def current_model(self) -> WidgetDataModel | None:
         """Get the current model of the active sub-window."""
         if sub := self.current_window:
             return sub.to_model()
-        return None
 
     def iter_windows(self) -> Iterator[SubWindow[_W]]:
         """Iterate over all the sub-windows in this main window."""
@@ -1021,7 +1017,6 @@ class MainWindow(Generic[_W]):
             self._main_window_resized(self.area_size)  # update layout and anchor
         if self._history_tab.get_from_last(1) != i:
             self._history_tab.add(i)
-        return None
 
     def move_window(self, sub: SubWindow[_W], target_index: int) -> None:
         """Move the sub-window to the target tab index."""
@@ -1045,7 +1040,6 @@ class MainWindow(Generic[_W]):
         if layout := win._parent_layout_ref():
             layout.remove(win)
         self.tabs.current_index = i_tab
-        return None
 
     def _window_activated(self):
         back = self._backend_main_window

@@ -189,7 +189,6 @@ def test_session_calculate_call_count(
     def _matcher(path: Path):
         if path.suffix == ".csv":
             return StandardType.TABLE
-        return None
 
     _command_id_1 = "test:temp-func-1"
 

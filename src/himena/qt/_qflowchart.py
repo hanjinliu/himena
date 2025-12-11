@@ -363,7 +363,6 @@ class QFlowChartView(QtW.QGraphicsView):
         """Get the associated item by its ID"""
         if node := self._node_map.get(item_id):
             return node.item()
-        return None
 
     def _arrow_color(self) -> QtGui.QColor:
         if self.scene().backgroundBrush().color().lightness() < 128:

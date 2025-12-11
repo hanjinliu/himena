@@ -43,7 +43,6 @@ def set_current_instance(name: str, instance: MainWindow[_W]) -> None:
     elif instance in _APP_INSTANCES[name]:
         _APP_INSTANCES[name].remove(instance)
     _APP_INSTANCES[name].append(instance)
-    return None
 
 
 def cleanup():
@@ -65,7 +64,6 @@ def remove_instance(name: str, instance: MainWindow[_W]) -> None:
             _APP_INSTANCES.pop(name, None)
         instance.tabs.clear()
         instance.dock_widgets.clear()
-    return None
 
 
 def _app_destroyed(app_name) -> None:
@@ -114,7 +112,6 @@ def init_application(app: HimenaApplication) -> HimenaApplication:
         ins = current_instance(app.name)
         if area := ins.tabs.current():
             return area.current()
-        return None
 
     @app.injection_store.mark_provider
     def _provide_data_model() -> WidgetDataModel:
@@ -135,7 +132,6 @@ def init_application(app: HimenaApplication) -> HimenaApplication:
         if ins._instructions.process_model_output:
             _LOGGER.debug("processing %r", model)
             ins.add_data_model(model)
-        return None
 
     @app.injection_store.mark_processor
     def _process_data_models(models: list[WidgetDataModel]) -> None:
@@ -151,7 +147,6 @@ def init_application(app: HimenaApplication) -> HimenaApplication:
         # set data to clipboard
         ins = current_instance(app.name)
         ins.clipboard = clip_data
-        return None
 
     @app.injection_store.mark_processor
     def _process_parametric(fn: Parametric) -> None:
@@ -173,21 +168,18 @@ def init_application(app: HimenaApplication) -> HimenaApplication:
                     command_id=tracker.command_id,
                     contexts=tracker.contexts,
                 ).construct_workflow()
-        return None
 
     @app.injection_store.mark_processor
     def _process_widget_type(widget: WidgetType) -> None:
         _LOGGER.debug("processing %r", widget)
         ins = current_instance(app.name)
         ins.add_widget(widget)
-        return None
 
     @app.injection_store.mark_processor
     def _process_widget_constructor(con: WidgetConstructor) -> None:
         _LOGGER.debug("processing %r", con)
         ins = current_instance(app.name)
         ins.add_widget(con())
-        return None
 
     @app.injection_store.mark_processor
     def _process_parametric_widget_protocol(widget: ParametricWidgetProtocol) -> None:
@@ -216,7 +208,6 @@ def init_application(app: HimenaApplication) -> HimenaApplication:
                 auto_close=getattr(widget, PWPN.GET_AUTO_CLOSE, lambda: True)(),
                 auto_size=getattr(widget, PWPN.GET_AUTO_SIZE, lambda: True)(),
             )
-        return None
 
     @app.injection_store.mark_processor
     def _process_future(future: Future) -> None:
@@ -229,7 +220,6 @@ def init_application(app: HimenaApplication) -> HimenaApplication:
             )
             future.add_done_callback(cb)
             app._futures.add(future)
-        return None
 
     _APP_INITIALIZED.add(app)
     return app

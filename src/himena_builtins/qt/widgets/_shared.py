@@ -31,10 +31,10 @@ def quick_min_max(
         return (0.0, 1.0)
     down_sample_factor = arr.size / down_sample_to
     if down_sample_factor <= 1.0:
-        return arr.min(), arr.max()
+        return float(arr.min()), float(arr.max())
     stride = int(np.ceil(down_sample_factor))
     arr_ref = arr[::stride]
-    return arr_ref.min(), arr_ref.max()
+    return float(arr_ref.min()), float(arr_ref.max())
 
 
 def spacer_widget() -> QtW.QWidget:

@@ -54,7 +54,6 @@ def set_clipboard(model=None, **kwargs) -> None:
         ins.clipboard = model
     else:
         ins.set_clipboard(**kwargs)
-    return None
 
 
 def notify(text: str, duration: float = 5.0) -> None:

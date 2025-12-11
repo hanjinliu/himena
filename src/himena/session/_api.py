@@ -45,7 +45,6 @@ def update_from_directory(ui: MainWindow, path: str | Path) -> None:
         session = TabSession.model_validate(yml)
         wf_overrides = dict(_iter_reader_method(dirpath, session))
         session.update_gui(ui, workflow_override=wf_overrides, dirpath=dirpath)
-    return None
 
 
 def _iter_reader_method(
@@ -81,7 +80,6 @@ def update_from_zip(ui: MainWindow, path: str | Path) -> None:
         tmpdir = Path(tmpdir)
         z.extractall(tmpdir)
         update_from_directory(ui, tmpdir)
-    return None
 
 
 def dump_tab_to_directory(
@@ -115,7 +113,6 @@ def dump_tab_to_zip(
         )
         for file in tmpdir.rglob("*"):
             z.write(file, file.relative_to(tmpdir))
-    return None
 
 
 def _dump_tab_to_directory_impl(
@@ -174,7 +171,6 @@ def dump_directory(
         dirname = path / f"{i_tab}_{tab_title}"
         dirname.mkdir()
         _dump_tab_to_directory_impl(tab, dirname, save_copies, cmd_id_allowed)
-    return None
 
 
 def dump_zip(
@@ -203,4 +199,3 @@ def dump_zip(
         )
         for file in tmpdir.rglob("*"):
             z.write(file, file.relative_to(tmpdir))
-    return None

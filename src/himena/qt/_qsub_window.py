@@ -463,7 +463,6 @@ class QSubWindow(QtW.QMdiSubWindow):
                     size_old,
                     new_rect.size(),
                 )
-        return None
 
     def _set_geometry_animated(self, rect: QtCore.QRect):
         if self._anim_geometry.state() == QtCore.QAbstractAnimation.State.Running:
@@ -686,7 +685,6 @@ class QSubWindowTitleBar(QtW.QFrame):
                 return None
         elif hasattr(interf, "__himena_model_type__"):
             return interf.__himena_model_type__
-        return None
 
     def _set_visible(self, visible: bool):
         if visible:

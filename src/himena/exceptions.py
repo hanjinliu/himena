@@ -47,10 +47,8 @@ class ExceptionHandler:
         threading.excepthook = self._original_thread_excepthook
         if self._warning_hook is not None:
             warnings.showwarning = self._original_warning
-        return None
 
     def show_warning(self, message, category, filename, lineno, file=None, line=None):
         """Handle warnings."""
         msg = warnings.WarningMessage(message, category, filename, lineno, file, line)
         self._warning_hook(msg)
-        return None

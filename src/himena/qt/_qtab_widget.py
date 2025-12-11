@@ -71,7 +71,6 @@ class QTabBar(QtW.QTabBar):
             model = model.data_model()
             main = get_main_window(self)
             main.tabs[index].add_data_model(model)
-        return None
 
     def resizeEvent(self, a0):
         super().resizeEvent(a0)
@@ -89,11 +88,10 @@ class QTabBar(QtW.QTabBar):
         """Move the "+" button to the right of the last tab."""
         if self.tab_widget()._is_startup_only():
             self._plus_btn.hide()
-            return None
-        size = self.width()
-        self._plus_btn.move(size + 4, 1)
-        self._plus_btn.show()
-        return None
+        else:
+            size = self.width()
+            self._plus_btn.move(size + 4, 1)
+            self._plus_btn.show()
 
     def _process_drop_event(self, sub: QSubWindow, target_index: int) -> None:
         # this is needed to initialize the drag state
@@ -112,7 +110,6 @@ class QTabBar(QtW.QTabBar):
             drag.setMimeData(mime_data)
             drag.setPixmap(area._pixmap_resized(QtCore.QSize(150, 150)))
             return drag
-        return None
 
     def mousePressEvent(self, event: QtGui.QMouseEvent):
         self._pressed_pos = event.pos()
@@ -121,7 +118,6 @@ class QTabBar(QtW.QTabBar):
             if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
                 if drag := self._prep_drag(i_tab):
                     drag.exec()
-        return None
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
         i_tab_released = self.tabAt(event.pos())
@@ -192,7 +188,6 @@ class QTabWidget(QtW.QTabWidget):
         self.removeTab(index)
         if self.count() == 0:
             self._add_startup_widget()
-        return None
 
     def _subwindow_activated(self, win: QSubWindow | None) -> None:
         if win is not None:
@@ -305,7 +300,6 @@ class QTabWidget(QtW.QTabWidget):
         super().resizeEvent(a0)
         self.resized.emit()
         self._tabbar.setMaximumWidth(self.width() - 22)
-        return None
 
     @thread_worker
     def _read_one_by_one(self, readers: list[ReaderMethod]):

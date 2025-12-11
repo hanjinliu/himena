@@ -194,14 +194,12 @@ class TabSession(BaseModel):
         for _win_sess in self.windows:
             for child_id in _win_sess.children:
                 _id_to_win[_win_sess.id]._child_windows.add(_id_to_win[child_id])
-        return None
 
 
 def _update_layout(tab: "TabArea[_W]", layouts: list[dict], main: "MainWindow[_W]"):
     for ly in layouts:
         _layout_obj = construct_layout(ly, main)
         tab._add_layout_impl(_layout_obj)
-    return None
 
 
 def _get_version(mod, maybe_file: bool = False) -> str | None:
@@ -320,7 +318,6 @@ class AppSession(BaseModel):
         for _, _win_sess in _win_sessions:
             for child_id in _win_sess.children:
                 _id_to_win[_win_sess.id]._child_windows.add(_id_to_win[child_id])
-        return None
 
 
 def _raise_failed(failed: list[tuple[WindowDescription, Exception]]) -> None:

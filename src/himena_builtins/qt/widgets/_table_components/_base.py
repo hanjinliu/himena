@@ -452,7 +452,6 @@ class QTableBase(QtW.QTableView):
 
     def _make_context_menu(self) -> QtW.QMenu | None:
         """Overwrite to provide a context menu."""
-        return None
 
     def paintEvent(self, event: QtGui.QPaintEvent):
         """Paint table and the selection."""

@@ -168,7 +168,6 @@ def watch_file_using_from_dialog(ui: MainWindow) -> Parametric:
         model = _open_file_using_reader(file_path, reader, editable=False)
         win = ui.add_data_model(model)
         win._switch_to_file_watch_mode()
-        return None
 
     return choose_a_plugin
 

@@ -26,7 +26,6 @@ def run_script(model: WidgetDataModel[str]):
         exec(script)
     else:
         raise ValueError("Cannot run non-Python script.")
-    return None
 
 
 @register_function(

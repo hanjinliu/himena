@@ -1082,3 +1082,10 @@ def test_scale_bar_widget():
         }
     )
     widget.get_value()
+
+def test_many_dtypes(himena_ui: MainWindow):
+    for dtype in [
+        np.uint8, np.uint16, np.uint32, np.int8, np.int16, np.int32, np.float16,
+        np.float32, np.float64, np.complex64, np.complex128
+    ]:
+        himena_ui.add_object(np.arange(96).reshape(8, 12).astype(dtype), type=StandardType.IMAGE)

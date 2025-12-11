@@ -116,7 +116,6 @@ class SelectionModel:
             self._row_selection_indices.add(len(self._ranges) - 1)
         elif column:
             self._col_selection_indices.add(len(self._ranges) - 1)
-        return None
 
     def update_last(self, range: Range, row: bool = False, col: bool = False) -> None:
         """Update the last range with new one."""
@@ -130,7 +129,6 @@ class SelectionModel:
             self._row_selection_indices.add(len(self._ranges) - 1)
         elif col:
             self._col_selection_indices.add(len(self._ranges) - 1)
-        return None
 
     def contains(self, index: tuple[int, int]) -> bool:
         """Whether the index is in the selection."""

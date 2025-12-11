@@ -50,7 +50,6 @@ class Layout(ABC):
     @size.setter
     def size(self, value: tuple[int, int]) -> None:
         self.rect = (self.rect.left, self.rect.top, *value)
-        return None
 
     @property
     def anchor(self) -> _anc.WindowAnchor:
@@ -246,7 +245,6 @@ class Layout1D(LayoutContainer, MutableSequence[Layout]):
         right = right if right is not None else margins_old.right
         bottom = bottom if bottom is not None else margins_old.bottom
         self.margins = left, top, right, bottom
-        return None
 
     def __len__(self) -> int:
         return len(self._children)
@@ -397,7 +395,6 @@ class VBoxLayout(BoxLayout1D):
             for i, (top, height) in enumerate(self._iter_edge_and_span(rect)):
                 irect = WindowRect(left, top, width, height)
                 self._children[i].rect = irect
-        return None
 
     def _adjust_child_resize(self, child: Layout, rect_old, rect_new):
         if self._is_calling_adjust_child_resize:
@@ -462,7 +459,6 @@ class HBoxLayout(BoxLayout1D):
             for i, (left, width) in enumerate(self._iter_edge_and_span(rect)):
                 irect = WindowRect(left, top, width, height)
                 self._children[i].rect = irect
-        return None
 
     def _adjust_child_resize(self, child: Layout, rect_old, rect_new):
         if self._is_calling_adjust_child_resize:
