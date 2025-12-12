@@ -877,7 +877,7 @@ class QImageView(QImageViewBase):
             self._img_view.set_image_blending([im.visible for im in imgs])
 
             # if in the live auto-contrast mode, update contrast limits
-            if self._control._auto_cont_live:
+            if self._control._auto_cont_btn.live:
                 self._control._auto_contrast()
         self.images_changed.emit(images)
 

@@ -94,18 +94,7 @@ class QImageViewControl(QImageViewControlBase):
         self._chn_mode_combo.setToolTip("Method to display multi-channel data")
         self._image_type = ImageType.OTHERS
 
-        self._auto_cont_btn = QColoredToolButton(
-            self._auto_contrast, ICON_PATH / "auto_contrast_once.svg"
-        )
-        self._auto_cont_btn.setContextMenuPolicy(
-            QtCore.Qt.ContextMenuPolicy.CustomContextMenu
-        )
-        self._auto_cont_btn.customContextMenuRequested.connect(
-            self._exec_autocontrast_menu
-        )
-        self._auto_cont_live = False
-        self._auto_cont_qmin = 0.0
-        self._auto_cont_qmax = 1.0
+        self._auto_cont_btn = QAutoContrastButton(self._auto_contrast)
 
         self._histogram = QHistogramView()
         self._histogram.setFixedWidth(120)
@@ -193,10 +182,6 @@ class QImageViewControl(QImageViewControlBase):
                 arr = None
             view._img_view.set_array(idx, arr)
 
-    def _exec_autocontrast_menu(self, *_):
-        menu = QAutoContrastMenu(self)
-        return menu.exec(QtGui.QCursor.pos())
-
     def _on_channel_mode_change(self, mode: str):
         self._chn_vis.setVisible(mode == ChannelMode.COMP)
         self._on_channel_visibility_change()
@@ -230,18 +215,10 @@ class QImageViewControl(QImageViewControlBase):
     def _auto_contrast(self):
         """Auto contrast (right click to change settings)."""
         range_min, range_max = self._histogram._view_range
-        if self._auto_cont_live and not self._auto_cont_btn.isChecked():
+        minmax = self._histogram.calc_contrast_limits(*self._auto_cont_btn.qminmax)
+        if minmax is None:
             return
-        min_new, max_new = float("inf"), -float("inf")
-        for item in self._histogram._hist_items:
-            cum_value = np.cumsum(item._hist_values)
-            cum_value = np.concatenate([[0.0], cum_value / cum_value[-1]])
-            qmin = max(self._auto_cont_qmin, 0.0)
-            qmax = min(self._auto_cont_qmax, 1.0)
-            min_new = min(_interp_hist(qmin, item._edges, cum_value), min_new)
-            max_new = max(_interp_hist(qmax, item._edges, cum_value), max_new)
-        if np.isinf(min_new) or np.isinf(max_new):
-            return
+        min_new, max_new = minmax
 
         view = self._image_view
         sl = view._dims_slider.value()
@@ -318,19 +295,19 @@ class QInterpolationSwitch(QtW.QAbstractButton):
 
 
 class QAutoContrastMenu(QtW.QMenu):
-    def __init__(self, parent: QImageViewControl):
+    def __init__(self, parent: QAutoContrastButton):
         super().__init__(parent)
-        self._control = parent
+        self._btn = parent
         action = self.addAction("Live Auto Contrast", self._toggle_live_auto_contrast)
         action.setCheckable(True)
         action.setChecked(parent._auto_cont_live)
 
-        min_widget = QDoubleLineEdit(format(parent._auto_cont_qmin * 100, ".2f"))
+        min_widget = QDoubleLineEdit(format(parent._qmin * 100, ".2f"))
         min_widget.setMinimum(0.0)
         min_widget.setMaximum(100.0)
         ac_min = QtW.QWidgetAction(self)
         ac_min.setDefaultWidget(_labeled("Min %", min_widget))
-        max_widget = QDoubleLineEdit(format(parent._auto_cont_qmax * 100, ".2f"))
+        max_widget = QDoubleLineEdit(format(parent._qmax * 100, ".2f"))
         ac_max = QtW.QWidgetAction(self)
         max_widget.setMinimum(0.0)
         max_widget.setMaximum(100.0)
@@ -339,18 +316,22 @@ class QAutoContrastMenu(QtW.QMenu):
         @min_widget.valueChanged.connect
         def _on_min_changed(txt: str):
             val = float(txt) / 100
-            parent._auto_cont_qmin = val
-            if val > parent._auto_cont_qmax:
-                parent._auto_cont_qmax = val
+            _qmin, _qmax = parent.qminmax
+            _qmin = val
+            if val > _qmax:
+                _qmax = val
                 max_widget.setText(min_widget.text())
+            parent.qminmax = _qmin, _qmax
 
         @max_widget.valueChanged.connect
         def _on_max_changed(txt: str):
             val = float(txt) / 100
-            parent._auto_cont_qmax = val
-            if val < parent._auto_cont_qmin:
-                parent._auto_cont_qmin = val
+            _qmin, _qmax = parent.qminmax
+            _qmax = val
+            if val < _qmin:
+                _qmin = val
                 min_widget.setText(max_widget.text())
+            parent.qminmax = _qmin, _qmax
 
         self.addAction(ac_min)
         self.addAction(ac_max)
@@ -358,11 +339,40 @@ class QAutoContrastMenu(QtW.QMenu):
         self._max_edit = max_widget
 
     def _toggle_live_auto_contrast(self):
-        live = self._control._auto_cont_live = not self._control._auto_cont_live
-        self._control._auto_cont_btn.setCheckable(live)
-        self._control._auto_cont_btn.setChecked(live)
+        live = self._btn._auto_cont_live = not self._btn._auto_cont_live
+        self._btn.setCheckable(live)
+        self._btn.setChecked(live)
         if live:
-            self._control._auto_contrast()
+            self._btn._callback()
+
+
+class QAutoContrastButton(QColoredToolButton):
+    def __init__(self, callback):
+        super().__init__(callback, ICON_PATH / "auto_contrast_once.svg")
+        self.setToolTip("Auto Contrast (right click to change settings)")
+        self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self._exec_autocontrast_menu)
+        self._auto_cont_live = False
+        self._qmin = 0.0
+        self._qmax = 1.0
+
+    @property
+    def live(self) -> bool:
+        return self._auto_cont_live
+
+    @property
+    def qminmax(self) -> tuple[float, float]:
+        qmin = max(self._qmin, 0.0)
+        qmax = min(self._qmax, 1.0)
+        return (qmin, qmax)
+
+    @qminmax.setter
+    def qminmax(self, qminmax: tuple[float, float]):
+        self._qmin, self._qmax = qminmax
+
+    def _exec_autocontrast_menu(self, *_):
+        menu = QAutoContrastMenu(self)
+        return menu.exec(QtGui.QCursor.pos())
 
 
 class QChannelToggleSwitch(QToggleSwitch):

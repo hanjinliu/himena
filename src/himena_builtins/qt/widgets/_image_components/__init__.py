@@ -8,6 +8,7 @@ from ._control import (
     QImageViewControl,
     QImageLabelViewControl,
     QImageViewControlBase,
+    QAutoContrastButton,
     ComplexMode,
     ChannelMode,
 )
@@ -23,6 +24,7 @@ __all__ = [
     "QImageViewControl",
     "QImageLabelViewControl",
     "QImageViewControlBase",
+    "QAutoContrastButton",
     "ComplexMode",
     "ChannelMode",
     "MouseMode",

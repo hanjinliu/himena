@@ -529,7 +529,7 @@ def test_constrast_hist(qtbot: QtBot):
         control._histogram._img_to_clipboard()
         control._histogram._reset_view()
 
-        menu = QAutoContrastMenu(control)
+        menu = QAutoContrastMenu(control._auto_cont_btn)
         image_view.dims_slider.setValue((1,))
         assert control._histogram.clim() != (float(imgs[1].min()), float(imgs[1].max()))
         menu._toggle_live_auto_contrast()

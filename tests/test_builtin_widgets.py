@@ -5,6 +5,7 @@ from himena.standards.model_meta import TableMeta
 from himena.widgets import MainWindow, SubWindow
 from himena.utils.table_selection import SelectionType, table_selection_gui_option
 from himena.qt._qprogress import QLabeledCircularProgressBar
+from himena.qt import QViewBox
 
 
 def test_table_selection(himena_ui: MainWindow):
@@ -59,4 +60,23 @@ def test_progress_bar(qtbot: QtBot):
     QtW.QApplication.processEvents()
     pbar._pbar.setInfinite(False)
     pbar.update()
+    QtW.QApplication.processEvents()
+
+def test_viewbox(qtbot: QtBot):
+    import numpy as np
+    from qtpy import QtCore
+
+    class MyViewBox(QViewBox):
+        def make_pixmap(self, size: QtCore.QSize) -> np.ndarray:
+            arr = np.zeros((size.height(), size.width(), 4), dtype=np.uint8)
+            arr[..., 0] = 255  # Red channel
+            arr[..., 3] = 255  # Alpha channel
+            return arr
+
+    viewbox = MyViewBox()
+    qtbot.addWidget(viewbox)
+    viewbox.resize(200, 100)
+    viewbox.show()
+    qtbot.waitForWindowShown(viewbox)
+    viewbox.update()
     QtW.QApplication.processEvents()

@@ -110,6 +110,20 @@ class QHistogramView(QBaseGraphicsView):
         self._view_range = (x0, x1)
         self.fitInView(self.viewRect(), QtCore.Qt.AspectRatioMode.IgnoreAspectRatio)
 
+    def calc_contrast_limits(
+        self, qmin: float, qmax: float
+    ) -> tuple[float, float] | None:
+        """Calculate contrast limits based on the given quantiles."""
+        min_new, max_new = float("inf"), -float("inf")
+        for item in self._hist_items:
+            cum_value = np.cumsum(item._hist_values)
+            cum_value = np.concatenate([[0.0], cum_value / cum_value[-1]])
+            min_new = min(_interp_hist(qmin, item._edges, cum_value), min_new)
+            max_new = max(_interp_hist(qmax, item._edges, cum_value), max_new)
+        if np.isinf(min_new) or np.isinf(max_new):
+            return
+        return min_new, max_new
+
     def resizeEvent(self, event: QtGui.QResizeEvent):
         super().resizeEvent(event)
         self.fitInView(self.viewRect(), QtCore.Qt.AspectRatioMode.IgnoreAspectRatio)
@@ -463,3 +477,11 @@ class QClimMenu(QtW.QMenu):
         elif value > v1:
             self._hist_view.set_view_range(v0, value)
         self.close()
+
+
+def _interp_hist(qmin: float, edges: np.ndarray, cum_value: np.ndarray):
+    # len(edges) == len(cum_value)
+    i = np.argmax(qmin <= cum_value)
+    if i == len(edges) - 1:
+        return edges[-1]
+    return edges[i] + (edges[i + 1] - edges[i]) * (qmin - cum_value[i])
