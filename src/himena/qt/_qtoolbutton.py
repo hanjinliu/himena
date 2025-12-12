@@ -22,4 +22,8 @@ class QColoredToolButton(QtW.QToolButton):
     def update_theme(self, theme: Theme):
         """Update the theme of the control."""
         color = theme.foreground
+        self.update_color(color)
+
+    def update_color(self, color: str):
+        """Update the color of the control."""
         self.setIcon(QColoredSVGIcon.fromfile(self._icon_path, color))

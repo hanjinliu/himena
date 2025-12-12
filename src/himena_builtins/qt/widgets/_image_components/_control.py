@@ -215,15 +215,10 @@ class QImageViewControl(QImageViewControlBase):
     def _auto_contrast(self):
         """Auto contrast (right click to change settings)."""
         range_min, range_max = self._histogram._view_range
-        min_new, max_new = float("inf"), -float("inf")
-        for item in self._histogram._hist_items:
-            cum_value = np.cumsum(item._hist_values)
-            cum_value = np.concatenate([[0.0], cum_value / cum_value[-1]])
-            qmin, qmax = self._auto_cont_btn.qminmax
-            min_new = min(_interp_hist(qmin, item._edges, cum_value), min_new)
-            max_new = max(_interp_hist(qmax, item._edges, cum_value), max_new)
-        if np.isinf(min_new) or np.isinf(max_new):
+        minmax = self._histogram.calc_contrast_limits(*self._auto_cont_btn.qminmax)
+        if minmax is None:
             return
+        min_new, max_new = minmax
 
         view = self._image_view
         sl = view._dims_slider.value()
@@ -321,18 +316,22 @@ class QAutoContrastMenu(QtW.QMenu):
         @min_widget.valueChanged.connect
         def _on_min_changed(txt: str):
             val = float(txt) / 100
-            parent._qmin = val
-            if val > parent._qmax:
-                parent._qmax = val
+            _qmin, _qmax = parent.qminmax
+            _qmin = val
+            if val > _qmax:
+                _qmax = val
                 max_widget.setText(min_widget.text())
+            parent.qminmax = _qmin, _qmax
 
         @max_widget.valueChanged.connect
         def _on_max_changed(txt: str):
             val = float(txt) / 100
-            parent._qmax = val
-            if val < parent._qmin:
-                parent._qmin = val
+            _qmin, _qmax = parent.qminmax
+            _qmax = val
+            if val < _qmin:
+                _qmin = val
                 min_widget.setText(max_widget.text())
+            parent.qminmax = _qmin, _qmax
 
         self.addAction(ac_min)
         self.addAction(ac_max)
@@ -366,6 +365,10 @@ class QAutoContrastButton(QColoredToolButton):
         qmin = max(self._qmin, 0.0)
         qmax = min(self._qmax, 1.0)
         return (qmin, qmax)
+
+    @qminmax.setter
+    def qminmax(self, qminmax: tuple[float, float]):
+        self._qmin, self._qmax = qminmax
 
     def _exec_autocontrast_menu(self, *_):
         menu = QAutoContrastMenu(self)
