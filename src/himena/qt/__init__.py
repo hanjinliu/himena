@@ -13,6 +13,7 @@ from himena.qt._utils import (
 )
 from himena.qt._qtoolbutton import QColoredToolButton
 from himena.qt._qsvg import QColoredSVGIcon
+from himena.qt._qviewbox import QViewBox
 
 __all__ = [
     "MainWindowQt",
@@ -26,6 +27,7 @@ __all__ = [
     "qimage_to_ndarray",
     "QColoredToolButton",
     "QColoredSVGIcon",
+    "QViewBox",
 ]
 
 register_magicgui_types()

@@ -17,6 +17,7 @@ class QColoredToolButton(QtW.QToolButton):
         self._icon_path = Path(svg_path)
         self.setToolTip(callback.__doc__ or "")
         self.clicked.connect(callback)
+        self._callback = callback
 
     def update_theme(self, theme: Theme):
         """Update the theme of the control."""
