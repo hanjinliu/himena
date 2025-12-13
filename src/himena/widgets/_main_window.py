@@ -1257,9 +1257,10 @@ def _tab_to_be_used(self: MainWindow) -> TabArea[_W]:
             idx = len(self.tabs) - 1
         elif self.tabs[idx].is_single_window:
             # find the first non-single-window tab
-            for tab_candidate in self.tabs:
+            for i, tab_candidate in self.tabs.enumerate():
                 if not tab_candidate.is_single_window:
                     tabarea = tab_candidate
+                    idx = i
                     break
             else:
                 tabarea = self.add_tab()

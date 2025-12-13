@@ -204,6 +204,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
     @name.setter
     def name(self, name: str) -> None:
         self._main_window()._set_tab_title(self._tab_index(), name)
+        self.renamed.emit(name)
 
     @property
     def current_index(self) -> int | None:
@@ -234,7 +235,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
             with self.renamed.blocked():
                 self.name = new_title
 
-        self.renamed.connect_setattr(sub_win, "title")
+        self.renamed.connect_setattr(sub_win, "title", maxargs=1)
         main._mark_tab_as_single_window_mode(self._tab_index())
         self._is_single_window = True
 

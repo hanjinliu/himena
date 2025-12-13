@@ -316,6 +316,7 @@ class SubWindow(WidgetWrapper[_W], Layout):
     @title.setter
     def title(self, value: str) -> None:
         self._main_window()._set_window_title(self._frontend_widget(), value)
+        self.renamed.emit(value)
 
     @property
     def state(self) -> WindowState:

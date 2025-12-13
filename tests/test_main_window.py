@@ -14,7 +14,7 @@ from himena.types import ClipboardDataModel, DragDataModel, FutureInfo, WidgetCo
 from himena.qt import MainWindowQt, drag_command, drag_files
 from himena.qt._qmain_window import QMainWindow, QChoicesDialog
 from himena.qt._qsub_window import QSubWindow, get_subwindow
-from himena.widgets import set_status_tip, notify, append_result, TabArea
+from himena.widgets import set_status_tip, notify, append_result, TabArea, DockWidget
 from himena.workflow._reader import LocalReaderMethod
 from himena_builtins.qt.text import QTextEdit
 
@@ -422,3 +422,40 @@ def test_custom_object_type_map(make_himena_ui):
 def test_remote_file(make_himena_ui):
     himena_ui: MainWindow = make_himena_ui("mock")
     himena_ui.run_script("https://gist.github.com/hanjinliu/ba5e58edfe2f912899cb5e2b9dc404ec")
+
+def test_single_window_mode(make_himena_ui):
+    himena_ui: MainWindow = make_himena_ui("mock")
+    himena_ui.add_data_model(create_model("a", type="text", title="single").use_tab())
+    assert himena_ui.tabs[0].is_single_window
+    assert himena_ui.tabs[0].name == "single"
+    assert himena_ui.tabs[0][0].title == "single"
+    himena_ui.add_data_model(create_model("b", type="text"))
+
+    # new tab should be created
+    assert len(himena_ui.tabs) == 2
+    assert himena_ui.tabs[0].is_single_window
+    assert not himena_ui.tabs[1].is_single_window
+    assert himena_ui.tabs[1][0].value == "b"
+
+    # reuse the non-single-window tab
+    himena_ui.tabs.current_index = 0
+    himena_ui.add_data_model(create_model("c", type="text"))
+    assert len(himena_ui.tabs) == 2
+
+    # rename
+    himena_ui.tabs[0].name = "renamed"
+    assert himena_ui.tabs[0].name == "renamed"
+    assert himena_ui.tabs[0][0].title == "renamed"
+    himena_ui.tabs[0][0].title = "renamed2"
+    assert himena_ui.tabs[0].name == "renamed2"
+    assert himena_ui.tabs[0][0].title == "renamed2"
+
+def test_model_as_dock_widget(make_himena_ui):
+    himena_ui: MainWindow = make_himena_ui("mock")
+    dock = himena_ui.add_data_model(
+        create_model("a", type="text", title="Title").use_dock_widget(area="bottom")
+    )
+    assert isinstance(dock, DockWidget)
+    assert dock.title == "Title"
+    assert len(himena_ui.dock_widgets) == 1
+    assert himena_ui.dock_widgets[0] == dock
