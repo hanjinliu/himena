@@ -266,6 +266,14 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         _LOGGER.info("Adding tab of title %r", tab_name)
         return self._tab_widget.add_tab_area(tab_name)
 
+    def _mark_tab_as_single_window_mode(self, i_tab: int) -> None:
+        """Mark the tab as single-window mode"""
+        if area := self._tab_widget.widget_area(i_tab):
+            subwindows = area.subWindowList()
+            assert len(subwindows) == 1
+            qsubwin = subwindows[0]
+            qsubwin.set_single_window_mode()
+
     def add_widget(
         self,
         widget: _T,
@@ -384,7 +392,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def _current_tab_index(self) -> int | None:
         idx = self._tab_widget.currentIndex()
-        if idx < 0:
+        if idx < 0 or self._tab_widget._is_startup_only():
             return None
         return idx
 
@@ -531,7 +539,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             case "new":
                 self._command_palette_new.update_context(self)
                 self._command_palette_new.show()
-            case _:
+            case _:  # pragma: no cover
                 raise NotImplementedError
 
     def _exit_main_window(self, confirm: bool = False) -> None:
@@ -539,10 +547,8 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             return None
         return self.close()
 
-    def _get_tab_name_list(self) -> list[str]:
-        if self._tab_widget._is_startup_only():
-            return []
-        return [self._tab_widget.tabText(i) for i in range(self._tab_widget.count())]
+    def _set_tab_name(self, i_tab: int, name: str) -> None:
+        self._tab_widget.setTabText(i_tab, name)
 
     def _get_widget_list(self, i_tab: int) -> list[tuple[str, QtW.QWidget]]:
         tab = self._tab_widget.widget_area(i_tab)
@@ -651,9 +657,15 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self._tab_widget.currentChanged.connect(main._tab_activated)
         self._tab_widget.activeWindowChanged.connect(main._window_activated)
         self._tab_widget.resized.connect(self._emit_resized)
+        self._tab_widget.renamed.connect(self._tab_renamed)
 
     def _emit_resized(self):
         self._himena_main_window._main_window_resized(Size(*self._area_size()))
+
+    def _tab_renamed(self, i: int, new_title: str):
+        tab = self._himena_main_window.tabs.get(i)
+        if tab is not None:
+            tab.renamed.emit(new_title)
 
     def _screenshot(self, target: str):
         match target:
@@ -669,7 +681,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
                     qwidget = sub._widget
                 else:
                     raise ValueError("No active window.")
-            case tgt:
+            case tgt:  # pragma: no cover
                 raise ValueError(f"Invalid target name {tgt!r}.")
         return ArrayQImage.from_qwidget(qwidget)
 
@@ -870,7 +882,7 @@ class QChoicesDialog(QtW.QDialog):
         self._layout = QtW.QVBoxLayout(self)
         self._layout.setSpacing(10)
 
-    def set_result_callback(self, value: _V, accept: bool) -> None:
+    def set_result_callback(self, value: _V, accept: bool) -> Callable[[], None]:
         def _set_result():
             self._result = value
             if accept:

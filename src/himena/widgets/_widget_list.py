@@ -18,22 +18,20 @@ import math
 import weakref
 
 from psygnal import Signal
-from himena import _providers
 from himena._descriptors import SaveToPath
 from himena.consts import ParametricWidgetProtocolNames as PWPN
 from himena.layout import Layout, VBoxLayout, HBoxLayout, VStackLayout
 from himena.plugins import _checker
 from himena.types import (
-    FutureInfo,
     Margins,
     NewWidgetBehavior,
     Size,
+    UseSubWindow,
     WidgetDataModel,
     WindowState,
     WindowRect,
 )
 from himena.utils.collections import FrozenList
-from himena.workflow import ProgrammaticMethod
 from himena.widgets._wrapper import (
     _HasMainWindowRef,
     SubWindow,
@@ -43,7 +41,6 @@ from himena.widgets._wrapper import (
 
 if TYPE_CHECKING:
     from himena.widgets import BackendMainWindow
-    from concurrent.futures import Future
     from IPython.lib.pretty import RepresentationPrinter
 
     PathOrPaths = str | Path | list[str | Path]
@@ -108,6 +105,8 @@ class SemiMutableSequence(Sequence[_T]):
 class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
     """An area containing multiple sub-windows."""
 
+    renamed = Signal(str)
+
     def __init__(self, main_window: BackendMainWindow[_W], hash_value: Hashable):
         super().__init__(main_window)
         self._hash_value = hash_value
@@ -117,6 +116,7 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         self._minimized_window_stack_layout._reanchor(Size(*main_window._area_size()))
         # the tab-specific result stack
         self._result_stack_ref: Callable[[], _W | None] = lambda: None
+        self._is_single_window: bool = False
 
     @property
     def layouts(self) -> FrozenList[Layout]:
@@ -199,7 +199,12 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
     @property
     def name(self) -> str:
         """Name of the tab area."""
-        return self._main_window()._get_tab_name_list()[self._tab_index()]
+        return self._main_window()._tab_title(self._tab_index())
+
+    @name.setter
+    def name(self, name: str) -> None:
+        self._main_window()._set_tab_title(self._tab_index(), name)
+        self.renamed.emit(name)
 
     @property
     def current_index(self) -> int | None:
@@ -214,6 +219,25 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
     def title(self) -> str:
         """Title of the tab area."""
         return self._main_window()._tab_title(self._tab_index())
+
+    @property
+    def is_single_window(self) -> bool:
+        """Whether the tab is in single-window mode."""
+        return self._is_single_window
+
+    def _mark_as_single_window_mode(self) -> None:
+        main = self._main_window()
+        sub_win = self[0]
+        sub_win.state = WindowState.MAX
+
+        @sub_win.renamed.connect
+        def _rename_tab(new_title: str) -> None:
+            with self.renamed.blocked():
+                self.name = new_title
+
+        self.renamed.connect_setattr(sub_win, "title", maxargs=1)
+        main._mark_tab_as_single_window_mode(self._tab_index())
+        self._is_single_window = True
 
     def add_widget(
         self,
@@ -239,8 +263,13 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
             `widget` property.
         """
         main = self._main_window()
+        ui = main._himena_main_window
+        if self.is_single_window:
+            target_tab = ui.add_tab(title)
+        else:
+            target_tab = self
         sub_window = SubWindow(widget=widget, main_window=main)
-        self._process_new_widget(sub_window, title, auto_size)
+        target_tab._process_new_widget(sub_window, title, auto_size)
         main._move_focus_to(sub_window._split_interface_and_frontend()[1])
         _checker.call_theme_changed_callback(widget, main._himena_main_window.theme)
         return sub_window
@@ -455,28 +484,21 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         _checker.call_widget_added_callback(sub_window.widget)
         main._himena_main_window.events.window_added.emit(sub_window)
         sub_window._alive = True
-        return None
 
     def add_data_model(self, model: WidgetDataModel) -> SubWindow[_W]:
         """Add a widget data model as a widget."""
-        if not isinstance(model, WidgetDataModel):
-            raise TypeError(
-                f"input model must be an instance of WidgetDataModel, got {model!r}"
-            )
-        if len(model.workflow) == 0:
-            # this case may happen if this method was programatically called
-            wf = ProgrammaticMethod(output_model_type=model.type).construct_workflow()
-            model = model.model_copy(update={"workflow": wf})
         ui = self._main_window()._himena_main_window
         widget = ui._pick_widget(model)
-        ui.set_status_tip(f"Data model {model.title!r} added.", duration=1)
-        sub_win = self.add_widget(widget, title=model.title)
-        sub_win._update_from_returned_model(model)
-        if rect_factory := model.window_rect_override:
-            rect = WindowRect.from_tuple(*rect_factory(sub_win.size))
-            sub_win.rect = rect
-        if model.extension_default is not None:
-            sub_win._extension_default_fallback = model.extension_default
+        if isinstance(_use_sub := model.output_window_type, UseSubWindow):
+            sub_win = self.add_widget(widget, title=model.title)
+            sub_win._update_from_returned_model(model)
+            if rect_factory := _use_sub.window_rect_override:
+                rect = WindowRect.from_tuple(*rect_factory(sub_win.size))
+                sub_win.rect = rect
+            if model.extension_default is not None:
+                sub_win._extension_default_fallback = model.extension_default
+        else:
+            raise ValueError("Unsupported output window type.")
         return sub_win
 
     def read_file(
@@ -510,47 +532,15 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         plugin: str | None = None,
     ) -> list[SubWindow[_W]]:
         """Read multiple files and open as new sub-windows in this tab."""
-        models = self._paths_to_models(file_paths, plugin=plugin)
-        out = [self.add_data_model(model) for model in models]
         ui = self._main_window()._himena_main_window
+        models = ui._paths_to_models(file_paths, plugin=plugin)
+        out = [self.add_data_model(model) for model in models]
         if len(out) == 1:
             ui.set_status_tip(f"File opened: {out[0].title}", duration=5)
         elif len(out) > 1:
             _titles = ", ".join(w.title for w in out)
             ui.set_status_tip(f"File opened: {_titles}", duration=5)
         return out
-
-    def _paths_to_models(self, file_paths: PathOrPaths, plugin: str | None = None):
-        ins = _providers.ReaderStore.instance()
-        file_paths = _norm_paths(file_paths)
-        reader_path_sets = [
-            (ins.pick(file_path, plugin=plugin), file_path) for file_path in file_paths
-        ]
-        models = [
-            reader.read_and_update_source(file_path)
-            for reader, file_path in reader_path_sets
-        ]
-        ui = self._main_window()._himena_main_window
-        ui._recent_manager.append_recent_files(
-            [(fp, reader.plugin_str) for reader, fp in reader_path_sets]
-        )
-        return models
-
-    def read_files_async(
-        self,
-        file_paths: PathOrPaths,
-        plugin: str | None = None,
-    ) -> Future:
-        """Read multiple files asynchronously and return a future."""
-        ui = self._main_window()._himena_main_window
-        file_paths = _norm_paths(file_paths)
-        future = ui._executor.submit(self._paths_to_models, file_paths, plugin=plugin)
-        if len(file_paths) == 1:
-            ui.set_status_tip(f"Opening: {file_paths[0].as_posix()}", duration=5)
-        else:
-            ui.set_status_tip(f"Opening {len(file_paths)} files", duration=5)
-        FutureInfo(list[WidgetDataModel]).set(future)  # set info for injection store
-        return future
 
     def save_session(
         self,
@@ -561,10 +551,9 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
         """Save the current session to a file."""
         from himena.session import dump_tab_to_zip
 
-        dump_tab_to_zip(
+        return dump_tab_to_zip(
             self, file_path, save_copies=save_copies, allow_calculate=allow_calculate
         )
-        return None
 
     def tile_windows(
         self,
@@ -588,7 +577,6 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
                 sub = self[idx]
                 rect = WindowRect.from_tuple(x, y, w, h)
                 main._set_window_rect(sub.widget, rect, inst)
-        return None
 
     def _norm_index_or_name(self, index_or_name: int | str) -> int:
         if isinstance(index_or_name, str):
@@ -674,7 +662,7 @@ class TabList(SemiMutableSequence[TabArea[_W]], _HasMainWindowRef[_W], Generic[_
             return None
 
     def __len__(self) -> int:
-        return len(self._main_window()._get_tab_name_list())
+        return self._main_window()._num_tabs()
 
     def __iter__(self):
         main = self._main_window()
@@ -695,7 +683,7 @@ class TabList(SemiMutableSequence[TabArea[_W]], _HasMainWindowRef[_W], Generic[_
     @property
     def names(self) -> list[str]:
         """List of names of the tabs."""
-        return self._main_window()._get_tab_name_list()
+        return [self._main_window()._tab_title(i) for i in range(len(self))]
 
     def current(self, default: _T = None) -> TabArea[_W] | _T:
         """Get the current tab or a default value."""
@@ -756,16 +744,3 @@ class DockWidgetList(
 
 def _make_title(i: int) -> str:
     return f"Untitled-{i}"
-
-
-def _norm_paths(file_paths: PathOrPaths) -> list[Path | list[Path]]:
-    if isinstance(file_paths, (str, Path)):
-        file_paths = [file_paths]
-    out = []
-    for file_path in file_paths:
-        if isinstance(file_path, (str, Path)):
-            file_path = Path(file_path)
-        else:
-            file_path = [Path(p) for p in file_path]
-        out.append(file_path)
-    return out

@@ -194,9 +194,6 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     def _del_widget_at(self, i_tab: int, i_window: int) -> None:
         """Delete the `i_window`-th window in the `i_tab`-th tab."""
 
-    def _get_tab_name_list(self) -> list[str]:
-        """Get the list of tab names."""
-
     def _del_tab_at(self, i_tab: int) -> None:
         """Delete the `i_tab`-th tab.
 
@@ -218,6 +215,9 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
 
     def add_tab(self, title: str) -> None:
         """Add a empty tab with the title."""
+
+    def _mark_tab_as_single_window_mode(self, i_tab: int) -> None:
+        """Mark the tab as single-window mode"""
 
     def add_dock_widget(
         self,

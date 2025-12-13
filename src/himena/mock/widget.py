@@ -29,7 +29,8 @@ class MockWidget:
 
     def set_dockwidget(self, dockwidget: MockDockWidget) -> None:
         """Set the dockwidget reference."""
-        self._dockwidget_ref = weakref.ref(dockwidget)
+        # TODO: use strong ref here but should be weakref
+        self._dockwidget_ref = lambda: dockwidget
 
 
 class MockSubWindow:

@@ -71,7 +71,7 @@ class HimenaApplication(Application):
                     def rov(size):
                         return WindowRect(_left, _top, *size)
 
-                result.window_rect_override = rov
+                result = result.use_subwindow(window_rect_override=rov)
         self.injection_store.process(result, type_hint=type_hint)
 
 

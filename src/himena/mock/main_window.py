@@ -211,10 +211,6 @@ class MockBackend(BackendMainWindow):
         """Delete the `i_window`-th window in the `i_tab`-th tab."""
         del self._tabs[i_tab].sub_windows[i_window]
 
-    def _get_tab_name_list(self) -> list[str]:
-        """Get the list of tab names."""
-        return [tab.title for tab in self._tabs]
-
     def _del_tab_at(self, i_tab: int) -> None:
         """Delete the `i_tab`-th tab.
 
@@ -222,6 +218,9 @@ class MockBackend(BackendMainWindow):
         wrapper side).
         """
         del self._tabs[i_tab]
+
+    def _mark_tab_as_single_window_mode(self, i_tab: int) -> None:
+        """Mark the tab as single-window mode"""
 
     def _rename_window_at(self, i_tab: int, i_window: int) -> None:
         """Start renaming the `i_window`-th window in the `i_tab`-th tab."""
