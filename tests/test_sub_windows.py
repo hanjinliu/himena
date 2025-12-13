@@ -2,7 +2,6 @@ from pathlib import Path
 import sys
 import pytest
 from pytestqt.qtbot import QtBot
-from tempfile import TemporaryDirectory
 from qtpy import QtWidgets as QtW
 import numpy as np
 from numpy.testing import assert_equal
@@ -21,24 +20,22 @@ from himena.testing import choose_one_dialog_response
 from himena_builtins.qt.text import QTextEdit
 import himena._providers
 
-def test_new_window(make_himena_ui, backend: str):
+def test_new_window(make_himena_ui, backend: str, tmpdir):
     himena_ui: MainWindow = make_himena_ui(backend)
     himena_ui.show()
+    tmpdir = Path(tmpdir)
+    path = tmpdir / "test.txt"
     assert len(himena_ui.tabs) == 0
     assert len(himena_ui.windows_for_type(StandardType.TEXT)) == 0
-    with TemporaryDirectory() as tmp:
-        path = Path(tmp) / "test.txt"
-        path.write_text("Hello, World!")
-        himena_ui.read_file(path)
+    path.write_text("Hello, World!")
+    himena_ui.read_file(path)
     assert len(himena_ui.tabs) == 1
     assert len(himena_ui.tabs[0]) == 1
     assert himena_ui.tabs[0][-1].is_editable
     himena_ui.exec_action("window-toggle-editable")
     assert not himena_ui.tabs[0][-1].is_editable
-    with TemporaryDirectory() as tmp:
-        path = Path(tmp) / "test.txt"
-        path.write_text("Hello, World! 2")
-        himena_ui.read_file(path)
+    path.write_text("Hello, World! 2")
+    himena_ui.read_file(path)
     assert len(himena_ui.tabs) == 1
     assert len(himena_ui.tabs[0]) == 2
 
@@ -49,6 +46,11 @@ def test_new_window(make_himena_ui, backend: str):
     assert len(himena_ui.tabs) == 2
     assert len(himena_ui.tabs.current()) == 0
     assert himena_ui.tabs.current().title == "New tab"
+    assert himena_ui.tabs.current().is_alive
+    himena_ui.tabs._get_by_hash(himena_ui.tabs[0])
+    result = himena_ui.tabs[0].read_files_async([path])
+    result.result()
+    assert himena_ui.tabs[0][-1].to_model().value == "Hello, World! 2"
 
     if backend == "qt":
         class CustomWidget:
