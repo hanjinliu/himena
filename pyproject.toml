@@ -71,8 +71,8 @@ testing = [
   "polars",
   "pyarrow",
   "narwhals",
-  "dask"
-,  "xarray",
+  "dask",
+  "xarray",
   "zarr",
   "click!=8.3.0",
   "himena[all]"
