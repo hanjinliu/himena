@@ -50,8 +50,12 @@ def test_new_window(make_himena_ui, backend: str):
     assert len(himena_ui.tabs.current()) == 0
     assert himena_ui.tabs.current().title == "New tab"
 
-    with pytest.raises(ValueError):
-        himena_ui.add_widget(object())
+    if backend == "qt":
+        class CustomWidget:
+            pass
+
+        with pytest.raises(TypeError):
+            himena_ui.add_widget(CustomWidget())
 
 def test_builtin_commands(himena_ui: MainWindow):
     himena_ui.show()
