@@ -77,6 +77,6 @@ def test_viewbox(qtbot: QtBot):
     qtbot.addWidget(viewbox)
     viewbox.resize(200, 100)
     viewbox.show()
-    qtbot.waitForWindowShown(viewbox)
-    viewbox.update()
+    with qtbot.waitExposed(viewbox, timeout=200):
+        viewbox.update()
     QtW.QApplication.processEvents()

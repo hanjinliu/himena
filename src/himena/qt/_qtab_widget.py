@@ -135,6 +135,7 @@ class QTabWidget(QtW.QTabWidget):
 
     activeWindowChanged = QtCore.Signal(bool)  # True if a window is active
     resized = QtCore.Signal()
+    renamed = QtCore.Signal(int, str)  # index, new name
 
     def __init__(self):
         super().__init__()
@@ -158,6 +159,10 @@ class QTabWidget(QtW.QTabWidget):
     def _init_startup(self):
         self._startup_widget = QStartupWidget(self)
         self._add_startup_widget()
+
+    def setTabText(self, index, a1):
+        super().setTabText(index, a1)
+        self.renamed.emit(index, a1)
 
     def add_tab_area(self, tab_name: str | None = None) -> QSubWindowArea:
         """Add a new tab with a sub-window area.
@@ -247,8 +252,7 @@ class QTabWidget(QtW.QTabWidget):
                 isinstance(src := event.source(), QSubWindow)
                 and src in self.current_widget_area().subWindowList()
             ):
-                # subwindow dropped in the same tab
-                pass
+                pass  # subwindow dropped in the same tab
             else:
                 self._process_subwindow_drop(model, drop_pos)
         elif mime_data.hasUrls():
@@ -272,7 +276,7 @@ class QTabWidget(QtW.QTabWidget):
     ) -> None:
         ui = get_main_window(self)
         model = drag_model.data_model()
-        model.window_rect_override = lambda s: _center_title_bar_on(s, drop_pos)
+        model = model.use_subwindow(lambda s: _center_title_bar_on(s, drop_pos))
         ui.add_data_model(model)
 
     def _process_file_url_drop(

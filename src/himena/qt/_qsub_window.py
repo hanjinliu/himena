@@ -173,6 +173,8 @@ class QSubWindowArea(QtW.QMdiArea):
             return super().eventFilter(obj, a0)
         return False
 
+    # NOTE: dropEvent is implemented on QTabWidget side.
+
     def _set_key_down(self, key: int):
         if main := self._qmain_window():
             main._keys_down.add(key)
@@ -526,6 +528,11 @@ class QSubWindow(QtW.QMdiSubWindow):
     def focusOutEvent(self, e):
         self._qt_mdiarea()._tooltip_widget.hide()
         return super().focusOutEvent(e)
+
+    def set_single_window_mode(self):
+        self._title_bar._minimize_btn.hide()
+        self._title_bar._toggle_size_btn.hide()
+        self._title_bar._close_btn.hide()
 
 
 class QTitleBarToolButton(QtW.QToolButton):

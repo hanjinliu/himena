@@ -14,6 +14,7 @@ from typing import (
     TypeVar,
     Generic,
     TYPE_CHECKING,
+    Union,
 )
 from pydantic import BaseModel, Field, field_validator
 from himena._descriptors import SaveBehavior
@@ -84,6 +85,58 @@ class _Void:
 _void = _Void()
 
 
+class UseSubWindow(BaseModel):
+    model_config = PYDANTIC_CONFIG_STRICT
+
+    kind: Literal["subwindow"] = Field(
+        "subwindow",
+        description="Use subwindow to show the data.",
+        frozen=True,
+    )
+    window_rect_override: Callable[["Size"], "WindowRect"] | None = Field(
+        None,
+        description="Function to override the window rectangle.",
+    )
+
+
+class UseTab(BaseModel):
+    model_config = PYDANTIC_CONFIG_STRICT
+
+    kind: Literal["tab"] = Field(
+        "tab",
+        description="Use tab to show the data.",
+        frozen=True,
+    )
+
+
+class UseDockWidget(BaseModel):
+    model_config = PYDANTIC_CONFIG_STRICT
+
+    kind: Literal["dock"] = Field(
+        "dock",
+        description="Use dock widget to show the data.",
+        frozen=True,
+    )
+    area: DockArea = Field(
+        DockArea.RIGHT,
+        description="Area to dock the widget.",
+    )
+    allowed_areas: list[DockArea] | None = Field(
+        None,
+        description="Allowed areas to dock the widget.",
+    )
+
+    @field_validator("area", mode="before")
+    def _validate_area(cls, v):
+        return DockArea(v)
+
+    @field_validator("allowed_areas", mode="before")
+    def _validate_allowed_areas(cls, v):
+        if isinstance(v, (str, DockArea)):
+            v = [v]
+        return [DockArea(area) for area in v]
+
+
 class WidgetDataModel(GenericModel[_T]):
     """A data model that represents a widget containing an internal data.
 
@@ -146,7 +199,10 @@ class WidgetDataModel(GenericModel[_T]):
         False,
         description="Whether to update the input data instead of creating a new window.",
     )
-    window_rect_override: Callable[["Size"], "WindowRect"] | None = Field(None)
+    output_window_type: Union[UseSubWindow, UseTab, UseDockWidget] = Field(
+        default_factory=UseSubWindow,
+        description="How to show the output widget.",
+    )
 
     def with_value(
         self,
@@ -173,6 +229,36 @@ class WidgetDataModel(GenericModel[_T]):
             force_open_with=None,
             update_inplace=update_inplace,
         )  # these parameters must be reset
+        return self.model_copy(update=update)
+
+    def use_subwindow(
+        self,
+        window_rect_override: Callable[["Size"], "WindowRect"] | None = None,
+    ) -> "WidgetDataModel[_T]":
+        update = {
+            "output_window_type": UseSubWindow(
+                window_rect_override=window_rect_override
+            )
+        }
+        return self.model_copy(update=update)
+
+    def use_tab(self) -> "WidgetDataModel[_T]":
+        update = {"output_window_type": UseTab()}
+        return self.model_copy(update=update)
+
+    def use_dock_widget(
+        self,
+        area: DockArea | DockAreaString = "right",
+        allowed_areas: list[DockArea | DockAreaString] | None = None,
+    ) -> "WidgetDataModel[_T]":
+        if allowed_areas is None:
+            allowed_areas = ["top", "bottom", "left", "right"]
+        update = {
+            "output_window_type": UseDockWidget(
+                area=area,
+                allowed_areas=allowed_areas,
+            )
+        }
         return self.model_copy(update=update)
 
     def astype(self, new_type: str):

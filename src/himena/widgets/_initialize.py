@@ -116,7 +116,12 @@ def init_application(app: HimenaApplication) -> HimenaApplication:
     @app.injection_store.mark_provider
     def _provide_data_model() -> WidgetDataModel:
         _LOGGER.debug("providing for %r", WidgetDataModel.__name__)
-        return current_instance(app.name)._provide_file_output()[0]
+        ins = current_instance(app.name)
+        if sub := ins.current_window:
+            model = sub.to_model()
+            return model
+        else:
+            raise ValueError("No active window.")
 
     @app.injection_store.mark_provider
     def _get_clipboard_data() -> ClipboardDataModel:

@@ -19,6 +19,8 @@ _C = TypeVar("_C", bound=type)
 if TYPE_CHECKING:
     _F = TypeVar("_F", bound=Callable)
 
+    PathOrPaths = str | Path | list[str | Path]
+
     @overload
     def lru_cache(maxsize: int = 128, typed: bool = False) -> Callable[[_F], _F]: ...
     @overload
@@ -254,6 +256,19 @@ def is_absolute_file_path_string(s: str) -> bool:
         return Path(s).is_absolute()
     except Exception:
         return False
+
+
+def norm_paths(file_paths: PathOrPaths) -> list[Path | list[Path]]:
+    if isinstance(file_paths, (str, Path)):
+        file_paths = [file_paths]
+    out = []
+    for file_path in file_paths:
+        if isinstance(file_path, (str, Path)):
+            file_path = Path(file_path)
+        else:
+            file_path = [Path(p) for p in file_path]
+        out.append(file_path)
+    return out
 
 
 def ext_to_filter(ext: str) -> str:

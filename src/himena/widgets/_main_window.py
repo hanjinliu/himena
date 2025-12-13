@@ -21,6 +21,7 @@ import warnings
 from app_model.expressions import create_context
 from psygnal import SignalGroup, Signal
 
+from himena import _providers
 from himena._app_model import AppContext, HimenaApplication
 from himena._open_recent import RecentFileManager, RecentSessionManager
 from himena._utils import get_widget_class_id, import_object
@@ -31,7 +32,10 @@ from himena.style import Theme
 from himena.standards import BaseMetadata
 from himena.types import (
     ClipboardDataModel,
+    FutureInfo,
     Size,
+    UseDockWidget,
+    UseTab,
     WidgetDataModel,
     NewWidgetBehavior,
     DockArea,
@@ -39,7 +43,7 @@ from himena.types import (
     BackendInstructions,
     WindowRect,
 )
-from himena.utils.misc import is_subtype, is_url_string, fetch_text_from_url
+from himena.utils.misc import is_subtype, is_url_string, fetch_text_from_url, norm_paths
 from himena.widgets._backend import BackendMainWindow
 from himena.widgets._keyset import KeySet
 from himena.widgets._hist import HistoryContainer, FileDialogHistoryDict
@@ -317,19 +321,6 @@ class MainWindow(Generic[_W]):
             if last_id == identifier:
                 return win
 
-    def _current_or_new_tab(self) -> tuple[int, TabArea[_W]]:
-        if self._new_widget_behavior is NewWidgetBehavior.WINDOW:
-            if len(self.tabs) == 0:
-                self.add_tab()
-                idx = 0
-            else:
-                idx = self._backend_main_window._current_tab_index()
-            tabarea = self.tabs[idx]
-        else:
-            tabarea = self.add_tab()
-            idx = len(self.tabs) - 1
-        return idx, tabarea
-
     def add_widget(
         self,
         widget: _W,
@@ -358,8 +349,7 @@ class MainWindow(Generic[_W]):
         SubWindow
             The sub-window handler.
         """
-        _, tabarea = self._current_or_new_tab()
-        return tabarea.add_widget(widget, title=title)
+        return _tab_to_be_used(self).add_widget(widget, title=title)
 
     def add_dock_widget(
         self,
@@ -447,10 +437,35 @@ class MainWindow(Generic[_W]):
         )
         return self.add_data_model(wd)
 
-    def add_data_model(self, model_data: WidgetDataModel) -> SubWindow[_W]:
+    def add_data_model(self, model: WidgetDataModel) -> SubWindow[_W] | DockWidget[_W]:
         """Add a widget data model as a widget."""
-        _, tabarea = self._current_or_new_tab()
-        return tabarea.add_data_model(model_data)
+        if not isinstance(model, WidgetDataModel):
+            raise TypeError(
+                f"input model must be an instance of WidgetDataModel, got {model!r}"
+            )
+        if len(model.workflow) == 0:
+            # this case may happen if this method was programatically called
+            wf = ProgrammaticMethod(output_model_type=model.type).construct_workflow()
+            model = model.model_copy(update={"workflow": wf})
+        self.set_status_tip(f"Data model {model.title!r} added.", duration=1)
+        widget = self._pick_widget(model)
+        if isinstance(_use_dock := model.output_window_type, UseDockWidget):
+            sub_win = self.add_dock_widget(
+                widget,
+                title=model.title,
+                area=_use_dock.area,
+                allowed_areas=_use_dock.allowed_areas,
+            )
+        elif isinstance(model.output_window_type, UseTab):
+            tab_area = self.tabs.add(model.title)
+            sub_win = tab_area.add_widget(widget, title=model.title)
+            sub_win._update_from_returned_model(model)
+            tab_area._mark_as_single_window_mode()
+            if model.extension_default is not None:
+                sub_win._extension_default_fallback = model.extension_default
+        else:  # pragma: no cover
+            sub_win = _tab_to_be_used(self).add_data_model(model)
+        return sub_win
 
     def add_function(
         self,
@@ -480,8 +495,7 @@ class MainWindow(Generic[_W]):
         SubWindow
             The sub-window instance that represents the output model.
         """
-        _, tabarea = self._current_or_new_tab()
-        return tabarea.add_function(
+        return _tab_to_be_used(self).add_function(
             func, title=title, preview=preview, result_as=result_as,
             show_parameter_labels=show_parameter_labels, auto_close=auto_close,
             run_async=run_async,
@@ -499,8 +513,7 @@ class MainWindow(Generic[_W]):
         run_async: bool = False,
         result_as: Literal["window", "below", "right"] = "window",
     ) -> ParametricWindow[_W]:
-        _, area = self._current_or_new_tab()
-        return area.add_parametric_widget(
+        return _tab_to_be_used(self).add_parametric_widget(
             widget, callback, title=title, preview=preview, auto_close=auto_close,
             auto_size=auto_size, result_as=result_as, run_async=run_async,
         )  # fmt: skip
@@ -510,19 +523,70 @@ class MainWindow(Generic[_W]):
         file_path: PathOrPaths,
         plugin: str | None = None,
     ) -> SubWindow[_W]:
-        """Read local file(s) and open as a new sub-window."""
-        _, tabarea = self._current_or_new_tab()
-        return tabarea.read_file(file_path, plugin=plugin)
+        """Read local file(s) and open as a new sub-window in this tab.
 
-    def read_files(self, file_paths: PathOrPaths):
-        """Read multiple files one by one and open as new sub-windows in a same tab."""
-        _, tabarea = self._current_or_new_tab()
-        return tabarea.read_files(file_paths)
+        Parameters
+        ----------
+        file_path : str or Path or list of them
+            Path(s) to the file to read. If a list is given, they will be read as a
+            group, not as separate windows.
+        plugin : str, optional
+            If given, reader provider will be searched with the plugin name. This value
+            is usually the full import path to the reader provider function, such as
+            `"himena_builtins.io.default_reader_provider"`.
 
-    def read_files_async(self, file_paths: PathOrPaths, plugin: str | None = None):
-        """Read multiple files asynchronously and open as new sub-windows."""
-        _, tabarea = self._current_or_new_tab()
-        return tabarea.read_files_async(file_paths, plugin=plugin)
+        Returns
+        -------
+        SubWindow
+            The sub-window instance that is constructed based on the return value of
+            the reader.
+        """
+        return self.read_files([file_path], plugin=plugin)[0]
+
+    def read_files(
+        self,
+        file_paths: PathOrPaths,
+        plugin: str | None = None,
+    ) -> list[SubWindow[_W]]:
+        """Read multiple files and open as new sub-windows in this tab."""
+        models = self._paths_to_models(file_paths, plugin=plugin)
+        out = [self.add_data_model(model) for model in models]
+        if len(out) == 1:
+            self.set_status_tip(f"File opened: {out[0].title}", duration=5)
+        elif len(out) > 1:
+            _titles = ", ".join(w.title for w in out)
+            self.set_status_tip(f"File opened: {_titles}", duration=5)
+        return out
+
+    def _paths_to_models(self, file_paths: PathOrPaths, plugin: str | None = None):
+        ins = _providers.ReaderStore.instance()
+        file_paths = norm_paths(file_paths)
+        reader_path_sets = [
+            (ins.pick(file_path, plugin=plugin), file_path) for file_path in file_paths
+        ]
+        models = [
+            reader.read_and_update_source(file_path)
+            for reader, file_path in reader_path_sets
+        ]
+        self._recent_manager.append_recent_files(
+            [(fp, reader.plugin_str) for reader, fp in reader_path_sets]
+        )
+        return models
+
+    def read_files_async(
+        self,
+        file_paths: PathOrPaths,
+        plugin: str | None = None,
+    ) -> Future:
+        """Read multiple files asynchronously and return a future."""
+        file_paths = norm_paths(file_paths)
+        future = self._executor.submit(self._paths_to_models, file_paths, plugin=plugin)
+        if len(file_paths) == 1:
+            self.set_status_tip(f"Opening: {file_paths[0].as_posix()}", duration=5)
+        else:
+            self.set_status_tip(f"Opening {len(file_paths)} files", duration=5)
+        FutureInfo(list[WidgetDataModel]).set(future)  # set info for injection store
+        return future
 
     def run_script(self, file: str | Path) -> Any:
         """Run the main function of the given script file with this UI instance."""
@@ -1001,13 +1065,6 @@ class MainWindow(Generic[_W]):
         for tab in self.tabs:
             yield from tab
 
-    def _provide_file_output(self) -> tuple[WidgetDataModel, SubWindow[_W]]:
-        if sub := self.current_window:
-            model = sub.to_model()
-            return model, sub
-        else:
-            raise ValueError("No active window.")
-
     def _tab_activated(self, i: int):
         if i < 0:
             return None
@@ -1190,3 +1247,24 @@ def _format_exceptions(exceptions: list[tuple[Any, Exception]]) -> str:
 def _iter_sorted(matched: list[tuple[tuple[int, int], type]]) -> Iterator[type]:
     _s = sorted(matched, key=lambda x: x[0], reverse=True)
     yield from (cls for _, cls in _s)
+
+
+def _tab_to_be_used(self: MainWindow) -> TabArea[_W]:
+    if self._new_widget_behavior is NewWidgetBehavior.WINDOW:
+        idx = self._backend_main_window._current_tab_index()
+        if idx is None:
+            self.add_tab()
+            idx = len(self.tabs) - 1
+        elif self.tabs[idx].is_single_window:
+            # find the first non-single-window tab
+            for tab_candidate in self.tabs:
+                if not tab_candidate.is_single_window:
+                    tabarea = tab_candidate
+                    break
+            else:
+                tabarea = self.add_tab()
+                idx = len(self.tabs) - 1
+        tabarea = self.tabs[idx]
+    else:
+        tabarea = self.add_tab()
+    return tabarea

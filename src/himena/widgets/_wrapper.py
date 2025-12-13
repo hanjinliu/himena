@@ -418,6 +418,8 @@ class SubWindow(WidgetWrapper[_W], Layout):
             )
 
     def _set_state(self, value: WindowState, inst: BackendInstructions | None = None):
+        if self.tab_area.is_single_window:
+            raise ValueError("Cannot change state in the single-window mode")
         main = self._main_window()
         front = self._frontend_widget()
         if main._window_state(front) is value:  # if already in the state, do nothing
