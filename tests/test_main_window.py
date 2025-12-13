@@ -1,6 +1,7 @@
 from concurrent.futures import Future
 from dataclasses import dataclass
 from pathlib import Path
+from concurrent.futures import Future
 from unittest.mock import MagicMock
 import warnings
 
@@ -295,7 +296,11 @@ def test_qt_main_window(himena_ui: MainWindowQt, qtbot: QtBot):
 def test_qchoices_dialog(qtbot: QtBot):
     choices = [("a", 0), ("b", 1), ("c", 2)]
     qtbot.addWidget(QChoicesDialog.make_request("title", "message", choices))
-    qtbot.addWidget(QChoicesDialog.make_request_radiobuttons("title", "message", choices))
+    dlg = QChoicesDialog.make_request_radiobuttons("title", "message", choices)
+    qtbot.addWidget(dlg)
+    cb = dlg.set_result_callback(0, True)
+    cb()
+
 
 def test_private_functions():
     from himena.widgets._main_window import _short_repr, _format_exceptions
@@ -450,8 +455,9 @@ def test_single_window_mode(make_himena_ui):
     assert himena_ui.tabs[0].name == "renamed2"
     assert himena_ui.tabs[0][0].title == "renamed2"
 
-def test_model_as_dock_widget(make_himena_ui):
-    himena_ui: MainWindow = make_himena_ui("mock")
+@pytest.mark.parametrize("backend", ["mock", "qt"])
+def test_model_as_dock_widget(make_himena_ui, backend):
+    himena_ui: MainWindow = make_himena_ui(backend)
     dock = himena_ui.add_data_model(
         create_model("a", type="text", title="Title").use_dock_widget(area="bottom")
     )
@@ -459,3 +465,10 @@ def test_model_as_dock_widget(make_himena_ui):
     assert dock.title == "Title"
     assert len(himena_ui.dock_widgets) == 1
     assert himena_ui.dock_widgets[0] == dock
+
+def test_process_future(make_himena_ui):
+    himena_ui: MainWindow = make_himena_ui("mock")
+    future = Future()
+    future.set_result(create_model("a", type="text"))
+    FutureInfo(type_hint=WidgetDataModel, top_left=(10, 10)).set(future)
+    himena_ui.model_app._future_done_callback(future)

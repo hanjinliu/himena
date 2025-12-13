@@ -12,6 +12,7 @@ from himena import MainWindow, anchor
 from himena._descriptors import NoNeedToSave, SaveToNewPath, SaveToPath
 from himena.consts import StandardType
 from himena.core import create_model
+from himena.style import Theme
 from himena.workflow import CommandExecution, LocalReaderMethod, ProgrammaticMethod
 from himena.types import ClipboardDataModel, DragDataModel, WidgetDataModel, WindowRect
 from himena.testing import file_dialog_response
@@ -49,6 +50,8 @@ def test_new_window(make_himena_ui, backend: str):
     assert len(himena_ui.tabs.current()) == 0
     assert himena_ui.tabs.current().title == "New tab"
 
+    with pytest.raises(ValueError):
+        himena_ui.add_widget(object())
 
 def test_builtin_commands(himena_ui: MainWindow):
     himena_ui.show()
@@ -186,6 +189,11 @@ def test_window_commands(himena_ui: MainWindowQt, sample_dir: Path):
     himena_ui.exec_action("full-screen-in-new-tab")
     assert len(himena_ui.tabs) == 2
     assert himena_ui.tabs.current_index == 1
+
+    himena_ui._backend_main_window._tab_renamed(0, "renamed-tab")
+    himena_ui._backend_main_window._set_tab_name(0, "renamed-tab-2")
+    himena_ui._backend_main_window._update_widget_theme(Theme.from_global("light-green"))
+    himena_ui._backend_main_window._update_widget_theme(Theme.from_global("dark-green"))
 
 def test_screenshot_commands(himena_ui: MainWindow, sample_dir: Path, tmpdir):
     himena_ui.read_file(sample_dir / "text.txt")

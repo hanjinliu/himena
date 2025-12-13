@@ -539,7 +539,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             case "new":
                 self._command_palette_new.update_context(self)
                 self._command_palette_new.show()
-            case _:
+            case _:  # pragma: no cover
                 raise NotImplementedError
 
     def _exit_main_window(self, confirm: bool = False) -> None:
@@ -681,7 +681,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
                     qwidget = sub._widget
                 else:
                     raise ValueError("No active window.")
-            case tgt:
+            case tgt:  # pragma: no cover
                 raise ValueError(f"Invalid target name {tgt!r}.")
         return ArrayQImage.from_qwidget(qwidget)
 
@@ -882,7 +882,7 @@ class QChoicesDialog(QtW.QDialog):
         self._layout = QtW.QVBoxLayout(self)
         self._layout.setSpacing(10)
 
-    def set_result_callback(self, value: _V, accept: bool) -> None:
+    def set_result_callback(self, value: _V, accept: bool) -> Callable[[], None]:
         def _set_result():
             self._result = value
             if accept:
