@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
+from concurrent.futures import Future
 import inspect
 from pathlib import Path
 from typing import (
@@ -224,6 +225,15 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
     def is_single_window(self) -> bool:
         """Whether the tab is in single-window mode."""
         return self._is_single_window
+
+    @property
+    def is_alive(self) -> bool:
+        """Whether the tab area is still alive in the main window."""
+        main = self._main_window()
+        for i in range(main._num_tabs()):
+            if main._tab_hash(i) == self._hash_value:
+                return True
+        return False
 
     def _mark_as_single_window_mode(self) -> None:
         main = self._main_window()
@@ -542,6 +552,15 @@ class TabArea(SemiMutableSequence[SubWindow[_W]], _HasMainWindowRef[_W]):
             ui.set_status_tip(f"File opened: {_titles}", duration=5)
         return out
 
+    def read_files_async(
+        self,
+        file_paths: PathOrPaths,
+        plugin: str | None = None,
+    ) -> Future:
+        """Read multiple files asynchronously and return a future."""
+        ui = self._main_window()._himena_main_window
+        return ui.read_files_async(file_paths, plugin=plugin, tab=self)
+
     def save_session(
         self,
         file_path: str | Path,
@@ -703,6 +722,9 @@ class TabList(SemiMutableSequence[TabArea[_W]], _HasMainWindowRef[_W], Generic[_
     @current_index.setter
     def current_index(self, index: int):
         self._main_window()._set_current_tab_index(index)
+
+    def _get_by_hash(self, hash: Hashable) -> TabArea[_W] | None:
+        return self._tab_areas.get(hash, None)
 
 
 class DockWidgetList(

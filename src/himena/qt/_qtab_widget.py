@@ -247,22 +247,31 @@ class QTabWidget(QtW.QTabWidget):
             # dropped on the tabbar outside the existing tabs
             if isinstance(src := event.source(), QSubWindow):
                 self._tabbar._process_drop_event(src, -1)
+            elif model := _drag.drop():
+                self._process_subwindow_drop(model, drop_pos, target_area=None)
+            elif mime_data.hasUrls():
+                plugin = (
+                    mime_data.data("text/himena-open-plugin").data().decode() or None
+                )
+                self._process_file_url_drop(
+                    mime_data.urls(),
+                    plugin=plugin,
+                    target_area=self.current_widget_area(),
+                )
+        elif isinstance(win := event.source(), QSubWindow):
+            # subwindow dragged and dropped without changing tabs
+            if win in self.current_widget_area().subWindowList():
+                event.ignore()
+            return super().dropEvent(event)
         elif model := _drag.drop():
-            if (
-                isinstance(src := event.source(), QSubWindow)
-                and src in self.current_widget_area().subWindowList()
-            ):
-                pass  # subwindow dropped in the same tab
-            else:
-                self._process_subwindow_drop(model, drop_pos)
+            self._process_subwindow_drop(
+                model, drop_pos, target_area=self.current_widget_area()
+            )
         elif mime_data.hasUrls():
-            if isinstance(win := event.source(), QSubWindow):
-                # subwindow dragged and dropped without changing tabs
-                if win in self.current_widget_area().subWindowList():
-                    event.ignore()
-                return super().dropEvent(event)
             plugin = mime_data.data("text/himena-open-plugin").data().decode() or None
-            self._process_file_url_drop(mime_data.urls(), plugin=plugin)
+            self._process_file_url_drop(
+                mime_data.urls(), plugin=plugin, target_area=self.current_widget_area()
+            )
         elif callable(rfm := getattr(mime_data.parent(), "readers_from_mime", None)):
             readers = rfm(mime_data)
             worker = self._read_one_by_one(readers)
@@ -272,19 +281,35 @@ class QTabWidget(QtW.QTabWidget):
         return super().dropEvent(event)
 
     def _process_subwindow_drop(
-        self, drag_model: DragDataModel, drop_pos: QtCore.QPoint
+        self,
+        drag_model: DragDataModel,
+        drop_pos: QtCore.QPoint,
+        target_area: QSubWindowArea | None = None,
     ) -> None:
         ui = get_main_window(self)
         model = drag_model.data_model()
         model = model.use_subwindow(lambda s: _center_title_bar_on(s, drop_pos))
-        ui.add_data_model(model)
+        if (
+            target_area is None
+            or (tab := ui.tabs._get_by_hash(target_area)) is None
+            or not tab.is_alive
+        ):
+            ui.add_data_model(model)
+        else:
+            tab.add_data_model(model)
 
     def _process_file_url_drop(
-        self, urls: list[QtCore.QUrl], plugin: str | None = None
+        self,
+        urls: list[QtCore.QUrl],
+        plugin: str | None = None,
+        target_area: QSubWindowArea | None = None,
     ) -> None:
         ui = get_main_window(self)
         paths = [url.toLocalFile() for url in urls if url.isLocalFile()]
-        future = ui.read_files_async(paths, plugin=plugin)
+        tab = None
+        if target_area is not None:
+            tab = ui.tabs._get_by_hash(target_area)
+        future = ui.read_files_async(paths, plugin=plugin, tab=tab)
         ui._backend_main_window._add_job_progress(future, "Reading files")
         ui.model_app.injection_store.process(future)
 

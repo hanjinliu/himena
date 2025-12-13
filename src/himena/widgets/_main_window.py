@@ -558,25 +558,12 @@ class MainWindow(Generic[_W]):
             self.set_status_tip(f"File opened: {_titles}", duration=5)
         return out
 
-    def _paths_to_models(self, file_paths: PathOrPaths, plugin: str | None = None):
-        ins = _providers.ReaderStore.instance()
-        file_paths = norm_paths(file_paths)
-        reader_path_sets = [
-            (ins.pick(file_path, plugin=plugin), file_path) for file_path in file_paths
-        ]
-        models = [
-            reader.read_and_update_source(file_path)
-            for reader, file_path in reader_path_sets
-        ]
-        self._recent_manager.append_recent_files(
-            [(fp, reader.plugin_str) for reader, fp in reader_path_sets]
-        )
-        return models
-
     def read_files_async(
         self,
         file_paths: PathOrPaths,
         plugin: str | None = None,
+        *,
+        tab: TabArea[_W] | None = None,
     ) -> Future:
         """Read multiple files asynchronously and return a future."""
         file_paths = norm_paths(file_paths)
@@ -585,7 +572,12 @@ class MainWindow(Generic[_W]):
             self.set_status_tip(f"Opening: {file_paths[0].as_posix()}", duration=5)
         else:
             self.set_status_tip(f"Opening {len(file_paths)} files", duration=5)
-        FutureInfo(list[WidgetDataModel]).set(future)  # set info for injection store
+        if tab is not None:
+            tab_hash = tab._hash_value
+        else:
+            tab_hash = None
+        # set info for injection store
+        FutureInfo(list[WidgetDataModel], tab_hash=tab_hash).set(future)
         return future
 
     def run_script(self, file: str | Path) -> Any:
@@ -1227,6 +1219,25 @@ class MainWindow(Generic[_W]):
         input_window.update_model(model)
         input_window._update_model_workflow(model.workflow)
         self.current_window = input_window
+
+    def _paths_to_models(
+        self,
+        file_paths: PathOrPaths,
+        plugin: str | None = None,
+    ) -> list[WidgetDataModel]:
+        ins = _providers.ReaderStore.instance()
+        file_paths = norm_paths(file_paths)
+        reader_path_sets = [
+            (ins.pick(file_path, plugin=plugin), file_path) for file_path in file_paths
+        ]
+        models = [
+            reader.read_and_update_source(file_path)
+            for reader, file_path in reader_path_sets
+        ]
+        self._recent_manager.append_recent_files(
+            [(fp, reader.plugin_str) for reader, fp in reader_path_sets]
+        )
+        return models
 
 
 def _short_repr(obj: Any) -> str:
