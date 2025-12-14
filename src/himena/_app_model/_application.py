@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Callable, TYPE_CHECKING
+from typing import Any, Callable, TYPE_CHECKING
 
 from app_model import Application
 import in_n_out
@@ -7,6 +7,7 @@ from himena._app_model._command_registry import CommandsRegistry
 from himena.types import WidgetDataModel, FutureInfo, WindowRect
 
 if TYPE_CHECKING:
+    from himena import MainWindow
     from concurrent.futures import Future
 
 
@@ -51,11 +52,11 @@ class HimenaApplication(Application):
             type_hint = info.type_hint
         else:
             type_hint = None
+        ui = current_instance()
         if isinstance(result, WidgetDataModel) and info is not None:
             if info.track is not None and len(result.workflow) == 0:
                 result.workflow = info.track.to_workflow(info.kwargs)
             if result.update_inplace and info.track and info.track.contexts:
-                ui = current_instance()
                 ui._process_update_inplace(info.track.contexts, result)
                 return None  # no need to process
             elif (top_left := info.top_left) is not None:
@@ -72,7 +73,33 @@ class HimenaApplication(Application):
                         return WindowRect(_left, _top, *size)
 
                 result = result.use_subwindow(window_rect_override=rov)
-        self.injection_store.process(result, type_hint=type_hint)
+
+            add_data_model_func = _add_data_model_func(ui, info)
+            if ui._instructions.process_model_output:
+                add_data_model_func(result)
+        elif (
+            isinstance(result, list)
+            and all(isinstance(m, WidgetDataModel) for m in result)
+            and info is not None
+        ):
+            add_data_model_func = _add_data_model_func(ui, info)
+            if ui._instructions.process_model_output:
+                for model in result:
+                    add_data_model_func(model)
+        else:
+            self.injection_store.process(result, type_hint=type_hint)
+
+
+def _add_data_model_func(
+    ui: MainWindow,
+    info: FutureInfo,
+) -> Callable[[WidgetDataModel], Any]:
+    for tab in ui.tabs:
+        if tab._hash_value == info.tab_hash:
+            add_data_model_func = tab.add_data_model
+    else:
+        add_data_model_func = ui.add_data_model
+    return add_data_model_func
 
 
 class HimenaInjectionStore(in_n_out.Store):

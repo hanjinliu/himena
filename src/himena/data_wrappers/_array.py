@@ -12,29 +12,13 @@ from himena.standards.model_meta import DimAxis
 import numpy as np
 
 if TYPE_CHECKING:
-    from typing import Any, Protocol, TypeAlias, TypeGuard, Self
+    from typing import Any, TypeGuard, Self
 
     import dask.array as da
-    import numpy.typing as npt
     import xarray as xr
     import zarr
 
-    _T_contra = TypeVar("_T_contra", contravariant=True)
     Index = int | slice
-
-    class SupportsIndexing(Protocol):
-        def __getitem__(self, key: Index | tuple[Index, ...]) -> npt.ArrayLike: ...
-        @property
-        def shape(self) -> tuple[int, ...]: ...
-
-    class SupportsDunderLT(Protocol[_T_contra]):
-        def __lt__(self, other: _T_contra, /) -> bool: ...
-
-    class SupportsDunderGT(Protocol[_T_contra]):
-        def __gt__(self, other: _T_contra, /) -> bool: ...
-
-    SupportsRichComparison: TypeAlias = SupportsDunderLT[Any] | SupportsDunderGT[Any]
-
 
 ArrayT = TypeVar("ArrayT")
 
@@ -118,11 +102,12 @@ class XarrayWrapper(ArrayWrapper["xr.DataArray"]):
         """Infer DimAxis objects for this array."""
 
         axes = []
-        for name, coord in self._arr.coords.items():
+        for name in self._arr.dims:
+            coord = self._arr.coords.get(name, None)
             if is_xarray(coord):
-                unit = coord.attrs.get("units", None)
+                unit = coord.attrs.get("units", "")
             else:
-                unit = None
+                unit = ""
             axes.append(DimAxis(name=str(name), unit=unit))
         return axes
 

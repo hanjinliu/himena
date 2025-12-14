@@ -7,6 +7,7 @@ from typing import (
     Any,
     Callable,
     ClassVar,
+    Hashable,
     Literal,
     NamedTuple,
     NewType,
@@ -710,7 +711,11 @@ class FutureInfo(_HasDynamicAttribute):
     track: ModelTrack | None = None
     kwargs: dict[str, Any] = field(default_factory=dict)
     top_left: tuple[int, int] | None = None
+    """Top-left position of the output widget."""
     size: Size[int] | None = None
+    """Size of the output widget."""
+    tab_hash: Hashable | None = None
+    """The hash of the tab where the resulting WidgetDataModel will be added."""
 
     def resolve_type_hint(self, ns: dict[str, Any]) -> "FutureInfo":
         if isinstance(self.type_hint, str):
@@ -726,6 +731,7 @@ class FutureInfo(_HasDynamicAttribute):
             kwargs=self.kwargs,
             top_left=self.top_left,
             size=self.size,
+            tab_hash=self.tab_hash,
         )
 
 
@@ -734,7 +740,7 @@ Parametric = NewType("Parametric", Any)
 
 This type can be interpreted by the injection store processor. For example, in the
 following code, `my_plugin_function` will be converted into a parametric widget
-with inputs `a` and `b`..
+with inputs `a` and `b`.
 
 ``` python
 from himena.plugin import register_function

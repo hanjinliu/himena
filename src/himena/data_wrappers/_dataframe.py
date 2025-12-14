@@ -260,7 +260,7 @@ class DataFrameWrapper(ABC):
 
 class DictWrapper(DataFrameWrapper):
     def __init__(self, df: Mapping[str, np.ndarray]):
-        self._df = df
+        super().__init__(df)
         self._columns = list(df.keys())
 
     def get_item(self, key: tuple[int, int]) -> Any:
@@ -363,8 +363,7 @@ class DictWrapper(DataFrameWrapper):
 
 
 class PandasWrapper(DataFrameWrapper):
-    def __init__(self, df: pd.DataFrame):
-        self._df = df
+    _df: pd.DataFrame
 
     def get_item(self, key: tuple[int, int]) -> Any:
         return self._df.iloc[key]
@@ -444,8 +443,7 @@ class PandasWrapper(DataFrameWrapper):
 
 
 class PolarsWrapper(DataFrameWrapper):
-    def __init__(self, df: pl.DataFrame):
-        self._df = df
+    _df: pl.DataFrame
 
     def get_item(self, key: tuple[int, int]) -> Any:
         return self._df[key]
@@ -539,8 +537,7 @@ class PolarsWrapper(DataFrameWrapper):
 
 
 class PyarrowWrapper(DataFrameWrapper):
-    def __init__(self, df: pa.Table):
-        self._df = df
+    _df: pa.Table
 
     def get_item(self, key: tuple[int, int]) -> Any:
         r, c = key
@@ -653,7 +650,7 @@ class PyarrowWrapper(DataFrameWrapper):
             pyarrow.feather.write_feather(self._df, path)
         else:
             raise ValueError(
-                "Cannot write a pandas dataframe to a file with the given extension "
+                "Cannot write a pyarrow dataframe to a file with the given extension "
                 f"{path.suffix!r}"
             )
 

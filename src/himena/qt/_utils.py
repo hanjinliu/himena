@@ -161,7 +161,7 @@ def drag_files(
         desc = f"{len(paths)} file{_s}"
     if plugin is not None:
         mime.setData("text/himena-open-plugin", plugin.encode())
-    drag.setPixmap(_text_to_pixmap(desc))
+    drag.setPixmap(_text_to_pixmap(desc, source))
     drag.setMimeData(mime)
     if exec:
         drag.exec()
@@ -194,7 +194,7 @@ def drag_model(
     mime.setText(text_data)
     if desc is None:
         desc = "model"
-    drag.setPixmap(_text_to_pixmap(desc))
+    drag.setPixmap(_text_to_pixmap(desc, source))
     drag.setMimeData(mime)
     drag.destroyed.connect(_drag.clear)
     cursor = QtGui.QCursor(QtCore.Qt.CursorShape.OpenHandCursor)
@@ -269,8 +269,9 @@ def drag_command(
     )
 
 
-def _text_to_pixmap(text: str) -> QtGui.QPixmap:
+def _text_to_pixmap(text: str, parent=None) -> QtGui.QPixmap:
     qlabel = QtW.QLabel(text)
     pixmap = QtGui.QPixmap(qlabel.size())
+    pixmap.setDevicePixelRatio(qlabel.devicePixelRatioF())
     qlabel.render(pixmap)
     return pixmap

@@ -533,6 +533,7 @@ class QSubWindow(QtW.QMdiSubWindow):
         self._title_bar._minimize_btn.hide()
         self._title_bar._toggle_size_btn.hide()
         self._title_bar._close_btn.hide()
+        self._title_bar._is_single_window_mode = True
 
 
 class QTitleBarToolButton(QtW.QToolButton):
@@ -585,6 +586,7 @@ class QSubWindowTitleBar(QtW.QFrame):
         self._is_double_clicking: bool = False
         self._resize_position: QtCore.QPoint | None = None
         self._subwindow = subwindow
+        self._is_single_window_mode = False
 
         self.setFrameShape(QtW.QFrame.Shape.StyledPanel)
         self.setFrameShadow(QtW.QFrame.Shadow.Raised)
@@ -793,18 +795,19 @@ class QSubWindowTitleBar(QtW.QFrame):
         _middle_btn = event.buttons() & Qt.MouseButton.MiddleButton
         _ctrl_mod = event.modifiers() & Qt.KeyboardModifier.ControlModifier
         if (_left_btn and _ctrl_mod) or _middle_btn:
-            # start dragging subwindow
-            self._is_window_drag_mode = True
-            drag = self._make_subwindow_drag()
-            self._subwindow.hide()
-            try:
-                drag.exec()
-            finally:
-                # NOTE: if subwindow is dropped to another tab, the old one will be
-                # removed from the MdiArea. In this case, the subwindow should not
-                # be shown again.
-                if self._subwindow.parent():
-                    self._subwindow.show()
+            if not self._is_single_window_mode:
+                # start dragging subwindow
+                self._is_window_drag_mode = True
+                drag = self._make_subwindow_drag()
+                self._subwindow.hide()
+                try:
+                    drag.exec()
+                finally:
+                    # NOTE: if subwindow is dropped to another tab, the old one will be
+                    # removed from the MdiArea. In this case, the subwindow should not
+                    # be shown again.
+                    if self._subwindow.parent():
+                        self._subwindow.show()
         else:
             if _subwin._window_state == WindowState.MIN:
                 # cannot move minimized window

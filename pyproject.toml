@@ -70,7 +70,10 @@ testing = [
   "pandas",
   "polars",
   "pyarrow",
+  "narwhals",
+  "dask",
   "xarray",
+  "zarr",
   "click!=8.3.0",
   "himena[all]"
 ]
