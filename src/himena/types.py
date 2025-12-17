@@ -831,6 +831,9 @@ def my_plugin_function() -> WidgetConstructor:
 ```
 """
 
+AnyContext = NewType("AnyContext", dict[str, Any])
+"""Any context dictionary that can be used for dependency injection."""
+
 
 @dataclass(frozen=True)
 class DropResult:

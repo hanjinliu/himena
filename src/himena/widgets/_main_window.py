@@ -31,6 +31,7 @@ from himena.profile import AppProfile, load_app_profile
 from himena.style import Theme
 from himena.standards import BaseMetadata
 from himena.types import (
+    AnyContext,
     ClipboardDataModel,
     FutureInfo,
     Size,
@@ -797,6 +798,7 @@ class MainWindow(Generic[_W]):
         *,
         model_context: WidgetDataModel | None = None,
         window_context: SubWindow | None = None,
+        user_context: dict[str, Any] | None = None,
         with_params: dict[str, Any] | None = None,
         with_defaults: dict[str, Any] | None = None,
         process_model_output: bool = True,
@@ -840,6 +842,8 @@ class MainWindow(Generic[_W]):
             providers.append((_window_context, SubWindow, 1000))
             if model_context is None and _window_context.supports_to_model:
                 providers.append((_window_context.to_model(), WidgetDataModel, 100))
+        if user_context:
+            providers.append((user_context, AnyContext, 1000))
         # execute the command under the given context
         with (
             self.model_app.injection_store.register(providers=providers),

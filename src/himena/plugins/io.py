@@ -12,9 +12,13 @@ from himena._utils import get_widget_data_model_type_arg
 _LOGGER = logging.getLogger(__name__)
 
 
-def _plugin_info_from_func(func: Callable) -> PluginInfo | None:
-    if hasattr(func, "__module__"):
-        module = func.__module__
+def _plugin_info_from_func(
+    func: Callable,
+    module: str | None = None,
+) -> PluginInfo | None:
+    if module is None:
+        module = getattr(func, "__module__", None)
+    if module is not None:
         if module == "__main__" or "<" in module:
             # this plugin will never be available. Skip it.
             return None
@@ -38,13 +42,16 @@ class _IOPluginBase:
         matcher: Callable | None = None,
         *,
         priority: int = 100,
+        module: str | None = None,
     ):
         self._priority = _check_priority(priority)
         self._func = func
         self._matcher = matcher or self._undefined_matcher
-        self._plugin = _plugin_info_from_func(func)
+        self._plugin = _plugin_info_from_func(func, module)
         self.__name__ = str(func)  # default value
         wraps(func)(self)
+        if module is not None:
+            self.__module__ = module
 
     @property
     def priority(self) -> int:
@@ -74,8 +81,9 @@ class ReaderPlugin(_IOPluginBase):
         matcher: Callable[[Path | list[Path]], bool] | None = None,
         *,
         priority: int = 100,
+        module: str | None = None,
     ):
-        super().__init__(reader, matcher, priority=priority)
+        super().__init__(reader, matcher, priority=priority, module=module)
         self._skip_if_list = False
         if hasattr(reader, "__annotations__"):
             annot_types = list(reader.__annotations__.values())
@@ -161,8 +169,9 @@ class WriterPlugin(_IOPluginBase):
         matcher: Callable[[Path | list[Path]], bool] | None = None,
         *,
         priority: int = 100,
+        module: str | None = None,
     ):
-        super().__init__(writer, matcher, priority=priority)
+        super().__init__(writer, matcher, priority=priority, module=module)
         if arg := get_widget_data_model_type_arg(writer):
             self._value_type_filter = arg
         else:
@@ -202,15 +211,17 @@ def register_reader_plugin(
     reader: Callable[[Path | list[Path]], WidgetDataModel],
     *,
     priority: int = 100,
+    module: str | None = None,
 ) -> ReaderPlugin: ...
 @overload
 def register_reader_plugin(
     *,
     priority: int = 100,
+    module: str | None = None,
 ) -> Callable[[Callable[[Path | list[Path]], WidgetDataModel]], ReaderPlugin]: ...
 
 
-def register_reader_plugin(reader=None, *, priority=100):
+def register_reader_plugin(reader=None, *, priority=100, module=None):
     """Register a reader plugin function.
 
     Decorate a function to register it as a reader plugin. The function should take a
@@ -244,6 +255,9 @@ def register_reader_plugin(reader=None, *, priority=100):
         default value 100 is higher than the himena builtin readers, so that your reader
         will prioritized over the default ones. If priority is less than 0, it will not
         be used unless users intentionally choose this plugin.
+    module : str | None, default None
+        The module name override. This is usefule when you want to register a reader
+        function in the upper scope to simplify the plugin info display.
     """
 
     def _inner(func):
@@ -251,7 +265,7 @@ def register_reader_plugin(reader=None, *, priority=100):
             raise ValueError("Reader plugin must be callable.")
         ins = ReaderStore().instance()
 
-        reader_plugin = ReaderPlugin(func, priority=priority)
+        reader_plugin = ReaderPlugin(func, priority=priority, module=module)
         ins.add_reader(reader_plugin)
         return reader_plugin
 
@@ -263,15 +277,17 @@ def register_writer_plugin(
     writer: Callable[[WidgetDataModel, Path], Any],
     *,
     priority: int = 100,
+    module: str | None = None,
 ) -> WriterPlugin: ...
 @overload
 def register_writer_plugin(
     *,
     priority: int = 100,
+    module: str | None = None,
 ) -> Callable[[Callable[[WidgetDataModel, Path], Any]], WriterPlugin]: ...
 
 
-def register_writer_plugin(writer=None, *, priority=100):
+def register_writer_plugin(writer=None, *, priority=100, module=None):
     """Register a writer plugin function.
 
     Decorate a function to register it as a writer plugin. The function should take a
@@ -306,6 +322,9 @@ def register_writer_plugin(writer=None, *, priority=100):
         default value 100 is higher than the himena builtin writers, so that your writer
         will prioritized over the default ones. If priority is less than 0, it will not
         be used unless users intentionally choose this plugin.
+    module : str | None, default None
+        The module name override. This is usefule when you want to register a reader
+        function in the upper scope to simplify the plugin info display.
     """
 
     def _inner(func):
@@ -313,7 +332,7 @@ def register_writer_plugin(writer=None, *, priority=100):
             raise ValueError("Writer plugin must be callable.")
         ins = WriterStore().instance()
 
-        writer_plugin = WriterPlugin(func, priority=priority)
+        writer_plugin = WriterPlugin(func, priority=priority, module=module)
         ins.add_writer(writer_plugin)
         return writer_plugin
 
