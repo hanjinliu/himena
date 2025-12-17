@@ -2891,14 +2891,7 @@ GUI menubar and toolbar.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src\himena\plugins\io.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 70</span>
-<span class="normal"> 71</span>
-<span class="normal"> 72</span>
-<span class="normal"> 73</span>
-<span class="normal"> 74</span>
-<span class="normal"> 75</span>
-<span class="normal"> 76</span>
-<span class="normal"> 77</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 77</span>
 <span class="normal"> 78</span>
 <span class="normal"> 79</span>
 <span class="normal"> 80</span>
@@ -2975,15 +2968,24 @@ GUI menubar and toolbar.</p>
 <span class="normal">151</span>
 <span class="normal">152</span>
 <span class="normal">153</span>
-<span class="normal">154</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ReaderPlugin</span><span class="p">(</span><span class="n">_IOPluginBase</span><span class="p">):</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ReaderPlugin</span><span class="p">(</span><span class="n">_IOPluginBase</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">reader</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]],</span> <span class="n">WidgetDataModel</span><span class="p">],</span>
         <span class="n">matcher</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]],</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">priority</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="n">module</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">reader</span><span class="p">,</span> <span class="n">matcher</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="n">priority</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">reader</span><span class="p">,</span> <span class="n">matcher</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="n">priority</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="n">module</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_skip_if_list</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">reader</span><span class="p">,</span> <span class="s2">&quot;__annotations__&quot;</span><span class="p">):</span>
             <span class="n">annot_types</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="vm">__annotations__</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
@@ -3106,15 +3108,7 @@ and <code>list[Path]</code> will be considered.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\plugins\io.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">121</span>
-<span class="normal">122</span>
-<span class="normal">123</span>
-<span class="normal">124</span>
-<span class="normal">125</span>
-<span class="normal">126</span>
-<span class="normal">127</span>
-<span class="normal">128</span>
-<span class="normal">129</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">129</span>
 <span class="normal">130</span>
 <span class="normal">131</span>
 <span class="normal">132</span>
@@ -3132,7 +3126,15 @@ and <code>list[Path]</code> will be considered.</p>
 <span class="normal">144</span>
 <span class="normal">145</span>
 <span class="normal">146</span>
-<span class="normal">147</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">define_matcher</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">matcher</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]],</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]):</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">define_matcher</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">matcher</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]],</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Mark a function as a matcher.</span>
 
 <span class="sd">    The matcher function should return a type string if the reader can read the</span>
@@ -3181,16 +3183,16 @@ and <code>list[Path]</code> will be considered.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\plugins\io.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">110</span>
-<span class="normal">111</span>
-<span class="normal">112</span>
-<span class="normal">113</span>
-<span class="normal">114</span>
-<span class="normal">115</span>
-<span class="normal">116</span>
-<span class="normal">117</span>
-<span class="normal">118</span>
-<span class="normal">119</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">match_model_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">match_model_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;True if the reader can read the file.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_skip_if_list</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">None</span>
@@ -3222,15 +3224,7 @@ and <code>list[Path]</code> will be considered.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\plugins\io.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 89</span>
-<span class="normal"> 90</span>
-<span class="normal"> 91</span>
-<span class="normal"> 92</span>
-<span class="normal"> 93</span>
-<span class="normal"> 94</span>
-<span class="normal"> 95</span>
-<span class="normal"> 96</span>
-<span class="normal"> 97</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 97</span>
 <span class="normal"> 98</span>
 <span class="normal"> 99</span>
 <span class="normal">100</span>
@@ -3239,7 +3233,15 @@ and <code>list[Path]</code> will be considered.</p>
 <span class="normal">103</span>
 <span class="normal">104</span>
 <span class="normal">105</span>
-<span class="normal">106</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">WidgetDataModel</span><span class="p">:</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">WidgetDataModel</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Read file(s) and return a data model.&quot;&quot;&quot;</span>
     <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Reading file(s) using reader plugin: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
@@ -3279,12 +3281,12 @@ and <code>list[Path]</code> will be considered.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\plugins\io.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">149</span>
-<span class="normal">150</span>
-<span class="normal">151</span>
-<span class="normal">152</span>
-<span class="normal">153</span>
-<span class="normal">154</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">read_and_update_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">WidgetDataModel</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">read_and_update_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">WidgetDataModel</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Update workflow to a local-reader method if it is not set.&quot;&quot;&quot;</span>
     <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">workflow</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -3448,15 +3450,7 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src\himena\plugins\io.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">157</span>
-<span class="normal">158</span>
-<span class="normal">159</span>
-<span class="normal">160</span>
-<span class="normal">161</span>
-<span class="normal">162</span>
-<span class="normal">163</span>
-<span class="normal">164</span>
-<span class="normal">165</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">165</span>
 <span class="normal">166</span>
 <span class="normal">167</span>
 <span class="normal">168</span>
@@ -3488,15 +3482,25 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
 <span class="normal">194</span>
 <span class="normal">195</span>
 <span class="normal">196</span>
-<span class="normal">197</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">WriterPlugin</span><span class="p">(</span><span class="n">_IOPluginBase</span><span class="p">):</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">WriterPlugin</span><span class="p">(</span><span class="n">_IOPluginBase</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">writer</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">WidgetDataModel</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">Any</span><span class="p">],</span>
         <span class="n">matcher</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]],</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">priority</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="n">module</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">writer</span><span class="p">,</span> <span class="n">matcher</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="n">priority</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">writer</span><span class="p">,</span> <span class="n">matcher</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="n">priority</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="n">module</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">arg</span> <span class="o">:=</span> <span class="n">get_widget_data_model_type_arg</span><span class="p">(</span><span class="n">writer</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_value_type_filter</span> <span class="o">=</span> <span class="n">arg</span>
         <span class="k">else</span><span class="p">:</span>
@@ -3568,20 +3572,20 @@ def _(model: WidgetDataModel, path: Path) -&gt; bool:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\plugins\io.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">184</span>
-<span class="normal">185</span>
-<span class="normal">186</span>
-<span class="normal">187</span>
-<span class="normal">188</span>
-<span class="normal">189</span>
-<span class="normal">190</span>
-<span class="normal">191</span>
-<span class="normal">192</span>
-<span class="normal">193</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">193</span>
 <span class="normal">194</span>
 <span class="normal">195</span>
 <span class="normal">196</span>
-<span class="normal">197</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">define_matcher</span><span class="p">(</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">define_matcher</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">matcher</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">WidgetDataModel</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WriterPlugin</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Define how to match the input data model and the save path to this writer.</span>
@@ -5478,12 +5482,12 @@ rule.</p>
 
 
 <h4 id="himena.plugins.register_reader_plugin" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">register_reader_plugin</span><span class="p">(</span><span class="n">reader</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">register_reader_plugin</span><span class="p">(</span><span class="n">reader</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h4>
           <div class="doc-overloads">
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">register_reader_plugin</span><span class="p">(</span><span class="n">reader</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]],</span> <span class="n">WidgetDataModel</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">priority</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReaderPlugin</span>
-</code></pre></div><div class="doc-signature highlight"><pre><span></span><code><span class="nf">register_reader_plugin</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">priority</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]],</span> <span class="n">WidgetDataModel</span><span class="p">]],</span> <span class="n">ReaderPlugin</span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">register_reader_plugin</span><span class="p">(</span><span class="n">reader</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]],</span> <span class="n">WidgetDataModel</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">priority</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReaderPlugin</span>
+</code></pre></div><div class="doc-signature highlight"><pre><span></span><code><span class="nf">register_reader_plugin</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">priority</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]],</span> <span class="n">WidgetDataModel</span><span class="p">]],</span> <span class="n">ReaderPlugin</span><span class="p">]</span>
 </code></pre></div>          </div>
 
 
@@ -5540,24 +5544,30 @@ be used unless users intentionally choose this plugin.</p>
                   <code>100</code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>module</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The module name override. This is usefule when you want to register a reader
+function in the upper scope to simplify the plugin info display.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\plugins\io.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">213</span>
-<span class="normal">214</span>
-<span class="normal">215</span>
-<span class="normal">216</span>
-<span class="normal">217</span>
-<span class="normal">218</span>
-<span class="normal">219</span>
-<span class="normal">220</span>
-<span class="normal">221</span>
-<span class="normal">222</span>
-<span class="normal">223</span>
-<span class="normal">224</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">224</span>
 <span class="normal">225</span>
 <span class="normal">226</span>
 <span class="normal">227</span>
@@ -5591,7 +5601,21 @@ be used unless users intentionally choose this plugin.</p>
 <span class="normal">255</span>
 <span class="normal">256</span>
 <span class="normal">257</span>
-<span class="normal">258</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_reader_plugin</span><span class="p">(</span><span class="n">reader</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_reader_plugin</span><span class="p">(</span><span class="n">reader</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a reader plugin function.</span>
 
 <span class="sd">    Decorate a function to register it as a reader plugin. The function should take a</span>
@@ -5625,6 +5649,9 @@ be used unless users intentionally choose this plugin.</p>
 <span class="sd">        default value 100 is higher than the himena builtin readers, so that your reader</span>
 <span class="sd">        will prioritized over the default ones. If priority is less than 0, it will not</span>
 <span class="sd">        be used unless users intentionally choose this plugin.</span>
+<span class="sd">    module : str | None, default None</span>
+<span class="sd">        The module name override. This is usefule when you want to register a reader</span>
+<span class="sd">        function in the upper scope to simplify the plugin info display.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_inner</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
@@ -5632,7 +5659,7 @@ be used unless users intentionally choose this plugin.</p>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Reader plugin must be callable.&quot;</span><span class="p">)</span>
         <span class="n">ins</span> <span class="o">=</span> <span class="n">ReaderStore</span><span class="p">()</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span>
 
-        <span class="n">reader_plugin</span> <span class="o">=</span> <span class="n">ReaderPlugin</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="n">priority</span><span class="p">)</span>
+        <span class="n">reader_plugin</span> <span class="o">=</span> <span class="n">ReaderPlugin</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="n">priority</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="n">module</span><span class="p">)</span>
         <span class="n">ins</span><span class="o">.</span><span class="n">add_reader</span><span class="p">(</span><span class="n">reader_plugin</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">reader_plugin</span>
 
@@ -5843,12 +5870,12 @@ functional.</p>
 
 
 <h4 id="himena.plugins.register_writer_plugin" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">register_writer_plugin</span><span class="p">(</span><span class="n">writer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">register_writer_plugin</span><span class="p">(</span><span class="n">writer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h4>
           <div class="doc-overloads">
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">register_writer_plugin</span><span class="p">(</span><span class="n">writer</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">WidgetDataModel</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">Any</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">priority</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WriterPlugin</span>
-</code></pre></div><div class="doc-signature highlight"><pre><span></span><code><span class="nf">register_writer_plugin</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">priority</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">WidgetDataModel</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">WriterPlugin</span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">register_writer_plugin</span><span class="p">(</span><span class="n">writer</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">WidgetDataModel</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">Any</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">priority</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WriterPlugin</span>
+</code></pre></div><div class="doc-signature highlight"><pre><span></span><code><span class="nf">register_writer_plugin</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">priority</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">WidgetDataModel</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">WriterPlugin</span><span class="p">]</span>
 </code></pre></div>          </div>
 
 
@@ -5906,29 +5933,30 @@ be used unless users intentionally choose this plugin.</p>
                   <code>100</code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>module</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The module name override. This is usefule when you want to register a reader
+function in the upper scope to simplify the plugin info display.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\plugins\io.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">274</span>
-<span class="normal">275</span>
-<span class="normal">276</span>
-<span class="normal">277</span>
-<span class="normal">278</span>
-<span class="normal">279</span>
-<span class="normal">280</span>
-<span class="normal">281</span>
-<span class="normal">282</span>
-<span class="normal">283</span>
-<span class="normal">284</span>
-<span class="normal">285</span>
-<span class="normal">286</span>
-<span class="normal">287</span>
-<span class="normal">288</span>
-<span class="normal">289</span>
-<span class="normal">290</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">290</span>
 <span class="normal">291</span>
 <span class="normal">292</span>
 <span class="normal">293</span>
@@ -5958,7 +5986,26 @@ be used unless users intentionally choose this plugin.</p>
 <span class="normal">317</span>
 <span class="normal">318</span>
 <span class="normal">319</span>
-<span class="normal">320</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_writer_plugin</span><span class="p">(</span><span class="n">writer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+<span class="normal">320</span>
+<span class="normal">321</span>
+<span class="normal">322</span>
+<span class="normal">323</span>
+<span class="normal">324</span>
+<span class="normal">325</span>
+<span class="normal">326</span>
+<span class="normal">327</span>
+<span class="normal">328</span>
+<span class="normal">329</span>
+<span class="normal">330</span>
+<span class="normal">331</span>
+<span class="normal">332</span>
+<span class="normal">333</span>
+<span class="normal">334</span>
+<span class="normal">335</span>
+<span class="normal">336</span>
+<span class="normal">337</span>
+<span class="normal">338</span>
+<span class="normal">339</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_writer_plugin</span><span class="p">(</span><span class="n">writer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a writer plugin function.</span>
 
 <span class="sd">    Decorate a function to register it as a writer plugin. The function should take a</span>
@@ -5993,6 +6040,9 @@ be used unless users intentionally choose this plugin.</p>
 <span class="sd">        default value 100 is higher than the himena builtin writers, so that your writer</span>
 <span class="sd">        will prioritized over the default ones. If priority is less than 0, it will not</span>
 <span class="sd">        be used unless users intentionally choose this plugin.</span>
+<span class="sd">    module : str | None, default None</span>
+<span class="sd">        The module name override. This is usefule when you want to register a reader</span>
+<span class="sd">        function in the upper scope to simplify the plugin info display.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_inner</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
@@ -6000,7 +6050,7 @@ be used unless users intentionally choose this plugin.</p>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Writer plugin must be callable.&quot;</span><span class="p">)</span>
         <span class="n">ins</span> <span class="o">=</span> <span class="n">WriterStore</span><span class="p">()</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span>
 
-        <span class="n">writer_plugin</span> <span class="o">=</span> <span class="n">WriterPlugin</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="n">priority</span><span class="p">)</span>
+        <span class="n">writer_plugin</span> <span class="o">=</span> <span class="n">WriterPlugin</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="n">priority</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="n">module</span><span class="p">)</span>
         <span class="n">ins</span><span class="o">.</span><span class="n">add_writer</span><span class="p">(</span><span class="n">writer_plugin</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">writer_plugin</span>
 

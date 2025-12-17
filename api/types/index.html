@@ -1142,6 +1142,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#himena.types.AnyContext" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AnyContext
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#himena.types.Parametric" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1795,6 +1806,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#himena.types.AnyContext" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AnyContext
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#himena.types.Parametric" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2328,6 +2350,28 @@
 
 
 
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="himena.types.AnyContext" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">AnyContext</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;AnyContext&#39;</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Any context dictionary that can be used for dependency injection.</p>
+
+    </div>
+
+</div>
 
 <div class="doc doc-object doc-attribute">
 
@@ -3221,10 +3265,7 @@ with inputs <code>a</code> and <code>b</code>.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src\himena\types.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">835</span>
-<span class="normal">836</span>
-<span class="normal">837</span>
-<span class="normal">838</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">838</span>
 <span class="normal">839</span>
 <span class="normal">840</span>
 <span class="normal">841</span>
@@ -3237,7 +3278,10 @@ with inputs <code>a</code> and <code>b</code>.</p>
 <span class="normal">848</span>
 <span class="normal">849</span>
 <span class="normal">850</span>
-<span class="normal">851</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="normal">851</span>
+<span class="normal">852</span>
+<span class="normal">853</span>
+<span class="normal">854</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">DropResult</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Model that can be returned by `dropped_callback` protocol.</span>
 
