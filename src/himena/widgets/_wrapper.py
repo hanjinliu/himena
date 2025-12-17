@@ -112,6 +112,11 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         """Get the save behavior of the widget."""
         return self._save_behavior
 
+    @property
+    def title(self) -> str:
+        """Title of the widget."""
+        raise NotImplementedError
+
     def update_default_save_path(
         self,
         path: str | Path,
@@ -245,6 +250,49 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
             model = WidgetDataModel(value=value, **kwargs)
         self.widget.update_model(model)
 
+    def to_model(self) -> WidgetDataModel:
+        """Export the widget data."""
+        if not self.supports_to_model:
+            raise ValueError("Widget does not have `to_model` method.")
+        model = self.widget.to_model()  # type: ignore
+        if not isinstance(model, WidgetDataModel):
+            raise TypeError(
+                "`to_model` method must return an instance of WidgetDataModel, got "
+                f"{type(model)}"
+            )
+
+        if model.title is None:
+            model.title = self.title
+        if len(model.workflow) == 0:
+            model.workflow = self._widget_workflow
+        if self.is_modified:
+            self._data_modifications.update_workflow(model)
+        if model.extension_default is None:
+            model.extension_default = self._extension_default_fallback
+        return model
+
+    @property
+    def value(self):
+        """Get the value of the internal widget data model."""
+        return self.to_model().value
+
+    @value.setter
+    def value(self, value: Any) -> None:
+        """Set the value of the internal widget data model."""
+        self.update_value(value)
+
+    def update_value(self, value: Any) -> None:
+        """Update the value of the widget."""
+        if hasattr(self.widget, "update_value"):
+            self.widget.update_value(value)
+        else:
+            model = self.to_model()
+            self.update_model(model.with_value(value))
+
+    def update_metadata(self, metadata: Any) -> None:
+        """Update the metadata of the widget data model."""
+        return self.update_model(self.to_model().with_metadata(metadata))
+
     def _is_drop_accepted(self, incoming: DragDataModel) -> bool:
         widget = self.widget
         return incoming.widget_accepts_me(widget)
@@ -341,52 +389,9 @@ class SubWindow(WidgetWrapper[_W], Layout):
         self._set_rect(value, inst)
 
     @property
-    def value(self):
-        """Get the value of the internal widget data model."""
-        return self.to_model().value
-
-    @value.setter
-    def value(self, value: Any) -> None:
-        """Set the value of the internal widget data model."""
-        self.update_value(value)
-
-    @property
     def is_alive(self) -> bool:
         """Whether the sub-window is present in a main window."""
         return self._alive
-
-    def to_model(self) -> WidgetDataModel:
-        """Export the widget data."""
-        if not self.supports_to_model:
-            raise ValueError("Widget does not have `to_model` method.")
-        model = self.widget.to_model()  # type: ignore
-        if not isinstance(model, WidgetDataModel):
-            raise TypeError(
-                "`to_model` method must return an instance of WidgetDataModel, got "
-                f"{type(model)}"
-            )
-
-        if model.title is None:
-            model.title = self.title
-        if len(model.workflow) == 0:
-            model.workflow = self._widget_workflow
-        if self.is_modified:
-            self._data_modifications.update_workflow(model)
-        if model.extension_default is None:
-            model.extension_default = self._extension_default_fallback
-        return model
-
-    def update_value(self, value: Any) -> None:
-        """Update the value of the widget."""
-        if hasattr(self.widget, "update_value"):
-            self.widget.update_value(value)
-        else:
-            model = self.to_model()
-            self.update_model(model.with_value(value))
-
-    def update_metadata(self, metadata: Any) -> None:
-        """Update the metadata of the widget data model."""
-        return self.update_model(self.to_model().with_metadata(metadata))
 
     def write_model(self, path: str | Path, plugin: str | None = None) -> None:
         """Write the widget data to a file."""

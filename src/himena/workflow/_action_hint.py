@@ -44,7 +44,7 @@ class ReaderMatcher(ActionMatcher):
 
 @dataclass
 class CommandMatcher(ActionMatcher):
-    """Matches workflow steps that are command-line based."""
+    """Matches workflow steps by the command ID."""
 
     command_id: str
 
@@ -90,6 +90,7 @@ class CommandSuggestion(Suggestion):
     """The model context to use for the command execution, if any."""
     defaults: dict[str, Callable[[WorkflowStep], Any]] = field(default_factory=dict)
     """Default parameter overrides."""
+    user_context: Callable[[MainWindow, WorkflowStep], dict[str, Any]] | None = None
 
     def execute(self, main_window: MainWindow, step: WorkflowStep) -> None:
         """Execute the suggestion in the given main window."""
@@ -101,8 +102,14 @@ class CommandSuggestion(Suggestion):
             window_context = main_window.window_for_id(self.window_id(step))
         else:
             window_context = None
+        ctx = None
+        if self.user_context is not None:
+            ctx = self.user_context(main_window, step)
         main_window.exec_action(
-            self.command_id, window_context=window_context, with_defaults=params
+            self.command_id,
+            window_context=window_context,
+            user_context=ctx,
+            with_defaults=params,
         )
 
     def get_title(self, main_window: MainWindow) -> str:
@@ -187,7 +194,7 @@ class ActionHintRegistry:
     ) -> Iterator[Suggestion]:
         """Get a list of matchers that match the given model type and step."""
         for ancestor_type, hints in self._rough_map.items():
-            if model_type.startswith(ancestor_type):
+            if is_subtype(model_type, ancestor_type):
                 for hint in hints:
                     if hint.matcher.match(model_type, step):
                         yield hint.suggestion
@@ -203,10 +210,29 @@ class ActionMatcherInterface:
         command_id: str,
         window_id: Callable[[WorkflowStep], uuid.UUID] | None = None,
         defaults: dict[str, Callable[[WorkflowStep], Any]] | None = None,
+        user_context: Callable[[MainWindow, WorkflowStep], dict[str, Any]]
+        | None = None,
     ) -> Self:
-        """Add a suggestion to the registry."""
+        """Add a suggestion to the registry.
+
+        Parameters
+        ----------
+        command_id : str
+            The command ID that will be suggested for the action.
+        window_id : Callable[[WorkflowStep], uuid.UUID], default None
+            A function that returns the window ID to use as context for the command.
+            Returned value will be passed to the `window_context` parameter of the
+            `ui.exec_action` method.
+        defaults : dict[str, Callable[[WorkflowStep], Any]], default None
+            A dictionary of parameter names to functions that generate default values.
+            Returned values will be passed to the `with_defaults` parameter of the
+            `ui.exec_action` method.
+        """
         suggestion = CommandSuggestion(
-            command_id=command_id, window_id=window_id, defaults=defaults or {}
+            command_id=command_id,
+            window_id=window_id,
+            defaults=defaults or {},
+            user_context=user_context,
         )
         self._registry.add_hint(self._matcher, suggestion)
         return self

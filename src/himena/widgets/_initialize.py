@@ -7,6 +7,7 @@ import weakref
 from magicgui.widgets import FunctionGui
 from himena.consts import ParametricWidgetProtocolNames as PWPN
 from himena.types import (
+    AnyContext,
     Parametric,
     WidgetType,
     WidgetConstructor,
@@ -127,6 +128,10 @@ def init_application(app: HimenaApplication) -> HimenaApplication:
     def _get_clipboard_data() -> ClipboardDataModel:
         _LOGGER.debug("providing for %r", ClipboardDataModel.__name__)
         return current_instance(app.name).clipboard
+
+    @app.injection_store.mark_provider
+    def _provide_any_context() -> AnyContext:
+        return {}
 
     ### processors ###
     @app.injection_store.mark_processor
