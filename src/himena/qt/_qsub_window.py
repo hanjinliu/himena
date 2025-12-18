@@ -28,6 +28,7 @@ from himena import _drag
 
 if TYPE_CHECKING:
     from PyQt6 import QtWidgets as QtW
+    from app_model.backends.qt import QModelMenu
     from himena.qt.main_window import MainWindowQt
     from himena.qt._qmain_window import QMainWindow
     from himena.widgets import SubWindow
@@ -747,6 +748,8 @@ class QSubWindowTitleBar(QtW.QFrame):
         self._subwindow.state_change_requested.emit(WindowState.MIN)
 
     def _toggle_size(self):
+        if self._is_single_window_mode:
+            return
         if self._subwindow._window_state is WindowState.NORMAL:
             self._subwindow.state_change_requested.emit(WindowState.MAX)
         else:
@@ -824,6 +827,7 @@ class QSubWindowTitleBar(QtW.QFrame):
             and self._drag_position is not None
             and _subwin._resize_state is ResizeState.NONE
             and not self._is_window_drag_mode
+            and not self._is_single_window_mode
         ):
             g = _subwin.geometry()
             main_qsize = _subwin._qt_mdiarea().size()
@@ -985,10 +989,10 @@ class QSubWindowTitleBar(QtW.QFrame):
             return None
         ui = get_main_window(self)
         model_subtypes = model_type.split(".")
-        supertype_menus: list[QtW.QMenu] = []
+        supertype_menus: list[QModelMenu] = []
         _id = f"/model_menu:{model_type}"
 
-        context_menu = build_qmodel_menu(_id, app=ui.model_app.name, parent=self)
+        model_menu = build_qmodel_menu(_id, app=ui.model_app.name, parent=self)
         ctx = ui._ctx_keys
         ctx._update(ui)
         ctx_dict = ctx.dict()
@@ -1009,17 +1013,18 @@ class QSubWindowTitleBar(QtW.QFrame):
                         open_in_actions.append(action)
         if open_in_actions and _n_enabled > 0:
             open_in_menu = QtW.QMenu()
-            open_in_menu.setParent(context_menu, open_in_menu.windowFlags())
+            open_in_menu.setParent(model_menu, open_in_menu.windowFlags())
             open_in_menu.setTitle("Open in ...")
-            actions = context_menu.actions()
+            actions = model_menu.actions()
             if len(actions) == 0:
-                context_menu.addMenu(open_in_menu)
+                model_menu.addMenu(open_in_menu)
             else:
-                context_menu.insertMenu(actions[0], open_in_menu)
+                model_menu.insertMenu(actions[0], open_in_menu)
             for action in open_in_actions:
                 open_in_menu.addAction(action)
 
-        # also add supertype actions
+        # Also add supertype actions. For example, all the actions for "array" should
+        # be available for "array.image" as well.
         for num in range(1, len(model_subtypes)):
             _typ = ".".join(model_subtypes[:num])
             _id = f"/model_menu:{_typ}"
@@ -1027,12 +1032,20 @@ class QSubWindowTitleBar(QtW.QFrame):
             _menu.setTitle(f'"{_typ}" menu')
             supertype_menus.append(_menu)
         if supertype_menus:
-            context_menu.addSeparator()
+            model_menu.addSeparator()
             for menu in supertype_menus:
-                if not menu.isEmpty():
-                    context_menu.addMenu(menu)
-        context_menu.update_from_context(ctx_dict)
-        return context_menu
+                if menu.isEmpty():
+                    continue
+                if _num_actions(model_menu) + _num_actions(menu) > 16:
+                    model_menu.addMenu(menu)
+                else:
+                    for action in menu.actions():
+                        if action.text():
+                            model_menu.addAction(action)
+                    model_menu.addSeparator()
+
+        model_menu.update_from_context(ctx_dict)
+        return model_menu
 
     def _prep_action_hints_menu(self) -> QtW.QMenu:
         ui = get_main_window(self)
@@ -1057,6 +1070,11 @@ class QSubWindowTitleBar(QtW.QFrame):
         pos_local = btn.rect().bottomLeft()
         pos_global = btn.mapToGlobal(pos_local)
         menu.exec(pos_global)
+
+
+def _num_actions(menu: QtW.QMenu) -> int:
+    """Count the number of commands in the menu"""
+    return len([a for a in menu.actions() if a.text()])
 
 
 def pixmap_resized(

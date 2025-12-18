@@ -89,6 +89,12 @@ def _active_window_widget_id(ui: "MainWindow") -> str | None:
         return get_widget_class_id(type(win.widget))
 
 
+def _is_single_window_mode(ui: "MainWindow") -> bool:
+    if area := ui.tabs.current():
+        return area.is_single_window
+    return False
+
+
 def _get_user_context(ui: "MainWindow") -> dict | None:
     if area := ui.tabs.current():
         if win := area.current():
@@ -158,6 +164,11 @@ class AppContext(ContextNamespace["MainWindow"]):
         None,
         "widget class id of the active window",
         _active_window_widget_id,
+    )
+    is_single_window_mode = ContextKey(
+        False,
+        "if the current window is a single-window tab",
+        _is_single_window_mode,
     )
     user_context = ContextKey(
         None,

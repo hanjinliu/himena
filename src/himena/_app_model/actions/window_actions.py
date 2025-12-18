@@ -149,6 +149,8 @@ def duplicate_window(win: SubWindow) -> WidgetDataModel:
     }
     if model.title is not None:
         model = model.with_title_numbering()
+    if win.tab_area.is_single_window:
+        model = model.use_tab()
     return model.model_copy(update=update)
 
 
@@ -221,7 +223,7 @@ def copy_data_to_clipboard(model: WidgetDataModel) -> ClipboardDataModel:
     title="Minimize Window",
     menus=[{"id": MenuId.WINDOW_RESIZE, "group": STATE_GROUP}],
     keybindings=[{"primary": KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.DownArrow)}],
-    enablement=_ctx.num_sub_windows > 0,
+    enablement=(_ctx.num_sub_windows > 0) & (~_ctx.is_single_window_mode),
 )
 def minimize_current_window(win: SubWindow) -> None:
     """Minimize the window"""
@@ -232,7 +234,7 @@ def minimize_current_window(win: SubWindow) -> None:
     id="maximize-window",
     title="Maximize Window",
     menus=[{"id": MenuId.WINDOW_RESIZE, "group": STATE_GROUP}],
-    enablement=_ctx.num_sub_windows > 0,
+    enablement=(_ctx.num_sub_windows > 0) & (~_ctx.is_single_window_mode),
     keybindings=[{"primary": KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.UpArrow)}],
 )
 def maximize_current_window(win: SubWindow) -> None:
@@ -244,7 +246,7 @@ def maximize_current_window(win: SubWindow) -> None:
     title="Toggle Full Screen",
     menus=[{"id": MenuId.WINDOW_RESIZE, "group": STATE_GROUP}],
     keybindings=[{"primary": KeyCode.F11}],
-    enablement=_ctx.num_sub_windows > 0,
+    enablement=(_ctx.num_sub_windows > 0) & (~_ctx.is_single_window_mode),
 )
 def toggle_full_screen(win: SubWindow) -> None:
     if win.state is WindowState.FULL:
@@ -311,31 +313,33 @@ def anchor_at_bottom_right(win: SubWindow) -> None:
 @ACTIONS.append_from_fn(
     id="window-expand",
     title="Expand (+20%)",
-    enablement=_ctx.num_sub_windows > 0,
+    enablement=(_ctx.num_sub_windows > 0) & (~_ctx.is_single_window_mode),
     menus=[{"id": MenuId.WINDOW_RESIZE, "group": ZOOM_GROUP}],
     keybindings=[StandardKeyBinding.ZoomIn],
 )
 def window_expand(win: SubWindow) -> None:
     """Expand (increase the size of) the current window."""
-    win._set_rect(win.rect.resize_relative(1.2, 1.2))
+    if win.state is WindowState.NORMAL:
+        win._set_rect(win.rect.resize_relative(1.2, 1.2))
 
 
 @ACTIONS.append_from_fn(
     id="window-shrink",
     title="Shrink (-20%)",
-    enablement=_ctx.num_sub_windows > 0,
+    enablement=(_ctx.num_sub_windows > 0) & (~_ctx.is_single_window_mode),
     menus=[{"id": MenuId.WINDOW_RESIZE, "group": ZOOM_GROUP}],
     keybindings=[StandardKeyBinding.ZoomOut],
 )
 def window_shrink(win: SubWindow) -> None:
     """Shrink (reduce the size of) the current window."""
-    win._set_rect(win.rect.resize_relative(1 / 1.2, 1 / 1.2))
+    if win.state is WindowState.NORMAL:
+        win._set_rect(win.rect.resize_relative(1 / 1.2, 1 / 1.2))
 
 
 @ACTIONS.append_from_fn(
     id="full-screen-in-new-tab",
     title="Full Screen In New Tab",
-    enablement=_ctx.num_sub_windows > 0,
+    enablement=(_ctx.num_sub_windows > 0) & (~_ctx.is_single_window_mode),
     menus=[{"id": MenuId.WINDOW, "group": EDIT_GROUP}],
 )
 def full_screen_in_new_tab(ui: MainWindow) -> None:
@@ -480,7 +484,7 @@ SUBMENUS.append_from(
     id=MenuId.WINDOW,
     submenu=MenuId.WINDOW_RESIZE,
     title="Resize",
-    enablement=_ctx.num_sub_windows > 0,
+    enablement=(_ctx.num_sub_windows > 0) & (~_ctx.is_single_window_mode),
     group=MOVE_GROUP,
 )
 SUBMENUS.append_from(
