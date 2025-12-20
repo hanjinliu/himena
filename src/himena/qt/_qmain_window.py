@@ -263,7 +263,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         tab_name : str
             Name of the tab.
         """
-        _LOGGER.info("Adding tab of title %r", tab_name)
+        _LOGGER.debug("Adding tab of title %r", tab_name)
         return self._tab_widget.add_tab_area(tab_name)
 
     def _mark_tab_as_single_window_mode(self, i_tab: int) -> None:
@@ -287,7 +287,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
                 "that returns QWidget."
             )
         tab = self._tab_widget.widget_area(i_tab)
-        _LOGGER.info("Adding widget of title %r to tab %r", title, i_tab)
+        _LOGGER.debug("Adding widget of title %r to tab %r", title, i_tab)
         subwindow = tab.add_widget(widget, title)
         if self._himena_main_window.theme.is_light_background():
             icon_color = "#333333"
@@ -559,7 +559,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _del_widget_at(self, i_tab: int, i_window: int) -> None:
         if i_tab < 0 or i_window < 0:
             raise ValueError("Invalid tab or window index.")
-        _LOGGER.info("Deleting widget at tab %r, window %r", i_tab, i_window)
+        _LOGGER.debug("Deleting widget at tab %r, window %r", i_tab, i_window)
         tab = self._tab_widget.widget_area(i_tab)
         subwindows = tab.subWindowList()
         subwindow = subwindows[i_window]
@@ -570,7 +570,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             tab._set_area_focused()
 
     def _del_tab_at(self, i_tab: int) -> None:
-        _LOGGER.info("Deleting tab at index %r", i_tab)
+        _LOGGER.debug("Deleting tab at index %r", i_tab)
         self._tab_widget.remove_tab_area(i_tab)
         if self._tab_widget._is_startup_only():
             self._try_show_default_status_tip()

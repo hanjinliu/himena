@@ -414,6 +414,10 @@ class QFlowChartView(QtW.QGraphicsView):
                     self.background_right_clicked.emit(event.position())
             return super().mouseReleaseEvent(event)
 
+    def mouseDoubleClickEvent(self, event):
+        self._last_drag_position = QtCore.QPointF()
+        return super().mouseDoubleClickEvent(event)
+
 
 class QFlowChartSideView(QtW.QPlainTextEdit):
     def __init__(self, parent=None):
