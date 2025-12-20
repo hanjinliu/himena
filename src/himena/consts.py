@@ -36,7 +36,7 @@ elif IS_MACOS:
     MonospaceFontFamily = "Menlo"
     DefaultFontFamily = "Helvetica"
 else:
-    MonospaceFontFamily = "Monospace"
+    MonospaceFontFamily = "monospace"
     DefaultFontFamily = "Sans Serif"
 
 # Allowed for profile names
