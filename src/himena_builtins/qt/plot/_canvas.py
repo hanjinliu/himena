@@ -54,6 +54,7 @@ class QMatplotlibCanvasBase(QtW.QWidget):
     def widget_resized_callback(self, size_old: Size, size_new: Size):
         if size_new.width > 40 and size_new.height > 40:
             self._canvas.figure.tight_layout(pad=TIGHT_LAYOUT_PAD)
+            self._canvas.draw()
 
     def _construct_toolbar(self):
         return QNavigationToolBar(self._canvas, self)
@@ -102,6 +103,7 @@ class QMatplotlibCanvasBase(QtW.QWidget):
         self._canvas.contextmenu_requested.connect(self._show_context_menu)
         self.layout().addWidget(self._canvas)
         self._canvas.figure.tight_layout(pad=TIGHT_LAYOUT_PAD)
+        self._canvas.draw()
 
     def _make_context_menu(self) -> QtW.QMenu:
         menu = QtW.QMenu(self)
@@ -241,6 +243,7 @@ class QModelMatplotlibCanvas(QMatplotlibCanvasBase):
     @validate_protocol
     def widget_added_callback(self):
         self._canvas.figure.tight_layout(pad=TIGHT_LAYOUT_PAD)
+        self._canvas.draw()
 
     @validate_protocol
     def is_modified(self) -> bool:

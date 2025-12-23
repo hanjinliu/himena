@@ -186,12 +186,9 @@ def copy_path_to_clipboard(ui: MainWindow) -> ClipboardDataModel:
         if isinstance(sv := window.save_behavior, SaveToPath):
             return ClipboardDataModel(text=str(sv.path))
         else:
-            warnings.warn(
-                "Window does not have the source path.", UserWarning, stacklevel=2
-            )
+            raise ValueError("Window does not have the source path.")
     else:
-        warnings.warn("No window is focused.", UserWarning, stacklevel=2)
-    raise Cancelled
+        RuntimeError("No window is focused.")
 
 
 @ACTIONS.append_from_fn(
@@ -491,13 +488,13 @@ SUBMENUS.append_from(
     id=MenuId.WINDOW,
     submenu=MenuId.WINDOW_ALIGN,
     title="Align",
-    enablement=_ctx.num_sub_windows > 0,
+    enablement=(_ctx.num_sub_windows > 0) & (~_ctx.is_single_window_mode),
     group=MOVE_GROUP,
 )
 SUBMENUS.append_from(
     id=MenuId.WINDOW,
     submenu=MenuId.WINDOW_ANCHOR,
     title="Anchor",
-    enablement=_ctx.num_sub_windows > 0,
+    enablement=(_ctx.num_sub_windows > 0) & (~_ctx.is_single_window_mode),
     group=MOVE_GROUP,
 )
