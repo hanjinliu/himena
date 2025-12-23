@@ -29,7 +29,13 @@ jobs:
             platform: windows-latest
             backend: pyqt5
           - python-version: "3.13"
-            platform: [macos-latest, ubuntu-latest, windows-latest]
+            platform: macos-latest
+            backend: pyside6
+          - python-version: "3.13"
+            platform: ubuntu-latest
+            backend: pyside6
+          - python-version: "3.13"
+            platform: windows-latest
             backend: pyside6
 
     steps:
