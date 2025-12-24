@@ -360,6 +360,17 @@ class SingleAxes(BaseLayoutModel):
         """Add a band plot model to the axes."""
         return self.axes.band(x=x, y0=y0, y1=y1, orient=orient, **kwargs)
 
+    def span(
+        self,
+        start: float,
+        end: float,
+        *,
+        orient: Literal["vertical", "horizontal"] = "horizontal",
+        **kwargs,
+    ) -> _m.Span:
+        """Add a span plot model to the axes."""
+        return self.axes.span(start=start, end=end, orient=orient, **kwargs)
+
     def hist(
         self,
         data: "Sequence[float] | NDArray[np.number]",
