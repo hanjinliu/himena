@@ -58,6 +58,7 @@ def _make_himena_ui(qtbot: QtBot, request: pytest.FixtureRequest):
             confirm=False,
             file_dialog_response=_raise_dialog_error,
             choose_one_dialog_response=_raise_dialog_error,
+            user_input_response=_raise_dialog_error,
         )
         window._pytest_name = request.node.name
         if backend == "qt":

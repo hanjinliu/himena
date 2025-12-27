@@ -345,7 +345,8 @@ def register_function(
     func : callable, optional
         Function to register as an action.
     menus : str or sequence of str, default "plugins"
-        Menu(s) to add the action. Submenus are separated by `/`.
+        Menu(s) to add the action. Submenus are separated by `/`. You can use menu IDs
+        start with "/model_menu" to specify the submenu under the model menu.
     title : str, optional
         Title of the action. Name of the function will be used if not given.
     types: str or sequence of str, optional

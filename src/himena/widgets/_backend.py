@@ -305,6 +305,13 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     ) -> _W:
         """Convert a function signature to a widget that can run it."""
 
+    def _add_widget_to_dialog(
+        self,
+        widget: _W,
+        title: str,
+    ) -> bool:
+        """Convert a parametric widget to a dialog widget, and return the response."""
+
     def _add_widget_to_parametric_window(
         self,
         wrapper: ParametricWindow[_W],

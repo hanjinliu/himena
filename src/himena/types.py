@@ -792,6 +792,12 @@ class BackendInstructions(BaseModel):
         "be called to get the response.",
         frozen=True,
     )
+    user_input_response: Callable[[], dict[str, Any]] | None = Field(
+        default=None,
+        description="If provided, parametric dialog will be skipped and this function "
+        "will be called to get the response.",
+        frozen=True,
+    )
     gui_execution: bool = Field(default=True)
     process_model_output: bool = Field(default=True)
     unwrap_future: bool = Field(default=False)
