@@ -259,11 +259,14 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         if isinstance(dock := widget.parentWidget(), QtW.QDockWidget):
             dock.close()
 
-    def _add_widget_to_dialog(
-        self,
-        widget: QtW.QWidget | Widget,
-        title: str,
-    ) -> bool:
+    def _add_widget_to_dialog(self, widget: QtW.QWidget | Widget, title: str) -> bool:
+        dialog = self._add_widget_to_dialog_no_exec(widget, title)
+        result = dialog.exec()
+        if result:
+            return True
+        return False
+
+    def _add_widget_to_dialog_no_exec(self, widget: QtW.QWidget | Widget, title: str):
         if isinstance(widget, Widget):
             widget = widget.native
         dialog = QtW.QDialog(self)
@@ -282,10 +285,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         dialog.setWindowTitle(title)
 
         self._last_dialog = dialog  # prevent garbage collection
-        result = dialog.exec()
-        if result:
-            return True
-        return False
+        return dialog
 
     def add_tab(self, tab_name: str) -> QSubWindowArea:
         """Add a new tab with a sub-window area.

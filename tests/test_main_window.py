@@ -476,6 +476,7 @@ def test_process_future(make_himena_ui):
     himena_ui.model_app._future_done_callback(future)
 
 def test_dialog(himena_ui: MainWindowQt, qtbot: QtBot):
+    himena_ui._backend_main_window._add_widget_to_dialog_no_exec(QtW.QWidget(), "title")
     with user_input_response(himena_ui, {"x": 3, "y": 0.6}):
         responce = himena_ui.exec_user_input_dialog(
             {"x": int, "y": Annotated[float, {"min": 0.0, "max": 1.0}]},
@@ -487,8 +488,5 @@ def test_dialog(himena_ui: MainWindowQt, qtbot: QtBot):
         return f"{boolean}, {tuple_val}"
 
     with user_input_response(himena_ui, {"boolean": True, "tuple_val": (5, 0.2)}):
-        responce = himena_ui.exec_user_input_dialog(
-            func,
-            title="My Dialog 2",
-        )
+        responce = himena_ui.exec_user_input_dialog(func)
     assert responce == "True, (5, 0.2)"
