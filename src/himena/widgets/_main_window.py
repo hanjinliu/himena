@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from concurrent.futures import Future, ThreadPoolExecutor
 from contextlib import contextmanager
+import inspect
 from logging import getLogger
 from pathlib import Path
 import threading
@@ -25,7 +26,7 @@ from himena import _providers
 from himena._app_model import AppContext, HimenaApplication
 from himena._open_recent import RecentFileManager, RecentSessionManager
 from himena._utils import get_widget_class_id, import_object
-from himena.consts import NO_RECORDING_FIELD
+from himena.consts import NO_RECORDING_FIELD, ParametricWidgetProtocolNames as PWPN
 from himena.plugins import _checker, actions as _actions
 from himena.profile import AppProfile, load_app_profile
 from himena.style import Theme
@@ -65,6 +66,7 @@ if TYPE_CHECKING:
 _W = TypeVar("_W")  # backend widget type
 _T = TypeVar("_T")  # internal data type
 _F = TypeVar("_F")  # function type
+_R = TypeVar("_R")  # return type
 _LOGGER = getLogger(__name__)
 
 
@@ -942,6 +944,77 @@ class MainWindow(Generic[_W]):
         )
 
     @overload
+    def exec_user_input_dialog(
+        self,
+        inputs: dict[str, type],
+        /,
+        title: str | None = None,
+        *,
+        show_parameter_labels: bool = True,
+    ) -> dict[str, Any] | None: ...
+    @overload
+    def exec_user_input_dialog(
+        self,
+        function: Callable[..., _R],
+        /,
+        title: str | None = None,
+        *,
+        show_parameter_labels: bool = True,
+    ) -> _R | None: ...
+    def exec_user_input_dialog(
+        self,
+        function_or_types: dict | Callable,
+        /,
+        title: str | None = None,
+        *,
+        show_parameter_labels: bool = True,
+    ) -> Any | None:
+        """Execute a parametric dialog to get user input.
+
+        Parameters
+        ----------
+        function : callable
+            Function that generates a WidgetDataModel from the input parameters.
+        title : str
+            Window title of the dialog.
+
+        Returns
+        -------
+        Any or None
+            The output of the function if the user confirmed, otherwise None.
+        """
+        if title is None:
+            title = "User Input"
+        if isinstance(function_or_types, dict):
+            parameters = []
+            for name, typ in function_or_types.items():
+                parameters.append(
+                    inspect.Parameter(
+                        name,
+                        inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                        annotation=typ,
+                    )
+                )
+            sig = inspect.Signature(parameters)
+            function = _default_dialog_func
+            function.__signature__ = sig
+        else:
+            function = function_or_types
+        fn_widget = self._backend_main_window._signature_to_widget(
+            inspect.signature(function),
+            show_parameter_labels=show_parameter_labels,
+            preview=False,
+        )
+        if cb := self._instructions.user_input_response:
+            params = cb()
+        else:
+            res = self._backend_main_window._add_widget_to_dialog(fn_widget, title)
+            if not res:
+                return
+            params = getattr(fn_widget, PWPN.GET_PARAMS)()
+        return function(**params)
+
+    @overload
     def exec_file_dialog(
         self,
         mode: Literal["r", "d", "w"] = "r",
@@ -1284,3 +1357,7 @@ def _tab_to_be_used(self: MainWindow) -> TabArea[_W]:
     else:
         tabarea = self.add_tab()
     return tabarea
+
+
+def _default_dialog_func(**kwargs) -> dict[str, Any]:
+    return kwargs

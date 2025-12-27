@@ -11,6 +11,7 @@ import weakref
 import numpy as np
 
 from qtpy import QtWidgets as QtW, QtGui, QtCore
+from magicgui.widgets import Widget
 from app_model.types import KeyCode
 from app_model.backends.qt import (
     QModelMainWindow,
@@ -154,6 +155,9 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self._corner_toolbar.setContentsMargins(0, 0, 0, 0)
         self._menubar.setCornerWidget(self._corner_toolbar)
 
+        # to prevent garbage collection
+        self._last_dialog: QtW.QDialog | None = None
+
     def _update_widget_theme(self, style: Theme):
         self.setStyleSheet(style.format_text(get_stylesheet_path().read_text()))
         if style.is_light_background():
@@ -254,6 +258,34 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _del_dock_widget(self, widget: QtW.QWidget) -> None:
         if isinstance(dock := widget.parentWidget(), QtW.QDockWidget):
             dock.close()
+
+    def _add_widget_to_dialog(
+        self,
+        widget: QtW.QWidget | Widget,
+        title: str,
+    ) -> bool:
+        if isinstance(widget, Widget):
+            widget = widget.native
+        dialog = QtW.QDialog(self)
+        layout = QtW.QVBoxLayout(dialog)
+
+        layout.addWidget(widget)
+
+        # Add OK and Cancel buttons
+        button_box = QtW.QDialogButtonBox(
+            QtW.QDialogButtonBox.StandardButton.Ok
+            | QtW.QDialogButtonBox.StandardButton.Cancel
+        )
+        button_box.accepted.connect(dialog.accept)
+        button_box.rejected.connect(dialog.reject)
+        layout.addWidget(button_box)
+        dialog.setWindowTitle(title)
+
+        self._last_dialog = dialog  # prevent garbage collection
+        result = dialog.exec()
+        if result:
+            return True
+        return False
 
     def add_tab(self, tab_name: str) -> QSubWindowArea:
         """Add a new tab with a sub-window area.

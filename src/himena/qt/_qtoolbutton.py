@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW
+from textwrap import dedent
 from himena.qt._qsvg import QColoredSVGIcon
 
 if TYPE_CHECKING:
@@ -15,7 +16,7 @@ class QColoredToolButton(QtW.QToolButton):
     def __init__(self, callback, svg_path):
         super().__init__()
         self._icon_path = Path(svg_path)
-        self.setToolTip(callback.__doc__ or "")
+        self.setToolTip(dedent(callback.__doc__ or ""))
         self.clicked.connect(callback)
         self._callback = callback
 
