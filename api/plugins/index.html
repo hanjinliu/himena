@@ -3630,13 +3630,13 @@ def _(model: WidgetDataModel, path: Path) -&gt; bool:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\plugins\actions.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">652</span>
-<span class="normal">653</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">653</span>
 <span class="normal">654</span>
 <span class="normal">655</span>
 <span class="normal">656</span>
 <span class="normal">657</span>
-<span class="normal">658</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">add_default_status_tip</span><span class="p">(</span>
+<span class="normal">658</span>
+<span class="normal">659</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">add_default_status_tip</span><span class="p">(</span>
     <span class="n">short</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">long</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -4549,8 +4549,7 @@ conventions.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\plugins\actions.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">573</span>
-<span class="normal">574</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">574</span>
 <span class="normal">575</span>
 <span class="normal">576</span>
 <span class="normal">577</span>
@@ -4580,7 +4579,8 @@ conventions.</p>
 <span class="normal">601</span>
 <span class="normal">602</span>
 <span class="normal">603</span>
-<span class="normal">604</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_conversion_rule</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="normal">604</span>
+<span class="normal">605</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_conversion_rule</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a function as a conversion rule.</span>
 
 <span class="sd">    A conversion rule will be added to the model menu under &quot;Convert &gt; ...&quot; submenu.</span>
@@ -5091,7 +5091,8 @@ objects will be used instead of the dict.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Menu(s) to add the action. Submenus are separated by <code>/</code>.</p>
+                <p>Menu(s) to add the action. Submenus are separated by <code>/</code>. You can use menu IDs
+start with "/model_menu" to specify the submenu under the model menu.</p>
               </div>
             </td>
             <td>
@@ -5319,7 +5320,8 @@ rule.</p>
 <span class="normal">389</span>
 <span class="normal">390</span>
 <span class="normal">391</span>
-<span class="normal">392</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_function</span><span class="p">(</span>
+<span class="normal">392</span>
+<span class="normal">393</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_function</span><span class="p">(</span>
     <span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">menus</span><span class="o">=</span><span class="s2">&quot;plugins&quot;</span><span class="p">,</span>
@@ -5343,7 +5345,8 @@ rule.</p>
 <span class="sd">    func : callable, optional</span>
 <span class="sd">        Function to register as an action.</span>
 <span class="sd">    menus : str or sequence of str, default &quot;plugins&quot;</span>
-<span class="sd">        Menu(s) to add the action. Submenus are separated by `/`.</span>
+<span class="sd">        Menu(s) to add the action. Submenus are separated by `/`. You can use menu IDs</span>
+<span class="sd">        start with &quot;/model_menu&quot; to specify the submenu under the model menu.</span>
 <span class="sd">    title : str, optional</span>
 <span class="sd">        Title of the action. Name of the function will be used if not given.</span>
 <span class="sd">    types: str or sequence of str, optional</span>
@@ -5410,8 +5413,7 @@ rule.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\plugins\actions.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">637</span>
-<span class="normal">638</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">638</span>
 <span class="normal">639</span>
 <span class="normal">640</span>
 <span class="normal">641</span>
@@ -5422,7 +5424,8 @@ rule.</p>
 <span class="normal">646</span>
 <span class="normal">647</span>
 <span class="normal">648</span>
-<span class="normal">649</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_modification_tracker</span><span class="p">(</span>
+<span class="normal">649</span>
+<span class="normal">650</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_modification_tracker</span><span class="p">(</span>
     <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">_T</span><span class="p">,</span> <span class="n">_T</span><span class="p">],</span> <span class="n">ReproduceArgs</span><span class="p">]],</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">_T</span><span class="p">,</span> <span class="n">_T</span><span class="p">],</span> <span class="n">ReproduceArgs</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a modification tracker.&quot;&quot;&quot;</span>
@@ -6256,8 +6259,7 @@ and optionally trigger the update of the widget if <code>update_widget</code> is
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\plugins\actions.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">661</span>
-<span class="normal">662</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">662</span>
 <span class="normal">663</span>
 <span class="normal">664</span>
 <span class="normal">665</span>
@@ -6271,7 +6273,8 @@ and optionally trigger the update of the widget if <code>update_widget</code> is
 <span class="normal">673</span>
 <span class="normal">674</span>
 <span class="normal">675</span>
-<span class="normal">676</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">when_command_executed</span><span class="p">(</span>
+<span class="normal">676</span>
+<span class="normal">677</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">when_command_executed</span><span class="p">(</span>
     <span class="n">model_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">command_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <span class="p">):</span>
@@ -6309,13 +6312,13 @@ and optionally trigger the update of the widget if <code>update_widget</code> is
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\plugins\actions.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">679</span>
-<span class="normal">680</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">680</span>
 <span class="normal">681</span>
 <span class="normal">682</span>
 <span class="normal">683</span>
 <span class="normal">684</span>
-<span class="normal">685</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">when_reader_used</span><span class="p">(</span>
+<span class="normal">685</span>
+<span class="normal">686</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">when_reader_used</span><span class="p">(</span>
     <span class="n">model_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">plugins</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
