@@ -206,7 +206,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         # Construct and add the dock widget
         dock_widget = QDockWidget(widget, title, allowed_areas)
         self.addDockWidget(dock_widget.area_normed(area), dock_widget)
-        dock_widget.closed.connect(self._update_context)
+        dock_widget.closed.connect(self._dock_widget_closed_callback)
         if doc := getattr(widget, "__doc__", ""):
             dock_widget.whats_this.connect(lambda: self._show_dock_whats_this(doc))
         QtW.QApplication.processEvents()
@@ -389,6 +389,9 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self._corner_toolbar.update_from_context(_dict)
         _msec = (timer() - _time_0) * 1000
         _LOGGER.debug("Context update took %.3f msec", _msec)
+
+    def _dock_widget_closed_callback(self) -> None:
+        self._update_context()
 
     def _current_tab_index(self) -> int | None:
         idx = self._tab_widget.currentIndex()

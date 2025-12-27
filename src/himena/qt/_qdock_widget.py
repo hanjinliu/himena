@@ -113,11 +113,14 @@ class QDockWidgetTitleBar(QtW.QWidget):
         _layout.setAlignment(self._close_button, Qt.AlignmentFlag.AlignRight)
 
         self._whats_this_button.clicked.connect(self.whatsThisSignal.emit)
-        self._close_button.clicked.connect(self.closeSignal.emit)
+        self._close_button.clicked.connect(self.close_button_clicked)
 
         self.setTitle(title)
         self.setFixedHeight(16)
         self.setCursor(Qt.CursorShape.OpenHandCursor)
+
+    def close_button_clicked(self):
+        self.closeSignal.emit()
 
     def title(self) -> str:
         """The title text."""

@@ -739,7 +739,9 @@ class DockWidgetList(
 
     def __delitem__(self, index: int) -> None:
         dock = self[index]
-        self._main_window()._del_dock_widget(dock._frontend_widget())
+        front = dock._frontend_widget()
+        _checker.call_widget_closed_callback(front)
+        self._main_window()._del_dock_widget(front)
         self._dock_widget_set.pop(dock)
 
     def __len__(self) -> int:
@@ -753,7 +755,6 @@ class DockWidgetList(
 
     def _add_dock_widget(self, dock: DockWidget[_W]) -> None:
         self._dock_widget_set[dock] = dock.widget
-        return None
 
     def widget_for_id(self, id: uuid.UUID) -> DockWidget[_W] | None:
         """Pick the dock widget by its ID."""
@@ -761,7 +762,6 @@ class DockWidgetList(
             if id != _dock._identifier:
                 continue
             return _dock
-        return None
 
 
 def _make_title(i: int) -> str:
