@@ -270,7 +270,7 @@ def drag_command(
 
 
 def _text_to_pixmap(text: str, parent=None) -> QtGui.QPixmap:
-    qlabel = QtW.QLabel(text)
+    qlabel = QtW.QLabel(text, parent)
     pixmap = QtGui.QPixmap(qlabel.size())
     pixmap.setDevicePixelRatio(qlabel.devicePixelRatioF())
     qlabel.render(pixmap)
