@@ -17,3 +17,12 @@ def test_full_workflow_widget(qtbot: QtBot, himena_ui: MainWindow):
     himena_ui.tabs[0].pop(1)
     QApplication.processEvents()
     assert len(widget.view.list_ids()) == 1
+
+    # test overlapping objects
+    win = himena_ui.add_object("abc,d")
+    himena_ui.exec_action("builtins:text:change-separator", with_params={}, window_context=win)
+    himena_ui.exec_action("builtins:text:change-separator", with_params={}, window_context=win)
+    himena_ui.exec_action("builtins:text:change-separator", with_params={}, window_context=himena_ui.tabs[-1][-1])
+    win = himena_ui.add_object("1234")
+    win = himena_ui.add_object("zzzzzzzz")
+    himena_ui.exec_action("builtins:text:change-separator", with_params={}, window_context=himena_ui.tabs[-1][-1])

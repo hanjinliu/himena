@@ -220,17 +220,8 @@ class QFlowChartArrow(QtW.QGraphicsLineItem):
         self.end_node = end_node
         self.arrowhead_size = 10
         self.offset = offset
-        pen = QtGui.QPen(color, 1.2)
-
-        # Set line properties
-        self.setPen(pen)
-
-        # Create arrowhead as a separate graphics item
-        # Arrowhead as a triangle polygon
         self.arrowhead = QtW.QGraphicsPolygonItem(self)
-        pen.setJoinStyle(Qt.PenJoinStyle.SvgMiterJoin)
-        self.arrowhead.setBrush(QtGui.QBrush(color))
-        self.arrowhead.setPen(pen)
+        self.set_color(color)
 
         # Register this arrow with both nodes
         # start --> end
@@ -239,6 +230,18 @@ class QFlowChartArrow(QtW.QGraphicsLineItem):
 
         # Initial position update
         self._update_position()
+
+    def set_color(self, color: QtGui.QColor):
+        pen = QtGui.QPen(color, 1.2)
+
+        # Set line properties
+        self.setPen(pen)
+
+        # Create arrowhead as a separate graphics item
+        # Arrowhead as a triangle polygon
+        pen.setJoinStyle(Qt.PenJoinStyle.SvgMiterJoin)
+        self.arrowhead.setBrush(QtGui.QBrush(color))
+        self.arrowhead.setPen(pen)
 
     def _update_position(self):
         """Update the arrow position based on the connected nodes"""
@@ -387,7 +390,7 @@ class QFlowChartView(QtW.QGraphicsView):
         super().setBackgroundBrush(val)
         for node in self._node_map.values():
             for ith, arrow in enumerate(node._connected_arrows_from):
-                arrow.setPen(QtGui.QPen(self._arrow_color(ith), 1.2))
+                arrow.set_color(self._arrow_color(ith))
 
     def _arrow_color(self, ith: int = 0) -> QtGui.QColor:
         if self.scene().backgroundBrush().color().lightness() < 128:
@@ -452,11 +455,12 @@ class QFlowChartView(QtW.QGraphicsView):
 def iter_next_shift(stride: float, max_value: float = 1e4) -> Iterator[float]:
     """Yield next shift in ... 3, 1, 0, 2, 4 ... order."""
     yield 0.0
+    cur_stride = stride
     while True:
         for direction in (-1, 1):
-            yield direction * stride
-        stride += stride
-        if stride > max_value:
+            yield direction * cur_stride
+        cur_stride += stride
+        if cur_stride > max_value:
             # just for safety
             raise StopIteration
 
