@@ -308,6 +308,8 @@ class QFlowChartView(QtW.QGraphicsView):
         self.horizontalScrollBar().hide()
         self.verticalScrollBar().hide()
 
+        self._dodge_distance = 32
+
     def add_child(
         self,
         item: BaseNodeItem,
@@ -331,7 +333,11 @@ class QFlowChartView(QtW.QGraphicsView):
             center = QtCore.QPointF(child_x, child_y)
 
         # shift to left or right if the position is already occupied
-        center = find_unoccupied_position(center, list(self._node_map.values()))
+        center = find_unoccupied_position(
+            center,
+            list(self._node_map.values()),
+            self._dodge_distance,
+        )
 
         # Create the child node
         child_node = self.add_node(center, item)
@@ -465,7 +471,11 @@ def iter_next_shift(stride: float, max_value: float = 1e4) -> Iterator[float]:
             raise StopIteration
 
 
-def find_unoccupied_position(center: QtCore.QPointF, nodes: list[QFlowChartNode]):
+def find_unoccupied_position(
+    center: QtCore.QPointF,
+    nodes: list[QFlowChartNode],
+    dodge_distance: float = 32,
+):
     # list of nodes that has similar y value
     may_overlap = [node for node in nodes if abs(node.center().y() - center.y()) < 20]
     if not may_overlap:
@@ -473,8 +483,8 @@ def find_unoccupied_position(center: QtCore.QPointF, nodes: list[QFlowChartNode]
     x_val_occupied: list[tuple[float, float]] = []
     for node in may_overlap:
         rect = node.rect()
-        left = rect.left() - 26
-        right = rect.right() + 26
+        left = rect.left() - dodge_distance + 6
+        right = rect.right() + dodge_distance - 6
         x_val_occupied.append((left, right))
 
     def is_ok(x: float) -> bool:
@@ -483,7 +493,7 @@ def find_unoccupied_position(center: QtCore.QPointF, nodes: list[QFlowChartNode]
                 return False
         return True
 
-    it = iter_next_shift(32)
+    it = iter_next_shift(dodge_distance)
     current_shift = next(it)
     while not is_ok(center.x() + current_shift):
         current_shift = next(it)
