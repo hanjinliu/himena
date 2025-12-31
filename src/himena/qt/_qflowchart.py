@@ -459,11 +459,11 @@ class QFlowChartView(QtW.QGraphicsView):
 
 
 def iter_next_shift(stride: float, max_value: float = 1e4) -> Iterator[float]:
-    """Yield next shift in ... 3, 1, 0, 2, 4 ... order."""
+    """Yield next shift in ... 4, 2, 0, 1, 3 ... order."""
     yield 0.0
     cur_stride = stride
     while True:
-        for direction in (-1, 1):
+        for direction in (1, -1):
             yield direction * cur_stride
         cur_stride += stride
         if cur_stride > max_value:

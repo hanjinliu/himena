@@ -525,6 +525,8 @@ class MainWindow(Generic[_W]):
         self,
         file_path: PathOrPaths,
         plugin: str | None = None,
+        *,
+        append_history: bool = True,
     ) -> SubWindow[_W]:
         """Read local file(s) and open as a new sub-window in this tab.
 
@@ -537,6 +539,8 @@ class MainWindow(Generic[_W]):
             If given, reader provider will be searched with the plugin name. This value
             is usually the full import path to the reader provider function, such as
             `"himena_builtins.io.default_reader_provider"`.
+        append_history : bool, default True
+            If True, the opened files will be appended to the recent file history.
 
         Returns
         -------
@@ -544,15 +548,21 @@ class MainWindow(Generic[_W]):
             The sub-window instance that is constructed based on the return value of
             the reader.
         """
-        return self.read_files([file_path], plugin=plugin)[0]
+        return self.read_files(
+            [file_path], plugin=plugin, append_history=append_history
+        )[0]
 
     def read_files(
         self,
         file_paths: PathOrPaths,
         plugin: str | None = None,
+        *,
+        append_history: bool = True,
     ) -> list[SubWindow[_W]]:
         """Read multiple files and open as new sub-windows in this tab."""
-        models = self._paths_to_models(file_paths, plugin=plugin)
+        models = self._paths_to_models(
+            file_paths, plugin=plugin, append_history=append_history
+        )
         out = [self.add_data_model(model) for model in models]
         if len(out) == 1:
             self.set_status_tip(f"File opened: {out[0].title}", duration=5)
@@ -567,10 +577,16 @@ class MainWindow(Generic[_W]):
         plugin: str | None = None,
         *,
         tab: TabArea[_W] | None = None,
+        append_history: bool = True,
     ) -> Future:
         """Read multiple files asynchronously and return a future."""
         file_paths = norm_paths(file_paths)
-        future = self._executor.submit(self._paths_to_models, file_paths, plugin=plugin)
+        future = self._executor.submit(
+            self._paths_to_models,
+            file_paths,
+            plugin=plugin,
+            append_history=append_history,
+        )
         if len(file_paths) == 1:
             self.set_status_tip(f"Opening: {file_paths[0].as_posix()}", duration=5)
         else:
@@ -1301,6 +1317,7 @@ class MainWindow(Generic[_W]):
         self,
         file_paths: PathOrPaths,
         plugin: str | None = None,
+        append_history: bool = True,
     ) -> list[WidgetDataModel]:
         ins = _providers.ReaderStore.instance()
         file_paths = norm_paths(file_paths)
@@ -1311,9 +1328,10 @@ class MainWindow(Generic[_W]):
             reader.read_and_update_source(file_path)
             for reader, file_path in reader_path_sets
         ]
-        self._recent_manager.append_recent_files(
-            [(fp, reader.plugin_str) for reader, fp in reader_path_sets]
-        )
+        if append_history:
+            self._recent_manager.append_recent_files(
+                [(fp, reader.plugin_str) for reader, fp in reader_path_sets]
+            )
         return models
 
 
