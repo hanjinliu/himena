@@ -32,7 +32,15 @@ class QPdfViewer(QtW.QWidget):
     @validate_protocol
     def update_model(self, model: WidgetDataModel):
         """Update the widget to display the PDF from the data model."""
-        self._pdf_document.load(str(model.value))
+        if not isinstance(_bytes := model.value, (bytes, bytearray)):
+            raise TypeError("Expected bytes or bytearray for PDF data.")
+        byte_array = QtCore.QByteArray(_bytes)
+        buf = QtCore.QBuffer(byte_array)
+        buf.open(QtCore.QIODevice.OpenModeFlag.ReadOnly)
+        try:
+            self._pdf_document.load(buf)
+        finally:
+            buf.close()
 
     @validate_protocol
     def control_widget(self) -> QPdfViewControl:

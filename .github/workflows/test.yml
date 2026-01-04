@@ -44,6 +44,14 @@ jobs:
       - name: Install dependencies
         run: python -m pip install .[testing] --upgrade hatch
 
+      - name: Install Ghostscript (Ubuntu)
+        if: matrix.platform == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y ghostscript
+
+      - name: Install Ghostscript (macOS)
+        if: matrix.platform == 'macos-latest'
+        run: brew install ghostscript
+
       - name: Test
         uses: aganders3/headless-gui@v1
         with:
