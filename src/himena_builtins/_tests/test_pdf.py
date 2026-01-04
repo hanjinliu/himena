@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 import pytest
 from pytestqt.qtbot import QtBot
@@ -17,3 +18,10 @@ def test_pdf_viewer(himena_ui: MainWindow, qtbot: QtBot, sample_dir: Path):
     widget.control_widget()._spin_box_zoom.setText("200")
     qtbot.keyClick(widget, Qt.Key.Key_Plus)
     qtbot.keyClick(widget, Qt.Key.Key_Minus)
+
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="Windows does not have ghostscript installed by default."
+)
+def test_read_eps(himena_ui: MainWindow, qtbot: QtBot, sample_dir: Path):
+    himena_ui.read_file(sample_dir / "eps.eps")
