@@ -108,11 +108,12 @@ def _send_or_create_window(
     path: str | None = None,
     attrs: dict = {},
     run: str | None = None,
-) -> "tuple[MainWindow, TextIOWrapper] | None":
+) -> "tuple[MainWindow | None, TextIOWrapper | None]":
     from himena.core import new_window
 
-    if (lock := get_unique_lock_file(prof.name)) is None:
-        socket_info = SocketInfo.from_lock(prof.name)
+    port = int(attrs.get("port", 49200))
+    if (lock := get_unique_lock_file(prof.name, port)) is None:
+        socket_info = SocketInfo.from_lock(prof.name, port)
         if path:
             files = path.split(";")
         else:
@@ -120,7 +121,7 @@ def _send_or_create_window(
         succeeded = socket_info.send_to_window(prof.name, files)
         if succeeded:
             return None, None
-        lock = lock_file_path(prof.name).open("w")
+        lock = lock_file_path(prof.name, port).open("w")
 
     ui = new_window(prof, app_attributes=attrs)
     ui.socket_info.dump(lock)
