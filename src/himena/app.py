@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from IPython import InteractiveShell
     from qtpy.QtWidgets import QApplication
     from warnings import WarningMessage
+    from himena.qt.main_window import MainWindowQt
 
 _A = TypeVar("_A")  # the backend application type
 
@@ -145,7 +146,7 @@ class QtEventLoopHandler(EventLoopHandler["QApplication"]):
             print("Failed to parse socket data: %s", e)
             return None
         try:
-            ins = current_instance(data.profile_name)
+            ins: MainWindowQt = current_instance(data.profile_name)
         except KeyError:
             ins = new_window(data.profile_name)
         ins.show()
