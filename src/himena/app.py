@@ -150,7 +150,6 @@ class QtEventLoopHandler(EventLoopHandler["QApplication"]):
         except KeyError:
             ins = new_window(data.profile_name)
         ins.show()
-        ins._backend_main_window.raise_()
         for file in data.files:
             ins.read_file(file)
 
