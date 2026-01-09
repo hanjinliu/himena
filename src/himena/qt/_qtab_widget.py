@@ -19,6 +19,8 @@ from himena.workflow._reader import ReaderMethod
 
 
 class QCloseTabToolButton(QtW.QToolButton):
+    """Tool button shown on each tab for closing the tab."""
+
     def __init__(self, area: QSubWindowArea):
         super().__init__()
         self._subwindow_area = area
@@ -33,8 +35,7 @@ class QCloseTabToolButton(QtW.QToolButton):
         tab_widget = main._backend_main_window._tab_widget
         for i in range(tab_widget.count()):
             if tab_widget.widget_area(i) is self._subwindow_area:
-                tab_widget.setCurrentIndex(i)
-                main.exec_action("close-tab")
+                main.exec_action("close-tab", user_context={"current_index": i})
 
 
 class QTabBar(QtW.QTabBar):
@@ -56,6 +57,10 @@ class QTabBar(QtW.QTabBar):
         tb.hide()
         self._plus_btn = tb
         self._plus_btn.setFixedHeight(18)
+
+        # Enable tab reordering by drag. Tabs are referred by their hash, not their
+        # indices in ui.tabs, so reordering is safe.
+        self.setMovable(True)
 
     def dragEnterEvent(self, e: QtGui.QDragEnterEvent) -> None:
         e.accept()
@@ -118,6 +123,7 @@ class QTabBar(QtW.QTabBar):
             if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
                 if drag := self._prep_drag(i_tab):
                     drag.exec()
+        return super().mousePressEvent(event)
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
         i_tab_released = self.tabAt(event.pos())
