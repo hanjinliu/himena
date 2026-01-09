@@ -4,54 +4,106 @@ from typing import TYPE_CHECKING, Literal
 import numpy as np
 from psygnal import Signal
 from qtpy import QtCore, QtGui, QtWidgets as QtW
-
+from functools import reduce
 from himena.consts import DefaultFontFamily
 from ._base import QBaseGraphicsScene, QBaseGraphicsView
 from himena.qt._qlineedit import QDoubleLineEdit
 from himena_builtins.qt.widgets._shared import quick_min_max
 
 if TYPE_CHECKING:
-    from numpy import ndarray as NDArray
+    from numpy.typing import NDArray
 
 
 class QHistogramView(QBaseGraphicsView):
     """Graphics view for displaying histograms and setting contrast limits."""
 
     clim_changed = QtCore.Signal(tuple)
+    threshold_changed = QtCore.Signal(float)
 
-    def __init__(self):
+    def __init__(self, mode: Literal["clim", "thresh"] = "clim"):
         super().__init__()
         self._hist_items = [self.addItem(QHistogramItem())]
-        self._line_low = self.addItem(QClimLineItem(0))
-        self._line_high = self.addItem(QClimLineItem(1))
-        self._line_low.valueChanged.connect(self._on_clim_changed)
-        self._line_high.valueChanged.connect(self._on_clim_changed)
+        self._qclim_set = ClimLineItemSet()
+        self._qthresh_item = QClimLineItem(0)
+        self.addItem(self._qclim_set._low)
+        self.addItem(self._qclim_set._high)
+        self.addItem(self._qclim_set._gamma_line)
+        self.addItem(self._qthresh_item)
+        if mode == "clim":
+            self._qthresh_item.hide()
+        else:
+            self._qclim_set.hide()
+        self._line_items = [
+            self._qclim_set._low,
+            self._qclim_set._high,
+            self._qthresh_item,
+        ]
+        self._qclim_set.valueChanged.connect(self._on_clim_changed)
+        self._qthresh_item.valueChanged.connect(self._on_thresh_changed)
+
         self._view_range: tuple[float, float] = (0.0, 1.0)
         self._minmax = (0.0, 1.0)  # limits of the movable range
-        self._pos_drag_start: QtCore.QPoint | None = None
-        self._default_hist_scale = "linear"
+        self._pos_drag_start = QtCore.QPoint()
+        self._pos_drag_prev = QtCore.QPoint()
+        self._default_hist_scale: Literal["linear", "log"] = "linear"
 
-    def _on_clim_changed(self):
-        clim = self.clim()
+    def set_mode(self, mode: Literal["clim", "thresh"]):
+        """Set the mode of the histogram view.
+
+        Parameters
+        ----------
+        mode : Literal["clim", "thresh"]
+            The mode to set. "clim" for contrast limits, "thresh" for threshold.
+        """
+        if mode == "clim":
+            self._qthresh_item.hide()
+            self._qclim_set.show()
+            for item in self._line_items:
+                item._show_value_label()
+        else:
+            self._qthresh_item.show()
+            self._qclim_set.hide()
+
+    def _on_clim_changed(self, clim):
         if self._view_range is not None:
             v0, v1 = self._view_range
-            x0, x1 = self.clim()
+            x0, x1 = clim
             if x0 < v0 or x1 > v1:
                 self._view_range = clim
                 self.update()
         self.clim_changed.emit(clim)
 
+    def _on_thresh_changed(self, thresh):
+        if self._view_range is not None:
+            v0, v1 = self._view_range
+            if thresh < v0 or thresh > v1:
+                self._view_range = (min(v0, thresh), max(v1, thresh))
+                self.update()
+        self.threshold_changed.emit(thresh)
+
     def clim(self) -> tuple[float, float]:
-        return tuple(sorted([self._line_low.value(), self._line_high.value()]))
+        """Return the current contrast limits as (low, high)."""
+        return self._qclim_set.clim()
 
     def set_clim(self, clim: tuple[float, float]):
-        self._line_low.setValue(max(clim[0], self._minmax[0]))
-        self._line_high.setValue(min(clim[1], self._minmax[1]))
+        """Set the current contrast limits."""
+        c0 = max(clim[0], self._minmax[0])
+        c1 = min(clim[1], self._minmax[1])
+        return self._qclim_set.set_clim((c0, c1))
+
+    def threshold(self) -> float:
+        """Return the current threshold value."""
+        return self._qthresh_item.value()
+
+    def set_threshold(self, thresh: float):
+        """Set the current threshold value."""
+        return self._qthresh_item.setValue(thresh)
 
     def set_minmax(self, minmax: tuple[float, float]):
+        """Set the movable range of the line items."""
         self._minmax = minmax
-        self._line_low.setRange(*minmax)
-        self._line_high.setRange(*minmax)
+        for line_item in self._line_items:
+            line_item.setRange(*minmax)
 
     def set_hist_for_array(
         self,
@@ -78,7 +130,7 @@ class QHistogramView(QBaseGraphicsView):
             ]  # RGB
             for i, (item, brush) in enumerate(zip(self._hist_items, brushes)):
                 item.with_brush(brush)
-                item.set_hist_for_array(arr[:, :, i])
+                item.set_hist_for_array(arr[..., i])
         else:
             brushes = [QtGui.QBrush(color)]
             self._hist_items[0].with_brush(brushes[0])
@@ -95,9 +147,19 @@ class QHistogramView(QBaseGraphicsView):
         if self._view_range is None:
             self._view_range = clim
 
-    def setValueFormat(self, fmt: str):
-        self._line_low.setValueFormat(fmt)
-        self._line_high.setValueFormat(fmt)
+    def setValueFormat(self, fmt: str, always_show: bool = False):
+        """Set the format string for the line item value labels.
+
+        Parameters
+        ----------
+        fmt : str
+            The format string, e.g., ".2f" for two decimal places.
+        always_show : bool
+            If True, the value label is always shown. Otherwise, it is only shown on
+            hover.
+        """
+        for line_item in self._line_items:
+            line_item.setValueFormat(fmt, always_show)
 
     def viewRect(self, width: float | None = None) -> QtCore.QRectF:
         """The current view range as a QRectF."""
@@ -130,18 +192,25 @@ class QHistogramView(QBaseGraphicsView):
 
     def showEvent(self, event: QtGui.QShowEvent):
         super().showEvent(event)
-        x0, x1 = self.clim()
+        x0, x1 = self._view_range
         self.fitInView(
             self.viewRect(x1 - x0), QtCore.Qt.AspectRatioMode.IgnoreAspectRatio
         )
-        self._line_low.setValue(self._line_low.value())
-        self._line_high.setValue(self._line_high.value())
+        # update line items
+        for line_item in self._line_items:
+            line_item.setValue(line_item.value())
 
     def mouseDoubleClickEvent(self, event: QtGui.QMouseEvent):
         self._reset_view()
 
     def _reset_view(self):
-        rect = self._line_low.boundingRect().united(self._line_high.boundingRect())
+        # Unite all items' bounding rects
+        rect = reduce(
+            lambda a, b: a.united(b),
+            (item.boundingRect() for item in self._line_items if item.isVisible()),
+            QtCore.QRectF(),
+        )
+
         for hist in self._hist_items:
             rect = rect.united(hist.boundingRect())
         x0, x1 = rect.left(), rect.right()
@@ -163,16 +232,15 @@ class QHistogramView(QBaseGraphicsView):
         self.set_view_range(x0, x1)
 
     def mousePressEvent(self, event: QtGui.QMouseEvent):
-        self._pos_drag_start = event.pos()
-        self._pos_drag_prev = self._pos_drag_start
-        super().mousePressEvent(event)
+        self._pos_drag_prev = self._pos_drag_start = event.pos()
+        return super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent):
         if self.scene().grabSource():
             return super().mouseMoveEvent(event)
         if event.buttons() & QtCore.Qt.MouseButton.LeftButton:
             pos = event.pos()
-            if self._pos_drag_prev is not None:
+            if not self._pos_drag_prev.isNull():
                 delta = self.mapToScene(pos) - self.mapToScene(self._pos_drag_prev)
                 delta = delta.x()
                 x0, x1 = self._view_range
@@ -185,15 +253,15 @@ class QHistogramView(QBaseGraphicsView):
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
         if (
             event.button() == QtCore.Qt.MouseButton.RightButton
-            and self._pos_drag_start is not None
+            and (not self._pos_drag_start.isNull())
             and (self._pos_drag_start - event.pos()).manhattanLength() < 8
         ):
             # right clicked
             menu = self._make_context_menu()
             menu.exec(self.mapToGlobal(event.pos()))
 
-        self._pos_drag_start = None
-        self._pos_drag_prev = None
+        self._pos_drag_start = QtCore.QPoint()
+        self._pos_drag_prev = QtCore.QPoint()
         self.scene().setGrabSource(None)
         return super().mouseReleaseEvent(event)
 
@@ -203,7 +271,7 @@ class QHistogramView(QBaseGraphicsView):
         menu_scale = menu.addMenu("Scale")
         for scale in ["linear", "log"]:
             ac = menu_scale.addAction(
-                scale.title(), lambda s=scale: self._set_hist_scale_func(s)
+                scale.title(), lambda s=scale: self.set_hist_scale(s)
             )
             ac.setCheckable(True)
             ac.setChecked(scale == self._default_hist_scale)
@@ -211,7 +279,7 @@ class QHistogramView(QBaseGraphicsView):
         menu.addAction("Copy Histogram", self._img_to_clipboard)
         return menu
 
-    def _set_hist_scale_func(self, scale: Literal["linear", "log"]):
+    def set_hist_scale(self, scale: Literal["linear", "log"]):
         for hist in self._hist_items:
             hist.with_hist_scale_func(scale)
         self._default_hist_scale = scale
@@ -219,6 +287,43 @@ class QHistogramView(QBaseGraphicsView):
     def _img_to_clipboard(self):
         img = self.grab().toImage()
         QtW.QApplication.clipboard().setImage(img)
+
+
+class ClimLineItemSet(QtCore.QObject):
+    valueChanged = Signal(tuple)
+
+    def __init__(self):
+        super().__init__()
+        self._low = QClimLineItem(0)
+        self._high = QClimLineItem(1)
+        self._gamma_line = QtW.QGraphicsLineItem()
+        pen = QtGui.QPen(self._low._color, 1)
+        pen.setCosmetic(True)
+        self._gamma_line.setPen(pen)
+        self._low.valueChanged.connect(self._line_changed)
+        self._high.valueChanged.connect(self._line_changed)
+
+    def clim(self) -> tuple[float, float]:
+        return tuple(sorted([self._low.value(), self._high.value()]))
+
+    def set_clim(self, clim: tuple[float, float]):
+        self._low.setValue(clim[0])
+        self._high.setValue(clim[1])
+
+    def _line_changed(self):
+        clim = self.clim()
+        self._gamma_line.setLine(clim[0], 1, clim[1], 0)
+        self.valueChanged.emit(clim)
+
+    def show(self):
+        self._low.show()
+        self._high.show()
+        self._gamma_line.show()
+
+    def hide(self):
+        self._low.hide()
+        self._high.hide()
+        self._gamma_line.hide()
 
 
 class QClimLineItem(QtW.QGraphicsRectItem):
@@ -242,15 +347,16 @@ class QClimLineItem(QtW.QGraphicsRectItem):
         self.setFlag(QtW.QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
         self._is_dragging = False
         self._range = (-float("inf"), float("inf"))
-        self._value = x
+        self._value = float(x)
         self._value_fmt = ".1f"
         self.setCursor(QtCore.Qt.CursorShape.SizeHorCursor)
-        self._value_label = QtW.QGraphicsSimpleTextItem()
+        self._value_label = QtW.QGraphicsSimpleTextItem(self)
         self._value_label.setFlag(
             QtW.QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations
         )
         self._value_label.setFont(QtGui.QFont(DefaultFontFamily, 8))
         self.setAcceptHoverEvents(True)
+        self._always_show_value = False
 
     def mousePressEvent(self, event: QtW.QGraphicsSceneMouseEvent):
         if event.button() == QtCore.Qt.MouseButton.LeftButton:
@@ -258,9 +364,10 @@ class QClimLineItem(QtW.QGraphicsRectItem):
             self.scene().setGrabSource(self)
         elif event.buttons() & QtCore.Qt.MouseButton.RightButton:
             self.scene().setGrabSource(self)
-            menu = QClimMenu(self.scene().views()[0], self)
-            menu._edit.setFocus()
-            menu.exec(event.screenPos())
+            if view := self.view():
+                menu = QClimMenu(view, self)
+                menu._edit.setFocus()
+                menu.exec(event.screenPos())
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event: QtW.QGraphicsSceneMouseEvent):
@@ -274,6 +381,13 @@ class QClimLineItem(QtW.QGraphicsRectItem):
         self.setValue(event.pos().x())
         return super().mouseReleaseEvent(event)
 
+    def view(self) -> QHistogramView | None:
+        if scene := self.scene():
+            views = scene.views()
+            if len(views) > 0:
+                return views[0]
+        return None
+
     def hoverEnterEvent(self, event):
         self._qpen.setWidthF(self._WIDTH_HOVER)
         self._show_value_label()
@@ -282,14 +396,19 @@ class QClimLineItem(QtW.QGraphicsRectItem):
 
     def hoverLeaveEvent(self, event):
         self._qpen.setWidthF(self._WIDTH_NORMAL)
-        self._value_label.hide()
+        if not self._always_show_value:
+            self._value_label.hide()
         self.update()
         return super().hoverLeaveEvent(event)
 
     def _show_value_label(self):
+        if not self.isVisible():
+            return self.hide()
         txt = format(self.value(), self._value_fmt)
         self._value_label.setText(txt)
-        vp = self.scene().views()[0].viewport()
+        if (view := self.view()) is None:
+            return
+        vp = view.viewport()
         background_color = vp.palette().color(vp.backgroundRole())
 
         brightness = (
@@ -321,8 +440,13 @@ class QClimLineItem(QtW.QGraphicsRectItem):
         if scene := self.scene():
             scene.update()
 
-    def setValueFormat(self, fmt: str):
+    def setValueFormat(self, fmt: str, always_show: bool = False):
         self._value_fmt = fmt
+        self._always_show_value = always_show
+        if always_show:
+            self._show_value_label()
+            if scene := self.scene():
+                scene.update()
 
     def paint(self, painter, option, widget):
         painter.setPen(self._qpen)
@@ -345,6 +469,8 @@ class QClimLineItem(QtW.QGraphicsRectItem):
         self.setRect(new_bbox)
         if new_value != old_value:
             self.valueChanged.emit(self._value)
+        if self._value_label.isVisible():
+            self._show_value_label()
         if scene := self.scene():
             scene.update(self.mapRectToScene(old_bbox.united(new_bbox)))
 
@@ -358,10 +484,9 @@ class QClimLineItem(QtW.QGraphicsRectItem):
         return super().scene()
 
     def _x_scale(self) -> float:
-        return self.view().transform().m11()
-
-    def view(self) -> QHistogramView:
-        return self.scene().views()[0]
+        if view := self.view():
+            return view.transform().m11()
+        return 1.0
 
     def boundingRect(self):
         w = 10.0 / self._x_scale()
@@ -400,7 +525,7 @@ class QHistogramItem(QtW.QGraphicsPathItem):
         else:
             _nbin = 256
         # nbin should not be more than half of the number of pixels
-        _nbin = min(_nbin, int(np.prod(arr.shape[-2:])) // 2)
+        _nbin = min(_nbin, int(arr.size) // 2)
         # draw histogram
         if arr.dtype.kind == "b":
             edges = np.array([0, 0.5, 1])

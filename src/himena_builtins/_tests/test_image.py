@@ -48,7 +48,7 @@ def test_image_view(qtbot: QtBot):
         QApplication.processEvents()
         image_view._control._chn_mode_combo.setCurrentText("Comp.")
         QApplication.processEvents()
-        image_view._control._histogram._line_low._show_value_label()
+        image_view._control._histogram._qclim_set._low._show_value_label()
 
         # switch modes
         _shift = Qt.KeyboardModifier.ShiftModifier
@@ -522,24 +522,32 @@ def test_constrast_hist(qtbot: QtBot):
         control = image_view.control_widget()
         qtbot.addWidget(control)
         control._auto_cont_btn.click()
-        control._histogram.set_clim((1, 2))
-        control._histogram._make_context_menu()
-        control._histogram._set_hist_scale_func("linear")
-        control._histogram._set_hist_scale_func("log")
-        control._histogram._img_to_clipboard()
-        control._histogram._reset_view()
+        hist_view = control._histogram
+        hist_view.set_clim((1, 2))
+        hist_view._make_context_menu()
+        hist_view.set_hist_scale("linear")
+        hist_view.set_hist_scale("log")
+        hist_view._img_to_clipboard()
+        hist_view._reset_view()
+        # threshold interface
+
+        hist_view.set_mode("clim")
+        hist_view.set_mode("thresh")
+        hist_view.set_threshold(0.5)
+        assert hist_view.threshold() == pytest.approx(0.5)
+        hist_view.setValueFormat(".2f", always_show=True)
 
         menu = QAutoContrastMenu(control._auto_cont_btn)
         image_view.dims_slider.setValue((1,))
-        assert control._histogram.clim() != (float(imgs[1].min()), float(imgs[1].max()))
+        assert hist_view.clim() != (float(imgs[1].min()), float(imgs[1].max()))
         menu._toggle_live_auto_contrast()
         time.sleep(0.11)  # NOTE: callback is throttled
         QApplication.processEvents()
-        assert control._histogram.clim() == (float(imgs[1].min()), float(imgs[1].max()))
+        assert hist_view.clim() == (float(imgs[1].min()), float(imgs[1].max()))
         image_view.dims_slider.setValue((2,))
         time.sleep(0.11)  # NOTE: callback is throttled
         QApplication.processEvents()
-        assert control._histogram.clim() == (float(imgs[2].min()), float(imgs[2].max()))
+        assert hist_view.clim() == (float(imgs[2].min()), float(imgs[2].max()))
         menu._max_edit.setText("50")
         menu._min_edit.setText("60")
         menu._max_edit.setText("40")
