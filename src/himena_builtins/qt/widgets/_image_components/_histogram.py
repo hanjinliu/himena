@@ -47,6 +47,23 @@ class QHistogramView(QBaseGraphicsView):
         self._pos_drag_prev = QtCore.QPoint()
         self._default_hist_scale: Literal["linear", "log"] = "linear"
 
+    def set_mode(self, mode: Literal["clim", "thresh"]):
+        """Set the mode of the histogram view.
+
+        Parameters
+        ----------
+        mode : Literal["clim", "thresh"]
+            The mode to set. "clim" for contrast limits, "thresh" for threshold.
+        """
+        if mode == "clim":
+            self._qthresh_item.hide()
+            self._qclim_set.show()
+            for item in self._line_items:
+                item._show_value_label()
+        else:
+            self._qthresh_item.show()
+            self._qclim_set.hide()
+
     def _on_clim_changed(self, clim):
         if self._view_range is not None:
             v0, v1 = self._view_range
@@ -70,7 +87,9 @@ class QHistogramView(QBaseGraphicsView):
 
     def set_clim(self, clim: tuple[float, float]):
         """Set the current contrast limits."""
-        return self._qclim_set.set_clim(clim)
+        c0 = max(clim[0], self._minmax[0])
+        c1 = min(clim[1], self._minmax[1])
+        return self._qclim_set.set_clim((c0, c1))
 
     def threshold(self) -> float:
         """Return the current threshold value."""
@@ -296,6 +315,11 @@ class ClimLineItemSet(QtCore.QObject):
         self._gamma_line.setLine(clim[0], 1, clim[1], 0)
         self.valueChanged.emit(clim)
 
+    def show(self):
+        self._low.show()
+        self._high.show()
+        self._gamma_line.show()
+
     def hide(self):
         self._low.hide()
         self._high.hide()
@@ -326,7 +350,7 @@ class QClimLineItem(QtW.QGraphicsRectItem):
         self._value = float(x)
         self._value_fmt = ".1f"
         self.setCursor(QtCore.Qt.CursorShape.SizeHorCursor)
-        self._value_label = QtW.QGraphicsSimpleTextItem()
+        self._value_label = QtW.QGraphicsSimpleTextItem(self)
         self._value_label.setFlag(
             QtW.QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations
         )
