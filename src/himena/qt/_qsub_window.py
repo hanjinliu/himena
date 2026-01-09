@@ -535,6 +535,7 @@ class QSubWindow(QtW.QMdiSubWindow):
         self._title_bar._toggle_size_btn.hide()
         self._title_bar._close_btn.hide()
         self._title_bar._is_single_window_mode = True
+        self._title_bar._index_label.hide()
 
 
 class QTitleBarToolButton(QtW.QToolButton):

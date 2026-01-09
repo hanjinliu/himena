@@ -261,10 +261,10 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def _add_widget_to_dialog(self, widget: QtW.QWidget | Widget, title: str) -> bool:
         dialog = self._add_widget_to_dialog_no_exec(widget, title)
+        # Center dialog relative to main window
+        dialog.move(self.geometry().center() - dialog.rect().center())
         result = dialog.exec()
-        if result:
-            return True
-        return False
+        return bool(result)
 
     def _add_widget_to_dialog_no_exec(self, widget: QtW.QWidget | Widget, title: str):
         if isinstance(widget, Widget):
