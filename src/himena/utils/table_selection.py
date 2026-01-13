@@ -305,6 +305,8 @@ def range_getter(
                 if child.name == ref:
                     model = child.value.to_model()
                     break
+            else:
+                raise ValueError(f"No such parameter named {ref!r}")
         else:
             model = ref.to_model()
         if model.type not in TABLE_LIKE_TYPES:
@@ -337,7 +339,7 @@ def table_selection_gui_option(
     def inner_function(x: SelectionType | None): ...
     ```
 
-    If the table widget is to be  determined by another parameter named "table"
+    If the table widget is to be determined by another parameter named "table"
 
     ```python
     @configure_gui(
