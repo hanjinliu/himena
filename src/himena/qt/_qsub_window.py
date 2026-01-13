@@ -537,6 +537,9 @@ class QSubWindow(QtW.QMdiSubWindow):
         self._title_bar._is_single_window_mode = True
         self._title_bar._index_label.hide()
 
+    def is_single_window_mode(self):
+        return self._title_bar._is_single_window_mode
+
 
 class QTitleBarToolButton(QtW.QToolButton):
     """Tool button for the title bar of the sub-window."""

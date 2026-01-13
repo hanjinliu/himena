@@ -34,7 +34,7 @@ from himena.plugins.install import (
     override_keybindings,
     register_config,
 )
-from himena.plugins.config import config_field
+from himena.plugins.config import config_field, plugin_data_dir
 
 __all__ = [
     "add_default_status_tip",
@@ -46,6 +46,7 @@ __all__ = [
     "get_plugin_interface",
     "install_plugins",
     "config_field",
+    "plugin_data_dir",
     "override_keybindings",
     "update_config_context",
     "get_config",
