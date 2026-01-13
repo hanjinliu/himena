@@ -263,6 +263,6 @@ def float_to_str(value: int | float):
             value_str = format(value, ".8g")
         return value_str
     out = format(value, ".8g")
-    if "." not in out:
+    if "." not in out and "e" not in out:
         return f"{out}.0"
     return out
