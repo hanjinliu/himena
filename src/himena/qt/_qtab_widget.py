@@ -218,9 +218,11 @@ class QTabWidget(QtW.QTabWidget):
     def _on_current_changed(self, index: int) -> None:
         """When the current tab index changed."""
         if widget := self.widget_area(index):
-            has_active_subwindow = any(
-                win.is_current() for win in widget.subWindowList()
-            )
+            subwindows = widget.subWindowList()
+            if len(subwindows) == 1 and (win := subwindows[0]).is_single_window_mode():
+                # closing tabs sometimes leaves the single window tab un-focused
+                win.set_is_current(True)
+            has_active_subwindow = any(win.is_current() for win in subwindows)
             self.activeWindowChanged.emit(has_active_subwindow)
 
     def _repolish(self, subwindow_focused: bool = True) -> None:

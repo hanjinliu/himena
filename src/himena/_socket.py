@@ -61,7 +61,10 @@ class SocketInfo:
             print(f"Socket is not available: {e}")
             return False
         else:
-            print(f"Sent data to {profile!r} window at {self.host}:{self.port}.")
+            if files:
+                print(f"Sent data to {profile!r} window at {self.host}:{self.port}.")
+            else:
+                print(f"Application at {self.host}:{self.port} is already running.")
             return True
 
 
