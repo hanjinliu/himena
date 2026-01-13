@@ -15,6 +15,7 @@ from himena.qt.magicgui._modeldrop import (
 from himena.qt.magicgui._toggle_switch import ToggleSwitch
 from himena.qt.magicgui._color import ColorEdit, ColormapEdit
 from himena.qt.magicgui._file_edit import FileEdit
+from himena.qt.magicgui._sequences import TupleEdit
 from himena.types import WidgetDataModel
 from himena.widgets import SubWindow
 from cmap import Color, Colormap
@@ -37,6 +38,7 @@ def register_magicgui_types():
     TYPE_MAP.register_type(Color, widget_type=ColorEdit)
     TYPE_MAP.register_type(Colormap, widget_type=ColormapEdit)
     TYPE_MAP.register_type(Path, widget_type=FileEdit)
+    TYPE_MAP.register_type(tuple, widget_type=TupleEdit)
 
     # remove non-serializable types from the magicgui type map
     TYPE_MAP._simple_types.pop(range, None)
