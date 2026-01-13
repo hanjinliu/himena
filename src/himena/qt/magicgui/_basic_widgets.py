@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Generic, TypeVar
+from typing import TYPE_CHECKING, Generic, TypeVar, cast
 
 from magicgui.widgets import LineEdit
 from magicgui.widgets.bases import ValueWidget
@@ -11,6 +11,7 @@ from himena.qt._qlineedit import (
     QDoubleLineEdit,
     QCommaSeparatedIntLineEdit,
     QCommaSeparatedDoubleLineEdit,
+    QValuedLineEdit,
 )
 
 __all__ = ["IntEdit", "FloatEdit"]
@@ -39,6 +40,9 @@ _T = TypeVar("_T")
 
 
 class RangedLineEdit(LineEdit, Generic[_T]):
+    if TYPE_CHECKING:
+        _widget: QBaseRangedStringWidget
+
     def __init__(
         self,
         value=Undefined,
@@ -78,7 +82,8 @@ class RangedLineEdit(LineEdit, Generic[_T]):
         self._widget._mgui_set_max(value)
 
     def _set_nullable(self, nullable: bool):
-        self._widget._qwidget._empty_allowed = nullable
+        qwidget = cast(QValuedLineEdit, self._widget._qwidget)
+        qwidget.set_empty_allowed(nullable)
 
 
 class QIntEdit(QBaseRangedStringWidget):
@@ -97,6 +102,8 @@ class QIntEdit(QBaseRangedStringWidget):
 
 
 class IntEdit(RangedLineEdit):
+    """Line edit for integer values."""
+
     def __init__(
         self,
         value=Undefined,
@@ -203,6 +210,8 @@ class IntListEdit(LineEdit):
 
     def set_value(self, value):
         if value is None:
+            if not self._nullable:
+                raise ValueError(f"Value for {self.label} cannot be None")
             value_str = ""
         else:
             value_str = ", ".join(str(part) for part in value)
@@ -239,9 +248,11 @@ class FloatListEdit(LineEdit):
 
     def set_value(self, value):
         if value is None:
+            if not self._nullable:
+                raise ValueError(f"Value for {self.label} cannot be None")
             value_str = ""
         else:
-            value_str = ",".join(float_to_str(part) for part in value)
+            value_str = ", ".join(float_to_str(part) for part in value)
         super().set_value(value_str)
 
 
@@ -252,6 +263,6 @@ def float_to_str(value: int | float):
             value_str = format(value, ".8g")
         return value_str
     out = format(value, ".8g")
-    if "." not in out:
+    if "." not in out and "e" not in out:
         return f"{out}.0"
     return out

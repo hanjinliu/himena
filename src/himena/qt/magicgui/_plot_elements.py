@@ -255,6 +255,14 @@ class AxisPropertyEdit(ValuedContainerWidget["AxisPropertyDict"]):
 
 
 class DictEdit(ValuedContainerWidget[dict]):
+    """Widget used in plot properties that in "edit plot".
+
+    Parameters
+    ----------
+    options : dict[str, dict]
+        magicgui GUI options for each key in the dictionary.
+    """
+
     def __init__(self, options: dict[str, dict], value=Undefined, **kwargs):
         from himena.qt.magicgui import get_type_map
 
