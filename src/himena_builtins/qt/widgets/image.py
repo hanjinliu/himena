@@ -16,7 +16,7 @@ from himena.consts import StandardType
 from himena.standards import roi, model_meta
 from himena.qt._utils import drag_command, qsignal_blocker
 from himena.types import DropResult, Parametric, Size, WidgetDataModel
-from himena.plugins import validate_protocol, register_function
+from himena.plugins import validate_protocol, register_hidden_function
 from himena.widgets import set_status_tip, current_instance, show_tooltip
 from himena.data_wrappers import ArrayWrapper, wrap_array
 from himena_builtins.qt.widgets._image_components import (
@@ -672,7 +672,7 @@ class QImageViewBase(QtW.QSplitter):
 _COMMAND_ID = "builtins:select-image-rois"
 
 
-@register_function(menus=[], command_id=_COMMAND_ID)
+@register_hidden_function(command_id=_COMMAND_ID)
 def _select_image_rois(model: WidgetDataModel) -> Parametric:
     assert isinstance(meta := model.metadata, model_meta.ImageMeta)
     rois = meta.unwrap_rois()
