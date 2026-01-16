@@ -43,11 +43,15 @@ class QImageRoiView(QtW.QWidget):
                 self._axes = meta.axes
             if meta.selections:
                 self._roi_collection.set_selections(meta.selections)
+        else:
+            self._axes = [DimAxis(name=a) for a in value.axis_names]
 
     @validate_protocol
     def to_model(self) -> WidgetDataModel:
+        rlist = self._roi_collection.to_standard_roi_list()
+        rlist.axis_names = [a.name for a in self._axes or []]
         return WidgetDataModel(
-            value=self._roi_collection.to_standard_roi_list(),
+            value=rlist,
             type=self.model_type(),
             extension_default=".roi.json",
             metadata=ImageRoisMeta(

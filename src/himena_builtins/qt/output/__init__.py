@@ -14,12 +14,14 @@ class OutputConfig:
     """Configuration for the output widget."""
 
     format: str = config_field(
-        default="%(levelname)s:%(message)s",
+        default="[%(asctime)s %(name)s %(levelname)s]\n%(message)s",
         tooltip="The logger format",
+        label="Log Format",
     )
     date_format: str = config_field(
         default="%Y-%m-%d %H:%M:%S",
         tooltip="The logger date format",
+        label="Log Date Format",
     )
 
 
