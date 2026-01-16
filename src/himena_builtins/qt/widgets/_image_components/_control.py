@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import TYPE_CHECKING
 import numpy as np
 from qtpy import QtWidgets as QtW
@@ -44,9 +45,75 @@ class RGBMode(StrEnum):
     GRAY = "Gray"
 
 
+class QZoomInView(QtW.QLabel):
+    def __init__(self):
+        super().__init__()
+        self.setToolTip(
+            "Local Zoom-in View. While moving the mouse over the image, all the items\n"
+            "except for the ROI handles are drawn here."
+        )
+        self._enabled = True
+        self._local_size = 5
+        self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self._show_menu)
+
+    def resizeEvent(self, a0):
+        self.setFixedWidth(self.height())
+        return super().resizeEvent(a0)
+
+    def init(self):
+        pixmap = self._make_pixmap(self.height(), enabled=self._enabled)
+        self.setPixmap(pixmap)
+
+    @lru_cache(maxsize=4)
+    def _make_pixmap(self, size: int, enabled: bool) -> QtGui.QPixmap:
+        pixmap = QtGui.QPixmap(size, size)
+        pixmap.fill(QtCore.Qt.GlobalColor.transparent)
+        painter = QtGui.QPainter(pixmap)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing, True)
+        painter.setPen(QtGui.QColor(128, 128, 128, 63))
+        c = self.width() / 2
+        r = self.width() / 3
+        painter.drawEllipse(QtCore.QRectF(c - r, c - r, 2 * r, 2 * r))
+        if not enabled:
+            painter.drawLine(QtCore.QPointF(c - r, c - r), QtCore.QPointF(c + r, c + r))
+            painter.drawLine(QtCore.QPointF(c - r, c + r), QtCore.QPointF(c + r, c - r))
+        painter.end()
+        return pixmap
+
+    def _make_menu(self):
+        menu = QtW.QMenu(self)
+        action = menu.addAction(
+            "Zoom-in View Enabled",
+            self._toggle_enabled,
+        )
+        action.setCheckable(True)
+        action.setChecked(self._enabled)
+        menu.addSeparator()
+        for i in [3, 5, 7, 11, 17, 25]:
+            s1 = i
+            act = menu.addAction(f"{i} x {i}", lambda s=s1: self._set_size(s))
+            act.setCheckable(True)
+            act.setChecked(s1 == self._local_size)
+        return menu
+
+    def _show_menu(self, *_):
+        menu = self._make_menu()
+        menu.exec(QtGui.QCursor.pos())
+
+    def _toggle_enabled(self):
+        self._enabled = not self._enabled
+        if not self._enabled:
+            self.init()
+
+    def _set_size(self, size: int):
+        self._local_size = size
+
+
 class QImageViewControlBase(QtW.QWidget):
     def __init__(self, image_view: QImageViewBase):
         super().__init__()
+        self._zoom_view = QZoomInView()
         self._image_view = image_view
         layout = QtW.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -56,6 +123,9 @@ class QImageViewControlBase(QtW.QWidget):
         self._interp_check_box.toggled.connect(self._interpolation_changed)
 
         self._hover_info = QElidingLabel()
+        self._hover_info.setTextInteractionFlags(
+            QtCore.Qt.TextInteractionFlag.TextSelectableByMouse
+        )
         self._hover_info.setAlignment(
             QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter
         )
@@ -67,13 +137,51 @@ class QImageViewControlBase(QtW.QWidget):
             layout.addWidget(wdt)
 
     def _widgets_to_add(self) -> list[QtW.QWidget]:
-        return [self._hover_info, self._interp_check_box]
+        return [self._hover_info, self._zoom_view, self._interp_check_box]
 
     def _interpolation_changed(self, checked: bool):
         self._image_view._img_view.setSmoothing(checked)
 
     def update_rgb_channel_dtype(self, is_rgb: bool, nchannels: int, dtype):
         pass
+
+    def _set_zoom_view(self, pos: QtCore.QPointF | None):
+        if pos is None or not self._zoom_view._enabled:
+            self._zoom_view.init()
+        else:
+            # Render local zoom view around cursor
+            zoom_size = self._zoom_view.height()
+            local_size = self._zoom_view._local_size
+            zoom_factor = zoom_size / local_size  # magnification factor
+
+            # Define the region to capture in scene coordinates
+            rect = QtCore.QRectF(
+                pos.x() - local_size / 2,
+                pos.y() - local_size / 2,
+                local_size,
+                local_size,
+            )
+
+            # Create a pixmap to render the zoomed region
+            render_size = int(zoom_size * self.devicePixelRatioF())
+            pixmap = QtGui.QPixmap(render_size, render_size)
+            pixmap.setDevicePixelRatio(self.devicePixelRatioF())
+            pixmap.fill(QtCore.Qt.GlobalColor.transparent)
+            painter = QtGui.QPainter(pixmap)
+            painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+
+            # Render items individually, excluding selection handles
+            for item in self._image_view._img_view.iter_items_except_handles(rect):
+                painter.save()
+                painter.setTransform(
+                    QtGui.QTransform.fromScale(zoom_factor, zoom_factor)
+                )
+                painter.translate(-rect.x(), -rect.y())
+                item.paint(painter, QtW.QStyleOptionGraphicsItem(), None)
+                painter.restore()
+
+            painter.end()
+            self._zoom_view.setPixmap(pixmap)
 
 
 class QImageViewControl(QImageViewControlBase):
@@ -108,7 +216,7 @@ class QImageViewControl(QImageViewControlBase):
 
     def _widgets_to_add(self) -> list[QtW.QWidget]:
         return [
-            self._hover_info, self._cmp_mode_combo, self._chn_vis,
+            self._hover_info, self._zoom_view, self._cmp_mode_combo, self._chn_vis,
             self._chn_mode_combo, self._auto_cont_btn, self._histogram,
             self._interp_check_box,
         ]  # fmt: skip

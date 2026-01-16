@@ -34,7 +34,7 @@ def test_properties_int_widget():
     assert edit.value == 3
     edit.value = None
     assert edit.value is None
-    assert edit.native.placeholderText() == "optional"
+    assert edit.native.placeholderText() == ""
 
 def test_properties_float_widget():
     edit = FloatEdit(value=2.5)
@@ -54,7 +54,7 @@ def test_properties_float_widget():
     assert edit.value == pytest.approx(3.14)
     edit.value = None
     assert edit.value is None
-    assert edit.native.placeholderText() == "optional"
+    assert edit.native.placeholderText() == ""
 
 def test_properties_list_widget():
     edit = IntListEdit(value=[1, 2, 3])

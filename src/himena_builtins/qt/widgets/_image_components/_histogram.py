@@ -111,6 +111,7 @@ class QHistogramView(QBaseGraphicsView):
         clim: tuple[float, float],
         is_rgb: bool = False,
         color: QtGui.QColor = QtGui.QColor(100, 100, 100),
+        minmax: tuple[float, float] | None = None,
     ):
         # coerce the number of histogram items
         n_hist = 3 if is_rgb else 1
@@ -137,7 +138,9 @@ class QHistogramView(QBaseGraphicsView):
             # this fallback is needed when slider is changed.
             minmax_fallback = self._hist_items[0].set_hist_for_array(arr)
 
-        if arr.dtype.kind in "ui":
+        if minmax is not None:
+            self.set_minmax(minmax)
+        elif arr.dtype.kind in "ui":
             self.set_minmax((np.iinfo(arr.dtype).min, np.iinfo(arr.dtype).max))
         elif arr.dtype.kind == "b":
             self.set_minmax((0, 1))

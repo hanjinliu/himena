@@ -105,7 +105,7 @@ class QValuedLineEdit(QtW.QLineEdit):
 
     def set_empty_allowed(self, allowed: bool):
         self._empty_allowed = allowed
-        self.setPlaceholderText("optional" if allowed else "required")
+        self.setPlaceholderText("" if allowed else "required")
 
     def sizeHint(self) -> QtCore.QSize:
         hint = super().sizeHint()

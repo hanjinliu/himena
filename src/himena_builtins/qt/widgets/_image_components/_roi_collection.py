@@ -600,7 +600,7 @@ class QRoiListModel(QtCore.QAbstractListModel):
         elif role == Qt.ItemDataRole.ToolTipRole:
             r = index.row()
             if 0 <= r < len(self._col):
-                _indices = tuple(self._col._qroi_list.indices[r])
+                _indices = tuple(int(i) for i in self._col._qroi_list.indices[r])
                 _type = self._col._qroi_list[r]._roi_type()
                 if len(_indices) > 0:
                     return f"{_type.title()} ROI on slice {_indices}"
