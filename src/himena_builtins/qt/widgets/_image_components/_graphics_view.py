@@ -549,6 +549,7 @@ class QImageGraphicsView(QBaseGraphicsView):
             if event.button() == Qt.MouseButton.MiddleButton:
                 self.set_mode(self._last_mode_before_key_hold)
             self._mouse_event_handler.released(event)
+        show_tooltip("")
         self.scene().setGrabSource(None)
         return super().mouseReleaseEvent(event)
 
