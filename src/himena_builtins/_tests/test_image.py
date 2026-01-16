@@ -49,6 +49,10 @@ def test_image_view(qtbot: QtBot):
         image_view._control._chn_mode_combo.setCurrentText("Comp.")
         QApplication.processEvents()
         image_view._control._histogram._qclim_set._low._show_value_label()
+        image_view._control._zoom_view._make_menu()
+        image_view._control._zoom_view._toggle_enabled()
+        image_view._control._zoom_view._toggle_enabled()
+        image_view._control._zoom_view._set_size(5)
 
         # switch modes
         _shift = Qt.KeyboardModifier.ShiftModifier

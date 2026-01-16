@@ -7,7 +7,6 @@ from typing import Iterable
 import numpy as np
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt
-
 from himena.consts import DefaultFontFamily
 from himena.types import Size
 
@@ -210,7 +209,15 @@ class QImageGraphicsView(QBaseGraphicsView):
         self.remove_current_item(reason="Ctrl+A")
         self.set_current_roi(QRectangleRoi(0, 0, nx, ny).withPen(self._roi_pen))
         self._selection_handles.connect_rect(self._current_roi_item)
-        return None
+
+    def iter_items_except_handles(
+        self, rect: QtCore.QRectF
+    ) -> Iterable[QtW.QGraphicsItem]:
+        """Iterate all items in the scene except handle items."""
+        scene = self.scene()
+        for item in scene.items() + scene.items(rect):
+            if not isinstance(item, QHandleRect):
+                yield item
 
     def _on_array_updated(self, idx: int, img: np.ndarray | None):
         if idx >= len(self._image_widgets):
@@ -314,10 +321,15 @@ class QImageGraphicsView(QBaseGraphicsView):
             )
 
     def _roi_moved_by_handle(self, roi: QRoi):
+        """Called when the current ROI is moved by handles.
+
+        This method is called either during drawing a ROI, or editing an existing ROI.
+        """
         self.current_roi_updated.emit()
         xscale = yscale = self._scale_bar_widget._scale
         unit = self._scale_bar_widget._unit
-        show_tooltip(roi.short_description(xscale, yscale, unit))
+        desc = roi.short_description(xscale, yscale, unit)
+        show_tooltip(desc)
 
     def setSmoothing(self, enabled: bool):
         """Enable/disable image smoothing."""
