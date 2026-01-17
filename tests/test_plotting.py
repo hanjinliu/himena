@@ -361,3 +361,24 @@ def test_plot_components(himena_ui: MainWindow):
     fig.set_legend(title="Title")
     fig.x.set_ticks([0, 5, 10], ["zero", "five", "ten"])
     himena_ui.add_object(fig, type=StandardType.PLOT)
+
+def test_plot_excel(himena_ui: MainWindow):
+    from himena_builtins.qt.widgets.excel import QExcelEdit
+    win = himena_ui.add_object(
+        {
+            "sheet-1": {"x": [0, 1, 2], "y": [2, 3, 5]},
+            "sheet-2": {"x": [0, 1, 2], "y": [2, 1, 2]},
+        },
+        type=StandardType.EXCEL,
+    )
+    assert isinstance(widget := win.widget, QExcelEdit)
+    widget.setCurrentIndex(1)  # switch to sheet-2
+    himena_ui.exec_action(
+        "builtins:plot:scatter",
+        with_params={
+            "x": ((0, 3), (0, 1)),
+            "y": ((0, 3), (1, 2)),
+            "factory_kwargs": {"current_tab": "sheet-2"}
+        },
+        window_context=win,
+    )

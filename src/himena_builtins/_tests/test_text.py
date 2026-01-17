@@ -1,5 +1,5 @@
 from pathlib import Path
-from qtpy import QtGui
+from qtpy import QtGui, QtWidgets as QtW
 from qtpy.QtCore import Qt
 from himena import MainWindow, StandardType
 from himena.standards.model_meta import TextMeta
@@ -63,6 +63,16 @@ def test_text_edit(qtbot: QtBot):
         tester.widget.resize(100, 100)
         tester.widget.resize(120, 120)
 
+
+def test_text_changing_language(qtbot: QtBot):
+    model = WidgetDataModel(value="def f(x):\n\tprint(x)", type="text")
+    text_edit = QTextEdit()
+    text_edit.update_model(model)
+    qtbot.addWidget(text_edit)
+    text_edit._control._language_combobox.setCurrentText("Python")
+    QtW.QApplication.processEvents()
+    text_edit._control._language_combobox.setCurrentText("C++")
+    QtW.QApplication.processEvents()
 
 def test_find_text(qtbot: QtBot):
     model = WidgetDataModel(value="a\nb\nc\nbc", type="text")
