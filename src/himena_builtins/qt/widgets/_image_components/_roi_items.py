@@ -380,9 +380,9 @@ class QRotatedRectangleRoi(QRotatedRoiBase):
         p11 = center + vx / 2 + vy / 2
         return p00, p01, p11, p10
 
-    def paint(self, painter, option, widget):
+    def paint(self, painter: QtGui.QPainter, option, widget):
         painter.setPen(self.pen())
-        painter.drawPolygon(*self._corner_points())
+        painter.drawPolygon(self._corner_points())
 
     def boundingRect(self):
         points = self._corner_points()
@@ -401,7 +401,7 @@ class QRotatedRectangleRoi(QRotatedRoiBase):
         painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
         painter.setPen(self.pen())
         painter.setTransform(self._thumbnail_transform(pixmap.width(), pixmap.height()))
-        painter.drawPolygon(*self._corner_points())
+        painter.drawPolygon(self._corner_points())
         painter.end()
         return pixmap
 
@@ -437,7 +437,7 @@ class QRotatedEllipseRoi(QRotatedRoiBase):
 
     def paint(self, painter: QtGui.QPainter, option, widget):
         painter.setPen(self.pen())
-        painter.drawPolygon(*self._dense_points())
+        painter.drawPolygon(self._dense_points())
 
     def boundingRect(self):
         points = self._point_array()
@@ -454,7 +454,7 @@ class QRotatedEllipseRoi(QRotatedRoiBase):
         painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
         painter.setPen(self.pen())
         painter.setTransform(self._thumbnail_transform(pixmap.width(), pixmap.height()))
-        painter.drawPolygon(*self._dense_points())
+        painter.drawPolygon(self._dense_points())
         painter.end()
         return pixmap
 
