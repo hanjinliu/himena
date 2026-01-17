@@ -4,7 +4,7 @@ import warnings
 import numpy as np
 from numpy.testing import assert_equal
 from himena import create_model
-from himena.standards.model_meta import ArrayMeta, DataFrameMeta, DictMeta, TableMeta
+from himena.standards.model_meta import ArrayMeta, DataFrameMeta, TableMeta
 from himena.types import Size, WindowRect
 from himena.utils.misc import is_subtype, ext_to_filter
 from himena.utils.table_selection import (
@@ -16,6 +16,7 @@ from himena.utils.table_selection import (
 from himena.utils.collections import OrderedSet, FrozenList, UndoRedoStack
 from himena.utils.ndobject import NDObjectCollection
 from himena.utils.window_rect import ResizeState
+from himena.plugins import plugin_data_dir
 import pytest
 
 def test_ordered_set():
@@ -284,3 +285,8 @@ def test_anchor():
         anchor.update_for_window_rect((600, 700), rect)
         d = anchor_to_dict(anchor)
         dict_to_anchor(d)
+
+def test_plugin_data_dir():
+    p = plugin_data_dir("mypugin")
+    assert p.exists()
+    assert p.is_dir()

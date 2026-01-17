@@ -42,18 +42,5 @@ class QToolTipWidget(QtW.QLabel):
             self.raise_()
             self._timer.start(int(duration * 1000))
 
-    # def show_image(self, image: QtGui.QImage, duration: float = 3.0) -> None:
-    #     """Show an image as tooltip next to the cursor."""
-    #     self._timer.stop()
-    #     if image is None:
-    #         self.clear()
-    #         self.hide()
-    #     else:
-    #         self.setPixmap(QtGui.QPixmap.fromImage(image))
-    #         self.adjustSize()
-    #         self.move_tooltip(QtGui.QCursor.pos())
-    #         self.show()
-    #         self._timer.start(int(duration * 1000))
-
     def move_tooltip(self, pos: QtCore.QPoint) -> None:
         self.move(pos + self._offset)

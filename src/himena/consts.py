@@ -65,6 +65,7 @@ class StandardType(SimpleNamespace):
     IMAGES = "dict.array.image"
 
     # text subtypes
+    PYTHON = "text.python"  # Python code
     HTML = "text.html"  # HTML text
     SVG = "text.svg"  # SVG text
     MARKDOWN = "text.markdown"  # markdown text

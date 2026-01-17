@@ -8,19 +8,19 @@ import yaml
 from pydantic import BaseModel, Field
 
 
-def lock_file_path(name: str) -> Path:
+def lock_file_path(name: str, port: int) -> Path:
     """Get the lock file path."""
     from himena.profile import data_dir
 
     dir_path = data_dir() / "lock"
     if not dir_path.exists():
         dir_path.mkdir(parents=True)
-    return dir_path / f"{name}.lock"
+    return dir_path / f"{name}+{port}.lock"
 
 
-def get_unique_lock_file(name: str) -> TextIOWrapper | None:
+def get_unique_lock_file(name: str, port: int) -> TextIOWrapper | None:
     """Create a lock file, return None if it already exists."""
-    lock_file = lock_file_path(name)
+    lock_file = lock_file_path(name, port)
     if lock_file.exists():
         return None
     return lock_file.open("w")
@@ -36,9 +36,9 @@ class SocketInfo:
         return asdict(self)
 
     @classmethod
-    def from_lock(cls, name: str) -> SocketInfo:
+    def from_lock(cls, name: str, port: int) -> SocketInfo:
         """Get the socket info from the lock file."""
-        with lock_file_path(name).open("r") as f:
+        with lock_file_path(name, port).open("r") as f:
             yml = yaml.load(f, Loader=yaml.Loader)
         if yml is None:
             yml = {}
@@ -61,7 +61,10 @@ class SocketInfo:
             print(f"Socket is not available: {e}")
             return False
         else:
-            print(f"Sent data to {profile} window at {self.host}:{self.port}.")
+            if files:
+                print(f"Sent data to {profile!r} window at {self.host}:{self.port}.")
+            else:
+                print(f"Application at {self.host}:{self.port} is already running.")
             return True
 
 

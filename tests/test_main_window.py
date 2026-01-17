@@ -2,6 +2,7 @@ from concurrent.futures import Future
 from dataclasses import dataclass
 from pathlib import Path
 from concurrent.futures import Future
+from typing import Annotated
 from unittest.mock import MagicMock
 import warnings
 
@@ -11,6 +12,7 @@ import pytest
 from himena import MainWindow, _drag
 from himena.consts import StandardType
 from himena.core import create_model
+from himena.testing.dialog import user_input_response
 from himena.types import ClipboardDataModel, DragDataModel, FutureInfo, WidgetConstructor, WidgetType, ParametricWidgetProtocol
 from himena.qt import MainWindowQt, drag_command, drag_files
 from himena.qt._qmain_window import QMainWindow, QChoicesDialog
@@ -472,3 +474,19 @@ def test_process_future(make_himena_ui):
     future.set_result(create_model("a", type="text"))
     FutureInfo(type_hint=WidgetDataModel, top_left=(10, 10)).set(future)
     himena_ui.model_app._future_done_callback(future)
+
+def test_dialog(himena_ui: MainWindowQt, qtbot: QtBot):
+    himena_ui._backend_main_window._add_widget_to_dialog_no_exec(QtW.QWidget(), "title")
+    with user_input_response(himena_ui, {"x": 3, "y": 0.6}):
+        responce = himena_ui.exec_user_input_dialog(
+            {"x": int, "y": Annotated[float, {"min": 0.0, "max": 1.0}]},
+            title="My Dialog",
+        )
+    assert responce == {"x": 3, "y": 0.6}
+
+    def func(boolean: bool, tuple_val: tuple[int, float]) -> str:
+        return f"{boolean}, {tuple_val}"
+
+    with user_input_response(himena_ui, {"boolean": True, "tuple_val": (5, 0.2)}):
+        responce = himena_ui.exec_user_input_dialog(func)
+    assert responce == "True, (5, 0.2)"

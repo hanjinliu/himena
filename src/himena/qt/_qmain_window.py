@@ -11,6 +11,7 @@ import weakref
 import numpy as np
 
 from qtpy import QtWidgets as QtW, QtGui, QtCore
+from magicgui.widgets import Widget
 from app_model.types import KeyCode
 from app_model.backends.qt import (
     QModelMainWindow,
@@ -154,6 +155,9 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self._corner_toolbar.setContentsMargins(0, 0, 0, 0)
         self._menubar.setCornerWidget(self._corner_toolbar)
 
+        # to prevent garbage collection
+        self._last_dialog: QtW.QDialog | None = None
+
     def _update_widget_theme(self, style: Theme):
         self.setStyleSheet(style.format_text(get_stylesheet_path().read_text()))
         if style.is_light_background():
@@ -206,7 +210,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         # Construct and add the dock widget
         dock_widget = QDockWidget(widget, title, allowed_areas)
         self.addDockWidget(dock_widget.area_normed(area), dock_widget)
-        dock_widget.closed.connect(self._update_context)
+        dock_widget.closed.connect(self._dock_widget_closed_callback)
         if doc := getattr(widget, "__doc__", ""):
             dock_widget.whats_this.connect(lambda: self._show_dock_whats_this(doc))
         QtW.QApplication.processEvents()
@@ -254,6 +258,34 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _del_dock_widget(self, widget: QtW.QWidget) -> None:
         if isinstance(dock := widget.parentWidget(), QtW.QDockWidget):
             dock.close()
+
+    def _add_widget_to_dialog(self, widget: QtW.QWidget | Widget, title: str) -> bool:
+        dialog = self._add_widget_to_dialog_no_exec(widget, title)
+        # Center dialog relative to main window
+        dialog.move(self.geometry().center() - dialog.rect().center())
+        result = dialog.exec()
+        return bool(result)
+
+    def _add_widget_to_dialog_no_exec(self, widget: QtW.QWidget | Widget, title: str):
+        if isinstance(widget, Widget):
+            widget = widget.native
+        dialog = QtW.QDialog(self)
+        layout = QtW.QVBoxLayout(dialog)
+
+        layout.addWidget(widget)
+
+        # Add OK and Cancel buttons
+        button_box = QtW.QDialogButtonBox(
+            QtW.QDialogButtonBox.StandardButton.Ok
+            | QtW.QDialogButtonBox.StandardButton.Cancel
+        )
+        button_box.accepted.connect(dialog.accept)
+        button_box.rejected.connect(dialog.reject)
+        layout.addWidget(button_box)
+        dialog.setWindowTitle(title)
+
+        self._last_dialog = dialog  # prevent garbage collection
+        return dialog
 
     def add_tab(self, tab_name: str) -> QSubWindowArea:
         """Add a new tab with a sub-window area.
@@ -389,6 +421,9 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self._corner_toolbar.update_from_context(_dict)
         _msec = (timer() - _time_0) * 1000
         _LOGGER.debug("Context update took %.3f msec", _msec)
+
+    def _dock_widget_closed_callback(self) -> None:
+        self._update_context()
 
     def _current_tab_index(self) -> int | None:
         idx = self._tab_widget.currentIndex()

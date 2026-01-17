@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from concurrent.futures import Future, ThreadPoolExecutor
 from contextlib import contextmanager
+import inspect
 from logging import getLogger
 from pathlib import Path
 import threading
@@ -25,7 +26,7 @@ from himena import _providers
 from himena._app_model import AppContext, HimenaApplication
 from himena._open_recent import RecentFileManager, RecentSessionManager
 from himena._utils import get_widget_class_id, import_object
-from himena.consts import NO_RECORDING_FIELD
+from himena.consts import NO_RECORDING_FIELD, ParametricWidgetProtocolNames as PWPN
 from himena.plugins import _checker, actions as _actions
 from himena.profile import AppProfile, load_app_profile
 from himena.style import Theme
@@ -65,6 +66,7 @@ if TYPE_CHECKING:
 _W = TypeVar("_W")  # backend widget type
 _T = TypeVar("_T")  # internal data type
 _F = TypeVar("_F")  # function type
+_R = TypeVar("_R")  # return type
 _LOGGER = getLogger(__name__)
 
 
@@ -523,6 +525,8 @@ class MainWindow(Generic[_W]):
         self,
         file_path: PathOrPaths,
         plugin: str | None = None,
+        *,
+        append_history: bool = True,
     ) -> SubWindow[_W]:
         """Read local file(s) and open as a new sub-window in this tab.
 
@@ -535,6 +539,8 @@ class MainWindow(Generic[_W]):
             If given, reader provider will be searched with the plugin name. This value
             is usually the full import path to the reader provider function, such as
             `"himena_builtins.io.default_reader_provider"`.
+        append_history : bool, default True
+            If True, the opened files will be appended to the recent file history.
 
         Returns
         -------
@@ -542,15 +548,21 @@ class MainWindow(Generic[_W]):
             The sub-window instance that is constructed based on the return value of
             the reader.
         """
-        return self.read_files([file_path], plugin=plugin)[0]
+        return self.read_files(
+            [file_path], plugin=plugin, append_history=append_history
+        )[0]
 
     def read_files(
         self,
         file_paths: PathOrPaths,
         plugin: str | None = None,
+        *,
+        append_history: bool = True,
     ) -> list[SubWindow[_W]]:
         """Read multiple files and open as new sub-windows in this tab."""
-        models = self._paths_to_models(file_paths, plugin=plugin)
+        models = self._paths_to_models(
+            file_paths, plugin=plugin, append_history=append_history
+        )
         out = [self.add_data_model(model) for model in models]
         if len(out) == 1:
             self.set_status_tip(f"File opened: {out[0].title}", duration=5)
@@ -565,10 +577,16 @@ class MainWindow(Generic[_W]):
         plugin: str | None = None,
         *,
         tab: TabArea[_W] | None = None,
+        append_history: bool = True,
     ) -> Future:
         """Read multiple files asynchronously and return a future."""
         file_paths = norm_paths(file_paths)
-        future = self._executor.submit(self._paths_to_models, file_paths, plugin=plugin)
+        future = self._executor.submit(
+            self._paths_to_models,
+            file_paths,
+            plugin=plugin,
+            append_history=append_history,
+        )
         if len(file_paths) == 1:
             self.set_status_tip(f"Opening: {file_paths[0].as_posix()}", duration=5)
         else:
@@ -942,6 +960,77 @@ class MainWindow(Generic[_W]):
         )
 
     @overload
+    def exec_user_input_dialog(
+        self,
+        inputs: dict[str, type],
+        /,
+        title: str | None = None,
+        *,
+        show_parameter_labels: bool = True,
+    ) -> dict[str, Any] | None: ...
+    @overload
+    def exec_user_input_dialog(
+        self,
+        function: Callable[..., _R],
+        /,
+        title: str | None = None,
+        *,
+        show_parameter_labels: bool = True,
+    ) -> _R | None: ...
+    def exec_user_input_dialog(
+        self,
+        function_or_types: dict | Callable,
+        /,
+        title: str | None = None,
+        *,
+        show_parameter_labels: bool = True,
+    ) -> Any | None:
+        """Execute a parametric dialog to get user input.
+
+        Parameters
+        ----------
+        function : callable
+            Function that generates a WidgetDataModel from the input parameters.
+        title : str
+            Window title of the dialog.
+
+        Returns
+        -------
+        Any or None
+            The output of the function if the user confirmed, otherwise None.
+        """
+        if title is None:
+            title = "User Input"
+        if isinstance(function_or_types, dict):
+            parameters = []
+            for name, typ in function_or_types.items():
+                parameters.append(
+                    inspect.Parameter(
+                        name,
+                        inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                        annotation=typ,
+                    )
+                )
+            sig = inspect.Signature(parameters)
+            function = _default_dialog_func
+            function.__signature__ = sig
+        else:
+            function = function_or_types
+        fn_widget = self._backend_main_window._signature_to_widget(
+            inspect.signature(function),
+            show_parameter_labels=show_parameter_labels,
+            preview=False,
+        )
+        if cb := self._instructions.user_input_response:
+            params = cb()
+        else:
+            res = self._backend_main_window._add_widget_to_dialog(fn_widget, title)
+            if not res:
+                return
+            params = getattr(fn_widget, PWPN.GET_PARAMS)()
+        return function(**params)
+
+    @overload
     def exec_file_dialog(
         self,
         mode: Literal["r", "d", "w"] = "r",
@@ -1228,6 +1317,7 @@ class MainWindow(Generic[_W]):
         self,
         file_paths: PathOrPaths,
         plugin: str | None = None,
+        append_history: bool = True,
     ) -> list[WidgetDataModel]:
         ins = _providers.ReaderStore.instance()
         file_paths = norm_paths(file_paths)
@@ -1238,9 +1328,10 @@ class MainWindow(Generic[_W]):
             reader.read_and_update_source(file_path)
             for reader, file_path in reader_path_sets
         ]
-        self._recent_manager.append_recent_files(
-            [(fp, reader.plugin_str) for reader, fp in reader_path_sets]
-        )
+        if append_history:
+            self._recent_manager.append_recent_files(
+                [(fp, reader.plugin_str) for reader, fp in reader_path_sets]
+            )
         return models
 
 
@@ -1284,3 +1375,7 @@ def _tab_to_be_used(self: MainWindow) -> TabArea[_W]:
     else:
         tabarea = self.add_tab()
     return tabarea
+
+
+def _default_dialog_func(**kwargs) -> dict[str, Any]:
+    return kwargs

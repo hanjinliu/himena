@@ -45,7 +45,7 @@ class QTextEdit(QtW.QWidget):
         self._main_text_edit = QMainTextEdit(self)
         self._control = QTextControl(self._main_text_edit)
 
-        self._control.languageChanged.connect(self._main_text_edit.syntax_highlight)
+        self._control.languageChanged.connect(self._on_language_changed)
         self._control.tabChanged.connect(self._main_text_edit.set_tab_size)
         self._main_text_edit.cursorPositionChanged.connect(self._update_line_numbers)
         layout = QtW.QVBoxLayout(self)
@@ -167,6 +167,15 @@ class QTextEdit(QtW.QWidget):
     def _update_line_numbers(self):
         line_num = self._main_text_edit.textCursor().blockNumber() + 1
         self._control._line_num.setText(str(line_num))
+
+    def _on_language_changed(self, language: str):
+        self._main_text_edit.syntax_highlight(language)
+        if language.lower() == "python":
+            self._model_type = StandardType.PYTHON
+            self._extension_default = ".py"
+        else:
+            self._model_type = StandardType.TEXT
+            self._extension_default = ".txt"
 
 
 class QRichTextEdit(QtW.QWidget):

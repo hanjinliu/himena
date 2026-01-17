@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from contextlib import suppress
 from enum import IntEnum
 import math
-from typing import Hashable, Iterable
+from typing import Hashable, Iterable, Iterator
 import weakref
 import numpy as np
 from psygnal import Signal
@@ -51,7 +51,8 @@ class QFlowChartNode(QtW.QGraphicsRectItem):
         super().__init__(0, 0, 1, 1)
         self._item = item  # Store the item associated with this node
         # List of arrows connected to this node
-        self._connected_arrows: list[QFlowChartArrow] = []
+        self._connected_arrows_from: list[QFlowChartArrow] = []
+        self._connected_arrows_to: list[QFlowChartArrow] = []
         self._last_press_pos = QtCore.QPointF()
 
         # Add text and adjust size
@@ -94,15 +95,22 @@ class QFlowChartNode(QtW.QGraphicsRectItem):
         y = center.y() - text_rect.height() / 2
         self.text_item.setPos(x, y)
 
-    def add_arrow(self, arrow):
-        """Add an arrow to the list of connected arrows"""
-        if arrow not in self._connected_arrows:
-            self._connected_arrows.append(arrow)
+    def add_arrow_from(self, arrow):
+        """Add an arrow to the list of connected arrows from other nodes to this."""
+        if arrow not in self._connected_arrows_to:
+            self._connected_arrows_to.append(arrow)
+
+    def add_arrow_to(self, arrow):
+        """Add an arrow to the list of connected arrows from this node to another"""
+        if arrow not in self._connected_arrows_from:
+            self._connected_arrows_from.append(arrow)
 
     def remove_arrow(self, arrow):
         """Remove an arrow from the list of connected arrows"""
-        if arrow in self._connected_arrows:
-            self._connected_arrows.remove(arrow)
+        if arrow in self._connected_arrows_from:
+            self._connected_arrows_from.remove(arrow)
+        if arrow in self._connected_arrows_to:
+            self._connected_arrows_to.remove(arrow)
 
     def center(self):
         """Get the center point of the node"""
@@ -148,7 +156,7 @@ class QFlowChartNode(QtW.QGraphicsRectItem):
         """Handle item changes, particularly position changes"""
         if change == QtW.QGraphicsRectItem.GraphicsItemChange.ItemPositionHasChanged:
             # Update all connected arrows when the node moves
-            for arrow in self._connected_arrows:
+            for arrow in self._connected_arrows_from + self._connected_arrows_to:
                 arrow._update_position()
             self._update_text_position()
         return super().itemChange(change, value)
@@ -194,17 +202,36 @@ class QFlowChartNode(QtW.QGraphicsRectItem):
 
 
 class QFlowChartArrow(QtW.QGraphicsLineItem):
+    """An path item with an arrowhead.
+
+    `offset` is used to shift the arrow line when multiple arrows may overlap.
+    """
+
     def __init__(
         self,
         start_node: QFlowChartNode,
         end_node: QFlowChartNode,
         color: QtGui.QColor = Qt.GlobalColor.black,
+        offset: int = 0,
     ):
         super().__init__()
         self.setCursor(Qt.CursorShape.ArrowCursor)
         self.start_node = start_node
         self.end_node = end_node
         self.arrowhead_size = 10
+        self.offset = offset
+        self.arrowhead = QtW.QGraphicsPolygonItem(self)
+        self.set_color(color)
+
+        # Register this arrow with both nodes
+        # start --> end
+        self.start_node.add_arrow_to(self)
+        self.end_node.add_arrow_from(self)
+
+        # Initial position update
+        self._update_position()
+
+    def set_color(self, color: QtGui.QColor):
         pen = QtGui.QPen(color, 1.2)
 
         # Set line properties
@@ -212,17 +239,9 @@ class QFlowChartArrow(QtW.QGraphicsLineItem):
 
         # Create arrowhead as a separate graphics item
         # Arrowhead as a triangle polygon
-        self.arrowhead = QtW.QGraphicsPolygonItem(self)
         pen.setJoinStyle(Qt.PenJoinStyle.SvgMiterJoin)
         self.arrowhead.setBrush(QtGui.QBrush(color))
         self.arrowhead.setPen(pen)
-
-        # Register this arrow with both nodes
-        self.start_node.add_arrow(self)
-        self.end_node.add_arrow(self)
-
-        # Initial position update
-        self._update_position()
 
     def _update_position(self):
         """Update the arrow position based on the connected nodes"""
@@ -232,6 +251,11 @@ class QFlowChartArrow(QtW.QGraphicsLineItem):
 
         start_point = self.start_node._get_edge_point(end_center)
         end_point = self.end_node._get_edge_point(start_center)
+
+        # Apply offset
+        offset_val = self.offset * 3
+        start_point.setX(start_point.x() + offset_val)
+        end_point.setX(end_point.x() + offset_val)
 
         # Update the main line
         self.setLine(start_point.x(), start_point.y(), end_point.x(), end_point.y())
@@ -284,44 +308,41 @@ class QFlowChartView(QtW.QGraphicsView):
         self.horizontalScrollBar().hide()
         self.verticalScrollBar().hide()
 
+        self._dodge_distance = 32
+
     def add_child(
         self,
         item: BaseNodeItem,
         parents: list[Hashable | QFlowChartNode] = [],
     ) -> QFlowChartNode:
         """Add a child node to the parents in the list"""
-        parents = [
+        parent_nodes = [
             p if isinstance(p, QFlowChartNode) else self._node_map[p] for p in parents
         ]
-        if not parents:
+        if not parent_nodes:
             center = QtCore.QPointF(32, 24)
         else:
             # Calculate the center position based on the first parent
-            xs = []
-            ys = []
-            for parent in parents:
+            xs: list[float] = []
+            ys: list[float] = []
+            for parent in parent_nodes:
                 xs.append(parent.center().x())
                 ys.append(parent.center().y() + parent.rect().height() / 2)
-            child_x = min(xs)
-            if len(xs) > 1 and np.std(xs) < 10:
-                child_x += 32
+            child_x = np.mean(xs)
             child_y = max(ys) + 45
             center = QtCore.QPointF(child_x, child_y)
 
-        # shift to right if the position is already occupied
-        need_shift = True
-        while need_shift:
-            for node in self._node_map.values():
-                if node.rect().adjusted(-26, -20, 26, 20).contains(center):
-                    center.setX(center.x() + node.rect().width() + 24)
-                    break
-            else:
-                need_shift = False
+        # shift to left or right if the position is already occupied
+        center = find_unoccupied_position(
+            center,
+            list(self._node_map.values()),
+            self._dodge_distance,
+        )
 
         # Create the child node
         child_node = self.add_node(center, item)
         # Create arrows from each parent to the child
-        for parent in parents:
+        for parent in parent_nodes:
             self.add_arrow(parent, child_node)
         return child_node
 
@@ -339,7 +360,14 @@ class QFlowChartView(QtW.QGraphicsView):
 
     def add_arrow(self, start_node: QFlowChartNode, end_node: QFlowChartNode):
         """Add an arrow between two nodes"""
-        arrow = QFlowChartArrow(start_node, end_node, color=self._arrow_color())
+        ith = len(start_node._connected_arrows_from) - 1
+        offset_sign = -1 if ith % 2 == 0 else 1
+        arrow = QFlowChartArrow(
+            start_node,
+            end_node,
+            color=self._arrow_color(ith),
+            offset=offset_sign * (ith + 1) // 2,
+        )
         arrow.setZValue(ZOrder.UNDERLAY)  # Ensure arrows are drawn below nodes
         self.scene().addItem(arrow)
         return arrow
@@ -348,7 +376,7 @@ class QFlowChartView(QtW.QGraphicsView):
         """Remove nodes and their associated arrows from the scene"""
         for node in nodes:
             # Remove all arrows connected to this node
-            for arrow in node._connected_arrows:
+            for arrow in node._connected_arrows_from + node._connected_arrows_to:
                 self.scene().removeItem(arrow)
                 node.remove_arrow(arrow)
             # Remove the node itself
@@ -364,11 +392,22 @@ class QFlowChartView(QtW.QGraphicsView):
         if node := self._node_map.get(item_id):
             return node.item()
 
-    def _arrow_color(self) -> QtGui.QColor:
+    def setBackgroundBrush(self, val):
+        super().setBackgroundBrush(val)
+        for node in self._node_map.values():
+            for ith, arrow in enumerate(node._connected_arrows_from):
+                arrow.set_color(self._arrow_color(ith))
+
+    def _arrow_color(self, ith: int = 0) -> QtGui.QColor:
         if self.scene().backgroundBrush().color().lightness() < 128:
-            arrow_color = QtGui.QColor(194, 194, 194)
+            base_lightness = 194
         else:
-            arrow_color = QtGui.QColor(62, 62, 62)
+            base_lightness = 62
+
+        # Calculate hue based on ith (distribute colors around the color wheel)
+        hue = (ith * 137) % 360
+        saturation = 128  # Moderate saturation for visible color variation
+        arrow_color = QtGui.QColor.fromHsl(hue, saturation, base_lightness)
         return arrow_color
 
     def mousePressEvent(self, event: QtGui.QMouseEvent):
@@ -419,6 +458,49 @@ class QFlowChartView(QtW.QGraphicsView):
         return super().mouseDoubleClickEvent(event)
 
 
+def iter_next_shift(stride: float, max_value: float = 1e4) -> Iterator[float]:
+    """Yield next shift in ... 4, 2, 0, 1, 3 ... order."""
+    yield 0.0
+    cur_stride = stride
+    while True:
+        for direction in (1, -1):
+            yield direction * cur_stride
+        cur_stride += stride
+        if cur_stride > max_value:
+            # just for safety
+            raise StopIteration
+
+
+def find_unoccupied_position(
+    center: QtCore.QPointF,
+    nodes: list[QFlowChartNode],
+    dodge_distance: float = 32,
+):
+    # list of nodes that has similar y value
+    may_overlap = [node for node in nodes if abs(node.center().y() - center.y()) < 20]
+    if not may_overlap:
+        return center
+    x_val_occupied: list[tuple[float, float]] = []
+    for node in may_overlap:
+        rect = node.rect()
+        left = rect.left() - dodge_distance + 6
+        right = rect.right() + dodge_distance - 6
+        x_val_occupied.append((left, right))
+
+    def is_ok(x: float) -> bool:
+        for left, right in x_val_occupied:
+            if left <= x <= right:
+                return False
+        return True
+
+    it = iter_next_shift(dodge_distance)
+    current_shift = next(it)
+    while not is_ok(center.x() + current_shift):
+        current_shift = next(it)
+    center.setX(center.x() + current_shift)
+    return center
+
+
 class QFlowChartSideView(QtW.QPlainTextEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -446,9 +528,6 @@ class QFlowChartWidget(QtW.QSplitter):
         """Set the background brush of the scene"""
         self.scene.setBackgroundBrush(val)
         self.view.setBackgroundBrush(val)
-        for item in self.scene.items():
-            if isinstance(item, QFlowChartArrow):
-                item.setPen(QtGui.QPen(self.view._arrow_color(), 1.2))
 
     def _activate_item(self, item: BaseNodeItem):
         """Handle item activation by displaying its content in the side view"""

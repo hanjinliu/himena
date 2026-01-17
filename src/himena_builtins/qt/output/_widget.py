@@ -35,7 +35,6 @@ class QLogger(QtW.QPlainTextEdit):
         self.moveCursor(QtGui.QTextCursor.MoveOperation.End)
         self.insertPlainText(obj)
         self.moveCursor(QtGui.QTextCursor.MoveOperation.End)
-        return None
 
     def appendText(self, text: str):
         """Append text in the main thread."""
@@ -143,13 +142,11 @@ class OutputInterface(logging.Handler):
     def emit(self, record: logging.LogRecord):
         """Handle the logging event."""
         log_entry = self.format(record)
-        self._widget._logger.appendText(f"{record.levelname}: {log_entry}\n")
-        return None
+        self._widget._logger.appendText(f"{log_entry}\n")
 
     def set_log_level(self, level: str):
         log_level = getattr(logging, level)
         self._logger.setLevel(log_level)
-        return None
 
     def set_log_filter(self, text: str):
         text = text.strip()
@@ -185,7 +182,8 @@ class OutputInterface(logging.Handler):
         return self._widget
 
     def update_configs(self, cfg: OutputConfig):
-        self.setFormatter(logging.Formatter(fmt=cfg.format, datefmt=cfg.date_format))
+        fmt = cfg.format.encode("utf-8").decode("unicode_escape")
+        self.setFormatter(logging.Formatter(fmt=fmt, datefmt=cfg.date_format))
 
 
 def get_widget(id: str = "default") -> OutputInterface:

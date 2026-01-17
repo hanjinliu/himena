@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterator, overload
+from typing import Any, Iterator, overload
 from pathlib import Path
 
 from himena.widgets import MainWindow
@@ -57,6 +57,19 @@ def choose_one_dialog_response(ui: MainWindow, choice: str):
     try:
         ui._instructions = ui._instructions.updated(
             choose_one_dialog_response=lambda: choice
+        )
+        yield
+    finally:
+        ui._instructions = old_inst
+
+
+@contextmanager
+def user_input_response(ui: MainWindow, response: dict[str, Any]):
+    """Set the response of the user input dialog in this context."""
+    old_inst = ui._instructions
+    try:
+        ui._instructions = ui._instructions.updated(
+            user_input_response=lambda: response
         )
         yield
     finally:

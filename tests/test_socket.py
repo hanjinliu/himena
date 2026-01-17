@@ -17,7 +17,7 @@ def test_event_loop_hander(make_himena_ui: Callable[..., MainWindow]):
 
 def test_remained_lock_file(capfd):
     prof_name = "dead_profile"
-    lock_file = lock_file_path("dead_profile")
+    lock_file = lock_file_path("dead_profile", 49200)
     with lock_file.open("w") as f:
         SocketInfo(port=49220).dump(f)
     prof = new_app_profile(prof_name)

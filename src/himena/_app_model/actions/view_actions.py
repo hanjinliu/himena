@@ -10,6 +10,7 @@ from himena.exceptions import Cancelled
 from himena.plugins._signature import configure_gui
 from himena.widgets import MainWindow, SubWindow
 from himena.types import (
+    AnyContext,
     Parametric,
     WindowState,
 )
@@ -38,11 +39,9 @@ def new_tab(ui: MainWindow) -> None:
     menus=[MenuId.VIEW],
     keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyW)],
 )
-def close_current_tab(ui: MainWindow) -> None:
+def close_current_tab(ui: MainWindow, context: AnyContext) -> None:
     """Close the current tab."""
-    idx = ui._backend_main_window._current_tab_index()
-    if idx is None:
-        return
+    idx = int(context.get("current_index", ui.tabs.current_index))
     win_modified = [win for win in ui.tabs[idx] if win._need_ask_save_before_close()]
     if len(win_modified) > 0 and ui._instructions.confirm:
         _modified_msg = "\n".join([f"- {win.title}" for win in win_modified])

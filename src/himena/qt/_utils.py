@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable
 import warnings
@@ -269,9 +269,29 @@ def drag_command(
     )
 
 
-def _text_to_pixmap(text: str, parent=None) -> QtGui.QPixmap:
-    qlabel = QtW.QLabel(text)
-    pixmap = QtGui.QPixmap(qlabel.size())
-    pixmap.setDevicePixelRatio(qlabel.devicePixelRatioF())
+def _text_to_pixmap(text: str, parent: QtW.QWidget | None = None) -> QtGui.QPixmap:
+    qlabel = QtW.QLabel(parent)
+    qlabel.setText(text)
+    if parent is not None:
+        # This is not needed in Windows, but in Ubuntu the background color is not
+        # correctly set without this.
+        with suppress(Exception):
+            pal = parent.palette()
+            background = pal.color(QtGui.QPalette.ColorRole.Window)
+            foreground = pal.color(QtGui.QPalette.ColorRole.WindowText)
+            qlabel.setStyleSheet(
+                f"QLabel {{ background-color: {background.name()}; "
+                f"color: {foreground.name()}; }}"
+            )
+    # NOTE: very strangely, only the height needs to be divided by ratio
+    metric = qlabel.fontMetrics()
+    ratio = qlabel.devicePixelRatioF()
+    rect = metric.boundingRect(text)
+    text_width = int(rect.width() * ratio)
+    text_height = int(rect.height() * ratio)
+    qsize = QtCore.QSize(text_width + 10, text_height + 6)
+    qlabel.setFixedSize(qsize.width(), int(qsize.height() / ratio))
+    pixmap = QtGui.QPixmap(qsize)
+    pixmap.setDevicePixelRatio(ratio)
     qlabel.render(pixmap)
     return pixmap

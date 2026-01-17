@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from functools import cache
 from pathlib import Path
+import shutil
 from himena.plugins import register_reader_plugin, register_writer_plugin
 from himena.data_wrappers import list_installed_dataframe_packages
 from himena.types import WidgetDataModel
@@ -122,12 +124,50 @@ def _(file_path: Path) -> str | None:
 
 @register_reader_plugin(priority=50)
 def read_pdf(file_path: Path) -> WidgetDataModel:
-    return WidgetDataModel(type=StandardType.PDF, value=file_path)
+    _bytes = file_path.read_bytes()
+    return WidgetDataModel(type=StandardType.PDF, value=_bytes)
 
 
 @read_pdf.define_matcher
 def _(file_path: Path) -> str | None:
     if file_path.suffix.rstrip("~") == ".pdf":
+        return StandardType.PDF
+    return None
+
+
+@register_reader_plugin(priority=50)
+def read_eps(file_path: Path) -> WidgetDataModel:
+    """Convert EPS to PDF and read as PDF."""
+    import subprocess
+    import tempfile
+
+    gs = _get_ghost_script()
+    if gs is None:
+        raise RuntimeError("Ghostscript is required to read EPS files.")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_pdf_path = Path(tmpdir) / (file_path.stem + ".pdf")
+        args = [
+            gs,
+            "-dBATCH",
+            "-dNOPAUSE",
+            "-dEPSCrop",
+            "-sDEVICE=pdfwrite",
+            f"-sOutputFile={tmp_pdf_path}",
+            str(file_path),
+        ]
+        subprocess.run(
+            args,
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        _bytes = tmp_pdf_path.read_bytes()
+    return WidgetDataModel(type=StandardType.PDF, value=_bytes)
+
+
+@read_eps.define_matcher
+def _(file_path: Path) -> str | None:
+    if file_path.suffix.rstrip("~") == ".eps":
         return StandardType.PDF
     return None
 
@@ -370,3 +410,17 @@ def write_pickle_anyway(model: WidgetDataModel, path: Path):
 @write_pickle_anyway.define_matcher
 def _(model: WidgetDataModel, path: Path) -> bool:
     return True
+
+
+@cache
+def _get_ghost_script() -> str | None:
+    gs_executable = shutil.which("gs")
+    if gs_executable is not None:
+        return gs_executable
+    gs_executable = shutil.which("gswin64c")
+    if gs_executable is not None:
+        return gs_executable
+    gs_executable = shutil.which("gswin32c")
+    if gs_executable is not None:
+        return gs_executable
+    return None

@@ -1,5 +1,7 @@
 from dataclasses import field, MISSING
+from pathlib import Path
 from typing import Any
+from platformdirs import user_data_dir
 
 
 def config_field(
@@ -42,3 +44,15 @@ def config_field(
         compare=False,
         metadata=metadata,
     )
+
+
+def plugin_data_dir(plugin_name: str) -> Path:
+    """Get the data directory for plugins.
+
+    This is a convenience function that provides a standard location for storing
+    plugin-specific data files. The directory structure is up to the plugin developer,
+    thus himena application does not recognize any of the contents.
+    """
+    out = Path(user_data_dir("himena")) / "plugins" / plugin_name
+    out.mkdir(parents=True, exist_ok=True)
+    return out

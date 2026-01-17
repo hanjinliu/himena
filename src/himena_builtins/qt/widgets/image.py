@@ -16,7 +16,7 @@ from himena.consts import StandardType
 from himena.standards import roi, model_meta
 from himena.qt._utils import drag_command, qsignal_blocker
 from himena.types import DropResult, Parametric, Size, WidgetDataModel
-from himena.plugins import validate_protocol, register_function
+from himena.plugins import validate_protocol, register_hidden_function
 from himena.widgets import set_status_tip, current_instance, show_tooltip
 from himena.data_wrappers import ArrayWrapper, wrap_array
 from himena_builtins.qt.widgets._image_components import (
@@ -549,6 +549,7 @@ class QImageViewBase(QtW.QSplitter):
             if not cur_img.visible:
                 self.set_hover_info(f"x={x:.1f}, y={y:.1f} (invisible)")
                 return
+
             intensity = cur_img.arr[int(y), int(x)]
             # NOTE: `intensity` could be an RGBA numpy array.
             if isinstance(intensity, np.ndarray) or self._arr.dtype.kind == "b":
@@ -569,18 +570,20 @@ class QImageViewBase(QtW.QSplitter):
                 yinfo = _fourier_info(ky, yaxis)
                 angle = math.degrees(math.atan2(ky, kx))
                 self.set_hover_info(
-                    f"kx={xinfo}, ky={yinfo}, theta={angle:.1f} value={_int}"
+                    f"kx={xinfo}, ky={yinfo}, theta={angle:.1f} value={_int}",
+                    pos,
                 )
             else:
                 xinfo = _physical_info(ix, xaxis)
                 yinfo = _physical_info(iy, yaxis)
-                self.set_hover_info(f"x={xinfo}, y={yinfo}, value={_int}")
+                self.set_hover_info(f"x={xinfo}, y={yinfo}, value={_int}", pos)
         else:
             self.set_hover_info(self._default_hover_info())
 
-    def set_hover_info(self, text: str):
+    def set_hover_info(self, text: str, pos: QtCore.QPointF | None = None):
         """Set the hover info text to the control widget."""
         self._control._hover_info.setText(text)
+        self._control._set_zoom_view(pos)
 
     def _default_hover_info(self) -> str:
         if self._arr is None:
@@ -669,7 +672,7 @@ class QImageViewBase(QtW.QSplitter):
 _COMMAND_ID = "builtins:select-image-rois"
 
 
-@register_function(menus=[], command_id=_COMMAND_ID)
+@register_hidden_function(command_id=_COMMAND_ID)
 def _select_image_rois(model: WidgetDataModel) -> Parametric:
     assert isinstance(meta := model.metadata, model_meta.ImageMeta)
     rois = meta.unwrap_rois()

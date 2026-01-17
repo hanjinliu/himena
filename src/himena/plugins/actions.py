@@ -295,6 +295,7 @@ def register_function(
     enablement: BoolOp | None = None,
     keybindings: Sequence[KeyBindingRule] | None = None,
     run_async: bool = False,
+    tooltip: str | None = None,
     command_id: str | None = None,
     group: str | None = None,
     icon: str | None = None,
@@ -312,6 +313,7 @@ def register_function(
     enablement: BoolOp | None = None,
     keybindings: Sequence[KeyBindingRule] | None = None,
     run_async: bool = False,
+    tooltip: str | None = None,
     command_id: str | None = None,
     group: str | None = None,
     icon: str | None = None,
@@ -328,6 +330,7 @@ def register_function(
     enablement=None,
     keybindings=None,
     run_async=False,
+    tooltip=None,
     command_id=None,
     group=None,
     icon=None,
@@ -342,7 +345,8 @@ def register_function(
     func : callable, optional
         Function to register as an action.
     menus : str or sequence of str, default "plugins"
-        Menu(s) to add the action. Submenus are separated by `/`.
+        Menu(s) to add the action. Submenus are separated by `/`. You can use menu IDs
+        start with "/model_menu" to specify the submenu under the model menu.
     title : str, optional
         Title of the action. Name of the function will be used if not given.
     types: str or sequence of str, optional
@@ -355,6 +359,8 @@ def register_function(
     run_async : bool, default False
         If true, the function will be executed asynchronously. Note that if the function
         updates the GUI, running it asynchronously may cause issues.
+    tooltip : str, optional
+        Tooltip text for the action. If not given, the function docstring will be used.
     command_id : str, optional
         Command ID. If not given, the function qualname will be used.
     group : str, optional
@@ -375,6 +381,7 @@ def register_function(
             enablement=enablement,
             keybindings=keybindings,
             run_async=run_async,
+            tooltip=tooltip,
             command_id=command_id,
             group=group,
             icon=icon,
@@ -399,6 +406,7 @@ def make_action_for_function(
     enablement=None,
     keybindings=None,
     run_async: bool = False,
+    tooltip: str | None = None,
     command_id: str | None = None,
     group: str | None = None,
     icon: str | None = None,
@@ -434,7 +442,7 @@ def make_action_for_function(
     return Action(
         id=_id,
         title=_title,
-        tooltip=tooltip_from_func(f),
+        tooltip=tooltip or tooltip_from_func(f),
         callback=_utils.make_function_callback(
             f, command_id=_id, title=_title, run_async=run_async
         ),
