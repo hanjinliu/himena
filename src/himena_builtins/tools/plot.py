@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Any, Iterator, TypeVar
-
+import warnings
+from app_model import Action
+from himena.plugins.actions import AppActionRegistry
 from himena.utils import plot_functions
 from himena.plugins import register_function, configure_gui, configure_submenu
 from himena.types import Parametric, WidgetDataModel
@@ -8,11 +10,11 @@ from himena.types import Parametric, WidgetDataModel
 from himena.consts import StandardType, MenuId
 from himena.utils.misc import is_subtype
 from himena.widgets import SubWindow
+
 from himena.standards import plotting as hplt
 from himena.standards.model_meta import DictMeta, TableMeta
 from himena.qt.magicgui import AxisPropertyEdit, DictEdit
 from himena._app_model import AppContext as _ctx
-
 
 _MENU = [MenuId.TOOLS_PLOT, "/model_menu/plot"]
 _NOT_AN_IMAGE = _ctx.active_window_model_subtype_1 != "image"
@@ -29,6 +31,27 @@ class PlotFactory(ABC):
 
     def __init__(self, subwindow: SubWindow):
         self._subwindow = subwindow
+
+    def __init_subclass__(cls):
+        if cls.__name__ == "DefaultPlotFactory":
+            return  # Skip registration for the default factory
+        reg = AppActionRegistry.instance()
+        new_menus = [f"/model_menu:{tp}/plot" for tp in cls.model_types()]
+
+        for action_kind in ["scatter", "line", "bar", "errorbar", "band", "histogram",
+                            "scatter-plot-3d", "line-plot-3d"]:  # fmt: skip
+            command_id = f"builtins:plot:{action_kind}"
+            new_id = f"builtins:plot-factory-register-{cls.__name__}:{action_kind}"
+            if action_orig := reg._actions.get(command_id):
+                params = action_orig.model_dump()
+                params["id"] = new_id
+                params["menus"] = new_menus
+                reg.add_action(Action(**params))
+            else:  # pragma: no cover
+                warnings.warn(
+                    f"Original action {command_id} not found. This is an internal error.",
+                    UserWarning,
+                )
 
     def to_model(self) -> WidgetDataModel:
         """Return the WidgetDataModel from the subwindow.
@@ -55,6 +78,18 @@ class PlotFactory(ABC):
         """Prepare keyword arguments for `table_data_model` method."""
 
 
+class DefaultPlotFactory(PlotFactory):
+    @classmethod
+    def model_types(cls) -> list[str]:
+        return [StandardType.TABLE, StandardType.ARRAY, StandardType.DATAFRAME]
+
+    def table_data_model(self) -> WidgetDataModel:
+        return self.to_model()
+
+    def prep_kwargs(self) -> dict[str, Any]:
+        return {}
+
+
 _C = TypeVar("_C", bound=type)
 
 
@@ -75,51 +110,6 @@ def _pick_plot_factory(type: str) -> type[PlotFactory]:
         f"This plotting action is not implemented for data type {type!r}. Supported "
         f"types are: {types}"
     )
-
-
-class DefaultPlotFactory(PlotFactory):
-    @classmethod
-    def model_types(cls) -> list[str]:
-        return [StandardType.TABLE, StandardType.ARRAY, StandardType.DATAFRAME]
-
-    def table_data_model(self) -> WidgetDataModel:
-        return self.to_model()
-
-    def prep_kwargs(self) -> dict[str, Any]:
-        return {}
-
-
-class ExcelPlotFactory(PlotFactory):
-    @classmethod
-    def model_types(cls) -> list[str]:
-        return [StandardType.EXCEL]
-
-    def table_data_model(self, current_tab: str) -> WidgetDataModel:
-        model = self.to_model()
-        meta = model.metadata
-        if isinstance(meta, DictMeta):
-            meta = meta.child_meta[current_tab]
-        else:
-            meta = TableMeta()
-        data = model.value[current_tab]
-        return WidgetDataModel(
-            value=data,
-            type=StandardType.TABLE,
-            title=f"{model.title} - {current_tab}",
-            metadata=meta,
-        )
-
-    def prep_kwargs(self) -> dict[str, Any]:
-        model = self.to_model()
-        if not isinstance(meta := model.metadata, DictMeta):
-            raise ValueError("Metadata is not DictMeta for Excel data.")
-        name = meta.current_tab
-        if name is None:
-            keys = list(meta.child_meta.keys())
-            if not keys:
-                raise ValueError("Data is empty.")
-            name = keys[0]
-        return {"current_tab": name}
 
 
 @register_function(
@@ -183,7 +173,7 @@ def band_plot(win: SubWindow) -> Parametric:
 
 
 @register_function(
-    title="Histogram ...",
+    title="Histogram Plot ...",
     menus=_MENU,
     command_id="builtins:plot:histogram",
     enablement=_NOT_AN_IMAGE,
@@ -360,6 +350,39 @@ def concatenate_with(model: WidgetDataModel) -> Parametric:
         return model.with_value(out).with_title_numbering()
 
     return run
+
+
+class ExcelPlotFactory(PlotFactory):
+    @classmethod
+    def model_types(cls) -> list[str]:
+        return [StandardType.EXCEL]
+
+    def table_data_model(self, current_tab: str) -> WidgetDataModel:
+        model = self.to_model()
+        meta = model.metadata
+        if isinstance(meta, DictMeta):
+            meta = meta.child_meta[current_tab]
+        else:
+            meta = TableMeta()
+        data = model.value[current_tab]
+        return WidgetDataModel(
+            value=data,
+            type=StandardType.TABLE,
+            title=f"{model.title} - {current_tab}",
+            metadata=meta,
+        )
+
+    def prep_kwargs(self) -> dict[str, Any]:
+        model = self.to_model()
+        if not isinstance(meta := model.metadata, DictMeta):
+            raise ValueError("Metadata is not DictMeta for Excel data.")
+        name = meta.current_tab
+        if name is None:
+            keys = list(meta.child_meta.keys())
+            if not keys:
+                raise ValueError("Data is empty.")
+            name = keys[0]
+        return {"current_tab": name}
 
 
 def _get_single_axes(model: WidgetDataModel) -> hplt.SingleAxes | hplt.SingleAxes3D:
