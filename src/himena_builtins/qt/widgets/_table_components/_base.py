@@ -333,6 +333,11 @@ class QTableBase(QtW.QTableView):
         )
         return super().keyReleaseEvent(a0)
 
+    def focusOutEvent(self, e):
+        self._selection_model.set_ctrl(False)  # make sure ctrl is off
+        self._selection_model.set_shift(False)  # make sure shift is off
+        return super().focusOutEvent(e)
+
     def mousePressEvent(self, e: QtGui.QMouseEvent) -> None:
         """Register clicked position"""
         self._mouse_press_event(e.pos(), e.button())

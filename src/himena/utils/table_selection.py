@@ -289,7 +289,7 @@ TABLE_LIKE_TYPES = [
 
 
 def range_getter(
-    ref: SubWindow | str,
+    ref: SubWindow | str | Callable[[], WidgetDataModel],
 ) -> Callable[..., tuple[SelectionType, SelectionType]]:
     """The getter function for SelectionEdit"""
     from himena.standards.model_meta import TableMeta, ArrayMeta
@@ -307,6 +307,8 @@ def range_getter(
                     break
             else:
                 raise ValueError(f"No such parameter named {ref!r}")
+        elif callable(ref):
+            model = ref()
         else:
             model = ref.to_model()
         if model.type not in TABLE_LIKE_TYPES:
@@ -324,7 +326,7 @@ def range_getter(
 
 
 def table_selection_gui_option(
-    ref: SubWindow | str,
+    ref: SubWindow | str | Callable[[], WidgetDataModel],
     default: SelectionType | None = None,
 ) -> dict:
     """GUI option used for a parameter of a single table selection.

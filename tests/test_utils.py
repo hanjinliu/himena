@@ -4,7 +4,7 @@ import warnings
 import numpy as np
 from numpy.testing import assert_equal
 from himena import create_model
-from himena.standards.model_meta import ArrayMeta, DataFrameMeta, DictMeta, TableMeta
+from himena.standards.model_meta import ArrayMeta, DataFrameMeta, TableMeta
 from himena.types import Size, WindowRect
 from himena.utils.misc import is_subtype, ext_to_filter
 from himena.utils.table_selection import (

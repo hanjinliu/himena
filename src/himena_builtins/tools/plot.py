@@ -1,40 +1,22 @@
-from typing import TYPE_CHECKING, Iterator
-import itertools
-
-from cmap import Color, Colormap
-import numpy as np
-
-from himena._utils import to_color_or_colormap
+from abc import ABC, abstractmethod
+from typing import Any, Iterator, TypeVar
+import warnings
+from app_model import Action
+from himena.plugins.actions import AppActionRegistry
+from himena.utils import plot_functions
 from himena.plugins import register_function, configure_gui, configure_submenu
 from himena.types import Parametric, WidgetDataModel
-from himena.utils.table_selection import (
-    model_to_xy_arrays,
-    table_selection_gui_option,
-    auto_select,
-    get_table_shape_and_selections,
-)
+
 from himena.consts import StandardType, MenuId
+from himena.utils.misc import is_subtype
 from himena.widgets import SubWindow
+
 from himena.standards import plotting as hplt
-from himena.qt.magicgui import (
-    FacePropertyEdit,
-    EdgePropertyEdit,
-    AxisPropertyEdit,
-    DictEdit,
-)
+from himena.standards.model_meta import DictMeta, TableMeta
+from himena.qt.magicgui import AxisPropertyEdit, DictEdit
 from himena._app_model import AppContext as _ctx
 
-if TYPE_CHECKING:
-    from himena.qt.magicgui._plot_elements import FacePropertyDict, EdgePropertyDict
-
-_TABLE_LIKE = [
-    StandardType.TABLE,
-    StandardType.ARRAY,
-    StandardType.DATAFRAME,
-    StandardType.EXCEL,
-]
 _MENU = [MenuId.TOOLS_PLOT, "/model_menu/plot"]
-_EDGE_ONLY_VALUE = {"color": "tab10", "width": 2.0}
 _NOT_AN_IMAGE = _ctx.active_window_model_subtype_1 != "image"
 
 # Single 2D selection in the form of ((row start, row stop), (col start, col stop))
@@ -44,282 +26,188 @@ SelectionType = tuple[tuple[int, int], tuple[int, int]]
 configure_submenu(MenuId.TOOLS_PLOT, group="20_builtins", order=32)
 
 
+class PlotFactory(ABC):
+    """Abstract base class for the built-in plot functions."""
+
+    def __init__(self, subwindow: SubWindow):
+        self._subwindow = subwindow
+
+    def __init_subclass__(cls):
+        if cls.__name__ == "DefaultPlotFactory":
+            return  # Skip registration for the default factory
+        reg = AppActionRegistry.instance()
+        new_menus = [f"/model_menu:{tp}/plot" for tp in cls.model_types()]
+
+        for action_kind in ["scatter", "line", "bar", "errorbar", "band", "histogram",
+                            "scatter-plot-3d", "line-plot-3d"]:  # fmt: skip
+            command_id = f"builtins:plot:{action_kind}"
+            new_id = f"builtins:plot-factory-register-{cls.__name__}:{action_kind}"
+            if action_orig := reg._actions.get(command_id):
+                params = action_orig.model_dump()
+                params["id"] = new_id
+                params["menus"] = new_menus
+                reg.add_action(Action(**params))
+            else:  # pragma: no cover
+                warnings.warn(
+                    f"Original action {command_id} not found. This is an internal error.",
+                    UserWarning,
+                )
+
+    def to_model(self) -> WidgetDataModel:
+        """Return the WidgetDataModel from the subwindow.
+
+        This is not necessarily the table widget."""
+        return self._subwindow.to_model()
+
+    @property
+    def subwindow(self) -> SubWindow:
+        """Return the subwindow associated with this factory."""
+        return self._subwindow
+
+    @classmethod
+    @abstractmethod
+    def model_types(cls) -> list[str]:
+        """Return the supported model types for this plot factory."""
+
+    @abstractmethod
+    def table_data_model(self, **kwargs) -> WidgetDataModel:
+        """Return the table type WidgetDataModel from this window for plotting."""
+
+    @abstractmethod
+    def prep_kwargs(self) -> dict[str, Any]:
+        """Prepare keyword arguments for `table_data_model` method."""
+
+
+class DefaultPlotFactory(PlotFactory):
+    @classmethod
+    def model_types(cls) -> list[str]:
+        return [StandardType.TABLE, StandardType.ARRAY, StandardType.DATAFRAME]
+
+    def table_data_model(self) -> WidgetDataModel:
+        return self.to_model()
+
+    def prep_kwargs(self) -> dict[str, Any]:
+        return {}
+
+
+_C = TypeVar("_C", bound=type)
+
+
+def _iter_subclasses(cls: _C) -> Iterator[_C]:
+    for subclass in cls.__subclasses__():
+        yield subclass
+        yield from _iter_subclasses(subclass)
+
+
+def _pick_plot_factory(type: str) -> type[PlotFactory]:
+    supported = [c for c in _iter_subclasses(PlotFactory) if c is not PlotFactory]
+    for subclass in supported:
+        for supported_type in subclass.model_types():
+            if is_subtype(type, supported_type):
+                return subclass
+    types = sum([c.model_types() for c in supported], [])
+    raise NotImplementedError(
+        f"This plotting action is not implemented for data type {type!r}. Supported "
+        f"types are: {types}"
+    )
+
+
 @register_function(
     title="Scatter Plot ...",
-    types=_TABLE_LIKE,
     menus=_MENU,
     command_id="builtins:plot:scatter",
     enablement=_NOT_AN_IMAGE,
 )
 def scatter_plot(win: SubWindow) -> Parametric:
     """Make a scatter plot from a table-like data."""
-    x0, y0 = auto_select(win.to_model(), 2)
-
-    @configure_gui(
-        x=table_selection_gui_option(win, default=x0),
-        y=table_selection_gui_option(win, default=y0),
-        face={"widget_type": FacePropertyEdit},
-        edge={"widget_type": EdgePropertyEdit},
-    )
-    def configure_plot(
-        x: SelectionType | None,
-        y: SelectionType,
-        symbol: str = "o",
-        size: float = 6.0,
-        face: dict = {},
-        edge: dict = {},
-    ) -> WidgetDataModel:
-        model = win.to_model()
-        fig = hplt.figure()
-        xarr, yarrs = _get_xy_data(model, x, y, fig.axes)
-        for name_yarr, _face, _edge in zip(
-            yarrs, _iter_face(face), _iter_edge(edge, prefix="edge_")
-        ):
-            name, yarr = name_yarr
-            fig.axes.scatter(
-                xarr, yarr, symbol=symbol, size=size, name=name, **_face, **_edge
-            )
-        if len(yarrs) == 1:
-            fig.axes.y.label = name
-        return WidgetDataModel(
-            value=fig,
-            type=StandardType.PLOT,
-            title=f"Plot of {model.title}",
-        )
-
-    return configure_plot
+    factory = _pick_plot_factory(win.model_type())(win)
+    return plot_functions.scatter(factory.table_data_model, factory.prep_kwargs)
 
 
 @register_function(
     title="Line Plot ...",
-    types=_TABLE_LIKE,
     menus=_MENU,
     command_id="builtins:plot:line",
     enablement=_NOT_AN_IMAGE,
 )
 def line_plot(win: SubWindow) -> Parametric:
     """Make a line plot from a table-like data."""
-    x0, y0 = auto_select(win.to_model(), 2)
-
-    @configure_gui(
-        x=table_selection_gui_option(win, default=x0),
-        y=table_selection_gui_option(win, default=y0),
-        edge={"widget_type": EdgePropertyEdit, "value": _EDGE_ONLY_VALUE},
-    )
-    def configure_plot(
-        x: SelectionType | None,
-        y: SelectionType,
-        edge: dict = {},
-    ) -> WidgetDataModel:
-        model = win.to_model()
-        fig = hplt.figure()
-        xarr, yarrs = _get_xy_data(model, x, y, fig.axes)
-        for name_yarr, _edge in zip(yarrs, _iter_edge(edge)):
-            name, yarr = name_yarr
-            fig.axes.plot(xarr, yarr, name=name, **_edge)
-        if len(yarrs) == 1:
-            fig.axes.y.label = name
-        return WidgetDataModel(
-            value=fig,
-            type=StandardType.PLOT,
-            title=f"Plot of {model.title}",
-        )
-
-    return configure_plot
+    factory = _pick_plot_factory(win.model_type())(win)
+    return plot_functions.line(factory.table_data_model, factory.prep_kwargs)
 
 
 @register_function(
     title="Bar Plot ...",
-    types=_TABLE_LIKE,
     menus=_MENU,
     command_id="builtins:plot:bar",
     enablement=_NOT_AN_IMAGE,
 )
 def bar_plot(win: SubWindow) -> Parametric:
     """Make a bar plot from a table-like data."""
-    model = win.to_model()
-    x0, y0 = auto_select(model, 2)
-
-    @configure_gui(
-        x=table_selection_gui_option(win, default=x0),
-        y=table_selection_gui_option(win, default=y0),
-        bottom=table_selection_gui_option(win),
-        face={"widget_type": FacePropertyEdit},
-        edge={"widget_type": EdgePropertyEdit},
-    )
-    def configure_plot(
-        x: SelectionType | None,
-        y: SelectionType,
-        bottom: SelectionType | None = None,
-        bar_width: float = 0.8,
-        face: dict = {},
-        edge: dict = {},
-    ) -> WidgetDataModel:
-        model = win.to_model()
-        fig = hplt.figure()
-        if bottom is not None:
-            _, bottoms = _get_xy_data(model, x, bottom, fig.axes)
-        else:
-            bottoms = itertools.repeat(None)
-        xarr, yarrs = _get_xy_data(model, x, y, fig.axes)
-        for name_yarr, name_bottom, _face, _edge in zip(
-            yarrs, bottoms, _iter_face(face), _iter_edge(edge, prefix="edge_")
-        ):
-            name, yarr = name_yarr
-            fig.axes.bar(
-                xarr, yarr, bottom=_ignore_label(name_bottom), bar_width=bar_width,
-                name=name, **_face, **_edge
-            )  # fmt: skip
-        return WidgetDataModel(
-            value=fig,
-            type=StandardType.PLOT,
-            title=f"Plot of {model.title}",
-        )
-
-    return configure_plot
+    factory = _pick_plot_factory(win.model_type())(win)
+    return plot_functions.bar(factory.table_data_model, factory.prep_kwargs)
 
 
 @register_function(
     title="Errorbar Plot ...",
-    types=_TABLE_LIKE,
     menus=_MENU,
     command_id="builtins:plot:errorbar",
     enablement=_NOT_AN_IMAGE,
 )
 def errorbar_plot(win: SubWindow) -> Parametric:
     """Make an error bar plot from a table-like data."""
-    x0, y0 = auto_select(win.to_model(), 2)
-
-    @configure_gui(
-        x=table_selection_gui_option(win, default=x0),
-        y=table_selection_gui_option(win, default=y0),
-        xerr=table_selection_gui_option(win),
-        yerr=table_selection_gui_option(win),
-        edge={"widget_type": EdgePropertyEdit, "value": _EDGE_ONLY_VALUE},
-    )
-    def configure_plot(
-        x: SelectionType | None,
-        y: SelectionType,
-        xerr: SelectionType | None,
-        yerr: SelectionType | None,
-        capsize: float = 0.0,
-        edge: dict = {},
-    ) -> WidgetDataModel:
-        model = win.to_model()
-        fig = hplt.figure()
-        if xerr is not None:
-            _, xerrs = _get_xy_data(model, x, xerr, fig.axes)
-        else:
-            xerrs = itertools.repeat(None)
-        if yerr is not None:
-            _, yerrs = _get_xy_data(model, x, yerr, fig.axes)
-        else:
-            yerrs = itertools.repeat(None)
-        xarr, yarrs = _get_xy_data(model, x, y, fig.axes)
-        for name_yarr, _xer, _yer, _edge in zip(yarrs, xerrs, yerrs, _iter_edge(edge)):
-            name, yarr = name_yarr
-            fig.axes.errorbar(
-                xarr, yarr, x_error=_ignore_label(_xer), y_error=_ignore_label(_yer),
-                capsize=capsize, name=name, **_edge,
-            )  # fmt: skip
-        return WidgetDataModel(
-            value=fig,
-            type=StandardType.PLOT,
-            title=f"Plot of {model.title}",
-        )
-
-    return configure_plot
+    factory = _pick_plot_factory(win.model_type())(win)
+    return plot_functions.errorbar(factory.table_data_model, factory.prep_kwargs)
 
 
 @register_function(
     title="Band Plot ...",
-    types=_TABLE_LIKE,
     menus=_MENU,
     command_id="builtins:plot:band",
     enablement=_NOT_AN_IMAGE,
 )
 def band_plot(win: SubWindow) -> Parametric:
     """Make a band plot from a table-like data."""
-    x0, y10, y20 = auto_select(win.to_model(), 3)
-
-    @configure_gui(
-        x=table_selection_gui_option(win, default=x0),
-        y0=table_selection_gui_option(win, default=y10),
-        y1=table_selection_gui_option(win, default=y20),
-        face={"widget_type": FacePropertyEdit},
-        edge={"widget_type": EdgePropertyEdit},
-    )
-    def configure_plot(
-        x: SelectionType | None,
-        y0: SelectionType,
-        y1: SelectionType,
-        face: dict = {},
-        edge: dict = {},
-    ) -> WidgetDataModel:
-        model = win.to_model()
-        fig = hplt.figure()
-        xarr, ydata1 = _get_xy_data(model, x, y0, fig.axes)
-        _, ydata2 = _get_xy_data(model, x, y1, fig.axes)
-        _face = next(_iter_face(face), {})
-        _edge = next(_iter_edge(edge, prefix="edge_"), {})
-        if len(ydata1) == 1 and len(ydata2) == 1:
-            name, yar1 = ydata1[0]
-            _, yar2 = ydata2[0]
-            fig.axes.band(xarr, yar1, yar2, name=name, **_face, **_edge)
-        else:
-            raise ValueError("Only one pair of y values is allowed.")
-        fig.axes.y.label = name
-        return WidgetDataModel(
-            value=fig,
-            type=StandardType.PLOT,
-            title=f"Plot of {model.title}",
-        )
-
-    return configure_plot
+    factory = _pick_plot_factory(win.model_type())(win)
+    return plot_functions.band(factory.table_data_model, factory.prep_kwargs)
 
 
 @register_function(
-    title="Histogram ...",
-    types=_TABLE_LIKE,
+    title="Histogram Plot ...",
     menus=_MENU,
     command_id="builtins:plot:histogram",
     enablement=_NOT_AN_IMAGE,
 )
 def histogram(win: SubWindow) -> Parametric:
     """Make a histogram from a table-like data."""
-    model = win.to_model()
-    shape, selections = get_table_shape_and_selections(model)
-    x0 = auto_select(model, 1)[0]
-    assert x0 is not None  # when num == 1, it must be a tuple.
+    factory = _pick_plot_factory(win.model_type())(win)
+    return plot_functions.histogram(factory.table_data_model, factory.prep_kwargs)
 
-    @configure_gui(
-        x=table_selection_gui_option(win, default=x0),
-        bins={"min": 1, "value": max(int(np.sqrt(shape[0])), 2)},
-        face={"widget_type": FacePropertyEdit},
-        edge={"widget_type": EdgePropertyEdit},
-    )
-    def configure_plot(
-        x: SelectionType | None,
-        bins: int = 10,
-        face: dict = {},
-        edge: dict = {},
-    ) -> WidgetDataModel:
-        model = win.to_model()
-        fig = hplt.figure()
-        _, yarrs = _get_xy_data(model, None, x, fig.axes)
-        for name_yarr, _face, _edge in zip(
-            yarrs, _iter_face(face), _iter_edge(edge, prefix="edge_")
-        ):
-            name, yarr = name_yarr
-            fig.axes.hist(yarr, bins=bins, name=name, **_face, **_edge)
-        fig.axes.x.label = name
-        return WidgetDataModel(
-            value=fig,
-            type=StandardType.PLOT,
-            title=f"Plot of {model.title}",
-        )
 
-    return configure_plot
+@register_function(
+    title="3D Scatter Plot ...",
+    menus=_MENU,
+    command_id="builtins:plot:scatter-plot-3d",
+    group="plot-3d",
+    enablement=_NOT_AN_IMAGE,
+)
+def scatter_plot_3d(win: SubWindow) -> Parametric:
+    """3D scatter plot."""
+    factory = _pick_plot_factory(win.model_type())(win)
+    return plot_functions.scatter_3d(factory.table_data_model, factory.prep_kwargs)
+
+
+@register_function(
+    title="3D Line Plot ...",
+    menus=_MENU,
+    command_id="builtins:plot:line-plot-3d",
+    group="plot-3d",
+    enablement=_NOT_AN_IMAGE,
+)
+def line_plot_3d(win: SubWindow) -> Parametric:
+    """3D line plot."""
+    factory = _pick_plot_factory(win.model_type())(win)
+    return plot_functions.line_3d(factory.table_data_model, factory.prep_kwargs)
 
 
 @register_function(
@@ -367,107 +255,6 @@ def edit_plot(model: WidgetDataModel) -> Parametric:
         return model
 
     return run_edit_plot
-
-
-@register_function(
-    title="3D Scatter Plot ...",
-    types=_TABLE_LIKE,
-    menus=_MENU,
-    command_id="builtins:plot:scatter-plot-3d",
-    group="plot-3d",
-    enablement=_NOT_AN_IMAGE,
-)
-def scatter_plot_3d(win: SubWindow) -> Parametric:
-    """3D scatter plot."""
-    x0, y0, z0 = auto_select(win.to_model(), 3)
-
-    @configure_gui(
-        x=table_selection_gui_option(win, default=x0),
-        y=table_selection_gui_option(win, default=y0),
-        z=table_selection_gui_option(win, default=z0),
-        face={"widget_type": FacePropertyEdit},
-        edge={"widget_type": EdgePropertyEdit},
-    )
-    def configure_plot(
-        x: SelectionType,
-        y: SelectionType,
-        z: SelectionType,
-        symbol: str = "o",
-        size: float = 6.0,
-        face: dict = {},
-        edge: dict = {},
-    ) -> WidgetDataModel:
-        model = win.to_model()
-        fig = hplt.figure_3d()
-        xarr, yarrs = _get_xy_data(model, x, y, fig.axes)
-        _, zarrs = _get_xy_data(model, x, z, fig.axes)
-
-        if len(yarrs) == 1 and len(zarrs) == 1:
-            name_y, yarr = yarrs[0]
-            name_z, zarr = zarrs[0]
-            _face = next(_iter_face(face), {})
-            _edge = next(_iter_edge(edge, prefix="edge_"), {})
-            fig.axes.scatter(
-                xarr, yarr, zarr, symbol=symbol, size=size, name=name_z, **_face,
-                **_edge
-            )  # fmt: skip
-        else:
-            raise ValueError("Only one pair of y values is allowed.")
-        fig.axes.y.label = name_y
-        fig.axes.z.label = name_z
-        return WidgetDataModel(
-            value=fig,
-            type=StandardType.PLOT,
-            title=f"Plot of {model.title}",
-        )
-
-    return configure_plot
-
-
-@register_function(
-    title="3D Line Plot ...",
-    types=_TABLE_LIKE,
-    menus=_MENU,
-    command_id="builtins:plot:line-plot-3d",
-    group="plot-3d",
-    enablement=_NOT_AN_IMAGE,
-)
-def line_plot_3d(win: SubWindow) -> Parametric:
-    """3D line plot."""
-    x0, y0, z0 = auto_select(win.to_model(), 3)
-
-    @configure_gui(
-        x=table_selection_gui_option(win, default=x0),
-        y=table_selection_gui_option(win, default=y0),
-        z=table_selection_gui_option(win, default=z0),
-        edge={"widget_type": EdgePropertyEdit, "value": _EDGE_ONLY_VALUE},
-    )
-    def configure_plot(
-        x: SelectionType,
-        y: SelectionType,
-        z: SelectionType,
-        edge: dict = {},
-    ) -> WidgetDataModel:
-        model = win.to_model()
-        fig = hplt.figure_3d()
-        xarr, yarrs = _get_xy_data(model, x, y, fig.axes)
-        _, zarrs = _get_xy_data(model, x, z, fig.axes)
-        if len(yarrs) == 1 and len(zarrs) == 1:
-            name_y, yarr = yarrs[0]
-            name_z, zarr = zarrs[0]
-            _edge = next(_iter_edge(edge), {})
-            fig.axes.plot(xarr, yarr, zarr, name=name_z, **_edge)
-        else:
-            raise ValueError("Only one pair of y values is allowed.")
-        fig.axes.y.label = name_y
-        fig.axes.z.label = name_z
-        return WidgetDataModel(
-            value=fig,
-            type=StandardType.PLOT,
-            title=f"Plot of {model.title}",
-        )
-
-    return configure_plot
 
 
 @register_function(
@@ -565,53 +352,37 @@ def concatenate_with(model: WidgetDataModel) -> Parametric:
     return run
 
 
-def _get_xy_data(
-    model: WidgetDataModel,
-    x: SelectionType | None,
-    y: SelectionType | None,
-    axes: hplt.Axes,
-) -> "tuple[np.ndarray, list[tuple[str | None, np.ndarray]]]":
-    xarr, yarrs = model_to_xy_arrays(model, x, y)
-    if xarr.name:
-        axes.x.label = xarr.name
-    return xarr.array, yarrs
+class ExcelPlotFactory(PlotFactory):
+    @classmethod
+    def model_types(cls) -> list[str]:
+        return [StandardType.EXCEL]
 
+    def table_data_model(self, current_tab: str) -> WidgetDataModel:
+        model = self.to_model()
+        meta = model.metadata
+        if isinstance(meta, DictMeta):
+            meta = meta.child_meta[current_tab]
+        else:
+            meta = TableMeta()
+        data = model.value[current_tab]
+        return WidgetDataModel(
+            value=data,
+            type=StandardType.TABLE,
+            title=f"{model.title} - {current_tab}",
+            metadata=meta,
+        )
 
-def _iter_face(face: "FacePropertyDict | dict", prefix: str = "") -> Iterator[dict]:
-    color = to_color_or_colormap(face.get("color", "gray"))
-    hatch = face.get("hatch", None)
-    if isinstance(color, Colormap):
-        cycler = itertools.cycle(color.color_stops.colors)
-    else:
-        cycler = itertools.repeat(Color(color))
-    while True:
-        yield {f"{prefix}color": next(cycler), f"{prefix}hatch": hatch}
-
-
-def _iter_edge(edge: "EdgePropertyDict | dict", prefix: str = "") -> Iterator[dict]:
-    color = to_color_or_colormap(edge.get("color", "gray"))
-    width = edge.get("width", None)
-    style = edge.get("style", None)
-    if isinstance(color, Colormap):
-        cycler = itertools.cycle(color.color_stops.colors)
-    else:
-        cycler = itertools.repeat(Color(color))
-    while True:
-        yield {
-            f"{prefix}color": next(cycler),
-            f"{prefix}width": width,
-            f"{prefix}style": style,
-        }
-
-
-def _ignore_label(
-    named_array: tuple[str | None, np.ndarray] | None,
-) -> np.ndarray | None:
-    if named_array is not None:
-        _, val = named_array
-    else:
-        val = None
-    return val
+    def prep_kwargs(self) -> dict[str, Any]:
+        model = self.to_model()
+        if not isinstance(meta := model.metadata, DictMeta):
+            raise ValueError("Metadata is not DictMeta for Excel data.")
+        name = meta.current_tab
+        if name is None:
+            keys = list(meta.child_meta.keys())
+            if not keys:
+                raise ValueError("Data is empty.")
+            name = keys[0]
+        return {"current_tab": name}
 
 
 def _get_single_axes(model: WidgetDataModel) -> hplt.SingleAxes | hplt.SingleAxes3D:

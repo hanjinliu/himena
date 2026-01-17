@@ -13,7 +13,7 @@ configure_submenu(MenuId.TOOLS_TEXT, group="20_builtins", order=0)
 
 
 @register_function(
-    types=StandardType.TEXT,
+    types=StandardType.PYTHON,
     menus=[MenuId.TOOLS_TEXT],
     keybindings="Ctrl+F5",
     command_id="builtins:text:run-script",
@@ -31,7 +31,7 @@ def run_script(model: WidgetDataModel[str]):
 @register_function(
     title="Run Main Function ...",
     menus=[MenuId.TOOLS_TEXT],
-    types=StandardType.TEXT,
+    types=StandardType.PYTHON,
     command_id="builtins:text:run-script-main",
     group="text-run",
 )
@@ -112,7 +112,7 @@ def change_encoding(model: WidgetDataModel[str]) -> Parametric:
 
 @register_function(
     title="Compile As a Function",
-    types=StandardType.TEXT,
+    types=StandardType.PYTHON,
     menus=[MenuId.TOOLS_TEXT],
     command_id="builtins:text:compile-as-function",
     group="text-run",

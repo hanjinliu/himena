@@ -68,7 +68,7 @@ def new_text_python(ui: MainWindow) -> WidgetDataModel:
     nwin = _get_n_windows(ui)
     return WidgetDataModel(
         value="",
-        type=StandardType.TEXT,
+        type=StandardType.PYTHON,
         extension_default=".py",
         title=f"Untitled-{nwin}",
         save_behavior_override=NoNeedToSave(),
