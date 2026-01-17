@@ -18,8 +18,9 @@ if TYPE_CHECKING:
     from himena.style import Theme
     from himena.widgets import MainWindow
     from himena_builtins.qt.console import ConsoleConfig
+    from qtconsole.console_widget import ConsoleWidget
 
-    class RichJupyterWidget(RichJupyterWidget, QtW.QWidget):
+    class RichJupyterWidget(RichJupyterWidget, ConsoleWidget, QtW.QWidget):
         """To fix typing problem"""
 
 # Modified from napari_console https://github.com/napari/napari-console
@@ -76,6 +77,7 @@ class QtConsole(RichJupyterWidget):
         self._matplotlib_backend_orig = os.environ.get("MPLBACKEND")
         self._ui = ui
         self.codeExecuted.connect(self.setFocus)
+        self.print_action.setShortcut("")
 
     @classmethod
     def get_or_create(cls, ui) -> QtConsole:
@@ -98,8 +100,7 @@ class QtConsole(RichJupyterWidget):
         shell = get_ipython()
 
         if shell is None:
-            # If there is no currently running instance create an in-process
-            # kernel.
+            # If there is no currently running instance create an in-process kernel.
             kernel_manager = QtInProcessKernelManager()
             kernel_manager.start_kernel(show_banner=False)
             kernel_manager.kernel.gui = "qt"
@@ -235,12 +236,6 @@ class QtConsole(RichJupyterWidget):
                 and key == QtCore.Qt.Key.Key_Period
             ):
                 return True  # prevent Ctrl+. from being processed
-            elif (
-                mod & QtCore.Qt.KeyboardModifier.ControlModifier
-                and mod & QtCore.Qt.KeyboardModifier.ShiftModifier
-                and key == QtCore.Qt.Key.Key_P
-            ):
-                return True
         return super().eventFilter(obj, event)
 
 

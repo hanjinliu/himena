@@ -655,6 +655,10 @@ QCommandLabel:hover {
     color: #[foreground];
 }
 
+QCommandPalette {
+    border-radius: 10px;
+}
+
 QClickableLabel {
     color: #[base_color];
 }
