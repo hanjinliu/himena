@@ -260,9 +260,9 @@ class QCommandListModel(QtCore.QAbstractListModel):
             return ui.model_app.registered_actions.get(command_id)
         return None
 
-    def data(self, index, role):
+    def data(self, index: QtCore.QModelIndex, role: int):
         if not index.isValid():
-            return QtCore.QVariant()
+            return None
         if role == Qt.ItemDataRole.ToolTipRole:
             if action := self._action_at(index.row()):
                 return action.tooltip
@@ -271,4 +271,4 @@ class QCommandListModel(QtCore.QAbstractListModel):
                 return action.status_tip
         elif role == Qt.ItemDataRole.DisplayRole:
             return ""
-        return QtCore.QVariant()
+        return None

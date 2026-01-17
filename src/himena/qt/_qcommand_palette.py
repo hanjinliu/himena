@@ -216,12 +216,12 @@ class QCommandMatchModel(QtCore.QAbstractListModel):
         super().__init__(parent)
         self._max_matches = 80
 
-    def rowCount(self, parent: QtCore.QModelIndex | None = None) -> int:
+    def rowCount(self, parent: QtCore.QModelIndex = None) -> int:
         return self._max_matches
 
     def data(self, index: QtCore.QModelIndex, role: int = 0) -> Any:
         """Don't show any data. Texts are rendered by the item widget."""
-        return QtCore.QVariant()
+        return None
 
     def flags(self, index: QtCore.QModelIndex) -> Qt.ItemFlag:
         return _QCOMMAND_PALETTE_FLAGS

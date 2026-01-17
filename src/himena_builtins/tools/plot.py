@@ -33,8 +33,6 @@ class PlotFactory(ABC):
         self._subwindow = subwindow
 
     def __init_subclass__(cls):
-        if cls.__name__ == "DefaultPlotFactory":
-            return  # Skip registration for the default factory
         reg = AppActionRegistry.instance()
         new_menus = [f"/model_menu:{tp}/plot" for tp in cls.model_types()]
 
@@ -76,18 +74,6 @@ class PlotFactory(ABC):
     @abstractmethod
     def prep_kwargs(self) -> dict[str, Any]:
         """Prepare keyword arguments for `table_data_model` method."""
-
-
-class DefaultPlotFactory(PlotFactory):
-    @classmethod
-    def model_types(cls) -> list[str]:
-        return [StandardType.TABLE, StandardType.ARRAY, StandardType.DATAFRAME]
-
-    def table_data_model(self) -> WidgetDataModel:
-        return self.to_model()
-
-    def prep_kwargs(self) -> dict[str, Any]:
-        return {}
 
 
 _C = TypeVar("_C", bound=type)
@@ -350,6 +336,18 @@ def concatenate_with(model: WidgetDataModel) -> Parametric:
         return model.with_value(out).with_title_numbering()
 
     return run
+
+
+class DefaultPlotFactory(PlotFactory):
+    @classmethod
+    def model_types(cls) -> list[str]:
+        return [StandardType.TABLE, StandardType.ARRAY, StandardType.DATAFRAME]
+
+    def table_data_model(self) -> WidgetDataModel:
+        return self.to_model()
+
+    def prep_kwargs(self) -> dict[str, Any]:
+        return {}
 
 
 class ExcelPlotFactory(PlotFactory):

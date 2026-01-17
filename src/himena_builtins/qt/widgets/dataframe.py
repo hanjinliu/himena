@@ -82,7 +82,7 @@ class QDataFrameModel(QtCore.QAbstractTableModel):
                 else:
                     text = str(value)
                 return text
-        return QtCore.QVariant()
+        return None
 
     def setData(self, index: QtCore.QModelIndex, value: Any, role: int = ...) -> bool:
         if role == Qt.ItemDataRole.EditRole:
