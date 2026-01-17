@@ -79,6 +79,12 @@ def _make_himena_ui(qtbot: QtBot, request: pytest.FixtureRequest):
         QApplication.processEvents()
         QApplication.processEvents()
         QApplication.processEvents()
+
+        app = QApplication.instance()
+        if app is not None:
+            app.quit()
+            app.deleteLater()
+
         gc.collect()
 
 

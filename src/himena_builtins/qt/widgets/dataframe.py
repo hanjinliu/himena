@@ -562,7 +562,7 @@ class QDataFramePlotView(QtW.QSplitter):
         layout_right = QtW.QVBoxLayout(right)
         layout_right.setContentsMargins(0, 0, 0, 0)
         layout_right.setSpacing(1)
-        layout_right.addWidget(self._plot_widget._toolbar)
+        layout_right.addWidget(self._plot_widget.control_widget())
         layout_right.addWidget(self._plot_widget)
         self._model_type = StandardType.DATAFRAME_PLOT
         self._color_cycle: list[str] | None = None
@@ -688,6 +688,7 @@ class QDataFramePlotView(QtW.QSplitter):
     def theme_changed_callback(self, theme):
         # self._table_widget.theme_changed_callback(theme)
         self._plot_widget.theme_changed_callback(theme)
+        self._table_widget.control_widget().update_theme(theme)
 
     def _update_plot_for_selections(self, old: Index, new: Index):
         axes_layout = self._plot_widget._plot_models

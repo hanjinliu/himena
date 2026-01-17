@@ -23,8 +23,8 @@ class QHistogramView(QBaseGraphicsView):
     def __init__(self, mode: Literal["clim", "thresh"] = "clim"):
         super().__init__()
         self._hist_items = [self.addItem(QHistogramItem())]
-        self._qclim_set = ClimLineItemSet()
-        self._qthresh_item = QClimLineItem(0)
+        self._qclim_set = ClimLineItemSet(self)
+        self._qthresh_item = QClimLineItem(0, self)
         self.addItem(self._qclim_set._low)
         self.addItem(self._qclim_set._high)
         self.addItem(self._qclim_set._gamma_line)
@@ -295,10 +295,10 @@ class QHistogramView(QBaseGraphicsView):
 class ClimLineItemSet(QtCore.QObject):
     valueChanged = Signal(tuple)
 
-    def __init__(self):
+    def __init__(self, parent: QHistogramView):
         super().__init__()
-        self._low = QClimLineItem(0)
-        self._high = QClimLineItem(1)
+        self._low = QClimLineItem(0, parent)
+        self._high = QClimLineItem(1, parent)
         self._gamma_line = QtW.QGraphicsLineItem()
         pen = QtGui.QPen(self._low._color, 1)
         pen.setCosmetic(True)
@@ -340,8 +340,9 @@ class QClimLineItem(QtW.QGraphicsRectItem):
     _WIDTH_NORMAL = 2
     _WIDTH_HOVER = 4
 
-    def __init__(self, x: float):
+    def __init__(self, x: float, parent: QHistogramView):
         super().__init__()
+        self._hist_view = parent
         self._color = QtGui.QColor(255, 0, 0, 150)
         pen = QtGui.QPen(self._color, self._WIDTH_NORMAL)
         pen.setCosmetic(True)
@@ -425,7 +426,8 @@ class QClimLineItem(QtW.QGraphicsRectItem):
             self._value_label.setBrush(QtGui.QBrush(QtCore.Qt.GlobalColor.white))
         text_width = self._value_label.boundingRect().width()
         pos = QtCore.QPointF(self.value(), 0)
-        if pos.x() + text_width / self._x_scale() > self._range[1]:
+        edge = self._hist_view._view_range[1]
+        if pos.x() + text_width / self._x_scale() > edge:
             pos.setX(pos.x() - (text_width + 4) / self._x_scale())
         else:
             pos.setX(pos.x() + 4 / self._x_scale())
@@ -450,6 +452,8 @@ class QClimLineItem(QtW.QGraphicsRectItem):
             self._show_value_label()
             if scene := self.scene():
                 scene.update()
+        else:
+            self._value_label.hide()
 
     def paint(self, painter, option, widget):
         painter.setPen(self._qpen)
