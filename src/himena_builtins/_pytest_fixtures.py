@@ -4,6 +4,7 @@ import warnings
 import pytest
 import gc
 from pathlib import Path
+from qtpy import PYQT6
 from qtpy.QtWidgets import QApplication
 from app_model import Application
 from pytestqt.qtbot import QtBot
@@ -80,12 +81,8 @@ def _make_himena_ui(qtbot: QtBot, request: pytest.FixtureRequest):
         QApplication.processEvents()
         QApplication.processEvents()
 
-        app = QApplication.instance()
-        if app is not None:
-            app.quit()
-            app.deleteLater()
-
-        gc.collect()
+        if not PYQT6:
+            gc.collect()
 
 
 @pytest.fixture
