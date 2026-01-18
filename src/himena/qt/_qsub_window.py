@@ -60,6 +60,10 @@ class QSubWindowArea(QtW.QMdiArea):
         except Exception:
             return None
 
+    def _prepare_close(self):
+        self.removeEventFilter(self)
+        self.area_focused.disconnect()
+
     def iter_widgets(self) -> Iterator[QtW.QWidget]:
         """Iterate over all widgets in the sub-window area."""
         for sub_window in self.subWindowList():

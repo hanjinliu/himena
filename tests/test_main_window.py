@@ -124,6 +124,20 @@ def test_dock_widget(himena_ui: MainWindow):
     del himena_ui.dock_widgets[0]
     assert len(himena_ui.dock_widgets) == 0
 
+def test_tab_focus_change(himena_ui: MainWindowQt):
+    himena_ui.show()
+    tab0 = himena_ui.add_tab(title="Tab 0")
+    tab0.add_data_model(WidgetDataModel(value="a", type="text", title="A"))
+    tab1 = himena_ui.add_tab(title="Tab 1")
+    tab1.add_data_model(WidgetDataModel(value="b", type="text", title="B"))
+    tab2 = himena_ui.add_tab(title="Tab 2")
+    tab2.add_data_model(WidgetDataModel(value="b", type="text", title="C"))
+    himena_ui.tabs.current_index = 1
+    assert himena_ui.tabs[1].current_index == 0
+    del himena_ui.tabs[2]
+    assert himena_ui.tabs.current_index == 1
+    assert himena_ui.tabs[1].current_index == 0
+
 def test_setting_widget(himena_ui: MainWindow, qtbot: QtBot):
     from himena.qt.settings import QSettingsDialog
 

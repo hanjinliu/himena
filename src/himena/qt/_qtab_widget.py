@@ -36,6 +36,7 @@ class QCloseTabToolButton(QtW.QToolButton):
         for i in range(tab_widget.count()):
             if tab_widget.widget_area(i) is self._subwindow_area:
                 main.exec_action("close-tab", user_context={"current_index": i})
+                return
 
 
 class QTabBar(QtW.QTabBar):
@@ -197,6 +198,8 @@ class QTabWidget(QtW.QTabWidget):
     def remove_tab_area(self, index: int) -> None:
         if self._is_startup_only():
             raise ValueError("No tab in the tab widget.")
+        if area := self.widget_area(index):
+            area._prepare_close()
         self.removeTab(index)
         if self.count() == 0:
             self._add_startup_widget()
