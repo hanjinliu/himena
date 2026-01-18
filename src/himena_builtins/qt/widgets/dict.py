@@ -15,6 +15,8 @@ _CMD_SELECT_TAB = "builtins:QDictOfWidgetEdit:select-tab"
 
 
 class QRightClickableTabBar(QtW.QTabBar):
+    """A QTabBar that can detect right-clicks on tabs."""
+
     right_clicked = QtCore.Signal(int)
 
     def __init__(self, parent: "QDictOfWidgetEdit") -> None:
@@ -23,12 +25,12 @@ class QRightClickableTabBar(QtW.QTabBar):
         self._is_dragging = False
         self._parent_ref = weakref.ref(parent)
 
-    def mousePressEvent(self, a0: QtGui.QMouseEvent | None) -> None:
+    def mousePressEvent(self, a0: QtGui.QMouseEvent) -> None:
         if a0 is not None and a0.button() == QtCore.Qt.MouseButton.RightButton:
             self._last_right_clicked = self.tabAt(a0.pos())
         return super().mousePressEvent(a0)
 
-    def mouseMoveEvent(self, a0):
+    def mouseMoveEvent(self, a0: QtGui.QMouseEvent) -> None:
         if self._is_dragging:
             return super().mouseMoveEvent(a0)
         if (
@@ -41,7 +43,7 @@ class QRightClickableTabBar(QtW.QTabBar):
                 return
         return super().mouseMoveEvent(a0)
 
-    def mouseReleaseEvent(self, a0: QtGui.QMouseEvent | None) -> None:
+    def mouseReleaseEvent(self, a0: QtGui.QMouseEvent) -> None:
         if a0 is not None and a0.button() == QtCore.Qt.MouseButton.RightButton:
             if self.tabAt(a0.pos()) == self._last_right_clicked:
                 self.right_clicked.emit(self._last_right_clicked)
@@ -95,7 +97,7 @@ class QDictOfWidgetEdit(QtW.QTabWidget):
             return
         else:  # Clicked on an existing tab
             menu = self._menu_for_tabbar_right_clicked(index)
-            menu.exec()
+            menu.exec(QtGui.QCursor.pos())
 
     def _menu_for_tabbar_right_clicked(self, index: int) -> QtW.QMenu:
         menu = QtW.QMenu(self)

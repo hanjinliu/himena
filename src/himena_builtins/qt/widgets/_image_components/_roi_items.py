@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from himena_builtins.qt.widgets._image_components import QImageGraphicsView
 
 
-class QRoi(QtW.QGraphicsItem):
+class _QRoiBase:
     """The base class for all ROI items."""
 
     def __repr__(self) -> str:
@@ -68,8 +68,19 @@ class QRoi(QtW.QGraphicsItem):
         """Description that will be shown in the tooltip when the ROI is drawn."""
         return ""
 
+    if TYPE_CHECKING:
 
-class QLineRoi(QtW.QGraphicsLineItem, QRoi):
+        def boundingRect(self) -> QtCore.QRectF: ...
+        def setPen(self, pen: QtGui.QPen): ...
+        def pen(self) -> QtGui.QPen: ...
+        def scene(self) -> QtW.QGraphicsScene | None: ...
+
+
+class QRoi(QtW.QGraphicsItem, _QRoiBase):
+    """The base class for all ROI items."""
+
+
+class QLineRoi(QtW.QGraphicsLineItem, _QRoiBase):
     changed = Signal(QtCore.QLineF)
 
     def toRoi(self) -> roi.LineRoi:
@@ -122,7 +133,7 @@ class QLineRoi(QtW.QGraphicsLineItem, QRoi):
         return f"start={start}<br>end={end}<br>length={length_px:.1f} px ({length:.1f} {unit})<br>angle={ang_px:.1f}° (scaled: {ang:.1f}°)"
 
 
-class QRectRoiBase(QRoi):
+class QRectRoiBase(_QRoiBase):
     changed = Signal(QtCore.QRectF)
 
 
@@ -369,9 +380,9 @@ class QRotatedRectangleRoi(QRotatedRoiBase):
         p11 = center + vx / 2 + vy / 2
         return p00, p01, p11, p10
 
-    def paint(self, painter, option, widget):
+    def paint(self, painter: QtGui.QPainter, option, widget):
         painter.setPen(self.pen())
-        painter.drawPolygon(*self._corner_points())
+        painter.drawPolygon(self._corner_points())
 
     def boundingRect(self):
         points = self._corner_points()
@@ -390,7 +401,7 @@ class QRotatedRectangleRoi(QRotatedRoiBase):
         painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
         painter.setPen(self.pen())
         painter.setTransform(self._thumbnail_transform(pixmap.width(), pixmap.height()))
-        painter.drawPolygon(*self._corner_points())
+        painter.drawPolygon(self._corner_points())
         painter.end()
         return pixmap
 
@@ -424,9 +435,9 @@ class QRotatedEllipseRoi(QRotatedRoiBase):
         points = self._point_array()
         return [QtCore.QPointF(x, y) for x, y in points]
 
-    def paint(self, painter, option, widget):
+    def paint(self, painter: QtGui.QPainter, option, widget):
         painter.setPen(self.pen())
-        painter.drawPolygon(*self._dense_points())
+        painter.drawPolygon(self._dense_points())
 
     def boundingRect(self):
         points = self._point_array()
@@ -443,7 +454,7 @@ class QRotatedEllipseRoi(QRotatedRoiBase):
         painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
         painter.setPen(self.pen())
         painter.setTransform(self._thumbnail_transform(pixmap.width(), pixmap.height()))
-        painter.drawPolygon(*self._dense_points())
+        painter.drawPolygon(self._dense_points())
         painter.end()
         return pixmap
 
@@ -451,7 +462,7 @@ class QRotatedEllipseRoi(QRotatedRoiBase):
         return "rotated ellipse"
 
 
-class QSegmentedLineRoi(QtW.QGraphicsPathItem, QRoi):
+class QSegmentedLineRoi(QtW.QGraphicsPathItem, _QRoiBase):
     changed = Signal(QtGui.QPainterPath)
 
     def __init__(self, xs: Iterable[float], ys: Iterable[float], parent=None):
@@ -730,7 +741,7 @@ class QPointsRoi(QPointRoiBase):
         return [(0.2, 0.2), (0.5, 0.8), (0.8, 0.6)]
 
 
-class QCircleRoi(QtW.QGraphicsEllipseItem, QRoi):
+class QCircleRoi(QtW.QGraphicsEllipseItem, _QRoiBase):
     changed = Signal(QtCore.QRectF)
 
     def __init__(self, x: float, y: float, radius: float, parent=None):

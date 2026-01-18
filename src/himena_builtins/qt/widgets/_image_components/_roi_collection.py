@@ -251,7 +251,7 @@ class QRoiCollection(QSimpleRoiCollection):
 
     show_rois_changed = QtCore.Signal(bool)
     show_labels_changed = QtCore.Signal(bool)
-    roi_item_clicked = QtCore.Signal(tuple, _roi_items.QRoi)
+    roi_item_clicked = QtCore.Signal(tuple, object)  # indices, QRoi
     key_pressed = QtCore.Signal(QtGui.QKeyEvent)
     key_released = QtCore.Signal(QtGui.QKeyEvent)
 
@@ -325,7 +325,7 @@ class QRoiCollection(QSimpleRoiCollection):
 
         self.setToolTip("List of ROIs in the image")
 
-    def _roi_item_clicked(self, indices: tuple[int, ...], qroi: _roi_items.QRoi):
+    def _roi_item_clicked(self, indices: tuple[int, ...], qroi: _roi_items._QRoiBase):
         view = self._image_view_ref()
         if view is None:
             return

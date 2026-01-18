@@ -78,6 +78,14 @@ class QDockWidgetTitleFrame(QtW.QFrame):
         )
 
 
+class QDockToolButton(QtW.QToolButton):
+    def __init__(self, text: str) -> None:
+        super().__init__()
+        self.setText(text)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setFixedSize(QtCore.QSize(16, 16))
+
+
 class QDockWidgetTitleBar(QtW.QWidget):
     """A custom title bar for a dock widget"""
 
@@ -94,17 +102,11 @@ class QDockWidgetTitleBar(QtW.QWidget):
         self._title_label.setContentsMargins(0, 0, 0, 0)
 
         _frame = QDockWidgetTitleFrame()
-        self._close_button = QtW.QToolButton()
-        self._close_button.setText("✕")
+        self._close_button = QDockToolButton("✕")
         self._close_button.setToolTip("Close the widget.")
-        self._close_button.setFixedSize(QtCore.QSize(16, 16))
-        self._close_button.setCursor(Qt.CursorShape.ArrowCursor)
 
-        self._whats_this_button = QtW.QToolButton()
-        self._whats_this_button.setText("?")
+        self._whats_this_button = QDockToolButton("?")
         self._whats_this_button.setToolTip("What's this widget?")
-        self._whats_this_button.setFixedSize(QtCore.QSize(16, 16))
-        self._whats_this_button.setCursor(Qt.CursorShape.ArrowCursor)
 
         _layout.addWidget(self._title_label)
         _layout.addWidget(_frame)

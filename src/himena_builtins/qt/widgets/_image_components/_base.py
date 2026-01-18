@@ -27,10 +27,11 @@ class QBaseGraphicsView(QtW.QGraphicsView):
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setMouseTracking(True)
+        self._scene = scene
 
     def addItem(self, item: _I) -> _I:
         self.scene().addItem(item)
         return item
 
     def scene(self) -> QBaseGraphicsScene:
-        return super().scene()
+        return self._scene

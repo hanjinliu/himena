@@ -85,7 +85,7 @@ class QArrayModel(QtCore.QAbstractTableModel):
         role: Qt.ItemDataRole = Qt.ItemDataRole.DisplayRole,
     ):
         if not index.isValid():
-            return QtCore.QVariant()
+            return None
         elif role == Qt.ItemDataRole.TextAlignmentRole:
             r, c = index.row(), index.column()
             if r < self.rowCount() and c < self.columnCount():
@@ -106,7 +106,7 @@ class QArrayModel(QtCore.QAbstractTableModel):
                 else:
                     text = str(value)
                 return text
-        return QtCore.QVariant()
+        return None
 
     def setData(self, index: QtCore.QModelIndex, value: Any, role: int = ...) -> bool:
         if role == Qt.ItemDataRole.EditRole:

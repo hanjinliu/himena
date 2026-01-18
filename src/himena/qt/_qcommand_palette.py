@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 _LOGGER = logging.getLogger(__name__)
 
 
-class QCommandPalette(QtW.QWidget):
+class QCommandPalette(QtW.QFrame):
     """A Qt command palette widget."""
 
     def __init__(
@@ -30,6 +30,14 @@ class QCommandPalette(QtW.QWidget):
         placeholder: str = "Search commands by name ...",
     ):
         super().__init__(parent)
+
+        # Add shadow effect
+        shadow = QtW.QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(20)
+        shadow.setXOffset(0)
+        shadow.setYOffset(5)
+        shadow.setColor(QtGui.QColor(0, 0, 0, 100))
+        self.setGraphicsEffect(shadow)
 
         self._line = QCommandLineEdit()
         self._line.setPlaceholderText(placeholder)
@@ -74,11 +82,9 @@ class QCommandPalette(QtW.QWidget):
 
     def extend_command(self, list_of_commands: Iterable[CommandRule]) -> None:
         self._list.extend_command(list_of_commands)
-        return
 
     def _on_text_changed(self, text: str) -> None:
         self._list.update_for_text(text)
-        return
 
     def _on_command_clicked(self, index: int) -> None:
         index_widget = self._list.widget_at(index)
@@ -86,7 +92,6 @@ class QCommandPalette(QtW.QWidget):
             return
         self._list.execute(index)
         self.hide()
-        return
 
     def _on_app_menus_changed(self, changed_menus: set[str]) -> None:
         """Connected to app_model.menus.menus_changed."""
@@ -114,7 +119,6 @@ class QCommandPalette(QtW.QWidget):
         for elem in palette_menu_commands:
             if elem in added:
                 self._list.all_commands.append(elem)
-        return
 
     def focusOutEvent(self, a0: QtGui.QFocusEvent | None) -> None:
         """Hide the palette when focus is lost."""
@@ -124,7 +128,6 @@ class QCommandPalette(QtW.QWidget):
     def update_context(self, parent: QMainWindow) -> None:
         """Update the context of the palette."""
         self._list._app_model_context = parent._himena_main_window._ctx_keys.dict()
-        return
 
     def show(self) -> None:
         if not self._command_initialized:
@@ -148,7 +151,6 @@ class QCommandPalette(QtW.QWidget):
 
         self.raise_()
         self._line.setFocus()
-        return
 
     def text(self) -> str:
         """Return the text in the line edit."""
@@ -216,12 +218,14 @@ class QCommandMatchModel(QtCore.QAbstractListModel):
         super().__init__(parent)
         self._max_matches = 80
 
-    def rowCount(self, parent: QtCore.QModelIndex | None = None) -> int:
+    def rowCount(self, parent: QtCore.QModelIndex = None) -> int:
         return self._max_matches
 
     def data(self, index: QtCore.QModelIndex, role: int = 0) -> Any:
         """Don't show any data. Texts are rendered by the item widget."""
-        return QtCore.QVariant()
+        if role == Qt.ItemDataRole.SizeHintRole:
+            return QtCore.QSize(200, 24)
+        return None
 
     def flags(self, index: QtCore.QModelIndex) -> Qt.ItemFlag:
         return _QCOMMAND_PALETTE_FLAGS
@@ -298,7 +302,6 @@ class QCommandLabel(QtW.QLabel):
             text = self.command_text()
             self.setText(colored(text, self.DISABLED_COLOR))
         self._disabled = disabled
-        return
 
 
 class QCommandList(QtW.QListView):
@@ -337,7 +340,6 @@ class QCommandList(QtW.QListView):
     def _on_clicked(self, index: QtCore.QModelIndex) -> None:
         if index.isValid():
             self.commandClicked.emit(index.row())
-            return
 
     def move_selection(self, dx: int) -> None:
         """Move selection by dx, dx can be negative or positive."""
@@ -345,7 +347,6 @@ class QCommandList(QtW.QListView):
         self._selected_index = max(0, self._selected_index)
         self._selected_index = min(self._current_max_index - 1, self._selected_index)
         self.update_selection()
-        return
 
     def update_selection(self) -> None:
         """Update the widget selection state based on the selected index."""
@@ -354,7 +355,6 @@ class QCommandList(QtW.QListView):
             model.setCurrentIndex(
                 index, QtCore.QItemSelectionModel.SelectionFlag.ClearAndSelect
             )
-        return
 
     @property
     def all_commands(self) -> list[CommandRule]:
@@ -366,11 +366,8 @@ class QCommandList(QtW.QListView):
         return
 
     def command_at(self, index: int) -> CommandRule | None:
-        i = index - self._index_offset
-        index_widget = self.widget_at(i)
-        if index_widget is None:
-            return None
-        return index_widget.command()
+        if index_widget := self.widget_at(index - self._index_offset):
+            return index_widget.command()
 
     def iter_widgets(self) -> Iterator[QCommandLabel]:
         """Iterate over all the index widgets."""
@@ -388,14 +385,11 @@ class QCommandList(QtW.QListView):
         """Execute the currently selected command."""
         if index is None:
             index = self._selected_index
-        command = self.command_at(index)
-        if command is None:
-            return
-        self._exec_action(command)
-        # move to the top
-        self.all_commands.remove(command)
-        self.all_commands.insert(0, command)
-        return
+        if (command := self.command_at(index)) is not None:
+            self._exec_action(command)
+            # move to the top
+            self.all_commands.remove(command)
+            self.all_commands.insert(0, command)
 
     def _exec_action(self, action: CommandRule):
         app = self._qpalette._model_app
@@ -441,7 +435,6 @@ class QCommandList(QtW.QListView):
             for r in range(row, max_matches):
                 self.setRowHidden(r, True)
         self.update_selection()
-        return
 
     def iter_top_hits(self, input_text: str) -> Iterator[CommandRule]:
         """Iterate over the top hits for the input text"""

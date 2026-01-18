@@ -1,5 +1,6 @@
 from importlib import import_module
 import sys
+import qtpy
 from himena.consts import MenuId
 from himena.widgets import MainWindow
 from himena.types import ClipboardDataModel
@@ -76,7 +77,13 @@ def show_about(ui: MainWindow) -> None:
         except ImportError:
             pass
 
-    lines.append("")
+    # add Qt dependency (such as pyqt6=6.10.0)
+    lines.append("<b>Qt:</b>")
+    lines.append(f"&nbsp;&nbsp;qtpy={qtpy.__version__}")
+    qt_ver = qtpy.PYQT_VERSION or qtpy.PYSIDE_VERSION
+    qt_api = qtpy.API
+    lines.append(f"&nbsp;&nbsp;{qt_api}={qt_ver}")
+
     lines.append("<b>Python:</b>")
     lines.append(f"&nbsp;&nbsp;{sys.version}")
     lines.append("<b>Platform:</b>")

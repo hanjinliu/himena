@@ -52,6 +52,7 @@ himena = "himena.__main__:main"
 [project.optional-dependencies]
 pyqt5 = ["pyqt5>=5.12.0"]
 pyqt6 = ["pyqt6"]
+pyside6 = ["pyside6"]
 recommended = [
   "pyqt6",
   "himena[all]",
@@ -181,12 +182,13 @@ features = ["testing"]
 run = "pytest -v --cov --cov-report=xml"
 
 [[tool.hatch.envs.test.matrix]]
-backend = ["pyqt5", "pyqt6"]
+backend = ["pyqt5", "pyqt6", "pyside6"]
 
 [tool.hatch.envs.test.overrides]
 matrix.backend.features = [
   { value = "pyqt5", if = ["pyqt5"] },
   { value = "pyqt6", if = ["pyqt6"] },
+  { value = "pyside6", if = ["pyside6"] },
 ]
 
 [project.entry-points.pytest11]

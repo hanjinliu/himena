@@ -48,6 +48,7 @@ class QTabBar(QtW.QTabBar):
 
         # "new tab" button
         tb = QtW.QToolButton()
+        tb.setCursor(Qt.CursorShape.PointingHandCursor)
         tb.setParent(parent)
         tb.setText("+")
         tb.setFont(QtGui.QFont(MonospaceFontFamily, 12, 15))

@@ -12,6 +12,7 @@ from himena.types import Size
 
 from ._base import QBaseGraphicsView, QBaseGraphicsScene
 from ._roi_items import (
+    _QRoiBase,
     QRoi,
     QRectangleRoi,
     ROI_MODES,
@@ -128,7 +129,7 @@ class QRoiLabels(QtW.QGraphicsItem):
 
 
 class QImageGraphicsView(QBaseGraphicsView):
-    roi_added = QtCore.Signal(QRoi)
+    roi_added = QtCore.Signal(object)
     roi_removed = QtCore.Signal(int)
     """Emitted when a i-th ROI *in this slice* is removed from the view."""
     roi_visibility_changed = QtCore.Signal(bool)
@@ -466,7 +467,7 @@ class QImageGraphicsView(QBaseGraphicsView):
         if item is not None:
             self._selection_handles.connect_roi(item)
             self._is_current_roi_item_not_registered = not is_registered_roi
-        if isinstance(item, QRoi):
+        if isinstance(item, _QRoiBase):
             self._current_roi_item = item
             self.current_roi_updated.emit()
             item.setVisible(True)
@@ -670,7 +671,7 @@ class QImageGraphicsView(QBaseGraphicsView):
     def _paste_roi(self) -> None:
         model = get_clipboard()
         item = model.internal_data
-        if not isinstance(item, QRoi):
+        if not isinstance(item, _QRoiBase):
             return
         sx, sy = self.transform().m11(), self.transform().m22()
         delta = QtCore.QPointF(4 / sx, 4 / sy)

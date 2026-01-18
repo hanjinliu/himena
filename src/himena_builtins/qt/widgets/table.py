@@ -201,10 +201,10 @@ class QStringArrayModel(QtCore.QAbstractTableModel):
         role: Qt.ItemDataRole = Qt.ItemDataRole.DisplayRole,
     ):
         if not index.isValid():
-            return QtCore.QVariant()
+            return None
         r, c = index.row(), index.column()
         if r >= self._arr.shape[0] or c >= self._arr.shape[1]:
-            return QtCore.QVariant()
+            return None
         r1 = self._proxy.map(r)
         if role == Qt.ItemDataRole.TextAlignmentRole:
             return Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
@@ -212,7 +212,7 @@ class QStringArrayModel(QtCore.QAbstractTableModel):
             return f"A[{r1}, {c}] = {self._arr[r1, c]}"
         if role in [Qt.ItemDataRole.EditRole, Qt.ItemDataRole.DisplayRole]:
             return str(self._arr[r1, c])
-        return QtCore.QVariant()
+        return None
 
     def setData(self, index: QtCore.QModelIndex, value: Any, role: int = ...) -> bool:
         if role == Qt.ItemDataRole.EditRole:
@@ -228,7 +228,7 @@ class QStringArrayModel(QtCore.QAbstractTableModel):
         role: int = Qt.ItemDataRole.DisplayRole,
     ):
         if role != Qt.ItemDataRole.DisplayRole:
-            return QtCore.QVariant()
+            return None
         if self._header_format is HeaderFormat.NumberZeroIndexed:
             return str(section)
         elif self._header_format is HeaderFormat.NumberOneIndexed:
