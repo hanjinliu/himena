@@ -562,7 +562,7 @@ QHeaderView:section:checked {
 }
 
 QTableView {
-    border: 1px solid gray;
+    border: 1px solid highlight_dim;
     background-color: #[background];
     color: #[foreground];
     gridline-color: #[foreground_dim];

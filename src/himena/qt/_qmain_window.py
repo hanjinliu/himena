@@ -377,6 +377,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             _LOGGER.warning("Some background workers did not finish in time.")
         self._event_loop_handler.close_socket()
         self._himena_main_window._prepare_quit()
+        self._status_bar.close()
         return super().closeEvent(event)
 
     def focusOutEvent(self, a0):
