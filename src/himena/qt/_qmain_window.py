@@ -371,13 +371,13 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         if event.spontaneous() and self._confirm_close and not self._ok_to_exit():
             event.ignore()
             return
-        if info := self._status_bar._profile_info:
-            info.close()
         try:
             WorkerBase.await_workers(500)
         except RuntimeError:
             _LOGGER.warning("Some background workers did not finish in time.")
         self._event_loop_handler.close_socket()
+        self._himena_main_window._prepare_quit()
+        self._status_bar.close()
         return super().closeEvent(event)
 
     def focusOutEvent(self, a0):
@@ -606,10 +606,18 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def _del_tab_at(self, i_tab: int) -> None:
         _LOGGER.debug("Deleting tab at index %r", i_tab)
+        # NOTE: when app has 3 tabs, ui.tabs[1] is focused, and we remove ui.tabs[2],
+        # the focused window in ui.tabs[1] will lose focus for some reason. So we
+        # connect focus back to the window below.
+        area = self._tab_widget.current_widget_area()
+        assert area is not None
+        win_cur = area.currentSubWindow()
         self._tab_widget.remove_tab_area(i_tab)
         if self._tab_widget._is_startup_only():
             self._try_show_default_status_tip()
         QtW.QApplication.processEvents()
+        if win_cur is not None and area is self._tab_widget.current_widget_area():
+            win_cur.set_is_current(True)
 
     def _rename_window_at(self, i_tab: int, i_window: int) -> None:
         tab = self._tab_widget.widget_area(i_tab)

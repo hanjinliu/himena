@@ -1303,6 +1303,13 @@ class MainWindow(Generic[_W]):
                 return None
             self._history_command.add(id)
 
+    def _prepare_quit(self):
+        """Disconnect events to prepare for quitting the application."""
+        self.tabs.changed.disconnect()
+        self.events.window_activated.disconnect()
+        self.events.tab_activated.disconnect()
+        self.events.window_added.disconnect()
+
     def _process_update_inplace(
         self,
         contexts: list[ModelParameter | WindowParameter],

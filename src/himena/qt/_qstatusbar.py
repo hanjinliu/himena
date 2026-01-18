@@ -38,6 +38,13 @@ class QStatusBar(QtW.QStatusBar):
             - QtCore.QPoint(0, info.height())
         )
 
+    def closeEvent(self, a0):
+        if self._profile_info:
+            self._profile_info.close()
+            self._profile_info.deleteLater()
+            self._profile_info = None
+        return super().closeEvent(a0)
+
 
 class QProfileInfo(QtW.QWidget):
     def __init__(self, current_profile_name: str):

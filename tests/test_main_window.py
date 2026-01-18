@@ -124,6 +124,20 @@ def test_dock_widget(himena_ui: MainWindow):
     del himena_ui.dock_widgets[0]
     assert len(himena_ui.dock_widgets) == 0
 
+def test_tab_focus_change(himena_ui: MainWindowQt):
+    himena_ui.show()
+    tab0 = himena_ui.add_tab(title="Tab 0")
+    tab0.add_data_model(WidgetDataModel(value="a", type="text", title="A"))
+    tab1 = himena_ui.add_tab(title="Tab 1")
+    tab1.add_data_model(WidgetDataModel(value="b", type="text", title="B"))
+    tab2 = himena_ui.add_tab(title="Tab 2")
+    tab2.add_data_model(WidgetDataModel(value="b", type="text", title="C"))
+    himena_ui.tabs.current_index = 1
+    assert himena_ui.tabs[1].current_index == 0
+    del himena_ui.tabs[2]
+    assert himena_ui.tabs.current_index == 1
+    assert himena_ui.tabs[1].current_index == 0
+
 def test_setting_widget(himena_ui: MainWindow, qtbot: QtBot):
     from himena.qt.settings import QSettingsDialog
 
@@ -490,3 +504,29 @@ def test_dialog(himena_ui: MainWindowQt, qtbot: QtBot):
     with user_input_response(himena_ui, {"boolean": True, "tuple_val": (5, 0.2)}):
         responce = himena_ui.exec_user_input_dialog(func)
     assert responce == "True, (5, 0.2)"
+
+def test_subwindow_mouse_move(himena_ui: MainWindowQt, qtbot: QtBot):
+    tab = himena_ui.add_tab()
+    win = tab.add_widget(QTextEdit())
+    qmain = himena_ui._backend_main_window
+    qarea = qmain._tab_widget.widget_area(0)
+    assert qarea is not None
+    sub = qarea.currentSubWindow()
+    assert sub is not None
+
+    pos0 = sub._title_bar.rect().center()
+    pos1 = pos0 + QPoint(4, 3)
+    qarea._mouse_move_event(Qt.MouseButton.LeftButton, pos0)
+    qarea._mouse_move_event(Qt.MouseButton.RightButton, pos0)
+    qarea._mouse_move_event(Qt.MouseButton.MiddleButton, pos0)
+    qarea._last_drag_pos = pos0
+    qarea._mouse_move_event(Qt.MouseButton.LeftButton, pos1)
+    qarea._mouse_move_event(Qt.MouseButton.RightButton, pos1)
+    qarea._mouse_move_event(Qt.MouseButton.MiddleButton, pos1)
+
+    qarea._mouse_release_event(Qt.MouseButton.LeftButton, pos1)
+    qarea._mouse_move_event(Qt.MouseButton.RightButton, pos0)
+    qarea._last_drag_pos = pos0
+    qarea._mouse_release_event(Qt.MouseButton.RightButton, pos1)
+
+    sub.set_single_window_mode()

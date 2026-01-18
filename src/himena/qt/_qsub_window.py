@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import Enum, auto
 from contextlib import suppress
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Iterator, cast
+from typing import TYPE_CHECKING, Callable, cast
 from logging import getLogger
 
 from app_model.types import MenuItem
@@ -60,13 +60,9 @@ class QSubWindowArea(QtW.QMdiArea):
         except Exception:
             return None
 
-    def iter_widgets(self) -> Iterator[QtW.QWidget]:
-        """Iterate over all widgets in the sub-window area."""
-        for sub_window in self.subWindowList():
-            yield sub_window.widget()
-
-    def indexOf(self, sub_window: QSubWindow) -> int:
-        return self.subWindowList().index(sub_window)
+    def _prepare_close(self):
+        self.removeEventFilter(self)
+        self.area_focused.disconnect()
 
     def relabel_widgets(self):
         """Update the 0, 1, 2... labels in the sub-windows."""
@@ -100,46 +96,49 @@ class QSubWindowArea(QtW.QMdiArea):
             self.setCursor(Qt.CursorShape.ClosedHandCursor)
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent):
-        self._mouse_move_event(event)
+        self._mouse_move_event(event.buttons(), event.pos())
 
-    def _mouse_move_event(self, event: QtGui.QMouseEvent):
+    def _mouse_move_event(self, buttons: QtCore.Qt.MouseButton, pos: QtCore.QPoint):
         if (
-            (event.buttons() & Qt.MouseButton.LeftButton)
+            (buttons & Qt.MouseButton.LeftButton)
             and (main := self._qmain_window())
             and (Qt.Key.Key_Space in main._keys_down)
-            or (event.buttons() & Qt.MouseButton.MiddleButton)
+            or (buttons & Qt.MouseButton.MiddleButton)
         ):
             if self._last_drag_pos is None:
                 return None
             # move all the windows
-            dpos = event.pos() - self._last_drag_pos
+            dpos = pos - self._last_drag_pos
             for sub_window in self.subWindowList():
                 sub_window.move(sub_window.pos() + dpos)
             self.setCursor(Qt.CursorShape.ClosedHandCursor)
 
-        self._last_drag_pos = event.pos()
+        self._last_drag_pos = pos
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
+        self._mouse_release_event(event.button(), event.pos())
+
+    def _mouse_release_event(self, button: QtCore.Qt.MouseButton, pos: QtCore.QPoint):
         # reset cursor state
         is_click = self._last_press_pos is not None and (
-            (event.pos() - self._last_press_pos).manhattanLength() < 8
+            (pos - self._last_press_pos).manhattanLength() < 8
         )
         self.setCursor(Qt.CursorShape.ArrowCursor)
         self._last_press_pos = self._last_drag_pos = None
 
         # check if any window is under the cursor
         for sub_window in self.subWindowList():
-            if sub_window.rect().contains(sub_window.mapFromParent(event.pos())):
+            if sub_window.rect().contains(sub_window.mapFromParent(pos)):
                 if not sub_window.is_current():
                     sub_window.set_is_current(True)
                     self.subWindowActivated.emit(sub_window)
                 break
         else:
-            if event.button() == Qt.MouseButton.RightButton and is_click:
+            if button == Qt.MouseButton.RightButton and is_click:
                 # context menu
                 app = get_main_window(self).model_app
                 menu = build_qmodel_menu(MenuId.FILE_NEW, app, self)
-                menu.exec(event.globalPos())
+                menu.exec(self.mapToGlobal(pos))
 
     def eventFilter(self, obj, a0: QtCore.QEvent) -> bool:
         with suppress(RuntimeError):
@@ -241,7 +240,7 @@ def _icon_for_id(icon_id: TitleIconId, color: str) -> QtGui.QIcon:
         return _get_icon(
             "material-symbols:filter-none-outline-rounded", rotate=180, color=color
         )
-    else:
+    else:  # pragma: no cover
         raise ValueError(f"Invalid icon id: {icon_id}")
 
 
