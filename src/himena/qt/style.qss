@@ -659,6 +659,10 @@ QCommandPalette {
     border-radius: 10px;
 }
 
+QGotoWidget {
+    border-radius: 10px;
+}
+
 QClickableLabel {
     color: #[base_color];
 }

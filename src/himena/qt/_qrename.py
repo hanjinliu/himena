@@ -32,6 +32,8 @@ class QRenameLineEdit(QtW.QLineEdit):
 class QTabRenameLineEdit(QRenameLineEdit):
     """LineEdit for renaming tab in QTabWidget."""
 
+    renamed = QtCore.Signal(int, str)
+
     def __init__(self, parent: QtW.QTabWidget, allow_duplicate: bool = True):
         super().__init__(parent)
         self._current_edit_index: int | None = None
@@ -48,6 +50,7 @@ class QTabRenameLineEdit(QRenameLineEdit):
                     if self.parent().tabText(i) == new_name:
                         raise ValueError(f"Duplicate tab name: {new_name!r}")
             parent.setTabText(self._current_edit_index, new_name)
+            self.renamed.emit(self._current_edit_index, new_name)
 
         parent.currentChanged.connect(self._hide_me)
         parent.tabBarDoubleClicked.connect(self.start_edit)
