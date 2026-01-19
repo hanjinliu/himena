@@ -76,6 +76,9 @@ class QDictOfWidgetEdit(QtW.QTabWidget):
         self._extension_default: str | None = None
         self.currentChanged.connect(self._on_tab_changed)
         self._line_edit = QTabRenameLineEdit(self, allow_duplicate=False)
+        self._line_edit.renamed.connect(self._on_tab_renamed)
+        self._tab_renamed = False
+        self._is_modified = False
 
         # corner widget for adding new tab
         tb = QtW.QToolButton()
@@ -88,6 +91,9 @@ class QDictOfWidgetEdit(QtW.QTabWidget):
 
     def _default_widget(self) -> QtW.QWidget:
         raise NotImplementedError
+
+    def _on_tab_renamed(self, index: int, new_name: str):
+        self._tab_renamed = True
 
     def _on_tab_changed(self, index: int):
         self.control_widget().update_for_component(self.widget(index))
@@ -112,7 +118,6 @@ class QDictOfWidgetEdit(QtW.QTabWidget):
         self.addTab(table, f"Sheet-{self.count() + 1}")
         self.setCurrentIndex(self.count() - 1)
         self.control_widget().update_for_component(table)
-        return None
 
     @validate_protocol
     def update_model(self, model: WidgetDataModel):
@@ -172,12 +177,12 @@ class QDictOfWidgetEdit(QtW.QTabWidget):
 
     @validate_protocol
     def is_modified(self) -> bool:
-        return any(self.widget(i).is_modified() for i in range(self.count()))
+        child_modified = any(self.widget(i).is_modified() for i in range(self.count()))
+        return child_modified or self._tab_renamed or self._is_modified
 
     @validate_protocol
     def set_modified(self, value: bool) -> None:
-        for i in range(self.count()):
-            self.widget(i).set_modified(value)
+        self._is_modified = value
 
     @validate_protocol
     def size_hint(self) -> tuple[int, int]:

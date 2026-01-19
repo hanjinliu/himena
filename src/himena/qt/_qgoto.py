@@ -31,7 +31,7 @@ def line_edit(text: str):
 BIG_INT = 999999
 
 
-class QGotoWidget(QtW.QWidget):
+class QGotoWidget(QtW.QFrame):
     def __init__(self, main: QMainWindow):
         super().__init__(main)
         self._main = main
@@ -40,6 +40,15 @@ class QGotoWidget(QtW.QWidget):
         layout = QtW.QVBoxLayout(self)
         layout.addWidget(self._stack)
         self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
+
+        # Add shadow effect
+        shadow = QtW.QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(20)
+        shadow.setXOffset(0)
+        shadow.setYOffset(5)
+        shadow.setColor(QtGui.QColor(0, 0, 0, 100))
+        self.setGraphicsEffect(shadow)
+
         self.close()
 
     def update_ui(self):

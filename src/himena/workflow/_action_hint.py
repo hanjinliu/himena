@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Iterator
 import uuid
+import weakref
 from himena.utils.misc import is_subtype
 from himena.workflow._base import WorkflowStep
-from himena.workflow._reader import ReaderMethod
+from himena.workflow._reader import ReaderMethod, LocalReaderMethod
 from himena.workflow._command import CommandExecution
 
 if TYPE_CHECKING:
@@ -60,28 +62,7 @@ class CommandMatcher(ActionMatcher):
 
 
 @dataclass
-class Suggestion(ABC):
-    @abstractmethod
-    def execute(self, main_window: MainWindow, step: WorkflowStep) -> None:
-        """Execute the suggestion in the given main window."""
-
-    @abstractmethod
-    def get_title(self, main_window: MainWindow) -> str:
-        """Get the title of the suggestion."""
-
-    @abstractmethod
-    def get_tooltip(self, main_window: MainWindow) -> str:
-        """Get the tooltip for the suggestion."""
-
-    def make_executor(
-        self, main_window: MainWindow, step: WorkflowStep
-    ) -> Callable[[], None]:
-        """Create an executor for the suggestion."""
-        return lambda: self.execute(main_window, step)
-
-
-@dataclass
-class CommandSuggestion(Suggestion):
+class CommandSuggestion:
     """Next action that is a command execution."""
 
     command_id: str
@@ -124,16 +105,52 @@ class CommandSuggestion(Suggestion):
             return cmd.tooltip
         return "No tooltip available for this command."
 
+    def make_executor(
+        self, main_window: MainWindow, step: WorkflowStep
+    ) -> SuggestionExecutor:
+        """Create an executor for the suggestion."""
+        return SuggestionExecutor(self, main_window, step)
+
+
+class SuggestionExecutor:
+    def __init__(
+        self, suggestion: CommandSuggestion, main_window: MainWindow, step: WorkflowStep
+    ):
+        self._suggestion = suggestion
+        self._main_window_ref = weakref.ref(main_window)
+        self._step = step
+
+    def __call__(self) -> None:
+        return self._suggestion.execute(self._get_main_window(), self._step)
+
+    def _get_main_window(self) -> MainWindow | None:
+        if ui := self._main_window_ref():
+            return ui
+        raise RuntimeError("Main window has been deleted.")
+
+    @property
+    def command_id(self) -> str:
+        """Command ID that will be executed by this suggestion."""
+        return self._suggestion.command_id
+
+    def get_user_context(self) -> dict[str, Any] | None:
+        """Unwrap and get the user context for this suggestion if any."""
+        ui = self._get_main_window()
+        if self._suggestion.user_context is not None:
+            return self._suggestion.user_context(ui, self._step)
+
 
 @dataclass
 class ActionHint:
     matcher: ActionMatcher
     """The matcher that determines if this action hint is applicable."""
-    suggestion: Suggestion
+    suggestion: CommandSuggestion
     """The next action to take if this action hint is applicable."""
 
 
 class ActionHintRegistry:
+    """Registry for managing action hints."""
+
     def __init__(self):
         self._rough_map: dict[str, list[ActionHint]] = {}
 
@@ -147,7 +164,7 @@ class ActionHintRegistry:
         for hints in self._rough_map.values():
             yield from hints
 
-    def add_hint(self, matcher: ActionMatcher, suggestion: Suggestion) -> None:
+    def add_hint(self, matcher: ActionMatcher, suggestion: CommandSuggestion) -> None:
         """Add a matcher to the registry."""
         ancestor_type = matcher.model_type.split(".")[0]
         if ancestor_type not in self._rough_map:
@@ -191,13 +208,35 @@ class ActionHintRegistry:
 
     def iter_suggestion(
         self, model_type: str, step: WorkflowStep
-    ) -> Iterator[Suggestion]:
+    ) -> Iterator[CommandSuggestion]:
         """Get a list of matchers that match the given model type and step."""
         for ancestor_type, hints in self._rough_map.items():
             if is_subtype(model_type, ancestor_type):
                 for hint in hints:
                     if hint.matcher.match(model_type, step):
                         yield hint.suggestion
+
+    def iter_executors_for_file(
+        self,
+        ui: MainWindow,
+        path: str | Path,
+        plugin: str | None = None,
+    ) -> Iterator[SuggestionExecutor]:
+        """Iterate over all the executors available for the given file path."""
+        from himena._providers import ReaderStore
+
+        ins = ReaderStore.instance()
+        reader_plugin = ins.pick(path, plugin=plugin)
+        model_type = reader_plugin.match_model_type(path)
+        if plugin := reader_plugin.plugin_str:
+            plugins = [plugin]
+        else:
+            plugins = []
+        interf = self.when_reader_used(model_type, plugins=plugins)
+        reg = interf._registry
+        meth = LocalReaderMethod(output_model_type=model_type, path=path)
+        for suggest in reg.iter_suggestion(model_type, meth):
+            yield suggest.make_executor(ui, meth)
 
 
 class ActionMatcherInterface:
@@ -236,3 +275,14 @@ class ActionMatcherInterface:
         )
         self._registry.add_hint(self._matcher, suggestion)
         return self
+
+    def iter_executables(
+        self,
+        ui: MainWindow,
+        path: str | Path,
+    ) -> Iterator[SuggestionExecutor]:
+        reg = self._registry
+        mtype = self._matcher.model_type
+        meth = LocalReaderMethod(output_model_type=mtype, path=path)
+        for suggest in reg.iter_suggestion(mtype, meth):
+            yield suggest.make_executor(ui, meth)
