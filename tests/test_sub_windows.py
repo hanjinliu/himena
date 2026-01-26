@@ -77,6 +77,8 @@ def test_builtin_commands(himena_ui: MainWindow):
     himena_ui.exec_action("builtins:new-text-python")
     with choose_one_dialog_response(himena_ui, "Copy"):
         himena_ui.exec_action("show-about")
+    win = himena_ui.read_file(Path(__file__))
+    assert win.model_type() == StandardType.PYTHON
     himena_ui.exec_action("quit")
 
 
@@ -521,7 +523,7 @@ def test_open_and_save_files(himena_ui: MainWindow, tmpdir, sample_dir: Path):
     assert isinstance(himena_ui.tabs[0][-1].to_model().workflow.last(), LocalReaderMethod)
 
     image_value = np.arange(5 * 20 * 15 * 3, dtype=np.uint8).reshape(5, 20, 15, 3)
-    himena_ui.add_object(image_value, type="array.image")
+    himena_ui.add_object(image_value, type=StandardType.IMAGE)
     save_path = tmpdir / "array_image.gif"
     with file_dialog_response(himena_ui, save_path):
         himena_ui.exec_action("save-as")

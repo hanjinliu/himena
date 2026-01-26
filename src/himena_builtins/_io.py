@@ -54,7 +54,9 @@ def _infer_separator(file_path: Path, encoding: str | None = None) -> str:
 def default_text_reader(file_path: Path) -> WidgetDataModel:
     """Read text file."""
     suffix = file_path.suffix.rstrip("~")
-    if suffix in (".html", ".htm"):
+    if suffix == ".py":
+        typ = StandardType.PYTHON
+    elif suffix in (".html", ".htm"):
         typ = StandardType.HTML
     elif suffix == ".json":
         typ = StandardType.JSON
