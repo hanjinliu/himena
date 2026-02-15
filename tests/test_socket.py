@@ -21,7 +21,7 @@ def test_remained_lock_file(capfd):
     with lock_file.open("w") as f:
         SocketInfo(port=49220).dump(f)
     prof = new_app_profile(prof_name)
-    ui, _ = _send_or_create_window(prof)
+    ui, _, _ = _send_or_create_window(prof)
     assert ui.app_profile.name == prof_name
     assert lock_file.exists()
     QtW.QApplication.processEvents()
