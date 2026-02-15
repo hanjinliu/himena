@@ -492,7 +492,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     ) -> Path | list[Path] | None:
         if allowed_extensions:
             filter_str = (
-                ";".join(ext_to_filter(ext) for ext in allowed_extensions)
+                " ".join(ext_to_filter(ext) for ext in allowed_extensions)
                 + ";;All Files (*)"
             )
         else:

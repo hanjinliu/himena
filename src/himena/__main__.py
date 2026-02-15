@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from himena.profile import AppProfile
     from himena.widgets import MainWindow
     from io import TextIOWrapper
+    from himena.plugins.install import PluginInstallResult
 
 
 def _is_testing() -> bool:
@@ -96,8 +97,14 @@ def _main(args: HimenaCliNamespace):
         "port": args.port,
     }
 
-    ui, lock = _send_or_create_window(app_prof, args.abs_path(), attrs, run=args.run)
+    ui, lock, results = _send_or_create_window(
+        app_prof, args.abs_path(), attrs, run=args.run
+    )
     if ui is not None:
+        ui.show(run=False)
+        # call plugin startup functions
+        for result in results:
+            result.call_startup(ui)
         ui.show(run=not _is_testing())
         lock.close()
         Path(lock.name).unlink(missing_ok=True)
@@ -108,8 +115,8 @@ def _send_or_create_window(
     path: str | None = None,
     attrs: dict = {},
     run: str | None = None,
-) -> "tuple[MainWindow | None, TextIOWrapper | None]":
-    from himena.core import new_window
+) -> "tuple[MainWindow | None, TextIOWrapper | None, list[PluginInstallResult]]":
+    from himena.core import _new_window_impl
 
     port = int(attrs.get("port", 49200))
     if (lock := get_unique_lock_file(prof.name, port)) is None:
@@ -120,16 +127,16 @@ def _send_or_create_window(
             files = []
         succeeded = socket_info.send_to_window(prof.name, files)
         if succeeded:
-            return None, None
+            return None, None, []
         lock = lock_file_path(prof.name, port).open("w")
 
-    ui = new_window(prof, app_attributes=attrs)
+    ui, results = _new_window_impl(prof, app_attributes=attrs)
     ui.socket_info.dump(lock)
     if path is not None:
         ui.read_file(path)
     if run is not None:
         ui.run_script(run)
-    return ui, lock
+    return ui, lock, results
 
 
 def main():

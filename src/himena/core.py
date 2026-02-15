@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from himena.widgets import MainWindow
     from himena.standards.model_meta import ImageChannel, DimAxis
     from himena.standards.roi import RoiModel, RoiListModel
+    from himena.plugins.install import PluginInstallResult
 
 _LOGGER = getLogger(__name__)
 _T = TypeVar("_T")
@@ -23,9 +24,26 @@ def new_window(
     *,
     plugins: Sequence[str] | None = None,
     backend: str = "qt",
-    app_attributes: dict[str, Any] = {},
 ) -> MainWindow:
     """Create a new window with the specified profile and additional plugins."""
+    main_window, results = _new_window_impl(
+        profile=profile,
+        plugins=plugins,
+        backend=backend,
+    )
+    # call plugin startup functions
+    for result in results:
+        result.call_startup(main_window)
+    return main_window
+
+
+def _new_window_impl(
+    profile: str | AppProfile | None = None,
+    *,
+    plugins: Sequence[str] | None = None,
+    backend: str = "qt",
+    app_attributes: dict[str, Any] = {},
+) -> tuple[MainWindow, list[PluginInstallResult]]:
     from himena._app_model import get_model_app
     from himena.widgets._initialize import init_application
     from himena.plugins.install import (
@@ -70,10 +88,7 @@ def new_window(
         for cmd, kwargs, exc in exceptions:
             _LOGGER.error("  %r (parameters=%r): %s", cmd, kwargs, exc)
 
-    # call plugin startup functions
-    for result in results:
-        result.call_startup(main_window)
-    return main_window
+    return main_window, results
 
 
 def _init_backend(backend: str):
