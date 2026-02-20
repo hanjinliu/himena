@@ -3,7 +3,7 @@ site_description: An infinitely extensible and reusable applications framework.
 repo_name: himena
 repo_url: https://github.com/hanjinliu/himena
 
-copyright: Copyright (c) 2024 - 2024 Hanjin Liu
+copyright: Copyright (c) 2024 - 2026 Hanjin Liu
 
 theme:
   name: material
