@@ -67,8 +67,6 @@ class NDObjectCollection(Generic[_T]):
                 columns.append(self.indices[:, index])
             else:
                 columns.append(-np.ones(len(self.items), dtype=np.int32))
-        print(self.indices)
-        print(columns)
         indices = np.column_stack(columns)
         return self.__class__(
             items=self.items,
