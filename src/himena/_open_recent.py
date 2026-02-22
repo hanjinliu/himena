@@ -54,24 +54,24 @@ class RecentFileManager:
         self,
         app: HimenaApplication,
         menu_id: MenuId = MenuId.FILE_RECENT,
-        file_name: str = "recent.json",
+        dir_name: str = "recent",
         group: str = ActionGroup.RECENT_FILE,
         n_history: int = 60,
     ):
         self._disposer = lambda: None
         self._app = app
         self._menu_id = menu_id
-        self._file_name = file_name
+        self._dir_name = dir_name
         self._group = group
         self._n_history = n_history
 
     def update_menu(self):
         """Update the menu for the recent file list."""
         if self._app.name in self._MENU_UPDATED:
-            return None
+            return
         file_args = self._list_args_for_recent()[::-1]
         if len(file_args) == 0:
-            return None
+            return
         num_recent = self.num_recent_in_menu()
         actions = [
             self.action_for_file(path, plugin, in_menu=i < num_recent)
@@ -96,7 +96,7 @@ class RecentFileManager:
     def _list_args_for_recent(self) -> list[tuple[_PathInput, str | None]]:
         """List the recent files (older first)."""
 
-        _path = data_dir() / self._file_name
+        _path = self.recent_json_path()
         if not _path.exists():
             return []
         with open(_path) as f:
@@ -120,9 +120,9 @@ class RecentFileManager:
     def append_recent_files(
         self,
         inputs: list[tuple[_PathInput, str | None]],
-    ) -> None:
+    ):
         """Append file(s) with plugin to the user history (duplication OK)."""
-        _path = data_dir() / self._file_name
+        _path = self.recent_json_path()
         if _path.exists():
             with open(_path) as f:
                 all_info = json.load(f)
@@ -141,17 +141,11 @@ class RecentFileManager:
             if each in existing_paths:
                 to_remove.append(existing_paths.index(each))
             if isinstance(each, list):
-                all_info.append(
-                    {"type": "group", "path": each, "plugin": plugin, "time": now}
-                )
+                all_info.append(_make_info("group", each, plugin, now))
             elif Path(each).is_file():
-                all_info.append(
-                    {"type": "file", "path": each, "plugin": plugin, "time": now}
-                )
+                all_info.append(_make_info("file", each, plugin, now))
             else:
-                all_info.append(
-                    {"type": "folder", "path": each, "plugin": plugin, "time": now}
-                )
+                all_info.append(_make_info("folder", each, plugin, now))
         for i in sorted(to_remove, reverse=True):
             all_info.pop(i)
         if len(all_info) > self._n_history:
@@ -201,6 +195,14 @@ class RecentFileManager:
             title = f"{len(file)} files such as {file[0]}"
         return id, title
 
+    def recent_json_path(self):
+        """Path to the JSON file that stores the recent file list."""
+        _data_dir = data_dir()
+        _recent_dir = _data_dir / self._dir_name
+        if not _recent_dir.exists():
+            _recent_dir.mkdir(parents=True, exist_ok=True)
+        return _recent_dir / f"{self._app.name}.json"
+
 
 class RecentSessionManager(RecentFileManager):
     _MENU_UPDATED: set[str] = set()
@@ -209,7 +211,7 @@ class RecentSessionManager(RecentFileManager):
     def default(cls, app: HimenaApplication) -> RecentSessionManager:
         return cls(
             app,
-            file_name="recent_sessions.json",
+            dir_name="recent_sessions",
             group=ActionGroup.RECENT_SESSION,
             n_history=20,
         )
@@ -250,3 +252,7 @@ def _update_annotation(obj):
 
     obj.__annotations__ = {"ui": MainWindow}
     return obj
+
+
+def _make_info(typ: str, path, plugin: str | None, now: str) -> dict:
+    return {"type": typ, "path": path, "plugin": plugin, "time": now}

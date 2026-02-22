@@ -436,13 +436,13 @@ class QImageViewBase(QtW.QSplitter):
         if model.type == StandardType.ROIS:
             # dropping ROIs to concatenate to the current ROI list
             if isinstance(roi_list := model.value, roi.RoiListModel):
+                roi_list = roi_list.coerce_dimensions(self._dims_slider.axis_names())
                 self._roi_col.extend_from_standard_roi_list(roi_list)
                 self._update_rois()
             self._is_modified = True
             return DropResult(delete_input=False)
         elif model.type == StandardType.IMAGE_LABELS:
             raise NotImplementedError("Merging with labels is not implemented yet.")
-        return None
 
     @validate_protocol
     def widget_resized_callback(self, old: Size, new: Size):

@@ -128,7 +128,6 @@ class NDObjectCollection(Generic[_T]):
         else:
             self.items = np.concatenate([self.items, other.items], axis=0)
             self.indices = np.concatenate([self.indices, other.indices], axis=0)
-        return None
 
     def pop(self, index: int) -> _T:
         item = self.items[index]
@@ -202,8 +201,10 @@ class NDObjectCollection(Generic[_T]):
     def simplified(self) -> Self:
         """Drop axis"""
         cannot_drop = np.all(self.indices >= 0, axis=0)
+        if all(cannot_drop):
+            return self
         indices = np.take(self.indices, cannot_drop, axis=1)
-        axis_names = [a for i, a in enumerate(self.axis_names) if i in cannot_drop]
+        axis_names = [a for i, a in enumerate(self.axis_names) if cannot_drop[i]]
         return self.__class__(
             items=self.items,
             indices=indices,
