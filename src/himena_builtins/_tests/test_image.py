@@ -1,3 +1,4 @@
+from typing import Callable
 import warnings
 import time
 import numpy as np
@@ -831,6 +832,28 @@ def test_rgb(himena_ui: MainWindow):
     assert view._is_rgb
     himena_ui.exec_action("builtins:image:split-channels")
     assert len(himena_ui.tabs.current()) == 4
+
+def test_split_channels_with_roi(make_himena_ui: Callable[..., MainWindow]):
+    ui = make_himena_ui("qt")
+    model = create_image_model(
+        np.zeros((3, 10, 10)),
+        axes=["c", "y", "x"],
+        rois=RoiListModel(
+            items=[
+                LineRoi(name="line", start=(1, 1), end=(4, 5)),
+                LineRoi(name="line", start=(2, 1), end=(4, 4)),
+            ],
+            indices=np.array([[0], [1]], dtype=np.int32),
+            axis_names=["c", "y", "x"]
+        ),
+        channel_axis=0,
+    )
+    ui.add_data_model(model)
+    ui.exec_action("builtins:image:split-channels")
+    assert len(ui.tabs[0]) == 4
+    assert ui.tabs[0][1].to_model().metadata.unwrap_rois().items[0].start == (1, 1)
+    assert ui.tabs[0][2].to_model().metadata.unwrap_rois().items[0].start == (2, 1)
+    assert len(ui.tabs[0][3].to_model().metadata.unwrap_rois().items) == 0
 
 def test_scale_bar(himena_ui: MainWindow):
     win = himena_ui.add_data_model(
