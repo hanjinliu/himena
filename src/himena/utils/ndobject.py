@@ -160,13 +160,19 @@ class NDObjectCollection(Generic[_T]):
         return len(self.items)
 
     def take_axis(self, axis: int, index: int):
+        """Take items where the given axis has the given index.
+
+        For example, if three indices are (0, 0), (0, 1), and (1, 0), then
+        `take_axis(0, 0)` will contain the object with 0-th and 1-st items.
+        """
         if axis >= len(self.axis_names):
             return self  # this happens when image is RGB image
         axis_name = self.axis_names[axis]
         column = self.indices[:, axis]
         ok = np.logical_or(column == index, column < 0)
         items = self.items[ok]
-        indices = self.indices[ok]
+        column_indices = [i for i in range(self.indices.shape[1]) if i != axis]
+        indices = self.indices[ok][:, column_indices]
         axis_names = [name for name in self.axis_names if name != axis_name]
         return self.__class__(
             items=items,
