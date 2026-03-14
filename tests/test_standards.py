@@ -2,6 +2,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 import math
+from himena.consts import StandardType
 from himena.standards import roi, model_meta
 from numpy.testing import assert_allclose
 from himena import create_image_model
@@ -46,3 +47,21 @@ def test_image_meta_serialize(tmpdir):
     )
     assert isinstance(model.metadata, model_meta.ImageMeta)
     model.metadata.write_metadata(Path(tmpdir))
+
+def test_dataframe_plot_meta(tmpdir):
+    items = [
+        roi.SpanRoi(start=1, end=5),
+        roi.PointRoi1D(x=2.3),
+        roi.PointsRoi1D(xs=[1.4, 2.3]),
+    ]
+    meta = model_meta.DataFramePlotMeta(
+        current_position=(0, 0),
+        plot_type="line",
+        rois=lambda: roi.RoiListModel(items=items),
+    )
+    write_dir = Path(tmpdir)
+    meta.write_metadata(write_dir)
+    assert len(meta.unwrap_rois()) == len(items)
+    out = meta.from_metadata(write_dir)
+    assert out.expected_type() == StandardType.DATAFRAME_PLOT
+    assert len(out.unwrap_rois()) == len(items)

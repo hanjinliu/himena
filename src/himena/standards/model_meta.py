@@ -125,7 +125,6 @@ class DataFramePlotMeta(DataFrameMeta):
             dir_path.joinpath("rois.roi.json").write_text(
                 json.dumps(rois.model_dump_typed())
             )
-        return None
 
     def expected_type(self):
         return StandardType.DATAFRAME_PLOT

@@ -49,6 +49,11 @@ class PointsRoi1D(Roi1D):
     def shifted(self, dx: float) -> PointsRoi1D:
         return PointsRoi1D(xs=self.xs + dx)
 
+    def model_dump_typed(self) -> dict[str, Any]:
+        out = super().model_dump_typed()
+        out["xs"] = self.xs.tolist()
+        return out
+
 
 class RectangleRoi(Roi2D):
     """ROI that represents a rectangle."""

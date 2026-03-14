@@ -36,7 +36,20 @@ elif IS_MACOS:
     MonospaceFontFamily = "Menlo"
     DefaultFontFamily = "Helvetica"
 else:
-    MonospaceFontFamily = "monospace"
+    import tkinter
+    import tkinter.font
+
+    def _get_font_family():
+        candidates = ["Noto Sans Mono", "DejaVu Sans Mono", "Ubuntu Mono"]
+        root = tkinter.Tk()  # noqa: F841
+        families = tkinter.font.families()
+        for fam in candidates:
+            if fam in families:
+                return fam
+        return "monospace"
+
+    MonospaceFontFamily = _get_font_family()
+    del _get_font_family
     DefaultFontFamily = "Sans Serif"
 
 # Allowed for profile names

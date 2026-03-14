@@ -42,7 +42,8 @@ Tutorial, developer's guide, and API reference are available at the [documentati
 `himena` is available on PyPI.
 
 ```shell
-pip install himena -U
+pip install himena -U  # minimal dependencies
+pip install himena[recommended] -U  # ready to use with recommended optional dependencies
 ```
 
 Alternatively, you can install the latest version from GitHub.
