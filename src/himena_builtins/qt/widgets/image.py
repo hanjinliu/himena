@@ -39,6 +39,8 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
     from himena.style import Theme
 
+    ComplexTransform = Callable[[NDArray[np.complexfloating]], NDArray[np.number]]
+
 
 class QImageViewBase(QtW.QSplitter):
     _executor = ThreadPoolExecutor(max_workers=1)
@@ -975,10 +977,9 @@ class QImageLabelView(QImageViewBase):
         self._current_image_slices = imgs
         if self._channels is None:
             return
+        opacity = self._get_opacity()
         for i, (imtup, ch) in enumerate(zip(imgs, self._channels)):
-            self._img_view.set_array(
-                i, ch.transform_labels(imtup.arr, opacity=self._get_opacity())
-            )
+            self._img_view.set_array(i, ch.transform_labels(imtup.arr, opacity=opacity))
         self._update_rois()
         self._img_view.set_image_blending([im.visible for im in imgs])
 
@@ -993,9 +994,7 @@ class ChannelInfo:
     def transform_image(
         self,
         arr: NDArray[np.number] | None,
-        complex_transform: Callable[
-            [NDArray[np.complexfloating]], NDArray[np.number]
-        ] = np.abs,
+        complex_transform: ComplexTransform = np.abs,
         is_rgb: bool = False,
         is_gray: bool = False,
     ) -> NDArray[np.uint8] | None:
@@ -1033,7 +1032,7 @@ class ChannelInfo:
     def transform_image_2d(
         self,
         arr: NDArray[np.number] | None,
-        complex_transform: Callable[[NDArray[np.complexfloating]], NDArray[np.number]],
+        complex_transform: ComplexTransform,
     ) -> NDArray[np.uint8] | None:
         """Transform the array to a displayable RGBA image."""
         if arr is None:
