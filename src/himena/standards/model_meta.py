@@ -370,7 +370,6 @@ class ImageMeta(ArrayMeta):
                     UserWarning,
                     stacklevel=2,
                 )
-        return None
 
     def expected_type(self):
         return StandardType.IMAGE
