@@ -603,22 +603,22 @@ class QSpreadsheet(QTableBase):
         self._delete_selection()
 
     def _copy_as_tsv(self):
-        return self._run_exec_action("builtins:table:copy-as-tsv")
+        self._run_exec_action("builtins:table:copy-as-tsv")
 
     def _copy_as_csv(self):
-        return self._run_exec_action("builtins:table:copy-as-csv")
+        self._run_exec_action("builtins:table:copy-as-csv")
 
     def _copy_as_markdown(self):
-        return self._run_exec_action("builtins:table:copy-as-markdown")
+        self._run_exec_action("builtins:table:copy-as-markdown")
 
     def _copy_as_html(self):
-        return self._run_exec_action("builtins:table:copy-as-html")
+        self._run_exec_action("builtins:table:copy-as-html")
 
     def _copy_as_rst(self):
-        return self._run_exec_action("builtins:table:copy-as-rst")
+        self._run_exec_action("builtins:table:copy-as-rst")
 
     def _run_exec_action(self, command_id: str):
-        return self._ui.exec_action(command_id, model_context=self.to_model())
+        self._ui.exec_action(command_id, model_context=self.to_model())
 
     def _paste_from_clipboard(self):
         text = QtW.QApplication.clipboard().text()
