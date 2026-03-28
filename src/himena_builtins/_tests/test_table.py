@@ -134,7 +134,7 @@ def test_copy_and_paste(himena_ui: MainWindow, qtbot: QtBot):
     tester.widget._copy_as_markdown()
     tester.widget._copy_as_html()
     tester.widget._copy_as_rst()
-    tester.widget._copy_to_clipboard()
+    tester.widget._copy_as_tsv()
     QApplication.processEvents()
     tester.widget.selection_model.current_index = (1, 1)
     tester.widget.selection_model.set_ranges([(slice(1, 2), slice(1, 2))])
@@ -145,7 +145,7 @@ def test_copy_and_paste(himena_ui: MainWindow, qtbot: QtBot):
     assert_equal(tester.widget.to_model().value, [["a", "a", "a"], ["a", "a", "a"]])
     tester.update_model(value=[["a", "b"], ["c", "bc"]])
     tester.widget.selection_model.set_ranges([(slice(0, 2), slice(0, 1))])
-    tester.widget._copy_to_clipboard()
+    tester.widget._copy_as_tsv()
     QApplication.processEvents()
     tester.widget.selection_model.set_ranges([(slice(0, 2), slice(1, 2))])
     tester.widget._paste_from_clipboard()
@@ -168,6 +168,7 @@ def test_commands(himena_ui: MainWindow):
         metadata=TableMeta(selections=[((0, 1), (1, 2))], separator=",")
     )
     himena_ui.add_data_model(model)
+    himena_ui.exec_action("builtins:table:copy-as-tsv")
     himena_ui.exec_action("builtins:table:copy-as-csv")
     himena_ui.exec_action("builtins:table:copy-as-markdown")
     himena_ui.exec_action("builtins:table:copy-as-html")
@@ -195,6 +196,32 @@ def test_commands(himena_ui: MainWindow):
     assert isinstance(widget, QSpreadsheet)
     widget._selection_model.set_ranges([(slice(1, 3), slice(1, 2))])
     widget._measure()
+
+    # test copy with multiple selections
+    model = WidgetDataModel(
+        value=[["a", "b", "c"], ["d", "e", "f"], ["g", "h", "i"]],
+        type=StandardType.TABLE,
+        metadata=TableMeta(
+            selections=[((0, 2), (0, 1)), ((0, 1), (2, 3))],
+            separator=",",
+        )
+    )
+    himena_ui.add_data_model(model)
+    himena_ui.exec_action("builtins:table:copy-as-csv")
+    himena_ui.exec_action("builtins:table:crop")
+
+    model = WidgetDataModel(
+        value=[["a", "b", "c"], ["d", "e", "f"], ["g", "h", "i"]],
+        type=StandardType.TABLE,
+        metadata=TableMeta(
+            selections=[((0, 1), (0, 2)), ((2, 3), (0, 2))],
+            separator=",",
+        )
+    )
+    himena_ui.add_data_model(model)
+    himena_ui.exec_action("builtins:table:copy-as-csv")
+    himena_ui.exec_action("builtins:table:crop")
+
 
 def test_large_data(himena_ui: MainWindow, qtbot: QtBot):
     # initialize with a large data
