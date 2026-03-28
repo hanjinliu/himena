@@ -18,18 +18,17 @@ configure_submenu(MenuId.TOOLS_TABLE, group="20_builtins", order=1)
     title="Crop Selection",
     types=StandardType.TABLE,
     menus=[MenuId.TOOLS_TABLE],
+    keybindings=["Ctrl+Shift+X"],
     command_id="builtins:table:crop",
 )
 def crop_selection(model: WidgetDataModel["np.ndarray"]) -> Parametric:
     """Crop the table data at the selection."""
 
-    @configure_gui(selection={"bind": lambda *_: _get_selection(model)})
+    @configure_gui(selection={"bind": lambda *_: _get_selections(model)})
     def run_crop_selection(
-        selection: tuple[tuple[int, int], tuple[int, int]],
+        selection: list[tuple[tuple[int, int], tuple[int, int]]],
     ) -> WidgetDataModel:
-        (r0, r1), (c0, c1) = selection
-        arr_str = model.value
-        arr_new = arr_str[r0:r1, c0:c1]
+        arr_new = _concat_selections(model.value, selection)
         out = model.with_value(arr_new)
         if isinstance(meta := out.metadata, TableMeta):
             meta.selections = []
@@ -64,6 +63,17 @@ def change_separator(model: WidgetDataModel) -> Parametric:
         return model.with_value(arr_new, metadata=meta, update_inplace=True)
 
     return change_separator
+
+
+@register_function(
+    title="Copy as TSV",
+    types=StandardType.TABLE,
+    menus=[MenuId.TOOLS_TABLE_COPY, "/model_menu/copy"],
+    command_id="builtins:table:copy-as-tsv",
+)
+def copy_as_tsv(model: WidgetDataModel) -> ClipboardDataModel:
+    """Copy the table data as TSV format."""
+    return _to_clipboard_data_model(model, "TSV")
 
 
 @register_function(
@@ -209,22 +219,39 @@ def _get_selections(
     return sels
 
 
-def _get_selection(
-    model: WidgetDataModel["np.ndarray"],
-    allow_no_selection: bool = False,
-) -> tuple[tuple[int, int], tuple[int, int]]:
-    sels = _get_selections(model)
-    if len(sels) == 0:
-        if allow_no_selection:
-            nr, nc = model.value.shape
-            return (0, nr), (0, nc)
-        raise ValueError("Table has no selection.")
-    if len(sels) != 1:
-        raise ValueError("Table must not contain multiple selections.")
-    return sels[0]
-
-
 def _to_clipboard_data_model(model: WidgetDataModel, format: str) -> ClipboardDataModel:
-    (r0, r1), (c0, c1) = _get_selection(model, allow_no_selection=True)
-    string, _, _ = table_to_text(model.value[r0:r1, c0:c1], format=format)
+    sels = _get_selections(model)
+    val_selected = _concat_selections(model.value, sels)
+    string, _, _ = table_to_text(val_selected, format=format)
     return ClipboardDataModel(text=string)
+
+
+def _rc_sizes(
+    selections: list[tuple[tuple[int, int], tuple[int, int]]],
+) -> tuple[set[int], set[int]]:
+    rsizes = set()
+    csizes = set()
+    for (r0, r1), (c0, c1) in selections:
+        rsizes.add(r1 - r0)
+        csizes.add(c1 - c0)
+    return rsizes, csizes
+
+
+def _concat_selections(
+    arr: "np.ndarray",
+    selections: list[tuple[tuple[int, int], tuple[int, int]]],
+) -> "np.ndarray":
+    if isinstance(selections, tuple):
+        selections = [selections]  # backward compatibility
+    if len(selections) == 0:
+        return arr
+    rsizes, csizes = _rc_sizes(selections)
+    if len(rsizes) == 1:
+        axis = 1
+    elif len(csizes) == 1:
+        axis = 0
+    else:
+        raise ValueError("Selections cannot be concatenated into a single selection.")
+    return np.concatenate(
+        [arr[r0:r1, c0:c1] for (r0, r1), (c0, c1) in selections], axis=axis
+    )

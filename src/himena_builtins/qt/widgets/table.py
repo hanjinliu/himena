@@ -27,7 +27,7 @@ from himena_builtins.qt.widgets._table_components import (
 )
 from himena_builtins.qt.widgets._shared import spacer_widget, index_contains
 from himena.utils.collections import UndoRedoStack
-from himena.utils import misc, proxy
+from himena.utils import proxy
 
 if TYPE_CHECKING:
     from himena.widgets import MainWindow
@@ -579,7 +579,7 @@ class QSpreadsheet(QTableBase):
     def _make_context_menu(self):
         menu = QtW.QMenu(self)
         menu.addAction("Cut", self._cut_and_copy_to_clipboard)
-        menu.addAction("Copy", self._copy_to_clipboard)
+        menu.addAction("Copy", self._copy_as_tsv)
         copy_as_menu = menu.addMenu("Copy As ...")
         copy_as_menu.addAction("CSV", self._copy_as_csv)
         copy_as_menu.addAction("Markdown", self._copy_as_markdown)
@@ -599,31 +599,26 @@ class QSpreadsheet(QTableBase):
         return menu
 
     def _cut_and_copy_to_clipboard(self):
-        self._copy_to_clipboard()
+        self._copy_as_tsv()
         self._delete_selection()
 
-    def _copy_to_clipboard(self, format="TSV"):
-        sels = self._selection_model.ranges
-        if len(sels) != 1:
-            return
-        r, c = sels[0]
-        r1 = self._map_row_index(r)
-        values = self.model()._arr[r1, c]
-        if values.size > 0:
-            string = misc.table_to_text(values, format=format)[0]
-            QtW.QApplication.clipboard().setText(string)
+    def _copy_as_tsv(self):
+        self._run_exec_action("builtins:table:copy-as-tsv")
 
     def _copy_as_csv(self):
-        return self._copy_to_clipboard("CSV")
+        self._run_exec_action("builtins:table:copy-as-csv")
 
     def _copy_as_markdown(self):
-        return self._copy_to_clipboard("Markdown")
+        self._run_exec_action("builtins:table:copy-as-markdown")
 
     def _copy_as_html(self):
-        return self._copy_to_clipboard("HTML")
+        self._run_exec_action("builtins:table:copy-as-html")
 
     def _copy_as_rst(self):
-        return self._copy_to_clipboard("rST")
+        self._run_exec_action("builtins:table:copy-as-rst")
+
+    def _run_exec_action(self, command_id: str):
+        self._ui.exec_action(command_id, model_context=self.to_model())
 
     def _paste_from_clipboard(self):
         text = QtW.QApplication.clipboard().text()
@@ -799,7 +794,7 @@ class QSpreadsheet(QTableBase):
     def keyPressEvent(self, e: QtGui.QKeyEvent):
         _ctrl = e.modifiers() & QtCore.Qt.KeyboardModifier.ControlModifier
         if _ctrl and e.key() == QtCore.Qt.Key.Key_C:
-            return self._copy_to_clipboard()
+            return self._copy_as_tsv()
         elif _ctrl and e.key() == QtCore.Qt.Key.Key_V:
             return self._paste_from_clipboard()
         elif _ctrl and e.key() == QtCore.Qt.Key.Key_X:
