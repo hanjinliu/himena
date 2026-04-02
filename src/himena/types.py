@@ -61,6 +61,7 @@ ChooseOneString: TypeAlias = Literal["buttons", "radiobuttons", "palette"]
 """Type for the parameter used in `exec_choose_one_dialog`.
 - "buttons": horizontal buttons
 - "radiobuttons": vertical radio buttons.
+- "palette": VSCode-like command palette.
 """
 
 

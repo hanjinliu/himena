@@ -18,6 +18,8 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class QCommandPaletteBase(QtW.QFrame):
+    palette_hidden = Signal()  # emitted when the palette is hidden
+
     def __init__(
         self,
         parent: QtW.QWidget | None = None,
@@ -25,6 +27,8 @@ class QCommandPaletteBase(QtW.QFrame):
         placeholder: str = "Search commands by name ...",
     ):
         super().__init__(parent)
+        self._need_initialize = True
+        self._need_update = False  # needs update before showing the palette
 
         # Add shadow effect
         shadow = QtW.QGraphicsDropShadowEffect(self)
@@ -40,6 +44,7 @@ class QCommandPaletteBase(QtW.QFrame):
         _layout = QtW.QVBoxLayout(self)
         _layout.addWidget(self._line)
         _layout.addWidget(self._list)
+        self._layout = _layout
 
         font = self.font()
         font.setPointSize(14)
@@ -52,6 +57,17 @@ class QCommandPaletteBase(QtW.QFrame):
 
         self._line.textChanged.connect(self._on_text_changed)
         self._line.editingFinished.connect(self.hide)
+        self._list.exec_requested.connect(self._on_command_exec_requested)
+
+    def _initialize_commands(self) -> None:
+        """Initialize the command list. Should be called before showing the palette."""
+
+    def _update_contents(self) -> None:
+        """Update the command list based on the current app model."""
+
+    def _on_command_exec_requested(self, cmd: CommandRule) -> None:
+        """Handle the request to execute a command."""
+        raise NotImplementedError
 
     def sizeHint(self) -> QtCore.QSize:
         return QtCore.QSize(600, 400)
@@ -67,9 +83,72 @@ class QCommandPaletteBase(QtW.QFrame):
         self.hide()
         return super().focusOutEvent(a0)
 
+    def hide(self) -> None:
+        super().hide()
+        self.palette_hidden.emit()
+
     def update_context(self, parent: QMainWindow) -> None:
         """Update the context of the palette."""
         self._list._app_model_context = parent._himena_main_window._ctx_keys.dict()
+
+    def show(self) -> None:
+        if self._need_initialize:
+            self._initialize_commands()
+            self._need_initialize = False
+        if self._need_update:
+            self._update_contents()
+            self._need_update = False
+
+        self._line.setText("")
+        self._list.update_for_text("")
+        super().show()
+        if parent := self.parentWidget():
+            parent_rect = parent.rect()
+            self_size = self.sizeHint()
+            w = min(int(parent_rect.width() * 0.8), self_size.width())
+            topleft = parent.rect().topLeft()
+            topleft.setX(int(topleft.x() + (parent_rect.width() - w) / 2))
+            topleft.setY(int(topleft.y() + 3))
+            self.move(topleft)
+            self.resize(w, self_size.height())
+
+        self.raise_()
+        self._line.setFocus()
+
+
+class QCommandPaletteDialog(QCommandPaletteBase):
+    def __init__(self, parent: QtW.QWidget | None = None):
+        super().__init__(parent, placeholder="Choose one ...")
+        self._title_label = QtW.QLabel()
+        self._layout.insertWidget(0, self._title_label)
+        self._response: Any | None = None
+        self._choice_map: dict[str, Any] = {}
+
+    def set_title_message(self, title: str, message: str) -> None:
+        if title.strip():
+            self._title_label.setText(f"<b>{title}</b>")
+            self._title_label.show()
+        else:
+            self._title_label.hide()
+        self._line.setPlaceholderText(message)
+
+    def set_choices(self, choices: list[tuple[str, Any]]):
+        self._choice_map = dict(choices)
+        commands = [CommandRule(id=txt, title=txt) for txt in self._choice_map.keys()]
+        self.extend_command(commands)
+
+    def _on_command_exec_requested(self, cmd: CommandRule) -> None:
+        self._response = self._choice_map.get(cmd.id)
+        self.hide()
+
+    def exec(self) -> Any | None:
+        """Show the palette and return the chosen response."""
+        self._response = None
+        self.show()
+        loop = QtCore.QEventLoop()
+        self.palette_hidden.connect(loop.quit)
+        loop.exec()
+        return self._response
 
 
 class QCommandPalette(QCommandPaletteBase):
@@ -86,15 +165,11 @@ class QCommandPalette(QCommandPaletteBase):
     ):
         super().__init__(parent, formatter, placeholder)
 
-        self._list.exec_requested.connect(self._on_command_exec_requested)
-
         self._menu_id = menu_id or app.menus.COMMAND_PALETTE_ID
         self._exclude = set(exclude)
-        self._command_initialized = False
 
         app.menus.menus_changed.connect(self._on_app_menus_changed)
         self._model_app = app
-        self._need_update = False  # needs update before showing the palette
 
     def _initialize_commands(self) -> None:
         app = self._model_app
@@ -105,7 +180,6 @@ class QCommandPalette(QCommandPaletteBase):
         except KeyError:
             pass
         _LOGGER.info("Command palette initialized.")
-        self._command_initialized = True
 
     def _on_command_exec_requested(self, cmd: CommandRule) -> None:
         app = self._model_app
@@ -140,29 +214,6 @@ class QCommandPalette(QCommandPaletteBase):
             if elem in added:
                 self._list.all_commands.append(elem)
 
-    def show(self) -> None:
-        if not self._command_initialized:
-            self._initialize_commands()
-        if self._need_update:
-            self._update_contents()
-            self._need_update = False
-
-        self._line.setText("")
-        self._list.update_for_text("")
-        super().show()
-        if parent := self.parentWidget():
-            parent_rect = parent.rect()
-            self_size = self.sizeHint()
-            w = min(int(parent_rect.width() * 0.8), self_size.width())
-            topleft = parent.rect().topLeft()
-            topleft.setX(int(topleft.x() + (parent_rect.width() - w) / 2))
-            topleft.setY(int(topleft.y() + 3))
-            self.move(topleft)
-            self.resize(w, self_size.height())
-
-        self.raise_()
-        self._line.setFocus()
-
 
 class QCommandLineEdit(QtW.QLineEdit):
     """The line edit used in command palette widget."""
@@ -179,29 +230,29 @@ class QCommandLineEdit(QtW.QLineEdit):
             Qt.KeyboardModifier.NoModifier,
             Qt.KeyboardModifier.KeypadModifier,
         ):
-            key = e.key()
             palette = self.commandPalette()
             list_widget = palette._list
-            if key == Qt.Key.Key_Escape:
-                palette.hide()
-                return True
-            if key == Qt.Key.Key_Return:
-                if list_widget.can_execute():
-                    list_widget.execute()
+            match e.key():
+                case Qt.Key.Key_Escape:
+                    palette.hide()
                     return True
-                return False
-            if key == Qt.Key.Key_Up:
-                list_widget.move_selection(-1)
-                return True
-            if key == Qt.Key.Key_PageUp:
-                list_widget.move_selection(-10)
-                return True
-            if key == Qt.Key.Key_Down:
-                list_widget.move_selection(1)
-                return True
-            if key == Qt.Key.Key_PageDown:
-                list_widget.move_selection(10)
-                return True
+                case Qt.Key.Key_Return:
+                    if list_widget.can_execute():
+                        list_widget.execute()
+                        return True
+                    return False
+                case Qt.Key.Key_Up:
+                    list_widget.move_selection(-1)
+                    return True
+                case Qt.Key.Key_PageUp:
+                    list_widget.move_selection(-10)
+                    return True
+                case Qt.Key.Key_Down:
+                    list_widget.move_selection(1)
+                    return True
+                case Qt.Key.Key_PageDown:
+                    list_widget.move_selection(10)
+                    return True
         return super().event(e)
 
 

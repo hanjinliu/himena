@@ -36,7 +36,7 @@ from himena.qt._qtab_widget import QTabWidget
 from himena.qt._qstatusbar import QStatusBar
 from himena.qt._qsub_window import QSubWindow, QSubWindowArea, get_subwindow
 from himena.qt._qdock_widget import QDockWidget
-from himena.qt._qcommand_palette import QCommandPalette
+from himena.qt._qcommand_palette import QCommandPalette, QCommandPaletteDialog
 from himena.qt._qcontrolstack import QControlStack
 from himena.qt._qparametric import QParametricWidget
 from himena.qt._qgoto import QGotoWidget
@@ -110,6 +110,8 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
         self._status_bar = QStatusBar(self)
         self.setStatusBar(self._status_bar)
+
+        self._command_palette_dialog = QCommandPaletteDialog(self)
 
         self._command_palette_general = QCommandPalette(
             self._app,
@@ -555,7 +557,9 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
                     title, message, choices, parent=self
                 )
             case "palette":
-                ...
+                self._command_palette_dialog.set_title_message(title, message)
+                self._command_palette_dialog.set_choices(choices)
+                return self._command_palette_dialog.exec()
             case _:
                 raise NotImplementedError
 
