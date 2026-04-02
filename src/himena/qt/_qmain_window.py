@@ -36,7 +36,7 @@ from himena.qt._qtab_widget import QTabWidget
 from himena.qt._qstatusbar import QStatusBar
 from himena.qt._qsub_window import QSubWindow, QSubWindowArea, get_subwindow
 from himena.qt._qdock_widget import QDockWidget
-from himena.qt._qcommand_palette import QCommandPalette
+from himena.qt._qcommand_palette import QCommandPalette, QCommandPaletteDialog
 from himena.qt._qcontrolstack import QControlStack
 from himena.qt._qparametric import QParametricWidget
 from himena.qt._qgoto import QGotoWidget
@@ -49,6 +49,7 @@ from himena.types import (
     WindowState,
     WindowRect,
     BackendInstructions,
+    ChooseOneString,
 )
 from himena.app import get_event_loop_handler
 from himena import widgets
@@ -109,6 +110,8 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
         self._status_bar = QStatusBar(self)
         self.setStatusBar(self._status_bar)
+
+        self._command_palette_dialog = QCommandPaletteDialog(self)
 
         self._command_palette_general = QCommandPalette(
             self._app,
@@ -403,12 +406,11 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _ok_to_exit(self) -> bool:
         ui = self._himena_main_window
         if any(win._need_ask_save_before_close() for win in ui.iter_windows()):
-            res = ui.exec_choose_one_dialog(
+            return "Exit" == ui.exec_choose_one_dialog(
                 title="Closing",
                 message="There are unsaved changes. Exit anyway?",
                 choices=["Exit", "Cancel"],
             )
-            return res == "Exit"
         return True
 
     def _update_context(self) -> None:
@@ -545,7 +547,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         title: str,
         message: str,
         choices: list[tuple[str, _V]],
-        how: Literal["buttons", "radiobuttons"] = "buttons",
+        how: ChooseOneString = "buttons",
     ) -> _V | None:
         match how:
             case "buttons":
@@ -554,6 +556,10 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
                 return QChoicesDialog.request_radiobuttons(
                     title, message, choices, parent=self
                 )
+            case "palette":
+                self._command_palette_dialog.set_title_message(title, message)
+                self._command_palette_dialog.set_choices(choices)
+                return self._command_palette_dialog.exec()
             case _:
                 raise NotImplementedError
 

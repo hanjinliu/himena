@@ -17,19 +17,18 @@ if TYPE_CHECKING:
 _LOGGER = logging.getLogger(__name__)
 
 
-class QCommandPalette(QtW.QFrame):
-    """A Qt command palette widget."""
+class QCommandPaletteBase(QtW.QFrame):
+    palette_hidden = Signal()  # emitted when the palette is hidden
 
     def __init__(
         self,
-        app: Application,
-        menu_id: str | None = None,
         parent: QtW.QWidget | None = None,
-        exclude: Iterable[str] = (),
         formatter: Callable[[Action], str] = lambda x: x.title,
         placeholder: str = "Search commands by name ...",
     ):
         super().__init__(parent)
+        self._need_initialize = True
+        self._need_update = False  # needs update before showing the palette
 
         # Add shadow effect
         shadow = QtW.QGraphicsDropShadowEffect(self)
@@ -41,15 +40,12 @@ class QCommandPalette(QtW.QFrame):
 
         self._line = QCommandLineEdit()
         self._line.setPlaceholderText(placeholder)
-        self._list = QCommandList(self, formatter)
+        self._list = QCommandList(formatter)
         _layout = QtW.QVBoxLayout(self)
         _layout.addWidget(self._line)
         _layout.addWidget(self._list)
-        self.setLayout(_layout)
+        self._layout = _layout
 
-        self._line.textChanged.connect(self._on_text_changed)
-        self._list.commandClicked.connect(self._on_command_clicked)
-        self._line.editingFinished.connect(self.hide)
         font = self.font()
         font.setPointSize(14)
         self.setFont(font)
@@ -58,24 +54,20 @@ class QCommandPalette(QtW.QFrame):
         font.setPointSize(11)
         self._list.setFont(font)
         self.hide()
-        self._menu_id = menu_id or app.menus.COMMAND_PALETTE_ID
-        self._exclude = set(exclude)
-        self._command_initialized = False
 
-        app.menus.menus_changed.connect(self._on_app_menus_changed)
-        self._model_app = app
-        self._need_update = False  # needs update before showing the palette
+        self._line.textChanged.connect(self._on_text_changed)
+        self._line.editingFinished.connect(self.hide)
+        self._list.exec_requested.connect(self._on_command_exec_requested)
 
     def _initialize_commands(self) -> None:
-        app = self._model_app
-        try:
-            menu_items = app.menus.get_menu(self._menu_id)
-            commands = collect_commands(app, menu_items, self._exclude)
-            self.extend_command(commands)
-        except KeyError:
-            pass
-        _LOGGER.info("Command palette initialized.")
-        self._command_initialized = True
+        """Initialize the command list. Should be called before showing the palette."""
+
+    def _update_contents(self) -> None:
+        """Update the command list based on the current app model."""
+
+    def _on_command_exec_requested(self, cmd: CommandRule) -> None:
+        """Handle the request to execute a command."""
+        raise NotImplementedError
 
     def sizeHint(self) -> QtCore.QSize:
         return QtCore.QSize(600, 400)
@@ -86,52 +78,23 @@ class QCommandPalette(QtW.QFrame):
     def _on_text_changed(self, text: str) -> None:
         self._list.update_for_text(text)
 
-    def _on_command_clicked(self, index: int) -> None:
-        index_widget = self._list.widget_at(index)
-        if index_widget.disabled():
-            return
-        self._list.execute(index)
-        self.hide()
-
-    def _on_app_menus_changed(self, changed_menus: set[str]) -> None:
-        """Connected to app_model.menus.menus_changed."""
-        if self._menu_id not in changed_menus:
-            return
-        self._need_update = True
-
-    def _update_contents(self) -> None:
-        app = self._model_app
-        all_cmds_set = set(self._list.all_commands)
-        try:
-            menus = app.menus.get_menu(self._menu_id)
-        except KeyError:
-            return
-        palette_menu_commands = [
-            item.command
-            for item in menus
-            if isinstance(item, MenuItem) and item.command.id not in self._exclude
-        ]
-        palette_menu_set = set(palette_menu_commands)
-        removed = all_cmds_set - palette_menu_set
-        added = palette_menu_set - all_cmds_set
-        for elem in removed:
-            self._list.all_commands.remove(elem)
-        for elem in palette_menu_commands:
-            if elem in added:
-                self._list.all_commands.append(elem)
-
     def focusOutEvent(self, a0: QtGui.QFocusEvent | None) -> None:
         """Hide the palette when focus is lost."""
         self.hide()
         return super().focusOutEvent(a0)
+
+    def hide(self) -> None:
+        super().hide()
+        self.palette_hidden.emit()
 
     def update_context(self, parent: QMainWindow) -> None:
         """Update the context of the palette."""
         self._list._app_model_context = parent._himena_main_window._ctx_keys.dict()
 
     def show(self) -> None:
-        if not self._command_initialized:
+        if self._need_initialize:
             self._initialize_commands()
+            self._need_initialize = False
         if self._need_update:
             self._update_contents()
             self._need_update = False
@@ -152,17 +115,112 @@ class QCommandPalette(QtW.QFrame):
         self.raise_()
         self._line.setFocus()
 
-    def text(self) -> str:
-        """Return the text in the line edit."""
-        return self._line.text()
+
+class QCommandPaletteDialog(QCommandPaletteBase):
+    def __init__(self, parent: QtW.QWidget | None = None):
+        super().__init__(parent, placeholder="Choose one ...")
+        self._title_label = QtW.QLabel()
+        self._layout.insertWidget(0, self._title_label)
+        self._response: Any | None = None
+        self._choice_map: dict[str, Any] = {}
+
+    def set_title_message(self, title: str, message: str) -> None:
+        if title.strip():
+            self._title_label.setText(f"<b>{title}</b>")
+            self._title_label.show()
+        else:
+            self._title_label.hide()
+        self._line.setPlaceholderText(message)
+
+    def set_choices(self, choices: list[tuple[str, Any]]):
+        self._choice_map = dict(choices)
+        commands = [CommandRule(id=txt, title=txt) for txt in self._choice_map.keys()]
+        self.extend_command(commands)
+
+    def _on_command_exec_requested(self, cmd: CommandRule) -> None:
+        self._response = self._choice_map.get(cmd.id)
+        self.hide()
+
+    def exec(self) -> Any | None:
+        """Show the palette and return the chosen response."""
+        self._response = None
+        self.show()
+        loop = QtCore.QEventLoop()
+        self.palette_hidden.connect(loop.quit)
+        loop.exec()
+        return self._response
+
+
+class QCommandPalette(QCommandPaletteBase):
+    """A Qt command palette widget."""
+
+    def __init__(
+        self,
+        app: Application,
+        menu_id: str | None = None,
+        parent: QtW.QWidget | None = None,
+        exclude: Iterable[str] = (),
+        formatter: Callable[[Action], str] = lambda x: x.title,
+        placeholder: str = "Search commands by name ...",
+    ):
+        super().__init__(parent, formatter, placeholder)
+
+        self._menu_id = menu_id or app.menus.COMMAND_PALETTE_ID
+        self._exclude = set(exclude)
+
+        app.menus.menus_changed.connect(self._on_app_menus_changed)
+        self._model_app = app
+
+    def _initialize_commands(self) -> None:
+        app = self._model_app
+        try:
+            menu_items = app.menus.get_menu(self._menu_id)
+            commands = collect_commands(app, menu_items, self._exclude)
+            self.extend_command(commands)
+        except KeyError:
+            pass
+        _LOGGER.info("Command palette initialized.")
+
+    def _on_command_exec_requested(self, cmd: CommandRule) -> None:
+        app = self._model_app
+        app.commands.execute_command(cmd.id).result()
+        self.hide()
+
+    def _on_app_menus_changed(self, changed_menus: set[str]) -> None:
+        """Connected to app_model.menus.menus_changed."""
+        if self._menu_id not in changed_menus:
+            return
+        self._need_update = True
+
+    def _update_contents(self) -> None:
+        """Update widget based on the current state of the app model."""
+        app = self._model_app
+        all_cmds_set = set(self._list.all_commands)
+        try:
+            menus = app.menus.get_menu(self._menu_id)
+        except KeyError:
+            return
+        palette_menu_commands = [
+            item.command
+            for item in menus
+            if isinstance(item, MenuItem) and item.command.id not in self._exclude
+        ]
+        palette_menu_set = set(palette_menu_commands)
+        removed = all_cmds_set - palette_menu_set
+        added = palette_menu_set - all_cmds_set
+        for elem in removed:
+            self._list.all_commands.remove(elem)
+        for elem in palette_menu_commands:
+            if elem in added:
+                self._list.all_commands.append(elem)
 
 
 class QCommandLineEdit(QtW.QLineEdit):
     """The line edit used in command palette widget."""
 
-    def commandPalette(self) -> QCommandPalette:
+    def commandPalette(self) -> QCommandPaletteBase:
         """The parent command palette widget."""
-        return cast(QCommandPalette, self.parent())
+        return cast(QCommandPaletteBase, self.parent())
 
     def event(self, e: QtCore.QEvent | None) -> bool:
         if e is None or e.type() != QtCore.QEvent.Type.KeyPress:
@@ -172,29 +230,29 @@ class QCommandLineEdit(QtW.QLineEdit):
             Qt.KeyboardModifier.NoModifier,
             Qt.KeyboardModifier.KeypadModifier,
         ):
-            key = e.key()
-            if key == Qt.Key.Key_Escape:
-                self.commandPalette().hide()
-                return True
-            if key == Qt.Key.Key_Return:
-                palette = self.commandPalette()
-                if palette._list.can_execute():
-                    self.commandPalette().hide()
-                    self.commandPalette()._list.execute()
+            palette = self.commandPalette()
+            list_widget = palette._list
+            match e.key():
+                case Qt.Key.Key_Escape:
+                    palette.hide()
                     return True
-                return False
-            if key == Qt.Key.Key_Up:
-                self.commandPalette()._list.move_selection(-1)
-                return True
-            if key == Qt.Key.Key_PageUp:
-                self.commandPalette()._list.move_selection(-10)
-                return True
-            if key == Qt.Key.Key_Down:
-                self.commandPalette()._list.move_selection(1)
-                return True
-            if key == Qt.Key.Key_PageDown:
-                self.commandPalette()._list.move_selection(10)
-                return True
+                case Qt.Key.Key_Return:
+                    if list_widget.can_execute():
+                        list_widget.execute()
+                        return True
+                    return False
+                case Qt.Key.Key_Up:
+                    list_widget.move_selection(-1)
+                    return True
+                case Qt.Key.Key_PageUp:
+                    list_widget.move_selection(-10)
+                    return True
+                case Qt.Key.Key_Down:
+                    list_widget.move_selection(1)
+                    return True
+                case Qt.Key.Key_PageDown:
+                    list_widget.move_selection(10)
+                    return True
         return super().event(e)
 
 
@@ -305,15 +363,10 @@ class QCommandLabel(QtW.QLabel):
 
 
 class QCommandList(QtW.QListView):
-    commandClicked = Signal(int)  # one of the items is clicked
+    exec_requested = Signal(CommandRule)  # request to execute the command
 
-    def __init__(
-        self,
-        palette: QCommandPalette,
-        formatter: Callable[[Action], str],
-    ) -> None:
+    def __init__(self, formatter: Callable[[Action], str]):
         super().__init__()
-        self._qpalette = palette
         self._commands = []
         self._formatter = formatter
         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -339,7 +392,11 @@ class QCommandList(QtW.QListView):
 
     def _on_clicked(self, index: QtCore.QModelIndex) -> None:
         if index.isValid():
-            self.commandClicked.emit(index.row())
+            row = index.row()
+            index_widget = self.widget_at(row)
+            if index_widget is None or index_widget.disabled():
+                return
+            self.execute(row)
 
     def move_selection(self, dx: int) -> None:
         """Move selection by dx, dx can be negative or positive."""
@@ -363,37 +420,22 @@ class QCommandList(QtW.QListView):
     def extend_command(self, commands: Iterable[Action]) -> None:
         """Extend the list of commands."""
         self.all_commands.extend(commands)
-        return
 
     def command_at(self, index: int) -> CommandRule | None:
         if index_widget := self.widget_at(index - self._index_offset):
             return index_widget.command()
 
-    def iter_widgets(self) -> Iterator[QCommandLabel]:
-        """Iterate over all the index widgets."""
-        yield from self._label_widgets
-
-    def iter_command(self) -> Iterator[CommandRule]:
-        """Iterate over all the commands registered to this command list widget."""
-        for i in range(self.model().rowCount()):
-            if not self.isRowHidden(i):
-                command = self.command_at(i)
-                if command is not None:
-                    yield command
-
     def execute(self, index: int | None = None) -> None:
         """Execute the currently selected command."""
+        if self._current_max_index == 0:
+            return
         if index is None:
             index = self._selected_index
         if (command := self.command_at(index)) is not None:
-            self._exec_action(command)
+            self.exec_requested.emit(command)
             # move to the top
             self.all_commands.remove(command)
             self.all_commands.insert(0, command)
-
-    def _exec_action(self, action: CommandRule):
-        app = self._qpalette._model_app
-        return app.commands.execute_command(action.id).result()
 
     def can_execute(self) -> bool:
         """Return true if the command can be executed."""
@@ -404,6 +446,7 @@ class QCommandList(QtW.QListView):
         return _enabled(command, self._app_model_context)
 
     def widget_at(self, index: int) -> QCommandLabel | None:
+        """Return the label widget at the given index."""
         i = index - self._index_offset
         return self.indexWidget(self.model().index(i))
 

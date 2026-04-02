@@ -10,6 +10,7 @@ from himena.types import (
     WidgetClassTuple,
     WindowRect,
     WindowState,
+    ChooseOneString,
 )
 from himena.widgets import MainWindow
 from himena.style import Theme
@@ -190,7 +191,7 @@ class MockBackend(BackendMainWindow):
         title: str,
         message: str,
         choices: list[tuple[str, _T]],
-        how: Literal["buttons", "radiobuttons"] = "buttons",
+        how: ChooseOneString = "buttons",
     ) -> _T | None:
         """Request a choice dialog and return the clicked text."""
         raise NotImplementedError

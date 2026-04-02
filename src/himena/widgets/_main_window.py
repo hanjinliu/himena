@@ -44,6 +44,7 @@ from himena.types import (
     DockAreaString,
     BackendInstructions,
     WindowRect,
+    ChooseOneString,
 )
 from himena.utils.misc import is_subtype, is_url_string, fetch_text_from_url, norm_paths
 from himena.widgets._backend import BackendMainWindow
@@ -916,21 +917,21 @@ class MainWindow(Generic[_W]):
     @overload
     def exec_choose_one_dialog(
         self,
-        title: str,
-        message: str,
-        choices: list[tuple[str, _T]],
-        how: Literal["buttons", "radiobuttons"] = "buttons",
+        title: str = "",
+        message: str = "",
+        choices: list[tuple[str, _T]] = [],
+        how: ChooseOneString = "buttons",
     ) -> _T | None: ...
     @overload
     def exec_choose_one_dialog(
         self,
-        title: str,
-        message: str,
-        choices: list[str],
-        how: Literal["buttons", "radiobuttons"] = "buttons",
+        title: str = "",
+        message: str = "",
+        choices: list[str] = [],
+        how: ChooseOneString = "buttons",
     ) -> str | None: ...
 
-    def exec_choose_one_dialog(self, title, message, choices, how="buttons"):
+    def exec_choose_one_dialog(self, title="", message="", choices=[], how="buttons"):
         """Execute a dialog to choose one from the given choices.
 
         Parameters
@@ -949,6 +950,8 @@ class MainWindow(Generic[_W]):
         if res := self._instructions.choose_one_dialog_response:
             return res()
         _choices_normed = []
+        if len(choices) == 0:
+            choices = ["OK"]
         for choice in choices:
             if isinstance(choice, str):
                 _choices_normed.append((choice, choice))

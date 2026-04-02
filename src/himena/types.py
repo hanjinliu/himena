@@ -57,6 +57,13 @@ class WindowState(StrEnum):
 DockAreaString: TypeAlias = Literal["top", "bottom", "left", "right"]
 WindowStateString: TypeAlias = Literal["min", "max", "normal", "full"]
 
+ChooseOneString: TypeAlias = Literal["buttons", "radiobuttons", "palette"]
+"""Type for the parameter used in `exec_choose_one_dialog`.
+- "buttons": horizontal buttons
+- "radiobuttons": vertical radio buttons.
+- "palette": VSCode-like command palette.
+"""
+
 
 class NewWidgetBehavior(StrEnum):
     """Behavior of adding a widget."""

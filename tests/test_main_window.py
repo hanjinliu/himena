@@ -52,6 +52,20 @@ def test_command_palette_events(himena_ui: MainWindowQt, qtbot: QtBot):
     qtbot.keyClick(qline, Qt.Key.Key_PageUp)
     qtbot.keyClick(qline, Qt.Key.Key_Escape)
 
+    # use the new command palette to test execution etc.
+    cmd_new = qmain._command_palette_new
+    cmd_new._update_contents()
+    qmain._show_command_palette("new")
+    qtbot.keyClick(cmd_new._line, Qt.Key.Key_Return)
+    qmain._show_command_palette("new")
+    cmd_new._list._on_clicked(cmd_new._list.model().index(0, 0))
+
+    # test command palette dialog
+    dlg = qmain._command_palette_dialog
+    dlg.set_choices([("Choice 1", 1), ("Choice 2", 2)])
+    dlg.set_title_message("Title", "Message")
+
+
 def test_goto_widget(himena_ui: MainWindowQt, qtbot: QtBot):
     himena_ui.show()
     tab0 = himena_ui.add_tab(title="Tab 0")
