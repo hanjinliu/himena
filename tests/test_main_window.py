@@ -12,7 +12,7 @@ import pytest
 from himena import MainWindow, _drag
 from himena.consts import StandardType
 from himena.core import create_model
-from himena.testing.dialog import user_input_response
+from himena.testing.dialog import user_input_response, user_string_input_response
 from himena.types import ClipboardDataModel, DragDataModel, FutureInfo, WidgetConstructor, WidgetType, ParametricWidgetProtocol
 from himena.qt import MainWindowQt, drag_command, drag_files
 from himena.qt._qmain_window import QMainWindow, QChoicesDialog
@@ -334,12 +334,14 @@ def test_qt_main_window(himena_ui: MainWindowQt, qtbot: QtBot):
 
 def test_qchoices_dialog(qtbot: QtBot):
     choices = [("a", 0), ("b", 1), ("c", 2)]
-    qtbot.addWidget(QChoicesDialog.make_request("title", "message", choices))
-    dlg = QChoicesDialog.make_request_radiobuttons("title", "message", choices)
-    qtbot.addWidget(dlg)
+    dlg = QChoicesDialog.new_dialog("title", "message")
+    dlg.setup_buttons(choices)
+
+    dlg = QChoicesDialog.new_dialog("title", "message")
+    dlg.setup_radiobuttons(choices)
+
     cb = dlg.set_result_callback(0, True)
     cb()
-
 
 def test_private_functions():
     from himena.widgets._main_window import _short_repr, _format_exceptions
@@ -527,6 +529,14 @@ def test_dialog(himena_ui: MainWindowQt, qtbot: QtBot):
     with user_input_response(himena_ui, {"boolean": True, "tuple_val": (5, 0.2)}):
         responce = himena_ui.exec_user_input_dialog(func)
     assert responce == "True, (5, 0.2)"
+
+    with user_string_input_response(himena_ui, "my input"):
+        responce = himena_ui.exec_user_string_input_dialog(
+            title="Input Dialog",
+            message="Please enter something:",
+        )
+    assert responce.input == "my input"
+    assert responce.choice is not None
 
 def test_subwindow_mouse_move(himena_ui: MainWindowQt, qtbot: QtBot):
     tab = himena_ui.add_tab()

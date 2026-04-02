@@ -1452,3 +1452,8 @@ class StringInputDialogResponse(Generic[_T]):
     def __iter__(self):
         yield self.input
         yield self.choice
+
+    def get_input(self) -> str | None:
+        """Get the user input if the user confirmed, otherwise None."""
+        if self.choice is not None:
+            return self.input

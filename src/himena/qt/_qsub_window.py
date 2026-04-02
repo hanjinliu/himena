@@ -556,6 +556,7 @@ class QTitleBarToolButton(QtW.QToolButton):
         self.setToolTip(tooltip)
         self.clicked.connect(callback)
         self._update_icon_color(color)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
 
     def _set_size(self, size: int):
         self.setFixedSize(size, size)
