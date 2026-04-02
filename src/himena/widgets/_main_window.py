@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from concurrent.futures import Future, ThreadPoolExecutor
 from contextlib import contextmanager
+from dataclasses import dataclass
 import inspect
 from logging import getLogger
 from pathlib import Path
@@ -919,7 +920,7 @@ class MainWindow(Generic[_W]):
         self,
         title: str = "",
         message: str = "",
-        choices: list[tuple[str, _T]] = [],
+        choices: list[tuple[str, _T]] = ...,
         how: ChooseOneString = "buttons",
     ) -> _T | None: ...
     @overload
@@ -927,40 +928,78 @@ class MainWindow(Generic[_W]):
         self,
         title: str = "",
         message: str = "",
-        choices: list[str] = [],
+        choices: list[str] = ["OK"],
         how: ChooseOneString = "buttons",
     ) -> str | None: ...
 
-    def exec_choose_one_dialog(self, title="", message="", choices=[], how="buttons"):
+    def exec_choose_one_dialog(
+        self,
+        title="",
+        message="",
+        choices=["OK"],
+        how="buttons",
+    ):
         """Execute a dialog to choose one from the given choices.
 
         Parameters
         ----------
-        title : str
+        title : str, optional
             Window title of the dialog.
-        message : str
+        message : str, optional
             HTML Message to show in the dialog.
-        choices : list
+        choices : list, optional
             List of choices. Each choice can be a string or a tuple of (text, value).
             This method will return the selected value.
         how : str, default "buttons"
             How to show the choices. "buttons" for horizontal buttons, "radiobuttons"
-            for vertically arranged radio buttons.
+            for vertically arranged radio buttons, and "palette" for a VSCode-like
+            palette dialog.
         """
         if res := self._instructions.choose_one_dialog_response:
             return res()
-        _choices_normed = []
-        if len(choices) == 0:
-            choices = ["OK"]
-        for choice in choices:
-            if isinstance(choice, str):
-                _choices_normed.append((choice, choice))
-            else:
-                text, value = choice
-                _choices_normed.append((text, value))
         return self._backend_main_window._request_choice_dialog(
-            title, message, _choices_normed, how=how
+            title, message, _norm_choices(choices), how=how
         )
+
+    @overload
+    def exec_user_string_input_dialog(
+        self,
+        title: str = "",
+        message: str = "",
+        choices: list[tuple[str, _T]] = [("Press 'Enter' to execute", True)],
+    ) -> StringInputDialogResponse[_T]: ...
+    @overload
+    def exec_user_string_input_dialog(
+        self,
+        title: str = "",
+        message: str = "",
+        choices: list[str] = ...,
+    ) -> StringInputDialogResponse[str]: ...
+    def exec_user_string_input_dialog(
+        self,
+        title="",
+        message="",
+        choices=[("Press 'Enter' to execute", True)],
+    ):
+        """Execute a dialog to get user string input.
+
+        Parameters
+        ----------
+        title : str, optional
+            Window title of the dialog.
+        message : str, optional
+            HTML Message to show in the dialog.
+        choices : list, optional
+            List of choices. Each choice can be a string or a tuple of (text, value).
+            This method will return the entered string if the user confirmed, otherwise
+            None.
+        """
+        if res := self._instructions.user_string_input_dialog_response:
+            return res()
+        out = self._backend_main_window._request_user_string_input_dialog(
+            title, message, _norm_choices(choices)
+        )
+        return StringInputDialogResponse(*out)
 
     @overload
     def exec_user_input_dialog(
@@ -1389,3 +1428,27 @@ def _tab_to_be_used(self: MainWindow) -> TabArea[_W]:
 
 def _default_dialog_func(**kwargs) -> dict[str, Any]:
     return kwargs
+
+
+def _norm_choices(choices: list, allow_zero: bool = False) -> list[tuple[str, Any]]:
+    _choices_normed = []
+    choices = choices.copy()
+    if len(choices) == 0 and not allow_zero:
+        raise ValueError("At least one choice must be given.")
+    for choice in choices:
+        if isinstance(choice, str):
+            _choices_normed.append((choice, choice))
+        else:
+            text, value = choice
+            _choices_normed.append((text, value))
+    return _choices_normed
+
+
+@dataclass
+class StringInputDialogResponse(Generic[_T]):
+    input: str
+    choice: _T | None
+
+    def __iter__(self):
+        yield self.input
+        yield self.choice

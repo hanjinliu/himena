@@ -40,7 +40,7 @@ class QCommandPaletteBase(QtW.QFrame):
 
         self._line = QCommandLineEdit()
         self._line.setPlaceholderText(placeholder)
-        self._list = QCommandList(formatter)
+        self._list = self._create_command_list(formatter)
         _layout = QtW.QVBoxLayout(self)
         _layout.addWidget(self._line)
         _layout.addWidget(self._list)
@@ -59,6 +59,13 @@ class QCommandPaletteBase(QtW.QFrame):
         self._line.editingFinished.connect(self.hide)
         self._list.exec_requested.connect(self._on_command_exec_requested)
 
+    def _create_command_list(
+        self,
+        formatter: Callable[[Action], str],
+    ) -> QCommandListBase:
+        """Create the command list widget."""
+        return QCommandList(formatter)
+
     def _initialize_commands(self) -> None:
         """Initialize the command list. Should be called before showing the palette."""
 
@@ -68,9 +75,6 @@ class QCommandPaletteBase(QtW.QFrame):
     def _on_command_exec_requested(self, cmd: CommandRule) -> None:
         """Handle the request to execute a command."""
         raise NotImplementedError
-
-    def sizeHint(self) -> QtCore.QSize:
-        return QtCore.QSize(600, 400)
 
     def extend_command(self, list_of_commands: Iterable[CommandRule]) -> None:
         self._list.extend_command(list_of_commands)
@@ -104,13 +108,13 @@ class QCommandPaletteBase(QtW.QFrame):
         super().show()
         if parent := self.parentWidget():
             parent_rect = parent.rect()
-            self_size = self.sizeHint()
-            w = min(int(parent_rect.width() * 0.8), self_size.width())
+            list_size = self._list.sizeHint()
+            w = min(int(parent_rect.width() * 0.8), list_size.width())
             topleft = parent.rect().topLeft()
             topleft.setX(int(topleft.x() + (parent_rect.width() - w) / 2))
             topleft.setY(int(topleft.y() + 3))
             self.move(topleft)
-            self.resize(w, self_size.height())
+            self.resize(w, list_size.height() + 40)
 
         self.raise_()
         self._line.setFocus()
@@ -149,6 +153,15 @@ class QCommandPaletteDialog(QCommandPaletteBase):
         self.palette_hidden.connect(loop.quit)
         loop.exec()
         return self._response
+
+
+class QUserStringInputDialog(QCommandPaletteDialog):
+    def _create_command_list(self, formatter: Callable[[Action], str]):
+        return QChoicesList(formatter)
+
+    def get_results(self) -> tuple[str, Any | None]:
+        """Return the user input response."""
+        return self._line.text(), self._response
 
 
 class QCommandPalette(QCommandPaletteBase):
@@ -267,14 +280,15 @@ def colored(text: str, color: str) -> str:
 
 
 _QCOMMAND_PALETTE_FLAGS = Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
+_QSIZE_PER_ITEM = QtCore.QSize(200, 24)
 
 
 class QCommandMatchModel(QtCore.QAbstractListModel):
     """A list model for the command palette."""
 
-    def __init__(self, parent: QtW.QWidget | None = None):
+    def __init__(self, parent: QtW.QWidget | None = None, max_matches: int = 80):
         super().__init__(parent)
-        self._max_matches = 80
+        self._max_matches = max_matches
 
     def rowCount(self, parent: QtCore.QModelIndex = None) -> int:
         return self._max_matches
@@ -282,7 +296,7 @@ class QCommandMatchModel(QtCore.QAbstractListModel):
     def data(self, index: QtCore.QModelIndex, role: int = 0) -> Any:
         """Don't show any data. Texts are rendered by the item widget."""
         if role == Qt.ItemDataRole.SizeHintRole:
-            return QtCore.QSize(200, 24)
+            return _QSIZE_PER_ITEM
         return None
 
     def flags(self, index: QtCore.QModelIndex) -> Qt.ItemFlag:
@@ -362,11 +376,12 @@ class QCommandLabel(QtW.QLabel):
         self._disabled = disabled
 
 
-class QCommandList(QtW.QListView):
+class QCommandListBase(QtW.QListView):
     exec_requested = Signal(CommandRule)  # request to execute the command
 
     def __init__(self, formatter: Callable[[Action], str]):
         super().__init__()
+        self.setMinimumHeight(10)
         self._commands = []
         self._formatter = formatter
         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -453,6 +468,29 @@ class QCommandList(QtW.QListView):
     def update_for_text(self, input_text: str) -> None:
         """Update the list to match the input text."""
         self._selected_index = 0
+        row = 0
+        for row, action in enumerate(self.all_commands):
+            self.setRowHidden(row, False)
+            lw = self.widget_at(row)
+            if lw is None:
+                self._current_max_index = row
+                break
+            lw.set_command(action, self._formatter(action))
+            lw.set_disabled(False)
+            row = row + 1
+        self._current_max_index = row
+        self.update_selection()
+
+    if TYPE_CHECKING:
+
+        def model(self) -> QCommandMatchModel: ...
+        def indexWidget(self, index: QtCore.QModelIndex) -> QCommandLabel | None: ...
+
+
+class QCommandList(QCommandListBase):
+    def update_for_text(self, input_text: str) -> None:
+        """Update the list to match the input text."""
+        self._selected_index = 0
         max_matches = self.model()._max_matches
         row = 0
         for row, action in enumerate(self.iter_top_hits(input_text)):
@@ -492,10 +530,14 @@ class QCommandList(QtW.QListView):
         for _, command in commands:
             yield command
 
-    if TYPE_CHECKING:
+    def sizeHint(self) -> QtCore.QSize:
+        return QtCore.QSize(600, 360)
 
-        def model(self) -> QCommandMatchModel: ...
-        def indexWidget(self, index: QtCore.QModelIndex) -> QCommandLabel | None: ...
+
+class QChoicesList(QCommandListBase):
+    def sizeHint(self) -> QtCore.QSize:
+        height = len(self.all_commands) * _QSIZE_PER_ITEM.height() + 8
+        return QtCore.QSize(600, height)
 
 
 def _enabled(action: CommandRule, context: Mapping[str, Any]) -> bool:

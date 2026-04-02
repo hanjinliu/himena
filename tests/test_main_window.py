@@ -39,6 +39,15 @@ def test_repr(make_himena_ui):
     repr(win)
     pretty(win)
 
+def test_norm_choices():
+    from himena.widgets._main_window import _norm_choices
+
+    assert _norm_choices(["OK"]) == [("OK", "OK")]
+    assert _norm_choices([("Yes", True), ("No", False)]) == [("Yes", True), ("No", False)]
+    with pytest.raises(ValueError):
+        _norm_choices([])
+    assert _norm_choices([], allow_zero=True) == []
+
 def test_command_palette_events(himena_ui: MainWindowQt, qtbot: QtBot):
     himena_ui.show()
     himena_ui.exec_action("show-command-palette")
