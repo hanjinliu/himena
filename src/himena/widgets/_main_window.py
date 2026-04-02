@@ -44,6 +44,7 @@ from himena.types import (
     DockAreaString,
     BackendInstructions,
     WindowRect,
+    ChooseOneString,
 )
 from himena.utils.misc import is_subtype, is_url_string, fetch_text_from_url, norm_paths
 from himena.widgets._backend import BackendMainWindow
@@ -919,7 +920,7 @@ class MainWindow(Generic[_W]):
         title: str,
         message: str,
         choices: list[tuple[str, _T]],
-        how: Literal["buttons", "radiobuttons"] = "buttons",
+        how: ChooseOneString = "buttons",
     ) -> _T | None: ...
     @overload
     def exec_choose_one_dialog(
@@ -927,7 +928,7 @@ class MainWindow(Generic[_W]):
         title: str,
         message: str,
         choices: list[str],
-        how: Literal["buttons", "radiobuttons"] = "buttons",
+        how: ChooseOneString = "buttons",
     ) -> str | None: ...
 
     def exec_choose_one_dialog(self, title, message, choices, how="buttons"):

@@ -20,6 +20,7 @@ from himena.types import (
     WindowRect,
     BackendInstructions,
     WidgetClassTuple,
+    ChooseOneString,
 )
 
 if TYPE_CHECKING:
@@ -178,7 +179,7 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
         title: str,
         message: str,
         choices: list[tuple[str, _T]],
-        how: Literal["buttons", "radiobuttons"] = "buttons",
+        how: ChooseOneString = "buttons",
     ) -> _T | None:
         """Request a choice dialog and return the clicked text."""
 

@@ -49,6 +49,7 @@ from himena.types import (
     WindowState,
     WindowRect,
     BackendInstructions,
+    ChooseOneString,
 )
 from himena.app import get_event_loop_handler
 from himena import widgets
@@ -403,12 +404,11 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _ok_to_exit(self) -> bool:
         ui = self._himena_main_window
         if any(win._need_ask_save_before_close() for win in ui.iter_windows()):
-            res = ui.exec_choose_one_dialog(
+            return "Exit" == ui.exec_choose_one_dialog(
                 title="Closing",
                 message="There are unsaved changes. Exit anyway?",
                 choices=["Exit", "Cancel"],
             )
-            return res == "Exit"
         return True
 
     def _update_context(self) -> None:
@@ -545,7 +545,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         title: str,
         message: str,
         choices: list[tuple[str, _V]],
-        how: Literal["buttons", "radiobuttons"] = "buttons",
+        how: ChooseOneString = "buttons",
     ) -> _V | None:
         match how:
             case "buttons":
@@ -554,6 +554,8 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
                 return QChoicesDialog.request_radiobuttons(
                     title, message, choices, parent=self
                 )
+            case "palette":
+                ...
             case _:
                 raise NotImplementedError
 
