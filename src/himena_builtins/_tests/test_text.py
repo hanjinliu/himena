@@ -76,6 +76,9 @@ def test_text_changing_language(qtbot: QtBot):
     QtW.QApplication.processEvents()
 
     text_edit._on_tab_size_changed(2)
+    text_edit._control._wordwrap_changed("No Wrap")
+    text_edit._control._wordwrap_changed("Word Wrap")
+    text_edit._control._wordwrap_changed("Wrap Anywhere")
 
 def test_find_text(qtbot: QtBot):
     model = WidgetDataModel(value="a\nb\nc\nbc", type="text")

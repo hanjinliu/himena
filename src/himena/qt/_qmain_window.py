@@ -1026,6 +1026,8 @@ def _prep_menubar_map(app: HimenaApplication) -> dict[str, str]:
 def _init_tool_bar(tbar: QModelToolBar):
     tbar.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.PreventContextMenu)
     tbar.setMovable(False)
+    for tbtn in tbar.findChildren(QtW.QToolButton):
+        tbtn.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
 
 
 def _update_toolbtn_color(toolbar: QModelToolBar, icon_color: str):

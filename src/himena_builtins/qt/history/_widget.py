@@ -271,4 +271,5 @@ class QCommandListModel(QtCore.QAbstractListModel):
                 return action.status_tip
         elif role == Qt.ItemDataRole.DisplayRole:
             return ""
-        return None
+        elif role == Qt.ItemDataRole.SizeHintRole:
+            return QtCore.QSize(100, 22)

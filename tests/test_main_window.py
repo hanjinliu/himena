@@ -73,7 +73,7 @@ def test_command_palette_events(himena_ui: MainWindowQt, qtbot: QtBot):
     dlg = qmain._command_palette_dialog
     dlg.set_choices([("Choice 1", 1), ("Choice 2", 2)])
     dlg.set_title_message("Title", "Message")
-
+    qtbot.keyClick(dlg._line, Qt.Key.Key_C)
 
 def test_goto_widget(himena_ui: MainWindowQt, qtbot: QtBot):
     himena_ui.show()
