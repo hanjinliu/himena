@@ -947,7 +947,7 @@ class MainWindow(Generic[_W]):
         title : str, optional
             Window title of the dialog.
         message : str, optional
-            HTML Message to show in the dialog.
+            HTML message to show in the dialog.
         choices : list, optional
             List of choices. Each choice can be a string or a tuple of (text, value).
             This method will return the selected value.
@@ -984,12 +984,15 @@ class MainWindow(Generic[_W]):
     ):
         """Execute a dialog to get user string input.
 
+        Calling this method will block the current thread until the user confirms or
+        cancels the command palette dialog.
+
         Parameters
         ----------
         title : str, optional
             Window title of the dialog.
         message : str, optional
-            HTML Message to show in the dialog.
+            Message to show in the dialog.
         choices : list, optional
             List of choices. Each choice can be a string or a tuple of (text, value).
             This method will return the entered string if the user confirmed, otherwise
@@ -1108,7 +1111,26 @@ class MainWindow(Generic[_W]):
         start_path=None,
         group: str | None = None,
     ):
-        """Execute a file dialog to get file path(s)."""
+        """Execute a file dialog to get file path(s).
+
+        Parameters
+        ----------
+        mode : str, default "r"
+            Mode of the file dialog. "r" for open file, "d" for open directory, "w" for
+            save file, and "rm" for open multiple files.
+        extension_default : str, optional
+            Default extension to add when saving a file without extension.
+        allowed_extensions : list of str, optional
+            List of allowed extensions. If given, user will only be able to select files
+            with these extensions.
+        caption : str, optional
+            Caption of the file dialog.
+        start_path : str or Path, optional
+            Initial path of the file dialog. If not given, the last path in the same
+            group will be used.
+        group : str, optional
+            Group name for the file dialog history.
+        """
         if mode not in {"r", "d", "w", "rm"}:
             raise ValueError(f"`mode` must be 'r', 'd', 'w' or 'rm', got {mode!r}.")
         if res := self._instructions.file_dialog_response:
@@ -1141,8 +1163,7 @@ class MainWindow(Generic[_W]):
         return result
 
     def show(self, run: bool = False) -> None:
-        """
-        Show the main window.
+        """Show the main window.
 
         Parameters
         ----------

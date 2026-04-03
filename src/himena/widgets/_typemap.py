@@ -5,6 +5,8 @@ from himena.consts import StandardType
 
 
 class ObjectTypeMap:
+    """Type map object to determine the widget data model type for a given value."""
+
     def __init__(self):
         self._functions = []
 
