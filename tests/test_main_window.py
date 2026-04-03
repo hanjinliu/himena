@@ -12,7 +12,7 @@ import pytest
 from himena import MainWindow, _drag
 from himena.consts import StandardType
 from himena.core import create_model
-from himena.testing.dialog import user_input_response, user_string_input_response
+from himena.testing.dialog import user_input_response, user_string_input_response, choose_one_dialog_response
 from himena.types import ClipboardDataModel, DragDataModel, FutureInfo, WidgetConstructor, WidgetType, ParametricWidgetProtocol
 from himena.qt import MainWindowQt, drag_command, drag_files
 from himena.qt._qmain_window import QMainWindow, QChoicesDialog
@@ -443,11 +443,12 @@ def test_action_hint(himena_ui: MainWindowQt, sample_dir: Path):
     assert len(menu.actions()) == 3 + len(suggestions)
 
     repr(himena_ui.action_hint_registry)
-    for hint in himena_ui.action_hint_registry.iter_all():
-        himena_ui.current_window = win
-        hint.suggestion.get_title(himena_ui)
-        hint.suggestion.get_tooltip(himena_ui)
-        hint.suggestion.execute(himena_ui, win.to_model().workflow.last())
+    with choose_one_dialog_response(himena_ui, ";"):
+        for hint in himena_ui.action_hint_registry.iter_all():
+            himena_ui.current_window = win
+            hint.suggestion.get_title(himena_ui)
+            hint.suggestion.get_tooltip(himena_ui)
+            hint.suggestion.execute(himena_ui, win.to_model().workflow.last())
 
 def test_custom_object_type_map(make_himena_ui):
     himena_ui: MainWindow = make_himena_ui("mock")
