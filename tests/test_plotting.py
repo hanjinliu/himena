@@ -360,7 +360,7 @@ def test_plot_components(himena_ui: MainWindow):
     fig.plot(np.arange(10), np.sin(np.arange(10)), name="sin(x)")
     fig.set_legend(title="Title")
     fig.x.set_ticks([0, 5, 10], ["zero", "five", "ten"])
-    himena_ui.add_object(fig, type=StandardType.PLOT)
+    himena_ui.add_object(fig)
 
 def test_plot_excel(himena_ui: MainWindow):
     from himena_builtins.qt.widgets.excel import QExcelEdit

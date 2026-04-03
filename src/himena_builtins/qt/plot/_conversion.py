@@ -78,7 +78,8 @@ def update_mpl_axes_by_model(ax: hplt.Axes, ax_mpl: plt.Axes):
             title, style = _parse_styled_text(legend.title)
             leg.set_title(title, **style)
         elif isinstance(legend.title, str):
-            leg.set_title(legend.title, color=ax.axis_color)
+            leg.set_title(legend.title)
+            leg.get_title().set_color(ax.axis_color)
 
 
 def _convert_axes_3d(ax: hplt.Axes3D, ax_mpl: plt3d.Axes3D):
