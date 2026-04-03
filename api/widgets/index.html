@@ -1716,6 +1716,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#himena.widgets.MainWindow.exec_user_string_input_dialog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        exec_user_string_input_dialog
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#himena.widgets.MainWindow.iter_windows" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2905,6 +2916,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#himena.widgets.MainWindow.exec_user_string_input_dialog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        exec_user_string_input_dialog
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#himena.widgets.MainWindow.iter_windows" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3977,7 +3999,15 @@
 <span class="normal">364</span>
 <span class="normal">365</span>
 <span class="normal">366</span>
-<span class="normal">367</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">BackendMainWindow</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">_W</span><span class="p">]):</span>  <span class="c1"># pragma: no cover</span>
+<span class="normal">367</span>
+<span class="normal">368</span>
+<span class="normal">369</span>
+<span class="normal">370</span>
+<span class="normal">371</span>
+<span class="normal">372</span>
+<span class="normal">373</span>
+<span class="normal">374</span>
+<span class="normal">375</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">BackendMainWindow</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">_W</span><span class="p">]):</span>  <span class="c1"># pragma: no cover</span>
     <span class="n">_himena_main_window</span><span class="p">:</span> <span class="n">MainWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">]</span>
     <span class="n">_event_loop_handler</span><span class="p">:</span> <span class="n">EventLoopHandler</span>
 
@@ -4123,6 +4153,14 @@
         <span class="n">how</span><span class="p">:</span> <span class="n">ChooseOneString</span> <span class="o">=</span> <span class="s2">&quot;buttons&quot;</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_T</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Request a choice dialog and return the clicked text.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_request_user_string_input_dialog</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">choices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_T</span><span class="p">]],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_T</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Request a user string input dialog and return the user input and the choice.&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_show_command_palette</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Show the command palette widget of the given kind.&quot;&quot;&quot;</span>
@@ -4339,17 +4377,17 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">223</span>
-<span class="normal">224</span>
-<span class="normal">225</span>
-<span class="normal">226</span>
-<span class="normal">227</span>
-<span class="normal">228</span>
-<span class="normal">229</span>
-<span class="normal">230</span>
-<span class="normal">231</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">231</span>
 <span class="normal">232</span>
-<span class="normal">233</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">add_dock_widget</span><span class="p">(</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">add_dock_widget</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">widget</span><span class="p">:</span> <span class="n">_W</span><span class="p">,</span>
     <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
@@ -4382,8 +4420,8 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">217</span>
-<span class="normal">218</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">add_tab</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">225</span>
+<span class="normal">226</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">add_tab</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Add a empty tab with the title.&quot;&quot;&quot;</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -4408,11 +4446,11 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">208</span>
-<span class="normal">209</span>
-<span class="normal">210</span>
-<span class="normal">211</span>
-<span class="normal">212</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">add_widget</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">widget</span><span class="p">:</span> <span class="n">_W</span><span class="p">,</span> <span class="n">i_tab</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_W</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">add_widget</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">widget</span><span class="p">:</span> <span class="n">_W</span><span class="p">,</span> <span class="n">i_tab</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_W</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Add a sub window containing the widget to the tab at the index.</span>
 
 <span class="sd">    Return the backend widget.</span>
@@ -4439,8 +4477,8 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">214</span>
-<span class="normal">215</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">set_widget_as_preview</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">widget</span><span class="p">:</span> <span class="n">_W</span><span class="p">):</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">222</span>
+<span class="normal">223</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">set_widget_as_preview</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">widget</span><span class="p">:</span> <span class="n">_W</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Set the widget state as the preview mode.&quot;&quot;&quot;</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -4464,8 +4502,8 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_backend.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">252</span>
-<span class="normal">253</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">260</span>
+<span class="normal">261</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Show the main window and run the app immediately if `run` is True&quot;&quot;&quot;</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -4823,9 +4861,7 @@
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">  83</span>
-<span class="normal">  84</span>
-<span class="normal">  85</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">  85</span>
 <span class="normal">  86</span>
 <span class="normal">  87</span>
 <span class="normal">  88</span>
@@ -6085,7 +6121,49 @@
 <span class="normal">1342</span>
 <span class="normal">1343</span>
 <span class="normal">1344</span>
-<span class="normal">1345</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MainWindow</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">_W</span><span class="p">]):</span>
+<span class="normal">1345</span>
+<span class="normal">1346</span>
+<span class="normal">1347</span>
+<span class="normal">1348</span>
+<span class="normal">1349</span>
+<span class="normal">1350</span>
+<span class="normal">1351</span>
+<span class="normal">1352</span>
+<span class="normal">1353</span>
+<span class="normal">1354</span>
+<span class="normal">1355</span>
+<span class="normal">1356</span>
+<span class="normal">1357</span>
+<span class="normal">1358</span>
+<span class="normal">1359</span>
+<span class="normal">1360</span>
+<span class="normal">1361</span>
+<span class="normal">1362</span>
+<span class="normal">1363</span>
+<span class="normal">1364</span>
+<span class="normal">1365</span>
+<span class="normal">1366</span>
+<span class="normal">1367</span>
+<span class="normal">1368</span>
+<span class="normal">1369</span>
+<span class="normal">1370</span>
+<span class="normal">1371</span>
+<span class="normal">1372</span>
+<span class="normal">1373</span>
+<span class="normal">1374</span>
+<span class="normal">1375</span>
+<span class="normal">1376</span>
+<span class="normal">1377</span>
+<span class="normal">1378</span>
+<span class="normal">1379</span>
+<span class="normal">1380</span>
+<span class="normal">1381</span>
+<span class="normal">1382</span>
+<span class="normal">1383</span>
+<span class="normal">1384</span>
+<span class="normal">1385</span>
+<span class="normal">1386</span>
+<span class="normal">1387</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MainWindow</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">_W</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The main window handler object.&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -6924,7 +7002,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
         <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-        <span class="n">choices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_T</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[],</span>
+        <span class="n">choices</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_T</span><span class="p">]]</span> <span class="o">=</span> <span class="o">...</span><span class="p">,</span>
         <span class="n">how</span><span class="p">:</span> <span class="n">ChooseOneString</span> <span class="o">=</span> <span class="s2">&quot;buttons&quot;</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_T</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
     <span class="nd">@overload</span>
@@ -6932,40 +7010,80 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
         <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-        <span class="n">choices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
+        <span class="n">choices</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;OK&quot;</span><span class="p">],</span>
         <span class="n">how</span><span class="p">:</span> <span class="n">ChooseOneString</span> <span class="o">=</span> <span class="s2">&quot;buttons&quot;</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">exec_choose_one_dialog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[],</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;buttons&quot;</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">exec_choose_one_dialog</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;OK&quot;</span><span class="p">],</span>
+        <span class="n">how</span><span class="o">=</span><span class="s2">&quot;buttons&quot;</span><span class="p">,</span>
+    <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute a dialog to choose one from the given choices.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        title : str</span>
+<span class="sd">        title : str, optional</span>
 <span class="sd">            Window title of the dialog.</span>
-<span class="sd">        message : str</span>
+<span class="sd">        message : str, optional</span>
 <span class="sd">            HTML Message to show in the dialog.</span>
-<span class="sd">        choices : list</span>
+<span class="sd">        choices : list, optional</span>
 <span class="sd">            List of choices. Each choice can be a string or a tuple of (text, value).</span>
 <span class="sd">            This method will return the selected value.</span>
 <span class="sd">        how : str, default &quot;buttons&quot;</span>
 <span class="sd">            How to show the choices. &quot;buttons&quot; for horizontal buttons, &quot;radiobuttons&quot;</span>
-<span class="sd">            for vertically arranged radio buttons.</span>
+<span class="sd">            for vertically arranged radio buttons, and &quot;palette&quot; for a VSCode-like</span>
+<span class="sd">            palette dialog.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">res</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_instructions</span><span class="o">.</span><span class="n">choose_one_dialog_response</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">res</span><span class="p">()</span>
-        <span class="n">_choices_normed</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">choices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">choices</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;OK&quot;</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">choice</span> <span class="ow">in</span> <span class="n">choices</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">choice</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-                <span class="n">_choices_normed</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">choice</span><span class="p">,</span> <span class="n">choice</span><span class="p">))</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">text</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">choice</span>
-                <span class="n">_choices_normed</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">text</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_backend_main_window</span><span class="o">.</span><span class="n">_request_choice_dialog</span><span class="p">(</span>
-            <span class="n">title</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">_choices_normed</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="n">how</span>
+            <span class="n">title</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">_norm_choices</span><span class="p">(</span><span class="n">choices</span><span class="p">),</span> <span class="n">how</span><span class="o">=</span><span class="n">how</span>
         <span class="p">)</span>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">exec_user_string_input_dialog</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">choices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_T</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">&quot;Press &#39;Enter&#39; to execute&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StringInputDialogResponse</span><span class="p">[</span><span class="n">_T</span><span class="p">]:</span> <span class="o">...</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">exec_user_string_input_dialog</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">choices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="o">...</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StringInputDialogResponse</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">exec_user_string_input_dialog</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;Press &#39;Enter&#39; to execute&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)],</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute a dialog to get user string input.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        title : str, optional</span>
+<span class="sd">            Window title of the dialog.</span>
+<span class="sd">        message : str, optional</span>
+<span class="sd">            HTML Message to show in the dialog.</span>
+<span class="sd">        choices : list, optional</span>
+<span class="sd">            List of choices. Each choice can be a string or a tuple of (text, value).</span>
+<span class="sd">            This method will return the entered string if the user confirmed, otherwise</span>
+<span class="sd">            None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">res</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_instructions</span><span class="o">.</span><span class="n">user_string_input_response</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">res</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_backend_main_window</span><span class="o">.</span><span class="n">_request_user_string_input_dialog</span><span class="p">(</span>
+                <span class="n">title</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">_norm_choices</span><span class="p">(</span><span class="n">choices</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">StringInputDialogResponse</span><span class="p">(</span><span class="o">*</span><span class="n">out</span><span class="p">)</span>
 
     <span class="nd">@overload</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">exec_user_input_dialog</span><span class="p">(</span>
@@ -7737,9 +7855,7 @@
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">444</span>
-<span class="normal">445</span>
-<span class="normal">446</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">446</span>
 <span class="normal">447</span>
 <span class="normal">448</span>
 <span class="normal">449</span>
@@ -7765,7 +7881,9 @@
 <span class="normal">469</span>
 <span class="normal">470</span>
 <span class="normal">471</span>
-<span class="normal">472</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">add_data_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">WidgetDataModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">]</span> <span class="o">|</span> <span class="n">DockWidget</span><span class="p">[</span><span class="n">_W</span><span class="p">]:</span>
+<span class="normal">472</span>
+<span class="normal">473</span>
+<span class="normal">474</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">add_data_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">WidgetDataModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">]</span> <span class="o">|</span> <span class="n">DockWidget</span><span class="p">[</span><span class="n">_W</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Add a widget data model as a widget.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">WidgetDataModel</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
@@ -7919,9 +8037,7 @@ appears.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">358</span>
-<span class="normal">359</span>
-<span class="normal">360</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">360</span>
 <span class="normal">361</span>
 <span class="normal">362</span>
 <span class="normal">363</span>
@@ -7955,7 +8071,9 @@ appears.</p>
 <span class="normal">391</span>
 <span class="normal">392</span>
 <span class="normal">393</span>
-<span class="normal">394</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">add_dock_widget</span><span class="p">(</span>
+<span class="normal">394</span>
+<span class="normal">395</span>
+<span class="normal">396</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">add_dock_widget</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">widget</span><span class="p">:</span> <span class="n">_W</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -8086,9 +8204,7 @@ interpreted by the application.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">474</span>
-<span class="normal">475</span>
-<span class="normal">476</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">476</span>
 <span class="normal">477</span>
 <span class="normal">478</span>
 <span class="normal">479</span>
@@ -8118,7 +8234,9 @@ interpreted by the application.</p>
 <span class="normal">503</span>
 <span class="normal">504</span>
 <span class="normal">505</span>
-<span class="normal">506</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">add_function</span><span class="p">(</span>
+<span class="normal">506</span>
+<span class="normal">507</span>
+<span class="normal">508</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">add_function</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">_T</span><span class="p">],</span>
     <span class="o">*</span><span class="p">,</span>
@@ -8264,9 +8382,7 @@ with a proper widget class.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">396</span>
-<span class="normal">397</span>
-<span class="normal">398</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">398</span>
 <span class="normal">399</span>
 <span class="normal">400</span>
 <span class="normal">401</span>
@@ -8310,7 +8426,9 @@ with a proper widget class.</p>
 <span class="normal">439</span>
 <span class="normal">440</span>
 <span class="normal">441</span>
-<span class="normal">442</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">add_object</span><span class="p">(</span>
+<span class="normal">442</span>
+<span class="normal">443</span>
+<span class="normal">444</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">add_object</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -8379,9 +8497,9 @@ with a proper widget class.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">306</span>
-<span class="normal">307</span>
-<span class="normal">308</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">add_tab</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TabArea</span><span class="p">[</span><span class="n">_W</span><span class="p">]:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">308</span>
+<span class="normal">309</span>
+<span class="normal">310</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">add_tab</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TabArea</span><span class="p">[</span><span class="n">_W</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Add a new tab of given name.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
@@ -8481,9 +8599,7 @@ generated.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">328</span>
-<span class="normal">329</span>
-<span class="normal">330</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">330</span>
 <span class="normal">331</span>
 <span class="normal">332</span>
 <span class="normal">333</span>
@@ -8509,7 +8625,9 @@ generated.</p>
 <span class="normal">353</span>
 <span class="normal">354</span>
 <span class="normal">355</span>
-<span class="normal">356</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">add_widget</span><span class="p">(</span>
+<span class="normal">356</span>
+<span class="normal">357</span>
+<span class="normal">358</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">add_widget</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">widget</span><span class="p">:</span> <span class="n">_W</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -8560,10 +8678,10 @@ generated.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">670</span>
-<span class="normal">671</span>
-<span class="normal">672</span>
-<span class="normal">673</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">672</span>
+<span class="normal">673</span>
+<span class="normal">674</span>
+<span class="normal">675</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Clear all widgets in the main window.&quot;&quot;&quot;</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">dock_widgets</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
@@ -8589,10 +8707,10 @@ generated.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1112</span>
-<span class="normal">1113</span>
-<span class="normal">1114</span>
-<span class="normal">1115</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1154</span>
+<span class="normal">1155</span>
+<span class="normal">1156</span>
+<span class="normal">1157</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Close the main window.&quot;&quot;&quot;</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_backend_main_window</span><span class="o">.</span><span class="n">_exit_main_window</span><span class="p">(</span><span class="n">confirm</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">remove_instance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_app</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
@@ -8734,9 +8852,7 @@ sub-window.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">814</span>
-<span class="normal">815</span>
-<span class="normal">816</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">816</span>
 <span class="normal">817</span>
 <span class="normal">818</span>
 <span class="normal">819</span>
@@ -8835,7 +8951,9 @@ sub-window.</p>
 <span class="normal">912</span>
 <span class="normal">913</span>
 <span class="normal">914</span>
-<span class="normal">915</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">exec_action</span><span class="p">(</span>
+<span class="normal">915</span>
+<span class="normal">916</span>
+<span class="normal">917</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">exec_action</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -8947,12 +9065,12 @@ sub-window.</p>
 
 
 <h5 id="himena.widgets.MainWindow.exec_choose_one_dialog" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">exec_choose_one_dialog</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[],</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;buttons&#39;</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">exec_choose_one_dialog</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;OK&#39;</span><span class="p">],</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;buttons&#39;</span><span class="p">)</span></code>
 
 </h5>
           <div class="doc-overloads">
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">exec_choose_one_dialog</span><span class="p">(</span><span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">choices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_T</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[],</span> <span class="n">how</span><span class="p">:</span> <span class="n">ChooseOneString</span> <span class="o">=</span> <span class="s1">&#39;buttons&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_T</span> <span class="o">|</span> <span class="kc">None</span>
-</code></pre></div><div class="doc-signature highlight"><pre><span></span><code><span class="nf">exec_choose_one_dialog</span><span class="p">(</span><span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">choices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span> <span class="n">how</span><span class="p">:</span> <span class="n">ChooseOneString</span> <span class="o">=</span> <span class="s1">&#39;buttons&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">exec_choose_one_dialog</span><span class="p">(</span><span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">choices</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_T</span><span class="p">]]</span> <span class="o">=</span> <span class="o">...</span><span class="p">,</span> <span class="n">how</span><span class="p">:</span> <span class="n">ChooseOneString</span> <span class="o">=</span> <span class="s1">&#39;buttons&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_T</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div><div class="doc-signature highlight"><pre><span></span><code><span class="nf">exec_choose_one_dialog</span><span class="p">(</span><span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">choices</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;OK&#39;</span><span class="p">],</span> <span class="n">how</span><span class="p">:</span> <span class="n">ChooseOneString</span> <span class="o">=</span> <span class="s1">&#39;buttons&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
 </code></pre></div>          </div>
 
 
@@ -9018,7 +9136,7 @@ This method will return the selected value.</p>
               </div>
             </td>
             <td>
-                  <code>[]</code>
+                  <code>[&#39;OK&#39;]</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -9031,7 +9149,8 @@ This method will return the selected value.</p>
             <td>
               <div class="doc-md-description">
                 <p>How to show the choices. "buttons" for horizontal buttons, "radiobuttons"
-for vertically arranged radio buttons.</p>
+for vertically arranged radio buttons, and "palette" for a VSCode-like
+palette dialog.</p>
               </div>
             </td>
             <td>
@@ -9044,9 +9163,7 @@ for vertically arranged radio buttons.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">934</span>
-<span class="normal">935</span>
-<span class="normal">936</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">936</span>
 <span class="normal">937</span>
 <span class="normal">938</span>
 <span class="normal">939</span>
@@ -9073,35 +9190,33 @@ for vertically arranged radio buttons.</p>
 <span class="normal">960</span>
 <span class="normal">961</span>
 <span class="normal">962</span>
-<span class="normal">963</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">exec_choose_one_dialog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[],</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;buttons&quot;</span><span class="p">):</span>
+<span class="normal">963</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">exec_choose_one_dialog</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;OK&quot;</span><span class="p">],</span>
+    <span class="n">how</span><span class="o">=</span><span class="s2">&quot;buttons&quot;</span><span class="p">,</span>
+<span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute a dialog to choose one from the given choices.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    title : str</span>
+<span class="sd">    title : str, optional</span>
 <span class="sd">        Window title of the dialog.</span>
-<span class="sd">    message : str</span>
+<span class="sd">    message : str, optional</span>
 <span class="sd">        HTML Message to show in the dialog.</span>
-<span class="sd">    choices : list</span>
+<span class="sd">    choices : list, optional</span>
 <span class="sd">        List of choices. Each choice can be a string or a tuple of (text, value).</span>
 <span class="sd">        This method will return the selected value.</span>
 <span class="sd">    how : str, default &quot;buttons&quot;</span>
 <span class="sd">        How to show the choices. &quot;buttons&quot; for horizontal buttons, &quot;radiobuttons&quot;</span>
-<span class="sd">        for vertically arranged radio buttons.</span>
+<span class="sd">        for vertically arranged radio buttons, and &quot;palette&quot; for a VSCode-like</span>
+<span class="sd">        palette dialog.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">res</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_instructions</span><span class="o">.</span><span class="n">choose_one_dialog_response</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">res</span><span class="p">()</span>
-    <span class="n">_choices_normed</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">choices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">choices</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;OK&quot;</span><span class="p">]</span>
-    <span class="k">for</span> <span class="n">choice</span> <span class="ow">in</span> <span class="n">choices</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">choice</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="n">_choices_normed</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">choice</span><span class="p">,</span> <span class="n">choice</span><span class="p">))</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">text</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">choice</span>
-            <span class="n">_choices_normed</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">text</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_backend_main_window</span><span class="o">.</span><span class="n">_request_choice_dialog</span><span class="p">(</span>
-        <span class="n">title</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">_choices_normed</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="n">how</span>
+        <span class="n">title</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">_norm_choices</span><span class="p">(</span><span class="n">choices</span><span class="p">),</span> <span class="n">how</span><span class="o">=</span><span class="n">how</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -9129,47 +9244,47 @@ for vertically arranged radio buttons.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1059</span>
-<span class="normal">1060</span>
-<span class="normal">1061</span>
-<span class="normal">1062</span>
-<span class="normal">1063</span>
-<span class="normal">1064</span>
-<span class="normal">1065</span>
-<span class="normal">1066</span>
-<span class="normal">1067</span>
-<span class="normal">1068</span>
-<span class="normal">1069</span>
-<span class="normal">1070</span>
-<span class="normal">1071</span>
-<span class="normal">1072</span>
-<span class="normal">1073</span>
-<span class="normal">1074</span>
-<span class="normal">1075</span>
-<span class="normal">1076</span>
-<span class="normal">1077</span>
-<span class="normal">1078</span>
-<span class="normal">1079</span>
-<span class="normal">1080</span>
-<span class="normal">1081</span>
-<span class="normal">1082</span>
-<span class="normal">1083</span>
-<span class="normal">1084</span>
-<span class="normal">1085</span>
-<span class="normal">1086</span>
-<span class="normal">1087</span>
-<span class="normal">1088</span>
-<span class="normal">1089</span>
-<span class="normal">1090</span>
-<span class="normal">1091</span>
-<span class="normal">1092</span>
-<span class="normal">1093</span>
-<span class="normal">1094</span>
-<span class="normal">1095</span>
-<span class="normal">1096</span>
-<span class="normal">1097</span>
-<span class="normal">1098</span>
-<span class="normal">1099</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">exec_file_dialog</span><span class="p">(</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1101</span>
+<span class="normal">1102</span>
+<span class="normal">1103</span>
+<span class="normal">1104</span>
+<span class="normal">1105</span>
+<span class="normal">1106</span>
+<span class="normal">1107</span>
+<span class="normal">1108</span>
+<span class="normal">1109</span>
+<span class="normal">1110</span>
+<span class="normal">1111</span>
+<span class="normal">1112</span>
+<span class="normal">1113</span>
+<span class="normal">1114</span>
+<span class="normal">1115</span>
+<span class="normal">1116</span>
+<span class="normal">1117</span>
+<span class="normal">1118</span>
+<span class="normal">1119</span>
+<span class="normal">1120</span>
+<span class="normal">1121</span>
+<span class="normal">1122</span>
+<span class="normal">1123</span>
+<span class="normal">1124</span>
+<span class="normal">1125</span>
+<span class="normal">1126</span>
+<span class="normal">1127</span>
+<span class="normal">1128</span>
+<span class="normal">1129</span>
+<span class="normal">1130</span>
+<span class="normal">1131</span>
+<span class="normal">1132</span>
+<span class="normal">1133</span>
+<span class="normal">1134</span>
+<span class="normal">1135</span>
+<span class="normal">1136</span>
+<span class="normal">1137</span>
+<span class="normal">1138</span>
+<span class="normal">1139</span>
+<span class="normal">1140</span>
+<span class="normal">1141</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">exec_file_dialog</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="s2">&quot;rm&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -9306,49 +9421,7 @@ for vertically arranged radio buttons.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 983</span>
-<span class="normal"> 984</span>
-<span class="normal"> 985</span>
-<span class="normal"> 986</span>
-<span class="normal"> 987</span>
-<span class="normal"> 988</span>
-<span class="normal"> 989</span>
-<span class="normal"> 990</span>
-<span class="normal"> 991</span>
-<span class="normal"> 992</span>
-<span class="normal"> 993</span>
-<span class="normal"> 994</span>
-<span class="normal"> 995</span>
-<span class="normal"> 996</span>
-<span class="normal"> 997</span>
-<span class="normal"> 998</span>
-<span class="normal"> 999</span>
-<span class="normal">1000</span>
-<span class="normal">1001</span>
-<span class="normal">1002</span>
-<span class="normal">1003</span>
-<span class="normal">1004</span>
-<span class="normal">1005</span>
-<span class="normal">1006</span>
-<span class="normal">1007</span>
-<span class="normal">1008</span>
-<span class="normal">1009</span>
-<span class="normal">1010</span>
-<span class="normal">1011</span>
-<span class="normal">1012</span>
-<span class="normal">1013</span>
-<span class="normal">1014</span>
-<span class="normal">1015</span>
-<span class="normal">1016</span>
-<span class="normal">1017</span>
-<span class="normal">1018</span>
-<span class="normal">1019</span>
-<span class="normal">1020</span>
-<span class="normal">1021</span>
-<span class="normal">1022</span>
-<span class="normal">1023</span>
-<span class="normal">1024</span>
-<span class="normal">1025</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1025</span>
 <span class="normal">1026</span>
 <span class="normal">1027</span>
 <span class="normal">1028</span>
@@ -9357,7 +9430,49 @@ for vertically arranged radio buttons.</p>
 <span class="normal">1031</span>
 <span class="normal">1032</span>
 <span class="normal">1033</span>
-<span class="normal">1034</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">exec_user_input_dialog</span><span class="p">(</span>
+<span class="normal">1034</span>
+<span class="normal">1035</span>
+<span class="normal">1036</span>
+<span class="normal">1037</span>
+<span class="normal">1038</span>
+<span class="normal">1039</span>
+<span class="normal">1040</span>
+<span class="normal">1041</span>
+<span class="normal">1042</span>
+<span class="normal">1043</span>
+<span class="normal">1044</span>
+<span class="normal">1045</span>
+<span class="normal">1046</span>
+<span class="normal">1047</span>
+<span class="normal">1048</span>
+<span class="normal">1049</span>
+<span class="normal">1050</span>
+<span class="normal">1051</span>
+<span class="normal">1052</span>
+<span class="normal">1053</span>
+<span class="normal">1054</span>
+<span class="normal">1055</span>
+<span class="normal">1056</span>
+<span class="normal">1057</span>
+<span class="normal">1058</span>
+<span class="normal">1059</span>
+<span class="normal">1060</span>
+<span class="normal">1061</span>
+<span class="normal">1062</span>
+<span class="normal">1063</span>
+<span class="normal">1064</span>
+<span class="normal">1065</span>
+<span class="normal">1066</span>
+<span class="normal">1067</span>
+<span class="normal">1068</span>
+<span class="normal">1069</span>
+<span class="normal">1070</span>
+<span class="normal">1071</span>
+<span class="normal">1072</span>
+<span class="normal">1073</span>
+<span class="normal">1074</span>
+<span class="normal">1075</span>
+<span class="normal">1076</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">exec_user_input_dialog</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">function_or_types</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="o">/</span><span class="p">,</span>
@@ -9418,6 +9533,150 @@ for vertically arranged radio buttons.</p>
 <div class="doc doc-object doc-function">
 
 
+<h5 id="himena.widgets.MainWindow.exec_user_string_input_dialog" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">exec_user_string_input_dialog</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;Press &#39;Enter&#39; to execute&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)])</span></code>
+
+</h5>
+          <div class="doc-overloads">
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">exec_user_string_input_dialog</span><span class="p">(</span><span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">choices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_T</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">&quot;Press &#39;Enter&#39; to execute&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)])</span> <span class="o">-&gt;</span> <span class="n">StringInputDialogResponse</span><span class="p">[</span><span class="n">_T</span><span class="p">]</span>
+</code></pre></div><div class="doc-signature highlight"><pre><span></span><code><span class="nf">exec_user_string_input_dialog</span><span class="p">(</span><span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">choices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="o">...</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StringInputDialogResponse</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+</code></pre></div>          </div>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Execute a dialog to get user string input.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>title</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Window title of the dialog.</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>message</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>HTML Message to show in the dialog.</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>choices</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of choices. Each choice can be a string or a tuple of (text, value).
+This method will return the entered string if the user confirmed, otherwise
+None.</p>
+              </div>
+            </td>
+            <td>
+                  <code>[(&#34;Press &#39;Enter&#39; to execute&#34;, True)]</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 979</span>
+<span class="normal"> 980</span>
+<span class="normal"> 981</span>
+<span class="normal"> 982</span>
+<span class="normal"> 983</span>
+<span class="normal"> 984</span>
+<span class="normal"> 985</span>
+<span class="normal"> 986</span>
+<span class="normal"> 987</span>
+<span class="normal"> 988</span>
+<span class="normal"> 989</span>
+<span class="normal"> 990</span>
+<span class="normal"> 991</span>
+<span class="normal"> 992</span>
+<span class="normal"> 993</span>
+<span class="normal"> 994</span>
+<span class="normal"> 995</span>
+<span class="normal"> 996</span>
+<span class="normal"> 997</span>
+<span class="normal"> 998</span>
+<span class="normal"> 999</span>
+<span class="normal">1000</span>
+<span class="normal">1001</span>
+<span class="normal">1002</span>
+<span class="normal">1003</span>
+<span class="normal">1004</span>
+<span class="normal">1005</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">exec_user_string_input_dialog</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">choices</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;Press &#39;Enter&#39; to execute&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute a dialog to get user string input.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    title : str, optional</span>
+<span class="sd">        Window title of the dialog.</span>
+<span class="sd">    message : str, optional</span>
+<span class="sd">        HTML Message to show in the dialog.</span>
+<span class="sd">    choices : list, optional</span>
+<span class="sd">        List of choices. Each choice can be a string or a tuple of (text, value).</span>
+<span class="sd">        This method will return the entered string if the user confirmed, otherwise</span>
+<span class="sd">        None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">res</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_instructions</span><span class="o">.</span><span class="n">user_string_input_response</span><span class="p">:</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">res</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_backend_main_window</span><span class="o">.</span><span class="n">_request_user_string_input_dialog</span><span class="p">(</span>
+            <span class="n">title</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">_norm_choices</span><span class="p">(</span><span class="n">choices</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">StringInputDialogResponse</span><span class="p">(</span><span class="o">*</span><span class="n">out</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h5 id="himena.widgets.MainWindow.iter_windows" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">iter_windows</span><span class="p">()</span></code>
 
@@ -9431,10 +9690,10 @@ for vertically arranged radio buttons.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1151</span>
-<span class="normal">1152</span>
-<span class="normal">1153</span>
-<span class="normal">1154</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">iter_windows</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">]]:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1193</span>
+<span class="normal">1194</span>
+<span class="normal">1195</span>
+<span class="normal">1196</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">iter_windows</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Iterate over all the sub-windows in this main window.&quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">tab</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="p">:</span>
         <span class="k">yield from</span> <span class="n">tab</span>
@@ -9460,9 +9719,7 @@ for vertically arranged radio buttons.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">633</span>
-<span class="normal">634</span>
-<span class="normal">635</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">635</span>
 <span class="normal">636</span>
 <span class="normal">637</span>
 <span class="normal">638</span>
@@ -9473,7 +9730,9 @@ for vertically arranged radio buttons.</p>
 <span class="normal">643</span>
 <span class="normal">644</span>
 <span class="normal">645</span>
-<span class="normal">646</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">load_session</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">646</span>
+<span class="normal">647</span>
+<span class="normal">648</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">load_session</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Read a session file and update the main window based on the content.&quot;&quot;&quot;</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">himena.session</span><span class="w"> </span><span class="kn">import</span> <span class="n">update_from_zip</span><span class="p">,</span> <span class="n">update_from_directory</span>
 
@@ -9509,28 +9768,28 @@ for vertically arranged radio buttons.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1166</span>
-<span class="normal">1167</span>
-<span class="normal">1168</span>
-<span class="normal">1169</span>
-<span class="normal">1170</span>
-<span class="normal">1171</span>
-<span class="normal">1172</span>
-<span class="normal">1173</span>
-<span class="normal">1174</span>
-<span class="normal">1175</span>
-<span class="normal">1176</span>
-<span class="normal">1177</span>
-<span class="normal">1178</span>
-<span class="normal">1179</span>
-<span class="normal">1180</span>
-<span class="normal">1181</span>
-<span class="normal">1182</span>
-<span class="normal">1183</span>
-<span class="normal">1184</span>
-<span class="normal">1185</span>
-<span class="normal">1186</span>
-<span class="normal">1187</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">move_window</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sub</span><span class="p">:</span> <span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">],</span> <span class="n">target_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1208</span>
+<span class="normal">1209</span>
+<span class="normal">1210</span>
+<span class="normal">1211</span>
+<span class="normal">1212</span>
+<span class="normal">1213</span>
+<span class="normal">1214</span>
+<span class="normal">1215</span>
+<span class="normal">1216</span>
+<span class="normal">1217</span>
+<span class="normal">1218</span>
+<span class="normal">1219</span>
+<span class="normal">1220</span>
+<span class="normal">1221</span>
+<span class="normal">1222</span>
+<span class="normal">1223</span>
+<span class="normal">1224</span>
+<span class="normal">1225</span>
+<span class="normal">1226</span>
+<span class="normal">1227</span>
+<span class="normal">1228</span>
+<span class="normal">1229</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">move_window</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sub</span><span class="p">:</span> <span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">],</span> <span class="n">target_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Move the sub-window to the target tab index.&quot;&quot;&quot;</span>
     <span class="n">i_tab</span> <span class="o">=</span> <span class="n">i_win</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">for</span> <span class="n">_i_tab</span><span class="p">,</span> <span class="n">tab</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">enumerate</span><span class="p">():</span>
@@ -9664,9 +9923,7 @@ the reader.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">525</span>
-<span class="normal">526</span>
-<span class="normal">527</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">527</span>
 <span class="normal">528</span>
 <span class="normal">529</span>
 <span class="normal">530</span>
@@ -9693,7 +9950,9 @@ the reader.</p>
 <span class="normal">551</span>
 <span class="normal">552</span>
 <span class="normal">553</span>
-<span class="normal">554</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">read_file</span><span class="p">(</span>
+<span class="normal">554</span>
+<span class="normal">555</span>
+<span class="normal">556</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">read_file</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">file_path</span><span class="p">:</span> <span class="n">PathOrPaths</span><span class="p">,</span>
     <span class="n">plugin</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -9745,9 +10004,7 @@ the reader.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">556</span>
-<span class="normal">557</span>
-<span class="normal">558</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">558</span>
 <span class="normal">559</span>
 <span class="normal">560</span>
 <span class="normal">561</span>
@@ -9762,7 +10019,9 @@ the reader.</p>
 <span class="normal">570</span>
 <span class="normal">571</span>
 <span class="normal">572</span>
-<span class="normal">573</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">read_files</span><span class="p">(</span>
+<span class="normal">573</span>
+<span class="normal">574</span>
+<span class="normal">575</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">read_files</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">file_paths</span><span class="p">:</span> <span class="n">PathOrPaths</span><span class="p">,</span>
     <span class="n">plugin</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -9802,9 +10061,7 @@ the reader.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">575</span>
-<span class="normal">576</span>
-<span class="normal">577</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">577</span>
 <span class="normal">578</span>
 <span class="normal">579</span>
 <span class="normal">580</span>
@@ -9828,7 +10085,9 @@ the reader.</p>
 <span class="normal">598</span>
 <span class="normal">599</span>
 <span class="normal">600</span>
-<span class="normal">601</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">read_files_async</span><span class="p">(</span>
+<span class="normal">601</span>
+<span class="normal">602</span>
+<span class="normal">603</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">read_files_async</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">file_paths</span><span class="p">:</span> <span class="n">PathOrPaths</span><span class="p">,</span>
     <span class="n">plugin</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -10001,9 +10260,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">755</span>
-<span class="normal">756</span>
-<span class="normal">757</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">757</span>
 <span class="normal">758</span>
 <span class="normal">759</span>
 <span class="normal">760</span>
@@ -10058,7 +10315,9 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 <span class="normal">809</span>
 <span class="normal">810</span>
 <span class="normal">811</span>
-<span class="normal">812</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_function</span><span class="p">(</span>
+<span class="normal">812</span>
+<span class="normal">813</span>
+<span class="normal">814</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_function</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -10138,9 +10397,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">603</span>
-<span class="normal">604</span>
-<span class="normal">605</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">605</span>
 <span class="normal">606</span>
 <span class="normal">607</span>
 <span class="normal">608</span>
@@ -10166,7 +10423,9 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 <span class="normal">628</span>
 <span class="normal">629</span>
 <span class="normal">630</span>
-<span class="normal">631</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">run_script</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="normal">631</span>
+<span class="normal">632</span>
+<span class="normal">633</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">run_script</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the main function of the given script file with this UI instance.&quot;&quot;&quot;</span>
     <span class="n">reg</span> <span class="o">=</span> <span class="n">_actions</span><span class="o">.</span><span class="n">AppActionRegistry</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span>
     <span class="n">num_actions_before</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">reg</span><span class="o">.</span><span class="n">_actions</span><span class="p">)</span>
@@ -10217,9 +10476,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">648</span>
-<span class="normal">649</span>
-<span class="normal">650</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">650</span>
 <span class="normal">651</span>
 <span class="normal">652</span>
 <span class="normal">653</span>
@@ -10237,7 +10494,9 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 <span class="normal">665</span>
 <span class="normal">666</span>
 <span class="normal">667</span>
-<span class="normal">668</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">save_session</span><span class="p">(</span>
+<span class="normal">668</span>
+<span class="normal">669</span>
+<span class="normal">670</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">save_session</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -10280,9 +10539,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">288</span>
-<span class="normal">289</span>
-<span class="normal">290</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">290</span>
 <span class="normal">291</span>
 <span class="normal">292</span>
 <span class="normal">293</span>
@@ -10296,7 +10553,9 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 <span class="normal">301</span>
 <span class="normal">302</span>
 <span class="normal">303</span>
-<span class="normal">304</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">set_clipboard</span><span class="p">(</span>
+<span class="normal">304</span>
+<span class="normal">305</span>
+<span class="normal">306</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">set_clipboard</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -10399,9 +10658,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">675</span>
-<span class="normal">676</span>
-<span class="normal">677</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">677</span>
 <span class="normal">678</span>
 <span class="normal">679</span>
 <span class="normal">680</span>
@@ -10420,7 +10677,9 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 <span class="normal">693</span>
 <span class="normal">694</span>
 <span class="normal">695</span>
-<span class="normal">696</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">set_status_tip</span><span class="p">(</span>
+<span class="normal">696</span>
+<span class="normal">697</span>
+<span class="normal">698</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">set_status_tip</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">,</span>
@@ -10495,16 +10754,16 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1101</span>
-<span class="normal">1102</span>
-<span class="normal">1103</span>
-<span class="normal">1104</span>
-<span class="normal">1105</span>
-<span class="normal">1106</span>
-<span class="normal">1107</span>
-<span class="normal">1108</span>
-<span class="normal">1109</span>
-<span class="normal">1110</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1143</span>
+<span class="normal">1144</span>
+<span class="normal">1145</span>
+<span class="normal">1146</span>
+<span class="normal">1147</span>
+<span class="normal">1148</span>
+<span class="normal">1149</span>
+<span class="normal">1150</span>
+<span class="normal">1151</span>
+<span class="normal">1152</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Show the main window.</span>
 
@@ -10583,9 +10842,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">698</span>
-<span class="normal">699</span>
-<span class="normal">700</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">700</span>
 <span class="normal">701</span>
 <span class="normal">702</span>
 <span class="normal">703</span>
@@ -10593,7 +10850,9 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 <span class="normal">705</span>
 <span class="normal">706</span>
 <span class="normal">707</span>
-<span class="normal">708</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">show_notification</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">708</span>
+<span class="normal">709</span>
+<span class="normal">710</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">show_notification</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Show a temporary notification in the main window.</span>
 
 <span class="sd">    Parameters</span>
@@ -10690,9 +10949,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">710</span>
-<span class="normal">711</span>
-<span class="normal">712</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">712</span>
 <span class="normal">713</span>
 <span class="normal">714</span>
 <span class="normal">715</span>
@@ -10708,7 +10965,9 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 <span class="normal">725</span>
 <span class="normal">726</span>
 <span class="normal">727</span>
-<span class="normal">728</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">show_tooltip</span><span class="p">(</span>
+<span class="normal">728</span>
+<span class="normal">729</span>
+<span class="normal">730</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">show_tooltip</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">3.0</span><span class="p">,</span>
@@ -10796,9 +11055,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">192</span>
-<span class="normal">193</span>
-<span class="normal">194</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">194</span>
 <span class="normal">195</span>
 <span class="normal">196</span>
 <span class="normal">197</span>
@@ -10819,7 +11076,9 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 <span class="normal">212</span>
 <span class="normal">213</span>
 <span class="normal">214</span>
-<span class="normal">215</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">submit_async_task</span><span class="p">(</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">submit_async_task</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="o">*</span><span class="n">args</span><span class="p">,</span>
@@ -10865,13 +11124,13 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">310</span>
-<span class="normal">311</span>
-<span class="normal">312</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">312</span>
 <span class="normal">313</span>
 <span class="normal">314</span>
 <span class="normal">315</span>
-<span class="normal">316</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">window_for_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">identifier</span><span class="p">:</span> <span class="n">uuid</span><span class="o">.</span><span class="n">UUID</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">316</span>
+<span class="normal">317</span>
+<span class="normal">318</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">window_for_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">identifier</span><span class="p">:</span> <span class="n">uuid</span><span class="o">.</span><span class="n">UUID</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Retrieve a sub-window by its identifier.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">identifier</span><span class="p">,</span> <span class="n">uuid</span><span class="o">.</span><span class="n">UUID</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected UUID, got </span><span class="si">{</span><span class="n">identifier</span><span class="si">!r}</span><span class="s2">.&quot;</span><span class="p">)</span>
@@ -10900,9 +11159,7 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">222</span>
-<span class="normal">223</span>
-<span class="normal">224</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">224</span>
 <span class="normal">225</span>
 <span class="normal">226</span>
 <span class="normal">227</span>
@@ -10910,7 +11167,9 @@ is a generalized version of <code>types</code> argument, you cannot use both of 
 <span class="normal">229</span>
 <span class="normal">230</span>
 <span class="normal">231</span>
-<span class="normal">232</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">windows_for_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">types</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">]]:</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">windows_for_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">types</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get all sub-windows for the given types.&quot;&quot;&quot;</span>
     <span class="n">windows</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">types</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>

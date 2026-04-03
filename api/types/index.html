@@ -2603,6 +2603,22 @@ with inputs <code>a</code> and <code>b</code>.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
+                <code>user_string_input_response</code>
+            </td>
+            <td>
+                  <code><span title="typing.Callable">Callable</span>[<span title="list">list</span>, <span title="tuple">tuple</span>[<span title="str">str</span>, <span title="typing.Any">Any</span> | None]] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If provided, user string input dialog will be skipped and this function will be called to get the response.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
                 <code>user_input_response</code>
             </td>
             <td>
@@ -2715,7 +2731,13 @@ with inputs <code>a</code> and <code>b</code>.</p>
 <span class="normal">810</span>
 <span class="normal">811</span>
 <span class="normal">812</span>
-<span class="normal">813</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">BackendInstructions</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="normal">813</span>
+<span class="normal">814</span>
+<span class="normal">815</span>
+<span class="normal">816</span>
+<span class="normal">817</span>
+<span class="normal">818</span>
+<span class="normal">819</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">BackendInstructions</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Instructions for the backend that are only relevant to user interface.&quot;&quot;&quot;</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">PYDANTIC_CONFIG_STRICT</span>
@@ -2740,6 +2762,12 @@ with inputs <code>a</code> and <code>b</code>.</p>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;If provided, file dialog will be skipped and this function will &quot;</span>
         <span class="s2">&quot;be called to get the response.&quot;</span><span class="p">,</span>
+        <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">user_string_input_response</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;If provided, user string input dialog will be skipped and this &quot;</span>
+        <span class="s2">&quot;function will be called to get the response.&quot;</span><span class="p">,</span>
         <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">user_input_response</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
@@ -3340,13 +3368,7 @@ with inputs <code>a</code> and <code>b</code>.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src\himena\types.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">851</span>
-<span class="normal">852</span>
-<span class="normal">853</span>
-<span class="normal">854</span>
-<span class="normal">855</span>
-<span class="normal">856</span>
-<span class="normal">857</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">857</span>
 <span class="normal">858</span>
 <span class="normal">859</span>
 <span class="normal">860</span>
@@ -3356,7 +3378,13 @@ with inputs <code>a</code> and <code>b</code>.</p>
 <span class="normal">864</span>
 <span class="normal">865</span>
 <span class="normal">866</span>
-<span class="normal">867</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="normal">867</span>
+<span class="normal">868</span>
+<span class="normal">869</span>
+<span class="normal">870</span>
+<span class="normal">871</span>
+<span class="normal">872</span>
+<span class="normal">873</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">DropResult</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Model that can be returned by `dropped_callback` protocol.</span>
 
@@ -5623,13 +5651,13 @@ mathematical identifier for the node.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src\himena\types.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">816</span>
-<span class="normal">817</span>
-<span class="normal">818</span>
-<span class="normal">819</span>
-<span class="normal">820</span>
-<span class="normal">821</span>
-<span class="normal">822</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">WidgetClassTuple</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">822</span>
+<span class="normal">823</span>
+<span class="normal">824</span>
+<span class="normal">825</span>
+<span class="normal">826</span>
+<span class="normal">827</span>
+<span class="normal">828</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">WidgetClassTuple</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for storing registered widget class.&quot;&quot;&quot;</span>
 
     <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span>
