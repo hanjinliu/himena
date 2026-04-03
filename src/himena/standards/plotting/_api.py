@@ -1,4 +1,5 @@
 from typing import Any
+from cmap import Color
 from himena.standards.plotting import layout, layout3d
 
 
@@ -15,6 +16,7 @@ def figure(background_color: Any = "white") -> layout.SingleAxes:
     ```
     """
     lo = layout.SingleAxes(background_color=background_color)
+    lo.axes.axis_color = _visible_line_color(background_color)
     return lo
 
 
@@ -31,6 +33,8 @@ def figure_3d(background_color: Any = "white") -> layout3d.SingleAxes3D:
     ```
     """
     lo = layout3d.SingleAxes3D(background_color=background_color)
+    # TODO: it is not clear how spines are used in 3D ...
+    # lo.axes.axis_color = _visible_line_color(background_color)
     return lo
 
 
@@ -59,8 +63,7 @@ def row(num: int = 1, *, background_color: Any = "white") -> layout.Row:
     ```
     """
     lo = layout.Row.fill(num)
-    lo.background_color = background_color
-    return lo
+    return _update_axis_colors(lo, background_color)
 
 
 def column(num: int = 1, *, background_color: Any = "white") -> layout.Column:
@@ -81,8 +84,7 @@ def column(num: int = 1, *, background_color: Any = "white") -> layout.Column:
     ```
     """
     lo = layout.Column.fill(num)
-    lo.background_color = "white"
-    return lo
+    return _update_axis_colors(lo, background_color)
 
 
 def grid(
@@ -107,5 +109,26 @@ def grid(
     ```
     """
     lo = layout.Grid.fill(rows, cols)
-    lo.background_color = "white"
+    lo.background_color = background_color
+    axis_color = _visible_line_color(background_color)
+    for row in lo.axes:
+        for ax in row:
+            ax.axis_color = axis_color
+    return lo
+
+
+def _visible_line_color(background_color: Any) -> str:
+    """Get a visible line color based on the background color."""
+    bg_color = Color(background_color)
+    if sum(bg_color.rgba[:3]) / 3 > 0.5:  # light background
+        return "#000000"  # black for light background
+    else:
+        return "#FFFFFF"  # white for dark background
+
+
+def _update_axis_colors(lo: layout.Layout1D, background_color: str):
+    lo.background_color = background_color
+    axis_color = _visible_line_color(background_color)
+    for ax in lo.axes:
+        ax.axis_color = axis_color
     return lo
