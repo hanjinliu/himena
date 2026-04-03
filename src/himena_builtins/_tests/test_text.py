@@ -5,6 +5,7 @@ from himena import MainWindow, StandardType
 from himena.standards.model_meta import TextMeta
 from himena.types import WidgetDataModel
 from himena_builtins.qt.text import QTextEdit, QRichTextEdit, QSvgPreview, QMarkdownPreview
+from himena_builtins.qt.widgets.text import get_languages, get_encodings
 from pytestqt.qtbot import QtBot
 from himena.testing import WidgetTester
 
@@ -17,8 +18,8 @@ def test_text_edit(qtbot: QtBot):
         tester.update_model(model)
         qtbot.addWidget(tester.widget)
         main = tester.widget._main_text_edit
-        tester.widget._control._wordwrap.setChecked(True)
-        tester.widget._control._wordwrap.setChecked(False)
+        tester.widget._control._wordwrap_btn.setChecked(True)
+        tester.widget._control._wordwrap_btn.setChecked(False)
 
         assert tester.to_model().value == "a\nb"
         assert main.toPlainText() == "a\nb"
@@ -73,6 +74,8 @@ def test_text_changing_language(qtbot: QtBot):
     QtW.QApplication.processEvents()
     text_edit._control._language_btn.setCurrentText("C++")
     QtW.QApplication.processEvents()
+
+    text_edit._on_tab_size_changed(2)
 
 def test_find_text(qtbot: QtBot):
     model = WidgetDataModel(value="a\nb\nc\nbc", type="text")
@@ -139,3 +142,7 @@ def test_open_as_text_anyway(sample_dir: Path, himena_ui: MainWindow):
     assert himena_ui.current_model.type == StandardType.TEXT
     assert himena_ui.current_model.value == sample_dir.joinpath("random_ext.aaa").read_text()
     assert himena_ui.current_model.extension_default == ".aaa"
+
+def test_get_choices():
+    assert "Python" in get_languages()
+    assert "utf-8" in get_encodings()

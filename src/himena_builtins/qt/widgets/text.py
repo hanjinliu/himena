@@ -7,9 +7,8 @@ from encodings import aliases, normalize_encoding
 
 from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
-from superqt import QToggleSwitch
 
-from himena.consts import StandardType, MonospaceFontFamily
+from himena.consts import StandardType
 from himena.types import WidgetDataModel
 from himena.standards.model_meta import TextMeta
 from himena.plugins import validate_protocol, config_field
@@ -31,15 +30,8 @@ _POPULAR_LANGUAGES = [
     "XML", "TOML", "PowerShell", "Batch", "C#", "Objective-C",
 ]  # fmt: skip
 _POPULAR_ENCODINGS = [
-    "utf-8",
-    "utf-16",
-    "ascii",
-    "latin-1",
-    "utf-16",
-    "shift-jis",
-    "gbk",
-    "euc-kr",
-]
+    "utf-8", "utf-16", "ascii", "latin-1", "shift-jis", "gbk", "euc-kr",
+]  # fmt: skip
 
 
 class QTextEdit(QtW.QWidget):
@@ -472,13 +464,13 @@ class QTextControl(QtW.QWidget):
         self._line_num = QtW.QLabel()
         self._line_num.setFixedWidth(50)
 
-        self._wordwrap = QToggleSwitch("Word Wrap")
-        self._wordwrap.setChecked(False)
-        self._wordwrap.toggled.connect(self._wordwrap_changed)
-        self._wordwrap.setToolTip("Enable word wrap")
+        self._wordwrap_btn = QComboButton("Word Wrap")
+        self._wordwrap_btn.setMessage("Select the word wrap mode.")
+        self._wordwrap_btn.setChoices(["No Wrap", "Word Wrap", "Wrap Anywhere"])
+        self._wordwrap_btn.setToolTip("Word wrap mode. Click to change.")
+        self._wordwrap_btn.currentTextChanged.connect(self._wordwrap_changed)
 
-        self._encoding_btn = QComboButton()
-        self._encoding_btn.setCurrentText("utf-8")
+        self._encoding_btn = QComboButton("utf-8")
         self._encoding_btn.setToolTip("Encoding of the document. Click to change.")
         self._encoding_btn.setChoices(get_encodings)
 
@@ -489,23 +481,25 @@ class QTextControl(QtW.QWidget):
         layout.addWidget(spacer_widget())
         layout.addWidget(labeled("Ln:", self._line_num))
         layout.addWidget(self._encoding_btn)
-        layout.addWidget(self._wordwrap)
+        layout.addWidget(self._wordwrap_btn)
         layout.addWidget(self._tab_spaces_btn)
         layout.addWidget(self._language_btn)
 
         # make font smaller
-        font = QtGui.QFont()
-        font.setFamily(MonospaceFontFamily)
-        font.setPointSize(8)
         for child in self.findChildren(QtW.QWidget):
+            font = child.font()
+            font.setPointSize(8)
             child.setFont(font)
 
-    def _wordwrap_changed(self, checked: bool):
+    def _wordwrap_changed(self, mode_str: str):
         """Enable or disable word wrap."""
-        if checked:
-            mode = QtGui.QTextOption.WrapMode.WordWrap
-        else:
-            mode = QtGui.QTextOption.WrapMode.NoWrap
+        match mode_str:
+            case "Word Wrap":
+                mode = QtGui.QTextOption.WrapMode.WordWrap
+            case "Wrap Anywhere":
+                mode = QtGui.QTextOption.WrapMode.WrapAnywhere
+            case _:
+                mode = QtGui.QTextOption.WrapMode.NoWrap
         self._text_edit.setWordWrapMode(mode)
 
     def _select_encoding(self):
