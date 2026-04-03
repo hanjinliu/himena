@@ -48,8 +48,14 @@ def _refer_title(ax: hplt.Axes, ax_mpl: plt.Axes):
 
 
 def update_mpl_axes_by_model(ax: hplt.Axes, ax_mpl: plt.Axes):
+    """Update the matplotlib axes by the model."""
     ax_mpl.spines["left"].set_edgecolor(ax.axis_color)
     ax_mpl.spines["bottom"].set_edgecolor(ax.axis_color)
+    ax_mpl.tick_params(colors=ax.axis_color)
+    ax_mpl.xaxis.label.set_color(ax.axis_color)
+    ax_mpl.yaxis.label.set_color(ax.axis_color)
+    ax_mpl.title.set_color(ax.axis_color)
+
     if ax.title is not None:
         _refer_title(ax, ax_mpl)
     if ax.x is not None:
@@ -61,13 +67,19 @@ def update_mpl_axes_by_model(ax: hplt.Axes, ax_mpl: plt.Axes):
     if legend := ax.legend:
         loc, bbox_to_anchor = _LEGEND_LOC_MAP[legend.location]
         leg = ax_mpl.legend(
-            loc=loc, bbox_to_anchor=bbox_to_anchor, prop={"size": legend.font_size}
+            loc=loc,
+            bbox_to_anchor=bbox_to_anchor,
+            prop={"size": legend.font_size},
+            facecolor="none",
+            edgecolor="gray",
+            labelcolor=ax.axis_color,
         )
         if isinstance(legend.title, hplt.StyledText):
             title, style = _parse_styled_text(legend.title)
             leg.set_title(title, **style)
         elif isinstance(legend.title, str):
             leg.set_title(legend.title)
+            leg.get_title().set_color(ax.axis_color)
 
 
 def _convert_axes_3d(ax: hplt.Axes3D, ax_mpl: plt3d.Axes3D):
@@ -109,7 +121,11 @@ def update_model_axis_by_mpl(axes: hplt.Axes, axes_mpl: plt.Axes):
     return axes
 
 
-def convert_plot_layout(lo: hplt.BaseLayoutModel, fig: plt.Figure):
+def convert_plot_layout(
+    lo: hplt.BaseLayoutModel,
+    fig: plt.Figure,
+) -> hplt.BaseLayoutModel:
+    """Update the matplotlib figure by the layout model."""
     fig.patch.set_facecolor(lo.background_color)
     if isinstance(lo, hplt.SingleAxes):
         ax_mpl = _get_single_mpl_axes(fig)

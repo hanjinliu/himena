@@ -64,3 +64,13 @@ def register_defaults(map: ObjectTypeMap):
         if isinstance(value, Workflow):
             return StandardType.WORKFLOW
         return None
+
+    @map.register
+    def standard_figure(value) -> str | None:
+        from himena.standards.plotting import layout
+
+        if isinstance(value, layout.BaseLayoutModel):
+            return StandardType.PLOT
+        elif isinstance(value, layout.StackedAxesBase):
+            return StandardType.PLOT_STACK
+        return None
