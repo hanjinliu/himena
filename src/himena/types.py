@@ -799,7 +799,7 @@ class BackendInstructions(BaseModel):
         "be called to get the response.",
         frozen=True,
     )
-    user_string_input_dialog_response: Callable[[], str] | None = Field(
+    user_string_input_response: Callable[[], tuple[str, Any | None]] | None = Field(
         default=None,
         description="If provided, user string input dialog will be skipped and this "
         "function will be called to get the response.",

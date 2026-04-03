@@ -995,11 +995,13 @@ class MainWindow(Generic[_W]):
             This method will return the entered string if the user confirmed, otherwise
             None.
         """
-        if res := self._instructions.user_string_input_dialog_response:
-            return res()
-        out = self._backend_main_window._request_user_string_input_dialog(
-            title, message, _norm_choices(choices)
-        )
+
+        if res := self._instructions.user_string_input_response:
+            out = res()
+        else:
+            out = self._backend_main_window._request_user_string_input_dialog(
+                title, message, _norm_choices(choices)
+            )
         return StringInputDialogResponse(*out)
 
     @overload

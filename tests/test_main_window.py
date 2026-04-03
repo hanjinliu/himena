@@ -515,6 +515,7 @@ def test_process_future(make_himena_ui):
     himena_ui.model_app._future_done_callback(future)
 
 def test_dialog(himena_ui: MainWindowQt, qtbot: QtBot):
+    himena_ui.show()
     himena_ui._backend_main_window._add_widget_to_dialog_no_exec(QtW.QWidget(), "title")
     with user_input_response(himena_ui, {"x": 3, "y": 0.6}):
         responce = himena_ui.exec_user_input_dialog(
@@ -530,7 +531,7 @@ def test_dialog(himena_ui: MainWindowQt, qtbot: QtBot):
         responce = himena_ui.exec_user_input_dialog(func)
     assert responce == "True, (5, 0.2)"
 
-    with user_string_input_response(himena_ui, "my input"):
+    with user_string_input_response(himena_ui, ("my input", "choice")):
         responce = himena_ui.exec_user_string_input_dialog(
             title="Input Dialog",
             message="Please enter something:",
