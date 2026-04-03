@@ -36,7 +36,11 @@ from himena.qt._qtab_widget import QTabWidget
 from himena.qt._qstatusbar import QStatusBar
 from himena.qt._qsub_window import QSubWindow, QSubWindowArea, get_subwindow
 from himena.qt._qdock_widget import QDockWidget
-from himena.qt._qcommand_palette import QCommandPalette, QCommandPaletteDialog
+from himena.qt._qcommand_palette import (
+    QCommandPalette,
+    QCommandPaletteDialog,
+    QUserStringInputDialog,
+)
 from himena.qt._qcontrolstack import QControlStack
 from himena.qt._qparametric import QParametricWidget
 from himena.qt._qgoto import QGotoWidget
@@ -112,6 +116,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self.setStatusBar(self._status_bar)
 
         self._command_palette_dialog = QCommandPaletteDialog(self)
+        self._user_string_input_dialog = QUserStringInputDialog(self)
 
         self._command_palette_general = QCommandPalette(
             self._app,
@@ -551,10 +556,16 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     ) -> _V | None:
         match how:
             case "buttons":
-                return QChoicesDialog.request(title, message, choices, parent=self)
+                return (
+                    QChoicesDialog.new_dialog(title, message, parent=self)
+                    .setup_buttons(choices)
+                    .run_request()
+                )
             case "radiobuttons":
-                return QChoicesDialog.request_radiobuttons(
-                    title, message, choices, parent=self
+                return (
+                    QChoicesDialog.new_dialog(title, message, parent=self)
+                    .setup_radiobuttons(choices)
+                    .run_request()
                 )
             case "palette":
                 self._command_palette_dialog.set_title_message(title, message)
@@ -562,6 +573,17 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
                 return self._command_palette_dialog.exec()
             case _:
                 raise NotImplementedError
+
+    def _request_user_string_input_dialog(
+        self,
+        title: str,
+        message: str,
+        choices: list[tuple[str, _V]],
+    ) -> tuple[str, _V | None]:
+        self._user_string_input_dialog.set_title_message(title, message)
+        self._user_string_input_dialog.set_choices(choices)
+        self._user_string_input_dialog.exec()
+        return self._user_string_input_dialog.get_results()
 
     def _show_command_palette(
         self,
@@ -940,15 +962,14 @@ class QChoicesDialog(QtW.QDialog):
         return _set_result
 
     @classmethod
-    def make_request(
-        cls,
-        title: str,
-        message: str,
-        choices: list[tuple[str, _V]],
-        parent: QtW.QWidget | None = None,
-    ) -> QChoicesDialog:
+    def new_dialog(cls, title: str, message: str, parent: QtW.QWidget | None = None):
         self = cls(parent)
-        self.init_message(title, message)
+        self.setWindowTitle(title)
+        label = QtW.QLabel(message)
+        self._layout.addWidget(label)
+        return self
+
+    def setup_buttons(self, choices: list[tuple[str, _V]]):
         button_group = QtW.QDialogButtonBox(self)
         shortcut_registered = set()
         for choice, value in choices:
@@ -962,28 +983,7 @@ class QChoicesDialog(QtW.QDialog):
         self._layout.addWidget(button_group)
         return self
 
-    @classmethod
-    def request(
-        cls,
-        title: str,
-        message: str,
-        choices: list[tuple[str, _V]],
-        parent: QtW.QWidget | None = None,
-    ) -> _V | None:
-        self = cls.make_request(title, message, choices, parent)
-        if self.exec() == QtW.QDialog.DialogCode.Accepted:
-            return self._result
-
-    @classmethod
-    def make_request_radiobuttons(
-        cls,
-        title: str,
-        message: str,
-        choices: list[tuple[str, _V]],
-        parent: QtW.QWidget | None = None,
-    ) -> QChoicesDialog:
-        self = cls(parent)
-        self.init_message(title, message)
+    def setup_radiobuttons(self, choices: list[tuple[str, _V]]):
         button_group = QtW.QButtonGroup(self)
         button_group.setExclusive(True)
         for choice, value in choices:
@@ -1000,22 +1000,9 @@ class QChoicesDialog(QtW.QDialog):
         self._layout.addWidget(ok_cancel)
         return self
 
-    @classmethod
-    def request_radiobuttons(
-        cls,
-        title: str,
-        message: str,
-        choices: list[tuple[str, _V]],
-        parent: QtW.QWidget | None = None,
-    ) -> _V | None:
-        self = cls.make_request_radiobuttons(title, message, choices, parent)
+    def run_request(self) -> _V | None:
         if self.exec() == QtW.QDialog.DialogCode.Accepted:
             return self._result
-
-    def init_message(self, title: str, message: str) -> None:
-        self.setWindowTitle(title)
-        label = QtW.QLabel(message)
-        self._layout.addWidget(label)
 
 
 def _prep_menubar_map(app: HimenaApplication) -> dict[str, str]:
@@ -1039,6 +1026,8 @@ def _prep_menubar_map(app: HimenaApplication) -> dict[str, str]:
 def _init_tool_bar(tbar: QModelToolBar):
     tbar.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.PreventContextMenu)
     tbar.setMovable(False)
+    for tbtn in tbar.findChildren(QtW.QToolButton):
+        tbtn.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
 
 
 def _update_toolbtn_color(toolbar: QModelToolBar, icon_color: str):

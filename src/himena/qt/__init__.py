@@ -14,6 +14,8 @@ from himena.qt._utils import (
 from himena.qt._qtoolbutton import QColoredToolButton
 from himena.qt._qsvg import QColoredSVGIcon
 from himena.qt._qviewbox import QViewBox
+from himena.qt._qcombobutton import QComboButton
+from himena.qt._qcoloredit import QColorSwatch
 
 __all__ = [
     "MainWindowQt",
@@ -28,6 +30,8 @@ __all__ = [
     "QColoredToolButton",
     "QColoredSVGIcon",
     "QViewBox",
+    "QComboButton",
+    "QColorSwatch",
 ]
 
 register_magicgui_types()

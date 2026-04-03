@@ -196,6 +196,15 @@ class MockBackend(BackendMainWindow):
         """Request a choice dialog and return the clicked text."""
         raise NotImplementedError
 
+    def _request_user_string_input_dialog(
+        self,
+        title: str,
+        message: str,
+        choices: list[tuple[str, _T]],
+    ) -> tuple[str, _T | None] | None:
+        """Request a user string input dialog and return the user input and the choice."""
+        raise NotImplementedError
+
     def _show_command_palette(self, kind: str) -> None:
         """Show the command palette widget of the given kind."""
 

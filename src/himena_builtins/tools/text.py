@@ -3,10 +3,13 @@ import csv
 import inspect
 from io import StringIO
 from types import FunctionType
+from typing import Annotated
+from himena.exceptions import Cancelled
 from himena.plugins import register_function, configure_gui, configure_submenu
 from himena.types import Parametric, WidgetDataModel
 from himena.standards.model_meta import TextMeta, FunctionMeta
 from himena.consts import StandardType, MenuId
+from himena.widgets import MainWindow
 from himena import create_model
 
 configure_submenu(MenuId.TOOLS_TEXT, group="20_builtins", order=0)
@@ -97,10 +100,20 @@ def change_separator(model: WidgetDataModel[str]) -> Parametric:
     menus=[MenuId.TOOLS_TEXT],
     command_id="builtins:text:change-encoding",
 )
-def change_encoding(model: WidgetDataModel[str]) -> Parametric:
+def change_encoding(ui: MainWindow, model: WidgetDataModel[str]) -> Parametric:
     """Change the encoding of a text."""
 
-    def change_encoding_data(encoding: str = "utf-8") -> WidgetDataModel[str]:
+    def _get_encoding(*_):
+        resp = ui.exec_user_string_input_dialog(
+            message="e.g. 'utf-8', 'latin-1', 'gbk', etc.",
+        )
+        if val := resp.get_input():
+            return val
+        raise Cancelled
+
+    def change_encoding_data(
+        encoding: Annotated[str, {"bind": _get_encoding}] = "utf-8",
+    ) -> WidgetDataModel[str]:
         new_text = model.value.encode(encoding).decode(encoding)
         out = model.with_value(new_text, update_inplace=True)
         if isinstance(meta := model.metadata, TextMeta):

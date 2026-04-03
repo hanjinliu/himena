@@ -12,7 +12,7 @@ import pytest
 from himena import MainWindow, _drag
 from himena.consts import StandardType
 from himena.core import create_model
-from himena.testing.dialog import user_input_response
+from himena.testing.dialog import user_input_response, user_string_input_response, choose_one_dialog_response
 from himena.types import ClipboardDataModel, DragDataModel, FutureInfo, WidgetConstructor, WidgetType, ParametricWidgetProtocol
 from himena.qt import MainWindowQt, drag_command, drag_files
 from himena.qt._qmain_window import QMainWindow, QChoicesDialog
@@ -39,6 +39,15 @@ def test_repr(make_himena_ui):
     repr(win)
     pretty(win)
 
+def test_norm_choices():
+    from himena.widgets._main_window import _norm_choices
+
+    assert _norm_choices(["OK"]) == [("OK", "OK")]
+    assert _norm_choices([("Yes", True), ("No", False)]) == [("Yes", True), ("No", False)]
+    with pytest.raises(ValueError):
+        _norm_choices([])
+    assert _norm_choices([], allow_zero=True) == []
+
 def test_command_palette_events(himena_ui: MainWindowQt, qtbot: QtBot):
     himena_ui.show()
     himena_ui.exec_action("show-command-palette")
@@ -64,7 +73,7 @@ def test_command_palette_events(himena_ui: MainWindowQt, qtbot: QtBot):
     dlg = qmain._command_palette_dialog
     dlg.set_choices([("Choice 1", 1), ("Choice 2", 2)])
     dlg.set_title_message("Title", "Message")
-
+    qtbot.keyClick(dlg._line, Qt.Key.Key_C)
 
 def test_goto_widget(himena_ui: MainWindowQt, qtbot: QtBot):
     himena_ui.show()
@@ -325,12 +334,14 @@ def test_qt_main_window(himena_ui: MainWindowQt, qtbot: QtBot):
 
 def test_qchoices_dialog(qtbot: QtBot):
     choices = [("a", 0), ("b", 1), ("c", 2)]
-    qtbot.addWidget(QChoicesDialog.make_request("title", "message", choices))
-    dlg = QChoicesDialog.make_request_radiobuttons("title", "message", choices)
-    qtbot.addWidget(dlg)
+    dlg = QChoicesDialog.new_dialog("title", "message")
+    dlg.setup_buttons(choices)
+
+    dlg = QChoicesDialog.new_dialog("title", "message")
+    dlg.setup_radiobuttons(choices)
+
     cb = dlg.set_result_callback(0, True)
     cb()
-
 
 def test_private_functions():
     from himena.widgets._main_window import _short_repr, _format_exceptions
@@ -432,11 +443,12 @@ def test_action_hint(himena_ui: MainWindowQt, sample_dir: Path):
     assert len(menu.actions()) == 3 + len(suggestions)
 
     repr(himena_ui.action_hint_registry)
-    for hint in himena_ui.action_hint_registry.iter_all():
-        himena_ui.current_window = win
-        hint.suggestion.get_title(himena_ui)
-        hint.suggestion.get_tooltip(himena_ui)
-        hint.suggestion.execute(himena_ui, win.to_model().workflow.last())
+    with choose_one_dialog_response(himena_ui, ";"):
+        for hint in himena_ui.action_hint_registry.iter_all():
+            himena_ui.current_window = win
+            hint.suggestion.get_title(himena_ui)
+            hint.suggestion.get_tooltip(himena_ui)
+            hint.suggestion.execute(himena_ui, win.to_model().workflow.last())
 
 def test_custom_object_type_map(make_himena_ui):
     himena_ui: MainWindow = make_himena_ui("mock")
@@ -504,6 +516,7 @@ def test_process_future(make_himena_ui):
     himena_ui.model_app._future_done_callback(future)
 
 def test_dialog(himena_ui: MainWindowQt, qtbot: QtBot):
+    himena_ui.show()
     himena_ui._backend_main_window._add_widget_to_dialog_no_exec(QtW.QWidget(), "title")
     with user_input_response(himena_ui, {"x": 3, "y": 0.6}):
         responce = himena_ui.exec_user_input_dialog(
@@ -518,6 +531,14 @@ def test_dialog(himena_ui: MainWindowQt, qtbot: QtBot):
     with user_input_response(himena_ui, {"boolean": True, "tuple_val": (5, 0.2)}):
         responce = himena_ui.exec_user_input_dialog(func)
     assert responce == "True, (5, 0.2)"
+
+    with user_string_input_response(himena_ui, ("my input", "choice")):
+        responce = himena_ui.exec_user_string_input_dialog(
+            title="Input Dialog",
+            message="Please enter something:",
+        )
+    assert responce.input == "my input"
+    assert responce.choice is not None
 
 def test_subwindow_mouse_move(himena_ui: MainWindowQt, qtbot: QtBot):
     tab = himena_ui.add_tab()
