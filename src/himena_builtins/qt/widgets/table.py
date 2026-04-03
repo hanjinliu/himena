@@ -864,7 +864,13 @@ class QTableControl(QtW.QWidget):
             groupbox_other.add_tool_button(table._auto_resize_columns, "resize_col"),
             groupbox_other.add_tool_button(table._sort_table_by_column, "sort_table"),
         ]
-        self._separator_label = QtW.QLabel()
+        self._separator_label = QtW.QToolButton()
+        self._separator_label.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+
+        @self._separator_label.clicked.connect
+        def _on_click():
+            table._ui.exec_action("builtins:table:change-separator")
+
         self._separator: str | None = None
 
         layout.addWidget(spacer_widget())

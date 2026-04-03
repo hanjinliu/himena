@@ -47,7 +47,7 @@ class QCommandPaletteBase(QtW.QFrame):
         self._layout = _layout
 
         font = self.font()
-        font.setPointSize(14)
+        font.setPointSize(12)
         self.setFont(font)
         self._line.setFont(font)
         font = self._list.font()
@@ -139,11 +139,15 @@ class QCommandPaletteDialog(QCommandPaletteBase):
     def set_choices(self, choices: list[tuple[str, Any]]):
         self._choice_map = dict(choices)
         commands = [CommandRule(id=txt, title=txt) for txt in self._choice_map.keys()]
+        self._list.all_commands.clear()
         self.extend_command(commands)
 
     def _on_command_exec_requested(self, cmd: CommandRule) -> None:
         self._response = self._choice_map.get(cmd.id)
         self.hide()
+
+    def _create_command_list(self, formatter: Callable[[Action], str]):
+        return QMatchableChoicesList(formatter)
 
     def exec(self) -> Any | None:
         """Show the palette and return the chosen response."""
@@ -534,10 +538,16 @@ class QCommandList(QCommandListBase):
         return QtCore.QSize(600, 360)
 
 
+class QMatchableChoicesList(QCommandList):
+    def sizeHint(self) -> QtCore.QSize:
+        height = len(self.all_commands) * _QSIZE_PER_ITEM.height() + 8
+        return QtCore.QSize(600, min(height, 400))
+
+
 class QChoicesList(QCommandListBase):
     def sizeHint(self) -> QtCore.QSize:
         height = len(self.all_commands) * _QSIZE_PER_ITEM.height() + 8
-        return QtCore.QSize(600, height)
+        return QtCore.QSize(600, min(height, 400))
 
 
 def _enabled(action: CommandRule, context: Mapping[str, Any]) -> bool:

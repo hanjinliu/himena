@@ -11,6 +11,7 @@ import uuid
 from typing import (
     Any,
     Callable,
+    Iterable,
     Sequence,
     Generic,
     Iterator,
@@ -920,7 +921,7 @@ class MainWindow(Generic[_W]):
         self,
         title: str = "",
         message: str = "",
-        choices: list[tuple[str, _T]] = ...,
+        choices: Iterable[tuple[str, _T]] = ...,
         how: ChooseOneString = "buttons",
     ) -> _T | None: ...
     @overload
@@ -928,7 +929,7 @@ class MainWindow(Generic[_W]):
         self,
         title: str = "",
         message: str = "",
-        choices: list[str] = ["OK"],
+        choices: Iterable[str] = ["OK"],
         how: ChooseOneString = "buttons",
     ) -> str | None: ...
 
@@ -1430,9 +1431,9 @@ def _default_dialog_func(**kwargs) -> dict[str, Any]:
     return kwargs
 
 
-def _norm_choices(choices: list, allow_zero: bool = False) -> list[tuple[str, Any]]:
+def _norm_choices(choices: Iterable, allow_zero: bool = False) -> list[tuple[str, Any]]:
     _choices_normed = []
-    choices = choices.copy()
+    choices = list(choices)
     if len(choices) == 0 and not allow_zero:
         raise ValueError("At least one choice must be given.")
     for choice in choices:

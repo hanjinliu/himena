@@ -1,4 +1,4 @@
-from qtpy import QtWidgets as QtW
+from qtpy import QtWidgets as QtW, QtCore
 from himena_builtins._consts import ICON_PATH
 from himena.qt import QColoredToolButton
 
@@ -23,5 +23,6 @@ class QToolButtonGroup(QtW.QGroupBox):
     def add_tool_button(self, callback, icon: str) -> QColoredToolButton:
         """Create a tool button with the given icon and callback."""
         btn = QColoredToolButton(callback, ICON_PATH / f"{icon}.svg")
+        btn.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
         self._inner_layout.addWidget(btn)
         return btn

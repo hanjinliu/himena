@@ -3,19 +3,21 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator, TYPE_CHECKING
+from encodings import aliases, normalize_encoding
 
 from qtpy import QtWidgets as QtW
 from qtpy import QtGui, QtCore
-from superqt import QSearchableComboBox, QToggleSwitch
+from superqt import QToggleSwitch
 
 from himena.consts import StandardType, MonospaceFontFamily
 from himena.types import WidgetDataModel
 from himena.standards.model_meta import TextMeta
 from himena.plugins import validate_protocol, config_field
+from himena.widgets import current_instance
 
 from himena.utils.collections import OrderedSet
 from himena.utils.misc import lru_cache
-from himena.qt._qcoloredit import QColorSwatch
+from himena.qt import QComboButton, QColorSwatch
 from himena_builtins.qt.widgets._text_base import QMainTextEdit, POINT_SIZES, TAB_SIZES
 from himena_builtins.qt.widgets._shared import labeled, spacer_widget
 
@@ -28,6 +30,16 @@ _POPULAR_LANGUAGES = [
     "Scala", "Perl", "Lua", "Haskell", "Julia", "MATLAB", "Markdown", "YAML", "JSON",
     "XML", "TOML", "PowerShell", "Batch", "C#", "Objective-C",
 ]  # fmt: skip
+_POPULAR_ENCODINGS = [
+    "utf-8",
+    "utf-16",
+    "ascii",
+    "latin-1",
+    "utf-16",
+    "shift-jis",
+    "gbk",
+    "euc-kr",
+]
 
 
 class QTextEdit(QtW.QWidget):
@@ -46,7 +58,7 @@ class QTextEdit(QtW.QWidget):
         self._control = QTextControl(self._main_text_edit)
 
         self._control.languageChanged.connect(self._on_language_changed)
-        self._control.tabChanged.connect(self._main_text_edit.set_tab_size)
+        self._control.tabChanged.connect(self._on_tab_size_changed)
         self._main_text_edit.cursorPositionChanged.connect(self._update_line_numbers)
         layout = QtW.QVBoxLayout(self)
         layout.setSpacing(0)
@@ -63,7 +75,7 @@ class QTextEdit(QtW.QWidget):
     def update_configs(self, configs: TextEditConfigs):
         self._main_text_edit._default_font.setPointSize(configs.default_font_size)
         self._main_text_edit.setFont(self._main_text_edit._default_font)
-        self._control._tab_spaces_combobox.setCurrentText(str(configs.default_tab_size))
+        self._control._tab_spaces_btn.setCurrentText(str(configs.default_tab_size))
 
     @validate_protocol
     def update_model(self, model: WidgetDataModel):
@@ -88,11 +100,12 @@ class QTextEdit(QtW.QWidget):
                 lang = find_language_from_path(src.name)
         # if language could be inferred, set it
         if lang:
-            self._control._language_combobox.setCurrentText(lang)
-            self._control._emit_language_changed()
-        self._control._tab_spaces_combobox.setCurrentText(str(spaces))
+            self._control._language_btn.setCurrentText(lang)
+            self._control.languageChanged.emit(lang)
+        self._control._tab_spaces_btn.setCurrentText(str(spaces))
         if encoding:
-            self._control._encoding.setText(encoding)
+            enc = normalize_encoding(encoding).replace("_", "-")
+            self._control._encoding_btn.setCurrentText(enc)
         self._model_type = model.type
         if (ext := model.extension_default) is not None:
             self._extension_default = ext
@@ -106,10 +119,10 @@ class QTextEdit(QtW.QWidget):
             type=self.model_type(),
             extension_default=self._extension_default,
             metadata=TextMeta(
-                language=self._control._language_combobox.currentText(),
-                spaces=int(self._control._tab_spaces_combobox.currentText()),
+                language=self._control._language_btn.currentText(),
+                spaces=int(self._control._tab_spaces_btn.currentText()),
                 selection=(cursor.selectionStart(), cursor.selectionEnd()),
-                encoding=self._control._encoding.text(),
+                encoding=self._control._encoding_btn.currentText(),
                 font_family=font.family(),
                 font_size=font.pointSizeF(),
             ),
@@ -176,6 +189,11 @@ class QTextEdit(QtW.QWidget):
         else:
             self._model_type = StandardType.TEXT
             self._extension_default = ".txt"
+        self._control._language_btn.setCurrentText(language)
+
+    def _on_tab_size_changed(self, tab_size: int):
+        self._main_text_edit.set_tab_size(tab_size)
+        self._control._tab_spaces_btn.setCurrentText(str(tab_size))
 
 
 class QRichTextEdit(QtW.QWidget):
@@ -395,9 +413,20 @@ def get_languages() -> OrderedSet[str]:
     langs: OrderedSet[str] = OrderedSet()
     for lang in _POPULAR_LANGUAGES:
         langs.add(lang)
-    for lang, aliases, extensions, _ in get_all_lexers(plugins=False):
+    for lang, _aliases, _extensions, _ in get_all_lexers(plugins=False):
         langs.add(lang)
     return langs
+
+
+@lru_cache(maxsize=1)
+def get_encodings() -> OrderedSet[str]:
+    """Get popular encodings."""
+    encs: OrderedSet[str] = OrderedSet()
+    for enc in _POPULAR_ENCODINGS:
+        encs.add(enc)
+    for enc in aliases.aliases.values():
+        encs.add(enc.replace("_", "-"))
+    return encs
 
 
 def find_language_from_path(path: str) -> str | None:
@@ -424,17 +453,19 @@ class QTextControl(QtW.QWidget):
         super().__init__()
         self._text_edit = text_edit
 
-        self._language_combobox = QSearchableComboBox()
-        self._language_combobox.addItems(get_languages())
-        self._language_combobox.setToolTip("Language of the document")
-        self._language_combobox.setMaximumWidth(120)
-        self._language_combobox.currentIndexChanged.connect(self._emit_language_changed)
+        self._language_btn = QComboButton("Plain Text")
+        self._language_btn.setMessage("Select the language for syntax highlighting.")
+        self._language_btn.setChoices(get_languages)
+        self._language_btn.setFormatter("Language: {}")
+        self._language_btn.setToolTip("Language of the document. Click to change.")
+        self._language_btn.currentTextChanged.connect(self.languageChanged.emit)
 
-        self._tab_spaces_combobox = QtW.QComboBox()
-        self._tab_spaces_combobox.addItems([str(x) for x in TAB_SIZES])
-        self._tab_spaces_combobox.setCurrentText("4")
-        self._tab_spaces_combobox.setToolTip("Tab size")
-        self._tab_spaces_combobox.currentTextChanged.connect(
+        self._tab_spaces_btn = QComboButton("4")
+        self._tab_spaces_btn.setMessage("Select the number of spaces for a tab.")
+        self._tab_spaces_btn.setChoices([str(i) for i in TAB_SIZES])
+        self._tab_spaces_btn.setFormatter("Spaces: {}")
+        self._tab_spaces_btn.setToolTip("Tab spaces. Click to change.")
+        self._tab_spaces_btn.currentTextChanged.connect(
             lambda x: self.tabChanged.emit(int(x))
         )
 
@@ -446,17 +477,21 @@ class QTextControl(QtW.QWidget):
         self._wordwrap.toggled.connect(self._wordwrap_changed)
         self._wordwrap.setToolTip("Enable word wrap")
 
-        self._encoding = QtW.QLabel("utf-8")
+        self._encoding_btn = QComboButton()
+        self._encoding_btn.setCurrentText("utf-8")
+        self._encoding_btn.setToolTip("Encoding of the document. Click to change.")
+        self._encoding_btn.setChoices(get_encodings)
 
         layout = QtW.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        layout.setSpacing(1)
         layout.addWidget(spacer_widget())
         layout.addWidget(labeled("Ln:", self._line_num))
-        layout.addWidget(self._encoding)
+        layout.addWidget(self._encoding_btn)
         layout.addWidget(self._wordwrap)
-        layout.addWidget(labeled("Spaces:", self._tab_spaces_combobox))
-        layout.addWidget(labeled("Language:", self._language_combobox))
+        layout.addWidget(self._tab_spaces_btn)
+        layout.addWidget(self._language_btn)
 
         # make font smaller
         font = QtGui.QFont()
@@ -473,15 +508,15 @@ class QTextControl(QtW.QWidget):
             mode = QtGui.QTextOption.WrapMode.NoWrap
         self._text_edit.setWordWrapMode(mode)
 
-    def _emit_language_changed(self):
-        self.languageChanged.emit(self._language_combobox.currentText())
+    def _select_encoding(self):
+        current_instance().exec_action("builtins:text:change-encoding")
 
-    def _move_cursor_to_line(self, line: int):
-        cursor = self._text_edit.textCursor()
-        cursor.setPosition(0)
-        cursor.movePosition(
-            QtGui.QTextCursor.MoveOperation.NextBlock,
-            QtGui.QTextCursor.MoveMode.KeepAnchor,
-            line - 1,
-        )
-        self._text_edit.setTextCursor(cursor)
+    # def _move_cursor_to_line(self, line: int):
+    #     cursor = self._text_edit.textCursor()
+    #     cursor.setPosition(0)
+    #     cursor.movePosition(
+    #         QtGui.QTextCursor.MoveOperation.NextBlock,
+    #         QtGui.QTextCursor.MoveMode.KeepAnchor,
+    #         line - 1,
+    #     )
+    #     self._text_edit.setTextCursor(cursor)

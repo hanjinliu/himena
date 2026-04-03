@@ -69,9 +69,9 @@ def test_text_changing_language(qtbot: QtBot):
     text_edit = QTextEdit()
     text_edit.update_model(model)
     qtbot.addWidget(text_edit)
-    text_edit._control._language_combobox.setCurrentText("Python")
+    text_edit._control._language_btn.setCurrentText("Python")
     QtW.QApplication.processEvents()
-    text_edit._control._language_combobox.setCurrentText("C++")
+    text_edit._control._language_btn.setCurrentText("C++")
     QtW.QApplication.processEvents()
 
 def test_find_text(qtbot: QtBot):

@@ -1,12 +1,13 @@
 from io import StringIO
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated
 import numpy as np
+from himena.exceptions import Cancelled
 from himena.plugins import register_function, configure_gui, configure_submenu
 from himena.types import ClipboardDataModel, Parametric, WidgetDataModel
 from himena.standards.model_meta import TableMeta
 from himena.consts import StandardType, MenuId
 from himena.utils.misc import table_to_text
-from himena.widgets import SubWindow, append_result
+from himena.widgets import SubWindow, append_result, MainWindow
 
 if TYPE_CHECKING:
     from himena_builtins.qt.widgets.table import QSpreadsheet
@@ -43,7 +44,7 @@ def crop_selection(model: WidgetDataModel["np.ndarray"]) -> Parametric:
     menus=[MenuId.TOOLS_TABLE],
     command_id="builtins:table:change-separator",
 )
-def change_separator(model: WidgetDataModel) -> Parametric:
+def change_separator(ui: MainWindow, model: WidgetDataModel) -> Parametric:
     """Change the separator of the table data."""
     arr_str = model.value
     meta = _cast_meta(model.metadata)
@@ -51,7 +52,24 @@ def change_separator(model: WidgetDataModel) -> Parametric:
     if sep is None:
         raise ValueError("Current separator of the table is unknown.")
 
-    def change_separator(separator: str = ",") -> None:
+    def _get_separator(*_):
+        all_choices = [
+            ("Comma", ","),
+            ("Tab", "\\t"),
+            ("Semicolon", ";"),
+            ("Pipe", "|"),
+            ("Space", " "),
+        ]
+        resp = ui.exec_choose_one_dialog(
+            message="Choose a separator",
+            choices=[(f"{name} ({s})", s) for name, s in all_choices],
+            how="palette",
+        )
+        if resp is None:
+            raise Cancelled
+        return resp
+
+    def change_separator(separator: Annotated[str, {"bind": _get_separator}] = ","):
         buf = _arr_to_buf(arr_str, sep)
         arr_new = np.loadtxt(
             buf,
