@@ -1,0 +1,16 @@
+From: sender@example.com
+To: recipient@example.com
+Subject: Test Email
+MIME-Version: 1.0
+Content-Type: text/html; charset="UTF-8"
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Email</title>
+</head>
+<body>
+    <h1>Hello!</h1>
+    <p>This is a simple HTML email.</p>
+</body>
+</html>

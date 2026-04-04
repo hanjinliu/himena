@@ -36,13 +36,19 @@ elif IS_MACOS:
     MonospaceFontFamily = "Menlo"
     DefaultFontFamily = "Helvetica"
 else:
-    import tkinter
-    import tkinter.font
 
     def _get_font_family():
+        try:
+            import tkinter
+            import tkinter.font
+
+            root = tkinter.Tk()  # noqa: F841
+            families = tkinter.font.families()
+        except ModuleNotFoundError:
+            # In WSL Ubuntu, tkinter is not available by default.
+            # `sudo apt-get install python3-tk` is required.
+            families = ()
         candidates = ["Noto Sans Mono", "DejaVu Sans Mono", "Ubuntu Mono"]
-        root = tkinter.Tk()  # noqa: F841
-        families = tkinter.font.families()
         for fam in candidates:
             if fam in families:
                 return fam
@@ -119,6 +125,7 @@ class StandardType(SimpleNamespace):
     ROIS = "rois"  # regions of interest
     FUNCTION = "function"  # callable object
     DISTRIBUTION = "distribution"  # probablistic distribution object
+    EMAIL = "email"  # email message object
 
     # fallback when no reader is found for the file (which means that the file could be
     # opened as a text file)
