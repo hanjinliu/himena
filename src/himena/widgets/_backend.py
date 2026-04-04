@@ -188,6 +188,7 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
         title: str,
         message: str,
         choices: list[tuple[str, _T]],
+        default: str = "",
     ) -> tuple[str, _T | None]:
         """Request a user string input dialog and return the user input and the choice."""
 

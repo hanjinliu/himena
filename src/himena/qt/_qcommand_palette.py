@@ -114,8 +114,7 @@ class QCommandPaletteBase(QtW.QFrame):
             topleft.setX(int(topleft.x() + (parent_rect.width() - w) / 2))
             topleft.setY(int(topleft.y() + 3))
             self.move(topleft)
-            self.resize(w, list_size.height() + 40)
-
+            self.resize(w, list_size.height() + 48)
         self.raise_()
         self._line.setFocus()
 
@@ -127,6 +126,7 @@ class QCommandPaletteDialog(QCommandPaletteBase):
         self._layout.insertWidget(0, self._title_label)
         self._response: Any | None = None
         self._choice_map: dict[str, Any] = {}
+        self._default_text = ""
 
     def set_title_message(self, title: str, message: str) -> None:
         if title.strip():
@@ -142,6 +142,10 @@ class QCommandPaletteDialog(QCommandPaletteBase):
         self._list.all_commands.clear()
         self.extend_command(commands)
 
+    def set_default(self, default: str) -> None:
+        """Set the default input text."""
+        self._default_text = default
+
     def _on_command_exec_requested(self, cmd: CommandRule) -> None:
         self._response = self._choice_map.get(cmd.id)
         self.hide()
@@ -155,6 +159,8 @@ class QCommandPaletteDialog(QCommandPaletteBase):
         self.show()
         loop = QtCore.QEventLoop()
         self.palette_hidden.connect(loop.quit)
+        self._line.setText(self._default_text)
+        self._line.selectAll()
         loop.exec()
         return self._response
 
@@ -485,6 +491,9 @@ class QCommandListBase(QtW.QListView):
         self._current_max_index = row
         self.update_selection()
 
+    def minimumSizeHint(self):
+        return QtCore.QSize(0, 0)
+
     if TYPE_CHECKING:
 
         def model(self) -> QCommandMatchModel: ...
@@ -540,13 +549,13 @@ class QCommandList(QCommandListBase):
 
 class QMatchableChoicesList(QCommandList):
     def sizeHint(self) -> QtCore.QSize:
-        height = len(self.all_commands) * _QSIZE_PER_ITEM.height() + 8
+        height = len(self.all_commands) * _QSIZE_PER_ITEM.height() + 10
         return QtCore.QSize(600, min(height, 400))
 
 
 class QChoicesList(QCommandListBase):
     def sizeHint(self) -> QtCore.QSize:
-        height = len(self.all_commands) * _QSIZE_PER_ITEM.height() + 8
+        height = len(self.all_commands) * _QSIZE_PER_ITEM.height() + 10
         return QtCore.QSize(600, min(height, 400))
 
 

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from contextlib import suppress
 from enum import IntEnum
 import math
 from typing import Hashable, Iterable, Iterator
@@ -316,9 +315,13 @@ class QFlowChartView(QtW.QGraphicsView):
         parents: list[Hashable | QFlowChartNode] = [],
     ) -> QFlowChartNode:
         """Add a child node to the parents in the list"""
-        parent_nodes = [
-            p if isinstance(p, QFlowChartNode) else self._node_map[p] for p in parents
-        ]
+        parent_nodes: list[QFlowChartNode] = []
+        for p in parents:
+            if isinstance(p, QFlowChartNode):
+                parent_nodes.append(p)
+            elif p in self._node_map:
+                # NOTE: in the subclasses, probably not all nodes are added.
+                parent_nodes.append(self._node_map[p])
         if not parent_nodes:
             center = QtCore.QPointF(32, 24)
         else:
@@ -414,8 +417,8 @@ class QFlowChartView(QtW.QGraphicsView):
         """Override mouse press event to start dragging the scene"""
         if _ := self.itemAt(event.pos()):
             return super().mousePressEvent(event)
+        self._last_drag_position = event.position()
         if event.button() == Qt.MouseButton.LeftButton:
-            self._last_drag_position = event.position()
             self.setCursor(Qt.CursorShape.ClosedHandCursor)
         return super().mousePressEvent(event)
 
@@ -437,21 +440,19 @@ class QFlowChartView(QtW.QGraphicsView):
         """Override mouse release event to stop dragging the scene"""
         if self._last_drag_position.isNull():
             return super().mouseReleaseEvent(event)
-        with suppress(RuntimeError):
-            is_click = (
-                self._last_drag_position - event.position()
-            ).manhattanLength() < 4
-            if event.button() == Qt.MouseButton.LeftButton:
-                self.setCursor(Qt.CursorShape.OpenHandCursor)
-                self._last_drag_position = QtCore.QPointF()
-                if is_click:
-                    # If it was a click, emit the background left clicked signal
-                    self.background_left_clicked.emit(event.position())
-            elif event.button() == Qt.MouseButton.RightButton:
-                # If right button is released, emit the right clicked signal
-                if is_click:
-                    self.background_right_clicked.emit(event.position())
-            return super().mouseReleaseEvent(event)
+        # with suppress(RuntimeError):
+        is_click = (self._last_drag_position - event.position()).manhattanLength() < 4
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.setCursor(Qt.CursorShape.OpenHandCursor)
+            self._last_drag_position = QtCore.QPointF()
+            if is_click:
+                # If it was a click, emit the background left clicked signal
+                self.background_left_clicked.emit(event.position())
+        elif event.button() == Qt.MouseButton.RightButton:
+            # If right button is released, emit the right clicked signal
+            if is_click:
+                self.background_right_clicked.emit(event.position())
+        return super().mouseReleaseEvent(event)
 
     def mouseDoubleClickEvent(self, event):
         self._last_drag_position = QtCore.QPointF()

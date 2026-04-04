@@ -201,6 +201,7 @@ class MockBackend(BackendMainWindow):
         title: str,
         message: str,
         choices: list[tuple[str, _T]],
+        default: str = "",
     ) -> tuple[str, _T | None] | None:
         """Request a user string input dialog and return the user input and the choice."""
         raise NotImplementedError
