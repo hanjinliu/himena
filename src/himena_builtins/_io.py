@@ -241,6 +241,19 @@ def default_excel_reader(file_path: Path) -> WidgetDataModel:
     )
 
 
+def default_email_reader(file_path: Path) -> WidgetDataModel:
+    """Read email file."""
+    import email
+
+    with file_path.open("r") as f:
+        msg = email.message_from_file(f)
+    return WidgetDataModel(
+        value=msg,
+        type=StandardType.EMAIL,
+        extension_default=file_path.suffix,
+    )
+
+
 def default_array_reader(file_path: Path) -> WidgetDataModel:
     """Read array file."""
     arr = np.load(file_path)

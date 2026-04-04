@@ -197,7 +197,19 @@ def read_zip(file_path: Path) -> WidgetDataModel:
 def _(file_path: Path) -> str | None:
     if file_path.suffix.rstrip("~") == ".zip":
         return StandardType.MODELS
-    return None
+
+
+@register_reader_plugin(priority=50)
+def read_email(file_path: Path) -> WidgetDataModel:
+    if file_path.suffix.rstrip("~") == ".eml":
+        return _io.default_email_reader(file_path)
+    raise ValueError(f"Unsupported file type: {file_path.suffix}")
+
+
+@read_email.define_matcher
+def _(file_path: Path) -> str | None:
+    if file_path.suffix.rstrip("~") == ".eml":
+        return StandardType.EMAIL
 
 
 @register_reader_plugin(priority=-100)
