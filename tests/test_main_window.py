@@ -472,10 +472,11 @@ def test_remote_file(make_himena_ui):
 
 def test_single_window_mode(make_himena_ui):
     himena_ui: MainWindow = make_himena_ui("mock")
+    assert len(himena_ui.windows) == 0
     himena_ui.add_data_model(create_model("a", type="text", title="single").use_tab())
     assert himena_ui.tabs[0].is_single_window
     assert himena_ui.tabs[0].name == "single"
-    assert himena_ui.tabs[0][0].title == "single"
+    assert himena_ui.windows[0].title == "single"
     himena_ui.add_data_model(create_model("b", type="text"))
 
     # new tab should be created
