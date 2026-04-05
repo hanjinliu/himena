@@ -221,6 +221,13 @@ class MainWindow(Generic[_W]):
         """Tab list object."""
         return self._tab_list
 
+    @property
+    def windows(self) -> TabArea[_W]:
+        """Get all sub-windows in the current active tab."""
+        if tab := self.tabs.current():
+            return tab
+        return []
+
     def windows_for_type(self, types: str | list[str]) -> list[SubWindow[_W]]:
         """Get all sub-windows for the given types."""
         windows = []
@@ -968,6 +975,7 @@ class MainWindow(Generic[_W]):
         title: str = "",
         message: str = "",
         choices: list[tuple[str, _T]] = [("Press 'Enter' to execute", True)],
+        default: str = "",
     ) -> StringInputDialogResponse[_T]: ...
     @overload
     def exec_user_string_input_dialog(
@@ -975,12 +983,14 @@ class MainWindow(Generic[_W]):
         title: str = "",
         message: str = "",
         choices: list[str] = ...,
+        default: str = "",
     ) -> StringInputDialogResponse[str]: ...
     def exec_user_string_input_dialog(
         self,
         title="",
         message="",
         choices=[("Press 'Enter' to execute", True)],
+        default: str = "",
     ):
         """Execute a dialog to get user string input.
 
@@ -997,13 +1007,18 @@ class MainWindow(Generic[_W]):
             List of choices. Each choice can be a string or a tuple of (text, value).
             This method will return the entered string if the user confirmed, otherwise
             None.
+        default : str, optional
+            Default string to show in the input field.
         """
 
         if res := self._instructions.user_string_input_response:
             out = res()
         else:
             out = self._backend_main_window._request_user_string_input_dialog(
-                title, message, _norm_choices(choices)
+                title,
+                message,
+                _norm_choices(choices),
+                default,
             )
         return StringInputDialogResponse(*out)
 

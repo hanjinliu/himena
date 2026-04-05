@@ -579,9 +579,11 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         title: str,
         message: str,
         choices: list[tuple[str, _V]],
+        default: str = "",
     ) -> tuple[str, _V | None]:
         self._user_string_input_dialog.set_title_message(title, message)
         self._user_string_input_dialog.set_choices(choices)
+        self._user_string_input_dialog.set_default(default)
         self._user_string_input_dialog.exec()
         return self._user_string_input_dialog.get_results()
 
