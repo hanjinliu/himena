@@ -710,6 +710,7 @@ class ParametricWindow(SubWindow[_W]):
             if _is_annotated(annot):
                 _, op = _split_annotated_type(annot)
                 if "bind" not in op:
+                    # user input is required, do not run immediately
                     return False
             else:
                 return False
