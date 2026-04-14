@@ -116,7 +116,7 @@ class ReaderPlugin(_IOPluginBase):
     __call__ = read
 
     def match_model_type(self, path: Path | list[Path]) -> str | None:
-        """True if the reader can read the file."""
+        """Not None if the reader can read the file."""
         if self._skip_if_list and isinstance(path, list):
             return None
         if self._matcher is None:

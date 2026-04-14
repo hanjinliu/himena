@@ -67,6 +67,14 @@ QPushButton:disabled {
     border: 0px;
 }
 
+QPushButton:disabled:checked {
+    background-color: #[highlight_dim];
+    color: #[foreground_dim];
+    border-radius: 2px;
+    padding: 4px;
+    border: 0px;
+}
+
 QPushButton#profileButton {
     background-color: #[background];
     color:: #[foreground_dim];
