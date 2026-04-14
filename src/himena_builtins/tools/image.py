@@ -15,6 +15,7 @@ from himena.standards.model_meta import (
 )
 from himena.widgets import SubWindow, TabArea
 from himena.utils import image_utils
+from himena.qt.magicgui import ToggleButtons
 from himena_builtins.tools.array import _cast_meta, _make_index_getter
 
 configure_submenu(MenuId.TOOLS_IMAGE_ROI, "ROI")
@@ -460,7 +461,7 @@ def set_channel_axis(model: WidgetDataModel) -> Parametric:
     else:
         choices = [(axis.name, i) for i, axis in enumerate(meta.axes[:-2])]
 
-    @configure_gui(axis={"choices": choices})
+    @configure_gui(axis={"choices": choices, "widget_type": ToggleButtons})
     def run_set_channel_axis(axis: int, inplace: bool = False):
         meta_out = meta.model_copy(update={"channel_axis": axis})
         return model.with_metadata(meta_out, update_inplace=inplace)
