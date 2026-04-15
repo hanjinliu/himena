@@ -33,6 +33,14 @@ def test_reading_writing_files(sample_dir: Path, tmpdir, file_name: str, model_t
     show_statistics(model)
     show_metadata(model)
 
+def test_uppercase_extension(sample_dir: Path, tmpdir):
+    tmpdir = Path(tmpdir)
+    model = read(sample_dir / "image.png")
+    assert model.type == StandardType.IMAGE
+    write(model, tmpdir / "image.PNG")
+    model = read(sample_dir / "image.PNG")
+    assert model.type == StandardType.IMAGE
+
 def test_dataframe(sample_dir: Path, tmpdir):
     tmpdir = Path(tmpdir)
     model = read(sample_dir / "pq.parquet")

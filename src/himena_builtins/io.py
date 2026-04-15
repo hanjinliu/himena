@@ -18,7 +18,7 @@ from himena.consts import (
 
 @register_reader_plugin(priority=50)
 def read_text(file_path: Path) -> WidgetDataModel:
-    suffix = file_path.suffix.rstrip("~")
+    suffix = file_path.suffix.rstrip("~").lower()
     if suffix == ".csv":
         return _io.default_csv_reader(file_path)
     elif suffix == ".tsv":
@@ -45,7 +45,7 @@ def read_text(file_path: Path) -> WidgetDataModel:
 def _(file_path: Path) -> str | None:
     if file_path.is_dir():
         return None
-    suffix = file_path.suffix.rstrip("~")
+    suffix = file_path.suffix.rstrip("~").lower()
     if suffix == ".csv":
         return StandardType.TABLE
     elif suffix == ".tsv":
@@ -82,21 +82,21 @@ def _(file_path: Path | list[Path]) -> str | None:
 
 @register_reader_plugin(priority=50)
 def read_image(file_path: Path) -> WidgetDataModel:
-    if file_path.suffix.rstrip("~") in {".png", ".jpg", ".jpeg"}:
+    if file_path.suffix.rstrip("~").lower() in {".png", ".jpg", ".jpeg"}:
         return _io.default_image_reader(file_path)
     raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
 
 @read_image.define_matcher
 def _(file_path: Path) -> str | None:
-    if file_path.suffix.rstrip("~") in {".png", ".jpg", ".jpeg"}:
+    if file_path.suffix.rstrip("~").lower() in {".png", ".jpg", ".jpeg"}:
         return StandardType.IMAGE
     return None
 
 
 @register_reader_plugin(priority=50)
 def read_excel(file_path: Path) -> WidgetDataModel:
-    if file_path.suffix.rstrip("~") in ExcelFileTypes:
+    if file_path.suffix.rstrip("~").lower() in ExcelFileTypes:
         return _io.default_excel_reader(file_path)
     raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
@@ -110,14 +110,14 @@ def _(file_path: Path) -> str | None:
 
 @register_reader_plugin(priority=50)
 def read_numpy_array(file_path: Path) -> WidgetDataModel:
-    if file_path.suffix.rstrip("~") == ".npy":
+    if file_path.suffix.rstrip("~").lower() == ".npy":
         return _io.default_array_reader(file_path)
     raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
 
 @read_numpy_array.define_matcher
 def _(file_path: Path) -> str | None:
-    if file_path.suffix.rstrip("~") == ".npy":
+    if file_path.suffix.rstrip("~").lower() == ".npy":
         return StandardType.ARRAY
     return None
 
@@ -130,7 +130,7 @@ def read_pdf(file_path: Path) -> WidgetDataModel:
 
 @read_pdf.define_matcher
 def _(file_path: Path) -> str | None:
-    if file_path.suffix.rstrip("~") == ".pdf":
+    if file_path.suffix.rstrip("~").lower() == ".pdf":
         return StandardType.PDF
     return None
 
@@ -167,48 +167,48 @@ def read_eps(file_path: Path) -> WidgetDataModel:
 
 @read_eps.define_matcher
 def _(file_path: Path) -> str | None:
-    if file_path.suffix.rstrip("~") == ".eps":
+    if file_path.suffix.rstrip("~").lower() == ".eps":
         return StandardType.PDF
     return None
 
 
 @register_reader_plugin(priority=50)
 def read_pickle(file_path: Path) -> WidgetDataModel:
-    if file_path.suffix.rstrip("~") == ".pickle":
+    if file_path.suffix.rstrip("~").lower() == ".pickle":
         return _io.default_pickle_reader(file_path)
     raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
 
 @read_pickle.define_matcher
 def _(file_path: Path) -> str | None:
-    if file_path.suffix.rstrip("~") == ".pickle":
+    if file_path.suffix.rstrip("~").lower() == ".pickle":
         return StandardType.ANY
     return None
 
 
 @register_reader_plugin(priority=50)
 def read_zip(file_path: Path) -> WidgetDataModel:
-    if file_path.suffix.rstrip("~") == ".zip":
+    if file_path.suffix.rstrip("~").lower() == ".zip":
         return _io.default_zip_reader(file_path)
     raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
 
 @read_zip.define_matcher
 def _(file_path: Path) -> str | None:
-    if file_path.suffix.rstrip("~") == ".zip":
+    if file_path.suffix.rstrip("~").lower() == ".zip":
         return StandardType.MODELS
 
 
 @register_reader_plugin(priority=50)
 def read_email(file_path: Path) -> WidgetDataModel:
-    if file_path.suffix.rstrip("~") == ".eml":
+    if file_path.suffix.rstrip("~").lower() == ".eml":
         return _io.default_email_reader(file_path)
     raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
 
 @read_email.define_matcher
 def _(file_path: Path) -> str | None:
-    if file_path.suffix.rstrip("~") == ".eml":
+    if file_path.suffix.rstrip("~").lower() == ".eml":
         return StandardType.EMAIL
 
 
@@ -234,7 +234,7 @@ def _(file_path: Path) -> str | None:
 
 @register_reader_plugin(priority=50)
 def read_as_pandas_dataframe(file_path: Path) -> WidgetDataModel:
-    suffix = file_path.suffix.rstrip("~")
+    suffix = file_path.suffix.rstrip("~").lower()
     if suffix in {".csv", ".txt"}:
         return _io.DataFrameReader("pandas", "read_csv", {})(file_path)
     elif suffix == ".tsv":
@@ -252,7 +252,7 @@ def read_as_pandas_dataframe(file_path: Path) -> WidgetDataModel:
 
 @register_reader_plugin(priority=50)
 def read_as_polars_dataframe(file_path: Path) -> WidgetDataModel:
-    suffix = file_path.suffix.rstrip("~")
+    suffix = file_path.suffix.rstrip("~").lower()
     if suffix in {".csv", ".txt"}:
         return _io.DataFrameReader("polars", "read_csv", {})(file_path)
     elif suffix == ".tsv":
@@ -285,7 +285,7 @@ def read_as_polars_plot(file_path: Path) -> WidgetDataModel:
 def _(file_path: Path) -> str | None:
     if "pandas" not in list_installed_dataframe_packages():
         return None
-    if file_path.suffix.rstrip("~") in {
+    if file_path.suffix.rstrip("~").lower() in {
         ".csv", ".txt", ".tsv", ".html", ".htm", ".json", ".parquet", ".pq", ".feather",
     }:  # fmt: skip
         return StandardType.DATAFRAME
@@ -297,7 +297,7 @@ def _(file_path: Path) -> str | None:
 def _(file_path: Path) -> str | None:
     if "polars" not in list_installed_dataframe_packages():
         return None
-    if file_path.suffix.rstrip("~") in {
+    if file_path.suffix.rstrip("~").lower() in {
         ".csv", ".txt", ".tsv", ".feather", ".json", ".parquet", ".pq",
     }:  # fmt: skip
         return StandardType.DATAFRAME

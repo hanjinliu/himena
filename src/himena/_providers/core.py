@@ -109,6 +109,14 @@ class ReaderStore(PluginStore["ReaderPlugin"]):
                     _LOGGER.debug("%r did not match", reader)
                 else:
                     matched.append(reader)
+        if (
+            len(matched) == 0
+            or matched[0].plugin_str == "himena_builtins.io.read_as_unknown"
+        ) and isinstance(path, Path):
+            # try again with lowercase suffix.
+            ext = path.suffix
+            if ext == ext.upper():
+                matched = self._get_impl(path.with_suffix(ext.lower()), min_priority)
         return matched
 
 
