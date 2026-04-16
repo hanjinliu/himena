@@ -62,17 +62,12 @@ QPushButton:checked {
 QPushButton:disabled {
     background-color: #[background];
     color: #[foreground_dim];
-    border-radius: 2px;
-    padding: 4px;
-    border: 0px;
+    border: 1px solid #[background_dim];
 }
 
 QPushButton:disabled:checked {
     background-color: #[highlight_dim];
     color: #[foreground_dim];
-    border-radius: 2px;
-    padding: 4px;
-    border: 0px;
 }
 
 QPushButton#profileButton {
@@ -138,6 +133,18 @@ QComboBox {
     background-color: #[background];
     color: #[foreground];
     padding: 1px;
+}
+
+QComboBox:dropdown {
+    border-radius: 4px;
+}
+
+QComboBox QAbstractItemView {
+    border: 1px solid #[foreground_dim];
+}
+
+QAbstractItemView:item {
+    height: 22px;
 }
 
 QSearchableComboBox {
@@ -400,6 +407,8 @@ QStatusBar::item{
 
 QLabel {
     background-color: none;
+    selection-color: #[foreground];
+    selection-background-color: #[highlight_strong];
 }
 
 QLabel#indexLabel {
@@ -418,6 +427,11 @@ QLineEdit {
 
 QLineEdit:hover {
     border-bottom: 2px solid #[highlight_dim];
+}
+
+QLineEdit:disabled {
+    background-color: #[background];
+    border: 1px solid #[background_dim];
 }
 
 QKeySequenceEdit {
@@ -782,8 +796,18 @@ QToggleButtonGroup {
     border-radius: 4px;
 }
 
+QToggleButtonGroup:disabled {
+    border: 1px solid #[background_dim];
+}
+
 QCheckableButton {
-    padding: 2px 2px;
-    border-radius: 4px;
     background-color: #[background_dim];
+    color: #[foreground];
+    border-radius: 4px;
+    padding: 2px;
+    border: 0px;
+}
+
+QCheckableButton:disabled {
+    border: 0px;
 }

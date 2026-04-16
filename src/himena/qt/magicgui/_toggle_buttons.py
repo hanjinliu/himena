@@ -17,10 +17,13 @@ if TYPE_CHECKING:
 
 
 class QCheckableButton(QtW.QPushButton):
+    """The button used in ToggleButtons."""
+
     def __init__(self, label: str, parent: QtW.QWidget | None = None):
         super().__init__(label, parent)
         self.setCheckable(True)
         self.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+        self._data: Any | None = None
 
 
 class QToggleButtonGroup(QtW.QFrame):
