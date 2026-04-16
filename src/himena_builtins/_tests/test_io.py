@@ -38,7 +38,7 @@ def test_uppercase_extension(sample_dir: Path, tmpdir):
     model = read(sample_dir / "image.png")
     assert model.type == StandardType.IMAGE
     write(model, tmpdir / "image.PNG")
-    model = read(sample_dir / "image.PNG")
+    model = read(tmpdir / "image.PNG")
     assert model.type == StandardType.IMAGE
 
 def test_dataframe(sample_dir: Path, tmpdir):

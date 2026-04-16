@@ -776,3 +776,14 @@ QLabel#HimenaToolTip {
     border: 1px solid #[background_dim];
     padding: 2px;
 }
+
+QToggleButtonGroup {
+    background-color: #[background_dim];
+    border-radius: 4px;
+}
+
+QCheckableButton {
+    padding: 2px 2px;
+    border-radius: 4px;
+    background-color: #[background_dim];
+}
