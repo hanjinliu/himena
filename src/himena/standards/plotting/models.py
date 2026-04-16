@@ -63,12 +63,16 @@ class Bar(PlotModelXY):
     edge: Edge = Field(default_factory=Edge, description="Properties of the bars.")
 
     def plot_option_dict(self) -> dict[str, Any]:
-        from himena.qt.magicgui import EdgePropertyEdit, FacePropertyEdit
+        from himena.qt.magicgui import EdgePropertyEdit, FacePropertyEdit, ToggleButtons
 
         return {
             "name": {"widget_type": "LineEdit", "value": self.name},
             "bar_width": {"annotation": float, "value": self.bar_width},
-            "orient": {"choices": ["vertical", "horizontal"], "value": self.orient},
+            "orient": {
+                "choices": ["vertical", "horizontal"],
+                "value": self.orient,
+                "widget_type": ToggleButtons,
+            },
             "face": {"widget_type": FacePropertyEdit, "value": self.face.model_dump()},
             "edge": {"widget_type": EdgePropertyEdit, "value": self.edge.model_dump()},
         }
@@ -107,11 +111,15 @@ class Band(BasePlotModel):
     edge: Edge = Field(default_factory=Edge, description="Properties of the band edge.")
 
     def plot_option_dict(self) -> dict[str, Any]:
-        from himena.qt.magicgui import EdgePropertyEdit, FacePropertyEdit
+        from himena.qt.magicgui import EdgePropertyEdit, FacePropertyEdit, ToggleButtons
 
         return {
             "name": {"widget_type": "LineEdit", "value": self.name},
-            "orient": {"choices": ["vertical", "horizontal"], "value": self.orient},
+            "orient": {
+                "choices": ["vertical", "horizontal"],
+                "value": self.orient,
+                "widget_type": ToggleButtons,
+            },
             "face": {"widget_type": FacePropertyEdit, "value": self.face.model_dump()},
             "edge": {"widget_type": EdgePropertyEdit, "value": self.edge.model_dump()},
         }
@@ -131,13 +139,17 @@ class Span(BasePlotModel):
     edge: Edge = Field(default_factory=Edge, description="Properties of the span edge.")
 
     def plot_option_dict(self) -> dict[str, Any]:
-        from himena.qt.magicgui import EdgePropertyEdit, FacePropertyEdit
+        from himena.qt.magicgui import EdgePropertyEdit, FacePropertyEdit, ToggleButtons
 
         return {
             "name": {"widget_type": "LineEdit", "value": self.name},
             "x0": {"annotation": float, "value": self.start},
             "x1": {"annotation": float, "value": self.end},
-            "orient": {"choices": ["vertical", "horizontal"], "value": self.orient},
+            "orient": {
+                "choices": ["vertical", "horizontal"],
+                "value": self.orient,
+                "widget_type": ToggleButtons,
+            },
             "face": {"widget_type": FacePropertyEdit, "value": self.face.model_dump()},
             "edge": {"widget_type": EdgePropertyEdit, "value": self.edge.model_dump()},
         }
@@ -159,11 +171,15 @@ class Histogram(BasePlotModel):
     )
 
     def plot_option_dict(self) -> dict[str, Any]:
-        from himena.qt.magicgui import EdgePropertyEdit, FacePropertyEdit
+        from himena.qt.magicgui import EdgePropertyEdit, FacePropertyEdit, ToggleButtons
 
         return {
             "name": {"widget_type": "LineEdit", "value": self.name},
-            "orient": {"choices": ["vertical", "horizontal"], "value": self.orient},
+            "orient": {
+                "choices": ["vertical", "horizontal"],
+                "value": self.orient,
+                "widget_type": ToggleButtons,
+            },
             "face": {"widget_type": FacePropertyEdit, "value": self.face.model_dump()},
             "edge": {"widget_type": EdgePropertyEdit, "value": self.edge.model_dump()},
         }

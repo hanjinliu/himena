@@ -7,6 +7,7 @@ from himena.qt.magicgui._plot_elements import (
     DictEdit,
 )
 from himena.qt.magicgui._toggle_switch import ToggleSwitch
+from himena.qt.magicgui._toggle_buttons import ToggleButtons
 from himena.qt.magicgui._basic_widgets import (
     IntEdit,
     FloatEdit,
@@ -30,6 +31,7 @@ __all__ = [
     "ColorEdit",
     "ColormapEdit",
     "ToggleSwitch",
+    "ToggleButtons",
     "FacePropertyEdit",
     "EdgePropertyEdit",
     "FileEdit",

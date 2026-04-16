@@ -25,6 +25,7 @@ from himena.standards.roi import (
 from himena.data_wrappers import wrap_dataframe, read_csv, wrap_array
 from himena.utils.misc import table_to_text as _table_to_text
 from himena.utils.html import html_to_plain_text
+from himena.qt.magicgui import ToggleButtons
 
 
 @register_conversion_rule(
@@ -157,7 +158,11 @@ def table_to_text(model: WidgetDataModel) -> Parametric:
     """Convert a table data into a text data."""
 
     @configure_gui(
-        preview=True, end_of_text={"choices": [("none", ""), ("newline", "\n")]}
+        preview=True,
+        end_of_text={
+            "choices": [("none", ""), ("newline", "\n")],
+            "widget_type": ToggleButtons,
+        },
     )
     def convert_table_to_text(
         format: Literal["CSV", "TSV", "Markdown", "Latex", "rST", "HTML"] = "CSV",
@@ -241,7 +246,9 @@ def table_to_array(model: WidgetDataModel) -> WidgetDataModel:
 def dataframe_to_image_rois(model: WidgetDataModel) -> Parametric:
     """Convert a data frame data into image ROIs."""
 
-    @configure_gui(roi_type={"choices": ["rectangle", "point"]})
+    @configure_gui(
+        roi_type={"choices": ["rectangle", "point"], "widget_type": ToggleButtons}
+    )
     def convert_dataframe_to_image_rois(
         roi_type: str,
         indices: list[str] = (),
