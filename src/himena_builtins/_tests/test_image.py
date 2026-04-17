@@ -13,7 +13,7 @@ from himena.standards.model_meta import DimAxis, ImageMeta
 from himena import MainWindow, StandardType, create_image_model
 from himena.standards.roi import RoiListModel, LineRoi, PointRoi2D, PointsRoi2D
 from himena.standards.roi.core import RectangleRoi
-from himena.testing import WidgetTester, image, file_dialog_response
+from himena.testing import WidgetTester, image, file_dialog_response, choose_one_dialog_response
 from himena.types import WidgetDataModel
 from himena.widgets import SubWindow
 from himena.qt import MainWindowQt
@@ -654,6 +654,44 @@ def test_number_key_click_events(himena_ui: MainWindowQt, qtbot: QtBot):
         qtbot.keyClick(image_view, Qt.Key.Key_0, modifier=_Ctrl)
         assert image_view._control._chn_vis.check_states() == [True, True, True, True]
 
+def test_share_quantile(himena_ui: MainWindowQt):
+    model = create_image_model(
+        np.zeros((2, 10, 10)),
+        axes=["c", "y", "x"],
+        channel_axis=0,
+    )
+    win0 = himena_ui.add_data_model(model)
+    win1 = himena_ui.add_data_model(model)
+
+    assert isinstance(win0.widget, QImageView)
+    assert isinstance(win1.widget, QImageView)
+    control0 = win0.widget.control_widget()
+    control1 = win1.widget.control_widget()
+
+    menu = QAutoContrastMenu(control0._auto_cont_btn)
+    menu._min_edit.setText("1")
+    menu._max_edit.setText("99")
+    menu._apply_to_others()
+    assert control0._auto_cont_btn.qminmax == pytest.approx((0.01, 0.99))
+    assert control1._auto_cont_btn.qminmax == pytest.approx((0.01, 0.99))
+
+    win2 = himena_ui.add_tab().add_data_model(model)
+    himena_ui.tabs.current_index = 0
+    assert isinstance(win2.widget, QImageView)
+    control2 = win2.widget.control_widget()
+
+    menu._min_edit.setText("2")
+    menu._max_edit.setText("98")
+    with choose_one_dialog_response(himena_ui, "Only this tab"):
+        menu._apply_to_others()
+        assert control0._auto_cont_btn.qminmax == pytest.approx((0.02, 0.98))
+        assert control1._auto_cont_btn.qminmax == pytest.approx((0.02, 0.98))
+        assert control2._auto_cont_btn.qminmax == pytest.approx((0, 1))
+    with choose_one_dialog_response(himena_ui, "All"):
+        menu._apply_to_others()
+        assert control0._auto_cont_btn.qminmax == pytest.approx((0.02, 0.98))
+        assert control1._auto_cont_btn.qminmax == pytest.approx((0.02, 0.98))
+        assert control2._auto_cont_btn.qminmax == pytest.approx((0.02, 0.98))
 
 def test_crop_image(himena_ui: MainWindow, tmpdir):
     model = create_image_model(
@@ -729,6 +767,14 @@ def test_crop_image(himena_ui: MainWindow, tmpdir):
     _bbox_list_getter(model.metadata, model.value)()
     _make_roi_limits_getter(win, "x")()
     _make_roi_limits_getter(win, "y")()
+
+    # test copying very big image
+    model = create_image_model(
+        np.zeros((2048, 2448)),
+    )
+    himena_ui.add_data_model(model)
+    himena_ui.exec_action("builtins:image:copy-slice-to-clipboard")
+
 
 def test_image_view_commands(himena_ui: MainWindow, tmpdir):
     himena_ui.add_data_model(
