@@ -112,7 +112,10 @@ def capture_setting(ui: MainWindow) -> Parametric:
     group="00-capture",
 )
 def copy_slice_to_clipboard(win: SubWindow[QImageView], ui: MainWindow):
-    """Copy the current slice to the clipboard as is."""
+    """Copy the current slice to the clipboard as is.
+
+    Large images will be scaled down to fit within 1024x1024 pixels.
+    """
     qimage = ImageViewCapture.get_instance(ui).to_qimage(win.widget)
     QtGui.QGuiApplication.clipboard().setImage(qimage)
     ui.show_notification("Image slice copied to the clipboard.", duration=3)
@@ -126,7 +129,10 @@ def copy_slice_to_clipboard(win: SubWindow[QImageView], ui: MainWindow):
     group="00-capture",
 )
 def save_slice(win: SubWindow[QImageView], ui: MainWindow):
-    """Save the current slice to file as is."""
+    """Save the current slice to file as is.
+
+    Large images will be scaled down to fit within 1024x1024 pixels.
+    """
     if path := ui.exec_file_dialog(
         mode="w",
         extension_default=".png",
@@ -174,6 +180,8 @@ def save_image_view_screenshot(win: SubWindow[QImageView], ui: MainWindow):
 
 
 class ImageViewCapture:
+    """Interface for capturing the image view."""
+
     _instances: "dict[int, ImageViewCapture]" = {}
 
     def __init__(self):
@@ -187,6 +195,7 @@ class ImageViewCapture:
         return self
 
     def to_qimage(self, view: QImageView) -> QtGui.QImage:
+        """Prepare the QImage."""
         if isinstance(current_roi := view.current_roi(), _roi.RectangleRoi):
             bbox = image_utils.roi_2d_to_bbox(current_roi, view._arr, view._is_rgb)
         else:
@@ -219,6 +228,17 @@ class ImageViewCapture:
                 painter.drawRect(rect.left, rect.top, rect.width, rect.height)
 
         painter.end()
+
+        # if image is too large, scale it down.
+        size_limit = 1024
+        if (
+            view._img_view.transform().m11() < 1
+            and qimage.width() > size_limit
+            and qimage.height() > size_limit
+        ):
+            qimage = qimage.scaled(
+                size_limit, size_limit, QtCore.Qt.AspectRatioMode.KeepAspectRatio
+            )
         return qimage
 
 

@@ -9,6 +9,7 @@ from superqt import QLabeledDoubleSlider, QToggleSwitch, QElidingLabel
 from superqt.utils import qthrottled
 
 from himena.consts import DefaultFontFamily
+from himena.widgets import current_instance
 from himena.qt import qsignal_blocker, ndarray_to_qimage, QColoredToolButton
 from himena.qt._qlineedit import QDoubleLineEdit
 from himena_builtins._consts import ICON_PATH
@@ -202,7 +203,7 @@ class QImageViewControl(QImageViewControlBase):
         self._chn_mode_combo.setToolTip("Method to display multi-channel data")
         self._image_type = ImageType.OTHERS
 
-        self._auto_cont_btn = QAutoContrastButton(self._auto_contrast)
+        self._auto_cont_btn = QAutoContrastButton(self._auto_contrast, image_view)
 
         self._histogram = QHistogramView()
         self._histogram.setFixedWidth(120)
@@ -254,7 +255,6 @@ class QImageViewControl(QImageViewControlBase):
             self._histogram.setValueFormat(".0f")
         else:
             self._histogram.setValueFormat(".3g")
-        return None
 
     def complex_transform(self, arr: np.ndarray) -> np.ndarray:
         """Transform complex array according to the current complex mode."""
@@ -410,21 +410,14 @@ class QAutoContrastMenu(QtW.QMenu):
         action.setCheckable(True)
         action.setChecked(parent._auto_cont_live)
 
-        min_widget = QDoubleLineEdit(format(parent._qmin * 100, ".2f"))
-        min_widget.setMinimum(0.0)
-        min_widget.setMaximum(100.0)
-        ac_min = QtW.QWidgetAction(self)
-        ac_min.setDefaultWidget(_labeled("Min %", min_widget))
-        max_widget = QDoubleLineEdit(format(parent._qmax * 100, ".2f"))
-        ac_max = QtW.QWidgetAction(self)
-        max_widget.setMinimum(0.0)
-        max_widget.setMaximum(100.0)
-        ac_max.setDefaultWidget(_labeled("Max %", max_widget))
+        qmin, qmax = parent.qminmax
+        ac_min, min_widget = _double_line_edit("Min %", qmin, self)
+        ac_max, max_widget = _double_line_edit("Max %", qmax, self)
 
         @min_widget.valueChanged.connect
         def _on_min_changed(txt: str):
             val = float(txt) / 100
-            _qmin, _qmax = parent.qminmax
+            _, _qmax = parent.qminmax
             _qmin = val
             if val > _qmax:
                 _qmax = val
@@ -434,42 +427,78 @@ class QAutoContrastMenu(QtW.QMenu):
         @max_widget.valueChanged.connect
         def _on_max_changed(txt: str):
             val = float(txt) / 100
-            _qmin, _qmax = parent.qminmax
+            _qmin, _ = parent.qminmax
             _qmax = val
             if val < _qmin:
                 _qmin = val
                 min_widget.setText(max_widget.text())
             parent.qminmax = _qmin, _qmax
 
+        self._min_edit = min_widget  # for testing
+        self._max_edit = max_widget  # for testing
+
         self.addAction(ac_min)
         self.addAction(ac_max)
-        self._min_edit = min_widget
-        self._max_edit = max_widget
+        self.addAction("Apply to others", self._apply_to_others)
+
+    def _apply_to_others(self):
+        from himena_builtins.qt.widgets.image import QImageViewBase
+
+        ui = current_instance()
+        if ui.tabs.len() > 1:
+            resp = ui.exec_choose_one_dialog(
+                message="Apply auto contrast settings to all the images in ...",
+                choices=["Only this tab", "All"],
+                how="palette",
+            )
+        else:
+            resp = "All"
+        if resp == "All":
+            it = ui.iter_windows()
+        elif resp == "Only this tab":
+            it = ui.tabs.current().iter()
+        else:
+            return
+        for win in it:
+            if (
+                isinstance(win.widget, QImageViewBase)
+                and win.widget is not self._btn._image_view
+            ):
+                ctrl = win.widget.control_widget()
+                ctrl._auto_cont_btn.qminmax = self._btn.qminmax
+                ctrl._auto_cont_btn.live = self._btn.live
+                if self._btn.live:
+                    ctrl._auto_cont_btn._callback()
 
     def _toggle_live_auto_contrast(self):
-        live = self._btn._auto_cont_live = not self._btn._auto_cont_live
-        self._btn.setCheckable(live)
-        self._btn.setChecked(live)
+        live = self._btn.live = not self._btn.live
         if live:
             self._btn._callback()
 
 
 class QAutoContrastButton(QColoredToolButton):
-    def __init__(self, callback):
+    def __init__(self, callback, image_view: QImageViewBase | None = None):
         super().__init__(callback, ICON_PATH / "auto_contrast_once.svg")
+        self._image_view = image_view
         self.setToolTip("Auto Contrast (right click to change settings)")
         self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self._exec_autocontrast_menu)
-        self._auto_cont_live = False
-        self._qmin = 0.0
-        self._qmax = 1.0
+        self._auto_cont_live, self._qmin, self._qmax = self.default_params()
 
     @property
     def live(self) -> bool:
+        """Whether live auto contrast is applied."""
         return self._auto_cont_live
+
+    @live.setter
+    def live(self, value: bool):
+        self._auto_cont_live = value
+        self.setCheckable(value)
+        self.setChecked(value)
 
     @property
     def qminmax(self) -> tuple[float, float]:
+        """Quantile range for auto contrast."""
         qmin = max(self._qmin, 0.0)
         qmax = min(self._qmax, 1.0)
         return (qmin, qmax)
@@ -481,6 +510,10 @@ class QAutoContrastButton(QColoredToolButton):
     def _exec_autocontrast_menu(self, *_):
         menu = QAutoContrastMenu(self)
         return menu.exec(QtGui.QCursor.pos())
+
+    @classmethod
+    def default_params(self) -> tuple[bool, float, float]:
+        return False, 0.0, 1.0
 
 
 class QChannelToggleSwitch(QToggleSwitch):
@@ -559,20 +592,28 @@ class QChannelToggleSwitches(QtW.QScrollArea):
         return len(self._toggle_switches) > 0
 
 
-def _labeled(label: str, widget: QtW.QWidget) -> QtW.QWidget:
+def _double_line_edit(
+    label: str,
+    value: float,
+    parent: QtW.QWidget,
+) -> tuple[QtW.QWidgetAction, QDoubleLineEdit]:
+    # | Min % [0.00 ] |
+    line_edit = QDoubleLineEdit(format(value * 100, ".2f"))
+    line_edit.setMinimum(0.0)
+    line_edit.setMaximum(100.0)
+
     container = QtW.QWidget()
     layout = QtW.QHBoxLayout(container)
     layout.setContentsMargins(0, 0, 0, 0)
     lbl = QtW.QLabel(label)
     lbl.setFont(QtGui.QFont(DefaultFontFamily, 8))
+    lbl.setFixedWidth(40)
+    lbl.setAlignment(
+        QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter
+    )
     layout.addWidget(lbl)
-    layout.addWidget(widget)
-    return container
+    layout.addWidget(line_edit)
 
-
-def _interp_hist(qmin: float, edges: np.ndarray, cum_value: np.ndarray):
-    # len(edges) == len(cum_value)
-    i = np.argmax(qmin <= cum_value)
-    if i == len(edges) - 1:
-        return edges[-1]
-    return edges[i] + (edges[i + 1] - edges[i]) * (qmin - cum_value[i])
+    action_out = QtW.QWidgetAction(parent)
+    action_out.setDefaultWidget(container)
+    return action_out, line_edit
