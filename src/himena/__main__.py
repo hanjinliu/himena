@@ -88,7 +88,13 @@ def _main(args: HimenaCliNamespace):
         return install_and_uninstall(args.install, args.uninstall, prof_name)
 
     if args.quit:
-        socket_info = SocketInfo.from_lock(prof_name, args.port)
+        try:
+            socket_info = SocketInfo.from_lock(prof_name, args.port)
+        except FileNotFoundError:  # lock file not found
+            print(
+                f"No running application found for profile {prof_name!r} and port {args.port}."
+            )
+            return
         succeeded = socket_info.send_close_request(prof_name)
         if succeeded:
             print(

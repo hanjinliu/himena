@@ -151,9 +151,6 @@ class QtEventLoopHandler(EventLoopHandler["QApplication"]):
             ins = new_window(data.profile_name)
 
         if data.files:
-            print(
-                f"Sent data to {data.profile_name!r} window at {self.host}:{self.port}."
-            )
             ins.show()
             for file in data.files:
                 ins.read_file(file)
@@ -161,7 +158,6 @@ class QtEventLoopHandler(EventLoopHandler["QApplication"]):
             if data.request_close:
                 ins.close()
             else:
-                print(f"Application at {self.host}:{self.port} is already running.")
                 ins.show()
 
     def instance(self) -> QApplication | None:
