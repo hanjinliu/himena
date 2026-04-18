@@ -23,6 +23,7 @@ class HimenaCliNamespace(argparse.Namespace):
     import_time: bool
     host: str = "localhost"
     port: int = 49200
+    quit: bool = False
 
     def assert_args_not_given(self) -> None:
         if self.profile is not None or self.path is not None:
@@ -124,6 +125,10 @@ class HimenaArgumentParser(argparse.ArgumentParser):
         self.add_argument(
             "--port", type=int, default=49200,
             help="Socket port number to use for the GUI.",
+        )
+        self.add_argument(
+            "--quit", action="store_true",
+            help="Quit the running application."
         )
         # fmt: on
 

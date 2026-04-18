@@ -149,9 +149,16 @@ class QtEventLoopHandler(EventLoopHandler["QApplication"]):
             ins: MainWindowQt = current_instance(data.profile_name)
         except KeyError:
             ins = new_window(data.profile_name)
-        ins.show()
-        for file in data.files:
-            ins.read_file(file)
+
+        if data.files:
+            ins.show()
+            for file in data.files:
+                ins.read_file(file)
+        else:
+            if data.request_close:
+                ins.close()
+            else:
+                ins.show()
 
     def instance(self) -> QApplication | None:
         """Get QApplication instance or None if it does not exist."""
