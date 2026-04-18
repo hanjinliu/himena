@@ -87,6 +87,19 @@ def _main(args: HimenaCliNamespace):
 
         return install_and_uninstall(args.install, args.uninstall, prof_name)
 
+    if args.quit:
+        socket_info = SocketInfo.from_lock(prof_name, args.port)
+        succeeded = socket_info.send_close_request(prof_name)
+        if succeeded:
+            print(
+                f"Closing {prof_name!r} window at {socket_info.host}:{socket_info.port}."
+            )
+        else:
+            print(
+                f"Failed to send close request to {prof_name!r} window at {socket_info.host}:{socket_info.port}."
+            )
+        return
+
     logging.basicConfig(level=args.log_level)
 
     # now it's ready to start the GUI

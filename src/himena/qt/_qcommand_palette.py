@@ -107,16 +107,19 @@ class QCommandPaletteBase(QtW.QFrame):
         self._list.update_for_text("")
         super().show()
         if parent := self.parentWidget():
-            parent_rect = parent.rect()
             list_size = self._list.sizeHint()
+            parent_rect = parent.rect()
             w = min(int(parent_rect.width() * 0.8), list_size.width())
             topleft = parent.rect().topLeft()
             topleft.setX(int(topleft.x() + (parent_rect.width() - w) / 2))
             topleft.setY(int(topleft.y() + 3))
             self.move(topleft)
-            self.resize(w, list_size.height() + 48)
+            self.resize(w, list_size.height() + self._additional_height())
         self.raise_()
         self._line.setFocus()
+
+    def _additional_height(self) -> int:
+        return 48
 
 
 class QCommandPaletteDialog(QCommandPaletteBase):
@@ -163,6 +166,11 @@ class QCommandPaletteDialog(QCommandPaletteBase):
         self._line.selectAll()
         loop.exec()
         return self._response
+
+    def _additional_height(self) -> int:
+        if self._title_label.isHidden():
+            return 48
+        return 72
 
 
 class QUserStringInputDialog(QCommandPaletteDialog):

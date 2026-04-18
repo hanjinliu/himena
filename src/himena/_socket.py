@@ -56,15 +56,27 @@ class SocketInfo:
             files=files or [],
         )
         try:
+            # will be handled in QtEventLoopHandler
             data.send(self.host, self.port)
         except Exception as e:
             print(f"Socket is not available: {e}")
             return False
         else:
-            if files:
-                print(f"Sent data to {profile!r} window at {self.host}:{self.port}.")
-            else:
-                print(f"Application at {self.host}:{self.port} is already running.")
+            return True
+
+    def send_close_request(self, profile: str) -> bool:
+        """Send a request to close the window."""
+        data = InterProcessData(
+            profile_name=profile,
+            request_close=True,
+        )
+        try:
+            # will be handled in QtEventLoopHandler
+            data.send(self.host, self.port)
+        except Exception as e:
+            print(f"Socket is not available: {e}")
+            return False
+        else:
             return True
 
 
@@ -73,6 +85,9 @@ class InterProcessData(BaseModel):
 
     profile_name: str = Field(..., description="Name of the profile")
     files: list[str] = Field(default_factory=list, description="List of files to send")
+    request_close: bool = Field(
+        default=False, description="Whether to request the window to close"
+    )
 
     def to_bytes(self) -> bytes:
         """Convert the data to bytes."""
