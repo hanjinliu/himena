@@ -39,7 +39,7 @@ Tutorial, developer's guide, and API reference are available at the [documentati
 
 ## Installation
 
-`himena` is available on PyPI.
+`himena` is available on [PyPI](https://pypi.org/project/himena/).
 
 ```shell
 pip install himena -U  # minimal dependencies
@@ -55,6 +55,8 @@ pip install -e .
 ```
 
 ## Start application
+
+Command `himena` will be available after installation.
 
 ```shell
 himena
