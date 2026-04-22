@@ -43,7 +43,6 @@ from himena.qt._qcommand_palette import (
 )
 from himena.qt._qcontrolstack import QControlStack
 from himena.qt._qparametric import QParametricWidget
-from himena.qt._qgoto import QGotoWidget
 from himena.qt._qresult_stack import QResultStack
 from himena.types import (
     DockArea,
@@ -139,7 +138,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             formatter=_formatter.formatter_general,
             placeholder="New ...",
         )
-        self._goto_widget = QGotoWidget(self)
 
         self._anim_subwindow = QtCore.QPropertyAnimation()
         self._confirm_close = True
@@ -589,7 +587,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
     def _show_command_palette(
         self,
-        kind: Literal["general", "recent", "goto", "new"],
+        kind: Literal["general", "recent", "new"],
     ) -> None:
         match kind:
             case "general":
@@ -598,9 +596,6 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             case "recent":
                 self._command_palette_general.update_context(self)
                 self._command_palette_recent.show()
-            case "goto":
-                self._goto_widget.show()
-                self._goto_widget.setFocus()
             case "new":
                 self._command_palette_new.update_context(self)
                 self._command_palette_new.show()

@@ -4,6 +4,7 @@ from app_model.types import (
     KeyMod,
 )
 from himena.consts import MenuId
+from himena.exceptions import Cancelled
 from himena.widgets import MainWindow
 from himena._app_model._context import AppContext as _ctx
 from himena._app_model.actions._registry import ACTIONS
@@ -75,4 +76,25 @@ def go_to_next_window(ui: MainWindow) -> None:
 )
 def go_to_window(ui: MainWindow) -> None:
     """Go to an existing window."""
-    ui._backend_main_window._show_command_palette("goto")
+    # items[i] = (description, (i_tab, i_win))
+    items: list[tuple[str, tuple[int, int]]] = []
+    many_tabs = ui.tabs.len() > 1
+    for i_tab, tab in ui.tabs.enumerate():
+        for i_win, win in tab.enumerate():
+            if many_tabs:
+                desc = f"({i_tab}-{i_win}) {tab.title} > {win.title}"
+            else:
+                desc = f"({i_win}) {win.title}"
+            items.append((desc, (i_tab, i_win)))
+    if resp := ui.exec_choose_one_dialog(
+        title="Go to window",
+        message="Select a window to go to.",
+        choices=items,
+        how="palette",
+    ):
+        i_tab, i_win = resp
+        ui.tabs.current_index = i_tab
+        if (area := ui.tabs.current()) and len(area) > i_win:
+            area.current_index = i_win
+    else:
+        raise Cancelled

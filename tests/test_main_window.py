@@ -85,17 +85,10 @@ def test_goto_widget(himena_ui: MainWindowQt, qtbot: QtBot):
     tab1.add_data_model(WidgetDataModel(value="d", type="text", title="D"))
     tab1.add_data_model(WidgetDataModel(value="e", type="text", title="E"))
 
-    himena_ui.exec_action("go-to-window")
-    qmain: QMainWindow = himena_ui._backend_main_window
-    qmain._goto_widget.show()
-    qtbot.keyClick(qmain._goto_widget, Qt.Key.Key_Down)
-    qtbot.keyClick(qmain._goto_widget, Qt.Key.Key_Up)
-    qtbot.keyClick(qmain._goto_widget, Qt.Key.Key_Right)
-    qtbot.keyClick(qmain._goto_widget, Qt.Key.Key_Left)
-    qtbot.keyClick(qmain._goto_widget, Qt.Key.Key_Down)
-    qtbot.keyClick(qmain._goto_widget, Qt.Key.Key_Return)
-    himena_ui.exec_action("go-to-window")
-    qtbot.keyClick(qmain._goto_widget, Qt.Key.Key_Escape)
+    with choose_one_dialog_response(himena_ui, (0, 1)):
+        himena_ui.exec_action("go-to-window")
+    assert himena_ui.tabs.current_index == 0
+    assert himena_ui.tabs[0].current_index == 1
 
     himena_ui.exec_action("jump-to-window-1")
     himena_ui.exec_action("go-to-previous-window")
