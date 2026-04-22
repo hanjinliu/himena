@@ -29,7 +29,7 @@ def open_github_repo() -> None:
 
 @ACTIONS.append_from_fn(
     id="documentation",
-    title="Documentation",
+    title="himena documentation",
     menus=[{"id": MenuId.HELP, "group": "98_open-site-group"}],
 )
 def open_documentation() -> None:
