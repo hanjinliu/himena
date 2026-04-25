@@ -64,12 +64,18 @@ def choose_one_dialog_response(ui: MainWindow, choice: str):
 
 
 @contextmanager
-def user_string_input_response(ui: MainWindow, input: str | None):
+def user_string_input_response(
+    ui: MainWindow,
+    input: str | None,
+    choice: str | None = None,
+):
     """Set the response of the user string input dialog in this context."""
     old_inst = ui._instructions
+    if choice is None:
+        choice = "OK"
     try:
         ui._instructions = ui._instructions.updated(
-            user_string_input_response=lambda: input
+            user_string_input_response=lambda: (input, choice)
         )
         yield
     finally:

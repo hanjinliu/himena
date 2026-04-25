@@ -303,6 +303,7 @@ class QFlowChartView(QtW.QGraphicsView):
         self.setCursor(Qt.CursorShape.OpenHandCursor)
         # Enable dragging the scene by dragging the background
         self._last_drag_position = QtCore.QPointF()
+        self._move_delta = QPointF(0, 0)
 
         self.horizontalScrollBar().hide()
         self.verticalScrollBar().hide()
@@ -418,6 +419,7 @@ class QFlowChartView(QtW.QGraphicsView):
         if _ := self.itemAt(event.pos()):
             return super().mousePressEvent(event)
         self._last_drag_position = event.position()
+        self._move_delta = QPointF(0, 0)
         if event.button() == Qt.MouseButton.LeftButton:
             self.setCursor(Qt.CursorShape.ClosedHandCursor)
         return super().mousePressEvent(event)
@@ -430,6 +432,7 @@ class QFlowChartView(QtW.QGraphicsView):
             # If left button is pressed, drag the scene
             delta = event.position() - self._last_drag_position
             self._last_drag_position = event.position()
+            self._move_delta += delta
             for item in self.scene().items():
                 if isinstance(item, QFlowChartNode):
                     item.setPos(item.pos() + delta)
@@ -440,8 +443,7 @@ class QFlowChartView(QtW.QGraphicsView):
         """Override mouse release event to stop dragging the scene"""
         if self._last_drag_position.isNull():
             return super().mouseReleaseEvent(event)
-        # with suppress(RuntimeError):
-        is_click = (self._last_drag_position - event.position()).manhattanLength() < 4
+        is_click = self._move_delta.manhattanLength() < 4
         if event.button() == Qt.MouseButton.LeftButton:
             self.setCursor(Qt.CursorShape.OpenHandCursor)
             self._last_drag_position = QtCore.QPointF()

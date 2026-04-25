@@ -185,6 +185,7 @@ def test_edit_dataframe(himena_ui: MainWindow, qtbot: QtBot):
         assert np.array(tester.to_model().value["float"]).tolist() == [1.0, 20.0, 20.0, -4.2]
         assert np.array(tester.to_model().value["str"]).tolist() == ["a", "xxx", "yyy", "ddd"]
 
+        view.copy_header()
 
 @pytest.mark.parametrize(
     "input_value",

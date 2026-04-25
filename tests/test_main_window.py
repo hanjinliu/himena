@@ -526,7 +526,7 @@ def test_dialog(himena_ui: MainWindowQt, qtbot: QtBot):
         responce = himena_ui.exec_user_input_dialog(func)
     assert responce == "True, (5, 0.2)"
 
-    with user_string_input_response(himena_ui, ("my input", "choice")):
+    with user_string_input_response(himena_ui, "my input", "choice"):
         responce = himena_ui.exec_user_string_input_dialog(
             title="Input Dialog",
             message="Please enter something:",

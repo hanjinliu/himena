@@ -281,13 +281,22 @@ class QDataFrameView(QTableBase):
         self.model().dataChanged.emit(idx, idx, [Qt.ItemDataRole.EditRole])
 
     def copy_data(self, header: bool = False):
-        rng = self._selection_model.get_single_range()
-
-        r, c = rng
-        r1 = self._map_row_index(r)
-        csv_text = self.model().df.get_subset(r1, c).to_csv_string("\t", header=header)
         if clipboard := QtGui.QGuiApplication.clipboard():
+            rng = self._selection_model.get_single_range()
+            r, c = rng
+            r1 = self._map_row_index(r)
+            csv_text = (
+                self.model().df.get_subset(r1, c).to_csv_string("\t", header=header)
+            )
             clipboard.setText(csv_text)
+
+    def copy_header(self):
+        if clipboard := QtGui.QGuiApplication.clipboard():
+            rng = self._selection_model.get_single_range()
+            _, c = rng
+            columns = self.model().df.column_names()[c]
+            header_text = self._sep_on_copy.join(columns)
+            clipboard.setText(header_text)
 
     def _paste_from_clipboard(self):
         if clipboard := QtGui.QGuiApplication.clipboard():
@@ -375,8 +384,9 @@ class QDataFrameView(QTableBase):
 
     def _make_context_menu(self):
         menu = QtW.QMenu(self)
-        menu.addAction("Copy", self.copy_data)
-        menu.addAction("Copy With Header", lambda: self.copy_data(header=True))
+        menu.addAction("Copy Data", self.copy_data)
+        menu.addAction("Copy Header", self.copy_header)
+        menu.addAction("Copy Data With Header", lambda: self.copy_data(header=True))
         action = menu.addAction("Paste", self._paste_from_clipboard)
         action.setEnabled(self.is_editable())
         return menu
