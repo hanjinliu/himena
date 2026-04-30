@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Iterator
+from typing import TYPE_CHECKING, Any, Callable, Iterator, overload
 import uuid
 import weakref
 from himena.utils.misc import is_subtype
@@ -12,6 +12,7 @@ from himena.workflow._reader import ReaderMethod, LocalReaderMethod
 from himena.workflow._command import CommandExecution
 
 if TYPE_CHECKING:
+    from himena.types import WidgetDataModel
     from typing import Self
     from himena.widgets import MainWindow
 
@@ -216,27 +217,62 @@ class ActionHintRegistry:
                     if hint.matcher.match(model_type, step):
                         yield hint.suggestion
 
-    def iter_executors_for_file(
-        self,
-        ui: MainWindow,
-        path: str | Path,
-        plugin: str | None = None,
-    ) -> Iterator[SuggestionExecutor]:
-        """Iterate over all the executors available for the given file path."""
-        from himena._providers import ReaderStore
+    @overload
+    def iter_executors(
+        self, ui: MainWindow, model_type: str, step: WorkflowStep
+    ) -> Iterator[tuple[SuggestionAttributes, SuggestionExecutor]]: ...
 
-        ins = ReaderStore.instance()
-        reader_plugin = ins.pick(path, plugin=plugin)
-        model_type = reader_plugin.match_model_type(path)
-        if plugin := reader_plugin.plugin_str:
-            plugins = [plugin]
+    @overload
+    def iter_executors(
+        self, ui: MainWindow, model: WidgetDataModel
+    ) -> Iterator[tuple[SuggestionAttributes, SuggestionExecutor]]: ...
+
+    def iter_executors(
+        self, ui: MainWindow, model_or_type, step_or_none=None
+    ) -> Iterator[tuple[SuggestionAttributes, SuggestionExecutor]]:
+        """Iterate over the suggestion attribute and executor.
+
+        This is a convenience method for creating widgets using the action hints.
+        """
+        from himena.types import WidgetDataModel
+
+        if isinstance(model_or_type, str) and step_or_none is not None:
+            model_type = model_or_type
+            step = step_or_none
+        elif isinstance(model_or_type, WidgetDataModel) and step_or_none is None:
+            model_type = model_or_type.type
+            step = model_or_type.workflow.steps[-1]
         else:
-            plugins = []
-        interf = self.when_reader_used(model_type, plugins=plugins)
-        reg = interf._registry
-        meth = LocalReaderMethod(output_model_type=model_type, path=path)
-        for suggest in reg.iter_suggestion(model_type, meth):
-            yield suggest.make_executor(ui, meth)
+            raise TypeError("Invalid arguments for iter_executors.")
+        for suggestion in self.iter_suggestion(model_type, step):
+            executor = suggestion.make_executor(ui, step)
+            yield SuggestionAttributes(suggestion, ui), executor
+
+
+class SuggestionAttributes:
+    def __init__(self, suggestion: CommandSuggestion, ui: MainWindow):
+        self._suggestion = suggestion
+        self._ui_ref = weakref.ref(ui)
+
+    @property
+    def command_id(self) -> str:
+        """Command ID of the suggestion."""
+        return self._suggestion.command_id
+
+    @property
+    def title(self) -> str:
+        """Title of the suggestion."""
+        return self._suggestion.get_title(self._get_ui())
+
+    @property
+    def tooltip(self) -> str:
+        """Tooltip of the suggestion."""
+        return self._suggestion.get_tooltip(self._get_ui())
+
+    def _get_ui(self) -> MainWindow:
+        if ui := self._ui_ref():
+            return ui
+        raise RuntimeError("Main window has been deleted.")
 
 
 class ActionMatcherInterface:
