@@ -24,6 +24,7 @@ class HimenaCliNamespace(argparse.Namespace):
     host: str = "localhost"
     port: int = 49200
     quit: bool = False
+    version: bool = False
 
     def assert_args_not_given(self) -> None:
         if self.profile is not None or self.path is not None:
@@ -47,9 +48,32 @@ class HimenaCliNamespace(argparse.Namespace):
             fp = fp.resolve()
         return str(fp)
 
+    def action_version(self):
+        from himena import __version__
+
+        print(f"himena version: {__version__}")
+
+    def action_remove(self):
+        _assert_profile_not_none(self.remove)
+        self.assert_args_not_given()
+        print(f"Profile {self.remove!r} is removed.")
+
+    def action_new(self):
+        _assert_profile_not_none(self.new)
+        self.assert_args_not_given()
+        print(
+            f"Profile {self.new!r} is created. You can start the application with:\n"
+            f"$ himena {self.new}"
+        )
+
 
 def _is_profile_name(arg: str) -> bool:
     return all(c in ALLOWED_LETTERS for c in arg)
+
+
+def _assert_profile_not_none(profile: str | None) -> None:
+    if profile is None:
+        raise ValueError("Profile name is required with the --new option.")
 
 
 class HimenaArgumentParser(argparse.ArgumentParser):
@@ -129,6 +153,10 @@ class HimenaArgumentParser(argparse.ArgumentParser):
         self.add_argument(
             "--quit", action="store_true",
             help="Quit the running application."
+        )
+        self.add_argument(
+            "--version", "-v", action="store_true",
+            help="Show the version and exit."
         )
         # fmt: on
 

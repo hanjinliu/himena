@@ -75,7 +75,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     _himena_main_window: MainWindow
     _app: HimenaApplication
     status_tip_requested = QtCore.Signal(str, float)
-    notification_requested = QtCore.Signal(str, float)
+    notification_requested = QtCore.Signal(str, float, str)
 
     def __init__(self, app: HimenaApplication):
         # app must be initialized
@@ -190,7 +190,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
         mbox = QtErrorMessageBox.from_exc(exc, parent=self)
         notification = QNotificationWidget(self)
-        notification.addWidget(mbox)
+        notification.set_content("Error", mbox)
         return notification.show_and_hide_later()
 
     @ensure_main_thread
@@ -199,7 +199,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
         mbox = QtErrorMessageBox.from_warning(warning, parent=self)
         notification = QNotificationWidget(self)
-        notification.addWidget(mbox)
+        notification.set_content("Warning", mbox)
         return notification.show_and_hide_later()
 
     def add_dock_widget(
@@ -818,8 +818,8 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _set_status_tip(self, tip: str, duration: float) -> None:
         self.status_tip_requested.emit(tip, duration)
 
-    def _show_notification(self, text: str, duration: float) -> None:
-        self.notification_requested.emit(text, duration)
+    def _show_notification(self, text: str, duration: float, title: str) -> None:
+        self.notification_requested.emit(text, duration, title)
 
     def _show_tooltip(self, text: str, duration: float, behavior: str) -> None:
         if area := self._tab_widget.current_widget_area():
@@ -829,12 +829,18 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _on_status_tip_requested(self, tip: str, duration: float) -> None:
         self._status_bar.showMessage(tip, int(duration * 1000))
 
-    def _on_show_notification_requested(self, text: str, duration: float) -> None:
+    def _on_show_notification_requested(
+        self, text: str, duration: float, title: str
+    ) -> None:
         text_edit = QtW.QPlainTextEdit(text)
         text_edit.setWordWrapMode(QtGui.QTextOption.WrapMode.WordWrap)
         notification = QNotificationWidget(self)
-        notification.addWidget(text_edit)
-        notification.show_and_hide_later(duration)
+        notification.set_content(title, text_edit)
+
+        # check the size of text.
+        fm = text_edit.fontMetrics()
+        height = fm.lineSpacing() * (text.count("\n") + 1) + 10
+        notification.show_and_hide_later(duration, height=min(height, 108))
 
     def _get_menu_action_by_id(self, name: str) -> QtW.QAction:
         # Find the help menu

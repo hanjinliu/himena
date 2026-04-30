@@ -704,7 +704,12 @@ class MainWindow(Generic[_W]):
         if process_event:
             self._backend_main_window._event_loop_handler.process_events()
 
-    def show_notification(self, text: str, duration: float = 5.0) -> None:
+    def show_notification(
+        self,
+        text: str,
+        duration: float = 5.0,
+        title: str = "Info",
+    ) -> None:
         """Show a temporary notification in the main window.
 
         Parameters
@@ -713,8 +718,10 @@ class MainWindow(Generic[_W]):
             Text to show in the notification.
         duration : float, default 5.0
             Duration (seconds) to show the notification.
+        title : str, default "Info"
+            Title of the notification.
         """
-        self._backend_main_window._show_notification(text, duration)
+        self._backend_main_window._show_notification(text, duration, title)
 
     def show_tooltip(
         self,

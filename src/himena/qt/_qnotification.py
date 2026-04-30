@@ -136,11 +136,20 @@ class QNotificationWidget(_QOverlayBase):
         """
         super().__init__(main)
 
-        size_grip = QtW.QSizeGrip(self)
-        size_grip.setFixedHeight(8)
-        self.layout().addWidget(
-            size_grip, 0, Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
-        )
+        self._container = QtW.QWidget(self)
+        _layout = QtW.QVBoxLayout(self._container)
+        _layout.setContentsMargins(0, 0, 0, 0)
+        _layout.setSpacing(1)
+        self._title_bar = QWidgetTitleBar("", self._container)
+        self._title_bar._title_label.setTextFormat()
+        self._title_bar.add_sizegrip()
+
+        self._close_btn = QTitleBarToolButton("✕")
+        self._close_btn.clicked.connect(self._hide)
+        self._title_bar.add_button(self._close_btn)
+        _layout.addWidget(self._title_bar)
+        self.addWidget(self._container)
+
         effect = QtW.QGraphicsOpacityEffect(self)
         effect.setOpacity(0.9)
         self.setGraphicsEffect(effect)
@@ -149,12 +158,10 @@ class QNotificationWidget(_QOverlayBase):
         self.geom_anim = QtCore.QPropertyAnimation(self, b"geometry", self)
         self._duration = duration
         self._timer: QtCore.QTimer | None = None
-        self._close_btn = QtW.QPushButton("✕")
-        self._close_btn.setFixedSize(15, 15)
-        self._close_btn.setParent(
-            self, self._close_btn.windowFlags() | Qt.WindowType.FramelessWindowHint
-        )
-        self._close_btn.clicked.connect(self._hide)
+
+    def set_content(self, title: str, widget: QtW.QWidget):
+        self._title_bar.setTitle(title)
+        self._container.layout().addWidget(widget)
 
     def hideLater(self, sec: float = 5):
         """Hide overlay widget after a delay."""
@@ -165,14 +172,23 @@ class QNotificationWidget(_QOverlayBase):
         self._timer.start()
 
     def _hide(self):
-        self._close_btn.hide()
         if self.isVisible():
-            self.setVisible(False)
+            # self.setVisible(False)
+            self.opacity_anim.setDuration(self._duration)
+            self.opacity_anim.setStartValue(0.9)
+            self.opacity_anim.setEndValue(0)
+            self.opacity_anim.start()
+
+            @self.opacity_anim.finished.connect
+            def _on_vanished():
+                if self.isVisible():
+                    self.setVisible(False)
+                self.opacity_anim.finished.disconnect()
+
             self._timer = None
 
     def slide_in(self):
         """Run animation that fades in the dialog with a slight slide up."""
-        self.resize(280, 120)
         self.alignToParent()
         geom = self.geometry()
         self.geom_anim.setDuration(200)
@@ -181,32 +197,11 @@ class QNotificationWidget(_QOverlayBase):
         self.geom_anim.setEasingCurve(QtCore.QEasingCurve.Type.OutQuad)
         self.geom_anim.start()
 
-    def moveEvent(self, a0):
-        super().moveEvent(a0)
-        self._align_close_btn()
-
-    def show(self):
-        """Show the overlay widget with animation."""
-        super().show()
-        self.slide_in()
-
-    def hide(self) -> None:
-        """Hide the overlay widget with animation."""
-        self._close_btn.hide()
-        self.opacity_anim.setDuration(self._duration)
-        self.opacity_anim.setStartValue(0.9)
-        self.opacity_anim.setEndValue(0)
-        self.opacity_anim.start()
-
-        @self.opacity_anim.finished.connect
-        def _on_vanished():
-            if self.isVisible():
-                self.setVisible(False)
-            self.opacity_anim.finished.disconnect()
-
-    def show_and_hide_later(self, sec: float = 5):
+    def show_and_hide_later(self, sec: float = 5, height: int = 120):
         """Show the overlay widget with animation and hide after a delay."""
         self.show()
+        self.resize(280, height + self._title_bar.height() + 8)
+        self.slide_in()
         self.hideLater(sec)
 
     def enterEvent(self, a0: QtCore.QEvent) -> None:
@@ -216,7 +211,6 @@ class QNotificationWidget(_QOverlayBase):
     def _enter_event(self):
         if self._timer is not None:
             self._timer.stop()
-        self._close_btn.show()
 
     def leaveEvent(self, a0: QtCore.QEvent) -> None:
         self._leave_event()
@@ -225,18 +219,6 @@ class QNotificationWidget(_QOverlayBase):
     def _leave_event(self):
         if self._timer is not None:
             self._timer.start()
-        if not self.rect().contains(self.mapFromGlobal(QtGui.QCursor.pos())):
-            self._close_btn.hide()
-
-    def _align_close_btn(self):
-        pos_loc = self.rect().topRight() - QtCore.QPoint(
-            self._close_btn.width() + 5, -5
-        )
-        self._close_btn.move(self.mapToGlobal(pos_loc))
-
-    def resizeEvent(self, a0):
-        super().resizeEvent(a0)
-        self._align_close_btn()
 
 
 class QJobStack(_QOverlayBase):

@@ -26,6 +26,7 @@ class QWidgetTitleBar(QtW.QWidget):
 
     def __init__(self, title: str = "", parent: QtW.QWidget | None = None) -> None:
         super().__init__(parent)
+        self._indent = 2
         self._layout = _layout = QtW.QHBoxLayout(self)
         _layout.setContentsMargins(4, 0, 4, 0)
         _layout.setSpacing(0)
@@ -44,6 +45,18 @@ class QWidgetTitleBar(QtW.QWidget):
         self._layout.addWidget(btn)
         self._layout.setAlignment(btn, QtCore.Qt.AlignmentFlag.AlignRight)
 
+    def add_sizegrip(self):
+        """Add size grip to the top-left corner"""
+        size_grip = QtW.QSizeGrip(self)
+        size_grip.setFixedWidth(8)
+        self._layout.insertWidget(
+            0,
+            size_grip,
+            0,
+            QtCore.Qt.AlignmentFlag.AlignTop | QtCore.Qt.AlignmentFlag.AlignLeft,
+        )
+        self._indent = 0
+
     def frameWidget(self) -> QWidgetTitleBarFrame:
         """Get the frame widget."""
         return self._frame
@@ -58,4 +71,5 @@ class QWidgetTitleBar(QtW.QWidget):
             self._title_label.setVisible(False)
         else:
             self._title_label.setVisible(True)
-            self._title_label.setText(f"  {text}  ")
+            ind = " " * self._indent
+            self._title_label.setText(f"{ind}{text}  ")

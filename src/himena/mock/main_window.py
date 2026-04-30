@@ -370,7 +370,7 @@ class MockBackend(BackendMainWindow):
     def _set_status_tip(self, tip: str, duration: float) -> None:
         """Set the status tip of the main window for a duration (sec)."""
 
-    def _show_notification(self, text: str, duration: float) -> None:
+    def _show_notification(self, text: str, duration: float, title: str) -> None:
         """Show notification for a duration (sec)."""
 
     def _set_tooltip(self, tip: str, duration: float, behavior: str) -> None:

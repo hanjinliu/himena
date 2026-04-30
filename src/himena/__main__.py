@@ -32,14 +32,12 @@ def _is_testing() -> bool:
 
 
 def _main(args: HimenaCliNamespace):
+    if args.version:
+        return args.action_version()
     if args.remove:
-        from himena._cli.profiles import remove_profile
-
-        return remove_profile(args)
+        return args.action_remove()
     if args.new:
-        from himena._cli.profiles import new_profile
-
-        return new_profile(args)
+        return args.action_new()
 
     args.norm_profile_and_path()
 
