@@ -141,7 +141,6 @@ class QNotificationWidget(_QOverlayBase):
         _layout.setContentsMargins(0, 0, 0, 0)
         _layout.setSpacing(1)
         self._title_bar = QWidgetTitleBar("", self._container)
-        self._title_bar._title_label.setTextFormat()
         self._title_bar.add_sizegrip()
 
         self._close_btn = QTitleBarToolButton("✕")
