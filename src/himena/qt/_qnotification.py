@@ -8,6 +8,7 @@ from superqt.utils import FunctionWorker, GeneratorWorker, WorkerBase
 
 from himena.consts import DefaultFontFamily
 from himena.qt._qprogress import QLabeledCircularProgressBar
+from himena.qt._qtitlebar import QWidgetTitleBar, QTitleBarToolButton
 
 if TYPE_CHECKING:
     from himena.qt._qmain_window import QMainWindow
@@ -124,8 +125,7 @@ class QNotificationWidget(_QOverlayBase):
     """The overlay widget appears at the fixed position."""
 
     def __init__(self, main: QMainWindow, duration: int = 500):
-        """
-        The overlay widget appears at the fixed position.
+        """The overlay widget appears at the fixed position.
 
         Parameters
         ----------
@@ -321,24 +321,25 @@ class QJobStack(_QOverlayBase):
 
 
 class QWhatsThisWidget(_QOverlayBase):
-    def __init__(self, parent: QTabWidget):
+    """Overlay widget for showing what's this text."""
+
+    def __init__(
+        self, parent: QTabWidget, text: str, style: str = "plain", title: str = ""
+    ):
         super().__init__(parent)
-        self._close_btn = QtW.QPushButton("✕")
-        self._close_btn.setFixedSize(15, 15)
-        self._close_btn.setParent(
-            self, self._close_btn.windowFlags() | Qt.WindowType.FramelessWindowHint
-        )
-        self._close_btn.clicked.connect(self._hide)
+        self._close_btn = QTitleBarToolButton("✕")
+        self._close_btn.clicked.connect(self.hide)
         self.setAnchor(Anchor.top_right)
         self.setFixedSize(480, 360)
 
-    def _hide(self):
-        self._close_btn.hide()
-        self.hide()
-
-    def set_text(self, text: str, style: str = "plain"):
-        text_widget = QtW.QTextEdit()
+        container = QtW.QWidget(self)
+        _layout = QtW.QVBoxLayout(container)
+        _layout.setContentsMargins(0, 0, 0, 0)
+        _layout.setSpacing(1)
+        title_bar = QWidgetTitleBar(title, container)
+        text_widget = QtW.QTextEdit(container)
         text_widget.setFont(QtGui.QFont(DefaultFontFamily, 10))
+        text_widget.setReadOnly(True)
         if style == "plain":
             text_widget.setText(text)
         elif style == "markdown":
@@ -347,17 +348,8 @@ class QWhatsThisWidget(_QOverlayBase):
             text_widget.setHtml(text)
         else:
             raise ValueError(f"Unknown style: {style}")
-        self.addWidget(text_widget)
+        _layout.addWidget(title_bar)
+        _layout.addWidget(text_widget)
+        self.addWidget(container)
 
-    def enterEvent(self, a0: QtCore.QEvent) -> None:
-        self._close_btn.show()
-        pos_loc = self.rect().topRight() - QtCore.QPoint(
-            self._close_btn.width() + 5, -5
-        )
-        self._close_btn.move(self.mapToGlobal(pos_loc))
-        return super().enterEvent(a0)
-
-    def leaveEvent(self, a0: QtCore.QEvent) -> None:
-        if not self.rect().contains(self.mapFromGlobal(QtGui.QCursor.pos())):
-            self._close_btn.hide()
-        return super().leaveEvent(a0)
+        title_bar.add_button(self._close_btn)

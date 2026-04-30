@@ -892,9 +892,9 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         self,
         text: str,
         style: Literal["plain", "markdown", "html"] = "plain",
+        title: str = "",
     ) -> None:
-        whatsthis = QWhatsThisWidget(self)
-        whatsthis.set_text(text, style)
+        whatsthis = QWhatsThisWidget(self, text, style, title)
         whatsthis.show()
 
     def _show_dock_whats_this(self, doc: str):

@@ -395,5 +395,10 @@ class MockBackend(BackendMainWindow):
     def _add_job_progress(self, future: Future, desc: str, total: int = 0) -> None:
         """Add a job to the job stack."""
 
-    def _add_whats_this(self, text: str, style: Literal["plain", "markdown", "html"]):
+    def _add_whats_this(
+        self,
+        text: str,
+        style: Literal["plain", "markdown", "html"],
+        title: str = "",
+    ):
         """Add a what's this text to the main window."""
