@@ -24,8 +24,12 @@ class QStatusBar(QtW.QStatusBar):
         self._profile_btn.clicked.connect(self._open_profile_info)
         layout.addWidget(self._profile_btn)
 
+        self.layout().setSpacing(0)
         self.layout().setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         self.layout().addWidget(self._corner_widget)
+        size_grip = QtW.QSizeGrip(self)
+        size_grip.setFixedWidth(16)
+        self.layout().addWidget(size_grip)
         self._profile_info: QProfileInfo | None = None
 
     def _open_profile_info(self) -> None:

@@ -172,7 +172,6 @@ class QNotificationWidget(_QOverlayBase):
 
     def _hide(self):
         if self.isVisible():
-            # self.setVisible(False)
             self.opacity_anim.setDuration(self._duration)
             self.opacity_anim.setStartValue(0.9)
             self.opacity_anim.setEndValue(0)

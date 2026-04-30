@@ -32,6 +32,7 @@ class QWidgetTitleBar(QtW.QWidget):
         _layout.setSpacing(0)
 
         self._title_label = QtW.QLabel()
+        self._title_label.setObjectName("TitleBarTitleLabel")
         self._title_label.setContentsMargins(0, 0, 0, 0)
 
         self._frame = QWidgetTitleBarFrame()

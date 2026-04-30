@@ -834,6 +834,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     ) -> None:
         text_edit = QtW.QPlainTextEdit(text)
         text_edit.setWordWrapMode(QtGui.QTextOption.WrapMode.WordWrap)
+        text_edit.setReadOnly(True)
         notification = QNotificationWidget(self)
         notification.set_content(title, text_edit)
 
