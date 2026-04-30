@@ -56,11 +56,18 @@ class HimenaCliNamespace(argparse.Namespace):
     def action_remove(self):
         _assert_profile_not_none(self.remove)
         self.assert_args_not_given()
+
+        from himena.profile import remove_app_profile
+
+        remove_app_profile(self.remove)
         print(f"Profile {self.remove!r} is removed.")
 
     def action_new(self):
         _assert_profile_not_none(self.new)
         self.assert_args_not_given()
+        from himena.profile import new_app_profile
+
+        new_app_profile(self.new)
         print(
             f"Profile {self.new!r} is created. You can start the application with:\n"
             f"$ himena {self.new}"
