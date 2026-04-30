@@ -695,7 +695,7 @@ QTitleBarToolButton {
     background-color: transparent;
 }
 
-QDockWidgetTitleFrame {
+QWidgetTitleBarFrame {
     border: 0px;
     border-bottom: 1px solid #[foreground_dim];
     background-color: none;

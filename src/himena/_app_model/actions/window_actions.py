@@ -46,9 +46,16 @@ _CtrlShift = KeyMod.CtrlCmd | KeyMod.Shift
 def show_whats_this(ui: MainWindow) -> None:
     """Show the docstring of the current widget."""
     if window := ui.current_window:
-        if doc := getattr(window.widget, "__doc__", ""):
-            doc_formatted = _utils.doc_to_whats_this(doc)
-            ui._backend_main_window._add_whats_this(doc_formatted, style="markdown")
+        doc = getattr(window.widget, "__doc__", None)
+        if not isinstance(doc, str):
+            doc = "No documentation available."
+        doc_formatted = _utils.doc_to_whats_this(doc)
+        disp_name = _utils.get_display_name(type(window.widget), class_id=False)
+        ui._backend_main_window._add_whats_this(
+            doc_formatted,
+            style="markdown",
+            title=disp_name,
+        )
 
 
 @ACTIONS.append_from_fn(

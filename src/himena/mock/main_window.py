@@ -370,7 +370,7 @@ class MockBackend(BackendMainWindow):
     def _set_status_tip(self, tip: str, duration: float) -> None:
         """Set the status tip of the main window for a duration (sec)."""
 
-    def _show_notification(self, text: str, duration: float) -> None:
+    def _show_notification(self, text: str, duration: float, title: str) -> None:
         """Show notification for a duration (sec)."""
 
     def _set_tooltip(self, tip: str, duration: float, behavior: str) -> None:
@@ -395,5 +395,10 @@ class MockBackend(BackendMainWindow):
     def _add_job_progress(self, future: Future, desc: str, total: int = 0) -> None:
         """Add a job to the job stack."""
 
-    def _add_whats_this(self, text: str, style: Literal["plain", "markdown", "html"]):
+    def _add_whats_this(
+        self,
+        text: str,
+        style: Literal["plain", "markdown", "html"],
+        title: str = "",
+    ):
         """Add a what's this text to the main window."""
