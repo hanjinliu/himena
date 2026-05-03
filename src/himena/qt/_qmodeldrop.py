@@ -99,7 +99,7 @@ class QModelDropBase(QtW.QGroupBox):
             return None
         return ui.window_for_id(self._target_id)
 
-    def to_model(self):
+    def to_data_model(self):
         if self._data_model is not None:
             return self._data_model
         if widget := self.subwindow():
@@ -350,7 +350,9 @@ class QModelDropList(QtW.QListWidget):
 
     def models(self) -> list[WidgetDataModel]:
         """List of models."""
-        return [self.itemWidget(self.item(i)).to_model() for i in range(self.count())]
+        return [
+            self.itemWidget(self.item(i)).to_data_model() for i in range(self.count())
+        ]
 
     def set_models(self, value):
         if value is None:

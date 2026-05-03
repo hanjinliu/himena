@@ -258,7 +258,7 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         if not isinstance(model, WidgetDataModel):
             raise TypeError(
                 "`to_model` method must return an instance of WidgetDataModel, got "
-                f"{type(model)}"
+                f"{type(model)} ({self.widget!r})"
             )
 
         if model.title is None:

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
   <!-- 45-degree lines for drag-to-resize indicator -->
-  <line x1="2" y1="14" x2="14" y2="2" stroke="gray" stroke-width="1" opacity="0.6"/>
-  <line x1="6" y1="14" x2="14" y2="6" stroke="gray" stroke-width="1" opacity="0.6"/>
-  <line x1="10" y1="14" x2="14" y2="10" stroke="gray" stroke-width="1" opacity="0.6"/>
+  <line x1="2" y1="14" x2="14" y2="2" stroke="gray" stroke-width="0.5" opacity="0.6"/>
+  <line x1="6" y1="14" x2="14" y2="6" stroke="gray" stroke-width="0.5" opacity="0.6"/>
+  <line x1="10" y1="14" x2="14" y2="10" stroke="gray" stroke-width="0.5" opacity="0.6"/>
 </svg>

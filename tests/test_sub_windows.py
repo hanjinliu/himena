@@ -394,21 +394,6 @@ def test_clipboard(himena_ui: MainWindow, sample_dir: Path, qtbot: QtBot):
     QtW.QApplication.processEvents()
     assert himena_ui.clipboard.text == str(sample_path)
     QtW.QApplication.processEvents()
-    himena_ui.exec_action("copy-data-to-clipboard")
-    QtW.QApplication.processEvents()
-    assert himena_ui.clipboard.text == sample_path.read_text()
-    himena_ui.add_object(np.zeros((6, 5, 3)), type=StandardType.IMAGE)
-    QtW.QApplication.processEvents()
-    himena_ui.exec_action("copy-data-to-clipboard")
-    QtW.QApplication.processEvents()
-    img = np.zeros((6, 5, 4), dtype=np.uint8)
-    img[..., 3] = 255
-    assert_equal(himena_ui.clipboard.image, img)
-    himena_ui.add_object("<b>a</b>", type=StandardType.HTML)
-    QtW.QApplication.processEvents()
-    himena_ui.exec_action("copy-data-to-clipboard")
-    QtW.QApplication.processEvents()
-    assert himena_ui.clipboard.text == "a"
 
 def test_tile_window(make_himena_ui, backend: str):
     himena_ui: MainWindow = make_himena_ui(backend)

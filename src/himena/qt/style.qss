@@ -815,3 +815,7 @@ QCheckableButton:disabled {
 QLabel#TitleBarTitleLabel {
     color: #[highlight_strong];
 }
+
+QChoicesDialog {
+    border: 3px solid #[highlight_dim];
+}
