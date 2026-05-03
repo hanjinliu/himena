@@ -1,6 +1,6 @@
 from __future__ import annotations
 from concurrent.futures import Future
-from contextlib import suppress
+from contextlib import contextmanager, suppress
 import inspect
 from timeit import default_timer as timer
 import logging
@@ -25,6 +25,7 @@ from superqt import QIconifyIcon
 from superqt.utils import ensure_main_thread, WorkerBase
 from himena.consts import MenuId
 from himena.consts import ParametricWidgetProtocolNames as PWPN
+from himena.qt._qtitlebar import QTitleBarToolButton, QWidgetTitleBar
 from himena.utils.window_rect import prevent_window_overlap
 from himena.utils.app import iter_root_menu_ids
 from himena._app_model import _formatter, HimenaApplication
@@ -76,6 +77,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     _app: HimenaApplication
     status_tip_requested = QtCore.Signal(str, float)
     notification_requested = QtCore.Signal(str, float, str)
+    window_rect_changed = QtCore.Signal()
 
     def __init__(self, app: HimenaApplication):
         # app must be initialized
@@ -392,7 +394,8 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         return super().focusOutEvent(a0)
 
     def event(self, e: QtCore.QEvent) -> bool:
-        if e.type() in {
+        typ = e.type()
+        if typ in {
             QtCore.QEvent.Type.WindowActivate,
             QtCore.QEvent.Type.ZOrderChange,
         }:
@@ -401,8 +404,10 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
         res = super().event(e)
 
-        if e.type() == QtCore.QEvent.Type.Close and e.isAccepted():
+        if typ == QtCore.QEvent.Type.Close and e.isAccepted():
             widgets.remove_instance(self._app_name, self._himena_main_window)
+        if typ in (QtCore.QEvent.Type.Move, QtCore.QEvent.Type.Resize):
+            self.window_rect_changed.emit()
 
         return res
 
@@ -954,8 +959,28 @@ class QChoicesDialog(QtW.QDialog):
         super().__init__(parent)
         self._result = None
         self.accepted.connect(self.close)
+        self._title_bar = QWidgetTitleBar(self)
+        self._close_btn = QTitleBarToolButton("✕")
+        self._close_btn.clicked.connect(self.reject)
+        self._close_btn.setToolTip(
+            "Close this dialog (equivalent to the Cancel operation, and will send\n"
+            "'None' to the backend program)"
+        )
+        self._title_bar.add_button(self._close_btn)
+        self._title_bar.set_font_size(12)
+        self._container = QtW.QWidget(self)
+        self._container_layout = QtW.QVBoxLayout(self._container)
+        self._container_layout.setContentsMargins(4, 4, 4, 4)
+
         self._layout = QtW.QVBoxLayout(self)
-        self._layout.setSpacing(10)
+        self._layout.setContentsMargins(3, 3, 3, 3)
+        self._layout.setSpacing(2)
+        self._layout.addWidget(self._title_bar)
+        self._layout.addWidget(self._container)
+        self.setParent(
+            parent,
+            QtCore.Qt.WindowType.Dialog | QtCore.Qt.WindowType.FramelessWindowHint,
+        )
 
     def set_result_callback(self, value: _V, accept: bool) -> Callable[[], None]:
         def _set_result():
@@ -968,9 +993,12 @@ class QChoicesDialog(QtW.QDialog):
     @classmethod
     def new_dialog(cls, title: str, message: str, parent: QtW.QWidget | None = None):
         self = cls(parent)
-        self.setWindowTitle(title)
+        self._title_bar.setTitle(title)
         label = QtW.QLabel(message)
-        self._layout.addWidget(label)
+        label.setTextInteractionFlags(
+            QtCore.Qt.TextInteractionFlag.TextSelectableByMouse
+        )
+        self._container_layout.addWidget(label)
         return self
 
     def setup_buttons(self, choices: list[tuple[str, _V]]):
@@ -978,13 +1006,14 @@ class QChoicesDialog(QtW.QDialog):
         shortcut_registered = set()
         for choice, value in choices:
             button = QtW.QPushButton(choice)
+            button.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
             button_group.addButton(button, button_group.ButtonRole.AcceptRole)
             button.clicked.connect(self.set_result_callback(value, accept=True))
             shortcut = choice[0].lower()
             if shortcut not in shortcut_registered:
                 button.setShortcut(shortcut)
                 shortcut_registered.add(shortcut)
-        self._layout.addWidget(button_group)
+        self._container_layout.addWidget(button_group)
         return self
 
     def setup_radiobuttons(self, choices: list[tuple[str, _V]]):
@@ -994,19 +1023,69 @@ class QChoicesDialog(QtW.QDialog):
             button = QtW.QRadioButton(choice)
             button_group.addButton(button)
             button.clicked.connect(self.set_result_callback(value, accept=False))
-            self._layout.addWidget(button)
+            self._container_layout.addWidget(button)
 
         ok_cancel = QtW.QDialogButtonBox()
         ok_cancel.addButton(QtW.QDialogButtonBox.StandardButton.Ok)
         ok_cancel.addButton(QtW.QDialogButtonBox.StandardButton.Cancel)
         ok_cancel.accepted.connect(self.accept)
         ok_cancel.rejected.connect(self.reject)
-        self._layout.addWidget(ok_cancel)
+        self._container_layout.addWidget(ok_cancel)
         return self
 
     def run_request(self) -> _V | None:
         if self.exec() == QtW.QDialog.DialogCode.Accepted:
             return self._result
+
+    def exec(self) -> int:
+        # Show as overlay instead of modal dialog
+        with self._exec_context():
+            return super().exec()
+
+    @contextmanager
+    def _exec_context(self):
+        parent = self.parentWidget()
+        self._result = None
+        if isinstance(parent, QMainWindow):
+            self.setWindowFlags(
+                QtCore.Qt.WindowType.Dialog | QtCore.Qt.WindowType.FramelessWindowHint
+            )
+            # Make parent appear whiter/disabled
+            effect = QtW.QGraphicsColorizeEffect()
+            effect.setColor(QtCore.Qt.GlobalColor.white)
+            effect.setStrength(0.66)
+            parent.setGraphicsEffect(effect)
+
+            # Disable parent interactivity
+            parent.setEnabled(False)
+            # Re-enable this dialog since it's a child of the parent
+            self.setEnabled(True)
+
+            # Connect event
+            parent.window_rect_changed.connect(self.align_to_center)
+
+            try:
+                # Show dialog first to get actual size
+                self.show()
+
+                # Move to center of main window
+                self.align_to_center()
+
+                yield
+            finally:
+                parent.setGraphicsEffect(None)
+                parent.setEnabled(True)
+                parent.window_rect_changed.disconnect(self.align_to_center)
+        else:
+            yield
+
+    def align_to_center(self):
+        if parent := self.parentWidget():
+            parent_rect = parent.geometry()
+            self_rect = self.geometry()
+            x = parent_rect.x() + (parent_rect.width() - self_rect.width()) // 2
+            y = parent_rect.y() + (parent_rect.height() - self_rect.height()) // 2
+            self.move(x, y)
 
 
 def _prep_menubar_map(app: HimenaApplication) -> dict[str, str]:

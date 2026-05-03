@@ -12,7 +12,6 @@ from app_model.types import (
 )
 from himena._descriptors import SaveToPath, NoNeedToSave
 from himena.consts import MenuId, StandardType, IS_WINDOWS, IS_MACOS, IS_LINUX
-from himena.utils.html import html_to_plain_text
 from himena.widgets import MainWindow, SubWindow
 from himena.types import (
     ClipboardDataModel,
@@ -196,30 +195,6 @@ def copy_path_to_clipboard(ui: MainWindow) -> ClipboardDataModel:
             raise ValueError("Window does not have the source path.")
     else:
         RuntimeError("No window is focused.")
-
-
-@ACTIONS.append_from_fn(
-    id="copy-data-to-clipboard",
-    title="Copy Data To Clipboard",
-    menus=[
-        {"id": MenuId.WINDOW, "group": EDIT_GROUP},
-    ],
-    enablement=(_ctx.num_sub_windows > 0) & _ctx.is_active_window_supports_to_model,
-    keybindings=[{"primary": KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.KeyC)}],
-)
-def copy_data_to_clipboard(model: WidgetDataModel) -> ClipboardDataModel:
-    """Copy the data of the current window to the clipboard."""
-
-    if model.is_subtype_of(StandardType.TEXT):
-        if model.is_subtype_of(StandardType.HTML):
-            return ClipboardDataModel(
-                text=html_to_plain_text(model.value), html=model.value
-            )
-        else:
-            return ClipboardDataModel(text=model.value)
-    elif model.is_subtype_of(StandardType.IMAGE):
-        return ClipboardDataModel(image=model.value)
-    raise ValueError(f"Cannot convert {model.type} to a clipboard data.")
 
 
 @ACTIONS.append_from_fn(
@@ -466,9 +441,12 @@ ACTIONS.append(
         id="window-toggle-editable",
         title="Window Editable",
         callback=toggle_editable,
-        enablement=_ctx.is_subwindow_focused,
+        enablement=_ctx.is_supports_editability,
         menus=[{"id": MenuId.WINDOW, "group": PROPERTY_GROUP}],
         toggled=ToggleRule(condition=_ctx.is_active_window_editable),
+        tooltip=(
+            "Toggle whether the window is editable (e.g. edit texts, edit cells etc.)"
+        ),
     )
 )
 
@@ -477,9 +455,13 @@ ACTIONS.append(
         id="window-toggle-track-modifications",
         title="Track User Modifications",
         callback=toggle_editable,
-        enablement=_ctx.is_subwindow_focused,
+        enablement=_ctx.is_supports_track_modification,
         menus=[{"id": MenuId.WINDOW, "group": PROPERTY_GROUP}],
         toggled=ToggleRule(condition=_ctx.is_active_window_track_modification),
+        tooltip=(
+            "Toggle whether this widget tracks user modifications. This needs to be "
+            "enabled to make the full workflow reproducible."
+        ),
     )
 )
 

@@ -336,6 +336,10 @@ def test_qchoices_dialog(qtbot: QtBot):
     cb = dlg.set_result_callback(0, True)
     cb()
 
+    with dlg._exec_context():
+        pass
+
+
 def test_private_functions():
     from himena.widgets._main_window import _short_repr, _format_exceptions
 

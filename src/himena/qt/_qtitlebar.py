@@ -42,6 +42,12 @@ class QWidgetTitleBar(QtW.QWidget):
         self.setTitle(title)
         self.setFixedHeight(16)
 
+    def set_font_size(self, size: int):
+        """Set the font size of the title."""
+        font = self._title_label.font()
+        font.setPointSize(size)
+        self._title_label.setFont(font)
+
     def add_button(self, btn: QTitleBarToolButton):
         self._layout.addWidget(btn)
         self._layout.setAlignment(btn, QtCore.Qt.AlignmentFlag.AlignRight)

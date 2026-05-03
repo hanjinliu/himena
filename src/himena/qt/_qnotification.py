@@ -68,27 +68,25 @@ class _QOverlayBase(QtW.QDialog):
         """Position widget at the bottom right edge of the parent."""
         if not self.isVisible():
             return
-        qtabwidget = self.parentWidget()
-        if not qtabwidget:
-            return
-        if self._anchor == Anchor.bottom_left:
-            self.alignBottomLeft()
-        elif self._anchor == Anchor.bottom_right:
-            self.alignBottomRight()
-        elif self._anchor == Anchor.top_left:
-            self.alignTopLeft()
-        elif self._anchor == Anchor.top_right:
-            self.alignTopRight()
-        else:
-            raise RuntimeError
+        match self._anchor:
+            case Anchor.bottom_left:
+                self.alignBottomLeft()
+            case Anchor.bottom_right:
+                self.alignBottomRight()
+            case Anchor.top_left:
+                self.alignTopLeft()
+            case Anchor.top_right:
+                self.alignTopRight()
+            case _:  # pragma: no cover
+                raise RuntimeError
 
     def viewRect(self) -> QtCore.QRect:
         """Return the parent table rect."""
-        parent = self.parentWidget()
-        if widget := parent.widget_area(0):
-            return widget.rect()
-        elif widget := parent.widget(0):
-            return widget.rect()
+        if parent := self.parentWidget():
+            if widget := parent.widget_area(0):
+                return widget.rect()
+            elif widget := parent.widget(0):
+                return widget.rect()
         return self.rect()
 
     def alignTopLeft(self, offset=(3, 3)):

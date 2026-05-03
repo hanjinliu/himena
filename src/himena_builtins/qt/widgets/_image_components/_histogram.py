@@ -182,6 +182,8 @@ class QHistogramView(QBaseGraphicsView):
         min_new, max_new = float("inf"), -float("inf")
         for item in self._hist_items:
             cum_value = np.cumsum(item._hist_values)
+            if cum_value.size == 0 or cum_value[-1] == 0:
+                continue
             cum_value = np.concatenate([[0.0], cum_value / cum_value[-1]])
             min_new = min(_interp_hist(qmin, item._edges, cum_value), min_new)
             max_new = max(_interp_hist(qmax, item._edges, cum_value), max_new)

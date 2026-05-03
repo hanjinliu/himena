@@ -225,13 +225,13 @@ def test_model_drop(himena_ui: MainWindowQt):
     drop_list = himena_ui.add_widget(qdroplist)
     qwins = himena_ui._backend_main_window._tab_widget.widget_area(0).subWindowList()
     qdrop._drop_qsubwindow(qwins[0])
-    assert qdrop.to_model().value == "abc"
-    assert qdrop.to_model().type == StandardType.TEXT
+    assert qdrop.to_data_model().value == "abc"
+    assert qdrop.to_data_model().type == StandardType.TEXT
     qdrop._drop_qsubwindow(qwins[1])
-    assert qdrop.to_model().value == "abc"  # type not accepted, so not changed
-    assert qdrop.to_model().type == StandardType.TEXT
+    assert qdrop.to_data_model().value == "abc"  # type not accepted, so not changed
+    assert qdrop.to_data_model().type == StandardType.TEXT
     qdrop.set_model(create_model("pqr", type=StandardType.TEXT))
-    assert qdrop.to_model().value == "pqr"
+    assert qdrop.to_data_model().value == "pqr"
     qdroplist._drop_qsubwindow(qwins[0])
     qdroplist._drop_qsubwindow(qwins[1])
     assert len(qdroplist.models()) == 1
