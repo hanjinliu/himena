@@ -153,7 +153,7 @@ class MainWindow(Generic[_W]):
     @property
     def action_hint_registry(self) -> ActionHintRegistry:
         """Action hint registry."""
-        return _actions.AppActionRegistry.instance()._action_hint_reg
+        return self._action_registry_instance()._action_hint_reg
 
     @property
     def socket_info(self) -> SocketInfo:
@@ -611,7 +611,7 @@ class MainWindow(Generic[_W]):
 
     def run_script(self, file: str | Path) -> Any:
         """Run the main function of the given script file with this UI instance."""
-        reg = _actions.AppActionRegistry.instance()
+        reg = self._action_registry_instance()
         num_actions_before = len(reg._actions)
         if is_url_string(file):
             code = fetch_text_from_url(file)
@@ -699,6 +699,8 @@ class MainWindow(Generic[_W]):
             Duration (seconds) to show the status tip.
         process_event : bool, default False
             If True, the application will process events after setting the status tip.
+            If the `ui.set_status_tip` call is a slow operation, setting this to True
+            will make the status tip update immediately so the user can see it.
         """
         self._backend_main_window._set_status_tip(text, duration)
         if process_event:
@@ -818,8 +820,8 @@ class MainWindow(Generic[_W]):
                 keybindings=keybindings,
                 command_id=command_id,
             )
-            _actions.AppActionRegistry.instance().add_action(action)
-            added_menus = _actions.AppActionRegistry.instance().install_to(
+            self._action_registry_instance().add_action(action)
+            added_menus = self._action_registry_instance().install_to(
                 self.model_app, [action]
             )
             self._backend_main_window._rebuild_for_runtime(added_menus)
@@ -1316,6 +1318,9 @@ class MainWindow(Generic[_W]):
             finally:
                 self._instructions = old_inst
 
+    def _action_registry_instance(self) -> _actions.AppActionRegistry:
+        return _actions.AppActionRegistry.instance()
+
     def _iter_widget_class(self, model: WidgetDataModel) -> Iterator[type[_W]]:
         """Pick the most suitable widget class for the given model."""
         if model.force_open_with:
@@ -1356,7 +1361,7 @@ class MainWindow(Generic[_W]):
                 except TypeError:
                     widget = factory()
                 widget_id = get_widget_class_id(type(widget))
-                reg = _actions.AppActionRegistry.instance()
+                reg = self._action_registry_instance()
                 if self.model_app.name != "." and (
                     plugin_configs := self.app_profile.plugin_configs.get(widget_id)
                 ):

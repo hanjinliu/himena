@@ -466,9 +466,12 @@ ACTIONS.append(
         id="window-toggle-editable",
         title="Window Editable",
         callback=toggle_editable,
-        enablement=_ctx.is_subwindow_focused,
+        enablement=_ctx.is_supports_editability,
         menus=[{"id": MenuId.WINDOW, "group": PROPERTY_GROUP}],
         toggled=ToggleRule(condition=_ctx.is_active_window_editable),
+        tooltip=(
+            "Toggle whether the window is editable (e.g. edit texts, edit cells etc.)"
+        ),
     )
 )
 
@@ -477,9 +480,13 @@ ACTIONS.append(
         id="window-toggle-track-modifications",
         title="Track User Modifications",
         callback=toggle_editable,
-        enablement=_ctx.is_subwindow_focused,
+        enablement=_ctx.is_supports_track_modification,
         menus=[{"id": MenuId.WINDOW, "group": PROPERTY_GROUP}],
         toggled=ToggleRule(condition=_ctx.is_active_window_track_modification),
+        tooltip=(
+            "Toggle whether this widget tracks user modifications. This needs to be "
+            "enabled to make the full workflow reproducible."
+        ),
     )
 )
 

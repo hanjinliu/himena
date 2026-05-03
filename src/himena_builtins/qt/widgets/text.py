@@ -405,7 +405,7 @@ def get_languages() -> OrderedSet[str]:
     langs: OrderedSet[str] = OrderedSet()
     for lang in _POPULAR_LANGUAGES:
         langs.add(lang)
-    for lang, _aliases, _extensions, _ in get_all_lexers(plugins=False):
+    for lang, _aliases, _extensions, _ in get_all_lexers(plugins=True):
         langs.add(lang)
     return langs
 

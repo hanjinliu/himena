@@ -941,16 +941,14 @@ class QSubWindowTitleBar(QtW.QFrame):
         return self._subwindow.dropEvent(a0)
 
     def enterEvent(self, event):
-        ui = get_main_window(self)
-        ui.set_status_tip("`Ctrl+LeftButton` or `MiddleButton` to drag the window")
+        if not self._is_single_window_mode:
+            ui = get_main_window(self)
+            ui.set_status_tip("`Ctrl+LeftButton` or `MiddleButton` to drag the window")
         return super().enterEvent(event)
 
     def leaveEvent(self, a0):
-        try:
+        with suppress(ValueError):
             main = get_main_window(self)
-        except ValueError:
-            pass
-        else:
             main.set_status_tip("")
         return super().leaveEvent(a0)
 

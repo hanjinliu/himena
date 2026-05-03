@@ -37,6 +37,10 @@ QFrame:!enabled {
     border-color: #[foreground_dim];
 }
 
+QSizeGrip {
+    image: url(himena-icons:/sizegrip.svg);
+}
+
 /* QPushButton */
 
 QPushButton {

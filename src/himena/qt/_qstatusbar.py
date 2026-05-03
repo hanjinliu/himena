@@ -29,6 +29,7 @@ class QStatusBar(QtW.QStatusBar):
         self.layout().addWidget(self._corner_widget)
         size_grip = QtW.QSizeGrip(self)
         size_grip.setFixedWidth(16)
+
         self.layout().addWidget(size_grip)
         self._profile_info: QProfileInfo | None = None
 

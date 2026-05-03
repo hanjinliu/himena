@@ -19,9 +19,22 @@ def _is_active_window_editable(ui: "MainWindow") -> bool:
     return False
 
 
+def _is_active_window_can_toggle_editability(ui: "MainWindow") -> bool:
+    if win := ui.current_window:
+        return hasattr(win.widget, "set_editable")
+    return False
+
+
 def _is_active_window_track_modification(ui: "MainWindow") -> bool:
     if win := ui.current_window:
         return win._data_modifications.track_enabled
+    return False
+
+
+def _is_active_window_can_toggle_track_modification(ui: "MainWindow") -> bool:
+    if win := ui.current_window:
+        if mtype := win.model_type():
+            return mtype in ui._action_registry_instance()._modification_trackers
     return False
 
 
@@ -115,10 +128,20 @@ class AppContext(ContextNamespace["MainWindow"]):
         "if the current window is editable",
         _is_active_window_editable,
     )
+    is_supports_editability = ContextKey(
+        False,
+        "if the current window supports toggling editability",
+        _is_active_window_can_toggle_editability,
+    )
     is_active_window_track_modification = ContextKey(
         False,
         "if the current window is tracking user modifications",
         _is_active_window_track_modification,
+    )
+    is_supports_track_modification = ContextKey(
+        False,
+        "if the current window supports toggling modification tracking",
+        _is_active_window_can_toggle_track_modification,
     )
     active_window_state = ContextKey(
         WindowState.NORMAL,
