@@ -225,7 +225,7 @@ class QTabWidget(QtW.QTabWidget):
             subwindows = widget.subWindowList()
             if len(subwindows) == 1 and subwindows[0].is_single_window_mode():
                 # closing tabs sometimes leaves the single window tab un-focused
-                widget.currentSubWindow().setFocus()
+                subwindows[0].setFocus()
             has_active_subwindow = any(win.is_current() for win in subwindows)
             self.activeWindowChanged.emit(has_active_subwindow)
 

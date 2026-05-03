@@ -13,21 +13,16 @@ class QStatusBar(QtW.QStatusBar):
 
     def __init__(self, parent: QMainWindow):
         super().__init__(parent)
-        self._corner_widget = QtW.QWidget(self)
-        layout = QtW.QHBoxLayout(self._corner_widget)
-        layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        layout.setContentsMargins(4, 0, 4, 0)
         self._profile_btn = QtW.QPushButton(f"{parent._app.name}")
         self._profile_btn.setToolTip("Application profile")
         self._profile_btn.setObjectName("profileButton")
         self._profile_btn.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
         self._profile_btn.clicked.connect(self._open_profile_info)
-        layout.addWidget(self._profile_btn)
 
         # NOTE: status bar already has a size grip.
         self.layout().setSpacing(0)
         self.layout().setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        self.layout().insertWidget(1, self._corner_widget)
+        self.layout().insertWidget(1, self._profile_btn)
         self._profile_info: QProfileInfo | None = None
 
     def _open_profile_info(self) -> None:

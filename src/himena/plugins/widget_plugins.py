@@ -12,6 +12,7 @@ from typing import (
     overload,
     TYPE_CHECKING,
 )
+import warnings
 import weakref
 
 from app_model.types import Action, ToggleRule
@@ -293,7 +294,13 @@ def _get_plugin_config(
     config_dict = {
         k: v["value"] for k, v in ui.app_profile.plugin_configs[_plugin_id].items()
     }
-    plugin_config = reg._plugin_default_configs[_plugin_id].updated(config_dict)
+    plugin_config = reg._plugin_default_configs[_plugin_id]
+    try:
+        plugin_config = plugin_config.updated(config_dict)
+    except Exception as e:
+        # This may happen when the signature of the config class is not consistent
+        # between plugin versions.
+        warnings.warn(f"Failed to update plugin config for {_plugin_id}: {e}")
     if not isinstance(plugin_config.config, _config_class):
         raise TypeError(
             f"Plugin ID {_plugin_id} does not match the config class {config_class}."
