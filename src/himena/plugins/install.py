@@ -30,9 +30,9 @@ def install_plugins(
     results = []
     show_import_time = app.attributes.get("print_import_time", False)
     if show_import_time:
-        print("==================")
-        print("Plugin import time")
-        print("==================")
+        print("======================")
+        print("  Plugin import time ")
+        print("======================")
     for name in plugins:
         if name in reg._installed_plugins:
             continue
@@ -45,11 +45,14 @@ def install_plugins(
     for cfg_key, cfg in reg._plugin_default_configs.items():
         cfg_dict = cfg.as_dict()
         cfg_dict_old = prof.plugin_configs.get(cfg_key, {})
-        # NOTE: if same config was updated during development, it may not have some keys
-        for k, v in cfg_dict.items():
-            if k not in cfg_dict_old:
-                cfg_dict_old[k] = v
-        prof.plugin_configs[cfg_key] = cfg_dict_old
+        if "value" in cfg_dict_old:
+            cfg_dict["value"] = cfg_dict_old["value"]
+        for k, new_dict in cfg_dict.items():
+            if k in cfg_dict_old:
+                old_dict = cfg_dict_old[k]
+                if "value" in old_dict:
+                    new_dict["value"] = old_dict["value"]
+        prof.plugin_configs[cfg_key] = cfg_dict
 
     prof.save()
     return results

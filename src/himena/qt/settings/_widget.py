@@ -33,6 +33,7 @@ class QSettingsDialog(QtW.QDialog):
         self._list = QtW.QListWidget(self)
         self._list.setFixedWidth(150)
         self._list.setFont(QtGui.QFont(DefaultFontFamily, 13))
+
         self._open_json_btn = QtW.QPushButton("Open JSON")
         self._open_json_btn.clicked.connect(self._open_json)
         self._stack = QtW.QStackedWidget(self)
