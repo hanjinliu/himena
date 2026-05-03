@@ -41,6 +41,8 @@ class ZOrder(IntEnum):
 
 
 class QFlowChartNode(QtW.QGraphicsRectItem):
+    left_pressed = Signal(object)
+    right_pressed = Signal(object)
     left_clicked = Signal(object)
     left_double_clicked = Signal(object)
     right_clicked = Signal(object)
@@ -177,6 +179,10 @@ class QFlowChartNode(QtW.QGraphicsRectItem):
     def mousePressEvent(self, event: QtW.QGraphicsSceneMouseEvent):
         """Handle mouse press events"""
         self._last_press_pos = self.mapFromScene(event.pos())
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.left_pressed.emit(self._item)
+        elif event.button() == Qt.MouseButton.RightButton:
+            self.right_pressed.emit(self._item)
         return super().mousePressEvent(event)
 
     def mouseReleaseEvent(self, event: QtW.QGraphicsSceneMouseEvent):
@@ -289,6 +295,8 @@ class QFlowChartArrow(QtW.QGraphicsLineItem):
 
 
 class QFlowChartView(QtW.QGraphicsView):
+    item_left_pressed = QtCore.Signal(BaseNodeItem)
+    item_right_pressed = QtCore.Signal(BaseNodeItem)
     item_left_clicked = QtCore.Signal(BaseNodeItem)
     item_right_clicked = QtCore.Signal(BaseNodeItem)
     item_left_double_clicked = QtCore.Signal(BaseNodeItem)
@@ -356,6 +364,10 @@ class QFlowChartView(QtW.QGraphicsView):
         self.scene().addItem(node)
         self._node_map[item.id()] = node
         node.setPen(QtGui.QPen(Qt.GlobalColor.black, 1.5))
+
+        # connect events
+        node.left_pressed.connect(self.item_left_pressed.emit)
+        node.right_pressed.connect(self.item_right_pressed.emit)
         node.left_clicked.connect(self.item_left_clicked.emit)
         node.right_clicked.connect(self.item_right_clicked.emit)
         node.left_double_clicked.connect(self.item_left_double_clicked.emit)
