@@ -12,6 +12,7 @@ import pytest
 from himena import MainWindow, _drag
 from himena.consts import StandardType
 from himena.core import create_model
+from himena.plugins.config import config_field
 from himena.testing.dialog import user_input_response, user_string_input_response, choose_one_dialog_response
 from himena.types import ClipboardDataModel, DragDataModel, FutureInfo, WidgetConstructor, WidgetType, ParametricWidgetProtocol
 from himena.qt import MainWindowQt, drag_command, drag_files
@@ -20,6 +21,8 @@ from himena.qt._qsub_window import QSubWindow, get_subwindow
 from himena.widgets import set_status_tip, notify, append_result, TabArea, DockWidget
 from himena.workflow._reader import LocalReaderMethod
 from himena_builtins.qt.text import QTextEdit
+from himena.plugins.install import _resolve_config_conflict
+from himena.plugins.actions import PluginConfigTuple
 
 from qtpy import QtWidgets as QtW, QtCore
 from qtpy.QtCore import Qt, QPoint
@@ -563,3 +566,27 @@ def test_subwindow_mouse_move(himena_ui: MainWindowQt, qtbot: QtBot):
     qarea._mouse_release_event(Qt.MouseButton.RightButton, pos1)
 
     sub.set_single_window_mode()
+
+def test_resolve_config_conflict():
+    @dataclass
+    class ConfigA:
+        a: int = config_field(default=1, label="A")
+
+    default = {
+        "config-1": PluginConfigTuple(
+            title="Config 1",
+            config=ConfigA(a=3),
+            config_class=ConfigA,
+        )
+    }
+    incoming = {
+        "test-plugin": {
+            "config-1": {
+                "value": {"a": 2},
+                "label": "Config New",
+            }
+        }
+    }
+    _resolve_config_conflict(incoming, default)
+    assert incoming["test-plugin"]["config-1"]["value"]["a"] == 2
+    assert incoming["test-plugin"]["config-1"]["label"] == "Config New"

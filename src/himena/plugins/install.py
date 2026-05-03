@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import traceback
 from importlib import import_module
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Callable, Any
 from pathlib import Path
 from timeit import default_timer as timer
 from app_model.types import KeyBindingRule, KeyBinding
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from himena.widgets import MainWindow
     from himena.profile import AppProfile
     from himena._app_model import HimenaApplication
-    from himena.plugins.widget_class import PluginConfigType
+    from himena.plugins.widget_class import PluginConfigType, PluginConfigTuple
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -42,9 +42,18 @@ def install_plugins(
     reg._installed_plugins.extend(plugins)
     prof = load_app_profile(app.name)
 
-    for cfg_key, cfg in reg._plugin_default_configs.items():
+    _resolve_config_conflict(prof.plugin_configs, reg._plugin_default_configs)
+    prof.save()
+    return results
+
+
+def _resolve_config_conflict(
+    incoming: dict[str, dict[str, Any]],
+    default: dict[str, PluginConfigTuple],
+):
+    for cfg_key, cfg in default.items():
         cfg_dict = cfg.as_dict()
-        cfg_dict_old = prof.plugin_configs.get(cfg_key, {})
+        cfg_dict_old = incoming.get(cfg_key, {})
         if "value" in cfg_dict_old:
             cfg_dict["value"] = cfg_dict_old["value"]
         for k, new_dict in cfg_dict.items():
@@ -52,10 +61,7 @@ def install_plugins(
                 old_dict = cfg_dict_old[k]
                 if "value" in old_dict:
                     new_dict["value"] = old_dict["value"]
-        prof.plugin_configs[cfg_key] = cfg_dict
-
-    prof.save()
-    return results
+        incoming[cfg_key] = cfg_dict
 
 
 def _install_one(name: str, show_import_time: bool) -> PluginInstallResult | None:
