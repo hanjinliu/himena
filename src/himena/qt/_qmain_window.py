@@ -1,6 +1,6 @@
 from __future__ import annotations
 from concurrent.futures import Future
-from contextlib import suppress
+from contextlib import contextmanager, suppress
 import inspect
 from timeit import default_timer as timer
 import logging
@@ -1039,8 +1039,17 @@ class QChoicesDialog(QtW.QDialog):
 
     def exec(self) -> int:
         # Show as overlay instead of modal dialog
+        with self._exec_context():
+            return super().exec()
+
+    @contextmanager
+    def _exec_context(self):
         parent = self.parentWidget()
+        self._result = None
         if isinstance(parent, QMainWindow):
+            self.setWindowFlags(
+                QtCore.Qt.WindowType.Dialog | QtCore.Qt.WindowType.FramelessWindowHint
+            )
             # Make parent appear whiter/disabled
             effect = QtW.QGraphicsColorizeEffect()
             effect.setColor(QtCore.Qt.GlobalColor.white)
@@ -1062,12 +1071,13 @@ class QChoicesDialog(QtW.QDialog):
                 # Move to center of main window
                 self.align_to_center()
 
-                out = super().exec()
+                yield
             finally:
                 parent.setGraphicsEffect(None)
                 parent.setEnabled(True)
                 parent.window_rect_changed.disconnect(self.align_to_center)
-        return out
+        else:
+            yield
 
     def align_to_center(self):
         if parent := self.parentWidget():
