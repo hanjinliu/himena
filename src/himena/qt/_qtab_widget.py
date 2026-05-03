@@ -223,9 +223,9 @@ class QTabWidget(QtW.QTabWidget):
         """When the current tab index changed."""
         if widget := self.widget_area(index):
             subwindows = widget.subWindowList()
-            if len(subwindows) == 1 and (win := subwindows[0]).is_single_window_mode():
+            if len(subwindows) == 1 and subwindows[0].is_single_window_mode():
                 # closing tabs sometimes leaves the single window tab un-focused
-                win.set_is_current(True)
+                widget.currentSubWindow().setFocus()
             has_active_subwindow = any(win.is_current() for win in subwindows)
             self.activeWindowChanged.emit(has_active_subwindow)
 
@@ -236,7 +236,7 @@ class QTabWidget(QtW.QTabWidget):
                 cur = area.currentSubWindow()
             else:
                 cur = None
-            for i, win in enumerate(wins):
+            for win in wins:
                 win.set_is_current(win == cur)
 
     def dragEnterEvent(self, e: QtGui.QDragEnterEvent) -> None:
