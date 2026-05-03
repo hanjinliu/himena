@@ -47,6 +47,11 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class PluginConfigTuple(NamedTuple):
+    """Tuple to hold plugin configuration information.
+
+    e.g. PluginConfigTuple(title="Global Settings", GlobalConfig(), GlobalConfig)
+    """
+
     title: str
     config: PluginConfigType
     config_class: type
@@ -64,7 +69,7 @@ class PluginConfigTuple(NamedTuple):
                 # here.
         elif isinstance(config, BaseModel):
             out = {}
-            for _fname, _finfo in config.model_fields.items():
+            for _fname, _finfo in type(config).model_fields.items():
                 options = {}
                 if tooltip := _finfo.description:
                     options["tooltip"] = tooltip
