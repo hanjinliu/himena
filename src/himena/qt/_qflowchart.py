@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
 from enum import IntEnum
 import math
 from typing import Hashable, Iterable, Iterator
+import uuid
 import weakref
 import numpy as np
 from psygnal import Signal
@@ -33,6 +35,23 @@ class BaseNodeItem(ABC):
     @abstractmethod
     def content(self) -> str:
         """Return the content of the node, default is the text"""
+
+
+@dataclass(frozen=True)
+class TagItem:
+    name: str
+    id: uuid.UUID = field(default_factory=uuid.uuid4)
+    color: Color = field(default=Color([255, 30, 30]))
+    tooltip: str = ""
+
+    def __post_init__(self):
+        object.__setattr__(self, "color", Color(self.color))
+        if not self.tooltip:
+            object.__setattr__(self, "tooltip", self.name)
+
+    @classmethod
+    def default(cls):
+        return cls(name="Default", color=Color([0, 0, 0]), id=uuid.UUID(int=0))
 
 
 class ZOrder(IntEnum):
@@ -69,6 +88,9 @@ class QFlowChartNode(QtW.QGraphicsRectItem):
         font = QtGui.QFont(DefaultFontFamily, 9)
         self.text_item.setFont(font)
 
+        # Add tag item pointing at the top-right corner
+        self.tag_items: list[QFlowChartTag] = []
+
         # Make it movable and selectable
         self.setFlag(QtW.QGraphicsRectItem.GraphicsItemFlag.ItemIsMovable, True)
         self.setFlag(QtW.QGraphicsRectItem.GraphicsItemFlag.ItemIsSelectable, True)
@@ -95,6 +117,13 @@ class QFlowChartNode(QtW.QGraphicsRectItem):
         x = center.x() - text_rect.width() / 2
         y = center.y() - text_rect.height() / 2
         self.text_item.setPos(x, y)
+
+    def _update_tag_position(self):
+        """Position the tag at the top-right corner of the node"""
+        tag_origin = self.rect().topRight() - QPointF(3, 3)
+        for tag_item in self.tag_items:
+            tag_item.setPos(tag_origin)
+            tag_origin.setX(tag_origin.x() + tag_item.boundingRect().width() * 0.67)
 
     def add_arrow_from(self, arrow):
         """Add an arrow to the list of connected arrows from other nodes to this."""
@@ -160,6 +189,7 @@ class QFlowChartNode(QtW.QGraphicsRectItem):
             for arrow in self._connected_arrows_from + self._connected_arrows_to:
                 arrow._update_position()
             self._update_text_position()
+            self._update_tag_position()
         return super().itemChange(change, value)
 
     def set_text(self, text):
@@ -175,6 +205,37 @@ class QFlowChartNode(QtW.QGraphicsRectItem):
             self.text_item.setDefaultTextColor(QtGui.QColor(255, 255, 255))
         else:
             self.text_item.setDefaultTextColor(QtGui.QColor(0, 0, 0))
+
+    def edit_tag(
+        self,
+        index: int,
+        name: str | None = None,
+        color: Color | None = None,
+        tooltip: str | None = None,
+    ):
+        if 0 <= index < len(self.tag_items):
+            qtab = self.tag_items[index]
+            cur_tab = qtab._tag_item
+            tag = TagItem(
+                name=name or cur_tab.name,
+                color=color or cur_tab.color,
+                tooltip=tooltip or cur_tab.tooltip,
+                id=cur_tab.id,
+            )
+            qtab.set_tag_item(tag)
+
+    def set_tags(self, tags: list[TagItem]):
+        if len(tags) < len(self.tag_items):
+            for qtag in self.tag_items[len(tags) :]:
+                qtag.setParentItem(None)
+            self.tag_items = self.tag_items[: len(tags)]
+        elif len(tags) > len(self.tag_items):
+            for _ in range(len(tags) - len(self.tag_items)):
+                qtag = QFlowChartTag(self)
+                self.tag_items.append(qtag)
+        for qtag, tag in zip(self.tag_items, tags):
+            qtag.set_tag_item(tag)
+        self._update_tag_position()
 
     def mousePressEvent(self, event: QtW.QGraphicsSceneMouseEvent):
         """Handle mouse press events"""
@@ -294,6 +355,38 @@ class QFlowChartArrow(QtW.QGraphicsLineItem):
         )
 
 
+class QFlowChartTag(QtW.QGraphicsPolygonItem):
+    def __init__(self, parent):
+        _tag_size = 10
+        polygon = QtGui.QPolygonF(
+            [
+                QPointF(0, _tag_size),
+                QPointF(0, _tag_size / 2),
+                QPointF(_tag_size / 2, 0),
+                QPointF(_tag_size, _tag_size / 2),
+                QPointF(_tag_size / 2, _tag_size),
+            ]
+        )
+        super().__init__(polygon, parent)
+        _tag_pen = QtGui.QPen(Qt.GlobalColor.black, 1)
+        _tag_pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+        self.setPen(_tag_pen)
+        self._tag_item = TagItem.default()
+        self.setCursor(Qt.CursorShape.ArrowCursor)
+
+    def set_tag_item(self, tag: TagItem):
+        self._tag_item = tag
+        color = QtGui.QColor.fromRgbF(*tag.color.rgba)
+        pen = self.pen()
+        pen.setColor(color)
+        brush_color = pen.color()
+        brush_color.setAlpha(180)
+
+        self.setPen(pen)
+        self.setBrush(brush_color)
+        self.setToolTip(tag.tooltip)
+
+
 class QFlowChartView(QtW.QGraphicsView):
     item_left_pressed = QtCore.Signal(BaseNodeItem)
     item_right_pressed = QtCore.Signal(BaseNodeItem)
@@ -317,6 +410,7 @@ class QFlowChartView(QtW.QGraphicsView):
         self.verticalScrollBar().hide()
 
         self._dodge_distance = 32
+        self._tag_collection: list[TagItem] = []
 
     def add_child(
         self,
@@ -398,6 +492,61 @@ class QFlowChartView(QtW.QGraphicsView):
             # Remove the node itself
             self.scene().removeItem(node)
             self._node_map.pop(node.item().id(), None)
+
+    def tags(self) -> list[TagItem]:
+        """List of all tags in the flow chart"""
+        return list(self._tag_collection)
+
+    def reset_tags(self, tags: list[TagItem]):
+        """Reset the tag collection and update all nodes accordingly"""
+        self._tag_collection = tags
+        self._update_ui_by_current_tags()
+
+    def item_tags(self, item_id: Hashable) -> list[TagItem]:
+        """Get the tags associated with a specific item by its ID"""
+        if node := self._node_map.get(item_id):
+            return [qtag._tag_item for qtag in node.tag_items]
+        return []
+
+    def set_item_tags(self, item_id: Hashable, tags: list[TagItem]):
+        if node := self._node_map.get(item_id):
+            node.set_tags(tags)
+
+    def edit_tag(
+        self,
+        index: int,
+        name: str | None = None,
+        color: Color | None = None,
+        tooltip: str | None = None,
+    ):
+        if index < 0:
+            # create new tag
+            name = name or f"Tag {len(self._tag_collection)}"
+            tag = TagItem(
+                name=name,
+                color=color or Color([255, 30, 30]),
+                tooltip=tooltip or name,
+            )
+            self._tag_collection.append(tag)
+        else:
+            old_tag = self._tag_collection[index]
+            self._tag_collection[index] = TagItem(
+                name=name or old_tag.name,
+                id=old_tag.id,
+                color=color or old_tag.color,
+                tooltip=tooltip or old_tag.tooltip,
+            )
+        self._update_ui_by_current_tags()
+
+    def _update_ui_by_current_tags(self):
+        id_to_tag_map = {tag.id: tag for tag in self._tag_collection}
+        for node in self._node_map.values():
+            new_tags: list[TagItem] = []
+            for qtag in node.tag_items:
+                tag_id = qtag._tag_item.id
+                if tag := id_to_tag_map.get(tag_id):
+                    new_tags.append(tag)
+            node.set_tags(new_tags)
 
     def list_ids(self) -> list[Hashable]:
         """List all node IDs in the flow chart"""

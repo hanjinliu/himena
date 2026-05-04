@@ -267,20 +267,28 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         if isinstance(dock := widget.parentWidget(), QtW.QDockWidget):
             dock.close()
 
-    def _add_widget_to_dialog(self, widget: QtW.QWidget | Widget, title: str) -> bool:
-        dialog = self._add_widget_to_dialog_no_exec(widget, title)
+    def _add_widget_to_dialog(
+        self,
+        widget: QtW.QWidget | Widget,
+        title: str,
+        message: str,
+    ) -> bool:
+        dialog = self._add_widget_to_dialog_no_exec(widget, title, message)
         # Center dialog relative to main window
-        dialog.move(self.geometry().center() - dialog.rect().center())
-        result = dialog.exec()
+        with dialog._exec_context():
+            result = dialog.exec()
         return bool(result)
 
-    def _add_widget_to_dialog_no_exec(self, widget: QtW.QWidget | Widget, title: str):
+    def _add_widget_to_dialog_no_exec(
+        self,
+        widget: QtW.QWidget | Widget,
+        title: str,
+        message: str = "",
+    ) -> QChoicesDialog:
         if isinstance(widget, Widget):
             widget = widget.native
-        dialog = QtW.QDialog(self)
-        layout = QtW.QVBoxLayout(dialog)
-
-        layout.addWidget(widget)
+        dialog = QChoicesDialog.new_dialog(title, message, parent=self)
+        dialog._container_layout.addWidget(widget)
 
         # Add OK and Cancel buttons
         button_box = QtW.QDialogButtonBox(
@@ -289,8 +297,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         )
         button_box.accepted.connect(dialog.accept)
         button_box.rejected.connect(dialog.reject)
-        layout.addWidget(button_box)
-        dialog.setWindowTitle(title)
+        dialog._container_layout.addWidget(button_box)
 
         self._last_dialog = dialog  # prevent garbage collection
         return dialog
@@ -991,14 +998,17 @@ class QChoicesDialog(QtW.QDialog):
         return _set_result
 
     @classmethod
-    def new_dialog(cls, title: str, message: str, parent: QtW.QWidget | None = None):
+    def new_dialog(
+        cls, title: str, message: str = "", parent: QtW.QWidget | None = None
+    ):
         self = cls(parent)
         self._title_bar.setTitle(title)
-        label = QtW.QLabel(message)
-        label.setTextInteractionFlags(
-            QtCore.Qt.TextInteractionFlag.TextSelectableByMouse
-        )
-        self._container_layout.addWidget(label)
+        if message:
+            label = QtW.QLabel(message)
+            label.setTextInteractionFlags(
+                QtCore.Qt.TextInteractionFlag.TextSelectableByMouse
+            )
+            self._container_layout.addWidget(label)
         return self
 
     def setup_buttons(self, choices: list[tuple[str, _V]]):
@@ -1053,7 +1063,7 @@ class QChoicesDialog(QtW.QDialog):
             # Make parent appear whiter/disabled
             effect = QtW.QGraphicsColorizeEffect()
             effect.setColor(QtCore.Qt.GlobalColor.white)
-            effect.setStrength(0.66)
+            effect.setStrength(0.4)
             parent.setGraphicsEffect(effect)
 
             # Disable parent interactivity

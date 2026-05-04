@@ -7,6 +7,8 @@ from himena.qt._qtitlebar import QWidgetTitleBar
 
 
 class QDockWidget(QtW.QDockWidget):
+    """Custom dock widget used in the main window."""
+
     closed = QtCore.Signal()
     whats_this = QtCore.Signal()
 
@@ -18,10 +20,10 @@ class QDockWidget(QtW.QDockWidget):
     ):
         super().__init__(title)
         self.setWidget(widget)
-        _titlebar = QDockWidgetTitleBar(title, self)
-        self.setTitleBarWidget(_titlebar)
-        _titlebar.closeSignal.connect(self.close)
-        _titlebar.whatsThisSignal.connect(self.whats_this.emit)
+        self._titlebar = QDockWidgetTitleBar(title, self)
+        self.setTitleBarWidget(self._titlebar)
+        self._titlebar.closeSignal.connect(self.close)
+        self._titlebar.whatsThisSignal.connect(self.whats_this.emit)
         if allowed_areas is None:
             allowed_areas = [
                 DockArea.LEFT,

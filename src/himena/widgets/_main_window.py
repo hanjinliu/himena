@@ -1055,6 +1055,7 @@ class MainWindow(Generic[_W]):
         /,
         title: str | None = None,
         *,
+        message: str | None = None,
         show_parameter_labels: bool = True,
     ) -> Any | None:
         """Execute a parametric dialog to get user input.
@@ -1065,6 +1066,8 @@ class MainWindow(Generic[_W]):
             Function that generates a WidgetDataModel from the input parameters.
         title : str
             Window title of the dialog.
+        message : str, optional
+            Message to show in the dialog.
 
         Returns
         -------
@@ -1096,7 +1099,9 @@ class MainWindow(Generic[_W]):
         if cb := self._instructions.user_input_response:
             params = cb()
         else:
-            res = self._backend_main_window._add_widget_to_dialog(fn_widget, title)
+            res = self._backend_main_window._add_widget_to_dialog(
+                fn_widget, title, message
+            )
             if not res:
                 return
             params = getattr(fn_widget, PWPN.GET_PARAMS)()

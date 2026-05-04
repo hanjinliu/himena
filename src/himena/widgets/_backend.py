@@ -319,6 +319,7 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
         self,
         widget: _W,
         title: str,
+        message: str = "",
     ) -> bool:
         """Convert a parametric widget to a dialog widget, and return the response."""
 
