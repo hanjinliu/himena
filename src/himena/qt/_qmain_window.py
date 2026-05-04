@@ -280,7 +280,10 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         return bool(result)
 
     def _add_widget_to_dialog_no_exec(
-        self, widget: QtW.QWidget | Widget, title: str, message: str
+        self,
+        widget: QtW.QWidget | Widget,
+        title: str,
+        message: str = "",
     ) -> QChoicesDialog:
         if isinstance(widget, Widget):
             widget = widget.native
