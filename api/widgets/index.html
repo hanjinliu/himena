@@ -4035,7 +4035,8 @@
 <span class="normal">378</span>
 <span class="normal">379</span>
 <span class="normal">380</span>
-<span class="normal">381</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">BackendMainWindow</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">_W</span><span class="p">]):</span>  <span class="c1"># pragma: no cover</span>
+<span class="normal">381</span>
+<span class="normal">382</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">BackendMainWindow</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">_W</span><span class="p">]):</span>  <span class="c1"># pragma: no cover</span>
     <span class="n">_himena_main_window</span><span class="p">:</span> <span class="n">MainWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">]</span>
     <span class="n">_event_loop_handler</span><span class="p">:</span> <span class="n">EventLoopHandler</span>
 
@@ -4318,6 +4319,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">widget</span><span class="p">:</span> <span class="n">_W</span><span class="p">,</span>
         <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert a parametric widget to a dialog widget, and return the response.&quot;&quot;&quot;</span>
 
@@ -6245,7 +6247,12 @@
 <span class="normal">1432</span>
 <span class="normal">1433</span>
 <span class="normal">1434</span>
-<span class="normal">1435</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MainWindow</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">_W</span><span class="p">]):</span>
+<span class="normal">1435</span>
+<span class="normal">1436</span>
+<span class="normal">1437</span>
+<span class="normal">1438</span>
+<span class="normal">1439</span>
+<span class="normal">1440</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MainWindow</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">_W</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The main window handler object.&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -7218,6 +7225,7 @@
         <span class="o">/</span><span class="p">,</span>
         <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
+        <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">show_parameter_labels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute a parametric dialog to get user input.</span>
@@ -7228,6 +7236,8 @@
 <span class="sd">            Function that generates a WidgetDataModel from the input parameters.</span>
 <span class="sd">        title : str</span>
 <span class="sd">            Window title of the dialog.</span>
+<span class="sd">        message : str, optional</span>
+<span class="sd">            Message to show in the dialog.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -7259,7 +7269,9 @@
         <span class="k">if</span> <span class="n">cb</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_instructions</span><span class="o">.</span><span class="n">user_input_response</span><span class="p">:</span>
             <span class="n">params</span> <span class="o">=</span> <span class="n">cb</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_backend_main_window</span><span class="o">.</span><span class="n">_add_widget_to_dialog</span><span class="p">(</span><span class="n">fn_widget</span><span class="p">,</span> <span class="n">title</span><span class="p">)</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_backend_main_window</span><span class="o">.</span><span class="n">_add_widget_to_dialog</span><span class="p">(</span>
+                <span class="n">fn_widget</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">message</span>
+            <span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">res</span><span class="p">:</span>
                 <span class="k">return</span>
             <span class="n">params</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">fn_widget</span><span class="p">,</span> <span class="n">PWPN</span><span class="o">.</span><span class="n">GET_PARAMS</span><span class="p">)()</span>
@@ -8859,10 +8871,10 @@ generated.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1199</span>
-<span class="normal">1200</span>
-<span class="normal">1201</span>
-<span class="normal">1202</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1204</span>
+<span class="normal">1205</span>
+<span class="normal">1206</span>
+<span class="normal">1207</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Close the main window.&quot;&quot;&quot;</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_backend_main_window</span><span class="o">.</span><span class="n">_exit_main_window</span><span class="p">(</span><span class="n">confirm</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">remove_instance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_app</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
@@ -9510,12 +9522,7 @@ group will be used.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1128</span>
-<span class="normal">1129</span>
-<span class="normal">1130</span>
-<span class="normal">1131</span>
-<span class="normal">1132</span>
-<span class="normal">1133</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1133</span>
 <span class="normal">1134</span>
 <span class="normal">1135</span>
 <span class="normal">1136</span>
@@ -9569,7 +9576,12 @@ group will be used.</p>
 <span class="normal">1184</span>
 <span class="normal">1185</span>
 <span class="normal">1186</span>
-<span class="normal">1187</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">exec_file_dialog</span><span class="p">(</span>
+<span class="normal">1187</span>
+<span class="normal">1188</span>
+<span class="normal">1189</span>
+<span class="normal">1190</span>
+<span class="normal">1191</span>
+<span class="normal">1192</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">exec_file_dialog</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="s2">&quot;rm&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -9639,7 +9651,7 @@ group will be used.</p>
 
 
 <h5 id="himena.widgets.MainWindow.exec_user_input_dialog" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">exec_user_input_dialog</span><span class="p">(</span><span class="n">function_or_types</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">show_parameter_labels</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">exec_user_input_dialog</span><span class="p">(</span><span class="n">function_or_types</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">show_parameter_labels</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 </h5>
           <div class="doc-overloads">
@@ -9690,6 +9702,22 @@ group will be used.</p>
             <td>
               <div class="doc-md-description">
                 <p>Window title of the dialog.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>message</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Message to show in the dialog.</p>
               </div>
             </td>
             <td>
@@ -9776,12 +9804,18 @@ group will be used.</p>
 <span class="normal">1100</span>
 <span class="normal">1101</span>
 <span class="normal">1102</span>
-<span class="normal">1103</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">exec_user_input_dialog</span><span class="p">(</span>
+<span class="normal">1103</span>
+<span class="normal">1104</span>
+<span class="normal">1105</span>
+<span class="normal">1106</span>
+<span class="normal">1107</span>
+<span class="normal">1108</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">exec_user_input_dialog</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">function_or_types</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="o">/</span><span class="p">,</span>
     <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">show_parameter_labels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute a parametric dialog to get user input.</span>
@@ -9792,6 +9826,8 @@ group will be used.</p>
 <span class="sd">        Function that generates a WidgetDataModel from the input parameters.</span>
 <span class="sd">    title : str</span>
 <span class="sd">        Window title of the dialog.</span>
+<span class="sd">    message : str, optional</span>
+<span class="sd">        Message to show in the dialog.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -9823,7 +9859,9 @@ group will be used.</p>
     <span class="k">if</span> <span class="n">cb</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_instructions</span><span class="o">.</span><span class="n">user_input_response</span><span class="p">:</span>
         <span class="n">params</span> <span class="o">=</span> <span class="n">cb</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_backend_main_window</span><span class="o">.</span><span class="n">_add_widget_to_dialog</span><span class="p">(</span><span class="n">fn_widget</span><span class="p">,</span> <span class="n">title</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_backend_main_window</span><span class="o">.</span><span class="n">_add_widget_to_dialog</span><span class="p">(</span>
+            <span class="n">fn_widget</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">message</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">res</span><span class="p">:</span>
             <span class="k">return</span>
         <span class="n">params</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">fn_widget</span><span class="p">,</span> <span class="n">PWPN</span><span class="o">.</span><span class="n">GET_PARAMS</span><span class="p">)()</span>
@@ -10030,10 +10068,10 @@ None.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1238</span>
-<span class="normal">1239</span>
-<span class="normal">1240</span>
-<span class="normal">1241</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">iter_windows</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">]]:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1243</span>
+<span class="normal">1244</span>
+<span class="normal">1245</span>
+<span class="normal">1246</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">iter_windows</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Iterate over all the sub-windows in this main window.&quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">tab</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="p">:</span>
         <span class="k">yield from</span> <span class="n">tab</span>
@@ -10108,12 +10146,7 @@ None.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1253</span>
-<span class="normal">1254</span>
-<span class="normal">1255</span>
-<span class="normal">1256</span>
-<span class="normal">1257</span>
-<span class="normal">1258</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1258</span>
 <span class="normal">1259</span>
 <span class="normal">1260</span>
 <span class="normal">1261</span>
@@ -10129,7 +10162,12 @@ None.</p>
 <span class="normal">1271</span>
 <span class="normal">1272</span>
 <span class="normal">1273</span>
-<span class="normal">1274</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">move_window</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sub</span><span class="p">:</span> <span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">],</span> <span class="n">target_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">1274</span>
+<span class="normal">1275</span>
+<span class="normal">1276</span>
+<span class="normal">1277</span>
+<span class="normal">1278</span>
+<span class="normal">1279</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">move_window</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sub</span><span class="p">:</span> <span class="n">SubWindow</span><span class="p">[</span><span class="n">_W</span><span class="p">],</span> <span class="n">target_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Move the sub-window to the target tab index.&quot;&quot;&quot;</span>
     <span class="n">i_tab</span> <span class="o">=</span> <span class="n">i_win</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">for</span> <span class="n">_i_tab</span><span class="p">,</span> <span class="n">tab</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">enumerate</span><span class="p">():</span>
@@ -11100,15 +11138,15 @@ will make the status tip update immediately so the user can see it.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\widgets\_main_window.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1189</span>
-<span class="normal">1190</span>
-<span class="normal">1191</span>
-<span class="normal">1192</span>
-<span class="normal">1193</span>
-<span class="normal">1194</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1194</span>
 <span class="normal">1195</span>
 <span class="normal">1196</span>
-<span class="normal">1197</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">1197</span>
+<span class="normal">1198</span>
+<span class="normal">1199</span>
+<span class="normal">1200</span>
+<span class="normal">1201</span>
+<span class="normal">1202</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Show the main window.</span>
 
 <span class="sd">    Parameters</span>
