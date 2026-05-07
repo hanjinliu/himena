@@ -4,7 +4,6 @@ from typing import Literal
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from magicgui import widgets as mgw
 from himena.standards import model_meta
-from himena.qt._utils import qsignal_blocker
 from himena.consts import MonospaceFontFamily
 
 
@@ -117,7 +116,7 @@ class QDimsSlider(QtW.QWidget):
         for slider, val in zip(self._sliders, value):
             if val == -1:  # flattened axis, no need to update slider
                 continue
-            with qsignal_blocker(slider):
+            with QtCore.QSignalBlocker(slider):
                 slider._slider.setValue(val)
 
     def axis_names(self) -> list[str]:

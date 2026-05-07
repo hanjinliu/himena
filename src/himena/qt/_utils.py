@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from contextlib import contextmanager, suppress
+from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable
 import warnings
@@ -92,16 +92,6 @@ def ndarray_to_qimage(arr: NDArray[np.uint8], alpha: int = 255) -> QtGui.QImage:
     return QtGui.QImage(
         arr, arr.shape[1], arr.shape[0], QtGui.QImage.Format.Format_RGBA8888
     )
-
-
-@contextmanager
-def qsignal_blocker(widget: QtW.QWidget):
-    was_blocked = widget.signalsBlocked()
-    widget.blockSignals(True)
-    try:
-        yield
-    finally:
-        widget.blockSignals(was_blocked)
 
 
 def get_main_window(widget: QtW.QWidget) -> MainWindowQt:

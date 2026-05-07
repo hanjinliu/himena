@@ -10,7 +10,7 @@ from superqt.utils import qthrottled
 
 from himena.consts import DefaultFontFamily
 from himena.widgets import current_instance
-from himena.qt import qsignal_blocker, ndarray_to_qimage, QColoredToolButton
+from himena.qt import ndarray_to_qimage, QColoredToolButton
 from himena.qt._qlineedit import QDoubleLineEdit
 from himena_builtins._consts import ICON_PATH
 from himena_builtins.qt.widgets._image_components import QHistogramView
@@ -277,7 +277,7 @@ class QImageViewControl(QImageViewControlBase):
         ch.clim = clim
         idx = ch.channel_index or 0
         imtup = view._current_image_slices[idx]
-        with qsignal_blocker(self._histogram):
+        with QtCore.QSignalBlocker(self._histogram):
             _grays = (RGBMode.GRAY, ChannelMode.GRAY)
             if imtup.visible:
                 arr = ch.transform_image(

@@ -7,7 +7,6 @@ from superqt import QIconifyIcon
 from himena.widgets import set_status_tip
 from himena_builtins.qt.widgets._image_components._graphics_view import MouseMode
 from himena_builtins.qt.widgets._image_components import _roi_items
-from himena.qt._utils import qsignal_blocker
 
 if TYPE_CHECKING:
     from himena_builtins.qt.widgets.image import QImageView
@@ -165,11 +164,10 @@ class QRoiButtons(QtW.QWidget):
         self._img_view.mode_changed.connect(self.set_mode)
 
     def set_mode(self, mode: MouseMode):
-        if btn := self._btn_map.get(mode):
-            with qsignal_blocker(self._button_group):
+        with QtCore.QSignalBlocker(self._button_group):
+            if btn := self._btn_map.get(mode):
                 btn.setChecked(True)
-        else:
-            with qsignal_blocker(self._button_group):
+            else:
                 for button in self._button_group.buttons():
                     button.setChecked(False)
 

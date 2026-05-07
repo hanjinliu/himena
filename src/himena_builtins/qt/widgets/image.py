@@ -14,7 +14,7 @@ from superqt import ensure_main_thread, QToggleSwitch
 
 from himena.consts import StandardType
 from himena.standards import roi, model_meta
-from himena.qt._utils import drag_command, qsignal_blocker
+from himena.qt._utils import drag_command
 from himena.types import DropResult, Parametric, Size, WidgetDataModel
 from himena.plugins import validate_protocol, register_hidden_function
 from himena.widgets import set_status_tip, current_instance, show_tooltip
@@ -151,7 +151,7 @@ class QImageViewBase(QtW.QSplitter):
             self._dims_slider.set_dimensions(arr.shape, meta0.axes, is_rgb=self._is_rgb)
         elif meta0.axes:
             self._dims_slider.set_axis_names([axis.name for axis in meta0.axes])
-        with qsignal_blocker(self._dims_slider):
+        with QtCore.QSignalBlocker(self._dims_slider):
             self._dims_slider.setValue(sl_0)
         axis_names = [meta0.axes[i].name for i in range(self._dims_slider.count())]
         self._roi_col._qroi_list = self._roi_col._qroi_list.coerce_dimensions(
@@ -177,7 +177,7 @@ class QImageViewBase(QtW.QSplitter):
         else:
             self._channel_axis = meta0.channel_axis
 
-        with qsignal_blocker(self._control):
+        with QtCore.QSignalBlocker(self._control):
             self._control.update_rgb_channel_dtype(
                 is_rgb=self._is_rgb,
                 nchannels=nchannels,
@@ -462,7 +462,7 @@ class QImageViewBase(QtW.QSplitter):
         self.set_hover_info(self._default_hover_info())
 
     def _roi_visibility_changed(self, show_rois: bool):
-        with qsignal_blocker(self._roi_col):
+        with QtCore.QSignalBlocker(self._roi_col):
             self._roi_col._roi_visible_btn.setChecked(show_rois)
 
     def _update_image_visibility(self, visible: list[bool]):
@@ -816,7 +816,7 @@ class QImageView(QImageViewBase):
 
     def _set_image_slice(self, img: NDArray[np.number], channel: ChannelInfo):
         idx = channel.channel_index or 0
-        with qsignal_blocker(self._control._histogram):
+        with QtCore.QSignalBlocker(self._control._histogram):
             self._img_view.set_array(
                 idx,
                 channel.transform_image(
@@ -851,7 +851,7 @@ class QImageView(QImageViewBase):
         if self._channels is None:
             return
         images: list[NDArray[np.number] | None] = []
-        with qsignal_blocker(self._control._histogram):
+        with QtCore.QSignalBlocker(self._control._histogram):
             for i, (imtup, ch) in enumerate(zip(imgs, self._channels)):
                 if imtup.visible:
                     img = imtup.arr
