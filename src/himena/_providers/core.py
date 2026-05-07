@@ -115,7 +115,8 @@ class ReaderStore(PluginStore["ReaderPlugin"]):
         ) and isinstance(path, Path):
             # try again with lowercase suffix.
             ext = path.suffix
-            if ext == ext.upper():
+            # if extension does not exists, this causes RecursionError
+            if ext and ext == ext.upper():
                 matched = self._get_impl(path.with_suffix(ext.lower()), min_priority)
         return matched
 
