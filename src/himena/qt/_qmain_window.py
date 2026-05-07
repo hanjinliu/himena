@@ -986,7 +986,7 @@ class QChoicesDialog(QtW.QDialog):
         self._layout.addWidget(self._container)
         self.setParent(
             parent,
-            QtCore.Qt.WindowType.Dialog | QtCore.Qt.WindowType.FramelessWindowHint,
+            QtCore.Qt.WindowType.FramelessWindowHint,
         )
 
     def set_result_callback(self, value: _V, accept: bool) -> Callable[[], None]:
@@ -1091,10 +1091,14 @@ class QChoicesDialog(QtW.QDialog):
 
     def align_to_center(self):
         if parent := self.parentWidget():
+            # Use parent's screen geometry to handle multi-display scenarios
             parent_rect = parent.geometry()
             self_rect = self.geometry()
+
+            # Calculate center relative to parent within screen bounds
             x = parent_rect.x() + (parent_rect.width() - self_rect.width()) // 2
             y = parent_rect.y() + (parent_rect.height() - self_rect.height()) // 2
+
             self.move(x, y)
 
 

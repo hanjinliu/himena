@@ -909,12 +909,18 @@ class MainWindow(Generic[_W]):
                     force_close=True,
                 )
             elif with_defaults is not None:
+                # (1) with_defaults != {} and `param_widget` found --> OK
+                # (2) with_defaults == {} and `param_widget` found --> OK
+                # (3) with_defaults != {} and `param_widget` not found --> NG
+                # (4) with_defaults == {} and `param_widget` not found --> OK
                 if (tab := self.tabs.current()) is not None and len(tab) > 0:
                     param_widget = tab[-1]
-                else:  # pragma: no cover
+                elif with_defaults:  # pragma: no cover
                     raise ValueError(
                         f"Command {id!r} did not create a parametric window."
                     )
+                else:
+                    param_widget = None  # avoid UnboundLocalError in case of (4)
                 if not isinstance(param_widget, ParametricWindow):
                     if with_defaults:
                         raise ValueError(

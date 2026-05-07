@@ -408,7 +408,6 @@ class SubWindow(WidgetWrapper[_W], Layout):
     ) -> None:
         io_utils.write(model, path, plugin=plugin)
         self.update_default_save_path(path)
-        return None
 
     def _set_modification_tracking(self, enabled: bool) -> None:
         if self._data_modifications.track_enabled == enabled:
@@ -579,6 +578,7 @@ class SubWindow(WidgetWrapper[_W], Layout):
         if behavior is None:
             behavior = self.save_behavior
         model = self.to_model()
+        # TODO: check if writer is available before calling get_save_path
         if save_path := behavior.get_save_path(main, model):
 
             def _save():

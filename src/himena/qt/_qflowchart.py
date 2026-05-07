@@ -55,8 +55,8 @@ class TagItem:
 
 
 class ZOrder(IntEnum):
-    UNDERLAY = -100
-    OVERLAY = 100
+    UNDERLAY = -10000
+    OVERLAY = 10000
 
 
 class QFlowChartNode(QtW.QGraphicsRectItem):
@@ -296,6 +296,7 @@ class QFlowChartArrow(QtW.QGraphicsLineItem):
 
         # Initial position update
         self._update_position()
+        self.setZValue(ZOrder.UNDERLAY)  # Ensure arrows are drawn below nodes
 
     def set_color(self, color: QtGui.QColor):
         pen = QtGui.QPen(color, 1.2)
@@ -373,6 +374,7 @@ class QFlowChartTag(QtW.QGraphicsPolygonItem):
         self.setPen(_tag_pen)
         self._tag_item = TagItem.default()
         self.setCursor(Qt.CursorShape.ArrowCursor)
+        self.setZValue(ZOrder.OVERLAY)
 
     def set_tag_item(self, tag: TagItem):
         self._tag_item = tag
@@ -478,7 +480,6 @@ class QFlowChartView(QtW.QGraphicsView):
             color=self._arrow_color(ith),
             offset=offset_sign * (ith + 1) // 2,
         )
-        arrow.setZValue(ZOrder.UNDERLAY)  # Ensure arrows are drawn below nodes
         self.scene().addItem(arrow)
         return arrow
 
