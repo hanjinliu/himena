@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-from qtpy import QtWidgets as QtW
-from qtpy.QtCore import Qt, Signal
+from qtpy import QtWidgets as QtW, QtCore
 from himena_builtins.qt.widgets._table_components._base import QTableBase
 from himena.qt._qlineedit import QIntLineEdit
-from himena.qt._utils import qsignal_blocker
 
 
 class QSelectionRangeEdit(QtW.QGroupBox):
-    sliceChanged = Signal(object)
+    sliceChanged = QtCore.Signal(object)
 
     def __init__(
         self,
@@ -21,7 +19,7 @@ class QSelectionRangeEdit(QtW.QGroupBox):
         self.setLayout(QtW.QHBoxLayout())
         self.setContentsMargins(0, 0, 0, 0)
         self.layout().setContentsMargins(0, 0, 0, 0)
-        self.layout().setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.layout().setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         inner = QtW.QWidget()
         self.layout().addWidget(inner)
         layout = QtW.QHBoxLayout()
@@ -102,7 +100,7 @@ class QSelectionRangeEdit(QtW.QGroupBox):
         rsl, csl = sl
         rstart, rstop = rsl
         cstart, cstop = csl
-        with qsignal_blocker(self):
+        with QtCore.QSignalBlocker(self):
             self._r_start.setText(str(rstart))
             self._r_stop.setText(str(rstop))
             self._c_start.setText(str(cstart))
@@ -159,7 +157,7 @@ class QSelectionRangeEdit(QtW.QGroupBox):
 
 def _label(text: str):
     label = QtW.QLabel(text)
-    label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+    label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
     label.setFixedWidth(8)
     return label
 
@@ -168,7 +166,7 @@ def _int_line_edit(tooltip: str, text_changed_callback) -> QIntLineEdit:
     out = QIntLineEdit()
     out.setObjectName("TableIndex")
     out.setToolTip(tooltip)
-    out.setAlignment(Qt.AlignmentFlag.AlignRight)
+    out.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
     out.textChanged.connect(text_changed_callback)
     return out
 
