@@ -135,6 +135,8 @@ def close_current_window(ui: MainWindow) -> None:
         raise Cancelled
     _LOGGER.info(f"Closing window {i_window} in tab {i_tab}")
     tab[i_window]._close_me(ui, ui._instructions.confirm)
+    if tab.is_single_window:
+        del ui.tabs[i_tab]
 
 
 @ACTIONS.append_from_fn(
