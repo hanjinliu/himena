@@ -23,6 +23,7 @@ from himena.mock.widget import (
     MockParametricWidget,
     MockModelWrapper,
 )
+from himena.widgets._wrapper import WidgetWrapper
 
 if TYPE_CHECKING:
     from concurrent.futures import Future
@@ -402,3 +403,6 @@ class MockBackend(BackendMainWindow):
         title: str = "",
     ):
         """Add a what's this text to the main window."""
+
+    def _add_popup(self, model, win: WidgetWrapper) -> None:
+        """Popup a model or a sub window as a separate window."""

@@ -178,7 +178,20 @@ def rename_window(ui: MainWindow) -> None:
         return None
     if (i_win := ui._backend_main_window._current_sub_window_index(i_tab)) is not None:
         ui._backend_main_window._rename_window_at(i_tab, i_win)
-    return None
+
+
+@ACTIONS.append_from_fn(
+    id="popup-window",
+    title="Popup This Window",
+    menus=[{"id": MenuId.WINDOW, "group": EDIT_GROUP}],
+    enablement=_ctx.num_sub_windows > 0,
+    keybindings=[{"primary": KeyChord(_CtrlK, KeyMod.CtrlCmd | KeyCode.KeyP)}],
+)
+def popup_window(ui: MainWindow) -> None:
+    """Popup the current window as a separate window."""
+    if win := ui.current_window:
+        if win.supports_to_model:
+            win.popup_me()
 
 
 @ACTIONS.append_from_fn(

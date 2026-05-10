@@ -13,6 +13,7 @@ from typing import (
 )
 
 from himena.types import (
+    WidgetDataModel,
     WindowState,
     ClipboardDataModel,
     DockArea,
@@ -22,6 +23,7 @@ from himena.types import (
     WidgetClassTuple,
     ChooseOneString,
 )
+from himena.widgets._wrapper import WidgetWrapper
 
 if TYPE_CHECKING:
     import numpy as np
@@ -380,3 +382,6 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
 
     def _keys_as_set(self) -> set[int]:
         """Return the set of currently pressed key codes."""
+
+    def _add_popup(self, model: WidgetDataModel, win: WidgetWrapper[_W]) -> None:
+        """Popup a model or a sub window."""

@@ -685,6 +685,10 @@ QCommandPalette {
     border-radius: 10px;
 }
 
+QPopupView {
+    border-radius: 10px;
+}
+
 QClickableLabel {
     color: #[base_color];
 }
