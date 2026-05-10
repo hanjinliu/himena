@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from contextlib import suppress
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Any, Callable
 import warnings
 
 import numpy as np
 from app_model.backends.qt import QModelMenu
+import magicgui.widgets as mgw
 import qtpy
 from qtpy import QtWidgets as QtW, QtCore
 from qtpy import QtGui
@@ -285,3 +286,17 @@ def _text_to_pixmap(text: str, parent: QtW.QWidget | None = None) -> QtGui.QPixm
     pixmap.setDevicePixelRatio(ratio)
     qlabel.render(pixmap)
     return pixmap
+
+
+def split_widget_and_interface(widget) -> tuple[Any, QtW.QWidget]:
+    if hasattr(widget, "native_widget"):
+        interf = widget
+        native_widget = interf.native_widget()
+    elif isinstance(widget, mgw.Widget):
+        interf = widget
+        native_widget = interf.native
+    elif isinstance(widget, QtW.QWidget):
+        interf = native_widget = widget
+    else:
+        raise TypeError(f"Expected a widget or an interface, got {type(widget)}")
+    return interf, native_widget

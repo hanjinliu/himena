@@ -4,10 +4,9 @@ from pathlib import Path
 import logging
 from typing import TYPE_CHECKING, Any, Callable, Mapping, Sequence
 import weakref
-from magicgui import widgets as mgw
 from qtpy import QtWidgets as QtW, QtCore
 from himena.plugins import validate_protocol, _checker, register_hidden_function
-from himena.qt._utils import get_main_window
+from himena.qt._utils import get_main_window, split_widget_and_interface
 from himena.types import DropResult, Parametric, Size, WidgetDataModel
 from himena.consts import StandardType
 from himena._utils import unwrap_lazy_model
@@ -236,7 +235,7 @@ class QModelStack(QtW.QSplitter):
         return self._ui._pick_widget(model)
 
     def _add_widget(self, item: QtW.QListWidgetItem, widget: Any):
-        interf, native_widget = _split_widget_and_interface(widget)
+        interf, native_widget = split_widget_and_interface(widget)
         self._widget_stack.add_widget(interf, native_widget)
 
         if hasattr(interf, "control_widget"):
@@ -261,7 +260,7 @@ class QModelStack(QtW.QSplitter):
                 model = _exec_lazy_loading(model)
                 widget = self._model_to_widget(model)
             self._add_widget(item, widget)
-        _, native_widget = _split_widget_and_interface(widget)
+        _, native_widget = split_widget_and_interface(widget)
         idx = self._widget_stack.indexOf(native_widget)
         self._widget_stack.setCurrentIndex(idx)
         self._control_widget.setCurrentIndex(idx)
@@ -277,7 +276,7 @@ class QModelStack(QtW.QSplitter):
             ):
                 item.setData(_WIDGET_ROLE, None)
                 item.setData(_MODEL_ROLE, model)
-                _, native_widget = _split_widget_and_interface(widget)
+                _, native_widget = split_widget_and_interface(widget)
                 assert isinstance(native_widget, QtW.QWidget)
                 stack_idx = self._widget_stack.indexOf(native_widget)
                 self._widget_stack.removeWidget(native_widget)
@@ -545,20 +544,6 @@ def _exec_lazy_loading(model: WidgetDataModel) -> WidgetDataModel:
     else:
         model.title = "File Group"
     return model
-
-
-def _split_widget_and_interface(widget) -> tuple[Any, QtW.QWidget]:
-    if hasattr(widget, "native_widget"):
-        interf = widget
-        native_widget = interf.native_widget()
-    elif isinstance(widget, mgw.Widget):
-        interf = widget
-        native_widget = interf.native
-    elif isinstance(widget, QtW.QWidget):
-        interf = native_widget = widget
-    else:
-        raise TypeError(f"Expected a widget or an interface, got {type(widget)}")
-    return interf, native_widget
 
 
 def _make_tooltip(name: str, model: WidgetDataModel) -> str:

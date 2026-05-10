@@ -480,6 +480,15 @@ class MainWindow(Generic[_W]):
             sub_win = _tab_to_be_used(self).add_data_model(model)
         return sub_win
 
+    def add_data_model_as_popup(self, model: WidgetDataModel) -> None:
+        """Add a WidgetDataModel as a popup window.
+
+        Popup window is not editable. The popup window will only be used for viewing
+        the content of the model.
+        """
+        model = model.model_copy(update={"editable": False})
+        self._backend_main_window._add_popup(model, None)
+
     def add_function(
         self,
         func: Callable[..., _T],

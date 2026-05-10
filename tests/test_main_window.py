@@ -157,6 +157,11 @@ def test_tab_focus_change(himena_ui: MainWindowQt):
     assert himena_ui.tabs.current_index == 1
     assert himena_ui.tabs[1].current_index == 0
 
+    himena_ui.add_data_model_as_popup(
+        WidgetDataModel(value="a", type="text", title="A")
+    )
+    himena_ui.current_window.popup_me()
+
 def test_setting_widget(himena_ui: MainWindow, qtbot: QtBot):
     from himena.qt.settings import QSettingsDialog
 

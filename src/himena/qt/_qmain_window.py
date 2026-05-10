@@ -35,6 +35,7 @@ from himena._utils import doc_to_whats_this
 from himena.qt._qnotification import QJobStack, QNotificationWidget, QWhatsThisWidget
 from himena.qt._qtab_widget import QTabWidget
 from himena.qt._qstatusbar import QStatusBar
+from himena.qt._qpopup_view import QPopupView
 from himena.qt._qsub_window import QSubWindow, QSubWindowArea, get_subwindow
 from himena.qt._qdock_widget import QDockWidget
 from himena.qt._qcommand_palette import (
@@ -50,6 +51,7 @@ from himena.types import (
     DockAreaString,
     ClipboardDataModel,
     Size,
+    WidgetDataModel,
     WindowState,
     WindowRect,
     BackendInstructions,
@@ -59,6 +61,7 @@ from himena.app import get_event_loop_handler
 from himena import widgets
 from himena.qt.registry import list_widget_class
 from himena.qt._utils import get_stylesheet_path, ArrayQImage, ndarray_to_qimage
+from himena.widgets._wrapper import WidgetWrapper
 
 if TYPE_CHECKING:
     from himena.widgets._main_window import SubWindow, MainWindow
@@ -946,6 +949,9 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             else:
                 out.add(int(model_key._key))
         return out
+
+    def _add_popup(self, model: WidgetDataModel, win: WidgetWrapper[QtW.QWidget]):
+        QPopupView(self, win).popup_data_model(model)
 
 
 class QCornerToolBar(QModelToolBar):
