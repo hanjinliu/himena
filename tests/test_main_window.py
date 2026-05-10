@@ -13,6 +13,7 @@ from himena import MainWindow, _drag
 from himena.consts import StandardType
 from himena.core import create_model
 from himena.plugins.config import config_field
+from himena.qt._qpopup_view import QPopupView
 from himena.testing.dialog import user_input_response, user_string_input_response, choose_one_dialog_response
 from himena.types import ClipboardDataModel, DragDataModel, FutureInfo, WidgetConstructor, WidgetType, ParametricWidgetProtocol
 from himena.qt import MainWindowQt, drag_command, drag_files
@@ -143,7 +144,7 @@ def test_dock_widget(himena_ui: MainWindow):
     del himena_ui.dock_widgets[0]
     assert len(himena_ui.dock_widgets) == 0
 
-def test_tab_focus_change(himena_ui: MainWindowQt):
+def test_tab_focus_change(himena_ui: MainWindowQt, qtbot: QtBot):
     himena_ui.show()
     tab0 = himena_ui.add_tab(title="Tab 0")
     tab0.add_data_model(WidgetDataModel(value="a", type="text", title="A"))
@@ -160,7 +161,14 @@ def test_tab_focus_change(himena_ui: MainWindowQt):
     himena_ui.add_data_model_as_popup(
         WidgetDataModel(value="a", type="text", title="A")
     )
-    himena_ui.current_window.popup_me()
+    himena_ui.current_window.popup_me(force_not_editable=True)
+    parent = QtW.QApplication.focusWidget()
+    while parent is not None:
+        parent = parent.parentWidget()
+        if isinstance(parent, QPopupView):
+            break
+    assert isinstance(popup := parent, QPopupView)
+    qtbot.keyClick(popup, Qt.Key.Key_Escape)
 
 def test_setting_widget(himena_ui: MainWindow, qtbot: QtBot):
     from himena.qt.settings import QSettingsDialog

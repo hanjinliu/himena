@@ -293,14 +293,15 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         """Update the metadata of the widget data model."""
         return self.update_model(self.to_model().with_metadata(metadata))
 
-    def popup_me(self):
+    def popup_me(self, force_not_editable: bool = False) -> None:
         """Popup this widget over the main window."""
-        model = self.to_model().model_copy(
-            update={
-                "force_open_with": get_widget_class_id(type(self.widget)),
-                "title": self.title,
-            }
-        )
+        update = {
+            "force_open_with": get_widget_class_id(type(self.widget)),
+            "title": self.title,
+        }
+        if force_not_editable:
+            update["editable"] = False
+        model = self.to_model().model_copy(update=update)
         self._main_window()._add_popup(model, self)
 
     def _is_drop_accepted(self, incoming: DragDataModel) -> bool:
