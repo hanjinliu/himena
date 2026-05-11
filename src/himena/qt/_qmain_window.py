@@ -1084,8 +1084,10 @@ class QChoicesDialog(QtW.QDialog):
                 # Show dialog first to get actual size
                 self.show()
 
-                # Move to center of main window
+                # Move to center of main window.
                 self.align_to_center()
+                # Via SSH, the main window geometry cannot be correctly obtained.
+                QtCore.QTimer.singleShot(10, self.align_to_center)
 
                 yield
             finally:
