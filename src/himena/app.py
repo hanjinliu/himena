@@ -4,6 +4,7 @@ from contextlib import suppress
 import sys
 import socket
 from abc import ABC, abstractmethod
+import time
 from typing import TYPE_CHECKING, Generic, TypeVar
 from psygnal import Signal
 from himena.exceptions import ExceptionHandler
@@ -133,13 +134,7 @@ class QtEventLoopHandler(EventLoopHandler["QApplication"]):
 
         client_socket, _ = self._server_socket.accept()
         with client_socket:
-            chunks = []
-            while True:
-                chunk = client_socket.recv(1024)
-                if not chunk:
-                    break
-                chunks.append(chunk)
-            incoming = b"".join(chunks)
+            incoming = _retry_recv(client_socket)
         try:
             data = InterProcessData.from_bytes(incoming)
         except Exception as e:
@@ -211,3 +206,23 @@ def get_ipython_shell() -> InteractiveShell | None:
         return get_ipython()
     else:
         return None
+
+
+def _retry_recv(soc: socket.socket, retries: int = 5) -> bytes:
+    """Retry receiving data from the socket."""
+    chunks = []
+    retry_count = 0
+    time.sleep(0.05)
+    while True:
+        try:
+            chunk = soc.recv(1024)
+        except OSError:
+            retry_count += 1
+            if retry_count >= retries:
+                break
+            continue
+        else:
+            if not chunk:
+                break
+            chunks.append(chunk)
+    return b"".join(chunks)
