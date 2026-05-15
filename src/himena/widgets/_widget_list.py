@@ -739,10 +739,9 @@ class DockWidgetList(
 
     def __delitem__(self, index: int) -> None:
         dock = self[index]
-        front = dock._frontend_widget()
-        _checker.call_widget_closed_callback(front)
-        self._main_window()._del_dock_widget(front)
-        self._dock_widget_set.pop(dock)
+        _checker.call_widget_closed_callback(dock.widget)
+        self._main_window()._del_dock_widget(dock._frontend_widget())
+        self._dock_widget_set.pop(dock, None)
 
     def __len__(self) -> int:
         return len(self._dock_widget_set)

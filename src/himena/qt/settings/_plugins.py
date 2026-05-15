@@ -26,6 +26,9 @@ class QPluginListEditor(QtW.QWidget):
             f"Select plugins to be included in <b><code>himena {self._app.name}</code>"
             "</b>.<br>Click <b>Apply</b> to save changes.",
         )
+        self._filter_line_edit = QtW.QLineEdit()
+        self._filter_line_edit.setPlaceholderText("Filter plugins by name...")
+        self._filter_line_edit.textChanged.connect(self._on_filter_text_changed)
         self._plugins_editor = QAvaliablePluginsTree(self)
         self._plugins_editor.stateChanged.connect(self._enabled_apply_button)
 
@@ -50,6 +53,7 @@ class QPluginListEditor(QtW.QWidget):
         button_layout.addWidget(self._apply_button)
 
         layout.addWidget(_instruction1)
+        layout.addWidget(self._filter_line_edit)
         layout.addWidget(self._plugins_editor)
         layout.addWidget(_instruction2)
         layout.addWidget(self._additional_plugin_list)
@@ -72,6 +76,19 @@ class QPluginListEditor(QtW.QWidget):
 
     def _enabled_apply_button(self):
         self._apply_button.setEnabled(True)
+
+    def _on_filter_text_changed(self, text: str):
+        text = text.lower()
+        for i in range(self._plugins_editor.topLevelItemCount()):
+            dist_item = self._plugins_editor.topLevelItem(i)
+            dist_visible = False
+            for j in range(dist_item.childCount()):
+                plugin_item = dist_item.child(j)
+                visible = text in plugin_item.text(0).lower()
+                plugin_item.setHidden(not visible)
+                if visible:
+                    dist_visible = True
+            dist_item.setHidden(not dist_visible)
 
 
 class QAvaliablePluginsTree(QtW.QTreeWidget):

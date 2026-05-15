@@ -603,3 +603,20 @@ def test_resolve_config_conflict():
     _resolve_config_conflict(incoming, default)
     assert incoming["test-plugin"]["config-1"]["value"]["a"] == 2
     assert incoming["test-plugin"]["config-1"]["label"] == "Config New"
+
+def test_dock_closed_callback(himena_ui: MainWindowQt, qtbot: QtBot):
+    from magicgui.widgets import Label
+    from himena.qt._qdock_widget import QDockWidget
+
+    mock = MagicMock()
+    class MyWidget(Label):
+        def widget_closed_callback(self):
+            mock()
+
+    widget = MyWidget(value="Test")
+    dock = himena_ui.add_dock_widget(widget)
+    mock.assert_not_called()
+    qdock = dock.widget.native.parentWidget()
+    assert isinstance(qdock, QDockWidget)
+    qdock._titlebar._close_button.click()
+    assert mock.call_count == 1
