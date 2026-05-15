@@ -219,13 +219,13 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         if title is None:
             title = widget.objectName()
         # Construct and add the dock widget
-        dock_widget = QDockWidget(widget, title, allowed_areas)
-        self.addDockWidget(dock_widget.area_normed(area), dock_widget)
-        dock_widget.closed.connect(self._dock_widget_closed_callback)
+        qdock = QDockWidget(widget, title, allowed_areas)
+        self.addDockWidget(qdock.area_normed(area), qdock)
+        qdock.closed.connect(lambda: self._dock_widget_closed_callback(qdock))
         if doc := getattr(widget, "__doc__", ""):
-            dock_widget.whats_this.connect(lambda: self._show_dock_whats_this(doc))
+            qdock.whats_this.connect(lambda: self._show_dock_whats_this(doc))
         QtW.QApplication.processEvents()
-        return dock_widget
+        return qdock
 
     def _dock_widget_title(self, widget: QtW.QWidget) -> str:
         if isinstance(dock := widget.parentWidget(), QtW.QDockWidget):
@@ -442,8 +442,13 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         _msec = (timer() - _time_0) * 1000
         _LOGGER.debug("Context update took %.3f msec", _msec)
 
-    def _dock_widget_closed_callback(self) -> None:
+    def _dock_widget_closed_callback(self, qdock: QDockWidget) -> None:
         self._update_context()
+        if inner := qdock.widget():
+            for i, dock in self._himena_main_window.dock_widgets.enumerate():
+                if dock._frontend_widget() is inner:
+                    del self._himena_main_window.dock_widgets[i]
+                    break
 
     def _current_tab_index(self) -> int | None:
         idx = self._tab_widget.currentIndex()
