@@ -7,7 +7,7 @@ from superqt import QToggleSwitch
 
 from himena.qt._qsvg import QColoredSVGIcon
 from himena.workflow import WslReaderMethod
-from himena.utils.cli import local_to_wsl
+from himena.utils.cli import local_to_wsl, to_wsl_path_from_wsl
 from himena_builtins._consts import ICON_PATH
 from himena_builtins.qt.explorer._base import (
     QBaseRemoteExplorerWidget,
@@ -19,17 +19,13 @@ from himena_builtins.qt.widgets._shared import labeled
 
 if TYPE_CHECKING:
     from himena.qt import MainWindowQt
-    from himena_builtins.qt.explorer import FileExplorerWSLConfig
+    from himena_builtins.qt.explorer import (
+        FileExplorerWSLConfig,
+        FileExplorerWindowsConfig,
+    )
 
 
-class QWSLRemoteExplorerWidget(QBaseRemoteExplorerWidget):
-    """A widget for exploring WSL files.
-
-    This widget will execute `ls` and `cp` commands to list, read and send files when
-    needed. This widget accepts copy-and-paste drag-and-drop from the local
-    file system, including the normal explorer dock widget and the OS file explorer.
-    """
-
+class QWSLExplorerBase(QBaseRemoteExplorerWidget):
     def __init__(self, ui: MainWindowQt) -> None:
         super().__init__(ui)
         self._user = ""
@@ -54,7 +50,7 @@ class QWSLRemoteExplorerWidget(QBaseRemoteExplorerWidget):
 
         layout = QtW.QVBoxLayout(self)
 
-        layout.addWidget(labeled("WSL:", self._pwd_widget))
+        layout.addWidget(labeled(self._pwd_label(), self._pwd_widget))
 
         hlayout2 = QtW.QHBoxLayout()
         hlayout2.setContentsMargins(0, 0, 0, 0)
@@ -81,15 +77,37 @@ class QWSLRemoteExplorerWidget(QBaseRemoteExplorerWidget):
 
         self.themeChanged.connect(self._on_theme_changed)
 
+    def _pwd_label(self) -> str:
+        return "WSL:"
+
     def _on_theme_changed(self, theme) -> None:
         color = "#222222" if self._light_background else "#eeeeee"
         self._refresh_btn.setIcon(
             QColoredSVGIcon.fromfile(ICON_PATH / "refresh.svg", color)
         )
 
+    def _set_busy(self, busy: bool):
+        self._refresh_btn.setEnabled(not busy)
+        self._last_dir_btn.setEnabled(not busy)
+        self._up_one_btn.setEnabled(not busy)
+        self._show_hidden_files_switch.setEnabled(not busy)
+        self._file_list_widget.setEnabled(not busy)
+        self._pwd_widget.setEnabled(not busy)
+
+    def _ls_options(self) -> str:
+        return "-lhAF" if self._show_hidden_files_switch.isChecked() else "-lhF"
+
+
+class QWSLRemoteExplorerWidget(QWSLExplorerBase):
+    """A widget for exploring WSL files.
+
+    This widget will execute `ls` and `cp` commands to list, read and send files when
+    needed. This widget accepts copy-and-paste drag-and-drop from the local
+    file system, including the normal explorer dock widget and the OS file explorer.
+    """
+
     def _iter_file_items(self, path) -> Iterator[QtW.QTreeWidgetItem]:
-        opt = "-lhAF" if self._show_hidden_files_switch.isChecked() else "-lhF"
-        args = ["wsl", "-e", "ls", path + "/", opt]
+        args = ["wsl", "-e", "ls", path + "/", self._ls_options()]
         yield from ls_args_to_items(args)
 
     def _get_file_type(self, path: str) -> Literal["d", "f"]:
@@ -113,14 +131,6 @@ class QWSLRemoteExplorerWidget(QBaseRemoteExplorerWidget):
             path = Path(f"/home/{self._user}/{fp[1:]}")
         return super()._set_current_path(path)
 
-    def _set_busy(self, busy: bool):
-        self._refresh_btn.setEnabled(not busy)
-        self._last_dir_btn.setEnabled(not busy)
-        self._up_one_btn.setEnabled(not busy)
-        self._show_hidden_files_switch.setEnabled(not busy)
-        self._file_list_widget.setEnabled(not busy)
-        self._pwd_widget.setEnabled(not busy)
-
     def _make_reader_method(self, path: Path, is_dir: bool) -> WslReaderMethod:
         return WslReaderMethod(path=path, force_directory=is_dir)
 
@@ -135,5 +145,58 @@ class QWSLRemoteExplorerWidget(QBaseRemoteExplorerWidget):
         if self._last_dir == Path("~"):
             self._pwd = Path(f"/home/{self._user}")
             self._last_dir = Path(f"/home/{self._user}")
+            # set the home directory
+            self._set_current_path(self._pwd)
+
+
+class QWindowsFromWSLRemoteExplorerWidget(QWSLExplorerBase):
+    """A widget for exploring Windows files from WSL.
+
+    This widget will execute `ls` and `cp` commands to list, read and send files when
+    needed. This widget accepts copy-and-paste drag-and-drop from the local
+    file system, including the normal explorer dock widget and the OS file explorer.
+    """
+
+    def _pwd_label(self) -> str:
+        return "Win:"
+
+    def _iter_file_items(self, path) -> Iterator[QtW.QTreeWidgetItem]:
+        args = ["ls", to_wsl_path_from_wsl(path), self._ls_options()]
+        yield from ls_args_to_items(args)
+
+    def _get_file_type(self, path: str) -> Literal["d", "f"]:
+        return stat_args_to_type(["stat", to_wsl_path_from_wsl(path), "--format='%F'"])
+
+    def _move_files(self, src: str, dst: str) -> None:
+        exec_command(["mv", src, dst])
+
+    def _trash_files(self, paths: list[str]) -> None:
+        raise NotImplementedError("Cannot trash windows files from WSL")
+
+    def _send_file_args(self, src, dst_remote, is_dir: bool = False):
+        dst = to_wsl_path_from_wsl(dst_remote)
+        if is_dir:
+            args = ["cp", "-r", src, dst]
+        else:
+            args = ["cp", src, dst]
+        return args
+
+    def _send_file(self, src, dst_remote, is_dir: bool = False):
+        exec_command(self._send_file_args(src, dst_remote, is_dir=is_dir))
+
+    def _make_reader_method(self, path: Path, is_dir: bool) -> WslReaderMethod:
+        return WslReaderMethod(path=path, force_directory=is_dir)
+
+    def _make_reader_method_from_str(self, line: str, is_dir: bool) -> WslReaderMethod:
+        return WslReaderMethod.from_str(line, force_directory=is_dir)
+
+    def _make_get_type_args(self, path: str) -> list[str]:
+        return ["stat", to_wsl_path_from_wsl(path), "--format='%F'"]
+
+    def update_configs(self, cfg: FileExplorerWindowsConfig) -> None:
+        self._user = cfg.default_user
+        if self._last_dir == Path("~"):
+            self._pwd = Path(f"C:/Users/{self._user}")
+            self._last_dir = Path(f"C:/Users/{self._user}")
             # set the home directory
             self._set_current_path(self._pwd)

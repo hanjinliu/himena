@@ -72,6 +72,8 @@ def to_command_args(
 def to_wsl_path(src: Path) -> str:
     """Convert an absolute Windows path to a WSL path.
 
+    This function must be called in Windows.
+
     Examples
     --------
     to_wsl_path(Path("C:/Users/me/Documents")) -> "/mnt/c/Users/me/Documents"
@@ -82,6 +84,18 @@ def to_wsl_path(src: Path) -> str:
     wsl_root = Path("mnt") / drive.lower().rstrip(":")
     src_pathobj_wsl = wsl_root / src.relative_to(drive_rel).as_posix()
     return "/" + src_pathobj_wsl.as_posix()
+
+
+def to_wsl_path_from_wsl(src: str) -> str:
+    src = src.replace("\\", "/")
+    if src.startswith("/mnt/"):
+        # already in WSL path format. This happens when links are resolved (such as the
+        # start menu of Windows).
+        return src
+    if src[1:3] == ":/":
+        drive = src[0].lower()
+        return f"/mnt/{drive}/{src[3:]}"
+    raise NotImplementedError
 
 
 def wsl_to_local(src: str, dst: Path, is_dir: bool = False) -> list[str]:

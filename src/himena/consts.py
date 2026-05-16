@@ -1,8 +1,8 @@
 import sys
+import platform
 import string
 from types import SimpleNamespace, MappingProxyType
 from himena.utils.enum import StrEnum
-
 
 BasicTextFileTypes = frozenset(
     [".txt", ".md", ".json", ".xml", ".yaml", ".yml", ".toml", ".log", ".py", ".pyi",
@@ -27,6 +27,7 @@ ExcelFileTypes = frozenset(
 IS_WINDOWS = sys.platform == "win32"
 IS_MACOS = sys.platform == "darwin"
 IS_LINUX = sys.platform.startswith("linux")
+IS_WSL = IS_LINUX and platform.uname().release.endswith("WSL2")
 
 # Monospace font
 if IS_WINDOWS:

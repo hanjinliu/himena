@@ -683,7 +683,7 @@ def stat_args_to_type(args: list[str]) -> Literal["d", "f"]:
     result = subprocess.run(args, capture_output=True)
     if result.returncode != 0:
         raise ValueError(f"Failed to get type: {result.stderr.decode()}")
-    typ = result.stdout.decode().strip()
+    typ = result.stdout.decode().strip().strip("'")
     if typ == "directory":
         return "d"
     else:

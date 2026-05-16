@@ -8,7 +8,7 @@ from himena.plugins import (
     config_field,
 )
 from himena.widgets import MainWindow
-from himena.consts import IS_WINDOWS
+from himena.consts import IS_WINDOWS, IS_WSL
 
 
 add_default_status_tip(
@@ -97,3 +97,28 @@ if IS_WINDOWS:
 
         ui.set_status_tip("Opening WSL file explorer ...", 1, process_event=True)
         return QWSLRemoteExplorerWidget(ui)
+
+
+if IS_WSL:
+
+    @dataclass
+    class FileExplorerWindowsConfig:
+        default_user: str = config_field(
+            default_factory=getpass.getuser, tooltip="The default Windows user name"
+        )
+
+    @register_dock_widget_action(
+        title="Windows File Explorer",
+        area="left",
+        command_id="builtins:file-explorer-windows",
+        singleton=True,
+        plugin_configs=FileExplorerWindowsConfig(),
+    )
+    def make_file_explorer_ssh_widget(ui: MainWindow):
+        """Open a remote file explorer widget as a dock widget."""
+        from himena_builtins.qt.explorer._widget_wsl import (
+            QWindowsFromWSLRemoteExplorerWidget,
+        )
+
+        ui.set_status_tip("Opening Windows file explorer ...", 1, process_event=True)
+        return QWindowsFromWSLRemoteExplorerWidget(ui)
