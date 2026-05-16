@@ -5,10 +5,10 @@ from pathlib import Path
 import subprocess
 
 from pydantic import Field
-from himena.consts import StandardType
+from himena.consts import StandardType, IS_WSL
 from himena.exceptions import NotExecutable
 from himena.utils.misc import PluginInfo
-from himena.utils.cli import remote_to_local, wsl_to_local
+from himena.utils.cli import remote_to_local, wsl_to_local, to_wsl_path_from_wsl
 from himena.workflow._base import WorkflowStep
 
 if TYPE_CHECKING:
@@ -275,9 +275,16 @@ class WslReaderMethod(PathReaderMethod):
         """Run cp command to move the file from wsl to local `dst_path`."""
 
         if isinstance(self.path, Path):
-            args = wsl_to_local(
-                self.path.as_posix(), dst_path, is_dir=self.force_directory
-            )
+            if IS_WSL:
+                dst_path_ = to_wsl_path_from_wsl(self.path.as_posix())
+                if self.force_directory:
+                    args = ["cp", "-r", dst_path_, dst_path.as_posix()]
+                else:
+                    args = ["cp", dst_path_, dst_path.as_posix()]
+            else:
+                args = wsl_to_local(
+                    self.path.as_posix(), dst_path, is_dir=self.force_directory
+                )
             result = subprocess.run(args, stdout=stdout)
         else:
             raise ValueError(
