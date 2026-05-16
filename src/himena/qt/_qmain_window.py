@@ -860,7 +860,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
 
         # check the size of text.
         fm = text_edit.fontMetrics()
-        height = fm.lineSpacing() * (text.count("\n") + 1) + 10
+        height = fm.lineSpacing() * (len(text) // 48 + 1) + 10
         notification.show_and_hide_later(duration, height=min(height, 108))
 
     def _get_menu_action_by_id(self, name: str) -> QtW.QAction:
