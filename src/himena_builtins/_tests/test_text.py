@@ -4,7 +4,7 @@ from qtpy.QtCore import Qt
 from himena import MainWindow, StandardType
 from himena.standards.model_meta import TextMeta
 from himena.types import WidgetDataModel
-from himena_builtins.qt.text import QTextEdit, QRichTextEdit, QSvgPreview, QMarkdownPreview
+from himena_builtins.qt.text import QTextEdit, QRichTextEdit, QSvgView, QMarkdownEdit
 from himena_builtins.qt.widgets.text import get_languages, get_encodings
 from pytestqt.qtbot import QtBot
 from himena.testing import WidgetTester
@@ -94,19 +94,31 @@ def test_find_text(qtbot: QtBot):
     finder._btn_next.click()
     finder._btn_prev.click()
 
-def test_svg_preview(sample_dir: Path, qtbot: QtBot):
-    with WidgetTester(QSvgPreview()) as tester:
+def test_svg_view(sample_dir: Path, qtbot: QtBot):
+    with WidgetTester(QSvgView()) as tester:
         qtbot.addWidget(tester.widget)
         svg_path = sample_dir / "svg.svg"
-        tester.update_model(value=svg_path.read_text(), type=StandardType.SVG)
+        tester.update_model(
+            value=svg_path.read_text(),
+            type=StandardType.SVG,
+            metadata=TextMeta(selection=(2, 5))
+        )
         tester.to_model()
+        tester.widget._svg_canvas.repaint()
+        tester.widget.size_hint()
+        ctrl = tester.widget._control
+        for val in ctrl._view_mode_tbtn.choices:
+            ctrl._view_mode_tbtn.value = val
 
-def test_markdow_preview(sample_dir: Path, qtbot: QtBot):
-    with WidgetTester(QMarkdownPreview()) as tester:
+def test_markdow_view(sample_dir: Path, qtbot: QtBot):
+    with WidgetTester(QMarkdownEdit()) as tester:
         qtbot.addWidget(tester.widget)
         md_path = sample_dir / "markdown.md"
         tester.update_model(value=md_path.read_text(), type=StandardType.MARKDOWN)
         tester.to_model()
+        ctrl = tester.widget._control
+        for val in ctrl._view_mode_tbtn.choices:
+            ctrl._view_mode_tbtn.value = val
 
 def test_rich_text(sample_dir: Path, qtbot: QtBot):
     with WidgetTester(QRichTextEdit()) as tester:
