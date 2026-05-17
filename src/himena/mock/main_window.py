@@ -249,7 +249,7 @@ class MockBackend(BackendMainWindow):
         self._set_current_sub_window_index(i_tab, len(_tab.sub_windows) - 1)
         return sub_window
 
-    def set_widget_as_preview(self, widget: MockWidget):
+    def set_widget_as_preview(self, widget: MockWidget, is_preview: bool) -> None:
         """Set the widget state as the preview mode."""
 
     def add_tab(self, title: str) -> None:
