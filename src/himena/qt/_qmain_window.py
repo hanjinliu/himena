@@ -719,7 +719,10 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             model.text = md.text()
         if md.hasUrls():
             model.files = [Path(url.toLocalFile()) for url in md.urls()]
-        # TODO: support more types
+        mime_dict = {}
+        for key in md.formats():
+            mime_dict[key] = md.data(key).data()
+        model.mime = mime_dict
         return model
 
     @ensure_main_thread
@@ -1120,19 +1123,20 @@ class QChoicesDialog(QtW.QDialog):
 
 
 def _prep_menubar_map(app: HimenaApplication) -> dict[str, str]:
+    ampa = "&"
     default_menu_ids = {
-        MenuId.FILE: "&" + MenuId.FILE.capitalize(),
-        MenuId.WINDOW: "&" + MenuId.WINDOW.capitalize(),
-        MenuId.VIEW: "&" + MenuId.VIEW.capitalize(),
-        MenuId.TOOLS: "&" + MenuId.TOOLS.capitalize(),
-        MenuId.GO: "&" + MenuId.GO.capitalize(),
+        MenuId.FILE: ampa + MenuId.FILE.capitalize(),
+        MenuId.WINDOW: ampa + MenuId.WINDOW.capitalize(),
+        MenuId.VIEW: ampa + MenuId.VIEW.capitalize(),
+        MenuId.TOOLS: ampa + MenuId.TOOLS.capitalize(),
+        MenuId.GO: ampa + MenuId.GO.capitalize(),
     }
     existing_chars = {"f", "w", "v", "t", "g"}
     for menu_id in iter_root_menu_ids(app):
         if menu_id and menu_id[0].lower() in existing_chars:
             title = menu_id.replace("_", " ").title()
         else:
-            title = "&" + menu_id.replace("_", " ").title()
+            title = ampa + menu_id.replace("_", " ").title()
         default_menu_ids[menu_id] = title
     return default_menu_ids
 

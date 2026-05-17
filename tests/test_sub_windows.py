@@ -387,6 +387,9 @@ def test_clipboard(himena_ui: MainWindow, sample_dir: Path, qtbot: QtBot):
     assert himena_ui.current_window is not None
     assert himena_ui.current_window.to_model().value == "XXX"
 
+    with choose_one_dialog_response(himena_ui, None):
+        himena_ui.exec_action("paste-as-window-using")
+
     sample_path = sample_dir / "text.txt"
     himena_ui.read_file(sample_path)
     QtW.QApplication.processEvents()

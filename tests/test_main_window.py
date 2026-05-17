@@ -620,3 +620,10 @@ def test_dock_closed_callback(himena_ui: MainWindowQt, qtbot: QtBot):
     assert isinstance(qdock, QDockWidget)
     qdock._titlebar._close_button.click()
     assert mock.call_count == 1
+
+def test_builtin_clipboard_readers():
+    from himena_builtins import io as builtin_io
+
+    assert builtin_io.read_clipboard_text(ClipboardDataModel(text="Text")) is not None
+    assert builtin_io.read_clipboard_html(ClipboardDataModel(html="<p>HTML</p>")) is not None
+    assert builtin_io.read_clipboard_image(ClipboardDataModel(image=np.zeros((10, 10, 3), dtype=np.uint8))) is not None

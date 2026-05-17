@@ -9,8 +9,10 @@ from himena.plugins._signature import configure_gui
 from himena.plugins.io import (
     register_reader_plugin,
     register_writer_plugin,
+    register_clipboard_reader_plugin,
     ReaderPlugin,
     WriterPlugin,
+    ClipboardReaderPlugin,
 )
 from himena.plugins.actions import (
     register_function,
@@ -53,6 +55,7 @@ __all__ = [
     "register_config",
     "register_reader_plugin",
     "register_writer_plugin",
+    "register_clipboard_reader_plugin",
     "register_function",
     "register_hidden_function",
     "register_dock_widget_action",
@@ -64,6 +67,7 @@ __all__ = [
     "ReproduceArgs",
     "ReaderPlugin",
     "WriterPlugin",
+    "ClipboardReaderPlugin",
     "when_command_executed",
     "when_reader_used",
 ]

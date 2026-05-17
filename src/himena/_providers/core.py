@@ -4,11 +4,16 @@ from pathlib import Path
 from logging import getLogger
 from typing import Generic, Iterator, TypeVar, TYPE_CHECKING
 from himena.utils.misc import PluginInfo
-from himena.types import WidgetDataModel
+from himena.types import ClipboardDataModel, WidgetDataModel
 
 if TYPE_CHECKING:
     from typing import Self
-    from himena.plugins.io import ReaderPlugin, WriterPlugin, _IOPluginBase
+    from himena.plugins.io import (
+        ReaderPlugin,
+        WriterPlugin,
+        ClipboardReaderPlugin,
+        _IOPluginBase,
+    )
 
     PathOrPaths = str | Path | list[str | Path]
 
@@ -181,6 +186,84 @@ class WriterStore(PluginStore["WriterPlugin"]):
                     _LOGGER.debug("%r did not match", writer)
                 else:
                     matched.append(writer)
+        return matched
+
+
+class ClipboardReaderStore(PluginStore["ClipboardReaderPlugin"]):
+    def add_reader(self, reader: ClipboardReaderPlugin):
+        self._plugin_items.append(reader)
+
+    def iter_readers(
+        self, model: ClipboardDataModel, min_priority: int = 0
+    ) -> Iterator[tuple[str, ClipboardReaderPlugin]]:
+        for reader in self._plugin_items:
+            if reader.priority < min_priority:
+                continue
+            try:
+                out = reader.match_model_type(model)
+            except Exception as e:
+                _warn_failed_provider(reader, e)
+            else:
+                if out is None:
+                    _LOGGER.debug("Reader %r did not match", reader)
+                else:
+                    yield out, reader
+
+    def get(
+        self,
+        model: ClipboardDataModel,
+        empty_ok: bool = False,
+        min_priority: int = 0,
+    ) -> list[ClipboardReaderPlugin]:
+        """List of reader plugins that can read the path."""
+        matched = self._get_impl(model, min_priority=min_priority)
+        if not matched and not empty_ok:
+            raise ValueError(
+                "No reader functions available for the current clipboard data"
+            )
+        return matched
+
+    def pick(
+        self,
+        model: ClipboardDataModel,
+        *,
+        plugin: str | None = None,
+        min_priority: int = 0,
+    ) -> ClipboardReaderPlugin:
+        """Pick a reader that match the inputs."""
+        if plugin is not None:
+            # if plugin is given, force to use it
+            min_priority = -float("inf")
+        return _pick_from_list(self.get(model, min_priority=min_priority), plugin)
+
+    def run(
+        self,
+        model: ClipboardDataModel,
+        *,
+        plugin: str | None = None,
+        min_priority: int = -float("inf"),
+    ) -> WidgetDataModel:
+        reader = self.pick(model, plugin=plugin, min_priority=min_priority)
+        return reader.read(model)
+
+    def _get_impl(
+        self,
+        model: ClipboardDataModel,
+        min_priority: int = 0,
+    ) -> list[ClipboardReaderPlugin]:
+        matched: list[ClipboardReaderPlugin] = []
+        for reader in self._plugin_items:
+            if reader.priority < min_priority:
+                continue
+            try:
+                out = reader.match_model_type(model)
+            except Exception as e:
+                _warn_failed_provider(reader, e)
+            else:
+                if not out:
+                    _LOGGER.debug("%r did not match", reader)
+                else:
+                    matched.append(reader)
         return matched
 
 

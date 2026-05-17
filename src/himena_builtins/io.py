@@ -3,9 +3,13 @@ from __future__ import annotations
 from functools import cache
 from pathlib import Path
 import shutil
-from himena.plugins import register_reader_plugin, register_writer_plugin
+from himena.plugins import (
+    register_reader_plugin,
+    register_writer_plugin,
+    register_clipboard_reader_plugin,
+)
 from himena.data_wrappers import list_installed_dataframe_packages
-from himena.types import WidgetDataModel
+from himena.types import ClipboardDataModel, WidgetDataModel
 from himena_builtins import _io
 from himena.consts import (
     StandardType,
@@ -436,3 +440,49 @@ def _get_ghost_script() -> str | None:
     if gs_executable is not None:
         return gs_executable
     return None
+
+
+# Clipboard plugins
+@register_clipboard_reader_plugin(priority=50)
+def read_clipboard_image(data: ClipboardDataModel) -> WidgetDataModel:
+    """Default clipboard reader."""
+    if (image := data.image) is not None:
+        from himena.data_wrappers import wrap_array
+        from himena.standards.model_meta import ImageMeta
+
+        shape = wrap_array(image).shape
+        if len(shape) == 3 and shape[-1] in (3, 4):
+            meta = ImageMeta(axes=["y", "x", "c"], is_rgb=True)
+        else:
+            meta = None
+        return WidgetDataModel(value=image, type=StandardType.IMAGE, metadata=meta)
+
+
+@register_clipboard_reader_plugin(priority=50)
+def read_clipboard_html(data: ClipboardDataModel) -> WidgetDataModel:
+    if html := data.html:
+        return WidgetDataModel(value=html, type=StandardType.HTML)
+
+
+@register_clipboard_reader_plugin(priority=50)
+def read_clipboard_text(data: ClipboardDataModel) -> WidgetDataModel:
+    if text := data.text:
+        return WidgetDataModel(value=text, type=StandardType.TEXT)
+
+
+@read_clipboard_image.define_matcher
+def _(data: ClipboardDataModel) -> str | None:
+    if data.image is not None:
+        return StandardType.IMAGE
+
+
+@read_clipboard_html.define_matcher
+def _(data: ClipboardDataModel) -> str | None:
+    if data.html:
+        return StandardType.HTML
+
+
+@read_clipboard_text.define_matcher
+def _(data: ClipboardDataModel) -> str | None:
+    if data.text:
+        return StandardType.TEXT

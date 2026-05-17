@@ -4,9 +4,9 @@ from functools import wraps
 import logging
 from pathlib import Path
 from typing import Any, Callable, ForwardRef, overload
-from himena.types import WidgetDataModel
+from himena.types import ClipboardDataModel, WidgetDataModel
 from himena.utils.misc import PluginInfo
-from himena._providers import ReaderStore, WriterStore
+from himena._providers import ReaderStore, WriterStore, ClipboardReaderStore
 from himena._utils import get_widget_data_model_type_arg
 
 _LOGGER = logging.getLogger(__name__)
@@ -206,6 +206,45 @@ class WriterPlugin(_IOPluginBase):
         return self
 
 
+class ClipboardReaderPlugin(_IOPluginBase):
+    def __init__(
+        self,
+        reader: Callable[[ClipboardDataModel], WidgetDataModel],
+        matcher: Callable[[ClipboardDataModel], str] | None = None,
+        *,
+        priority: int = 100,
+        module: str | None = None,
+    ):
+        super().__init__(reader, matcher, priority=priority, module=module)
+
+    def read(self, data: ClipboardDataModel) -> WidgetDataModel:
+        _LOGGER.info("Reading clipboard data using clipboard reader plugin: %s", self)
+        out = self._func(data)
+        if not isinstance(out, WidgetDataModel):
+            raise TypeError(
+                f"Clipboard reader plugin {self!r} did not return a WidgetDataModel."
+            )
+        return out
+
+    __call__ = read
+
+    def match_model_type(self, path: Path | list[Path]) -> str | None:
+        """Not None if the reader can read the file."""
+        if self._matcher is None:
+            return None
+        out = self._matcher(path)
+        if out is None or isinstance(out, str):
+            return out
+        raise TypeError(f"Matcher {self._matcher!r} did not return a string.")
+
+    def define_matcher(
+        self, matcher: Callable[[ClipboardDataModel], str]
+    ) -> ClipboardReaderPlugin:
+        """Define how to match the input clipboard data model to this reader."""
+        self._matcher = matcher
+        return self
+
+
 @overload
 def register_reader_plugin(
     reader: Callable[[Path | list[Path]], WidgetDataModel],
@@ -337,6 +376,75 @@ def register_writer_plugin(writer=None, *, priority=100, module=None):
         return writer_plugin
 
     return _inner if writer is None else _inner(writer)
+
+
+@overload
+def register_clipboard_reader_plugin(
+    reader: Callable[[ClipboardDataModel], WidgetDataModel],
+    *,
+    priority: int = 100,
+    module: str | None = None,
+) -> ClipboardReaderPlugin: ...
+@overload
+def register_clipboard_reader_plugin(
+    *,
+    priority: int = 100,
+    module: str | None = None,
+) -> Callable[
+    [Callable[[ClipboardDataModel], WidgetDataModel]], ClipboardReaderPlugin
+]: ...
+
+
+def register_clipboard_reader_plugin(reader=None, *, priority=100, module=None):
+    """Register a clipboard reader plugin function.
+
+    Decorate a function to register it as a clipboard reader plugin. The function should
+    take a `ClipboardDataModel` as input and return a `WidgetDataModel`.
+
+    ``` python
+    from himena.plugins import register_clipboard_reader_plugin
+
+    @register_clipboard_reader_plugin
+    def my_clipboard_reader(data]: ClipboardDataModel) -> WidgetDataModel:
+        ...  # read clipboard data and return a WidgetDataModel
+    ```
+
+    You will need to define a matcher function to tell whether this function can read
+    a clipboard data model using `define_matcher` method. The matcher should return a
+    type string if the reader can read the clipboard data, or None otherwise.
+
+    ```python
+    from himena import StandardType
+
+    @my_clipboard_reader.define_matcher
+    def _(data: ClipboardDataModel):
+        if "image/svg+xml" in data.mime:
+            return StandardType.SVG  # StandardType.SVG == "text.svg"
+        return None
+    ```
+
+    Parameters
+    ----------
+    priority : int, default 100
+        Priority of choosing this reader when multiple readers are available. The
+        default value 100 is higher than the himena builtin clipboard readers, so that
+        your reader will prioritized over the default ones. If priority is less than 0,
+        it will not be used unless users intentionally choose this plugin.
+    module : str | None, default None
+        The module name override. This is usefule when you want to register a reader
+        function in the upper scope to simplify the plugin info display.
+    """
+
+    def _inner(func):
+        if not callable(func):
+            raise ValueError("Clipboard reader plugin must be callable.")
+        ins = ClipboardReaderStore().instance()
+
+        reader_plugin = ClipboardReaderPlugin(func, priority=priority, module=module)
+        ins.add_reader(reader_plugin)
+        return reader_plugin
+
+    return _inner if reader is None else _inner(reader)
 
 
 def _check_priority(priority: int):
