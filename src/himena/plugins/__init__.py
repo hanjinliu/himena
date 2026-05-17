@@ -1,7 +1,6 @@
 from himena.plugins.widget_class import (
     register_widget_class,
     get_widget_class,
-    register_previewer_class,
     widget_classes,
 )
 from himena.plugins._checker import validate_protocol
@@ -41,7 +40,6 @@ from himena.plugins.config import config_field, plugin_data_dir
 __all__ = [
     "add_default_status_tip",
     "get_widget_class",
-    "register_previewer_class",
     "widget_classes",
     "validate_protocol",
     "configure_gui",

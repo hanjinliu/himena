@@ -12,7 +12,6 @@ from himena.plugins._utils import type_to_expression
 from himena.types import WidgetDataModel
 
 if TYPE_CHECKING:
-    from himena.widgets import SubWindow, MainWindow
     from himena.plugins.actions import PluginConfigType
 
 _T = TypeVar("_T")
@@ -127,28 +126,6 @@ def widget_classes() -> MappingProxyType[str, type]:
     return MappingProxyType(out)
 
 
-def register_previewer_class(type_: str, widget_class: type):
-    """Register a widget class for previewing the given model type."""
-
-    def inner(wcls):
-        import himena.qt
-
-        widget_id = get_widget_class_id(wcls)
-        if existing_class := _WIDGET_ID_TO_WIDGET_CLASS.get(widget_id):
-            raise ValueError(
-                f"Widget class with ID {widget_id!r} already exists ({existing_class})."
-            )
-        _WIDGET_ID_TO_WIDGET_CLASS[widget_id] = wcls
-        himena.qt.register_widget_class(type_, wcls, priority=-10)
-        fn = OpenDataInFunction(type_, wcls)
-        AppActionRegistry.instance().add_action(fn.to_action(), is_dynamic=True)
-        fn = PreviewDataInFunction(type_, wcls)
-        AppActionRegistry.instance().add_action(fn.to_action(), is_dynamic=True)
-        return type_
-
-    return inner if widget_class is None else inner(widget_class)
-
-
 class OpenDataInFunction:
     """Callable class for 'open this data in ...' action."""
 
@@ -182,35 +159,5 @@ class OpenDataInFunction:
             tooltip=f"Open this data in {self._display_name}",
             callback=self_func,
             enablement=self._enablement,
-            menus=[{"id": self.menu_id(), "group": "open-in"}],
-        )
-
-
-class PreviewDataInFunction:
-    """Callable class for 'preview this data in ...' action."""
-
-    def __init__(self, type_: str, widget_class: type):
-        self._display_name = get_display_name(widget_class)
-        self._plugin_id = get_widget_class_id(widget_class)
-        self._type = type_
-
-    def __call__(self, win: "SubWindow", ui: "MainWindow"):
-        model = win.to_model().with_open_plugin(self._plugin_id)
-        previewer = ui.add_data_model(model)
-        previewer._switch_to_file_watch_mode()
-
-    def menu_id(self) -> str:
-        return f"/model_menu:{self._type}/preview-in"
-
-    def to_action(self) -> Action:
-        @wraps(self, assigned=_TO_ASSIGN)
-        def self_func(win: "SubWindow", ui: "MainWindow"):
-            return self(win, ui)
-
-        return Action(
-            id=f"preview-in:{self._plugin_id}:{self._type}",
-            title=self._display_name,
-            tooltip=f"Preview this data in {self._display_name}",
-            callback=self_func,
             menus=[{"id": self.menu_id(), "group": "open-in"}],
         )

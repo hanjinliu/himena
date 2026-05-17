@@ -4,7 +4,7 @@ from qtpy.QtCore import Qt
 from himena import MainWindow, StandardType
 from himena.standards.model_meta import TextMeta
 from himena.types import WidgetDataModel
-from himena_builtins.qt.text import QTextEdit, QRichTextEdit, QSvgPreview, QMarkdownPreview
+from himena_builtins.qt.text import QTextEdit, QRichTextEdit, QSvgView, QMarkdownEdit
 from himena_builtins.qt.widgets.text import get_languages, get_encodings
 from pytestqt.qtbot import QtBot
 from himena.testing import WidgetTester
@@ -95,14 +95,14 @@ def test_find_text(qtbot: QtBot):
     finder._btn_prev.click()
 
 def test_svg_preview(sample_dir: Path, qtbot: QtBot):
-    with WidgetTester(QSvgPreview()) as tester:
+    with WidgetTester(QSvgView()) as tester:
         qtbot.addWidget(tester.widget)
         svg_path = sample_dir / "svg.svg"
         tester.update_model(value=svg_path.read_text(), type=StandardType.SVG)
         tester.to_model()
 
 def test_markdow_preview(sample_dir: Path, qtbot: QtBot):
-    with WidgetTester(QMarkdownPreview()) as tester:
+    with WidgetTester(QMarkdownEdit()) as tester:
         qtbot.addWidget(tester.widget)
         md_path = sample_dir / "markdown.md"
         tester.update_model(value=md_path.read_text(), type=StandardType.MARKDOWN)
