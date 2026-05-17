@@ -31,6 +31,7 @@ class QSvgPreview(QtW.QWidget):
             self._svg_content = content
         else:
             self._svg_renderer.load(self._svg_content.encode())
+        self._svg_renderer.setAspectRatioMode(QtCore.Qt.AspectRatioMode.KeepAspectRatio)
         self._is_valid = _is_valid
         self._model_type = model.type
         self.update()

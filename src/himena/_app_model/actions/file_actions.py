@@ -9,11 +9,9 @@ from app_model.types import (
     KeyChord,
     StandardKeyBinding,
 )
-from himena.data_wrappers import wrap_array
 from himena._descriptors import SaveToNewPath
-from himena.consts import StandardType, MenuId
-from himena.plugins import configure_gui, ReaderPlugin
-from himena.standards.model_meta import ImageMeta
+from himena.consts import MenuId
+from himena.plugins import configure_gui, ReaderPlugin, ClipboardReaderPlugin
 from himena.widgets import MainWindow, SubWindow
 from himena import _providers, workflow as _wf
 from himena.types import (
@@ -277,32 +275,54 @@ def open_new(ui: MainWindow) -> WidgetDataModel:
 
 @ACTIONS.append_from_fn(
     id="paste-as-window",
-    title="Paste As Window",
+    title="From Clipboard",
     menus=[MenuId.FILE_NEW],
     enablement=~_ctx.is_subwindow_focused,
     keybindings=[StandardKeyBinding.Paste],
 )
 def paste_from_clipboard(ui: MainWindow) -> WidgetDataModel:
     """Paste the clipboard data as a sub-window."""
-    if data := ui._backend_main_window._clipboard_data():
-        title = "Clipboard"
-        if (image := data.image) is not None:
-            shape = wrap_array(image).shape
-            if len(shape) == 3 and shape[-1] in (3, 4):
-                meta = ImageMeta(axes=["y", "x", "c"], is_rgb=True)
-            else:
-                meta = None
-            return WidgetDataModel(
-                value=image, type=StandardType.IMAGE, title=title, metadata=meta
-            )
-        elif files := data.files:
+
+    if data := ui.clipboard:
+        if files := data.files:
             ui.read_files(files)
             return None
-        elif html := data.html:
-            return WidgetDataModel(value=html, type=StandardType.HTML, title=title)
-        elif text := data.text:
-            return WidgetDataModel(value=text, type=StandardType.TEXT, title=title)
-        raise ValueError("No data to paste from clipboard.")
+        store = _providers.ClipboardReaderStore.instance()
+        model = store.run(data)
+        model.title = "Clipboard"
+        return model
+    raise Cancelled
+
+
+@ACTIONS.append_from_fn(
+    id="paste-as-window-using",
+    title="From Clipboard As ...",
+    menus=[MenuId.FILE_NEW],
+    enablement=~_ctx.is_subwindow_focused,
+    keybindings=[KeyBindingRule(primary=KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyV)],
+)
+def from_clipboard_as(ui: MainWindow) -> WidgetDataModel:
+    """Paste the clipboard data using selected plugin."""
+
+    if data := ui.clipboard:
+        _store = _providers.ClipboardReaderStore.instance()
+        choices: list[tuple[str, ClipboardReaderPlugin]] = []
+        for typ, reader in _store.iter_readers(data, min_priority=-float("inf")):
+            if reader.plugin:
+                desc = f"{typ} ({reader.plugin.module})"
+            else:
+                desc = typ
+            choices.append((desc, reader))
+
+        if reader := ui.exec_choose_one_dialog(
+            title="From Clipboard ...",
+            message="Select a plugin to read the clipboard data",
+            choices=choices,
+            how="palette",
+        ):
+            model = reader.read(data)
+            model.title = "Clipboard"
+            return model
     raise Cancelled
 
 

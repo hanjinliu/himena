@@ -438,7 +438,7 @@ class ClipboardDataModel(BaseModel):
         default_factory=list,
         description="List of file paths in the clipboard if exists.",
     )
-    mime: dict[str, Any] = Field(
+    mime: dict[str, bytes] = Field(
         default_factory=dict,
         description="Raw MIME data in the clipboard if exists.",
     )
