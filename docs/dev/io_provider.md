@@ -94,3 +94,26 @@ def _(path: Path):
 
 Unlike readers, matcher function returns `True` if the writer can write the file, and
 `False` otherwise.
+
+## Clipboard Plugins
+
+Developers can also implement the behavior of pasting data from the clipboard. This
+works in a similar way as reader plugins.
+
+``` python
+from himena import StandardType, ClipboardDataModel, WidgetDataModel
+from himena.plugins import register_clipboard_reader_plugin
+
+@register_clipboard_reader_plugin
+def paste_text(model: ClipboardDataModel):
+    return WidgetDataModel(
+        value=model.mime.get("text/plain", "").decode("utf-8"),
+        type=StandardType.TEXT,
+    )
+
+@write_text.define_matcher
+def _(model: ClipboardDataModel):
+    if "text/plain" in model.mime:
+        return StandardType.TEXT
+    return None
+```
