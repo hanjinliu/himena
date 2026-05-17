@@ -1,4 +1,5 @@
 from __future__ import annotations
+from cmap import Color
 from qtpy import QtWidgets as QtW, QtGui
 from qtpy.QtCore import Qt, Signal
 
@@ -13,7 +14,7 @@ class QColorSwatch(QtW.QFrame):
         self.setFrameStyle(QtW.QFrame.Shape.Panel | QtW.QFrame.Shadow.Sunken)
         self._qcolor: QtGui.QColor = QtGui.QColor(255, 255, 255, 255)
         self.colorChanged.connect(self._update_swatch_style)
-        self.setMinimumWidth(40)
+        self.setMinimumWidth(28)
 
     @property
     def rgba(self) -> tuple[int, int, int, int]:
@@ -24,7 +25,7 @@ class QColorSwatch(QtW.QFrame):
         return w
 
     def _update_swatch_style(self, color: QtGui.QColor) -> None:
-        rgba = f'rgba({",".join(str(x) for x in color.getRgb())})'
+        rgba = f"rgba({','.join(str(x) for x in color.getRgb())})"
         return self.setStyleSheet("QColorSwatch {background-color: " + rgba + ";}")
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent) -> None:
@@ -60,7 +61,8 @@ class QColorLineEdit(QtW.QLineEdit):
 
     def setQColor(self, color: QtGui.QColor):
         self._qcolor = color
-        text = color.name()
+        color_obj = Color(color.getRgbF())
+        text = color_obj.name or color_obj.hex
         self.setText(text)
 
     def _emit_color_changed(self):
@@ -93,6 +95,7 @@ class QColorEdit(QtW.QWidget):
         self._line_edit.colorChanged.connect(self._on_line_edit_edited)
         self.setSizePolicy(QtW.QSizePolicy.Policy.Fixed, QtW.QSizePolicy.Policy.Fixed)
         self.setMinimumHeight(20)
+        self.setColor(QtGui.QColor(0, 0, 0))
 
     def color(self) -> QtGui.QColor:
         """Return the current color."""
