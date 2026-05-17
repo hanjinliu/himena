@@ -800,7 +800,7 @@ class ParametricWindow(SubWindow[_W]):
                 # create a new preview window
                 title = f"{return_value.title} (preview)"
                 prev = self.add_child(result_widget, title=title)
-                main.set_widget_as_preview(prev)
+                main.set_widget_as_preview(prev, True)
                 prev.force_not_editable(True)  # disable editing if possible
                 # move the window so that it does not overlap with the parametric window
                 prev.rect = prevent_window_overlap(self, prev, main._area_size())
@@ -825,6 +825,7 @@ class ParametricWindow(SubWindow[_W]):
         _LOGGER.info("Got tracker: %r", tracker)
         if isinstance(return_value, WidgetDataModel):
             if prev := self._get_preview_window():
+                main.set_widget_as_preview(prev, False)
                 # no need to create a new window, just use the preview window
                 self._preview_window_ref = _do_nothing
                 if self._result_as != "window":
