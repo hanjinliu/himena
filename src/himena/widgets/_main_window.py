@@ -301,6 +301,7 @@ class MainWindow(Generic[_W]):
         html: str | None = None,
         image: Any | None = None,
         files: list[str | Path] | None = None,
+        mime: dict[str, bytes] | None = None,
         internal_data: Any | None = None,
     ) -> None:
         """Set clipboard data."""
@@ -309,6 +310,7 @@ class MainWindow(Generic[_W]):
             html=html,
             image=image,
             files=files or [],
+            mime=mime or {},
             internal_data=internal_data,
         )
 

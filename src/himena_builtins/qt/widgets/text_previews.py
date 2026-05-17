@@ -1,4 +1,5 @@
 from __future__ import annotations
+from functools import cache
 
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 
@@ -19,13 +20,9 @@ class QSvgPreview(QtW.QWidget):
         super().__init__()
         self._svg_renderer = QtSvg.QSvgRenderer()
         self._svg_renderer.setAspectRatioMode(QtCore.Qt.AspectRatioMode.KeepAspectRatio)
-        self._svg_content: str = ""
+        self._svg_content = ""
         self._is_valid = True
         self._model_type = StandardType.SVG
-        self._brush = QtGui.QBrush(
-            QtGui.QColor(128, 128, 128, 128), QtCore.Qt.BrushStyle.Dense4Pattern
-        )
-        self._brush.setTransform(QtGui.QTransform().scale(10, 10))
 
     @validate_protocol
     def update_model(self, model: WidgetDataModel):
@@ -55,8 +52,10 @@ class QSvgPreview(QtW.QWidget):
 
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
-        painter.setBrush(self._brush)
+
+        painter.setBrush(ichimatsu_brush())
         painter.drawRect(self.rect())
+
         self._svg_renderer.render(painter)
         if not self._is_valid:
             painter.setPen(QtGui.QPen(QtCore.Qt.GlobalColor.red, 1))
@@ -65,6 +64,22 @@ class QSvgPreview(QtW.QWidget):
                 self.rect().bottomLeft() + QtCore.QPoint(2, -2), "Invalid SVG"
             )
         painter.end()
+
+
+@cache
+def ichimatsu_brush() -> QtGui.QBrush:
+    """Make a brush with an ichimatsu (checkered) pattern."""
+    brush = QtGui.QBrush()
+
+    pixmap = QtGui.QPixmap(60, 60)
+    pixmap.fill(QtGui.QColor(255, 255, 255, 0))
+    painter = QtGui.QPainter(pixmap)
+    painter.fillRect(0, 0, 30, 30, QtGui.QColor(128, 128, 128, 128))
+    painter.fillRect(30, 30, 30, 30, QtGui.QColor(128, 128, 128, 128))
+    painter.end()
+
+    brush.setTexture(pixmap)
+    return brush
 
 
 class QMarkdownPreview(QtW.QWidget):

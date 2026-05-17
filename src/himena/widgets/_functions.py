@@ -37,6 +37,7 @@ def set_clipboard(
     html: str | None = None,
     image: Any | None = None,
     files: list[str | Path] | None = None,
+    mime: dict[str, bytes] | None = None,
     interanal_data: Any | None = None,
 ) -> None: ...
 

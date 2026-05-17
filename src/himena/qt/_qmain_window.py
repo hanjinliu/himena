@@ -719,6 +719,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             model.text = md.text()
         if md.hasUrls():
             model.files = [Path(url.toLocalFile()) for url in md.urls()]
+        # TODO: support more types
         return model
 
     @ensure_main_thread
@@ -739,7 +740,10 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             mime.setImageData(qimg)
         if (files := data.files) is not None:
             mime.setUrls([QtCore.QUrl.fromLocalFile(str(f)) for f in files])
-        return clipboard.setMimeData(mime)
+        for name, bytes_data in data.mime.items():
+            mime.setData(name, bytes_data)
+        clipboard.setMimeData(mime)
+        QtW.QApplication.processEvents()
 
     def _connect_main_window_signals(self, main: MainWindow):
         self._tab_widget.currentChanged.connect(main._tab_activated)
