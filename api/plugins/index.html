@@ -1219,6 +1219,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#himena.plugins.ClipboardReaderPlugin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ClipboardReaderPlugin
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ClipboardReaderPlugin">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#himena.plugins.ClipboardReaderPlugin.define_matcher" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        define_matcher
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#himena.plugins.ClipboardReaderPlugin.match_model_type" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        match_model_type
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#himena.plugins.ReaderPlugin" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1389,6 +1428,17 @@
     <span class="md-ellipsis">
       
         plugin_data_dir
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#himena.plugins.register_clipboard_reader_plugin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        register_clipboard_reader_plugin
       
     </span>
   </a>
@@ -1848,6 +1898,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#himena.plugins.ClipboardReaderPlugin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ClipboardReaderPlugin
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ClipboardReaderPlugin">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#himena.plugins.ClipboardReaderPlugin.define_matcher" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        define_matcher
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#himena.plugins.ClipboardReaderPlugin.match_model_type" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        match_model_type
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#himena.plugins.ReaderPlugin" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2018,6 +2107,17 @@
     <span class="md-ellipsis">
       
         plugin_data_dir
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#himena.plugins.register_clipboard_reader_plugin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        register_clipboard_reader_plugin
       
     </span>
   </a>
@@ -2875,6 +2975,197 @@ GUI menubar and toolbar.</p>
     <span class="k">if</span> <span class="n">title</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_submenu_titles</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">title</span>
     <span class="k">return</span> <span class="nb">id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">title</span><span class="p">()</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="himena.plugins.ClipboardReaderPlugin" class="doc doc-heading">
+            <code>ClipboardReaderPlugin</code>
+
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+
+
+
+
+
+
+
+
+
+              <details class="mkdocstrings-source">
+                <summary>Source code in <code>src\himena\plugins\io.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ClipboardReaderPlugin</span><span class="p">(</span><span class="n">_IOPluginBase</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">reader</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ClipboardDataModel</span><span class="p">],</span> <span class="n">WidgetDataModel</span><span class="p">],</span>
+        <span class="n">matcher</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ClipboardDataModel</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">priority</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="n">module</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">reader</span><span class="p">,</span> <span class="n">matcher</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="n">priority</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="n">module</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">ClipboardDataModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WidgetDataModel</span><span class="p">:</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Reading clipboard data using clipboard reader plugin: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_func</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">WidgetDataModel</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Clipboard reader plugin </span><span class="si">{</span><span class="bp">self</span><span class="si">!r}</span><span class="s2"> did not return a WidgetDataModel.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+    <span class="fm">__call__</span> <span class="o">=</span> <span class="n">read</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">match_model_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Not None if the reader can read the file.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">out</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">out</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Matcher </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span><span class="si">!r}</span><span class="s2"> did not return a string.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">define_matcher</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">matcher</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ClipboardDataModel</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ClipboardReaderPlugin</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Define how to match the input clipboard data model to this reader.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span> <span class="o">=</span> <span class="n">matcher</span>
+        <span class="k">return</span> <span class="bp">self</span>
+</code></pre></div></td></tr></table></div>
+              </details>
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="himena.plugins.ClipboardReaderPlugin.define_matcher" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">define_matcher</span><span class="p">(</span><span class="n">matcher</span><span class="p">)</span></code>
+
+</h5>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Define how to match the input clipboard data model to this reader.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src\himena\plugins\io.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">define_matcher</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">matcher</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ClipboardDataModel</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ClipboardReaderPlugin</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Define how to match the input clipboard data model to this reader.&quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span> <span class="o">=</span> <span class="n">matcher</span>
+    <span class="k">return</span> <span class="bp">self</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="himena.plugins.ClipboardReaderPlugin.match_model_type" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">match_model_type</span><span class="p">(</span><span class="n">path</span><span class="p">)</span></code>
+
+</h5>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Not None if the reader can read the file.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src\himena\plugins\io.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">match_model_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Not None if the reader can read the file.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">out</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">out</span>
+    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Matcher </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span><span class="si">!r}</span><span class="s2"> did not return a string.&quot;</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4377,6 +4668,201 @@ thus himena application does not recognize any of the contents.</p>
 <div class="doc doc-object doc-function">
 
 
+<h4 id="himena.plugins.register_clipboard_reader_plugin" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">register_clipboard_reader_plugin</span><span class="p">(</span><span class="n">reader</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+</h4>
+          <div class="doc-overloads">
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">register_clipboard_reader_plugin</span><span class="p">(</span><span class="n">reader</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ClipboardDataModel</span><span class="p">],</span> <span class="n">WidgetDataModel</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">priority</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ClipboardReaderPlugin</span>
+</code></pre></div><div class="doc-signature highlight"><pre><span></span><code><span class="nf">register_clipboard_reader_plugin</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">priority</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">ClipboardDataModel</span><span class="p">],</span> <span class="n">WidgetDataModel</span><span class="p">]],</span> <span class="n">ClipboardReaderPlugin</span><span class="p">]</span>
+</code></pre></div>          </div>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Register a clipboard reader plugin function.</p>
+<p>Decorate a function to register it as a clipboard reader plugin. The function should
+take a <code>ClipboardDataModel</code> as input and return a <code>WidgetDataModel</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">himena.plugins</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_clipboard_reader_plugin</span>
+
+<span class="nd">@register_clipboard_reader_plugin</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">my_clipboard_reader</span><span class="p">(</span><span class="n">data</span><span class="p">]:</span> <span class="n">ClipboardDataModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WidgetDataModel</span><span class="p">:</span>
+    <span class="o">...</span>  <span class="c1"># read clipboard data and return a WidgetDataModel</span>
+</code></pre></div>
+<p>You will need to define a matcher function to tell whether this function can read
+a clipboard data model using <code>define_matcher</code> method. The matcher should return a
+type string if the reader can read the clipboard data, or None otherwise.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">himena</span><span class="w"> </span><span class="kn">import</span> <span class="n">StandardType</span>
+
+<span class="nd">@my_clipboard_reader</span><span class="o">.</span><span class="n">define_matcher</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">ClipboardDataModel</span><span class="p">):</span>
+    <span class="k">if</span> <span class="s2">&quot;image/svg+xml&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">mime</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">StandardType</span><span class="o">.</span><span class="n">SVG</span>  <span class="c1"># StandardType.SVG == &quot;text.svg&quot;</span>
+    <span class="k">return</span> <span class="kc">None</span>
+</code></pre></div>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>priority</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Priority of choosing this reader when multiple readers are available. The
+default value 100 is higher than the himena builtin clipboard readers, so that
+your reader will prioritized over the default ones. If priority is less than 0,
+it will not be used unless users intentionally choose this plugin.</p>
+              </div>
+            </td>
+            <td>
+                  <code>100</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>module</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The module name override. This is usefule when you want to register a reader
+function in the upper scope to simplify the plugin info display.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src\himena\plugins\io.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">398</span>
+<span class="normal">399</span>
+<span class="normal">400</span>
+<span class="normal">401</span>
+<span class="normal">402</span>
+<span class="normal">403</span>
+<span class="normal">404</span>
+<span class="normal">405</span>
+<span class="normal">406</span>
+<span class="normal">407</span>
+<span class="normal">408</span>
+<span class="normal">409</span>
+<span class="normal">410</span>
+<span class="normal">411</span>
+<span class="normal">412</span>
+<span class="normal">413</span>
+<span class="normal">414</span>
+<span class="normal">415</span>
+<span class="normal">416</span>
+<span class="normal">417</span>
+<span class="normal">418</span>
+<span class="normal">419</span>
+<span class="normal">420</span>
+<span class="normal">421</span>
+<span class="normal">422</span>
+<span class="normal">423</span>
+<span class="normal">424</span>
+<span class="normal">425</span>
+<span class="normal">426</span>
+<span class="normal">427</span>
+<span class="normal">428</span>
+<span class="normal">429</span>
+<span class="normal">430</span>
+<span class="normal">431</span>
+<span class="normal">432</span>
+<span class="normal">433</span>
+<span class="normal">434</span>
+<span class="normal">435</span>
+<span class="normal">436</span>
+<span class="normal">437</span>
+<span class="normal">438</span>
+<span class="normal">439</span>
+<span class="normal">440</span>
+<span class="normal">441</span>
+<span class="normal">442</span>
+<span class="normal">443</span>
+<span class="normal">444</span>
+<span class="normal">445</span>
+<span class="normal">446</span>
+<span class="normal">447</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_clipboard_reader_plugin</span><span class="p">(</span><span class="n">reader</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a clipboard reader plugin function.</span>
+
+<span class="sd">    Decorate a function to register it as a clipboard reader plugin. The function should</span>
+<span class="sd">    take a `ClipboardDataModel` as input and return a `WidgetDataModel`.</span>
+
+<span class="sd">    ``` python</span>
+<span class="sd">    from himena.plugins import register_clipboard_reader_plugin</span>
+
+<span class="sd">    @register_clipboard_reader_plugin</span>
+<span class="sd">    def my_clipboard_reader(data]: ClipboardDataModel) -&gt; WidgetDataModel:</span>
+<span class="sd">        ...  # read clipboard data and return a WidgetDataModel</span>
+<span class="sd">    ```</span>
+
+<span class="sd">    You will need to define a matcher function to tell whether this function can read</span>
+<span class="sd">    a clipboard data model using `define_matcher` method. The matcher should return a</span>
+<span class="sd">    type string if the reader can read the clipboard data, or None otherwise.</span>
+
+<span class="sd">    ```python</span>
+<span class="sd">    from himena import StandardType</span>
+
+<span class="sd">    @my_clipboard_reader.define_matcher</span>
+<span class="sd">    def _(data: ClipboardDataModel):</span>
+<span class="sd">        if &quot;image/svg+xml&quot; in data.mime:</span>
+<span class="sd">            return StandardType.SVG  # StandardType.SVG == &quot;text.svg&quot;</span>
+<span class="sd">        return None</span>
+<span class="sd">    ```</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    priority : int, default 100</span>
+<span class="sd">        Priority of choosing this reader when multiple readers are available. The</span>
+<span class="sd">        default value 100 is higher than the himena builtin clipboard readers, so that</span>
+<span class="sd">        your reader will prioritized over the default ones. If priority is less than 0,</span>
+<span class="sd">        it will not be used unless users intentionally choose this plugin.</span>
+<span class="sd">    module : str | None, default None</span>
+<span class="sd">        The module name override. This is usefule when you want to register a reader</span>
+<span class="sd">        function in the upper scope to simplify the plugin info display.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_inner</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Clipboard reader plugin must be callable.&quot;</span><span class="p">)</span>
+        <span class="n">ins</span> <span class="o">=</span> <span class="n">ClipboardReaderStore</span><span class="p">()</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span>
+
+        <span class="n">reader_plugin</span> <span class="o">=</span> <span class="n">ClipboardReaderPlugin</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="n">priority</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="n">module</span><span class="p">)</span>
+        <span class="n">ins</span><span class="o">.</span><span class="n">add_reader</span><span class="p">(</span><span class="n">reader_plugin</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">reader_plugin</span>
+
+    <span class="k">return</span> <span class="n">_inner</span> <span class="k">if</span> <span class="n">reader</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">_inner</span><span class="p">(</span><span class="n">reader</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h4 id="himena.plugins.register_config" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">register_config</span><span class="p">(</span><span class="n">plugin_id</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">cfg</span><span class="p">)</span></code>
 
@@ -5644,46 +6130,7 @@ function in the upper scope to simplify the plugin info display.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\plugins\io.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">224</span>
-<span class="normal">225</span>
-<span class="normal">226</span>
-<span class="normal">227</span>
-<span class="normal">228</span>
-<span class="normal">229</span>
-<span class="normal">230</span>
-<span class="normal">231</span>
-<span class="normal">232</span>
-<span class="normal">233</span>
-<span class="normal">234</span>
-<span class="normal">235</span>
-<span class="normal">236</span>
-<span class="normal">237</span>
-<span class="normal">238</span>
-<span class="normal">239</span>
-<span class="normal">240</span>
-<span class="normal">241</span>
-<span class="normal">242</span>
-<span class="normal">243</span>
-<span class="normal">244</span>
-<span class="normal">245</span>
-<span class="normal">246</span>
-<span class="normal">247</span>
-<span class="normal">248</span>
-<span class="normal">249</span>
-<span class="normal">250</span>
-<span class="normal">251</span>
-<span class="normal">252</span>
-<span class="normal">253</span>
-<span class="normal">254</span>
-<span class="normal">255</span>
-<span class="normal">256</span>
-<span class="normal">257</span>
-<span class="normal">258</span>
-<span class="normal">259</span>
-<span class="normal">260</span>
-<span class="normal">261</span>
-<span class="normal">262</span>
-<span class="normal">263</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">263</span>
 <span class="normal">264</span>
 <span class="normal">265</span>
 <span class="normal">266</span>
@@ -5692,7 +6139,46 @@ function in the upper scope to simplify the plugin info display.</p>
 <span class="normal">269</span>
 <span class="normal">270</span>
 <span class="normal">271</span>
-<span class="normal">272</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_reader_plugin</span><span class="p">(</span><span class="n">reader</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span>
+<span class="normal">299</span>
+<span class="normal">300</span>
+<span class="normal">301</span>
+<span class="normal">302</span>
+<span class="normal">303</span>
+<span class="normal">304</span>
+<span class="normal">305</span>
+<span class="normal">306</span>
+<span class="normal">307</span>
+<span class="normal">308</span>
+<span class="normal">309</span>
+<span class="normal">310</span>
+<span class="normal">311</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_reader_plugin</span><span class="p">(</span><span class="n">reader</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a reader plugin function.</span>
 
 <span class="sd">    Decorate a function to register it as a reader plugin. The function should take a</span>
@@ -6033,46 +6519,7 @@ function in the upper scope to simplify the plugin info display.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\plugins\io.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">290</span>
-<span class="normal">291</span>
-<span class="normal">292</span>
-<span class="normal">293</span>
-<span class="normal">294</span>
-<span class="normal">295</span>
-<span class="normal">296</span>
-<span class="normal">297</span>
-<span class="normal">298</span>
-<span class="normal">299</span>
-<span class="normal">300</span>
-<span class="normal">301</span>
-<span class="normal">302</span>
-<span class="normal">303</span>
-<span class="normal">304</span>
-<span class="normal">305</span>
-<span class="normal">306</span>
-<span class="normal">307</span>
-<span class="normal">308</span>
-<span class="normal">309</span>
-<span class="normal">310</span>
-<span class="normal">311</span>
-<span class="normal">312</span>
-<span class="normal">313</span>
-<span class="normal">314</span>
-<span class="normal">315</span>
-<span class="normal">316</span>
-<span class="normal">317</span>
-<span class="normal">318</span>
-<span class="normal">319</span>
-<span class="normal">320</span>
-<span class="normal">321</span>
-<span class="normal">322</span>
-<span class="normal">323</span>
-<span class="normal">324</span>
-<span class="normal">325</span>
-<span class="normal">326</span>
-<span class="normal">327</span>
-<span class="normal">328</span>
-<span class="normal">329</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">329</span>
 <span class="normal">330</span>
 <span class="normal">331</span>
 <span class="normal">332</span>
@@ -6082,7 +6529,46 @@ function in the upper scope to simplify the plugin info display.</p>
 <span class="normal">336</span>
 <span class="normal">337</span>
 <span class="normal">338</span>
-<span class="normal">339</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_writer_plugin</span><span class="p">(</span><span class="n">writer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="normal">339</span>
+<span class="normal">340</span>
+<span class="normal">341</span>
+<span class="normal">342</span>
+<span class="normal">343</span>
+<span class="normal">344</span>
+<span class="normal">345</span>
+<span class="normal">346</span>
+<span class="normal">347</span>
+<span class="normal">348</span>
+<span class="normal">349</span>
+<span class="normal">350</span>
+<span class="normal">351</span>
+<span class="normal">352</span>
+<span class="normal">353</span>
+<span class="normal">354</span>
+<span class="normal">355</span>
+<span class="normal">356</span>
+<span class="normal">357</span>
+<span class="normal">358</span>
+<span class="normal">359</span>
+<span class="normal">360</span>
+<span class="normal">361</span>
+<span class="normal">362</span>
+<span class="normal">363</span>
+<span class="normal">364</span>
+<span class="normal">365</span>
+<span class="normal">366</span>
+<span class="normal">367</span>
+<span class="normal">368</span>
+<span class="normal">369</span>
+<span class="normal">370</span>
+<span class="normal">371</span>
+<span class="normal">372</span>
+<span class="normal">373</span>
+<span class="normal">374</span>
+<span class="normal">375</span>
+<span class="normal">376</span>
+<span class="normal">377</span>
+<span class="normal">378</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_writer_plugin</span><span class="p">(</span><span class="n">writer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a writer plugin function.</span>
 
 <span class="sd">    Decorate a function to register it as a writer plugin. The function should take a</span>

@@ -782,6 +782,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#clipboard-plugins" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clipboard Plugins
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1306,6 +1317,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#clipboard-plugins" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clipboard Plugins
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1398,6 +1420,25 @@ tries to open a file, all registered matcher functions are called.</p>
 </code></pre></div>
 <p>Unlike readers, matcher function returns <code>True</code> if the writer can write the file, and
 <code>False</code> otherwise.</p>
+<h2 id="clipboard-plugins">Clipboard Plugins</h2>
+<p>Developers can also implement the behavior of pasting data from the clipboard. This
+works in a similar way as reader plugins.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">himena</span><span class="w"> </span><span class="kn">import</span> <span class="n">StandardType</span><span class="p">,</span> <span class="n">ClipboardDataModel</span><span class="p">,</span> <span class="n">WidgetDataModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">himena.plugins</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_clipboard_reader_plugin</span>
+
+<span class="nd">@register_clipboard_reader_plugin</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">paste_text</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ClipboardDataModel</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">WidgetDataModel</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">mime</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;text/plain&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">),</span>
+        <span class="nb">type</span><span class="o">=</span><span class="n">StandardType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">,</span>
+    <span class="p">)</span>
+
+<span class="nd">@write_text</span><span class="o">.</span><span class="n">define_matcher</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ClipboardDataModel</span><span class="p">):</span>
+    <span class="k">if</span> <span class="s2">&quot;text/plain&quot;</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">mime</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">StandardType</span><span class="o">.</span><span class="n">TEXT</span>
+    <span class="k">return</span> <span class="kc">None</span>
+</code></pre></div>
 
 
 
