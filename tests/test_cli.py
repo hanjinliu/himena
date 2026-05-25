@@ -27,6 +27,8 @@ def test_list_plugins():
     main()
     sys.argv = ["himena", "--list-plugins"]
     main()
+    sys.argv = ["himena", "--list-processes"]
+    main()
     sys.argv = ["himena", PROF_NAME, "--list-plugins"]
     main()
     sys.argv = ["himena", PROF_NAME, "--install", "himena_builtins"]
