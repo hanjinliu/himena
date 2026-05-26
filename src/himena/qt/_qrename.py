@@ -10,18 +10,21 @@ class QRenameLineEdit(QtW.QLineEdit):
         super().__init__(parent)
         self.setHidden(True)
 
-        @self.editingFinished.connect
-        def _():
-            if not self.isVisible():
-                return
-            self.setHidden(True)
-            text = self.text()
-            if text:
-                self.rename_requested.emit(text)
+    def _editing_finished(self):
+        if not self.isVisible():
+            return
+        self.setHidden(True)
+        text = self.text()
+        if text:
+            self.rename_requested.emit(text)
 
     def keyPressEvent(self, a0: QtGui.QKeyEvent) -> None:
         if a0.key() == QtCore.Qt.Key.Key_Escape:
             self.setHidden(True)
+        elif (
+            a0.key() == QtCore.Qt.Key.Key_Return or a0.key() == QtCore.Qt.Key.Key_Enter
+        ):
+            self._editing_finished()
         return super().keyPressEvent(a0)
 
     def focusOutEvent(self, a0: QtGui.QFocusEvent) -> None:

@@ -199,6 +199,8 @@ def test_image_view_draw_roi(qtbot: QtBot, unit: str):
         # line should be removed by clicking somewhere else
         QApplication.processEvents()
         assert image_view._img_view._current_roi_item is None
+        QApplication.processEvents()
+        QApplication.processEvents()
 
         # rotated rect
         image_view._img_view.switch_mode(image_view._img_view.Mode.ROI_ROTATED_RECTANGLE)
@@ -211,6 +213,8 @@ def test_image_view_draw_roi(qtbot: QtBot, unit: str):
         # roi should be removed by clicking somewhere else
         QApplication.processEvents()
         assert image_view._img_view._current_roi_item is None
+        QApplication.processEvents()
+        QApplication.processEvents()
 
         # rotated ellipse
         image_view._img_view.switch_mode(image_view._img_view.Mode.ROI_ROTATED_ELLIPSE)
@@ -223,6 +227,8 @@ def test_image_view_draw_roi(qtbot: QtBot, unit: str):
         # roi should be removed by clicking somewhere else
         QApplication.processEvents()
         assert image_view._img_view._current_roi_item is None
+        QApplication.processEvents()
+        QApplication.processEvents()
 
         # circle
         image_view._img_view.switch_mode(image_view._img_view.Mode.ROI_CIRCLE)
@@ -235,6 +241,8 @@ def test_image_view_draw_roi(qtbot: QtBot, unit: str):
         # circle should be removed by clicking somewhere else
         QApplication.processEvents()
         assert image_view._img_view._current_roi_item is None
+        QApplication.processEvents()
+        QApplication.processEvents()
 
         # polygon
         image_view._img_view.switch_mode(image_view._img_view.Mode.ROI_POLYGON)
