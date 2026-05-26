@@ -40,7 +40,7 @@ def test_tab_widget(qtbot: QtBot):
     QtW.QApplication.processEvents()
     tab_widget._line_edit.setText("Y")
     QtW.QApplication.processEvents()
-    qtbot.keyClick(tab_widget._line_edit, Qt.Key.Key_Return)
+    tab_widget._line_edit._editing_finished()
     QtW.QApplication.processEvents()
     assert tab_widget.tabText(0) == "Y"
 
