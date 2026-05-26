@@ -239,9 +239,13 @@ def test_image_view_draw_roi(qtbot: QtBot, unit: str):
         # polygon
         image_view._img_view.switch_mode(image_view._img_view.Mode.ROI_POLYGON)
         qtbot.mouseClick(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(10, 10))
+        QApplication.processEvents()
         qtbot.mouseClick(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(10, 20))
+        QApplication.processEvents()
         qtbot.mouseClick(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(20, 20))
+        QApplication.processEvents()
         qtbot.mouseClick(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(20, 30))
+        QApplication.processEvents()
         qtbot.mouseDClick(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(30, 30))
         QApplication.processEvents()
         assert isinstance(image_view._img_view._current_roi_item, _rois.QPolygonRoi)
