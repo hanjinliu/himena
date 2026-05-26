@@ -47,10 +47,10 @@ class QTabRenameLineEdit(QRenameLineEdit):
             if self._current_edit_index is None:
                 return
             if not self._allow_duplicate:
-                for i in range(self.parent().count()):
+                for i in range(parent.count()):
                     if i == self._current_edit_index:
                         continue
-                    if self.parent().tabText(i) == new_name:
+                    if parent.tabText(i) == new_name:
                         raise ValueError(f"Duplicate tab name: {new_name!r}")
             parent.setTabText(self._current_edit_index, new_name)
             self.renamed.emit(self._current_edit_index, new_name)

@@ -152,6 +152,7 @@ def test_image_view_draw_roi(qtbot: QtBot, unit: str):
             ),
         )
         qtbot.addWidget(image_view)
+        qtbot.waitExposed(image_view)
 
         # test ROI drawing
         vp = image_view._img_view.viewport()

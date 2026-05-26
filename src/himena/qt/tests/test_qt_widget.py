@@ -33,6 +33,7 @@ def test_tab_widget(qtbot: QtBot):
 
     tab_widget = QTabWidget()
     tab_widget.show()  # this is necessary for testing key click
+    qtbot.waitExposed(tab_widget)
     qtbot.addWidget(tab_widget)
     qtbot.addWidget(tab_widget._line_edit)
     tab_widget.add_tab_area("X")
@@ -40,7 +41,7 @@ def test_tab_widget(qtbot: QtBot):
     QtW.QApplication.processEvents()
     tab_widget._line_edit.setText("Y")
     QtW.QApplication.processEvents()
-    tab_widget._line_edit._editing_finished()
+    qtbot.keyClick(tab_widget._line_edit, Qt.Key.Key_Return)
     QtW.QApplication.processEvents()
     assert tab_widget.tabText(0) == "Y"
 
