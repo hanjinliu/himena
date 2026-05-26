@@ -20,7 +20,7 @@ class QMagicguiModelDrop(QBaseValueWidget):
         layout = kwargs.get("layout", "horizontal")
         super().__init__(
             lambda parent: QModelDrop(types=types, layout=layout, parent=parent),
-            "to_model",
+            "to_data_model",
             "set_model",
             "valueChanged",
             **kwargs,

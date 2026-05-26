@@ -92,6 +92,7 @@ class QModelDropBase(QtW.QGroupBox):
 
     def subwindow(self) -> SubWindow | None:
         """The dropped subwindow."""
+        # NOTE: do not rename this method.
         if self._target_id is None:
             return None
         ui = self._main_window_ref()
@@ -100,6 +101,7 @@ class QModelDropBase(QtW.QGroupBox):
         return ui.window_for_id(self._target_id)
 
     def to_data_model(self):
+        # NOTE: do not rename this method.
         if self._data_model is not None:
             return self._data_model
         if widget := self.subwindow():
@@ -115,6 +117,7 @@ class QModelDropBase(QtW.QGroupBox):
         self._label.setText(src.windowTitle())
 
     def set_subwindow(self, src: SubWindow | uuid.UUID):
+        # NOTE: do not rename this method.
         if isinstance(src, uuid.UUID):
             src = get_main_window(self).window_for_id(src)
         self.set_qsubwindow(get_subwindow(src.widget))
@@ -187,6 +190,7 @@ class QModelDrop(QModelDropBase):
             self.set_model(model.data_model())
 
     def set_model(self, value: WidgetDataModel | uuid.UUID | None):
+        # NOTE: do not rename this method.
         if value is None:
             self._label.setText("Drop here")
             self._label.setToolTip(_NONE_TOOLTIP)
