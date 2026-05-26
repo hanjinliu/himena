@@ -20,9 +20,12 @@ class QStatusBar(QtW.QStatusBar):
         self._profile_btn.clicked.connect(self._open_profile_info)
 
         # NOTE: status bar already has a size grip.
-        self.layout().setSpacing(0)
-        self.layout().setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        self.layout().insertWidget(1, self._profile_btn)
+        layout: QtW.QHBoxLayout = self.layout()
+        layout.setSpacing(0)
+        layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        layout.insertWidget(
+            1, self._profile_btn, alignment=QtCore.Qt.AlignmentFlag.AlignRight
+        )
         self._profile_info: QProfileInfo | None = None
 
     def _open_profile_info(self) -> None:

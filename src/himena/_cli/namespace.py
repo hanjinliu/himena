@@ -19,6 +19,7 @@ class HimenaCliNamespace(argparse.Namespace):
     get: list[str]
     list_plugins: bool
     list_profiles: bool
+    list_processes: bool
     clear_plugin_configs: bool
     import_time: bool
     host: str = "localhost"
@@ -72,6 +73,14 @@ class HimenaCliNamespace(argparse.Namespace):
             f"Profile {self.new!r} is created. You can start the application with:\n"
             f"$ himena {self.new}"
         )
+
+    def action_list_processes(self):
+        from himena._socket import lock_file_dir
+
+        for lock_file in lock_file_dir().glob("*.lock"):
+            if lock_file.stem.count("+") == 1:
+                prof, port = lock_file.stem.split("+")
+                print(f"Profile: {prof}, Port: {port}")
 
 
 def _is_profile_name(arg: str) -> bool:
@@ -140,6 +149,10 @@ class HimenaArgumentParser(argparse.ArgumentParser):
         self.add_argument(
             "--list-profiles", action="store_true",
             help="List all the available profiles."
+        )
+        self.add_argument(
+            "--list-processes", action="store_true",
+            help="List all the running himena processes."
         )
         self.add_argument(
             "--clear-plugin-configs", action="store_true",

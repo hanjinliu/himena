@@ -2,6 +2,7 @@ from concurrent.futures import Future
 from dataclasses import dataclass
 from pathlib import Path
 from concurrent.futures import Future
+import sys
 from typing import Annotated
 from unittest.mock import MagicMock
 import warnings
@@ -144,6 +145,7 @@ def test_dock_widget(himena_ui: MainWindow):
     del himena_ui.dock_widgets[0]
     assert len(himena_ui.dock_widgets) == 0
 
+@pytest.mark.skipif(sys.platform == "darwin", reason="Problem with popup view on macOS")
 def test_tab_focus_change(himena_ui: MainWindowQt, qtbot: QtBot):
     himena_ui.show()
     tab0 = himena_ui.add_tab(title="Tab 0")

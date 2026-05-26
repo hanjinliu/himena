@@ -10,18 +10,21 @@ class QRenameLineEdit(QtW.QLineEdit):
         super().__init__(parent)
         self.setHidden(True)
 
-        @self.editingFinished.connect
-        def _():
-            if not self.isVisible():
-                return
-            self.setHidden(True)
-            text = self.text()
-            if text:
-                self.rename_requested.emit(text)
+    def _editing_finished(self):
+        if not self.isVisible():
+            return
+        self.setHidden(True)
+        text = self.text()
+        if text:
+            self.rename_requested.emit(text)
 
     def keyPressEvent(self, a0: QtGui.QKeyEvent) -> None:
         if a0.key() == QtCore.Qt.Key.Key_Escape:
             self.setHidden(True)
+        elif (
+            a0.key() == QtCore.Qt.Key.Key_Return or a0.key() == QtCore.Qt.Key.Key_Enter
+        ):
+            self._editing_finished()
         return super().keyPressEvent(a0)
 
     def focusOutEvent(self, a0: QtGui.QFocusEvent) -> None:
@@ -44,10 +47,10 @@ class QTabRenameLineEdit(QRenameLineEdit):
             if self._current_edit_index is None:
                 return
             if not self._allow_duplicate:
-                for i in range(self.parent().count()):
+                for i in range(parent.count()):
                     if i == self._current_edit_index:
                         continue
-                    if self.parent().tabText(i) == new_name:
+                    if parent.tabText(i) == new_name:
                         raise ValueError(f"Duplicate tab name: {new_name!r}")
             parent.setTabText(self._current_edit_index, new_name)
             self.renamed.emit(self._current_edit_index, new_name)

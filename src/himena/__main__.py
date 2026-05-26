@@ -75,6 +75,9 @@ def _main(args: HimenaCliNamespace):
             print(path.stem)
         return
 
+    if args.list_processes:
+        return args.action_list_processes()
+
     if args.get:
         from himena._cli.install import get_and_install
 

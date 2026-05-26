@@ -8,11 +8,15 @@ import yaml
 from pydantic import BaseModel, Field
 
 
-def lock_file_path(name: str, port: int) -> Path:
-    """Get the lock file path."""
+def lock_file_dir() -> Path:
     from himena.profile import data_dir
 
-    dir_path = data_dir() / "lock"
+    return data_dir() / "lock"
+
+
+def lock_file_path(name: str, port: int) -> Path:
+    """Get the lock file path."""
+    dir_path = lock_file_dir()
     if not dir_path.exists():
         dir_path.mkdir(parents=True)
     return dir_path / f"{name}+{port}.lock"
@@ -65,7 +69,10 @@ class SocketInfo:
             if files:
                 print(f"Sent data to {profile!r} window at {self.host}:{self.port}.")
             else:
-                print(f"Application at {self.host}:{self.port} is already running.")
+                print(
+                    f"Application at {self.host}:{self.port} is already running. You "
+                    f"can close it by:\nhimena {profile} --port {self.port} --quit"
+                )
             return True
 
     def send_close_request(self, profile: str) -> bool:

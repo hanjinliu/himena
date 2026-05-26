@@ -152,6 +152,7 @@ def test_image_view_draw_roi(qtbot: QtBot, unit: str):
             ),
         )
         qtbot.addWidget(image_view)
+        qtbot.waitExposed(image_view)
 
         # test ROI drawing
         vp = image_view._img_view.viewport()
@@ -160,7 +161,9 @@ def test_image_view_draw_roi(qtbot: QtBot, unit: str):
         qtbot.mousePress(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(10, 10))
         qtbot.mouseMove(vp, pos=QtCore.QPoint(50, 50))
         qtbot.mouseRelease(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(50, 50))
+        QApplication.processEvents()
         qtbot.mouseDClick(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(50, 50))
+        QApplication.processEvents()
 
         # rectangle
         image_view._img_view.switch_mode(image_view._img_view.Mode.ROI_RECTANGLE)
@@ -168,69 +171,96 @@ def test_image_view_draw_roi(qtbot: QtBot, unit: str):
         qtbot.mouseMove(vp, pos=QtCore.QPoint(50, 50))
         qtbot.mouseRelease(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(50, 50))
         assert isinstance(image_view._img_view._current_roi_item, _rois.QRectangleRoi)
+        QApplication.processEvents()
         qtbot.keyPress(image_view._img_view, Qt.Key.Key_T)
         assert len(image_view._img_view._roi_items) == 1
+        QApplication.processEvents()
         image_view._img_view._make_menu_for_roi(image_view._img_view._roi_items[0])
         qtbot.mouseDClick(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(50, 50))
+        QApplication.processEvents()
 
         # ellipse
         image_view._img_view.switch_mode(image_view._img_view.Mode.ROI_ELLIPSE)
         qtbot.mousePress(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(20, 20))
         qtbot.mouseMove(vp, pos=QtCore.QPoint(50, 50))
         qtbot.mouseRelease(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(50, 50))
+        QApplication.processEvents()
         assert isinstance(image_view._img_view._current_roi_item, _rois.QEllipseRoi)
         qtbot.mouseDClick(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(50, 50))
+        QApplication.processEvents()
 
         # line
         image_view._img_view.switch_mode(image_view._img_view.Mode.ROI_LINE)
         qtbot.mousePress(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(10, 10))
         qtbot.mouseMove(vp, pos=QtCore.QPoint(50, 50))
         qtbot.mouseRelease(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(50, 50))
+        QApplication.processEvents()
         assert isinstance(image_view._img_view._current_roi_item, _rois.QLineRoi)
         qtbot.mouseDClick(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(30, 10))
         # line should be removed by clicking somewhere else
+        QApplication.processEvents()
         assert image_view._img_view._current_roi_item is None
+        QApplication.processEvents()
+        QApplication.processEvents()
 
         # rotated rect
         image_view._img_view.switch_mode(image_view._img_view.Mode.ROI_ROTATED_RECTANGLE)
         qtbot.mousePress(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(10, 10))
         qtbot.mouseMove(vp, pos=QtCore.QPoint(50, 50))
         qtbot.mouseRelease(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(50, 50))
+        QApplication.processEvents()
         assert isinstance(image_view._img_view._current_roi_item, _rois.QRotatedRectangleRoi)
         qtbot.mouseDClick(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(80, 80))
         # roi should be removed by clicking somewhere else
+        QApplication.processEvents()
         assert image_view._img_view._current_roi_item is None
+        QApplication.processEvents()
+        QApplication.processEvents()
 
         # rotated ellipse
         image_view._img_view.switch_mode(image_view._img_view.Mode.ROI_ROTATED_ELLIPSE)
         qtbot.mousePress(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(10, 10))
         qtbot.mouseMove(vp, pos=QtCore.QPoint(50, 50))
         qtbot.mouseRelease(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(50, 50))
+        QApplication.processEvents()
         assert isinstance(image_view._img_view._current_roi_item, _rois.QRotatedEllipseRoi)
         qtbot.mouseDClick(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(80, 80))
         # roi should be removed by clicking somewhere else
+        QApplication.processEvents()
         assert image_view._img_view._current_roi_item is None
+        QApplication.processEvents()
+        QApplication.processEvents()
 
         # circle
         image_view._img_view.switch_mode(image_view._img_view.Mode.ROI_CIRCLE)
         qtbot.mousePress(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(10, 10))
         qtbot.mouseMove(vp, pos=QtCore.QPoint(50, 50))
         qtbot.mouseRelease(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(50, 50))
+        QApplication.processEvents()
         assert isinstance(image_view._img_view._current_roi_item, _rois.QCircleRoi)
         qtbot.mouseDClick(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(50, 60))
         # circle should be removed by clicking somewhere else
+        QApplication.processEvents()
         assert image_view._img_view._current_roi_item is None
+        QApplication.processEvents()
+        QApplication.processEvents()
 
         # polygon
         image_view._img_view.switch_mode(image_view._img_view.Mode.ROI_POLYGON)
         qtbot.mouseClick(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(10, 10))
+        QApplication.processEvents()
         qtbot.mouseClick(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(10, 20))
+        QApplication.processEvents()
         qtbot.mouseClick(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(20, 20))
+        QApplication.processEvents()
         qtbot.mouseClick(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(20, 30))
+        QApplication.processEvents()
         qtbot.mouseDClick(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(30, 30))
+        QApplication.processEvents()
         assert isinstance(image_view._img_view._current_roi_item, _rois.QPolygonRoi)
         qtbot.keyClick(image_view._img_view, Qt.Key.Key_Delete)
         qtbot.mouseDClick(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(50, 50))
+        QApplication.processEvents()
         assert image_view._img_view._current_roi_item is None
 
         # segmented line
@@ -238,30 +268,38 @@ def test_image_view_draw_roi(qtbot: QtBot, unit: str):
         qtbot.mousePress(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(10, 10))
         qtbot.mouseMove(vp, pos=QtCore.QPoint(20, 20))
         qtbot.mouseRelease(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(20, 20))
+        QApplication.processEvents()
         qtbot.mousePress(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(20, 20))
         qtbot.mouseMove(vp, pos=QtCore.QPoint(30, 20))
         qtbot.mouseRelease(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(30, 20))
+        QApplication.processEvents()
         qtbot.mousePress(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(30, 20))
         qtbot.mouseRelease(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(30, 20))
+        QApplication.processEvents()
         qtbot.mouseDClick(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(50, 50))
+        QApplication.processEvents()
 
         # point
         image_view._img_view.switch_mode(image_view._img_view.Mode.ROI_POINT)
         qtbot.mousePress(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(10, 10))
         qtbot.mouseMove(vp, pos=QtCore.QPoint(20, 20))
         qtbot.mouseRelease(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(20, 20))
+        QApplication.processEvents()
         qtbot.mousePress(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(40, 40))
         qtbot.mouseRelease(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(40, 40))
+        QApplication.processEvents()
         assert isinstance(image_view._img_view._current_roi_item, _rois.QPointRoi)
         qtbot.mouseDClick(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(50, 50))
-
+        QApplication.processEvents()
 
         # select
         image_view._img_view.switch_mode(image_view._img_view.Mode.SELECT)
         qtbot.mousePress(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(20, 20))
         qtbot.mouseMove(vp, pos=QtCore.QPoint(50, 50))
         qtbot.mouseRelease(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(50, 50))
+        QApplication.processEvents()
         qtbot.mouseDClick(vp, Qt.MouseButton.LeftButton, pos=QtCore.QPoint(50, 50))
+        QApplication.processEvents()
 
 
 def test_image_view_copy_roi(himena_ui: MainWindow, qtbot: QtBot):
