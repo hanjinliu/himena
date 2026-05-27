@@ -1,4 +1,5 @@
 import sys
+from unittest.mock import MagicMock
 from qtpy import QtWidgets as QtW
 from qtpy.QtCore import Qt
 from pytestqt.qtbot import QtBot
@@ -31,18 +32,28 @@ def test_qt_traceback(qtbot: QtBot):
 def test_tab_widget(qtbot: QtBot):
     from himena.qt._qtab_widget import QTabWidget
 
+    mock1 = MagicMock()
+    mock2 = MagicMock()
     tab_widget = QTabWidget()
     tab_widget.show()  # this is necessary for testing key click
     qtbot.waitExposed(tab_widget)
     qtbot.addWidget(tab_widget)
     qtbot.addWidget(tab_widget._line_edit)
+    tab_widget._line_edit.rename_requested.connect(mock1)
+    tab_widget._line_edit.renamed.connect(mock2)
     tab_widget.add_tab_area("X")
+    mock1.assert_not_called()
+    mock2.assert_not_called()
     tab_widget._line_edit.start_edit(0)
     QtW.QApplication.processEvents()
     tab_widget._line_edit.setText("Y")
     QtW.QApplication.processEvents()
+    mock1.assert_not_called()
+    mock2.assert_not_called()
     qtbot.keyClick(tab_widget._line_edit, Qt.Key.Key_Return)
     QtW.QApplication.processEvents()
+    mock1.assert_called_once_with("Y")
+    mock2.assert_called_once_with(0, "Y")
     assert tab_widget.tabText(0) == "Y"
 
 def test_int_line_edit(qtbot: QtBot):
