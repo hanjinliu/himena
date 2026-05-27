@@ -11,7 +11,7 @@ class QRenameLineEdit(QtW.QLineEdit):
         self.setHidden(True)
 
     def _editing_finished(self):
-        if not self.isVisible():
+        if self.isHidden():
             return
         self.setHidden(True)
         text = self.text()
@@ -81,7 +81,6 @@ class QTabRenameLineEdit(QRenameLineEdit):
         self.setHidden(False)
         self.setFocus()
         self.selectAll()
-        self.setVisible(True)
 
     def _hide_me(self):
         self.setHidden(True)
