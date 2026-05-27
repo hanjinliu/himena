@@ -46,6 +46,7 @@ def test_tab_widget(qtbot: QtBot):
     mock2.assert_not_called()
     tab_widget._line_edit.start_edit(0)
     QtW.QApplication.processEvents()
+    assert tab_widget._line_edit._current_edit_index == 0
     tab_widget._line_edit.setText("Y")
     QtW.QApplication.processEvents()
     mock1.assert_not_called()
