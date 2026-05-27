@@ -11,7 +11,7 @@ class QRenameLineEdit(QtW.QLineEdit):
         self.setHidden(True)
 
     def _editing_finished(self):
-        if not self.isVisible():
+        if self.isHidden():
             return
         self.setHidden(True)
         text = self.text()
@@ -70,11 +70,7 @@ class QTabRenameLineEdit(QRenameLineEdit):
         self._current_edit_index = self.parent().currentIndex()
         return super().showEvent(a0)
 
-    def _move_line_edit(
-        self,
-        rect: QtCore.QRect,
-        text: str,
-    ) -> QtW.QLineEdit:
+    def _move_line_edit(self, rect: QtCore.QRect, text: str) -> None:
         geometry = self.geometry()
         geometry.setWidth(rect.width())
         geometry.setHeight(rect.height())
