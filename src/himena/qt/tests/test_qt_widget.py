@@ -38,14 +38,16 @@ def test_tab_widget(qtbot: QtBot):
     tab_widget.show()  # this is necessary for testing key click
     qtbot.waitExposed(tab_widget)
     qtbot.addWidget(tab_widget)
-    qtbot.addWidget(tab_widget._line_edit)
     tab_widget._line_edit.rename_requested.connect(mock1)
     tab_widget._line_edit.renamed.connect(mock2)
     tab_widget.add_tab_area("X")
     mock1.assert_not_called()
     mock2.assert_not_called()
+    assert not tab_widget._line_edit.isVisible()
     tab_widget._line_edit.start_edit(0)
     QtW.QApplication.processEvents()
+    qtbot.waitExposed(tab_widget._line_edit)
+    assert tab_widget._line_edit.isVisible()
     assert tab_widget._line_edit._current_edit_index == 0
     tab_widget._line_edit.setText("Y")
     QtW.QApplication.processEvents()
