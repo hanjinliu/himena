@@ -53,6 +53,8 @@ def test_tab_widget(qtbot: QtBot):
     mock2.assert_not_called()
     qtbot.keyClick(tab_widget._line_edit, Qt.Key.Key_Return)
     QtW.QApplication.processEvents()
+    assert tab_widget._line_edit._current_edit_index == 0
+    assert tab_widget._line_edit.text() == "Y"
     mock1.assert_called_once_with("Y")
     mock2.assert_called_once_with(0, "Y")
     assert tab_widget.tabText(0) == "Y"
