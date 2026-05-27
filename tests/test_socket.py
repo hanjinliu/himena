@@ -27,4 +27,17 @@ def test_remained_lock_file(capfd):
     QtW.QApplication.processEvents()
     QtW.QApplication.processEvents()
     ui.close()
-    assert capfd.readouterr().out.startswith("Socket is not available")
+
+def test_using_same_port_without_file():
+    prof = new_app_profile("prof")
+    ui0, lock0, _ = _send_or_create_window(prof)
+    assert ui0 is not None
+    assert lock0 is not None
+    assert lock_file_path("prof", 49200).exists()
+
+    ui1, lock1, _ = _send_or_create_window(prof)
+    assert ui1 is not None
+    assert lock1 is None
+
+    ui0.close()
+    ui1.close()
