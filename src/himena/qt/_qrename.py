@@ -81,6 +81,7 @@ class QTabRenameLineEdit(QRenameLineEdit):
         self.setHidden(False)
         self.setFocus()
         self.selectAll()
+        self.setVisible(True)
 
     def _hide_me(self):
         self.setHidden(True)

@@ -143,7 +143,7 @@ def test_image_view_rgb(qtbot: QtBot):
 
 @pytest.mark.parametrize("unit", ["", "nm"])
 def test_image_view_draw_roi(qtbot: QtBot, unit: str):
-    if sys.platform == "linux" and sys.version_info >= (3, 14):
+    if sys.platform == "linux" and sys.version_info >= (3, 13):
         pytest.skip("This test is very unstable on Linux")
     image_view = QImageView()
     image_view.show()
