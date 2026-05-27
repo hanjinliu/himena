@@ -126,8 +126,9 @@ def _main(args: HimenaCliNamespace):
         for result in results:
             result.call_startup(ui)
         ui.show(run=not _is_testing())
-        lock.close()
-        Path(lock.name).unlink(missing_ok=True)
+        if lock is not None:
+            lock.close()
+            Path(lock.name).unlink(missing_ok=True)
 
 
 def _send_or_create_window(
@@ -144,7 +145,9 @@ def _send_or_create_window(
         if path:
             files = path.split(";")
         else:
-            files = []
+            ui, results = _new_window_impl(prof, app_attributes=attrs)
+            return ui, None, results
+
         succeeded = socket_info.send_to_window(prof.name, files)
         if succeeded:
             return None, None, []
