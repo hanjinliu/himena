@@ -1023,6 +1023,7 @@ class QChoicesDialog(QtW.QDialog):
         self._title_bar.setTitle(title)
         if message:
             label = QtW.QLabel(message)
+            label.setWordWrap(True)
             label.setTextInteractionFlags(
                 QtCore.Qt.TextInteractionFlag.TextSelectableByMouse
             )

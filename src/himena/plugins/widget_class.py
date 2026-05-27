@@ -1,9 +1,10 @@
 from functools import wraps
+from pathlib import Path
 from types import MappingProxyType
 from typing import Callable, overload, TypeVar, TYPE_CHECKING
 import warnings
 from app_model.types import Action
-from himena._descriptors import NoNeedToSave
+from himena._descriptors import NoNeedToSave, SaveToPath
 from himena._utils import get_display_name, get_widget_class_id
 from himena._app_model import AppContext as ctx
 from himena.plugins.actions import AppActionRegistry, PluginConfigTuple
@@ -141,8 +142,14 @@ class OpenDataInFunction:
         )
 
     def __call__(self, model: WidgetDataModel) -> WidgetDataModel:
+        if model.save_behavior_override is not None:
+            save_behavior_override = model.save_behavior_override
+        elif isinstance(model.source, Path):
+            save_behavior_override = SaveToPath(path=model.source, ask_overwrite=True)
+        else:
+            save_behavior_override = NoNeedToSave()
         return model.with_open_plugin(
-            self._plugin_id, save_behavior_override=NoNeedToSave()
+            self._plugin_id, save_behavior_override=save_behavior_override
         )
 
     def menu_id(self) -> str:
