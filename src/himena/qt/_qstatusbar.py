@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import subprocess
 from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW, QtCore
 from himena.profile import profile_dir
@@ -26,40 +27,30 @@ class QStatusBar(QtW.QStatusBar):
         layout.insertWidget(
             1, self._profile_btn, alignment=QtCore.Qt.AlignmentFlag.AlignRight
         )
-        self._profile_info: QProfileInfo | None = None
+
+    def parentWidget(self) -> QMainWindow:
+        return super().parentWidget()
 
     def _open_profile_info(self) -> None:
         """Open the profile info."""
-        self._profile_info = info = QProfileInfo(self._profile_btn.text())
-        info.setParent(self, QtCore.Qt.WindowType.Popup)
-        info.show()
-        info.move(
-            self._profile_btn.mapToGlobal(QtCore.QPoint(0, 0))
-            - QtCore.QPoint(0, info.height())
-        )
-
-    def closeEvent(self, a0):
-        if self._profile_info:
-            self._profile_info.close()
-            self._profile_info.deleteLater()
-            self._profile_info = None
-        return super().closeEvent(a0)
-
-
-class QProfileInfo(QtW.QWidget):
-    def __init__(self, current_profile_name: str):
-        super().__init__()
-        label_texts = []
+        cur = self._profile_btn.text()
+        choices: list[tuple[str, str]] = []
         for path in profile_dir().iterdir():
-            if path.stem == current_profile_name:
-                label_texts.append(f"&gt; <b>{path.stem}</b>")
+            if path.stem == cur:
+                choices.append((f"{cur} (current)", cur))
             else:
-                label_texts.append(f"&nbsp;&nbsp; {path.stem}")
-        label_text = "<br>".join(label_texts)
-        label = QtW.QLabel(label_text)
-        label.setTextFormat(QtCore.Qt.TextFormat.RichText)
-        label.setTextInteractionFlags(
-            QtCore.Qt.TextInteractionFlag.TextBrowserInteraction
-        )
-        layout = QtW.QVBoxLayout(self)
-        layout.addWidget(label)
+                choices.append((path.stem, path.stem))
+
+        ui = self.parentWidget()._himena_main_window
+        if resp := ui.exec_choose_one_dialog(
+            message="Choose another profile to open an new window with it.",
+            choices=choices,
+            how="palette",
+        ):
+            if resp == cur:
+                return
+            socket = ui.socket_info
+            ui.close()
+            subprocess.Popen(
+                ["himena", resp, "--port", str(socket.port), "--host", socket.host],
+            )
