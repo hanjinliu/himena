@@ -145,6 +145,7 @@ def _send_or_create_window(
         if path:
             files = path.split(";")
         else:
+            attrs["port"] = -1
             ui, results = _new_window_impl(prof, app_attributes=attrs)
             return ui, None, results
 
