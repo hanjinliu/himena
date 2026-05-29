@@ -168,7 +168,10 @@ class HimenaArgumentParser(argparse.ArgumentParser):
         )
         self.add_argument(
             "--port", type=int, default=49200,
-            help="Socket port number to use for the GUI.",
+            help=(
+                "Socket port number to use for the GUI. If negative, application will "
+                "not use a socket server."
+            ),
         )
         self.add_argument(
             "--quit", action="store_true",

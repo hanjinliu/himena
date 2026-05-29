@@ -105,14 +105,17 @@ class QtEventLoopHandler(EventLoopHandler["QApplication"]):
 
     def _run_app_routine(self):
         qapp = self.get_app()
-        try:
-            try:
-                self._setup_socket(qapp)
-            except PermissionError as e:
-                print(e)
+        if self._port < 0:
             qapp.exec()
-        finally:
-            self.close_socket()
+        else:
+            try:
+                try:
+                    self._setup_socket(qapp)
+                except PermissionError as e:
+                    print(e)
+                qapp.exec()
+            finally:
+                self.close_socket()
 
     def _setup_socket(self, app):
         """Set up a socket for inter-process communication."""
