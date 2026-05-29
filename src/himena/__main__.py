@@ -141,14 +141,14 @@ def _send_or_create_window(
 
     port = int(attrs.get("port", 49200))
     if (lock := get_unique_lock_file(prof.name, port)) is None:
-        socket_info = SocketInfo.from_lock(prof.name, port)
-        if path:
+        if path or not lock_file_path(prof.name, port).exists():
             files = path.split(";")
         else:
             attrs["port"] = -1
             ui, results = _new_window_impl(prof, app_attributes=attrs)
             return ui, None, results
 
+        socket_info = SocketInfo.from_lock(prof.name, port)
         succeeded = socket_info.send_to_window(prof.name, files)
         if succeeded:
             return None, None, []
