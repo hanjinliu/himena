@@ -130,7 +130,8 @@ def test_notification_and_status_tip(himena_ui: MainWindowQt):
     himena_ui._backend_main_window._on_error(ValueError())
     himena_ui._backend_main_window._on_error(ValueError("msg 1", "msg 2"))
     himena_ui._backend_main_window._on_warning(warnings.WarningMessage("msg", UserWarning, "file", 1))
-    himena_ui._backend_main_window._status_bar._profile_btn.click()
+    with choose_one_dialog_response(himena_ui, False):
+        himena_ui._backend_main_window._status_bar._profile_btn.click()
     himena_ui._backend_main_window.setFocus()
 
 def test_dock_widget(himena_ui: MainWindow):
