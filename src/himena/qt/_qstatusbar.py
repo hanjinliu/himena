@@ -50,7 +50,13 @@ class QStatusBar(QtW.QStatusBar):
             if resp == cur:
                 return
             socket = ui.socket_info
-            ui.close()
+            if len(list(ui.iter_windows())) == 0 or ui.exec_choose_one_dialog(
+                title="Close this app?",
+                message="There are still windows open. Do you want to keep this application open?",
+                choices=[("Yes, keep it open", False), ("No, close", True)],
+                how="buttons",
+            ):
+                ui.close()
             subprocess.Popen(
                 ["himena", resp, "--port", str(socket.port), "--host", socket.host],
             )
