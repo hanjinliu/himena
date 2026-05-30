@@ -5,6 +5,7 @@ from io import TextIOWrapper
 import socket
 from dataclasses import dataclass, asdict
 import yaml
+from contextlib import suppress
 from pydantic import BaseModel, Field
 
 
@@ -63,16 +64,13 @@ class SocketInfo:
             # will be handled in QtEventLoopHandler
             data.send(self.host, self.port)
         except Exception as e:
-            print(f"Socket is not available: {e}")
+            print(
+                f"Tried to send file to {self.host}:{self.port} but socket is not "
+                f"available: {e}"
+            )
             return False
         else:
-            if files:
-                print(f"Sent data to {profile!r} window at {self.host}:{self.port}.")
-            else:
-                print(
-                    f"Application at {self.host}:{self.port} is already running. You "
-                    f"can close it by:\nhimena {profile} --port {self.port} --quit"
-                )
+            print(f"Sent data to {profile!r} window at {self.host}:{self.port}.")
             return True
 
     def send_close_request(self, profile: str) -> bool:
@@ -86,6 +84,9 @@ class SocketInfo:
             data.send(self.host, self.port)
         except Exception as e:
             print(f"Socket is not available: {e}")
+            if (lock := lock_file_path(profile, self.port)).exists():
+                with suppress(Exception):
+                    lock.unlink(missing_ok=True)
             return False
         else:
             return True

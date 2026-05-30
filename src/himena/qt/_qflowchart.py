@@ -13,6 +13,7 @@ from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt, QPointF
 from cmap import Color
 from himena.consts import MonospaceFontFamily, DefaultFontFamily
+from himena.utils.collections import UndoRedoStack
 
 
 class BaseNodeItem(ABC):
@@ -389,7 +390,16 @@ class QFlowChartTag(QtW.QGraphicsPolygonItem):
         self.setToolTip(tag.tooltip)
 
 
+class QFlowChartOrigin(QtW.QGraphicsEllipseItem):
+    def __init__(self):
+        super().__init__(-1, -1, 2, 2)
+        self.setVisible(False)
+        self.setPos(0, 0)
+
+
 class QFlowChartView(QtW.QGraphicsView):
+    """Interactive flowchart view"""
+
     item_left_pressed = QtCore.Signal(BaseNodeItem)
     item_right_pressed = QtCore.Signal(BaseNodeItem)
     item_left_clicked = QtCore.Signal(BaseNodeItem)
@@ -405,7 +415,8 @@ class QFlowChartView(QtW.QGraphicsView):
         self.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
         self.setCursor(Qt.CursorShape.OpenHandCursor)
         # Enable dragging the scene by dragging the background
-        self._last_drag_position = QtCore.QPointF()
+        self._last_drag_pos = QtCore.QPointF()
+        self._last_wheel_start_pos = QtCore.QPointF()
         self._move_delta = QPointF(0, 0)
 
         self.horizontalScrollBar().hide()
@@ -413,6 +424,18 @@ class QFlowChartView(QtW.QGraphicsView):
 
         self._dodge_distance = 32
         self._tag_collection: list[TagItem] = []
+
+        self._origin_item = QFlowChartOrigin()
+        self.scene().addItem(self._origin_item)
+
+        # go to previous/next positions
+        self._goto_undo_stack = UndoRedoStack[QtCore.QPointF](size=100)
+
+    def clear_items(self):
+        self.scene().clear()
+        self._node_map.clear()
+        self._origin_item = QFlowChartOrigin()
+        self.scene().addItem(self._origin_item)
 
     def add_child(
         self,
@@ -580,47 +603,134 @@ class QFlowChartView(QtW.QGraphicsView):
         """Override mouse press event to start dragging the scene"""
         if _ := self.itemAt(event.pos()):
             return super().mousePressEvent(event)
-        self._last_drag_position = event.position()
+        self._last_drag_pos = event.position()
         self._move_delta = QPointF(0, 0)
+        if not self._last_wheel_start_pos.isNull():
+            pos = self._origin_item.pos()
+            self._push_or_merge(pos - self._last_wheel_start_pos)
+        self._last_wheel_start_pos = QtCore.QPointF()
         if event.button() == Qt.MouseButton.LeftButton:
             self.setCursor(Qt.CursorShape.ClosedHandCursor)
+        elif event.button() == Qt.MouseButton.BackButton:
+            self.goto_previous_position()
+        elif event.button() == Qt.MouseButton.ForwardButton:
+            self.goto_next_position()
         return super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
         if (
             event.buttons() & Qt.MouseButton.LeftButton
-            and not self._last_drag_position.isNull()
+            and not self._last_drag_pos.isNull()
         ):
             # If left button is pressed, drag the scene
-            delta = event.position() - self._last_drag_position
-            self._last_drag_position = event.position()
+            delta = event.position() - self._last_drag_pos
+            self._last_drag_pos = event.position()
             self._move_delta += delta
-            for item in self.scene().items():
-                if isinstance(item, QFlowChartNode):
-                    item.setPos(item.pos() + delta)
+            self.move_items(delta)
 
         return super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
         """Override mouse release event to stop dragging the scene"""
-        if self._last_drag_position.isNull():
+        if self._last_drag_pos.isNull():
             return super().mouseReleaseEvent(event)
         is_click = self._move_delta.manhattanLength() < 4
         if event.button() == Qt.MouseButton.LeftButton:
             self.setCursor(Qt.CursorShape.OpenHandCursor)
-            self._last_drag_position = QtCore.QPointF()
+            self._last_drag_pos = QtCore.QPointF()
             if is_click:
                 # If it was a click, emit the background left clicked signal
                 self.background_left_clicked.emit(event.position())
+            else:
+                # If it was a drag, add the final position to the undo stack
+                self._push_or_merge(self._move_delta)
+                self._move_delta = QPointF(0, 0)
         elif event.button() == Qt.MouseButton.RightButton:
             # If right button is released, emit the right clicked signal
             if is_click:
                 self.background_right_clicked.emit(event.position())
         return super().mouseReleaseEvent(event)
 
+    def wheelEvent(self, event: QtGui.QWheelEvent):
+        """Override wheel event to zoom in/out the scene"""
+        angle_delta = event.angleDelta()
+        factor = 0.5  # sensitivity
+        delta = QtCore.QPointF(angle_delta.x() * factor, angle_delta.y() * factor)
+        self.move_items(delta)
+        if self._last_wheel_start_pos.isNull():
+            self._last_wheel_start_pos = self._origin_item.pos()
+
     def mouseDoubleClickEvent(self, event):
-        self._last_drag_position = QtCore.QPointF()
+        self._last_drag_pos = QtCore.QPointF()
         return super().mouseDoubleClickEvent(event)
+
+    def center_on_item(self, item: BaseNodeItem, animate: bool = False):
+        """Move the view to ensure the item visible and select it."""
+        if node := self._node_map.get(item.id()):
+            self.centerOn(node)
+            v0 = self.verticalScrollBar().value()
+            h0 = self.horizontalScrollBar().value()
+            delta = -QPointF(h0, v0)
+            self.verticalScrollBar().setValue(0)
+            self.horizontalScrollBar().setValue(0)
+            if animate:
+                self.move_items_animated(delta)
+            else:
+                self.move_items(delta)
+            self._push_or_merge(delta)
+            node.setSelected(True)
+
+    def goto_previous_position(self):
+        """Go to the previous position in the undo stack"""
+        if delta := self._goto_undo_stack.undo():
+            self.move_items_animated(-delta)
+
+    def goto_next_position(self):
+        """Go to the next position in the undo stack"""
+        if delta := self._goto_undo_stack.redo():
+            self.move_items_animated(delta)
+
+    def keyPressEvent(self, event: QtGui.QKeyEvent):
+        """Handle key press events for navigation"""
+        if event.modifiers() & Qt.KeyboardModifier.AltModifier:
+            if event.key() == Qt.Key.Key_Left:
+                self.goto_previous_position()
+                return
+            elif event.key() == Qt.Key.Key_Right:
+                self.goto_next_position()
+                return
+        return super().keyPressEvent(event)
+
+    def move_items(self, delta: QtCore.QPointF):
+        for item in self.scene().items():
+            if isinstance(item, (QFlowChartNode, QFlowChartOrigin)):
+                item.setPos(item.pos() + delta)
+
+    def move_items_animated(self, delta: QtCore.QPointF, duration_ms_max: int = 150):
+        """Animate moving items by the given delta over the specified duration"""
+        num_split = max(1, int(duration_ms_max / 33.3))  # Aim for ~30 FPS
+        # if the distance is too short, reduce the number of splits to avoid unnecessary animation
+        num_split = min(
+            num_split, int(np.ceil(np.sqrt(delta.x() ** 2 + delta.y() ** 2) / 80))
+        )
+        if num_split == 1:
+            return self.move_items(delta)
+
+        frac = np.arange(1, num_split + 1) / num_split
+        frac = np.cos((1 - frac) * np.pi / 2)  # ease out effect
+        frac = np.diff(frac, prepend=0)  # split into fractions that sum to 1
+        for i in range(num_split):
+            delta_i = delta * frac[i]
+            QtCore.QTimer.singleShot(
+                int(i * 33.3), lambda d=delta_i: self.move_items(d)
+            )
+
+    def _push_or_merge(self, delta: QtCore.QPointF):
+        """Push a new delta to the undo stack or merge it with the last one if small"""
+        if len(self._goto_undo_stack._stack_undo) > 0 and delta.manhattanLength() < 27:
+            last_delta = self._goto_undo_stack.undo()
+            delta = last_delta + delta
+        self._goto_undo_stack.push(delta)
 
 
 def iter_next_shift(stride: float, max_value: float = 1e4) -> Iterator[float]:
