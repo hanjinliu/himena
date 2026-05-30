@@ -13,7 +13,6 @@ from typing import (
 )
 
 from himena.types import (
-    WidgetDataModel,
     WindowState,
     ClipboardDataModel,
     DockArea,
@@ -383,5 +382,5 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     def _keys_as_set(self) -> set[int]:
         """Return the set of currently pressed key codes."""
 
-    def _add_popup(self, model: WidgetDataModel, win: WidgetWrapper[_W]) -> None:
-        """Popup a model or a sub window."""
+    def _add_popup(self, widget: _W, title: str, win: WidgetWrapper[_W] | None):
+        """Popup a widget as a overlay window."""

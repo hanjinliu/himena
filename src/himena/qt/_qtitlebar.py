@@ -47,6 +47,14 @@ class QWidgetTitleBar(QtW.QWidget):
         font = self._title_label.font()
         font.setPointSize(size)
         self._title_label.setFont(font)
+        self.setFixedHeight(size + 8)
+
+    def set_selectable(self):
+        """Set whether the title is selectable."""
+        self._title_label.setTextInteractionFlags(
+            QtCore.Qt.TextInteractionFlag.TextSelectableByMouse
+        )
+        self._title_label.setCursor(QtCore.Qt.CursorShape.IBeamCursor)
 
     def add_button(self, btn: QTitleBarToolButton):
         self._layout.addWidget(btn)
