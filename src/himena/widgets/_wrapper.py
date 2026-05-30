@@ -302,7 +302,9 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         if force_not_editable:
             update["editable"] = False
         model = self.to_model().model_copy(update=update)
-        self._main_window()._add_popup(model, self)
+        back = self._main_window()
+        interf = back._himena_main_window._pick_widget(model)
+        back._add_popup(interf, model.title, self)
 
     def _is_drop_accepted(self, incoming: DragDataModel) -> bool:
         widget = self.widget

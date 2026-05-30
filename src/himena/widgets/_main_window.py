@@ -489,7 +489,12 @@ class MainWindow(Generic[_W]):
         the content of the model.
         """
         model = model.model_copy(update={"editable": False})
-        self._backend_main_window._add_popup(model, None)
+        interf = self._pick_widget(model)
+        self.add_widget_as_popup(interf, title=model.title)
+
+    def add_widget_as_popup(self, widget: _W, title: str = "") -> None:
+        """Add a widget as a popup window."""
+        self._backend_main_window._add_popup(widget, title, None)
 
     def add_function(
         self,

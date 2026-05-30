@@ -29,7 +29,7 @@ from himena.qt._qtitlebar import QTitleBarToolButton, QWidgetTitleBar
 from himena.utils.window_rect import prevent_window_overlap
 from himena.utils.app import iter_root_menu_ids
 from himena._app_model import _formatter, HimenaApplication
-from himena.plugins import AppActionRegistry
+from himena.plugins import AppActionRegistry, _checker
 from himena.utils.misc import ext_to_filter
 from himena._utils import doc_to_whats_this
 from himena.qt._qnotification import QJobStack, QNotificationWidget, QWhatsThisWidget
@@ -51,7 +51,6 @@ from himena.types import (
     DockAreaString,
     ClipboardDataModel,
     Size,
-    WidgetDataModel,
     WindowState,
     WindowRect,
     BackendInstructions,
@@ -60,7 +59,12 @@ from himena.types import (
 from himena.app import get_event_loop_handler
 from himena import widgets
 from himena.qt.registry import list_widget_class
-from himena.qt._utils import get_stylesheet_path, ArrayQImage, ndarray_to_qimage
+from himena.qt._utils import (
+    get_stylesheet_path,
+    ArrayQImage,
+    ndarray_to_qimage,
+    split_widget_and_interface,
+)
 from himena.widgets._wrapper import WidgetWrapper
 
 if TYPE_CHECKING:
@@ -962,8 +966,12 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
                 out.add(int(model_key._key))
         return out
 
-    def _add_popup(self, model: WidgetDataModel, win: WidgetWrapper[QtW.QWidget]):
-        QPopupView(self, win).popup_data_model(model)
+    def _add_popup(self, widget, title: str, win: WidgetWrapper[QtW.QWidget] | None):
+        interf, qwidget = split_widget_and_interface(widget)
+        _checker.call_theme_changed_callback(interf, self._himena_main_window.theme)
+        view = QPopupView(self)
+        view.set_title(title)
+        view.popup_widget(qwidget, interf, win)
 
 
 class QCornerToolBar(QModelToolBar):

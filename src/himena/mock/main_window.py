@@ -404,5 +404,5 @@ class MockBackend(BackendMainWindow):
     ):
         """Add a what's this text to the main window."""
 
-    def _add_popup(self, model, win: WidgetWrapper) -> None:
-        """Popup a model or a sub window as a separate window."""
+    def _add_popup(self, widget, title: str, win: WidgetWrapper):
+        """Popup a widget as a overlay window."""
