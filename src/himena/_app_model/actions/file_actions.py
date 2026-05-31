@@ -442,6 +442,28 @@ def quit_main_window(ui: MainWindow) -> None:
 
 
 @ACTIONS.append_from_fn(
+    id="restart",
+    title="Restart Application",
+    recording=False,
+)
+def restart_main_window(ui: MainWindow) -> None:
+    """Restart the application."""
+    import subprocess
+
+    socket = ui.socket_info
+    args = [
+        "himena",
+        ui.app_profile.name,
+        "--port",
+        str(socket.port),
+        "--host",
+        socket.host,
+    ]
+    subprocess.Popen(args, start_new_session=True)
+    ui.close()
+
+
+@ACTIONS.append_from_fn(
     id="copy-screenshot",
     title="Copy Screenshot of Entire Main Window",
     menus=[{"id": MenuId.FILE_SCREENSHOT, "group": COPY_SCR_SHOT}],
