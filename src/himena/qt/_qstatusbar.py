@@ -47,16 +47,24 @@ class QStatusBar(QtW.QStatusBar):
             choices=choices,
             how="palette",
         ):
-            if resp == cur:
-                return
             socket = ui.socket_info
-            if len(list(ui.iter_windows())) == 0 or ui.exec_choose_one_dialog(
-                title="Close this app?",
-                message="There are still windows open. Do you want to keep this application open?",
-                choices=[("Yes, keep it open", False), ("No, close", True)],
-                how="buttons",
-            ):
-                ui.close()
+            if resp != cur:
+                if len(list(ui.iter_windows())) == 0 or ui.exec_choose_one_dialog(
+                    title="Close this app?",
+                    message="There are still windows open. Do you want to keep this application open?",
+                    choices=[("Yes, keep it open", False), ("No, close", True)],
+                    how="buttons",
+                ):
+                    ui.close()
+                else:
+                    ui.set_status_tip(
+                        f"Launching a new application with the profile {resp!r}",
+                        duration=5,
+                    )
+            else:
+                ui.set_status_tip(
+                    "Launching a new application with the same profile", duration=5
+                )
             subprocess.Popen(
                 ["himena", resp, "--port", str(socket.port), "--host", socket.host],
             )

@@ -82,6 +82,26 @@ class HimenaCliNamespace(argparse.Namespace):
                 prof, port = lock_file.stem.split("+")
                 print(f"Profile: {prof}, Port: {port}")
 
+    def action_quit(self, prof_name: str, port: int):
+        from himena._socket import SocketInfo
+
+        try:
+            socket_info = SocketInfo.from_lock(prof_name, port)
+        except FileNotFoundError:  # lock file not found
+            print(
+                f"No running application found for profile {prof_name!r} and port {port}."
+            )
+            return
+        succeeded = socket_info.send_close_request(prof_name)
+        if succeeded:
+            print(
+                f"Closing {prof_name!r} window at {socket_info.host}:{socket_info.port}."
+            )
+        else:
+            print(
+                f"Failed to send close request to {prof_name!r} window at {socket_info.host}:{socket_info.port}."
+            )
+
 
 def _is_profile_name(arg: str) -> bool:
     return all(c in ALLOWED_LETTERS for c in arg)
