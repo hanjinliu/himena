@@ -219,10 +219,9 @@ class QHistogramView(QBaseGraphicsView):
         for hist in self._hist_items:
             rect = rect.united(hist.boundingRect())
         x0, x1 = rect.left(), rect.right()
-        self.fitInView(
-            self.viewRect(x1 - x0), QtCore.Qt.AspectRatioMode.IgnoreAspectRatio
-        )
-        self._view_range = (x0, x1)
+        x0 = max(rect.left(), self._minmax[0])
+        x1 = min(rect.right(), self._minmax[1])
+        self.set_view_range(x0, x1)
 
     def wheelEvent(self, event: QtGui.QWheelEvent):
         delta = event.angleDelta().y()
