@@ -393,6 +393,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         if event.spontaneous() and self._confirm_close and not self._ok_to_exit():
             event.ignore()
             return
+        self.hide()  # quickly hide the main window.
         try:
             WorkerBase.await_workers(500)
         except RuntimeError:
@@ -860,9 +861,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _on_status_tip_requested(self, tip: str, duration: float) -> None:
         self._status_bar.showMessage(tip, int(duration * 1000))
 
-    def _on_show_notification_requested(
-        self, text: str, duration: float, title: str
-    ) -> None:
+    def _on_show_notification_requested(self, text: str, duration: float, title: str):
         text_edit = QtW.QPlainTextEdit(text)
         text_edit.setWordWrapMode(QtGui.QTextOption.WrapMode.WordWrap)
         text_edit.setReadOnly(True)
