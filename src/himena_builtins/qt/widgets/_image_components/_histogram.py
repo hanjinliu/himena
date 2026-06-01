@@ -224,13 +224,11 @@ class QHistogramView(QBaseGraphicsView):
         self.set_view_range(x0, x1)
 
     def wheelEvent(self, event: QtGui.QWheelEvent):
-        delta = event.angleDelta().y()
-        if delta > 0:
-            factor = 1.1
-        else:
-            factor = 1 / 1.1
+        self._wheel_event(event.pos(), 1.1 if event.angleDelta().y() > 0 else 1 / 1.1)
+
+    def _wheel_event(self, pos: QtCore.QPoint, factor: float):
         x0, x1 = self._view_range
-        xcursor = self.mapToScene(event.pos()).x()
+        xcursor = self.mapToScene(pos).x()
         x0 = max((x0 - xcursor) / factor + xcursor, self._minmax[0])
         x1 = min((x1 - xcursor) / factor + xcursor, self._minmax[1])
         self.set_view_range(x0, x1)
@@ -369,8 +367,7 @@ class QClimLineItem(QtW.QGraphicsRectItem):
             self.scene().setGrabSource(self)
         elif event.buttons() & QtCore.Qt.MouseButton.RightButton:
             self.scene().setGrabSource(self)
-            if view := self.view():
-                menu = QClimMenu(view, self)
+            if menu := self._get_clim_menu():
                 menu._edit.setFocus()
                 menu.exec(event.screenPos())
         super().mousePressEvent(event)
@@ -385,6 +382,11 @@ class QClimLineItem(QtW.QGraphicsRectItem):
         self.scene().setGrabSource(None)
         self.setValue(event.pos().x())
         return super().mouseReleaseEvent(event)
+
+    def _get_clim_menu(self) -> QClimMenu | None:
+        if view := self.view():
+            return QClimMenu(view, self)
+        return None
 
     def view(self) -> QHistogramView | None:
         if scene := self.scene():

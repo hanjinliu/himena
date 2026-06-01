@@ -51,6 +51,11 @@ def test_image_view(qtbot: QtBot):
         image_view._control._chn_mode_combo.setCurrentText("Comp.")
         QApplication.processEvents()
         image_view._control._histogram._qclim_set._low._show_value_label()
+        image_view._control._histogram._reset_view()
+        clim_menu = image_view._control._histogram._qclim_set._low._get_clim_menu()
+        assert clim_menu is not None
+        clim_menu._on_value_changed()
+
         image_view._control._zoom_view._make_menu()
         image_view._control._zoom_view._toggle_enabled()
         image_view._control._zoom_view._toggle_enabled()
