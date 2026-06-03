@@ -2,6 +2,7 @@ import sys
 import platform
 import string
 from types import SimpleNamespace, MappingProxyType
+import warnings
 from himena.utils.enum import StrEnum
 
 BasicTextFileTypes = frozenset(
@@ -49,6 +50,20 @@ else:
             # In WSL Ubuntu, tkinter is not available by default.
             # `sudo apt-get install python3-tk` is required.
             families = ()
+            warnings.warn(
+                "tkinter is not available. Monospace font will be set to 'monospace'. "
+                "Please install tkinter by e.g. `sudo apt-get install python3-tk`.",
+                RuntimeWarning,
+                stacklevel=1,
+            )
+        except Exception as e:
+            # Running GUI via SSH may cause TclError due to missing DISPLAY variable.
+            families = ()
+            warnings.warn(
+                f"Failed to get font families from tkinter: {e}.",
+                RuntimeWarning,
+                stacklevel=1,
+            )
         candidates = ["Noto Sans Mono", "DejaVu Sans Mono", "Ubuntu Mono"]
         for fam in candidates:
             if fam in families:
