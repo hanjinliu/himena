@@ -459,14 +459,18 @@ class QFlowChartView(QtW.QGraphicsView):
             for parent in parent_nodes:
                 xs.append(parent.center().x())
                 ys.append(parent.center().y() + parent.rect().height() / 2)
-            child_x = np.mean(xs)
-            child_y = max(ys) + 45
+            xs = np.array(xs)
+            ys = np.array(ys)
+            child_y = np.max(ys) + 45
+            weight = 1 / np.abs(ys - child_y)
+            weight = weight / np.sum(weight)
+            child_x = np.sum(xs * weight)
             center = QtCore.QPointF(child_x, child_y)
 
         # shift to left or right if the position is already occupied
         center = find_unoccupied_position(
             center,
-            list(self._node_map.values()),
+            self._node_map.values(),
             self._dodge_distance,
         )
 
@@ -727,7 +731,7 @@ class QFlowChartView(QtW.QGraphicsView):
 
     def _push_or_merge(self, delta: QtCore.QPointF):
         """Push a new delta to the undo stack or merge it with the last one if small"""
-        if len(self._goto_undo_stack._stack_undo) > 0 and delta.manhattanLength() < 27:
+        if len(self._goto_undo_stack._stack_undo) > 1 and delta.manhattanLength() < 27:
             last_delta = self._goto_undo_stack.undo()
             delta = last_delta + delta
         self._goto_undo_stack.push(delta)
@@ -748,7 +752,7 @@ def iter_next_shift(stride: float, max_value: float = 1e4) -> Iterator[float]:
 
 def find_unoccupied_position(
     center: QtCore.QPointF,
-    nodes: list[QFlowChartNode],
+    nodes: Iterable[QFlowChartNode],
     dodge_distance: float = 32,
 ):
     # list of nodes that has similar y value
