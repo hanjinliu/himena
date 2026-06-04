@@ -4,7 +4,7 @@ from himena.widgets._wrapper import SubWindow, ParametricWindow, DockWidget
 from himena.widgets._initialize import (
     current_instance,
     set_current_instance,
-    remove_instance,
+    cleanup_instance,
     init_application,
 )
 from himena.widgets._functions import (
@@ -27,7 +27,7 @@ __all__ = [
     # functions
     "current_instance",
     "set_current_instance",
-    "remove_instance",
+    "cleanup_instance",
     "init_application",
     "set_status_tip",
     "show_tooltip",

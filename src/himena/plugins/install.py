@@ -99,12 +99,15 @@ def _install_one(name: str, show_import_time: bool) -> PluginInstallResult | Non
         raise TypeError(f"Invalid plugin type: {type(name)}")
 
     startup_callback = mod_namespace.get("on_himena_startup", None)
+    teardown_callback = mod_namespace.get("on_himena_teardown", None)
 
     _msec = (timer() - _time_0) * 1000
     if show_import_time and _exc is None:
         color = _color_for_time(_msec)
         print(f"{color}{name}\t{_msec:.3f} msec\033[0m")
-    return PluginInstallResult(name, _msec, _exc, startup=startup_callback)
+    return PluginInstallResult(
+        name, _msec, _exc, startup=startup_callback, teardown=teardown_callback
+    )
 
 
 def override_keybindings(app: HimenaApplication, prof: AppProfile) -> None:
@@ -184,6 +187,7 @@ class PluginInstallResult:
     time: float = field(default=0.0)
     error: Exception | None = None
     startup: Callable[[MainWindow], None] | None = None
+    teardown: Callable[[MainWindow], None] | None = None
 
     def call_startup(self, ui: MainWindow):
         if self.startup is not None:
@@ -192,6 +196,15 @@ class PluginInstallResult:
             except Exception as e:
                 _LOGGER.error(
                     f"Error calling on_himena_startup of plugin {self.plugin}: {e!r}"
+                )
+
+    def call_teardown(self, ui: MainWindow):
+        if self.teardown is not None:
+            try:
+                self.teardown(ui)
+            except Exception as e:
+                _LOGGER.error(
+                    f"Error calling on_himena_teardown of plugin {self.plugin}: {e!r}"
                 )
 
 

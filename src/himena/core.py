@@ -75,6 +75,7 @@ def _new_window_impl(
     init_application(model_app)
     override_keybindings(model_app, app_prof)
     main_window = _get_main_window(backend, model_app, theme=app_prof.theme)
+    main_window._plugin_install_results = results
 
     # execute startup commands (don't raise exceptions, just log them)
     exceptions: list[tuple[str, dict, Exception]] = []
