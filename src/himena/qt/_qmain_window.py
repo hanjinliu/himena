@@ -32,7 +32,12 @@ from himena._app_model import _formatter, HimenaApplication
 from himena.plugins import AppActionRegistry, _checker
 from himena.utils.misc import ext_to_filter
 from himena._utils import doc_to_whats_this
-from himena.qt._qnotification import QJobStack, QNotificationWidget, QWhatsThisWidget
+from himena.qt._qnotification import (
+    QJobStack,
+    QNotificationWidget,
+    QWhatsThisWidget,
+    QNotificationTextArea,
+)
 from himena.qt._qtab_widget import QTabWidget
 from himena.qt._qstatusbar import QStatusBar
 from himena.qt._qpopup_view import QPopupView
@@ -83,7 +88,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     _himena_main_window: MainWindow
     _app: HimenaApplication
     status_tip_requested = QtCore.Signal(str, float)
-    notification_requested = QtCore.Signal(str, float, str)
+    notification_requested = QtCore.Signal(str, float, str, dict)
     window_rect_changed = QtCore.Signal()
 
     def __init__(self, app: HimenaApplication):
@@ -850,8 +855,14 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _set_status_tip(self, tip: str, duration: float) -> None:
         self.status_tip_requested.emit(tip, duration)
 
-    def _show_notification(self, text: str, duration: float, title: str) -> None:
-        self.notification_requested.emit(text, duration, title)
+    def _show_notification(
+        self,
+        text: str,
+        duration: float,
+        title: str,
+        callbacks: dict[str, Callable[[], None]],
+    ) -> None:
+        self.notification_requested.emit(text, duration, title, callbacks)
 
     def _show_tooltip(self, text: str, duration: float, behavior: str) -> None:
         if area := self._tab_widget.current_widget_area():
@@ -861,16 +872,21 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _on_status_tip_requested(self, tip: str, duration: float) -> None:
         self._status_bar.showMessage(tip, int(duration * 1000))
 
-    def _on_show_notification_requested(self, text: str, duration: float, title: str):
-        text_edit = QtW.QPlainTextEdit(text)
-        text_edit.setWordWrapMode(QtGui.QTextOption.WrapMode.WordWrap)
-        text_edit.setReadOnly(True)
+    def _on_show_notification_requested(
+        self,
+        text: str,
+        duration: float,
+        title: str,
+        callbacks: dict[str, Callable[[], None]],
+    ):
+        content = QNotificationTextArea(text, callbacks)
         notification = QNotificationWidget(self)
-        notification.set_content(title, text_edit)
+        content.button_clicked.connect(lambda: notification._hide())
+
+        notification.set_content(title, content)
 
         # check the size of text.
-        fm = text_edit.fontMetrics()
-        height = fm.lineSpacing() * (len(text) // 48 + 1) + 10
+        height = content.height_for_content(text)
         notification.show_and_hide_later(duration, height=min(height, 108))
 
     def _get_menu_action_by_id(self, name: str) -> QtW.QAction:

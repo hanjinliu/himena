@@ -344,7 +344,13 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     def _set_status_tip(self, tip: str, duration: float, behavior: str) -> None:
         """Set the status tip of the main window for a duration (sec)."""
 
-    def _show_notification(self, text: str, duration: float, title: str) -> None:
+    def _show_notification(
+        self,
+        text: str,
+        duration: float,
+        title: str,
+        callbacks: dict[str, Callable[[], None]],
+    ) -> None:
         """Show notification for a duration (sec)."""
 
     def _show_tooltip(self, text: str, duration: float) -> None:

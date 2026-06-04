@@ -1,6 +1,6 @@
 from __future__ import annotations
 from pathlib import Path
-from typing import Any, Literal, overload
+from typing import Any, Callable, Literal, overload
 
 from himena.types import ClipboardDataModel
 from himena.widgets import current_instance
@@ -57,7 +57,13 @@ def set_clipboard(model=None, **kwargs) -> None:
         ins.set_clipboard(**kwargs)
 
 
-def notify(text: str, duration: float = 5.0) -> None:
+def show_notification(
+    text: str,
+    duration: float = 5.0,
+    title: str = "Info",
+    *,
+    callbacks: dict[str, Callable[[], None]] | None = None,
+) -> None:
     """Show a notification popup in the bottom right corner.
 
     Parameters
@@ -68,7 +74,7 @@ def notify(text: str, duration: float = 5.0) -> None:
         Duration (seconds) to show the notification.
     """
     ins = current_instance()
-    ins.show_notification(text, duration)
+    ins.show_notification(text, duration, title=title, callbacks=callbacks)
 
 
 def show_tooltip(

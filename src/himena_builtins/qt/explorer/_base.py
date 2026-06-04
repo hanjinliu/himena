@@ -15,7 +15,7 @@ from himena.types import WidgetDataModel, DragDataModel
 from himena.workflow import PathReaderMethod
 from himena.consts import MonospaceFontFamily
 from himena.plugins import validate_protocol
-from himena.widgets import notify, set_status_tip
+from himena.widgets import show_notification, set_status_tip
 from himena.style import Theme
 from himena_builtins._consts import ICON_PATH
 
@@ -219,7 +219,9 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
             raise ValueError(f"Invalid file name: {src.name!r}")
         dst_remote = self._pwd / src.name
         self._send_file(src, dst_remote.as_posix(), is_dir=is_dir)
-        notify(f"Sent {src.as_posix()} to {dst_remote.as_posix()}", duration=2.8)
+        show_notification(
+            f"Sent {src.as_posix()} to {dst_remote.as_posix()}", duration=2.8
+        )
 
     def dragEnterEvent(self, a0):
         mime = a0.mimeData()
@@ -302,7 +304,7 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
         paths = [self._pwd.joinpath(item.text(0)).as_posix() for item in items]
         self._trash_files(paths)
         item_str = "\n- ".join(item.text(0) for item in items)
-        notify(f"Moved items to trash:\n- {item_str}", duration=2.8)
+        show_notification(f"Moved items to trash:\n- {item_str}", duration=2.8)
         self._refresh_pwd()
 
     @validate_protocol
@@ -499,7 +501,7 @@ class QRemoteTreeWidget(QtW.QTreeWidget):
             paths = [Path(url.toLocalFile()) for url in urls]
             self.item_pasted.emit(paths)
         else:
-            notify("No valid file paths in the clipboard.")
+            show_notification("No valid file paths in the clipboard.")
 
     # drag-and-drop
     def mouseMoveEvent(self, e: QtGui.QMouseEvent):

@@ -20,7 +20,7 @@ from himena.types import ClipboardDataModel, DragDataModel, FutureInfo, WidgetCo
 from himena.qt import MainWindowQt, drag_command, drag_files
 from himena.qt._qmain_window import QMainWindow, QChoicesDialog
 from himena.qt._qsub_window import QSubWindow, get_subwindow
-from himena.widgets import set_status_tip, notify, append_result, TabArea, DockWidget
+from himena.widgets import set_status_tip, show_notification, append_result, TabArea, DockWidget
 from himena.workflow._reader import LocalReaderMethod
 from himena_builtins.qt.text import QTextEdit
 from himena.plugins.install import _resolve_config_conflict
@@ -125,7 +125,7 @@ def test_register_function_in_runtime(himena_ui: MainWindowQt, qtbot: QtBot):
 def test_notification_and_status_tip(himena_ui: MainWindowQt):
     himena_ui.show()
     set_status_tip("my text", duration=0.1)
-    notify("my text", duration=0.1)
+    show_notification("my text", duration=0.1, title="Title", callbacks={"Click me": lambda: print("Clicked")})
     himena_ui._backend_main_window._on_error(ValueError("error msg"))
     himena_ui._backend_main_window._on_error(ValueError())
     himena_ui._backend_main_window._on_error(ValueError("msg 1", "msg 2"))

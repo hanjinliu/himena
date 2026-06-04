@@ -4,7 +4,7 @@ import numpy as np
 from himena.consts import StandardType
 from himena.plugins import register_function, configure_gui
 from himena.types import Parametric, WidgetDataModel, WidgetConstructor
-from himena.widgets import MainWindow, notify, set_status_tip
+from himena.widgets import MainWindow, show_notification, set_status_tip
 from himena_builtins.debug import draw_tool
 
 del draw_tool
@@ -252,12 +252,12 @@ def test_notification() -> Parametric:
     def run(notification: bool = True, status_tip: bool = True):
         time.sleep(1)
         if status_tip:
-            notify("1. This is test notification", duration=4.2)
+            show_notification("1. This is test notification", duration=4.2)
         if notification:
             set_status_tip("1. This is test status tip", duration=4.2)
         time.sleep(1)
         if status_tip:
-            notify("2. This is test notification", duration=4.2)
+            show_notification("2. This is test notification", duration=4.2)
         if notification:
             set_status_tip("2. This is test status tip", duration=4.2)
 

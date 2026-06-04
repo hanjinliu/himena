@@ -729,6 +729,8 @@ class MainWindow(Generic[_W]):
         text: str,
         duration: float = 5.0,
         title: str = "Info",
+        *,
+        callbacks: dict[str, Callable[[], None]] | None = None,
     ) -> None:
         """Show a temporary notification in the main window.
 
@@ -740,8 +742,14 @@ class MainWindow(Generic[_W]):
             Duration (seconds) to show the notification.
         title : str, default "Info"
             Title of the notification.
+        callbacks : dict of str to callable, optional
+            If given, buttons with the given names will be added to the notification.
         """
-        self._backend_main_window._show_notification(text, duration, title)
+        callbacks = dict(callbacks or {})
+        for key, callback in callbacks.items():
+            if not callable(callback):
+                raise ValueError(f"Callback for {key!r} is not callable: {callback!r}")
+        self._backend_main_window._show_notification(text, duration, title, callbacks)
 
     def show_tooltip(
         self,
