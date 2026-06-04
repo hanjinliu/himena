@@ -4576,15 +4576,15 @@ be passed as variable keyword arguments **kwargs.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\plugins\install.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">110</span>
-<span class="normal">111</span>
-<span class="normal">112</span>
-<span class="normal">113</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">113</span>
 <span class="normal">114</span>
 <span class="normal">115</span>
 <span class="normal">116</span>
 <span class="normal">117</span>
-<span class="normal">118</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">override_keybindings</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">HimenaApplication</span><span class="p">,</span> <span class="n">prof</span><span class="p">:</span> <span class="n">AppProfile</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">override_keybindings</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">HimenaApplication</span><span class="p">,</span> <span class="n">prof</span><span class="p">:</span> <span class="n">AppProfile</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Override keybindings in the application.&quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">ko</span> <span class="ow">in</span> <span class="n">prof</span><span class="o">.</span><span class="n">keybinding_overrides</span><span class="p">:</span>
         <span class="n">kb_int</span> <span class="o">=</span> <span class="n">KeyBinding</span><span class="o">.</span><span class="n">from_str</span><span class="p">(</span><span class="n">ko</span><span class="o">.</span><span class="n">to_normed_str</span><span class="p">())</span><span class="o">.</span><span class="n">to_int</span><span class="p">()</span>
@@ -4934,10 +4934,7 @@ the plugin's settings.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\plugins\install.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">132</span>
-<span class="normal">133</span>
-<span class="normal">134</span>
-<span class="normal">135</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">135</span>
 <span class="normal">136</span>
 <span class="normal">137</span>
 <span class="normal">138</span>
@@ -4980,7 +4977,10 @@ the plugin's settings.</p>
 <span class="normal">175</span>
 <span class="normal">176</span>
 <span class="normal">177</span>
-<span class="normal">178</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_config</span><span class="p">(</span><span class="n">plugin_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">PluginConfigType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_config</span><span class="p">(</span><span class="n">plugin_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">PluginConfigType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a plugin-specific configuration.</span>
 
 <span class="sd">    Registered options can be accessed by the `get_config` function. Note that a plugin</span>
