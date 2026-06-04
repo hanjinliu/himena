@@ -10,11 +10,13 @@ from himena.widgets._initialize import (
 from himena.widgets._functions import (
     set_status_tip,
     show_tooltip,
+    show_notification,
     get_clipboard,
     set_clipboard,
-    notify,
     append_result,
 )
+
+notify = show_notification  # backward compatibility
 
 __all__ = [
     # widgets

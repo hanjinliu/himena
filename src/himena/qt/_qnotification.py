@@ -1,6 +1,6 @@
 from __future__ import annotations
 from concurrent.futures import Future
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 from enum import Enum
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from qtpy.QtCore import Qt
@@ -120,8 +120,6 @@ class _QOverlayBase(QtW.QDialog):
 
 
 class QNotificationWidget(_QOverlayBase):
-    """The overlay widget appears at the fixed position."""
-
     def __init__(self, main: QMainWindow, duration: int = 500):
         """The overlay widget appears at the fixed position.
 
@@ -331,3 +329,43 @@ class QWhatsThisWidget(_QOverlayBase):
         self.addWidget(container)
 
         title_bar.add_button(self._close_btn)
+
+
+class QNotificationTextArea(QtW.QWidget):
+    button_clicked = QtCore.Signal()
+
+    def __init__(self, text: str, callbacks: dict[str, Callable[[], None]]):
+        super().__init__()
+        layout = QtW.QVBoxLayout(self)
+        layout.setSpacing(3)
+
+        text_edit = QtW.QPlainTextEdit(text)
+        text_edit.setWordWrapMode(QtGui.QTextOption.WrapMode.WordWrap)
+        text_edit.setReadOnly(True)
+        self.text_edit = text_edit
+
+        layout.addWidget(text_edit, stretch=100)
+
+        self._has_buttons = len(callbacks) > 0
+
+        if self._has_buttons:
+            footer = QtW.QWidget()
+            layout_footer = QtW.QHBoxLayout(footer)
+            layout_footer.setContentsMargins(0, 0, 0, 0)
+
+            for name, callback in callbacks.items():
+                btn = QtW.QPushButton(name, self)
+                btn.setFixedHeight(20)
+                btn.clicked.connect(callback)
+                btn.clicked.connect(self.button_clicked)
+                layout_footer.addWidget(btn)
+
+            layout_footer.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+            layout.addWidget(footer)
+
+    def height_for_content(self, text: str) -> int:
+        fm = self.text_edit.fontMetrics()
+        h = fm.lineSpacing() * (len(text) // 48 + 1) + 10
+        if self._has_buttons:
+            h += 36
+        return h
