@@ -54,8 +54,12 @@ def cleanup():
     _APP_INSTANCES.clear()
 
 
-def remove_instance(name: str, instance: MainWindow[_W]) -> None:
+def cleanup_instance(name: str, instance: MainWindow[_W]) -> None:
     """Remove the instance from the list."""
+    for res in instance._plugin_install_results:
+        res.call_teardown(instance)
+    instance.tabs.clear()
+    instance.dock_widgets.clear()
     if name in _APP_INSTANCES:
         instances = _APP_INSTANCES[name]
         if instance in instances:
@@ -63,8 +67,6 @@ def remove_instance(name: str, instance: MainWindow[_W]) -> None:
             instance.model_app.destroy(instance.model_app.name)
         if not instances:
             _APP_INSTANCES.pop(name, None)
-        instance.tabs.clear()
-        instance.dock_widgets.clear()
 
 
 def _app_destroyed(app_name) -> None:

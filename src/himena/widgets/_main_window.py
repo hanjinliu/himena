@@ -52,7 +52,7 @@ from himena.utils.misc import is_subtype, is_url_string, fetch_text_from_url, no
 from himena.widgets._backend import BackendMainWindow
 from himena.widgets._keyset import KeySet
 from himena.widgets._hist import HistoryContainer, FileDialogHistoryDict
-from himena.widgets._initialize import remove_instance
+from himena.widgets._initialize import cleanup_instance
 from himena.widgets._typemap import ObjectTypeMap, register_defaults
 from himena.widgets._widget_list import TabList, TabArea, DockWidgetList
 from himena.widgets._wrapper import ParametricWindow, SubWindow, DockWidget
@@ -64,6 +64,7 @@ if TYPE_CHECKING:
     from app_model.expressions import BoolOp
     from himena.widgets._widget_list import PathOrPaths
     from himena.workflow import ModelParameter, WindowParameter
+    from himena.plugins.install import PluginInstallResult
     from IPython.lib.pretty import RepresentationPrinter
 
 _W = TypeVar("_W")  # backend widget type
@@ -119,6 +120,7 @@ class MainWindow(Generic[_W]):
         self._executor = ThreadPoolExecutor(max_workers=5)
         self._global_lock = threading.Lock()
         self._object_type_map = ObjectTypeMap()
+        self._plugin_install_results: list[PluginInstallResult] = []
         self.theme = theme
         register_defaults(self._object_type_map)
 
@@ -1226,7 +1228,7 @@ class MainWindow(Generic[_W]):
     def close(self) -> None:
         """Close the main window."""
         self._backend_main_window._exit_main_window(confirm=False)
-        remove_instance(self.model_app.name, self)
+        cleanup_instance(self.model_app.name, self)
 
     @property
     def current_window(self) -> SubWindow[_W] | None:

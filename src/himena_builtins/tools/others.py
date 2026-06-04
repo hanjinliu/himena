@@ -29,6 +29,14 @@ configure_submenu(MenuId.TOOLS_OTHERS, group="20_builtins", order=51)
 configure_submenu(MenuId.TOOLS_FUNCTION, group="20_builtins", order=50)
 
 
+def _startup_and_teardown(ui: MainWindow):
+    """This is just for debugging and improving the test coverage."""
+
+
+on_himena_startup = _startup_and_teardown
+on_himena_teardown = _startup_and_teardown
+
+
 @register_function(
     types=StandardType.READER_NOT_FOUND,
     menus=[],

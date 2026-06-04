@@ -420,7 +420,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         res = super().event(e)
 
         if typ == QtCore.QEvent.Type.Close and e.isAccepted():
-            widgets.remove_instance(self._app_name, self._himena_main_window)
+            widgets.cleanup_instance(self._app_name, self._himena_main_window)
         if typ in (QtCore.QEvent.Type.Move, QtCore.QEvent.Type.Resize):
             self.window_rect_changed.emit()
 
