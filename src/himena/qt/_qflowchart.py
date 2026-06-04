@@ -462,9 +462,12 @@ class QFlowChartView(QtW.QGraphicsView):
             xs = np.array(xs)
             ys = np.array(ys)
             child_y = np.max(ys) + 45
-            weight = 1 / np.abs(ys - child_y)
-            weight = weight / np.sum(weight)
-            child_x = np.sum(xs * weight)
+            dist_y = np.abs(ys - child_y)
+            thresh = 135
+            if np.min(dist_y) > thresh:
+                child_x = np.mean(xs)
+            else:
+                child_x = np.mean(xs[dist_y <= thresh])
             center = QtCore.QPointF(child_x, child_y)
 
         # shift to left or right if the position is already occupied
