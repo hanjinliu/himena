@@ -45,6 +45,8 @@ class QPopupView(QtW.QFrame):
         self._win: WidgetWrapper | None = None
         self._interf: Any | None = None
 
+        parent.window_rect_changed.connect(self._align_to_main_window)
+
     def set_title(self, title: str):
         self._titlebar.setTitle(title)
 
@@ -58,20 +60,25 @@ class QPopupView(QtW.QFrame):
         self.adjustSize()
         self.show()
         _checker.call_widget_added_callback(interf)
+
+        if interf is None:
+            interf = widget
+        self._win = win
+        self._interf = interf
+        self._align_to_main_window()
+        widget.setFocus()
+
+    def _align_to_main_window(self):
         margin = 50
         qsize = self._main_window.size() - QtCore.QSize(margin * 2, margin * 2)
         size_old = Size(self.width(), self.height() - 18)
         size_new = Size(qsize.width(), qsize.height() - 18)
         self.resize(qsize)
         self.move(QtCore.QPoint(margin, margin))
-        if interf is None:
-            interf = widget
-        _checker.call_widget_resized_callback(interf, size_old, size_new)
-        self._win = win
-        self._interf = interf
-        widget.setFocus()
+        _checker.call_widget_resized_callback(self._interf, size_old, size_new)
 
     def closeEvent(self, a0):
+        self._main_window.window_rect_changed.disconnect(self._align_to_main_window)
         if self._win is None:
             return super().closeEvent(a0)
         _checker.call_widget_closed_callback(self._interf)

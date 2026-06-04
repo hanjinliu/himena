@@ -1030,7 +1030,9 @@ class QChoicesDialog(QtW.QDialog):
         self._title_bar.setTitle(title)
         if message:
             label = QtW.QLabel(message)
+            width_old = label.sizeHint().width()
             label.setWordWrap(True)
+            label.setFixedWidth(min(width_old, 480))
             label.setTextInteractionFlags(
                 QtCore.Qt.TextInteractionFlag.TextSelectableByMouse
             )

@@ -291,12 +291,15 @@ class QDataFrameView(QTableBase):
             clipboard.setText(csv_text)
 
     def copy_header(self):
-        if clipboard := QtGui.QGuiApplication.clipboard():
-            rng = self._selection_model.get_single_range()
+        """Copy the header text(s)"""
+        rng = self._selection_model.get_single_range()
+        if self.model()._transpose:
+            c, _ = rng
+        else:
             _, c = rng
-            columns = self.model().df.column_names()[c]
-            header_text = self._sep_on_copy.join(columns)
-            clipboard.setText(header_text)
+        columns = self.model().df.column_names()[c]
+        header_text = self._sep_on_copy.join(columns)
+        self._ui.set_clipboard(text=header_text)
 
     def _paste_from_clipboard(self):
         if clipboard := QtGui.QGuiApplication.clipboard():
