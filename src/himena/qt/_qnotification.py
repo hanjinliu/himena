@@ -337,6 +337,7 @@ class QNotificationTextArea(QtW.QWidget):
     def __init__(self, text: str, callbacks: dict[str, Callable[[], None]]):
         super().__init__()
         layout = QtW.QVBoxLayout(self)
+        layout.setContentsMargins(2, 4, 2, 4)
         layout.setSpacing(3)
 
         text_edit = QtW.QPlainTextEdit(text)
