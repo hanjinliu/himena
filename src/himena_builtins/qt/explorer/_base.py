@@ -527,6 +527,8 @@ class QRemoteTreeWidget(QtW.QTreeWidget):
             download_dir = self.parent()._ui.exec_file_dialog(
                 "d", caption="Select the directory to download files to"
             )
+            if download_dir is None:
+                return
         src_paths: list[Path] = []
         for item in items:
             typ = item_type(item)

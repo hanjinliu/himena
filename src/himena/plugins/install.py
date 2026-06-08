@@ -126,6 +126,9 @@ class GlobalConfig:
     num_recent_files_to_show: int = config_field(default=10)
     num_recent_sessions_to_show: int = config_field(default=3)
     subwindow_bar_height: int = config_field(default=18, min=10, max=45)
+    datetime_format: str = config_field(
+        default="%Y-%m-%d %H:%M:%S", tooltip="Preferred datetime format."
+    )
 
 
 def install_default_configs() -> None:

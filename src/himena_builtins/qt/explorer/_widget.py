@@ -6,6 +6,7 @@ import shutil
 from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW, QtCore, QtGui
 from himena import _drag
+from himena.plugins import get_global_config
 from himena_builtins.qt.explorer._base import (
     make_paste_remote_files_worker,
     QBaseRemoteExplorerWidget,
@@ -102,10 +103,12 @@ class QExtendedFileSystemModel(QFileSystemModel):
             stat = path.stat()
             size_human_readable = QtCore.QLocale().formattedDataSize(stat.st_size, 2)
             time_last_modified = datetime.fromtimestamp(stat.st_mtime)
+            try:
+                dt = format(time_last_modified, get_global_config().datetime_format)
+            except Exception:
+                dt = format(time_last_modified, "%Y-%m-%d %H:%M:%S")
             return (
-                f"{path.as_posix()}\n"
-                f"Size: {size_human_readable}\n"
-                f"Last modified: {time_last_modified:%Y-%m-%d %H:%M:%S}"
+                f"{path.as_posix()}\nSize: {size_human_readable}\nLast modified: {dt}"
             )
         else:
             return "<Deleted>"

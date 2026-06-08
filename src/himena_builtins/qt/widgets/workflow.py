@@ -9,7 +9,7 @@ from qtpy import QtWidgets as QtW, QtGui
 from magicgui.widgets import request_values
 from himena import workflow as _wf
 from himena.consts import StandardType
-from himena.plugins import validate_protocol
+from himena.plugins import validate_protocol, get_global_config
 from himena.qt._utils import get_main_window
 from himena.qt._qflowchart import QFlowChartWidget, BaseNodeItem
 from himena.widgets import current_instance, MainWindow
@@ -336,7 +336,9 @@ def _(step: _wf.ProgrammaticMethod, main: MainWindow) -> QtW.QTreeWidgetItem:
 
 
 def _add_common_child(item: QtW.QTreeWidgetItem, step: _wf.WorkflowStep):
-    item.addChild(
-        QtW.QTreeWidgetItem([f"datetime = {step.datetime:%Y-%m-%d %H:%M:%S}"])
-    )
+    try:
+        dt = format(step.datetime, get_global_config().datetime_format)
+    except Exception:
+        dt = format(step.datetime, "%Y-%m-%d %H:%M:%S")
+    item.addChild(QtW.QTreeWidgetItem([f"datetime = {dt}"]))
     return item

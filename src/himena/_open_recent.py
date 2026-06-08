@@ -7,8 +7,7 @@ from logging import getLogger
 import json
 from himena.consts import MenuId, ActionCategory, ActionGroup, NO_RECORDING_FIELD
 from himena.profile import data_dir
-from himena.plugins import get_config
-from himena.plugins.install import GlobalConfig
+from himena.plugins import get_global_config
 from datetime import datetime
 
 if TYPE_CHECKING:
@@ -86,8 +85,7 @@ class RecentFileManager:
         self.__class__._MENU_UPDATED.add(self._app.name)
 
     def num_recent_in_menu(self) -> int:
-        cfg = get_config(GlobalConfig) or GlobalConfig()
-        return cfg.num_recent_files_to_show
+        return get_global_config().num_recent_files_to_show
 
     @classmethod
     def default(cls, app: HimenaApplication) -> RecentFileManager:
@@ -132,7 +130,7 @@ class RecentFileManager:
             all_info = []
         existing_paths = [each["path"] for each in all_info]
         to_remove: list[int] = []
-        now = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+        now = datetime.now().strftime(get_global_config().datetime_format)
         for each_path_input, plugin in inputs:
             if plugin == "himena_builtins.io.read_as_unknown":
                 # This plugin should not be used again from the open recent menu.
@@ -217,8 +215,7 @@ class RecentSessionManager(RecentFileManager):
         )
 
     def num_recent_in_menu(self) -> int:
-        cfg = get_config(GlobalConfig) or GlobalConfig()
-        return cfg.num_recent_sessions_to_show
+        return get_global_config().num_recent_sessions_to_show
 
     def to_callback(self, file, plugin: str | None = None):
         return _update_annotation(OpenSessionFunction(file))
