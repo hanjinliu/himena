@@ -433,9 +433,14 @@ class QCommandListBase(QtW.QListView):
 
     def move_selection(self, dx: int) -> None:
         """Move selection by dx, dx can be negative or positive."""
-        self._selected_index += dx
-        self._selected_index = max(0, self._selected_index)
-        self._selected_index = min(self._current_max_index - 1, self._selected_index)
+        if dx < 0 and self._selected_index == 0:
+            self._selected_index = self._current_max_index - 1
+        elif dx > 0 and self._selected_index == self._current_max_index - 1:
+            self._selected_index = 0
+        else:
+            self._selected_index = min(
+                max(0, self._selected_index + dx), self._current_max_index - 1
+            )
         self.update_selection()
 
     def update_selection(self) -> None:
