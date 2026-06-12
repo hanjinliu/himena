@@ -31,6 +31,8 @@ def test_workspace_widget(qtbot: QtBot, himena_ui, tmpdir):
         assert (tmpdir / Path(__file__).name).exists()
         widget._file_tree._paste_file([tmpdir / Path(__file__).name], tmpdir, is_copy=True)
 
+    widget._file_tree._model._tooltip_for_index(widget._file_tree.model().index(0, 0))
+    widget._file_tree._model._tooltip_for_index(widget._file_tree.model().index(1, 0))
 
     # TODO: not working ...
     # qtree = widget._workspace_tree
