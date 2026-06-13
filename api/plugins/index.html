@@ -1402,6 +1402,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#himena.plugins.get_global_config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_global_config
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#himena.plugins.install_plugins" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2063,6 +2074,17 @@
     <span class="md-ellipsis">
       
         configure_submenu
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#himena.plugins.get_global_config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_global_config
       
     </span>
   </a>
@@ -4490,6 +4512,33 @@ be passed as variable keyword arguments **kwargs.</p>
 <div class="doc doc-object doc-function">
 
 
+<h4 id="himena.plugins.get_global_config" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">get_global_config</span><span class="p">()</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Get the himena global config.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src\himena\plugins\__init__.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_global_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">GlobalConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the himena global config.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">get_config</span><span class="p">(</span><span class="n">GlobalConfig</span><span class="p">)</span> <span class="ow">or</span> <span class="n">GlobalConfig</span><span class="p">()</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h4 id="himena.plugins.install_plugins" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">install_plugins</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">plugins</span><span class="p">)</span></code>
 
@@ -4934,10 +4983,7 @@ the plugin's settings.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\plugins\install.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">135</span>
-<span class="normal">136</span>
-<span class="normal">137</span>
-<span class="normal">138</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">138</span>
 <span class="normal">139</span>
 <span class="normal">140</span>
 <span class="normal">141</span>
@@ -4980,7 +5026,10 @@ the plugin's settings.</p>
 <span class="normal">178</span>
 <span class="normal">179</span>
 <span class="normal">180</span>
-<span class="normal">181</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_config</span><span class="p">(</span><span class="n">plugin_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">PluginConfigType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_config</span><span class="p">(</span><span class="n">plugin_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">PluginConfigType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a plugin-specific configuration.</span>
 
 <span class="sd">    Registered options can be accessed by the `get_config` function. Note that a plugin</span>
