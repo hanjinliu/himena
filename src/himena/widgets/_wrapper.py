@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Callable, Generic, TYPE_CHECKING, Literal, TypeVar, overload
 import uuid
 import weakref
+from datetime import datetime
 
 from psygnal import Signal
 from magicgui import widgets as mgw
@@ -92,6 +93,7 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
         self._extension_default_fallback: str | None = None
         self._force_not_editable: bool = False
         self._data_modifications = Modifications()
+        self._datetime_last_read: datetime = datetime.now()
 
     @property
     def is_alive(self) -> bool:
@@ -249,6 +251,7 @@ class WidgetWrapper(_HasMainWindowRef[_W]):
                 raise ValueError(f"Invalid keyword arguments: {invalid!r}")
             model = WidgetDataModel(value=value, **kwargs)
         self.widget.update_model(model)
+        self._datetime_last_read = datetime.now()
 
     def to_model(self) -> WidgetDataModel:
         """Export the widget data."""
@@ -598,6 +601,7 @@ class SubWindow(WidgetWrapper[_W], Layout):
                 main.set_status_tip(f"Saving {self.title!r} to {save_path}", duration=2)
                 self._write_model(save_path, plugin=plugin, model=model)
                 main.set_status_tip(f"Saved {self.title!r} to {save_path}", duration=2)
+                self._datetime_last_read = datetime.now()
                 return save_path
 
             return _save

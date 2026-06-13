@@ -3,6 +3,7 @@ from __future__ import annotations
 from concurrent.futures import Future, ThreadPoolExecutor
 from contextlib import contextmanager
 from dataclasses import dataclass
+from datetime import datetime
 import inspect
 from logging import getLogger
 from pathlib import Path
@@ -24,12 +25,12 @@ import warnings
 from app_model.expressions import create_context
 from psygnal import SignalGroup, Signal
 
-from himena import _providers
+from himena import _providers, _descriptors
 from himena._app_model import AppContext, HimenaApplication
 from himena._open_recent import RecentFileManager, RecentSessionManager
 from himena._utils import get_widget_class_id, import_object
 from himena.consts import NO_RECORDING_FIELD, ParametricWidgetProtocolNames as PWPN
-from himena.plugins import _checker, actions as _actions
+from himena.plugins import _checker, actions as _actions, ReaderPlugin
 from himena.profile import AppProfile, load_app_profile
 from himena.style import Theme
 from himena.standards import BaseMetadata
@@ -123,6 +124,7 @@ class MainWindow(Generic[_W]):
         self._plugin_install_results: list[PluginInstallResult] = []
         self.theme = theme
         register_defaults(self._object_type_map)
+        self._is_window_activating = False
 
     def __repr__(self) -> str:
         return (
@@ -750,6 +752,9 @@ class MainWindow(Generic[_W]):
             if not callable(callback):
                 raise ValueError(f"Callback for {key!r} is not callable: {callback!r}")
         self._backend_main_window._show_notification(text, duration, title, callbacks)
+        self._instructions.notification_callback(text, title)
+        if (res := self._instructions.notification_response) is not None:
+            callbacks[res]()
 
     def show_tooltip(
         self,
@@ -1311,21 +1316,64 @@ class MainWindow(Generic[_W]):
         self.tabs.current_index = i_tab
 
     def _window_activated(self):
-        back = self._backend_main_window
-        back._update_context()
-        i_tab = back._current_tab_index()
-        if i_tab is None:
-            return back._update_control_widget(None)
-        tab = self.tabs.get(i_tab)
-        if tab is None or len(tab) == 0:
-            return back._update_control_widget(None)
-        i_win = back._current_sub_window_index(i_tab)
-        if i_win is None or len(tab) <= i_win:
-            return back._update_control_widget(None)
-        win = tab[i_win]
-        back._update_control_widget(win.widget)
-        _checker.call_widget_activated_callback(win.widget)
-        self.events.window_activated.emit(win)
+        if self._is_window_activating:
+            return
+        self._is_window_activating = True
+        try:
+            back = self._backend_main_window
+            back._update_context()
+            i_tab = back._current_tab_index()
+            if i_tab is None:
+                return back._update_control_widget(None)
+            tab = self.tabs.get(i_tab)
+            if tab is None or len(tab) == 0:
+                return back._update_control_widget(None)
+            i_win = back._current_sub_window_index(i_tab)
+            if i_win is None or len(tab) <= i_win:
+                return back._update_control_widget(None)
+            win = tab[i_win]
+            back._update_control_widget(win.widget)
+            _checker.call_widget_activated_callback(win.widget)
+
+            self.events.window_activated.emit(win)
+
+            if not (
+                self._instructions.notify_file_changed
+                and isinstance(beh := win._save_behavior, _descriptors.SaveToPath)
+            ):
+                return
+
+            elif not beh.path.exists():
+                self.show_notification(
+                    text=f"Window {win.title} is showing a file that has been moved or "
+                    f"deleted: {beh.path}.",
+                    title="File Moved",
+                    callbacks={"Close": lambda: win._close_me(self)},
+                )
+            elif win.supports_update_model and beh.path.is_file():
+                # check if the file is up to date
+                try:
+                    time_last_update = datetime.fromtimestamp(beh.path.stat().st_mtime)
+                    ins = _providers.ReaderStore.instance()
+                    reader = ins.pick(beh.path)
+                except Exception:
+                    pass
+                else:
+                    delta = time_last_update - win._datetime_last_read
+                    if delta.total_seconds() > 2e-6:  # more than 2 us
+                        self.show_notification(
+                            text=f"Window {win.title} is not showing the latest content of "
+                            f"{beh.path.name}.",
+                            title="Outdated File",
+                            callbacks={
+                                "Reload": lambda: _reload_file(win, reader, beh.path),
+                                "Dismiss": lambda: _set_timestamp(
+                                    win, time_last_update
+                                ),
+                            },
+                        )
+        finally:
+            self._is_window_activating = False
 
     def _main_window_resized(self, size: Size):
         if tab := self.tabs.current():
@@ -1545,3 +1593,13 @@ class StringInputDialogResponse(Generic[_T]):
         """Get the user input if the user confirmed, otherwise None."""
         if self.choice is not None:
             return self.input
+
+
+def _reload_file(win: SubWindow, reader: ReaderPlugin, path):
+    model = reader.read_and_update_source(path)
+    win.update_model(model)
+    _set_timestamp(win, datetime.now())
+
+
+def _set_timestamp(win: SubWindow, timestamp: datetime):
+    win._datetime_last_read = timestamp
