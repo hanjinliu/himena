@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from concurrent.futures import Future
 import sys
+import time
 from typing import Annotated
 from unittest.mock import MagicMock
 import warnings
@@ -15,7 +16,7 @@ from himena.consts import StandardType
 from himena.core import create_model
 from himena.plugins.config import config_field
 from himena.qt._qpopup_view import QPopupView
-from himena.testing.dialog import user_input_response, user_string_input_response, choose_one_dialog_response
+from himena import testing
 from himena.types import ClipboardDataModel, DragDataModel, FutureInfo, WidgetConstructor, WidgetType, ParametricWidgetProtocol
 from himena.qt import MainWindowQt, drag_command, drag_files
 from himena.qt._qmain_window import QMainWindow, QChoicesDialog
@@ -90,7 +91,7 @@ def test_goto_widget(himena_ui: MainWindowQt, qtbot: QtBot):
     tab1.add_data_model(WidgetDataModel(value="d", type="text", title="D"))
     tab1.add_data_model(WidgetDataModel(value="e", type="text", title="E"))
 
-    with choose_one_dialog_response(himena_ui, (0, 1)):
+    with testing.choose_one_dialog_response(himena_ui, (0, 1)):
         himena_ui.exec_action("go-to-window")
     assert himena_ui.tabs.current_index == 0
     assert himena_ui.tabs[0].current_index == 1
@@ -125,12 +126,25 @@ def test_register_function_in_runtime(himena_ui: MainWindowQt, qtbot: QtBot):
 def test_notification_and_status_tip(himena_ui: MainWindowQt):
     himena_ui.show()
     set_status_tip("my text", duration=0.1)
-    show_notification("my text", duration=0.1, title="Title", callbacks={"Click me": lambda: print("Clicked")})
+    mock = MagicMock()
+    clicked = MagicMock()
+    with (
+        testing.notification_response(himena_ui, "Click me"),
+        testing.notification_callback(himena_ui, mock)
+    ):
+        mock.assert_not_called()
+        clicked.assert_not_called()
+        show_notification(
+            "my text", duration=0.1, title="Title",
+            callbacks={"Click me": clicked}
+        )
+    mock.assert_called_once_with("my text", "Title")
+    clicked.assert_called_once()
     himena_ui._backend_main_window._on_error(ValueError("error msg"))
     himena_ui._backend_main_window._on_error(ValueError())
     himena_ui._backend_main_window._on_error(ValueError("msg 1", "msg 2"))
     himena_ui._backend_main_window._on_warning(warnings.WarningMessage("msg", UserWarning, "file", 1))
-    with choose_one_dialog_response(himena_ui, False):
+    with testing.choose_one_dialog_response(himena_ui, False):
         himena_ui._backend_main_window._status_bar._profile_btn.click()
     himena_ui._backend_main_window.setFocus()
 
@@ -459,7 +473,7 @@ def test_action_hint(himena_ui: MainWindowQt, sample_dir: Path):
     assert len(menu.actions()) == 3 + len(suggestions)
 
     repr(himena_ui.action_hint_registry)
-    with choose_one_dialog_response(himena_ui, ";"):
+    with testing.choose_one_dialog_response(himena_ui, ";"):
         for hint in himena_ui.action_hint_registry.iter_all():
             himena_ui.current_window = win
             hint.suggestion.get_title(himena_ui)
@@ -535,7 +549,7 @@ def test_process_future(make_himena_ui):
 def test_dialog(himena_ui: MainWindowQt, qtbot: QtBot):
     himena_ui.show()
     himena_ui._backend_main_window._add_widget_to_dialog_no_exec(QtW.QWidget(), "title")
-    with user_input_response(himena_ui, {"x": 3, "y": 0.6}):
+    with testing.user_input_response(himena_ui, {"x": 3, "y": 0.6}):
         responce = himena_ui.exec_user_input_dialog(
             {"x": int, "y": Annotated[float, {"min": 0.0, "max": 1.0}]},
             title="My Dialog",
@@ -545,11 +559,11 @@ def test_dialog(himena_ui: MainWindowQt, qtbot: QtBot):
     def func(boolean: bool, tuple_val: tuple[int, float]) -> str:
         return f"{boolean}, {tuple_val}"
 
-    with user_input_response(himena_ui, {"boolean": True, "tuple_val": (5, 0.2)}):
+    with testing.user_input_response(himena_ui, {"boolean": True, "tuple_val": (5, 0.2)}):
         responce = himena_ui.exec_user_input_dialog(func)
     assert responce == "True, (5, 0.2)"
 
-    with user_string_input_response(himena_ui, "my input", "choice"):
+    with testing.user_string_input_response(himena_ui, "my input", "choice"):
         responce = himena_ui.exec_user_string_input_dialog(
             title="Input Dialog",
             message="Please enter something:",
@@ -630,3 +644,36 @@ def test_builtin_clipboard_readers():
     assert builtin_io.read_clipboard_text(ClipboardDataModel(text="Text")) is not None
     assert builtin_io.read_clipboard_html(ClipboardDataModel(html="<p>HTML</p>")) is not None
     assert builtin_io.read_clipboard_image(ClipboardDataModel(image=np.zeros((10, 10, 3), dtype=np.uint8))) is not None
+
+def test_file_change(himena_ui: MainWindowQt, tmpdir):
+    tmpdir = Path(tmpdir)
+    file_path = tmpdir / "test.txt"
+    file_path.write_text("ABC")
+    himena_ui.read_file(file_path)
+    time.sleep(0.02)
+    win = himena_ui.current_window
+    with testing.notification_response(himena_ui, "Dismiss"):
+        file_path.write_text("DEF")
+        file_path.touch()
+        himena_ui._window_activated()
+    assert win.to_model().value == "ABC"
+
+    time.sleep(0.02)
+    win = himena_ui.current_window
+    with testing.notification_response(himena_ui, "Reload"):
+        file_path.write_text("AAA")
+        file_path.touch()
+        himena_ui._window_activated()
+    assert win.to_model().value == "AAA"
+
+def test_file_delete(himena_ui: MainWindowQt, tmpdir):
+    tmpdir = Path(tmpdir)
+    file_path = tmpdir / "test.txt"
+    file_path.write_text("ABC")
+    himena_ui.read_file(file_path)
+    time.sleep(0.02)
+    assert len(himena_ui.windows) == 1
+    with testing.notification_response(himena_ui, "Close"):
+        file_path.unlink()
+        himena_ui._window_activated()
+    assert len(himena_ui.windows) == 0

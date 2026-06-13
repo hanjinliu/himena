@@ -14,6 +14,7 @@ from himena.testing.dialog import (
     user_string_input_response,
     user_input_response,
 )
+from himena.testing.notification import notification_response, notification_callback
 
 __all__ = [
     "image",
@@ -24,4 +25,6 @@ __all__ = [
     "choose_one_dialog_response",
     "user_string_input_response",
     "user_input_response",
+    "notification_response",
+    "notification_callback",
 ]

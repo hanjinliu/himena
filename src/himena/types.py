@@ -818,6 +818,18 @@ class BackendInstructions(BaseModel):
     gui_execution: bool = Field(default=True)
     process_model_output: bool = Field(default=True)
     unwrap_future: bool = Field(default=False)
+    notification_callback: Callable[[str, str], Any | None] = Field(
+        default=lambda text, title: None,
+        description="Callback function when notification is shown.",
+    )
+    notification_response: str | None = Field(
+        default=None,
+    )
+    notify_file_changed: bool = Field(
+        default=True,
+        description="Whether to notify the user if the file has changed, moved or "
+        "deleted on disk.",
+    )
 
     def updated(self, **kwargs) -> "BackendInstructions":
         return self.model_copy(update=kwargs)
