@@ -43,6 +43,7 @@ class SortProxy(TableProxy):
     def from_array(
         cls, index: int, arr: np.ndarray, ascending: bool = True
     ) -> SortProxy:
+        index = int(index)
         arr1d = arr[:, index]
         sorted_indices = np.argsort(arr1d)
         return cls(index, sorted_indices, ascending=ascending)
@@ -54,6 +55,7 @@ class SortProxy(TableProxy):
         df: DataFrameWrapper,
         ascending: bool = True,
     ) -> SortProxy:
+        index = int(index)
         column_name = df.column_names()[index]
         ser = df.column_to_array(column_name)
         sorted_indices = np.argsort(ser)

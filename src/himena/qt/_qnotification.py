@@ -346,20 +346,21 @@ class QNotificationTextArea(QtW.QWidget):
         self.text_edit = text_edit
 
         layout.addWidget(text_edit, stretch=100)
+        self._buttons: list[QtW.QPushButton] = []
 
-        self._has_buttons = len(callbacks) > 0
-
-        if self._has_buttons:
+        if len(callbacks) > 0:
             footer = QtW.QWidget()
             layout_footer = QtW.QHBoxLayout(footer)
             layout_footer.setContentsMargins(0, 0, 0, 0)
 
             for name, callback in callbacks.items():
                 btn = QtW.QPushButton(name, self)
+                btn.setCursor(Qt.CursorShape.PointingHandCursor)
                 btn.setFixedHeight(20)
                 btn.clicked.connect(callback)
-                btn.clicked.connect(self.button_clicked)
+                btn.clicked.connect(self._emit_button_clicked)
                 layout_footer.addWidget(btn)
+                self._buttons.append(btn)
 
             layout_footer.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
             layout.addWidget(footer)
@@ -367,6 +368,11 @@ class QNotificationTextArea(QtW.QWidget):
     def height_for_content(self, text: str) -> int:
         fm = self.text_edit.fontMetrics()
         h = fm.lineSpacing() * (len(text) // 48 + 1) + 10
-        if self._has_buttons:
-            h += 36
+        if len(self._buttons) > 0:
+            h += 40
         return h
+
+    def _emit_button_clicked(self):
+        for btn in self._buttons:
+            btn.setEnabled(False)
+        self.button_clicked.emit()

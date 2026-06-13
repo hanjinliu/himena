@@ -34,8 +34,15 @@ from himena.plugins.install import (
     install_plugins,
     override_keybindings,
     register_config,
+    GlobalConfig,
 )
 from himena.plugins.config import config_field, plugin_data_dir
+
+
+def get_global_config() -> GlobalConfig:
+    """Get the himena global config."""
+    return get_config(GlobalConfig) or GlobalConfig()
+
 
 __all__ = [
     "add_default_status_tip",
@@ -50,6 +57,7 @@ __all__ = [
     "override_keybindings",
     "update_config_context",
     "get_config",
+    "get_global_config",
     "register_config",
     "register_reader_plugin",
     "register_writer_plugin",
