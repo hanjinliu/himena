@@ -14,19 +14,15 @@ class QStatusBar(QtW.QStatusBar):
 
     def __init__(self, parent: QMainWindow):
         super().__init__(parent)
-        self._profile_btn = QtW.QPushButton(f"{parent._app.name}")
-        self._profile_btn.setToolTip("Application profile")
-        self._profile_btn.setObjectName("profileButton")
-        self._profile_btn.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
-        self._profile_btn.clicked.connect(self._open_profile_info)
+        self._profile_btn = btn = QtW.QPushButton(f"{parent._app.name}")
+        btn.setToolTip("Application profile")
+        btn.setObjectName("profileButton")
+        btn.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+        btn.clicked.connect(self._open_profile_info)
+        btn.setSizePolicy(QtW.QSizePolicy.Policy.Maximum, QtW.QSizePolicy.Policy.Fixed)
 
         # NOTE: status bar already has a size grip.
-        layout: QtW.QHBoxLayout = self.layout()
-        layout.setSpacing(0)
-        layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        layout.insertWidget(
-            1, self._profile_btn, alignment=QtCore.Qt.AlignmentFlag.AlignRight
-        )
+        self.addPermanentWidget(btn)
 
     def parentWidget(self) -> QMainWindow:
         return super().parentWidget()

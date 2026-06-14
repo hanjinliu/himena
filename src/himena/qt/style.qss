@@ -78,6 +78,7 @@ QPushButton#profileButton {
     background-color: #[background];
     color:: #[foreground_dim];
     margin: 1px;
+    padding: 1px;
 }
 QPushButton#profileButton:hover {
     background-color: #[highlight_dim];
@@ -139,8 +140,12 @@ QComboBox {
     padding: 1px;
 }
 
-QComboBox:dropdown {
+QComboBox::drop-down:button {
+    image: url(himena-icons:/down.svg);
     border-radius: 4px;
+    background-color: #[background];
+    width: 20px;
+    height: 20px;
 }
 
 QComboBox QAbstractItemView {
@@ -390,6 +395,13 @@ QMenuBar::item:selected {
 
 QMenu {
     border: 1px solid gray;
+    border-radius: 6px;
+}
+
+QMenu:item {
+    spacing: 12px;
+    padding: 4px 8px;
+    border-radius: 6px;
 }
 
 QMenu::item:hover {
