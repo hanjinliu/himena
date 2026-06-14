@@ -199,7 +199,8 @@ class ImageViewCapture:
         if isinstance(current_roi := view.current_roi(), _roi.RectangleRoi):
             bbox = image_utils.roi_2d_to_bbox(current_roi, view._arr, view._is_rgb)
         else:
-            bbox = Rect(0, 0, view._arr.shape[-1], view._arr.shape[-2])
+            width, height = image_utils.slice_shape(view._arr, view._is_rgb)
+            bbox = Rect(0, 0, width, height)
         # manually paint the graphics items
         qimage = QtGui.QImage(
             bbox.width, bbox.height, QtGui.QImage.Format.Format_RGBA8888
