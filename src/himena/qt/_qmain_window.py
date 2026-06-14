@@ -1149,20 +1149,15 @@ class QChoicesDialog(QtW.QDialog):
 
 
 def _prep_menubar_map(app: HimenaApplication) -> dict[str, str]:
-    ampa = "&"
     default_menu_ids = {
-        MenuId.FILE: ampa + MenuId.FILE.capitalize(),
-        MenuId.WINDOW: ampa + MenuId.WINDOW.capitalize(),
-        MenuId.VIEW: ampa + MenuId.VIEW.capitalize(),
-        MenuId.TOOLS: ampa + MenuId.TOOLS.capitalize(),
-        MenuId.GO: ampa + MenuId.GO.capitalize(),
+        MenuId.FILE: MenuId.FILE.capitalize(),
+        MenuId.WINDOW: MenuId.WINDOW.capitalize(),
+        MenuId.VIEW: MenuId.VIEW.capitalize(),
+        MenuId.TOOLS: MenuId.TOOLS.capitalize(),
+        MenuId.GO: MenuId.GO.capitalize(),
     }
-    existing_chars = {"f", "w", "v", "t", "g"}
     for menu_id in iter_root_menu_ids(app):
-        if menu_id and menu_id[0].lower() in existing_chars:
-            title = menu_id.replace("_", " ").title()
-        else:
-            title = ampa + menu_id.replace("_", " ").title()
+        title = menu_id.replace("_", " ").title()
         default_menu_ids[menu_id] = title
     return default_menu_ids
 
