@@ -73,6 +73,7 @@ class QTextEdit(QtW.QWidget):
     def update_model(self, model: WidgetDataModel):
         if not isinstance(value := model.value, str):
             value = str(value)
+        vbar_value: int | None = self._main_text_edit.verticalScrollBar().value()
         self._main_text_edit.setPlainText(value)
         lang = None
         spaces = 4
@@ -86,6 +87,7 @@ class QTextEdit(QtW.QWidget):
                 cursor.setPosition(sel[0])
                 cursor.setPosition(sel[1], QtGui.QTextCursor.MoveMode.KeepAnchor)
                 self._main_text_edit.setTextCursor(cursor)
+                vbar_value = None
         if lang is None:
             if isinstance(src := model.source, Path):
                 # set default language
@@ -101,6 +103,9 @@ class QTextEdit(QtW.QWidget):
         self._model_type = model.type
         if (ext := model.extension_default) is not None:
             self._extension_default = ext
+        if vbar_value is not None:
+            vbar = self._main_text_edit.verticalScrollBar()
+            vbar.setValue(min(vbar_value, vbar.maximum()))
 
     @validate_protocol
     def to_model(self) -> WidgetDataModel[str]:
@@ -210,7 +215,6 @@ class QRichTextEdit(QtW.QWidget):
     @validate_protocol
     def update_model(self, model: WidgetDataModel[str]):
         self.initPlainText(model.value)
-        return None
 
     @validate_protocol
     def to_model(self) -> WidgetDataModel[str]:

@@ -30,7 +30,7 @@ from himena._app_model import AppContext, HimenaApplication
 from himena._open_recent import RecentFileManager, RecentSessionManager
 from himena._utils import get_widget_class_id, import_object
 from himena.consts import NO_RECORDING_FIELD, ParametricWidgetProtocolNames as PWPN
-from himena.plugins import _checker, actions as _actions, ReaderPlugin
+from himena.plugins import _checker, actions as _actions
 from himena.profile import AppProfile, load_app_profile
 from himena.style import Theme
 from himena.standards import BaseMetadata
@@ -1354,19 +1354,24 @@ class MainWindow(Generic[_W]):
                 # check if the file is up to date
                 try:
                     time_last_update = datetime.fromtimestamp(beh.path.stat().st_mtime)
-                    ins = _providers.ReaderStore.instance()
-                    reader = ins.pick(beh.path)
+                    read_from = win._determine_read_from()
+                    if read_from is None:
+                        return
                 except Exception:
                     pass
                 else:
                     delta = time_last_update - win._datetime_last_read
                     if delta.total_seconds() > 2e-6:  # more than 2 us
+                        from_path, plugin = read_from
+                        model = self._paths_to_models(
+                            from_path, plugin=plugin, append_history=False
+                        )[0]
                         self.show_notification(
                             text=f"Window {win.title} is not showing the latest content of "
                             f"{beh.path.name}.",
                             title="Outdated File",
                             callbacks={
-                                "Reload": lambda: _reload_file(win, reader, beh.path),
+                                "Reload": lambda: _reload_file(win, model),
                                 "Dismiss": lambda: _set_timestamp(
                                     win, time_last_update
                                 ),
@@ -1595,8 +1600,7 @@ class StringInputDialogResponse(Generic[_T]):
             return self.input
 
 
-def _reload_file(win: SubWindow, reader: ReaderPlugin, path):
-    model = reader.read_and_update_source(path)
+def _reload_file(win: SubWindow, model: WidgetDataModel):
     win.update_model(model)
     _set_timestamp(win, datetime.now())
 
