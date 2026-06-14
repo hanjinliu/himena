@@ -6370,7 +6370,12 @@
 <span class="normal">1517</span>
 <span class="normal">1518</span>
 <span class="normal">1519</span>
-<span class="normal">1520</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MainWindow</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">_W</span><span class="p">]):</span>
+<span class="normal">1520</span>
+<span class="normal">1521</span>
+<span class="normal">1522</span>
+<span class="normal">1523</span>
+<span class="normal">1524</span>
+<span class="normal">1525</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MainWindow</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">_W</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The main window handler object.&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -7640,19 +7645,24 @@
                 <span class="c1"># check if the file is up to date</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">time_last_update</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">beh</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">)</span>
-                    <span class="n">ins</span> <span class="o">=</span> <span class="n">_providers</span><span class="o">.</span><span class="n">ReaderStore</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span>
-                    <span class="n">reader</span> <span class="o">=</span> <span class="n">ins</span><span class="o">.</span><span class="n">pick</span><span class="p">(</span><span class="n">beh</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+                    <span class="n">read_from</span> <span class="o">=</span> <span class="n">win</span><span class="o">.</span><span class="n">_determine_read_from</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">read_from</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="k">return</span>
                 <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                     <span class="k">pass</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">delta</span> <span class="o">=</span> <span class="n">time_last_update</span> <span class="o">-</span> <span class="n">win</span><span class="o">.</span><span class="n">_datetime_last_read</span>
                     <span class="k">if</span> <span class="n">delta</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mf">2e-6</span><span class="p">:</span>  <span class="c1"># more than 2 us</span>
+                        <span class="n">from_path</span><span class="p">,</span> <span class="n">plugin</span> <span class="o">=</span> <span class="n">read_from</span>
+                        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paths_to_models</span><span class="p">(</span>
+                            <span class="n">from_path</span><span class="p">,</span> <span class="n">plugin</span><span class="o">=</span><span class="n">plugin</span><span class="p">,</span> <span class="n">append_history</span><span class="o">=</span><span class="kc">False</span>
+                        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">show_notification</span><span class="p">(</span>
                             <span class="n">text</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Window </span><span class="si">{</span><span class="n">win</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s2"> is not showing the latest content of &quot;</span>
                             <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">beh</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
                             <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Outdated File&quot;</span><span class="p">,</span>
                             <span class="n">callbacks</span><span class="o">=</span><span class="p">{</span>
-                                <span class="s2">&quot;Reload&quot;</span><span class="p">:</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_reload_file</span><span class="p">(</span><span class="n">win</span><span class="p">,</span> <span class="n">reader</span><span class="p">,</span> <span class="n">beh</span><span class="o">.</span><span class="n">path</span><span class="p">),</span>
+                                <span class="s2">&quot;Reload&quot;</span><span class="p">:</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_reload_file</span><span class="p">(</span><span class="n">win</span><span class="p">,</span> <span class="n">model</span><span class="p">),</span>
                                 <span class="s2">&quot;Dismiss&quot;</span><span class="p">:</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_set_timestamp</span><span class="p">(</span>
                                     <span class="n">win</span><span class="p">,</span> <span class="n">time_last_update</span>
                                 <span class="p">),</span>
