@@ -1340,6 +1340,7 @@ class MainWindow(Generic[_W]):
             if not (
                 self._instructions.notify_file_changed
                 and isinstance(beh := win._save_behavior, _descriptors.SaveToPath)
+                and getattr(win.widget, "__himena_ignore_file_updates__", False)
             ):
                 return
 
@@ -1361,7 +1362,7 @@ class MainWindow(Generic[_W]):
                     pass
                 else:
                     delta = time_last_update - win._datetime_last_read
-                    if delta.total_seconds() > 2e-6:  # more than 2 us
+                    if delta.total_seconds() > 2e-5:  # more than 20 us
                         from_path, plugin = read_from
                         model = self._paths_to_models(
                             from_path, plugin=plugin, append_history=False
@@ -1373,7 +1374,7 @@ class MainWindow(Generic[_W]):
                             callbacks={
                                 "Reload": lambda: _reload_file(win, model),
                                 "Dismiss": lambda: _set_timestamp(
-                                    win, time_last_update
+                                    win, datetime(9999, 12, 31)
                                 ),
                             },
                         )
@@ -1525,10 +1526,10 @@ class MainWindow(Generic[_W]):
         return models
 
 
-def _short_repr(obj: Any) -> str:
+def _short_repr(obj: Any, *, num_chars_limits: int = 50) -> str:
     obj_repr = repr(obj)
-    if len(obj_repr) > 50:
-        obj_repr = obj_repr[:50] + "..."
+    if len(obj_repr) > num_chars_limits:
+        obj_repr = obj_repr[:num_chars_limits] + "..."
     return obj_repr
 
 
