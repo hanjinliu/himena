@@ -138,14 +138,15 @@ QComboBox {
     background-color: #[background];
     color: #[foreground];
     padding: 1px;
+    height: 18px;
 }
 
 QComboBox::drop-down:button {
     image: url(himena-icons:/down.svg);
     border-radius: 4px;
     background-color: #[background];
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
 }
 
 QComboBox QAbstractItemView {
