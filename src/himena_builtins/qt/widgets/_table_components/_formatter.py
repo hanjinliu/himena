@@ -10,20 +10,15 @@ def _format_float(value, ndigits: int = 4) -> str:
     if 0.1 <= abs(value) < 10 ** (ndigits + 1) or value == 0:
         text = f"{value:.{ndigits}f}"
     else:
-        text = f"{value:.{ndigits-1}e}"
+        text = f"{value:.{ndigits - 1}e}"
 
     return text
 
 
-def _format_int(value, ndigits: int = 4) -> str:
+def _format_int(value) -> str:
     if value is None:
         return "null"
-    if 0.1 <= abs(value) < 10 ** (ndigits + 1) or value == 0:
-        text = str(value)
-    else:
-        text = f"{value:.{ndigits-1}e}"
-
-    return text
+    return str(value)
 
 
 def _format_complex(value: complex, ndigits: int = 3) -> str:
@@ -32,7 +27,7 @@ def _format_complex(value: complex, ndigits: int = 3) -> str:
     elif 0.1 <= abs(value) < 10 ** (ndigits + 1) or value == 0:
         text = f"{value.real:.{ndigits}f}{value.imag:+.{ndigits}f}j"
     else:
-        text = f"{value.real:.{ndigits-1}e}{value.imag:+.{ndigits-1}e}j"
+        text = f"{value.real:.{ndigits - 1}e}{value.imag:+.{ndigits - 1}e}j"
 
     return text
 
