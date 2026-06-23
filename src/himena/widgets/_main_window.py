@@ -1342,6 +1342,8 @@ class MainWindow(Generic[_W]):
                 and isinstance(beh := win._save_behavior, _descriptors.SaveToPath)
             ):
                 return
+            if getattr(win.widget, "__himena_ignore_file_updates__", False):
+                return
 
             elif not beh.path.exists():
                 self.show_notification(
@@ -1525,10 +1527,10 @@ class MainWindow(Generic[_W]):
         return models
 
 
-def _short_repr(obj: Any) -> str:
+def _short_repr(obj: Any, *, num_chars_limits: int = 50) -> str:
     obj_repr = repr(obj)
-    if len(obj_repr) > 50:
-        obj_repr = obj_repr[:50] + "..."
+    if len(obj_repr) > num_chars_limits:
+        obj_repr = obj_repr[:num_chars_limits] + "..."
     return obj_repr
 
 
