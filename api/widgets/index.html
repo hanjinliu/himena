@@ -6375,7 +6375,9 @@
 <span class="normal">1522</span>
 <span class="normal">1523</span>
 <span class="normal">1524</span>
-<span class="normal">1525</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MainWindow</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">_W</span><span class="p">]):</span>
+<span class="normal">1525</span>
+<span class="normal">1526</span>
+<span class="normal">1527</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MainWindow</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">_W</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The main window handler object.&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -7632,6 +7634,8 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_instructions</span><span class="o">.</span><span class="n">notify_file_changed</span>
                 <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">beh</span> <span class="o">:=</span> <span class="n">win</span><span class="o">.</span><span class="n">_save_behavior</span><span class="p">,</span> <span class="n">_descriptors</span><span class="o">.</span><span class="n">SaveToPath</span><span class="p">)</span>
             <span class="p">):</span>
+                <span class="k">return</span>
+            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">win</span><span class="o">.</span><span class="n">widget</span><span class="p">,</span> <span class="s2">&quot;__himena_ignore_file_updates__&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
                 <span class="k">return</span>
 
             <span class="k">elif</span> <span class="ow">not</span> <span class="n">beh</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
