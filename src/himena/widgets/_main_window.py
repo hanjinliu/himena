@@ -1362,7 +1362,7 @@ class MainWindow(Generic[_W]):
                     pass
                 else:
                     delta = time_last_update - win._datetime_last_read
-                    if delta.total_seconds() > 2e-5:  # more than 20 us
+                    if delta.total_seconds() > 2e-6:  # more than 2 us
                         from_path, plugin = read_from
                         model = self._paths_to_models(
                             from_path, plugin=plugin, append_history=False
