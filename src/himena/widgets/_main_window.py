@@ -1340,8 +1340,9 @@ class MainWindow(Generic[_W]):
             if not (
                 self._instructions.notify_file_changed
                 and isinstance(beh := win._save_behavior, _descriptors.SaveToPath)
-                and getattr(win.widget, "__himena_ignore_file_updates__", False)
             ):
+                return
+            if getattr(win.widget, "__himena_ignore_file_updates__", False):
                 return
 
             elif not beh.path.exists():
@@ -1374,7 +1375,7 @@ class MainWindow(Generic[_W]):
                             callbacks={
                                 "Reload": lambda: _reload_file(win, model),
                                 "Dismiss": lambda: _set_timestamp(
-                                    win, datetime(9999, 12, 31)
+                                    win, time_last_update
                                 ),
                             },
                         )
