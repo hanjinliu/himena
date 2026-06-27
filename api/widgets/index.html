@@ -6377,7 +6377,10 @@
 <span class="normal">1524</span>
 <span class="normal">1525</span>
 <span class="normal">1526</span>
-<span class="normal">1527</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MainWindow</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">_W</span><span class="p">]):</span>
+<span class="normal">1527</span>
+<span class="normal">1528</span>
+<span class="normal">1529</span>
+<span class="normal">1530</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MainWindow</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">_W</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The main window handler object.&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -7669,6 +7672,9 @@
                                 <span class="s2">&quot;Reload&quot;</span><span class="p">:</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_reload_file</span><span class="p">(</span><span class="n">win</span><span class="p">,</span> <span class="n">model</span><span class="p">),</span>
                                 <span class="s2">&quot;Dismiss&quot;</span><span class="p">:</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_set_timestamp</span><span class="p">(</span>
                                     <span class="n">win</span><span class="p">,</span> <span class="n">time_last_update</span>
+                                <span class="p">),</span>
+                                <span class="s2">&quot;Never&quot;</span><span class="p">:</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_set_timestamp</span><span class="p">(</span>
+                                    <span class="n">win</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">9999</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">31</span><span class="p">)</span>
                                 <span class="p">),</span>
                             <span class="p">},</span>
                         <span class="p">)</span>
