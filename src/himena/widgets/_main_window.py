@@ -1377,6 +1377,9 @@ class MainWindow(Generic[_W]):
                                 "Dismiss": lambda: _set_timestamp(
                                     win, time_last_update
                                 ),
+                                "Never": lambda: _set_timestamp(
+                                    win, datetime(9999, 12, 31)
+                                ),
                             },
                         )
         finally:
@@ -1580,10 +1583,10 @@ def _norm_choices(choices: Iterable, allow_zero: bool = False) -> list[tuple[str
         raise ValueError("At least one choice must be given.")
     for choice in choices:
         if isinstance(choice, str):
-            _choices_normed.append((choice, choice))
+            text = value = choice
         else:
             text, value = choice
-            _choices_normed.append((text, value))
+        _choices_normed.append((text, value))
     return _choices_normed
 
 

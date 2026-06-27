@@ -858,15 +858,13 @@ class QImageView(QImageViewBase):
                 else:
                     img = None
                 images.append(img)
-                self._img_view.set_array(
-                    i,
-                    ch.transform_image(
-                        img,
-                        complex_transform=self._control.complex_transform,
-                        is_rgb=self._is_rgb,
-                        is_gray=self._composite_state() == "Gray",
-                    ),
+                img_tr = ch.transform_image(
+                    img,
+                    complex_transform=self._control.complex_transform,
+                    is_rgb=self._is_rgb,
+                    is_gray=self._composite_state() == "Gray",
                 )
+                self._img_view.set_array(i, img_tr)
             ch_cur = self.current_channel()
             idx = ch_cur.channel_index or 0
             hist_arr_ref = imgs[idx].arr
@@ -1047,10 +1045,8 @@ class ChannelInfo:
             true_color = (np.array(self.colormap(1.0).rgba) * 255).astype(np.uint8)
             arr_normed = np.where(arr[..., np.newaxis], true_color, false_color)
         elif cmax > cmin:
-            arr = arr.clip(cmin, cmax)
-            arr_normed = (self.colormap((arr - cmin) / (cmax - cmin)) * 255).astype(
-                np.uint8
-            )
+            arr_ = (arr - cmin) / (cmax - cmin)
+            arr_normed = (self.colormap(arr_, bytes=True)).astype(np.uint8)
         else:
             color = np.array(self.colormap(0.5).rgba8, dtype=np.uint8)
             arr_normed = np.empty(arr.shape + (4,), dtype=np.uint8)
