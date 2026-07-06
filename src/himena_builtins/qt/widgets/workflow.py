@@ -75,8 +75,7 @@ class QWorkflowViewBase(QFlowChartWidget):
 
     def clear_workflow(self) -> None:
         """Clear the workflow view."""
-        self.scene.clear()
-        self.view._node_map.clear()
+        self.view.clear_items()
 
     def _add_step(self, step: _wf.WorkflowStep, workflow: _wf.Workflow, main) -> None:
         parents: list[UUID] = []
