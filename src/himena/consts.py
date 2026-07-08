@@ -2,7 +2,6 @@ import sys
 import platform
 import string
 from types import SimpleNamespace, MappingProxyType
-import warnings
 from himena.utils.enum import StrEnum
 
 BasicTextFileTypes = frozenset(
@@ -39,31 +38,19 @@ elif IS_MACOS:
     DefaultFontFamily = "Helvetica"
 else:
 
-    def _get_font_family():
+    def _get_font_family_tk():
         try:
             import tkinter
             import tkinter.font
 
             root = tkinter.Tk()  # noqa: F841
-            families = tkinter.font.families()
-        except ModuleNotFoundError:
-            # In WSL Ubuntu, tkinter is not available by default.
-            # `sudo apt-get install python3-tk` is required.
-            families = ()
-            warnings.warn(
-                "tkinter is not available. Monospace font will be set to 'monospace'. "
-                "Please install tkinter by e.g. `sudo apt-get install python3-tk`.",
-                RuntimeWarning,
-                stacklevel=1,
-            )
-        except Exception as e:
-            # Running GUI via SSH may cause TclError due to missing DISPLAY variable.
-            families = ()
-            warnings.warn(
-                f"Failed to get font families from tkinter: {e}.",
-                RuntimeWarning,
-                stacklevel=1,
-            )
+            return tkinter.font.families()
+        except Exception:
+            return ()
+
+    def _get_font_family():
+        families = _get_font_family_tk()
+
         candidates = ["Noto Sans Mono", "DejaVu Sans Mono", "Ubuntu Mono"]
         for fam in candidates:
             if fam in families:
