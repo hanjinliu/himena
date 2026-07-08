@@ -48,16 +48,9 @@ else:
         except Exception:
             return ()
 
-    def _get_font_family_qt():
-        try:
-            from qtpy.QtGui import QFontDatabase
-
-            return QFontDatabase().families()
-        except Exception:
-            return ()
-
     def _get_font_family():
-        families = _get_font_family_qt() or _get_font_family_tk()
+        families = _get_font_family_tk()
+
         candidates = ["Noto Sans Mono", "DejaVu Sans Mono", "Ubuntu Mono"]
         for fam in candidates:
             if fam in families:
