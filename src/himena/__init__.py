@@ -1,4 +1,4 @@
-__version__ = "0.2.4"
+__version__ = "0.2.5"
 __author__ = "Hanjin Liu"
 
 from typing import TYPE_CHECKING
