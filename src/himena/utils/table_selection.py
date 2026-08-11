@@ -257,11 +257,11 @@ class TableValueParser:
             raise ValueError("The X values must be a 1D row vector.")
         arr = arr.ravel()
         try:
-            arr[:1].astype(np.float64)
+            as_f64(arr[:1])
         except ValueError:
-            label, arr_number = str(arr[0]), arr[1:].astype(np.float64)
+            label, arr_number = str(arr[0]), as_f64(arr[1:])
         else:
-            label, arr_number = None, arr.astype(np.float64)
+            label, arr_number = None, as_f64(arr)
         if same_size and arr_number.size != self.n_samples:
             raise ValueError("The number of X values must be the same as the Y values.")
         return NamedArray(label, arr_number)
@@ -409,12 +409,24 @@ def auto_select(model: WidgetDataModel, num: int) -> list[None | SelectionType]:
         return selections
     if ncols == 0:
         raise ValueError("The table must have at least one column.")
-    elif ncols < num:
+    if len(selections) == 1:
+        # if selection is (N, 2) and num == 2, assume that xy data is selected.
+        sel = selections[0]
+        (rstart, rend), (cstart, cend) = sel
+        if cend - cstart == num:
+            out = []
+            for i in range(cstart, cend):
+                out.append(((rstart, rend), (i, i + 1)))
+            return out
+
+    if ncols < num:
+        # just select from left to right as many as possible
         out = [None] * num
         for i in range(ncols):
             out[i + num - ncols] = ((0, None), (i, i + 1))
         return out
     else:
+        # just select from left to right
         return [((0, None), (i, i + 1)) for i in range(num)]
 
 
@@ -427,5 +439,6 @@ def _to_single_column_slice(val: SelectionType) -> int:
 
 def as_f64(arr: np.ndarray):
     if arr.dtype.kind == "T":
+        # string array, convert empty string to nan
         return np.where(arr == "", "nan", arr).astype(np.float64)
     return arr.astype(np.float64)
