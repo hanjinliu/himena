@@ -267,9 +267,9 @@ class QTableBase(QtW.QTableView):
             rect |= self.visualRect(model.index(*start))
 
         if src.row < 0 or dst.row < 0:
-            rect.setBottom(999999)
+            rect.setBottom(BIG_NUM)
         if src.column < 0 or dst.column < 0:
-            rect.setRight(999999)
+            rect.setRight(BIG_NUM)
 
         self._update_all(rect)
         if dst.row >= 0 and dst.column >= 0:
@@ -285,22 +285,21 @@ class QTableBase(QtW.QTableView):
         self._selection_model.set_shift(has_shift)
         self._selection_model.set_ctrl(has_ctrl)
         if has_ctrl:
-            nr, nc = self.data_shape()
-            if _key == Qt.Key.Key_Up:
-                dr, dc = -99999999, 0
-            elif _key == Qt.Key.Key_Down:
-                dr, dc = 99999999, 0
-            elif _key == Qt.Key.Key_Left:
-                dr, dc = 0, -99999999
-            elif _key == Qt.Key.Key_Right:
-                dr, dc = 0, 99999999
+            if _key in {
+                Qt.Key.Key_Up,
+                Qt.Key.Key_Down,
+                Qt.Key.Key_Left,
+                Qt.Key.Key_Right,
+            }:
+                dr, dc = self._ctrl_move(_key)
+                nr, nc = self.data_shape()
+                self._selection_model.move_limited(dr, dc, nr, nc)
+                return
             elif _key == Qt.Key.Key_A:
                 self.select_all()
-                return None
+                return
             else:
                 return super().keyPressEvent(e)
-            self._selection_model.move_limited(dr, dc, nr, nc)
-            return None
         elif _mod == Qt.KeyboardModifier.NoModifier or has_shift:
             if _key == Qt.Key.Key_Up:
                 dr, dc = -1, 0
@@ -321,8 +320,21 @@ class QTableBase(QtW.QTableView):
             else:
                 return super().keyPressEvent(e)
             self._selection_model.move(dr, dc, allow_header=True)
-            return None
+            return
         return super().keyPressEvent(e)
+
+    def _ctrl_move(self, key) -> tuple[int, int]:
+        if key == Qt.Key.Key_Up:
+            dr, dc = -BIG_NUM, 0
+        elif key == Qt.Key.Key_Down:
+            dr, dc = BIG_NUM, 0
+        elif key == Qt.Key.Key_Left:
+            dr, dc = 0, -BIG_NUM
+        elif key == Qt.Key.Key_Right:
+            dr, dc = 0, BIG_NUM
+        else:  # pragma: no cover
+            raise RuntimeError(f"Invalid key for ctrl_move: {key}")
+        return dr, dc
 
     def keyReleaseEvent(self, a0: QtGui.QKeyEvent) -> None:
         has_ctrl = a0.modifiers() & Qt.KeyboardModifier.ControlModifier
@@ -579,6 +591,9 @@ class MouseTrack:
         if self.last_click_pos is None:
             return False
         return (self.last_click_pos - pos).manhattanLength() <= tol
+
+
+BIG_NUM = 99999999
 
 
 class Editability:

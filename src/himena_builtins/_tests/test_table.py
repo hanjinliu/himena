@@ -404,3 +404,32 @@ def test_table_sort(himena_ui: MainWindow, qtbot: QtBot):
     ss._remove_selected_columns()
     ss._remove_selected_rows()
     ss._paste_array(np.array([["x", "y"], ["z", "w"]]))
+
+def test_ctrl_move(himena_ui: MainWindow, qtbot: QtBot):
+    with _get_tester(himena_ui) as tester:
+        qtbot.addWidget(tester.widget)
+        ___ = ""
+        tester.update_model(
+            [["a", "b", ___, "b", "b"],
+             ["c", ___, "e", ___, "f"],
+             [___, "f", ___, ___, ___],
+             ["g", "h", "i", ___, "j"],
+             ["k", ___, ___, "l", "m"]],
+        )
+        tester.widget.selection_model.current_index = (0, 0)
+        qtbot.keyClick(tester.widget, Qt.Key.Key_Right, modifier=_Ctrl)
+        assert tester.widget.selection_model.current_index == (0, 1)
+        qtbot.keyClick(tester.widget, Qt.Key.Key_Right, modifier=_Ctrl)
+        assert tester.widget.selection_model.current_index == (0, 4)
+        qtbot.keyClick(tester.widget, Qt.Key.Key_Left, modifier=_Ctrl)
+        assert tester.widget.selection_model.current_index == (0, 3)
+        qtbot.keyClick(tester.widget, Qt.Key.Key_Left, modifier=_Ctrl)
+        assert tester.widget.selection_model.current_index == (0, 0)
+        qtbot.keyClick(tester.widget, Qt.Key.Key_Down, modifier=_Ctrl)
+        assert tester.widget.selection_model.current_index == (1, 0)
+        qtbot.keyClick(tester.widget, Qt.Key.Key_Down, modifier=_Ctrl)
+        assert tester.widget.selection_model.current_index == (4, 0)
+        qtbot.keyClick(tester.widget, Qt.Key.Key_Up, modifier=_Ctrl)
+        assert tester.widget.selection_model.current_index == (3, 0)
+        qtbot.keyClick(tester.widget, Qt.Key.Key_Up, modifier=_Ctrl)
+        assert tester.widget.selection_model.current_index == (0, 0)

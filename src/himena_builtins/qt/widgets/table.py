@@ -827,11 +827,57 @@ class QSpreadsheet(QTableBase):
                 return
         return super().keyPressEvent(e)
 
+    def _ctrl_move(self, key):
+        r, c = self._selection_model.current_index
+        if r < 0 or c < 0:
+            return super()._ctrl_move(key)
+        arr = self.model()._arr
+        if key == Qt.Key.Key_Up:
+            is_change_point = _detect_edge_neg(arr[:r, c])
+            if is_change_point.size > 0:
+                dr = is_change_point[0] - r + 1
+            else:
+                dr = -BIG_NUM
+            dc = 0
+        elif key == Qt.Key.Key_Down:
+            is_change_point = _detect_edge_pos(arr[r + 1 :, c])
+            if is_change_point.size > 0:
+                dr = is_change_point[-1] + 1
+            else:
+                dr = BIG_NUM
+            dc = 0
+        elif key == Qt.Key.Key_Left:
+            is_change_point = _detect_edge_neg(arr[r, :c])
+            if is_change_point.size > 0:
+                dc = is_change_point[0] - c + 1
+            else:
+                dc = -BIG_NUM
+            dr = 0
+        elif key == Qt.Key.Key_Right:
+            is_change_point = _detect_edge_pos(arr[r, c + 1 :])
+            if is_change_point.size > 0:
+                dc = is_change_point[-1] + 1
+            else:
+                dc = BIG_NUM
+            dr = 0
+        else:  # pragma: no cover
+            raise RuntimeError(f"Invalid key for ctrl_move: {key}")
+        return dr, dc
+
     if TYPE_CHECKING:
 
         def model(self) -> QStringArrayModel: ...
 
 
+def _detect_edge_neg(arr1d):
+    return np.where(np.diff((arr1d == "").astype(np.int8)) < 0)[0]
+
+
+def _detect_edge_pos(arr1d):
+    return np.where(np.diff((arr1d == "").astype(np.int8)) > 0)[0]
+
+
+BIG_NUM = 99999999
 _R_CENTER = QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter
 
 
