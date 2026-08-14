@@ -498,6 +498,7 @@ QToolTip {
     background-color: #[background];
     color: #[foreground];
     padding: 1px;
+    border: 1px solid gray;
     border-radius: 2px;
 }
 
