@@ -2518,12 +2518,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_actions</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Action</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_actions_dynamic</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_submenu_titles</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">MenuId</span><span class="o">.</span><span class="n">FILE_NEW</span><span class="p">:</span> <span class="s2">&quot;New ...&quot;</span><span class="p">,</span>
-            <span class="n">MenuId</span><span class="o">.</span><span class="n">TOOLS_DOCK</span><span class="p">:</span> <span class="s2">&quot;Dock widgets&quot;</span><span class="p">,</span>
+            <span class="n">MenuId</span><span class="o">.</span><span class="n">FILE_NEW</span><span class="p">:</span> <span class="s2">"New ..."</span><span class="p">,</span>
+            <span class="n">MenuId</span><span class="o">.</span><span class="n">TOOLS_DOCK</span><span class="p">:</span> <span class="s2">"Dock widgets"</span><span class="p">,</span>
         <span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_submenu_groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">MenuId</span><span class="o">.</span><span class="n">FILE_NEW</span><span class="p">:</span> <span class="s2">&quot;00_new&quot;</span><span class="p">,</span>
-            <span class="n">MenuId</span><span class="o">.</span><span class="n">TOOLS_DOCK</span><span class="p">:</span> <span class="s2">&quot;00_dock&quot;</span><span class="p">,</span>
+            <span class="n">MenuId</span><span class="o">.</span><span class="n">FILE_NEW</span><span class="p">:</span> <span class="s2">"00_new"</span><span class="p">,</span>
+            <span class="n">MenuId</span><span class="o">.</span><span class="n">TOOLS_DOCK</span><span class="p">:</span> <span class="s2">"00_dock"</span><span class="p">,</span>
         <span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_submenu_order</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_installed_plugins</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -2535,45 +2535,45 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">instance</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AppActionRegistry</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the global instance of the registry.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Get the global instance of the registry."""</span>
         <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_global_instance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">cls</span><span class="o">.</span><span class="n">_global_instance</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_global_instance</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_try_load_app_tips</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">tip_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;resources&quot;</span> <span class="o">/</span> <span class="s2">&quot;tips.json&quot;</span>
+        <span class="n">tip_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">"resources"</span> <span class="o">/</span> <span class="s2">"tips.json"</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">with</span> <span class="n">tip_path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">tip_path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"r"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
                 <span class="n">out</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">each</span> <span class="ow">in</span> <span class="n">out</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_app_tips</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                     <span class="n">AppTip</span><span class="p">(</span>
-                        <span class="n">short</span><span class="o">=</span><span class="n">each</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;short&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
-                        <span class="n">long</span><span class="o">=</span><span class="n">each</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;long&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+                        <span class="n">short</span><span class="o">=</span><span class="n">each</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"short"</span><span class="p">,</span> <span class="s2">""</span><span class="p">),</span>
+                        <span class="n">long</span><span class="o">=</span><span class="n">each</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"long"</span><span class="p">,</span> <span class="s2">""</span><span class="p">),</span>
                     <span class="p">)</span>
                 <span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Failed to load app tips: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"Failed to load app tips: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">pick_a_tip</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AppTip</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Pick a random tip.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Pick a random tip."""</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_app_tips</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
         <span class="n">tip</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_app_tips</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">tip</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">add_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="n">Action</span><span class="p">,</span> <span class="n">is_dynamic</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add an action to the registry.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Add an action to the registry."""</span>
         <span class="n">id_</span> <span class="o">=</span> <span class="n">action</span><span class="o">.</span><span class="n">id</span>
         <span class="k">if</span> <span class="n">id_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_actions</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Action ID </span><span class="si">{</span><span class="n">id_</span><span class="si">}</span><span class="s2"> already exists.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Action ID </span><span class="si">{</span><span class="n">id_</span><span class="si">}</span><span class="s2"> already exists."</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_actions</span><span class="p">[</span><span class="n">id_</span><span class="p">]</span> <span class="o">=</span> <span class="n">action</span>
         <span class="k">if</span> <span class="n">is_dynamic</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_actions_dynamic</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">id_</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">installed_plugins</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;List of modules or python paths that are installed as plugins.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""List of modules or python paths that are installed as plugins."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_installed_plugins</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">iter_actions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="n">HimenaApplication</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Action</span><span class="p">]:</span>
@@ -2582,13 +2582,13 @@
                 <span class="k">yield</span> <span class="n">action</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">submenu_title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the title of a submenu.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Get the title of a submenu."""</span>
         <span class="k">if</span> <span class="n">title</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_submenu_titles</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">title</span>
-        <span class="k">return</span> <span class="nb">id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">title</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">title</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">submenu_group</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the group of a submenu.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Get the group of a submenu."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_submenu_groups</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">submenu_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
@@ -2603,16 +2603,16 @@
         <span class="n">app</span><span class="p">:</span> <span class="n">HimenaApplication</span><span class="p">,</span>
         <span class="n">actions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Action</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Install actions to the application.</span>
+<span class="w">        </span><span class="sd">"""Install actions to the application.</span>
 
 <span class="sd">        This method automatically adds submenus if they are not already exists, and</span>
 <span class="sd">        returns the list of added root menu IDs. Note that this does NOT updates the</span>
 <span class="sd">        GUI menubar and toolbar.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="c1"># look for existing menu items</span>
         <span class="k">if</span> <span class="n">actions</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">actions</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">iter_actions</span><span class="p">(</span><span class="n">app</span><span class="p">))</span>
-        <span class="n">existing_menu_ids</span> <span class="o">=</span> <span class="p">{</span><span class="n">_id</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">_id</span> <span class="ow">in</span> <span class="n">MenuId</span> <span class="k">if</span> <span class="s2">&quot;/&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_id</span><span class="o">.</span><span class="n">value</span><span class="p">}</span>
+        <span class="n">existing_menu_ids</span> <span class="o">=</span> <span class="p">{</span><span class="n">_id</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">_id</span> <span class="ow">in</span> <span class="n">MenuId</span> <span class="k">if</span> <span class="s2">"/"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_id</span><span class="o">.</span><span class="n">value</span><span class="p">}</span>
         <span class="k">for</span> <span class="n">menu_id</span><span class="p">,</span> <span class="n">menu</span> <span class="ow">in</span> <span class="n">app</span><span class="o">.</span><span class="n">menus</span><span class="p">:</span>
             <span class="n">existing_menu_ids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">menu_id</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">each</span> <span class="ow">in</span> <span class="n">menu</span><span class="p">:</span>
@@ -2630,12 +2630,12 @@
         <span class="n">new_menu_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="k">for</span> <span class="n">place</span> <span class="ow">in</span> <span class="n">added_menu_ids</span> <span class="o">-</span> <span class="n">existing_menu_ids</span><span class="p">:</span>
-            <span class="n">place_components</span> <span class="o">=</span> <span class="n">place</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+            <span class="n">place_components</span> <span class="o">=</span> <span class="n">place</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">place_components</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">new_menu_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">place</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">place_components</span><span class="p">)):</span>
-                <span class="n">menu_id</span> <span class="o">=</span> <span class="s2">&quot;/&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">place_components</span><span class="p">[:</span><span class="n">i</span><span class="p">])</span>
-                <span class="n">submenu</span> <span class="o">=</span> <span class="s2">&quot;/&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">place_components</span><span class="p">[:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+                <span class="n">menu_id</span> <span class="o">=</span> <span class="s2">"/"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">place_components</span><span class="p">[:</span><span class="n">i</span><span class="p">])</span>
+                <span class="n">submenu</span> <span class="o">=</span> <span class="s2">"/"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">place_components</span><span class="p">[:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
                 <span class="k">if</span> <span class="n">submenu</span> <span class="ow">in</span> <span class="n">existing_menu_ids</span><span class="p">:</span>
                     <span class="k">continue</span>
                 <span class="n">title</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submenu_title</span><span class="p">(</span><span class="n">submenu</span><span class="p">)</span>
@@ -2712,10 +2712,10 @@
 <span class="normal">170</span>
 <span class="normal">171</span>
 <span class="normal">172</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">add_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="n">Action</span><span class="p">,</span> <span class="n">is_dynamic</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add an action to the registry.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Add an action to the registry."""</span>
     <span class="n">id_</span> <span class="o">=</span> <span class="n">action</span><span class="o">.</span><span class="n">id</span>
     <span class="k">if</span> <span class="n">id_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_actions</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Action ID </span><span class="si">{</span><span class="n">id_</span><span class="si">}</span><span class="s2"> already exists.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Action ID </span><span class="si">{</span><span class="n">id_</span><span class="si">}</span><span class="s2"> already exists."</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_actions</span><span class="p">[</span><span class="n">id_</span><span class="p">]</span> <span class="o">=</span> <span class="n">action</span>
     <span class="k">if</span> <span class="n">is_dynamic</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_actions_dynamic</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">id_</span><span class="p">)</span>
@@ -2800,16 +2800,16 @@ GUI menubar and toolbar.</p>
     <span class="n">app</span><span class="p">:</span> <span class="n">HimenaApplication</span><span class="p">,</span>
     <span class="n">actions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Action</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Install actions to the application.</span>
+<span class="w">    </span><span class="sd">"""Install actions to the application.</span>
 
 <span class="sd">    This method automatically adds submenus if they are not already exists, and</span>
 <span class="sd">    returns the list of added root menu IDs. Note that this does NOT updates the</span>
 <span class="sd">    GUI menubar and toolbar.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="c1"># look for existing menu items</span>
     <span class="k">if</span> <span class="n">actions</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">actions</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">iter_actions</span><span class="p">(</span><span class="n">app</span><span class="p">))</span>
-    <span class="n">existing_menu_ids</span> <span class="o">=</span> <span class="p">{</span><span class="n">_id</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">_id</span> <span class="ow">in</span> <span class="n">MenuId</span> <span class="k">if</span> <span class="s2">&quot;/&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_id</span><span class="o">.</span><span class="n">value</span><span class="p">}</span>
+    <span class="n">existing_menu_ids</span> <span class="o">=</span> <span class="p">{</span><span class="n">_id</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">_id</span> <span class="ow">in</span> <span class="n">MenuId</span> <span class="k">if</span> <span class="s2">"/"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_id</span><span class="o">.</span><span class="n">value</span><span class="p">}</span>
     <span class="k">for</span> <span class="n">menu_id</span><span class="p">,</span> <span class="n">menu</span> <span class="ow">in</span> <span class="n">app</span><span class="o">.</span><span class="n">menus</span><span class="p">:</span>
         <span class="n">existing_menu_ids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">menu_id</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">each</span> <span class="ow">in</span> <span class="n">menu</span><span class="p">:</span>
@@ -2827,12 +2827,12 @@ GUI menubar and toolbar.</p>
     <span class="n">new_menu_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="k">for</span> <span class="n">place</span> <span class="ow">in</span> <span class="n">added_menu_ids</span> <span class="o">-</span> <span class="n">existing_menu_ids</span><span class="p">:</span>
-        <span class="n">place_components</span> <span class="o">=</span> <span class="n">place</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+        <span class="n">place_components</span> <span class="o">=</span> <span class="n">place</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">place_components</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">new_menu_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">place</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">place_components</span><span class="p">)):</span>
-            <span class="n">menu_id</span> <span class="o">=</span> <span class="s2">&quot;/&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">place_components</span><span class="p">[:</span><span class="n">i</span><span class="p">])</span>
-            <span class="n">submenu</span> <span class="o">=</span> <span class="s2">&quot;/&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">place_components</span><span class="p">[:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+            <span class="n">menu_id</span> <span class="o">=</span> <span class="s2">"/"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">place_components</span><span class="p">[:</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">submenu</span> <span class="o">=</span> <span class="s2">"/"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">place_components</span><span class="p">[:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
             <span class="k">if</span> <span class="n">submenu</span> <span class="ow">in</span> <span class="n">existing_menu_ids</span><span class="p">:</span>
                 <span class="k">continue</span>
             <span class="n">title</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submenu_title</span><span class="p">(</span><span class="n">submenu</span><span class="p">)</span>
@@ -2880,7 +2880,7 @@ GUI menubar and toolbar.</p>
 <span class="normal">140</span>
 <span class="normal">141</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">instance</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AppActionRegistry</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the global instance of the registry.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Get the global instance of the registry."""</span>
     <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_global_instance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">cls</span><span class="o">.</span><span class="n">_global_instance</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
     <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_global_instance</span>
@@ -2912,7 +2912,7 @@ GUI menubar and toolbar.</p>
 <span class="normal">161</span>
 <span class="normal">162</span>
 <span class="normal">163</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">pick_a_tip</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AppTip</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pick a random tip.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Pick a random tip."""</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_app_tips</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="n">tip</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_app_tips</span><span class="p">)</span>
@@ -2942,7 +2942,7 @@ GUI menubar and toolbar.</p>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">190</span>
 <span class="normal">191</span>
 <span class="normal">192</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">submenu_group</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the group of a submenu.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Get the group of a submenu."""</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_submenu_groups</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -2971,10 +2971,10 @@ GUI menubar and toolbar.</p>
 <span class="normal">186</span>
 <span class="normal">187</span>
 <span class="normal">188</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">submenu_title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the title of a submenu.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Get the title of a submenu."""</span>
     <span class="k">if</span> <span class="n">title</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_submenu_titles</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">title</span>
-    <span class="k">return</span> <span class="nb">id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">title</span><span class="p">()</span>
+    <span class="k">return</span> <span class="nb">id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">title</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3061,29 +3061,29 @@ GUI menubar and toolbar.</p>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">reader</span><span class="p">,</span> <span class="n">matcher</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="n">priority</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="n">module</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">ClipboardDataModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WidgetDataModel</span><span class="p">:</span>
-        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Reading clipboard data using clipboard reader plugin: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Reading clipboard data using clipboard reader plugin: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
         <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_func</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">WidgetDataModel</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Clipboard reader plugin </span><span class="si">{</span><span class="bp">self</span><span class="si">!r}</span><span class="s2"> did not return a WidgetDataModel.&quot;</span>
+                <span class="sa">f</span><span class="s2">"Clipboard reader plugin </span><span class="si">{</span><span class="bp">self</span><span class="si">!r}</span><span class="s2"> did not return a WidgetDataModel."</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">out</span>
 
     <span class="fm">__call__</span> <span class="o">=</span> <span class="n">read</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">match_model_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Not None if the reader can read the file.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Not None if the reader can read the file."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
         <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">out</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">out</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Matcher </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span><span class="si">!r}</span><span class="s2"> did not return a string.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Matcher </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span><span class="si">!r}</span><span class="s2"> did not return a string."</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">define_matcher</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">matcher</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ClipboardDataModel</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ClipboardReaderPlugin</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Define how to match the input clipboard data model to this reader.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Define how to match the input clipboard data model to this reader."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span> <span class="o">=</span> <span class="n">matcher</span>
         <span class="k">return</span> <span class="bp">self</span>
 </code></pre></div></td></tr></table></div>
@@ -3126,7 +3126,7 @@ GUI menubar and toolbar.</p>
 <span class="normal">245</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">define_matcher</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">matcher</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ClipboardDataModel</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ClipboardReaderPlugin</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Define how to match the input clipboard data model to this reader.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Define how to match the input clipboard data model to this reader."""</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span> <span class="o">=</span> <span class="n">matcher</span>
     <span class="k">return</span> <span class="bp">self</span>
 </code></pre></div></td></tr></table></div>
@@ -3159,13 +3159,13 @@ GUI menubar and toolbar.</p>
 <span class="normal">236</span>
 <span class="normal">237</span>
 <span class="normal">238</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">match_model_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Not None if the reader can read the file.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Not None if the reader can read the file."""</span>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">out</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">out</span>
-    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Matcher </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span><span class="si">!r}</span><span class="s2"> did not return a string.&quot;</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Matcher </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span><span class="si">!r}</span><span class="s2"> did not return a string."</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3300,38 +3300,38 @@ GUI menubar and toolbar.</p>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">reader</span><span class="p">,</span> <span class="n">matcher</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="n">priority</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="n">module</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_skip_if_list</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">reader</span><span class="p">,</span> <span class="s2">&quot;__annotations__&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">reader</span><span class="p">,</span> <span class="s2">"__annotations__"</span><span class="p">):</span>
             <span class="n">annot_types</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="vm">__annotations__</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">annot_types</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">annot_types</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span>
                 <span class="n">Path</span><span class="p">,</span>
-                <span class="s2">&quot;Path&quot;</span><span class="p">,</span>
-                <span class="n">ForwardRef</span><span class="p">(</span><span class="s2">&quot;Path&quot;</span><span class="p">),</span>
+                <span class="s2">"Path"</span><span class="p">,</span>
+                <span class="n">ForwardRef</span><span class="p">(</span><span class="s2">"Path"</span><span class="p">),</span>
             <span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_skip_if_list</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">WidgetDataModel</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read file(s) and return a data model.&quot;&quot;&quot;</span>
-        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Reading file(s) using reader plugin: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">"""Read file(s) and return a data model."""</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Reading file(s) using reader plugin: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
             <span class="n">paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">path</span><span class="p">:</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-                    <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">p</span><span class="si">!r}</span><span class="s2"> does not exist.&quot;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"File </span><span class="si">{</span><span class="n">p</span><span class="si">!r}</span><span class="s2"> does not exist."</span><span class="p">)</span>
                 <span class="n">paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
             <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_func</span><span class="p">(</span><span class="n">paths</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-                <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">path</span><span class="si">!r}</span><span class="s2"> does not exist.&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"File </span><span class="si">{</span><span class="n">path</span><span class="si">!r}</span><span class="s2"> does not exist."</span><span class="p">)</span>
             <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_func</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">WidgetDataModel</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Reader plugin </span><span class="si">{</span><span class="bp">self</span><span class="si">!r}</span><span class="s2"> did not return a WidgetDataModel.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Reader plugin </span><span class="si">{</span><span class="bp">self</span><span class="si">!r}</span><span class="s2"> did not return a WidgetDataModel."</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">out</span>
 
     <span class="fm">__call__</span> <span class="o">=</span> <span class="n">read</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">match_model_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Not None if the reader can read the file.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Not None if the reader can read the file."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_skip_if_list</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -3339,10 +3339,10 @@ GUI menubar and toolbar.</p>
         <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">out</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">out</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Matcher </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span><span class="si">!r}</span><span class="s2"> did not return a string.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Matcher </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span><span class="si">!r}</span><span class="s2"> did not return a string."</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">define_matcher</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">matcher</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]],</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Mark a function as a matcher.</span>
+<span class="w">        </span><span class="sd">"""Mark a function as a matcher.</span>
 
 <span class="sd">        The matcher function should return a type string if the reader can read the</span>
 <span class="sd">        file, or None otherwise. If the reader function is annotated with `Path`, only</span>
@@ -3356,21 +3356,21 @@ GUI menubar and toolbar.</p>
 <span class="sd">        ```python</span>
 <span class="sd">        @my_reader.define_matcher</span>
 <span class="sd">        def _(path: Path):</span>
-<span class="sd">            if path.suffix == &quot;.txt&quot;:</span>
-<span class="sd">                return &quot;text&quot;</span>
+<span class="sd">            if path.suffix == ".txt":</span>
+<span class="sd">                return "text"</span>
 <span class="sd">            return None</span>
 <span class="sd">        ```</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># NOTE: matcher don&#39;t have to return the priority. If users want to define</span>
+<span class="sd">        """</span>
+        <span class="c1"># NOTE: matcher don't have to return the priority. If users want to define</span>
         <span class="c1"># a plugin that has different priority for different file type, they can just</span>
         <span class="c1"># split the plugin function into two.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span> <span class="ow">is</span> <span class="bp">self</span><span class="o">.</span><span class="n">_undefined_matcher</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Matcher for </span><span class="si">{</span><span class="bp">self</span><span class="si">!r}</span><span class="s2"> is already defined.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Matcher for </span><span class="si">{</span><span class="bp">self</span><span class="si">!r}</span><span class="s2"> is already defined."</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span> <span class="o">=</span> <span class="n">matcher</span>
         <span class="k">return</span> <span class="n">matcher</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">read_and_update_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">WidgetDataModel</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update workflow to a local-reader method if it is not set.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Update workflow to a local-reader method if it is not set."""</span>
         <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">workflow</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_with_source</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">source</span><span class="p">,</span> <span class="n">plugin</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">plugin</span><span class="p">)</span>
@@ -3413,8 +3413,8 @@ and <code>list[Path]</code> will be considered.</p>
     <p>A reader plugin that reads only text files:</p>
 <div class="highlight"><pre><span></span><code><span class="nd">@my_reader</span><span class="o">.</span><span class="n">define_matcher</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">&quot;.txt&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;text&quot;</span>
+    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">".txt"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"text"</span>
     <span class="k">return</span> <span class="kc">None</span>
 </code></pre></div>
 
@@ -3448,7 +3448,7 @@ and <code>list[Path]</code> will be considered.</p>
 <span class="normal">153</span>
 <span class="normal">154</span>
 <span class="normal">155</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">define_matcher</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">matcher</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]],</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mark a function as a matcher.</span>
+<span class="w">    </span><span class="sd">"""Mark a function as a matcher.</span>
 
 <span class="sd">    The matcher function should return a type string if the reader can read the</span>
 <span class="sd">    file, or None otherwise. If the reader function is annotated with `Path`, only</span>
@@ -3462,16 +3462,16 @@ and <code>list[Path]</code> will be considered.</p>
 <span class="sd">    ```python</span>
 <span class="sd">    @my_reader.define_matcher</span>
 <span class="sd">    def _(path: Path):</span>
-<span class="sd">        if path.suffix == &quot;.txt&quot;:</span>
-<span class="sd">            return &quot;text&quot;</span>
+<span class="sd">        if path.suffix == ".txt":</span>
+<span class="sd">            return "text"</span>
 <span class="sd">        return None</span>
 <span class="sd">    ```</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># NOTE: matcher don&#39;t have to return the priority. If users want to define</span>
+<span class="sd">    """</span>
+    <span class="c1"># NOTE: matcher don't have to return the priority. If users want to define</span>
     <span class="c1"># a plugin that has different priority for different file type, they can just</span>
     <span class="c1"># split the plugin function into two.</span>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span> <span class="ow">is</span> <span class="bp">self</span><span class="o">.</span><span class="n">_undefined_matcher</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Matcher for </span><span class="si">{</span><span class="bp">self</span><span class="si">!r}</span><span class="s2"> is already defined.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Matcher for </span><span class="si">{</span><span class="bp">self</span><span class="si">!r}</span><span class="s2"> is already defined."</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span> <span class="o">=</span> <span class="n">matcher</span>
     <span class="k">return</span> <span class="n">matcher</span>
 </code></pre></div></td></tr></table></div>
@@ -3506,7 +3506,7 @@ and <code>list[Path]</code> will be considered.</p>
 <span class="normal">125</span>
 <span class="normal">126</span>
 <span class="normal">127</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">match_model_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Not None if the reader can read the file.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Not None if the reader can read the file."""</span>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_skip_if_list</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -3514,7 +3514,7 @@ and <code>list[Path]</code> will be considered.</p>
     <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">out</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">out</span>
-    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Matcher </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span><span class="si">!r}</span><span class="s2"> did not return a string.&quot;</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Matcher </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span><span class="si">!r}</span><span class="s2"> did not return a string."</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3555,22 +3555,22 @@ and <code>list[Path]</code> will be considered.</p>
 <span class="normal">112</span>
 <span class="normal">113</span>
 <span class="normal">114</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">WidgetDataModel</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read file(s) and return a data model.&quot;&quot;&quot;</span>
-    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Reading file(s) using reader plugin: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">"""Read file(s) and return a data model."""</span>
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Reading file(s) using reader plugin: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
         <span class="n">paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">path</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-                <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">p</span><span class="si">!r}</span><span class="s2"> does not exist.&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"File </span><span class="si">{</span><span class="n">p</span><span class="si">!r}</span><span class="s2"> does not exist."</span><span class="p">)</span>
             <span class="n">paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
         <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_func</span><span class="p">(</span><span class="n">paths</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">path</span><span class="si">!r}</span><span class="s2"> does not exist.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"File </span><span class="si">{</span><span class="n">path</span><span class="si">!r}</span><span class="s2"> does not exist."</span><span class="p">)</span>
         <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_func</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">WidgetDataModel</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Reader plugin </span><span class="si">{</span><span class="bp">self</span><span class="si">!r}</span><span class="s2"> did not return a WidgetDataModel.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Reader plugin </span><span class="si">{</span><span class="bp">self</span><span class="si">!r}</span><span class="s2"> did not return a WidgetDataModel."</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">out</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -3600,7 +3600,7 @@ and <code>list[Path]</code> will be considered.</p>
 <span class="normal">160</span>
 <span class="normal">161</span>
 <span class="normal">162</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">read_and_update_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">WidgetDataModel</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Update workflow to a local-reader method if it is not set.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Update workflow to a local-reader method if it is not set."""</span>
     <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">workflow</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_with_source</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">source</span><span class="p">,</span> <span class="n">plugin</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">plugin</span><span class="p">)</span>
@@ -3711,7 +3711,7 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
 <span class="normal">97</span>
 <span class="normal">98</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ReproduceArgs</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Command and its arguments to reproduce a user modification.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Command and its arguments to reproduce a user modification."""</span>
 
     <span class="n">command_id</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">with_params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
@@ -3820,7 +3820,7 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
             <span class="bp">self</span><span class="o">.</span><span class="n">_value_type_filter</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">WidgetDataModel</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Writing file using writer plugin: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Writing file using writer plugin: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_func</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
 
     <span class="fm">__call__</span> <span class="o">=</span> <span class="n">write</span>
@@ -3835,15 +3835,15 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
     <span class="k">def</span><span class="w"> </span><span class="nf">define_matcher</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">matcher</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">WidgetDataModel</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WriterPlugin</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Define how to match the input data model and the save path to this writer.</span>
+<span class="w">        </span><span class="sd">"""Define how to match the input data model and the save path to this writer.</span>
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
 <span class="sd">        ```python</span>
 <span class="sd">        @my_writer.define_matcher</span>
 <span class="sd">        def _(model: WidgetDataModel, path: Path) -&gt; bool:</span>
-<span class="sd">            return path.suffix == &quot;.txt&quot; and model.type == &quot;text&quot;</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">            return path.suffix == ".txt" and model.type == "text"</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span> <span class="o">=</span> <span class="n">matcher</span>
         <span class="k">return</span> <span class="bp">self</span>
 </code></pre></div></td></tr></table></div>
@@ -3901,15 +3901,15 @@ def _(model: WidgetDataModel, path: Path) -&gt; bool:
 <span class="normal">206</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">define_matcher</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">matcher</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">WidgetDataModel</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WriterPlugin</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Define how to match the input data model and the save path to this writer.</span>
+<span class="w">    </span><span class="sd">"""Define how to match the input data model and the save path to this writer.</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
 <span class="sd">    ```python</span>
 <span class="sd">    @my_writer.define_matcher</span>
 <span class="sd">    def _(model: WidgetDataModel, path: Path) -&gt; bool:</span>
-<span class="sd">        return path.suffix == &quot;.txt&quot; and model.type == &quot;text&quot;</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">        return path.suffix == ".txt" and model.type == "text"</span>
+<span class="sd">    """</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_matcher</span> <span class="o">=</span> <span class="n">matcher</span>
     <span class="k">return</span> <span class="bp">self</span>
 </code></pre></div></td></tr></table></div>
@@ -3953,7 +3953,7 @@ def _(model: WidgetDataModel, path: Path) -&gt; bool:
     <span class="n">short</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">long</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add a status tip that will be randomly shown in the status bar.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Add a status tip that will be randomly shown in the status bar."""</span>
     <span class="n">reg</span> <span class="o">=</span> <span class="n">AppActionRegistry</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span>
     <span class="n">reg</span><span class="o">.</span><span class="n">_app_tips</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">AppTip</span><span class="p">(</span><span class="n">short</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">short</span><span class="p">),</span> <span class="n">long</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">long</span><span class="p">)))</span>
 </code></pre></div></td></tr></table></div>
@@ -3976,7 +3976,7 @@ def _(model: WidgetDataModel, path: Path) -&gt; bool:
         <p>Field used for plugin config dataclass.</p>
 <div class="highlight"><pre><span></span><code><span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">MyPluginConfig</span><span class="p">:</span>
-    <span class="n">my_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">config_field</span><span class="p">(</span><span class="s2">&quot;abc&quot;</span><span class="p">,</span> <span class="n">tooltip</span><span class="o">=</span><span class="s2">&quot;how to use this&quot;</span><span class="p">)</span>
+    <span class="n">my_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">config_field</span><span class="p">(</span><span class="s2">"abc"</span><span class="p">,</span> <span class="n">tooltip</span><span class="o">=</span><span class="s2">"how to use this"</span><span class="p">)</span>
 </code></pre></div>
 
 
@@ -4033,27 +4033,27 @@ def _(model: WidgetDataModel, path: Path) -&gt; bool:
     <span class="n">visible</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Field used for plugin config dataclass.</span>
+<span class="w">    </span><span class="sd">"""Field used for plugin config dataclass.</span>
 
 <span class="sd">    ```python</span>
 <span class="sd">    @dataclass</span>
 <span class="sd">    class MyPluginConfig:</span>
-<span class="sd">        my_field: str = config_field(&quot;abc&quot;, tooltip=&quot;how to use this&quot;)</span>
+<span class="sd">        my_field: str = config_field("abc", tooltip="how to use this")</span>
 <span class="sd">    ```</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">metadata</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">tooltip</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;tooltip&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tooltip</span>
+        <span class="n">metadata</span><span class="p">[</span><span class="s2">"tooltip"</span><span class="p">]</span> <span class="o">=</span> <span class="n">tooltip</span>
     <span class="k">if</span> <span class="n">label</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">label</span>
+        <span class="n">metadata</span><span class="p">[</span><span class="s2">"label"</span><span class="p">]</span> <span class="o">=</span> <span class="n">label</span>
     <span class="k">if</span> <span class="n">choices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;choices&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">choices</span>
+        <span class="n">metadata</span><span class="p">[</span><span class="s2">"choices"</span><span class="p">]</span> <span class="o">=</span> <span class="n">choices</span>
     <span class="k">if</span> <span class="n">enabled</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;enabled&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">enabled</span>
+        <span class="n">metadata</span><span class="p">[</span><span class="s2">"enabled"</span><span class="p">]</span> <span class="o">=</span> <span class="n">enabled</span>
     <span class="k">if</span> <span class="n">visible</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;visible&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">visible</span>
+        <span class="n">metadata</span><span class="p">[</span><span class="s2">"visible"</span><span class="p">]</span> <span class="o">=</span> <span class="n">visible</span>
     <span class="k">if</span> <span class="n">widget_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;widget_type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">widget_type</span>
+        <span class="n">metadata</span><span class="p">[</span><span class="s2">"widget_type"</span><span class="p">]</span> <span class="o">=</span> <span class="n">widget_type</span>
 
     <span class="k">return</span> <span class="n">field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="n">default</span><span class="p">,</span>
@@ -4071,12 +4071,12 @@ def _(model: WidgetDataModel, path: Path) -&gt; bool:
 
 
 <h4 id="himena.plugins.configure_gui" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">configure_gui</span><span class="p">(</span><span class="n">f</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">preview</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">auto_close</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">show_parameter_labels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">gui_options</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">result_as</span><span class="o">=</span><span class="s1">&#39;window&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">configure_gui</span><span class="p">(</span><span class="n">f</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">preview</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">auto_close</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">show_parameter_labels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">gui_options</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">result_as</span><span class="o">=</span><span class="s1">'window'</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h4>
           <div class="doc-overloads">
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">configure_gui</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">_F</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">preview</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">auto_close</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">show_parameter_labels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">gui_options</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">result_as</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;window&#39;</span><span class="p">,</span> <span class="s1">&#39;below&#39;</span><span class="p">,</span> <span class="s1">&#39;right&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;window&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_F</span>
-</code></pre></div><div class="doc-signature highlight"><pre><span></span><code><span class="nf">configure_gui</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">preview</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">auto_close</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">show_parameter_labels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">gui_options</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">result_as</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;window&#39;</span><span class="p">,</span> <span class="s1">&#39;below&#39;</span><span class="p">,</span> <span class="s1">&#39;right&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;window&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">_F</span><span class="p">],</span> <span class="n">_F</span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">configure_gui</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">_F</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">preview</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">auto_close</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">show_parameter_labels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">gui_options</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">result_as</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">'window'</span><span class="p">,</span> <span class="s1">'below'</span><span class="p">,</span> <span class="s1">'right'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'window'</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_F</span>
+</code></pre></div><div class="doc-signature highlight"><pre><span></span><code><span class="nf">configure_gui</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">preview</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">auto_close</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">show_parameter_labels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">gui_options</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">result_as</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">'window'</span><span class="p">,</span> <span class="s1">'below'</span><span class="p">,</span> <span class="s1">'right'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'window'</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">_F</span><span class="p">],</span> <span class="n">_F</span><span class="p">]</span>
 </code></pre></div>          </div>
 
 
@@ -4084,7 +4084,7 @@ def _(model: WidgetDataModel, path: Path) -&gt; bool:
 
         <p>Configure the parametric GUI.</p>
 <p>This decorator sets the configuration options for the parametric GUI window.</p>
-<div class="highlight"><pre><span></span><code><span class="nd">@configure_gui</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;widget_type&quot;</span><span class="p">:</span> <span class="s2">&quot;FloatSlider&quot;</span><span class="p">})</span>
+<div class="highlight"><pre><span></span><code><span class="nd">@configure_gui</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="p">{</span><span class="s2">"label"</span><span class="p">:</span> <span class="s2">"A"</span><span class="p">,</span> <span class="s2">"widget_type"</span><span class="p">:</span> <span class="s2">"FloatSlider"</span><span class="p">})</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">my_func</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
     <span class="k">pass</span>
 </code></pre></div>
@@ -4286,15 +4286,15 @@ be passed as variable keyword arguments **kwargs.</p>
     <span class="n">auto_close</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">show_parameter_labels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">gui_options</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">result_as</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;window&quot;</span><span class="p">,</span> <span class="s2">&quot;below&quot;</span><span class="p">,</span> <span class="s2">&quot;right&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;window&quot;</span><span class="p">,</span>
+    <span class="n">result_as</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"window"</span><span class="p">,</span> <span class="s2">"below"</span><span class="p">,</span> <span class="s2">"right"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"window"</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configure the parametric GUI.</span>
+<span class="w">    </span><span class="sd">"""Configure the parametric GUI.</span>
 
 <span class="sd">    This decorator sets the configuration options for the parametric GUI window.</span>
 
 <span class="sd">    ``` python</span>
-<span class="sd">    @configure_gui(a={&quot;label&quot;: &quot;A&quot;, &quot;widget_type&quot;: &quot;FloatSlider&quot;})</span>
+<span class="sd">    @configure_gui(a={"label": "A", "widget_type": "FloatSlider"})</span>
 <span class="sd">    def my_func(a: float):</span>
 <span class="sd">        pass</span>
 <span class="sd">    ```</span>
@@ -4316,7 +4316,7 @@ be passed as variable keyword arguments **kwargs.</p>
 <span class="sd">    gui_options : dict, optional</span>
 <span class="sd">        Additional GUI options to be passed to the `magicgui` decorator. Keys can also</span>
 <span class="sd">        be passed as variable keyword arguments **kwargs.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">,</span> <span class="o">**</span><span class="p">(</span><span class="n">gui_options</span> <span class="ow">or</span> <span class="p">{}))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_inner</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
@@ -4328,14 +4328,14 @@ be passed as variable keyword arguments **kwargs.</p>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">new_params</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">var_kwargs_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">k</span><span class="si">!r}</span><span class="s2"> is not a valid parameter for </span><span class="si">{</span><span class="n">f</span><span class="si">!r}</span><span class="s2">.&quot;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="si">!r}</span><span class="s2"> is not a valid parameter for </span><span class="si">{</span><span class="n">f</span><span class="si">!r}</span><span class="s2">."</span><span class="p">)</span>
                 <span class="c1"># This allows using **kwargs in the target function so that magicgui</span>
                 <span class="c1"># widget can be created for a variable number of parameters.</span>
                 <span class="n">param</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">KEYWORD_ONLY</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">param</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;annotation&quot;</span> <span class="ow">in</span> <span class="n">v</span><span class="p">:</span>
-                <span class="n">param_annotation</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;annotation&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">"annotation"</span> <span class="ow">in</span> <span class="n">v</span><span class="p">:</span>
+                <span class="n">param_annotation</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"annotation"</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">param_annotation</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">annotation</span>
             <span class="c1"># unwrap Annotated types</span>
@@ -4353,7 +4353,7 @@ be passed as variable keyword arguments **kwargs.</p>
         <span class="n">f</span><span class="o">.</span><span class="n">__signature__</span> <span class="o">=</span> <span class="n">sig</span>
         <span class="n">f</span><span class="o">.</span><span class="vm">__annotations__</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">annotation</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
         <span class="k">if</span> <span class="n">sig</span><span class="o">.</span><span class="n">return_annotation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-            <span class="n">f</span><span class="o">.</span><span class="vm">__annotations__</span><span class="p">[</span><span class="s2">&quot;return&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">return_annotation</span>
+            <span class="n">f</span><span class="o">.</span><span class="vm">__annotations__</span><span class="p">[</span><span class="s2">"return"</span><span class="p">]</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">return_annotation</span>
 
         <span class="n">GuiConfiguration</span><span class="p">(</span>
             <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
@@ -4483,7 +4483,7 @@ be passed as variable keyword arguments **kwargs.</p>
     <span class="n">group</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">order</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a configuration for submenu(s).</span>
+<span class="w">    </span><span class="sd">"""Register a configuration for submenu(s).</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -4493,7 +4493,7 @@ be passed as variable keyword arguments **kwargs.</p>
 <span class="sd">        Specify the title of the submenu.</span>
 <span class="sd">    group : str, optional</span>
 <span class="sd">        Specify the group ID of the submenu.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">submenu_id</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="n">submenu_id</span> <span class="o">=</span> <span class="p">[</span><span class="n">submenu_id</span><span class="p">]</span>
     <span class="k">for</span> <span class="n">sid</span> <span class="ow">in</span> <span class="n">submenu_id</span><span class="p">:</span>
@@ -4528,7 +4528,7 @@ be passed as variable keyword arguments **kwargs.</p>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">42</span>
 <span class="normal">43</span>
 <span class="normal">44</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_global_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">GlobalConfig</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the himena global config.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Get the himena global config."""</span>
     <span class="k">return</span> <span class="n">get_config</span><span class="p">(</span><span class="n">GlobalConfig</span><span class="p">)</span> <span class="ow">or</span> <span class="n">GlobalConfig</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -4580,17 +4580,17 @@ be passed as variable keyword arguments **kwargs.</p>
 <span class="normal">47</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">install_plugins</span><span class="p">(</span>
     <span class="n">app</span><span class="p">:</span> <span class="n">HimenaApplication</span><span class="p">,</span> <span class="n">plugins</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">PluginInstallResult</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Install plugins to the application.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Install plugins to the application."""</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">himena.plugins</span><span class="w"> </span><span class="kn">import</span> <span class="n">AppActionRegistry</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">himena.profile</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_app_profile</span>
 
     <span class="n">reg</span> <span class="o">=</span> <span class="n">AppActionRegistry</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span>
     <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">show_import_time</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;print_import_time&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="n">show_import_time</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"print_import_time"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">show_import_time</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;======================&quot;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  Plugin import time &quot;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;======================&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"======================"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"  Plugin import time "</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"======================"</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">plugins</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">reg</span><span class="o">.</span><span class="n">_installed_plugins</span><span class="p">:</span>
             <span class="k">continue</span>
@@ -4634,7 +4634,7 @@ be passed as variable keyword arguments **kwargs.</p>
 <span class="normal">119</span>
 <span class="normal">120</span>
 <span class="normal">121</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">override_keybindings</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">HimenaApplication</span><span class="p">,</span> <span class="n">prof</span><span class="p">:</span> <span class="n">AppProfile</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Override keybindings in the application.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Override keybindings in the application."""</span>
     <span class="k">for</span> <span class="n">ko</span> <span class="ow">in</span> <span class="n">prof</span><span class="o">.</span><span class="n">keybinding_overrides</span><span class="p">:</span>
         <span class="n">kb_int</span> <span class="o">=</span> <span class="n">KeyBinding</span><span class="o">.</span><span class="n">from_str</span><span class="p">(</span><span class="n">ko</span><span class="o">.</span><span class="n">to_normed_str</span><span class="p">())</span><span class="o">.</span><span class="n">to_int</span><span class="p">()</span>
         <span class="n">app</span><span class="o">.</span><span class="n">keybindings</span><span class="o">.</span><span class="n">_keymap</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">kb_int</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
@@ -4677,13 +4677,13 @@ thus himena application does not recognize any of the contents.</p>
 <span class="normal">56</span>
 <span class="normal">57</span>
 <span class="normal">58</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">plugin_data_dir</span><span class="p">(</span><span class="n">plugin_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the data directory for plugins.</span>
+<span class="w">    </span><span class="sd">"""Get the data directory for plugins.</span>
 
 <span class="sd">    This is a convenience function that provides a standard location for storing</span>
 <span class="sd">    plugin-specific data files. The directory structure is up to the plugin developer,</span>
 <span class="sd">    thus himena application does not recognize any of the contents.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">user_data_dir</span><span class="p">(</span><span class="s2">&quot;himena&quot;</span><span class="p">))</span> <span class="o">/</span> <span class="s2">&quot;plugins&quot;</span> <span class="o">/</span> <span class="n">plugin_name</span>
+<span class="sd">    """</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">user_data_dir</span><span class="p">(</span><span class="s2">"himena"</span><span class="p">))</span> <span class="o">/</span> <span class="s2">"plugins"</span> <span class="o">/</span> <span class="n">plugin_name</span>
     <span class="n">out</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">out</span>
 </code></pre></div></td></tr></table></div>
@@ -4723,8 +4723,8 @@ type string if the reader can read the clipboard data, or None otherwise.</p>
 
 <span class="nd">@my_clipboard_reader</span><span class="o">.</span><span class="n">define_matcher</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">ClipboardDataModel</span><span class="p">):</span>
-    <span class="k">if</span> <span class="s2">&quot;image/svg+xml&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">mime</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">StandardType</span><span class="o">.</span><span class="n">SVG</span>  <span class="c1"># StandardType.SVG == &quot;text.svg&quot;</span>
+    <span class="k">if</span> <span class="s2">"image/svg+xml"</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">mime</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">StandardType</span><span class="o">.</span><span class="n">SVG</span>  <span class="c1"># StandardType.SVG == "text.svg"</span>
     <span class="k">return</span> <span class="kc">None</span>
 </code></pre></div>
 
@@ -4832,7 +4832,7 @@ function in the upper scope to simplify the plugin info display.</p>
 <span class="normal">445</span>
 <span class="normal">446</span>
 <span class="normal">447</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_clipboard_reader_plugin</span><span class="p">(</span><span class="n">reader</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a clipboard reader plugin function.</span>
+<span class="w">    </span><span class="sd">"""Register a clipboard reader plugin function.</span>
 
 <span class="sd">    Decorate a function to register it as a clipboard reader plugin. The function should</span>
 <span class="sd">    take a `ClipboardDataModel` as input and return a `WidgetDataModel`.</span>
@@ -4854,8 +4854,8 @@ function in the upper scope to simplify the plugin info display.</p>
 
 <span class="sd">    @my_clipboard_reader.define_matcher</span>
 <span class="sd">    def _(data: ClipboardDataModel):</span>
-<span class="sd">        if &quot;image/svg+xml&quot; in data.mime:</span>
-<span class="sd">            return StandardType.SVG  # StandardType.SVG == &quot;text.svg&quot;</span>
+<span class="sd">        if "image/svg+xml" in data.mime:</span>
+<span class="sd">            return StandardType.SVG  # StandardType.SVG == "text.svg"</span>
 <span class="sd">        return None</span>
 <span class="sd">    ```</span>
 
@@ -4869,11 +4869,11 @@ function in the upper scope to simplify the plugin info display.</p>
 <span class="sd">    module : str | None, default None</span>
 <span class="sd">        The module name override. This is usefule when you want to register a reader</span>
 <span class="sd">        function in the upper scope to simplify the plugin info display.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_inner</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Clipboard reader plugin must be callable.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Clipboard reader plugin must be callable."</span><span class="p">)</span>
         <span class="n">ins</span> <span class="o">=</span> <span class="n">ClipboardReaderStore</span><span class="p">()</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span>
 
         <span class="n">reader_plugin</span> <span class="o">=</span> <span class="n">ClipboardReaderPlugin</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="n">priority</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="n">module</span><span class="p">)</span>
@@ -4975,9 +4975,9 @@ the plugin's settings.</p>
 
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">MyPluginConfig</span><span class="p">:</span>
-    <span class="n">my_option</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">config_field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;default_value&quot;</span><span class="p">)</span>
+    <span class="n">my_option</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">config_field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"default_value"</span><span class="p">)</span>
 
-<span class="n">register_config</span><span class="p">(</span><span class="s2">&quot;my-plugin-id&quot;</span><span class="p">,</span> <span class="s2">&quot;My Plugin Settings&quot;</span><span class="p">,</span> <span class="n">MyPluginConfig</span><span class="p">)</span>
+<span class="n">register_config</span><span class="p">(</span><span class="s2">"my-plugin-id"</span><span class="p">,</span> <span class="s2">"My Plugin Settings"</span><span class="p">,</span> <span class="n">MyPluginConfig</span><span class="p">)</span>
 </code></pre></div>
 
 
@@ -5030,12 +5030,12 @@ the plugin's settings.</p>
 <span class="normal">182</span>
 <span class="normal">183</span>
 <span class="normal">184</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_config</span><span class="p">(</span><span class="n">plugin_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">PluginConfigType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a plugin-specific configuration.</span>
+<span class="w">    </span><span class="sd">"""Register a plugin-specific configuration.</span>
 
 <span class="sd">    Registered options can be accessed by the `get_config` function. Note that a plugin</span>
 <span class="sd">    configuration is not used as a global variable. If changing the config leads to a</span>
 <span class="sd">    different output, it is not what we expect. What a plugin config usually does is</span>
-<span class="sd">    &quot;path to some-app executable&quot;, &quot;cache directory&quot;, etc.</span>
+<span class="sd">    "path to some-app executable", "cache directory", etc.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -5045,7 +5045,7 @@ the plugin's settings.</p>
 <span class="sd">        The title of the configuration shown in the setting dialog.</span>
 <span class="sd">    cfg : PluginConfigType</span>
 <span class="sd">        The configuration class (dict, dataclass or pydantic.BaseModel) that defines</span>
-<span class="sd">        the plugin&#39;s settings.</span>
+<span class="sd">        the plugin's settings.</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
@@ -5055,12 +5055,12 @@ the plugin's settings.</p>
 
 <span class="sd">    @dataclass</span>
 <span class="sd">    class MyPluginConfig:</span>
-<span class="sd">        my_option: str = config_field(default=&quot;default_value&quot;)</span>
+<span class="sd">        my_option: str = config_field(default="default_value")</span>
 
-<span class="sd">    register_config(&quot;my-plugin-id&quot;, &quot;My Plugin Settings&quot;, MyPluginConfig)</span>
+<span class="sd">    register_config("my-plugin-id", "My Plugin Settings", MyPluginConfig)</span>
 <span class="sd">    ```</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">himena.plugins.actions</span><span class="w"> </span><span class="kn">import</span> <span class="n">AppActionRegistry</span><span class="p">,</span> <span class="n">PluginConfigTuple</span>
 
     <span class="n">reg</span> <span class="o">=</span> <span class="n">AppActionRegistry</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span>
@@ -5068,12 +5068,12 @@ the plugin's settings.</p>
     <span class="n">cfg_dict</span> <span class="o">=</span> <span class="n">tup</span><span class="o">.</span><span class="n">as_dict</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value_dict</span> <span class="ow">in</span> <span class="n">cfg_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value_dict</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">value_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;choices&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">value_dict</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">value_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"value"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">"choices"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">value_dict</span><span class="p">:</span>
             <span class="c1"># Unlike using magicgui in runtime, no annotations can be saved to the</span>
             <span class="c1"># config field.</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Key </span><span class="si">{</span><span class="n">key</span><span class="si">!r}</span><span class="s2"> ofr config </span><span class="si">{</span><span class="n">cfg</span><span class="si">!r}</span><span class="s2"> must have a default value or choices. &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;Equivalent dict was:</span><span class="se">\n</span><span class="si">{</span><span class="n">cfg_dict</span><span class="si">!r}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">"Key </span><span class="si">{</span><span class="n">key</span><span class="si">!r}</span><span class="s2"> ofr config </span><span class="si">{</span><span class="n">cfg</span><span class="si">!r}</span><span class="s2"> must have a default value or choices. "</span>
+                <span class="sa">f</span><span class="s2">"Equivalent dict was:</span><span class="se">\n</span><span class="si">{</span><span class="n">cfg_dict</span><span class="si">!r}</span><span class="s2">"</span>
             <span class="p">)</span>
     <span class="n">reg</span><span class="o">.</span><span class="n">_plugin_default_configs</span><span class="p">[</span><span class="n">plugin_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">PluginConfigTuple</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">cfg</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">cfg</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
@@ -5104,7 +5104,7 @@ registration method is recommended for the sake of clarity and following the
 conventions.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">himena.plugins</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_conversion_rule</span>
 
-<span class="nd">@register_conversion_rule</span><span class="p">(</span><span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="s2">&quot;table&quot;</span><span class="p">)</span>
+<span class="nd">@register_conversion_rule</span><span class="p">(</span><span class="s2">"text"</span><span class="p">,</span> <span class="s2">"table"</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">convert_text_to_table</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">WidgetDataModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WidgetDataModel</span><span class="p">:</span>
     <span class="o">...</span>  <span class="c1"># convert the data type</span>
 </code></pre></div>
@@ -5144,9 +5144,9 @@ conventions.</p>
 <span class="normal">608</span>
 <span class="normal">609</span>
 <span class="normal">610</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_conversion_rule</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a function as a conversion rule.</span>
+<span class="w">    </span><span class="sd">"""Register a function as a conversion rule.</span>
 
-<span class="sd">    A conversion rule will be added to the model menu under &quot;Convert &gt; ...&quot; submenu.</span>
+<span class="sd">    A conversion rule will be added to the model menu under "Convert &gt; ..." submenu.</span>
 <span class="sd">    Essentially, this method does nothing more than `register_function`, but using this</span>
 <span class="sd">    registration method is recommended for the sake of clarity and following the</span>
 <span class="sd">    conventions.</span>
@@ -5154,11 +5154,11 @@ conventions.</p>
 <span class="sd">    ```python</span>
 <span class="sd">    from himena.plugins import register_conversion_rule</span>
 
-<span class="sd">    @register_conversion_rule(&quot;text&quot;, &quot;table&quot;)</span>
+<span class="sd">    @register_conversion_rule("text", "table")</span>
 <span class="sd">    def convert_text_to_table(model: WidgetDataModel) -&gt; WidgetDataModel:</span>
 <span class="sd">        ...  # convert the data type</span>
 <span class="sd">    ```</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">no_func</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="k">else</span><span class="p">:</span>
@@ -5167,8 +5167,8 @@ conventions.</p>
         <span class="n">no_func</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">inner</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
-        <span class="n">annot</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="s2">&quot;__annotations__&quot;</span><span class="p">,</span> <span class="p">{})</span>
-        <span class="n">annot</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;return&quot;</span><span class="p">,</span> <span class="n">WidgetDataModel</span><span class="p">)</span>
+        <span class="n">annot</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="s2">"__annotations__"</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">annot</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"return"</span><span class="p">,</span> <span class="n">WidgetDataModel</span><span class="p">)</span>
         <span class="n">func</span><span class="o">.</span><span class="vm">__annotations__</span> <span class="o">=</span> <span class="n">annot</span>
         <span class="n">action</span> <span class="o">=</span> <span class="n">_make_conversion_rule</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">AppActionRegistry</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span><span class="o">.</span><span class="n">add_action</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
@@ -5336,16 +5336,16 @@ application profile and will be used to update the dock widget via the method
 <code>update_configs(self, cfg) -&gt; None</code>. This argument must be a dict, dataclass
 or pydantic.BaseModel. If a dict, the format must be like:</p>
 <div class="highlight"><pre><span></span><code><span class="n">plugin_configs</span> <span class="o">=</span> <span class="p">{</span>
-   <span class="s2">&quot;config_0&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;tooltip&quot;</span><span class="p">:</span> <span class="o">...</span><span class="p">},</span>
-   <span class="s2">&quot;config_1&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;xyz&quot;</span><span class="p">,</span> <span class="s2">&quot;tooltip&quot;</span><span class="p">:</span> <span class="o">...</span><span class="p">},</span>
+   <span class="s2">"config_0"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"value"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"tooltip"</span><span class="p">:</span> <span class="o">...</span><span class="p">},</span>
+   <span class="s2">"config_1"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"value"</span><span class="p">:</span> <span class="s2">"xyz"</span><span class="p">,</span> <span class="s2">"tooltip"</span><span class="p">:</span> <span class="o">...</span><span class="p">},</span>
 <span class="p">}</span>
 </code></pre></div>
 <p>where only "value" is required. If a dataclass or pydantic.BaseModel, field
 objects will be used instead of the dict.</p>
 <div class="highlight"><pre><span></span><code><span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">MyPluginConfig</span><span class="p">:</span>
-    <span class="n">config_0</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;tooltip&quot;</span><span class="p">:</span> <span class="o">...</span><span class="p">})</span>
-    <span class="n">config_1</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;xyz&quot;</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;tooltip&quot;</span><span class="p">:</span> <span class="o">...</span><span class="p">})</span>
+    <span class="n">config_0</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"tooltip"</span><span class="p">:</span> <span class="o">...</span><span class="p">})</span>
+    <span class="n">config_1</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"xyz"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"tooltip"</span><span class="p">:</span> <span class="o">...</span><span class="p">})</span>
 <span class="n">plugin_configs</span> <span class="o">=</span> <span class="n">MyPluginConfig</span><span class="p">()</span>
 </code></pre></div>
               </div>
@@ -5505,7 +5505,7 @@ objects will be used instead of the dict.</p>
     <span class="n">command_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">icon</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a widget factory as a dock widget function.</span>
+<span class="w">    </span><span class="sd">"""Register a widget factory as a dock widget function.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -5531,26 +5531,26 @@ objects will be used instead of the dict.</p>
 
 <span class="sd">        ``` python</span>
 <span class="sd">        plugin_configs = {</span>
-<span class="sd">           &quot;config_0&quot;: {&quot;value&quot;: 0, &quot;tooltip&quot;: ...},</span>
-<span class="sd">           &quot;config_1&quot;: {&quot;value&quot;: &quot;xyz&quot;, &quot;tooltip&quot;: ...},</span>
+<span class="sd">           "config_0": {"value": 0, "tooltip": ...},</span>
+<span class="sd">           "config_1": {"value": "xyz", "tooltip": ...},</span>
 <span class="sd">        }</span>
 <span class="sd">        ```</span>
 
-<span class="sd">        where only &quot;value&quot; is required. If a dataclass or pydantic.BaseModel, field</span>
+<span class="sd">        where only "value" is required. If a dataclass or pydantic.BaseModel, field</span>
 <span class="sd">        objects will be used instead of the dict.</span>
 
 <span class="sd">        ``` python</span>
 <span class="sd">        @dataclass</span>
 <span class="sd">        class MyPluginConfig:</span>
-<span class="sd">            config_0: int = Field(default=0, metadata={&quot;tooltip&quot;: ...})</span>
-<span class="sd">            config_1: str = Field(default=&quot;xyz&quot;, metadata={&quot;tooltip&quot;: ...})</span>
+<span class="sd">            config_0: int = Field(default=0, metadata={"tooltip": ...})</span>
+<span class="sd">            config_1: str = Field(default="xyz", metadata={"tooltip": ...})</span>
 <span class="sd">        plugin_configs = MyPluginConfig()</span>
 <span class="sd">        ```</span>
 <span class="sd">    command_id : str, optional</span>
 <span class="sd">        Command ID. If not given, the function name will be used.</span>
 <span class="sd">    icon : str, optional</span>
 <span class="sd">        Iconify icon key.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">kbs</span> <span class="o">=</span> <span class="n">normalize_keybindings</span><span class="p">(</span><span class="n">keybindings</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">menus</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">menus</span> <span class="o">=</span> <span class="p">[</span><span class="n">MenuId</span><span class="o">.</span><span class="n">TOOLS_DOCK</span><span class="p">]</span>
@@ -5603,12 +5603,12 @@ objects will be used instead of the dict.</p>
 
 
 <h4 id="himena.plugins.register_function" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">register_function</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">menus</span><span class="o">=</span><span class="s1">&#39;plugins&#39;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">enablement</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">keybindings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">run_async</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">tooltip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">command_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">register_function</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">menus</span><span class="o">=</span><span class="s1">'plugins'</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">enablement</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">keybindings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">run_async</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">tooltip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">command_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 </h4>
           <div class="doc-overloads">
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">register_function</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">menus</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;plugins&#39;</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">types</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">enablement</span><span class="p">:</span> <span class="n">BoolOp</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">keybindings</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">KeyBindingRule</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">run_async</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">tooltip</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">command_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">group</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">icon</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">palette</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
-</code></pre></div><div class="doc-signature highlight"><pre><span></span><code><span class="nf">register_function</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">_F</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">menus</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;plugins&#39;</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">types</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">enablement</span><span class="p">:</span> <span class="n">BoolOp</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">keybindings</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">KeyBindingRule</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">run_async</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">tooltip</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">command_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">group</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">icon</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">palette</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_F</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">register_function</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">menus</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'plugins'</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">types</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">enablement</span><span class="p">:</span> <span class="n">BoolOp</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">keybindings</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">KeyBindingRule</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">run_async</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">tooltip</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">command_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">group</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">icon</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">palette</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div><div class="doc-signature highlight"><pre><span></span><code><span class="nf">register_function</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">_F</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">menus</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'plugins'</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">types</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">enablement</span><span class="p">:</span> <span class="n">BoolOp</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">keybindings</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">KeyBindingRule</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">run_async</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">tooltip</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">command_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">group</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">icon</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">palette</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_F</span>
 </code></pre></div>          </div>
 
 
@@ -5887,7 +5887,7 @@ rule.</p>
 <span class="normal">398</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_function</span><span class="p">(</span>
     <span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">menus</span><span class="o">=</span><span class="s2">&quot;plugins&quot;</span><span class="p">,</span>
+    <span class="n">menus</span><span class="o">=</span><span class="s2">"plugins"</span><span class="p">,</span>
     <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">enablement</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -5899,7 +5899,7 @@ rule.</p>
     <span class="n">icon</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">palette</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a function as a callback of a plugin action.</span>
+<span class="w">    </span><span class="sd">"""Register a function as a callback of a plugin action.</span>
 
 <span class="sd">    This function can be used either as a decorator or a simple function.</span>
 
@@ -5907,9 +5907,9 @@ rule.</p>
 <span class="sd">    ----------</span>
 <span class="sd">    func : callable, optional</span>
 <span class="sd">        Function to register as an action.</span>
-<span class="sd">    menus : str or sequence of str, default &quot;plugins&quot;</span>
+<span class="sd">    menus : str or sequence of str, default "plugins"</span>
 <span class="sd">        Menu(s) to add the action. Submenus are separated by `/`. You can use menu IDs</span>
-<span class="sd">        start with &quot;/model_menu&quot; to specify the submenu under the model menu.</span>
+<span class="sd">        start with "/model_menu" to specify the submenu under the model menu.</span>
 <span class="sd">    title : str, optional</span>
 <span class="sd">        Title of the action. Name of the function will be used if not given.</span>
 <span class="sd">    types: str or sequence of str, optional</span>
@@ -5933,7 +5933,7 @@ rule.</p>
 <span class="sd">        Iconify icon key to use for the action.</span>
 <span class="sd">    palette : bool, default True</span>
 <span class="sd">        If true, the action will be added to the command palette.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_inner</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">_F</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_F</span><span class="p">:</span>
         <span class="n">action</span> <span class="o">=</span> <span class="n">make_action_for_function</span><span class="p">(</span>
@@ -5991,10 +5991,10 @@ rule.</p>
 <span class="normal">655</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_modification_tracker</span><span class="p">(</span>
     <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">_T</span><span class="p">,</span> <span class="n">_T</span><span class="p">],</span> <span class="n">ReproduceArgs</span><span class="p">]],</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">_T</span><span class="p">,</span> <span class="n">_T</span><span class="p">],</span> <span class="n">ReproduceArgs</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a modification tracker.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Register a modification tracker."""</span>
     <span class="n">reg</span> <span class="o">=</span> <span class="n">AppActionRegistry</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span>
     <span class="k">if</span> <span class="nb">type</span> <span class="ow">in</span> <span class="n">reg</span><span class="o">.</span><span class="n">_modification_trackers</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Modification tracker for </span><span class="si">{</span><span class="nb">type</span><span class="si">}</span><span class="s2"> already exists.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Modification tracker for </span><span class="si">{</span><span class="nb">type</span><span class="si">}</span><span class="s2"> already exists."</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">inner</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
         <span class="n">reg</span><span class="o">.</span><span class="n">_modification_trackers</span><span class="p">[</span><span class="nb">type</span><span class="p">]</span> <span class="o">=</span> <span class="n">fn</span>
@@ -6037,8 +6037,8 @@ a path using <code>define_matcher</code> method.</p>
 
 <span class="nd">@my_reader</span><span class="o">.</span><span class="n">define_matcher</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">&quot;.txt&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">StandardType</span><span class="o">.</span><span class="n">TEXT</span>  <span class="c1"># StandardType.TEXT == &quot;text&quot;</span>
+    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">".txt"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">StandardType</span><span class="o">.</span><span class="n">TEXT</span>  <span class="c1"># StandardType.TEXT == "text"</span>
     <span class="k">return</span> <span class="kc">None</span>
 </code></pre></div>
 
@@ -6145,7 +6145,7 @@ function in the upper scope to simplify the plugin info display.</p>
 <span class="normal">309</span>
 <span class="normal">310</span>
 <span class="normal">311</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_reader_plugin</span><span class="p">(</span><span class="n">reader</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a reader plugin function.</span>
+<span class="w">    </span><span class="sd">"""Register a reader plugin function.</span>
 
 <span class="sd">    Decorate a function to register it as a reader plugin. The function should take a</span>
 <span class="sd">    `Path` or a list of `Path`s as input and return a WidgetDataModel.</span>
@@ -6166,8 +6166,8 @@ function in the upper scope to simplify the plugin info display.</p>
 
 <span class="sd">    @my_reader.define_matcher</span>
 <span class="sd">    def _(path: Path):</span>
-<span class="sd">        if path.suffix == &quot;.txt&quot;:</span>
-<span class="sd">            return StandardType.TEXT  # StandardType.TEXT == &quot;text&quot;</span>
+<span class="sd">        if path.suffix == ".txt":</span>
+<span class="sd">            return StandardType.TEXT  # StandardType.TEXT == "text"</span>
 <span class="sd">        return None</span>
 <span class="sd">    ```</span>
 
@@ -6181,11 +6181,11 @@ function in the upper scope to simplify the plugin info display.</p>
 <span class="sd">    module : str | None, default None</span>
 <span class="sd">        The module name override. This is usefule when you want to register a reader</span>
 <span class="sd">        function in the upper scope to simplify the plugin info display.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_inner</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Reader plugin must be callable.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Reader plugin must be callable."</span><span class="p">)</span>
         <span class="n">ins</span> <span class="o">=</span> <span class="n">ReaderStore</span><span class="p">()</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span>
 
         <span class="n">reader_plugin</span> <span class="o">=</span> <span class="n">ReaderPlugin</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="n">priority</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="n">module</span><span class="p">)</span>
@@ -6218,7 +6218,7 @@ function in the upper scope to simplify the plugin info display.</p>
 <p>The <code>__init__</code> method of the registered class must not take any argument. The class
 must implement <code>update_model</code> method to update the widget state from a
 WidgetDataModel.</p>
-<div class="highlight"><pre><span></span><code><span class="nd">@register_widget</span><span class="p">(</span><span class="s2">&quot;text&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="nd">@register_widget</span><span class="p">(</span><span class="s2">"text"</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">MyTextEdit</span><span class="p">(</span><span class="n">QtW</span><span class="o">.</span><span class="n">QPlainTextEdit</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">update_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">WidgetDataModel</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">setPlainText</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
@@ -6318,14 +6318,14 @@ functional.</p>
 <span class="normal">114</span>
 <span class="normal">115</span>
 <span class="normal">116</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_widget_class</span><span class="p">(</span><span class="n">type_</span><span class="p">,</span> <span class="n">widget_class</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">plugin_configs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a frontend widget class for the given model type.</span>
+<span class="w">    </span><span class="sd">"""Register a frontend widget class for the given model type.</span>
 
 <span class="sd">    The `__init__` method of the registered class must not take any argument. The class</span>
 <span class="sd">    must implement `update_model` method to update the widget state from a</span>
 <span class="sd">    WidgetDataModel.</span>
 
 <span class="sd">    ``` python</span>
-<span class="sd">    @register_widget(&quot;text&quot;)</span>
+<span class="sd">    @register_widget("text")</span>
 <span class="sd">    class MyTextEdit(QtW.QPlainTextEdit):</span>
 <span class="sd">        def update_model(self, model: WidgetDataModel):</span>
 <span class="sd">            self.setPlainText(model.value)</span>
@@ -6349,7 +6349,7 @@ functional.</p>
 <span class="sd">    - `widget_activated_callback(self)`:</span>
 <span class="sd">    - `widget_closed_callback(self)`:</span>
 <span class="sd">    - `widget_resized_callback(self, size_old, size_new)`:</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">inner</span><span class="p">(</span><span class="n">wcls</span><span class="p">):</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">himena.qt</span>
@@ -6361,8 +6361,8 @@ functional.</p>
                 <span class="n">is_multi_registration</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Widget class with ID </span><span class="si">{</span><span class="n">widget_id</span><span class="si">!r}</span><span class="s2"> already assigned for &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">existing_class</span><span class="si">}</span><span class="s2">; you must assign a unique ID for each class.&quot;</span>
+                    <span class="sa">f</span><span class="s2">"Widget class with ID </span><span class="si">{</span><span class="n">widget_id</span><span class="si">!r}</span><span class="s2"> already assigned for "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">existing_class</span><span class="si">}</span><span class="s2">; you must assign a unique ID for each class."</span>
                 <span class="p">)</span>
         <span class="n">_WIDGET_ID_TO_WIDGET_CLASS</span><span class="p">[</span><span class="n">widget_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">wcls</span>
         <span class="n">himena</span><span class="o">.</span><span class="n">qt</span><span class="o">.</span><span class="n">register_widget_class</span><span class="p">(</span><span class="n">type_</span><span class="p">,</span> <span class="n">wcls</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="n">priority</span><span class="p">)</span>
@@ -6376,13 +6376,13 @@ functional.</p>
             <span class="n">cfg_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">plugin_configs</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">widget_id</span> <span class="ow">in</span> <span class="n">reg</span><span class="o">.</span><span class="n">_plugin_default_configs</span><span class="p">:</span>
                 <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Plugin config for </span><span class="si">{</span><span class="n">widget_id</span><span class="si">!r}</span><span class="s2"> already registered; &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;overwriting with new config </span><span class="si">{</span><span class="n">plugin_configs</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">"Plugin config for </span><span class="si">{</span><span class="n">widget_id</span><span class="si">!r}</span><span class="s2"> already registered; "</span>
+                    <span class="sa">f</span><span class="s2">"overwriting with new config </span><span class="si">{</span><span class="n">plugin_configs</span><span class="si">}</span><span class="s2">."</span><span class="p">,</span>
                     <span class="ne">UserWarning</span><span class="p">,</span>
                     <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="n">reg</span><span class="o">.</span><span class="n">_plugin_default_configs</span><span class="p">[</span><span class="n">widget_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">PluginConfigTuple</span><span class="p">(</span>
-                <span class="n">get_display_name</span><span class="p">(</span><span class="n">wcls</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">class_id</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+                <span class="n">get_display_name</span><span class="p">(</span><span class="n">wcls</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">" "</span><span class="p">,</span> <span class="n">class_id</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
                 <span class="n">plugin_configs</span><span class="p">,</span>
                 <span class="n">cfg_type</span><span class="p">,</span>
             <span class="p">)</span>
@@ -6426,7 +6426,7 @@ plugins, matchers should return bool.</p>
 
 <span class="nd">@my_writer</span><span class="o">.</span><span class="n">define_matcher</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">WidgetDataModel</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">&quot;.txt&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">".txt"</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">True</span>
     <span class="k">return</span> <span class="kc">False</span>
 </code></pre></div>
@@ -6535,7 +6535,7 @@ function in the upper scope to simplify the plugin info display.</p>
 <span class="normal">376</span>
 <span class="normal">377</span>
 <span class="normal">378</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_writer_plugin</span><span class="p">(</span><span class="n">writer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a writer plugin function.</span>
+<span class="w">    </span><span class="sd">"""Register a writer plugin function.</span>
 
 <span class="sd">    Decorate a function to register it as a writer plugin. The function should take a</span>
 <span class="sd">    `Path` as a save path and a `WidgetDataModel`.</span>
@@ -6557,7 +6557,7 @@ function in the upper scope to simplify the plugin info display.</p>
 
 <span class="sd">    @my_writer.define_matcher</span>
 <span class="sd">    def _(path: Path, model: WidgetDataModel):</span>
-<span class="sd">        if path.suffix == &quot;.txt&quot;:</span>
+<span class="sd">        if path.suffix == ".txt":</span>
 <span class="sd">            return True</span>
 <span class="sd">        return False</span>
 <span class="sd">    ```</span>
@@ -6572,11 +6572,11 @@ function in the upper scope to simplify the plugin info display.</p>
 <span class="sd">    module : str | None, default None</span>
 <span class="sd">        The module name override. This is usefule when you want to register a reader</span>
 <span class="sd">        function in the upper scope to simplify the plugin info display.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_inner</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Writer plugin must be callable.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Writer plugin must be callable."</span><span class="p">)</span>
         <span class="n">ins</span> <span class="o">=</span> <span class="n">WriterStore</span><span class="p">()</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span>
 
         <span class="n">writer_plugin</span> <span class="o">=</span> <span class="n">WriterPlugin</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="n">priority</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="n">module</span><span class="p">)</span>
@@ -6665,7 +6665,7 @@ and optionally trigger the update of the widget if <code>update_widget</code> is
     <span class="o">*</span><span class="p">,</span>
     <span class="n">update_widget</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Context manager for updating plugin config.</span>
+<span class="w">    </span><span class="sd">"""Context manager for updating plugin config.</span>
 
 <span class="sd">    If a config object is updated within the context, it will be saved to the profile</span>
 <span class="sd">    and optionally trigger the update of the widget if `update_widget` is True.</span>
@@ -6678,7 +6678,7 @@ and optionally trigger the update of the widget if <code>update_widget</code> is
 <span class="sd">        cfg.some_attr = ...</span>
 <span class="sd">    ```</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">himena.widgets</span><span class="w"> </span><span class="kn">import</span> <span class="n">current_instance</span>
 
     <span class="n">ui</span> <span class="o">=</span> <span class="n">current_instance</span><span class="p">()</span>
@@ -6695,9 +6695,9 @@ and optionally trigger the update of the widget if <code>update_widget</code> is
     <span class="k">if</span> <span class="n">update_widget</span> <span class="ow">and</span> <span class="p">(</span><span class="n">cb</span> <span class="o">:=</span> <span class="n">WidgetCallbackBase</span><span class="o">.</span><span class="n">instance_for_command_id</span><span class="p">(</span><span class="n">plugin_id</span><span class="p">)):</span>
         <span class="n">params</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">opt</span> <span class="ow">in</span> <span class="n">cfg_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">opt</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span>
+            <span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">opt</span><span class="p">[</span><span class="s2">"value"</span><span class="p">]</span>
         <span class="k">for</span> <span class="n">widget</span> <span class="ow">in</span> <span class="n">cb</span><span class="o">.</span><span class="n">_all_widgets</span><span class="p">:</span>
-            <span class="c1"># the internal widget should always has the method &quot;update_configs&quot;</span>
+            <span class="c1"># the internal widget should always has the method "update_configs"</span>
             <span class="n">widget</span><span class="o">.</span><span class="n">update_configs</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -6726,9 +6726,9 @@ and optionally trigger the update of the widget if <code>update_widget</code> is
 <span class="normal">38</span>
 <span class="normal">39</span>
 <span class="normal">40</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">validate_protocol</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">_T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_T</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if the method is allowed as a himena protocol.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Check if the method is allowed as a himena protocol."""</span>
     <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_ALLOWED_METHODS</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Method </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2"> is not an allowed protocol name.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Method </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2"> is not an allowed protocol name."</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">f</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -6752,9 +6752,9 @@ and optionally trigger the update of the widget if <code>update_widget</code> is
 
 <p><span class="doc-section-title">Examples:</span></p>
     <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">reg</span><span class="o">.</span><span class="n">when_command_executed</span><span class="p">(</span><span class="s2">&quot;table&quot;</span><span class="p">,</span> <span class="s2">&quot;sort-table&quot;</span><span class="p">)</span>
-<span class="gp">... </span>       <span class="o">.</span><span class="n">add_command_suggestion</span><span class="p">(</span><span class="s2">&quot;scatter-plot&quot;</span><span class="p">)</span>
-<span class="gp">... </span>       <span class="o">.</span><span class="n">add_command_suggestion</span><span class="p">(</span><span class="s2">&quot;line-plot&quot;</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">reg</span><span class="o">.</span><span class="n">when_command_executed</span><span class="p">(</span><span class="s2">"table"</span><span class="p">,</span> <span class="s2">"sort-table"</span><span class="p">)</span>
+<span class="gp">... </span>       <span class="o">.</span><span class="n">add_command_suggestion</span><span class="p">(</span><span class="s2">"scatter-plot"</span><span class="p">)</span>
+<span class="gp">... </span>       <span class="o">.</span><span class="n">add_command_suggestion</span><span class="p">(</span><span class="s2">"line-plot"</span><span class="p">)</span>
 <span class="gp">... </span><span class="p">)</span>
 </code></pre></div>
 
@@ -6780,16 +6780,16 @@ and optionally trigger the update of the widget if <code>update_widget</code> is
     <span class="n">model_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">command_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create an interface for adding command suggestions.</span>
+<span class="w">    </span><span class="sd">"""Create an interface for adding command suggestions.</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
 <span class="sd">    &gt;&gt;&gt; (</span>
-<span class="sd">    ...     reg.when_command_executed(&quot;table&quot;, &quot;sort-table&quot;)</span>
-<span class="sd">    ...        .add_command_suggestion(&quot;scatter-plot&quot;)</span>
-<span class="sd">    ...        .add_command_suggestion(&quot;line-plot&quot;)</span>
+<span class="sd">    ...     reg.when_command_executed("table", "sort-table")</span>
+<span class="sd">    ...        .add_command_suggestion("scatter-plot")</span>
+<span class="sd">    ...        .add_command_suggestion("line-plot")</span>
 <span class="sd">    ... )</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">reg</span> <span class="o">=</span> <span class="n">AppActionRegistry</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span><span class="o">.</span><span class="n">_action_hint_reg</span>
     <span class="k">return</span> <span class="n">reg</span><span class="o">.</span><span class="n">when_command_executed</span><span class="p">(</span><span class="n">model_type</span><span class="p">,</span> <span class="n">command_id</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
@@ -6824,7 +6824,7 @@ and optionally trigger the update of the widget if <code>update_widget</code> is
     <span class="n">model_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">plugins</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create an interface for adding command suggestions when a reader is used.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Create an interface for adding command suggestions when a reader is used."""</span>
     <span class="n">reg</span> <span class="o">=</span> <span class="n">AppActionRegistry</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span><span class="o">.</span><span class="n">_action_hint_reg</span>
     <span class="k">return</span> <span class="n">reg</span><span class="o">.</span><span class="n">when_reader_used</span><span class="p">(</span><span class="n">model_type</span><span class="p">,</span> <span class="n">plugins</span><span class="o">=</span><span class="n">plugins</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
@@ -6858,7 +6858,7 @@ and optionally trigger the update of the widget if <code>update_widget</code> is
 <span class="normal">125</span>
 <span class="normal">126</span>
 <span class="normal">127</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">widget_classes</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">MappingProxyType</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the mapping of widget ID to widget class.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Get the mapping of widget ID to widget class."""</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">himena.qt.registry._api</span><span class="w"> </span><span class="kn">import</span> <span class="n">_APP_TYPE_TO_QWIDGET</span>
 
     <span class="n">out</span> <span class="o">=</span> <span class="p">{}</span>

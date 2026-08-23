@@ -1803,63 +1803,63 @@
 <span class="normal">199</span>
 <span class="normal">200</span>
 <span class="normal">201</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MenuId</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Preset of menu IDs.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Preset of menu IDs."""</span>
 
-    <span class="n">FILE</span> <span class="o">=</span> <span class="s2">&quot;file&quot;</span>
-    <span class="n">FILE_RECENT</span> <span class="o">=</span> <span class="s2">&quot;file/recent&quot;</span>
-    <span class="n">FILE_NEW</span> <span class="o">=</span> <span class="s2">&quot;file/new&quot;</span>
-    <span class="n">FILE_SCREENSHOT</span> <span class="o">=</span> <span class="s2">&quot;file/screenshot&quot;</span>
-    <span class="n">FILE_SESSION</span> <span class="o">=</span> <span class="s2">&quot;file/session&quot;</span>
-    <span class="n">WINDOW</span> <span class="o">=</span> <span class="s2">&quot;window&quot;</span>
-    <span class="n">WINDOW_RESIZE</span> <span class="o">=</span> <span class="s2">&quot;window/resize&quot;</span>
-    <span class="n">WINDOW_ALIGN</span> <span class="o">=</span> <span class="s2">&quot;window/align&quot;</span>
-    <span class="n">WINDOW_ANCHOR</span> <span class="o">=</span> <span class="s2">&quot;window/anchor&quot;</span>
-    <span class="n">WINDOW_NTH</span> <span class="o">=</span> <span class="s2">&quot;window/nth&quot;</span>
-    <span class="n">VIEW</span> <span class="o">=</span> <span class="s2">&quot;view&quot;</span>
-    <span class="n">VIEW_LAYOUT</span> <span class="o">=</span> <span class="s2">&quot;view/layout&quot;</span>
+    <span class="n">FILE</span> <span class="o">=</span> <span class="s2">"file"</span>
+    <span class="n">FILE_RECENT</span> <span class="o">=</span> <span class="s2">"file/recent"</span>
+    <span class="n">FILE_NEW</span> <span class="o">=</span> <span class="s2">"file/new"</span>
+    <span class="n">FILE_SCREENSHOT</span> <span class="o">=</span> <span class="s2">"file/screenshot"</span>
+    <span class="n">FILE_SESSION</span> <span class="o">=</span> <span class="s2">"file/session"</span>
+    <span class="n">WINDOW</span> <span class="o">=</span> <span class="s2">"window"</span>
+    <span class="n">WINDOW_RESIZE</span> <span class="o">=</span> <span class="s2">"window/resize"</span>
+    <span class="n">WINDOW_ALIGN</span> <span class="o">=</span> <span class="s2">"window/align"</span>
+    <span class="n">WINDOW_ANCHOR</span> <span class="o">=</span> <span class="s2">"window/anchor"</span>
+    <span class="n">WINDOW_NTH</span> <span class="o">=</span> <span class="s2">"window/nth"</span>
+    <span class="n">VIEW</span> <span class="o">=</span> <span class="s2">"view"</span>
+    <span class="n">VIEW_LAYOUT</span> <span class="o">=</span> <span class="s2">"view/layout"</span>
 
-    <span class="c1"># &quot;Tools&quot; menu</span>
-    <span class="n">TOOLS</span> <span class="o">=</span> <span class="s2">&quot;tools&quot;</span>
-    <span class="n">TOOLS_DOCK</span> <span class="o">=</span> <span class="s2">&quot;tools/dock&quot;</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Menu ID for the dock widgets.&quot;&quot;&quot;</span>
-    <span class="n">TOOLS_ARRAY</span> <span class="o">=</span> <span class="s2">&quot;tools/array&quot;</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Menu ID for the commands related to &quot;array&quot;-type data.&quot;&quot;&quot;</span>
-    <span class="n">TOOLS_DATAFRAME</span> <span class="o">=</span> <span class="s2">&quot;tools/dataframe&quot;</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Menu ID for the commands related to &quot;dataframe&quot;-type data.&quot;&quot;&quot;</span>
-    <span class="n">TOOLS_EXCEL</span> <span class="o">=</span> <span class="s2">&quot;tools/excel&quot;</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Menu ID for the commands related to &quot;excel&quot;-type data.&quot;&quot;&quot;</span>
-    <span class="n">TOOLS_IMAGE</span> <span class="o">=</span> <span class="s2">&quot;tools/image&quot;</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Menu ID for the commands related to &quot;image&quot;-type data.&quot;&quot;&quot;</span>
-    <span class="n">TOOLS_IMAGE_ROI</span> <span class="o">=</span> <span class="s2">&quot;tools/image/roi&quot;</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Menu ID for the commands related to image ROIs.&quot;&quot;&quot;</span>
-    <span class="n">TOOLS_IMAGE_CHANNELS</span> <span class="o">=</span> <span class="s2">&quot;tools/image/channels&quot;</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Menu ID for the commands related to image channels.&quot;&quot;&quot;</span>
-    <span class="n">TOOLS_IMAGE_CAPTURE</span> <span class="o">=</span> <span class="s2">&quot;tools/image/capture&quot;</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Menu ID for the commands related to capturing current image slice.&quot;&quot;&quot;</span>
-    <span class="n">TOOLS_PLOT</span> <span class="o">=</span> <span class="s2">&quot;tools/plot&quot;</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Menu ID for the commands related to &quot;plot&quot;-type data.&quot;&quot;&quot;</span>
-    <span class="n">TOOLS_TEXT</span> <span class="o">=</span> <span class="s2">&quot;tools/text&quot;</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Menu ID for the commands related to &quot;text&quot;-type data.&quot;&quot;&quot;</span>
-    <span class="n">TOOLS_TABLE</span> <span class="o">=</span> <span class="s2">&quot;tools/table&quot;</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Menu ID for the commands related to &quot;table&quot;-type data.&quot;&quot;&quot;</span>
-    <span class="n">TOOLS_TABLE_COPY</span> <span class="o">=</span> <span class="s2">&quot;tools/table/copy&quot;</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Menu ID for the commands that copy the &quot;table&quot;-type data.&quot;&quot;&quot;</span>
-    <span class="n">TOOLS_FUNCTION</span> <span class="o">=</span> <span class="s2">&quot;tools/function&quot;</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Menu ID for the commands related to &quot;function&quot;-type data.&quot;&quot;&quot;</span>
-    <span class="n">TOOLS_OTHERS</span> <span class="o">=</span> <span class="s2">&quot;tools/others&quot;</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Menu ID for the commands related to other data.&quot;&quot;&quot;</span>
+    <span class="c1"># "Tools" menu</span>
+    <span class="n">TOOLS</span> <span class="o">=</span> <span class="s2">"tools"</span>
+    <span class="n">TOOLS_DOCK</span> <span class="o">=</span> <span class="s2">"tools/dock"</span>
+<span class="w">    </span><span class="sd">"""Menu ID for the dock widgets."""</span>
+    <span class="n">TOOLS_ARRAY</span> <span class="o">=</span> <span class="s2">"tools/array"</span>
+<span class="w">    </span><span class="sd">"""Menu ID for the commands related to "array"-type data."""</span>
+    <span class="n">TOOLS_DATAFRAME</span> <span class="o">=</span> <span class="s2">"tools/dataframe"</span>
+<span class="w">    </span><span class="sd">"""Menu ID for the commands related to "dataframe"-type data."""</span>
+    <span class="n">TOOLS_EXCEL</span> <span class="o">=</span> <span class="s2">"tools/excel"</span>
+<span class="w">    </span><span class="sd">"""Menu ID for the commands related to "excel"-type data."""</span>
+    <span class="n">TOOLS_IMAGE</span> <span class="o">=</span> <span class="s2">"tools/image"</span>
+<span class="w">    </span><span class="sd">"""Menu ID for the commands related to "image"-type data."""</span>
+    <span class="n">TOOLS_IMAGE_ROI</span> <span class="o">=</span> <span class="s2">"tools/image/roi"</span>
+<span class="w">    </span><span class="sd">"""Menu ID for the commands related to image ROIs."""</span>
+    <span class="n">TOOLS_IMAGE_CHANNELS</span> <span class="o">=</span> <span class="s2">"tools/image/channels"</span>
+<span class="w">    </span><span class="sd">"""Menu ID for the commands related to image channels."""</span>
+    <span class="n">TOOLS_IMAGE_CAPTURE</span> <span class="o">=</span> <span class="s2">"tools/image/capture"</span>
+<span class="w">    </span><span class="sd">"""Menu ID for the commands related to capturing current image slice."""</span>
+    <span class="n">TOOLS_PLOT</span> <span class="o">=</span> <span class="s2">"tools/plot"</span>
+<span class="w">    </span><span class="sd">"""Menu ID for the commands related to "plot"-type data."""</span>
+    <span class="n">TOOLS_TEXT</span> <span class="o">=</span> <span class="s2">"tools/text"</span>
+<span class="w">    </span><span class="sd">"""Menu ID for the commands related to "text"-type data."""</span>
+    <span class="n">TOOLS_TABLE</span> <span class="o">=</span> <span class="s2">"tools/table"</span>
+<span class="w">    </span><span class="sd">"""Menu ID for the commands related to "table"-type data."""</span>
+    <span class="n">TOOLS_TABLE_COPY</span> <span class="o">=</span> <span class="s2">"tools/table/copy"</span>
+<span class="w">    </span><span class="sd">"""Menu ID for the commands that copy the "table"-type data."""</span>
+    <span class="n">TOOLS_FUNCTION</span> <span class="o">=</span> <span class="s2">"tools/function"</span>
+<span class="w">    </span><span class="sd">"""Menu ID for the commands related to "function"-type data."""</span>
+    <span class="n">TOOLS_OTHERS</span> <span class="o">=</span> <span class="s2">"tools/others"</span>
+<span class="w">    </span><span class="sd">"""Menu ID for the commands related to other data."""</span>
 
-    <span class="c1"># &quot;Go&quot; menu</span>
-    <span class="n">GO</span> <span class="o">=</span> <span class="s2">&quot;go&quot;</span>
+    <span class="c1"># "Go" menu</span>
+    <span class="n">GO</span> <span class="o">=</span> <span class="s2">"go"</span>
 
     <span class="c1"># Others</span>
-    <span class="n">TOOLBAR</span> <span class="o">=</span> <span class="s2">&quot;toolbar&quot;</span>
-    <span class="n">CORNER</span> <span class="o">=</span> <span class="s2">&quot;corner&quot;</span>
-    <span class="n">HELP</span> <span class="o">=</span> <span class="s2">&quot;help&quot;</span>
+    <span class="n">TOOLBAR</span> <span class="o">=</span> <span class="s2">"toolbar"</span>
+    <span class="n">CORNER</span> <span class="o">=</span> <span class="s2">"corner"</span>
+    <span class="n">HELP</span> <span class="o">=</span> <span class="s2">"help"</span>
 
-    <span class="n">RECENT_ALL</span> <span class="o">=</span> <span class="s2">&quot;file/.recent-all&quot;</span>
-    <span class="n">STARTUP</span> <span class="o">=</span> <span class="s2">&quot;file/.startup&quot;</span>
-    <span class="n">MODEL_MENU</span> <span class="o">=</span> <span class="s2">&quot;/model_menu&quot;</span>
+    <span class="n">RECENT_ALL</span> <span class="o">=</span> <span class="s2">"file/.recent-all"</span>
+    <span class="n">STARTUP</span> <span class="o">=</span> <span class="s2">"file/.startup"</span>
+    <span class="n">MODEL_MENU</span> <span class="o">=</span> <span class="s2">"/model_menu"</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -1878,7 +1878,7 @@
 
 
 <h5 id="himena.consts.MenuId.TOOLS_ARRAY" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">TOOLS_ARRAY</span> <span class="o">=</span> <span class="s1">&#39;tools/array&#39;</span></code>
+            <code class="highlight language-python"><span class="n">TOOLS_ARRAY</span> <span class="o">=</span> <span class="s1">'tools/array'</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -1901,7 +1901,7 @@
 
 
 <h5 id="himena.consts.MenuId.TOOLS_DATAFRAME" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">TOOLS_DATAFRAME</span> <span class="o">=</span> <span class="s1">&#39;tools/dataframe&#39;</span></code>
+            <code class="highlight language-python"><span class="n">TOOLS_DATAFRAME</span> <span class="o">=</span> <span class="s1">'tools/dataframe'</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -1924,7 +1924,7 @@
 
 
 <h5 id="himena.consts.MenuId.TOOLS_DOCK" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">TOOLS_DOCK</span> <span class="o">=</span> <span class="s1">&#39;tools/dock&#39;</span></code>
+            <code class="highlight language-python"><span class="n">TOOLS_DOCK</span> <span class="o">=</span> <span class="s1">'tools/dock'</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -1947,7 +1947,7 @@
 
 
 <h5 id="himena.consts.MenuId.TOOLS_EXCEL" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">TOOLS_EXCEL</span> <span class="o">=</span> <span class="s1">&#39;tools/excel&#39;</span></code>
+            <code class="highlight language-python"><span class="n">TOOLS_EXCEL</span> <span class="o">=</span> <span class="s1">'tools/excel'</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -1970,7 +1970,7 @@
 
 
 <h5 id="himena.consts.MenuId.TOOLS_FUNCTION" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">TOOLS_FUNCTION</span> <span class="o">=</span> <span class="s1">&#39;tools/function&#39;</span></code>
+            <code class="highlight language-python"><span class="n">TOOLS_FUNCTION</span> <span class="o">=</span> <span class="s1">'tools/function'</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -1993,7 +1993,7 @@
 
 
 <h5 id="himena.consts.MenuId.TOOLS_IMAGE" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">TOOLS_IMAGE</span> <span class="o">=</span> <span class="s1">&#39;tools/image&#39;</span></code>
+            <code class="highlight language-python"><span class="n">TOOLS_IMAGE</span> <span class="o">=</span> <span class="s1">'tools/image'</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -2016,7 +2016,7 @@
 
 
 <h5 id="himena.consts.MenuId.TOOLS_IMAGE_CAPTURE" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">TOOLS_IMAGE_CAPTURE</span> <span class="o">=</span> <span class="s1">&#39;tools/image/capture&#39;</span></code>
+            <code class="highlight language-python"><span class="n">TOOLS_IMAGE_CAPTURE</span> <span class="o">=</span> <span class="s1">'tools/image/capture'</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -2039,7 +2039,7 @@
 
 
 <h5 id="himena.consts.MenuId.TOOLS_IMAGE_CHANNELS" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">TOOLS_IMAGE_CHANNELS</span> <span class="o">=</span> <span class="s1">&#39;tools/image/channels&#39;</span></code>
+            <code class="highlight language-python"><span class="n">TOOLS_IMAGE_CHANNELS</span> <span class="o">=</span> <span class="s1">'tools/image/channels'</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -2062,7 +2062,7 @@
 
 
 <h5 id="himena.consts.MenuId.TOOLS_IMAGE_ROI" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">TOOLS_IMAGE_ROI</span> <span class="o">=</span> <span class="s1">&#39;tools/image/roi&#39;</span></code>
+            <code class="highlight language-python"><span class="n">TOOLS_IMAGE_ROI</span> <span class="o">=</span> <span class="s1">'tools/image/roi'</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -2085,7 +2085,7 @@
 
 
 <h5 id="himena.consts.MenuId.TOOLS_OTHERS" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">TOOLS_OTHERS</span> <span class="o">=</span> <span class="s1">&#39;tools/others&#39;</span></code>
+            <code class="highlight language-python"><span class="n">TOOLS_OTHERS</span> <span class="o">=</span> <span class="s1">'tools/others'</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -2108,7 +2108,7 @@
 
 
 <h5 id="himena.consts.MenuId.TOOLS_PLOT" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">TOOLS_PLOT</span> <span class="o">=</span> <span class="s1">&#39;tools/plot&#39;</span></code>
+            <code class="highlight language-python"><span class="n">TOOLS_PLOT</span> <span class="o">=</span> <span class="s1">'tools/plot'</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -2131,7 +2131,7 @@
 
 
 <h5 id="himena.consts.MenuId.TOOLS_TABLE" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">TOOLS_TABLE</span> <span class="o">=</span> <span class="s1">&#39;tools/table&#39;</span></code>
+            <code class="highlight language-python"><span class="n">TOOLS_TABLE</span> <span class="o">=</span> <span class="s1">'tools/table'</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -2154,7 +2154,7 @@
 
 
 <h5 id="himena.consts.MenuId.TOOLS_TABLE_COPY" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">TOOLS_TABLE_COPY</span> <span class="o">=</span> <span class="s1">&#39;tools/table/copy&#39;</span></code>
+            <code class="highlight language-python"><span class="n">TOOLS_TABLE_COPY</span> <span class="o">=</span> <span class="s1">'tools/table/copy'</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -2177,7 +2177,7 @@
 
 
 <h5 id="himena.consts.MenuId.TOOLS_TEXT" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">TOOLS_TEXT</span> <span class="o">=</span> <span class="s1">&#39;tools/text&#39;</span></code>
+            <code class="highlight language-python"><span class="n">TOOLS_TEXT</span> <span class="o">=</span> <span class="s1">'tools/text'</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
@@ -2308,79 +2308,79 @@ other plugins.</p>
 <span class="normal">139</span>
 <span class="normal">140</span>
 <span class="normal">141</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">StandardType</span><span class="p">(</span><span class="n">SimpleNamespace</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Conventions for standard model types.</span>
+<span class="w">    </span><span class="sd">"""Conventions for standard model types.</span>
 
 <span class="sd">    Developers should use these types as much as possible to ensure compatibility with</span>
 <span class="sd">    other plugins.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="c1">### Basic types ###</span>
-    <span class="n">TEXT</span> <span class="o">=</span> <span class="s2">&quot;text&quot;</span>  <span class="c1"># any text</span>
-    <span class="n">TABLE</span> <span class="o">=</span> <span class="s2">&quot;table&quot;</span>  <span class="c1"># 2D data without any special structure</span>
-    <span class="n">ARRAY</span> <span class="o">=</span> <span class="s2">&quot;array&quot;</span>  <span class="c1"># nD grid data such as numpy array</span>
-    <span class="n">DICT</span> <span class="o">=</span> <span class="s2">&quot;dict&quot;</span>  <span class="c1"># dictionary</span>
-    <span class="n">DATAFRAME</span> <span class="o">=</span> <span class="s2">&quot;dataframe&quot;</span>  <span class="c1"># DataFrame object</span>
+    <span class="n">TEXT</span> <span class="o">=</span> <span class="s2">"text"</span>  <span class="c1"># any text</span>
+    <span class="n">TABLE</span> <span class="o">=</span> <span class="s2">"table"</span>  <span class="c1"># 2D data without any special structure</span>
+    <span class="n">ARRAY</span> <span class="o">=</span> <span class="s2">"array"</span>  <span class="c1"># nD grid data such as numpy array</span>
+    <span class="n">DICT</span> <span class="o">=</span> <span class="s2">"dict"</span>  <span class="c1"># dictionary</span>
+    <span class="n">DATAFRAME</span> <span class="o">=</span> <span class="s2">"dataframe"</span>  <span class="c1"># DataFrame object</span>
 
     <span class="c1">### Subtypes ###</span>
     <span class="c1"># dict subtypes</span>
-    <span class="n">EXCEL</span> <span class="o">=</span> <span class="s2">&quot;dict.table&quot;</span>  <span class="c1"># Excel file (~= tabbed tables)</span>
-    <span class="n">DATAFRAMES</span> <span class="o">=</span> <span class="s2">&quot;dict.dataframe&quot;</span>
-    <span class="n">ARRAYS</span> <span class="o">=</span> <span class="s2">&quot;dict.array&quot;</span>
-    <span class="n">IMAGES</span> <span class="o">=</span> <span class="s2">&quot;dict.array.image&quot;</span>
+    <span class="n">EXCEL</span> <span class="o">=</span> <span class="s2">"dict.table"</span>  <span class="c1"># Excel file (~= tabbed tables)</span>
+    <span class="n">DATAFRAMES</span> <span class="o">=</span> <span class="s2">"dict.dataframe"</span>
+    <span class="n">ARRAYS</span> <span class="o">=</span> <span class="s2">"dict.array"</span>
+    <span class="n">IMAGES</span> <span class="o">=</span> <span class="s2">"dict.array.image"</span>
 
     <span class="c1"># text subtypes</span>
-    <span class="n">PYTHON</span> <span class="o">=</span> <span class="s2">&quot;text.python&quot;</span>  <span class="c1"># Python code</span>
-    <span class="n">HTML</span> <span class="o">=</span> <span class="s2">&quot;text.html&quot;</span>  <span class="c1"># HTML text</span>
-    <span class="n">SVG</span> <span class="o">=</span> <span class="s2">&quot;text.svg&quot;</span>  <span class="c1"># SVG text</span>
-    <span class="n">MARKDOWN</span> <span class="o">=</span> <span class="s2">&quot;text.markdown&quot;</span>  <span class="c1"># markdown text</span>
-    <span class="n">JSON</span> <span class="o">=</span> <span class="s2">&quot;text.json&quot;</span>  <span class="c1"># JSON text</span>
-    <span class="n">IPYNB</span> <span class="o">=</span> <span class="s2">&quot;text.json.ipynb&quot;</span>  <span class="c1"># Jupyter notebook</span>
+    <span class="n">PYTHON</span> <span class="o">=</span> <span class="s2">"text.python"</span>  <span class="c1"># Python code</span>
+    <span class="n">HTML</span> <span class="o">=</span> <span class="s2">"text.html"</span>  <span class="c1"># HTML text</span>
+    <span class="n">SVG</span> <span class="o">=</span> <span class="s2">"text.svg"</span>  <span class="c1"># SVG text</span>
+    <span class="n">MARKDOWN</span> <span class="o">=</span> <span class="s2">"text.markdown"</span>  <span class="c1"># markdown text</span>
+    <span class="n">JSON</span> <span class="o">=</span> <span class="s2">"text.json"</span>  <span class="c1"># JSON text</span>
+    <span class="n">IPYNB</span> <span class="o">=</span> <span class="s2">"text.json.ipynb"</span>  <span class="c1"># Jupyter notebook</span>
 
     <span class="c1"># image data</span>
-    <span class="n">IMAGE</span> <span class="o">=</span> <span class="s2">&quot;array.image&quot;</span>
+    <span class="n">IMAGE</span> <span class="o">=</span> <span class="s2">"array.image"</span>
     <span class="c1"># uint image data that will be interpreted as labels</span>
-    <span class="n">IMAGE_LABELS</span> <span class="o">=</span> <span class="s2">&quot;array.image.labels&quot;</span>
+    <span class="n">IMAGE_LABELS</span> <span class="o">=</span> <span class="s2">"array.image.labels"</span>
     <span class="c1"># Complex image data that should be interpreted as a Fourier transform. C0 must</span>
     <span class="c1"># be shifted to the image center (using np.fft.fftshift)</span>
-    <span class="n">IMAGE_FOURIER</span> <span class="o">=</span> <span class="s2">&quot;array.image.fourier&quot;</span>
+    <span class="n">IMAGE_FOURIER</span> <span class="o">=</span> <span class="s2">"array.image.fourier"</span>
 
     <span class="c1"># (N, D) numerical array, such as D-dimensional point cloud</span>
-    <span class="n">COORDINATES</span> <span class="o">=</span> <span class="s2">&quot;array.coordinates&quot;</span>
+    <span class="n">COORDINATES</span> <span class="o">=</span> <span class="s2">"array.coordinates"</span>
 
     <span class="c1"># DataFrame that is supposed to be plotted immediately (such as image line scan)</span>
-    <span class="n">DATAFRAME_PLOT</span> <span class="o">=</span> <span class="s2">&quot;dataframe.plot&quot;</span>
+    <span class="n">DATAFRAME_PLOT</span> <span class="o">=</span> <span class="s2">"dataframe.plot"</span>
 
     <span class="c1">### plotting ###</span>
-    <span class="n">PLOT</span> <span class="o">=</span> <span class="s2">&quot;plot&quot;</span>  <span class="c1"># objects that satisfy the plotting standard</span>
-    <span class="n">PLOT_STACK</span> <span class="o">=</span> <span class="s2">&quot;plot-stack&quot;</span>  <span class="c1"># stack of plot objects</span>
-    <span class="n">MPL_FIGURE</span> <span class="o">=</span> <span class="s2">&quot;matplotlib-figure&quot;</span>  <span class="c1"># matplotlib figure object</span>
-    <span class="n">PDF</span> <span class="o">=</span> <span class="s2">&quot;pdf&quot;</span>  <span class="c1"># PDF document</span>
+    <span class="n">PLOT</span> <span class="o">=</span> <span class="s2">"plot"</span>  <span class="c1"># objects that satisfy the plotting standard</span>
+    <span class="n">PLOT_STACK</span> <span class="o">=</span> <span class="s2">"plot-stack"</span>  <span class="c1"># stack of plot objects</span>
+    <span class="n">MPL_FIGURE</span> <span class="o">=</span> <span class="s2">"matplotlib-figure"</span>  <span class="c1"># matplotlib figure object</span>
+    <span class="n">PDF</span> <span class="o">=</span> <span class="s2">"pdf"</span>  <span class="c1"># PDF document</span>
 
     <span class="c1">### 3D ###</span>
-    <span class="n">MESH</span> <span class="o">=</span> <span class="s2">&quot;mesh&quot;</span>  <span class="c1"># vertices, faces and values for 3D mesh</span>
+    <span class="n">MESH</span> <span class="o">=</span> <span class="s2">"mesh"</span>  <span class="c1"># vertices, faces and values for 3D mesh</span>
 
     <span class="c1">### Nested models ###</span>
-    <span class="n">MODELS</span> <span class="o">=</span> <span class="s2">&quot;models&quot;</span>  <span class="c1"># list or dict of models</span>
-    <span class="n">LAZY</span> <span class="o">=</span> <span class="s2">&quot;lazy&quot;</span>  <span class="c1"># lazy loading of models</span>
+    <span class="n">MODELS</span> <span class="o">=</span> <span class="s2">"models"</span>  <span class="c1"># list or dict of models</span>
+    <span class="n">LAZY</span> <span class="o">=</span> <span class="s2">"lazy"</span>  <span class="c1"># lazy loading of models</span>
 
     <span class="c1">### Other types ###</span>
-    <span class="n">WORKFLOW</span> <span class="o">=</span> <span class="s2">&quot;workflow&quot;</span>  <span class="c1"># himena workflow object</span>
-    <span class="n">WORKFLOW_PARAMETRIC</span> <span class="o">=</span> <span class="s2">&quot;workflow.parametric&quot;</span>  <span class="c1"># parametric workflow object</span>
-    <span class="n">GROUPBY</span> <span class="o">=</span> <span class="s2">&quot;groupby&quot;</span>  <span class="c1"># DataFrame GroupBy object</span>
-    <span class="n">ROIS</span> <span class="o">=</span> <span class="s2">&quot;rois&quot;</span>  <span class="c1"># regions of interest</span>
-    <span class="n">FUNCTION</span> <span class="o">=</span> <span class="s2">&quot;function&quot;</span>  <span class="c1"># callable object</span>
-    <span class="n">DISTRIBUTION</span> <span class="o">=</span> <span class="s2">&quot;distribution&quot;</span>  <span class="c1"># probablistic distribution object</span>
-    <span class="n">EMAIL</span> <span class="o">=</span> <span class="s2">&quot;email&quot;</span>  <span class="c1"># email message object</span>
+    <span class="n">WORKFLOW</span> <span class="o">=</span> <span class="s2">"workflow"</span>  <span class="c1"># himena workflow object</span>
+    <span class="n">WORKFLOW_PARAMETRIC</span> <span class="o">=</span> <span class="s2">"workflow.parametric"</span>  <span class="c1"># parametric workflow object</span>
+    <span class="n">GROUPBY</span> <span class="o">=</span> <span class="s2">"groupby"</span>  <span class="c1"># DataFrame GroupBy object</span>
+    <span class="n">ROIS</span> <span class="o">=</span> <span class="s2">"rois"</span>  <span class="c1"># regions of interest</span>
+    <span class="n">FUNCTION</span> <span class="o">=</span> <span class="s2">"function"</span>  <span class="c1"># callable object</span>
+    <span class="n">DISTRIBUTION</span> <span class="o">=</span> <span class="s2">"distribution"</span>  <span class="c1"># probablistic distribution object</span>
+    <span class="n">EMAIL</span> <span class="o">=</span> <span class="s2">"email"</span>  <span class="c1"># email message object</span>
 
     <span class="c1"># fallback when no reader is found for the file (which means that the file could be</span>
     <span class="c1"># opened as a text file)</span>
-    <span class="n">READER_NOT_FOUND</span> <span class="o">=</span> <span class="s2">&quot;reader_not_found&quot;</span>
+    <span class="n">READER_NOT_FOUND</span> <span class="o">=</span> <span class="s2">"reader_not_found"</span>
 
     <span class="c1"># fallback when no specific widget can be used for the data</span>
-    <span class="n">ANY</span> <span class="o">=</span> <span class="s2">&quot;any&quot;</span>
+    <span class="n">ANY</span> <span class="o">=</span> <span class="s2">"any"</span>
 
     <span class="c1"># type used for result stack</span>
-    <span class="n">RESULTS</span> <span class="o">=</span> <span class="s2">&quot;results&quot;</span>
+    <span class="n">RESULTS</span> <span class="o">=</span> <span class="s2">"results"</span>
 </code></pre></div></td></tr></table></div>
               </details>
 

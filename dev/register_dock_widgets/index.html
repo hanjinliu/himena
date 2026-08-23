@@ -1371,8 +1371,8 @@ processing routines more efficiently. For example, dock widgets defined in
     <span class="o">...</span>  <span class="c1"># implementation</span>
 
 <span class="nd">@register_dock_widget_action</span><span class="p">(</span>
-    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;My Dock Widget&quot;</span><span class="p">,</span>  <span class="c1"># (1)!</span>
-    <span class="n">area</span><span class="o">=</span><span class="s2">&quot;bottom&quot;</span><span class="p">,</span>  <span class="c1"># (2)!</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">"My Dock Widget"</span><span class="p">,</span>  <span class="c1"># (1)!</span>
+    <span class="n">area</span><span class="o">=</span><span class="s2">"bottom"</span><span class="p">,</span>  <span class="c1"># (2)!</span>
     <span class="n">singleton</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># (3)!</span>
 <span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">my_dock_widget_action</span><span class="p">(</span><span class="n">ui</span><span class="p">):</span>
@@ -1393,12 +1393,12 @@ customized by the end user in the setting dialog.</p>
 
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">MyPluginConfig</span><span class="p">:</span>
-    <span class="n">some_default_value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;Hello, world!&quot;</span><span class="p">)</span>
+    <span class="n">some_default_value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"Hello, world!"</span><span class="p">)</span>
 </code></pre></div>
 <p>Pass the configuration instance to the <code>register_dock_widget_action</code> decorator</p>
 <div class="highlight"><pre><span></span><code><span class="nd">@register_dock_widget_action</span><span class="p">(</span>
-    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;My Dock Widget&quot;</span><span class="p">,</span>
-    <span class="n">area</span><span class="o">=</span><span class="s2">&quot;bottom&quot;</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">"My Dock Widget"</span><span class="p">,</span>
+    <span class="n">area</span><span class="o">=</span><span class="s2">"bottom"</span><span class="p">,</span>
     <span class="n">config</span><span class="o">=</span><span class="n">MyPluginConfig</span><span class="p">(),</span>
 <span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">my_dock_widget_action</span><span class="p">(</span><span class="n">ui</span><span class="p">):</span>

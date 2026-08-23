@@ -1433,8 +1433,8 @@ file.</p>
 <p>For example, if you have a module named <code>himena_my_plugin</code> and all the IO functions are
 registered in the <code>io</code> submodule, you need to add the following configuration to the
 <code>pyproject.toml</code> file.</p>
-<div class="highlight"><pre><span></span><code><span class="k">[project.entry-points.</span><span class="s2">&quot;himena.plugin&quot;</span><span class="k">]</span>
-<span class="hll"><span class="s2">&quot;My Plugin IO&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;himena_my_plugin.io&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="k">[project.entry-points.</span><span class="s2">"himena.plugin"</span><span class="k">]</span>
+<span class="hll"><span class="s2">"My Plugin IO"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"himena_my_plugin.io"</span>
 </span></code></pre></div>
 <p>The "My Plugin IO" is the display name of your plugin, and the value "himena_my_plugin.io"
 is the import path to the submodule.</p>
@@ -1446,10 +1446,10 @@ will allow your package integrated with <code>himena</code>.</p>
 <p>To improve the customizability of your plugin, your plugin should be well categorized.
 For example, IO, widgets, and data processing functions should be separated into
 different submodules.</p>
-<div class="highlight"><pre><span></span><code><span class="k">[project.entry-points.</span><span class="s2">&quot;himena.plugin&quot;</span><span class="k">]</span>
-<span class="s2">&quot;My Plugin IO&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;himena_my_plugin.io&quot;</span>
-<span class="s2">&quot;My Plugin Widgets&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;himena_my_plugin.widgets&quot;</span>
-<span class="s2">&quot;My Plugin Data Processing&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;himena_my_plugin.processing&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="k">[project.entry-points.</span><span class="s2">"himena.plugin"</span><span class="k">]</span>
+<span class="s2">"My Plugin IO"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"himena_my_plugin.io"</span>
+<span class="s2">"My Plugin Widgets"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"himena_my_plugin.widgets"</span>
+<span class="s2">"My Plugin Data Processing"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"himena_my_plugin.processing"</span>
 </code></pre></div>
 <h2 id="testing-plugins">Testing Plugins</h2>
 <p>To locally test your plugin, first install your package to the python environment</p>
@@ -1472,9 +1472,9 @@ plugin is installed only once in the beginning.</p>
 <div class="highlight"><span class="filename">tests/conftest.py</span><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">himena.testing</span><span class="w"> </span><span class="kn">import</span> <span class="n">install_plugin</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
 
-<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">(</span><span class="n">scope</span><span class="o">=</span><span class="s2">&quot;session&quot;</span><span class="p">,</span> <span class="n">autouse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">(</span><span class="n">scope</span><span class="o">=</span><span class="s2">"session"</span><span class="p">,</span> <span class="n">autouse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">init_pytest</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
-    <span class="n">install_plugin</span><span class="p">(</span><span class="s2">&quot;himena-image&quot;</span><span class="p">)</span>
+    <span class="n">install_plugin</span><span class="p">(</span><span class="s2">"himena-image"</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="single-file-plugin">Single-file Plugin</h2>
 <p>Sometimes you may prefer to create a plugin in a single file. This is useful for such as
@@ -1489,7 +1489,7 @@ folders.</p>
 plugin module. If the function is found, it will be called with the main window.</p>
 <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">on_himena_startup</span><span class="p">(</span><span class="n">ui</span><span class="p">):</span>
     <span class="c1"># Your plugin initialization code here</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;My plugin loaded!&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"My plugin loaded!"</span><span class="p">)</span>
 </code></pre></div>
 
 

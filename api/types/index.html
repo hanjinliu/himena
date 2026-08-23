@@ -2378,7 +2378,7 @@
 
 
 <h4 id="himena.types.AnyContext" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">AnyContext</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;AnyContext&#39;</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span></code>
+            <code class="highlight language-python"><span class="n">AnyContext</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">'AnyContext'</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
@@ -2400,7 +2400,7 @@
 
 
 <h4 id="himena.types.ChooseOneString" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">ChooseOneString</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;buttons&#39;</span><span class="p">,</span> <span class="s1">&#39;radiobuttons&#39;</span><span class="p">,</span> <span class="s1">&#39;palette&#39;</span><span class="p">]</span></code>
+            <code class="highlight language-python"><span class="n">ChooseOneString</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">'buttons'</span><span class="p">,</span> <span class="s1">'radiobuttons'</span><span class="p">,</span> <span class="s1">'palette'</span><span class="p">]</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
@@ -2425,7 +2425,7 @@
 
 
 <h4 id="himena.types.Parametric" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">Parametric</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;Parametric&#39;</span><span class="p">,</span> <span class="n">Any</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">Parametric</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">'Parametric'</span><span class="p">,</span> <span class="n">Any</span><span class="p">)</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
@@ -2457,7 +2457,7 @@ with inputs <code>a</code> and <code>b</code>.</p>
 
 
 <h4 id="himena.types.WidgetConstructor" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">WidgetConstructor</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;WidgetConstructor&#39;</span><span class="p">,</span> <span class="nb">object</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">WidgetConstructor</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">'WidgetConstructor'</span><span class="p">,</span> <span class="nb">object</span><span class="p">)</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
@@ -2484,7 +2484,7 @@ with inputs <code>a</code> and <code>b</code>.</p>
 
 
 <h4 id="himena.types.WidgetType" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">WidgetType</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;WidgetType&#39;</span><span class="p">,</span> <span class="nb">object</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">WidgetType</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">'WidgetType'</span><span class="p">,</span> <span class="nb">object</span><span class="p">)</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
@@ -2694,7 +2694,7 @@ with inputs <code>a</code> and <code>b</code>.</p>
               </div>
             </td>
             <td>
-                  <code>&lt;function BackendInstructions.&lt;lambda&gt; at 0x0000026955087100&gt;</code>
+                  <code>&lt;function BackendInstructions.&lt;lambda&gt; at 0x00000236E4CDB060&gt;</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -2798,42 +2798,42 @@ with inputs <code>a</code> and <code>b</code>.</p>
 <span class="normal">833</span>
 <span class="normal">834</span>
 <span class="normal">835</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">BackendInstructions</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Instructions for the backend that are only relevant to user interface.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Instructions for the backend that are only relevant to user interface."""</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">PYDANTIC_CONFIG_STRICT</span>
 
     <span class="n">animate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to animate&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to animate"</span><span class="p">,</span>
         <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">confirm</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to show a confirmation dialog&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to show a confirmation dialog"</span><span class="p">,</span>
         <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">choose_one_dialog_response</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;If provided, choose-one dialog will be skipped and this function &quot;</span>
-        <span class="s2">&quot;will be called to get the response.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"If provided, choose-one dialog will be skipped and this function "</span>
+        <span class="s2">"will be called to get the response."</span><span class="p">,</span>
         <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">file_dialog_response</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;If provided, file dialog will be skipped and this function will &quot;</span>
-        <span class="s2">&quot;be called to get the response.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"If provided, file dialog will be skipped and this function will "</span>
+        <span class="s2">"be called to get the response."</span><span class="p">,</span>
         <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">user_string_input_response</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;If provided, user string input dialog will be skipped and this &quot;</span>
-        <span class="s2">&quot;function will be called to get the response.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"If provided, user string input dialog will be skipped and this "</span>
+        <span class="s2">"function will be called to get the response."</span><span class="p">,</span>
         <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">user_input_response</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;If provided, parametric dialog will be skipped and this function &quot;</span>
-        <span class="s2">&quot;will be called to get the response.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"If provided, parametric dialog will be skipped and this function "</span>
+        <span class="s2">"will be called to get the response."</span><span class="p">,</span>
         <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">gui_execution</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -2841,18 +2841,18 @@ with inputs <code>a</code> and <code>b</code>.</p>
     <span class="n">unwrap_future</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">notification_callback</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="k">lambda</span> <span class="n">text</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Callback function when notification is shown.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Callback function when notification is shown."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">notification_response</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">notify_file_changed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to notify the user if the file has changed, moved or &quot;</span>
-        <span class="s2">&quot;deleted on disk.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to notify the user if the file has changed, moved or "</span>
+        <span class="s2">"deleted on disk."</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">updated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;BackendInstructions&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">updated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"BackendInstructions"</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="n">kwargs</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
@@ -3049,39 +3049,39 @@ with inputs <code>a</code> and <code>b</code>.</p>
 <span class="normal">451</span>
 <span class="normal">452</span>
 <span class="normal">453</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ClipboardDataModel</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Data model for a clipboard data.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Data model for a clipboard data."""</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">PYDANTIC_CONFIG_STRICT</span>
 
     <span class="n">text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Text in the clipboard if exists.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Text in the clipboard if exists."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">html</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;HTML in the clipboard if exists.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"HTML in the clipboard if exists."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">image</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Image in the clipboard if exists.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Image in the clipboard if exists."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;List of file paths in the clipboard if exists.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"List of file paths in the clipboard if exists."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">mime</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Raw MIME data in the clipboard if exists.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Raw MIME data in the clipboard if exists."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">internal_data</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Application specific data in the clipboard if exists. This data &quot;</span>
-        <span class="s2">&quot;cannot be used across application, but is useful to send Python object to &quot;</span>
-        <span class="s2">&quot;other widgets.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Application specific data in the clipboard if exists. This data "</span>
+        <span class="s2">"cannot be used across application, but is useful to send Python object to "</span>
+        <span class="s2">"other widgets."</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">with_internal_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">internal_data</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ClipboardDataModel&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;internal_data&quot;</span><span class="p">:</span> <span class="n">internal_data</span><span class="p">})</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_internal_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">internal_data</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ClipboardDataModel"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"internal_data"</span><span class="p">:</span> <span class="n">internal_data</span><span class="p">})</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -3139,12 +3139,12 @@ with inputs <code>a</code> and <code>b</code>.</p>
 <span class="normal">43</span>
 <span class="normal">44</span>
 <span class="normal">45</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">DockArea</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Area of the dock widget.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Area of the dock widget."""</span>
 
-    <span class="n">TOP</span> <span class="o">=</span> <span class="s2">&quot;top&quot;</span>
-    <span class="n">BOTTOM</span> <span class="o">=</span> <span class="s2">&quot;bottom&quot;</span>
-    <span class="n">LEFT</span> <span class="o">=</span> <span class="s2">&quot;left&quot;</span>
-    <span class="n">RIGHT</span> <span class="o">=</span> <span class="s2">&quot;right&quot;</span>
+    <span class="n">TOP</span> <span class="o">=</span> <span class="s2">"top"</span>
+    <span class="n">BOTTOM</span> <span class="o">=</span> <span class="s2">"bottom"</span>
+    <span class="n">LEFT</span> <span class="o">=</span> <span class="s2">"left"</span>
+    <span class="n">RIGHT</span> <span class="o">=</span> <span class="s2">"right"</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -3268,9 +3268,9 @@ with inputs <code>a</code> and <code>b</code>.</p>
 <span class="normal">480</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">DragDataModel</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">PYDANTIC_CONFIG_STRICT</span>
     <span class="n">getter</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">WidgetDataModel</span><span class="p">]</span> <span class="o">|</span> <span class="n">WidgetDataModel</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Getter function to get the data model.&quot;</span>
+        <span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Getter function to get the data model."</span>
     <span class="p">)</span>
-    <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Type of the internal data.&quot;</span><span class="p">)</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Type of the internal data."</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">data_model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WidgetDataModel</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">getter</span><span class="p">,</span> <span class="n">WidgetDataModel</span><span class="p">):</span>
@@ -3280,14 +3280,14 @@ with inputs <code>a</code> and <code>b</code>.</p>
         <span class="k">return</span> <span class="n">model</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">widget_accepts_me</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">widget</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return true if the widget accepts this data model to be dropped.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">widget</span><span class="p">,</span> <span class="s2">&quot;allowed_drop_types&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Return true if the widget accepts this data model to be dropped."""</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">widget</span><span class="p">,</span> <span class="s2">"allowed_drop_types"</span><span class="p">):</span>
             <span class="n">types</span> <span class="o">=</span> <span class="n">widget</span><span class="o">.</span><span class="n">allowed_drop_types</span><span class="p">()</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">return</span> <span class="kc">True</span>  <span class="c1"># not specified. Just allow it.</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="ow">in</span> <span class="n">types</span><span class="p">:</span>
                 <span class="k">return</span> <span class="kc">True</span>
-        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">widget</span><span class="p">,</span> <span class="s2">&quot;dropped_callback&quot;</span><span class="p">):</span>
+        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">widget</span><span class="p">,</span> <span class="s2">"dropped_callback"</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">True</span>
         <span class="k">return</span> <span class="kc">False</span>
 </code></pre></div></td></tr></table></div>
@@ -3333,14 +3333,14 @@ with inputs <code>a</code> and <code>b</code>.</p>
 <span class="normal">478</span>
 <span class="normal">479</span>
 <span class="normal">480</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">widget_accepts_me</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">widget</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return true if the widget accepts this data model to be dropped.&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">widget</span><span class="p">,</span> <span class="s2">&quot;allowed_drop_types&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Return true if the widget accepts this data model to be dropped."""</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">widget</span><span class="p">,</span> <span class="s2">"allowed_drop_types"</span><span class="p">):</span>
         <span class="n">types</span> <span class="o">=</span> <span class="n">widget</span><span class="o">.</span><span class="n">allowed_drop_types</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">True</span>  <span class="c1"># not specified. Just allow it.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="ow">in</span> <span class="n">types</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">True</span>
-    <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">widget</span><span class="p">,</span> <span class="s2">&quot;dropped_callback&quot;</span><span class="p">):</span>
+    <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">widget</span><span class="p">,</span> <span class="s2">"dropped_callback"</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">True</span>
     <span class="k">return</span> <span class="kc">False</span>
 </code></pre></div></td></tr></table></div>
@@ -3482,7 +3482,7 @@ with inputs <code>a</code> and <code>b</code>.</p>
 <span class="normal">888</span>
 <span class="normal">889</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">DropResult</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Model that can be returned by `dropped_callback` protocol.</span>
+<span class="w">    </span><span class="sd">"""Model that can be returned by `dropped_callback` protocol.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
@@ -3492,7 +3492,7 @@ with inputs <code>a</code> and <code>b</code>.</p>
 <span class="sd">        Command that will be executed when the drop succeeded.</span>
 <span class="sd">    with_params : dict[str, object] | None</span>
 <span class="sd">        Parameters that will be passed to the command.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">delete_input</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">command_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -3711,23 +3711,23 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
 <span class="normal">745</span>
 <span class="normal">746</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">FutureInfo</span><span class="p">(</span><span class="n">_HasDynamicAttribute</span><span class="p">):</span>
-    <span class="n">_ATTR_NAME</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;__himena_future_info__&quot;</span>
+    <span class="n">_ATTR_NAME</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"__himena_future_info__"</span>
 
     <span class="n">type_hint</span><span class="p">:</span> <span class="n">Any</span>
     <span class="n">track</span><span class="p">:</span> <span class="n">ModelTrack</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">top_left</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Top-left position of the output widget.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Top-left position of the output widget."""</span>
     <span class="n">size</span><span class="p">:</span> <span class="n">Size</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Size of the output widget.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Size of the output widget."""</span>
     <span class="n">tab_hash</span><span class="p">:</span> <span class="n">Hashable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The hash of the tab where the resulting WidgetDataModel will be added.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""The hash of the tab where the resulting WidgetDataModel will be added."""</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">resolve_type_hint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ns</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;FutureInfo&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">resolve_type_hint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ns</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">"FutureInfo"</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type_hint</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">typ</span> <span class="o">=</span> <span class="n">ns</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type_hint</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">typ</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not resolve the type hint: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">type_hint</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not resolve the type hint: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">type_hint</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
             <span class="n">type_hint</span> <span class="o">=</span> <span class="n">typ</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">type_hint</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_hint</span>
@@ -4043,19 +4043,19 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
 <span class="normal">681</span>
 <span class="normal">682</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">GuiConfiguration</span><span class="p">(</span><span class="n">_HasDynamicAttribute</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for parametric widget (interpreted by the injection processor)&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Configuration for parametric widget (interpreted by the injection processor)"""</span>
 
-    <span class="n">_ATTR_NAME</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;__himena_gui_config__&quot;</span>
+    <span class="n">_ATTR_NAME</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"__himena_gui_config__"</span>
 
     <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">preview</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">auto_close</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">show_parameter_labels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">run_async</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="n">result_as</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;window&quot;</span><span class="p">,</span> <span class="s2">&quot;below&quot;</span><span class="p">,</span> <span class="s2">&quot;right&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;window&quot;</span>
+    <span class="n">result_as</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"window"</span><span class="p">,</span> <span class="s2">"below"</span><span class="p">,</span> <span class="s2">"right"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"window"</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">asdict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the configuration as a dictionary.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return the configuration as a dictionary."""</span>
         <span class="k">return</span> <span class="n">asdict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
@@ -4092,7 +4092,7 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">680</span>
 <span class="normal">681</span>
 <span class="normal">682</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">asdict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the configuration as a dictionary.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Return the configuration as a dictionary."""</span>
     <span class="k">return</span> <span class="n">asdict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -4244,12 +4244,12 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
     <span class="n">bottom</span><span class="p">:</span> <span class="n">_V</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Iterate over the field to make this class tuple-like.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Iterate over the field to make this class tuple-like."""</span>
         <span class="k">return</span> <span class="nb">iter</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">top</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bottom</span><span class="p">))</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">from_rects</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">inner</span><span class="p">:</span> <span class="n">Rect</span><span class="p">[</span><span class="n">_V</span><span class="p">],</span> <span class="n">outer</span><span class="p">:</span> <span class="n">Rect</span><span class="p">[</span><span class="n">_V</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;Margins[_V]&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the margins from the inner and outer rectangles.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_rects</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">inner</span><span class="p">:</span> <span class="n">Rect</span><span class="p">[</span><span class="n">_V</span><span class="p">],</span> <span class="n">outer</span><span class="p">:</span> <span class="n">Rect</span><span class="p">[</span><span class="n">_V</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">"Margins[_V]"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Calculate the margins from the inner and outer rectangles."""</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
             <span class="n">inner</span><span class="o">.</span><span class="n">left</span> <span class="o">-</span> <span class="n">outer</span><span class="o">.</span><span class="n">left</span><span class="p">,</span>
             <span class="n">inner</span><span class="o">.</span><span class="n">top</span> <span class="o">-</span> <span class="n">outer</span><span class="o">.</span><span class="n">top</span><span class="p">,</span>
@@ -4291,7 +4291,7 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">641</span>
 <span class="normal">642</span>
 <span class="normal">643</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Iterate over the field to make this class tuple-like.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Iterate over the field to make this class tuple-like."""</span>
     <span class="k">return</span> <span class="nb">iter</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">top</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bottom</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -4328,8 +4328,8 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
 <span class="normal">651</span>
 <span class="normal">652</span>
 <span class="normal">653</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">from_rects</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">inner</span><span class="p">:</span> <span class="n">Rect</span><span class="p">[</span><span class="n">_V</span><span class="p">],</span> <span class="n">outer</span><span class="p">:</span> <span class="n">Rect</span><span class="p">[</span><span class="n">_V</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;Margins[_V]&quot;</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate the margins from the inner and outer rectangles.&quot;&quot;&quot;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">from_rects</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">inner</span><span class="p">:</span> <span class="n">Rect</span><span class="p">[</span><span class="n">_V</span><span class="p">],</span> <span class="n">outer</span><span class="p">:</span> <span class="n">Rect</span><span class="p">[</span><span class="n">_V</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">"Margins[_V]"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Calculate the margins from the inner and outer rectangles."""</span>
     <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
         <span class="n">inner</span><span class="o">.</span><span class="n">left</span> <span class="o">-</span> <span class="n">outer</span><span class="o">.</span><span class="n">left</span><span class="p">,</span>
         <span class="n">inner</span><span class="o">.</span><span class="n">top</span> <span class="o">-</span> <span class="n">outer</span><span class="o">.</span><span class="n">top</span><span class="p">,</span>
@@ -4496,9 +4496,9 @@ mathematical identifier for the node.</p>
 <span class="normal">713</span>
 <span class="normal">714</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ModelTrack</span><span class="p">(</span><span class="n">_HasDynamicAttribute</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Model to track how model is created.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Model to track how model is created."""</span>
 
-    <span class="n">_ATTR_NAME</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;__himena_model_track__&quot;</span>
+    <span class="n">_ATTR_NAME</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"__himena_model_track__"</span>
 
     <span class="n">command_id</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">contexts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ModelParameter</span> <span class="o">|</span> <span class="n">WindowParameter</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
@@ -4506,11 +4506,11 @@ mathematical identifier for the node.</p>
     <span class="n">time_start</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">to_workflow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Workflow</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct a workflow based on the given parameters.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Construct a workflow based on the given parameters."""</span>
         <span class="n">params</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">more_workflows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Workflow</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="s2">&quot;is_previewing&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="s2">"is_previewing"</span><span class="p">:</span>
                 <span class="k">continue</span>
             <span class="n">param</span><span class="p">,</span> <span class="n">wf</span> <span class="o">=</span> <span class="n">parse_parameter</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
             <span class="n">params</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">param</span><span class="p">)</span>
@@ -4575,11 +4575,11 @@ mathematical identifier for the node.</p>
 <span class="normal">712</span>
 <span class="normal">713</span>
 <span class="normal">714</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">to_workflow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Workflow</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct a workflow based on the given parameters.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Construct a workflow based on the given parameters."""</span>
     <span class="n">params</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">more_workflows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Workflow</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="s2">&quot;is_previewing&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="s2">"is_previewing"</span><span class="p">:</span>
             <span class="k">continue</span>
         <span class="n">param</span><span class="p">,</span> <span class="n">wf</span> <span class="o">=</span> <span class="n">parse_parameter</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
         <span class="n">params</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">param</span><span class="p">)</span>
@@ -4638,10 +4638,10 @@ mathematical identifier for the node.</p>
 <span class="normal">70</span>
 <span class="normal">71</span>
 <span class="normal">72</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">NewWidgetBehavior</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Behavior of adding a widget.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Behavior of adding a widget."""</span>
 
-    <span class="n">TAB</span> <span class="o">=</span> <span class="s2">&quot;tab&quot;</span>
-    <span class="n">WINDOW</span> <span class="o">=</span> <span class="s2">&quot;window&quot;</span>
+    <span class="n">TAB</span> <span class="o">=</span> <span class="s2">"tab"</span>
+    <span class="n">WINDOW</span> <span class="o">=</span> <span class="s2">"window"</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -4702,11 +4702,11 @@ mathematical identifier for the node.</p>
 <span class="normal">774</span>
 <span class="normal">775</span>
 <span class="normal">776</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ParametricWidgetProtocol</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Protocol used for return annotation of a parametric widget.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Protocol used for return annotation of a parametric widget."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="n">ParametricWidgetProtocol</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;ParametricWidgetProtocol cannot be instantiated.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">"ParametricWidgetProtocol cannot be instantiated."</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
@@ -4924,7 +4924,7 @@ mathematical identifier for the node.</p>
 <span class="normal">588</span>
 <span class="normal">589</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Rect</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">_V</span><span class="p">]):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Rectangle use for any place.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Rectangle use for any place."""</span>
 
     <span class="n">left</span><span class="p">:</span> <span class="n">_V</span>
     <span class="n">top</span><span class="p">:</span> <span class="n">_V</span>
@@ -4939,26 +4939,26 @@ mathematical identifier for the node.</p>
     <span class="k">def</span><span class="w"> </span><span class="nf">bottom</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">top</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">with_left</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left</span><span class="p">:</span> <span class="n">_V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Rect[_V]&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_left</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left</span><span class="p">:</span> <span class="n">_V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Rect[_V]"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">top</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">with_top</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">top</span><span class="p">:</span> <span class="n">_V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Rect[_V]&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_top</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">top</span><span class="p">:</span> <span class="n">_V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Rect[_V]"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="n">top</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">with_width</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="n">_V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Rect[_V]&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_width</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="n">_V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Rect[_V]"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">top</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">with_height</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="n">_V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Rect[_V]&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_height</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="n">_V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Rect[_V]"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">top</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">with_right</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="n">_V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Rect[_V]&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_right</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="n">_V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Rect[_V]"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="n">right</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">top</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">with_bottom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bottom</span><span class="p">:</span> <span class="n">_V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Rect[_V]&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_bottom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bottom</span><span class="p">:</span> <span class="n">_V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Rect[_V]"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="n">bottom</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Iterate over the field to make this class tuple-like.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Iterate over the field to make this class tuple-like."""</span>
         <span class="k">return</span> <span class="nb">iter</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">top</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">size</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Size</span><span class="p">[</span><span class="n">_V</span><span class="p">]:</span>
@@ -4966,11 +4966,11 @@ mathematical identifier for the node.</p>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">adjust_to_int</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">how</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span> <span class="s2">&quot;outer&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;inner&quot;</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Rect[int]&quot;</span><span class="p">:</span>
+        <span class="n">how</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"inner"</span><span class="p">,</span> <span class="s2">"outer"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"inner"</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Rect[int]"</span><span class="p">:</span>
         <span class="n">right</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">right</span>
         <span class="n">bottom</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bottom</span>
-        <span class="k">if</span> <span class="n">how</span> <span class="o">==</span> <span class="s2">&quot;inner&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">how</span> <span class="o">==</span> <span class="s2">"inner"</span><span class="p">:</span>
             <span class="n">left</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">))</span>
             <span class="n">top</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">top</span><span class="p">))</span>
             <span class="n">right</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">right</span><span class="p">))</span>
@@ -4982,24 +4982,24 @@ mathematical identifier for the node.</p>
             <span class="n">bottom</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">bottom</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">top</span><span class="p">,</span> <span class="n">right</span> <span class="o">-</span> <span class="n">left</span><span class="p">,</span> <span class="n">bottom</span> <span class="o">-</span> <span class="n">top</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">limit_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xmax</span><span class="p">:</span> <span class="n">_T</span><span class="p">,</span> <span class="n">ymax</span><span class="p">:</span> <span class="n">_T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Rect[_T]&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Limit the size of the Rect to the given maximum size.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">limit_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xmax</span><span class="p">:</span> <span class="n">_T</span><span class="p">,</span> <span class="n">ymax</span><span class="p">:</span> <span class="n">_T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Rect[_T]"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Limit the size of the Rect to the given maximum size."""</span>
         <span class="n">left</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">top</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">top</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">right</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="p">,</span> <span class="n">xmax</span><span class="p">)</span>
         <span class="n">bottom</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bottom</span><span class="p">,</span> <span class="n">ymax</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">top</span><span class="p">,</span> <span class="n">right</span> <span class="o">-</span> <span class="n">left</span><span class="p">,</span> <span class="n">bottom</span> <span class="o">-</span> <span class="n">top</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">move_top_left</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left</span><span class="p">:</span> <span class="n">_V</span><span class="p">,</span> <span class="n">top</span><span class="p">:</span> <span class="n">_V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Rect[_V]&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">move_top_left</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left</span><span class="p">:</span> <span class="n">_V</span><span class="p">,</span> <span class="n">top</span><span class="p">:</span> <span class="n">_V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Rect[_V]"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">top</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">move_top_right</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="n">_V</span><span class="p">,</span> <span class="n">top</span><span class="p">:</span> <span class="n">_V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Rect[_V]&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">move_top_right</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="n">_V</span><span class="p">,</span> <span class="n">top</span><span class="p">:</span> <span class="n">_V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Rect[_V]"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="n">right</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="n">top</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">move_bottom_left</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left</span><span class="p">:</span> <span class="n">_V</span><span class="p">,</span> <span class="n">bottom</span><span class="p">:</span> <span class="n">_V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Rect[_V]&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">move_bottom_left</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left</span><span class="p">:</span> <span class="n">_V</span><span class="p">,</span> <span class="n">bottom</span><span class="p">:</span> <span class="n">_V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Rect[_V]"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">bottom</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">move_bottom_right</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="n">_V</span><span class="p">,</span> <span class="n">bottom</span><span class="p">:</span> <span class="n">_V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Rect[_V]&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">move_bottom_right</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="n">_V</span><span class="p">,</span> <span class="n">bottom</span><span class="p">:</span> <span class="n">_V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Rect[_V]"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Rect</span><span class="p">(</span><span class="n">right</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="n">bottom</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
@@ -5036,7 +5036,7 @@ mathematical identifier for the node.</p>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">546</span>
 <span class="normal">547</span>
 <span class="normal">548</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Iterate over the field to make this class tuple-like.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Iterate over the field to make this class tuple-like."""</span>
     <span class="k">return</span> <span class="nb">iter</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">top</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -5066,8 +5066,8 @@ mathematical identifier for the node.</p>
 <span class="normal">574</span>
 <span class="normal">575</span>
 <span class="normal">576</span>
-<span class="normal">577</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">limit_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xmax</span><span class="p">:</span> <span class="n">_T</span><span class="p">,</span> <span class="n">ymax</span><span class="p">:</span> <span class="n">_T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Rect[_T]&quot;</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Limit the size of the Rect to the given maximum size.&quot;&quot;&quot;</span>
+<span class="normal">577</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">limit_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xmax</span><span class="p">:</span> <span class="n">_T</span><span class="p">,</span> <span class="n">ymax</span><span class="p">:</span> <span class="n">_T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Rect[_T]"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Limit the size of the Rect to the given maximum size."""</span>
     <span class="n">left</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
     <span class="n">top</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">top</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
     <span class="n">right</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="p">,</span> <span class="n">xmax</span><span class="p">)</span>
@@ -5188,13 +5188,13 @@ mathematical identifier for the node.</p>
 <span class="normal">507</span>
 <span class="normal">508</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Size</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">_V</span><span class="p">]):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Size use for any place.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Size use for any place."""</span>
 
     <span class="n">width</span><span class="p">:</span> <span class="n">_V</span>
     <span class="n">height</span><span class="p">:</span> <span class="n">_V</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Iterate over the field to make this class tuple-like.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Iterate over the field to make this class tuple-like."""</span>
         <span class="k">return</span> <span class="nb">iter</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
@@ -5202,12 +5202,12 @@ mathematical identifier for the node.</p>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span>
         <span class="k">elif</span> <span class="n">index</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span>
-        <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Index </span><span class="si">{</span><span class="n">index</span><span class="si">!r}</span><span class="s2"> out of range.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Index </span><span class="si">{</span><span class="n">index</span><span class="si">!r}</span><span class="s2"> out of range."</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">with_width</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="n">_V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Size[_V]&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_width</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="n">_V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Size[_V]"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Size</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">with_height</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="n">_V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Size[_V]&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_height</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="n">_V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Size[_V]"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Size</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
@@ -5244,7 +5244,7 @@ mathematical identifier for the node.</p>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">493</span>
 <span class="normal">494</span>
 <span class="normal">495</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Iterate over the field to make this class tuple-like.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Iterate over the field to make this class tuple-like."""</span>
     <span class="k">return</span> <span class="nb">iter</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -5376,25 +5376,25 @@ mathematical identifier for the node.</p>
 <span class="normal">145</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">UseDockWidget</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">PYDANTIC_CONFIG_STRICT</span>
 
-    <span class="n">kind</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;dock&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="s2">&quot;dock&quot;</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Use dock widget to show the data.&quot;</span><span class="p">,</span>
+    <span class="n">kind</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"dock"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">"dock"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Use dock widget to show the data."</span><span class="p">,</span>
         <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">area</span><span class="p">:</span> <span class="n">DockArea</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">DockArea</span><span class="o">.</span><span class="n">RIGHT</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Area to dock the widget.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Area to dock the widget."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">allowed_areas</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DockArea</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Allowed areas to dock the widget.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Allowed areas to dock the widget."</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;area&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"area"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_validate_area</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">DockArea</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
 
-    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;allowed_areas&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"allowed_areas"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_validate_allowed_areas</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">DockArea</span><span class="p">)):</span>
             <span class="n">v</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span><span class="p">]</span>
@@ -5514,14 +5514,14 @@ mathematical identifier for the node.</p>
 <span class="normal">107</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">UseSubWindow</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">PYDANTIC_CONFIG_STRICT</span>
 
-    <span class="n">kind</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;subwindow&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="s2">&quot;subwindow&quot;</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Use subwindow to show the data.&quot;</span><span class="p">,</span>
+    <span class="n">kind</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"subwindow"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">"subwindow"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Use subwindow to show the data."</span><span class="p">,</span>
         <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">window_rect_override</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="s2">&quot;Size&quot;</span><span class="p">],</span> <span class="s2">&quot;WindowRect&quot;</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+    <span class="n">window_rect_override</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="s2">"Size"</span><span class="p">],</span> <span class="s2">"WindowRect"</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Function to override the window rectangle.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Function to override the window rectangle."</span><span class="p">,</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
@@ -5613,9 +5613,9 @@ mathematical identifier for the node.</p>
 <span class="normal">117</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">UseTab</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">PYDANTIC_CONFIG_STRICT</span>
 
-    <span class="n">kind</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;tab&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="s2">&quot;tab&quot;</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Use tab to show the data.&quot;</span><span class="p">,</span>
+    <span class="n">kind</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"tab"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">"tab"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Use tab to show the data."</span><span class="p">,</span>
         <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
@@ -5754,10 +5754,10 @@ mathematical identifier for the node.</p>
 <span class="normal">842</span>
 <span class="normal">843</span>
 <span class="normal">844</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">WidgetClassTuple</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for storing registered widget class.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Class for storing registered widget class."""</span>
 
     <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">widget_class</span><span class="p">:</span> <span class="s2">&quot;type | Callable&quot;</span>  <span class="c1"># factory function</span>
+    <span class="n">widget_class</span><span class="p">:</span> <span class="s2">"type | Callable"</span>  <span class="c1"># factory function</span>
     <span class="n">priority</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span>
     <span class="n">widget_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 </code></pre></div></td></tr></table></div>
@@ -6305,7 +6305,7 @@ mathematical identifier for the node.</p>
 <span class="normal">415</span>
 <span class="normal">416</span>
 <span class="normal">417</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">WidgetDataModel</span><span class="p">(</span><span class="n">GenericModel</span><span class="p">[</span><span class="n">_T</span><span class="p">]):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A data model that represents a widget containing an internal data.</span>
+<span class="w">    </span><span class="sd">"""A data model that represents a widget containing an internal data.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
@@ -6313,7 +6313,7 @@ mathematical identifier for the node.</p>
 <span class="sd">        Internal value.</span>
 <span class="sd">    type : str, optional</span>
 <span class="sd">        Type of the internal data. Type hierarchy is separated by dots. For example,</span>
-<span class="sd">        &quot;text.plain&quot; is a subtype of &quot;text&quot;.</span>
+<span class="sd">        "text.plain" is a subtype of "text".</span>
 <span class="sd">    title : str, optional</span>
 <span class="sd">        Title for the widget. If not given, the title will be generated from the source</span>
 <span class="sd">        path when this model is added to the GUI.</span>
@@ -6329,46 +6329,46 @@ mathematical identifier for the node.</p>
 <span class="sd">        History of how this data is created.</span>
 <span class="sd">    force_open_with : str, optional</span>
 <span class="sd">        Force open with a specific plugin if given.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">PYDANTIC_CONFIG_STRICT</span>
 
-    <span class="n">value</span><span class="p">:</span> <span class="n">_T</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Internal value.&quot;</span><span class="p">)</span>
-    <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Type of the internal data.&quot;</span><span class="p">)</span>
+    <span class="n">value</span><span class="p">:</span> <span class="n">_T</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Internal value."</span><span class="p">)</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Type of the internal data."</span><span class="p">)</span>
     <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Default title for the widget.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Default title for the widget."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">extension_default</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Default file extension for saving.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Default file extension for saving."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">extensions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;List of allowed file extensions.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"List of allowed file extensions."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">metadata</span><span class="p">:</span> <span class="nb">object</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Metadata that may be used for storing additional information of &quot;</span>
-        <span class="s2">&quot;the internal data or describing the state of the widget.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Metadata that may be used for storing additional information of "</span>
+        <span class="s2">"the internal data or describing the state of the widget."</span><span class="p">,</span>
     <span class="p">)</span>  <span class="c1"># fmt: skip</span>
     <span class="n">workflow</span><span class="p">:</span> <span class="n">Workflow</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">Workflow</span><span class="p">)</span>
     <span class="n">force_open_with</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Force open with a specific plugin if given.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Force open with a specific plugin if given."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">save_behavior_override</span><span class="p">:</span> <span class="n">SaveBehavior</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Override the default save behavior.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Override the default save behavior."</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">editable</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether the widget is editable.&quot;</span><span class="p">)</span>
+    <span class="n">editable</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Whether the widget is editable."</span><span class="p">)</span>
     <span class="n">update_inplace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="kc">False</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to update the input data instead of creating a new window.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to update the input data instead of creating a new window."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">output_window_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">UseSubWindow</span><span class="p">,</span> <span class="n">UseTab</span><span class="p">,</span> <span class="n">UseDockWidget</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="n">UseSubWindow</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;How to show the output widget.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"How to show the output widget."</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">with_value</span><span class="p">(</span>
@@ -6380,17 +6380,17 @@ mathematical identifier for the node.</p>
         <span class="n">metadata</span><span class="p">:</span> <span class="nb">object</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">_void</span><span class="p">,</span>
         <span class="n">save_behavior_override</span><span class="p">:</span> <span class="n">SaveBehavior</span> <span class="o">|</span> <span class="n">_Void</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">_void</span><span class="p">,</span>
         <span class="n">update_inplace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;WidgetDataModel[_U]&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a model with the new value.&quot;&quot;&quot;</span>
-        <span class="n">update</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="n">value</span><span class="p">}</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"WidgetDataModel[_U]"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return a model with the new value."""</span>
+        <span class="n">update</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"value"</span><span class="p">:</span> <span class="n">value</span><span class="p">}</span>
         <span class="k">if</span> <span class="nb">type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">update</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">type</span>
+            <span class="n">update</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">type</span>
         <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_void</span><span class="p">:</span>
-            <span class="n">update</span><span class="p">[</span><span class="s2">&quot;metadata&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span>
+            <span class="n">update</span><span class="p">[</span><span class="s2">"metadata"</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span>
         <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">update</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">title</span>
+            <span class="n">update</span><span class="p">[</span><span class="s2">"title"</span><span class="p">]</span> <span class="o">=</span> <span class="n">title</span>
         <span class="k">if</span> <span class="n">save_behavior_override</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_void</span><span class="p">:</span>
-            <span class="n">update</span><span class="p">[</span><span class="s2">&quot;save_behavior_override&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">save_behavior_override</span>
+            <span class="n">update</span><span class="p">[</span><span class="s2">"save_behavior_override"</span><span class="p">]</span> <span class="o">=</span> <span class="n">save_behavior_override</span>
         <span class="n">update</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
             <span class="n">workflow</span><span class="o">=</span><span class="n">Workflow</span><span class="p">(),</span>
             <span class="n">force_open_with</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -6400,28 +6400,28 @@ mathematical identifier for the node.</p>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">use_subwindow</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">window_rect_override</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="s2">&quot;Size&quot;</span><span class="p">],</span> <span class="s2">&quot;WindowRect&quot;</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;WidgetDataModel[_T]&quot;</span><span class="p">:</span>
+        <span class="n">window_rect_override</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="s2">"Size"</span><span class="p">],</span> <span class="s2">"WindowRect"</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"WidgetDataModel[_T]"</span><span class="p">:</span>
         <span class="n">update</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;output_window_type&quot;</span><span class="p">:</span> <span class="n">UseSubWindow</span><span class="p">(</span>
+            <span class="s2">"output_window_type"</span><span class="p">:</span> <span class="n">UseSubWindow</span><span class="p">(</span>
                 <span class="n">window_rect_override</span><span class="o">=</span><span class="n">window_rect_override</span>
             <span class="p">)</span>
         <span class="p">}</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">use_tab</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;WidgetDataModel[_T]&quot;</span><span class="p">:</span>
-        <span class="n">update</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;output_window_type&quot;</span><span class="p">:</span> <span class="n">UseTab</span><span class="p">()}</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">use_tab</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"WidgetDataModel[_T]"</span><span class="p">:</span>
+        <span class="n">update</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"output_window_type"</span><span class="p">:</span> <span class="n">UseTab</span><span class="p">()}</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">use_dock_widget</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">area</span><span class="p">:</span> <span class="n">DockArea</span> <span class="o">|</span> <span class="n">DockAreaString</span> <span class="o">=</span> <span class="s2">&quot;right&quot;</span><span class="p">,</span>
+        <span class="n">area</span><span class="p">:</span> <span class="n">DockArea</span> <span class="o">|</span> <span class="n">DockAreaString</span> <span class="o">=</span> <span class="s2">"right"</span><span class="p">,</span>
         <span class="n">allowed_areas</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DockArea</span> <span class="o">|</span> <span class="n">DockAreaString</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;WidgetDataModel[_T]&quot;</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"WidgetDataModel[_T]"</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">allowed_areas</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">allowed_areas</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;top&quot;</span><span class="p">,</span> <span class="s2">&quot;bottom&quot;</span><span class="p">,</span> <span class="s2">&quot;left&quot;</span><span class="p">,</span> <span class="s2">&quot;right&quot;</span><span class="p">]</span>
+            <span class="n">allowed_areas</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"top"</span><span class="p">,</span> <span class="s2">"bottom"</span><span class="p">,</span> <span class="s2">"left"</span><span class="p">,</span> <span class="s2">"right"</span><span class="p">]</span>
         <span class="n">update</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;output_window_type&quot;</span><span class="p">:</span> <span class="n">UseDockWidget</span><span class="p">(</span>
+            <span class="s2">"output_window_type"</span><span class="p">:</span> <span class="n">UseDockWidget</span><span class="p">(</span>
                 <span class="n">area</span><span class="o">=</span><span class="n">area</span><span class="p">,</span>
                 <span class="n">allowed_areas</span><span class="o">=</span><span class="n">allowed_areas</span><span class="p">,</span>
             <span class="p">)</span>
@@ -6429,16 +6429,16 @@ mathematical identifier for the node.</p>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">astype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="n">update</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">new_type</span><span class="p">}</span>
+        <span class="n">update</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="n">new_type</span><span class="p">}</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_with_source</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">],</span>
-        <span class="n">plugin</span><span class="p">:</span> <span class="s2">&quot;PluginInfo | None&quot;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">plugin</span><span class="p">:</span> <span class="s2">"PluginInfo | None"</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="nb">id</span><span class="p">:</span> <span class="n">uuid</span><span class="o">.</span><span class="n">UUID</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;WidgetDataModel[_T]&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a new instance with the source path.&quot;&quot;&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"WidgetDataModel[_T]"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return a new instance with the source path."""</span>
         <span class="k">if</span> <span class="n">plugin</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">plugin_name</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">else</span><span class="p">:</span>
@@ -6453,12 +6453,12 @@ mathematical identifier for the node.</p>
             <span class="n">output_model_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">,</span>
             <span class="nb">id</span><span class="o">=</span><span class="nb">id</span> <span class="ow">or</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">(),</span>
         <span class="p">)</span><span class="o">.</span><span class="n">construct_workflow</span><span class="p">()</span>
-        <span class="n">to_update</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;workflow&quot;</span><span class="p">:</span> <span class="n">wf</span><span class="p">}</span>
+        <span class="n">to_update</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"workflow"</span><span class="p">:</span> <span class="n">wf</span><span class="p">}</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-                <span class="n">to_update</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;File group&quot;</span><span class="p">})</span>
+                <span class="n">to_update</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"title"</span><span class="p">:</span> <span class="s2">"File group"</span><span class="p">})</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">to_update</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="p">})</span>
+                <span class="n">to_update</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"title"</span><span class="p">:</span> <span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="p">})</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="n">to_update</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">with_open_plugin</span><span class="p">(</span>
@@ -6467,21 +6467,21 @@ mathematical identifier for the node.</p>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">workflow</span><span class="p">:</span> <span class="n">Workflow</span> <span class="o">|</span> <span class="n">_Void</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">_void</span><span class="p">,</span>
         <span class="n">save_behavior_override</span><span class="p">:</span> <span class="n">SaveBehavior</span> <span class="o">|</span> <span class="n">_Void</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">_void</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;WidgetDataModel[_T]&quot;</span><span class="p">:</span>
-        <span class="n">update</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;force_open_with&quot;</span><span class="p">:</span> <span class="n">open_with</span><span class="p">}</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"WidgetDataModel[_T]"</span><span class="p">:</span>
+        <span class="n">update</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"force_open_with"</span><span class="p">:</span> <span class="n">open_with</span><span class="p">}</span>
         <span class="k">if</span> <span class="n">workflow</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_void</span><span class="p">:</span>
-            <span class="n">update</span><span class="p">[</span><span class="s2">&quot;workflow&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">workflow</span>
+            <span class="n">update</span><span class="p">[</span><span class="s2">"workflow"</span><span class="p">]</span> <span class="o">=</span> <span class="n">workflow</span>
         <span class="k">if</span> <span class="n">save_behavior_override</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_void</span><span class="p">:</span>
-            <span class="n">update</span><span class="p">[</span><span class="s2">&quot;save_behavior_override&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">save_behavior_override</span>
+            <span class="n">update</span><span class="p">[</span><span class="s2">"save_behavior_override"</span><span class="p">]</span> <span class="o">=</span> <span class="n">save_behavior_override</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">with_metadata</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">metadata</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
         <span class="n">update_inplace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;WidgetDataModel[_T]&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a new instance with the given metadata.&quot;&quot;&quot;</span>
-        <span class="n">update</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;metadata&quot;</span><span class="p">:</span> <span class="n">metadata</span><span class="p">,</span> <span class="s2">&quot;update_inplace&quot;</span><span class="p">:</span> <span class="n">update_inplace</span><span class="p">}</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"WidgetDataModel[_T]"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return a new instance with the given metadata."""</span>
+        <span class="n">update</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"metadata"</span><span class="p">:</span> <span class="n">metadata</span><span class="p">,</span> <span class="s2">"update_inplace"</span><span class="p">:</span> <span class="n">update_inplace</span><span class="p">}</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">write_to_directory</span><span class="p">(</span>
@@ -6493,86 +6493,86 @@ mathematical identifier for the node.</p>
         <span class="kn">from</span><span class="w"> </span><span class="nn">himena</span><span class="w"> </span><span class="kn">import</span> <span class="n">_providers</span>
 
         <span class="n">ins</span> <span class="o">=</span> <span class="n">_providers</span><span class="o">.</span><span class="n">WriterStore</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span>
-        <span class="n">title</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="ow">or</span> <span class="s2">&quot;Untitled&quot;</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="ow">or</span> <span class="s2">"Untitled"</span>
         <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span> <span class="o">/</span> <span class="n">title</span>
-        <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">""</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">ext</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extension_default</span><span class="p">:</span>
                 <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="n">ext</span><span class="p">)</span>
             <span class="k">elif</span> <span class="n">exts</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extensions</span><span class="p">:</span>
                 <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="n">exts</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Could not determine the file extension.&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Could not determine the file extension."</span><span class="p">)</span>
         <span class="n">ins</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">min_priority</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">plugin</span><span class="o">=</span><span class="n">plugin</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">path</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">source</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The direct source path of the data.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""The direct source path of the data."""</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">step</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">workflow</span><span class="o">.</span><span class="n">last</span><span class="p">(),</span> <span class="n">LocalReaderMethod</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">step</span><span class="o">.</span><span class="n">path</span>
         <span class="k">return</span> <span class="kc">None</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">is_subtype_of</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">supertype</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if the type is a subtype of the given type.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Check if the type is a subtype of the given type."""</span>
         <span class="k">return</span> <span class="n">is_subtype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">supertype</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">with_title_numbering</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">copy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;WidgetDataModel[_T]&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add [n] suffix to the title.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_title_numbering</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">copy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"WidgetDataModel[_T]"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Add [n] suffix to the title."""</span>
         <span class="n">title</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span>
         <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">title</span> <span class="o">=</span> <span class="s2">&quot;Untitled&quot;</span>
-        <span class="k">if</span> <span class="s2">&quot;.&quot;</span> <span class="ow">in</span> <span class="n">title</span><span class="p">:</span>
-            <span class="n">stem</span><span class="p">,</span> <span class="n">ext</span> <span class="o">=</span> <span class="n">title</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-            <span class="n">ext</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;.</span><span class="si">{</span><span class="n">ext</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="s2">"Untitled"</span>
+        <span class="k">if</span> <span class="s2">"."</span> <span class="ow">in</span> <span class="n">title</span><span class="p">:</span>
+            <span class="n">stem</span><span class="p">,</span> <span class="n">ext</span> <span class="o">=</span> <span class="n">title</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">"."</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">ext</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">".</span><span class="si">{</span><span class="n">ext</span><span class="si">}</span><span class="s2">"</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">stem</span> <span class="o">=</span> <span class="n">title</span>
-            <span class="n">ext</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+            <span class="n">ext</span> <span class="o">=</span> <span class="s2">""</span>
         <span class="k">if</span> <span class="p">(</span>
-            <span class="p">(</span><span class="n">last_part</span> <span class="o">:=</span> <span class="n">stem</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;[&quot;</span><span class="p">)</span>
-            <span class="ow">and</span> <span class="n">last_part</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;]&quot;</span><span class="p">)</span>
+            <span class="p">(</span><span class="n">last_part</span> <span class="o">:=</span> <span class="n">stem</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">" "</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"["</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">last_part</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"]"</span><span class="p">)</span>
             <span class="ow">and</span> <span class="n">last_part</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span>
         <span class="p">):</span>
             <span class="n">nth</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">last_part</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-            <span class="n">stem</span> <span class="o">=</span> <span class="n">stem</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot; [</span><span class="si">{</span><span class="n">nth</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">]&quot;</span>
+            <span class="n">stem</span> <span class="o">=</span> <span class="n">stem</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">" "</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">" [</span><span class="si">{</span><span class="n">nth</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">]"</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">stem</span> <span class="o">=</span> <span class="n">stem</span> <span class="o">+</span> <span class="s2">&quot; [1]&quot;</span>
+            <span class="n">stem</span> <span class="o">=</span> <span class="n">stem</span> <span class="o">+</span> <span class="s2">" [1]"</span>
         <span class="n">new_title</span> <span class="o">=</span> <span class="n">stem</span> <span class="o">+</span> <span class="n">ext</span>
         <span class="k">if</span> <span class="n">copy</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="n">new_title</span><span class="p">})</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"title"</span><span class="p">:</span> <span class="n">new_title</span><span class="p">})</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">new_title</span>
             <span class="k">return</span> <span class="bp">self</span>
 
-    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;extension_default&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"extension_default"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_validate_extension_default</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
-        <span class="k">if</span> <span class="n">v</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">v</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
-            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;.</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">v</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"."</span><span class="p">):</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">".</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span>
         <span class="k">return</span> <span class="n">v</span>
 
-    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;extensions&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"extensions"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_validate_extensions</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">v</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span><span class="p">]</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">ext</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">v</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid type for `extensions`: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">s</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;.</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">v</span><span class="p">]</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Invalid type for `extensions`: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">s</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">".</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">v</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">value_repr</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&lt;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&gt;&quot;</span>
+        <span class="n">value_repr</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"&lt;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&gt;"</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="n">Path</span><span class="p">):</span>
             <span class="n">source_repr</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">source</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">source_repr</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">source</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span><span class="si">}</span><span class="s2">, ...]&quot;</span>
+                <span class="n">source_repr</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">source</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span><span class="si">}</span><span class="s2">, ...]"</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">source_repr</span> <span class="o">=</span> <span class="s2">&quot;[]&quot;</span>
+                <span class="n">source_repr</span> <span class="o">=</span> <span class="s2">"[]"</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">source_repr</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(value=</span><span class="si">{</span><span class="n">value_repr</span><span class="si">}</span><span class="s2">, source=</span><span class="si">{</span><span class="n">source_repr</span><span class="si">}</span><span class="s2">, &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;type=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="si">!r}</span><span class="s2">, title=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="si">!r}</span><span class="s2">)&quot;</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(value=</span><span class="si">{</span><span class="n">value_repr</span><span class="si">}</span><span class="s2">, source=</span><span class="si">{</span><span class="n">source_repr</span><span class="si">}</span><span class="s2">, "</span>
+            <span class="sa">f</span><span class="s2">"type=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="si">!r}</span><span class="s2">, title=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="si">!r}</span><span class="s2">)"</span>
         <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
@@ -6631,7 +6631,7 @@ mathematical identifier for the node.</p>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">356</span>
 <span class="normal">357</span>
 <span class="normal">358</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">is_subtype_of</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">supertype</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if the type is a subtype of the given type.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Check if the type is a subtype of the given type."""</span>
     <span class="k">return</span> <span class="n">is_subtype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">supertype</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -6666,9 +6666,9 @@ mathematical identifier for the node.</p>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">metadata</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">update_inplace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;WidgetDataModel[_T]&quot;</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a new instance with the given metadata.&quot;&quot;&quot;</span>
-    <span class="n">update</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;metadata&quot;</span><span class="p">:</span> <span class="n">metadata</span><span class="p">,</span> <span class="s2">&quot;update_inplace&quot;</span><span class="p">:</span> <span class="n">update_inplace</span><span class="p">}</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"WidgetDataModel[_T]"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return a new instance with the given metadata."""</span>
+    <span class="n">update</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"metadata"</span><span class="p">:</span> <span class="n">metadata</span><span class="p">,</span> <span class="s2">"update_inplace"</span><span class="p">:</span> <span class="n">update_inplace</span><span class="p">}</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -6717,29 +6717,29 @@ mathematical identifier for the node.</p>
 <span class="normal">382</span>
 <span class="normal">383</span>
 <span class="normal">384</span>
-<span class="normal">385</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">with_title_numbering</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">copy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;WidgetDataModel[_T]&quot;</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add [n] suffix to the title.&quot;&quot;&quot;</span>
+<span class="normal">385</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">with_title_numbering</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">copy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"WidgetDataModel[_T]"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Add [n] suffix to the title."""</span>
     <span class="n">title</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span>
     <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">title</span> <span class="o">=</span> <span class="s2">&quot;Untitled&quot;</span>
-    <span class="k">if</span> <span class="s2">&quot;.&quot;</span> <span class="ow">in</span> <span class="n">title</span><span class="p">:</span>
-        <span class="n">stem</span><span class="p">,</span> <span class="n">ext</span> <span class="o">=</span> <span class="n">title</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="n">ext</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;.</span><span class="si">{</span><span class="n">ext</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="s2">"Untitled"</span>
+    <span class="k">if</span> <span class="s2">"."</span> <span class="ow">in</span> <span class="n">title</span><span class="p">:</span>
+        <span class="n">stem</span><span class="p">,</span> <span class="n">ext</span> <span class="o">=</span> <span class="n">title</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">"."</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">ext</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">".</span><span class="si">{</span><span class="n">ext</span><span class="si">}</span><span class="s2">"</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">stem</span> <span class="o">=</span> <span class="n">title</span>
-        <span class="n">ext</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">ext</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="k">if</span> <span class="p">(</span>
-        <span class="p">(</span><span class="n">last_part</span> <span class="o">:=</span> <span class="n">stem</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;[&quot;</span><span class="p">)</span>
-        <span class="ow">and</span> <span class="n">last_part</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;]&quot;</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">last_part</span> <span class="o">:=</span> <span class="n">stem</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">" "</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"["</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="n">last_part</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"]"</span><span class="p">)</span>
         <span class="ow">and</span> <span class="n">last_part</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span>
     <span class="p">):</span>
         <span class="n">nth</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">last_part</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-        <span class="n">stem</span> <span class="o">=</span> <span class="n">stem</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot; [</span><span class="si">{</span><span class="n">nth</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">]&quot;</span>
+        <span class="n">stem</span> <span class="o">=</span> <span class="n">stem</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">" "</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">" [</span><span class="si">{</span><span class="n">nth</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">]"</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">stem</span> <span class="o">=</span> <span class="n">stem</span> <span class="o">+</span> <span class="s2">&quot; [1]&quot;</span>
+        <span class="n">stem</span> <span class="o">=</span> <span class="n">stem</span> <span class="o">+</span> <span class="s2">" [1]"</span>
     <span class="n">new_title</span> <span class="o">=</span> <span class="n">stem</span> <span class="o">+</span> <span class="n">ext</span>
     <span class="k">if</span> <span class="n">copy</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="n">new_title</span><span class="p">})</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"title"</span><span class="p">:</span> <span class="n">new_title</span><span class="p">})</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">new_title</span>
         <span class="k">return</span> <span class="bp">self</span>
@@ -6799,17 +6799,17 @@ mathematical identifier for the node.</p>
     <span class="n">metadata</span><span class="p">:</span> <span class="nb">object</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">_void</span><span class="p">,</span>
     <span class="n">save_behavior_override</span><span class="p">:</span> <span class="n">SaveBehavior</span> <span class="o">|</span> <span class="n">_Void</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">_void</span><span class="p">,</span>
     <span class="n">update_inplace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;WidgetDataModel[_U]&quot;</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a model with the new value.&quot;&quot;&quot;</span>
-    <span class="n">update</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="n">value</span><span class="p">}</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"WidgetDataModel[_U]"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return a model with the new value."""</span>
+    <span class="n">update</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"value"</span><span class="p">:</span> <span class="n">value</span><span class="p">}</span>
     <span class="k">if</span> <span class="nb">type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">update</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">type</span>
+        <span class="n">update</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">type</span>
     <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_void</span><span class="p">:</span>
-        <span class="n">update</span><span class="p">[</span><span class="s2">&quot;metadata&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span>
+        <span class="n">update</span><span class="p">[</span><span class="s2">"metadata"</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span>
     <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">update</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">title</span>
+        <span class="n">update</span><span class="p">[</span><span class="s2">"title"</span><span class="p">]</span> <span class="o">=</span> <span class="n">title</span>
     <span class="k">if</span> <span class="n">save_behavior_override</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_void</span><span class="p">:</span>
-        <span class="n">update</span><span class="p">[</span><span class="s2">&quot;save_behavior_override&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">save_behavior_override</span>
+        <span class="n">update</span><span class="p">[</span><span class="s2">"save_behavior_override"</span><span class="p">]</span> <span class="o">=</span> <span class="n">save_behavior_override</span>
     <span class="n">update</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
         <span class="n">workflow</span><span class="o">=</span><span class="n">Workflow</span><span class="p">(),</span>
         <span class="n">force_open_with</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -6980,27 +6980,27 @@ mathematical identifier for the node.</p>
 <span class="normal">630</span>
 <span class="normal">631</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">WindowRect</span><span class="p">(</span><span class="n">Rect</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Rectangle of a window.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Rectangle of a window."""</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">from_tuple</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">top</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;WindowRect&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_tuple</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">top</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"WindowRect"</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">left</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">top</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">width</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">height</span><span class="p">))</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">align_left</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">area_size</span><span class="p">:</span> <span class="n">Size</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;WindowRect&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">align_left</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">area_size</span><span class="p">:</span> <span class="n">Size</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">"WindowRect"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">WindowRect</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">top</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">align_right</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">area_size</span><span class="p">:</span> <span class="n">Size</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;WindowRect&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">align_right</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">area_size</span><span class="p">:</span> <span class="n">Size</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">"WindowRect"</span><span class="p">:</span>
         <span class="n">w0</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">area_size</span>
         <span class="k">return</span> <span class="n">WindowRect</span><span class="p">(</span><span class="n">w0</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">top</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">align_top</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">area_size</span><span class="p">:</span> <span class="n">Size</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;WindowRect&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">align_top</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">area_size</span><span class="p">:</span> <span class="n">Size</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">"WindowRect"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">WindowRect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">align_bottom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">area_size</span><span class="p">:</span> <span class="n">Size</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;WindowRect&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">align_bottom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">area_size</span><span class="p">:</span> <span class="n">Size</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">"WindowRect"</span><span class="p">:</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">h0</span> <span class="o">=</span> <span class="n">area_size</span>
         <span class="k">return</span> <span class="n">WindowRect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="n">h0</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">align_center</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">area_size</span><span class="p">:</span> <span class="n">Size</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;WindowRect&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">align_center</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">area_size</span><span class="p">:</span> <span class="n">Size</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">"WindowRect"</span><span class="p">:</span>
         <span class="n">w0</span><span class="p">,</span> <span class="n">h0</span> <span class="o">=</span> <span class="n">area_size</span>
         <span class="k">return</span> <span class="n">WindowRect</span><span class="p">(</span>
             <span class="p">(</span><span class="n">w0</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>
@@ -7009,9 +7009,9 @@ mathematical identifier for the node.</p>
             <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">resize_relative</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wratio</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">hratio</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;WindowRect&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">resize_relative</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wratio</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">hratio</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"WindowRect"</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">wratio</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">hratio</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Ratios must be positive.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Ratios must be positive."</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">WindowRect</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">top</span><span class="p">,</span>
@@ -7075,12 +7075,12 @@ mathematical identifier for the node.</p>
 <span class="normal">52</span>
 <span class="normal">53</span>
 <span class="normal">54</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">WindowState</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;State of the sub window.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""State of the sub window."""</span>
 
-    <span class="n">MIN</span> <span class="o">=</span> <span class="s2">&quot;min&quot;</span>
-    <span class="n">MAX</span> <span class="o">=</span> <span class="s2">&quot;max&quot;</span>
-    <span class="n">NORMAL</span> <span class="o">=</span> <span class="s2">&quot;normal&quot;</span>
-    <span class="n">FULL</span> <span class="o">=</span> <span class="s2">&quot;full&quot;</span>
+    <span class="n">MIN</span> <span class="o">=</span> <span class="s2">"min"</span>
+    <span class="n">MAX</span> <span class="o">=</span> <span class="s2">"max"</span>
+    <span class="n">NORMAL</span> <span class="o">=</span> <span class="s2">"normal"</span>
+    <span class="n">FULL</span> <span class="o">=</span> <span class="s2">"full"</span>
 </code></pre></div></td></tr></table></div>
               </details>
 

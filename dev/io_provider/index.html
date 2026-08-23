@@ -1380,7 +1380,7 @@ to be used. To let ".txt" match the reader function we have just defined, use th
 read the file, and <code>None</code> otherwise.</p>
 <div class="highlight"><pre><span></span><code><span class="nd">@read_text</span><span class="o">.</span><span class="n">define_matcher</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">&quot;.txt&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">".txt"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">StandardType</span><span class="o">.</span><span class="n">TEXT</span>
     <span class="k">return</span> <span class="kc">None</span>
 </code></pre></div>
@@ -1414,7 +1414,7 @@ tries to open a file, all registered matcher functions are called.</p>
 
 <span class="nd">@write_text</span><span class="o">.</span><span class="n">define_matcher</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">&quot;.txt&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">".txt"</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">True</span>
     <span class="k">return</span> <span class="kc">False</span>
 </code></pre></div>
@@ -1429,13 +1429,13 @@ works in a similar way as reader plugins.</p>
 <span class="nd">@register_clipboard_reader_plugin</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">paste_text</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ClipboardDataModel</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">WidgetDataModel</span><span class="p">(</span>
-        <span class="n">value</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">mime</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;text/plain&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">),</span>
+        <span class="n">value</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">mime</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"text/plain"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">),</span>
         <span class="nb">type</span><span class="o">=</span><span class="n">StandardType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">,</span>
     <span class="p">)</span>
 
 <span class="nd">@write_text</span><span class="o">.</span><span class="n">define_matcher</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ClipboardDataModel</span><span class="p">):</span>
-    <span class="k">if</span> <span class="s2">&quot;text/plain&quot;</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">mime</span><span class="p">:</span>
+    <span class="k">if</span> <span class="s2">"text/plain"</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">mime</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">StandardType</span><span class="o">.</span><span class="n">TEXT</span>
     <span class="k">return</span> <span class="kc">None</span>
 </code></pre></div>

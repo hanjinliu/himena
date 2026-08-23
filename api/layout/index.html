@@ -1959,11 +1959,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_stretches</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">child</span><span class="p">:</span> <span class="n">Layout</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">stretch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Insert a child layout at the specified index.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Insert a child layout at the specified index."""</span>
         <span class="k">if</span> <span class="n">stretch</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;stretch must be positive, got </span><span class="si">{</span><span class="n">stretch</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"stretch must be positive, got </span><span class="si">{</span><span class="n">stretch</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">Layout</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Can only insert a Layout object, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">child</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Can only insert a Layout object, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">child</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">child</span><span class="p">)</span>
         <span class="n">child</span><span class="o">.</span><span class="n">_main_window_ref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_main_window_ref</span>
         <span class="n">child</span><span class="o">.</span><span class="n">_parent_layout_ref</span> <span class="o">=</span> <span class="n">weakref</span><span class="o">.</span><span class="n">ref</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
@@ -1980,7 +1980,7 @@
         <span class="o">*</span><span class="n">more</span><span class="p">:</span> <span class="n">Layout</span><span class="p">,</span>
         <span class="n">stretch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add child layout(s) to the layout.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Add child layout(s) to the layout."""</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">Layout</span><span class="p">):</span>
             <span class="n">child</span><span class="p">,</span> <span class="n">more</span> <span class="o">=</span> <span class="n">child</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="o">*</span><span class="n">child</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="o">*</span><span class="n">more</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">stretch</span><span class="o">=</span><span class="n">stretch</span><span class="p">)</span>
@@ -2066,7 +2066,7 @@
     <span class="o">*</span><span class="n">more</span><span class="p">:</span> <span class="n">Layout</span><span class="p">,</span>
     <span class="n">stretch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add child layout(s) to the layout.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Add child layout(s) to the layout."""</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">Layout</span><span class="p">):</span>
         <span class="n">child</span><span class="p">,</span> <span class="n">more</span> <span class="o">=</span> <span class="n">child</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="o">*</span><span class="n">child</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="o">*</span><span class="n">more</span><span class="p">]</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">stretch</span><span class="o">=</span><span class="n">stretch</span><span class="p">)</span>
@@ -2107,11 +2107,11 @@
 <span class="normal">313</span>
 <span class="normal">314</span>
 <span class="normal">315</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">child</span><span class="p">:</span> <span class="n">Layout</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">stretch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Insert a child layout at the specified index.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Insert a child layout at the specified index."""</span>
     <span class="k">if</span> <span class="n">stretch</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;stretch must be positive, got </span><span class="si">{</span><span class="n">stretch</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"stretch must be positive, got </span><span class="si">{</span><span class="n">stretch</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">Layout</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Can only insert a Layout object, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">child</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Can only insert a Layout object, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">child</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">child</span><span class="p">)</span>
     <span class="n">child</span><span class="o">.</span><span class="n">_main_window_ref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_main_window_ref</span>
     <span class="n">child</span><span class="o">.</span><span class="n">_parent_layout_ref</span> <span class="o">=</span> <span class="n">weakref</span><span class="o">.</span><span class="n">ref</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
@@ -2184,7 +2184,7 @@
 <span class="normal">132</span>
 <span class="normal">133</span>
 <span class="normal">134</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">EmptyLayout</span><span class="p">(</span><span class="n">Layout</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A layout that does not contain anything.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""A layout that does not contain anything."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">main</span><span class="p">:</span> <span class="n">BackendMainWindow</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">main</span><span class="p">)</span>
@@ -2202,12 +2202,12 @@
             <span class="n">parent</span><span class="o">.</span><span class="n">_adjust_child_resize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rect_old</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rect</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_layout</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;empty&quot;</span><span class="p">,</span> <span class="s2">&quot;rect&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">rect</span><span class="p">}</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"empty"</span><span class="p">,</span> <span class="s2">"rect"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">rect</span><span class="p">}</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_deserialize_layout</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">main</span><span class="p">:</span> <span class="n">MainWindow</span><span class="p">):</span>
         <span class="bp">self</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">_backend_main_window</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">rect</span> <span class="o">=</span> <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;rect&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rect</span> <span class="o">=</span> <span class="n">obj</span><span class="p">[</span><span class="s2">"rect"</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span>
 </code></pre></div></td></tr></table></div>
               </details>
@@ -2301,7 +2301,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">margins</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Margins</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Margins around the layout.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Margins around the layout."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_margins</span>
 
     <span class="nd">@margins</span><span class="o">.</span><span class="n">setter</span>
@@ -2311,7 +2311,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">spacing</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Size</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Spacing between children.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Spacing between children."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_spacing</span>
 
     <span class="nd">@spacing</span><span class="o">.</span><span class="n">setter</span>
@@ -2480,7 +2480,7 @@
 <span class="normal">496</span>
 <span class="normal">497</span>
 <span class="normal">498</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">HBoxLayout</span><span class="p">(</span><span class="n">BoxLayout1D</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A horizontal box layout.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""A horizontal box layout."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_iter_edge_and_span</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rect</span><span class="p">:</span> <span class="n">WindowRect</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
         <span class="n">num</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">)</span>
@@ -2675,23 +2675,23 @@
     <span class="nd">@property</span>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">rect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WindowRect</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Position and size of the sub-window.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Position and size of the sub-window."""</span>
 
     <span class="nd">@rect</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">rect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="n">WindowRect</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
 
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_layout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Serialize the layout instance.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Serialize the layout instance."""</span>
 
     <span class="nd">@classmethod</span>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_deserialize_layout</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">main</span><span class="p">:</span> <span class="n">MainWindow</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Deserialize the layout instance.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Deserialize the layout instance."""</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">size</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Size</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Size of the object.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Size of the object."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rect</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
 
     <span class="nd">@size</span><span class="o">.</span><span class="n">setter</span>
@@ -2709,11 +2709,11 @@
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">anchor</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">anchor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_anchor_from_str</span><span class="p">(</span><span class="n">anchor</span><span class="p">)</span>
         <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">anchor</span><span class="p">,</span> <span class="n">_anc</span><span class="o">.</span><span class="n">WindowAnchor</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected WindowAnchor, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">anchor</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Expected WindowAnchor, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">anchor</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_anchor</span> <span class="o">=</span> <span class="n">anchor</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_reanchor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Size</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reanchor all windows if needed (such as minimized windows).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Reanchor all windows if needed (such as minimized windows)."""</span>
         <span class="k">if</span> <span class="n">rect</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_anchor</span><span class="o">.</span><span class="n">apply_anchor</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">rect</span> <span class="o">=</span> <span class="n">rect</span>
 
@@ -2724,16 +2724,16 @@
             <span class="n">w0</span><span class="p">,</span> <span class="n">h0</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">100</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">w0</span><span class="p">,</span> <span class="n">h0</span> <span class="o">=</span> <span class="n">main</span><span class="o">.</span><span class="n">_area_size</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">anchor</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;top-left&quot;</span><span class="p">,</span> <span class="s2">&quot;top left&quot;</span><span class="p">,</span> <span class="s2">&quot;top_left&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">anchor</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"top-left"</span><span class="p">,</span> <span class="s2">"top left"</span><span class="p">,</span> <span class="s2">"top_left"</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">_anc</span><span class="o">.</span><span class="n">TopLeftConstAnchor</span><span class="p">(</span><span class="n">rect</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="n">rect</span><span class="o">.</span><span class="n">top</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">anchor</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;top-right&quot;</span><span class="p">,</span> <span class="s2">&quot;top right&quot;</span><span class="p">,</span> <span class="s2">&quot;top_right&quot;</span><span class="p">):</span>
+        <span class="k">elif</span> <span class="n">anchor</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"top-right"</span><span class="p">,</span> <span class="s2">"top right"</span><span class="p">,</span> <span class="s2">"top_right"</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">_anc</span><span class="o">.</span><span class="n">TopRightConstAnchor</span><span class="p">(</span><span class="n">w0</span> <span class="o">-</span> <span class="n">rect</span><span class="o">.</span><span class="n">right</span><span class="p">,</span> <span class="n">rect</span><span class="o">.</span><span class="n">top</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">anchor</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;bottom-left&quot;</span><span class="p">,</span> <span class="s2">&quot;bottom left&quot;</span><span class="p">,</span> <span class="s2">&quot;bottom_left&quot;</span><span class="p">):</span>
+        <span class="k">elif</span> <span class="n">anchor</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"bottom-left"</span><span class="p">,</span> <span class="s2">"bottom left"</span><span class="p">,</span> <span class="s2">"bottom_left"</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">_anc</span><span class="o">.</span><span class="n">BottomLeftConstAnchor</span><span class="p">(</span><span class="n">rect</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="n">h0</span> <span class="o">-</span> <span class="n">rect</span><span class="o">.</span><span class="n">bottom</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">anchor</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;bottom-right&quot;</span><span class="p">,</span> <span class="s2">&quot;bottom right&quot;</span><span class="p">,</span> <span class="s2">&quot;bottom_right&quot;</span><span class="p">):</span>
+        <span class="k">elif</span> <span class="n">anchor</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"bottom-right"</span><span class="p">,</span> <span class="s2">"bottom right"</span><span class="p">,</span> <span class="s2">"bottom_right"</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">_anc</span><span class="o">.</span><span class="n">BottomRightConstAnchor</span><span class="p">(</span><span class="n">w0</span> <span class="o">-</span> <span class="n">rect</span><span class="o">.</span><span class="n">right</span><span class="p">,</span> <span class="n">h0</span> <span class="o">-</span> <span class="n">rect</span><span class="o">.</span><span class="n">bottom</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown anchor: </span><span class="si">{</span><span class="n">anchor</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown anchor: </span><span class="si">{</span><span class="n">anchor</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -2954,7 +2954,7 @@
 <span class="normal">294</span>
 <span class="normal">295</span>
 <span class="normal">296</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Layout1D</span><span class="p">(</span><span class="n">LayoutContainer</span><span class="p">,</span> <span class="n">MutableSequence</span><span class="p">[</span><span class="n">Layout</span><span class="p">]):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Layout container that arranges children in 1D at the constant interval.</span>
+<span class="w">    </span><span class="sd">"""Layout container that arranges children in 1D at the constant interval.</span>
 
 <span class="sd">    Properties `margins` and `spacing` are defined as follows.</span>
 <span class="sd">    ```</span>
@@ -2967,7 +2967,7 @@
 <span class="sd">    Abstract methods:</span>
 <span class="sd">    - `_resize_children(self, rect: WindowRect) -&gt; None`</span>
 <span class="sd">    - `insert(self, index: int, child: Layout) -&gt; None`</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -2983,7 +2983,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">margins</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Margins</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Margins around the layout.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Margins around the layout."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_margins</span>
 
     <span class="nd">@margins</span><span class="o">.</span><span class="n">setter</span>
@@ -2993,13 +2993,13 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">spacing</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Spacing between children.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Spacing between children."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_spacing</span>
 
     <span class="nd">@spacing</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">spacing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">int_</span><span class="p">)):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;spacing must be non-negative integer, got </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"spacing must be non-negative integer, got </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_spacing</span> <span class="o">=</span> <span class="n">value</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_resize_children</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rect</span><span class="p">)</span>
 
@@ -3011,7 +3011,7 @@
         <span class="n">right</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">bottom</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update margins around the layout.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Update margins around the layout."""</span>
         <span class="n">margins_old</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">margins</span>
         <span class="n">left</span> <span class="o">=</span> <span class="n">left</span> <span class="k">if</span> <span class="n">left</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">margins_old</span><span class="o">.</span><span class="n">left</span>
         <span class="n">top</span> <span class="o">=</span> <span class="n">top</span> <span class="k">if</span> <span class="n">top</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">margins_old</span><span class="o">.</span><span class="n">top</span>
@@ -3027,7 +3027,7 @@
             <span class="k">yield</span> <span class="n">child</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="si">!r}</span><span class="s2">)&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="si">!r}</span><span class="s2">)"</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Layout</span><span class="p">:</span>
         <span class="n">_assert_supports_index</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
@@ -3035,7 +3035,7 @@
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">layout</span><span class="p">:</span> <span class="n">Layout</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">Layout</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Can only set a Layout object, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">layout</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Can only set a Layout object, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">layout</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">_assert_supports_index</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">layout</span>
         <span class="n">layout</span><span class="o">.</span><span class="n">_main_window_ref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_main_window_ref</span>
@@ -3052,18 +3052,18 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_layout</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span>
-            <span class="s2">&quot;children&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">child</span><span class="o">.</span><span class="n">_serialize_layout</span><span class="p">()</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">],</span>
-            <span class="s2">&quot;margins&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">margins</span><span class="p">),</span>
-            <span class="s2">&quot;spacing&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">spacing</span><span class="p">,</span>
+            <span class="s2">"type"</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span>
+            <span class="s2">"children"</span><span class="p">:</span> <span class="p">[</span><span class="n">child</span><span class="o">.</span><span class="n">_serialize_layout</span><span class="p">()</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">],</span>
+            <span class="s2">"margins"</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">margins</span><span class="p">),</span>
+            <span class="s2">"spacing"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">spacing</span><span class="p">,</span>
         <span class="p">}</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_deserialize_layout</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">main</span><span class="p">:</span> <span class="n">MainWindow</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
         <span class="bp">self</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span>
-            <span class="n">main</span><span class="o">.</span><span class="n">_backend_main_window</span><span class="p">,</span> <span class="n">margins</span><span class="o">=</span><span class="n">obj</span><span class="p">[</span><span class="s2">&quot;margins&quot;</span><span class="p">],</span> <span class="n">spacing</span><span class="o">=</span><span class="n">obj</span><span class="p">[</span><span class="s2">&quot;spacing&quot;</span><span class="p">]</span>
+            <span class="n">main</span><span class="o">.</span><span class="n">_backend_main_window</span><span class="p">,</span> <span class="n">margins</span><span class="o">=</span><span class="n">obj</span><span class="p">[</span><span class="s2">"margins"</span><span class="p">],</span> <span class="n">spacing</span><span class="o">=</span><span class="n">obj</span><span class="p">[</span><span class="s2">"spacing"</span><span class="p">]</span>
         <span class="p">)</span>
-        <span class="k">for</span> <span class="n">child_obj</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;children&quot;</span><span class="p">]:</span>
+        <span class="k">for</span> <span class="n">child_obj</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">[</span><span class="s2">"children"</span><span class="p">]:</span>
             <span class="n">child</span> <span class="o">=</span> <span class="n">construct_layout</span><span class="p">(</span><span class="n">child_obj</span><span class="p">,</span> <span class="n">main</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span>
@@ -3167,7 +3167,7 @@
     <span class="n">right</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">bottom</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Update margins around the layout.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Update margins around the layout."""</span>
     <span class="n">margins_old</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">margins</span>
     <span class="n">left</span> <span class="o">=</span> <span class="n">left</span> <span class="k">if</span> <span class="n">left</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">margins_old</span><span class="o">.</span><span class="n">left</span>
     <span class="n">top</span> <span class="o">=</span> <span class="n">top</span> <span class="k">if</span> <span class="n">top</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">margins_old</span><span class="o">.</span><span class="n">top</span>
@@ -3258,7 +3258,7 @@
 <span class="normal">178</span>
 <span class="normal">179</span>
 <span class="normal">180</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">LayoutContainer</span><span class="p">(</span><span class="n">Layout</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Layout that can contain other layouts.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Layout that can contain other layouts."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">main</span><span class="p">:</span> <span class="n">BackendMainWindow</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_rect</span> <span class="o">=</span> <span class="n">WindowRect</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
@@ -3290,17 +3290,17 @@
 
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_resize_children</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rect</span><span class="p">:</span> <span class="n">WindowRect</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resize all children layouts based on the geometry of this layout.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Resize all children layouts based on the geometry of this layout."""</span>
 
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">child</span><span class="p">:</span> <span class="n">Layout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove a child layout from this layout.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Remove a child layout from this layout."""</span>
 
     <span class="c1"># @abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_adjust_child_resize</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">child</span><span class="p">:</span> <span class="n">Layout</span><span class="p">,</span> <span class="n">rect_old</span><span class="p">:</span> <span class="n">WindowRect</span><span class="p">,</span> <span class="n">rect_new</span><span class="p">:</span> <span class="n">WindowRect</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Adjust layout container based on the child resize/move.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Adjust layout container based on the child resize/move."""</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -3341,7 +3341,7 @@
 <span class="normal">173</span>
 <span class="normal">174</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@abstractmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">child</span><span class="p">:</span> <span class="n">Layout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Remove a child layout from this layout.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Remove a child layout from this layout."""</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3444,7 +3444,7 @@
 <span class="normal">428</span>
 <span class="normal">429</span>
 <span class="normal">430</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">VBoxLayout</span><span class="p">(</span><span class="n">BoxLayout1D</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A vertical box layout.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""A vertical box layout."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_iter_edge_and_span</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rect</span><span class="p">:</span> <span class="n">WindowRect</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
         <span class="n">num</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">)</span>
@@ -3630,7 +3630,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_resize_children</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rect</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">child</span><span class="p">:</span> <span class="n">Layout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Insert a child layout at the specified index.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Insert a child layout at the specified index."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">child</span><span class="p">)</span>
         <span class="n">child</span><span class="o">.</span><span class="n">_main_window_ref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_main_window_ref</span>
         <span class="n">child</span><span class="o">.</span><span class="n">_parent_layout_ref</span> <span class="o">=</span> <span class="n">weakref</span><span class="o">.</span><span class="n">ref</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
@@ -3703,7 +3703,7 @@
 <span class="normal">559</span>
 <span class="normal">560</span>
 <span class="normal">561</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">child</span><span class="p">:</span> <span class="n">Layout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Insert a child layout at the specified index.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Insert a child layout at the specified index."""</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">child</span><span class="p">)</span>
     <span class="n">child</span><span class="o">.</span><span class="n">_main_window_ref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_main_window_ref</span>
     <span class="n">child</span><span class="o">.</span><span class="n">_parent_layout_ref</span> <span class="o">=</span> <span class="n">weakref</span><span class="o">.</span><span class="n">ref</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>

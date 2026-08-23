@@ -1375,7 +1375,7 @@
 <code>WidgetDataModel</code> is a Python object that represents a value of any type, tagged with
 some additional information of how to interpret the value in GUI. For example, a text
 data "xyz" read from a txt file can be written as follows:</p>
-<div class="highlight"><pre><span></span><code><span class="n">WidgetDataModel</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="s2">&quot;abc&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="n">WidgetDataModel</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="s2">"abc"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"text"</span><span class="p">)</span>
 </code></pre></div>
 <p>All the "data-embedded" widgets in <code>himena</code> implements <code>update_model()</code> method to update
 the state of the widget from a <code>WidgetDataModel</code> object, and <code>to_model()</code> method to dump
@@ -1388,7 +1388,7 @@ the state of the widget to a <code>WidgetDataModel</code> object.</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>  <span class="c1"># (1)!</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">to_model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WidgetDataModel</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">WidgetDataModel</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_text</span><span class="p">(),</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">)</span>  <span class="c1"># (2)!</span>
+        <span class="k">return</span> <span class="n">WidgetDataModel</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_text</span><span class="p">(),</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"text"</span><span class="p">)</span>  <span class="c1"># (2)!</span>
 </code></pre></div>
 <p>(1) The incoming text data is stored in <code>model.value</code>. The <code>set_text()</code> method is just
     an example.
@@ -1398,7 +1398,7 @@ the state of the widget to a <code>WidgetDataModel</code> object.</p>
 <code>register_widget_class()</code> function.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">himena.plugins</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_widget_class</span>
 
-<span class="n">register_widget_class</span><span class="p">(</span><span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="n">widget_class</span><span class="o">=</span><span class="n">TextViewer</span><span class="p">)</span>
+<span class="n">register_widget_class</span><span class="p">(</span><span class="s2">"text"</span><span class="p">,</span> <span class="n">widget_class</span><span class="o">=</span><span class="n">TextViewer</span><span class="p">)</span>
 </code></pre></div>
 <p>The <code>WidgetDataModel</code> standard makes the different part of development very clear-cut.</p>
 <ul>
@@ -1407,7 +1407,7 @@ the state of the widget to a <code>WidgetDataModel</code> object.</p>
   a <code>WidgetDataModel</code>.</p>
 <div class="highlight"><span class="filename">Example reader function</span><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">read_txt</span><span class="p">(</span><span class="n">file_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WidgetDataModel</span><span class="p">:</span>
     <span class="n">text_value</span> <span class="o">=</span> <span class="n">file_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">WidgetDataModel</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">text_value</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">WidgetDataModel</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">text_value</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"text"</span><span class="p">)</span>
 </code></pre></div>
 <p>A proper widget class will be automatically selected based on the <code>type</code> field, and
 updated based on the returned model using <code>update_model()</code> method.</p>
@@ -1426,7 +1426,7 @@ calling this writer function.</p>
   that just convert a <code>WidgetDataModel</code> into another.</p>
 <div class="highlight"><span class="filename">Example data processing function</span><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">to_upper</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">WidgetDataModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WidgetDataModel</span><span class="p">:</span>
     <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">WidgetDataModel</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">WidgetDataModel</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"text"</span><span class="p">)</span>
 </code></pre></div>
 <p>A widget will be automatically converted to a model using <code>to_model()</code> method before
 calling this function, and sent back to the GUI as another widget created based on the
@@ -1453,10 +1453,10 @@ the <code>himena</code> built-in functions and probably for other plugins, you m
 use the <a class="autorefs autorefs-internal" href="../../api/consts/#himena.consts.StandardType"><code>StandardType</code></a>.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">himena.const</span><span class="w"> </span><span class="kn">import</span> <span class="n">StandardType</span>
 
-<span class="n">StandardType</span><span class="o">.</span><span class="n">TEXT</span>  <span class="c1"># &quot;text&quot;</span>
-<span class="n">StandardType</span><span class="o">.</span><span class="n">TABLE</span>  <span class="c1"># &quot;table&quot;</span>
-<span class="n">StandardType</span><span class="o">.</span><span class="n">ARRAY</span>  <span class="c1"># &quot;array&quot;</span>
-<span class="n">StandardType</span><span class="o">.</span><span class="n">IMAGE</span>  <span class="c1"># &quot;array.image&quot;</span>
+<span class="n">StandardType</span><span class="o">.</span><span class="n">TEXT</span>  <span class="c1"># "text"</span>
+<span class="n">StandardType</span><span class="o">.</span><span class="n">TABLE</span>  <span class="c1"># "table"</span>
+<span class="n">StandardType</span><span class="o">.</span><span class="n">ARRAY</span>  <span class="c1"># "array"</span>
+<span class="n">StandardType</span><span class="o">.</span><span class="n">IMAGE</span>  <span class="c1"># "array.image"</span>
 </code></pre></div>
 <details class="info">
 <summary>The list of the pre-defined standards</summary>
@@ -1550,11 +1550,11 @@ functions can be applied to the "array.image" data.</p>
 <p>You can set other fields of <code>WidgetDataModel</code> to provide more details of how to convert
 the data to a widget.</p>
 <div class="highlight"><pre><span></span><code><span class="n">WidgetDataModel</span><span class="p">(</span>
-    <span class="n">value</span><span class="o">=</span><span class="s2">&quot;abc&quot;</span><span class="p">,</span>
-    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
-    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;My Text&quot;</span>  <span class="c1"># title of the widget</span>
-    <span class="n">extension_default</span><span class="o">=</span><span class="s2">&quot;.txt&quot;</span><span class="p">,</span>  <span class="c1"># default file extension in the save dialog</span>
-    <span class="n">extensions</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;.txt&quot;</span><span class="p">,</span> <span class="s2">&quot;.md&quot;</span><span class="p">]</span>  <span class="c1"># allowed file extensions in the save dialog</span>
+    <span class="n">value</span><span class="o">=</span><span class="s2">"abc"</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s2">"text"</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">"My Text"</span>  <span class="c1"># title of the widget</span>
+    <span class="n">extension_default</span><span class="o">=</span><span class="s2">".txt"</span><span class="p">,</span>  <span class="c1"># default file extension in the save dialog</span>
+    <span class="n">extensions</span><span class="o">=</span><span class="p">[</span><span class="s2">".txt"</span><span class="p">,</span> <span class="s2">".md"</span><span class="p">]</span>  <span class="c1"># allowed file extensions in the save dialog</span>
 <span class="p">)</span>
 </code></pre></div>
 

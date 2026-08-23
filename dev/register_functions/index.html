@@ -1514,7 +1514,7 @@ formats a non-indented json text data into an indented, pretty json text data.</
 
 <span class="k">def</span><span class="w"> </span><span class="nf">format_json</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">WidgetDataModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WidgetDataModel</span><span class="p">:</span>
     <span class="n">value</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">value</span><span class="p">),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">WidgetDataModel</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">WidgetDataModel</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"text"</span><span class="p">)</span>
 </code></pre></div>
 <p>Because <code>himena</code> has its default widget for <code>"text"</code>-type model, this function can be
 readly used in the GUI. You can register this function using <code>register_function()</code>
@@ -1523,10 +1523,10 @@ function.</p>
 <span class="kn">from</span><span class="w"> </span><span class="nn">himena.plugins</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_function</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 
-<span class="hll"><span class="nd">@register_function</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;Format JSON Text&quot;</span><span class="p">)</span>
+<span class="hll"><span class="nd">@register_function</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">"Format JSON Text"</span><span class="p">)</span>
 </span><span class="k">def</span><span class="w"> </span><span class="nf">format_json</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">WidgetDataModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WidgetDataModel</span><span class="p">:</span>
     <span class="n">value</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">value</span><span class="p">),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">WidgetDataModel</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">WidgetDataModel</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"text"</span><span class="p">)</span>
 </code></pre></div>
 <p>The registered function will be shown in the menu bar (under the "Plugins" menu by
 default) and the command palette. When this function is called from the GUI, currently
@@ -1578,7 +1578,7 @@ argument of the <code>register_function()</code> decorator.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">himena.consts</span><span class="w"> </span><span class="kn">import</span> <span class="n">StandardType</span>
 
 <span class="nd">@register_function</span><span class="p">(</span>
-    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Format JSON Text&quot;</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">"Format JSON Text"</span><span class="p">,</span>
 <span class="hll">    <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="n">StandardType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">],</span>
 </span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">format_json</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">WidgetDataModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WidgetDataModel</span><span class="p">:</span>
@@ -1597,9 +1597,9 @@ identifier. Following is an example that puts the function in the
 <span class="kn">from</span><span class="w"> </span><span class="nn">himena.plugins</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_function</span>
 
 <span class="nd">@register_function</span><span class="p">(</span>
-    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Format JSON Text&quot;</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">"Format JSON Text"</span><span class="p">,</span>
     <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="n">StandardType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">],</span>
-<span class="hll">    <span class="n">menus</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;my-plugins/my-text-plugins&quot;</span><span class="p">],</span>
+<span class="hll">    <span class="n">menus</span><span class="o">=</span><span class="p">[</span><span class="s2">"my-plugins/my-text-plugins"</span><span class="p">],</span>
 </span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">format_json</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">WidgetDataModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WidgetDataModel</span><span class="p">:</span>
     <span class="o">...</span>
@@ -1607,16 +1607,16 @@ identifier. Following is an example that puts the function in the
 <p>To define how to display the menu title, you can use <a class="autorefs autorefs-internal" title="configure_submenu(submenu_id, title=None, *, group=None, order=None)" href="../../api/plugins/#himena.plugins.configure_submenu"><code>configure_submenu()</code></a>.</p>
 <div class="highlight"><pre><span></span><code><span class="hll"><span class="kn">from</span><span class="w"> </span><span class="nn">himena.plugins</span><span class="w"> </span><span class="kn">import</span> <span class="n">configure_submenu</span>
 </span>
-<span class="n">configure_submenu</span><span class="p">(</span><span class="s2">&quot;my-plugins&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;My Plugins&quot;</span><span class="p">)</span>
-<span class="n">configure_submenu</span><span class="p">(</span><span class="s2">&quot;my-plugins/my-text-plugins&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;My Text Plugins&quot;</span><span class="p">)</span>
+<span class="n">configure_submenu</span><span class="p">(</span><span class="s2">"my-plugins"</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"My Plugins"</span><span class="p">)</span>
+<span class="n">configure_submenu</span><span class="p">(</span><span class="s2">"my-plugins/my-text-plugins"</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"My Text Plugins"</span><span class="p">)</span>
 </code></pre></div>
 <p>If a menu has many items, it is better to group them. You can use the <code>group</code> argument
 of <code>configure_submenu()</code> for this purpose. Groups are sorted alphabetically, so it is
 a good idea to prefix the group name with a number to control the order.</p>
 <div class="highlight"><pre><span></span><code><span class="n">configure_submenu</span><span class="p">(</span>
-    <span class="s2">&quot;my-plugins/my-text-plugins&quot;</span><span class="p">,</span>
-    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;My Text Plugins&quot;</span><span class="p">,</span>
-<span class="hll">    <span class="n">group</span><span class="o">=</span><span class="s2">&quot;00_process-text&quot;</span><span class="p">,</span>
+    <span class="s2">"my-plugins/my-text-plugins"</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">"My Text Plugins"</span><span class="p">,</span>
+<span class="hll">    <span class="n">group</span><span class="o">=</span><span class="s2">"00_process-text"</span><span class="p">,</span>
 </span><span class="p">)</span>
 </code></pre></div>
 <hr />
@@ -1635,13 +1635,13 @@ of parameters, you need to <strong>annotate the returned value with the <code>Pa
 <span class="hll"><span class="kn">from</span><span class="w"> </span><span class="nn">himena</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parametric</span><span class="p">,</span> <span class="n">StandardType</span><span class="p">,</span> <span class="n">WidgetDataModel</span>
 </span>
 <span class="nd">@register_function</span><span class="p">(</span>
-    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Format JSON Text&quot;</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">"Format JSON Text"</span><span class="p">,</span>
     <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="n">StandardType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">],</span>
 <span class="p">)</span>
 <span class="hll"><span class="k">def</span><span class="w"> </span><span class="nf">format_json</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">WidgetDataModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Parametric</span><span class="p">:</span>
 </span>    <span class="k">def</span><span class="w"> </span><span class="nf">run_format_json</span><span class="p">(</span><span class="n">indent</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">):</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">value</span><span class="p">),</span> <span class="n">indent</span><span class="o">=</span><span class="n">indent</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">WidgetDataModel</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">WidgetDataModel</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"text"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">run_format_json</span>
 </code></pre></div>
 <p>The type-to-widget mapping is as follows:</p>
@@ -1671,14 +1671,14 @@ decorator.</p>
 </span><span class="kn">from</span><span class="w"> </span><span class="nn">himena</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parametric</span><span class="p">,</span> <span class="n">StandardType</span><span class="p">,</span> <span class="n">WidgetDataModel</span>
 
 <span class="nd">@register_function</span><span class="p">(</span>
-    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Format JSON Text&quot;</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">"Format JSON Text"</span><span class="p">,</span>
     <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="n">StandardType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">],</span>
 <span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">format_json</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">WidgetDataModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Parametric</span><span class="p">:</span>
-<span class="hll">    <span class="nd">@configure_gui</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Indent in Spaces&quot;</span><span class="p">,</span> <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mi">8</span><span class="p">})</span>
+<span class="hll">    <span class="nd">@configure_gui</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="p">{</span><span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Indent in Spaces"</span><span class="p">,</span> <span class="s2">"min"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"max"</span><span class="p">:</span> <span class="mi">8</span><span class="p">})</span>
 </span>    <span class="k">def</span><span class="w"> </span><span class="nf">run_format_json</span><span class="p">(</span><span class="n">indent</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">):</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">value</span><span class="p">),</span> <span class="n">indent</span><span class="o">=</span><span class="n">indent</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">WidgetDataModel</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">WidgetDataModel</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"text"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">run_format_json</span>
 </code></pre></div>
 <p><code>configure_gui</code> takes keyword arguments that are passed to the function it decorates,
@@ -1697,7 +1697,7 @@ and use <code>dict</code> to configure the widget used for the parameter input.<
 <p>To avoid argument name collision, you can pass the options as a dict to
 <code>gui_options</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="nd">@configure_gui</span><span class="p">(</span>
-    <span class="n">gui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;indent&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Indent in Spaces&quot;</span><span class="p">,</span> <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mi">8</span><span class="p">}},</span>
+    <span class="n">gui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"indent"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Indent in Spaces"</span><span class="p">,</span> <span class="s2">"min"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"max"</span><span class="p">:</span> <span class="mi">8</span><span class="p">}},</span>
 <span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">run_format_json</span><span class="p">(</span><span class="n">indent</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">):</span>
     <span class="o">...</span>
@@ -1717,14 +1717,14 @@ as the <code>selection</code> property, you can define a function as follows.</p
 <span class="kn">from</span><span class="w"> </span><span class="nn">himena</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parametric</span><span class="p">,</span> <span class="n">StandardType</span><span class="p">,</span> <span class="n">WidgetDataModel</span>
 
 <span class="nd">@register_function</span><span class="p">(</span>
-    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Count &#39;a&#39;&quot;</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">"Count 'a'"</span><span class="p">,</span>
     <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="n">StandardType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">],</span>
 <span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">count_a</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">WidgetDataModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Parametric</span><span class="p">:</span>
-<span class="hll">    <span class="nd">@configure_gui</span><span class="p">(</span><span class="n">text_range</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;bind&quot;</span><span class="p">:</span> <span class="n">model</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">selection</span><span class="p">})</span>
+<span class="hll">    <span class="nd">@configure_gui</span><span class="p">(</span><span class="n">text_range</span><span class="o">=</span><span class="p">{</span><span class="s2">"bind"</span><span class="p">:</span> <span class="n">model</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">selection</span><span class="p">})</span>
 </span>    <span class="k">def</span><span class="w"> </span><span class="nf">run_count_a</span><span class="p">(</span><span class="n">text_range</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]):</span>
         <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">text_range</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">"a"</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">run_count_a</span>
 </code></pre></div>
 <p>This function does not have any parameter that can be specified by the user, thus no
@@ -1736,18 +1736,18 @@ widget will be shown as usual.</p>
 <span class="kn">from</span><span class="w"> </span><span class="nn">himena</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parametric</span><span class="p">,</span> <span class="n">StandardType</span><span class="p">,</span> <span class="n">WidgetDataModel</span>
 
 <span class="nd">@register_function</span><span class="p">(</span>
-    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Count &#39;a&#39;&quot;</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">"Count 'a'"</span><span class="p">,</span>
     <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="n">StandardType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">],</span>
 <span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">count_a_2</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">WidgetDataModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Parametric</span><span class="p">:</span>
-    <span class="nd">@configure_gui</span><span class="p">(</span><span class="n">text_range</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;bind&quot;</span><span class="p">:</span> <span class="n">model</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">selection</span><span class="p">})</span>
+    <span class="nd">@configure_gui</span><span class="p">(</span><span class="n">text_range</span><span class="o">=</span><span class="p">{</span><span class="s2">"bind"</span><span class="p">:</span> <span class="n">model</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">selection</span><span class="p">})</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_count_a</span><span class="p">(</span><span class="n">text_range</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">case_sensitive</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
         <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">text_range</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">case_sensitive</span><span class="p">:</span>
             <span class="n">text</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">text</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">"a"</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">run_count_a</span>
 </code></pre></div>
 <details class="note">
@@ -1756,12 +1756,12 @@ widget will be shown as usual.</p>
 the registered function, instead of returning a function to make the command
 parametric.</p>
 <div class="highlight"><pre><span></span><code><span class="nd">@register_function</span><span class="p">(</span>
-    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Count &#39;a&#39;&quot;</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">"Count 'a'"</span><span class="p">,</span>
     <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="n">StandardType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">],</span>
 <span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">count_a</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">WidgetDataModel</span><span class="p">):</span>
     <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">selection</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">"a"</span><span class="p">))</span>
 </code></pre></div>
 <p>A benefit of using a parametric function is that the function becomes reproducible.
 When the function is re-executed from a workflow, the input text edit does not
@@ -1778,14 +1778,14 @@ example in the case of the <code>format_json</code> function, the user may want 
 so that the json string looks good. To add a "preview" toggle button to the parameter
 input window, just add the <code>preview</code> argument to the <code>configure_gui()</code> decorator.</p>
 <div class="highlight"><pre><span></span><code><span class="nd">@register_function</span><span class="p">(</span>
-    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Format JSON Text&quot;</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">"Format JSON Text"</span><span class="p">,</span>
     <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="n">StandardType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">],</span>
 <span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">format_json</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">WidgetDataModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Parametric</span><span class="p">:</span>
 <span class="hll">    <span class="nd">@configure_gui</span><span class="p">(</span><span class="n">preview</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </span>    <span class="k">def</span><span class="w"> </span><span class="nf">run_format_json</span><span class="p">(</span><span class="n">indent</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">):</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">value</span><span class="p">),</span> <span class="n">indent</span><span class="o">=</span><span class="n">indent</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">WidgetDataModel</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">WidgetDataModel</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"text"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">run_format_json</span>
 </code></pre></div>
 <p><img alt="" loading="lazy" src="../../images/02_preview.gif" width="700px" /></p>
@@ -1795,14 +1795,14 @@ input window, just add the <code>preview</code> argument to the <code>configure_
 during the execution). Just add the <code>run_async=True</code> argument to the
 <code>register_function()</code> decorator.</p>
 <div class="highlight"><pre><span></span><code><span class="nd">@register_function</span><span class="p">(</span>
-    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Format JSON Text&quot;</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">"Format JSON Text"</span><span class="p">,</span>
     <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="n">StandardType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">],</span>
 <span class="hll">    <span class="n">run_async</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 </span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">format_json</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">WidgetDataModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Parametric</span><span class="p">:</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_format_json</span><span class="p">(</span><span class="n">indent</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">):</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">value</span><span class="p">),</span> <span class="n">indent</span><span class="o">=</span><span class="n">indent</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">WidgetDataModel</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">WidgetDataModel</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">"text"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">run_format_json</span>
 </code></pre></div>
 <div class="admonition warning">
@@ -1810,11 +1810,11 @@ during the execution). Just add the <code>run_async=True</code> argument to the
 <p>You should not update the GUI from an asynchronous function, because it can only be
 updated in the main thread.</p>
 <div class="highlight"><span class="filename">This function crashes the application</span><pre><span></span><code><span class="nd">@register_function</span><span class="p">(</span>
-    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Add widget&quot;</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">"Add widget"</span><span class="p">,</span>
     <span class="n">run_async</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">add_widget</span><span class="p">(</span><span class="n">ui</span><span class="p">:</span> <span class="n">MainWindow</span><span class="p">):</span>
-    <span class="n">ui</span><span class="o">.</span><span class="n">add_widget</span><span class="p">(</span><span class="n">QtW</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s2">&quot;Hello, world!&quot;</span><span class="p">))</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">add_widget</span><span class="p">(</span><span class="n">QtW</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s2">"Hello, world!"</span><span class="p">))</span>
 </code></pre></div>
 </div>
 <hr />
@@ -1825,7 +1825,7 @@ is built with the widget <code>T</code>.</p>
 <p>For example, the following built-in plugin function only works for the <code>QImageView</code>
 widget.</p>
 <div class="highlight"><pre><span></span><code><span class="nd">@register_function</span><span class="p">(</span>
-    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Scale bar ...&quot;</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">"Scale bar ..."</span><span class="p">,</span>
     <span class="o">...</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="hll"><span class="k">def</span><span class="w"> </span><span class="nf">setup_image_scale_bar</span><span class="p">(</span><span class="n">win</span><span class="p">:</span> <span class="n">SubWindow</span><span class="p">[</span><span class="n">QImageView</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Parametric</span><span class="p">:</span>

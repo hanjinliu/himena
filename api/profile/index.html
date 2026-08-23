@@ -1984,35 +1984,35 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
 <span class="normal">223</span>
 <span class="normal">224</span>
 <span class="normal">225</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">AppProfile</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Model of a profile.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Model of a profile."""</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Name of the profile.&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">"default"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Name of the profile."</span><span class="p">,</span>
         <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="n">_current_version</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Version of this profile created.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Version of this profile created."</span><span class="p">,</span>
         <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">plugins</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default_factory</span><span class="o">=</span><span class="n">_default_plugins</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;List of plugins to load.&quot;</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="n">_default_plugins</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"List of plugins to load."</span>
     <span class="p">)</span>
-    <span class="n">theme</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;light-green&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Theme to use.&quot;</span><span class="p">)</span>
+    <span class="n">theme</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"light-green"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Theme to use."</span><span class="p">)</span>
     <span class="n">startup_commands</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Startup commands that will be executed when the app starts.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Startup commands that will be executed when the app starts."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">keybinding_overrides</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">KeyBindingOverride</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">plugin_configs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">from_json</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;AppProfile&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct an AppProfile from a json file.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_json</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"AppProfile"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Construct an AppProfile from a json file."""</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-        <span class="n">version_saved</span> <span class="o">=</span> <span class="n">Version</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;version&quot;</span><span class="p">,</span> <span class="s2">&quot;0.0.1&quot;</span><span class="p">))</span>
+        <span class="n">version_saved</span> <span class="o">=</span> <span class="n">Version</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"version"</span><span class="p">,</span> <span class="s2">"0.0.1"</span><span class="p">))</span>
         <span class="bp">self</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="o">**</span><span class="n">data</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">version_saved</span> <span class="o">&lt;</span> <span class="n">Version</span><span class="p">(</span><span class="n">_current_version</span><span class="p">()):</span>
             <span class="k">for</span> <span class="n">place</span><span class="p">,</span> <span class="n">version_added</span> <span class="ow">in</span> <span class="n">DEFAULT_PLUGINS</span><span class="p">:</span>
@@ -2023,40 +2023,40 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">default</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">save</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;AppProfile&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the default profile.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">default</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">save</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"AppProfile"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the default profile."""</span>
         <span class="n">prof</span> <span class="o">=</span> <span class="n">AppProfile</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">save</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="n">profile_dir</span><span class="p">()</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prof</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.json&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">save</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="n">profile_dir</span><span class="p">()</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prof</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.json"</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="n">prof</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">prof</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Save profile as a json file.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Save profile as a json file."""</span>
         <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile_path</span><span class="p">()</span>
         <span class="n">json_string</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json_string</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">None</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">profile_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Path to this profile.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">profile_dir</span><span class="p">()</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.json&quot;</span>
+<span class="w">        </span><span class="sd">"""Path to this profile."""</span>
+        <span class="k">return</span> <span class="n">profile_dir</span><span class="p">()</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.json"</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">with_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;AppProfile&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a new profile with a new name.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">})</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"AppProfile"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return a new profile with a new name."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="n">name</span><span class="p">})</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">with_plugins</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plugins</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;AppProfile&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a new profile with new plugins.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;plugins&quot;</span><span class="p">:</span> <span class="n">plugins</span><span class="p">})</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_plugins</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plugins</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">"AppProfile"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return a new profile with new plugins."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"plugins"</span><span class="p">:</span> <span class="n">plugins</span><span class="p">})</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">with_plugin_configs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">configs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="s2">&quot;AppProfile&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a new profile with new plugin configs.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;plugin_configs&quot;</span><span class="p">:</span> <span class="n">configs</span><span class="p">})</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_plugin_configs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">configs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="s2">"AppProfile"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return a new profile with new plugin configs."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"plugin_configs"</span><span class="p">:</span> <span class="n">configs</span><span class="p">})</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">with_keybinding_override</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">command_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;AppProfile&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a new profile with new keybind overrides.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_keybinding_override</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">command_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"AppProfile"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return a new profile with new keybind overrides."""</span>
         <span class="n">_overrides</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">keybinding_overrides</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">_overrides</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">command_id</span> <span class="o">==</span> <span class="n">command_id</span><span class="p">:</span>
@@ -2068,10 +2068,10 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">key</span><span class="p">:</span>
                 <span class="n">_overrides</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">KeyBindingOverride</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">command_id</span><span class="o">=</span><span class="n">command_id</span><span class="p">))</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;keybinding_overrides&quot;</span><span class="p">:</span> <span class="n">_overrides</span><span class="p">})</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"keybinding_overrides"</span><span class="p">:</span> <span class="n">_overrides</span><span class="p">})</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">update_plugin_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plugin_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update the config of the plugin specified by `plugin_id`&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Update the config of the plugin specified by `plugin_id`"""</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">himena.plugins</span><span class="w"> </span><span class="kn">import</span> <span class="n">AppActionRegistry</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">himena.plugins.widget_plugins</span><span class="w"> </span><span class="kn">import</span> <span class="n">WidgetCallbackBase</span>
 
@@ -2088,24 +2088,24 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
                     <span class="n">cur_config</span><span class="p">[</span><span class="n">ckey</span><span class="p">]</span> <span class="o">=</span> <span class="n">cval</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">cur_config</span><span class="p">:</span>
-                <span class="n">cur_config</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s2">&quot;value&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+                <span class="n">cur_config</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s2">"value"</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
         <span class="n">configs</span><span class="p">[</span><span class="n">plugin_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">cur_config</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">with_plugin_configs</span><span class="p">(</span><span class="n">configs</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 
         <span class="c1"># update existing dock widgets with the new config</span>
         <span class="n">params</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">opt</span> <span class="ow">in</span> <span class="n">cur_config</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">opt</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span>
+            <span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">opt</span><span class="p">[</span><span class="s2">"value"</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">cb</span> <span class="o">:=</span> <span class="n">WidgetCallbackBase</span><span class="o">.</span><span class="n">instance_for_command_id</span><span class="p">(</span><span class="n">plugin_id</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">dock</span> <span class="ow">in</span> <span class="n">cb</span><span class="o">.</span><span class="n">_all_widgets</span><span class="p">:</span>
-                <span class="c1"># the internal widget should always has the method &quot;update_configs&quot;</span>
+                <span class="c1"># the internal widget should always has the method "update_configs"</span>
                 <span class="n">dock</span><span class="o">.</span><span class="n">update_configs</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
 
-    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"name"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_validate_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="c1"># check if value is a valid file name</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">c</span> <span class="ow">in</span> <span class="n">ALLOWED_LETTERS</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">value</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid profile name: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Invalid profile name: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">value</span>
 </code></pre></div></td></tr></table></div>
               </details>
@@ -2150,10 +2150,10 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
 <span class="normal">145</span>
 <span class="normal">146</span>
 <span class="normal">147</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">default</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">save</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;AppProfile&quot;</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the default profile.&quot;&quot;&quot;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">default</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">save</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"AppProfile"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return the default profile."""</span>
     <span class="n">prof</span> <span class="o">=</span> <span class="n">AppProfile</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">save</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="n">profile_dir</span><span class="p">()</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prof</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.json&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">save</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="n">profile_dir</span><span class="p">()</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prof</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.json"</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
         <span class="n">prof</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">prof</span>
 </code></pre></div></td></tr></table></div>
@@ -2196,11 +2196,11 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
 <span class="normal">137</span>
 <span class="normal">138</span>
 <span class="normal">139</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">from_json</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;AppProfile&quot;</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct an AppProfile from a json file.&quot;&quot;&quot;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">from_json</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"AppProfile"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Construct an AppProfile from a json file."""</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-    <span class="n">version_saved</span> <span class="o">=</span> <span class="n">Version</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;version&quot;</span><span class="p">,</span> <span class="s2">&quot;0.0.1&quot;</span><span class="p">))</span>
+    <span class="n">version_saved</span> <span class="o">=</span> <span class="n">Version</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"version"</span><span class="p">,</span> <span class="s2">"0.0.1"</span><span class="p">))</span>
     <span class="bp">self</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="o">**</span><span class="n">data</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">version_saved</span> <span class="o">&lt;</span> <span class="n">Version</span><span class="p">(</span><span class="n">_current_version</span><span class="p">()):</span>
         <span class="k">for</span> <span class="n">place</span><span class="p">,</span> <span class="n">version_added</span> <span class="ow">in</span> <span class="n">DEFAULT_PLUGINS</span><span class="p">:</span>
@@ -2234,8 +2234,8 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">158</span>
 <span class="normal">159</span>
 <span class="normal">160</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">profile_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Path to this profile.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">profile_dir</span><span class="p">()</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.json&quot;</span>
+<span class="w">    </span><span class="sd">"""Path to this profile."""</span>
+    <span class="k">return</span> <span class="n">profile_dir</span><span class="p">()</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.json"</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2266,11 +2266,11 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
 <span class="normal">154</span>
 <span class="normal">155</span>
 <span class="normal">156</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Save profile as a json file.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Save profile as a json file."""</span>
     <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile_path</span><span class="p">()</span>
     <span class="n">json_string</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
         <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json_string</span><span class="p">)</span>
     <span class="k">return</span> <span class="kc">None</span>
 </code></pre></div></td></tr></table></div>
@@ -2325,7 +2325,7 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
 <span class="normal">216</span>
 <span class="normal">217</span>
 <span class="normal">218</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">update_plugin_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plugin_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Update the config of the plugin specified by `plugin_id`&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Update the config of the plugin specified by `plugin_id`"""</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">himena.plugins</span><span class="w"> </span><span class="kn">import</span> <span class="n">AppActionRegistry</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">himena.plugins.widget_plugins</span><span class="w"> </span><span class="kn">import</span> <span class="n">WidgetCallbackBase</span>
 
@@ -2342,17 +2342,17 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
                 <span class="n">cur_config</span><span class="p">[</span><span class="n">ckey</span><span class="p">]</span> <span class="o">=</span> <span class="n">cval</span>
     <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">cur_config</span><span class="p">:</span>
-            <span class="n">cur_config</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s2">&quot;value&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="n">cur_config</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s2">"value"</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
     <span class="n">configs</span><span class="p">[</span><span class="n">plugin_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">cur_config</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">with_plugin_configs</span><span class="p">(</span><span class="n">configs</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 
     <span class="c1"># update existing dock widgets with the new config</span>
     <span class="n">params</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">opt</span> <span class="ow">in</span> <span class="n">cur_config</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">opt</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span>
+        <span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">opt</span><span class="p">[</span><span class="s2">"value"</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">cb</span> <span class="o">:=</span> <span class="n">WidgetCallbackBase</span><span class="o">.</span><span class="n">instance_for_command_id</span><span class="p">(</span><span class="n">plugin_id</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">dock</span> <span class="ow">in</span> <span class="n">cb</span><span class="o">.</span><span class="n">_all_widgets</span><span class="p">:</span>
-            <span class="c1"># the internal widget should always has the method &quot;update_configs&quot;</span>
+            <span class="c1"># the internal widget should always has the method "update_configs"</span>
             <span class="n">dock</span><span class="o">.</span><span class="n">update_configs</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -2389,8 +2389,8 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
 <span class="normal">184</span>
 <span class="normal">185</span>
 <span class="normal">186</span>
-<span class="normal">187</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">with_keybinding_override</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">command_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;AppProfile&quot;</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a new profile with new keybind overrides.&quot;&quot;&quot;</span>
+<span class="normal">187</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">with_keybinding_override</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">command_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"AppProfile"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return a new profile with new keybind overrides."""</span>
     <span class="n">_overrides</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">keybinding_overrides</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">_overrides</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">command_id</span> <span class="o">==</span> <span class="n">command_id</span><span class="p">:</span>
@@ -2402,7 +2402,7 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
     <span class="k">else</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">key</span><span class="p">:</span>
             <span class="n">_overrides</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">KeyBindingOverride</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">command_id</span><span class="o">=</span><span class="n">command_id</span><span class="p">))</span>
-    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;keybinding_overrides&quot;</span><span class="p">:</span> <span class="n">_overrides</span><span class="p">})</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"keybinding_overrides"</span><span class="p">:</span> <span class="n">_overrides</span><span class="p">})</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2427,9 +2427,9 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
               <summary>Source code in <code>src\himena\profile.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">162</span>
 <span class="normal">163</span>
-<span class="normal">164</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">with_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;AppProfile&quot;</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a new profile with a new name.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">})</span>
+<span class="normal">164</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">with_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"AppProfile"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return a new profile with a new name."""</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="n">name</span><span class="p">})</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2454,9 +2454,9 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
               <summary>Source code in <code>src\himena\profile.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">170</span>
 <span class="normal">171</span>
-<span class="normal">172</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">with_plugin_configs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">configs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="s2">&quot;AppProfile&quot;</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a new profile with new plugin configs.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;plugin_configs&quot;</span><span class="p">:</span> <span class="n">configs</span><span class="p">})</span>
+<span class="normal">172</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">with_plugin_configs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">configs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="s2">"AppProfile"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return a new profile with new plugin configs."""</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"plugin_configs"</span><span class="p">:</span> <span class="n">configs</span><span class="p">})</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2481,9 +2481,9 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
               <summary>Source code in <code>src\himena\profile.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">166</span>
 <span class="normal">167</span>
-<span class="normal">168</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">with_plugins</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plugins</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;AppProfile&quot;</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a new profile with new plugins.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;plugins&quot;</span><span class="p">:</span> <span class="n">plugins</span><span class="p">})</span>
+<span class="normal">168</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">with_plugins</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plugins</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">"AppProfile"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return a new profile with new plugins."""</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"plugins"</span><span class="p">:</span> <span class="n">plugins</span><span class="p">})</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2580,7 +2580,7 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
     <span class="n">command_id</span><span class="p">:</span> <span class="nb">str</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">to_normed_str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">", "</span><span class="p">,</span> <span class="s2">" "</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -2627,7 +2627,7 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
 <span class="normal">30</span>
 <span class="normal">31</span>
 <span class="normal">32</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">data_dir</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the user data directory.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Get the user data directory."""</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">USER_DATA_DIR</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
         <span class="n">USER_DATA_DIR</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">USER_DATA_DIR</span>
@@ -2661,10 +2661,10 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
 <span class="normal">262</span>
 <span class="normal">263</span>
 <span class="normal">264</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">new_app_profile</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AppProfile</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a new profile.&quot;&quot;&quot;</span>
-    <span class="n">path</span> <span class="o">=</span> <span class="n">profile_dir</span><span class="p">()</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.json&quot;</span>
+<span class="w">    </span><span class="sd">"""Create a new profile."""</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">profile_dir</span><span class="p">()</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.json"</span>
     <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Profile </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> already exists.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Profile </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> already exists."</span><span class="p">)</span>
     <span class="n">profile</span> <span class="o">=</span> <span class="n">AppProfile</span><span class="o">.</span><span class="n">default</span><span class="p">()</span><span class="o">.</span><span class="n">with_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
     <span class="n">profile</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">profile</span>
@@ -2701,7 +2701,7 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
 <span class="normal">24</span>
 <span class="normal">25</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@contextmanager</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">patch_user_data_dir</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Change the user data directory to avoid pytest updates the local state.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Change the user data directory to avoid pytest updates the local state."""</span>
     <span class="k">global</span> <span class="n">USER_DATA_DIR</span>
     <span class="n">old</span> <span class="o">=</span> <span class="n">USER_DATA_DIR</span>
     <span class="n">USER_DATA_DIR</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
@@ -2735,8 +2735,8 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
 <span class="normal">268</span>
 <span class="normal">269</span>
 <span class="normal">270</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">remove_app_profile</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Remove an existing profile.&quot;&quot;&quot;</span>
-    <span class="n">path</span> <span class="o">=</span> <span class="n">profile_dir</span><span class="p">()</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.json&quot;</span>
+<span class="w">    </span><span class="sd">"""Remove an existing profile."""</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">profile_dir</span><span class="p">()</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.json"</span>
     <span class="k">return</span> <span class="n">path</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
             </details>

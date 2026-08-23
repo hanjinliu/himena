@@ -2049,25 +2049,25 @@
 <span class="normal">212</span>
 <span class="normal">213</span>
 <span class="normal">214</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ArrayMeta</span><span class="p">(</span><span class="n">BaseMetadata</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Preset for describing an array metadata.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Preset for describing an array metadata."""</span>
 
-    <span class="n">axes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DimAxis</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Axes of the array.&quot;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DimAxis</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Axes of the array."</span><span class="p">)</span>
     <span class="n">current_indices</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Current slice indices to render the array in GUI.&quot;</span>
+        <span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Current slice indices to render the array in GUI."</span>
     <span class="p">)</span>
     <span class="n">selections</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Selections of the array. This attribute should be any sliceable &quot;</span>
-        <span class="s2">&quot;objects that can passed to the backend array object.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Selections of the array. This attribute should be any sliceable "</span>
+        <span class="s2">"objects that can passed to the backend array object."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">unit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Unit of the array values.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Unit of the array values."</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">without_selections</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ArrayMeta&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Make a copy of the metadata without selections.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;selections&quot;</span><span class="p">:</span> <span class="p">[]})</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">without_selections</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ArrayMeta"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Make a copy of the metadata without selections."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"selections"</span><span class="p">:</span> <span class="p">[]})</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">expected_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">StandardType</span><span class="o">.</span><span class="n">ARRAY</span>
@@ -2105,9 +2105,9 @@
               <summary>Source code in <code>src\himena\standards\model_meta.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">209</span>
 <span class="normal">210</span>
-<span class="normal">211</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">without_selections</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ArrayMeta&quot;</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Make a copy of the metadata without selections.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;selections&quot;</span><span class="p">:</span> <span class="p">[]})</span>
+<span class="normal">211</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">without_selections</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ArrayMeta"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Make a copy of the metadata without selections."""</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"selections"</span><span class="p">:</span> <span class="p">[]})</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2236,10 +2236,10 @@
 <span class="normal">65</span>
 <span class="normal">66</span>
 <span class="normal">67</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">DataFrameMeta</span><span class="p">(</span><span class="n">TableMeta</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Preset for describing the metadata for a &quot;dataframe&quot; type.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Preset for describing the metadata for a "dataframe" type."""</span>
 
     <span class="n">transpose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether the table is transposed.&quot;</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Whether the table is transposed."</span>
     <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">expected_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -2479,42 +2479,42 @@
 <span class="normal">128</span>
 <span class="normal">129</span>
 <span class="normal">130</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">DataFramePlotMeta</span><span class="p">(</span><span class="n">DataFrameMeta</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Preset for describing the metadata for a &quot;dataframe.plot&quot; type.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Preset for describing the metadata for a "dataframe.plot" type."""</span>
 
-    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;arbitrary_types_allowed&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"arbitrary_types_allowed"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
 
-    <span class="n">plot_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;line&quot;</span><span class="p">,</span> <span class="s2">&quot;scatter&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="s2">&quot;line&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Type of the plot.&quot;</span>
+    <span class="n">plot_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"line"</span><span class="p">,</span> <span class="s2">"scatter"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">"line"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Type of the plot."</span>
     <span class="p">)</span>
     <span class="n">plot_color_cycle</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Color cycle of the plot.&quot;</span>
+        <span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Color cycle of the plot."</span>
     <span class="p">)</span>
     <span class="n">plot_background_color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="s2">&quot;#FFFFFF&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Background color of the plot.&quot;</span>
+        <span class="s2">"#FFFFFF"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Background color of the plot."</span>
     <span class="p">)</span>
     <span class="n">rois</span><span class="p">:</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiListModel</span> <span class="o">|</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiListModel</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default_factory</span><span class="o">=</span><span class="n">roi</span><span class="o">.</span><span class="n">RoiListModel</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Regions of interest.&quot;</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="n">roi</span><span class="o">.</span><span class="n">RoiListModel</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Regions of interest."</span>
     <span class="p">)</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">from_metadata</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">dir_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;DataFramePlotMeta&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_metadata</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">dir_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"DataFramePlotMeta"</span><span class="p">:</span>
         <span class="bp">self</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span><span class="n">dir_path</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">_META_NAME</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">rois_path</span> <span class="o">:=</span> <span class="n">dir_path</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="s2">&quot;rois.roi.json&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">rois_path</span> <span class="o">:=</span> <span class="n">dir_path</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="s2">"rois.roi.json"</span><span class="p">))</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">rois</span> <span class="o">=</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiListModel</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span><span class="n">rois_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">unwrap_rois</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiListModel</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Unwrap the lazy-evaluation of the ROIs.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Unwrap the lazy-evaluation of the ROIs."""</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rois</span><span class="p">,</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiListModel</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rois</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rois</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rois</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rois</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">write_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dir_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">dir_path</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">_META_NAME</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">exclude</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;rois&quot;</span><span class="p">}))</span>
+        <span class="n">dir_path</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">_META_NAME</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">exclude</span><span class="o">=</span><span class="p">{</span><span class="s2">"rois"</span><span class="p">}))</span>
         <span class="n">rois</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unwrap_rois</span><span class="p">()</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rois</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">dir_path</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="s2">&quot;rois.roi.json&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
+            <span class="n">dir_path</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="s2">"rois.roi.json"</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
                 <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">rois</span><span class="o">.</span><span class="n">model_dump_typed</span><span class="p">())</span>
             <span class="p">)</span>
 
@@ -2558,7 +2558,7 @@
 <span class="normal">117</span>
 <span class="normal">118</span>
 <span class="normal">119</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">unwrap_rois</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiListModel</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Unwrap the lazy-evaluation of the ROIs.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Unwrap the lazy-evaluation of the ROIs."""</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rois</span><span class="p">,</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiListModel</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rois</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">rois</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rois</span><span class="p">()</span>
@@ -2657,9 +2657,9 @@
 <span class="normal">75</span>
 <span class="normal">76</span>
 <span class="normal">77</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">DictMeta</span><span class="p">(</span><span class="n">BaseMetadata</span><span class="p">):</span>
-    <span class="n">current_tab</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Current tab name.&quot;</span><span class="p">)</span>
+    <span class="n">current_tab</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Current tab name."</span><span class="p">)</span>
     <span class="n">child_meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BaseMetadata</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Metadata of the child models.&quot;</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Metadata of the child models."</span>
     <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">expected_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -2863,25 +2863,25 @@
 <span class="normal">187</span>
 <span class="normal">188</span>
 <span class="normal">189</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">DimAxis</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A dimension axis.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""A dimension axis."""</span>
 
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Name of the axis.&quot;</span><span class="p">)</span>
-    <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Pixel scale of the axis.&quot;</span><span class="p">)</span>
-    <span class="n">origin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Offset of the axis.&quot;</span><span class="p">)</span>
-    <span class="n">unit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Unit of the axis spacing.&quot;</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Name of the axis."</span><span class="p">)</span>
+    <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Pixel scale of the axis."</span><span class="p">)</span>
+    <span class="n">origin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Offset of the axis."</span><span class="p">)</span>
+    <span class="n">unit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="s2">""</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Unit of the axis spacing."</span><span class="p">)</span>
     <span class="n">labels</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Category labels of the axis.&quot;</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Category labels of the axis."</span>
     <span class="p">)</span>
     <span class="n">default_label_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="s2">&quot;</span><span class="si">{:s}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Default format of the labels.&quot;</span>
+        <span class="s2">"</span><span class="si">{:s}</span><span class="s2">"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Default format of the labels."</span>
     <span class="p">)</span>
 
-    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_name_to_str</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;DimAxis&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"DimAxis"</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">axis</span> <span class="o">=</span> <span class="n">DimAxis</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">obj</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
@@ -2889,13 +2889,13 @@
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">DimAxis</span><span class="p">):</span>
             <span class="n">axis</span> <span class="o">=</span> <span class="n">obj</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot convert </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="si">}</span><span class="s2"> to DimAxis.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Cannot convert </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="si">}</span><span class="s2"> to DimAxis."</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">axis</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_label</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the label of the axis at the given index.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return the label of the axis at the given index."""</span>
         <span class="k">if</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Index must be non-negative.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Index must be non-negative."</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
         <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
@@ -2940,9 +2940,9 @@
 <span class="normal">187</span>
 <span class="normal">188</span>
 <span class="normal">189</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_label</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the label of the axis at the given index.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Return the label of the axis at the given index."""</span>
     <span class="k">if</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Index must be non-negative.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Index must be non-negative."</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
     <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
@@ -3025,9 +3025,9 @@
 <span class="normal">84</span>
 <span class="normal">85</span>
 <span class="normal">86</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">FunctionMeta</span><span class="p">(</span><span class="n">BaseMetadata</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Preset for describing the metadata for a &quot;function&quot; type.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Preset for describing the metadata for a "function" type."""</span>
 
-    <span class="n">source_code</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Source code of the function.&quot;</span><span class="p">)</span>
+    <span class="n">source_code</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Source code of the function."</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">expected_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">StandardType</span><span class="o">.</span><span class="n">FUNCTION</span>
@@ -3161,22 +3161,22 @@
 <span class="normal">147</span>
 <span class="normal">148</span>
 <span class="normal">149</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ImageChannel</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A channel in an image file.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""A channel in an image file."""</span>
 
-    <span class="n">colormap</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Color map of the channel.&quot;</span><span class="p">)</span>
+    <span class="n">colormap</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Color map of the channel."</span><span class="p">)</span>
     <span class="n">contrast_limits</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Contrast limits of the channel.&quot;</span>
+        <span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Contrast limits of the channel."</span>
     <span class="p">)</span>
-    <span class="n">visible</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether the channel is visible.&quot;</span><span class="p">)</span>
+    <span class="n">visible</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Whether the channel is visible."</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">default</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ImageChannel&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a default channel (also used for mono-channel images).&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">colormap</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span> <span class="n">contrast_limits</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">default</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ImageChannel"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return a default channel (also used for mono-channel images)."""</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">colormap</span><span class="o">=</span><span class="s2">"gray"</span><span class="p">,</span> <span class="n">contrast_limits</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">with_colormap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">colormap</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ImageChannel&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the colormap of the channel.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;colormap&quot;</span><span class="p">:</span> <span class="n">colormap</span><span class="p">})</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_colormap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">colormap</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ImageChannel"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Set the colormap of the channel."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"colormap"</span><span class="p">:</span> <span class="n">colormap</span><span class="p">})</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -3217,9 +3217,9 @@
 <span class="normal">143</span>
 <span class="normal">144</span>
 <span class="normal">145</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">default</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ImageChannel&quot;</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a default channel (also used for mono-channel images).&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">colormap</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span> <span class="n">contrast_limits</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">default</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ImageChannel"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return a default channel (also used for mono-channel images)."""</span>
+    <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">colormap</span><span class="o">=</span><span class="s2">"gray"</span><span class="p">,</span> <span class="n">contrast_limits</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3244,9 +3244,9 @@
               <summary>Source code in <code>src\himena\standards\model_meta.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">147</span>
 <span class="normal">148</span>
-<span class="normal">149</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">with_colormap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">colormap</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ImageChannel&quot;</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Set the colormap of the channel.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;colormap&quot;</span><span class="p">:</span> <span class="n">colormap</span><span class="p">})</span>
+<span class="normal">149</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">with_colormap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">colormap</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ImageChannel"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Set the colormap of the channel."""</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"colormap"</span><span class="p">:</span> <span class="n">colormap</span><span class="p">})</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3676,125 +3676,125 @@
 <span class="normal">373</span>
 <span class="normal">374</span>
 <span class="normal">375</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ImageMeta</span><span class="p">(</span><span class="n">ArrayMeta</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Preset for describing an image file metadata.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Preset for describing an image file metadata."""</span>
 
-    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;arbitrary_types_allowed&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"arbitrary_types_allowed"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
 
     <span class="n">channels</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ImageChannel</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[</span><span class="n">ImageChannel</span><span class="o">.</span><span class="n">default</span><span class="p">()],</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Channels of the image. At least one channel is required.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Channels of the image. At least one channel is required."</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">channel_axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Channel axis of the image.&quot;</span><span class="p">)</span>
-    <span class="n">is_rgb</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether the image is RGB.&quot;</span><span class="p">)</span>
+    <span class="n">channel_axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Channel axis of the image."</span><span class="p">)</span>
+    <span class="n">is_rgb</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Whether the image is RGB."</span><span class="p">)</span>
     <span class="n">current_roi</span><span class="p">:</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiModel</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Current region of interest&quot;</span>
+        <span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Current region of interest"</span>
     <span class="p">)</span>
     <span class="n">current_roi_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Current index of the ROI in the `rois`, if applicable.&quot;</span>
+        <span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Current index of the ROI in the `rois`, if applicable."</span>
     <span class="p">)</span>
     <span class="n">rois</span><span class="p">:</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiListModel</span> <span class="o">|</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiListModel</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default_factory</span><span class="o">=</span><span class="n">roi</span><span class="o">.</span><span class="n">RoiListModel</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Regions of interest.&quot;</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="n">roi</span><span class="o">.</span><span class="n">RoiListModel</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Regions of interest."</span>
     <span class="p">)</span>
     <span class="n">interpolation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Interpolation method.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Interpolation method."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">play_setting</span><span class="p">:</span> <span class="n">ImagePlaySetting</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Settings for playing image sequences.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Settings for playing image sequences."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">skip_image_rerendering</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Skip image rerendering when the model is passed to the `update_model` method. This field is only used when a function does not touch the image data itself.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Skip image rerendering when the model is passed to the `update_model` method. This field is only used when a function does not touch the image data itself."</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">more_metadata</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;More metadata if exists.&quot;</span><span class="p">)</span>
+    <span class="n">more_metadata</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"More metadata if exists."</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">without_rois</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ImageMeta&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;rois&quot;</span><span class="p">:</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiListModel</span><span class="p">(),</span> <span class="s2">&quot;current_roi&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">})</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">without_rois</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ImageMeta"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"rois"</span><span class="p">:</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiListModel</span><span class="p">(),</span> <span class="s2">"current_roi"</span><span class="p">:</span> <span class="kc">None</span><span class="p">})</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_one_axis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ImageMeta&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Drop an axis by index for the array slicing arr[..., value, ...].&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_one_axis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ImageMeta"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Drop an axis by index for the array slicing arr[..., value, ...]."""</span>
         <span class="k">if</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">index</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">index</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid axis index: </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Invalid axis index: </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
         <span class="n">axes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="k">del</span> <span class="n">axes</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
-        <span class="n">update</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;axes&quot;</span><span class="p">:</span> <span class="n">axes</span><span class="p">,</span> <span class="s2">&quot;rois&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">unwrap_rois</span><span class="p">()</span><span class="o">.</span><span class="n">take_axis</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">value</span><span class="p">)}</span>
+        <span class="n">update</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"axes"</span><span class="p">:</span> <span class="n">axes</span><span class="p">,</span> <span class="s2">"rois"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">unwrap_rois</span><span class="p">()</span><span class="o">.</span><span class="n">take_axis</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">value</span><span class="p">)}</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">caxis</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel_axis</span><span class="p">)</span> <span class="o">==</span> <span class="n">index</span><span class="p">:</span>
-            <span class="n">update</span><span class="p">[</span><span class="s2">&quot;channels&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">[</span><span class="n">value</span><span class="p">]]</span>
-            <span class="n">update</span><span class="p">[</span><span class="s2">&quot;channel_axis&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="n">update</span><span class="p">[</span><span class="s2">&quot;is_rgb&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">update</span><span class="p">[</span><span class="s2">"channels"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">[</span><span class="n">value</span><span class="p">]]</span>
+            <span class="n">update</span><span class="p">[</span><span class="s2">"channel_axis"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">update</span><span class="p">[</span><span class="s2">"is_rgb"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">elif</span> <span class="n">caxis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">update</span><span class="p">[</span><span class="s2">&quot;channel_axis&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">caxis</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">caxis</span> <span class="o">&gt;</span> <span class="n">index</span> <span class="k">else</span> <span class="n">caxis</span>
+            <span class="n">update</span><span class="p">[</span><span class="s2">"channel_axis"</span><span class="p">]</span> <span class="o">=</span> <span class="n">caxis</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">caxis</span> <span class="o">&gt;</span> <span class="n">index</span> <span class="k">else</span> <span class="n">caxis</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">with_current_roi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">roi</span><span class="p">:</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ImageMeta&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the current ROI.&quot;&quot;&quot;</span>
-        <span class="n">update</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;current_roi&quot;</span><span class="p">:</span> <span class="n">roi</span><span class="p">}</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_current_roi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">roi</span><span class="p">:</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ImageMeta"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Set the current ROI."""</span>
+        <span class="n">update</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"current_roi"</span><span class="p">:</span> <span class="n">roi</span><span class="p">}</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_roi_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">rois</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unwrap_rois</span><span class="p">()</span>
             <span class="n">rois</span><span class="o">.</span><span class="n">items</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">current_roi_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">roi</span>
-            <span class="n">update</span><span class="p">[</span><span class="s2">&quot;rois&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rois</span>
+            <span class="n">update</span><span class="p">[</span><span class="s2">"rois"</span><span class="p">]</span> <span class="o">=</span> <span class="n">rois</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">unwrap_rois</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiListModel</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Unwrap the lazy-evaluation of the ROIs.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Unwrap the lazy-evaluation of the ROIs."""</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rois</span><span class="p">,</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiListModel</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rois</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rois</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rois</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rois</span>
 
-    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;axes&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"axes"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_strings_to_axes</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">DimAxis</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">axis</span><span class="p">)</span> <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="n">v</span><span class="p">]</span>
 
-    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;channel_axis&quot;</span><span class="p">)</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_is_rgb_and_channels_exclusive</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="s2">&quot;ValidationInfo&quot;</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">values</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;is_rgb&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Channel axis must be None for RGB images.&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;channels&quot;</span><span class="p">,</span> <span class="p">[]))</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Channel axis is required for multi-channel images.&quot;</span><span class="p">)</span>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"channel_axis"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_is_rgb_and_channels_exclusive</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="s2">"ValidationInfo"</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">values</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"is_rgb"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Channel axis must be None for RGB images."</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"channels"</span><span class="p">,</span> <span class="p">[]))</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Channel axis is required for multi-channel images."</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">v</span>
 
-    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;channels&quot;</span><span class="p">)</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_channels_not_empty</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="s2">&quot;ValidationInfo&quot;</span><span class="p">):</span>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"channels"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_channels_not_empty</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="s2">"ValidationInfo"</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;At least one channel is required.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"At least one channel is required."</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">v</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">contrast_limits</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the contrast limits of the first visible channel.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return the contrast limits of the first visible channel."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">contrast_limits</span>
 
     <span class="nd">@contrast_limits</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">contrast_limits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the contrast limits of all channels.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Set the contrast limits of all channels."""</span>
         <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">:</span>
             <span class="n">channel</span><span class="o">.</span><span class="n">contrast_limits</span> <span class="o">=</span> <span class="n">value</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">colormap</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the colormap of the first visible channel.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return the colormap of the first visible channel."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">colormap</span>
 
     <span class="nd">@colormap</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">colormap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the colormap of all channels.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Set the colormap of all channels."""</span>
         <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">:</span>
             <span class="n">channel</span><span class="o">.</span><span class="n">colormap</span> <span class="o">=</span> <span class="n">value</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">from_metadata</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">dir_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ImageMeta&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_metadata</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">dir_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ImageMeta"</span><span class="p">:</span>
         <span class="bp">self</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span><span class="n">dir_path</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">_META_NAME</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">rois_path</span> <span class="o">:=</span> <span class="n">dir_path</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">_ROIS</span><span class="p">))</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">rois</span> <span class="o">=</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiListModel</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span><span class="n">rois_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">cur_roi_path</span> <span class="o">:=</span> <span class="n">dir_path</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">_CURRENT_ROI</span><span class="p">))</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="n">roi_js</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">cur_roi_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">current_roi</span> <span class="o">=</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiModel</span><span class="o">.</span><span class="n">construct</span><span class="p">(</span><span class="n">roi_js</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">),</span> <span class="n">roi_js</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_roi</span> <span class="o">=</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiModel</span><span class="o">.</span><span class="n">construct</span><span class="p">(</span><span class="n">roi_js</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"type"</span><span class="p">),</span> <span class="n">roi_js</span><span class="p">)</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">more_meta_path</span> <span class="o">:=</span> <span class="n">dir_path</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">_MORE_META</span><span class="p">))</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="k">with</span> <span class="n">more_meta_path</span><span class="o">.</span><span class="n">open</span><span class="p">()</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">more_metadata</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
@@ -3803,7 +3803,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">write_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dir_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">dir_path</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">_META_NAME</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span>
-                <span class="n">exclude</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;current_roi&quot;</span><span class="p">,</span> <span class="s2">&quot;rois&quot;</span><span class="p">,</span> <span class="s2">&quot;labels&quot;</span><span class="p">,</span> <span class="s2">&quot;more_metadata&quot;</span><span class="p">}</span>
+                <span class="n">exclude</span><span class="o">=</span><span class="p">{</span><span class="s2">"current_roi"</span><span class="p">,</span> <span class="s2">"rois"</span><span class="p">,</span> <span class="s2">"labels"</span><span class="p">,</span> <span class="s2">"more_metadata"</span><span class="p">}</span>
             <span class="p">)</span>
         <span class="p">)</span>
         <span class="n">rois</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unwrap_rois</span><span class="p">()</span>
@@ -3818,7 +3818,7 @@
                 <span class="n">dir_path</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">_MORE_META</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">more_metadata</span><span class="p">))</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Failed to save `more_metadata`: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">"Failed to save `more_metadata`: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
                     <span class="ne">UserWarning</span><span class="p">,</span>
                     <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
                 <span class="p">)</span>
@@ -3918,21 +3918,21 @@
 <span class="normal">275</span>
 <span class="normal">276</span>
 <span class="normal">277</span>
-<span class="normal">278</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_one_axis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ImageMeta&quot;</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Drop an axis by index for the array slicing arr[..., value, ...].&quot;&quot;&quot;</span>
+<span class="normal">278</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_one_axis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ImageMeta"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Drop an axis by index for the array slicing arr[..., value, ...]."""</span>
     <span class="k">if</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">index</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">index</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid axis index: </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Invalid axis index: </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
     <span class="n">axes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="k">del</span> <span class="n">axes</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
-    <span class="n">update</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;axes&quot;</span><span class="p">:</span> <span class="n">axes</span><span class="p">,</span> <span class="s2">&quot;rois&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">unwrap_rois</span><span class="p">()</span><span class="o">.</span><span class="n">take_axis</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">value</span><span class="p">)}</span>
+    <span class="n">update</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"axes"</span><span class="p">:</span> <span class="n">axes</span><span class="p">,</span> <span class="s2">"rois"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">unwrap_rois</span><span class="p">()</span><span class="o">.</span><span class="n">take_axis</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">value</span><span class="p">)}</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">caxis</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel_axis</span><span class="p">)</span> <span class="o">==</span> <span class="n">index</span><span class="p">:</span>
-        <span class="n">update</span><span class="p">[</span><span class="s2">&quot;channels&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">[</span><span class="n">value</span><span class="p">]]</span>
-        <span class="n">update</span><span class="p">[</span><span class="s2">&quot;channel_axis&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">update</span><span class="p">[</span><span class="s2">&quot;is_rgb&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">update</span><span class="p">[</span><span class="s2">"channels"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">[</span><span class="n">value</span><span class="p">]]</span>
+        <span class="n">update</span><span class="p">[</span><span class="s2">"channel_axis"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">update</span><span class="p">[</span><span class="s2">"is_rgb"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="k">elif</span> <span class="n">caxis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">update</span><span class="p">[</span><span class="s2">&quot;channel_axis&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">caxis</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">caxis</span> <span class="o">&gt;</span> <span class="n">index</span> <span class="k">else</span> <span class="n">caxis</span>
+        <span class="n">update</span><span class="p">[</span><span class="s2">"channel_axis"</span><span class="p">]</span> <span class="o">=</span> <span class="n">caxis</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">caxis</span> <span class="o">&gt;</span> <span class="n">index</span> <span class="k">else</span> <span class="n">caxis</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -3962,7 +3962,7 @@
 <span class="normal">292</span>
 <span class="normal">293</span>
 <span class="normal">294</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">unwrap_rois</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiListModel</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Unwrap the lazy-evaluation of the ROIs.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Unwrap the lazy-evaluation of the ROIs."""</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rois</span><span class="p">,</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiListModel</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rois</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">rois</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rois</span><span class="p">()</span>
@@ -3996,13 +3996,13 @@
 <span class="normal">284</span>
 <span class="normal">285</span>
 <span class="normal">286</span>
-<span class="normal">287</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">with_current_roi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">roi</span><span class="p">:</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ImageMeta&quot;</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Set the current ROI.&quot;&quot;&quot;</span>
-    <span class="n">update</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;current_roi&quot;</span><span class="p">:</span> <span class="n">roi</span><span class="p">}</span>
+<span class="normal">287</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">with_current_roi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">roi</span><span class="p">:</span> <span class="n">roi</span><span class="o">.</span><span class="n">RoiModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ImageMeta"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Set the current ROI."""</span>
+    <span class="n">update</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"current_roi"</span><span class="p">:</span> <span class="n">roi</span><span class="p">}</span>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_roi_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">rois</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unwrap_rois</span><span class="p">()</span>
         <span class="n">rois</span><span class="o">.</span><span class="n">items</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">current_roi_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">roi</span>
-        <span class="n">update</span><span class="p">[</span><span class="s2">&quot;rois&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rois</span>
+        <span class="n">update</span><span class="p">[</span><span class="s2">"rois"</span><span class="p">]</span> <span class="o">=</span> <span class="n">rois</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -4098,11 +4098,11 @@
 <span class="normal">221</span>
 <span class="normal">222</span>
 <span class="normal">223</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ImagePlaySetting</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Settings for playing image sequences.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Settings for playing image sequences."""</span>
 
-    <span class="n">interval</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Interval between frames in seconds.&quot;</span><span class="p">)</span>
-    <span class="n">mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;once&quot;</span><span class="p">,</span> <span class="s2">&quot;loop&quot;</span><span class="p">,</span> <span class="s2">&quot;pingpong&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="s2">&quot;loop&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Playback mode.&quot;</span>
+    <span class="n">interval</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Interval between frames in seconds."</span><span class="p">)</span>
+    <span class="n">mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"once"</span><span class="p">,</span> <span class="s2">"loop"</span><span class="p">,</span> <span class="s2">"pingpong"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">"loop"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Playback mode."</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
@@ -4210,9 +4210,9 @@ The argument must be an iterable if specified.</p>
 <span class="normal">393</span>
 <span class="normal">394</span>
 <span class="normal">395</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ImageRoisMeta</span><span class="p">(</span><span class="n">ListMeta</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Preset for describing an image-rois metadata.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Preset for describing an image-rois metadata."""</span>
 
-    <span class="n">axes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DimAxis</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Axes of the ROIs.&quot;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DimAxis</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Axes of the ROIs."</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">expected_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">StandardType</span><span class="o">.</span><span class="n">ROIS</span>
@@ -4303,7 +4303,7 @@ The argument must be an iterable if specified.</p>
 <span class="normal">384</span>
 <span class="normal">385</span>
 <span class="normal">386</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ListMeta</span><span class="p">(</span><span class="n">BaseMetadata</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Preset for describing a metadata for a list-like object.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Preset for describing a metadata for a list-like object."""</span>
 
     <span class="n">selections</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
@@ -4434,17 +4434,17 @@ The argument must be an iterable if specified.</p>
 <span class="normal">54</span>
 <span class="normal">55</span>
 <span class="normal">56</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">TableMeta</span><span class="p">(</span><span class="n">BaseMetadata</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Preset for describing the metadata for a &quot;table&quot; type.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Preset for describing the metadata for a "table" type."""</span>
 
     <span class="n">current_position</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Current index position of (row, column) in the table.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Current index position of (row, column) in the table."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">selections</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Table selections in the format of ((row_start, row_end), (col_start, col_end)), where the end index is exclusive, as is always the case for the Python indexing.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Table selections in the format of ((row_start, row_end), (col_start, col_end)), where the end index is exclusive, as is always the case for the Python indexing."</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">separator</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Separator of the table.&quot;</span><span class="p">)</span>
+    <span class="n">separator</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Separator of the table."</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">expected_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">StandardType</span><span class="o">.</span><span class="n">TABLE</span>
@@ -4621,14 +4621,14 @@ The argument must be an iterable if specified.</p>
 <span class="normal">37</span>
 <span class="normal">38</span>
 <span class="normal">39</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">TextMeta</span><span class="p">(</span><span class="n">BaseMetadata</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Preset for describing the metadata for a &quot;text&quot; type.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Preset for describing the metadata for a "text" type."""</span>
 
-    <span class="n">language</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Language of the text file.&quot;</span><span class="p">)</span>
-    <span class="n">spaces</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Number of spaces for indentation.&quot;</span><span class="p">)</span>
-    <span class="n">selection</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Selection range.&quot;</span><span class="p">)</span>
-    <span class="n">font_family</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Font family.&quot;</span><span class="p">)</span>
-    <span class="n">font_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Font size.&quot;</span><span class="p">)</span>
-    <span class="n">encoding</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Encoding of the text file.&quot;</span><span class="p">)</span>
+    <span class="n">language</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Language of the text file."</span><span class="p">)</span>
+    <span class="n">spaces</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Number of spaces for indentation."</span><span class="p">)</span>
+    <span class="n">selection</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Selection range."</span><span class="p">)</span>
+    <span class="n">font_family</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Font family."</span><span class="p">)</span>
+    <span class="n">font_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Font size."</span><span class="p">)</span>
+    <span class="n">encoding</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Encoding of the text file."</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">expected_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">StandardType</span><span class="o">.</span><span class="n">TEXT</span>

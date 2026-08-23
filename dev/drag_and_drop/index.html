@@ -1424,7 +1424,7 @@ item. The way you register a command is exactly the same as <a href="../register
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">himena</span><span class="w"> </span><span class="kn">import</span> <span class="n">WidgetDataModel</span><span class="p">,</span> <span class="n">Parametric</span><span class="p">,</span> <span class="n">StandardType</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">himena.plugins</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_hidden_function</span>
 
-<span class="nd">@register_hidden_function</span><span class="p">(</span><span class="n">command_id</span><span class="o">=</span><span class="s2">&quot;test-drag&quot;</span><span class="p">)</span>
+<span class="nd">@register_hidden_function</span><span class="p">(</span><span class="n">command_id</span><span class="o">=</span><span class="s2">"test-drag"</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">test_drag</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Parametric</span><span class="p">:</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WidgetDataModel</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">WidgetDataModel</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">StandardType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">)</span>
@@ -1453,9 +1453,9 @@ while holding the right button.</p>
             <span class="n">drag_command</span><span class="p">(</span>
                 <span class="n">source</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
                 <span class="nb">type</span><span class="o">=</span><span class="n">StandardType</span><span class="o">.</span><span class="n">TEXT</span><span class="p">,</span>
-                <span class="n">command_id</span><span class="o">=</span><span class="s2">&quot;test-drag&quot;</span><span class="p">,</span>
-                <span class="n">with_params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="s2">&quot;TEST DRAG&quot;</span><span class="p">},</span>
-                <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Testing Drag ...&quot;</span><span class="p">,</span>
+                <span class="n">command_id</span><span class="o">=</span><span class="s2">"test-drag"</span><span class="p">,</span>
+                <span class="n">with_params</span><span class="o">=</span><span class="p">{</span><span class="s2">"text"</span><span class="p">:</span> <span class="s2">"TEST DRAG"</span><span class="p">},</span>
+                <span class="n">desc</span><span class="o">=</span><span class="s2">"Testing Drag ..."</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="k">return</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">mouseMoveEvent</span><span class="p">(</span><span class="n">a0</span><span class="p">)</span>
