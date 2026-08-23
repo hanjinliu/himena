@@ -4,9 +4,7 @@ import pytest
 from pytestqt.qtbot import QtBot
 from himena import MainWindow
 from qtpy.QtCore import Qt
-from qtpy import QT5
 
-@pytest.mark.skipif(QT5, reason="Qt5 does not implement QtPdfWidgets.")
 def test_pdf_viewer(himena_ui: MainWindow, qtbot: QtBot, sample_dir: Path):
     from himena_builtins.qt.widgets.pdf import QPdfViewer
 
@@ -19,7 +17,6 @@ def test_pdf_viewer(himena_ui: MainWindow, qtbot: QtBot, sample_dir: Path):
     qtbot.keyClick(widget, Qt.Key.Key_Plus)
     qtbot.keyClick(widget, Qt.Key.Key_Minus)
 
-@pytest.mark.skipif(QT5, reason="Qt5 does not implement QtPdfWidgets.")
 @pytest.mark.skipif(sys.platform == "win32", reason="Ghostscript is not available")
 def test_read_eps(himena_ui: MainWindow, qtbot: QtBot, sample_dir: Path):
     himena_ui.read_file(sample_dir / "eps.eps")
