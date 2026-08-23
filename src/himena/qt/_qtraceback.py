@@ -114,28 +114,17 @@ class QtErrorMessageBox(QtW.QWidget):
         self = cls(text, e, parent)
 
         # prepare buttons specific to Exception
-        footer = QtW.QWidget()
-        layout = QtW.QHBoxLayout(footer)
-        layout.setContentsMargins(0, 0, 0, 0)
-
-        traceback_button = QtW.QPushButton("Trackback", self)
-        enter_debugger_button = QtW.QPushButton("Debug", self)
-        traceback_button.setFixedHeight(20)
-        enter_debugger_button.setFixedHeight(20)
-
-        traceback_button.clicked.connect(self._traceback_button_clicked)
-        enter_debugger_button.clicked.connect(self._enter_debugger_button_clicked)
-
-        layout.addWidget(traceback_button)
-        layout.addWidget(enter_debugger_button)
-        layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        self.layout().addWidget(footer)
+        self.layout().addWidget(self._make_footer())
         return self
 
     @classmethod
     def from_warning(cls, w: WarningMessage, parent: QMainWindow):
+        """Construct message box from a warning."""
         if isinstance(w.message, Warning):
-            text = str(w.message)
+            detail = f"{w.filename}:{w.lineno}: {w.category.__name__}"
+            if w.line:
+                detail += f"\n    {w.line.strip()}"
+            text = f"{w.message}\n\n{detail}"
             exc = w.message
         else:
             text = w.message
@@ -162,6 +151,24 @@ class QtErrorMessageBox(QtW.QWidget):
         else:
             tb = get_tb_formatter()(self._exc_info(), as_html=True, is_dark=is_dark)
         return tb
+
+    def _make_footer(self):
+        footer = QtW.QWidget()
+        layout = QtW.QHBoxLayout(footer)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        traceback_button = QtW.QPushButton("Trackback", self)
+        enter_debugger_button = QtW.QPushButton("Debug", self)
+        traceback_button.setFixedHeight(20)
+        enter_debugger_button.setFixedHeight(20)
+
+        traceback_button.clicked.connect(self._traceback_button_clicked)
+        enter_debugger_button.clicked.connect(self._enter_debugger_button_clicked)
+
+        layout.addWidget(traceback_button)
+        layout.addWidget(enter_debugger_button)
+        layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        return footer
 
 
 # Following functions are mostly copied from napari (BSD 3-Clause).
