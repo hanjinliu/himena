@@ -81,10 +81,7 @@ class QtEventLoopHandler(EventLoopHandler["QApplication"]):
     def create_application(self) -> QApplication:
         from qtpy.QtCore import Qt
         from qtpy.QtWidgets import QApplication
-        from qtpy import QT6
 
-        if not QT6:
-            QApplication.setAttribute(Qt.ApplicationAttribute.AA_EnableHighDpiScaling)
         QApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
         return QApplication([])
 
