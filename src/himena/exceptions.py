@@ -21,9 +21,9 @@ class NotExecutable(RuntimeError):
     """Exception raised when the workflow cannot be executed."""
 
 
-__SYS_EXCEPTHOOK = sys.excepthook
-__SHOW_WARNING = warnings.showwarning
-__THREAD_EXCEPTHOOK = threading.excepthook
+_SYS_EXCEPTHOOK = sys.excepthook
+_SHOW_WARNING = warnings.showwarning
+_THREAD_EXCEPTHOOK = threading.excepthook
 
 
 class ExceptionHandler:
@@ -45,10 +45,10 @@ class ExceptionHandler:
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
-        sys.excepthook = __SYS_EXCEPTHOOK
-        threading.excepthook = __THREAD_EXCEPTHOOK
+        sys.excepthook = _SYS_EXCEPTHOOK
+        threading.excepthook = _THREAD_EXCEPTHOOK
         if self._warning_hook is not None:
-            warnings.showwarning = __SHOW_WARNING
+            warnings.showwarning = _SHOW_WARNING
 
     def show_warning(self, message, category, filename, lineno, file=None, line=None):
         """Handle warnings."""
