@@ -638,6 +638,29 @@ def test_dock_closed_callback(himena_ui: MainWindowQt, qtbot: QtBot):
     qdock._titlebar._close_button.click()
     assert mock.call_count == 1
 
+def test_dock_widget_floating(himena_ui: MainWindowQt):
+    from qtpy.QtCore import Qt
+    from qtpy import QtGui
+    from magicgui.widgets import Label
+    from himena.qt._qdock_widget import QDockWidget
+
+    dock = himena_ui.add_dock_widget(Label(value="Test"))
+    qdock = dock.widget.native.parentWidget()
+    assert isinstance(qdock, QDockWidget)
+    qdock.setFloating(True)
+    assert qdock.isFloating()
+    # floating dock widget must be a normal window, not a Qt.Tool window, so that
+    # it works even under SSH X11 forwarding.
+    flags = qdock.windowFlags()
+    assert (flags & Qt.WindowType.WindowType_Mask) == Qt.WindowType.Window
+    assert flags & Qt.WindowType.FramelessWindowHint  # but stays frameless
+    # the floating dock widget is frameless, thus the border must be painted
+    qdock.setProperty("borderColor", QtGui.QColor("red"))
+    qdock.resize(100, 60)
+    assert qdock.grab().toImage().pixelColor(0, 0).name() == "#ff0000"
+    qdock.setFloating(False)
+    assert not qdock.isFloating()
+
 def test_builtin_clipboard_readers():
     from himena_builtins import io as builtin_io
 

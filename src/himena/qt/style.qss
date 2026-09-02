@@ -685,11 +685,6 @@ QSubWindowTitleBar[isCurrent=true] {
     background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #[highlight_strong], stop:1 #[background_dim]);
 }
 
-QTitleBarToolButton:hover {
-    border: 1px solid #[highlight_dim];
-    border-radius: 3px;
-}
-
 QCommandLabel:hover {
     background-color: #[highlight_dim];
     color: #[foreground];
@@ -713,6 +708,11 @@ QToggleSwitch {
     qproperty-handleColor: #[background_dim];
 }
 
+QTitleBarToolButton:hover {
+    border: 1px solid #[highlight_dim];
+    border-radius: 3px;
+}
+
 QTitleBarToolButton {
     background-color: transparent;
 }
@@ -721,6 +721,10 @@ QWidgetTitleBarFrame {
     border: 0px;
     border-bottom: 1px solid #[foreground_dim];
     background-color: none;
+}
+
+QDockWidget {
+    qproperty-borderColor: #[foreground_dim];
 }
 
 QCloseTabToolButton {
