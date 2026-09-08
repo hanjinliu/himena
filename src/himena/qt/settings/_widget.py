@@ -11,6 +11,7 @@ from himena.qt.settings._plugins import QPluginListEditor
 from himena.qt.settings._startup_commands import QStartupCommandsPanel
 from himena.qt.settings._configs import QPluginConfigs
 from himena.qt.settings._keybind_edit import QKeybindEdit
+from himena.qt.settings._warning_filters import QWarningFilterPanel
 
 if TYPE_CHECKING:
     from himena.widgets import MainWindow
@@ -75,6 +76,7 @@ class QSettingsDialog(QtW.QDialog):
         self.addPanel(
             "Configurations", "Plugin Configurations", QPluginConfigs(self._ui)
         )
+        self.addPanel("Warnings", "Warning Filters", QWarningFilterPanel(self._ui))
 
     def _open_json(self):
         self._ui.read_file(self._ui.app_profile.profile_path())

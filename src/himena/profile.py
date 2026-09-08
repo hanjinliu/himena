@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 import json
 from pathlib import Path
+import re
 from typing import Any, Iterable
 import warnings
 from platformdirs import user_data_dir
@@ -99,6 +100,62 @@ class KeyBindingOverride(BaseModel):
         return self.key.replace(", ", " ")
 
 
+class WarningFilter(BaseModel):
+    """Filter that determines whether a warning is shown in the GUI."""
+
+    category: str = Field(
+        default="",
+        description="Name of the warning category, such as `DeprecationWarning` or "
+        "the fully qualified name `numpy.exceptions.VisibleDeprecationWarning`. "
+        "Subclasses of the category also match. An empty string matches any category.",
+    )
+    message: str = Field(
+        default="",
+        description="Regular expression searched in the warning message. An empty "
+        "string matches any message.",
+    )
+    module: str = Field(
+        default="",
+        description="Regular expression searched in the path of the file that raised "
+        "the warning. An empty string matches any file.",
+    )
+
+    def matches(self, warning: warnings.WarningMessage) -> bool:
+        """True if the given warning matches this filter."""
+        return (
+            self._matches_category(warning.category)
+            and _regex_search(self.message, str(warning.message))
+            and _regex_search(self.module, _norm_path(warning.filename))
+        )
+
+    def _matches_category(self, category: Any) -> bool:
+        if not self.category:
+            return True
+        if not (isinstance(category, type) and issubclass(category, Warning)):
+            return False
+        for cls in category.__mro__:
+            if not issubclass(cls, Warning):
+                continue  # BaseException, Exception and object
+            if self.category in (cls.__name__, f"{cls.__module__}.{cls.__qualname__}"):
+                return True
+        return False
+
+
+def _regex_search(pattern: str, text: str) -> bool:
+    """True if `pattern` is empty or is found in `text`."""
+    if not pattern:
+        return True
+    try:
+        return re.search(pattern, text) is not None
+    except re.error:
+        # An invalid regular expression should not break the notification.
+        return False
+
+
+def _norm_path(path: Any) -> str:
+    return str(path).replace("\\", "/")
+
+
 class AppProfile(BaseModel):
     """Model of a profile."""
 
@@ -122,6 +179,10 @@ class AppProfile(BaseModel):
     )
     keybinding_overrides: list[KeyBindingOverride] = Field(default_factory=list)
     plugin_configs: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    warning_filters: list[WarningFilter] = Field(
+        default_factory=list,
+        description="Filters that determine which warnings are shown in the GUI.",
+    )
 
     @classmethod
     def from_json(cls, path) -> "AppProfile":
@@ -170,6 +231,21 @@ class AppProfile(BaseModel):
     def with_plugin_configs(self, configs: dict[str, dict[str, Any]]) -> "AppProfile":
         """Return a new profile with new plugin configs."""
         return self.model_copy(update={"plugin_configs": configs})
+
+    def with_warning_filters(self, filters: list[WarningFilter]) -> "AppProfile":
+        """Return a new profile with new warning filters."""
+        return self.model_copy(update={"warning_filters": list(filters)})
+
+    def is_warning_filtered(self, warning: warnings.WarningMessage) -> bool:
+        """True if the warning should not be shown in the GUI.
+
+        Filters are checked in order and the first matched one determines the result,
+        just like the filters of the built-in `warnings` module.
+        """
+        for filt in self.warning_filters:
+            if filt.matches(warning):
+                return True
+        return False
 
     def with_keybinding_override(self, key: str, command_id: str) -> "AppProfile":
         """Return a new profile with new keybind overrides."""
