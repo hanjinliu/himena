@@ -1099,8 +1099,9 @@ class MainWindow(Generic[_W]):
 
         Parameters
         ----------
-        function : callable
-            Function that generates a WidgetDataModel from the input parameters.
+        function_or_types : dict or callable
+            Function signature or function that generates a WidgetDataModel from the
+            input parameters.
         title : str
             Window title of the dialog.
         message : str, optional

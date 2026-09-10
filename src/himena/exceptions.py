@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import suppress
 import sys
 from typing import Any, Callable, TYPE_CHECKING
 import warnings
@@ -54,3 +55,16 @@ class ExceptionHandler:
         """Handle warnings."""
         msg = warnings.WarningMessage(message, category, filename, lineno, file, line)
         self._warning_hook(msg)
+
+
+def default_show_warning(warning: warnings.WarningMessage) -> None:
+    """Show a warning using the default `warnings.showwarning` (usually stderr)."""
+    with suppress(Exception):
+        _SHOW_WARNING(
+            warning.message,
+            warning.category,
+            warning.filename,
+            warning.lineno,
+            warning.file,
+            warning.line,
+        )
