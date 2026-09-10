@@ -261,10 +261,15 @@ def test_setting_dialog_contents(himena_ui: MainWindowQt, qtbot: QtBot):
     keybind_edit._restore_default_btn.click()
 
 def test_alias_command_keybindings(himena_ui: MainWindowQt, qtbot: QtBot):
+    from app_model.types import KeyBinding
     from himena.qt.settings._keybind_edit import QKeybindEdit, H
     from himena.plugins.install import override_keybindings
 
     app = himena_ui.model_app
+    # NOTE: the text representation is platform dependent (e.g. "Ctrl+Alt+L" is
+    # displayed as "Control+Option+L" on macOS), so keybindings must be compared
+    # after being normalized by app_model.
+    new_keybinding = KeyBinding.from_str("Ctrl+Alt+L")
     aliases = list(app.iter_command_aliases("builtins:plot:line"))
     assert len(aliases) > 0
 
@@ -287,10 +292,10 @@ def test_alias_command_keybindings(himena_ui: MainWindowQt, qtbot: QtBot):
 
     # updating the keybinding must update the aliases as well
     row = ids.index("builtins:plot:line")
-    table.item(row, H.KEYBINDING).setText("Ctrl+Alt+L")
+    table.item(row, H.KEYBINDING).setText(new_keybinding.to_text())
     for cmd_id in ["builtins:plot:line", *aliases]:
         kbd = app.keybindings.get_keybinding(cmd_id)
-        assert kbd is not None and kbd.keybinding.to_text() == "Ctrl+Alt+L"
+        assert kbd is not None and kbd.keybinding.to_int() == new_keybinding.to_int()
 
     # only the original command ID is stored in the profile ...
     overrides = himena_ui.app_profile.keybinding_overrides
@@ -301,7 +306,7 @@ def test_alias_command_keybindings(himena_ui: MainWindowQt, qtbot: QtBot):
     override_keybindings(app, himena_ui.app_profile)
     for cmd_id in ["builtins:plot:line", *aliases]:
         kbd = app.keybindings.get_keybinding(cmd_id)
-        assert kbd is not None and kbd.keybinding.to_text() == "Ctrl+Alt+L"
+        assert kbd is not None and kbd.keybinding.to_int() == new_keybinding.to_int()
 
     keybind_edit._restore_default_btn.click()
     assert himena_ui.app_profile.keybinding_overrides == []
