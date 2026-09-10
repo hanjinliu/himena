@@ -9,6 +9,7 @@ from himena.types import WidgetDataModel, FutureInfo, WindowRect
 if TYPE_CHECKING:
     from himena import MainWindow
     from concurrent.futures import Future
+    from typing import Iterator
 
 
 def get_model_app(name: str) -> HimenaApplication:
@@ -28,8 +29,20 @@ class HimenaApplication(Application):
             raise_synchronous_exceptions=True,
         )
         self._dynamic_command_ids: set[str] = set()
+        # Maps an alias command ID to the command ID it is an alias of.
+        self._command_aliases: dict[str, str] = {}
         self._futures: set[Future] = set()
         self._attributes: dict[str, object] = {}
+
+    def iter_command_aliases(self, command_id: str) -> Iterator[str]:
+        """Yield all the command IDs that are aliases of the given command."""
+        for alias_id, orig_id in self._command_aliases.items():
+            if orig_id == command_id:
+                yield alias_id
+
+    def command_id_and_aliases(self, command_id: str) -> list[str]:
+        """The given command ID followed by all of its alias command IDs."""
+        return [command_id, *self.iter_command_aliases(command_id)]
 
     @property
     def attributes(self) -> dict[str, object]:
