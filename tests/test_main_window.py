@@ -308,6 +308,76 @@ def test_alias_command_keybindings(himena_ui: MainWindowQt, qtbot: QtBot):
     for cmd_id in ["builtins:plot:line", *aliases]:
         assert app.keybindings.get_keybinding(cmd_id) is None
 
+def test_warning_filter_matching():
+    from himena.profile import AppProfile, WarningFilter
+
+    def _warning(message, category, filename):
+        return warnings.WarningMessage(message, category, filename, 10)
+
+    dep = _warning("old api", DeprecationWarning, "/path/to/my_plugin/core.py")
+    user = _warning("something", UserWarning, "/path/to/my_plugin/core.py")
+    other = _warning("old api", DeprecationWarning, "/path/to/other/core.py")
+
+    prof = AppProfile.default().with_warning_filters(
+        [WarningFilter(category="DeprecationWarning", module="my_plugin")]
+    )
+    assert prof.is_warning_filtered(dep)
+    assert not prof.is_warning_filtered(user)  # category does not match
+    assert not prof.is_warning_filtered(other)  # module does not match
+
+    # subclasses of the category also match, and the message is a regular expression
+    class MyDeprecationWarning(DeprecationWarning):
+        pass
+
+    prof = AppProfile.default().with_warning_filters(
+        [WarningFilter(category="DeprecationWarning", message="^old")]
+    )
+    assert prof.is_warning_filtered(_warning("old api", MyDeprecationWarning, "a.py"))
+    assert not prof.is_warning_filtered(_warning("new api", DeprecationWarning, "a.py"))
+
+    # invalid regular expressions never match
+    prof = AppProfile.default().with_warning_filters([WarningFilter(message="(")])
+    assert not prof.is_warning_filtered(dep)
+
+def test_warning_filter_panel(himena_ui: MainWindowQt, qtbot: QtBot):
+    from himena.profile import WarningFilter
+    from himena.qt.settings._warning_filters import QWarningFilterPanel, H
+
+    panel = QWarningFilterPanel(himena_ui)
+    qtbot.addWidget(panel)
+    assert not panel._apply_button.isEnabled()
+    panel._add_filter()
+    assert panel._apply_button.isEnabled()
+    table = panel._table
+    table._category_combo(0).setCurrentText("DeprecationWarning")
+    table.item(0, H.MODULE).setText("my_plugin")
+    panel._apply_changes()
+    assert himena_ui.app_profile.warning_filters == [
+        WarningFilter(action="ignore", category="DeprecationWarning", module="my_plugin")
+    ]
+    assert not panel._apply_button.isEnabled()
+
+    # the warning is not shown as a notification anymore
+    qmain = himena_ui._backend_main_window
+    qmain._on_warning(
+        warnings.WarningMessage(
+            "old api", DeprecationWarning, "/path/to/my_plugin/core.py", 10
+        )
+    )
+
+    # invalid regular expression should not be saved
+    table.item(0, H.MESSAGE).setText("(")
+    panel._apply_changes()
+    assert "Invalid regular expression" in panel._msg_label.text()
+    assert himena_ui.app_profile.warning_filters[0].message == ""
+
+    # a filter can be removed
+    table.item(0, H.MESSAGE).setText("")
+    table.selectRow(0)
+    panel._remove_selected_filters()
+    panel._apply_changes()
+    assert himena_ui.app_profile.warning_filters == []
+
 def test_notification(himena_ui: MainWindowQt):
     from himena.qt._qnotification import QNotificationWidget
 

@@ -25,6 +25,7 @@ from superqt import QIconifyIcon
 from superqt.utils import ensure_main_thread, WorkerBase
 from himena.consts import MenuId
 from himena.consts import ParametricWidgetProtocolNames as PWPN
+from himena.exceptions import default_show_warning
 from himena.qt._qtitlebar import QTitleBarToolButton, QWidgetTitleBar
 from himena.utils.window_rect import prevent_window_overlap
 from himena.utils.app import iter_root_menu_ids
@@ -211,6 +212,10 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _on_warning(self, warning: warnings.WarningMessage) -> None:
         from himena.qt._qtraceback import QtErrorMessageBox
 
+        if self._himena_main_window.app_profile.is_warning_filtered(warning):
+            # This warning is filtered out in the app profile. Just send it to the
+            # default handler so that it is not completely lost.
+            return default_show_warning(warning)
         mbox = QtErrorMessageBox.from_warning(warning, parent=self)
         notification = QNotificationWidget(self)
         notification.set_content("Warning", mbox)
