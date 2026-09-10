@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -29,7 +29,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -557,6 +557,17 @@
     <span class="md-ellipsis">
       
         Keyboard Shortcuts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#warning-filters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Warning Filters
       
     </span>
   </a>
@@ -1340,6 +1351,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#warning-filters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Warning Filters
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#plugin-settings" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1382,6 +1404,22 @@ appearance tab in the setting dialog.</p>
 <h2 id="keyboard-shortcuts">Keyboard Shortcuts</h2>
 <p>You can customize keyboard shortcuts for various actions registered in the application.</p>
 <p><img alt="" loading="lazy" src="../../images/02_keyboard_shortcuts.gif" width="600px" /></p>
+<h2 id="warning-filters">Warning Filters</h2>
+<p>Warnings raised during the application execution are shown as a notification popup.
+In the warnings tab of the setting dialog, you can define which warnings should be
+hidden in the current profile.</p>
+<p>Each filter has three fields.</p>
+<ul>
+<li><strong>Category</strong> ... name of the warning category, such as <code>DeprecationWarning</code>.</li>
+<li><strong>Message</strong> ... regular expression searched in the warning message.</li>
+<li><strong>Module</strong> ... regular expression searched in the path of the file that raised the
+  warning, such as <code>skimage</code>.</li>
+</ul>
+<p>Empty fields match anything. Filters are checked from the top and the first matched one
+determines the result. Filtered warnings are not shown as a notification popup, but are
+still sent to the standard error.</p>
+<p>Because filters are stored in the profile, a profile in which a specific module is
+installed can silence the warnings raised by that module only.</p>
 <h2 id="plugin-settings">Plugin Settings</h2>
 <p>Many settings that are not directly relevant to the data itself (such as the table cell
 size, default SSH host name, etc.) can be configured from the plugin settings tab.</p>
@@ -1482,7 +1520,7 @@ size, default SSH host name, etc.) can be configured from the plugin settings ta
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.annotate", "navigation.sections", "navigation.indexes", "navigation.footer", "toc.follow", "search.suggest", "search.share"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
         <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
       
