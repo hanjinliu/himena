@@ -260,6 +260,59 @@ def test_setting_dialog_contents(himena_ui: MainWindowQt, qtbot: QtBot):
     keybind_edit._table._update_keybinding(0, 1)
     keybind_edit._restore_default_btn.click()
 
+def test_alias_command_keybindings(himena_ui: MainWindowQt, qtbot: QtBot):
+    from app_model.types import KeyBinding
+    from himena.qt.settings._keybind_edit import QKeybindEdit, H
+    from himena.plugins.install import override_keybindings
+
+    app = himena_ui.model_app
+    # NOTE: the text representation is platform dependent (e.g. "Ctrl+Alt+L" is
+    # displayed as "Control+Option+L" on macOS), so keybindings must be compared
+    # after being normalized by app_model.
+    new_keybinding = KeyBinding.from_str("Ctrl+Alt+L")
+    aliases = list(app.iter_command_aliases("builtins:plot:line"))
+    assert len(aliases) > 0
+
+    # alias commands should not be in the command palette
+    palette_ids = {
+        item.command.id
+        for item in app.menus.get_menu(app.menus.COMMAND_PALETTE_ID)
+        if hasattr(item, "command")
+    }
+    assert "builtins:plot:line" in palette_ids
+    assert palette_ids.isdisjoint(aliases)
+
+    keybind_edit = QKeybindEdit(himena_ui)
+    qtbot.addWidget(keybind_edit)
+    table = keybind_edit._table
+    ids = [table.item(r, H.COMMAND_ID).text() for r in range(table.rowCount())]
+    # alias commands should be listed only once, as the original command
+    assert "builtins:plot:line" in ids
+    assert set(ids).isdisjoint(aliases)
+
+    # updating the keybinding must update the aliases as well
+    row = ids.index("builtins:plot:line")
+    table.item(row, H.KEYBINDING).setText(new_keybinding.to_text())
+    for cmd_id in ["builtins:plot:line", *aliases]:
+        kbd = app.keybindings.get_keybinding(cmd_id)
+        assert kbd is not None and kbd.keybinding.to_int() == new_keybinding.to_int()
+
+    # only the original command ID is stored in the profile ...
+    overrides = himena_ui.app_profile.keybinding_overrides
+    assert [ko.command_id for ko in overrides] == ["builtins:plot:line"]
+
+    # ... but it is restored for the alias commands on startup
+    app.keybindings._keymap.clear()
+    override_keybindings(app, himena_ui.app_profile)
+    for cmd_id in ["builtins:plot:line", *aliases]:
+        kbd = app.keybindings.get_keybinding(cmd_id)
+        assert kbd is not None and kbd.keybinding.to_int() == new_keybinding.to_int()
+
+    keybind_edit._restore_default_btn.click()
+    assert himena_ui.app_profile.keybinding_overrides == []
+    for cmd_id in ["builtins:plot:line", *aliases]:
+        assert app.keybindings.get_keybinding(cmd_id) is None
+
 def test_warning_filter_matching():
     from himena.profile import AppProfile, WarningFilter
 

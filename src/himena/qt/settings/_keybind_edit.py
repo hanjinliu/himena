@@ -59,11 +59,14 @@ class QKeybindEdit(QtW.QWidget):
         _LOGGER.info("Keybindings registered: %s -> %s", command_id, new_shortcut)
         self._table.update_table_from_model_app(self._ui.model_app)
         self._table.filter_by_text(self._search.text())  # re-filter
+        # NOTE: only the original command ID is stored in the profile. The keybindings
+        # of its aliases are restored from it on startup.
         self._ui.app_profile.with_keybinding_override(new_shortcut, command_id).save()
         _LOGGER.info("Keybinding override saved")
         qui = self._ui._backend_main_window
+        command_ids = set(self._ui.model_app.command_id_and_aliases(command_id))
         for qa in _iter_command_action(qui._menubar.actions() + qui._toolbar.actions()):
-            if qa._command_id == command_id:
+            if qa._command_id in command_ids:
                 parts = [
                     SimpleKeyBinding.from_str(part) for part in new_shortcut.split(", ")
                 ]
@@ -73,24 +76,30 @@ class QKeybindEdit(QtW.QWidget):
         _LOGGER.info("Restoring keybindings.")
         qui = self._ui._backend_main_window
         app = self._ui.model_app
-        for ko in self._ui.app_profile.keybinding_overrides:
-            keybind = app.keybindings.get_keybinding(ko.command_id)
-            if keybind:
-                app.keybindings._keymap.pop(keybind.keybinding.to_int(), -1)
-        self._ui.app_profile.keybinding_overrides.clear()
-        self._ui.app_profile.save()
+        prof = self._ui.app_profile
+        overridden: list[str] = []
+        for ko in prof.keybinding_overrides:
+            for command_id in app.command_id_and_aliases(ko.command_id):
+                keybind = app.keybindings.get_keybinding(command_id)
+                if keybind:
+                    app.keybindings._keymap.pop(keybind.keybinding.to_int(), -1)
+                overridden.append(command_id)
+        prof.keybinding_overrides.clear()
+        prof.save()
+        # re-register the default keybindings of the commands that were overridden
+        for command_id in overridden:
+            if action := app.registered_actions.get(command_id):
+                for kb in action.keybindings or []:
+                    if kb.primary:
+                        app.keybindings.register_keybinding_rule(
+                            action.id, KeyBindingRule(primary=kb.primary)
+                        )
         for qa in _iter_command_action(qui._menubar.actions() + qui._toolbar.actions()):
-            if action := self._ui.model_app.registered_actions.get(qa._command_id):
-                if action.keybindings:
-                    for kb in action.keybindings:
-                        if kb.primary:
-                            app.keybindings.register_keybinding_rule(
-                                action.id, KeyBindingRule(primary=kb.primary)
-                            )
-                            kb_obj = app.keybindings.get_keybinding(
-                                action.id
-                            ).keybinding
-                            qa.setShortcut(QKeyBindingSequence(kb_obj))
+            if action := app.registered_actions.get(qa._command_id):
+                if kb_registered := app.keybindings.get_keybinding(action.id):
+                    qa.setShortcut(QKeyBindingSequence(kb_registered.keybinding))
+                else:
+                    qa.setShortcut(QtGui.QKeySequence())
         self._table.update_table_from_model_app(self._ui.model_app)
         self._table.filter_by_text(self._search.text())  # re-filter
 
@@ -142,7 +151,9 @@ class QKeybindTable(QtW.QTableWidget):
         self.cellChanged.connect(self._update_keybinding)
 
     def update_table_from_model_app(self, app: HimenaApplication):
-        commands_to_skip = app._dynamic_command_ids
+        # Alias commands are duplicates of their original command, thus should not be
+        # listed here. Their keybindings are updated along with the original one.
+        commands_to_skip = app._dynamic_command_ids | app._command_aliases.keys()
         commands = sorted(
             (cmd[1] for cmd in app.commands if cmd[1].id not in commands_to_skip),
             key=lambda cmd: cmd.title,
@@ -261,15 +272,18 @@ class QKeybindTable(QtW.QTableWidget):
                 self._app.keybindings._keymap.pop(kbd_current.keybinding.to_int(), -1)
             if new_shortcut:
                 kb = KeyBindingRule(primary=new_shortcut.replace(", ", " "))
-                self._app.keybindings.register_keybinding_rule(command_id, kb)
+                # alias commands must share the keybinding with the original command
+                for cmd_id in self._app.command_id_and_aliases(command_id):
+                    self._app.keybindings.register_keybinding_rule(cmd_id, kb)
             self.keybinding_updated.emit(command_id, new_shortcut)
 
     def _get_confliction_command_ids(
         self, keybinding: str, except_for: str
     ) -> list[str]:
         conflictions: list[str] = []
+        ignored = set(self._app.command_id_and_aliases(except_for))
         for kbd in self._app.keybindings:
-            if kbd.command_id == except_for:
+            if kbd.command_id in ignored:
                 continue
             if kbd.keybinding.to_text() == keybinding:
                 # TODO: check "when" to avoid adding conflictions of independent

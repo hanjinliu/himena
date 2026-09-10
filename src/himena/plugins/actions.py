@@ -117,6 +117,10 @@ class AppActionRegistry:
     def __init__(self):
         self._actions: dict[str, Action] = {}
         self._actions_dynamic: set[str] = set()
+        # Maps an alias command ID to the command ID it is an alias of. Alias commands
+        # are the ones that do the exactly same thing as the original command but are
+        # registered under different menus.
+        self._command_aliases: dict[str, str] = {}
         self._submenu_titles: dict[str, str] = {
             MenuId.FILE_NEW: "New ...",
             MenuId.TOOLS_DOCK: "Dock widgets",
@@ -162,14 +166,34 @@ class AppActionRegistry:
         tip = random.choice(self._app_tips)
         return tip.clone()
 
-    def add_action(self, action: Action, is_dynamic: bool = False) -> None:
-        """Add an action to the registry."""
+    def add_action(
+        self,
+        action: Action,
+        is_dynamic: bool = False,
+        alias_of: str | None = None,
+    ) -> None:
+        """Add an action to the registry.
+
+        Parameters
+        ----------
+        action : Action
+            The action to be registered.
+        is_dynamic : bool, default False
+            If true, the action is considered dynamically created, thus will not be
+            listed in the keybinding editor.
+        alias_of : str, optional
+            If given, this action is an alias of the command of this ID. Alias commands
+            are hidden from the command palette and the keybinding editor, and their
+            keybindings always follow the original command.
+        """
         id_ = action.id
         if id_ in self._actions:
             raise ValueError(f"Action ID {id_} already exists.")
         self._actions[id_] = action
         if is_dynamic:
             self._actions_dynamic.add(id_)
+        if alias_of is not None:
+            self._command_aliases[id_] = alias_of
 
     @property
     def installed_plugins(self) -> list[str]:
@@ -249,6 +273,7 @@ class AppActionRegistry:
         app.register_actions(actions)
         app.menus.append_menu_items(to_add)
         app._dynamic_command_ids.update(self._actions_dynamic)
+        app._command_aliases.update(self._command_aliases)
         return new_menu_ids
 
 

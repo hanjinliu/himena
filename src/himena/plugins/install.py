@@ -115,10 +115,12 @@ def override_keybindings(app: HimenaApplication, prof: AppProfile) -> None:
     for ko in prof.keybinding_overrides:
         kb_int = KeyBinding.from_str(ko.to_normed_str()).to_int()
         app.keybindings._keymap.pop(kb_int, None)
-        app.keybindings.register_keybinding_rule(
-            ko.command_id,
-            KeyBindingRule(primary=ko.to_normed_str()),
-        )
+        # alias commands must share the keybinding with the original command
+        for command_id in app.command_id_and_aliases(ko.command_id):
+            app.keybindings.register_keybinding_rule(
+                command_id,
+                KeyBindingRule(primary=ko.to_normed_str()),
+            )
 
 
 @dataclass

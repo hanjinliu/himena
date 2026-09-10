@@ -44,7 +44,12 @@ class PlotFactory(ABC):
                 params = action_orig.model_dump()
                 params["id"] = new_id
                 params["menus"] = new_menus
-                reg.add_action(Action(**params))
+                # These actions only differ from the original one in the menus they
+                # belong to. Registering them as aliases keeps the command palette and
+                # the keybinding editor free of the duplicates, and makes their
+                # keybindings follow the original command.
+                params["palette"] = False
+                reg.add_action(Action(**params), alias_of=command_id)
             else:  # pragma: no cover
                 warnings.warn(
                     f"Original action {command_id} not found. This is an internal error.",
