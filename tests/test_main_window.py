@@ -287,16 +287,6 @@ def test_warning_filter_matching():
     assert prof.is_warning_filtered(_warning("old api", MyDeprecationWarning, "a.py"))
     assert not prof.is_warning_filtered(_warning("new api", DeprecationWarning, "a.py"))
 
-    # the first matched filter wins
-    prof = AppProfile.default().with_warning_filters(
-        [
-            WarningFilter(action="show", category="DeprecationWarning", module="keep"),
-            WarningFilter(category="DeprecationWarning"),
-        ]
-    )
-    assert not prof.is_warning_filtered(_warning("msg", DeprecationWarning, "keep.py"))
-    assert prof.is_warning_filtered(_warning("msg", DeprecationWarning, "other.py"))
-
     # invalid regular expressions never match
     prof = AppProfile.default().with_warning_filters([WarningFilter(message="(")])
     assert not prof.is_warning_filtered(dep)

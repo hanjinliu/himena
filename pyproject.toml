@@ -81,7 +81,7 @@ testing = [
 docs = [
   "mkdocs",
   "mkdocs-autorefs",
-  "mkdocs-material==9.7.1",
+  "mkdocs-material==9.7.7",
   "mkdocs-material-extensions",
   "mkdocstrings",
   "mkdocstrings-python",
