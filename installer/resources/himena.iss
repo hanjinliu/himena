@@ -26,13 +26,14 @@ LicenseFile=@LICENSE@
 OutputDir=@OUTPUT_DIR@
 OutputBaseFilename=@OUTPUT_NAME@
 SetupIconFile=@ICON@
-UninstallDisplayIcon={app}\himena.ico
+UninstallDisplayIcon={app}\himena.exe
 Compression=lzma2/max
 SolidCompression=yes
 LZMAUseSeparateProcess=yes
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 ChangesEnvironment=yes
+ChangesAssociations=yes
 WizardStyle=modern
 
 [Languages]
@@ -47,15 +48,24 @@ Name: "addtopath"; Description: "Add himena to the user PATH (enables the ""hime
 Source: "@STAGE_DIR@\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{group}\{#MyAppName}"; Filename: "{app}\python\pythonw.exe"; Parameters: "-m himena"; WorkingDir: "{app}"; IconFilename: "{app}\himena.ico"
+; himena.exe is a native launcher (installer/resources/launcher.c) that runs
+; the bundled pythonw.exe, so that Windows shows "himena" rather than "python".
+Name: "{group}\{#MyAppName}"; Filename: "{app}\himena.exe"; WorkingDir: "{app}"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\python\pythonw.exe"; Parameters: "-m himena"; WorkingDir: "{app}"; IconFilename: "{app}\himena.ico"; Tasks: desktopicon
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\himena.exe"; WorkingDir: "{app}"; Tasks: desktopicon
 
 [Registry]
 Root: HKCU; Subkey: "Environment"; ValueType: expandsz; ValueName: "Path"; ValueData: "{olddata};{app}\bin"; Tasks: addtopath; Check: NeedsAddPath(ExpandConstant('{app}\bin'))
+; App Paths: makes "himena" resolvable from Win+R and the Explorer address bar
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\App Paths\himena.exe"; ValueType: string; ValueName: ""; ValueData: "{app}\himena.exe"; Flags: uninsdeletekey
+; Register himena as an application for the "Open with" dialog (any extension)
+Root: HKCU; Subkey: "Software\Classes\Applications\himena.exe"; ValueType: string; ValueName: "FriendlyAppName"; ValueData: "{#MyAppName}"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\Applications\himena.exe\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\himena.exe,0"
+Root: HKCU; Subkey: "Software\Classes\Applications\himena.exe\shell\open"; ValueType: string; ValueName: "FriendlyAppName"; ValueData: "{#MyAppName}"
+Root: HKCU; Subkey: "Software\Classes\Applications\himena.exe\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\himena.exe"" ""%1"""
 
 [Run]
-Filename: "{app}\python\pythonw.exe"; Parameters: "-m himena"; WorkingDir: "{app}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\himena.exe"; WorkingDir: "{app}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
 ; plugins installed at runtime live inside the bundled python directory

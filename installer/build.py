@@ -326,12 +326,126 @@ def _write_executable(path: Path, content: str) -> None:
     path.chmod(path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
 
-def write_launchers_windows(stage: Path) -> None:
-    (stage / "bin").mkdir(exist_ok=True)
-    (stage / "bin" / "himena.cmd").write_text(
-        '@echo off\r\n"%~dp0..\\python\\python.exe" -m himena %*\r\n'
+def _find_vcvarsall() -> Path:
+    """Locate vcvarsall.bat of the newest Visual Studio (or Build Tools)."""
+    vswhere = (
+        Path(os.environ.get("ProgramFiles(x86)", ""))
+        / "Microsoft Visual Studio"
+        / "Installer"
+        / "vswhere.exe"
     )
-    shutil.copy(RESOURCES / "himena.ico", stage / "himena.ico")
+    component = {
+        "x86_64": "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+        "aarch64": "Microsoft.VisualStudio.Component.VC.Tools.ARM64",
+    }[_arch()]
+    install_path = ""
+    if vswhere.exists():
+        install_path = subprocess.check_output(
+            [
+                str(vswhere),
+                "-latest",
+                "-products",
+                "*",
+                "-requires",
+                component,
+                "-property",
+                "installationPath",
+            ],
+            text=True,
+        ).strip()
+    vcvarsall = Path(install_path) / "VC" / "Auxiliary" / "Build" / "vcvarsall.bat"
+    if not install_path or not vcvarsall.exists():
+        raise FileNotFoundError(
+            "MSVC (cl.exe) not found. Install the Visual Studio Build Tools with the "
+            '"Desktop development with C++" workload (https://visualstudio.microsoft.com/'
+            "visual-cpp-build-tools/) or run from a developer command prompt."
+        )
+    return vcvarsall
+
+
+def _msvc_env() -> dict[str, str]:
+    """Environment with the MSVC toolchain (cl.exe, rc.exe) on PATH."""
+    if shutil.which("cl") and shutil.which("rc"):
+        return os.environ.copy()
+    vcvarsall = _find_vcvarsall()
+    vc_arch = {"x86_64": "x64", "aarch64": "arm64"}[_arch()]
+    # vcvarsall may print a harmless "vswhere.exe is not recognized" message
+    out = subprocess.check_output(
+        f'"{vcvarsall}" {vc_arch} >nul 2>&1 && set',
+        shell=True,
+        text=True,
+        errors="replace",
+    )
+    env: dict[str, str] = {}
+    for line in out.splitlines():
+        key, sep, value = line.partition("=")
+        if sep:
+            env[key] = value
+    return env
+
+
+def _version_tuple(version: str) -> str:
+    """'0.2.7.dev12' -> '0,2,7,0' (four numeric fields for VERSIONINFO)."""
+    fields: list[int] = []
+    for part in version.split("."):
+        if not part.isdigit():
+            break
+        fields.append(int(part))
+    fields = (fields + [0, 0, 0, 0])[:4]
+    return ",".join(str(f) for f in fields)
+
+
+def write_launchers_windows(stage: Path, version: str, build_dir: Path) -> None:
+    """Compile resources/launcher.c into himena.exe (GUI) and bin/himena.exe."""
+    env = _msvc_env()
+    # environment variable names are case-insensitive on Windows ("Path")
+    path = next((v for k, v in env.items() if k.upper() == "PATH"), "")
+    cl = shutil.which("cl", path=path)
+    rc = shutil.which("rc", path=path)
+    if cl is None or rc is None:
+        raise FileNotFoundError("cl.exe / rc.exe not found in the MSVC environment")
+
+    work = build_dir / "launcher"
+    work.mkdir(parents=True, exist_ok=True)
+    rc_src = (
+        (RESOURCES / "launcher.rc")
+        .read_text()
+        .replace("@ICON@", str(RESOURCES / "himena.ico").replace("\\", "\\\\"))
+        .replace("@VERSION_COMMA@", _version_tuple(version))
+        .replace("@VERSION@", version)
+    )
+    (work / "launcher.rc").write_text(rc_src)
+    res = work / "launcher.res"
+    _run([rc, "/nologo", "/fo", res, work / "launcher.rc"], env=env)
+
+    (stage / "bin").mkdir(exist_ok=True)
+    targets = [
+        (stage / f"{APP_NAME}.exe", "WINDOWS", []),
+        (stage / "bin" / f"{APP_NAME}.exe", "CONSOLE", ["/DHIMENA_CONSOLE"]),
+    ]
+    for exe, subsystem, defines in targets:
+        _run(
+            [
+                cl,
+                "/nologo",
+                "/O1",
+                "/W4",
+                "/MT",
+                "/DUNICODE",
+                "/D_UNICODE",
+                *defines,
+                f"/Fo:{work / (subsystem.lower() + '.obj')}",
+                f"/Fe:{exe}",
+                RESOURCES / "launcher.c",
+                res,
+                "/link",
+                f"/SUBSYSTEM:{subsystem}",
+                "kernel32.lib",
+                "user32.lib",
+            ],
+            env=env,
+            cwd=work,
+        )
 
 
 def write_launchers_macos(app_dir: Path, version: str) -> None:
@@ -506,7 +620,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Bundled himena version: {version}")
 
     if IS_WINDOWS:
-        write_launchers_windows(stage)
+        write_launchers_windows(stage, version, build_dir)
         licenses_dir = stage
     elif IS_MACOS:
         write_launchers_macos(app_dir, version)
@@ -519,7 +633,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # smoke test through the launcher
     if IS_WINDOWS:
-        launcher = stage / "bin" / "himena.cmd"
+        launcher = stage / "bin" / f"{APP_NAME}.exe"
     elif IS_MACOS:
         launcher = app_dir / "Contents" / "MacOS" / APP_NAME
     else:

@@ -1,0 +1,35 @@
+// Resource template for the Windows launcher (icon and version information).
+// Placeholders (@...@) are substituted by installer/build.py. The
+// "FileDescription" is what Explorer shows in "Open with" and the Task Manager.
+#include <winver.h>
+
+1 ICON "@ICON@"
+
+1 VERSIONINFO
+FILEVERSION @VERSION_COMMA@
+PRODUCTVERSION @VERSION_COMMA@
+FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
+FILEFLAGS 0
+FILEOS VOS_NT_WINDOWS32
+FILETYPE VFT_APP
+FILESUBTYPE VFT2_UNKNOWN
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904B0"
+    BEGIN
+      VALUE "CompanyName", "Hanjin Liu"
+      VALUE "FileDescription", "himena"
+      VALUE "FileVersion", "@VERSION@"
+      VALUE "InternalName", "himena"
+      VALUE "LegalCopyright", "Copyright (c) 2024, hanjinliu"
+      VALUE "OriginalFilename", "himena.exe"
+      VALUE "ProductName", "himena"
+      VALUE "ProductVersion", "@VERSION@"
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x409, 1200
+  END
+END

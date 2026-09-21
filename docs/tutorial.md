@@ -10,8 +10,9 @@ installer bundles its own Python and the recommended dependencies (with PySide6 
 the Qt backend), so no other setup is required.
 
 - **Windows**: run `himena-<version>-windows-x86_64.exe`. himena is installed for the
-  current user and added to the Start menu. Check "Add himena to the user PATH" if you
-  want to use the `himena` command from a terminal.
+  current user and added to the Start menu, and files of any type can be opened with
+  himena from the "Open with" menu of Explorer. Check "Add himena to the user PATH" if
+  you want to use the `himena` command from a terminal.
 - **macOS**: open the `.dmg` and drag `himena.app` to Applications. The app is not
   notarized yet, so on first launch you may need to run
   `xattr -cr /Applications/himena.app` in a terminal.

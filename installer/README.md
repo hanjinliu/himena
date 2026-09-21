@@ -28,9 +28,18 @@ pre-existing Python (and do not use conda).
 
    | Platform | Package                                  | Layout                                                 |
    |----------|------------------------------------------|--------------------------------------------------------|
-   | Windows  | `himena-<ver>-windows-x86_64.exe` (Inno Setup) | `%LOCALAPPDATA%\Programs\himena\{python, bin\himena.cmd}` |
+   | Windows  | `himena-<ver>-windows-x86_64.exe` (Inno Setup) | `%LOCALAPPDATA%\Programs\himena\{himena.exe, python, bin\himena.exe}` |
    | macOS    | `himena-<ver>-macos-<arch>.dmg`          | `himena.app/Contents/Resources/python`                 |
    | Linux    | `himena-<ver>-linux-x86_64.tar.gz`       | `himena-<ver>-linux-x86_64/{python, bin/himena, install.sh}` |
+
+   On Windows, `himena.exe` is a tiny native launcher compiled from
+   `resources/launcher.c` (with the icon and version information from
+   `resources/launcher.rc`) that runs `python\pythonw.exe -m himena`. Windows
+   therefore shows "himena" instead of "python" in the "Open with" dialog,
+   file associations and the Task Manager, and the installer registers it as
+   an application (`HKCU\Software\Classes\Applications\himena.exe`) so that
+   any file type can be opened with himena. `bin\himena.exe` is the same
+   launcher built as a console application (for `himena --version` etc.).
 
 Because the bundle contains a real interpreter with `pip`, plugins can still
 be installed from the application (`himena --get <package>`), exactly as with
@@ -46,13 +55,17 @@ python installer/build.py
 Requirements: any Python 3.10+ to run the script (nothing else from the
 repository is needed), network access, and
 
-- Windows: [Inno Setup 6](https://jrsoftware.org/isinfo.php) (`ISCC.exe`)
+- Windows: [Inno Setup 6](https://jrsoftware.org/isinfo.php) (`ISCC.exe`) and
+  MSVC for the `himena.exe` launcher (Visual Studio or the
+  [Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
+  with the "Desktop development with C++" workload; found via `vswhere`, or
+  run from a developer command prompt)
 - macOS: `hdiutil` (ships with macOS)
 - Linux: nothing extra
 
 Useful options:
 
-- `--skip-package`: only build `installer/build/stage` (no installer tool needed)
+- `--skip-package`: only build `installer/build/stage` (no Inno Setup / `hdiutil` needed)
 - `--skip-install`: reuse the staging directory, only rewrite launchers/package
 - `--himena-spec himena==0.2.6`: bundle a PyPI release instead of the checkout
 - `--extras pyside6`: bundle fewer optional dependencies
