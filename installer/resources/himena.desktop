@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=himena
+Comment=An infinitely extensible and reusable application framework
+Exec=@BIN@ %F
+Icon=@ICON@
+Terminal=false
+Categories=Science;Development;
+StartupWMClass=himena
