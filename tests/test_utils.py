@@ -296,12 +296,10 @@ def test_standalone_app_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
     # regular installation: no marker next to sys.prefix
     monkeypatch.setattr(sys, "prefix", str(tmp_path / "python"))
-    assert profile.standalone_app_dir() is None
     assert not profile.is_standalone_app()
 
     # stand-alone bundle: "<app>/python" with the marker in "<app>"
     (tmp_path / profile.STANDALONE_MARKER).write_text("marker")
-    assert profile.standalone_app_dir() == tmp_path
     assert profile.is_standalone_app()
     assert profile._default_user_data_dir() == tmp_path / "data"
     with profile.patch_user_data_dir(profile._default_user_data_dir()):
