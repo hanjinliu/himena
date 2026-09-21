@@ -1,7 +1,6 @@
 from dataclasses import field, MISSING
 from pathlib import Path
 from typing import Any
-from platformdirs import user_data_dir
 
 
 def config_field(
@@ -53,6 +52,8 @@ def plugin_data_dir(plugin_name: str) -> Path:
     plugin-specific data files. The directory structure is up to the plugin developer,
     thus himena application does not recognize any of the contents.
     """
-    out = Path(user_data_dir("himena")) / "plugins" / plugin_name
+    from himena.profile import data_dir
+
+    out = data_dir() / "plugins" / plugin_name
     out.mkdir(parents=True, exist_ok=True)
     return out

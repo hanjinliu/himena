@@ -290,3 +290,20 @@ def test_plugin_data_dir():
     p = plugin_data_dir("mypugin")
     assert p.exists()
     assert p.is_dir()
+
+def test_standalone_app_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    from himena import profile
+
+    # regular installation: no marker next to sys.prefix
+    monkeypatch.setattr(sys, "prefix", str(tmp_path / "python"))
+    assert profile.standalone_app_dir() is None
+    assert not profile.is_standalone_app()
+
+    # stand-alone bundle: "<app>/python" with the marker in "<app>"
+    (tmp_path / profile.STANDALONE_MARKER).write_text("marker")
+    assert profile.standalone_app_dir() == tmp_path
+    assert profile.is_standalone_app()
+    assert profile._default_user_data_dir() == tmp_path / "data"
+    with profile.patch_user_data_dir(profile._default_user_data_dir()):
+        assert profile.profile_dir() == tmp_path / "data" / "profiles"
+        assert plugin_data_dir("myplugin") == tmp_path / "data" / "plugins" / "myplugin"

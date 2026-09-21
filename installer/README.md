@@ -41,6 +41,13 @@ pre-existing Python (and do not use conda).
    any file type can be opened with himena. `bin\himena.exe` is the same
    launcher built as a console application (for `himena --version` etc.).
 
+7. A marker file `himena-standalone` is written next to the launcher (on macOS
+   into `himena.app/Contents/Resources`). `himena.profile.is_standalone_app()`
+   detects it and the application then keeps all of its user data (profiles,
+   recent files, plugin data, ...) in a `data` directory next to the marker
+   instead of the platform user data directory, so that the installation is
+   self-contained.
+
 Because the bundle contains a real interpreter with `pip`, plugins can still
 be installed from the application (`himena --get <package>`), exactly as with
 a pip-based installation. Plugins are installed into the bundled interpreter,
