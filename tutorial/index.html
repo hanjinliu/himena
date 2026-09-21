@@ -328,6 +328,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stand-alone-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stand-alone application
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-pip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        With pip
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1396,6 +1424,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stand-alone-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stand-alone application
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-pip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        With pip
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1514,6 +1570,22 @@
 
 <h1 id="tutorial">Tutorial</h1>
 <h2 id="installation">Installation</h2>
+<h3 id="stand-alone-application">Stand-alone application</h3>
+<p>If you do not have a Python environment, download the installer for your platform
+from the <a href="https://github.com/hanjinliu/himena/releases">GitHub releases page</a>. The
+installer bundles its own Python and the recommended dependencies (with PySide6 as
+the Qt backend), so no other setup is required.</p>
+<ul>
+<li><strong>Windows</strong>: run <code>himena-&lt;version&gt;-windows-x86_64.exe</code>. himena is installed for the
+  current user and added to the Start menu. Check "Add himena to the user PATH" if you
+  want to use the <code>himena</code> command from a terminal.</li>
+<li><strong>macOS</strong>: open the <code>.dmg</code> and drag <code>himena.app</code> to Applications. The app is not
+  notarized yet, so on first launch you may need to run
+  <code>xattr -cr /Applications/himena.app</code> in a terminal.</li>
+<li><strong>Linux</strong>: extract the <code>.tar.gz</code> anywhere and run <code>./install.sh</code> to register the
+  <code>himena</code> command and a desktop entry.</li>
+</ul>
+<h3 id="with-pip">With pip</h3>
 <p><code>himena</code> is available on PyPI. You can install it with the recommended dependencies:</p>
 <div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>himena<span class="o">[</span>recommended<span class="o">]</span>
 </code></pre></div>
