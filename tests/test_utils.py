@@ -294,14 +294,21 @@ def test_plugin_data_dir():
 def test_standalone_app_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     from himena import profile
 
+    # keep the platform user data directory out of the real file system
+    monkeypatch.setattr(profile, "user_data_dir", lambda *_: str(tmp_path / "user"))
+    app_root = tmp_path / "app"
+    app_root.mkdir()
+
     # regular installation: no marker next to sys.prefix
-    monkeypatch.setattr(sys, "prefix", str(tmp_path / "python"))
+    monkeypatch.setattr(sys, "prefix", str(app_root / "python"))
     assert not profile.is_standalone_app()
+    assert profile._default_user_data_dir() == tmp_path / "user"
 
     # stand-alone bundle: "<app>/python" with the marker in "<app>"
-    (tmp_path / profile.STANDALONE_MARKER).write_text("marker")
+    (app_root / profile.STANDALONE_MARKER).write_text("marker")
     assert profile.is_standalone_app()
-    assert profile._default_user_data_dir() == tmp_path / "data"
+    expected = tmp_path / "user" / "himena-standalone"
+    assert profile._default_user_data_dir() == expected
     with profile.patch_user_data_dir(profile._default_user_data_dir()):
-        assert profile.profile_dir() == tmp_path / "data" / "profiles"
-        assert plugin_data_dir("myplugin") == tmp_path / "data" / "plugins" / "myplugin"
+        assert profile.profile_dir() == expected / "profiles"
+        assert plugin_data_dir("myplugin") == expected / "plugins" / "myplugin"
