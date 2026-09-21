@@ -39,7 +39,10 @@ Tutorial, developer's guide, and API reference are available at the [documentati
 
 ## Installation
 
-`himena` is available on [PyPI](https://pypi.org/project/himena/).
+Stand-alone installers (no Python required) for Windows, macOS and Linux are
+available on the [releases page](https://github.com/hanjinliu/himena/releases).
+
+`himena` is also available on [PyPI](https://pypi.org/project/himena/).
 
 ```shell
 pip install himena -U  # minimal dependencies

@@ -2,6 +2,25 @@
 
 ## Installation
 
+### Stand-alone application
+
+If you do not have a Python environment, download the installer for your platform
+from the [GitHub releases page](https://github.com/hanjinliu/himena/releases). The
+installer bundles its own Python and the recommended dependencies (with PySide6 as
+the Qt backend), so no other setup is required.
+
+- **Windows**: run `himena-<version>-windows-x86_64.exe`. himena is installed for the
+  current user and added to the Start menu. Check "Add himena to the user PATH" if you
+  want to use the `himena` command from a terminal.
+- **macOS**: open the `.dmg` and drag `himena.app` to Applications. The app is not
+  notarized yet, so on first launch you may need to run
+  `xattr -cr /Applications/himena.app` in a terminal.
+- **Linux**: extract the `.tar.gz` anywhere and run `./install.sh` to register the
+  `himena` command and a desktop entry.
+
+
+### With pip
+
 `himena` is available on PyPI. You can install it with the recommended dependencies:
 
 ``` shell

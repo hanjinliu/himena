@@ -157,3 +157,7 @@ def main():
     from himena.widgets._initialize import cleanup
 
     cleanup()
+
+
+if __name__ == "__main__":
+    main()
