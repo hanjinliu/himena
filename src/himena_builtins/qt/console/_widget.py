@@ -66,6 +66,7 @@ class QtConsole(RichJupyterWidget):
 
     codeExecuted = Signal()
     _instance = None
+    _magic_installed = False
 
     def __init__(self, ui: MainWindow):
         super().__init__()
@@ -171,6 +172,8 @@ class QtConsole(RichJupyterWidget):
             ns = {self._main_window_symbol: self._ui}
             self.shell.push(ns)
 
+            self._install_magic()
+
     def execute(self, source=None, hidden=False, interactive=False):
         out = super().execute(source, hidden, interactive)
         self.codeExecuted.emit()
@@ -237,6 +240,25 @@ class QtConsole(RichJupyterWidget):
             ):
                 return True  # prevent Ctrl+. from being processed
         return super().eventFilter(obj, event)
+
+    def _install_magic(self):
+        from IPython import get_ipython  # noqa: F401
+        from IPython.core.magic import (
+            register_line_magic,
+            needs_local_scope,
+        )
+        from himena._cli.install import get_and_install
+
+        if self._magic_installed:
+            return
+
+        @register_line_magic
+        @needs_local_scope
+        def install(line: str, local_ns: dict = {}):
+            args = line.split()
+            get_and_install(args, self._ui.app_profile.name)
+
+        self.__class__._magic_installed = True
 
 
 @lru_cache(maxsize=1)

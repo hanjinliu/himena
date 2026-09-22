@@ -49,6 +49,8 @@ PBS_URL = "https://github.com/astral-sh/python-build-standalone/releases/downloa
 APP_NAME = "himena"
 BUNDLE_ID = "io.github.hanjinliu.himena"
 DEFAULT_EXTRAS = "pyside6,all"
+# must match himena.profile.STANDALONE_MARKER
+STANDALONE_MARKER = "himena-standalone"
 
 
 # ----------------------------------------------------------------------------
@@ -318,6 +320,21 @@ for row in sorted(rows, key=lambda r: r[0].lower()):
         (RESOURCES / "GPL-3.0.txt").read_text(encoding="utf-8"),
     ]
     dest.write_text("\n".join(lines), encoding="utf-8")
+
+
+def write_standalone_marker(app_root: Path) -> None:
+    """Mark the bundle so that himena knows it runs from the stand-alone app.
+
+    himena.profile looks for this file next to the bundled python directory
+    (``Path(sys.prefix).parent``) and, when found, stores profiles and other
+    user data in ``<app_root>/data`` instead of the platform user data directory.
+    """
+    (app_root / STANDALONE_MARKER).write_text(
+        "This file marks the stand-alone himena bundle. Do not delete it.\n"
+        "himena keeps its profiles and other user data in the 'data' directory\n"
+        "next to this file.\n",
+        encoding="utf-8",
+    )
 
 
 def _write_executable(path: Path, content: str) -> None:
@@ -630,6 +647,7 @@ def main(argv: list[str] | None = None) -> int:
         licenses_dir = stage
     shutil.copy(REPO_ROOT / "LICENSE", licenses_dir / "LICENSE.txt")
     write_third_party_licenses(python_dir, licenses_dir / "THIRD_PARTY_LICENSES.txt")
+    write_standalone_marker(licenses_dir)
 
     # smoke test through the launcher
     if IS_WINDOWS:

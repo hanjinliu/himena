@@ -3,7 +3,7 @@ from __future__ import annotations
 import subprocess
 from typing import TYPE_CHECKING
 from qtpy import QtWidgets as QtW, QtCore
-from himena.profile import profile_dir
+from himena.profile import profile_dir, is_standalone_app
 
 if TYPE_CHECKING:
     from himena.qt._qmain_window import QMainWindow
@@ -23,6 +23,10 @@ class QStatusBar(QtW.QStatusBar):
 
         # NOTE: status bar already has a size grip.
         self.addPermanentWidget(btn)
+
+        # stand-alone app only has one profile, so we hide the profile button.
+        if is_standalone_app() or len(list(profile_dir().iterdir())) <= 1:
+            btn.hide()
 
     def parentWidget(self) -> QMainWindow:
         return super().parentWidget()

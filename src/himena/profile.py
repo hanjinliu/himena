@@ -2,6 +2,7 @@ from contextlib import contextmanager
 import json
 from pathlib import Path
 import re
+import sys
 from typing import Any, Iterable
 import warnings
 from platformdirs import user_data_dir
@@ -11,7 +12,29 @@ from packaging.version import Version
 from himena.consts import ALLOWED_LETTERS
 
 
-USER_DATA_DIR = Path(user_data_dir("himena"))
+# Name of the marker file that installer/build.py writes into the root of the
+# stand-alone bundle, next to the bundled "python" directory.
+STANDALONE_MARKER = "himena-standalone"
+
+
+def is_standalone_app() -> bool:
+    """Whether himena is running from the stand-alone (installer) app."""
+    root = Path(sys.prefix).parent
+    if (root / STANDALONE_MARKER).is_file():
+        return True
+    return False
+
+
+def _default_user_data_dir() -> Path:
+    # The stand-alone app keeps all user data (profiles, recent files, plugin
+    # data, ...) inside its own directory so that it is self-contained.
+    _user_data_dir = Path(user_data_dir("himena"))
+    if is_standalone_app():
+        _user_data_dir = _user_data_dir / "himena-standalone"
+    return _user_data_dir
+
+
+USER_DATA_DIR = _default_user_data_dir()
 
 
 @contextmanager
