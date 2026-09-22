@@ -4140,7 +4140,8 @@ def _(model: WidgetDataModel, path: Path) -&gt; bool:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\plugins\config.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 7</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 6</span>
+<span class="normal"> 7</span>
 <span class="normal"> 8</span>
 <span class="normal"> 9</span>
 <span class="normal">10</span>
@@ -4178,8 +4179,7 @@ def _(model: WidgetDataModel, path: Path) -&gt; bool:
 <span class="normal">42</span>
 <span class="normal">43</span>
 <span class="normal">44</span>
-<span class="normal">45</span>
-<span class="normal">46</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">config_field</span><span class="p">(</span>
+<span class="normal">45</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">config_field</span><span class="p">(</span>
     <span class="n">default</span><span class="o">=</span><span class="n">MISSING</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">default_factory</span><span class="o">=</span><span class="n">MISSING</span><span class="p">,</span>
@@ -4829,7 +4829,8 @@ thus himena application does not recognize any of the contents.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src\himena\plugins\config.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">49</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">48</span>
+<span class="normal">49</span>
 <span class="normal">50</span>
 <span class="normal">51</span>
 <span class="normal">52</span>
@@ -4838,14 +4839,17 @@ thus himena application does not recognize any of the contents.</p>
 <span class="normal">55</span>
 <span class="normal">56</span>
 <span class="normal">57</span>
-<span class="normal">58</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">plugin_data_dir</span><span class="p">(</span><span class="n">plugin_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="normal">58</span>
+<span class="normal">59</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">plugin_data_dir</span><span class="p">(</span><span class="n">plugin_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Get the data directory for plugins.</span>
 
 <span class="sd">    This is a convenience function that provides a standard location for storing</span>
 <span class="sd">    plugin-specific data files. The directory structure is up to the plugin developer,</span>
 <span class="sd">    thus himena application does not recognize any of the contents.</span>
 <span class="sd">    """</span>
-    <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">user_data_dir</span><span class="p">(</span><span class="s2">"himena"</span><span class="p">))</span> <span class="o">/</span> <span class="s2">"plugins"</span> <span class="o">/</span> <span class="n">plugin_name</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">himena.profile</span><span class="w"> </span><span class="kn">import</span> <span class="n">data_dir</span>
+
+    <span class="n">out</span> <span class="o">=</span> <span class="n">data_dir</span><span class="p">()</span> <span class="o">/</span> <span class="s2">"plugins"</span> <span class="o">/</span> <span class="n">plugin_name</span>
     <span class="n">out</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">out</span>
 </code></pre></div></td></tr></table></div>
