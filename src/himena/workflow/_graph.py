@@ -9,7 +9,6 @@ from himena.workflow._reader import (
     ProgrammaticMethod,
     LocalReaderMethod,
     RemoteReaderMethod,
-    WslReaderMethod,
     UserInput,
 )
 from himena.workflow._command import CommandExecution, UserModification
@@ -24,7 +23,6 @@ WorkflowStepType = Union[
     ProgrammaticMethod,
     LocalReaderMethod,
     RemoteReaderMethod,
-    WslReaderMethod,
     CommandExecution,
     UserModification,
     UserInput,

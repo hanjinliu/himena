@@ -8,7 +8,6 @@ from qtpy import QtWidgets as QtW, QtCore, QtGui
 from himena import _drag
 from himena.plugins import get_global_config
 from himena_builtins.qt.explorer._base import (
-    make_paste_remote_files_worker,
     QBaseRemoteExplorerWidget,
 )
 
@@ -270,12 +269,8 @@ class QFileTree(QtW.QTreeView):
             self._paste_mime_data(clipboard.mimeData(), dirpath)
 
     def _paste_mime_data(self, mime: QtCore.QMimeData, dirpath: Path):
-        ui = self._ui._backend_main_window
         if isinstance(par := mime.parent(), QBaseRemoteExplorerWidget):
-            readers = par.readers_from_mime(mime)
-            worker = make_paste_remote_files_worker(readers, dirpath)
-            ui._job_stack.add_worker(worker, "Pasting remote files", total=len(readers))
-            worker.start()
+            par._download_paths(par._paths_from_mime(mime), dirpath)
         else:
             self._paste_file(
                 self._ui.clipboard.files,

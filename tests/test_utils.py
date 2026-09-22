@@ -119,10 +119,8 @@ def test_cli_args():
         assert cli.to_wsl_path(Path("C:/Program Files/")) == "/mnt/c/Program Files"
         assert cli.to_wsl_path(Path("D:/")) == "/mnt/d"
 
-        assert cli.wsl_to_local("/d/file.txt", Path("C:/Users/username/file.txt")) == ["wsl", "-e", "cp", "/d/file.txt", "/mnt/c/Users/username/file.txt"]
-        assert cli.wsl_to_local("/d/dir", Path("C:/Users/username/dir"), is_dir=True) == ["wsl", "-e", "cp", "-r", "/d/dir", "/mnt/c/Users/username"]
-        assert cli.local_to_wsl(Path("C:/Users/username/file.txt"), "/d/file.txt") == ["wsl", "-e", "cp", "/mnt/c/Users/username/file.txt", "/d/file.txt"]
-        assert cli.local_to_wsl(Path("C:/Users/username/dir"), "/d/dir", is_dir=True) == ["wsl", "-e", "cp", "-r", "/mnt/c/Users/username/dir", "/d"]
+        assert cli.to_windows_path_from_wsl("/d/file.txt", "Ubuntu") == Path("//wsl.localhost/Ubuntu/d/file.txt")
+        assert cli.to_windows_path_from_wsl("/mnt/c/Users/username", "Ubuntu") == Path("C:/Users/username")
 
     assert cli.local_to_remote("rsync", Path("C:/src"), "/dst") == ["rsync", "-a", "--progress", "C:/src", "/dst"]
     assert cli.local_to_remote("rsync", Path("C:/src"), "/dst", is_dir=True) == ["rsync", "-ar", "--progress", "C:/src", "/"]

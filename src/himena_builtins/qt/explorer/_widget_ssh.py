@@ -176,12 +176,6 @@ class QSSHRemoteExplorerWidget(QBaseRemoteExplorerWidget):
         args = ["ssh", "-p", port, host, "trash", *paths]
         exec_command(self._with_wsl_prefix(args))
 
-    def _make_get_type_args(self, path: str) -> list[str]:
-        host = self._host_edit.text()
-        port = str(int(self._port_edit.text()))
-        args = ["ssh", "-p", port, host, "stat", path, "--format='%F'"]
-        return self._with_wsl_prefix(args)
-
     def _host_and_port(self) -> tuple[str, str]:
         """Return the host and port as a tuple."""
         host = self._host_edit.text()
@@ -194,16 +188,11 @@ class QSSHRemoteExplorerWidget(QBaseRemoteExplorerWidget):
             return ["wsl", "-e"] + args
         return args
 
-    def _make_reader_method_from_str(
-        self, line: str, is_dir: bool
-    ) -> RemoteReaderMethod:
-        """Create a RemoteReaderMethod from a string path."""
-        return RemoteReaderMethod.from_str(
-            line,
-            wsl=self._is_wsl_switch.isChecked(),
-            protocol=self._protocol_choice.currentText(),
-            force_directory=is_dir,
-        )
+    def _copy_to_local(self, src: Path, dst: Path, is_dir: bool) -> None:
+        self._make_reader_method(src, is_dir).run_command(dst)
+
+    def _path_to_mime_text(self, path: Path) -> str:
+        return f"{self._host_name()}:{path.as_posix()}"
 
     def update_configs(
         self,

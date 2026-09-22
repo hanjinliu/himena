@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from functools import lru_cache
 from pathlib import Path, PurePosixPath
+import subprocess
 
 
 def local_to_remote(
@@ -87,6 +89,15 @@ def to_wsl_path(src: Path) -> str:
 
 
 def to_wsl_path_from_wsl(src: str) -> str:
+    """Convert a Windows path to a WSL path.
+
+    This function must be called in Windows.
+
+    Examples
+    --------
+    to_wsl_path_from_wsl("C:/Users/me/Documents") -> "/mnt/c/Users/me/Documents"
+    to_wsl_path_from_wsl("D:/path/to/file.txt") -> "/mnt/d/path/to/file.txt"
+    """
     src = src.replace("\\", "/")
     if src.startswith("/mnt/"):
         # already in WSL path format. This happens when links are resolved (such as the
@@ -98,25 +109,32 @@ def to_wsl_path_from_wsl(src: str) -> str:
     raise NotImplementedError
 
 
-def wsl_to_local(src: str, dst: Path, is_dir: bool = False) -> list[str]:
-    """Copy a file from WSL to local Windows filesystem."""
-    if is_dir:
-        dst = dst.parent
-    wsl_dst = to_wsl_path(dst)
-    if is_dir:
-        args = ["wsl", "-e", "cp", "-r", src, wsl_dst]
-    else:
-        args = ["wsl", "-e", "cp", src, wsl_dst]
-    return args
+def to_windows_path_from_wsl(src: str, distro: str | None = None) -> Path:
+    """Convert an absolute WSL path to a Windows UNC path.
+
+    This function must be called in Windows.
+
+    Examples
+    --------
+    to_windows_path_from_wsl("/home/me/a.txt", "Ubuntu")
+    -> Path("//wsl.localhost/Ubuntu/home/me/a.txt")
+    """
+    if src.startswith("/mnt/") and (len(src) == 6 or src[6] == "/"):
+        # path of Windows filesystem
+        return Path(f"{src[5].upper()}:/{src[7:]}")
+    if src.startswith("~"):
+        src = get_wsl_env("HOME") + src[1:]
+    if not src.startswith("/"):
+        raise ValueError(f"WSL path must be absolute, got {src!r}")
+    if distro is None:
+        distro = get_wsl_env("WSL_DISTRO_NAME")
+    return Path(f"//wsl.localhost/{distro}{src}")
 
 
-def local_to_wsl(src: Path, dst: str, is_dir: bool = False) -> list[str]:
-    """Copy a file from local Windows filesystem to WSL."""
-    if is_dir:
-        dst = PurePosixPath(dst).parent.as_posix()
-    wsl_src = to_wsl_path(src)
-    if is_dir:
-        args = ["wsl", "-e", "cp", "-r", wsl_src, dst]
-    else:
-        args = ["wsl", "-e", "cp", wsl_src, dst]
-    return args
+@lru_cache(maxsize=4)
+def get_wsl_env(name: str) -> str:
+    """Get the environment variable of the default WSL distribution."""
+    result = subprocess.run(["wsl", "-e", "printenv", name], capture_output=True)
+    if result.returncode != 0:
+        raise ValueError(f"Failed to get {name} in WSL: {result.stderr.decode()}")
+    return result.stdout.decode().strip()

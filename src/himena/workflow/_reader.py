@@ -1,14 +1,14 @@
 from contextlib import contextmanager
 import tempfile
-from typing import Iterator, Literal, Any, TYPE_CHECKING
+from typing import Generator, Iterator, Literal, Any, TYPE_CHECKING
 from pathlib import Path
 import subprocess
 
 from pydantic import Field
-from himena.consts import StandardType, IS_WSL
+from himena.consts import StandardType
 from himena.exceptions import NotExecutable
 from himena.utils.misc import PluginInfo
-from himena.utils.cli import remote_to_local, wsl_to_local, to_wsl_path_from_wsl
+from himena.utils.cli import remote_to_local
 from himena.workflow._base import WorkflowStep
 
 if TYPE_CHECKING:
@@ -97,7 +97,7 @@ class PathReaderMethod(ReaderMethod):
     @contextmanager
     def run_context(
         self, filenames: list[str] | None = None
-    ) -> Iterator[Path | list[Path]]:
+    ) -> Generator[Path | list[Path], None, None]:
         if filenames is None:
             filenames = self._list_dst_filenames()
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -155,7 +155,7 @@ class LocalReaderMethod(ReaderMethod):
     @contextmanager
     def run_context(
         self, filenames: list[str] | None = None
-    ) -> Iterator[Path | list[Path]]:
+    ) -> Generator[Path | list[Path], None, None]:
         assert filenames is None
         yield self.path
 
@@ -250,45 +250,5 @@ class RemoteReaderMethod(PathReaderMethod):
                 "Cannot run command for multiple paths in RemoteReaderMethod."
             )
         result = subprocess.run(args, stdout=stdout)
-        if result.returncode != 0:
-            raise ValueError(f"Failed to run command {args}: {result!r}")
-
-
-class WslReaderMethod(PathReaderMethod):
-    """Describes that one was read from a WSL source file."""
-
-    type: Literal["wsl-reader"] = "wsl-reader"
-
-    @classmethod
-    def from_str(cls, line: str, force_directory: bool = False) -> "WslReaderMethod":
-        """Construct a WslReaderMethod from a string representation."""
-        if ";" in line:
-            path = [Path(p) for p in line.split(";")]
-        else:
-            path = Path(line)
-        return cls(
-            path=path,
-            force_directory=force_directory,
-        )
-
-    def run_command(self, dst_path: Path, stdout=None):
-        """Run cp command to move the file from wsl to local `dst_path`."""
-
-        if isinstance(self.path, Path):
-            if IS_WSL:
-                dst_path_ = to_wsl_path_from_wsl(self.path.as_posix())
-                if self.force_directory:
-                    args = ["cp", "-r", dst_path_, dst_path.as_posix()]
-                else:
-                    args = ["cp", dst_path_, dst_path.as_posix()]
-            else:
-                args = wsl_to_local(
-                    self.path.as_posix(), dst_path, is_dir=self.force_directory
-                )
-            result = subprocess.run(args, stdout=stdout)
-        else:
-            raise ValueError(
-                "Cannot run command for multiple paths in WSLReaderMethod."
-            )
         if result.returncode != 0:
             raise ValueError(f"Failed to run command {args}: {result!r}")
