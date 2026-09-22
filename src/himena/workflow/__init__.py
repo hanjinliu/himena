@@ -15,7 +15,6 @@ from himena.workflow._reader import (
     ProgrammaticMethod,
     ReaderMethod,
     RemoteReaderMethod,
-    WslReaderMethod,
     PathReaderMethod,
     UserInput,
 )
@@ -32,7 +31,6 @@ __all__ = [
     "ReaderMethod",
     "LocalReaderMethod",
     "RemoteReaderMethod",
-    "WslReaderMethod",
     "PathReaderMethod",
     "UserInput",
     "CommandExecution",

@@ -61,7 +61,6 @@ def test_ssh_widget(qtbot: QtBot, himena_ui, tmpdir):
     with file_dialog_response(himena_ui, tmpdir):
         widget._file_list_widget._download_items([])
     widget._file_list_widget._download_items([], download_dir=tmpdir)
-    widget._make_get_type_args("path/to/file")
 
 class QTestRemoteExplorerWidget(QBaseRemoteExplorerWidget):
     def _make_reader_method(self, path: Path, is_dir: bool) -> LocalReaderMethod:
@@ -93,10 +92,8 @@ class QTestRemoteExplorerWidget(QBaseRemoteExplorerWidget):
     def _send_file(self, src: Path, dst_remote: str, is_dir: bool = False):
         Path(dst_remote).write_bytes(src.read_bytes())
 
-    def _make_reader_method_from_str(self, line: str, is_dir: bool) -> LocalReaderMethod:
-        # X@Y:<path>
-        path = line
-        return LocalReaderMethod(path=path)
+    def _copy_to_local(self, src: Path, dst: Path, is_dir: bool) -> None:
+        dst.write_bytes(src.read_bytes())
 
 @pytest.mark.skipif(sys.platform == "linux", reason="segfault for some reason")
 def test_remote_base_widget(qtbot: QtBot, himena_ui, tmpdir):
@@ -134,4 +131,8 @@ def test_remote_base_widget(qtbot: QtBot, himena_ui, tmpdir):
     widget._get_file_type(tmpdir / "a.txt")
     mime = widget._make_mimedata_for_items([widget._file_list_widget.topLevelItem(1)])
     widget._read_and_add_model(tmpdir / "a.txt")
-    widget.readers_from_mime(mime)
+    assert widget._paths_from_mime(mime) == [(tmpdir / "a.txt", False)]
+    widget._file_list_widget._download_items(
+        [widget._file_list_widget.topLevelItem(1)], download_dir=tmpdir / "Dir"
+    )
+    assert (tmpdir / "Dir" / "a.txt").read_text() == "a"

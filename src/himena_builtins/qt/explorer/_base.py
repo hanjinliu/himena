@@ -12,7 +12,7 @@ from superqt.utils import thread_worker, FunctionWorker
 from himena import _drag
 from himena.qt._qsvg import QColoredSVGIcon
 from himena.types import WidgetDataModel, DragDataModel
-from himena.workflow import PathReaderMethod
+from himena.workflow import ReaderMethod
 from himena.consts import MonospaceFontFamily
 from himena.plugins import validate_protocol
 from himena.widgets import show_notification, set_status_tip
@@ -59,37 +59,38 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
         self,
         items: list[QtW.QTreeWidgetItem],
     ) -> QtCore.QMimeData:
+        paths = self._item_paths(items)
         mime = QtCore.QMimeData()
-        mime.setText(
-            "\n".join(
-                meth.to_str() for meth in self._make_reader_methods_for_items(items)
-            )
-        )
+        mime.setText("\n".join(self._path_to_mime_text(path) for path, _ in paths))
         mime.setHtml(
             "<br>".join(
-                f'<span ftype="{"d" if meth.force_directory else "f"}">{meth.to_str()}</span>'
-                for meth in self._make_reader_methods_for_items(items)
+                f'<span ftype="{"d" if is_dir else "f"}">{path.as_posix()}</span>'
+                for path, is_dir in paths
             )
         )
         mime.setParent(self)  # this is needed to trace where the MIME data comes from
         return mime
 
-    def _make_reader_methods_for_items(
-        self, items: list[QtW.QTreeWidgetItem]
-    ) -> list[PathReaderMethod]:
-        methods: list[PathReaderMethod] = []
+    def _item_paths(self, items: list[QtW.QTreeWidgetItem]) -> list[tuple[Path, bool]]:
+        """Return the remote paths and whether they are directories."""
+        out: list[tuple[Path, bool]] = []
         for item in items:
             typ = item_type(item)
             if typ == "l":
                 _, real_path = item.text(0).split(" -> ")
-                remote_path = self._pwd / real_path
-                is_dir = False
+                out.append((self._pwd / real_path, False))
             else:
-                remote_path = self._pwd / item.text(0)
-                is_dir = typ == "d"
-            meth = self._make_reader_method(remote_path, is_dir)
-            methods.append(meth)
-        return methods
+                out.append((self._pwd / item.text(0), typ == "d"))
+        return out
+
+    def _paths_from_mime(self, mime: QtCore.QMimeData) -> list[tuple[Path, bool]]:
+        """Parse the remote paths from the mime data."""
+        out: list[tuple[Path, bool]] = []
+        ptn = re.compile(r"<span ftype=\"(d|f)\">(.+)</span>")
+        for line in mime.html().split("<br>"):
+            if m := ptn.match(line):
+                out.append((Path(m.group(2)), m.group(1) == "d"))
+        return out
 
     @thread_worker
     def _read_remote_path_worker(
@@ -115,10 +116,10 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
     #############################################
     #### Need to be overridden in subclasses ####
     #############################################
-    def _make_reader_method(self, path: Path, is_dir: bool) -> PathReaderMethod:
+    def _make_reader_method(self, path: Path, is_dir: bool) -> ReaderMethod:
         raise NotImplementedError
 
-    def _make_reader_method_from_str(self, line: str, is_dir: bool) -> PathReaderMethod:
+    def _copy_to_local(self, src: Path, dst: Path, is_dir: bool) -> None:
         raise NotImplementedError
 
     def _iter_file_items(self, path: str) -> list[QtW.QTreeWidgetItem]:
@@ -136,26 +137,12 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
     def _send_file(self, src: Path, dst_remote: str, is_dir: bool = False):
         raise NotImplementedError
 
-    def _make_get_type_args(self, path: str) -> list[str]:
-        raise NotImplementedError
-
     #############################################
     #############################################
 
-    def readers_from_mime(self, mime: QtCore.QMimeData) -> list[PathReaderMethod]:
-        """Construct readers from the mime data."""
-        out: list[PathReaderMethod] = []
-        for line in mime.html().split("<br>"):
-            if not line:
-                continue
-            if m := re.compile(r"<span ftype=\"(d|f)\">(.+)</span>").match(line):
-                is_dir = m.group(1) == "d"
-                line = m.group(2)
-            else:
-                continue
-            meth = self._make_reader_method_from_str(line, is_dir)
-            out.append(meth)
-        return out
+    def _path_to_mime_text(self, path: Path) -> str:
+        """String representation of the remote path used for the clipboard text."""
+        return path.as_posix()
 
     @thread_worker
     def _run_ls_command(self, path: Path) -> list[QtW.QTreeWidgetItem]:
@@ -189,11 +176,6 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
                 real_path_abs = Path(real_path)
             else:
                 real_path_abs = self._pwd / real_path
-            args_check_type = self._make_get_type_args(real_path_abs.as_posix())
-            result = subprocess.run(args_check_type, capture_output=True)
-            if result.returncode != 0:
-                raise ValueError(f"Failed to get type: {result.stderr.decode()}")
-
             link_type = self._get_file_type(real_path_abs.as_posix())
             if link_type == "d":
                 self._set_current_path(real_path_abs)
@@ -258,20 +240,38 @@ class QBaseRemoteExplorerWidget(QtW.QWidget):
                 return
             if item_type(item_under_cursor) == "d":
                 dst_dir = self._pwd / item_under_cursor.text(0)
-                methods = self.readers_from_mime(mime)
-                paths: list[Path] = []
-                for meth in methods:
-                    if isinstance(meth.path, Path):
-                        paths.append(meth.path)
-                    else:
-                        paths.extend(meth.path)
-
+                paths = [path for path, _ in self._paths_from_mime(mime)]
                 for path in paths:
                     self._move_files(
                         path.as_posix(), dst_dir.joinpath(path.name).as_posix()
                     )
                 if paths:
                     self._refresh_pwd()
+
+    def _download_paths(self, paths: list[tuple[Path, bool]], download_dir: Path):
+        """Download the remote paths to the local directory in another thread."""
+        worker = self._make_download_worker(paths, download_dir)
+        qui = self._ui._backend_main_window
+        qui._job_stack.add_worker(worker, "Downloading files", total=len(paths))
+        if self._force_sync:
+            worker.run()
+        else:
+            worker.start()
+
+    @thread_worker
+    def _make_download_worker(self, paths: list[tuple[Path, bool]], dirpath: Path):
+        for path, is_dir in paths:
+            stem = path.stem
+            ext = path.suffix
+            suffix = 0
+            dst = dirpath / f"{stem}{ext}"
+            while dst.exists():
+                dst = dirpath / f"{stem}_{suffix}{ext}"
+                suffix += 1
+            self._copy_to_local(path, dst, is_dir)
+            if dst.exists():
+                dst.touch()
+            yield
 
     def _refresh_pwd(self):
         """Refresh the current path."""
@@ -529,24 +529,8 @@ class QRemoteTreeWidget(QtW.QTreeWidget):
             )
             if download_dir is None:
                 return
-        src_paths: list[Path] = []
-        for item in items:
-            typ = item_type(item)
-            if typ == "l":
-                _, real_path = item.text(0).split(" -> ")
-                remote_path = self.parent()._pwd / real_path
-            else:
-                remote_path = self.parent()._pwd / item.text(0)
-            src_paths.append(remote_path)
-
-        readers = self.parent()._make_reader_methods_for_items(items)
-        worker = make_paste_remote_files_worker(readers, download_dir)
-        qui = self.parent()._ui._backend_main_window
-        qui._job_stack.add_worker(worker, "Downloading files", total=len(src_paths))
-        if self.parent()._force_sync:
-            worker.run()
-        else:
-            worker.start()
+        par = self.parent()
+        par._download_paths(par._item_paths(items), download_dir)
 
     def _apply_filter(self, text: str):
         for i in range(self.topLevelItemCount()):
@@ -640,30 +624,6 @@ def icon_for_file_type(file_type: str, light_background: bool) -> QColoredSVGIco
     else:
         svg_path = ICON_PATH / "explorer_file.svg"
     return QColoredSVGIcon.fromfile(svg_path, color=color)
-
-
-@thread_worker
-def make_paste_remote_files_worker(
-    readers: list[PathReaderMethod],
-    dirpath: Path,
-):
-    for reader in readers:
-        if isinstance(reader.path, Path):
-            paths = [reader.path]
-        else:
-            paths = reader.path
-        for path in paths:
-            stem = path.stem
-            ext = path.suffix
-            suffix = 0
-            dst = dirpath / f"{stem}{ext}"
-            while dst.exists():
-                dst = dirpath / f"{stem}_{suffix}{ext}"
-                suffix += 1
-            reader.run_command(dst)
-            if dst.exists():
-                dst.touch()
-            yield
 
 
 def ls_args_to_items(args: list[str]) -> Iterator[QtW.QTreeWidgetItem]:
