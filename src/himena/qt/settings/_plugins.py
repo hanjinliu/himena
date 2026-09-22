@@ -65,6 +65,12 @@ class QPluginListEditor(QtW.QWidget):
 
     def _apply_changes(self):
         plugins = self._plugins_editor.get_plugin_list()
+        # Plugins that are in the profile but not listed in the tree (e.g. installed
+        # without an entry point, or stale package metadata) must not be dropped.
+        listed = set(self._plugins_editor.get_all_plugin_places())
+        for plugin_name in self._ui.app_profile.plugins:
+            if plugin_name not in listed and not plugin_name.endswith(".py"):
+                plugins.append(plugin_name)
         for line in self._additional_plugin_list.toPlainText().splitlines():
             line = line.strip()
             if line:
@@ -139,6 +145,15 @@ class QAvaliablePluginsTree(QtW.QTreeWidget):
                 if plugin_item.checkState(0) == Qt.CheckState.Checked:
                     plugins.append(plugin_item.text(1))
         return plugins
+
+    def get_all_plugin_places(self) -> list[str]:
+        """Return the plugin IDs of all the items, checked or not."""
+        places: list[str] = []
+        for i in range(self.topLevelItemCount()):
+            dist_item = self.topLevelItem(i)
+            for j in range(dist_item.childCount()):
+                places.append(dist_item.child(j).text(1))
+        return places
 
     def _on_item_changed(self, item: QtW.QTreeWidgetItem, column: int):
         if item.parent() is None:
