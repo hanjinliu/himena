@@ -260,6 +260,23 @@ def test_setting_dialog_contents(himena_ui: MainWindowQt, qtbot: QtBot):
     keybind_edit._table._update_keybinding(0, 1)
     keybind_edit._restore_default_btn.click()
 
+def test_plugin_list_editor_keeps_unlisted_plugins(himena_ui: MainWindowQt, qtbot: QtBot):
+    from himena.qt.settings._plugins import QPluginListEditor
+
+    # a plugin that is in the profile but has no entry point (e.g. stale package
+    # metadata) must survive "Apply", otherwise it silently disappears from the
+    # profile and its plugin config becomes orphaned.
+    prof = himena_ui.app_profile.with_plugins(
+        himena_ui.app_profile.plugins + ["my_unlisted_plugin.mod"]
+    )
+    prof.save()
+    editor = QPluginListEditor(himena_ui)
+    qtbot.addWidget(editor)
+    assert "my_unlisted_plugin.mod" not in editor._plugins_editor.get_all_plugin_places()
+    editor._apply_changes()
+    assert "my_unlisted_plugin.mod" in himena_ui.app_profile.plugins
+    assert "himena_builtins.qt.favorites" in himena_ui.app_profile.plugins
+
 def test_alias_command_keybindings(himena_ui: MainWindowQt, qtbot: QtBot):
     from app_model.types import KeyBinding
     from himena.qt.settings._keybind_edit import QKeybindEdit, H
