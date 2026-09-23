@@ -261,3 +261,83 @@ def test_list_of_subwindows_input(
     himena_ui.load_session(tmpdir / "test.session.zip")
     assert len(himena_ui.tabs) == 1
     assert len(himena_ui.tabs.current()) == 3
+
+
+def test_session_with_invalid_titles(himena_ui: MainWindow, tmpdir):
+    titles = ["a/b:c?.txt", "a\b*c", "dots...", "  ", "x" * 300 + ".txt", "a/b:c?.txt"]
+    tab = himena_ui.add_tab("tab/:*?")
+    for i, title in enumerate(titles):
+        tab.add_data_model(
+            WidgetDataModel(
+                value=f"text-{i}",
+                type=StandardType.TEXT,
+                title=title,
+                extension_default=".txt",
+                metadata=TextMeta(language="Python"),
+            )
+        )
+    session_path = Path(tmpdir) / "test.session.zip"
+    himena_ui.save_session(session_path, save_copies=True)
+    himena_ui.clear()
+    himena_ui.load_session(session_path)
+    assert len(himena_ui.tabs) == 1
+    tab = himena_ui.tabs[0]
+    assert tab.title == "tab/:*?"
+    assert [win.title for win in tab] == titles
+    for i, win in enumerate(tab):
+        model = win.to_model()
+        assert model.value == f"text-{i}"
+        assert isinstance(model.metadata, TextMeta)
+        assert model.metadata.language == "Python"
+
+
+def test_session_with_parametric_window(himena_ui: MainWindow, tmpdir):
+    def func(a: int = 1) -> WidgetDataModel:
+        return WidgetDataModel(value=str(a), type=StandardType.TEXT)
+
+    tab = himena_ui.add_tab()
+    tab.add_function(func, title="param-0")
+    for i in range(2):
+        tab.add_data_model(
+            WidgetDataModel(
+                value=f"text-{i}",
+                type=StandardType.TEXT,
+                title=f"win-{i}",
+                extension_default=".txt",
+                metadata=TextMeta(language=["Python", "Rust"][i]),
+            )
+        )
+    tab.add_function(func, title="param-1")  # current window is parametric
+    session_path = Path(tmpdir) / "test.session.zip"
+    himena_ui.save_session(session_path, save_copies=True)
+    himena_ui.clear()
+    himena_ui.load_session(session_path)
+    tab = himena_ui.tabs[0]
+    assert [win.title for win in tab] == ["win-0", "win-1"]
+    for i, win in enumerate(tab):
+        model = win.to_model()
+        assert model.value == f"text-{i}"
+        assert model.metadata.language == ["Python", "Rust"][i]
+
+
+def test_session_current_indices(himena_ui: MainWindow, tmpdir):
+    def _text(title: str) -> WidgetDataModel:
+        return WidgetDataModel(
+            value=title, type=StandardType.TEXT, title=title, extension_default=".txt"
+        )
+
+    for n_wins, cur in [(3, 1), (2, 0), (3, 2)]:
+        tab = himena_ui.add_tab("same-name")
+        for i in range(n_wins):
+            tab.add_data_model(_text(f"win-{i}"))
+        tab.current_index = cur
+    himena_ui.tabs.current_index = 1
+    session_path = Path(tmpdir) / "test.session.zip"
+    himena_ui.save_session(session_path, save_copies=True)
+    himena_ui.clear()
+    himena_ui.add_tab("existing")
+    himena_ui.load_session(session_path)
+    assert len(himena_ui.tabs) == 4
+    assert [len(tab) for tab in himena_ui.tabs] == [0, 3, 2, 3]
+    assert [tab.current_index for tab in himena_ui.tabs][1:] == [1, 0, 2]
+    assert himena_ui.tabs.current_index == 2
