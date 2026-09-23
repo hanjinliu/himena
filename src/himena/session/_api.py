@@ -11,6 +11,7 @@ from himena.session._utils import (
     write_model_by_title,
     write_metadata_by_title,
     replace_invalid_characters,
+    find_by_prefix,
 )
 from himena.standards import read_metadata
 from himena.widgets._wrapper import ParametricWindow
@@ -37,7 +38,7 @@ def update_from_directory(ui: MainWindow, path: str | Path) -> None:
         for tab_dir in dirpath.iterdir():
             if tab_dir.is_file():
                 continue
-            ith = int(tab_dir.stem.split("_")[0])
+            ith = int(tab_dir.name.split("_", 1)[0])
             for uuid, meth in _iter_reader_method(tab_dir, session.tabs[ith]):
                 wf_overrides[uuid] = meth
         session.update_gui(ui, workflow_override=wf_overrides, dirpath=dirpath)
@@ -52,14 +53,14 @@ def _iter_reader_method(
     tab_session: TabSession,
 ) -> Iterator[tuple[UUID, LocalReaderMethod]]:
     for file in dirpath.iterdir():
-        if file.suffix == ".himena-meta":
+        if file.suffix == ".himena-meta" or file.name == _SESSION_YAML:
             continue
-        ith_win = int(file.stem.rsplit("_")[0])
+        ith_win = int(file.name.split("_", 1)[0])
         win_sess = tab_session.windows[ith_win]
         uuid = win_sess.id
-        meta_path = file.with_name(f"{ith_win}_{win_sess.title}.himena-meta")
+        meta_path = find_by_prefix(dirpath, ith_win, ".himena-meta")
         metadata = None
-        if meta_path.exists():
+        if meta_path is not None:
             try:
                 metadata = read_metadata(meta_path)
             except Exception as e:
@@ -121,9 +122,10 @@ def _dump_tab_to_directory_impl(
     save_copies: bool,
     cmd_id_allowed: set[str],
 ):
-    for i, win in enumerate(tab):
-        if isinstance(win, ParametricWindow):
-            continue
+    # NOTE: ParametricWindow is not saved in the session, so the index must be counted
+    # without it to be consistent with TabSession.windows.
+    windows = [win for win in tab if not isinstance(win, ParametricWindow)]
+    for i, win in enumerate(windows):
         prefix = str(i)
         read_from = win._determine_read_from()
         if read_from is not None and isinstance(read_from[0], Path) and not save_copies:
