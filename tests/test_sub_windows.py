@@ -2,7 +2,7 @@ from pathlib import Path
 import sys
 import pytest
 from pytestqt.qtbot import QtBot
-from qtpy import QtWidgets as QtW
+from qtpy import QtWidgets as QtW, QtCore
 import numpy as np
 from numpy.testing import assert_equal
 import polars as pl
@@ -564,14 +564,14 @@ def test_drop_event(himena_ui: MainWindow):
         win._close_me(himena_ui, confirm=True)
 
 
-def _flush_deferred_delete():
-    import gc
-
+def _flush_deferred_delete(*qobjects):
+    """Process the pending `deleteLater()` of the given objects."""
+    # NOTE: do not flush all the deferred deletions of the application, as it also
+    # deletes objects left by the other tests.
     app = QtW.QApplication.instance()
-    for _ in range(3):
-        app.processEvents()
-        app.sendPostedEvents(None, 52)  # QEvent.Type.DeferredDelete
-        gc.collect()
+    for qobj in qobjects:
+        app.sendPostedEvents(qobj, QtCore.QEvent.Type.DeferredDelete)
+    app.processEvents()
 
 
 def _is_deleted(qobj) -> bool:
@@ -596,7 +596,7 @@ def test_closed_window_is_deleted(himena_ui: MainWindowQt):
     n_stack = himena_ui._backend_main_window._control_stack.count()
     win._close_me(himena_ui)
     del win
-    _flush_deferred_delete()
+    _flush_deferred_delete(qsub, control)
     assert _is_deleted(qsub)
     assert _is_deleted(widget)
     assert _is_deleted(control)
@@ -607,7 +607,7 @@ def test_closed_window_is_deleted(himena_ui: MainWindowQt):
     widget = himena_ui.tabs[0][0].widget
     qsub = get_subwindow(widget)
     del himena_ui.tabs[0]
-    _flush_deferred_delete()
+    _flush_deferred_delete(qsub, area)
     assert _is_deleted(area)
     assert _is_deleted(qsub)
     assert _is_deleted(widget)
@@ -624,7 +624,7 @@ def test_moved_window_is_not_deleted(himena_ui: MainWindowQt):
     control = widget.control_widget()
     qsub_old = get_subwindow(widget)
     himena_ui.move_window(win, 1)
-    _flush_deferred_delete()
+    _flush_deferred_delete(qsub_old)
     assert _is_deleted(qsub_old)
     assert not _is_deleted(widget)
     assert not _is_deleted(control)
