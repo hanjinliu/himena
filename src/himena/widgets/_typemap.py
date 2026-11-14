@@ -57,7 +57,16 @@ def register_defaults(map: ObjectTypeMap):
 
     @map.register
     def as_dataframe(value) -> str | None:
-        if hasattr(value, "__dataframe__"):
+        from himena.data_wrappers import _dataframe as _df
+
+        # NOTE: polars>=2 does not implement `__dataframe__`
+        if (
+            hasattr(value, "__dataframe__")
+            or _df.is_polars_dataframe(value)
+            or _df.is_pandas_dataframe(value)
+            or _df.is_pyarrow_table(value)
+            or _df.is_narwhals_dataframe(value)
+        ):
             return StandardType.DATAFRAME
         return None
 
