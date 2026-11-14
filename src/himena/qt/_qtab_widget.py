@@ -201,6 +201,9 @@ class QTabWidget(QtW.QTabWidget):
         if area := self.widget_area(index):
             area._prepare_close()
         self.removeTab(index)
+        if area is not None:
+            # NOTE: removeTab() does not delete the page widget
+            area.deleteLater()
         if self.count() == 0:
             self._add_startup_widget()
 

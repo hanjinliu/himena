@@ -84,8 +84,9 @@ def test_custom_parametric_widget(himena_ui: MainWindow):
     assert win.get_params() == {"text": "xyz"}
     win._emit_btn_clicked()
     assert not win.is_alive
+    # NOTE: the closed widget is deleted, so a new one is needed
     with pytest.raises(TypeError):  # needs implementation of "is_preview_enabled" etc.
-        himena_ui.add_parametric_widget(widget, preview=True)
+        himena_ui.add_parametric_widget(MyParams(), preview=True)
 
     class MyParams2(MyParams):
         def connect_changed_signal(self, callback):
