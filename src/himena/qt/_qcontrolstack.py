@@ -20,9 +20,12 @@ class QControlStack(QtW.QStackedWidget):
         self._widget_map[widget] = control
         self.setCurrentWidget(control)
 
-    def remove_control_widget(self, widget: QtW.QWidget) -> None:
+    def remove_control_widget(self, widget: QtW.QWidget, delete: bool = True) -> None:
         if control := self._widget_map.pop(widget, None):
+            # NOTE: removeWidget() does not delete the widget
             self.removeWidget(control)
+            if delete:
+                control.deleteLater()
 
     def update_control_widget(self, current: QtW.QWidget | None) -> None:
         if control := self._widget_map.get(current):

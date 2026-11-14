@@ -2,7 +2,7 @@ from pathlib import Path
 import sys
 import pytest
 from pytestqt.qtbot import QtBot
-from qtpy import QtWidgets as QtW
+from qtpy import QtWidgets as QtW, QtCore
 import numpy as np
 from numpy.testing import assert_equal
 import polars as pl
@@ -562,3 +562,71 @@ def test_drop_event(himena_ui: MainWindow):
         win._close_me(himena_ui, confirm=True)
     with choose_one_dialog_response(himena_ui, "Don't save"):
         win._close_me(himena_ui, confirm=True)
+
+
+def _flush_deferred_delete(*qobjects):
+    """Process the pending `deleteLater()` of the given objects."""
+    # NOTE: do not flush all the deferred deletions of the application, as it also
+    # deletes objects left by the other tests.
+    app = QtW.QApplication.instance()
+    for qobj in qobjects:
+        app.sendPostedEvents(qobj, QtCore.QEvent.Type.DeferredDelete)
+    app.processEvents()
+
+
+def _is_deleted(qobj) -> bool:
+    try:
+        qobj.objectName()
+    except RuntimeError:
+        return True
+    return False
+
+
+def test_closed_window_is_deleted(himena_ui: MainWindowQt):
+    """Closing windows and tabs must delete the Qt widgets."""
+    from himena.qt._qsub_window import get_subwindow
+
+    himena_ui.show()
+    win = himena_ui.add_object("abc", type=StandardType.TEXT)
+    himena_ui.add_object("xyz", type=StandardType.TEXT)
+    widget = win.widget
+    control = widget.control_widget()
+    qsub = get_subwindow(widget)
+    area = himena_ui._backend_main_window._tab_widget.widget_area(0)
+    n_stack = himena_ui._backend_main_window._control_stack.count()
+    win._close_me(himena_ui)
+    del win
+    _flush_deferred_delete(qsub, control)
+    assert _is_deleted(qsub)
+    assert _is_deleted(widget)
+    assert _is_deleted(control)
+    assert himena_ui._backend_main_window._control_stack.count() == n_stack - 1
+    assert not _is_deleted(area)
+
+    # closing the tab must delete the area and the remaining window
+    widget = himena_ui.tabs[0][0].widget
+    qsub = get_subwindow(widget)
+    del himena_ui.tabs[0]
+    _flush_deferred_delete(qsub, area)
+    assert _is_deleted(area)
+    assert _is_deleted(qsub)
+    assert _is_deleted(widget)
+
+
+def test_moved_window_is_not_deleted(himena_ui: MainWindowQt):
+    """Moving a window to another tab must keep the widget and its control."""
+    from himena.qt._qsub_window import get_subwindow
+
+    himena_ui.show()
+    win = himena_ui.add_object("abc", type=StandardType.TEXT)
+    himena_ui.add_tab()
+    widget = win.widget
+    control = widget.control_widget()
+    qsub_old = get_subwindow(widget)
+    himena_ui.move_window(win, 1)
+    _flush_deferred_delete(qsub_old)
+    assert _is_deleted(qsub_old)
+    assert not _is_deleted(widget)
+    assert not _is_deleted(control)
+    assert himena_ui.tabs[1][0].widget is widget
+    assert himena_ui.tabs[1][0].to_model().value == "abc"

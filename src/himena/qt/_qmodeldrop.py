@@ -229,6 +229,12 @@ class QModelDrop(QModelDropBase):
         return any(is_subtype(model_type, t) for t in self._allowed_types)
 
 
+def _disconnect_all(callbacks: dict[QModelListItem, tuple[SubWindow, partial]]):
+    for win, cb in callbacks.values():
+        win.closed.disconnect(cb, missing_ok=True)
+    callbacks.clear()
+
+
 class QModelDropList(QtW.QListWidget):
     modelsChanged = QtCore.Signal(list)
     windowsChanged = QtCore.Signal(list)
@@ -248,6 +254,10 @@ class QModelDropList(QtW.QListWidget):
         self.setAcceptDrops(True)
         self._allowed_types = types  # the model type
         self._layout = layout
+        # item widget -> (source window, callback connected to its `closed` signal)
+        self._closed_callbacks: dict[QModelListItem, tuple[SubWindow, partial]] = {}
+        # NOTE: source windows must not call back to this list after it is deleted
+        self.destroyed.connect(partial(_disconnect_all, self._closed_callbacks))
 
     def sizeHint(self) -> QtCore.QSize:
         return QtCore.QSize(250, 200)
@@ -339,16 +349,17 @@ class QModelDropList(QtW.QListWidget):
         item_widget = self._append_item()
         item_widget.set_qsubwindow(src)
         win = src._my_wrapper()
-        win.closed.connect(partial(self._remove_item, item_widget))
+        cb = partial(self._remove_item, item_widget)
+        win.closed.connect(cb)
+        self._closed_callbacks[item_widget] = (win, cb)
 
     def _remove_item(self, item: QModelListItem):
+        if win_cb := self._closed_callbacks.pop(item, None):
+            # disconnect the signal to avoid memory leak
+            win, cb = win_cb
+            win.closed.disconnect(cb, missing_ok=True)
         for i in range(self.count()):
             if self.itemWidget(self.item(i)) is item:
-                if (win := item.subwindow()) and (
-                    cb := partial(self._remove_item, item)
-                ) in win.closed:
-                    # disconnect the signal to avoid memory leak
-                    win.closed.disconnect(cb)
                 self.takeItem(i)
                 return
 

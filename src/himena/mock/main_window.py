@@ -121,7 +121,7 @@ class MockBackend(BackendMainWindow):
         If None is given, the control widget will be just hidden.
         """
 
-    def _remove_control_widget(self, widget: MockWidget) -> None:
+    def _remove_control_widget(self, widget: MockWidget, delete: bool = True) -> None:
         """Remove the control widget for the given sub window widget from the stack."""
 
     def _window_state(self, widget: MockWidget) -> WindowState:
@@ -219,7 +219,7 @@ class MockBackend(BackendMainWindow):
             (widget._title, widget._widget) for widget in self._tabs[i_tab].sub_windows
         ]
 
-    def _del_widget_at(self, i_tab: int, i_window: int) -> None:
+    def _del_widget_at(self, i_tab: int, i_window: int, delete: bool = True) -> None:
         """Delete the `i_window`-th window in the `i_tab`-th tab."""
         del self._tabs[i_tab].sub_windows[i_window]
 

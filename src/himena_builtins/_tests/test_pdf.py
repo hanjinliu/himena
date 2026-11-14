@@ -1,10 +1,19 @@
+import importlib.util
 import sys
 from pathlib import Path
 import pytest
 from pytestqt.qtbot import QtBot
 from himena import MainWindow
+import qtpy
 from qtpy.QtCore import Qt
 
+# NOTE: some Qt bindings (e.g. PyQt6>=6.12) are not shipped with QtPdf
+_requires_qtpdf = pytest.mark.skipif(
+    importlib.util.find_spec(f"{qtpy.API_NAME}.QtPdfWidgets") is None,
+    reason="QtPdfWidgets is not available",
+)
+
+@_requires_qtpdf
 def test_pdf_viewer(himena_ui: MainWindow, qtbot: QtBot, sample_dir: Path):
     from himena_builtins.qt.widgets.pdf import QPdfViewer
 
@@ -17,6 +26,7 @@ def test_pdf_viewer(himena_ui: MainWindow, qtbot: QtBot, sample_dir: Path):
     qtbot.keyClick(widget, Qt.Key.Key_Plus)
     qtbot.keyClick(widget, Qt.Key.Key_Minus)
 
+@_requires_qtpdf
 @pytest.mark.skipif(sys.platform == "win32", reason="Ghostscript is not available")
 def test_read_eps(himena_ui: MainWindow, qtbot: QtBot, sample_dir: Path):
     himena_ui.read_file(sample_dir / "eps.eps")

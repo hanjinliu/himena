@@ -100,8 +100,12 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
         If None is given, the control widget will be just hidden.
         """
 
-    def _remove_control_widget(self, widget: _W) -> None:
-        """Remove the control widget for the given sub window widget from the stack."""
+    def _remove_control_widget(self, widget: _W, delete: bool = True) -> None:
+        """Remove the control widget for the given sub window widget from the stack.
+
+        If `delete` is False, the control widget must be kept alive so that it can be
+        set again.
+        """
 
     def _window_state(self, widget: _W) -> WindowState:
         """The state (min, normal, etc.) of the window."""
@@ -202,8 +206,12 @@ class BackendMainWindow(Generic[_W]):  # pragma: no cover
     def _get_widget_list(self, i_tab: int) -> list[tuple[str, _W]]:
         """Get the list of widgets in the tab."""
 
-    def _del_widget_at(self, i_tab: int, i_window: int) -> None:
-        """Delete the `i_window`-th window in the `i_tab`-th tab."""
+    def _del_widget_at(self, i_tab: int, i_window: int, delete: bool = True) -> None:
+        """Delete the `i_window`-th window in the `i_tab`-th tab.
+
+        If `delete` is False, the inner widget must be kept alive so that it can be
+        added again to another tab.
+        """
 
     def _del_tab_at(self, i_tab: int) -> None:
         """Delete the `i_tab`-th tab.

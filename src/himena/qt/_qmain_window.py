@@ -277,8 +277,8 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
     def _update_control_widget(self, current: QtW.QWidget) -> None:
         self._control_stack.update_control_widget(current)
 
-    def _remove_control_widget(self, widget: QtW.QWidget) -> None:
-        self._control_stack.remove_control_widget(widget)
+    def _remove_control_widget(self, widget: QtW.QWidget, delete: bool = True) -> None:
+        self._control_stack.remove_control_widget(widget, delete=delete)
 
     def _del_dock_widget(self, widget: QtW.QWidget) -> None:
         if isinstance(dock := widget.parentWidget(), QtW.QDockWidget):
@@ -651,7 +651,7 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
             return []
         return [(w.windowTitle(), w._widget) for w in tab.subWindowList()]
 
-    def _del_widget_at(self, i_tab: int, i_window: int) -> None:
+    def _del_widget_at(self, i_tab: int, i_window: int, delete: bool = True) -> None:
         if i_tab < 0 or i_window < 0:
             raise ValueError("Invalid tab or window index.")
         _LOGGER.debug("Deleting widget at tab %r, window %r", i_tab, i_window)
@@ -660,6 +660,11 @@ class QMainWindow(QModelMainWindow, widgets.BackendMainWindow[QtW.QWidget]):
         subwindow = subwindows[i_window]
         tab.removeSubWindow(subwindow)
         subwindow._widget._himena_widget = None
+        if not delete:
+            # the inner widget will be reused (e.g. moved to another tab)
+            subwindow._widget.setParent(None)
+        # NOTE: removeSubWindow() does not delete the sub-window
+        subwindow.deleteLater()
         tab.relabel_widgets()
         if len(subwindows) == 1:  # now empty
             tab._set_area_focused()
